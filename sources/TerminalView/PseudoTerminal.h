@@ -94,6 +94,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // Are we in the process of restoring a window with NSWindowRestoration? If so, do not order
 // the window as it may be minimized (issue 5258)
 @property(nonatomic) BOOL restoringWindow;
+@property(nonatomic) BOOL orphanJobsOnClose;
 
 // Set to YES when the window has been created but window:didDecodeRestorableState: hasn't been
 // called yet.
@@ -173,6 +174,9 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 + (void)performWhenWindowCreationIsSafeForLionFullScreen:(BOOL)lionFullScreen
                                                    block:(void (^)(void))block;
+
++ (BOOL)useUnlimitedHistoryForArrangement;
++ (void)setUseUnlimitedHistoryForArrangement:(BOOL)use;
 
 // Initialize a new PseudoTerminal.
 // smartLayout: If true then position windows using the "smart layout"

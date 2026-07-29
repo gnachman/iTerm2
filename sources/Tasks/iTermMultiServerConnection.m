@@ -369,6 +369,22 @@
     }];
 }
 
+- (void)reinsertUnattachedChild:(iTermFileDescriptorMultiClientChild *)child {
+    if (!child) {
+        return;
+    }
+    [_thread dispatchAsync:^(iTermMultiServerPerConnectionState * _Nullable state) {
+        if ([state.unattachedChildren containsObject:child]) {
+            DLog(@"reinsertUnattachedChild: pid %@ already unattached on socket %@",
+                 @(child.pid), @(self.socketNumber));
+            return;
+        }
+        DLog(@"reinsertUnattachedChild: re-add pid %@ (fd %@) to unattached children on socket %@",
+             @(child.pid), @(child.fd), @(self.socketNumber));
+        [state.unattachedChildren addObject:child];
+    }];
+}
+
 // These C pointers live until the callback is run.
 - (void)launchWithTTYState:(iTermTTYState)ttyState
                    argpath:(const char *)argpath

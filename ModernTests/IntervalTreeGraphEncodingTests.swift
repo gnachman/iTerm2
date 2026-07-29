@@ -8,6 +8,14 @@
 import XCTest
 @testable import iTerm2SharedARC
 
+fileprivate func iTermMark() -> iTermMark {
+    return (iTermMark() as iTermMark?)!
+}
+
+fileprivate func VT100ScreenMark() -> VT100ScreenMark {
+    return (VT100ScreenMark() as VT100ScreenMark?)!
+}
+
 class IntervalTreeGraphEncodingTests: XCTestCase {
 
     // MARK: - iTermMark GUID Tests

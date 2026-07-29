@@ -434,6 +434,26 @@ typedef struct {
     [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
 }
 
+- (pid_t)parkChildForReattachment {
+    __block pid_t pid = -1;
+    [self.thread dispatchRecursiveSync:^(iTermMultiServerJobManagerState * _Nullable state) {
+        if (state.child == nil || state.conn == nil) {
+            DLog(@"parkChildForReattachment: nothing to park (child=%@ conn=%@)", state.child, state.conn);
+            return;
+        }
+        pid = state.child.pid;
+        DLog(@"parkChildForReattachment: parking pid %@ (fd %@) on socket %@ for later in-process re-adoption",
+             @(pid), @(state.child.fd), @(state.conn.socketNumber));
+        // Hand the live child (with its still-open fd) back to the connection so
+        // a thaw-time -attachToProcessID: can find it again. Then forget it here
+        // WITHOUT closing the fd (unlike -closeFileDescriptor).
+        [state.conn reinsertUnattachedChild:state.child];
+        state.child = nil;
+        self.cachedChild = nil;
+    }];
+    return pid;
+}
+
 - (void)reallyAttachToServer:(iTermGeneralServerConnection)serverConnection
                withProcessID:(NSNumber *)thePid
                   brokenPipe:(void (^)(void))brokenPipe

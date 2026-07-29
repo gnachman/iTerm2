@@ -60,6 +60,13 @@ extern NSString *const iTermMultiServerRestorationKeyChildPID;
 
 + (BOOL)getGeneralConnection:(iTermGeneralServerConnection *)generalConnection
    fromRestorationIdentifier:(NSDictionary *)dict;
+
+// In-process freeze/thaw support. Detaches the running child from this job
+// manager and returns it to its connection's unattached list so it can be
+// re-adopted on thaw, WITHOUT closing the child's file descriptor and WITHOUT
+// tearing down the shared connection. Returns the parked child's pid, or -1 if
+// there was nothing to park (e.g., no live child or non-multiserver child).
+- (pid_t)parkChildForReattachment;
 @end
 
 NS_ASSUME_NONNULL_END
