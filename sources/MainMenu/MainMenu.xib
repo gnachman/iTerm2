@@ -1607,6 +1607,11 @@ CQ
                                     <action selector="showBookmarkWindow:" target="201" id="953"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Search Profiles…" identifier="Search Profiles…" id="cX7-Sr-Pfs">
+                                <connections>
+                                    <action selector="showProfileSearchWindow:" target="201" id="cX7-Sr-Pfa"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="868">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>

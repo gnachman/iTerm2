@@ -88,6 +88,7 @@ extern NSString *const iTermProcessTypeDidChangeNotification;
 static iTermController *gSharedInstance;
 
 @interface iTermController()<iTermSetCurrentTerminalHelperDelegate, iTermPresentationControllerDelegate>
+- (void)openProfileFromProfilesMenuWithGuid:(NSString *)guid action:(SEL)action;
 @end
 
 @implementation iTermController {
@@ -322,6 +323,44 @@ static iTermController *gSharedInstance;
                                   inTerminal:nil
                           respectTabbingMode:NO
                                   completion:nil];
+    }
+}
+
++ (SEL)profilesMenuActionForOpenProfilesInNewWindow:(BOOL)openProfilesInNewWindow
+                                      modifierFlags:(NSEventModifierFlags)modifierFlags {
+    const BOOL optionPressed = (modifierFlags & NSEventModifierFlagOption) != 0;
+    const BOOL openInWindow = optionPressed ? !openProfilesInNewWindow : openProfilesInNewWindow;
+    return openInWindow ? @selector(newSessionInWindowAtIndex:) : @selector(newSessionInTabAtIndex:);
+}
+
+- (void)openProfileFromProfilesMenuWithGuid:(NSString *)guid {
+    if (!guid) {
+        return;
+    }
+
+    SEL action = [self.class profilesMenuActionForOpenProfilesInNewWindow:[iTermAdvancedSettingsModel openProfilesInNewWindow]
+                                                            modifierFlags:[NSEvent modifierFlags]];
+    [self openProfileFromProfilesMenuWithGuid:guid action:action];
+}
+
+- (void)openProfileFromProfilesMenuWithGuid:(NSString *)guid action:(SEL)action {
+    if (!guid) {
+        return;
+    }
+
+    NSMenuItem *sender = [[NSMenuItem alloc] initWithTitle:@""
+                                                    action:action
+                                             keyEquivalent:@""];
+    sender.representedObject = guid;
+    id validator = [NSApp delegate];
+    if ([validator respondsToSelector:@selector(validateMenuItem:)] &&
+        ![validator validateMenuItem:sender]) {
+        return;
+    }
+    if (action == @selector(newSessionInWindowAtIndex:)) {
+        [self newSessionInWindowAtIndex:sender];
+    } else {
+        [self newSessionInTabAtIndex:sender];
     }
 }
 
@@ -2239,4 +2278,3 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 @end
-

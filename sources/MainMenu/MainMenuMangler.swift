@@ -260,6 +260,7 @@ class MainMenuMangler: NSObject {
 
         // Profiles menu
         "Open Profiles…": "person",
+        "Search Profiles…": "magnifyingglass",
         // Press Option to Show Alternate Profiles removed - no identifier in XIB
         "Open In New Window": "macwindow",
         "Change Profile in Arrangement…": "person.crop.rectangle",

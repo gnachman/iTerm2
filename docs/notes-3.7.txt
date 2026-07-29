@@ -2350,3 +2350,5 @@ Bug Fixes:
   reprocessed to build each request, so the
   per-message work stays small no matter how
   long the conversation gets.
+- The Profiles menu now has Search Profiles…
+  for quickly opening a profile by name or tag.

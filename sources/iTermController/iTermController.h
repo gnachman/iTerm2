@@ -89,6 +89,9 @@ extern NSString *const iTermSnippetsTagsDidChange;
 - (void)arrangeHorizontally;
 - (void)newSessionInTabAtIndex:(id)sender;
 - (void)newSessionInWindowAtIndex:(id)sender;
++ (SEL)profilesMenuActionForOpenProfilesInNewWindow:(BOOL)openProfilesInNewWindow
+                                      modifierFlags:(NSEventModifierFlags)modifierFlags;
+- (void)openProfileFromProfilesMenuWithGuid:(NSString *)guid;
 - (PseudoTerminal*)keyTerminalWindow;
 - (PTYSession *)anyTmuxSession;
 
@@ -317,4 +320,3 @@ typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
 - (NSArray<NSString *> *)currentSnippetsFilter;
 
 @end
-

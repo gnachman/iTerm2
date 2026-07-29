@@ -101,6 +101,7 @@
 #import "iTermPreferences.h"
 #import "iTermProfileModelJournal.h"
 #import "iTermProfilePreferences.h"
+#import "iTermProfileSearchWindowController.h"
 #import "iTermProfilesMenuController.h"
 #import "iTermProfilesWindowController.h"
 #import "iTermPromptOnCloseReason.h"
@@ -186,6 +187,7 @@ static BOOL hasBecomeActive = NO;
 
 @implementation iTermApplicationDelegate {
     iTermPasswordManagerWindowController *_passwordManagerWindowController;
+    iTermProfileSearchWindowController *_profileSearchWindowController;
 
     // Menu items
     IBOutlet NSMenu *bookmarkMenu;
@@ -359,6 +361,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     [_appNapStoppingActivity release];
     [_focusFollowsMouseController release];
     [_globalScopeController release];
+    [_profileSearchWindowController release];
     [_untitledWindowStateMachine release];
 
     [super dealloc];
@@ -2268,13 +2271,13 @@ static iTermKeyEventReplayer *gReplayer;
     if ([iTermAdvancedSettingsModel openProfilesInNewWindow]) {
         params.selector = @selector(newSessionInWindowAtIndex:);
         params.alternateSelector = @selector(newSessionInTabAtIndex:);
-        [bookmarkMenu itemAtIndex:2].title = [[bookmarkMenu itemAtIndex:2].title stringByReplacingOccurrencesOfString:@"Window" withString:@"Tab"];
         [bookmarkMenu itemAtIndex:3].title = [[bookmarkMenu itemAtIndex:3].title stringByReplacingOccurrencesOfString:@"Window" withString:@"Tab"];
+        [bookmarkMenu itemAtIndex:4].title = [[bookmarkMenu itemAtIndex:4].title stringByReplacingOccurrencesOfString:@"Window" withString:@"Tab"];
     } else {
         params.selector = @selector(newSessionInTabAtIndex:);
         params.alternateSelector = @selector(newSessionInWindowAtIndex:);
-        [bookmarkMenu itemAtIndex:2].title = [[bookmarkMenu itemAtIndex:2].title stringByReplacingOccurrencesOfString:@"Tab" withString:@"Window"];
         [bookmarkMenu itemAtIndex:3].title = [[bookmarkMenu itemAtIndex:3].title stringByReplacingOccurrencesOfString:@"Tab" withString:@"Window"];
+        [bookmarkMenu itemAtIndex:4].title = [[bookmarkMenu itemAtIndex:4].title stringByReplacingOccurrencesOfString:@"Tab" withString:@"Window"];
     }
     params.openAllSelector = @selector(newSessionsInWindow:);
     params.alternateOpenAllSelector = @selector(newSessionsInWindow:);
@@ -2283,7 +2286,7 @@ static iTermKeyEventReplayer *gReplayer;
     NSDictionary<NSString *, NSNumber *> *shortcutsChanged =
     [iTermProfilesMenuController applyJournal:[aNotification userInfo]
                                        toMenu:bookmarkMenu
-                               startingAtItem:5
+                               startingAtItem:6
                                        params:params];
     // See issue 6254.
     NSNumber *fShortcut = shortcutsChanged[@"F"];
@@ -2903,6 +2906,16 @@ static iTermKeyEventReplayer *gReplayer;
 - (IBAction)showBookmarkWindow:(id)sender {
     [NSApp activateIgnoringOtherApps:YES];
     [[iTermProfilesWindowController sharedInstance] showWindow:sender];
+}
+
+- (IBAction)showProfileSearchWindow:(id)sender {
+    if (!_profileSearchWindowController) {
+        _profileSearchWindowController = [[iTermProfileSearchWindowController alloc] init];
+        _profileSearchWindowController.profileSelected = ^(NSString *guid) {
+            [[iTermController sharedInstance] openProfileFromProfilesMenuWithGuid:guid];
+        };
+    }
+    [_profileSearchWindowController showSearchWindow:sender];
 }
 
 - (IBAction)pasteFaster:(id)sender
