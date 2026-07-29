@@ -43,21 +43,58 @@ protocol TokenExecutorDelegate: AnyObject {
     func tokenExecutorWillExecuteTokens()
 }
 
-// Uncomment the stack tracing code to debug stuck paused executors.
 @objc(iTermTokenExecutorUnpauser)
 class Unpauser: NSObject {
+    // Flip to true in an adhoc diagnostic build to find stuck paused executors (a pause that is
+    // never released wedges the mutation queue, which starves TokenExecutor's backpressure
+    // semaphore and hangs the shared TaskNotifier reader thread, freezing every session). When on,
+    // this captures a full call stack for every pause (expensive, which is why it is off by
+    // default) and lets addTokens dump the origins of all outstanding pauses if it wedges on the
+    // backpressure semaphore. The dump goes to RLog, so it is captured by a debug log generated
+    // while the app is wedged.
+    static let traceStuckPauses = true
+
     private weak var delegate: UnpauserDelegate?
     private let mutex = Mutex()
-    // @objc var stack: String
+    // Creation stack, captured only when `traceStuckPauses` is on. Cleared on unpause.
+    @objc private(set) var stack = ""
     #if DEBUG
     private var hasBeenUnpaused = false
     #endif
 
+    // Weakly tracks pauses that have not yet been released so their origins can be dumped when a
+    // stuck pause is suspected. Weak so that adding to it cannot itself prevent an Unpauser from
+    // deallocating (its deinit is the safety net that releases a dropped pause). Only populated
+    // when `traceStuckPauses` is on. Guarded by `registryMutex`.
+    private static let registryMutex = Mutex()
+    private static let outstanding = NSHashTable<Unpauser>.weakObjects()
+
     init(_ delegate: UnpauserDelegate) {
         self.delegate = delegate
-        // stack = Thread.callStackSymbols.joined(separator: "\n")
+        if Unpauser.traceStuckPauses {
+            stack = Thread.callStackSymbols.joined(separator: "\n")
+        }
         super.init()
-        // print("Pause \(self) from\n\(stack)")
+        if Unpauser.traceStuckPauses {
+            Unpauser.registryMutex.sync {
+                Unpauser.outstanding.add(self)
+            }
+        }
+    }
+
+    // Logs the creation stack of every pause that has not yet been released. Call this when token
+    // execution appears wedged to identify the pause that was never balanced by an unpause.
+    static func dumpOutstanding() {
+        guard traceStuckPauses else {
+            return
+        }
+        let stacks: [String] = registryMutex.sync {
+            outstanding.allObjects.map { $0.stack }
+        }
+        RLog("There are \(stacks.count) outstanding token-executor pauses:")
+        for (i, stack) in stacks.enumerated() {
+            RLog("Outstanding pause #\(i):\n\(stack)")
+        }
     }
 
     @objc
@@ -66,11 +103,15 @@ class Unpauser: NSObject {
             #if DEBUG
             hasBeenUnpaused = true
             #endif
-            // print("Unpause \(self)")
             guard let temp = delegate else {
                 return
             }
-            // stack = ""
+            if Unpauser.traceStuckPauses {
+                Unpauser.registryMutex.sync {
+                    Unpauser.outstanding.remove(self)
+                }
+                stack = ""
+            }
             delegate = nil
             temp.unpause()
         }
@@ -82,9 +123,6 @@ class Unpauser: NSObject {
         #endif
         DLog("Unpause in deinit! This should never happen.")
         unpause()
-//        if stack != "" {
-//            fatalError()
-//        }
     }
 }
 
@@ -189,7 +227,23 @@ class TokenExecutor: NSObject {
         if TokenExecutor.enableTimingStats {
             TokenExecutor.parserTimingStats.recordEnd()
         }
-        _ = semaphore.wait(timeout: .distantFuture)
+        if Unpauser.traceStuckPauses {
+            // Bounded wait so that a stuck pause (which would otherwise wedge this thread and every
+            // session forever) leaves a trail: after a few seconds blocked, dump the origins of all
+            // outstanding pauses to the debug log once, then keep waiting.
+            var waited = 0.0
+            var dumped = false
+            while semaphore.wait(timeout: .now() + 1.0) == .timedOut {
+                waited += 1.0
+                if waited >= 3.0 && !dumped {
+                    dumped = true
+                    RLog("TokenExecutor.addTokens blocked on the backpressure semaphore for \(waited)s. Dumping outstanding pauses.")
+                    Unpauser.dumpOutstanding()
+                }
+            }
+        } else {
+            _ = semaphore.wait(timeout: .distantFuture)
+        }
         if TokenExecutor.enableTimingStats {
             TokenExecutor.parserTimingStats.recordStart()
         }
