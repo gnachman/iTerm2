@@ -363,6 +363,43 @@ final class ChatRestoreToolUsePersistenceTests: XCTestCase {
             "leading agent turn")
     }
 
+    // MARK: - displayTailForNewRounds pin (capture-side translate-only-tail)
+
+    /// The capture fast path translates ONLY displayTailForNewRounds(display, existing)
+    /// and freezes its rounds. For that to persist the SAME bytes as the original path
+    /// (translate the whole history, then slice rounds[existing...]), the translated
+    /// tail must equal the tail of the full translate for every prefix length. This
+    /// pins that equality (and that the tail begins with a user turn); a drift would
+    /// freeze wrong or duplicated bytes on the write path.
+    func testDisplayTailForNewRounds_translatesToFullHistoryTail() throws {
+        let req = UUID()
+        let display = [
+            userText("first"), agentText("reply one"),                    // round 0
+            userText("run a tool"),
+            { var m = requestMessage(callID: "c1", requestUUID: req); m.responseID = "r1"; return m }(),
+            responseMessage(callID: "c1", requestUUID: req),
+            agentText("tool done"),                                       // round 1
+            userText("third"), agentText("reply three"),                 // round 2
+        ]
+        let full = ChatAgent.translateForTesting(display, resolve: { _ in nil })
+        let fullRounds = ChatBlobCapture.rounds(from: full)
+        XCTAssertEqual(fullRounds.count, 3)
+
+        for existing in 0...(fullRounds.count + 1) {
+            let tail = ChatAgent.displayTailForNewRounds(display, existing: existing)
+            if existing >= fullRounds.count {
+                XCTAssertNil(tail, "no rounds beyond \(existing); tail must be nil")
+                continue
+            }
+            let tailMessages = ChatAgent.translateForTesting(try XCTUnwrap(tail), resolve: { _ in nil })
+            let expected = Array(fullRounds[existing...]).flatMap { $0 }
+            XCTAssertEqual(tailMessages, expected,
+                           "translated tail (existing=\(existing)) must equal the full translate's tail")
+            XCTAssertEqual(tailMessages.first?.role, .user,
+                           "the tail must begin at a round boundary (a user turn)")
+        }
+    }
+
     // MARK: - carriedPreviousResponseID (blob-native pre-reduce delta mode)
 
     private func agentTextWithID(_ s: String, _ responseID: String?) -> Message {

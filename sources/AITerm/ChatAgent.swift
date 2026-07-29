@@ -636,9 +636,22 @@ class ChatAgent {
     /// message, so it cannot change the round count; that is why counting the
     /// pre-repair boundaries is exact.
     static func reconstructedRoundCount(_ messages: [Message]) -> Int {
-        var rounds = 0
+        roundStartIndices(messages).count
+    }
+
+    /// The indices into `messages` where each reconstructed round begins: a message
+    /// that translate() would emit as role .user, or the first non-skipped message
+    /// (which always opens a round, mirroring ChatBlobCapture.rounds). This is the ONE
+    /// place the display->round boundary is derived without building message bodies;
+    /// reconstructedRoundCount and displayTailForNewRounds both read it, so the
+    /// aiMessagesForStructuredReplay content filter + role(from:) live here once. It
+    /// MUST agree with rounds(from: translate(messages)); that equality is pinned by
+    /// test (an undercount would drop un-frozen history on the send path, a wrong
+    /// boundary would freeze the wrong bytes on the capture path).
+    private static func roundStartIndices(_ messages: [Message]) -> [Int] {
+        var indices = [Int]()
         var started = false
-        for message in messages {
+        for (i, message) in messages.enumerated() {
             switch message.content {
             case .setPermissions, .clientLocal, .renameChat, .append, .appendAttachment,
                     .commit, .vectorStoreCreated, .userCommand, .selectSessionRequest,
@@ -652,11 +665,25 @@ class ChatAgent {
                 break
             }
             if AITermController.Message.role(from: message) == .user || !started {
-                rounds += 1
+                indices.append(i)
             }
             started = true
         }
-        return rounds
+        return indices
+    }
+
+    /// The suffix of `messages` that forms the rounds BEYOND the first `existing`
+    /// rounds, or nil when there are `existing` or fewer rounds (nothing new to
+    /// freeze). The suffix begins exactly at the (existing+1)-th round start (a user
+    /// message), so translating just it yields the new rounds and none of the
+    /// already-frozen prefix -- the capture-side counterpart of the send-side
+    /// pre-reduce. The caller re-derives the full history if the translated tail does
+    /// not begin with a clean user turn.
+    static func displayTailForNewRounds(_ messages: [Message], existing: Int) -> [Message]? {
+        guard existing >= 0 else { return nil }
+        let starts = roundStartIndices(messages)
+        guard starts.count > existing else { return nil }
+        return Array(messages[starts[existing]...])
     }
 
     /// The previous_response_id to carry forward when load() pre-reduces a chat for
@@ -1568,17 +1595,15 @@ class ChatAgent {
         // SAME store the turn used -- the real singleton in production, a temp DB
         // under test -- rather than reaching for the ChatDatabase.instance singleton.
         let listModel = broker.listModel
+        let database = listModel.chatDatabase
         guard let displayMessages = listModel.messages(forChat: chatID, createIfNeeded: false) else {
             return
         }
-        let all = translate(messages: Array(displayMessages))
-        let appended = ChatBlobCapture.captureTurn(chatID: chatID,
-                                                   allMessages: all,
-                                                   api: api,
-                                                   modelName: modelName,
-                                                   hostedTools: hostedTools,
-                                                   newRoundTokenCount: newRoundTokenCount,
-                                                   database: listModel.chatDatabase)
+        let display = Array(displayMessages)
+        let appended = captureNewRoundsFrom(display: display, api: api, modelName: modelName,
+                                            hostedTools: hostedTools,
+                                            newRoundTokenCount: newRoundTokenCount,
+                                            database: database)
         if appended > 0 {
             try? listModel.setBlobProtocol(Int(api.rawValue), forChatID: chatID)
         }
@@ -1587,9 +1612,48 @@ class ChatAgent {
         // just-frozen blob and this turn's user message; a multi-round migration
         // capture leaves firstBlobRef nil (the fork falls back to re-migration for the
         // un-linked prefix).
-        if appended == 1, let newestBlobID = listModel.chatDatabase.lastBlobID(inChat: chatID) {
+        if appended == 1, let newestBlobID = database.lastBlobID(inChat: chatID) {
             listModel.setFirstBlobRef(newestBlobID.uuidString, forMessageID: userMessageID, inChat: chatID)
         }
+    }
+
+    /// Freeze the completed turn's new round(s), translating as little history as
+    /// possible. For an established same-protocol chat this translates ONLY the new
+    /// rounds' display messages (displayTailForNewRounds) instead of the whole,
+    /// already-frozen history -- the capture-side counterpart of the send-side
+    /// pre-reduce -- and appends them directly. It re-derives from the FULL history
+    /// (the original path) for migration (no blobs yet), a protocol switch (blobs
+    /// re-frozen wholesale under the new protocol), or if the translated tail does not
+    /// begin with a clean user turn (a boundary the fast path can't trust). Both paths
+    /// persist identical blobs; only the amount translated differs.
+    private func captureNewRoundsFrom(display: [Message],
+                                      api: iTermAIAPI,
+                                      modelName: String?,
+                                      hostedTools: HostedTools,
+                                      newRoundTokenCount: Int?,
+                                      database: ChatDatabase) -> Int {
+        let existing = database.blobCount(inChat: chatID)
+        let sameProtocol = existing == 0 || database.storedBlobProtocol(inChat: chatID) == Int(api.rawValue)
+        if existing > 0, sameProtocol,
+           let tail = Self.displayTailForNewRounds(display, existing: existing) {
+            let tailMessages = translate(messages: tail)
+            // The tail must begin at a clean round boundary (a user turn). It does by
+            // construction (displayTailForNewRounds starts at a user round start), so
+            // this only trips on an unexpected translate outcome; fall back to the
+            // full re-derive rather than freeze bytes from a misaligned tail.
+            if tailMessages.first?.role == .user {
+                return ChatBlobCapture.appendNewRounds(
+                    chatID: chatID, newRounds: ChatBlobCapture.rounds(from: tailMessages),
+                    api: api, modelName: modelName, hostedTools: hostedTools,
+                    newRoundTokenCount: newRoundTokenCount, database: database)
+            }
+        }
+        return ChatBlobCapture.captureTurn(chatID: chatID,
+                                           allMessages: translate(messages: display),
+                                           api: api, modelName: modelName,
+                                           hostedTools: hostedTools,
+                                           newRoundTokenCount: newRoundTokenCount,
+                                           database: database)
     }
 
     private func requestRenaming() {

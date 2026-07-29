@@ -142,6 +142,89 @@ final class ChatBlobCaptureTests: XCTestCase {
         XCTAssertEqual(db.blobs(inChat: "A").count, 4)
     }
 
+    /// The capture-side fast path: appending only the NEW rounds each turn
+    /// (appendNewRounds, fed the translated tail) must persist byte-identical blobs
+    /// to the original path that re-translates the whole history and re-slices it
+    /// (captureNewRounds). This is what lets capture translate only the tail without
+    /// changing what gets stored.
+    func test_appendNewRounds_matchesCaptureNewRounds() throws {
+        let r0 = [user("q0"), asst("a0")]
+        let r1 = [user("q1"), asst("pre"), toolCall("c1"), toolResult("c1"), asst("post")]
+        let r2 = [user("q2"), asst("a2")]
+
+        // Baseline: whole-history incremental capture, one turn at a time.
+        let full = try makeTempDB()
+        XCTAssertEqual(ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: r0, api: .chatCompletions,
+                                                        modelName: "m", hostedTools: HostedTools(), database: full), 1)
+        XCTAssertEqual(ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: r0 + r1, api: .chatCompletions,
+                                                        modelName: "m", hostedTools: HostedTools(), database: full), 1)
+        XCTAssertEqual(ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: r0 + r1 + r2, api: .chatCompletions,
+                                                        modelName: "m", hostedTools: HostedTools(), database: full), 1)
+
+        // Fast path: bootstrap the first round, then append only each new round.
+        let fast = try makeTempDB()
+        XCTAssertEqual(ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: r0, api: .chatCompletions,
+                                                        modelName: "m", hostedTools: HostedTools(), database: fast), 1)
+        XCTAssertEqual(ChatBlobCapture.appendNewRounds(chatID: "A", newRounds: [r1], api: .chatCompletions,
+                                                       modelName: "m", hostedTools: HostedTools(), database: fast), 1)
+        XCTAssertEqual(ChatBlobCapture.appendNewRounds(chatID: "A", newRounds: [r2], api: .chatCompletions,
+                                                       modelName: "m", hostedTools: HostedTools(), database: fast), 1)
+
+        // Compare parsed JSON (order-independent): chatCompletions blobs use a
+        // non-sorted encoder, so two independent encodings of the same round can
+        // differ only in key order. Production never re-encodes a stored blob (it
+        // splices the bytes verbatim), so semantic equality is the right invariant:
+        // the fast path must freeze the SAME rounds, message-for-message.
+        let fullBlobs = full.blobs(inChat: "A")
+        let fastBlobs = fast.blobs(inChat: "A")
+        let fullJSON = fullBlobs.map { try? JSONSerialization.jsonObject(with: $0.payload) as? [Any] }
+        let fastJSON = fastBlobs.map { try? JSONSerialization.jsonObject(with: $0.payload) as? [Any] }
+        XCTAssertEqual(fullJSON.count, 3)
+        XCTAssertEqual(fastJSON.count, 3)
+        for (a, b) in zip(fullJSON, fastJSON) {
+            XCTAssertEqual((a ?? []) as NSArray, (b ?? []) as NSArray,
+                           "fast-path blob must be semantically identical to the full-history path")
+        }
+        XCTAssertEqual(fullBlobs.map { $0.blobProtocol }, fastBlobs.map { $0.blobProtocol })
+    }
+
+    /// For a sorted-keys protocol (Anthropic, whose prompt cache is a byte-prefix
+    /// match), the fast path must freeze BYTE-identical blobs to the full path, so the
+    /// capture optimization can never perturb the cached prefix.
+    func test_appendNewRounds_anthropicBytesIdentical() throws {
+        let r0 = [user("q0"), asst("a0")]
+        let r1 = [user("q1"), asst("pre"), toolCall("c1"), toolResult("c1"), asst("post")]
+
+        let full = try makeTempDB()
+        ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: r0, api: .anthropic,
+                                         modelName: "m", hostedTools: HostedTools(), database: full)
+        ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: r0 + r1, api: .anthropic,
+                                         modelName: "m", hostedTools: HostedTools(), database: full)
+
+        let fast = try makeTempDB()
+        ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: r0, api: .anthropic,
+                                         modelName: "m", hostedTools: HostedTools(), database: fast)
+        ChatBlobCapture.appendNewRounds(chatID: "A", newRounds: [r1], api: .anthropic,
+                                        modelName: "m", hostedTools: HostedTools(), database: fast)
+
+        XCTAssertEqual(full.blobs(inChat: "A").map { $0.payload },
+                       fast.blobs(inChat: "A").map { $0.payload },
+                       "Anthropic (sorted-keys) fast-path blobs must be byte-identical")
+    }
+
+    /// appendNewRounds honors the same protocol guard as captureNewRounds: it must
+    /// not stack new-protocol rounds on old-protocol blobs.
+    func test_appendNewRounds_protocolMismatch_refuses() throws {
+        let db = try makeTempDB()
+        XCTAssertEqual(ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: [user("q"), asst("a")],
+                                                        api: .chatCompletions, modelName: nil,
+                                                        hostedTools: HostedTools(), database: db), 1)
+        XCTAssertEqual(ChatBlobCapture.appendNewRounds(chatID: "A", newRounds: [[user("q2"), asst("a2")]],
+                                                       api: .responses, modelName: nil,
+                                                       hostedTools: HostedTools(), database: db), 0)
+        XCTAssertEqual(db.blobs(inChat: "A").count, 1)
+    }
+
     /// An encode failure (here: an unsupported protocol) must stop without
     /// appending a gapped/partial sequence.
     func testCapture_encodeFailure_appendsNothing() throws {

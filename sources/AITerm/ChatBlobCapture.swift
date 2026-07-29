@@ -138,8 +138,56 @@ enum ChatBlobCapture {
         // usage across rounds, so those store nil and byte-estimate at read time.
         let newRoundCount = allRounds.count - existing
         let tokenCountForSingleRound = newRoundCount == 1 ? newRoundTokenCount : nil
+        return appendRoundBlobs(chatID: chatID, rounds: Array(allRounds[existing...]),
+                                api: api, modelName: modelName, hostedTools: hostedTools,
+                                tokenCountForSingleRound: tokenCountForSingleRound,
+                                database: database)
+    }
+
+    /// Append a set of rounds ALREADY KNOWN to be the un-stored tail (rounds beyond
+    /// the stored prefix), for the incremental capture fast path that translates only
+    /// the new rounds' display messages instead of the whole (already-frozen) history.
+    /// `newRounds` MUST be exactly the not-yet-stored rounds, in order; the caller
+    /// (ChatAgent.captureBlobsForCompletedTurn) computes the display boundary and
+    /// verifies the translated tail before calling. Mirrors captureNewRounds'
+    /// protocol guard and single-round token crediting, so the two paths persist
+    /// identical blobs; only the amount of history translated differs.
+    @discardableResult
+    static func appendNewRounds(chatID: String,
+                                newRounds: [[LLM.Message]],
+                                api: iTermAIAPI,
+                                modelName: String?,
+                                hostedTools: HostedTools,
+                                newRoundTokenCount: Int? = nil,
+                                database: ChatDatabase) -> Int {
+        guard !newRounds.isEmpty else { return 0 }
+        if database.blobCount(inChat: chatID) > 0,
+           database.storedBlobProtocol(inChat: chatID) != Int(api.rawValue) {
+            RLog("ChatBlobCapture: protocol mismatch for chat \(chatID); refusing appendNewRounds (a protocol switch must go through replaceBlobs)")
+            return 0
+        }
+        let tokenCountForSingleRound = newRounds.count == 1 ? newRoundTokenCount : nil
+        return appendRoundBlobs(chatID: chatID, rounds: newRounds,
+                                api: api, modelName: modelName, hostedTools: hostedTools,
+                                tokenCountForSingleRound: tokenCountForSingleRound,
+                                database: database)
+    }
+
+    /// Encode and persist each round in order, stopping (never skipping) on the first
+    /// encode or write failure so the stored sequence never gets a hole; the
+    /// un-captured tail is retried next turn. Shared by captureNewRounds (which slices
+    /// the tail from a whole-history translate) and appendNewRounds (fed the tail
+    /// directly). Returns the number of blobs appended.
+    @discardableResult
+    private static func appendRoundBlobs(chatID: String,
+                                         rounds: [[LLM.Message]],
+                                         api: iTermAIAPI,
+                                         modelName: String?,
+                                         hostedTools: HostedTools,
+                                         tokenCountForSingleRound: Int?,
+                                         database: ChatDatabase) -> Int {
         var appended = 0
-        for round in allRounds[existing...] {
+        for round in rounds {
             let payload: Data
             do {
                 payload = try ChatBlobWireEncoder.encodeRound(round, api: api,
