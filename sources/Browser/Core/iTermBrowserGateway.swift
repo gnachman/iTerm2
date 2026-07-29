@@ -49,6 +49,18 @@ class iTermBrowserGateway: NSObject {
         cached.expire()
     }
 
+    // Web schemes the GetURL Apple event handler should route to the built-in web
+    // browser (when the user hasn't bound the scheme to a specific profile). ftp is
+    // excluded because the built-in browser cannot display it; file is included
+    // because the browser can render local documents. See issue 12431.
+    @objc(schemeRoutesToBuiltInBrowser:)
+    static func schemeRoutesToBuiltInBrowser(_ scheme: String?) -> Bool {
+        guard let scheme = scheme?.lowercased() else {
+            return false
+        }
+        return scheme == "http" || scheme == "https" || scheme == "file"
+    }
+
     @objc(didLocateBundleManually:)
     static func didLocateBundleManually(_ url: URL) -> String? {
         guard let bundle = Bundle(url: url) else {

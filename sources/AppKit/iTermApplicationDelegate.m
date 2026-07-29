@@ -2183,6 +2183,40 @@ static iTermKeyEventReplayer *gReplayer;
         [self handleiTerm2URL:url internal:NO];
         return;
     }
+
+    // If the OS (or `open -a iTerm <url>`, Velja, vim gx, etc.) hands us a web URL
+    // and the user hasn't bound this scheme to a specific profile, open it in the
+    // built-in web browser rather than launching a terminal. See issue 12431.
+    if ([iTermBrowserGateway schemeRoutesToBuiltInBrowser:scheme] &&
+        ![[iTermLaunchServices sharedInstance] profileForScheme:scheme]) {
+        if ([[iTermController sharedInstance] openURL:url
+                                              target:nil
+                                           openStyle:iTermOpenStyleTab
+                                              select:YES]) {
+            return;
+        }
+        // The built-in browser isn't available (browser profiles disabled or the
+        // plugin isn't installed). If it's the missing-plugin case, offer the
+        // plugin once (permanently silenceable), then fall through to the legacy
+        // behavior below.
+        if ([iTermBrowserGateway shouldOfferPlugin]) {
+            switch ([iTermBrowserGateway upsell]) {
+                case iTermTriStateTrue:
+                    // User is downloading the plugin; nothing to open right now.
+                    return;
+                case iTermTriStateOther:
+                    // User cancelled.
+                    return;
+                case iTermTriStateFalse:
+                    // “Use System Browser”: fall through to the legacy behavior
+                    // below. We deliberately avoid handing the URL back to the OS
+                    // default browser here because that would loop if iTerm2 is
+                    // itself the default browser.
+                    break;
+            }
+        }
+    }
+
     Profile *profile = [[iTermLaunchServices sharedInstance] profileForScheme:scheme];
     if (!profile) {
         profile = [[ProfileModel sharedInstance] defaultBookmark];

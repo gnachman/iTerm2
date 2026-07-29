@@ -2302,3 +2302,10 @@ Bug Fixes:
   of the terminal when new output
   arrived, and make new output reachable
   without re-interacting.
+- Web links handed to iTerm2 by the system
+  (for example when it’s your default
+  browser, or via “open -a iTerm2 <url>”)
+  now open in the built-in web browser
+  instead of a terminal, unless you’ve
+  bound the scheme to a specific profile.
+  Issue 12431.
