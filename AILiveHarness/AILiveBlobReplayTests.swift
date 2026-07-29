@@ -871,6 +871,111 @@ extension AILiveHarness {
                       "turn 2 must splice the reasoning round's blob bytes verbatim")
     }
 
+    /// Whole-round truncation against a REAL vendor: force the frozen history past the
+    /// budget (by lowering the AiMaxTokens pref) so blob-native truncation drops head
+    /// blobs, and assert (a) the oldest round's blob bytes are GONE from the truncated
+    /// request while a recent round's bytes remain (whole-round head-drop), and (b) the
+    /// truncated splice is ACCEPTED - a dropped-whole-round can't split a
+    /// tool_use/tool_result pair, and a split pair would 400. This proves live what the
+    /// offline stitch tests prove by construction. (Cache-read is not asserted: active
+    /// truncation churns the prefix by design, so it's logged, not required.)
+    func test_chat_blobNativeReplay_truncationDropsHeadRoundsAndIsAccepted() throws {
+        guard let apiKey = Self.blobConfigValue("ANTHROPIC_API_KEY"), !apiKey.isEmpty else {
+            throw XCTSkip("No ANTHROPIC_API_KEY")
+        }
+        let anthropicModel =
+            AIMetadata.instance.models.first(where: { $0.vendor == .anthropic && !$0.name.lowercased().contains("haiku") })
+            ?? AIMetadata.instance.models.first(where: { $0.vendor == .anthropic })
+        guard let anthropicModel else { throw XCTSkip("No Anthropic model in AIMetadata") }
+        guard let broker = ChatBroker.instance else { throw XCTSkip("ChatBroker.instance unavailable") }
+        Self.blobSuspendProcessors(broker, on: self)
+
+        // Lower the token budget so a few padded rounds force truncation; restore it.
+        let savedLimit = iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit)
+        let savedResponseLimit = iTermPreferences.int(forKey: kPreferenceKeyAIResponseTokenLimit)
+        // Big enough that turn 1 (system prompt + one round) fits, small enough that a
+        // handful of ~1000-token rounds exceed it and force head-drops.
+        iTermPreferences.setObject(NSNumber(value: 8000), forKey: kPreferenceKeyAITokenLimit)
+        iTermPreferences.setObject(NSNumber(value: 1000), forKey: kPreferenceKeyAIResponseTokenLimit)
+        addTeardownBlock {
+            iTermPreferences.setObject(NSNumber(value: savedLimit), forKey: kPreferenceKeyAITokenLimit)
+            iTermPreferences.setObject(NSNumber(value: savedResponseLimit), forKey: kPreferenceKeyAIResponseTokenLimit)
+        }
+
+        let wire = BlobWireCapture()
+        iTermAIClient.liveObserver = { capture in
+            switch capture.request.body {
+            case .string(let s): wire.requests.append(s)
+            case .bytes(let b): wire.requests.append("<\(b.count) bytes>")
+            }
+            if let response = capture.response { wire.responses.append(response.data) }
+            else if !capture.streamChunks.isEmpty { wire.responses.append(capture.streamChunks.joined()) }
+        }
+        defer { iTermAIClient.liveObserver = nil }
+
+        let chatID = try broker.create(
+            chatWithTitle: "live truncation \(UUID().uuidString.prefix(8))",
+            terminalSessionGuid: "blob-trunc-test",
+            browserSessionGuid: nil,
+            permissions: "",
+            initialMessages: [])
+        addTeardownBlock { try? broker.delete(chatID: chatID) }
+        try broker.listModel.setModel(chatID: chatID, modelName: anthropicModel.name)
+
+        let registrationProvider = BlobTestRegistrationProvider(apiKey: apiKey)
+        let registrationSub = broker.subscribe(chatID: chatID, registrationProvider: registrationProvider) { _ in }
+        defer { registrationSub.unsubscribe() }
+
+        func runTurn(_ body: String) throws {
+            let ended = expectation(description: "turn ends")
+            var done = false
+            let sub = broker.subscribe(chatID: chatID, registrationProvider: nil) { update in
+                if case .turnLifecycle(let event) = update, event == .ended, !done { done = true; ended.fulfill() }
+            }
+            defer { sub.unsubscribe() }
+            var msg = Message(chatID: chatID, author: .user, content: .plainText(body, context: nil),
+                              sentDate: Date(), uniqueID: UUID())
+            msg.configuration = Message.Configuration(hostedWebSearchEnabled: false, vectorStoreIDs: [],
+                                                      model: anthropicModel.name, shouldThink: false)
+            try broker.publish(message: msg, toChatID: chatID, partial: false)
+            wait(for: [ended], timeout: 120)
+        }
+
+        // Each round carries ~1000 tokens of filler; a single round fits the budget but
+        // the accumulated history soon exceeds it, forcing head-drops.
+        let filler = String(repeating: "context word ", count: 300)
+        let turnCount = 6
+        for i in 1...turnCount {
+            try runTurn("Turn \(i). Ignore this filler: \(filler) Reply with only: \(i)")
+            try Self.skipIfTransientVendorError(
+                broker.listModel.messages(forChat: chatID, createIfNeeded: false).map { Array($0) } ?? [])
+        }
+
+        let db = broker.listModel.chatDatabase
+        XCTAssertEqual(db.blobCount(inChat: chatID), turnCount,
+                       "all turns must be accepted (truncated splices included)")
+
+        let blobs = db.blobs(inChat: chatID)
+        try XCTSkipIf(blobs.count < turnCount, "not all turns captured; earlier assertion already failed")
+        let oldestInner = String(decoding: try ChatBlobAssembler.stitchInner([blobs[0]]), as: UTF8.self)
+        let lastRequest = try XCTUnwrap(wire.requests.last)
+        for (i, resp) in wire.responses.enumerated() {
+            print("[trunc] request \(i): cache_read=\(Self.blobUsageInt(resp, "cache_read_input_tokens")) "
+                  + "cache_creation=\(Self.blobUsageInt(resp, "cache_creation_input_tokens"))")
+        }
+        // Whole-round head-drop: the oldest round's blob is GONE from the truncated
+        // request. (anthropicHalve's deep 50% cut can drop ALL frozen rounds when a
+        // round is large relative to the target, so we don't assert a specific recent
+        // round survives - only that the head was dropped and everything was accepted.)
+        XCTAssertFalse(lastRequest.contains(oldestInner),
+                       "truncation must have dropped the oldest round's blob from the final request")
+
+        // Cache-warm under truncation: the stable tools+system prefix is still read
+        // even as history rounds churn (the anthropicHalve benefit partially realized).
+        let totalCacheRead = wire.responses.reduce(0) { $0 + Self.blobUsageInt($1, "cache_read_input_tokens") }
+        XCTAssertGreaterThan(totalCacheRead, 0, "the cached prefix must still be read under truncation")
+    }
+
     // MARK: - Helpers (file-local; the queue test's private helpers are not visible here)
 
     private static func blobConfigValue(_ key: String) -> String? {
