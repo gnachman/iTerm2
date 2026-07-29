@@ -83,7 +83,7 @@
     NSView *view = [NSView viewAtScreenCoordinate:mousePoint];
     NSWindow *window = view.window;
     if (view) {
-        DLog(@"Will activate %@", window.title);
+        RLog(@"Will activate %@", window.title);
         [window makeKeyAndOrderFront:nil];
         if ([view conformsToProtocol:@protocol(iTermFocusFollowsMouseFocusReceiver)]) {
             [window makeFirstResponder:view];

@@ -1,0 +1,740 @@
+{
+  "version": 1,
+  "models": [
+    {
+      "name": "gpt-5.5",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 1050000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "recommended": true,
+      "economyModel": "gpt-5-mini",
+      "thinkingOffEffort": "none",
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority",
+        "flex"
+      ]
+    },
+    {
+      "name": "gpt-5.5-pro",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 1050000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "fixtureExempt": true,
+      "economyModel": "gpt-5-mini",
+      "thinkingOffEffort": "medium",
+      "thinkingOnEffort": "high",
+      "reasoningEfforts": [
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "flex"
+      ]
+    },
+    {
+      "name": "gpt-5.4",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 1050000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "economyModel": "gpt-5-mini",
+      "thinkingOffEffort": "none",
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority",
+        "flex"
+      ]
+    },
+    {
+      "name": "gpt-5.3-codex",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 400000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "economyModel": "gpt-5-mini",
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority"
+      ]
+    },
+    {
+      "name": "gpt-5.2",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 400000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "economyModel": "gpt-5-mini",
+      "thinkingOffEffort": "none",
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ]
+    },
+    {
+      "name": "gpt-5.2-pro",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 400000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "economyModel": "gpt-5-mini",
+      "thinkingOffEffort": "medium",
+      "thinkingOnEffort": "high",
+      "reasoningEfforts": [
+        "medium",
+        "high",
+        "xhigh"
+      ]
+    },
+    {
+      "name": "gpt-5.1",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 400000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "economyModel": "gpt-5-mini",
+      "thinkingOffEffort": "none",
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    {
+      "name": "gpt-5.1-codex",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 400000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "economyModel": "gpt-5-mini",
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    {
+      "name": "gpt-5",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 400000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "vectorStore": "openAI",
+      "economyModel": "gpt-5-mini",
+      "thinkingOffEffort": "minimal",
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    {
+      "name": "gpt-5-mini",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 400000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "vectorStore": "openAI",
+      "thinkingOffEffort": "minimal",
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    {
+      "name": "gpt-5-nano",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 400000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "vectorStore": "openAI",
+      "thinkingOffEffort": "minimal",
+      "reasoningEfforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    {
+      "name": "gpt-4.1",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 1000000,
+      "maxResponseTokens": 32768,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter"
+      ],
+      "vectorStore": "openAI",
+      "economyModel": "gpt-5-mini"
+    },
+    {
+      "name": "gpt-4o",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 128000,
+      "maxResponseTokens": 16384,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter"
+      ],
+      "vectorStore": "openAI",
+      "economyModel": "gpt-5-mini"
+    },
+    {
+      "name": "gpt-4o-mini",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 128000,
+      "maxResponseTokens": 16384,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter"
+      ],
+      "vectorStore": "openAI"
+    },
+    {
+      "name": "gpt-4.1-mini",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 1000000,
+      "maxResponseTokens": 16384,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter"
+      ],
+      "vectorStore": "openAI"
+    },
+    {
+      "name": "o3",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 200000,
+      "maxResponseTokens": 100000,
+      "features": [
+        "hostedFileSearch",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "vectorStore": "openAI",
+      "economyModel": "gpt-5-mini",
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    {
+      "name": "o3-pro",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 200000,
+      "maxResponseTokens": 100000,
+      "features": [
+        "functionCalling",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "vectorStore": "openAI",
+      "economyModel": "gpt-5-mini",
+      "thinkingOffEffort": "medium",
+      "thinkingOnEffort": "high",
+      "reasoningEfforts": [
+        "medium",
+        "high",
+        "xhigh"
+      ]
+    },
+    {
+      "name": "o4-mini",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 200000,
+      "maxResponseTokens": 100000,
+      "features": [
+        "hostedFileSearch",
+        "streaming",
+        "functionCalling",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "vectorStore": "openAI",
+      "reasoningEfforts": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    {
+      "name": "gemini-3.5-flash",
+      "vendor": "gemini",
+      "api": "gemini",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+      "contextWindowTokens": 1048576,
+      "maxResponseTokens": 65536,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "recommended": true,
+      "economyModel": "gemini-2.5-flash-lite"
+    },
+    {
+      "name": "gemini-3.1-pro-preview",
+      "vendor": "gemini",
+      "api": "gemini",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+      "contextWindowTokens": 1048576,
+      "maxResponseTokens": 65536,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "economyModel": "gemini-2.5-flash-lite"
+    },
+    {
+      "name": "gemini-3-pro-preview",
+      "vendor": "gemini",
+      "api": "gemini",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+      "contextWindowTokens": 1048576,
+      "maxResponseTokens": 65536,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "fixtureExempt": true,
+      "economyModel": "gemini-2.5-flash-lite"
+    },
+    {
+      "name": "gemini-3-flash-preview",
+      "vendor": "gemini",
+      "api": "gemini",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+      "contextWindowTokens": 1048576,
+      "maxResponseTokens": 65536,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "economyModel": "gemini-2.5-flash-lite"
+    },
+    {
+      "name": "gemini-2.5-flash-lite",
+      "vendor": "gemini",
+      "api": "gemini",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+      "contextWindowTokens": 1048576,
+      "maxResponseTokens": 65536,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ]
+    },
+    {
+      "name": "gemini-2.5-flash",
+      "vendor": "gemini",
+      "api": "gemini",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+      "contextWindowTokens": 1048576,
+      "maxResponseTokens": 65536,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "economyModel": "gemini-2.5-flash-lite"
+    },
+    {
+      "name": "gemini-2.5-pro",
+      "vendor": "gemini",
+      "api": "gemini",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+      "contextWindowTokens": 1048576,
+      "maxResponseTokens": 65536,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "economyModel": "gemini-2.5-flash-lite"
+    },
+    {
+      "name": "gemini-2.0-flash",
+      "vendor": "gemini",
+      "api": "gemini",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+      "contextWindowTokens": 1048576,
+      "maxResponseTokens": 8192,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "fixtureExempt": true,
+      "economyModel": "gemini-2.5-flash-lite"
+    },
+    {
+      "name": "gemini-2.0-flash-lite",
+      "vendor": "gemini",
+      "api": "gemini",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+      "contextWindowTokens": 1048576,
+      "maxResponseTokens": 8192,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "fixtureExempt": true
+    },
+    {
+      "name": "deepseek-v4-flash",
+      "vendor": "deepSeek",
+      "api": "deepSeek",
+      "url": "https://api.deepseek.com/chat/completions",
+      "contextWindowTokens": 1000000,
+      "maxResponseTokens": 384000,
+      "features": [
+        "functionCalling",
+        "streaming",
+        "configurableThinking"
+      ],
+      "recommended": true
+    },
+    {
+      "name": "deepseek-v4-pro",
+      "vendor": "deepSeek",
+      "api": "deepSeek",
+      "url": "https://api.deepseek.com/chat/completions",
+      "contextWindowTokens": 1000000,
+      "maxResponseTokens": 384000,
+      "features": [
+        "functionCalling",
+        "streaming",
+        "configurableThinking"
+      ],
+      "economyModel": "deepseek-v4-flash"
+    },
+    {
+      "name": "deepseek-chat",
+      "vendor": "deepSeek",
+      "api": "deepSeek",
+      "url": "https://api.deepseek.com/v1/chat/completions",
+      "contextWindowTokens": 128000,
+      "maxResponseTokens": 8000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "economyModel": "deepseek-v4-flash"
+    },
+    {
+      "name": "deepseek-coder",
+      "vendor": "deepSeek",
+      "api": "deepSeek",
+      "url": "https://api.deepseek.com/v1/chat/completions",
+      "contextWindowTokens": 65536,
+      "maxResponseTokens": 8000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "economyModel": "deepseek-v4-flash"
+    },
+    {
+      "name": "deepseek-reasoner",
+      "vendor": "deepSeek",
+      "api": "deepSeek",
+      "url": "https://api.deepseek.com/v1/chat/completions",
+      "contextWindowTokens": 64000,
+      "maxResponseTokens": 8000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "economyModel": "deepseek-v4-flash"
+    },
+    {
+      "name": "claude-opus-4-8",
+      "vendor": "anthropic",
+      "api": "anthropic",
+      "url": "https://api.anthropic.com/v1/messages",
+      "contextWindowTokens": 200000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "supportsTemperature": false,
+      "recommended": true,
+      "economyModel": "claude-haiku-4-5"
+    },
+    {
+      "name": "claude-opus-4-7",
+      "vendor": "anthropic",
+      "api": "anthropic",
+      "url": "https://api.anthropic.com/v1/messages",
+      "contextWindowTokens": 200000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "supportsTemperature": false,
+      "economyModel": "claude-haiku-4-5"
+    },
+    {
+      "name": "claude-opus-4-6",
+      "vendor": "anthropic",
+      "api": "anthropic",
+      "url": "https://api.anthropic.com/v1/messages",
+      "contextWindowTokens": 200000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "economyModel": "claude-haiku-4-5"
+    },
+    {
+      "name": "claude-sonnet-4-6",
+      "vendor": "anthropic",
+      "api": "anthropic",
+      "url": "https://api.anthropic.com/v1/messages",
+      "contextWindowTokens": 200000,
+      "maxResponseTokens": 64000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "economyModel": "claude-haiku-4-5"
+    },
+    {
+      "name": "claude-sonnet-4-5",
+      "vendor": "anthropic",
+      "api": "anthropic",
+      "url": "https://api.anthropic.com/v1/messages",
+      "contextWindowTokens": 200000,
+      "maxResponseTokens": 64000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "economyModel": "claude-haiku-4-5"
+    },
+    {
+      "name": "claude-haiku-4-5",
+      "vendor": "anthropic",
+      "api": "anthropic",
+      "url": "https://api.anthropic.com/v1/messages",
+      "contextWindowTokens": 200000,
+      "maxResponseTokens": 64000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ]
+    },
+    {
+      "name": "claude-opus-4-1",
+      "vendor": "anthropic",
+      "api": "anthropic",
+      "url": "https://api.anthropic.com/v1/messages",
+      "contextWindowTokens": 200000,
+      "maxResponseTokens": 32000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "economyModel": "claude-haiku-4-5"
+    },
+    {
+      "name": "llama4:latest",
+      "vendor": "llama",
+      "api": "llama",
+      "url": "http://localhost:11434/api/chat",
+      "contextWindowTokens": 10000000,
+      "maxResponseTokens": 10000000,
+      "features": [
+        "streaming",
+        "functionCalling"
+      ],
+      "recommended": true,
+      "fixtureExempt": true
+    },
+    {
+      "name": "llama3.3:latest",
+      "vendor": "llama",
+      "api": "llama",
+      "url": "http://localhost:11434/api/chat",
+      "contextWindowTokens": 131072,
+      "maxResponseTokens": 131072,
+      "features": [
+        "streaming",
+        "functionCalling"
+      ],
+      "fixtureExempt": true
+    },
+    {
+      "name": "apple-on-device",
+      "vendor": "apple",
+      "api": "appleIntelligence",
+      "url": "",
+      "contextWindowTokens": 8192,
+      "maxResponseTokens": 1024,
+      "features": [],
+      "recommended": true,
+      "fixtureExempt": true
+    }
+  ]
+}

@@ -83,6 +83,36 @@ class VT100ScreenTests: XCTestCase {
         XCTAssertEqual(range, VT100GridCoordRangeMake(1, 1, 3, 1))
     }
 
+    func testSwitchingScreenBuffersRefreshesChangedKeyReportingFlags() {
+        let screen = screen(width: 80, height: 24)
+
+        feed(screen, "\u{1b}[>1u")
+        feed(screen, "\u{1b}[?1049h")
+        feed(screen, "\u{1b}[>2u")
+
+        session.keyReportingFlagsAtChange.removeAll()
+        feed(screen, "\u{1b}[?1049l")
+        XCTAssertEqual(session.keyReportingFlagsAtChange, [.disambiguateEscape])
+
+        session.keyReportingFlagsAtChange.removeAll()
+        feed(screen, "\u{1b}[?1049h")
+        XCTAssertEqual(session.keyReportingFlagsAtChange, [.reportAllEventTypes])
+    }
+
+    func testSwitchingScreenBuffersDoesNotRefreshUnchangedKeyReportingFlags() {
+        let screen = screen(width: 80, height: 24)
+
+        feed(screen, "\u{1b}[?1049h")
+        feed(screen, "\u{1b}[?1049l")
+        XCTAssertTrue(session.keyReportingFlagsAtChange.isEmpty)
+
+        feed(screen, "\u{1b}[=1;1u")
+        session.keyReportingFlagsAtChange.removeAll()
+        feed(screen, "\u{1b}[?1049h")
+        feed(screen, "\u{1b}[?1049l")
+        XCTAssertTrue(session.keyReportingFlagsAtChange.isEmpty)
+    }
+
     private func screen(width: Int32, height: Int32) -> VT100Screen {
         let screen = VT100Screen()
         session.screen = screen
@@ -114,6 +144,33 @@ class VT100ScreenTests: XCTestCase {
                 }
             }
         })
+    }
+
+    private func feed(_ screen: VT100Screen, _ string: String) {
+        screen.inject(string.data(using: .utf8)!)
+        screen.performBlock(joinedThreads: { _, _, _ in })
+    }
+
+    // The per-row cache's combined screenCharArrayForLine:contentIdentity: must
+    // return exactly what the two separate calls (screenCharArrayForLine: and
+    // contentIdentityForLine:) return, for every displayed line across the history
+    // and grid boundary. Guards the single-pass fold against copy-paste drift.
+    func testScreenCharArrayForLineContentIdentityMatchesSeparateCalls() {
+        let screen = fiveByFourScreenWithThreeLinesOneWrapped()
+        appendLinesNoNewline(["hello world"], screen: screen)
+        for line in 0..<screen.numberOfLines() {
+            var combinedIdentity = iTermRowContentIdentity()
+            let combinedSCA = screen.screenCharArray(forLine: line, contentIdentity: &combinedIdentity)
+            let separateIdentity = screen.contentIdentity(forLine: line)
+            let separateSCA = screen.screenCharArray(forLine: line)
+            XCTAssertEqual(combinedIdentity.generation, separateIdentity.generation, "line \(line) generation")
+            XCTAssertEqual(combinedIdentity.mutationCount, separateIdentity.mutationCount, "line \(line) mutationCount")
+            XCTAssertEqual(combinedIdentity.remainder, separateIdentity.remainder, "line \(line) remainder")
+            XCTAssertEqual(combinedIdentity.width, separateIdentity.width, "line \(line) width")
+            XCTAssertEqual(combinedIdentity.source, separateIdentity.source, "line \(line) source")
+            XCTAssertEqual(combinedIdentity.eligibleForDWC, separateIdentity.eligibleForDWC, "line \(line) eligibleForDWC")
+            XCTAssertEqual(combinedSCA.stringValue, separateSCA.stringValue, "line \(line) content")
+        }
     }
 
     func testResizeNoteInPrimaryWhileInAltAndSomeHistory() {
@@ -676,6 +733,67 @@ class VT100ScreenTests: XCTestCase {
             if outStart.x >= 0 {
                 XCTAssertLessThan(outStart.x, 10)
             }
+        })
+    }
+
+    func testCommandMarkAtReturnsNilWhenLineIsOutOfBounds() {
+        let screen = self.screen(width: 10, height: 4)
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            var range = VT100GridWindowedRange()
+            let negative = mutableState.commandMark(at: VT100GridCoordMake(0, -1),
+                                                    mustHaveCommand: false,
+                                                    range: &range)
+            XCTAssertNil(negative)
+
+            let tooLargeY = mutableState.numberOfLines
+            let tooLarge = mutableState.commandMark(at: VT100GridCoordMake(0, tooLargeY),
+                                                    mustHaveCommand: false,
+                                                    range: &range)
+            XCTAssertNil(tooLarge)
+        })
+    }
+
+    func testCommandMarkAtReturnsNilWhenNoMarkOnLine() {
+        let screen = self.screen(width: 10, height: 4)
+
+        appendLinesNoNewline([
+            "https://example.com",
+            "next line"
+        ], screen: screen)
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            var range = VT100GridWindowedRange()
+            let mark = mutableState.commandMark(at: VT100GridCoordMake(0, 0),
+                                                mustHaveCommand: false,
+                                                range: &range)
+            XCTAssertNil(mark)
+        })
+    }
+
+    func testCommandMarkAtReturnsNilWhenMarkHasNoCommand() {
+        let screen = self.screen(width: 10, height: 4)
+
+        appendLinesNoNewline([
+            "prompt",
+            "next line"
+        ], screen: screen)
+
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            let mark = mutableState.addMark(onLine: 0, of: VT100ScreenMark.self) as! VT100ScreenMark
+            let absLine = mutableState.cumulativeScrollbackOverflow
+            mutableState.mutableIntervalTree().mutate(mark) { obj in
+                let m = obj as! VT100ScreenMark
+                m.promptRange = VT100GridAbsCoordRangeMake(0, absLine, 6, absLine)
+            }
+
+            var range = VT100GridWindowedRange()
+            XCTAssertNotNil(mutableState.commandMark(at: VT100GridCoordMake(0, 0),
+                                                     mustHaveCommand: false,
+                                                     range: &range))
+            XCTAssertNil(mutableState.commandMark(at: VT100GridCoordMake(0, 0),
+                                                  mustHaveCommand: true,
+                                                  range: &range))
         })
     }
 
@@ -1523,6 +1641,7 @@ struct SeededGenerator: RandomNumberGenerator {
 }
 
 class FakeSession: NSObject, VT100ScreenDelegate {
+    var keyReportingFlagsAtChange = [VT100TerminalKeyReportingFlags]()
     var screen: VT100Screen?
     var configuration = VT100MutableScreenConfiguration()
     var selection = iTermSelection()
@@ -1562,7 +1681,11 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenDidTerminateSSHProcess(_ pid: Int32, code: Int32, depth: Int32) {
 
     }
-    
+
+    func screenHandleIT2(_ string: String?, depth: Int32) {
+
+    }
+
     func screenWillBeginSSHIntegration() {
 
     }
@@ -1818,7 +1941,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     }
     
     func screenKeyReportingFlagsDidChange() {
-
+        keyReportingFlagsAtChange.append(screen!.terminalKeyReportingFlags)
     }
     
     func screenReportVariableNamed(_ name: String) {

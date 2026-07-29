@@ -301,6 +301,21 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         return .canReadAgain
     }
 
+    private func parseFramerIT2(_ string: String, into token: VT100Token) -> VT100DCSParserHookResult {
+        // "%it2 <connid> <event> [<base64>]". The whole line was captured by
+        // parseNextOSC, so unlike %output there is no re-parse to fragment a long
+        // base64 payload. Deliver it whole via a dedicated token, à la %terminate.
+        let payload = String(string.removing(prefix: "%it2 "))
+        guard !payload.isEmpty else {
+            DLog("Malformed %it2 (empty payload)")
+            return .canReadAgain
+        }
+        DLog("%it2 \(payload.semiVerboseDescription)")
+        token.type = SSH_IT2
+        token.string = payload
+        return .canReadAgain
+    }
+
     private func parseFramerPayload(_ string: String, into token: VT100Token) -> VT100DCSParserHookResult {
         let wasInRecoveryMode = recoveryMode
         recoveryMode = false
@@ -312,6 +327,9 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         }
         if string.hasPrefix("%terminate ") {
             return parseFramerTerminate(string, into: token)
+        }
+        if string.hasPrefix("%it2 ") {
+            return parseFramerIT2(string, into: token)
         }
         if string.hasPrefix("%") {
             DLog("Ignore unrecognized notification \(string)")

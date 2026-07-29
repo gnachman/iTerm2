@@ -113,6 +113,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     self = [super initForMutationOnQueue:queue];
     if (self) {
         _uniqueIdentifier = [[NSUUID UUID] UUIDString];
+        _bottommostFoldAbsLine = -1;
         // The base class's initForMutationOnQueue: already set a fresh
         // _rcGuid (main-thread pool). Don't touch it here; the override of
         // -rcGuid below returns _uniqueIdentifier so the mutation-thread
@@ -240,7 +241,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     if (enabled == _terminalEnabled) {
         return;
     }
-    DLog(@"setTerminalEnabled:%@", @(enabled));
+    RLog(@"setTerminalEnabled:%@", @(enabled));
     _terminalEnabled = enabled;
     if (enabled) {
         _terminal.delegate = self;
@@ -547,7 +548,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
 }
 
 - (void)setExited:(BOOL)exited {
-    DLog(@"begin %@", @(exited));
+    RLog(@"begin %@", @(exited));
     _exited = exited;
     _triggerEvaluator.sessionExited = exited;
 }
@@ -1859,6 +1860,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     [self.linebuffer clear];
     [self resetScrollbackOverflow];
+    // The bulkMoveObjects above rewrote every surviving fold's absolute coordinate, so the cached
+    // bottommost-fold line is stale.
+    _foldCacheDirty = YES;
     [self.currentGrid markAllCharsDirty:YES updateTimestamps:YES];
     [self reloadMarkCache];
     self.lastCommandMark = nil;
@@ -1883,7 +1887,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)clearBufferSavingPrompt:(BOOL)savePrompt {
     // Cancel out the current command if shell integration is in use and we are
     // at the shell prompt.
-    DLog(@"clear buffer saving prompt");
+    RLog(@"clear buffer saving prompt");
     const int linesToSave = savePrompt ? [self numberOfLinesToPreserveWhenClearingScreen] : 0;
     id<VT100ScreenMarkReading> mark = [self lastPromptMark];
     const BOOL detectedByTrigger = mark.promptDetectedByTrigger;
@@ -2107,6 +2111,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (numberOfLinesAppended <= 0) {
         return;
     }
+    // removeLastRawLine below can shift fold coordinates (this is a grid->buffer->grid reshuffle, not a
+    // plain line move), so the cached bottommost-fold line must be recomputed.
+    _foldCacheDirty = YES;
     [self.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
                                 to:VT100GridCoordMake(self.width - 1,
                                                       self.height - 1)
@@ -2249,6 +2256,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (self.currentGrid == self.altGrid) {
         return;
     }
+    const VT100TerminalKeyReportingFlags oldKeyReportingFlags = self.terminalKeyReportingFlags;
     if (!self.altGrid) {
         self.altGrid = [[VT100Grid alloc] initWithSize:self.primaryGrid.size delegate:self];
         self.altGrid.defaultChar = self.terminal.defaultChar;
@@ -2261,10 +2269,16 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.currentGrid.cursor = self.primaryGrid.cursor;
 
     [self swapOnscreenIntervalTreeObjects];
+    // The swap moved on-screen folds between the primary and saved interval trees.
+    _foldCacheDirty = YES;
     [self reloadMarkCache];
 
     [self.currentGrid markAllCharsDirty:YES updateTimestamps:NO];
     [self invalidateCommandStartCoordWithoutSideEffects];
+    // currentGrid selects which key-reporting stack contributes the effective flags.
+    if (oldKeyReportingFlags != self.terminalKeyReportingFlags) {
+        [self terminalKeyReportingFlagsDidChange];
+    }
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenRemoveSelection];
         [delegate screenScheduleRedrawSoon];
@@ -2276,14 +2290,20 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (self.currentGrid != self.altGrid) {
         return;
     }
+    const VT100TerminalKeyReportingFlags oldKeyReportingFlags = self.terminalKeyReportingFlags;
     [self.temporaryDoubleBuffer reset];
     [self hideOnScreenNotesAndTruncateSpanners];
     self.currentGrid = self.primaryGrid;
     [self invalidateCommandStartCoordWithoutSideEffects];
     [self swapOnscreenIntervalTreeObjects];
+    // The swap restored the primary buffer's on-screen folds into the live interval tree.
+    _foldCacheDirty = YES;
     [self reloadMarkCache];
 
     [self.currentGrid markAllCharsDirty:YES updateTimestamps:NO];
+    if (oldKeyReportingFlags != self.terminalKeyReportingFlags) {
+        [self terminalKeyReportingFlagsDidChange];
+    }
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenRemoveSelection];
         [delegate screenScheduleRedrawSoon];
@@ -2895,6 +2915,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if ([obj isKindOfClass:[VT100ScreenMark class]]) {
         DLog(@"Removed %@ from:\n%@", obj, [NSThread callStackSymbols]);
     }
+    if ([obj isKindOfClass:[iTermFoldMark class]]) {
+        // Central chokepoint for fold-mark removal. Reached by removeObjectFromIntervalTree:,
+        // removeObjectsFromIntervalTree:, and removeIntervalTreeObjectsInRange:/InAbsRange: (e.g.
+        // reallyClearFromAbsoluteLineToEnd:, which deletes an in-grid fold in place without touching
+        // scrollback). bulkRemoveObjects: (unfold) bypasses this but sets the flag itself. Harmless on
+        // the temporary remove+re-add patterns: a redundant recompute, never a wrong value.
+        _foldCacheDirty = YES;
+    }
     // OSC 133 aid registry maintenance does NOT happen here. Several
     // operations (replaceMark:, changeHeightOfMark:, reallyReplaceRange:)
     // temporarily remove a mark and immediately re-add it; dropping the
@@ -3078,8 +3106,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (!command && range.start.x != -1) {
         command = @"";
     }
-    DLog(@"FinalTerm: Command <<%@>> ended with range %@",
-         command, VT100GridCoordRangeDescription(range));
+    RLog(@"FinalTerm: Command <<%@>> ended with range %@",
+         RLogRedact(command, @(command.length)), VT100GridCoordRangeDescription(range));
 
     if (command) {
         NSString *trimmedCommand =
@@ -3104,8 +3132,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                 NSString *firstLine = (firstNewline.location != NSNotFound)
                     ? [command substringToIndex:firstNewline.location]
                     : command;
-                DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
-                     self.lastPromptLine - self.cumulativeScrollbackOverflow, mark, command);
+                RLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
+                     self.lastPromptLine - self.cumulativeScrollbackOverflow,
+                     RLogRedact(mark, mark.redactedDescription),
+                     RLogRedact(command, @(command.length)));
                 [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
                     VT100ScreenMark *mark = (VT100ScreenMark *)obj;
                     mark.firstLineOfCommand = firstLine;
@@ -3287,7 +3317,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (VT100ScreenMark *)setPromptStartLine:(int)line
                       detectedByTrigger:(BOOL)detectedByTrigger
                                     aid:(NSString * _Nullable)aid {
-    DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine. aid=%@", line, aid);
+    RLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine. aid=%@", line, aid);
     // Reset this in case it's taking the "real" shell integration path.
     self.fakePromptDetectedAbsLine = -1;
     const long long lastPromptLine = (long long)line + self.cumulativeScrollbackOverflow;
@@ -4614,8 +4644,24 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self replaceMark:mark
             withLines:mark.savedLines ?: @[]
             savedITOs:mark.savedITOs];
+    _foldCacheDirty = YES;
     [self reloadMarkCache];
     [self setNeedsRedraw];
+}
+
+// See _bottommostFoldAbsLine in VT100ScreenMutableState+Private.h. Cold path, called lazily from the
+// cursor-positioning check when _foldCacheDirty is set; the hot check otherwise just reads the value.
+// Scans the WHOLE buffer (grid + history), not just the grid, so the cached line survives a fold
+// scrolling into history and is still correct if it later scrolls back into the grid.
+- (void)recomputeBottommostFoldAbsLine {
+    NSArray<iTermFoldMark *> *folds = [self foldMarksInRange:NSMakeRange(self.cumulativeScrollbackOverflow,
+                                                                         self.numberOfLines)
+                                                         max:NSUIntegerMax];
+    long long maxAbs = -1;
+    for (iTermFoldMark *fold in folds) {
+        maxAbs = MAX(maxAbs, [self absCoordRangeForInterval:fold.entry.interval].start.y);
+    }
+    _bottommostFoldAbsLine = maxAbs;
 }
 
 // Performs a fold operation
@@ -4703,6 +4749,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                              width:self.width];
         [self.mutableIntervalTree addObject:mark withInterval:interval];
         createdFoldMark = mark;
+        _foldCacheDirty = YES;
     }
     // Fire the mutation-thread linesShifted notification now that
     // createdFoldMark is assigned. Without this, RCs whose coord lands
@@ -5265,6 +5312,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                             downByLines:(int)deltaLines {
     DLog(@"shiftIntervalTreeObjectsInRange:%@ startingAfter:%@ downByLines:%@",
          VT100GridCoordRangeDescription(inputRange), @(startingAfter), @(deltaLines));
+    // This is the common chokepoint for relocating interval-tree objects by a line delta (porthole
+    // add/resize via reallyReplaceRange:, the composer reflow in ensureContentEndsAt:/clearForComposer,
+    // and fold create/unfold). Any of these can move a fold's absolute coordinate, so invalidate the
+    // bottommost-fold cache here. Idempotent with the create/unfold callers that also set it (needed
+    // for their zero-delta case, which doesn't reach this method).
+    _foldCacheDirty = YES;
     Interval *intervalToMove =
     [self intervalForGridCoordRange:inputRange];
 
@@ -6034,7 +6087,7 @@ lengthExcludingInBandSignaling:data.length
                     [self.openAidStack addObject:obj];
                 }
             }
-            DLog(@"restoreFromDictionary: restored openAidStack=%@", self.openAidStack);
+            RLog(@"restoreFromDictionary: restored openAidStack=%@", self.openAidStack);
         } else {
             DLog(@"restoreFromDictionary: no openAidStack in saved state (pre-feature or empty)");
         }
@@ -6158,7 +6211,7 @@ lengthExcludingInBandSignaling:data.length
 }
 
 - (void)reallyAppendBannerMessage:(NSString *)message {
-    DLog(@"Append banner %@", message);
+    RLog(@"Append banner %@", message);
     // Save graphic rendition. Set to system message color.
     const VT100GraphicRendition saved = self.terminal.graphicRendition;
 
@@ -6200,6 +6253,9 @@ lengthExcludingInBandSignaling:data.length
                   progenitorRCDataSource:(id<iTermResilientCoordinateDataSource>)progenitorRCDataSource
                        mainRCDataSource:(id<iTermResilientCoordinateDataSource>)mainRCDataSource {
     assert(VT100ScreenMutableState.performingJoinedBlock);
+    // Restoration deserializes fold marks straight into the tree at fresh coordinates, bypassing the
+    // interactive create path, so the cached bottommost-fold line must be recomputed.
+    _foldCacheDirty = YES;
     id<VT100RemoteHostReading> lastRemoteHost = nil;
     NSMutableDictionary<NSString *, id<CapturedOutputReading>> *markGuidToCapturedOutput = [NSMutableDictionary dictionary];
     // Collect maps for ResilientCoordinate fold/porthole resolution. Decoded
@@ -6416,7 +6472,7 @@ lengthExcludingInBandSignaling:data.length
 // the NEXT prompt-start) and isn't a reliable open/closed flag at
 // arbitrary save points.
 - (void)rebuildAidStateFromIntervalTree {
-    DLog(@"rebuildAidStateFromIntervalTree begin: restoredStack=%@", self.openAidStack);
+    RLog(@"rebuildAidStateFromIntervalTree begin: restoredStack=%@", self.openAidStack);
     [self.marksByAid removeAllObjects];
     if (self.openAidStack.count == 0) {
         DLog(@"rebuildAidStateFromIntervalTree: empty stack, nothing to rebuild");
@@ -6550,7 +6606,7 @@ lengthExcludingInBandSignaling:data.length
 
 - (void)markDidBecomeCommandMark:(id<VT100ScreenMarkReading>)mark {
     [self assertOnMutationThread];
-    DLog(@"mark %@ became command mark", mark);
+    RLog(@"mark %@ became command mark", RLogRedact(mark, mark.redactedDescription));
     if (mark.entry.interval.location > self.lastCommandMark.entry.interval.location) {
         DLog(@"Set last command mark to %@", mark);
         self.lastCommandMark = mark;
@@ -6568,7 +6624,7 @@ lengthExcludingInBandSignaling:data.length
     if (sizeBefore < VT100ScreenBigFileDownloadThreshold && afterSize >= VT100ScreenBigFileDownloadThreshold) {
         if (![delegate screenConfirmDownloadNamed:name
                                     canExceedSize:VT100ScreenBigFileDownloadThreshold]) {
-            DLog(@"Aborting big download");
+            RLog(@"Aborting big download");
             __weak __typeof(self) weakSelf = self;
             dispatch_async(queue, ^{
                 [weakSelf stopTerminalReceivingFile];
@@ -6757,6 +6813,8 @@ lengthExcludingInBandSignaling:data.length
         // Mark all cells dirty to force a full resync during mergeFrom:.
         [self.primaryGrid markAllCharsDirty:YES updateTimestamps:NO];
         [self.altGrid markAllCharsDirty:YES updateTimestamps:NO];
+        // The grid swap changes which buffer the on-screen folds belong to.
+        _foldCacheDirty = YES;
     }
 
     NSNumber *altSavedX = state[kStateDictAltSavedCX];
@@ -7205,7 +7263,7 @@ launchCoprocessWithCommand:(NSString *)command
 }
 
 - (void)handleTriggerDetectedPromptAt:(VT100GridAbsCoordRange)range {
-    DLog(@"handleTriggerDetectedPromptAt: %@", VT100GridAbsCoordRangeDescription(range));
+    RLog(@"handleTriggerDetectedPromptAt: %@", VT100GridAbsCoordRangeDescription(range));
     _triggerDidDetectPrompt = NO;
     if (self.fakePromptDetectedAbsLine == -2) {
         // Infer the end of the preceding command. Set a return status of 0 since we don't know what it was.
@@ -7277,7 +7335,7 @@ launchCoprocessWithCommand:(NSString *)command
     const VT100GridCoordRange relative = { .start = startCoord, .end = endCoord };
     const VT100GridAbsCoordRange range = VT100GridAbsCoordRangeFromCoordRange(relative, overflow);
 
-    DLog(@"Trigger detected prompt at %@ of %@ (%@)",
+    RLog(@"Trigger detected prompt at %@ of %@ (%@)",
          NSStringFromRange(wrappedRange), @(lineNumber),  VT100GridAbsCoordRangeDescription(range));
 
     id<VT100ScreenMarkReading> lastPromptMark = [self lastPromptMark];
@@ -7700,20 +7758,18 @@ launchCoprocessWithCommand:(NSString *)command
     }
     if (!highPriority && !_isTmuxGateway && _hasMuteCoprocess) {
         DLog(@"%@ (is ssh output=%@, csi.p[0]=%@, csi.p[1]=%@)", token, @(token.type == SSH_OUTPUT), @(token.csi->p[0]), @(token.csi->p[1]));
-        switch (token.type) {
-            case SSH_INIT:
-            case SSH_LINE:
-            case SSH_UNHOOK:
-            case SSH_BEGIN:
-            case SSH_END:
-            case SSH_OUTPUT:
-            case SSH_TERMINATE:
-            case SSH_RECOVERY_BOUNDARY:
-                DLog(@"not discarding token!");
-                return NO;
-            default:
-                return YES;
+        // SSH conductor meta tokens must be processed even while muting a coprocess (they
+        // drive the ssh protocol, not terminal output). Single source of truth for the set
+        // in VT100Token.h so a new meta token (like SSH_IT2 was) is never dropped here.
+        // Deliberate behavior note: the canonical set adds SSH_SIDE_CHANNEL, which the prior
+        // hand-written switch here discarded. Preserving it is intended -- a mute coprocess
+        // must not break the conductor's side channel -- not an accidental byproduct of the
+        // consolidation.
+        if (VT100TokenTypeIsSSHMeta(token.type)) {
+            DLog(@"not discarding token!");
+            return NO;
         }
+        return YES;
     }
     if (_suppressAllOutput) {
         return YES;
@@ -8003,4 +8059,3 @@ launchCoprocessWithCommand:(NSString *)command
 }
 
 @end
-

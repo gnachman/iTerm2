@@ -7,6 +7,7 @@
 //
 
 #import "iTermPasswordManagerWindowController.h"
+#import "iTermModalSheetRunner.h"
 
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
@@ -446,7 +447,7 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
                 byExtendingSelection:NO];
         [_tableView scrollRowToVisible:index];
     } else if (!self.dataSourceProvider.authenticated) {
-        DLog(@"set _accountNameToSelectAfterAuthentication to %@", name);
+        RLog(@"set _accountNameToSelectAfterAuthentication to %@", name);
         _accountNameToSelectAfterAuthentication = [name copy];
     } else {
         DLog(@"failed to find %@ among %@", name, [[_entries mapWithBlock:^id _Nullable(id<PasswordManagerAccount>  _Nonnull anObject) {
@@ -649,12 +650,18 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         _newAccountPassword.placeholderString = nil;
     }
     [self configureFirstAddAccountToggle];
-    [self.window beginSheet:_newAccountPanel completionHandler:^(NSModalResponse response){
-        [NSApp stopModal];
+    NSWindow *newAccountPanel = _newAccountPanel;
+    [self.window beginSheet:newAccountPanel completionHandler:^(NSModalResponse response){
+        // Fires a run-loop turn later, after iTermRunModalForWindowAbortingIfParentCloses
+        // may have aborted our session (parent closed). Only stop if we're still the
+        // current modal, so we don't stop an unrelated modal that is live by then.
+        if (NSApp.modalWindow == newAccountPanel) {
+            [NSApp stopModal];
+        }
     }];
     // beginSheet can reset subview frames via autoresizing; apply layout again.
     [self configureFirstAddAccountToggle];
-    [NSApp runModalForWindow:_newAccountPanel];
+    iTermRunModalForWindowAbortingIfParentCloses(newAccountPanel, self.window);
 }
 
 - (NSDictionary *)firstAddAccountToggleDescription {
@@ -1555,7 +1562,7 @@ static NSInteger const kDynamicMenuItemTag = 9999;
                 }];
             }
         } else {
-            DLog(@"Auth failed. Close window.");
+            RLog(@"Auth failed. Close window.");
             [self closeOrEndSheet];
         }
     }];
@@ -1564,7 +1571,7 @@ static NSInteger const kDynamicMenuItemTag = 9999;
 - (void)didBecomeReady {
     DLog(@"didBecomeReady");
     if (_accountNameToSelectAfterAuthentication) {
-        DLog(@"will select %@", _accountNameToSelectAfterAuthentication);
+        RLog(@"will select %@", _accountNameToSelectAfterAuthentication);
         [self selectAccountName:_accountNameToSelectAfterAuthentication];
         _accountNameToSelectAfterAuthentication = nil;
     } else {
@@ -1612,7 +1619,7 @@ static NSInteger const kDynamicMenuItemTag = 9999;
         [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
             [weakSelf decrBusy];
             if (error) {
-                DLog(@"passwordForRow: return nil, keychain gave error %@", error);
+                RLog(@"passwordForRow: return nil, keychain gave error %@", error);
 
                 NSAlert *alert = [[NSAlert alloc] init];
                 alert.messageText = [NSString stringWithFormat:@"Could not get password. Keychain query failed: %@",
@@ -2035,7 +2042,7 @@ static NSArray<NSString *> *gBrowserCachedCombinedAccountNames;
 
 - (void)reallySelectAccountName:(NSString *)name {
     if (!self.dataSourceProvider.authenticated) {
-        DLog(@"set _accountNameToSelectAfterAuthentication to %@", name);
+        RLog(@"set _accountNameToSelectAfterAuthentication to %@", name);
         _accountNameToSelectAfterAuthentication = [name copy];
         return;
     }

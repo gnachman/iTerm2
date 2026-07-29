@@ -87,7 +87,7 @@ static const NSEventModifierFlags iTermHotkeyModifierMask = (NSEventModifierFlag
                                                                            error:&error];
 
     if (error) {
-        DLog(@"Error parsing plist: %@", error.localizedDescription);
+        RLog(@"Error parsing plist: %@", error.localizedDescription);
         return nil;
     }
     return dictionary;

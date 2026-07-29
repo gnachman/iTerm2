@@ -282,6 +282,7 @@ static NSString *const __attribute__((unused)) DEPRECATED_SESSION_ARRANGEMENT_DE
 static NSString *const __attribute__((unused)) DEPRECATED_SESSION_ARRANGEMENT_WINDOW_TITLE_DEPRECATED = @"Session Window Title";  // server-set window name
 static NSString *const __attribute__((unused)) DEPRECATED_SESSION_ARRANGEMENT_NAME_DEPRECATED = @"Session Name";  // server-set "icon" (tab) name
 static NSString *const SESSION_ARRANGEMENT_GUID = @"Session GUID";  // A truly unique ID.
+static NSString *const SESSION_ARRANGEMENT_STABLE_ID = @"Session Stable ID";  // Reload/restore-durable identity, see iTermStableSessionID.
 static NSString *const SESSION_ARRANGEMENT_LIVE_SESSION = @"Live Session";  // If zoomed, this gives the "live" session's arrangement.
 static NSString *const SESSION_ARRANGEMENT_SUBSTITUTIONS = @"Substitutions";  // Dictionary for $$VAR$$ substitutions
 static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // DEPRECATED. A string used for restoring soft-terminated sessions for arrangements that predate the introduction of the GUID.
@@ -333,7 +334,12 @@ static NSString *const SESSION_ARRANGEMENT_CLIPPINGS = @"Clippings";  // NSArray
 static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE = @"Clippings Visible";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_ARCHIVE = @"Clippings Archive";  // NSArray<NSArray<NSDictionary<NSString *, NSString *> *> *>, oldest first.
 static NSString *const SESSION_ARRANGEMENT_CLIPPINGS_VIEW_INDEX = @"Clippings View Index";  // NSNumber, -1 = live.
+static NSString *const SESSION_ARRANGEMENT_AUTO_SEND_CLIPPINGS_WHEN_IDLE = @"Auto Send Clippings When Idle";  // BOOL. Code-review peer's toolbar toggle state.
+static NSString *const SESSION_ARRANGEMENT_AUTO_REQUEST_REVIEW_WHEN_IDLE = @"Auto Request Review When Idle";  // BOOL. Main session's toolbar toggle state.
 static NSString *const SESSION_ARRANGEMENT_WORKGROUP = @"Workgroup";  // NSDictionary, opaque to PTYSession. Owned by iTermWorkgroupRestoration. Present on the visible/anchor member of a peer group; embeds the other (buried) members' arrangements so the workgroup can be rebuilt on relaunch.
+static NSString *const SESSION_ARRANGEMENT_CODE_REVIEW_LAST_PROMPT = @"Code Review Last Prompt";  // NSString. The prompt text the user last submitted in a code-review session, so a reload after restore defaults to their edited prompt.
+static NSString *const SESSION_ARRANGEMENT_INLINE_CHAT_ID = @"Inline Chat ID";  // NSString. Chat hosted in this session's inline AI chat gutter panel.
+static NSString *const SESSION_ARRANGEMENT_INLINE_CHAT_VISIBLE = @"Inline Chat Visible";  // BOOL. Whether that panel was showing.
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -379,6 +385,7 @@ NSString *const PTYSessionArrangementOptionsForDuplication = @"PTYSessionArrange
 NSString *const PTYSessionArrangementOptionsUnlimitedHistory = @"PTYSessionArrangementOptionsUnlimitedHistory";
 NSString *const PTYSessionArrangementOptionsArchive = @"PTYSessionArrangementOptionsArchive";
 NSString *const PTYSessionArrangementOptionsLargeContentProvider = @"PTYSessionArrangementOptionsLargeContentProvider";
+NSString *const PTYSessionArrangementOptionsInhibitRelaunch = @"PTYSessionArrangementOptionsInhibitRelaunch";
 
 static char iTermEffectiveAppearanceKey;
 
@@ -396,6 +403,38 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 };
 
 @interface PTYSession(AppSwitching)<iTermAppSwitchingPreventionDetectorDelegate>
+@end
+
+// Background-drawing delegate used when rendering a screenshot. It forwards to the
+// session but forces transparency off, so the saved/preview background image is opaque
+// (a screenshot has nothing behind it). This matches the tile branch, which also draws
+// at full alpha. See -screenshotBackgroundSliceForRect:ofTotalSize:.
+@interface iTermScreenshotBackgroundDrawingDelegate : NSObject <iTermBackgroundDrawingHelperDelegate>
+@property (nonatomic, weak) PTYSession *session;
+@end
+
+@implementation iTermScreenshotBackgroundDrawingDelegate
+- (SessionView *)backgroundDrawingHelperView {
+    return [self.session backgroundDrawingHelperView];
+}
+- (iTermImageWrapper *)backgroundDrawingHelperImage {
+    return [self.session backgroundDrawingHelperImage];
+}
+- (BOOL)backgroundDrawingHelperUseTransparency {
+    return NO;
+}
+- (CGFloat)backgroundDrawingHelperTransparency {
+    return 0;
+}
+- (iTermBackgroundImageMode)backgroundDrawingHelperBackgroundImageMode {
+    return [self.session backgroundDrawingHelperBackgroundImageMode];
+}
+- (NSColor *)backgroundDrawingHelperDefaultBackgroundColor {
+    return [self.session backgroundDrawingHelperDefaultBackgroundColor];
+}
+- (CGFloat)backgroundDrawingHelperBlending {
+    return [self.session backgroundDrawingHelperBlending];
+}
 @end
 
 @implementation PTYSession {
@@ -421,6 +460,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     // Time since reference date when the tab label was last updated.
     NSTimeInterval _lastUpdate;
+
+    // Monotonic (it_timeSinceBoot) time the rendered screen contents last
+    // changed, updated from textViewDidFindDirtyRects. Read by the
+    // orchestrator's tab-status escalation backstop to measure how long a
+    // session has been visually quiet. Monotonic so durations survive wall-
+    // clock changes.
+    NSTimeInterval _lastScreenContentsChangeTime;
 
     // This is used for divorced sessions. It contains the keys in profile
     // that have been customized. Changes in the original profile will be copied over
@@ -561,6 +607,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     iTermSessionModeHandler *_modeHandler;
 
+    // Set while injecting a synthesized key event (companion on-screen keyboard) so
+    // the shared keyDown/keyUp path suppresses broadcast to other split panes: the
+    // phone targets one specific session.
+    BOOL _injectingSynthesizedKey;
+
+    // Set by -regularKeyDown: when it actually emits mapper bytes for an injected key,
+    // so injection only synthesizes the matching key-up when there was a real press
+    // (a keyDown consumed by a binding/handler/copy-mode must not emit an orphan
+    // release under Kitty report-all-event-types).
+    BOOL _injectedKeyEmittedPress;
+
     // Absolute line number where touchbar status changed.
     long long _statusChangedAbsLine;
 
@@ -583,6 +640,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     iTermSessionTabStatus *_tabStatus;
 
     iTermBackgroundDrawingHelper *_backgroundDrawingHelper;
+    // Used to render the background behind a screenshot with transparency forced off.
+    // Held strongly because iTermBackgroundDrawingHelper's delegate is weak.
+    iTermBackgroundDrawingHelper *_screenshotBackgroundDrawingHelper;
+    iTermScreenshotBackgroundDrawingDelegate *_screenshotBackgroundDrawingDelegate;
     iTermBackgroundImageRotationManager *_backgroundImageRotator;
     iTermMetaFrustrationDetector *_metaFrustrationDetector;
 
@@ -767,6 +828,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
         _lastOutputIgnoringOutputAfterResizing = _lastInput;
         _lastUpdate = _lastInput;
+        _lastScreenContentsChangeTime = [NSDate it_timeSinceBoot];
         _pasteHelper = [[iTermPasteHelper alloc] init];
         _pasteHelper.delegate = self;
 
@@ -775,6 +837,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
         _guid = [[NSString uuid] retain];
         [[PTYSession sessionMap] setObject:self forKey:_guid];
+        // Allocate the durable stable identifier. Unlike guid it is not rotated
+        // by replaceTerminatedShellWithNewInstance (so it is durable across shell
+        // restarts); when restoring from an arrangement it is replaced by the
+        // saved value (see sessionFromArrangement:), so it is durable across app
+        // restarts too.
+        _stableID = [[iTermStableSessionID generate] copy];
 
         _screen = [[VT100Screen alloc] init];
         NSParameterAssert(_shell != nil && _screen != nil);
@@ -879,6 +947,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         _eventTriggerEvaluator.fireTriggerHandler = ^(Trigger *trigger, NSArray<NSString *> *capturedStrings, BOOL useInterpolation) {
             [weakScreen fireEventTrigger:trigger capturedStrings:capturedStrings useInterpolation:useInterpolation];
         };
+        // Lets the variable-changed match type observe session variables.
+        _eventTriggerEvaluator.variableScope = self.genericScope;
         _sshState = iTermSSHStateNone;
         _hostStack = [[NSMutableArray alloc] init];
         [iTermCPUUtilization instanceForSessionID:_guid];
@@ -973,6 +1043,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(broadcastDomainsDidChange:)
                                                      name:iTermBroadcastDomainsDidChangeNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(graphicSourceDidReload:)
+                                                     name:iTermGraphicSourceDidReloadNotification
                                                    object:nil];
         [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                                selector:@selector(activeSpaceDidChange:)
@@ -1070,6 +1144,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_bellRate release];
     [iTermCPUUtilization setInstance:nil forSessionID:_guid];
     [_guid release];
+    [_stableID release];
     [_lastCommand release];
     [_substitutions release];
     [_automaticProfileSwitcher release];
@@ -1661,6 +1736,15 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     aSession.clippingsVisible = [[NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE]] boolValue];
+    // Workgroup code-review toolbar toggle state. Restored onto the session
+    // before the workgroup adopts it and builds the toolbar, so the rebuilt
+    // toggle reflects the saved state. Absent keys leave the flags at their
+    // default (off).
+    aSession.autoSendClippingsWhenIdle = [[NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_AUTO_SEND_CLIPPINGS_WHEN_IDLE]] boolValue];
+    aSession.autoRequestReviewWhenIdle = [[NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_AUTO_REQUEST_REVIEW_WHEN_IDLE]] boolValue];
+    // Inline AI chat is restored earlier, synchronously, in
+    // sessionFromArrangement: (see the comment there) so the panel's reserved
+    // width is in place before the window first fits its grid.
     [aSession.directoryTracker restoreFromArrangement:arrangement];
 
     if (arrangement[SESSION_ARRANGEMENT_APS]) {
@@ -1780,7 +1864,7 @@ ITERM_WEAKLY_REFERENCEABLE
                          forObjectType:(iTermObjectType)objectType
                     partialAttachments:(NSDictionary *)partialAttachments
                                options:(NSDictionary *)options {
-    DLog(@"Restoring session from arrangement");
+    RLog(@"Restoring session from arrangement");
 
     Profile *theBookmark =
     [[ProfileModel sharedInstance] bookmarkWithGuid:arrangement[SESSION_ARRANGEMENT_BOOKMARK][KEY_GUID]];
@@ -1804,6 +1888,20 @@ ITERM_WEAKLY_REFERENCEABLE
     aSession.view = sessionView;
     aSession->_savedGridSize = VT100GridSizeMake(MAX(1, [arrangement[SESSION_ARRANGEMENT_COLUMNS] intValue]),
                                                  MAX(1, [arrangement[SESSION_ARRANGEMENT_ROWS] intValue]));
+    // Re-bind the inline AI chat here, synchronously, rather than in the
+    // asynchronous finishInitializing path. The right-gutter panel reserves
+    // width through desiredRightExtra; if inlineChatID is set late (after the
+    // command/server attach finishes), the window has already fit its grid to
+    // the full width with no reservation, and applying the reservation
+    // afterward grows the window by the panel width. Setting it now (before
+    // the window lays out its grid) means the grid is fit with the panel's
+    // space reserved, matching the saved frame. The session has no delegate
+    // yet, so this won't kick off a premature window resize.
+    NSString *inlineChatID = [NSString castFrom:arrangement[SESSION_ARRANGEMENT_INLINE_CHAT_ID]];
+    if (inlineChatID) {
+        [aSession restoreInlineChatID:inlineChatID
+                              visible:[[NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_INLINE_CHAT_VISIBLE]] boolValue]];
+    }
     [sessionView setFindDriverDelegate:aSession];
     NSMutableSet<NSString *> *keysToPreserveInCaseOfDivorce = [NSMutableSet setWithArray:@[ KEY_GUID, KEY_ORIGINAL_GUID ]];
 
@@ -1993,6 +2091,10 @@ ITERM_WEAKLY_REFERENCEABLE
                             (arrangement[SESSION_ARRANGEMENT_BROWSER_STATE] != nil || contents) &&
                             [iTermAdvancedSettingsModel restoreWindowContents]);
     BOOL attachedToServer = NO;
+    // Opaque workgroup peer-group descriptor, owned by
+    // iTermWorkgroupRestoration. Read once: used both by the inhibit-relaunch
+    // decision below and by the restoration-coordinator registration later.
+    NSDictionary *workgroupState = arrangement[SESSION_ARRANGEMENT_WORKGROUP];
     typedef void (^iTermSessionCreationCompletionBlock)(PTYSession *, BOOL ok);
     void (^runCommandBlock)(iTermSessionCreationCompletionBlock) =
     ^(iTermSessionCreationCompletionBlock innerCompletion) {
@@ -2041,27 +2143,27 @@ ITERM_WEAKLY_REFERENCEABLE
             if ([NSNumber castFrom:arrangement[SESSION_ARRANGEMENT_SERVER_PID]]) {
                 DLog(@"Have a server PID in the arrangement");
                 pid_t serverPid = [arrangement[SESSION_ARRANGEMENT_SERVER_PID] intValue];
-                DLog(@"Try to attach to pid %d", (int)serverPid);
+                RLog(@"Try to attach to pid %d", (int)serverPid);
                 // serverPid might be -1 if the user turned on session restoration and then quit.
                 if (serverPid != -1 && [aSession tryToAttachToServerWithProcessId:serverPid
                                                                               tty:arrangement[SESSION_ARRANGEMENT_TTY]]) {
-                    DLog(@"Success!");
+                    RLog(@"Success!");
                     didAttach = YES;
                 }
             } else if ([iTermMultiServerJobManager available] &&
                        [NSDictionary castFrom:arrangement[SESSION_ARRANGEMENT_SERVER_DICT]]) {
                 DLog(@"Have a server dict in the arrangement");
                 NSDictionary *serverDict = arrangement[SESSION_ARRANGEMENT_SERVER_DICT];
-                DLog(@"Try to attach to %@", serverDict);
+                RLog(@"Try to attach to %@", serverDict);
                 if (partialAttachments) {
                     id partial = partialAttachments[serverDict];
                     if (partial &&
                         [aSession tryToFinishAttachingToMultiserverWithPartialAttachment:partial] != 0) {
-                        DLog(@"Finished attaching to multiserver!");
+                        RLog(@"Finished attaching to multiserver!");
                         didAttach = YES;
                     }
                 } else if ([aSession tryToAttachToMultiserverWithRestorationIdentifier:serverDict]) {
-                    DLog(@"Attached to multiserver!");
+                    RLog(@"Attached to multiserver!");
                     didAttach = YES;
                 }
             }
@@ -2087,6 +2189,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
                         [terminal.parser cancelConductorRecoveryMode];
                     }];
+                    [aSession->_conductor resolveIT2AuthorizationFailClosed];
                     [aSession removeChannelClientsForConductor:aSession->_conductor];
                     aSession->_conductor.delegate = nil;
                     [aSession->_conductor release];
@@ -2096,18 +2199,68 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         }
 
+        // Nothing was attached to (either the server-restore path above
+        // failed, or session restoration servers are off entirely). For a
+        // code-review or diff workgroup session that had a live program at
+        // save time, don't launch a replacement: leave the restored last
+        // output on screen. The signal comes either from an explicit option
+        // (buried peers, set by WorkgroupRestorationCoordinator) or, for the
+        // anchor, from its workgroup config + saved overlay state. When the
+        // session WAS showing its pre-launch overlay at save time the
+        // coordinator re-presents it and relies on a relaunched shell, so
+        // those cases are excluded. Evaluated outside the runJobsInServers
+        // block so the buried-peer option and the anchor check apply even
+        // when session restoration servers are off.
+        //
+        // Gate on isRestartable: the inhibited session is put into the exited
+        // state, which is only useful if it can be restarted later
+        // (restartSession/replaceTerminatedShellWithNewInstance and the reload
+        // paths all require isRestartable, i.e. a non-nil _program). If the
+        // arrangement carried no restartable program, fall through to the
+        // normal path rather than stranding a dead, unrestartable pane.
+        if (runCommand && aSession.isRestartable) {
+            if ([options[PTYSessionArrangementOptionsInhibitRelaunch] boolValue] ||
+                (workgroupState &&
+                 [iTermWorkgroupRestoration shouldInhibitRelaunchForAnchorState:workgroupState])) {
+                DLog(@"Inhibiting relaunch for code-review/diff workgroup session with no program to attach to");
+                runCommand = NO;
+                // Put the session in the exited state so the workgroup
+                // reload/restart affordance works: restartSession takes the
+                // replaceTerminatedShellWithNewInstance path, which requires
+                // _exited (and isRestartable, gated above). We leave the
+                // restored last output on screen; nothing relaunches until
+                // the user asks.
+                //
+                // Set it silently: restore is synthesizing an exited state,
+                // not observing a real program exit. The program was orphaned
+                // by app quit (with servers on it may still have been alive,
+                // so its Session Ended trigger never fired), so firing the
+                // trigger now would be spurious.
+                [aSession setExitedSilently:YES];
+            }
+        }
+
         // GUID will be set for new saved arrangements since late 2014.
         // Older versions won't be able to associate saved state with windows from a saved arrangement.
         if (arrangement[SESSION_ARRANGEMENT_GUID]) {
             DLog(@"The session arrangement has a GUID");
             NSString *guid = arrangement[SESSION_ARRANGEMENT_GUID];
             aSession->_arrangementGUID = [guid copy];
+            // Adopt the saved stableID only where we adopt the saved guid (so chat/
+            // companion bindings survive an app restart). During a live duplicate,
+            // or any restore of a still-live session's arrangement, none of these
+            // guards hold, so the new session keeps its freshly-minted, unique
+            // stableID instead of colliding with the source.
+            NSString *savedStableID = [PTYSession stableIDInArrangement:arrangement];
             if (guid && gRegisteredSessionContents[guid]) {
                 DLog(@"The GUID is registered");
                 // There was a registered session with this guid. This session was created by
                 // restoring a saved arrangement and there is saved content registered.
                 contents = gRegisteredSessionContents[guid];
                 aSession.guid = guid;
+                if (savedStableID) {
+                    aSession.stableID = savedStableID;
+                }
                 DLog(@"Assign guid %@ to session %@ which will have its contents restored from registered contents",
                      guid, aSession);
             } else if ([[iTermController sharedInstance] startingUp] ||
@@ -2117,6 +2270,9 @@ ITERM_WEAKLY_REFERENCEABLE
                 // If contents are present, then system window restoration is bringing back a
                 // session.
                 aSession.guid = guid;
+                if (savedStableID) {
+                    aSession.stableID = savedStableID;
+                }
                 DLog(@"iTerm2 is starting up or has contents. Assign guid %@ to session %@ (session is loaded from saved arrangement. No content registered.)", guid, aSession);
             }
         }
@@ -2222,11 +2378,17 @@ ITERM_WEAKLY_REFERENCEABLE
     }];
     [aSession updateMarksMinimapRangeOfVisibleLines];
 
+    // Restore the prompt the user last submitted in a code-review session
+    // so a reload defaults to it (see SESSION_ARRANGEMENT_CODE_REVIEW_LAST_PROMPT).
+    NSString *codeReviewLastPrompt = [NSString castFrom:arrangement[SESSION_ARRANGEMENT_CODE_REVIEW_LAST_PROMPT]];
+    if (codeReviewLastPrompt) {
+        aSession.codeReviewLastUsedPrompt = codeReviewLastPrompt;
+    }
+
     // If this session was the visible/anchor member of a workgroup peer
     // group, hand the opaque descriptor to the restoration coordinator;
     // it rebuilds the peer group (adopting the embedded buried members)
     // once the window/tab finishes restoring.
-    NSDictionary *workgroupState = arrangement[SESSION_ARRANGEMENT_WORKGROUP];
     if (workgroupState) {
         [iTermWorkgroupRestoration registerForRestorationWithSession:aSession
                                                               state:workgroupState];
@@ -2387,7 +2549,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _wrapper = [[TextViewWrapper alloc] initWithFrame:NSMakeRect(0, 0, aSize.width, aSize.height)];
 
     _textview = [[PTYTextView alloc] initWithFrame:NSMakeRect(0,
-                                                              [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins],
+                                                              [iTermPreferences topBottomMargins],
                                                               aSize.width,
                                                               aSize.height)];
     _textview.colorMap = _screen.colorMap;
@@ -2414,7 +2576,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setTransparencyAffectsOnlyDefaultBackgroundColor:[[_profile objectForKey:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR] boolValue]];
 
     [_wrapper addSubview:_textview];
-    [_textview setFrame:NSMakeRect(0, [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins], aSize.width, aSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins])];
+    const int vmargin = [iTermPreferences topBottomMargins];
+    [_textview setFrame:NSMakeRect(0, vmargin, aSize.width, aSize.height - vmargin)];
 
     // assign terminal and task objects
     // Pause token execution in case the caller needs to modify terminal state before it starts running.
@@ -2441,8 +2604,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                       scrollerStyle:_view.scrollview.scrollerStyle
                                                          rightExtra:self.desiredRightExtra];
 
-        int width = (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins]*2) / [_textview charWidth];
-        int height = (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]*2) / [_textview lineHeight];
+        int width = (contentSize.width - [iTermPreferences sideMargins]*2) / [_textview charWidth];
+        int height = (contentSize.height - [iTermPreferences topBottomMargins]*2) / [_textview lineHeight];
         [_screen destructivelySetScreenWidth:width
                                       height:height
                                 mutableState:mutableState];
@@ -2479,12 +2642,12 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"Failing to attach because run jobs in servers is off");
         return NO;
     }
-    DLog(@"Try to attach...");
+    RLog(@"Try to attach...");
     if ([_shell tryToAttachToServerWithProcessId:serverPid tty:tty]) {
-        DLog(@"Success, attached.");
+        RLog(@"Success, attached.");
         return YES;
     } else {
-        DLog(@"Failed to attach");
+        RLog(@"Failed to attach");
         return NO;
     }
 }
@@ -2497,10 +2660,10 @@ ITERM_WEAKLY_REFERENCEABLE
         DLog(@"Attached to multiserver. Not registered.");
     }
     if (results & iTermJobManagerAttachResultsAttached) {
-        DLog(@"Success, attached.");
+        RLog(@"Success, attached.");
         return YES;
     } else {
-        DLog(@"Failed to attach");
+        RLog(@"Failed to attach");
         return NO;
     }
 }
@@ -2509,7 +2672,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)attachToServer:(iTermGeneralServerConnection)serverConnection
             completion:(void (^)(void))completion {
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
-        DLog(@"Attaching to a server...");
+        RLog(@"Attaching to a server...");
         [_shell attachToServer:serverConnection completion:^(iTermJobManagerAttachResults results) {
             if (!(results & iTermJobManagerAttachResultsAttached)) {
                 [self brokenPipe];
@@ -2652,7 +2815,7 @@ ITERM_WEAKLY_REFERENCEABLE
         if (_view.showBottomStatusBar) {
             result -= iTermGetStatusBarHeight();
         }
-        result -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;
+        result -= [iTermPreferences topBottomMargins] * 2;
         int iLineHeight = [_textview lineHeight];
         if (iLineHeight == 0) {
             return 0;
@@ -2663,7 +2826,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         return result;
     } else {
-        result -= [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2;
+        result -= [iTermPreferences sideMargins] * 2;
         int iCharWidth = [_textview charWidth];
         if (iCharWidth == 0) {
             return 0;
@@ -3156,14 +3319,16 @@ ITERM_WEAKLY_REFERENCEABLE
      fromArrangement:(BOOL)fromArrangement
 webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
           completion:(void (^)(BOOL))completion {
-    DLog(@"startProgram:%@ ssh:%@ browser:%@ environment:%@ customShell:%@ isUTF8:%@ substitutions:%@ arrangementName:%@ fromArrangement:%@, self=%@",
-         command,
+    // command can be a user-configured command line, environment can carry exported
+    // secrets, and substitutions can carry user values; keep them out of the ring.
+    RLog(@"startProgram:%@ ssh:%@ browser:%@ environment:%@ customShell:%@ isUTF8:%@ substitutions:%@ arrangementName:%@ fromArrangement:%@, self=%@",
+         RLogRedact(command, @(command.length)),
          @(ssh),
          @(browser),
-         environment,
+         RLogRedact(environment, environment.allKeys),
          customShell,
          @(isUTF8),
-         substitutions,
+         RLogRedact(substitutions, @(substitutions.count)),
          arrangementName,
          @(fromArrangement),
          self);
@@ -3492,6 +3657,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_naggingController willRecycleSession];
 
     if (_conductor) {
+        // Dismiss any pending it2 auth prompt while the delegate is still live; deinit
+        // fulfills the seal but (being nonisolated) cannot dismiss the announcement.
+        [_conductor resolveIT2AuthorizationFailClosed];
         [self removeChannelClientsForConductor:_conductor];
         _conductor.delegate = nil;
         [_conductor release];
@@ -3524,7 +3692,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // Request that the session close. It may or may not be undoable. Only undoable terminations support
 // "restart", which is done by first calling revive and then replaceTerminatedShellWithNewInstance.
 - (void)terminate {
-    DLog(@"terminate called from %@", [NSThread callStackSymbols]);
+    RLog(@"terminate called from %@", [NSThread callStackSymbols]);
     if (self.isBrowserSession) {
         [self terminateBrowser];
     }
@@ -3550,7 +3718,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         if (n == 0) {
             // The last session in this tab closed so check if the client has
             // changed size
-            DLog(@"Last session in tab closed. Check if the client has changed size");
+            RLog(@"Last session in tab closed. Check if the client has changed size");
             [_tmuxController fitLayoutToWindows];
         }
         _tmuxStatusBarMonitor.active = NO;
@@ -3586,7 +3754,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         [_liveSession terminate];
     }
 
-    DLog(@"  terminate: exited = YES");
+    RLog(@"  terminate: exited = YES");
     [self setExited:YES];
     [_view retain];  // hardstop and revive will release this.
     if (undoable) {
@@ -3629,6 +3797,15 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             [_eventTriggerEvaluator sessionEnded];
         }
     }
+    [self setExitedSilently:exited];
+}
+
+// Set the exited state without firing Session Ended triggers. Used when
+// restoring a session that is already in the exited state (its program
+// ended before the app quit): the Session Ended event already fired then,
+// so re-firing it on every launch would spuriously repeat the trigger's
+// action.
+- (void)setExitedSilently:(BOOL)exited {
     _exited = exited;
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         mutableState.exited = exited;
@@ -3756,8 +3933,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             [mutableState appendStringAtCursor:[string stringByMakingControlCharactersToPrintable]];
         }];
     }
-    // check if we want to send this input to all the sessions
-    if (canBroadcast && [[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid]) {
+    // check if we want to send this input to all the sessions. Suppressed while
+    // injecting a synthesized key (companion keyboard): the phone targets one specific
+    // session, so its keys must not fan out to the split's other panes. Only the
+    // broadcast decision is gated - local echo (above), bell-silence, and
+    // scroll-to-bottom (below) still behave as they do for a real keypress.
+    if (canBroadcast && !_injectingSynthesizedKey && [[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid]) {
         // Ask the parent window to write to the other tasks.
         DLog(@"Passing input to window to broadcast it. Won't send in this call.");
         [[_delegate realParentWindow] sendInputToAllSessions:string
@@ -3985,6 +4166,16 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
           reporting:reporting];
 }
 
+// Side effects every keystroke sent to a TMUX_CLIENT (or conductor/ssh) pane
+// gets: clear the bell indicator and scroll back to the bottom ("typing scrolls
+// to bottom"). Kept in one place so the delegated send-keys path and the normal
+// write path stay in sync.
+- (void)didSendKeystrokeToTmuxClient {
+    [self setBell:NO];
+    PTYScroller *ptys = (PTYScroller *)[_view.scrollview verticalScroller];
+    [ptys setUserScroll:NO];
+}
+
 - (void)writeTask:(NSString *)string
          encoding:(NSStringEncoding)optionalEncoding
     forceEncoding:(BOOL)forceEncoding
@@ -3992,8 +4183,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         reporting:(BOOL)reporting {
     NSStringEncoding encoding = forceEncoding ? optionalEncoding : _screen.terminalEncoding;
     if (self.tmuxMode == TMUX_CLIENT || _conductor.handlesKeystrokes || _connectingSSH) {
-        [self setBell:NO];
-        if (canBroadcast && [[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid]) {
+        if (canBroadcast && !_injectingSynthesizedKey && [[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid]) {
             [[_delegate realParentWindow] sendInputToAllSessions:string
                                                         encoding:optionalEncoding
                                                    forceEncoding:forceEncoding];
@@ -4006,8 +4196,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             [[_tmuxController gateway] sendKeys:string
                                    toWindowPane:self.tmuxPane];
         }
-        PTYScroller* ptys = (PTYScroller*)[_view.scrollview verticalScroller];
-        [ptys setUserScroll:NO];
+        [self didSendKeystrokeToTmuxClient];
         return;
     } else if (self.tmuxMode == TMUX_GATEWAY) {
         // Use keypresses for tmux gateway commands for development and debugging.
@@ -4208,7 +4397,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 
 - (void)threadedTaskBrokenPipe {
-    DLog(@"threaded task broken pipe");
+    RLog(@"threaded task broken pipe");
     // Put the call to brokenPipe in the same queue as the token executor to avoid a race.
     dispatch_async(dispatch_get_main_queue(), ^{
         [self brokenPipe];
@@ -4274,7 +4463,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (void)tmuxDidDisconnect {
-    DLog(@"tmuxDidDisconnect");
+    RLog(@"tmuxDidDisconnect");
     if (_exited) {
         return;
     }
@@ -4324,9 +4513,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (void)brokenPipeWithError:(NSString *)message {
-    DLog(@"  brokenPipe %@ task=%@ message=%@\n%@", self, self.shell, message, [NSThread callStackSymbols]);
+    RLog(@"  brokenPipe %@ task=%@ message=%@\n%@", self, self.shell, message, [NSThread callStackSymbols]);
     if (_exited) {
-        DLog(@"  brokenPipe: Already exited");
+        RLog(@"  brokenPipe: Already exited");
         return;
     }
     // Ensure we don't leak the monoserver unix domain socket file descriptor.
@@ -4341,7 +4530,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                                               [_delegate tabNumber]]];
     }
 
-    DLog(@"  brokenPipe: set exited = YES");
+    RLog(@"  brokenPipe: set exited = YES");
     [self cleanUpAfterBrokenPipe];
 
     if (_shouldRestart) {
@@ -4400,6 +4589,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (self.profile.profileIsBrowser) {
         return iTermSessionEndActionClose;
     }
+    // Workgroup-spawned members force the default end action so a profile
+    // sync can't flip them to Close and have them auto-close on program
+    // exit, which would tear the whole workgroup down. See
+    // PTYSession.forceDefaultEndAction.
+    if (self.forceDefaultEndAction) {
+        return iTermSessionEndActionDefault;
+    }
     return _endAction;
 }
 
@@ -4437,7 +4633,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     assert(self.isRestartable);
     assert(_exited);
     _shouldRestart = NO;
-    DLog(@"  replaceTerminatedShellWithNewInstance: exited <- NO");
+    RLog(@"  replaceTerminatedShellWithNewInstance: exited <- NO");
     [self setExited:NO];
     [_shell autorelease];
     _shell = nil;
@@ -4474,8 +4670,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (NSSize)idealScrollViewSizeWithStyle:(NSScrollerStyle)scrollerStyle {
-    NSSize innerSize = NSMakeSize([_screen width] * [_textview charWidth] + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2,
-                                  [_screen height] * [_textview lineHeight] + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2);
+    NSSize innerSize = NSMakeSize([_screen width] * [_textview charWidth] + [iTermPreferences sideMargins] * 2,
+                                  [_screen height] * [_textview lineHeight] + [iTermPreferences topBottomMargins] * 2);
     BOOL hasScrollbar = [[_delegate realParentWindow] scrollbarShouldBeVisible];
     NSSize outerSize =
     [PTYScrollView frameSizeForContentSize:innerSize
@@ -5528,6 +5724,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     _textview.animateMovementOnlyInInteractiveApps = [iTermProfilePreferences boolForKey:KEY_ANIMATE_MOVEMENT_ONLY_IN_INTERACTIVE_APPS
                                                                                inProfile:aDict];
     _textview.cursorSmoothSlide = [iTermProfilePreferences boolForKey:KEY_CURSOR_SMOOTH_SLIDE inProfile:aDict];
+    _textview.cursorSmoothBlink = [iTermProfilePreferences boolForKey:KEY_CURSOR_SMOOTH_BLINK inProfile:aDict];
+    _textview.cursorBlinkFadeInDuration = [iTermProfilePreferences floatForKey:KEY_CURSOR_BLINK_FADE_IN_DURATION inProfile:aDict];
+    _textview.cursorBlinkFadeOutDuration = [iTermProfilePreferences floatForKey:KEY_CURSOR_BLINK_FADE_OUT_DURATION inProfile:aDict];
+    _textview.cursorBlinkFadeInCurve = [iTermProfilePreferences intForKey:KEY_CURSOR_BLINK_FADE_IN_CURVE inProfile:aDict];
+    _textview.cursorBlinkFadeOutCurve = [iTermProfilePreferences intForKey:KEY_CURSOR_BLINK_FADE_OUT_CURVE inProfile:aDict];
+    _textview.cursorBlinkVisibleDwell = [iTermProfilePreferences floatForKey:KEY_CURSOR_BLINK_VISIBLE_DWELL inProfile:aDict];
+    _textview.cursorBlinkHiddenDwell = [iTermProfilePreferences floatForKey:KEY_CURSOR_BLINK_HIDDEN_DWELL inProfile:aDict];
     [_textview setBlinkingCursor:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
     [_textview setCursorType:_cursorTypeOverride ? _cursorTypeOverride.integerValue : [iTermProfilePreferences intForKey:KEY_CURSOR_TYPE inProfile:aDict]];
 
@@ -6108,7 +6311,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     _backgroundImageMode = mode;
     [_backgroundDrawingHelper invalidate];
     [self setBackgroundImagePath:_backgroundImageSwiftyString.swiftyString];
-    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+    if ([iTermPreferences perPaneBackgroundImage]) {
         self.view.imageMode = mode;
     }
 }
@@ -6165,7 +6368,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (!self.effectiveBackgroundImage) {
         return 0;
     }
-    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+    if ([iTermPreferences perPaneBackgroundImage]) {
         return self.desiredBlend;
     } else {
         if (self.backgroundImage) {
@@ -6181,7 +6384,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (iTermImageWrapper *)effectiveBackgroundImage {
-    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+    if ([iTermPreferences perPaneBackgroundImage]) {
         return _backgroundImage;
     } else {
         return [self.delegate sessionBackgroundImage];
@@ -6189,7 +6392,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (iTermBackgroundImageMode)effectiveBackgroundImageMode {
-    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+    if ([iTermPreferences perPaneBackgroundImage]) {
         return _backgroundImageMode;
     } else {
         return [self.delegate sessionBackgroundImageMode];
@@ -6201,7 +6404,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (void)updateViewBackgroundImage {
-    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+    if ([iTermPreferences perPaneBackgroundImage]) {
         DLog(@"Update per-pane background image");
         self.view.image = _backgroundImage;
         [self.view setImageMode:_backgroundImageMode];
@@ -6660,6 +6863,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
 
     result[SESSION_ARRANGEMENT_GUID] = _guid;
+    result[SESSION_ARRANGEMENT_STABLE_ID] = _stableID;
     if (_lastActivityOrdinal > 0) {
         result[SESSION_ARRANGEMENT_LAST_ACTIVITY_ORDINAL] = @(_lastActivityOrdinal);
     }
@@ -6744,6 +6948,24 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         result[SESSION_ARRANGEMENT_CLIPPINGS_VIEW_INDEX] = @(self.localClippingsViewIndex);
     }
     result[SESSION_ARRANGEMENT_CLIPPINGS_VISIBLE] = @(self.clippingsVisible);
+    // Workgroup code-review toolbar toggles. Per-session runtime flags,
+    // default off; written only when on so a plain session's arrangement
+    // doesn't grow. Restored in setContentsFromArrangement so the toggle
+    // (and its idle-driven behavior) survive a relaunch.
+    if (self.autoSendClippingsWhenIdle) {
+        result[SESSION_ARRANGEMENT_AUTO_SEND_CLIPPINGS_WHEN_IDLE] = @(YES);
+    }
+    if (self.autoRequestReviewWhenIdle) {
+        result[SESSION_ARRANGEMENT_AUTO_REQUEST_REVIEW_WHEN_IDLE] = @(YES);
+    }
+
+    // Inline AI chat gutter panel. Only meaningful when a chat is bound, so
+    // the visibility flag rides along with the id rather than being written
+    // unconditionally.
+    if (self.inlineChatID) {
+        result[SESSION_ARRANGEMENT_INLINE_CHAT_ID] = self.inlineChatID;
+        result[SESSION_ARRANGEMENT_INLINE_CHAT_VISIBLE] = @(self.inlineChatVisible);
+    }
 
     // Workgroup peer-group membership. The descriptor is opaque here:
     // iTermWorkgroupRestoration owns its schema and embeds the other
@@ -6754,6 +6976,14 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                                                    includeContents:includeContents];
     if (workgroupState) {
         result[SESSION_ARRANGEMENT_WORKGROUP] = workgroupState;
+    }
+
+    // The prompt the user last submitted in a code-review session. Not
+    // derivable from the workgroup config (which only has the raw command
+    // template), so persist it here; on restore a reload defaults to the
+    // user's edited prompt instead of the store default.
+    if (self.codeReviewLastUsedPrompt) {
+        result[SESSION_ARRANGEMENT_CODE_REVIEW_LAST_PROMPT] = self.codeReviewLastUsedPrompt;
     }
 
     NSString *pwd = [self currentLocalWorkingDirectory];
@@ -6839,6 +7069,18 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     } else {
         return arrangement[SESSION_UNIQUE_ID];
     }
+}
+
++ (NSString *)stableIDInArrangement:(NSDictionary *)arrangement {
+    // castFrom: guards a type-corrupted plist (e.g. a number under this key):
+    // the raw value must be a string before it crosses into canonical()'s
+    // nonnull String parameter, and validation on the way out means a malformed
+    // value falls back to the freshly-minted id rather than being adopted.
+    NSString *raw = [NSString castFrom:arrangement[SESSION_ARRANGEMENT_STABLE_ID]];
+    if (!raw) {
+        return nil;
+    }
+    return [iTermStableSessionID canonical:raw];
 }
 
 + (NSString *)initialWorkingDirectoryFromArrangement:(NSDictionary *)arrangement {
@@ -7016,9 +7258,26 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (void)setCurrentForegroundJobProcessInfo:(iTermProcessInfo *)processInfo {
-    DLog(@"%p set job name to %@", self, processInfo.name);
-    NSString *name = processInfo.name;
-    NSString *processTitle = processInfo.argv0 ?: name;
+    // processInfo is the deepest foreground job. It may be a helper that runs in
+    // the foreground process group but isn't actually attached to the terminal
+    // (e.g. an MCP server spawned by claude and piped to it, or caffeinate with
+    // its stdio sent to /dev/null). Prefer the deepest foreground job whose stdin
+    // or stdout is the session tty for the user-facing job name, the session icon,
+    // and auto profile switching, while still exposing the raw deepest job as
+    // iTermVariableKeySessionDeepestJob. The process cache derives the session's
+    // tty from the root pid and falls back to the raw deepest job (so this equals
+    // processInfo) when nothing is attached or the tty is unknown, e.g. remote
+    // sessions.
+    // For a tmux integration pane the pid tracked in the process cache is the tmux
+    // client process id, not _shell.pid, so use the same effective pid the icon
+    // path and the foreground-job ancestry use. Otherwise the cache lookup misses
+    // and the display job silently degrades to the raw deepest job for tmux panes.
+    const pid_t effectivePid = _shell.tmuxClientProcessID ? _shell.tmuxClientProcessID.intValue : _shell.pid;
+    iTermProcessInfo *displayInfo = [self.processInfoProvider displayForegroundJobForPid:effectivePid] ?: processInfo;
+    DLog(@"%p set jobName to %@ (pid %@); raw deepest/deepestJob is %@ (pid %@); root pid %@",
+         self, displayInfo.name, @(displayInfo.processID), processInfo.name, @(processInfo.processID), @(effectivePid));
+    NSString *name = displayInfo.name;
+    NSString *processTitle = displayInfo.argv0 ?: name;
 
     // This is a gross hack but I haven't found a nicer way to do it yet. When exec fails (or takes
     // enough time that we happen to poll it before exec finishes) then the job name is
@@ -7029,12 +7288,21 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
     [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionJob];
     [self.variablesScope setValue:processTitle forVariableNamed:iTermVariableKeySessionProcessTitle];
-    [self.variablesScope setValue:processInfo.commandLine forVariableNamed:iTermVariableKeySessionCommandLine];
-    [self.variablesScope setValue:@(processInfo.processID) forVariableNamed:iTermVariableKeySessionJobPid];
+    [self.variablesScope setValue:displayInfo.commandLine forVariableNamed:iTermVariableKeySessionCommandLine];
+    [self.variablesScope setValue:@(displayInfo.processID) forVariableNamed:iTermVariableKeySessionJobPid];
+
+    // Expose the raw deepest foreground job (which may be a non-interactive helper
+    // like an MCP server) for scripting. Apply the same iTermServer hack so it
+    // matches the historical jobName value during the exec window.
+    NSString *deepestName = processInfo.name;
+    if ([deepestName isEqualToString:@"iTermServer"] && ![[self.program lastPathComponent] isEqualToString:deepestName]) {
+        deepestName = self.program.lastPathComponent;
+    }
+    [self.variablesScope setValue:deepestName forVariableNamed:iTermVariableKeySessionDeepestJob];
 
     // Collect argv0 values from the foreground process up through its ancestors (deepest first),
-    // stopping before the login shell. This lets triggers and monitors match on the user's command
-    // (e.g. "claude") even when a child process (e.g. caffeinate) is the deepest foreground job.
+    // stopping before the login shell. This intentionally uses the raw deepest job so the full
+    // chain (including helpers like caffeinate) remains available to triggers and monitors.
     NSArray<NSString *> *ancestorNames = processInfo.foregroundJobAncestorNames;
     DLog(@"setCurrentForegroundJobProcessInfo: setting foreground job ancestors to %@ for trigger filtering", ancestorNames);
     [self applyForegroundJobAncestors:ancestorNames];
@@ -7045,7 +7313,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         [_naggingController removeTouchIDForSudoOffer];
     }
 
-    NSNumber *effectiveShellPID = _shell.tmuxClientProcessID ?: @(_shell.pid);
+    NSNumber *effectiveShellPID = @(effectivePid);
     if (!_exited) {
         if (effectiveShellPID.intValue > 0) {
             [self.variablesScope setValue:effectiveShellPID
@@ -7065,14 +7333,19 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             [self.delegate sessionProcessInfoProviderDidChange:self];
         }
     }
-    // Avoid join from side-effect.
+    // Avoid join from side-effect. Auto profile switching matches on the
+    // tty-attached job (the same value as iTermVariableKeySessionJob), so a
+    // foreground-group helper that isn't facing the terminal can't trigger a
+    // surprising profile switch.
+    NSString *displayJobName = name;
+    NSString *displayCommandLine = displayInfo.commandLine;
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf tryAutoProfileSwitchWithHostname:weakSelf.variablesScope.hostname
                                           username:weakSelf.variablesScope.username
                                               path:weakSelf.variablesScope.path
-                                               job:processInfo.name
-                                       commandLine:processInfo.commandLine];
+                                               job:displayJobName
+                                       commandLine:displayCommandLine];
     });
 }
 
@@ -8240,6 +8513,79 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     return [_view snapshot];
 }
 
+- (NSImage *)screenshotBackgroundSliceForRect:(NSRect)sliceRect ofTotalSize:(NSSize)totalSize {
+    if (sliceRect.size.width <= 0 || sliceRect.size.height <= 0 ||
+        totalSize.width <= 0 || totalSize.height <= 0) {
+        return nil;
+    }
+    // Force the fill opaque: a screenshot has nothing behind it, so transparency
+    // settings shouldn't leak into the saved file.
+    NSColor *backgroundColor = [[self processedBackgroundColor] colorWithAlphaComponent:1] ?: [NSColor blackColor];
+    // The slice image's coordinate space is local (origin at 0,0); sliceRect is expressed
+    // in the full screenshot's space (origin at bottom-left). localRect is the whole slice.
+    const NSRect localRect = NSMakeRect(0, 0, sliceRect.size.width, sliceRect.size.height);
+    NSImage *result = [[NSImage alloc] initWithSize:sliceRect.size];
+    [result lockFocus];
+    [backgroundColor set];
+    NSRectFillUsingOperation(localRect, NSCompositingOperationCopy);
+
+    iTermImageWrapper *backgroundImage = [self effectiveBackgroundImage];
+    if (backgroundImage) {
+        const iTermBackgroundImageMode mode = [self effectiveBackgroundImageMode];
+        if (mode == iTermBackgroundImageModeTile) {
+            // Tiling is independent of the window/screenshot size, so we draw it directly
+            // rather than via the helper (whose patterned-image cache would allocate a
+            // full-screenshot-size bitmap). The pattern phase keeps tiles continuous
+            // across slices/batches.
+            NSGraphicsContext *context = [NSGraphicsContext currentContext];
+            [context saveGraphicsState];
+            context.patternPhase = NSMakePoint(-sliceRect.origin.x, -sliceRect.origin.y);
+            [[NSColor colorWithPatternImage:backgroundImage.image] set];
+            NSRectFillUsingOperation(localRect, NSCompositingOperationSourceOver);
+            [context restoreGraphicsState];
+            // Blend the default background over the image, matching the live path.
+            [[backgroundColor colorWithAlphaComponent:1.0 - self.effectiveBlend] set];
+            NSRectFillUsingOperation(localRect, NSCompositingOperationSourceOver);
+        } else {
+            // Stretch / scale-aspect-fit / scale-aspect-fill: reuse the live drawing so the
+            // mode and blend match on screen. The image is laid out as though the pane were
+            // the full screenshot size; we translate so this slice lands at the origin. The
+            // helper draws the source image scaled into the slice, so memory stays bounded.
+            // A dedicated delegate forces transparency off so the image is opaque, matching
+            // the tile branch (the live _backgroundDrawingHelper would apply window
+            // transparency, washing the image toward the background color).
+            if (!_screenshotBackgroundDrawingHelper) {
+                _screenshotBackgroundDrawingDelegate = [[iTermScreenshotBackgroundDrawingDelegate alloc] init];
+                _screenshotBackgroundDrawingDelegate.session = self;
+                _screenshotBackgroundDrawingHelper = [[iTermBackgroundDrawingHelper alloc] init];
+                _screenshotBackgroundDrawingHelper.delegate = _screenshotBackgroundDrawingDelegate;
+            }
+            NSAffineTransform *transform = [NSAffineTransform transform];
+            [transform translateXBy:-sliceRect.origin.x yBy:-sliceRect.origin.y];
+            [transform concat];
+            const NSRect totalRect = NSMakeRect(0, 0, totalSize.width, totalSize.height);
+            NSView *scratch = [[NSView alloc] initWithFrame:totalRect];
+            [_screenshotBackgroundDrawingHelper drawBackgroundImageInView:scratch
+                                                                container:scratch
+                                                                dirtyRect:sliceRect
+                                                   visibleRectInContainer:totalRect
+                                                   blendDefaultBackground:YES
+                                                                     flip:NO
+                                                            virtualOffset:0];
+        }
+    }
+    [result unlockFocus];
+    return result;
+}
+
+- (NSData *)screenshotPNGData {
+    NSImage *image = [self terminalContentSnapshot];
+    if (!image) {
+        return nil;
+    }
+    return [iTermAnnotatedScreenshot pngDataFrom:image];
+}
+
 - (NSImage *)snapshotCenteredOn:(VT100GridAbsCoord)coord size:(NSSize)size {
     if (_screen.totalScrollbackOverflow > coord.y) {
         return nil;
@@ -8299,7 +8645,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 #pragma mark iTermMetalGlueDelegate
 
 - (iTermImageWrapper *)metalGlueBackgroundImage {
-    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+    if ([iTermPreferences perPaneBackgroundImage]) {
         return _backgroundImage;
     } else {
         return [self.delegate sessionBackgroundImage];
@@ -8307,7 +8653,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 }
 
 - (iTermBackgroundImageMode)metalGlueBackgroundImageMode {
-    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+    if ([iTermPreferences perPaneBackgroundImage]) {
         return _backgroundImageMode;
     } else {
         return [self.delegate sessionBackgroundImageMode];
@@ -8945,7 +9291,8 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 }
 
 - (void)launchCoprocessWithCommand:(NSString *)command mute:(BOOL)mute {
-    DLog(@"Launch coprocess with command %@. Mute=%@", command, @(mute));
+    // The coprocess command line can carry arguments/credentials; keep it out of the ring.
+    RLog(@"Launch coprocess with command %@. Mute=%@", RLogRedact(command, @(command.length)), @(mute));
     NSDictionary *env = [self environmentForNewJobFromEnvironment:self.environment
                                                     substitutions:self.substitutions
                                                       arrangement:nil
@@ -9562,6 +9909,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }];
 }
 
+- (void)addNoteToSelection {
+    [_textview addNote];
+}
+
 - (void)textViewToggleAnnotations {
     VT100GridCoordRange range =
     VT100GridCoordRangeMake(0,
@@ -9610,6 +9961,21 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         return;
     }
     [_conductor quit];
+}
+
+- (BOOL)textViewRemoteHostCanControlIterm2:(out BOOL *)available {
+    const BOOL isAvailable = (_conductor != nil && _conductor.it2ProxyActive);
+    if (available) {
+        *available = isAvailable;
+    }
+    return isAvailable && _conductor.it2AuthorizedByUser;
+}
+
+- (void)textViewToggleRemoteHostCanControlIterm2 {
+    if (!_conductor.it2ProxyActive) {
+        return;
+    }
+    [_conductor setIT2AuthorizationFromMenu:!_conductor.it2AuthorizedByUser];
 }
 
 
@@ -10533,6 +10899,60 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return accept;
 }
 
+- (BOOL)textViewSendTmuxControlModeKeyEvent:(NSEvent *)event {
+    // The pre-Cocoa hook runs before insertText:'s _exited guard, so drop keys
+    // for a dead pane here too (the gateway can outlive the pane, e.g. after
+    // cleanUpAfterBrokenPipe leaves tmuxMode set).
+    if (_exited) {
+        return NO;
+    }
+    // Only real tmux control-mode panes, and not while a conductor (ssh) owns
+    // keystrokes.
+    if (self.tmuxMode != TMUX_CLIENT || _conductor) {
+        return NO;
+    }
+    // On tmux < 3.2 (no extended-keys) send-keys by name collapses modified keys
+    // via legacy input_key (C-j -> 0x0a), losing the distinction the byte path
+    // preserves; keep the byte path there.
+    if (![[_tmuxController gateway] serverSupportsExtendedKeys]) {
+        return NO;
+    }
+    // Companion-injected keys track their emitted press through the byte path
+    // (_injectedKeyEmittedPress); leave them on it so key-up handling stays
+    // correct.
+    if (_injectingSynthesizedKey) {
+        return NO;
+    }
+    // Preserve broadcast semantics: when this keystroke would be broadcast to
+    // other sessions, fall back to the normal byte path (which handles
+    // broadcasting) rather than sending only to this pane.
+    if ([[_delegate realParentWindow] broadcastInputToSession:self fromSessionWithGUID:self.guid]) {
+        return NO;
+    }
+    // Only the modifyOtherKeys mappers (level 1 and 2) adopt the naming protocol,
+    // and deliberately so: their encoding is a fixed CSI-27 form that can mismatch
+    // the pane's negotiated extended-keys-format (the bug this fixes), so tmux
+    // must re-encode. The other mappers are intentionally left on the byte path
+    // because their bytes are already what the pane wants: iTermModernKeyMapper
+    // emits the kitty flags the app itself enabled, and iTermTermkeyKeyMapper
+    // emits the CSI-u form the profile selected -- injecting those verbatim is
+    // correct. If a new mapper has a format that can diverge from tmux, it should
+    // adopt iTermTmuxControlModeKeyNaming.
+    if (![_keyMapper conformsToProtocol:@protocol(iTermTmuxControlModeKeyNaming)]) {
+        return NO;
+    }
+    NSString *name = [(id<iTermTmuxControlModeKeyNaming>)_keyMapper tmuxControlModeKeyNameForEvent:event];
+    if (!name) {
+        return NO;
+    }
+    DLog(@"tmux -CC: send key event %@ as send-keys name %@ to pane %@", event, name, @(self.tmuxPane));
+    [[_tmuxController gateway] sendKeyName:name toWindowPane:self.tmuxPane];
+    // Match the normal TMUX_CLIENT write path's per-keystroke side effects, which
+    // the delegated send-keys path would otherwise skip.
+    [self didSendKeystrokeToTmuxClient];
+    return YES;
+}
+
 - (BOOL)shouldReportOrFilterKeystrokesForAPI {
     if (self.isTmuxClient && _tmuxPaused) {
         // This ignores the monitor filter and subscriptions because it might be the only way to
@@ -10904,7 +11324,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if (!action) {
         return;
     }
-    for (PTYSession *session in [PTYSession sessionsForActionApplyMode:action.applyMode focused:self]) {
+    // While injecting a synthesized key (companion keyboard) the phone targets one
+    // session, so don't let an action's apply-mode (all sessions / all-in-tab /
+    // broadcasting) fan the injected key out to other sessions - restrict to self.
+    NSArray<PTYSession *> *sessions =
+        _injectingSynthesizedKey ? @[ self ]
+                                 : [PTYSession sessionsForActionApplyMode:action.applyMode focused:self];
+    for (PTYSession *session in sessions) {
         [session reallyPerformKeyBindingAction:action event:event];
     }
 }
@@ -11265,7 +11691,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             PTYSession *session = self;
             for (iTermKeyBindingAction *subaction in [action.parameter keyBindingActionsFromSequenceParameter]) {
                 [session performKeyBindingAction:subaction event:event];
-                session = [[[iTermController sharedInstance] currentTerminal] currentSession] ?: self;
+                // Normally a sequence follows the focused session (a subaction may
+                // switch panes, and the next should type into the new one). But while
+                // injecting, the phone targets exactly one session: keep the whole
+                // sequence on it, or later subactions would run on the mac's focused
+                // session - the wrong target, and one where _injectingSynthesizedKey is
+                // clear so writes could broadcast.
+                if (!_injectingSynthesizedKey) {
+                    session = [[[iTermController sharedInstance] currentTerminal] currentSession] ?: self;
+                }
             }
             break;
         case KEY_ACTION_SWAP_WITH_NEXT_PANE:
@@ -11578,7 +12012,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     DLog(@"PTYSession keyDown not short-circuted by special handler");
     const NSEventModifierFlags mask = (NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagShift | NSEventModifierFlagControl);
 
-    if (!_screen.terminalSoftAlternateScreenMode &&
+    // The "movement keys scroll outside interactive apps" shortcut is meaningless for
+    // an injected (companion) key: a remote typist wants PageUp/Home/etc. delivered to
+    // the program, not consumed to scroll the mac's local text view. It also reads the
+    // mac's LIVE physical modifier state, which would be cross-talk between the phone's
+    // key and whatever the mac user is holding, so skip it entirely while injecting.
+    if (!_injectingSynthesizedKey &&
+        !_screen.terminalSoftAlternateScreenMode &&
         ([[iTermApplication sharedApplication] it_modifierFlags] & mask) == 0 &&
         [iTermProfilePreferences boolForKey:KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS inProfile:self.profile]) {
         switch (event.keyCode) {
@@ -11629,9 +12069,27 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if (_textview.keyboardHandler.performsTextReplacement) {
         [self performTextReplacement];
     }
+    // In a tmux -CC pane, hand a modifyOtherKeys "other key" to tmux by name so
+    // it re-encodes it in the pane's own extended-keys-format. This post-Cocoa
+    // site backstops keystrokes that never reach the pre-Cocoa hook: option-as-
+    // meta keys (keyMapperShouldBypassPreCocoaForEvent returns YES for them, so
+    // shouldSendEventToController routes them to the controller before the
+    // pre-Cocoa block runs), plus the marked-text and Bypass-Terminal cases where
+    // that block is skipped. Ctrl/Shift "other keys" are consumed at the pre-
+    // Cocoa hook and don't reach here.
+    if ([self textViewSendTmuxControlModeKeyEvent:event]) {
+        return;
+    }
     NSData *const dataToSend = [_keyMapper keyMapperDataForPostCocoaEvent:event];
     DLog(@"dataToSend=%@", dataToSend);
     if (dataToSend) {
+        if (_injectingSynthesizedKey) {
+            // Record that this injected keyDown produced a real press, so injection
+            // knows whether a matching key-up is warranted.
+            _injectedKeyEmittedPress = YES;
+        }
+        // Broadcast suppression during injection is enforced centrally in
+        // -writeTask:encoding:forceEncoding:canBroadcast:reporting:.
         [self writeLatin1EncodedData:dataToSend broadcastAllowed:YES reporting:NO];
     }
 }
@@ -11678,6 +12136,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if (_screen.terminalReportKeyUp || _keyMapper.keyMapperWantsKeyUp) {
         NSData *const dataToSend = [_keyMapper keyMapperDataForKeyUp:event];
         if (dataToSend) {
+            // Broadcast suppression during injection is enforced centrally in
+            // -writeTask:encoding:forceEncoding:canBroadcast:reporting:.
             [self writeLatin1EncodedData:dataToSend broadcastAllowed:YES reporting:NO];
         }
     }
@@ -11757,10 +12217,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 
     if (self.filter.length) {
-        DLog(@"stopFiltering");
+        RLog(@"stopFiltering");
         [self stopFiltering];
     } else {
-        DLog(@"Unzooming");
+        RLog(@"Unzooming");
         [[_delegate realParentWindow] replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
     }
     return YES;
@@ -11898,6 +12358,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return [[self _keyBindingActionForEvent:event] isActionable];
 }
 
+- (BOOL)keyMapsToBypassActionForEvent:(NSEvent *)event {
+    return [self _keyBindingActionForEvent:event].keyAction == KEY_ACTION_BYPASS;
+}
+
 - (BOOL)shouldRespectTerminalMetaSendsEscape {
     if (![iTermAdvancedSettingsModel supportDecsetMetaSendsEscape]) {
         return NO;
@@ -12003,6 +12467,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 // Pastes the current string in the clipboard. Uses the sender's tag to get flags.
+// See -[iTermPasteHelper pasteLiteralString:afterDelay:].
+- (void)pasteLiteralString:(NSString *)string afterDelay:(NSTimeInterval)delay {
+    [_pasteHelper pasteLiteralString:string afterDelay:delay];
+}
+
 - (void)paste:(id)sender {
     DLog(@"PTYSession paste:");
 
@@ -12092,7 +12561,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         _backgroundDrawingHelper = [[iTermBackgroundDrawingHelper alloc] init];
         _backgroundDrawingHelper.delegate = self;
     }
-    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+    if ([iTermPreferences perPaneBackgroundImage]) {
         NSRect contentRect = self.view.contentRect;
         if (contentRect.size.width == 0 ||
             contentRect.size.height == 0) {
@@ -12108,7 +12577,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     } else {
         NSView *container = [self.delegate sessionContainerView:self];
         NSRect visibleRect = view.enclosingScrollView.documentVisibleRect;
-        const CGFloat marginHeight = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+        const CGFloat marginHeight = [iTermPreferences topBottomMargins];
         visibleRect.origin.y -= marginHeight;
         NSRect clippedDirtyRect = NSIntersectionRect(dirtyRect, visibleRect);
         NSRect windowVisibleRect = [self.view insetRect:container.bounds
@@ -12126,7 +12595,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (CGRect)textViewRelativeFrame {
-    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+    if ([iTermPreferences perPaneBackgroundImage]) {
         return CGRectMake(0, 0, 1, 1);
     }
     NSRect viewRect;
@@ -12144,7 +12613,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (CGRect)textViewContainerRect {
-    if ([iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+    if ([iTermPreferences perPaneBackgroundImage]) {
         return self.view.frame;
     }
     NSView *container = [self.delegate sessionContainerView:self];
@@ -12186,7 +12655,17 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     }
 }
 
+- (NSTimeInterval)timeSinceScreenContentsLastChanged {
+    return [NSDate it_timeSinceBoot] - _lastScreenContentsChangeTime;
+}
+
+- (NSTimeInterval)screenContentsLastChangedAt {
+    return _lastScreenContentsChangeTime;
+}
+
 - (void)textViewDidFindDirtyRects {
+    _lastScreenContentsChangeTime = [NSDate it_timeSinceBoot];
+    _screenContentsHaveEverChanged = YES;
     if (_updateSubscriptions.count) {
         ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
         notification.screenUpdateNotification = [[[ITMScreenUpdateNotification alloc] init] autorelease];
@@ -12455,6 +12934,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return _locked;
 }
 
+- (BOOL)textViewWindowIsLayoutLocked {
+    return [[_delegate realParentWindow] layoutLocked];
+}
+
 - (void)setLocked:(BOOL)locked {
     if (_locked == locked) {
         return;
@@ -12491,6 +12974,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)textViewDidBecomeFirstResponder {
     DLog(@"textViewDidBecomeFirstResponder for %@", self);
+    [[iTermInputSourceForcer sharedInstance] forceKeyboardForSessionIfNeeded:self];
     [self notifyActive];
 }
 
@@ -12804,6 +13288,173 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return NO;
 }
 
+- (BOOL)scrollWheelReportingEnabled {
+    // Mirror the full gate the live scroll-report path enforces
+    // (PTYMouseHandler.terminalWantsMouseReports plus its wheel sub-gate),
+    // not just the program's requested mode. Otherwise the orchestrator
+    // would advertise mouse_reporting:true and inject scroll bytes even
+    // when the user has turned reporting off in their profile, bypassing
+    // the consent the real wheel path honors.
+    //
+    //   1. xtermMouseReporting: the profile's "Enable mouse reporting"
+    //      setting (KEY_XTERM_MOUSE_REPORTING) and its
+    //      restrict-to-alternate-screen rule. NO means the user opted out.
+    //   2. xtermMouseReportingAllowMouseWheel: the separate "report mouse
+    //      wheel events" sub-setting.
+    //   3. a mouse mode that actually reports the wheel. Highlight-tracking
+    //      mode (1001) reports selection clicks but never scroll, so it's
+    //      excluded just like in terminalWantsMouseReports.
+    if (!self.xtermMouseReporting) {
+        return NO;
+    }
+    if (!self.xtermMouseReportingAllowMouseWheel) {
+        return NO;
+    }
+    switch (_screen.terminalMouseMode) {
+        case MOUSE_REPORTING_NORMAL:
+        case MOUSE_REPORTING_BUTTON_MOTION:
+        case MOUSE_REPORTING_ALL_MOTION:
+            return YES;
+        case MOUSE_REPORTING_NONE:
+        case MOUSE_REPORTING_HIGHLIGHT:
+            return NO;
+    }
+    return NO;
+}
+
+- (void)injectSynthesizedKeyEvent:(NSEvent *)event literalText:(NSString *)literalText {
+    if (_exited) {
+        DLog(@"injectSynthesizedKeyEvent: session already dead");
+        return;
+    }
+    if (!event) {
+        return;
+    }
+    // A browser session has no PTY. The mapped path would hit regularKeyDown's browser
+    // guard and drop the key, but the literal path would write raw bytes into the
+    // browser view, so guard here uniformly so the two paths can't diverge if a browser
+    // session ever becomes an injection target.
+    if (_view.isBrowser) {
+        DLog(@"injectSynthesizedKeyEvent: browser session, ignoring");
+        return;
+    }
+    // Gate exactly like a physical keystroke, via the same entry point the real key
+    // path uses (textViewShouldAcceptKeyDownEvent:): keystroke monitors, copy/session
+    // mode, tmux unpause, paste-abort, PLUS the responsive-keystroke cadence boost and
+    // selected-command-range clearing. If the gate consumes the event (it drove copy
+    // mode, unpaused tmux, was filtered by a monitor, etc.), don't also send it to the
+    // shell. Both the mapped and the literal path go through this gate so ASCII and
+    // non-ASCII phone input behave identically.
+    //
+    // Known tradeoff: this gate consults Mac-LOCAL state. If the Mac operator has a
+    // selection up with copy-mode-on-selection enabled, an injected key can auto-enter
+    // copy mode and be swallowed with no signal to the remote typist. That is the price
+    // of "gate exactly like a physical key"; treated as acceptable for now.
+    if (![self textViewShouldAcceptKeyDownEvent:event]) {
+        return;
+    }
+    // The flag suppresses broadcast to other split panes for the duration, since the
+    // phone targets one specific session. Save/restore in @finally rather than a bare
+    // assignment so a bound action that raises an exception can't leak the flag YES
+    // (which would silently disable broadcast for real keys in this pane afterward);
+    // save/restore (not clear-to-NO) also keeps a re-entrant injection correct.
+    const BOOL previouslyInjecting = _injectingSynthesizedKey;
+    const BOOL previouslyEmittedPress = _injectedKeyEmittedPress;
+    _injectingSynthesizedKey = YES;
+    _injectedKeyEmittedPress = NO;
+    @try {
+        if (literalText.length > 0) {
+            // A character with no single-keystroke mapping on the mac's layout (accented
+            // letter, emoji, dead-key result). Its fallback key code would be mis-encoded
+            // by the CSI-u key mapper, so write the correct character literally - but
+            // through the same broadcast-suppressed, already-gated path as the mapped keys.
+            [self writeTaskNoBroadcast:literalText];
+        } else {
+            // Route through the real key-down path so profile key bindings (e.g. Delete
+            // sends ^H, remapped keys), the browser guard, and the session's key mapper
+            // all apply exactly as for a physical press.
+            //
+            // Known tradeoff: broadcast suppression relies on _injectingSynthesizedKey
+            // being YES for the SYNCHRONOUS duration here. A bound paste-style action
+            // (KEY_ACTION_PASTE_*, SEND_SNIPPET routed through the paste helper) delivers
+            // its bytes in later runloop chunks, after the flag is restored, so those
+            // chunks are not broadcast-suppressed. Rare (injected key must be bound to a
+            // paste action AND broadcast-input on); a dedicated no-broadcast paste path
+            // would be needed to fully close it.
+            [self keyDown:event];
+            // A phone tap is a discrete press-and-release. When the program asked to see
+            // key releases (the Kitty "report all event types" enhancement, or DECSET
+            // key-up reporting), deliver the matching key-up - but ONLY if the keyDown
+            // actually produced a press. A keyDown consumed by a binding/handler/copy
+            // mode emitted no press, so a key-up here would be an orphan release. Modifier
+            // dead-keys ride on the key event's flags rather than as separate modifier
+            // press/release events, which the phone cannot produce.
+            if (_injectedKeyEmittedPress &&
+                (_keyMapper.keyMapperWantsKeyUp || _screen.terminalReportKeyUp)) {
+                NSEvent *keyUp = [NSEvent keyEventWithType:NSEventTypeKeyUp
+                                                  location:event.locationInWindow
+                                             modifierFlags:event.modifierFlags
+                                                 timestamp:event.timestamp
+                                              windowNumber:event.windowNumber
+                                                   context:nil
+                                                characters:event.characters
+                               charactersIgnoringModifiers:event.charactersIgnoringModifiers
+                                                 isARepeat:NO
+                                                   keyCode:event.keyCode];
+                [self keyUp:keyUp];
+            }
+        }
+    } @finally {
+        _injectingSynthesizedKey = previouslyInjecting;
+        _injectedKeyEmittedPress = previouslyEmittedPress;
+    }
+}
+
+- (BOOL)reportScrollWheelForOrchestratorUp:(BOOL)up lines:(NSInteger)lines {
+    // Gate on the shared scroll-capable predicate so the bytes we'd send
+    // are actually understood by the program. Without scroll reporting
+    // there's nothing meaningful to send.
+    if (!self.scrollWheelReportingEnabled) {
+        return NO;
+    }
+    VT100Output *output = _screen.terminalOutput;
+    if (!output) {
+        return NO;
+    }
+    // Bound the repeat count: a runaway value would flood the program
+    // with reports. 256 notches is far more than any real history view
+    // needs and matches the spirit of the 32-step cap on live scrolls.
+    const NSInteger steps = MAX(1, MIN(256, lines));
+    // iTerm's MOUSE_BUTTON_SCROLL{UP,DOWN} names track the sign of the
+    // scroll-wheel *delta*, not the direction the content moves.
+    // MOUSE_BUTTON_SCROLLDOWN (4) encodes to xterm SGR button 64, which
+    // pagers and TUIs read as "scroll back" (reveal OLDER content above);
+    // MOUSE_BUTTON_SCROLLUP (5) encodes to SGR 65 = "scroll forward"
+    // (newer content below). So revealing older content (up==YES) means
+    // SCROLLDOWN. This matches the live scroll path in PTYMouseHandler.m,
+    // where scrollingDeltaY>0 maps to MOUSE_BUTTON_SCROLLDOWN. Getting it
+    // backwards sends a forward-scroll that does nothing when the view is
+    // already at the bottom, which is exactly the no-op the orchestrator hit.
+    const int button = up ? MOUSE_BUTTON_SCROLLDOWN : MOUSE_BUTTON_SCROLLUP;
+    // Report the scroll over the middle of the grid. Apps that key off
+    // pointer location (panes, scroll regions) then treat it as a scroll
+    // over the main content area rather than an edge. mousePress: adds 1
+    // to translate to the 1-based wire coordinates.
+    const int width = _screen.width;
+    const int height = _screen.height;
+    const VT100GridCoord coord = VT100GridCoordMake(MAX(0, width / 2),
+                                                    MAX(0, height / 2));
+    NSData *data = [output mousePress:button
+                       withModifiers:0
+                                  at:coord
+                               point:NSMakePoint(coord.x, coord.y)];
+    if (!data) {
+        return NO;
+    }
+    [self writeMouseReport:[data it_repeated:steps]];
+    return YES;
+}
+
 - (void)writeMouseReport:(NSData *)data {
     if ([iTermAdvancedSettingsModel autodetectMouseReportingStuck] &&
         ![iTermAdvancedSettingsModel noSyncNeverAskAboutMouseReportingFrustration] &&
@@ -13048,11 +13699,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (BOOL)textViewSessionIsLinkedToAIChat {
-    return [iTermChatDatabase chatIDsForSession:_guid].count > 0;
+    // Pass both ids so the lookup is a plain map hit, not a session-tree walk
+    // (this runs on the draw path via configureIndicatorsHelperWithRightMargin).
+    return [iTermChatDatabase chatIDsForSessionGuid:_guid stableID:self.stableID].count > 0;
 }
 
 - (BOOL)textViewSessionIsStreamingToAIChat {
-    return [[iTermChatWindowController instanceIfExists] isStreamingToGuid:self.guid];
+    return [[iTermChatWindowController instanceIfExists] isStreamingToGuid:self.guid
+                                                                  stableID:self.stableID];
 }
 
 - (BOOL)textViewSessionHasChannelParent {
@@ -13090,7 +13744,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     const CGFloat desiredHeight = _textview.desiredHeight;
     if (fabs(desiredHeight - NSHeight(frame)) >= 0.5) {
         // Update the wrapper's size, which in turn updates textview's size.
-        frame.size.height = desiredHeight + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];  // The wrapper is always larger by VMARGIN.
+        frame.size.height = desiredHeight + [iTermPreferences topBottomMargins];  // The wrapper is always larger by VMARGIN.
         _wrapper.frame = [self safeFrameForWrapperViewFrame:frame];
 
         AccLog(@"Post notification: row count changed (PTYSession)");
@@ -13784,8 +14438,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         minX = hasWindow ? windowedRange.columnWindow.location : 0;
         maxX = hasWindow ? (windowedRange.columnWindow.location + windowedRange.columnWindow.length) : _screen.width;
     }
-    const int hmargin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
-    const int vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const int hmargin = [iTermPreferences sideMargins];
+    const int vmargin = [iTermPreferences topBottomMargins];
     const int rows = visibleRange.end.y - visibleRange.start.y + 1;
     const VT100GridSize gridSize = VT100GridSizeMake(maxX - minX, rows);
     const CGFloat cellWidth = [_textview charWidth];
@@ -13909,7 +14563,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)bury {
-    DLog(@"Bury %@", self);
+    RLog(@"Bury %@", self);
     if (_synthetic) {
         DLog(@"Attempt to bury while synthetic");
         return;
@@ -14015,7 +14669,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)uploadFiles:(NSArray *)localFilenames toPath:(SCPPath *)destinationPath
 {
-    DLog(@"uploadFiles:%@ toPath:%@", localFilenames, destinationPath.path);
+    RLog(@"uploadFiles:%@ toPath:%@", RLogRedact(localFilenames, @(localFilenames.count)), RLogRedact(destinationPath.path, @(destinationPath.path.length)));
 
     SCPFile *previous = nil;
     for (NSString *file in localFilenames) {
@@ -14508,6 +15162,54 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         columns = windowSize.width;
     }
     [_delegate sessionInitiatedResize:self width:columns height:rows];
+}
+
+- (BOOL)companionSessionCanResizeWindow {
+    id<WindowControllerInterface> window = [_delegate parentWindow];
+    if (!window) {
+        return NO;
+    }
+    // A resize request is ignored in full screen (see sessionInitiatedResize:).
+    if ([window anyFullScreen]) {
+        return NO;
+    }
+    // A width-locked session (e.g. the "lock" affordance) refuses column changes.
+    if (_view.preferredWidth != nil) {
+        return NO;
+    }
+    // Freely-resizable and edge-attached window styles can be resized. Normal
+    // styles resize to an arbitrary grid; edge-attached styles (by percentage or
+    // by cells) lock the attached dimension but are already manually resizable in
+    // the free dimension, so the phone may resize them too and the window
+    // controller clamps the locked dimension exactly as it does for a manual drag.
+    // Maximized styles are fixed to the screen and full-screen styles do not
+    // resize at all.
+    // windowType lives on the iTermWindowController sub-protocol; parentWindow is
+    // declared as the narrower WindowControllerInterface but is always a real
+    // window controller, so downcast to read it.
+    switch (iTermThemedWindowType([(id<iTermWindowController>)window windowType])) {
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_COMPACT:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+        case WINDOW_TYPE_ACCESSORY:
+        case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_TOP_PERCENTAGE:
+        case WINDOW_TYPE_BOTTOM_PERCENTAGE:
+        case WINDOW_TYPE_LEFT_PERCENTAGE:
+        case WINDOW_TYPE_RIGHT_PERCENTAGE:
+        case WINDOW_TYPE_TOP_CELLS:
+        case WINDOW_TYPE_BOTTOM_CELLS:
+        case WINDOW_TYPE_LEFT_CELLS:
+        case WINDOW_TYPE_RIGHT_CELLS:
+            return YES;
+
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            return NO;
+    }
+    return NO;
 }
 
 - (VT100GridSize)windowSizeInCells {
@@ -15070,12 +15772,104 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self.textview refuseFirstResponderAtCurrentMouseLocation];
 }
 
+// Switch the workgroup peer switcher to show this session in the pane it
+// shares with its siblings, if it isn't already the active peer. This is the
+// peer-swap portion of -reveal and nothing else: it does NOT order the window
+// front, activate the app, disinter a buried session, or change the selected
+// tab. The swapped-in view becomes visible only if its tab is already the
+// foreground one; otherwise the switch is silent until the user visits that
+// tab. Used by the workgroup auto-request-review / auto-send-clippings paths,
+// which want the switcher to follow the active side within the shared pane
+// without yanking the user's window, tab, or app focus around.
+- (void)revealAsPeerWithoutActivatingWindow {
+    PTYSessionPeerPort *port = self.peerPort;
+    NSString *portIdentifier = [port identifierForSession:self];
+    if (port && portIdentifier && port.activeSession != self) {
+        RLog(@"Switch peer switcher to %@ without activating window/tab/app", portIdentifier);
+        [port activateIdentifier:portIdentifier];
+    }
+}
+
 - (void)reveal {
-    DLog(@"Reveal session %@", self);
+    RLog(@"Reveal session %@", self);
     if ([[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:self]) {
         DLog(@"disinter");
         [[iTermBuriedSessions sharedInstance] restoreSession:self];
     }
+
+    // If this session is a non-visible workgroup peer, its view isn't
+    // in the splitview — setActiveSessionPreservingMaximization can't
+    // do the right thing. Route through the peer port instead, which
+    // swaps this peer's view in, buries the previously-active sibling,
+    // and sets the active session for us. The swap must happen BEFORE
+    // the window-focus logic below: a non-visible peer has no delegate
+    // until it's swapped in, so focusing first would resolve a nil
+    // window (clobbering the current terminal with nil) and leave the
+    // swapped-in peer sitting in a background window.
+    BOOL activatedViaPort = NO;
+    PTYSessionPeerPort *port = self.peerPort;
+    NSString *portIdentifier = [port identifierForSession:self];
+    if (port && portIdentifier && port.activeSession != self) {
+        DLog(@"Activate peer %@ via port", portIdentifier);
+        // activateIdentifier: restores the group's buried anchor
+        // itself if the user buried its only in-tab member, so no
+        // pre-call is needed here.
+        activatedViaPort = [port activateIdentifier:portIdentifier];
+        if (!activatedViaPort) {
+            DLog(@"Port refused to activate %@", portIdentifier);
+        }
+    }
+    // NOT gated on !activatedViaPort: this session is realized (the
+    // port only yields fulfilled members), so the swap — or its silent
+    // decline — already happened synchronously inside the activate
+    // above. If _delegate is still nil here, no asynchronous swap is
+    // coming, and skipping the rescue because activate reported
+    // "success" would make the FIRST click on a declined-swap peer a
+    // silent no-op (only a second click, with activeSession == self by
+    // then, would reach this block).
+    if (port && portIdentifier && !_delegate &&
+        ![[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:self]) {
+        if ([port hasRestorableAnchor]) {
+            // A sibling still anchors the group's pane — either it has
+            // a live delegate (a silently-declined swap: PTYTab refuses
+            // while a session-initiated resize holds the lock, or for
+            // tmux clients) or it is buried and restorable. Retry the
+            // swap: activateIdentifier: disinters a buried anchor first
+            // and then swaps. Reviving instead would put two members of
+            // one peer group on screen at once (the windowless one in a
+            // fresh window plus the sibling once it's restored).
+            DLog(@"Retry swap of %@ into the group's anchored pane", portIdentifier);
+            activatedViaPort = [port activateIdentifier:portIdentifier];
+        } else {
+            // Registry-only workgroup member: in no tab, not buried
+            // (born-buried peers are never registered in
+            // iTermBuriedSessions), and the whole group is windowless
+            // so there is no pane to swap into. The session is still
+            // findable (the lookup's workgroup-registry pass), so a
+            // Session Status click can land here; surfacing it
+            // requires giving it a window.
+            DLog(@"Revive windowless workgroup member %@", self.guid);
+            [self disinter];
+            [[iTermController sharedInstance] reviveSessionIntoWindow:self];
+            if (_delegate && port.activeSession != self) {
+                // Re-run the port activation so activeSessionIdentifier
+                // and the mode switchers reflect the revived member.
+                activatedViaPort = [port activateIdentifier:portIdentifier];
+            }
+        }
+    }
+    if (activatedViaPort && !_delegate) {
+        // The activation committed but the swap never took effect, even
+        // after the rescue retry — a persistently-declining swap (tmux
+        // client, or a resize lock still held this runloop). There is
+        // nothing to focus or select; treat the reveal as failed
+        // instead of stealing app focus for an invisible session. The
+        // rescue block above is not gated on the already-active check,
+        // so a later click retries once the decline clears.
+        DLog(@"Reveal of %@ failed: the swap never took effect", self.guid);
+        return;
+    }
+
     NSWindowController<iTermWindowController> *terminal = [_delegate realParentWindow];
     iTermController *controller = [iTermController sharedInstance];
     BOOL okToActivateApp = YES;
@@ -15085,31 +15879,30 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         iTermProfileHotKey *hotKey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:(PseudoTerminal *)terminal];
         [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:hotKey url:nil];
         okToActivateApp = (hotKey.hotkeyWindowType != iTermHotkeyWindowTypeFloatingPanel);
-    } else {
+    } else if (terminal) {
         DLog(@"Making window current");
         [controller setCurrentTerminal:(PseudoTerminal *)terminal];
         DLog(@"Making window key and ordering front");
         [[terminal window] makeKeyAndOrderFront:self];
+    } else {
+        // Still no window (e.g. an unfulfilled peer spawn was
+        // activated, so the swap is deferred). Don't pass nil to
+        // setCurrentTerminal: — that clobbers the front-terminal state.
+        DLog(@"No window to focus for %@", self);
     }
     if (okToActivateApp) {
         DLog(@"Activate the app");
         [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     }
 
-    // If this session is a non-visible workgroup peer, its view isn't
-    // in the splitview — setActiveSessionPreservingMaximization can't
-    // do the right thing. Route through the peer port instead, which
-    // swaps this peer's view in and burying the previously-active
-    // sibling. The port's sessionActivate then sets the active session
-    // for us, so don't fall through to the plain setActiveSession path.
-    PTYSessionPeerPort *port = self.peerPort;
-    if (port && port.activeSession != self) {
-        NSString *identifier = [port identifierForSession:self];
-        if (identifier) {
-            DLog(@"Activate peer %@ via port", identifier);
-            [port activateIdentifier:identifier];
-            return;
-        }
+    if (activatedViaPort) {
+        // The port's sessionActivate already set the active session;
+        // just bring its tab forward. Select the tab even for hotkey
+        // windows so a notification click from a background tab surfaces
+        // the source tab and pane (Issue 12902).
+        DLog(@"Selecting tab from delegate %@", _delegate);
+        [_delegate sessionSelectContainingTab];
+        return;
     }
 
     DLog(@"Make this session active in delegate %@", _delegate);
@@ -15120,10 +15913,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     // -[iTermFocusOrder setNeedsUpdate]), so the destination window's
     // previously-active sibling is never stamped.
     [_delegate setActiveSessionPreservingMaximization:self];
-    if (!isHotKey) {
-        DLog(@"Selecting tab from delegate %@", _delegate);
-        [_delegate sessionSelectContainingTab];
-    }
+    // Select the tab even for hotkey windows so a notification click
+    // from a background tab surfaces the source tab and pane, instead of
+    // leaving the previously-selected tab in front (Issue 12902).
+    DLog(@"Selecting tab from delegate %@", _delegate);
+    [_delegate sessionSelectContainingTab];
 }
 
 - (void)revealSelection:(iTermSelection *)selection {
@@ -15165,14 +15959,22 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     self.alertOnNextMark = NO;
     NSString *action = [iTermApplication.sharedApplication delegate].markAlertAction;
     if ([action isEqualToString:kMarkAlertActionPostNotification]) {
+        NSString *markDescription = [NSString stringWithFormat:@"Session %@ #%d had a mark set.",
+                                     [[self name] removingHTMLFromTabTitleIfNeeded],
+                                     [_delegate tabNumber]];
         [[iTermNotificationController sharedInstance] notify:@"Mark Set"
-                                             withDescription:[NSString stringWithFormat:@"Session %@ #%d had a mark set.",
-                                                              [[self name] removingHTMLFromTabTitleIfNeeded],
-                                                              [_delegate tabNumber]]
+                                             withDescription:markDescription
                                                  windowIndex:[self screenWindowIndex]
                                                     tabIndex:[self screenTabIndex]
                                                    viewIndex:[self screenViewIndex]
                                                       sticky:YES];
+        // Mirror to the paired iPhone when this profile opted in (the bridge is a
+        // no-op unless a revision-2 phone is paired and can be notified).
+        if ([iTermProfilePreferences boolForKey:KEY_SEND_ALERTS_TO_COMPANION inProfile:self.profile]) {
+            [iTermCompanionAlertBridge postTerminalAlertWithTitle:@"Mark Set"
+                                                             body:markDescription
+                                                        threadKey:self.stableID];
+        }
         completion();
         return;
     }
@@ -15504,7 +16306,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (void)screenWillReceiveFileNamed:(NSString *)filename ofSize:(NSInteger)size preconfirmed:(BOOL)preconfirmed {
     [self.download stop];
     [self.download endOfData];
-    self.download = [[[TerminalFileDownload alloc] initWithName:filename size:size] autorelease];
+    self.download = [[[TerminalFileDownload alloc] initWithName:filename size:size window:_view.window] autorelease];
     self.download.preconfirmed = preconfirmed;
     [self.download download];
 }
@@ -16747,17 +17549,32 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)screenSetPointerShape:(NSString *)pointerShape {
     NSDictionary *cursors = @{
-        @"X_cursor": ^{ return [NSCursor arrowCursor]; },
+        @"X_cursor": ^{ return [NSCursor operationNotAllowedCursor]; },
         @"arrow": ^{ return[NSCursor arrowCursor]; },
         @"based_arrow_down": ^{ return[NSCursor resizeDownCursor]; },
         @"based_arrow_up": ^{ return[NSCursor resizeUpCursor]; },
         @"cross": ^{ return[NSCursor crosshairCursor]; },
         @"cross_reverse": ^{ return[NSCursor crosshairCursor]; },
         @"crosshair": ^{ return[NSCursor crosshairCursor]; },
+        @"fleur": ^{ return[NSCursor openHandCursor]; },
         @"hand1": ^{ return[NSCursor pointingHandCursor]; },
         @"hand2": ^{ return[NSCursor pointingHandCursor]; },
         @"left_ptr": ^{ return[NSCursor arrowCursor]; },
         @"left_side": ^{ return[NSCursor resizeLeftCursor]; },
+        @"minus": ^{
+            if (@available(macOS 15.0, *)) {
+                return [NSCursor zoomOutCursor];
+            } else {
+                return [NSCursor crosshairCursor];
+            }
+        },
+        @"plus": ^{
+            if (@available(macOS 15.0, *)) {
+                return [NSCursor zoomInCursor];
+            } else {
+                return [NSCursor crosshairCursor];
+            }
+        },
         @"right_side": ^{ return[NSCursor resizeRightCursor]; },
         @"sb_h_double_arrow": ^{ return[NSCursor resizeLeftRightCursor]; },
         @"sb_left_arrow": ^{ return[NSCursor resizeLeftCursor]; },
@@ -16765,6 +17582,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         @"sb_up_arrow": ^{ return[NSCursor resizeUpCursor]; },
         @"sb_v_double_arrow": ^{ return[NSCursor resizeUpDownCursor]; },
         @"tcross": ^{ return[NSCursor crosshairCursor]; },
+        @"watch": ^{ return[NSCursor arrowCursor]; },
         @"xterm": ^{ return [iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]; },
     };
     NSCursor *(^f)(void) = cursors[pointerShape];
@@ -18476,13 +19294,18 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)unhookSSHConductor {
-    DLog(@"Unhook %@", _conductor);
+    RLog(@"Unhook %@", _conductor);
     [self conductorWillDie];
     NSDictionary *config = _conductor.terminalConfiguration;
     if (config) {
         [_screen restoreSavedState:config];
     }
     if (_conductor) {
+        // Dismiss any pending it2 auth prompt while the delegate is still live (covers
+        // conductorQuit / conductorAbortWithReason and the root-recovery unhook loop);
+        // otherwise the announcement lingers pointing at a released conductor. Idempotent
+        // and a no-op when no prompt is pending.
+        [_conductor resolveIT2AuthorizationFailClosed];
         [self removeChannelClientsForConductor:_conductor];
         _conductor.delegate = nil;
         [_conductor autorelease];
@@ -18531,6 +19354,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)screenDidTerminateSSHProcess:(int)pid code:(int)code depth:(int)depth {
     [_conductor handleTerminatePID:pid withCode:code depth:depth];
+}
+
+- (void)screenHandleIT2:(NSString *)string depth:(int)depth {
+    if (!string) {
+        return;
+    }
+    [_conductor handleIT2:string depth:depth];
 }
 
 - (NSInteger)screenEndSSH:(NSString *)uniqueID {
@@ -18588,6 +19418,19 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)screenBeginFramerRecovery:(int)parentDepth {
+    // Preserve the it2 proxy state (nonce/socket/authorization) of the conductor being
+    // recovered so it carries into the shim below. For a root single-hop recovery the
+    // old conductor is unhooked (and released) before the shim exists, so retain it
+    // across that teardown; for nested recovery it becomes the shim's parent.
+    iTermConductor *recovering = [_conductor retain];
+    // Dismiss any it2 auth prompt for the retiring conductor WHILE its delegate is still
+    // live. unhookSSHConductor does resolve the prompt too, but it nils the delegate on
+    // the way, and it only runs on the root (parentDepth < 0) path's loop -- the nested
+    // path keeps the old conductor as parent and never unhooks it. So resolve here,
+    // before the loop, to cover the nested path and to run before the delegate is cleared.
+    // persist:false, so this does not touch it2Authorized and is safe before adopt (which
+    // carries any decided grant); an undecided prompt re-appears on the next command.
+    [recovering resolveIT2AuthorizationFailClosed];
     if (parentDepth < 0) {
         while (_conductor) {
             [self unhookSSHConductor];
@@ -18603,6 +19446,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                              initialDirectory:nil
                  shouldInjectShellIntegration:NO
                                        parent:previousConductor];
+    [_conductor adoptIT2RecoveryStateFrom:recovering];
+    [recovering release];
     [self updateVariablesFromConductor];
     _conductor.delegate = self;
     [_conductor startRecovery];
@@ -18614,6 +19459,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (!recovery) {
         return nil;
     }
+    // Dismiss any pending it2 auth prompt while the delegate is still live (deinit fulfills
+    // the seal but cannot dismiss the announcement). The recovery shim usually has no
+    // prompt, but close the gap so a released conductor never leaves a live announcement.
+    [_conductor resolveIT2AuthorizationFailClosed];
     _conductor.delegate = nil;
     [_conductor autorelease];
     _conductor = [[iTermConductor alloc] initWithRecovery:recovery];
@@ -19574,11 +20423,15 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (BOOL)sessionViewShouldDimOnlyText {
-    return [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
+    return [iTermPreferences dimOnlyText];
 }
 
 - (NSColor *)sessionViewTabColor {
     return self.tabColor;
+}
+
+- (BOOL)sessionViewTabHasMultipleDistinctTabColors {
+    return [self.delegate sessionTabHasMultipleDistinctTabColors];
 }
 
 - (BOOL)sessionViewUseActivePaneBorder {
@@ -19612,7 +20465,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (CGFloat)sessionViewDesiredHeightOfDocumentView {
-    return _textview.desiredHeight + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    return _textview.desiredHeight + [iTermPreferences topBottomMargins];
 }
 
 - (BOOL)sessionViewShouldUpdateSubviewsFramesAutomatically {
@@ -19711,7 +20564,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     const int cy = [self.screen cursorY];
     const CGFloat charWidth = [self.textview charWidth];
     const CGFloat lineHeight = [self.textview lineHeight];
-    NSPoint p = NSMakePoint([iTermPreferences doubleForKey:kPreferenceKeySideMargins] + cx * charWidth,
+    NSPoint p = NSMakePoint([iTermPreferences sideMargins] + cx * charWidth,
                             ([self.screen numberOfLines] - [self.screen height] + cy) * lineHeight);
     const NSPoint origin = [self.textview.window pointToScreenCoords:[self.textview convertPoint:p toView:nil]];
     return NSMakeRect(origin.x,
@@ -20925,6 +21778,74 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self.delegate sessionJobDidChange:self];
 }
 
+- (void)graphicSourceDidReload:(NSNotification *)notification {
+    // The icon/color maps changed (e.g. a settings-sync import). Recompute this session's icon from
+    // its current job so the change is visible without waiting for the next foreground-job change.
+    //
+    // Only an Automatic-icon, non-browser session actually resolves its tab graphic from
+    // _graphicSource (see -tabGraphicForProfile:): iTermProfileIconNone shows nothing, Custom shows a
+    // fixed image, and a browser shows its favicon, none of which the maps affect. Skip the expensive
+    // process-tree walk (deepestForegroundJobForPid + ancestors) and the redundant redraw for those,
+    // matching the real branching rather than just its tmux-vs-pid split.
+    const iTermProfileIcon icon = [iTermProfilePreferences unsignedIntegerForKey:KEY_ICON inProfile:self.profile];
+    if (icon != iTermProfileIconAutomatic) {
+        return;
+    }
+    if (_exited) {
+        // An exited-but-on-screen session keeps its last positive effectiveRootPid (it's only assigned
+        // while !_exited and never cleared), so the rootPid <= 0 guard below can't catch it. Recomputing
+        // from the dead pid resolves to a nil image and would blank the icon the tab is still showing;
+        // leave the current icon, matching the intent of that guard.
+        return;
+    }
+    if (_view.isBrowser) {
+        // A browser resolves its tab graphic from its favicon, not _graphicSource, so the map reload
+        // doesn't affect it. (No @available guard: isBrowser is a plain BOOL and the deployment target
+        // is macOS 12, so a macOS 11 check would always be true.)
+        return;
+    }
+    // Mirror the branching in -tabGraphicForProfile:: tmux clients resolve by foreground job name
+    // (self.shell.pid is the local client, not the remote job), everyone else by the root pid.
+    const BOOL enabled = [self shouldShowTabGraphic];
+    BOOL changed;
+    if (self.isTmuxClient) {
+        NSString *jobName = self.tmuxForegroundJobMonitor.lastValue;
+        if (jobName.length == 0) {
+            // The monitor hasn't reported a foreground job yet; recomputing with a nil name would
+            // blank the existing tab icon. Leave the current icon until the next job update.
+            return;
+        }
+        changed = [_graphicSource updateImageForJobName:jobName enabled:enabled];
+    } else {
+        NSNumber *rootPid = self.variablesScope.effectiveRootPid;
+        if (rootPid == nil || rootPid.intValue <= 0) {
+            // No known root pid (e.g. mid-teardown); recomputing with pid 0 resolves to a nil image
+            // and would blank an existing tab graphic. Leave the current icon, symmetric to the tmux
+            // guard above.
+            return;
+        }
+        if (enabled && [self.processInfoProvider deepestForegroundJobForPid:rootPid.intValue] == nil) {
+            // The process tree for this live pid isn't populated in the cache yet. This notification is
+            // posted synchronously during a settings-sync import (often at launch), when process trees
+            // may not be resolved; recomputing now would resolve to a nil image and blank a
+            // correctly-displaying icon. Leave the current icon until the next foreground-job change,
+            // symmetric to the tmux and rootPid guards above. (When !enabled a nil image is the intended
+            // result - the tab graphic is off - so skip this guard and let the blank apply. The lookup
+            // is a cheap cached-dict read, so doing it here plus inside updateImageForProcessID: is fine.)
+            return;
+        }
+        changed = [_graphicSource updateImageForProcessID:rootPid.intValue
+                                                  enabled:enabled
+                                      processInfoProvider:self.processInfoProvider];
+    }
+    if (changed) {
+        // Pass the image _graphicSource just computed above rather than self.tabGraphic: for this gated
+        // case (Automatic icon, non-browser) -tabGraphicForProfile: would only re-run the same
+        // deepestForegroundJobForPid + ancestor walk a second time and return this very image.
+        [self.delegate sessionDidChangeGraphic:self shouldShow:enabled image:_graphicSource.image];
+    }
+}
+
 #pragma mark - iTermEchoProbeDelegate
 
 - (void)echoProbe:(iTermEchoProbe *)echoProbe writeString:(NSString *)string {
@@ -21088,6 +22009,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (NSColor *)statusBarBackgroundColor {
     return _statusBarViewController.layout.advancedConfiguration.backgroundColor;
+}
+
+- (nullable NSColor *)statusBarEdgeSeparatorColor {
+    return [[iTermTheme sharedInstance] statusBarEdgeSeparatorColorForTabStyle:[self.view.window.ptyWindow it_tabStyle]];
 }
 
 - (void)updateStatusBarStyle {
@@ -22273,7 +23198,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
     newFrame.origin.y += newFrame.size.height;
     const CGFloat maxWidth = _view.bounds.size.width - newFrame.origin.x * 2;
-    const CGFloat vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const CGFloat vmargin = [iTermPreferences topBottomMargins];
     const NSSize paneSize = self.view.frame.size;
     CGFloat y = 0;
     CGFloat width = 0;
@@ -23363,13 +24288,21 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 - (void)triggerSideEffectPostUserNotificationWithMessage:(NSString * _Nonnull)message {
     [iTermGCD assertMainQueueSafe];
     iTermNotificationController *notificationController = [iTermNotificationController sharedInstance];
-    [notificationController notify:message
-                   withDescription:[NSString stringWithFormat:@"A trigger fired in session \"%@\" in tab #%d.",
+    NSString *triggerDescription = [NSString stringWithFormat:@"A trigger fired in session “%@” in tab #%d.",
                                     [[self name] removingHTMLFromTabTitleIfNeeded],
-                                    self.delegate.tabNumber]
+                                    self.delegate.tabNumber];
+    [notificationController notify:message
+                   withDescription:triggerDescription
                        windowIndex:[self screenWindowIndex]
                           tabIndex:[self screenTabIndex]
                          viewIndex:[self screenViewIndex]];
+    // Mirror to the paired iPhone when this profile opted in (the bridge is a
+    // no-op unless a revision-2 phone is paired and can be notified).
+    if ([iTermProfilePreferences boolForKey:KEY_SEND_ALERTS_TO_COMPANION inProfile:self.profile]) {
+        [iTermCompanionAlertBridge postTerminalAlertWithTitle:message
+                                                         body:triggerDescription
+                                                    threadKey:self.stableID];
+    }
 }
 
 // Scroll so that `absLine` is the last visible onscreen.
@@ -23442,6 +24375,11 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     // coordinator will rebuild the peer group (adopting the saved
     // members); letting the trigger fire here on a replayed/reattached
     // shell would race it and spawn a duplicate workgroup.
+    // iTermWorkgroupController.enter has the same guard, but this copy
+    // samples the flag NOW, before the dispatch_async below: by the
+    // deferred tick the coordinator may have finished and cleared the
+    // flag, and enter's check would no longer recognize the replayed
+    // trigger as restoration-raced.
     if ([iTermWorkgroupRestoration isRestoringWithGuid:self.guid]) {
         return;
     }
@@ -23458,7 +24396,8 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
             return;
         }
         [iTermWorkgroupController.instance enterWithWorkgroupUniqueIdentifier:identifier
-                                                                           on:strongSelf];
+                                                                           on:strongSelf
+                                                                    mechanism:iTermWorkgroupEntryMechanismTrigger];
     });
 }
 
@@ -23575,6 +24514,47 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     [self writeTaskNoBroadcast:string];
 }
 
+// Identifier used to queue and later dismiss the it2 authorization announcement. Keyed
+// on the conductor's guid (not the display name) so two conductors sharing an ssh
+// identity in one session get distinct announcements and queueAnnouncement's
+// dismiss-same-identifier cannot cross-cancel a different conductor's live prompt.
+static NSString *IT2AuthorizationAnnouncementIdentifier(NSString *guid) {
+    return [NSString stringWithFormat:@"IT2Authorization-%@", guid];
+}
+
++ (NSString *)it2AuthorizationAnnouncementIdentifierForGUID:(NSString *)guid {
+    return IT2AuthorizationAnnouncementIdentifier(guid);
+}
+
+- (void)conductorRequestIT2AuthorizationWithGUID:(NSString *)guid
+                                     displayName:(NSString *)displayName
+                                      completion:(void (^)(BOOL granted, BOOL remember))completion {
+    NSString *who = displayName.length ? displayName : @"A remote session";
+    NSString *title =
+        [NSString stringWithFormat:
+         @"%@ wants to control iTerm2 using the API over SSH integration. The API can "
+         @"view and modify iTerm2’s contents. Allow it for this session?", who];
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:title
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:@[ @"Allow", @"Deny" ]
+                                                    completion:^(int selection) {
+            // 0 = Allow, 1 = Deny: explicit choices we remember for the connection.
+            // Closing (-1) or dismissing (-2) is not a choice, so deny just this request
+            // without remembering; the next it2 command prompts again. There is no
+            // default action, so a stray Return in the pane cannot grant access.
+            const BOOL granted = (selection == 0);
+            const BOOL remember = (selection == 0 || selection == 1);
+            completion(granted, remember);
+        }];
+    [self queueAnnouncement:announcement
+                 identifier:IT2AuthorizationAnnouncementIdentifier(guid)];
+}
+
+- (void)conductorDismissIT2AuthorizationPromptWithGUID:(NSString *)guid {
+    [self dismissAnnouncementWithIdentifier:IT2AuthorizationAnnouncementIdentifier(guid)];
+}
+
 - (void)conductorSendInitialText {
     [self sendInitialText];
     if (_pendingConductor) {
@@ -23586,7 +24566,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (void)conductorWillDie {
-    DLog(@"conductorWillDie");
+    RLog(@"conductorWillDie");
     iTermPublisher<NSNumber *> *replacement = _conductor.parent.cpuUtilizationPublisher;
     if (!replacement) {
         replacement = [iTermLocalCPUUtilizationPublisher sharedInstance];
@@ -23615,7 +24595,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (void)conductorQuit {
-    DLog(@"conductorQuit");
+    RLog(@"conductorQuit");
     [self conductorWillDie];
     NSString *identity = _conductor.sshIdentity.description;
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {

@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/proc_info.h>
+#include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/un.h>
 
@@ -53,6 +54,10 @@
 
 - (NSDate *)startTimeForProcess:(pid_t)pid {
     return [iTermLSOF startTimeForProcess:pid];
+}
+
+- (dev_t)ttyRdevForFileDescriptor:(int)fd ofProcess:(pid_t)pid {
+    return [iTermLSOF ttyRdevForFileDescriptor:fd ofProcess:pid];
 }
 
 @end
@@ -351,6 +356,30 @@ static NSString *iTermSocketEndpointString(const struct in_sockinfo *in, BOOL lo
     return result;
 }
 
++ (dev_t)ttyRdevForFileDescriptor:(int)fd ofProcess:(pid_t)pid {
+    struct vnode_fdinfowithpath info;
+    const int rc = proc_pidfdinfo(pid, fd, PROC_PIDFDVNODEPATHINFO, &info, sizeof(info));
+    if (rc != sizeof(info)) {
+        return 0;
+    }
+    // Only character special devices have a meaningful rdev. Pipes and sockets are
+    // a different fd type entirely and never reach this code; a regular file is a
+    // vnode but not a character device.
+    if ((info.pvip.vip_vi.vi_stat.vst_mode & S_IFMT) != S_IFCHR) {
+        return 0;
+    }
+    // proc_pidfdinfo reports an rdev for ANY character device, including /dev/null,
+    // /dev/zero, etc. We only want terminals, so a redirection to /dev/null is not
+    // mistaken for the session's controlling tty. On macOS pty slaves are
+    // /dev/ttysNNN and the controlling-terminal alias is /dev/tty, so they all
+    // share the /dev/tty prefix.
+    NSString *path = [NSString stringWithUTF8String:info.pvip.vip_path] ?: @"";
+    if (![path hasPrefix:@"/dev/tty"]) {
+        return 0;
+    }
+    return info.pvip.vip_vi.vi_stat.vst_rdev;
+}
+
 + (NSArray<NSString *> *)commandLineArgumentsForProcess:(pid_t)pid execName:(NSString **)execName {
     NSArray<NSString *> *raw = [self rawCommandLineArgumentsForProcess:pid execName:execName];
     if (!raw) {
@@ -492,6 +521,31 @@ static NSString *iTermSocketEndpointString(const struct in_sockinfo *in, BOOL lo
     }
 }
 
++ (NSString *)nameFailureDiagnosisForPid:(pid_t)pid {
+    int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, pid };
+    struct kinfo_proc kp;
+    // Zero the whole struct so that, if the sysctl reports success but writes nothing
+    // (Darwin returns 0 bytes for a pid that wasn't matched during its process-list
+    // walk), p_stat/p_flag read back as 0 rather than as garbage.
+    memset(&kp, 0, sizeof(kp));
+    size_t bufSize = sizeof(kp);
+    errno = 0;
+    const int rc = sysctl(mib, 4, &kp, &bufSize, NULL, 0);
+    if (rc < 0) {
+        return [NSString stringWithFormat:@"sysctl KERN_PROC_PID error rc=%d errno=%d (%s)",
+                rc, errno, strerror(errno)];
+    }
+    if (bufSize == 0) {
+        return @"pid not in the kernel process list (not matched; likely exited or momentarily unreferenceable)";
+    }
+    if (kp.kp_proc.p_comm[0] == 0) {
+        return [NSString stringWithFormat:@"matched but empty p_comm (p_stat=%d p_flag=0x%x; typically mid-exec)",
+                (int)kp.kp_proc.p_stat, kp.kp_proc.p_flag];
+    }
+    return [NSString stringWithFormat:@"readable now as \"%s\" (original failure was transient)",
+            kp.kp_proc.p_comm];
+}
+
 // This is a stunningly brittle hack. Find the child of parentPid with the
 // oldest start time. This relies on undocumented APIs, but short of forking
 // ps, I can't see another way to do it.
@@ -499,19 +553,19 @@ static NSString *iTermSocketEndpointString(const struct in_sockinfo *in, BOOL lo
     DLog(@"Want to find first child of process %@", @(parentPid));
     iTermProcessInfo *parentInfo = [[iTermProcessCache sharedInstance] processInfoForPid:parentPid];
     if (!parentInfo) {
-        DLog(@"Forcing a synchronous update of the process cache");
+        RLog(@"Forcing a synchronous update of the process cache");
         [[iTermProcessCache sharedInstance] updateSynchronously];
         parentInfo = [[iTermProcessCache sharedInstance] processInfoForPid:parentPid];
     }
     if (!parentInfo) {
-        DLog(@"No parent with pid %@", @(parentPid));
+        RLog(@"No parent with pid %@", @(parentPid));
         return -1;
     }
     iTermProcessInfo *firstChild = [parentInfo.children minWithBlock:^NSComparisonResult(iTermProcessInfo *obj1, iTermProcessInfo *obj2) {
         return [obj1.startTime compare:obj2.startTime];
     }];
     if (!firstChild) {
-        DLog(@"Process is childless");
+        RLog(@"Process is childless");
         return -1;
     }
     return firstChild.processID;
@@ -574,14 +628,15 @@ static NSString *iTermSocketEndpointString(const struct in_sockinfo *in, BOOL lo
                                                                       queue:queue
                                                                  completion:^(NSString *rawDir) {
         DLog(@"getWorkingDirectoyrOfProcessWithID:%@ returned %@", @(pid), rawDir);
-        if (!rawDir) {
-            DLog(@"Failed to get working directory of %@", @(pid));
-        }
         if (!rawDir && canFallBack) {
-            DLog(@"Will attempt fallback");
+            // The root pid is often /usr/bin/login running as root, whose vnode
+            // info we're not allowed to read. That's expected and we recover via
+            // the eldest child below, so log the miss at DLog. Only a real
+            // give-up (no child to fall back to) is worth an RLog.
+            DLog(@"Failed to get working directory of %@; will attempt fallback", @(pid));
             pid_t childPid = [self pidOfFirstChildOf:pid];
             if (childPid <= 0) {
-                DLog(@"Failed to get first child. Giving up.");
+                RLog(@"Failed to get working directory of %@ and it has no child to fall back to. Giving up.", @(pid));
                 block(nil);
                 return;
             }
@@ -594,7 +649,7 @@ static NSString *iTermSocketEndpointString(const struct in_sockinfo *in, BOOL lo
             return;
         }
         if (!rawDir) {
-            DLog(@"Failing");
+            RLog(@"Failed to get working directory of %@", @(pid));
             block(nil);
             return;
         }

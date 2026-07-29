@@ -88,7 +88,7 @@
             return NO;
         }
 
-        DLog(@"Send %d code", code);
+        RLog(@"Send %d code", code);
         BOOL ok;
         ok = [self writeString:[NSString stringWithFormat:@"HTTP/1.1 %d %@\r\n", code, reason]];
         if (!ok) {
@@ -287,9 +287,9 @@
     } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
     if (rc <= 0) {
         if (rc < 0) {
-            DLog(@"Read failed with %s", strerror(errno));
+            RLog(@"Read failed with %s", strerror(errno));
         } else {
-            DLog(@"EOF reached");
+            RLog(@"EOF reached");
         }
         @synchronized(_lock) {
             _stream = nil;
@@ -338,10 +338,10 @@
         }
     } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
     if (rc == 0) {
-        DLog(@"select timed out");
+        RLog(@"select timed out");
         return NO;
     } else if (rc < 0) {
-        DLog(@"Select failed with %s", strerror(errno));
+        RLog(@"Select failed with %s", strerror(errno));
         return NO;
     }
 
@@ -373,7 +373,7 @@
         } while (rc == -1 && (errno == EINTR || errno == EAGAIN));
         if (rc <= 0) {
             if (rc < 0) {
-                DLog(@"Write failed with %s", strerror(errno));
+                RLog(@"Write failed with %s", strerror(errno));
             } else {
                 DLog(@"EOF reached");
             }
@@ -393,17 +393,25 @@
                                       dispatch_data_t _Nullable data,
                                       int error))completion {
     @synchronized(_lock) {
-        if (!_stream) {
+        if (_stream) {
+            dispatch_io_write(_stream.stream,
+                              0,  // offset
+                              dispatchData,
+                              queue,
+                              ^(bool done, dispatch_data_t  _Nullable data, int error) {
+                completion(done, data, error);
+            });
             return;
         }
-        dispatch_io_write(_stream.stream,
-                          0,  // offset
-                          dispatchData,
-                          queue,
-                          ^(bool done, dispatch_data_t  _Nullable data, int error) {
-            completion(done, data, error);
-        });
     }
+    // The stream is gone, so the write can never be submitted. Still deliver a
+    // terminal (error) completion on the caller's queue so that callers relying
+    // on completion running exactly once - e.g. to release a backpressure slot -
+    // are not wedged forever. Done outside @synchronized because completion may
+    // reenter this object.
+    dispatch_async(queue, ^{
+        completion(true, NULL, EPIPE);
+    });
 }
 
 @end

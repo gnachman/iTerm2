@@ -105,7 +105,7 @@
             index = [preferredSuperview.subviews indexOfObject:self];
             NSScrollView *scrollview = [self.ptyScrollerDelegate ptyScrollerScrollView];
             if (preferredSuperview != scrollview && scrollview != nil) {
-                DLog(@"Scroller style changing to overlay. Remove self from %@, add to %@", preferredSuperview, scrollview);
+                RLog(@"Scroller style changing to overlay. Remove self from %@, add to %@", preferredSuperview, scrollview);
                 reparent = preferredSuperview;
                 [scrollview addSubview:self];
             }
@@ -221,7 +221,7 @@
         PTYScroller *aScroller;
 
         aScroller = [[PTYScroller alloc] init];
-        DLog(@"Set new scroller's style  %@ -> %@", @(aScroller.scrollerStyle), @([NSScroller preferredScrollerStyle]));
+        RLog(@"Set new scroller's style  %@ -> %@", @(aScroller.scrollerStyle), @([NSScroller preferredScrollerStyle]));
         aScroller.scrollerStyle = [NSScroller preferredScrollerStyle];
         [self setVerticalScroller:aScroller];
         self.verticalScrollElasticity = NSScrollElasticityNone;

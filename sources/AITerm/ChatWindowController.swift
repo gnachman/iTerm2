@@ -76,7 +76,10 @@ extension DictionaryCodable {
 
 extension NSToolbarItem.Identifier {
     static let toggleChatList = NSToolbarItem.Identifier("ToggleChatList")
+    static let providerSelector = NSToolbarItem.Identifier("ProviderSelector")
     static let modelSelector = NSToolbarItem.Identifier("ModelSelector")
+    static let reasoningEffortSelector = NSToolbarItem.Identifier("ReasoningEffortSelector")
+    static let serviceTierSelector = NSToolbarItem.Identifier("ServiceTierSelector")
     static let thinkingToggle = NSToolbarItem.Identifier("ThinkingToggle")
     static let webSearchToggle = NSToolbarItem.Identifier("WebSearchToggle")
     static let sessionButton = NSToolbarItem.Identifier("SessionButton")
@@ -122,6 +125,25 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         self.client = client
         super.init(window: nil)
         chatListViewController.dataSource = model
+
+        // The window's own delete flow clears the conversation view itself,
+        // but a chat can also be deleted out from under us (the companion
+        // phone today; anything else tomorrow). Without this the view keeps
+        // showing, and interacting with, a chat that no longer exists.
+        NotificationCenter.default.addObserver(
+            forName: ChatListModel.chatWasDeleted,
+            object: nil,
+            queue: .main) { [weak self] notification in
+                MainActor.assumeIsolated {
+                    guard let self,
+                          let deletedID = notification.userInfo?[ChatListModel.chatIDUserInfoKey] as? String,
+                          self.chatViewController.chatID == deletedID else {
+                        return
+                    }
+                    RLog("Displayed chat \(deletedID) was deleted externally; clearing the view")
+                    self.chatViewController.load(chatID: nil)
+                }
+            }
     }
 
     convenience init(from decoder: any Decoder) throws {
@@ -159,14 +181,34 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         chatViewController.makeMessageInputFieldFirstResponder()
     }
 
-    @objc(isStreamingToGuid:)
-    func isStreaming(to guid: String) -> Bool {
-        return chatViewController.streaming && chatViewController.terminalSessionGuid == guid
+    // True when `binding` (a chat's stored terminal reference, a stableID for
+    // new bindings or a legacy guid otherwise) is one of `keys` (a session's
+    // {guid, stableID} pair). Matches a binding stored in either form.
+    private func terminalBinding(_ binding: String?, matchesReferenceKeys keys: Set<String>) -> Bool {
+        guard let binding else {
+            return false
+        }
+        return keys.contains(binding)
+    }
+
+    // Resolving convenience for the non-hot callers that only hold a guid.
+    private func terminalBinding(_ binding: String?, matchesSessionGuid guid: String) -> Bool {
+        return terminalBinding(binding, matchesReferenceKeys: iTermSessionReferenceKeys(forGuid: guid))
+    }
+
+    // Called from the draw path (textViewSessionIsStreamingToAIChat), so the
+    // caller passes the session's stableID to avoid a session-tree walk here.
+    @objc(isStreamingToGuid:stableID:)
+    func isStreaming(toGuid guid: String, stableID: String) -> Bool {
+        return chatViewController.streaming &&
+            terminalBinding(chatViewController.terminalSessionGuid,
+                            matchesReferenceKeys: [guid, stableID])
     }
 
     @objc(stopStreamingSession:)
     func stopStreaming(guid: String) {
-        if chatViewController.terminalSessionGuid == guid && chatViewController.streaming {
+        if terminalBinding(chatViewController.terminalSessionGuid, matchesSessionGuid: guid) &&
+            chatViewController.streaming {
             chatViewController.stopStreaming()
         }
     }
@@ -191,7 +233,7 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
             case .plainText, .markdown, .explanationRequest, .explanationResponse,
                     .remoteCommandRequest, .remoteCommandResponse, .selectSessionRequest,
                     .clientLocal, .renameChat, .append, .appendAttachment, .commit,
-                    .vectorStoreCreated, .terminalCommand, .multipart:
+                    .vectorStoreCreated, .terminalCommand, .multipart, .unsupported:
                 true
             case .userCommand, .setPermissions, .watcherEvent:
                 false
@@ -299,7 +341,7 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         chatViewController.chatToolbar.titleLabel.stringValue = title
     }
 
-    private func createNewChat(offerGuid guid: String?) {
+    private func createNewChat(offerGuid guid: String?, enableOrchestration: Bool = false) {
         do {
             let chatID = try client.create(chatWithTitle: "New Chat",
                                            terminalSessionGuid: nil,
@@ -308,7 +350,13 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
                                            permissions: "")
             chatViewController.load(chatID: chatID)
             chatListViewController.select(chatID: chatID)
-            if let guid, let session = iTermController.sharedInstance().anySession(withGUID: guid) {
+            if enableOrchestration {
+                // The "try orchestration" entry point: don't just offer it,
+                // turn it on so the user lands in an orchestration chat.
+                chatViewController.enableOrchestration()
+                return
+            }
+            if let guid, let session = iTermController.sharedInstance().anySession(forReference: guid) {
                 let terminal = !session.isBrowserSession()
                 let name = session.name
                 chatViewController.offerLink(to: guid, terminal: terminal, name: name)
@@ -320,6 +368,18 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         } catch {
             DLog("\(error)")
         }
+    }
+
+    // Open a brand-new chat with orchestration already enabled. The caller is
+    // expected to have shown the window first (showChatWindow), which is gated
+    // by iTermAITermGatekeeper; if AI is disabled the window never appeared, so
+    // bail rather than silently creating a chat behind the warning.
+    @objc
+    func createNewOrchestrationChat() {
+        guard window?.isVisible == true else {
+            return
+        }
+        createNewChat(offerGuid: nil, enableOrchestration: true)
     }
 
     @objc func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
@@ -358,7 +418,8 @@ extension ChatWindowController: NSToolbarDelegate {
         if #available(macOS 26, *) {
             return []
         } else {
-            return [.modelSelector, .thinkingToggle, .webSearchToggle, .sessionButton, .toggleChatList]
+            return [.providerSelector, .modelSelector, .reasoningEffortSelector, .serviceTierSelector,
+                    .thinkingToggle, .webSearchToggle, .sessionButton, .toggleChatList]
         }
     }
 
@@ -366,7 +427,8 @@ extension ChatWindowController: NSToolbarDelegate {
         if #available(macOS 26, *) {
             return []
         } else {
-            return [.modelSelector, .thinkingToggle, .webSearchToggle, .sessionButton, .toggleChatList]
+            return [.providerSelector, .modelSelector, .reasoningEffortSelector, .serviceTierSelector,
+                    .thinkingToggle, .webSearchToggle, .sessionButton, .toggleChatList]
         }
     }
 
@@ -392,6 +454,18 @@ extension ChatWindowController: NSToolbarDelegate {
             }
             return item
 
+        case .providerSelector:
+            if let providerSelector = chatViewController.chatToolbar.providerSelectorButton,
+               !providerSelector.isHidden {
+                let item = NSToolbarItem(itemIdentifier: itemIdentifier)
+                item.label = "Provider"
+                item.paletteLabel = "AI Provider"
+                item.toolTip = "Select AI provider for new chats"
+                item.view = providerSelector
+                return item
+            }
+            return nil
+
         case .modelSelector:
             // Only create if we have multiple models
             if let modelSelector = chatViewController.chatToolbar.modelSelectorButton {
@@ -411,6 +485,30 @@ extension ChatWindowController: NSToolbarDelegate {
                 item.paletteLabel = "Toggle Thinking"
                 item.toolTip = "Enable or disable thinking/reasoning mode"
                 item.view = button
+                return item
+            }
+            return nil
+
+        case .reasoningEffortSelector:
+            if let selector = chatViewController.chatToolbar.reasoningEffortButton,
+               !selector.isHidden {
+                let item = NSToolbarItem(itemIdentifier: itemIdentifier)
+                item.label = "Effort"
+                item.paletteLabel = "Reasoning Effort"
+                item.toolTip = "Select reasoning effort"
+                item.view = selector
+                return item
+            }
+            return nil
+
+        case .serviceTierSelector:
+            if let selector = chatViewController.chatToolbar.serviceTierButton,
+               !selector.isHidden {
+                let item = NSToolbarItem(itemIdentifier: itemIdentifier)
+                item.label = "Speed"
+                item.paletteLabel = "AI Speed"
+                item.toolTip = "Select AI service tier"
+                item.view = selector
                 return item
             }
             return nil
@@ -451,7 +549,7 @@ extension ChatWindowController: NSToolbarDelegate {
 
     @objc(setSelectionText:forSession:)
     func setSelectedText(_ text: String, forSession guid: String) {
-        if currentChat?.terminalSessionGuid == guid {
+        if terminalBinding(currentChat?.terminalSessionGuid, matchesSessionGuid: guid) {
             chatViewController.offerSelectedText(text)
         }
     }
@@ -510,10 +608,23 @@ extension ChatWindowController: NSToolbarDelegate {
         // Update visibility of toolbar items based on current state
         var visibleIdentifiers: [NSToolbarItem.Identifier] = [.toggleChatList, .flexibleSpace]
 
+        if chatViewController.availableProviderOptions.count > 1 {
+            visibleIdentifiers.append(.providerSelector)
+        }
+
         // Add model selector if multiple models available
-        let availableModels = AITermController.allProvidersForCurrentVendor.map({ $0.model })
-        if availableModels.count > 1 {
+        if chatViewController.availableModels.count > 1 {
             visibleIdentifiers.append(.modelSelector)
+        }
+
+        if let provider = chatViewController.provider,
+           !provider.model.reasoningEfforts.isEmpty {
+            visibleIdentifiers.append(.reasoningEffortSelector)
+        }
+
+        if let provider = chatViewController.provider,
+           !provider.model.serviceTiers.isEmpty {
+            visibleIdentifiers.append(.serviceTierSelector)
         }
 
         // Add thinking button if supported
@@ -548,6 +659,75 @@ extension ChatWindowController: ChatListViewControllerDelegate {
         // Update toolbar items in case model or features changed
         updateToolbarItems()
     }
+
+    func chatListViewController(_ chatListViewController: ChatListViewController,
+                                renameChat chatID: String) {
+        renameChat(chatID: chatID)
+    }
+
+    func chatListViewController(_ chatListViewController: ChatListViewController,
+                                deleteChats chatIDs: [String]) {
+        let currentChatID = chatViewController.chatID
+        deleteChats(chatIDs: chatIDs) { [weak self] in
+            guard let self else {
+                return
+            }
+            if let currentChatID,
+               chatIDs.contains(currentChatID) {
+                if model.count > 0 {
+                    let nextChatID = model.chat(at: 0).id
+                    chatViewController.load(chatID: nextChatID)
+                    chatListViewController.select(chatID: nextChatID)
+                } else {
+                    chatViewController.load(chatID: nil)
+                }
+            }
+            updateTitle(chatViewController.chatTitle)
+            updateToolbarItems()
+        }
+    }
+
+    private func renameChat(chatID: String) {
+        guard let chat = model.chat(id: chatID) else {
+            return
+        }
+        let alert = NSAlert()
+        alert.messageText = "Rename Chat"
+        alert.informativeText = "Choose a new name for this chat."
+        alert.addButton(withTitle: "Rename")
+        alert.addButton(withTitle: "Cancel")
+
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 320, height: 24))
+        field.stringValue = chat.title
+        field.selectText(nil)
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+
+        guard alert.runModal() == .alertFirstButtonReturn else {
+            return
+        }
+        let newTitle = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !newTitle.isEmpty,
+              newTitle != chat.title else {
+            return
+        }
+        do {
+            try client.publishMessageFromAgent(chatID: chatID,
+                                               content: .renameChat(newTitle))
+            if chatViewController.chatID == chatID {
+                updateTitle(newTitle)
+            }
+        } catch {
+            DLog("Failed to rename chat \(chatID): \(error)")
+            iTermWarning.show(withTitle: "The chat could not be renamed.",
+                              actions: ["OK"],
+                              accessory: nil,
+                              identifier: nil,
+                              silenceable: .kiTermWarningTypePersistent,
+                              heading: "Rename Failed",
+                              window: window)
+        }
+    }
 }
 
 extension ChatWindowController: ChatSearchResultsViewControllerDelegate {
@@ -559,7 +739,7 @@ extension ChatWindowController: ChatSearchResultsViewControllerDelegate {
 
 extension ChatWindowController: ChatViewControllerDelegate {
     func chatViewController(_ controller: ChatViewController, revealSessionWithGuid guid: String) -> Bool {
-        if let session = iTermController.sharedInstance().anySession(withGUID: guid) {
+        if let session = iTermController.sharedInstance().anySession(forReference: guid) {
             session.reveal()
             return true
         }
@@ -570,20 +750,35 @@ extension ChatWindowController: ChatViewControllerDelegate {
         guard let chatID = controller.chatID else {
             return
         }
+        deleteChats(chatIDs: [chatID]) { [weak self] in
+            self?.chatViewController.load(chatID: nil)
+        }
+    }
+
+    fileprivate func deleteChats(chatIDs: [String], completion: (() -> Void)?) {
+        let uniqueChatIDs = Array(Set(chatIDs))
+        guard !uniqueChatIDs.isEmpty else {
+            return
+        }
         let warning = iTermWarning()
-        warning.title = "Are you sure you want to delete this chat? This action cannot be undone."
-        warning.heading = "Delete Chat?"
+        let count = uniqueChatIDs.count
+        warning.title = count == 1
+            ? "Are you sure you want to delete this chat? This action cannot be undone."
+            : "Are you sure you want to delete \(count) chats? This action cannot be undone."
+        warning.heading = count == 1 ? "Delete Chat?" : "Delete \(count) Chats?"
 
         let action = iTermWarningAction(label: "Delete") { [weak self] _ in
             guard let self else {
                 return
             }
-            do {
-                try client.delete(chatID: chatID)
-                chatViewController.load(chatID: nil)
-            } catch {
-                DLog("\(error)")
+            for chatID in uniqueChatIDs {
+                do {
+                    try client.delete(chatID: chatID)
+                } catch {
+                    DLog("\(error)")
+                }
             }
+            completion?()
         }
         action.destructive = true
         warning.warningActions = [ iTermWarningAction(label: "Cancel"), action ]
@@ -599,15 +794,15 @@ extension ChatWindowController: ChatViewControllerDelegate {
                             forkAtMessageID: UUID,
                             ofChat originalChatID: String) {
         guard let listModel = ChatListModel.instance else {
-            DLog("No chat list model")
+            RLog("No chat list model")
             return
         }
         guard let chat = ChatListModel.instance?.chat(id: originalChatID) else {
-            DLog("No chat with id \(originalChatID)")
+            RLog("No chat with id \(originalChatID)")
             return
         }
         guard let index = listModel.index(ofMessageID: forkAtMessageID, inChat: chat.id) else {
-            DLog("No such message \(forkAtMessageID) in \(originalChatID)")
+            RLog("No such message \(forkAtMessageID) in \(originalChatID)")
             return
         }
         do {
@@ -651,6 +846,21 @@ extension ChatWindowController: ChatViewControllerDelegate {
                                            browserSessionGuid: chat.browserSessionGuid,
                                            initialMessages: initialMessages,
                                            permissions: chat.permissions)
+            // The fork inherits the source chat's icon: icon generation
+            // only runs when the AI mints a title, and a forked chat is
+            // never renamed (its title is set at creation and
+            // .renameChat messages are stripped from the clones above),
+            // so without this it would show the default icon forever
+            // next to its near-identical sibling. setIcon is the single
+            // funnel for icon writes; both this and create's insert post
+            // their notifications in the same runloop turn, so no
+            // default-icon flash is visible. Non-fatal: a failed icon
+            // write must not abort loading the freshly forked chat.
+            do {
+                try listModel.setIcon(chat.icon, forChatID: chatID)
+            } catch {
+                RLog("Failed to copy icon to forked chat \(chatID): \(error)")
+            }
             chatViewController.load(chatID: chatID)
             chatListViewController.select(chatID: chatID)
 
@@ -663,4 +873,3 @@ extension ChatWindowController: ChatViewControllerDelegate {
         }
     }
 }
-

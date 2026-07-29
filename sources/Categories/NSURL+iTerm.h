@@ -23,11 +23,18 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSURL *)URLByAppendingQueryParameter:(NSString *)queryParameter;
 
 // If non-ascii characters are present then the string is first percent-escaped. NSURL will fail
-// if any non-ascii characters exist, so it's worth a shot.
-+ (NSURL *)URLWithUserSuppliedString:(NSString *)string;
+// if any non-ascii characters exist, so it's worth a shot. Returns nil if the string cannot be
+// turned into a URL.
++ (nullable NSURL *)URLWithUserSuppliedString:(NSString *)string;
 
 - (BOOL)saveContentsOfPathToZip:(NSURL *)destination;
 - (nullable NSData *)zippedContents;
+
+// A description safe for the always-on retrospective ring (RLog): scheme, host,
+// and path only. Drops the three places a secret hides in a URL: userinfo
+// (user:password@), the query string (?token=…), and the fragment (#access_token=…).
+// See DebugLogging.h.
+@property (nonatomic, readonly) NSString *it_redactedDescription;
 
 @end
 

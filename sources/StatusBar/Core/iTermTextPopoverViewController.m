@@ -89,7 +89,7 @@ const CGFloat iTermTextPopoverViewControllerHorizontalMarginWidth = 4;
 #pragma mark - NSTextViewDelegate
 
 - (BOOL)textView:(NSTextView *)textView clickedOnLink:(id)link atIndex:(NSUInteger)charIndex {
-    DLog(@"Click on %@", link);
+    RLog(@"Click on %@", link);
     NSURL *url = nil;
     if ([link isKindOfClass:[NSString class]]) {
         url = [NSURL URLWithString:link];

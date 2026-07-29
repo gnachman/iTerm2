@@ -167,6 +167,13 @@
 #define KEY_ANIMATE_MOVEMENT       @"Animate Movement"
 #define KEY_ANIMATE_MOVEMENT_ONLY_IN_INTERACTIVE_APPS     @"Animate Movement Only in Interactive Apps"
 #define KEY_CURSOR_SMOOTH_SLIDE    @"Cursor Smooth Slide"
+#define KEY_CURSOR_SMOOTH_BLINK    @"Cursor Smooth Blink"
+#define KEY_CURSOR_BLINK_FADE_IN_DURATION   @"Cursor Blink Fade In Duration"
+#define KEY_CURSOR_BLINK_FADE_OUT_DURATION  @"Cursor Blink Fade Out Duration"
+#define KEY_CURSOR_BLINK_FADE_IN_CURVE      @"Cursor Blink Fade In Curve"
+#define KEY_CURSOR_BLINK_FADE_OUT_CURVE     @"Cursor Blink Fade Out Curve"
+#define KEY_CURSOR_BLINK_VISIBLE_DWELL      @"Cursor Blink Visible Dwell"
+#define KEY_CURSOR_BLINK_HIDDEN_DWELL       @"Cursor Blink Hidden Dwell"
 #define KEY_BLINK_ALLOWED          @"Blink Allowed"
 #define KEY_CURSOR_TYPE            @"Cursor Type"
 #define KEY_DISABLE_BOLD           @"Disable Bold"  // DEPRECATED
@@ -251,6 +258,7 @@ extern NSString *const iTermProgressBarColorSchemeOrange;
 #define KEY_SEND_NEW_OUTPUT_ALERT             @"Send New Output Alert"
 #define KEY_SEND_SESSION_ENDED_ALERT          @"Send Session Ended Alert"
 #define KEY_SEND_TERMINAL_GENERATED_ALERT     @"Send Terminal Generated Alerts"
+#define KEY_SEND_ALERTS_TO_COMPANION          @"Send Alerts To Companion"
 #define KEY_SUPPRESS_ALERTS_IN_ACTIVE_SESSION @"Suppress Alerts in Active Session"
 #define KEY_ALLOW_CHANGE_CURSOR_BLINK         @"Allow Change Cursor Blink"
 #define KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY @"Load Shell Integration Automatically"
@@ -581,6 +589,10 @@ typedef NS_ENUM(NSInteger, iTermTriggerMatchType) {
     // selects the process name to watch for (e.g. "claude").
     iTermTriggerMatchTypeEventJobStarted = 113,
     iTermTriggerMatchTypeEventJobEnded = 114,
+    // Fires when a session-scope variable changes value. The trigger's
+    // eventParams select which variable to watch ("variableName") and an
+    // optional regex its new value must match ("variableValueRegex").
+    iTermTriggerMatchTypeEventVariableChanged = 115,
 };
 
 static inline BOOL iTermTriggerMatchTypeIsEvent(iTermTriggerMatchType type) {

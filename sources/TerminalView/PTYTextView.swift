@@ -134,7 +134,7 @@ extension PTYTextView: ExternalSearchResultsController {
     private func replace(range absRange: VT100GridAbsCoordRange,
                          withPorthole porthole: Porthole) {
         DLog("replace(range:\(VT100GridAbsCoordRangeDescription(absRange)), withPorthole:\(porthole))")
-        let hmargin = CGFloat(iTermPreferences.int(forKey: kPreferenceKeySideMargins))
+        let hmargin = CGFloat(iTermPreferences.sideMargins())
         let desiredHeight = porthole.fit(toWidth: bounds.width - hmargin * 2)
         let relativeRange = VT100GridCoordRangeFromAbsCoordRange(absRange, dataSource.totalScrollbackOverflow())
         porthole.savedLines = (relativeRange.start.y ... relativeRange.end.y).map { i in
@@ -166,7 +166,7 @@ extension PTYTextView: ExternalSearchResultsController {
         guard let dataSource = dataSource else {
             return
         }
-        let hmargin = CGFloat(iTermPreferences.int(forKey: kPreferenceKeySideMargins))
+        let hmargin = CGFloat(iTermPreferences.sideMargins())
         let desiredHeight = porthole.fit(toWidth: bounds.width - hmargin * 2)
         dataSource.changeHeight(of: porthole.mark, to: Int32(ceil(desiredHeight / lineHeight)))
     }
@@ -180,7 +180,7 @@ extension PTYTextView: ExternalSearchResultsController {
     }
 
     @objc func hydratePorthole(_ mark: PortholeMarkReading) -> ObjCPorthole? {
-        DLog("hydratePorthole(\(mark))")
+        RLog("hydratePorthole(\(mark))")
         guard let interval = mark.entry?.interval,
               let absRange = dataSource?.absCoordRange(for: interval) else {
             return nil
@@ -230,7 +230,7 @@ extension PTYTextView: ExternalSearchResultsController {
     // site knows, and signals here.
     @objc(forciblyRemovePortholeWithUniqueIdentifier:)
     func forciblyRemovePorthole(uniqueIdentifier: String) {
-        DLog("forciblyRemovePorthole(\(uniqueIdentifier))")
+        RLog("forciblyRemovePorthole(\(uniqueIdentifier))")
         // Drop the registry references unconditionally. This is the whole point
         // of the signal: break the doppelganger retain cycle (registry -> mark
         // doppelganger -> progenitor) so the progenitor mark carried in the
@@ -263,7 +263,7 @@ extension PTYTextView: ExternalSearchResultsController {
         DLog("unhidePorthole(\(objcPorthole))")
         let porthole = objcPorthole as! Porthole
         guard portholes.contains(porthole) else {
-            DLog("Not unhiding porthole we don't own")
+            RLog("Not unhiding porthole we don't own")
             return
         }
         guard porthole.view.superview != self else {
@@ -275,7 +275,7 @@ extension PTYTextView: ExternalSearchResultsController {
 
     @objc
     func removePorthole(_ objcPorthole: ObjCPorthole) {
-        DLog("removePorthole(\(objcPorthole))")
+        RLog("removePorthole(\(objcPorthole))")
         let porthole = objcPorthole as! Porthole
         willRemoveSubview(porthole.view)
         if porthole.delegate === self {
@@ -349,8 +349,8 @@ extension PTYTextView: ExternalSearchResultsController {
         }
         let lineRange = gridCoordRange.start.y...gridCoordRange.end.y
         DLog("Update porthole with line range \(lineRange)")
-        let hmargin = CGFloat(iTermPreferences.integer(forKey: kPreferenceKeySideMargins))
-        let vmargin = CGFloat(iTermPreferences.integer(forKey: kPreferenceKeyTopBottomMargins))
+        let hmargin = CGFloat(iTermPreferences.sideMargins())
+        let vmargin = CGFloat(iTermPreferences.topBottomMargins())
         let cellWidth = dataSource.width()
         let innerMargin = porthole.outerMargin
         if lastPortholeWidth == cellWidth && !force {
@@ -547,7 +547,7 @@ extension PTYTextView: ExternalSearchResultsController {
             return nil
         }
         let locationInTextView = convert(windowCoord, from: nil)
-        if Int(clamping: locationInTextView.x) >= iTermPreferences.int(forKey: kPreferenceKeySideMargins) + Int32(PTYTextViewMarginClickGraceWidth) {
+        if Int(clamping: locationInTextView.x) >= iTermPreferences.sideMargins() + Int32(PTYTextViewMarginClickGraceWidth) {
             return nil
         }
         let coord = self.coord(for: locationInTextView, allowRightMarginOverflow: true)
@@ -561,7 +561,7 @@ extension PTYTextView: ExternalSearchResultsController {
     @objc(commandMarkAtWindowCoord:)
     func commandMark(at windowCoord: NSPoint) -> VT100ScreenMarkReading? {
         let locationInTextView = convert(windowCoord, from: nil)
-        if Int(clamping: locationInTextView.x) >= iTermPreferences.int(forKey: kPreferenceKeySideMargins) {
+        if Int(clamping: locationInTextView.x) >= iTermPreferences.sideMargins() {
             return nil
         }
         let coord = self.coord(for: locationInTextView, allowRightMarginOverflow: true)
@@ -576,7 +576,7 @@ extension PTYTextView: ExternalSearchResultsController {
     @objc(pathMarkAtWindowCoord:)
     func pathMark(at windowCoord: NSPoint) -> PathMarkReading? {
         let locationInTextView = convert(windowCoord, from: nil)
-        if Int(clamping: locationInTextView.x) < iTermPreferences.int(forKey: kPreferenceKeySideMargins) {
+        if Int(clamping: locationInTextView.x) < iTermPreferences.sideMargins() {
             return nil
         }
         guard let dataSource = dataSource else {
@@ -648,7 +648,7 @@ extension PTYTextView: ExternalSearchResultsController {
         guard let dataSource else {
             return
         }
-        DLog("Fold")
+        RLog("Fold")
         let overflow = dataSource.totalScrollbackOverflow()
         let absRange = VT100GridAbsCoordRange(start: VT100GridAbsCoord(x: 0,
                                                                        y: range.lowerBound),
@@ -752,7 +752,7 @@ extension PTYTextView: ExternalSearchResultsController {
             completion?(false)
             return
         }
-        DLog("Unfold")
+        RLog("Unfold")
         let coord = dataSource.absCoordRange(for: interval)
         dataSource.removeFolds(in: NSRange(location: Int(coord.start.y), length: 1),
                                completion: completion)

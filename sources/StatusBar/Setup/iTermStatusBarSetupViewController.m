@@ -73,6 +73,7 @@ NS_ASSUME_NONNULL_BEGIN
     IBOutlet NSPanel *_advancedPanel;
     IBOutlet NSButton *_tightPacking;
     IBOutlet NSButton *_removeEmptyComponents;
+    IBOutlet NSButton *_drawSeparatorBetweenStatusBarAndTerminal;
     IBOutlet NSPopUpButton *_autoRainbow;
     NSArray<iTermStatusBarSetupElement *> *_elements;
     iTermStatusBarLayout *_layout;
@@ -201,6 +202,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
 
     _removeEmptyComponents.state = _layout.advancedConfiguration.removeEmptyComponents ? NSControlStateValueOn : NSControlStateValueOff;
+    _drawSeparatorBetweenStatusBarAndTerminal.state = _layout.advancedConfiguration.drawSeparatorBetweenStatusBarAndTerminal ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 - (void)initializeColorWell:(CPKColorWell *)colorWell
@@ -343,6 +345,7 @@ NS_ASSUME_NONNULL_BEGIN
     _layout.advancedConfiguration.defaultTextColor = _defaultTextColorWell.color;
     _layout.advancedConfiguration.layoutAlgorithm = (_tightPacking.state == NSControlStateValueOn) ? iTermStatusBarLayoutAlgorithmSettingTightlyPacked : iTermStatusBarLayoutAlgorithmSettingStable;
     _layout.advancedConfiguration.removeEmptyComponents = (_removeEmptyComponents.state == NSControlStateValueOn);
+    _layout.advancedConfiguration.drawSeparatorBetweenStatusBarAndTerminal = (_drawSeparatorBetweenStatusBarAndTerminal.state == NSControlStateValueOn);
     _layout.delegate = nil;
 
     _layout = [[iTermStatusBarLayout alloc] initWithDictionary:_layout.dictionaryValue scope:nil];

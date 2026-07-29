@@ -35,7 +35,7 @@ static void iTermDisplayReconfigurationCallback(CGDirectDisplayID display,
         dispatch_async(dispatch_get_main_queue(), ^{
             if (gShouldPostNontrivialScreenParametersChange) {
                 gShouldPostNontrivialScreenParametersChange = NO;
-                DLog(@"Post iTermScreenParametersDidChangeNontrivally");
+                RLog(@"Post iTermScreenParametersDidChangeNontrivally");
                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermScreenParametersDidChangeNontrivally
                                                                     object:nil];
             }
@@ -287,11 +287,11 @@ NSString *PODescription(NSApplicationPresentationOptions presentationOptions) {
     if ((presentationOptions & requiresHiddenDock) && !(presentationOptions & dockHidden)) {
         static const int maxAttempts = 10;
         if (attempt >= maxAttempts) {
-            DLog(@"Still can't set valid presentation options %@ after %d attempts; giving up until the next update",
+            RLog(@"Still can't set valid presentation options %@ after %d attempts; giving up until the next update",
                  PODescription(presentationOptions), attempt);
             return;
         }
-        DLog(@"Would set invalid presentation options %@ (dock not hidden); deferring (attempt %d) until Spaces transition settles",
+        RLog(@"Would set invalid presentation options %@ (dock not hidden); deferring (attempt %d) until Spaces transition settles",
              PODescription(presentationOptions), attempt);
         // retryUpdateWithAttempt: is the only delayed perform on this object, so a
         // target-wide cancel keeps at most one retry pending regardless of count.
@@ -300,7 +300,7 @@ NSString *PODescription(NSApplicationPresentationOptions presentationOptions) {
         return;
     }
 
-    DLog(@"Set presentation options from %@ to %@", PODescription(NSApp.presentationOptions), PODescription(presentationOptions));
+    RLog(@"Set presentation options from %@ to %@", PODescription(NSApp.presentationOptions), PODescription(presentationOptions));
     NSApp.presentationOptions = presentationOptions;
 }
 
@@ -452,7 +452,7 @@ NSString *PODescription(NSApplicationPresentationOptions presentationOptions) {
         DLog(@"That was a lie. Frames are still %@", _screenFrames);
         return;
     }
-    DLog(@"screen parameters did change. Set lastScreen to nil and update. This could cause the dock to spuriously appear.");
+    RLog(@"screen parameters did change. Set lastScreen to nil and update. This could cause the dock to spuriously appear.");
     _lastScreen = nil;
     [self update];
 }

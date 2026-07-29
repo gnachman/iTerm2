@@ -7,7 +7,7 @@ protocol SessionNoteViewDelegate: AnyObject {
     func sessionNoteViewTextDidChange(_ view: SessionNoteView)
     func sessionNoteViewDidBecomeEmpty(_ view: SessionNoteView)
     func sessionNoteViewDidUpdateFrame(_ view: SessionNoteView)
-    func sessionNoteFont() -> NSFont
+    func sessionNoteFont() -> NSFont?
 }
 
 // MARK: - Flipped Visual Effect View

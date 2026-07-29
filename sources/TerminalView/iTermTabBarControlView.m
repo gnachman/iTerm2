@@ -283,6 +283,20 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
     self.showAddTabButton = ![iTermAdvancedSettingsModel removeAddTabButton] && (orientation == PSMTabBarHorizontalOrientation);
 }
 
+- (void)updateHeightWithDefault:(CGFloat)defaultHeight {
+    if (@available(macOS 26, *)) {
+        if (self.orientation == PSMTabBarVerticalOrientation) {
+            self.style.orientation = self.orientation;
+            const CGFloat styleHeight = self.style.tabBarHeight;
+            if (styleHeight > 0) {
+                self.height = styleHeight;
+                return;
+            }
+        }
+    }
+    self.height = defaultHeight;
+}
+
 #pragma mark - Private
 
 - (BOOL)cellAllowsTabProgressBar:(PSMTabBarCell *)cell {
@@ -325,7 +339,11 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 
 - (void)configureCustomProgressBarView:(NSView *)view forTabCell:(PSMTabBarCell *)cell {
     iTermProgressBarView *progressBar = (iTermProgressBarView *)view;
-    progressBar.heightValue = PSMTabBarProgressBarHeight;
+    // The gradient fills the view's full height before the clip-path mask is
+    // applied. For the flush bar styles the view is PSMTabBarProgressBarHeight
+    // tall; for the Tahoe ring it's the outset pill height, so the gradient
+    // fills the ring before the mask carves out its center.
+    progressBar.heightValue = MAX(PSMTabBarProgressBarHeight, NSHeight(view.frame));
     progressBar.transparent = [self.style respondsToSelector:@selector(progressBarClipPathForTabCell:)];
     progressBar.darkMode = self.style.useLightControls;
     progressBar.colorScheme = [self tabProgressBarColorSchemeForCell:cell];

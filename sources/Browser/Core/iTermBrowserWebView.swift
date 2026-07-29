@@ -281,7 +281,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
                                                           eventNumber: 1,
                                                           clickCount: 1,
                                                           pressure: 1.0) else {
-                DLog("Failed to create right mouse down event")
+                RLog("Failed to create right mouse down event")
                 return
             }
 
@@ -295,7 +295,7 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
                                                         eventNumber: 2,
                                                         clickCount: 1,
                                                         pressure: 1.0) else {
-                DLog("Failed to create right mouse up event")
+                RLog("Failed to create right mouse up event")
                 return
             }
 

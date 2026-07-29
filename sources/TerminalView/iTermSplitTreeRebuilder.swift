@@ -201,6 +201,14 @@ class iTermSplitTreeRebuilder: NSObject {
             tab.activeSession = first
         }
 
+        // `setRoot` reparented every SessionView, which detaches whatever
+        // view held first-responder status and leaves the window with a
+        // nil/stale responder. When the active session survived above,
+        // `setActiveSession`'s makeFirstResponder was never invoked (it's
+        // gated on the active pointer changing), so nothing restored focus.
+        // Do it unconditionally here, matching the tmux rebuild paths.
+        tab.restoreFirstResponderAfterViewHierarchyRebuild()
+
         return newRoot
     }
 

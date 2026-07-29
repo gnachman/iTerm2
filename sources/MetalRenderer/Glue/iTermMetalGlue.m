@@ -17,7 +17,10 @@
 #import "iTermData.h"
 #import "iTermImageInfo.h"
 #import "iTermMarkRenderer.h"
+#import "iTermConfigGenerationTracker.h"
 #import "iTermMetalPerFrameState.h"
+#import "iTermRowOutputCache.h"
+#import "VT100LineInfo.h"
 #import "iTermSelection.h"
 #import "iTermSmartCursorColor.h"
 #import "iTermTextDrawingHelper.h"
@@ -43,10 +46,23 @@ NS_ASSUME_NONNULL_BEGIN
     NSMutableSet<NSString *> *_missingImages;
     NSMutableSet<NSString *> *_loadedImages;
     iTermAttributedStringBuilderStats _stats;
+    iTermConfigGenerationTracker *_configGenerationTracker;
+    // Persists across frames so unchanged rows can be reused. One per text view.
+    iTermRowOutputCache *_rowOutputCache;
 }
 
 @synthesize oldCursorScreenCoord = _oldCursorScreenCoord;
 @synthesize lastTimeCursorMoved = _lastTimeCursorMoved;
+
+- (uint64_t)metalConfigGenerationForRenderInputs:(const iTermRowRenderInputs *)inputs
+                                        colorMap:(nullable iTermColorMap *)colorMap
+                                      colorSpace:(NSColorSpace *)colorSpace
+                                       fontTable:(nullable iTermFontTable *)fontTable {
+    return [_configGenerationTracker generationForRenderInputs:inputs
+                                                      colorMap:colorMap
+                                                    colorSpace:colorSpace
+                                                     fontTable:fontTable];
+}
 
 - (instancetype)init {
     self = [super init];
@@ -57,7 +73,13 @@ NS_ASSUME_NONNULL_BEGIN
                                                    object:nil];
         _missingImages = [NSMutableSet set];
         _loadedImages = [NSMutableSet set];
-        iTermPreciseTimerSetEnabled(YES);
+        _configGenerationTracker = [[iTermConfigGenerationTracker alloc] init];
+        // Only visible rows are looked up in a frame; caching beyond the viewport
+        // only speeds scrollback navigation, so a modest multiple of a tall
+        // viewport is plenty. Each entry owns row-sized blobs (~20-25 KB on a wide
+        // pane), so a larger cap would retain tens of MB per text view across split
+        // panes and tabs for near-zero extra hit rate.
+        _rowOutputCache = [[iTermRowOutputCache alloc] initWithCapacity:256];
         iTermPreciseTimerStatsInit(&_stats.attrsForChar, "Compute Attrs");
         iTermPreciseTimerStatsInit(&_stats.shouldSegment, "Segment");
         iTermPreciseTimerStatsInit(&_stats.buildMutableAttributedString, "Build attr strings");
@@ -103,6 +125,13 @@ NS_ASSUME_NONNULL_BEGIN
     }
     ITBetaAssert(self.delegate != nil, @"Nil delegate");
     ITBetaAssert(self.delegate.metalGlueContext != nil, @"Nil metal glue context");
+    if ([iTermAdvancedSettingsModel metalRowOutputCacheEnabled]) {
+        // The per-row cache keys grid rows on the per-line generation, which is not
+        // advanced unless tracking is on (it is off by default so idle sessions
+        // don't bump the shared counter on every dirty line). Turn it on now that a
+        // cache-enabled frame is being built.
+        VT100LineInfoEnableGenerationTracking();
+    }
     iTermAttributedStringBuilderStatsPointers statsPointers = {
         .attrsForChar = &_stats.attrsForChar,
         .shouldSegment = &_stats.shouldSegment,
@@ -117,7 +146,8 @@ NS_ASSUME_NONNULL_BEGIN
                                                         glue:self
                                                      context:self.delegate.metalGlueContext
                                          doubleWidthContext:self.delegate.metalGlueContextDoubleWidth
-                                     attributedStringBuilder:attributedStringBuilder];
+                                     attributedStringBuilder:attributedStringBuilder
+                                              rowOutputCache:_rowOutputCache];
 }
 
 - (void)metalDidFindImages:(NSSet<NSString *> *)foundImages

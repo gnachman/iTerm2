@@ -154,7 +154,7 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
     panel.allowsMultipleSelection = NO;
     if ([panel runModal] == NSModalResponseOK) {
         picked = YES;
-        DLog(@"Selected app has url %@", panel.URL);
+        RLog(@"Selected app has url %@", panel.URL);
         NSBundle *appBundle = [NSBundle bundleWithURL:panel.URL];
         NSString *bundleId = [appBundle bundleIdentifier];
         DLog(@"Bundle id is %@", bundleId);
@@ -162,7 +162,7 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
             NSString *uti;
             NSError *error;
             if ([_currentFileUrlForOpenPanel getResourceValue:&uti forKey:NSURLTypeIdentifierKey error:&error]) {
-                DLog(@"UTI is %@. Make it the default viewer.", uti);
+                RLog(@"UTI is %@. Make it the default viewer.", uti);
                 LSSetDefaultRoleHandlerForContentType((CFStringRef)uti,
                                                       kLSRolesViewer,
                                                       (CFStringRef)bundleId);
@@ -200,7 +200,7 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
           target:(NSString *)target
           window:(NSWindow *)window
       completion:(void (^)(BOOL ok))completion {
-    DLog(@"openFile: %@ with fragment %@", fullPath, fragment);
+    RLog(@"openFile: %@ with fragment %@", fullPath, fragment);
     NSURL *url;
     BOOL shouldOfferToPickAppOnError = NO;
     if (fragment) {

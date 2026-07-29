@@ -43,6 +43,10 @@ extern NSString * const kTriggerEventParamsKey;
 extern NSString * const kTriggerJobKey;
 extern NSString * const kTriggerProvenanceKey;
 
+// Keys within the eventParams dictionary for the variable-changed match type.
+extern NSString * const kTriggerVariableNameKey;
+extern NSString * const kTriggerVariableValueRegexKey;
+
 @protocol iTermTriggerDelegate<NSObject>
 - (void)triggerDidChangeParameterOptions:(Trigger *)trigger;
 @end

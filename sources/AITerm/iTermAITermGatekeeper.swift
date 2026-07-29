@@ -67,7 +67,7 @@ class iTermAITermGatekeeper: NSObject {
         do {
             try iTermAIClient.instance.validate()
         } catch let error as PluginError {
-            DLog("\(error.reason)")
+            RLog("\(error.reason)")
             if !silent {
                 iTermWarning.show(withTitle: error.reason,
                                   actions: ["OK"],

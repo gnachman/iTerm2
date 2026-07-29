@@ -15,8 +15,22 @@ typedef enum {
     kiTermAdvancedSettingTypeInteger,
     kiTermAdvancedSettingTypeFloat,
     kiTermAdvancedSettingTypeString,
-    kiTermAdvancedSettingTypeOptionalBoolean
+    kiTermAdvancedSettingTypeOptionalBoolean,
+
+    // An integer whose value is the index of a choice presented in a popup
+    // button. The kAdvancedSettingOptions key holds an array of option titles.
+    kiTermAdvancedSettingTypeIntEnum
 } iTermAdvancedSettingType;
+
+// Where a tmux window created outside iTerm2 (e.g., by running `tmux new-window`
+// at the command line) should open. Stored as the integer value of
+// +anonymousTmuxWindowsOpenInCurrentWindow. The raw values are persisted in user
+// defaults, so do not renumber them.
+typedef NS_ENUM(int, iTermOpenAnonymousTmuxWindowLocation) {
+    iTermOpenAnonymousTmuxWindowLocationNewWindow = 0,
+    iTermOpenAnonymousTmuxWindowLocationFocusedWindow = 1,
+    iTermOpenAnonymousTmuxWindowLocationTopmostSessionWindow = 2,
+};
 
 extern NSString *const kAdvancedSettingIdentifier;
 extern NSString *const kAdvancedSettingType;
@@ -24,6 +38,10 @@ extern NSString *const kAdvancedSettingDefaultValue;
 extern NSString *const kAdvancedSettingDescription;
 extern NSString *const kAdvancedSettingSetter;
 extern NSString *const kAdvancedSettingGetter;
+
+// For kiTermAdvancedSettingTypeIntEnum: an NSArray<NSString *> of option titles,
+// indexed by the setting's integer value.
+extern NSString *const kAdvancedSettingOptions;
 
 // The model posts this notification when it makes a change.
 extern NSString *const iTermAdvancedSettingsDidChange;
@@ -48,10 +66,12 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)acceptOSC7;
 + (double)activeUpdateCadence;
 + (int)adaptiveFrameRateThroughputThreshold;
++ (BOOL)addTabButtonUsesCurrentProfile;
 + (BOOL)addUtilitiesToPATH;
 + (BOOL)advancedPasteWaitsForPromptByDefault;
 + (BOOL)aggressiveBaseCharacterDetection;
 + (BOOL)aggressiveFocusFollowsMouse;
++ (NSString *)aiModelCatalogURL;
 + (NSString *)aiModernModelPrefixes;
 + (NSString *)aiProxy;
 + (double)alertTriggerRateLimit;
@@ -77,7 +97,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)alternateMouseScrollStringForUp;
 + (BOOL)alwaysAcceptFirstMouse;
 + (int)alwaysWarnBeforePastingOverSize;
-+ (BOOL)anonymousTmuxWindowsOpenInCurrentWindow;
++ (int)anonymousTmuxWindowsOpenInCurrentWindow;
 + (BOOL)appendToExistingDebugLog;
 + (BOOL)aquaSKKBugfixEnabled;
 + (BOOL)autoLockSessionNameOnEdit;
@@ -104,6 +124,11 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)browserPluginPathHint;
 + (void)setBrowserPluginPathHint:(NSString *)newValue;
 + (BOOL)browserProfiles;
++ (BOOL)companionStreamFrameNumbers;
++ (int)companionStreamMaxLeadMilliseconds;
++ (int)companionStreamMaxQueueDepth;
++ (double)companionStreamBitrateMultiplier;
++ (double)companionWakeupCoalesceInterval;
 + (int)bufferDepth;
 + (BOOL)chaseAnchoredScreen;
 + (BOOL)channelsEnabled;
@@ -224,6 +249,9 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)fullHeightCursor;
 + (BOOL)fullWidthFlags;
 + (BOOL)generativeAIAllowed;
++ (BOOL)companionPairingAllowed;
++ (NSString *)companionRelayOrigin;
++ (NSString *)companionResolverURL;
 + (NSString *)gitSearchPath;
 + (double)gitTimeout;
 + (void)setGitTimeout:(double)value;
@@ -253,6 +281,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)llmPlatform;
 + (BOOL)logDrawingPerformance;
 + (BOOL)logRestorableStateSize;
++ (BOOL)logForegroundJobAncestryDiagnostics;
 + (NSString *)logTimestampFormat;
 + (BOOL)logTimestampsWithPlainText;
 + (BOOL)logToSyslog;
@@ -384,6 +413,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)quickPasteDelayBetweenCalls;
 + (BOOL)remapModifiersWithoutEventTap;
 + (BOOL)rememberTmuxWindowSizes;
++ (BOOL)tmuxWindowsOpenInBackground;
 + (BOOL)removeAddTabButton;
 + (BOOL)reportOnFirstMouse;
 + (BOOL)restrictSemanticHistoryPrefixAndSuffixToLogicalWindow;
@@ -408,6 +438,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)sensitiveScrollWheel;
 + (BOOL)serializeOpeningMultipleFullScreenWindows;
 + (int)screenshotMaxPixelHeight;
++ (NSString *)screenshotSaveLocation;
 + (BOOL)setCookie;
 + (void)setSetCookie:(BOOL)value;
 + (BOOL)setIT2AppPath;
@@ -492,9 +523,9 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)tabsWrapAround;
 + (BOOL)tabTitlesUseSmartTruncation;
 + (BOOL)tabCloseButtonsAlwaysVisible;
-+ (BOOL)threeFingerDragSendsMouseReports;
 + (BOOL)throttleMetalConcurrentFrames;
 + (BOOL)metalSynchronizedDrawing;
++ (BOOL)metalRowOutputCacheEnabled;
 + (double)timeBetweenBlinks;
 + (double)timeBetweenTips;
 + (void)setTimeBetweenTips:(double)time;
@@ -559,6 +590,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)webUserAgent;
 + (BOOL)workAroundMultiDisplayOSBug;
 + (BOOL)workAroundNumericKeypadBug;
++ (double)workgroupAutoSendSubmitDelay;
 + (int)xtermVersion;
 + (CGFloat)verticalBarCursorWidth;
 + (NSString *)viewManPageCommand;

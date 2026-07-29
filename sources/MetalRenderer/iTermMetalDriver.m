@@ -1454,11 +1454,21 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
         cursorInfo.coord.x < frameData.gridSize.width) {
         iTermMetalRowData *rowWithCursor = frameData.rows[cursorInfo.coord.y];
         iTermMetalGlyphAttributes *glyphAttributes = (iTermMetalGlyphAttributes *)rowWithCursor.attributesData.mutableBytes;
-        glyphAttributes[cursorInfo.coord.x].foregroundColor = cursorInfo.textColor;
-        glyphAttributes[cursorInfo.coord.x].backgroundColor = simd_make_float4(cursorInfo.cursorColor.redComponent,
-                                                                               cursorInfo.cursorColor.greenComponent,
-                                                                               cursorInfo.cursorColor.blueComponent,
-                                                                               1);
+        // The foreground was already crossfaded by the per-frame state. Crossfade
+        // the background the glyph is drawn over the same way so its antialiasing
+        // matches the box cursor fading underneath.
+        const vector_float4 cursorBg = simd_make_float4(cursorInfo.cursorColor.redComponent,
+                                                        cursorInfo.cursorColor.greenComponent,
+                                                        cursorInfo.cursorColor.blueComponent,
+                                                        1);
+        const CGFloat fade = cursorInfo.fadeAlpha;
+        if (fade >= 1.0) {
+            glyphAttributes[cursorInfo.coord.x].foregroundColor = cursorInfo.textColor;
+            glyphAttributes[cursorInfo.coord.x].backgroundColor = cursorBg;
+        } else {
+            const vector_float4 t = simd_make_float4(fade, fade, fade, fade);
+            glyphAttributes[cursorInfo.coord.x].backgroundColor = simd_mix(cursorInfo.backgroundColor, cursorBg, t);
+        }
         glyphAttributes[cursorInfo.coord.x].hasUnderlineColor = NO;
         [rowWithCursor.attributesData checkForOverrun];
     }
@@ -1468,9 +1478,11 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
         tState.selecting = cursorInfo.copyModeCursorSelecting;
         tState.coord = cursorInfo.copyModeCursorCoord;
     }
+    const CGFloat cursorFadeAlpha = cursorInfo.fadeAlpha;
     if (cursorInfo.cursorVisible && cursorInfo.password) {
         iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_keyCursorRenderer];
         tState.coord = cursorInfo.coord;
+        tState.fadeAlpha = cursorFadeAlpha;
         tState.backgroundIsDark = SIMDPerceivedBrightness(cursorInfo.backgroundColor) < 0.5;
     } else if (cursorInfo.cursorVisible) {
         switch (cursorInfo.type) {
@@ -1480,12 +1492,14 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
                 tState.color = cursorInfo.cursorColor;
                 tState.doubleWidth = cursorInfo.doubleWidth;
                 tState.pixelOffset = cursorInfo.pixelOffset;
+                tState.fadeAlpha = cursorFadeAlpha;
 
                 iTermCursorRendererTransientState *shadowTState = [frameData transientStateForRenderer:_horizontalShadowCursorRenderer];
                 shadowTState.coord = cursorInfo.coord;
                 shadowTState.color = cursorInfo.cursorColor;
                 shadowTState.doubleWidth = cursorInfo.doubleWidth;
                 shadowTState.pixelOffset = cursorInfo.pixelOffset;
+                shadowTState.fadeAlpha = cursorFadeAlpha;
                 break;
             }
             case CURSOR_BOX: {
@@ -1493,11 +1507,13 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
                 tState.doubleWidth = cursorInfo.doubleWidth;
+                tState.fadeAlpha = cursorFadeAlpha;
 
                 tState = [frameData transientStateForRenderer:_frameCursorRenderer];
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
                 tState.doubleWidth = cursorInfo.doubleWidth;
+                tState.fadeAlpha = cursorFadeAlpha;
                 break;
             }
             case CURSOR_VERTICAL: {
@@ -1505,11 +1521,13 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
                 tState.coord = cursorInfo.coord;
                 tState.color = cursorInfo.cursorColor;
                 tState.pixelOffset = cursorInfo.pixelOffset;
+                tState.fadeAlpha = cursorFadeAlpha;
 
                 iTermCursorRendererTransientState *shadowTState = [frameData transientStateForRenderer:_verticalShadowCursorRenderer];
                 shadowTState.coord = cursorInfo.coord;
                 shadowTState.color = cursorInfo.cursorColor;
                 shadowTState.pixelOffset = cursorInfo.pixelOffset;
+                shadowTState.fadeAlpha = cursorFadeAlpha;
                 break;
             }
             case CURSOR_DEFAULT:

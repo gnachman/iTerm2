@@ -74,13 +74,10 @@ extension AILiveHarness {
         guard let broker = ChatBroker.instance else {
             throw XCTSkip("ChatBroker.instance unavailable")
         }
-        // Critical isolation invariant: do NOT touch ChatClient.instance.
-        // If we did, it would register a broker processor that intercepts
-        // .remoteCommandRequest before the test can act as the tool
-        // runner. Sanity check: nothing in the harness should have
-        // pre-instantiated it.
-        XCTAssertFalse(chatClientAlreadyInstantiated(),
-                       "ChatClient.instance must not exist; this test plays the role of the broker-side tool runner")
+        // This test acts as the broker-side tool runner, so no processor
+        // (notably ChatClient's, which exists at launch on a machine with a
+        // paired companion) may intercept its messages.
+        suspendBrokerProcessors(broker)
 
         // 2) Encode permissions that grant runCommands=.always so the
         //    LLM is offered the execute_command tool. The chatID/guid
@@ -159,25 +156,35 @@ extension AILiveHarness {
 
         // 6) Expectations driven by the recorder's transition log.
         //    These are sequenced strictly: tool request, then A's turn
-        //    end (typing=false after tool response), then B's turn end
-        //    (second typing=false). The recorder's onEntry hook
-        //    fulfills them as it observes matching events.
+        //    end (turnLifecycle .ended after the tool round-trip), then
+        //    B's turn end (second .ended). The recorder's onEntry hook
+        //    fulfills them as it observes matching events. Turn boundaries
+        //    are read from turnLifecycle, not typing edges, because typing
+        //    now toggles false mid-turn when A parks for the tool result.
         let sawToolRequest = expectation(description: "agent dispatched .remoteCommandRequest")
-        let sawATurnEnd    = expectation(description: "first agent typing=false after tool round-trip (A's turn finished)")
-        let sawBTurnEnd    = expectation(description: "second agent typing=false (B's turn finished)")
+        let sawATurnEnd    = expectation(description: "first agent turnLifecycle .ended after tool round-trip (A's turn finished)")
+        let sawBTurnEnd    = expectation(description: "second agent turnLifecycle .ended (B's turn finished)")
         let userMessageABody = "Use the execute_command tool to run any command. The exact command does not matter."
         let userMessageBBody = "Reply with the single digit answer to 1+1, nothing else."
 
         var agentTurnEndCount = 0
+        var toolRequestSeen = false
         recorder.onEntry = { entry, _ in
             switch entry {
             case .delivery(let message, _):
+                // One-shot: a later turn can legitimately call the tool
+                // again, and a second fulfill() would assert (crashing the
+                // host, since asserts are enabled).
                 if case .remoteCommandRequest = message.content,
-                   message.author == .agent {
+                   message.author == .agent, !toolRequestSeen {
+                    toolRequestSeen = true
                     sawToolRequest.fulfill()
                 }
-            case .typing(let isTyping, let participant):
-                guard !isTyping, participant == .agent else { return }
+            case .typing:
+                // Spinner hint only; not a turn boundary (fires false on a park).
+                return
+            case .turnLifecycle(let event):
+                guard event == .ended else { return }
                 agentTurnEndCount += 1
                 if agentTurnEndCount == 1 {
                     sawATurnEnd.fulfill()
@@ -196,18 +203,18 @@ extension AILiveHarness {
 
         // 8) Tool request is in the air; FakeToolResponder will publish
         //    a response after `toolDelay` seconds. Publish B right
-        //    now. The queue must hold it — no typing=true for B fires
-        //    until A's typing=false fires first.
+        //    now. The queue must hold it — B's turn does not start
+        //    until A's turn ends first.
         try broker.publish(message: userText(chatID: chatID, body: userMessageBBody),
                            toChatID: chatID, partial: false)
 
-        // 9) Wait for A's turn to fully finish (typing=false). This
-        //    can only happen after the fake responder publishes the
+        // 9) Wait for A's turn to fully finish (turnLifecycle .ended).
+        //    This can only happen after the fake responder publishes the
         //    tool response AND the post-tool LLM call completes.
         wait(for: [sawATurnEnd], timeout: 120)
 
-        // 10) Wait for B's turn to finish (second typing=false). If
-        //     queue discipline holds, this fires AFTER A's typing=false.
+        // 10) Wait for B's turn to finish (second .ended). If queue
+        //     discipline holds, this fires AFTER A's turn ends.
         wait(for: [sawBTurnEnd], timeout: 120)
 
         // 11) Walk the recorder log and assert the strict event order.
@@ -296,6 +303,7 @@ extension AILiveHarness {
         guard let broker = ChatBroker.instance else {
             throw XCTSkip("ChatBroker.instance unavailable")
         }
+        suspendBrokerProcessors(broker)
 
         let recorder = BrokerEventRecorder()
         let listenAll = broker.subscribe(chatID: nil, registrationProvider: nil) { update in
@@ -320,9 +328,10 @@ extension AILiveHarness {
         // delivery; signals A's turn is actively streaming and stop will
         // intercept mid-flight rather than after completion).
         let sawAgentStreaming = expectation(description: "agent emitted first streaming chunk")
-        let sawBTurnEnd = expectation(description: "B's turn ends (typing=false)")
+        let sawBTurnEnd = expectation(description: "B's turn ends (turnLifecycle .ended)")
         var sawStream = false
         var bTurnStarted = false
+        var bTurnEnded = false
         recorder.onEntry = { entry, _ in
             switch entry {
             case .delivery(let message, _):
@@ -335,12 +344,20 @@ extension AILiveHarness {
                         return
                     }
                 }
-            case .typing(let isTyping, let participant):
-                guard participant == .agent else { return }
-                if isTyping {
+            case .typing:
+                // Spinner hint only; not a turn boundary.
+                return
+            case .turnLifecycle(let event):
+                switch event {
+                case .started:
                     if sawStream { bTurnStarted = true }
-                } else if bTurnStarted {
-                    sawBTurnEnd.fulfill()
+                case .ended:
+                    if bTurnStarted, !bTurnEnded {
+                        bTurnEnded = true
+                        sawBTurnEnd.fulfill()
+                    }
+                case .unknownFuture:
+                    return
                 }
             }
         }
@@ -406,7 +423,7 @@ extension AILiveHarness {
     ///   4. Publish msg B.
     ///   5. The fake responder publishes the tool response AFTER B
     ///      has started, so the response is orphan.
-    ///   6. Assert: B's turn ends (typing=false fires for B).
+    ///   6. Assert: B's turn ends (turnLifecycle .ended fires for B).
     ///
     /// FAILS on current main; PASSES once ChatAgent.fetchCompletion
     /// drops orphan .remoteCommandResponse messages instead of
@@ -430,6 +447,7 @@ extension AILiveHarness {
         guard let broker = ChatBroker.instance else {
             throw XCTSkip("ChatBroker.instance unavailable")
         }
+        suspendBrokerProcessors(broker)
 
         let perms = #"[{"guid":"queue-test","category":"Run Commands","chatID":"queue-test"},"always"]"#
         let recorder = BrokerEventRecorder()
@@ -461,19 +479,28 @@ extension AILiveHarness {
         defer { responder.shutdown() }
 
         let sawToolRequest = expectation(description: "tool request seen")
-        let sawBTurnEnd    = expectation(description: "B's turn ends (typing=false)")
+        let sawBTurnEnd    = expectation(description: "B's turn ends (turnLifecycle .ended)")
         var turnEndsAfterStop = 0
         var pressedStop = false
+        var toolRequestSeen = false
         recorder.onEntry = { entry, _ in
             switch entry {
             case .delivery(let message, _):
-                if case .remoteCommandRequest = message.content, message.author == .agent {
+                // One-shot: B's turn (or the orphan-response turn) can call
+                // the tool again; a second fulfill() would assert and crash
+                // the host.
+                if case .remoteCommandRequest = message.content,
+                   message.author == .agent, !toolRequestSeen {
+                    toolRequestSeen = true
                     sawToolRequest.fulfill()
                 }
-            case .typing(let isTyping, let participant):
-                guard participant == .agent, !isTyping else { return }
+            case .typing:
+                // Spinner hint only; not a turn boundary (fires false on a park).
+                return
+            case .turnLifecycle(let event):
+                guard event == .ended else { return }
                 if pressedStop {
-                    // First typing=false after stop = A's turn ending
+                    // First turn-end after stop = A's turn ending
                     // (stop drained A). Second = B's turn ending.
                     turnEndsAfterStop += 1
                     if turnEndsAfterStop == 2 {
@@ -514,7 +541,178 @@ extension AILiveHarness {
         print("[orphan-tool-test] broker log:\n\(dump)")
     }
 
+    /// Repros GitLab issue #12883: with DeepSeek, asking the AI chat to
+    /// run a command and then sending a follow-up turn fails with HTTP
+    /// 400 "An assistant message with 'tool_calls' must be followed by
+    /// tool messages responding to each 'tool_call_id' (insufficient tool
+    /// messages following tool_calls message)".
+    ///
+    /// Mechanism (client side, not the model): a tool call that never
+    /// gets a response — e.g. an `.ask` request the user abandons, or a
+    /// parked request cleared by `cancelPendingCommands` on the next
+    /// user message — stays in the transcript as an orphan
+    /// `.remoteCommandRequest`. On the next turn `ChatAgent.translate`
+    /// emits it as an assistant `functionCall` but appends the
+    /// synthesized "interrupted" `functionOutput` at the END of the
+    /// message array (ChatAgent.swift:451-466) instead of immediately
+    /// after the call. When any persisted message sits between the
+    /// orphan call and the end of history, the wire order becomes
+    /// `assistant tool_calls → user/agent text → … → tool output`, which
+    /// DeepSeek (and the legacy OpenAI chat-completions path) reject for
+    /// breaking tool_call→tool_output adjacency. Anthropic, Gemini, and
+    /// the OpenAI Responses API pair by id and tolerate it, which is why
+    /// the issue is reported only against DeepSeek.
+    ///
+    /// The turn is pinned to a DeepSeek model via the user message's
+    /// `configuration.model` (ChatAgent forwards it to
+    /// AIConversation.providerOverride), so the repro doesn't depend on
+    /// whichever provider the test environment defaults to. The
+    /// transcript is seeded via `initialMessages` (the same on-disk shape
+    /// a reloaded chat would have) so the repro is deterministic and
+    /// costs a single round-trip. The orphan call is followed by two more
+    /// messages, which is exactly what forces the synthesized output past
+    /// them to the end.
+    ///
+    /// FAILS while translate appends orphan filler at the end; PASSES
+    /// once the synthesized output is inserted adjacent to its call.
+    func test_chat_orphanToolCallBeforeLaterMessages_doesNotPoisonNextTurn() throws {
+        // Issue #12883 is DeepSeek-specific: it's the vendor whose
+        // chat-completions endpoint enforces tool_call→tool_output
+        // adjacency. Pin the turn to a DeepSeek model so the malformed
+        // order is actually rejected; skip if there's no DeepSeek key.
+        guard let apiKey = Self.configValue("DEEPSEEK_API_KEY"), !apiKey.isEmpty else {
+            throw XCTSkip("No DEEPSEEK_API_KEY; issue #12883 only reproduces against DeepSeek")
+        }
+        // Prefer a non-thinking DeepSeek model to keep the round-trip
+        // focused on message ordering rather than reasoning round-trip.
+        let deepSeekModel = AIMetadata.instance.models.first(where: {
+            $0.vendor == .deepSeek && !$0.features.contains(.configurableThinking)
+        }) ?? AIMetadata.instance.models.first(where: { $0.vendor == .deepSeek })
+        guard let deepSeekModel else {
+            throw XCTSkip("No DeepSeek model in AIMetadata")
+        }
+        guard let broker = ChatBroker.instance else {
+            throw XCTSkip("ChatBroker.instance unavailable")
+        }
+        suspendBrokerProcessors(broker)
+
+        // Build a transcript that already holds an orphan tool call
+        // (a .remoteCommandRequest with no matching .remoteCommandResponse)
+        // followed by two more persisted messages. The trailing messages
+        // are what push translate's synthesized output to the end and
+        // break adjacency.
+        let orphanCallID = "call_orphan_\(UUID().uuidString.prefix(8))"
+        let initialMessages: [Message] = [
+            seedUserText("Run a quick command for me."),
+            seedOrphanToolCall(callID: orphanCallID, command: "ls"),
+            seedUserText("Actually never mind that, let's just chat instead."),
+            seedAgentText("Sure, happy to chat. What's on your mind?"),
+        ]
+
+        let recorder = BrokerEventRecorder()
+        let listenAll = broker.subscribe(chatID: nil, registrationProvider: nil) { update in
+            recorder.record(update)
+        }
+        defer { listenAll.unsubscribe() }
+
+        let chatID = try broker.create(
+            chatWithTitle: "live orphan-tool-call test \(UUID().uuidString.prefix(8))",
+            terminalSessionGuid: "queue-test",
+            browserSessionGuid: nil,
+            permissions: "",
+            initialMessages: initialMessages)
+        addTeardownBlock { try? broker.delete(chatID: chatID) }
+
+        let registrationProvider = TestRegistrationProvider(apiKey: apiKey)
+        let registrationSub = broker.subscribe(chatID: chatID,
+                                               registrationProvider: registrationProvider) { _ in }
+        defer { registrationSub.unsubscribe() }
+
+        // Send a brand-new user turn. Rebuilding history for it walks the
+        // seeded transcript and (with the bug) ships the orphan call far
+        // from its synthesized output.
+        let sawTurnEnd = expectation(description: "agent turn ends (turnLifecycle .ended)")
+        var turnEnded = false
+        recorder.onEntry = { entry, _ in
+            if case .turnLifecycle(.ended) = entry, !turnEnded {
+                turnEnded = true
+                sawTurnEnd.fulfill()
+            }
+        }
+
+        var trigger = userText(chatID: chatID,
+                               body: "What is 1 + 1? Reply with just the digit.")
+        trigger.configuration = Message.Configuration(hostedWebSearchEnabled: false,
+                                                      vectorStoreIDs: [],
+                                                      model: deepSeekModel.name,
+                                                      shouldThink: false)
+        try broker.publish(message: trigger, toChatID: chatID, partial: false)
+        wait(for: [sawTurnEnd], timeout: 90)
+
+        let dump = recorder.summary(formatContent: short)
+        print("[orphan-tool-call-test] broker log (model=\(deepSeekModel.name)):\n\(dump)")
+
+        // A vendor rejection surfaces as ChatAgent's committed error
+        // message: "🛑 I ran into a problem: <error>". For DeepSeek the
+        // error text carries "insufficient tool messages" / status 400.
+        let errorDelivery = recorder.firstDelivery { msg in
+            guard msg.author == .agent, let text = msg.content.simpleText else { return false }
+            let lower = text.lowercased()
+            return text.contains("🛑")
+                || lower.contains("insufficient tool")
+                || lower.contains("must be followed by tool")
+                || lower.contains("status 400")
+        }
+        if let errorDelivery,
+           case .delivery(let msg, _) = recorder.entries[errorDelivery] {
+            XCTFail("""
+                Next turn was poisoned by the orphan tool call (issue #12883). \
+                The agent replied with an error instead of answering: \
+                \(msg.content.simpleText ?? "<non-text>"). \
+                translate() appended the synthesized tool output at the end of \
+                history instead of adjacent to its tool call, so DeepSeek \
+                (\(deepSeekModel.name)) rejected the malformed message order. \
+                Full log printed above.
+                """)
+        }
+    }
+
     // MARK: - Helpers
+
+    /// A function-call id wrapper matching how vendors round-trip ids.
+    private func seedFcid(_ s: String) -> LLM.Message.FunctionCallID {
+        LLM.Message.FunctionCallID(callID: s, itemID: s)
+    }
+
+    /// A persisted assistant tool call with NO matching response: the
+    /// orphan that issue #12883 is about. chatID is a placeholder;
+    /// broker.create rewrites it to the real chat id.
+    private func seedOrphanToolCall(callID: String, command: String) -> Message {
+        let llm = LLM.Message(
+            role: .assistant,
+            body: .functionCall(LLM.FunctionCall(name: "execute_command",
+                                                 arguments: "{\"command\":\"\(command)\"}",
+                                                 id: callID,
+                                                 thoughtSignature: nil),
+                                id: seedFcid(callID)))
+        let rc = RemoteCommand(llmMessage: llm,
+                               content: .executeCommand(.init(command: command)))
+        return Message(chatID: "seed",
+                       author: .agent,
+                       content: .remoteCommandRequest(.classic(rc), safe: nil),
+                       sentDate: Date(),
+                       uniqueID: UUID())
+    }
+
+    private func seedUserText(_ s: String) -> Message {
+        Message(chatID: "seed", author: .user, content: .markdown(s),
+                sentDate: Date(), uniqueID: UUID())
+    }
+
+    private func seedAgentText(_ s: String) -> Message {
+        Message(chatID: "seed", author: .agent, content: .markdown(s),
+                sentDate: Date(), uniqueID: UUID())
+    }
 
     private func userText(chatID: String, body: String) -> Message {
         return Message(chatID: chatID,
@@ -538,21 +736,31 @@ extension AILiveHarness {
         }
     }
 
-    /// Best-effort check that nobody has pre-instantiated ChatClient.
-    /// We don't want to read its private singleton, so probe indirectly
-    /// — if ChatClient.instance were already created, its broker
-    /// processor would be in broker.processors. Since processors are
-    /// just closures, we can't introspect them; instead we accept this
-    /// returns false here and rely on the test path not calling it.
-    private func chatClientAlreadyInstantiated() -> Bool {
-        return false
+    /// These tests play the broker-side tool runner themselves, so no broker
+    /// processor may intercept their messages. That used to be "ensured" by
+    /// assuming ChatClient.instance had never been created, but the guard was
+    /// unenforceable (processors are anonymous closures) and the assumption
+    /// is simply false on a machine with a paired companion device: the
+    /// companion bridge and agent-activity notifier touch the lazily-creating
+    /// ChatClient.instance at app launch, and its processor then wraps this
+    /// fixture's .remoteCommandRequest (fabricated session guid, no live
+    /// PTYSession) in .selectSessionRequest, which the recorder never
+    /// matches. Suspend ALL processors for the test's duration and restore
+    /// them on teardown; every test in this file was authored under the
+    /// no-processor assumption.
+    private func suspendBrokerProcessors(_ broker: ChatBroker) {
+        let saved = broker.processors
+        broker.processors = []
+        addTeardownBlock { @MainActor in
+            broker.processors = saved
+        }
     }
 
     /// Static config-value lookup mirrors AILiveDriver.configValue.
     /// Public extension methods can't reach the private one, so
     /// duplicate the trivial reader.
     private static func configValue(_ key: String) -> String? {
-        let configPath = "/tmp/iterm2-ai-live.json"
+        let configPath = AILiveHarness.configFilePath()
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: String]
         else {
@@ -586,6 +794,7 @@ private final class BrokerEventRecorder {
     enum Entry {
         case delivery(Message, String)
         case typing(Bool, Participant)
+        case turnLifecycle(TurnEvent)
     }
 
     private(set) var entries: [Entry] = []
@@ -595,10 +804,15 @@ private final class BrokerEventRecorder {
     func record(_ update: ChatBroker.Update) {
         let entry: Entry
         switch update {
-        case .delivery(let message, let chatID):
+        case .delivery(let message, let chatID, _):
             entry = .delivery(message, chatID)
         case .typingStatus(let isTyping, let participant):
             entry = .typing(isTyping, participant)
+        case .turnLifecycle(let event):
+            // The authoritative turn boundary. Turn-end detection keys on this
+            // (not on typing edges) because typing is now a pure spinner hint
+            // that toggles false mid-turn on a park.
+            entry = .turnLifecycle(event)
         }
         entries.append(entry)
         timestamps.append(Date())
@@ -613,6 +827,8 @@ private final class BrokerEventRecorder {
                 lines.append("  [\(idx)] \(message.author.rawValue):\(formatContent(message.content))")
             case let .typing(isTyping, participant):
                 lines.append("  [\(idx)] typing:\(participant.rawValue)=\(isTyping)")
+            case let .turnLifecycle(event):
+                lines.append("  [\(idx)] turn:\(event.rawValue)")
             }
         }
         return lines.joined(separator: "\n")
@@ -629,11 +845,12 @@ private final class BrokerEventRecorder {
         return nil
     }
 
-    /// Index of the first agent typing=false transition at or after `from`.
+    /// Index of the first agent turn-end (turnLifecycle .ended) at or after `at`.
+    /// This is the authoritative turn boundary now that typing is a pure spinner
+    /// hint that can toggle false mid-turn on a park.
     func firstAgentTurnEnd(at: Int = 0) -> Int? {
         for i in at..<entries.count {
-            if case let .typing(isTyping, participant) = entries[i],
-               !isTyping, participant == .agent {
+            if case .turnLifecycle(.ended) = entries[i] {
                 return i
             }
         }
@@ -652,7 +869,14 @@ private final class FakeToolResponder {
     private let delay: TimeInterval
     private let output: String
     private var subscription: ChatBroker.Subscription?
-    private var responded = false
+    // One response per REQUEST, not one total: a later turn can re-issue
+    // the tool (the interrupted-call filler in a rebuilt history invites a
+    // retry), and if that call never got an answer the turn would park in
+    // pendingRemoteCommands forever and the test would time out on turn-end.
+    // Responding per-request keeps the ORPHAN semantics intact where they
+    // matter: a response whose dispatcher was cleared by Stop is still an
+    // orphan no matter how many requests get answered.
+    private var respondedRequestIDs = Set<UUID>()
 
     init(broker: ChatBroker, chatID: String, delay: TimeInterval, output: String) {
         self.broker = broker
@@ -671,11 +895,10 @@ private final class FakeToolResponder {
     }
 
     private func handle(_ update: ChatBroker.Update) {
-        guard case .delivery(let message, _) = update else { return }
-        guard !responded else { return }
+        guard case .delivery(let message, _, _) = update else { return }
         guard case .remoteCommandRequest(let payload, _) = message.content else { return }
         guard case .classic(let cmd) = payload else { return }
-        responded = true
+        guard respondedRequestIDs.insert(message.uniqueID).inserted else { return }
         let requestID = message.uniqueID
         let functionName = cmd.content.functionName
         // Round-trip the LLM-side function_call id (carried inside the

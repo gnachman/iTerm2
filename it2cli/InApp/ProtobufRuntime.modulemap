@@ -1,0 +1,20 @@
+// Header-only clang module that exposes iTerm2's protobuf ObjC types
+// (GPB* runtime + ITM* generated messages) to the in-app `it2core` Swift module.
+//
+// It intentionally lists only headers, never the .m sources: the GPB/ITM
+// *implementations* are already compiled into libiTerm2Shared.a, so at app-link
+// time it2core binds to that single copy of the classes. Compiling the .m here
+// too would produce a duplicate set of ObjC classes.
+//
+// The standalone SwiftPM build does NOT use this file; there the `ProtobufRuntime`
+// target compiles the .m so the standalone `it2` binary is self-contained.
+//
+// Referenced explicitly via -fmodule-map-file (see the it2core target's
+// OTHER_SWIFT_FLAGS); it lives in its own directory and has a non-default name so
+// it is never auto-discovered by the app targets that compile these headers
+// non-modularly.
+module ProtobufRuntime {
+    header "../../ThirdParty/ProtobufRuntime/GPBProtocolBuffers.h"
+    header "../../sources/proto/Api.pbobjc.h"
+    export *
+}

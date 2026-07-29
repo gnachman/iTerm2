@@ -102,7 +102,7 @@ NSString *const iTermWindowStateKeyGUID = @"guid";
 }
 
 + (void)externalRestorationDidComplete {
-    DLog(@"external restoration completed");
+    RLog(@"external restoration completed");
     gExternalRestorationDidComplete = YES;
     [self runPostRestorationBlockIfNeeded];
 }
@@ -152,10 +152,10 @@ NSString *const iTermWindowStateKeyGUID = @"guid";
                   completionHandler:(void (^)(NSWindow *, NSError *))completionHandler {
     DLog(@"restoreWindowWithIdentifier:%@", identifier);
     if (system && [iTermUserDefaults ignoreSystemWindowRestoration]) {
-        DLog(@"Ignore system window restoration because we're using our own restorable state controller.");
+        RLog(@"Ignore system window restoration because we're using our own restorable state controller.");
         NSString *guid = [state.coder decodeObjectForKey:iTermWindowStateKeyGUID];
         if (!guid) {
-            DLog(@"GUID missing.");
+            RLog(@"GUID missing.");
             iTermRestorableStateController.shouldIgnoreOpenUntitledFile = YES;
             completionHandler(nil, nil);
             iTermRestorableStateController.shouldIgnoreOpenUntitledFile = NO;
@@ -219,7 +219,7 @@ NSString *const iTermWindowStateKeyGUID = @"guid";
             [arrangement autorelease];
             DLog(@"Create a new terminal %@", term);
             if (!term) {
-                DLog(@"Failed to create term");
+                RLog(@"Failed to create term");
                 completionHandler(nil, nil);
                 return;
             }
@@ -269,13 +269,13 @@ NSString *const iTermWindowStateKeyGUID = @"guid";
                 DLog(@"10.11 and this is a fullscreen window.");
                 // Keep any more blocks from running until this window finishes entering fullscreen.
                 gWaitingForFullScreen = YES;
-                DLog(@"Set gWaitingForFullScreen=YES and set callback on %@", term);
+                RLog(@"Set gWaitingForFullScreen=YES and set callback on %@", term);
 
                 [completionHandler retain];
                 term.didEnterLionFullscreen = ^(PseudoTerminal *theTerm) {
                     // Finished entering fullscreen. Run the completion handler
                     // and open more windows.
-                    DLog(@"%@ finished entering fullscreen, running completion handler", theTerm);
+                    RLog(@"%@ finished entering fullscreen, running completion handler", theTerm);
                     term.restoringWindow = YES;
                     completionHandler([theTerm window], nil);
                     term.restoringWindow = NO;
@@ -292,7 +292,7 @@ NSString *const iTermWindowStateKeyGUID = @"guid";
         [queuedBlocks addObject:[[theBlock copy] autorelease]];
         DLog(@"Returning");
     } else {
-        DLog(@"Abort because no arrangement");
+        RLog(@"Abort because no arrangement");
         completionHandler(nil, nil);
     }
 }

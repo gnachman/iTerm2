@@ -30,6 +30,18 @@ extension iTermWorkgroupInstance {
                                                   workgroupInstanceID: instanceUniqueIdentifier) else {
             return
         }
+        // A tracked member can die synchronously inside the spawner
+        // (the willTerminate observer is live), tearing this instance
+        // down mid-call. The new session is already installed in the
+        // window with ITERM_WORKGROUP_ID in its environment, but
+        // teardown can't reach it (it was never registered), so close
+        // it here and stop. Proceeding would wire live shells —
+        // including any nested peer group this config hosts — to a
+        // dead workgroup that will never tear them down.
+        guard !didTeardown else {
+            closeStraySpawn(newSession)
+            return
+        }
         registerNonPeerOrPeerGroupHost(session: newSession,
                                        config: config,
                                        parent: parent)
@@ -46,6 +58,11 @@ extension iTermWorkgroupInstance {
         guard let newSession = spawner.spawnTab(parent: parent,
                                                 config: resolved,
                                                 workgroupInstanceID: instanceUniqueIdentifier) else {
+            return
+        }
+        // Same mid-spawn teardown hazard as spawnSplit above.
+        guard !didTeardown else {
+            closeStraySpawn(newSession)
             return
         }
         registerNonPeerOrPeerGroupHost(session: newSession,
@@ -103,11 +120,6 @@ extension iTermWorkgroupInstance {
                                hostSession: session,
                                hostConfig: config,
                                peerChildrenPromises: childPromises)
-        for (_, promise) in peers {
-            promise.then { [weak self] s in
-                guard let self else { return }
-                s.workgroupInstance = self
-            }
-        }
+        attachBackPointers(toEach: Array(peers.values))
     }
 }

@@ -107,6 +107,15 @@ final class WorkgroupModeSwitcherItem: SessionToolbarControl {
         }
     }
 
+    // The identifier whose segment is currently selected, or nil when
+    // nothing is. Lets tests (and logs) observe the visual selection
+    // the resync paths maintain.
+    var selectedIdentifier: String? {
+        let idx = segmentedControl.indexOfSelectedItem
+        guard idx >= 0, idx < identifiers.count else { return nil }
+        return identifiers[idx]
+    }
+
     override var desiredWidthRange: ClosedRange<CGFloat> {
         let natural = max(_view.fittingSize.width, 0)
         return (30.0 * CGFloat(segmentedControl.segmentCount))...natural

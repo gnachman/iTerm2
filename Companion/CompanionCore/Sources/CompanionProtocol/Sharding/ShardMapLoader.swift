@@ -1,0 +1,201 @@
+//
+//  ShardMapLoader.swift
+//  CompanionCore
+//
+//  Loads the shard map and applies monotonic versioning. The map URL is the
+//  `resolver=` value from the pairing QR (PairingCode.resolverURL): it points
+//  directly at the static shard-map JSON, served with a short TTL and replaced
+//  atomically on publish, and is fetched verbatim (no path is appended, so the URL
+//  a caller configures is exactly the URL that is GET'd). A single fetch gets the
+//  latest map: the map carries its own `version`, so there is no separate
+//  version-pointer file and no second round-trip. Networking is behind an
+//  injectable `ShardMapFetching`, so the loader is exercised entirely offline in
+//  tests; persistence of the highest-seen version is the caller's concern (pass
+//  `initialHighestVersion`, read `highestVersion`). See
+//  docs/companion-relay-design.md (§6.3, §6.4, §6.8).
+//
+
+import Foundation
+
+/// Abstraction over "GET this URL, give me the body" so the loader can be tested
+/// without a network. The default conformance uses URLSession.
+public protocol ShardMapFetching: Sendable {
+    func data(from url: URL) async throws -> Data
+}
+
+public enum ShardMapLoaderError: Error, Equatable {
+    /// The configured map URL could not be turned into a request URL.
+    case invalidResolverURL(String)
+    /// The HTTP response was not an HTTPURLResponse (e.g. a non-HTTP scheme).
+    case badResponse
+    /// A non-2xx HTTP status.
+    case httpStatus(Int)
+    /// The map file did not decode as a ShardMap.
+    case malformedMap
+}
+
+/// URLSession-backed fetcher: GET the URL, require a 2xx, return the body.
+public struct URLSessionShardMapFetcher: ShardMapFetching {
+    private let session: URLSession
+    private let timeout: TimeInterval
+
+    /// - session: pass a no-redirect session (CompanionURLSession.shared) so a
+    ///   compromised CDN edge cannot 3xx-redirect the shard-map GET to a rogue
+    ///   host. The default is URLSession.shared because this type lives below the
+    ///   CompanionURLSession layer; every real call site injects the no-redirect
+    ///   one.
+    /// - timeout: bound the GET so a stalled fetch cannot blow a caller's budget
+    ///   (e.g. the NSE, which resolves before its connect timeout applies).
+    public init(session: URLSession = .shared, timeout: TimeInterval = 15) {
+        self.session = session
+        self.timeout = timeout
+    }
+
+    public func data(from url: URL) async throws -> Data {
+        let (data, response) = try await session.data(for: URLRequest(url: url, timeoutInterval: timeout))
+        guard let http = response as? HTTPURLResponse else {
+            throw ShardMapLoaderError.badResponse
+        }
+        // A refused redirect surfaces here as a non-2xx (CompanionURLSession does
+        // not follow 3xx), so it is thrown rather than followed to the rogue host.
+        guard (200..<300).contains(http.statusCode) else {
+            throw ShardMapLoaderError.httpStatus(http.statusCode)
+        }
+        return data
+    }
+}
+
+public actor ShardMapLoader {
+    private let resolverURL: String
+    private let fetcher: ShardMapFetching
+
+    /// Durable floor across relaunches (§6.4). Seeds `highestVersion` at init and
+    /// is written every time a newer map is adopted, so a fresh process cannot
+    /// adopt a map older than one already trusted. Optional: tests and the delete
+    /// path pass none and get within-session monotonicity only.
+    private let floorStore: ShardMapVersionFloorStore?
+
+    /// The highest map version adopted so far, or nil if none. Monotonicity
+    /// (§6.6) rests on this: a version at or below it is ignored. Exposed so the
+    /// caller can persist it across launches and seed a fresh loader with it.
+    public private(set) var highestVersion: Int?
+
+    /// The most recently adopted map, or nil before the first successful load.
+    public private(set) var current: ShardMap?
+
+    public init(resolverURL: String,
+                fetcher: ShardMapFetching = URLSessionShardMapFetcher(),
+                initialHighestVersion: Int? = nil,
+                floorStore: ShardMapVersionFloorStore? = nil) {
+        self.resolverURL = resolverURL
+        self.fetcher = fetcher
+        self.floorStore = floorStore
+        // An explicit seed wins; otherwise read the persisted floor. Both are just
+        // a starting floor for monotonicity, so the higher of the two is the safe
+        // choice if a caller passes both.
+        let persisted = floorStore?.floor(forResolverURL: resolverURL)
+        switch (initialHighestVersion, persisted) {
+        case let (seed?, stored?): self.highestVersion = max(seed, stored)
+        case let (seed?, nil): self.highestVersion = seed
+        case let (nil, stored?): self.highestVersion = stored
+        case (nil, nil): self.highestVersion = nil
+        }
+    }
+
+    /// Fetch the latest map and, if its version is strictly newer than the
+    /// highest already seen, validate and adopt it. Returns the current map after
+    /// the refresh (unchanged, possibly nil, when the fetched map was not newer).
+    /// Throws on a fetch, decode, or validation failure, leaving
+    /// `current`/`highestVersion` untouched so a bad publish or a CDN blip never
+    /// downgrades or corrupts the adopted map.
+    @discardableResult
+    public func refresh() async throws -> ShardMap? {
+        let map = try await fetchMap()
+        // Monotonicity, but bootstrap-aware. Only the highest-seen VERSION is
+        // persisted, not the map, so after a relaunch `current` is nil while
+        // `highestVersion` may be a seeded floor.
+        //  - With a map already loaded, adopt only a STRICTLY newer version; an
+        //    equal or older one (e.g. a lagging CDN edge, or roll-forward meaning
+        //    a lower version is never authoritative) is ignored.
+        //  - With no map yet (fresh start / after restart), adopt a version EQUAL
+        //    to the floor too, so a relaunch against an unchanged publisher picks
+        //    a host instead of staying empty until the next version bump. Still
+        //    reject a version strictly BELOW the floor: that is the stale-edge
+        //    regression the persisted floor exists to prevent (§6.4).
+        if let highestVersion {
+            if current == nil {
+                if map.version < highestVersion {
+                    CompanionLog.log("shardmap: fetched v\(map.version) below floor \(highestVersion) on bootstrap; ignoring (stale edge)")
+                    return current
+                }
+            } else if map.version <= highestVersion {
+                CompanionLog.log("shardmap: fetched v\(map.version) not newer than current v\(highestVersion); keeping current")
+                return current
+            }
+        }
+        do {
+            try map.validate()
+        } catch {
+            CompanionLog.log("shardmap: v\(map.version) failed validation: \(error); not adopting")
+            throw error
+        }
+        current = map
+        highestVersion = map.version
+        // Persist the new floor so a relaunch cannot adopt an older map from a
+        // lagging edge (§6.4). Best-effort and monotonic in the store itself.
+        floorStore?.setFloor(map.version, forResolverURL: resolverURL)
+        CompanionLog.log("shardmap: adopted v\(map.version) (\(map.ranges.count) ranges)")
+        return map
+    }
+
+    private var backgroundRefreshInFlight = false
+
+    /// Kick off a refresh without blocking the caller, deduped so rapid callers
+    /// (e.g. a reconnect storm) do not pile up concurrent fetches. Failures are
+    /// swallowed: the caller already holds a usable adopted map, and the next call
+    /// retries. Used by the resolver to keep the map fresh without ever blocking a
+    /// connect on a control-plane fetch in steady state (§6.6, §8).
+    public func refreshInBackground() {
+        guard !backgroundRefreshInFlight else { return }
+        backgroundRefreshInFlight = true
+        Task {
+            _ = try? await refresh()
+            backgroundRefreshInFlight = false
+        }
+    }
+
+    /// Convenience: the host owning `bucket` per the currently adopted map, or
+    /// nil if no map is loaded or the bucket is out of range.
+    public func currentHost(forBucket bucket: Int) -> String? {
+        current?.host(forBucket: bucket)
+    }
+
+    // MARK: - Fetching
+
+    private func fetchMap() async throws -> ShardMap {
+        let url = try mapURL()
+        let data: Data
+        do {
+            data = try await fetcher.data(from: url)
+        } catch {
+            CompanionLog.log("shardmap: GET \(url.absoluteString) failed: \(error)")
+            throw error
+        }
+        guard let map = try? JSONDecoder().decode(ShardMap.self, from: data) else {
+            CompanionLog.log("shardmap: GET \(url.absoluteString) returned an undecodable body (\(data.count) bytes)")
+            throw ShardMapLoaderError.malformedMap
+        }
+        return map
+    }
+
+    /// The configured URL, fetched verbatim: it points directly at the shard-map
+    /// JSON, so nothing is appended and the URL a caller configures is exactly the
+    /// URL that is GET'd (which keeps it trivially pointable at any test fixture or
+    /// self-hosted map).
+    private func mapURL() throws -> URL {
+        guard let url = URL(string: resolverURL) else {
+            throw ShardMapLoaderError.invalidResolverURL(resolverURL)
+        }
+        return url
+    }
+}

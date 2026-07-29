@@ -4,10 +4,80 @@
 //
 //  Created by George Nachman on 2/12/25.
 //
+//  NOTE: This file is also compiled into the iTerm2 Companion iOS app. Keep it
+//  platform-neutral (Foundation only); Mac-only code goes in a sibling file
+//  (the database conformance lives in Message+Database.swift).
+//
+
+import Foundation
+
+/// Thrown by a forward-compat-aware decoder when it encounters an enum case this
+/// build does not know (a newer build added it) - as distinct from a corrupt
+/// body of a KNOWN case. `Message.init(from:)` catches this and degrades the
+/// whole content to `.unsupported`; a real DecodingError (corruption) propagates
+/// so a genuinely broken message surfaces instead of being masked as "newer".
+enum ForwardCompatibilityError: Error {
+    case unknownCase
+}
+
+/// A coding key that accepts any string, for reading the single discriminator
+/// key a synthesized enum encodes its case under (`{"<caseName>": ...}`).
+struct AnyDiscriminatorKey: CodingKey {
+    let stringValue: String
+    init?(stringValue: String) { self.stringValue = stringValue }
+    var intValue: Int? { nil }
+    init?(intValue: Int) { nil }
+}
+
+extension KeyedDecodingContainer {
+    /// Strictly decode `type` from `key`, but FIRST peek the value's single
+    /// discriminator (the case name a synthesized enum encodes under): if it is
+    /// not in `knownDiscriminators`, throw `ForwardCompatibilityError.unknownCase`
+    /// so the caller can degrade to a forward-compat sentinel. A KNOWN
+    /// discriminator whose body fails to decode still throws a normal
+    /// DecodingError, so corruption surfaces instead of masquerading as "newer".
+    /// An unreadable value (not a single-keyed object) also falls through to the
+    /// strict decode and its error.
+    ///
+    /// One implementation of the "peek the discriminator, degrade unknown / decode
+    /// known" forward-compat dance, shared by Message content, ClientLocal.Action,
+    /// and CompanionEnvelope so the three cannot drift apart.
+    func decodeForwardCompatible<T: Decodable>(_ type: T.Type,
+                                               forKey key: Key,
+                                               knownDiscriminators: Set<String>) throws -> T {
+        if let nested = try? nestedContainer(keyedBy: AnyDiscriminatorKey.self, forKey: key),
+           let discriminator = nested.allKeys.first?.stringValue,
+           !knownDiscriminators.contains(discriminator) {
+            throw ForwardCompatibilityError.unknownCase
+        }
+        return try decode(T.self, forKey: key)
+    }
+}
 
 enum Participant: String, Codable, Hashable {
     case user
     case agent
+}
+
+// The explicit agent-turn-lifecycle signal on the Companion wire, decoupled from
+// the typing-status spinner hint: .started brackets the beginning of an agent
+// turn, .ended its genuine completion (not a mid-turn park). The phone drives its
+// reply notification off these instead of inferring turn boundaries from typing
+// edges. .unknownFuture is the forward-compat sink for a value a newer peer might
+// send (see the custom decoder below).
+enum TurnEvent: String, Codable, Hashable {
+    case started
+    case ended
+    case unknownFuture
+
+    init(from decoder: Decoder) throws {
+        // Degrade an unrecognized value to .unknownFuture instead of throwing. The
+        // wire envelope masks unknown message DISCRIMINATORS to .unsupported, but a
+        // known discriminator (turnLifecycle) carrying a raw value a newer peer
+        // added would otherwise throw and break the whole frame for this peer.
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        self = TurnEvent(rawValue: raw) ?? .unknownFuture
+    }
 }
 
 // Carried by Message.Content.watcherEvent. Synthesized by iTerm2
@@ -23,6 +93,7 @@ enum Participant: String, Codable, Hashable {
 struct StatusUpdate: Codable, Equatable {
     enum Reason: String, Codable {
         case stateReached     // a registered state-watcher fired
+        case conditionMet     // a plain-English condition watcher fired
         case watcherDropped   // the watched session is gone (e.g. failed to restore)
         case watchTimedOut    // a screen-observation watcher gave up after its time cap
     }
@@ -33,12 +104,27 @@ struct StatusUpdate: Codable, Equatable {
     var roleName: String
     var reason: Reason
     // Concrete state name for stateReached (e.g. "idle"). Empty for
-    // watcherDropped (state isn't relevant — the session is gone).
+    // the other reasons: conditionMet carries its condition in detail,
+    // and for watcherDropped / watchTimedOut no state was reached.
     var stateReached: String
     var timestamp: Date
     // Free-form human-readable detail, used both as the chat-UI body
     // and as the inner text of the agent-side <status_update> tag.
     var detail: String
+    // Whether iTerm2 already pushed a notification to the paired phone
+    // for this event (the watcher was registered with notify_user).
+    // true = sent; false = asked for but undeliverable; nil = not
+    // requested. Drives the agent-side guidance so the model neither
+    // double-notifies nor stays silent when it shouldn't.
+    var pushed: Bool? = nil
+    // Humanized age of the watched session's screen at fire time
+    // (e.g. "< 1 min ago"). Sampled when the event is published, not at
+    // render time, so history reloads keep showing what was true when
+    // the watcher fired. Lets the agent tell a just-went-idle blip
+    // from a session that has been quiet for a long time. nil for
+    // events without a live session (drops) and for old persisted
+    // messages that predate the field.
+    var screenLastChanged: String? = nil
 }
 
 struct ClientLocal: Codable {
@@ -78,13 +164,53 @@ struct ClientLocal: Codable {
         // tool, registered only in session-bound mode.
         case enableOrchestrationRequest(requestID: String)
 
+        // Published when the user @-mentions a session or workgroup in
+        // an orchestration chat. Naming a target is taken as standing
+        // permission for this chat to control it, so the inline claim
+        // prompt is skipped the first time the orchestrator writes
+        // there. Rendered as a system-message bubble with a single
+        // Revoke button; tapping it sends
+        // UserCommand.revokeOrchestrationPermission(scope:) which drops
+        // the claim. `scope` is the claimedScopes entry (a real
+        // workgroup instance ID or a synthetic "session:<guid>"), and
+        // `name` is resolved at publish time so the bubble still reads
+        // correctly if the target is torn down before the user revokes.
+        case orchestrationPermissionGranted(scope: String, name: String)
+
         enum StreamingState: String, Codable {
             case stopped
             case active
             case stoppedAutomatically
         }
+
+        /// Discriminators this build knows. Add a line when a case is added (a
+        /// ModernTests exhaustiveness test enforces this). An unknown action makes
+        /// ClientLocal.init throw ForwardCompatibilityError.unknownCase, which
+        /// Message.init turns into `.unsupported` content.
+        static let knownActionKeys: Set<String> = [
+            "pickingSession", "executingCommand", "notice", "streamingChanged",
+            "offerLink", "offerOrchestration", "permissions",
+            "workgroupPermissionRequest", "enableOrchestrationRequest",
+            "orchestrationPermissionGranted",
+        ]
     }
     var action: Action
+}
+
+extension ClientLocal {
+    private enum CodingKeys: String, CodingKey { case action }
+
+    // Custom decode (encode stays synthesized) so a NEWER ClientLocal.Action
+    // (nested inside a known .clientLocal content) is reported as an unknown case
+    // rather than a generic decode failure: Message.init degrades the whole
+    // content to .unsupported for the former but rethrows the latter (a corrupt
+    // body of a KNOWN action), so corruption still surfaces. Declared in an
+    // extension to preserve the memberwise initializer.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        action = try c.decodeForwardCompatible(Action.self, forKey: .action,
+                                               knownDiscriminators: Action.knownActionKeys)
+    }
 }
 
 enum UserCommand: Codable {
@@ -103,6 +229,13 @@ enum UserCommand: Codable {
     // the chat's orchestrationEnabled flag and transitions itself
     // in place to orchestration mode.
     case enableOrchestrationResponse(requestID: String, approved: Bool)
+    // Response to a ClientLocal.Action.orchestrationPermissionGranted
+    // Revoke button. Routed through the broker so OrchestratorClient
+    // drops `scope` from the chat's claimedScopes. Like
+    // workgroupPermissionResponse it goes through UserCommand so the
+    // chat service's skip-userCommand filter keeps it from looping
+    // back to the LLM.
+    case revokeOrchestrationPermission(scope: String)
 }
 
 struct Message: Codable {
@@ -115,6 +248,38 @@ struct Message: Codable {
         case attachment(LLM.Message.Attachment)
         // Extra info in user-sent messages to add to context
         case context(String)
+
+        /// The one-line preview for this subpart plus whether it is a rendered
+        /// attachment LABEL ("📄 name") rather than real text, or nil for a
+        /// non-previewable subpart (.context). One definition of the subpart ->
+        /// preview mapping, used by snippetText and by the companion's streamed
+        /// reply-preview classifier so they can never drift.
+        func previewAndLabel(maxLength: Int) -> (text: String, isLabel: Bool)? {
+            // The RAW per-subpart mapping (nil only for a non-previewable subpart).
+            // It does NOT apply a substance policy: snippetText wants the last
+            // non-context subpart's text (blank if empty), while the companion's
+            // reply preview wants the last SUBSTANTIVE subpart - so each caller
+            // decides substance-skipping (via hasDisplayableSubstance) rather than
+            // baking one policy in here (which would flash "Empty message" in the Mac
+            // chat list for a transient empty streamed subpart).
+            switch self {
+            case .plainText(let text), .markdown(let text):
+                return (text.truncatedWithTrailingEllipsis(to: maxLength), false)
+            case .attachment(let attachment):
+                switch attachment.type {
+                case .code(let text):
+                    return (text.truncatedWithTrailingEllipsis(to: maxLength), false)
+                case .statusUpdate(let statusUpdate):
+                    return (statusUpdate.displayString, true)
+                case .file(let file):
+                    return ("📄 " + file.name, true)
+                case .fileID(_, let name):
+                    return ("📄 " + name, true)
+                }
+            case .context:
+                return nil
+            }
+        }
     }
 
     indirect enum Content: Codable {
@@ -159,11 +324,33 @@ struct Message: Codable {
         // created.
         case multipart([Subpart], vectorStoreID: String?)
 
+        // Forward-compatibility sentinel: a message type this build
+        // doesn't understand (a newer iTerm2 added a Content or
+        // ClientLocal.Action case). Never encoded by this build; it's
+        // produced by Message.init(from:) when the content field fails
+        // to decode, so an unknown message renders as a "needs a newer
+        // version" placeholder instead of throwing and taking the whole
+        // message (and, in a history batch, every sibling message) down
+        // with it.
+        case unsupported
+
+        /// Discriminators this build knows. Message.init maps a top-level content
+        /// case NOT in this set to `.unsupported` (forward compatibility) but
+        /// decodes a known case strictly (a corrupt body throws). Add a line when
+        /// a case is added (a ModernTests exhaustiveness test enforces this).
+        static let knownContentKeys: Set<String> = [
+            "plainText", "markdown", "explanationRequest", "explanationResponse",
+            "remoteCommandRequest", "watcherEvent", "remoteCommandResponse",
+            "selectSessionRequest", "clientLocal", "renameChat", "append",
+            "appendAttachment", "commit", "userCommand", "setPermissions",
+            "vectorStoreCreated", "terminalCommand", "multipart", "unsupported",
+        ]
+
         func clone(_ uuidMap: [UUID: UUID], messages: [UUID: Message]) -> Content {
             switch self {
             case .plainText, .markdown, .explanationRequest, .remoteCommandRequest, .clientLocal,
                     .renameChat, .userCommand, .setPermissions, .vectorStoreCreated,
-                    .terminalCommand, .multipart, .watcherEvent:
+                    .terminalCommand, .multipart, .watcherEvent, .unsupported:
                 return self
             case .explanationResponse(let response, var update, let markdown):
                 if let updateID = update?.messageID, let replacement = uuidMap[updateID] {
@@ -236,6 +423,8 @@ struct Message: Codable {
                     return "Client-local: workgroup permission request \(requestID) workgroup=\(workgroupName) (\(workgroupID))"
                 case .enableOrchestrationRequest(let requestID):
                     return "Client-local: enable orchestration request \(requestID)"
+                case let .orchestrationPermissionGranted(scope, name):
+                    return "Client-local: orchestration permission granted name=\(name) (\(scope))"
                 }
             case .renameChat(let name):
                 return "Rename chat to \(name)"
@@ -257,11 +446,18 @@ struct Message: Codable {
                 return "User command \(command)"
             case .watcherEvent(let update):
                 return "Watcher event (\(update.reason.rawValue)): \(update.detail.truncatedWithTrailingEllipsis(to: maxLength))"
+            case .unsupported:
+                return "Unsupported message type"
             }
         }
 
         var snippetText: String? {
-            let maxLength = 40
+            // 40 suits the Mac's narrow chat-list sidebar; the companion
+            // bridge asks for a longer cut for the phone's two-line cells.
+            snippetText(maxLength: 40)
+        }
+
+        func snippetText(maxLength: Int) -> String? {
             switch self {
             case .plainText(let text, _): return text.truncatedWithTrailingEllipsis(to: maxLength)
             case .markdown(let text): return text.truncatedWithTrailingEllipsis(to: maxLength)
@@ -283,11 +479,11 @@ struct Message: Codable {
                         "Sending commands to AI automatically"
                     }
                 case .offerLink, .offerOrchestration, .permissions, .workgroupPermissionRequest,
-                        .enableOrchestrationRequest:
+                        .enableOrchestrationRequest, .orchestrationPermissionGranted:
                     return nil
                 }
             case .renameChat, .append, .appendAttachment, .commit, .setPermissions,
-                    .vectorStoreCreated, .userCommand:
+                    .vectorStoreCreated, .userCommand, .unsupported:
                 return nil
             case .watcherEvent(let update):
                 return update.detail.truncatedWithTrailingEllipsis(to: maxLength)
@@ -296,23 +492,11 @@ struct Message: Codable {
             case .terminalCommand(let cmd):
                 return "Ran `\(cmd.command.truncatedWithTrailingEllipsis(to: maxLength - 4))`"
             case .multipart(let subparts, _):
+                // Return the last substantive subpart's preview (shared with the
+                // companion's reply-preview classifier via Subpart.previewAndLabel).
                 for subpart in subparts.reversed() {
-                    switch subpart {
-                    case .plainText(let text), .markdown(let text):
-                        return text.truncatedWithTrailingEllipsis(to: maxLength)
-                    case .attachment(let attachment):
-                        switch attachment.type {
-                        case .code(let text):
-                            return text.truncatedWithTrailingEllipsis(to: maxLength)
-                        case .statusUpdate(let statusUpdate):
-                            return statusUpdate.displayString
-                        case .file(let file):
-                            return "📄 " + file.name
-                        case .fileID(_, let name):
-                            return "📄 " + name
-                        }
-                    case .context(_):
-                        break
+                    if let preview = subpart.previewAndLabel(maxLength: maxLength) {
+                        return preview.text
                     }
                 }
                 return "Empty message"
@@ -344,6 +528,8 @@ struct Message: Codable {
         var vectorStoreIDs: [String]
         var model: String?
         var shouldThink: Bool
+        var reasoningEffort: AIReasoningEffort?
+        var serviceTier: AIServiceTier?
     }
     var configuration: Configuration?
 
@@ -360,6 +546,10 @@ struct Message: Codable {
                 .explanationResponse, .explanationRequest, .clientLocal, .append, .terminalCommand,
                 .appendAttachment, .multipart, .watcherEvent:
             false
+        // An unrecognized message renders as a placeholder, so it must
+        // be visible to the user rather than hidden.
+        case .unsupported:
+            false
         }
     }
 
@@ -371,7 +561,7 @@ struct Message: Codable {
         case .remoteCommandResponse, .selectSessionRequest, .remoteCommandRequest, .plainText,
                 .markdown, .explanationResponse, .explanationRequest, .renameChat, .append,
                 .commit, .setPermissions, .terminalCommand, .appendAttachment, .multipart,
-                .vectorStoreCreated, .userCommand, .watcherEvent:
+                .vectorStoreCreated, .userCommand, .watcherEvent, .unsupported:
             false
         }
     }
@@ -449,7 +639,7 @@ struct Message: Codable {
         case .explanationRequest, .explanationResponse, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat,
                 .append, .appendAttachment, .commit, .setPermissions, .terminalCommand,
-                .vectorStoreCreated, .userCommand, .watcherEvent:
+                .vectorStoreCreated, .userCommand, .watcherEvent, .unsupported:
             it_fatalError()
         }
     }
@@ -487,7 +677,7 @@ struct Message: Codable {
         case .explanationRequest, .explanationResponse, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat, .append,
                 .commit, .setPermissions, .terminalCommand, .appendAttachment, .vectorStoreCreated,
-                .userCommand, .watcherEvent:
+                .userCommand, .watcherEvent, .unsupported:
             it_fatalError()
         }
     }
@@ -501,130 +691,53 @@ struct Message: Codable {
     }
 }
 
-extension Message: iTermDatabaseElement {
-    enum Columns: String {
-        case author
-        case content
-        case sentDate
-        case uniqueID
-        case chatID
-        case responseID
-        case agentReasoning
+extension Message {
+    // Listed explicitly so the synthesized encode(to:) and this custom
+    // decoder share one key set; every stored property must appear here
+    // (a missing one fails to compile in init(from:) below).
+    private enum CodingKeys: String, CodingKey {
+        case chatID, author, content, sentDate, uniqueID
+        case inResponseTo, responseID, agentReasoning, configuration
     }
 
-    static func schema() -> String {
-        """
-        create table if not exists Message
-            (\(Columns.uniqueID.rawValue) text,
-             \(Columns.author.rawValue) text not null,
-             \(Columns.chatID.rawValue) text not null,
-             \(Columns.content.rawValue) text not null,
-             \(Columns.sentDate.rawValue) integer not null,
-             \(Columns.responseID.rawValue) text,
-             \(Columns.agentReasoning.rawValue) text)
-        """
+    // Custom decode (encode stays synthesized) so an unrecognized `content`
+    // degrades to .unsupported instead of throwing, WITHOUT also masking a corrupt
+    // body of a known case (a blanket `try?` here would do both). This is the
+    // forward-compatibility boundary for content:
+    //   - an unknown TOP-LEVEL Content case (discriminator not in
+    //     knownContentKeys) -> .unsupported;
+    //   - an unknown case NESTED in a known content (a new ClientLocal.Action)
+    //     surfaces as ForwardCompatibilityError.unknownCase -> .unsupported;
+    //   - any other content decode failure (a corrupt body of a KNOWN case) is
+    //     rethrown, so a genuinely broken message surfaces rather than silently
+    //     becoming "needs a newer version".
+    // Other fields stay strict; a message with a corrupt timestamp is broken.
+    //
+    // Declared in an extension to preserve the memberwise initializer
+    // Message(chatID:author:content:...) that the rest of the app uses.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        chatID = try c.decode(String.self, forKey: .chatID)
+        author = try c.decode(Participant.self, forKey: .author)
+        content = try Self.decodeContent(from: c)
+        sentDate = try c.decode(Date.self, forKey: .sentDate)
+        uniqueID = try c.decode(UUID.self, forKey: .uniqueID)
+        inResponseTo = try c.decodeIfPresent(String.self, forKey: .inResponseTo)
+        responseID = try c.decodeIfPresent(String.self, forKey: .responseID)
+        agentReasoning = try c.decodeIfPresent(String.self, forKey: .agentReasoning)
+        configuration = try c.decodeIfPresent(Configuration.self, forKey: .configuration)
     }
 
-    static func migrations(existingColumns: [String]) -> [Migration] {
-        var result = [Migration]()
-        if !existingColumns.contains(Columns.responseID.rawValue) {
-            result.append(.init(query: "ALTER TABLE Message ADD COLUMN \(Columns.responseID.rawValue) text", args: []))
+    private static func decodeContent(from c: KeyedDecodingContainer<CodingKeys>) throws -> Content {
+        do {
+            return try c.decodeForwardCompatible(Content.self, forKey: .content,
+                                                 knownDiscriminators: Content.knownContentKeys)
+        } catch ForwardCompatibilityError.unknownCase {
+            // An unknown case - top-level (a newer Content) OR nested in a known
+            // content (a newer ClientLocal.Action, which throws this from
+            // ClientLocal.init) - degrades the whole content to the placeholder. A
+            // corrupt body of a KNOWN case throws a DecodingError and propagates.
+            return .unsupported
         }
-        if !existingColumns.contains(Columns.agentReasoning.rawValue) {
-            result.append(.init(query: "ALTER TABLE Message ADD COLUMN \(Columns.agentReasoning.rawValue) text", args: []))
-        }
-        return result
-    }
-
-
-    static func fetchAllQuery() -> String {
-        "select * from Message"
-    }
-
-    static func query(forChatID chatID: String) -> (String, [Any?]) {
-        ("select * from Message where chatID=?", [chatID])
-    }
-
-    static func tableInfoQuery() -> String {
-        "PRAGMA table_info(Message)"
-    }
-
-    func appendQuery() -> (String, [Any?]) {
-        let jsonData = try! JSONEncoder().encode(content)
-        let jsonString = String(data: jsonData, encoding: .utf8)!
-        return (
-            """
-            insert into Message (
-                \(Columns.uniqueID.rawValue),
-                \(Columns.author.rawValue),
-                \(Columns.chatID.rawValue),
-                \(Columns.content.rawValue),
-                \(Columns.sentDate.rawValue),
-                \(Columns.responseID.rawValue),
-                \(Columns.agentReasoning.rawValue))
-            values (?, ?, ?, ?, ?, ?, ?)
-            """,
-            [
-                uniqueID.uuidString,
-                author.rawValue,
-                chatID,
-                jsonString,
-                sentDate.timeIntervalSince1970,
-                responseID,
-                agentReasoning
-            ]
-        )
-    }
-
-    func removeQuery() -> (String, [Any?]) {
-        ("DELETE from Message where \(Columns.uniqueID.rawValue) = ?",
-         [uniqueID.uuidString])
-    }
-
-    func updateQuery() -> (String, [Any?]) {
-        let jsonData = try! JSONEncoder().encode(content)
-        let jsonString = String(data: jsonData, encoding: .utf8)!
-        return (
-            """
-            update Message set \(Columns.author.rawValue) = ?,
-                                \(Columns.chatID.rawValue) = ?,
-                                \(Columns.content.rawValue) = ?,
-                                \(Columns.sentDate.rawValue) = ?,
-                                \(Columns.responseID.rawValue) = ?,
-                                \(Columns.agentReasoning.rawValue) = ?
-            where \(Columns.uniqueID.rawValue) = ?
-            """,
-            [
-                author.rawValue,
-                chatID,
-                jsonString,
-                sentDate.timeIntervalSince1970,
-                responseID,
-                agentReasoning,
-                uniqueID.uuidString,
-            ]
-        )
-    }
-
-    init?(dbResultSet result: iTermDatabaseResultSet) {
-        guard let uniqueIDStr = result.string(forColumn: Columns.uniqueID.rawValue),
-              let uniqueID = UUID(uuidString: uniqueIDStr),
-              let authorStr = result.string(forColumn: Columns.author.rawValue),
-              let chatID = result.string(forColumn: Columns.chatID.rawValue),
-              let author = Participant(rawValue: authorStr),
-              let contentJSON = result.string(forColumn: Columns.content.rawValue),
-              let contentData = contentJSON.data(using: .utf8),
-              let content = try? JSONDecoder().decode(Content.self, from: contentData),
-              let sentDate = result.date(forColumn: Columns.sentDate.rawValue)
-        else {
-            return nil
-        }
-        self.uniqueID = uniqueID
-        self.author = author
-        self.chatID = chatID
-        self.content = content
-        self.sentDate = sentDate
-        self.responseID = result.string(forColumn: Columns.responseID.rawValue)
-        self.agentReasoning = result.string(forColumn: Columns.agentReasoning.rawValue)
     }
 }

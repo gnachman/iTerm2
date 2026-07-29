@@ -114,7 +114,7 @@ extension HighlightBrowserTrigger: BrowserTrigger {
                               contentCaptures: [String]?,
                               in client: any BrowserTriggerClient) async -> [BrowserTriggerAction] {
         guard let matchID else {
-            DLog("No match ID")
+            RLog("No match ID")
             return []
         }
         let colors = self.colors

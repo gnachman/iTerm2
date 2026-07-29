@@ -140,7 +140,7 @@ class WindowInitialPositioner: NSObject {
     /// Called from iTermWindowImpl's makeKeyAndOrderFront:.
     @objc
     func windowWillShowInitial() {
-        DLog("windowWillShowInitial: preferredOrigin=\(NSStringFromPoint(preferredOrigin)) anchoredScreenNumber=\(String(describing: anchoredScreenNumber)) screenNumberFromFirstProfile=\(screenNumberFromFirstProfile) disableAutoFrame=\(disableAutoFrame)")
+        RLog("windowWillShowInitial: preferredOrigin=\(NSStringFromPoint(preferredOrigin)) anchoredScreenNumber=\(String(describing: anchoredScreenNumber)) screenNumberFromFirstProfile=\(screenNumberFromFirstProfile) disableAutoFrame=\(disableAutoFrame)")
 
         guard let window = delegate?.windowForPositioner else {
             DLog("windowWillShowInitial: no window")
@@ -208,7 +208,7 @@ class WindowInitialPositioner: NSObject {
         var point = window.frame.origin
         point.y += window.frame.size.height
         let key = "\(profileGUID) \(uniqueNumber)"
-        DLog("saveWindowPosition: key=\(key) point=\(NSStringFromPoint(point))")
+        RLog("saveWindowPosition: key=\(key) point=\(NSStringFromPoint(point))")
         positions[key] = NSStringFromPoint(point)
         if loadedLegacyPosition {
             positions.removeValue(forKey: String(globalNumber))
@@ -225,7 +225,7 @@ class WindowInitialPositioner: NSObject {
             return
         }
         let name = String(format: kProfileWindowNameFormat, profileGUID, uniqueNumber)
-        DLog("saveFrame: name=\(name) frame=\(NSStringFromRect(window.frame))")
+        RLog("saveFrame: name=\(name) frame=\(NSStringFromRect(window.frame))")
         window.saveFrame(usingName: name)
 
         if loadedLegacyFrame {
@@ -258,7 +258,7 @@ class WindowInitialPositioner: NSObject {
         }
 
         let screenNumber = window.screenNumber
-        DLog("loadSavedWindowPosition: screenNumber=\(screenNumber) anchoredScreenNumber=\(String(describing: anchoredScreenNumber))")
+        RLog("loadSavedWindowPosition: screenNumber=\(screenNumber) anchoredScreenNumber=\(String(describing: anchoredScreenNumber))")
         loadAutoSavePosition()
         if anchoredScreenNumber != nil && window.screenNumber != screenNumber {
             DLog("Move window to preferred origin because it moved to another screen.")
@@ -286,7 +286,7 @@ class WindowInitialPositioner: NSObject {
             DLog("No per-profile frame, trying legacy format")
             let legacyName = String(format: kWindowNameFormat, globalNumber)
             if window.setFrameUsingName(legacyName) {
-                DLog("Migrated from legacy frame \(legacyName)")
+                RLog("Migrated from legacy frame \(legacyName)")
                 loadedLegacyFrame = true
                 hadAutoSaveFrame = true
             }
@@ -375,7 +375,7 @@ class WindowInitialPositioner: NSObject {
                 // the saved value (for example if screens have changed or the initial size is
                 // different than the window's size when its position was saved).
                 let canonicalFrame = delegate.canonicalFrame(screen: screen)
-                DLog("loadAutoSavePosition: using canonical frame \(NSStringFromRect(canonicalFrame)) on screen \(screen.localizedName)")
+                RLog("loadAutoSavePosition: using canonical frame \(NSStringFromRect(canonicalFrame)) on screen \(screen.localizedName)")
                 window.setFrame(canonicalFrame, display: false)
             } else {
                 // This might not do anything if the frame's size is too big. Or it might decide
@@ -388,7 +388,7 @@ class WindowInitialPositioner: NSObject {
         }
 
         // Put it on the correct display
-        DLog("loadAutoSavePosition: no saved position, using preferredOrigin=\(NSStringFromPoint(preferredOrigin))")
+        RLog("loadAutoSavePosition: no saved position, using preferredOrigin=\(NSStringFromPoint(preferredOrigin))")
         frame.origin = preferredOrigin
         window.setFrame(frame, display: false)
 
@@ -396,6 +396,6 @@ class WindowInitialPositioner: NSObject {
         DLog("loadAutoSavePosition: calling smartLayout")
         window.smartLayout()
 
-        DLog("loadAutoSavePosition: final frame=\(NSStringFromRect(window.frame))")
+        RLog("loadAutoSavePosition: final frame=\(NSStringFromRect(window.frame))")
     }
 }

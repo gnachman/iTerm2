@@ -139,7 +139,7 @@ class iTermSearchRequest: NSObject {
     func setAbsLineRange(_ absLineRange: NSRange) {
         self.absLineRange = Range(safe: absLineRange)
         if self.absLineRange == nil {
-            DLog("Invalid NSRange passed to setAbsLineRange: \(absLineRange)")
+            RLog("Invalid NSRange passed to setAbsLineRange: \(absLineRange)")
         }
     }
 
@@ -582,7 +582,7 @@ class SearchOperation: Pausable {
                                                    hasWrapped: wrapped) {
                 stop = position
             } else {
-                DLog("This shouldn't happen")
+                RLog("This shouldn't happen")
 #if DEUG
                 fatalError()
 #endif
@@ -1179,6 +1179,17 @@ class iTermSearchEngine: NSObject, Pausable {
     @objc
     var query: String? {
         impl?.operation?.request.query
+    }
+
+    // The immutable snapshot the current search is running against. Clients that
+    // extract snippets for results must use THIS snapshot (not a freshly taken
+    // one) so the result coordinates and the data source they index into are
+    // consistent. Taking a new snapshot can drift out from under the results,
+    // e.g. a main-screen search whose primary grid has since been emptied,
+    // which yields out-of-bounds coordinates and blank snippets.
+    @objc
+    var searchedSnapshot: TerminalContentSnapshot? {
+        impl?.snapshot
     }
     
     @objc

@@ -306,7 +306,8 @@ class Window:
             command: typing.Optional[str] = None,
             index: typing.Optional[int] = None,
             profile_customizations: typing.Optional[
-                iterm2.profile.LocalWriteOnlyProfile] = None) -> typing.Optional[
+                iterm2.profile.LocalWriteOnlyProfile] = None,
+            select: bool = True) -> typing.Optional[
                     iterm2.tab.Tab]:
         """
         Creates a new tab in this window.
@@ -320,6 +321,9 @@ class Window:
             (0=first position, etc.)
         :param profile_customizations: LocalWriteOnlyProfile giving changes to
             make in profile. Mutually exclusive with command.
+        :param select: If True (the default), select the new tab and order this
+            window to the front. If False, create the tab in the background
+            without moving keyboard focus.
 
         :returns: :class:`Tab` or `None` if the session closed right away.
 
@@ -340,7 +344,8 @@ class Window:
             profile=profile,
             window=self.__window_id,
             index=index,
-            profile_customizations=custom_dict)
+            profile_customizations=custom_dict,
+            select=select)
         # pylint: disable=no-member
         if (result.create_tab_response.status ==
                 iterm2.api_pb2.CreateTabResponse.Status.Value("OK")):

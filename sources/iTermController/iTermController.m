@@ -112,7 +112,7 @@ static iTermController *gSharedInstance;
 }
 
 + (void)releaseSharedInstance {
-    DLog(@"releaseSharedInstance");
+    RLog(@"releaseSharedInstance");
     [gSharedInstance cleanUpIfNeeded];
     gSharedInstance = nil;
 }
@@ -212,9 +212,9 @@ static iTermController *gSharedInstance;
         //
         // In either case, we only get here if we're pretty sure everything will get restored
         // nicely.
-        DLog(@"Intentionally leaving sessions running on quit");
+        RLog(@"Intentionally leaving sessions running on quit");
     } else {
-        DLog(@"Will close all terminal windows to kill jobs: %@", _terminalWindows);
+        RLog(@"Will close all terminal windows to kill jobs: %@", _terminalWindows);
         // Terminate buried sessions
         [[iTermBuriedSessions sharedInstance] terminateAll];
         // Close all terminal windows, killing jobs.
@@ -263,6 +263,12 @@ static iTermController *gSharedInstance;
     return [self anyTmuxSession] != nil;
 }
 
+// Deliberately NOT routed through enumerateSessionLookupLocations:
+// (which would pay for the peer-port passes just to discard them) and
+// not through -allSessions (which flat-maps every window's sessions
+// into a fresh array before the scan starts). This runs on every
+// menu-validation pass via haveTmuxConnection, so iterate window by
+// window and return at the first hit.
 - (PTYSession *)anyTmuxSession {
     for (PseudoTerminal *terminal in _terminalWindows) {
         for (PTYSession *session in [terminal allSessions]) {
@@ -285,7 +291,7 @@ static iTermController *gSharedInstance;
 }
 
 - (void)newWindow:(id)sender possiblyTmux:(BOOL)possiblyTmux {
-    DLog(@"newWindow:%@ possiblyTmux:%@", sender, @(possiblyTmux));
+    RLog(@"newWindow:%@ possiblyTmux:%@", sender, @(possiblyTmux));
     if (possiblyTmux &&
         _frontTerminalWindowController &&
         [[_frontTerminalWindowController currentSession] isTmuxClient]) {
@@ -705,7 +711,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification {
-    DLog(@"Controller: window exited fullscreen");
+    RLog(@"Controller: window exited fullscreen");
     if (_arrangeHorizontallyPendingFullScreenTransitions &&
         [[iTermFullScreenWindowManager sharedInstance] numberOfQueuedTransitions] == 0) {
         _arrangeHorizontallyPendingFullScreenTransitions = NO;
@@ -1417,7 +1423,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (void)killRestorableSessions {
-    DLog(@"killRestorableSessions");
+    RLog(@"killRestorableSessions");
     assert([iTermAdvancedSettingsModel runJobsInServers]);
     for (iTermRestorableSession *restorableSession in _restorableSessions) {
         for (PTYSession *aSession in restorableSession.sessions) {
@@ -1495,20 +1501,71 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (void)revealSessionWithGUID:(NSString *)guid {
-    for (PseudoTerminal *window in [self terminals]) {
-        for (PTYSession *session in window.allSessions) {
-            if ([session.guid isEqualToString:guid]) {
-                [session reveal];
-                return;
+    // anySessionWithGUID: searches tabs, buried sessions, and peer
+    // ports; -reveal knows how to surface all three (a port-only peer
+    // is activated into its group's pane).
+    [[self anySessionWithGUID:guid] reveal];
+}
+
+- (void)reviveSessionIntoWindow:(PTYSession *)session {
+    PseudoTerminal *term = nil;
+    if (_frontTerminalWindowController && ![_frontTerminalWindowController isHotKeyWindow]) {
+        term = _frontTerminalWindowController;
+    } else {
+        // The front window is a hotkey window (it auto-hides, so a
+        // revived tab there would vanish with it) or there is none;
+        // find any regular window.
+        for (PseudoTerminal *candidate in _terminalWindows) {
+            if (![candidate isHotKeyWindow]) {
+                term = candidate;
+                break;
             }
         }
     }
-    for (PTYSession *session in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
-        if ([session.guid isEqualToString:guid]) {
-            [session reveal];
-            return;
-        }
+    if (!term) {
+        const iTermPercentage percentage = (iTermPercentage){ .width = -1, .height = -1 };
+        const iTermWindowType windowType = iTermWindowDefaultType();
+        [self reviveSession:session
+        inNewWindowWithType:windowType
+            savedWindowType:windowType
+                 percentage:percentage
+                     screen:-1
+               terminalGuid:nil];
+        return;
     }
+    [term addRevivedSession:session];
+    [term fitWindowToTabs];
+}
+
+- (PseudoTerminal *)reviveSession:(PTYSession *)session
+              inNewWindowWithType:(iTermWindowType)windowType
+                  savedWindowType:(iTermWindowType)savedWindowType
+                       percentage:(iTermPercentage)percentage
+                           screen:(int)screen
+                     terminalGuid:(NSString *)terminalGuid {
+    PseudoTerminal *term = [[PseudoTerminal alloc] initWithSmartLayout:YES
+                                                            windowType:windowType
+                                                       savedWindowType:savedWindowType
+                                                            percentage:percentage
+                                                                screen:screen
+                                                               profile:nil];
+    if (!term) {
+        RLog(@"Failed to create a window to revive %@", session);
+        return nil;
+    }
+    [self addTerminalWindow:term];
+    if (terminalGuid) {
+        // Deliberately conditional: the pre-refactor buried-restore
+        // path assigned restorableSession.terminalGuid unconditionally,
+        // which could blank the window's freshly minted identity to
+        // nil. Keeping the minted guid when no saved one exists is the
+        // intended behavior — window arrangement encoding and
+        // window-matching consumers expect a non-nil terminalGuid.
+        term.terminalGuid = terminalGuid;
+    }
+    [term addRevivedSession:session];
+    [term fitWindowToTabs];
+    return term;
 }
 
 - (PTYSession *)sessionWithGUID:(NSString *)identifier {
@@ -1523,24 +1580,129 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (PTYSession *)anySessionWithGUID:(NSString *)identifier {
-    PTYSession *direct = [self sessionWithGUID:identifier];
-    if (direct) {
-        return direct;
-    }
-    for (PTYSession *buried in [[iTermBuriedSessions sharedInstance] buriedSessions]) {
-        if ([buried.guid isEqualToString:identifier]) {
-            return buried;
+    __block PTYSession *result = nil;
+    [self enumerateSessionLookupLocations:^(PTYSession *session,
+                                            iTermSessionLookupLocation location,
+                                            BOOL *stop) {
+        if ([session.guid isEqualToString:identifier]) {
+            result = session;
+            *stop = YES;
         }
+    }];
+    return result;
+}
+
+- (PTYSession *)anySessionWithStableID:(NSString *)stableID {
+    if (!stableID) {
+        return nil;
     }
-    for (PseudoTerminal *term in self.terminals) {
-        for (PTYSession *session in term.allSessions) {
-            PTYSession *peer = [session.peerPort peerSessionWithGUID:identifier];
-            if (peer) {
-                return peer;
+    NSString *canonical = [iTermStableSessionID canonical:stableID];
+    if (!canonical) {
+        return nil;
+    }
+    __block PTYSession *result = nil;
+    [self enumerateSessionLookupLocations:^(PTYSession *session,
+                                            iTermSessionLookupLocation location,
+                                            BOOL *stop) {
+        if ([session.stableID isEqualToString:canonical]) {
+            result = session;
+            *stop = YES;
+        }
+    }];
+    return result;
+}
+
+- (PTYSession *)anySessionForReference:(NSString *)reference {
+    if (!reference) {
+        return nil;
+    }
+    // A stableID is self-describing (canonical() validates prefix + checksum) and
+    // a legacy guid is a UUID that never starts with the stable prefix, so
+    // dispatching on canonical() is unambiguous.
+    if ([iTermStableSessionID canonical:reference]) {
+        return [self anySessionWithStableID:reference];
+    }
+    return [self anySessionWithGUID:reference];
+}
+
+- (void)enumerateSessionLookupLocations:(void (^NS_NOESCAPE)(PTYSession *session,
+                                                             iTermSessionLookupLocation location,
+                                                             BOOL *stop))block {
+    // Pass order is the search precedence documented on
+    // iTermSessionLookupLocation. The peer-port passes cover workgroup
+    // peers that are in no tab and not registered in
+    // iTermBuriedSessions (addBuriedSession: drops sessions that have
+    // no window yet, which is how non-active peers are born); buried
+    // sessions' ports matter because the user can bury the only
+    // in-tab member of a peer group, leaving the rest reachable
+    // exclusively through the buried member's port.
+    // `visit` is the single dispatch point: it owns the stop check so
+    // a future change to how stop is honored (or a new yield-time
+    // invariant) lands in one place. Each leg is fetched lazily —
+    // most lookups hit in the tab pass, and a miss is guaranteed for
+    // every blank Session Status row on every reload, so the later
+    // legs shouldn't be materialized until needed.
+    __block BOOL stop = NO;
+    void (^visit)(NSArray<PTYSession *> *, iTermSessionLookupLocation) =
+        ^(NSArray<PTYSession *> *sessions, iTermSessionLookupLocation location) {
+            if (stop) {
+                return;
             }
+            for (PTYSession *session in sessions) {
+                block(session, location, &stop);
+                if (stop) {
+                    return;
+                }
+            }
+        };
+    // Tab pass: iterate window by window rather than flattening every
+    // window's sessions up front via -allSessions. The common case (a
+    // GUID-lookup hit) returns from an early window without building a
+    // combined array; the more expensive legs below are reached only on
+    // a miss.
+    for (PseudoTerminal *term in _terminalWindows) {
+        visit(term.allSessions, iTermSessionLookupLocationTab);
+        if (stop) {
+            return;
         }
     }
-    return nil;
+    NSArray<PTYSession *> *buriedSessions = [[iTermBuriedSessions sharedInstance] buriedSessions];
+    visit(buriedSessions, iTermSessionLookupLocationBuried);
+    for (PseudoTerminal *term in _terminalWindows) {
+        for (PTYSession *session in term.allSessions) {
+            if (stop) {
+                return;
+            }
+            visit(session.peerPort.realizedPeerSessions,
+                  iTermSessionLookupLocationTabPeerPort);
+        }
+    }
+    for (PTYSession *session in buriedSessions) {
+        if (stop) {
+            return;
+        }
+        visit(session.peerPort.realizedPeerSessions,
+              iTermSessionLookupLocationBuriedPeerPort);
+    }
+    if (stop) {
+        return;
+    }
+    // The registry pass reaches peers of a workgroup whose realized
+    // members are all windowless and unburied (born-buried peers are
+    // deliberately not registered in iTermBuriedSessions), which no
+    // in-tab or buried session's port can surface. The controller
+    // strongly retains each instance, and each instance its ports, so
+    // reachability here doesn't depend on which member happens to be
+    // in a tab.
+    for (iTermWorkgroupInstance *instance in iTermWorkgroupController.instance.allInstances) {
+        for (PTYSessionPeerPort *port in instance.allPeerPorts) {
+            if (stop) {
+                return;
+            }
+            visit(port.realizedPeerSessions,
+                  iTermSessionLookupLocationWorkgroupRegistryPort);
+        }
+    }
 }
 
 - (void)workspaceWillPowerOff:(NSNotification *)notification {
@@ -1753,7 +1915,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         case iTermOpenStyleVerticalSplit:
         case iTermOpenStyleHorizontalSplit:
             term = [self currentTerminal];
-            if (term) {
+            if (term && !(term.layoutLocked && term.numberOfTabs > 0)) {
                 return [self openURLInSplitPane:url
                                          target:target
                                          window:term
@@ -1763,6 +1925,13 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                                splitSessionGuid:term.currentSession.guid];
             }
             break;
+    }
+    if (term.layoutLocked && term.numberOfTabs > 0) {
+        // The current window’s layout is locked. Don’t split it or add a tab;
+        // open the URL in a new window so the lock is honored and the open still
+        // succeeds.
+        RLog(@"Current window is layout-locked; opening URL in a new window instead");
+        term = nil;
     }
     if (!term) {
         term = [[PseudoTerminal alloc] initWithSmartLayout:YES
@@ -1851,7 +2020,8 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                                                profile:windowProfile];
     [self addTerminalWindow:term];
 
-    DLog(@"Open single-use browser window with url: %@", url);
+    // The URL can carry secrets in its query string; redact it for the ring.
+    RLog(@"Open single-use browser window with url: %@", RLogRedact(url, url.it_redactedDescription));
     PTYSession *(^makeSession)(Profile *, PseudoTerminal *) =
     ^PTYSession *(Profile *profile, PseudoTerminal *term) {
         profile = [profile dictionaryBySettingObject:kProfilePreferenceCommandTypeBrowserValue
@@ -1972,7 +2142,8 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     if (options & iTermSingleUseWindowOptionsCommandNotSwiftyString) {
         command = [command stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
     }
-    DLog(@"Open single-use window with command: %@", command);
+    // The command line can carry passwords/tokens; keep it out of the ring.
+    RLog(@"Open single-use window with command: %@", RLogRedact(command, @(command.length)));
     void (^makeSession)(Profile *, PseudoTerminal *, void (^)(PTYSession *)) =
     ^(Profile *profile, PseudoTerminal *term, void (^makeSessionCompletion)(PTYSession *))  {
         profile = [profile dictionaryBySettingObject:@"" forKey:KEY_INITIAL_TEXT];

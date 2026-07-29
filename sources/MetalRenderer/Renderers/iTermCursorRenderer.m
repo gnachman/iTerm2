@@ -38,6 +38,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermCursorRendererTransientState
 
+- (instancetype)initWithConfiguration:(__kindof iTermRenderConfiguration *)configuration {
+    self = [super initWithConfiguration:configuration];
+    if (self) {
+        _fadeAlpha = 1.0;
+    }
+    return self;
+}
+
 - (void)writeDebugInfoToFolder:(NSURL *)folder {
     [super writeDebugInfoToFolder:folder];
     NSString *s = [NSString stringWithFormat:
@@ -358,10 +366,27 @@ NS_ASSUME_NONNULL_BEGIN
     return description;
 }
 
+// Apply the smooth-blink fade to a cursor description's color, respecting the
+// renderer's blend mode. compositeSourceOver expects premultiplied alpha
+// (sourceRGBBlendFactor == One) so the rgb is scaled too; the default straight
+// alpha blend only needs the alpha component scaled.
+- (void)applyFadeAlpha:(CGFloat)fadeAlpha toDescription:(iTermCursorDescription *)description {
+    if (fadeAlpha >= 1.0) {
+        return;
+    }
+    const float a = MAX(0.0, MIN(1.0, (float)fadeAlpha));
+    if ([[self class] blending].sourceRGBBlendFactor == MTLBlendFactorOne) {
+        description->color *= simd_make_float4(a, a, a, a);
+    } else {
+        description->color.w *= a;
+    }
+}
+
 - (void)drawWithFrameData:(iTermMetalFrameData *)frameData
            transientState:(__kindof iTermMetalRendererTransientState *)transientState {
     iTermCursorRendererTransientState *tState = transientState;
     iTermCursorDescription description = [self cursorDescriptionWithTransientState:tState];
+    [self applyFadeAlpha:tState.fadeAlpha toDescription:&description];
     id<MTLBuffer> descriptionBuffer = [_descriptionPool requestBufferFromContext:tState.poolContext
                                                                        withBytes:&description
                                                                   checkIfChanged:YES];
@@ -524,6 +549,7 @@ static id<MTLBuffer> iTermNewVertexBufferWithBlockCursorQuad(iTermCursorRenderer
     iTermFrameCursorRendererTransientState *tState = transientState;
     tState.vertexBuffer = iTermNewVertexBufferWithBlockCursorQuad(tState, _cellRenderer);
     iTermCursorDescription description = [self cursorDescriptionWithTransientState:tState];
+    [self applyFadeAlpha:tState.fadeAlpha toDescription:&description];
     id<MTLBuffer> descriptionBuffer = [_descriptionPool requestBufferFromContext:tState.poolContext
                                                                        withBytes:&description
                                                                   checkIfChanged:YES];

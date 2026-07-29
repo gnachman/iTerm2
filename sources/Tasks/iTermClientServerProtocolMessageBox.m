@@ -60,7 +60,7 @@ static void HexDump(NSData *data) {
     }
     const int status = iTermMultiServerProtocolParseMessageFromServer(&_protocolMessage, &_decodedMessage);
     if (status) {
-        DLog(@"Failed to decode message from server with status %d", status);
+        RLog(@"Failed to decode message from server with status %d", status);
         return nil;
     }
     _haveDecodedMessage = YES;

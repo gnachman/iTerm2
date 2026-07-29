@@ -10,7 +10,7 @@ struct AIConversation {
         private(set) var busy = false
         var completion: ((Result<String, Error>) -> ())?
         var streaming: ((LLM.StreamingUpdate) -> ())?
-        var registrationNeeded: ((@escaping (AITermController.Registration) -> ()) -> ())?
+        var registrationNeeded: ((iTermAIVendor, @escaping (AITermController.Registration) -> ()) -> ())?
         var createVectorStoreCompletion: ((Result<String, Error>) -> ())?
         var uploadFileCompletion: ((Result<String, Error>) -> ())?
         var addFilesToVectorStoreCompletion: ((Error?) -> ())?
@@ -48,7 +48,7 @@ struct AIConversation {
 
         func aitermControllerRequestRegistration(_ sender: AITermController,
                                                  completion: @escaping (AITermController.Registration) -> ()) {
-            registrationNeeded?(completion)
+            registrationNeeded?(sender.requiredRegistrationVendor, completion)
         }
 
         func aitermController(_ sender: AITermController, didStreamUpdate update: String?) {
@@ -106,10 +106,30 @@ struct AIConversation {
     }
 
     var messages: [AITermController.Message]
+    // Selects the model by name, resolved against the public catalog
+    // (AIMetadata.instance.models) at request time. Use this when the catalog's
+    // own endpoint is what you want.
     var model: String?
+    // A fully-specified model to use instead of `model`/the configured provider.
+    // Unlike `model` (a name that gets re-resolved to the catalog's public
+    // endpoint), this is used verbatim, so it preserves a custom url/api/auth.
+    // Callers that must not leak the API key past a user's custom base URL (e.g.
+    // the economy-model path) set this rather than `model`. Takes precedence over
+    // `model`. Not carried by the AIConversation(_:) copy initializer.
+    var modelOverride: AIMetadata.Model?
     var shouldThink: Bool? = nil {
         didSet {
             controller.shouldThink = shouldThink
+        }
+    }
+    var reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort? = nil {
+        didSet {
+            controller.reasoningEffort = reasoningEffort
+        }
+    }
+    var serviceTier: ResponsesRequestBody.ServiceTier? = nil {
+        didSet {
+            controller.serviceTier = serviceTier
         }
     }
     private(set) var controller: AITermController
@@ -237,7 +257,7 @@ struct AIConversation {
         controller.cancel()
         delegate.completion = { _ in }
         delegate.streaming = nil
-        delegate.registrationNeeded = { _ in }
+        delegate.registrationNeeded = { _, _ in }
         delegate.createVectorStoreCompletion = nil
         delegate.uploadFileCompletion = nil
         delegate.addFilesToVectorStoreCompletion = nil
@@ -247,9 +267,9 @@ struct AIConversation {
         if delegate.busy {
             cancel()
         }
-        delegate.registrationNeeded = { [weak registrationProvider] regCompletion in
+        delegate.registrationNeeded = { [weak registrationProvider] vendor, regCompletion in
             if let registrationProvider {
-                registrationProvider.registrationProviderRequestRegistration() { registration in
+                registrationProvider.registrationProviderRequestRegistration(for: vendor) { registration in
                     if let registration {
                         regCompletion(registration)
                         completion(nil)
@@ -258,7 +278,7 @@ struct AIConversation {
                     }
                 }
             } else {
-                DLog("No registration provider found")
+                RLog("No registration provider found")
                 completion(AIError("You must provide a valid API key to use AI features in iTerm2"))
             }
         }
@@ -382,8 +402,21 @@ struct AIConversation {
             }
         }
         let lastAssistantMessage = self.messages.last { $0.role == .assistant }
-        if let modelName = model, let model = AIMetadata.instance.models.first(where: { $0.name == modelName }) {
-            controller.providerOverride = LLMProvider(model: model)
+        if let modelOverride {
+            // Used verbatim: preserves the caller's url/api/auth (see the
+            // economy-model path in ScreenWatchPoller).
+            controller.providerOverride = LLMProvider(model: modelOverride)
+        } else if let modelName = model {
+            // Consult manually-configured models too: AIMetadata.instance.models
+            // is only the built-in catalog, so a chat pinned to a manual/custom
+            // model would otherwise fall through to the global default and be
+            // sent to a different model (and possibly vendor/URL) than the UI
+            // shows. A manual model WINS over a built-in that shares its name so
+            // a user proxying a known model (custom url/api under the same name)
+            // reaches their endpoint rather than the public one.
+            let pinnedModel = LLMMetadata.manualModels().first(where: { $0.name == modelName })
+                ?? AIMetadata.instance.models.first(where: { $0.name == modelName })
+            controller.providerOverride = pinnedModel.map { LLMProvider(model: $0) }
         } else {
             controller.providerOverride = nil
         }
@@ -405,5 +438,40 @@ struct AIConversation {
             return truncate(messages: [lastMessage], maxTokens: maxTokens)
         }
         return truncate(messages: messages, maxTokens: maxTokens)
+    }
+}
+
+// MARK: - One-shot completion
+
+// Retention for fire-and-forget conversations: AIConversation is a value
+// type that owns a controller doing async work, so somebody must keep a
+// copy alive until the completion runs. Main-thread only.
+private enum AIConversationOneShotRetention {
+    static var retained = [UUID: AIConversation]()
+}
+
+extension AIConversation {
+    // Completes a fire-and-forget conversation, retaining it (and the
+    // controller it owns) until the completion has run. Use this instead
+    // of a hand-rolled stored property or static dictionary: complete is
+    // mutating and can run its callback synchronously (e.g. when no
+    // registration exists), so a caller that stores the conversation and
+    // then mutates that same storage from inside the callback traps under
+    // exclusivity enforcement. This helper calls complete on a local
+    // copy, stores it afterward, and releases on the next runloop turn,
+    // which keeps the ordering correct in the synchronous case too. Call
+    // on the main thread.
+    static func completeOneShot(_ conversation: AIConversation,
+                                completion: @escaping (Result<AIConversation, Error>) -> ()) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        var mutable = conversation
+        let token = UUID()
+        mutable.complete { result in
+            DispatchQueue.main.async {
+                AIConversationOneShotRetention.retained.removeValue(forKey: token)
+            }
+            completion(result)
+        }
+        AIConversationOneShotRetention.retained[token] = mutable
     }
 }

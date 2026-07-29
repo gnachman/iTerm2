@@ -203,7 +203,7 @@ static NSDateFormatter *gScriptHistoryDateFormatter;
     }
     pid_t pgid = getpgid(pid);
     if (pgid <= 0) {
-        DLog(@"Failed to get the process group id %@", @(errno));
+        RLog(@"Failed to get the process group id %@", @(errno));
         kill(pid, signal);
         return;
     }
@@ -397,6 +397,27 @@ NSString *const iTermScriptHistoryNumberOfEntriesDidChangeNotification = @"iTerm
 
 - (void)addHistoryEntry:(iTermScriptHistoryEntry *)entry {
     [_entries addObject:entry];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryNumberOfEntriesDidChangeNotification
+                                                        object:self];
+}
+
+- (void)removeHistoryEntry:(iTermScriptHistoryEntry *)entry {
+    if (![_entries containsObject:entry]) {
+        return;
+    }
+    [_entries removeObject:entry];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryNumberOfEntriesDidChangeNotification
+                                                        object:self];
+}
+
+- (void)removeTerminatedEntries {
+    NSIndexSet *terminated = [_entries indexesOfObjectsPassingTest:^BOOL(iTermScriptHistoryEntry *entry, NSUInteger idx, BOOL *stop) {
+        return !entry.isRunning;
+    }];
+    if (terminated.count == 0) {
+        return;
+    }
+    [_entries removeObjectsAtIndexes:terminated];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptHistoryNumberOfEntriesDidChangeNotification
                                                         object:self];
 }

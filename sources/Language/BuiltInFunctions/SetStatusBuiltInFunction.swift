@@ -16,6 +16,7 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
     private static let textColorArg = "text_color"
     private static let dotColorArg = "dot_color"
     private static let detailArg = "detail"
+    private static let backgroundTasksArg = "background_tasks"
 
     private static func error(message: String) -> NSError {
         return NSError(domain: "com.iterm2.set-status",
@@ -29,8 +30,10 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
             arguments: [statusArg: NSString.self,
                       textColorArg: NSString.self,
                        dotColorArg: NSString.self,
-                         detailArg: NSString.self],
-            optionalArguments: Set([statusArg, textColorArg, dotColorArg, detailArg]),
+                         detailArg: NSString.self,
+                backgroundTasksArg: NSNumber.self],
+            optionalArguments: Set([statusArg, textColorArg, dotColorArg, detailArg,
+                                    backgroundTasksArg]),
             defaultValues: ["session_id": iTermVariableKeySessionID],
             context: .session,
             sideEffectsPlaceholder: "[set_status]") { parameters, completion in
@@ -92,9 +95,38 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
                     }
                 }
 
+                if let backgroundTasks = parameters[backgroundTasksArg] as? NSNumber {
+                    update.backgroundTasksPresence = .set
+                    update.backgroundTasks = max(0, backgroundTasks.intValue)
+                }
+
                 session.screenSetTabStatus(update)
                 completion(nil, nil)
             }
         iTermBuiltInFunctions.sharedInstance().register(builtInFunction, namespace: "iterm2")
+
+        // Read-back for the background-task count. cc-status runs once
+        // per hook event with no state of its own, and idle_prompt
+        // payloads carry no task info; this lets it ask iTerm2 for the
+        // count the earlier Stop/SubagentStop events parked here (RAM
+        // only), instead of keeping marker files on disk.
+        let getBackgroundTasks = iTermBuiltInFunction(
+            name: "get_background_task_count",
+            arguments: [:],
+            optionalArguments: Set(),
+            defaultValues: ["session_id": iTermVariableKeySessionID],
+            context: .session,
+            sideEffectsPlaceholder: nil) { parameters, completion in
+                guard let sessionID = parameters["session_id"] as? String else {
+                    completion(nil, error(message: "Missing session_id"))
+                    return
+                }
+                guard let session = iTermController.sharedInstance().anySession(withGUID: sessionID) else {
+                    completion(nil, error(message: "No such session"))
+                    return
+                }
+                completion(NSNumber(value: session.tabStatus?.backgroundTasks ?? 0), nil)
+            }
+        iTermBuiltInFunctions.sharedInstance().register(getBackgroundTasks, namespace: "iterm2")
     }
 }

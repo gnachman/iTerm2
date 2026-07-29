@@ -225,4 +225,58 @@ final class OrchestrationPayloadTests: XCTestCase {
         }
         XCTAssertEqual(output, "ok")
     }
+
+    // MARK: - Watcher Codable compatibility
+
+    // Watchers persist on the chat record across iTerm2 restarts. A
+    // watcher written before condition watchers existed has targetState
+    // present and no mode/condition keys; it must decode into the new
+    // optional-targetState shape with the original tab-status semantics.
+    func testWorkgroupWatcher_decodesLegacyPersistedShape() throws {
+        let legacyJSON = """
+        {"watcherID":"w1","sessionGUID":"g1","workgroupID":"wg1",
+         "workgroupName":"WG","roleID":"r1","roleName":"Code Review",
+         "targetState":"idle","registeredAt":700000000}
+        """
+        let decoded = try JSONDecoder().decode(WorkgroupWatcher.self,
+                                               from: Data(legacyJSON.utf8))
+        XCTAssertEqual(decoded.targetState, .idle)
+        XCTAssertNil(decoded.condition)
+        XCTAssertEqual(decoded.effectiveMode, .tabStatus,
+                       "Missing mode key must keep the original tab-status behavior")
+    }
+
+    func testWorkgroupWatcher_conditionWatcherRoundTrips() throws {
+        let watcher = WorkgroupWatcher(
+            watcherID: "w2",
+            sessionGUID: "g2",
+            workgroupID: "wg2",
+            workgroupName: "WG",
+            roleID: "r2",
+            roleName: "emacs",
+            targetState: nil,
+            registeredAt: Date(timeIntervalSince1970: 1_700_000_000),
+            mode: .screenPoll,
+            condition: "emacs has exited and a shell prompt is showing")
+        let data = try JSONEncoder().encode(watcher)
+        let decoded = try JSONDecoder().decode(WorkgroupWatcher.self, from: data)
+        XCTAssertEqual(decoded, watcher)
+        XCTAssertEqual(decoded.effectiveMode, .screenPoll)
+    }
+
+    // register_watch accepts either form; the schema only requires
+    // session_guid, so both optional fields must decode independently.
+    func testRegisterWatchArgs_decodesEitherForm() throws {
+        let stateForm = try JSONDecoder().decode(
+            RegisterWatchArgs.self,
+            from: Data("{\"session_guid\":\"g\",\"target_state\":\"waiting\"}".utf8))
+        XCTAssertEqual(stateForm.targetState, .waiting)
+        XCTAssertNil(stateForm.condition)
+
+        let conditionForm = try JSONDecoder().decode(
+            RegisterWatchArgs.self,
+            from: Data("{\"session_guid\":\"g\",\"condition\":\"the build finished\"}".utf8))
+        XCTAssertNil(conditionForm.targetState)
+        XCTAssertEqual(conditionForm.condition, "the build finished")
+    }
 }

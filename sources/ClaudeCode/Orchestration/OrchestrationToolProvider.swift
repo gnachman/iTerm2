@@ -161,6 +161,21 @@ final class OrchestrationToolProvider: ToolProvider {
     private func registerWorkgroupTools(on conversation: inout AIConversation) {
         guard let invoker = externalInvoker else { return }
         for definition in OrchestratorCommand.allToolDefinitions {
+            // The push tools depend on the paired phone's state. Tools are
+            // bound at agent creation, so a phone pairing mid-conversation
+            // appears on the next agent rebuild; notify is offered whenever
+            // a phone is around (even before permission, since permission
+            // can be granted mid-conversation) and reports a clear error if
+            // pushes still can't be delivered.
+            if definition.name == ToolName.notify.rawValue,
+               !CompanionPushRegistry.phoneIsConnected,
+               !CompanionPushRegistry.canNotify {
+                continue
+            }
+            if definition.name == ToolName.requestNotificationPermission.rawValue,
+               !CompanionPushRegistry.canPromptForPermission || CompanionPushRegistry.canNotify {
+                continue
+            }
             let decl = ChatGPTFunctionDeclaration(
                 name: definition.name,
                 description: definition.description,
@@ -188,6 +203,14 @@ final class OrchestrationToolProvider: ToolProvider {
             case .getCommandBeforeCursor(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .searchCommandHistory(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .getCommandOutput(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
+            case .getScreenContents:
+                // NOT offered as session_get_screen_contents: the orchestrator
+                // already has a workgroup-level get_screen_contents (which also
+                // pairs with scroll_wheel), so a session_* mirror would be a
+                // redundant duplicate. (handleSessionToolCall also rejects it
+                // defensively.) It exists on RemoteCommand.Content only so the
+                // session-bound surface can offer it.
+                break
             case .getTerminalSize(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .getShellType(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .detectSSHSession(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
@@ -195,8 +218,17 @@ final class OrchestrationToolProvider: ToolProvider {
             case .getUserIdentity(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .getCurrentDirectory(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .setClipboard(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
-            case .insertTextAtCursor(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
-            case .deleteCurrentLine(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
+            case .insertTextAtCursor, .deleteCurrentLine:
+                // NOT offered in orchestration mode. These .controlTerminal tools
+                // write straight to the PTY with no classification (unlike the
+                // gated send_text and execute_command paths), and their payload
+                // can submit an arbitrary command (insert_text_at_cursor with a
+                // CR, delete_current_line via Ctrl-U), which would bypass the
+                // safety gate entirely. send_text (screen/shell-aware gated)
+                // already covers typing and control keys, so these are
+                // redundant here as well. (handleSessionToolCall also rejects
+                // them defensively.)
+                break
             case .getManPage(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .createFile(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .searchBrowser(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
@@ -204,6 +236,7 @@ final class OrchestrationToolProvider: ToolProvider {
             case .webSearch(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .getURL(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             case .readWebPage(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
+            case .restartSession(let p): registerSessionTool(content: content, prototype: p, on: &conversation)
             }
         }
     }
@@ -305,6 +338,13 @@ final class OrchestrationToolProvider: ToolProvider {
             return "Checking state of " + sessionDescription(args: dict)
         case "get_screen_contents":
             return "Reading screen of " + sessionDescription(args: dict)
+        case "scroll_wheel":
+            // direction defaults to "up" (reveal older content) at the
+            // dispatcher; mirror that here so the bubble matches behavior.
+            let direction = (dict["direction"] as? String) ?? "up"
+            let what = (direction == "down") ? "newer" : "older"
+            return "Scrolling " + sessionDescription(args: dict)
+                + " to show \(what) content"
         case "list_workgroup_clippings":
             return "Listing clippings in " + workgroupDescription(args: dict)
         case "send_text":
@@ -334,6 +374,10 @@ final class OrchestrationToolProvider: ToolProvider {
             return "Kicking off Code Review on " + sessionDescription(args: dict)
                 + " " + promptLabel
         case "register_watch":
+            if let condition = dict["condition"] as? String, !condition.isEmpty {
+                return "Will notify when " + sessionDescription(args: dict)
+                    + " satisfies: " + previewQuote(condition)
+            }
             let state = (dict["target_state"] as? String) ?? "?"
             return "Will notify when " + sessionDescription(args: dict)
                 + " becomes **\(state)**"
@@ -344,10 +388,15 @@ final class OrchestrationToolProvider: ToolProvider {
         default:
             if name.hasPrefix("session_") {
                 let raw = String(name.dropFirst("session_".count))
+                if raw == "execute_command",
+                   let cmd = dict["command"] as? String,
+                   !cmd.isEmpty {
+                    return "Executing `\(cmd.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 80))`"
+                }
                 // Use the @<guid> mention form (not a bare backticked guid) so
                 // OrchestrationMentionRenderer rewrites it to the session's name
                 // (or "[defunct session]" when it no longer resolves).
-                return "`\(prettifyToolName(raw))` on " + sessionDescription(args: dict)
+                return "\(prettifyToolName(raw)) in " + sessionDescription(args: dict)
             }
             return prettifyToolName(name)
         }

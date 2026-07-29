@@ -32,6 +32,14 @@
 - (BOOL)it_eventGetsSpecialHandlingForAPINotifications;
 + (BOOL)it_keycodeShouldHaveNumericKeypadFlag:(unsigned short)keycode;
 
+// Like -description but with typed characters removed. -[NSEvent description]
+// for key events includes chars="…" and unmodchars="…", i.e. the literal
+// keystrokes (which for a password prompt is the password). Use this instead of
+// the event itself in any log that could reach the always-on retrospective ring
+// (RLog). See DebugLogging.h. Keycode and modifier flags are retained because
+// they carry the routing information logs actually need.
+@property (nonatomic, readonly) NSString *it_redactedDescription;
+
 @end
 
 // Conform to this protocol to be notified that control-tab was key-down'ed when you are first responder.

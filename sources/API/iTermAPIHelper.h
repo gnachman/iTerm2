@@ -87,6 +87,18 @@ typedef NS_ENUM(NSUInteger, iTermNoAuthStatus) {
 
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey;
 
+// In-process API dispatch for the embedded it2 command tree (SSH integration).
+// Runs requests through the same handlers/subscriptions as a socket client using
+// a synthetic connection. Does NOT apply the permission gate; the caller is
+// responsible for authorizing the origin.
+// Returns NO if the API was disabled in the race window (server gone): the caller must
+// then not block on a receive, since the connection was never registered.
+- (BOOL)registerInProcessAPIConnection:(id<iTermAPIServerConnection>)connection
+                           displayName:(NSString *)displayName;
+- (void)dispatchInProcessAPIRequest:(ITMClientOriginatedMessage *)request
+                         connection:(id<iTermAPIServerConnection>)connection;
+- (void)unregisterInProcessAPIConnection:(id<iTermAPIServerConnection>)connection;
+
 - (void)dispatchRPCWithName:(NSString *)name
                   arguments:(NSDictionary *)arguments
                  completion:(iTermServerOriginatedRPCCompletionBlock)completion;

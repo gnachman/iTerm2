@@ -838,3 +838,168 @@ final class CharsetPerformanceTests: XCTestCase {
         }
     }
 }
+
+// MARK: - Section 7: Regional indicator (flag) pairing
+
+/// Regional indicators are stored one per cell (for wcwidth compatibility), so a flag
+/// emoji is two adjacent indicator cells and can even split across a soft wrap. Under the
+/// default fullWidthFlags=YES each indicator is double-width, inserting a DWC_RIGHT spacer
+/// after it, so a flag is laid out as [RI][DWC_RIGHT][RI][DWC_RIGHT]. The GPU renderer must
+/// pair the indicators (across the spacers) exactly as the legacy CoreText run does.
+final class RegionalIndicatorPairingTests: XCTestCase {
+    // Regional indicator symbols.
+    private let regionalU: UInt32 = 0x1F1FA // 🇺
+    private let regionalS: UInt32 = 0x1F1F8 // 🇸
+    private let regionalF: UInt32 = 0x1F1EB // 🇫
+    private let regionalR: UInt32 = 0x1F1F7 // 🇷
+
+    private func isSpacer(_ c: screen_char_t) -> Bool {
+        return ScreenCharIsDWC_RIGHT(c) || ScreenCharIsDWL_SPACER(c)
+    }
+
+    private func isRegionalIndicator(_ c: screen_char_t) -> Bool {
+        return c.complexChar != 0 && ComplexCharCodeIsRegionalIndicator(c.code)
+    }
+
+    /// Compact role encoding across a line, running the same greedy pairing the renderer uses:
+    ///   "J" opening indicator joined to a partner   "C" closing indicator (suppressed)
+    ///   "L" lone/trailing indicator (fallback glyph) ">" transparent spacer
+    ///   "." any other cell
+    private func roles(_ buf: [screen_char_t], _ len: Int) -> String {
+        var pendingOpen: ObjCBool = false
+        var out = ""
+        buf.withUnsafeBufferPointer { ptr in
+            for i in 0..<len {
+                let r: iTermRegionalIndicatorPairing = withUnsafeMutablePointer(to: &pendingOpen) { pop in
+                    iTermRegionalIndicatorPairingForCell(ptr.baseAddress, Int32(i), Int32(len), pop)
+                }
+                let c = buf[i]
+                if r.suppress.boolValue {
+                    out += "C"
+                } else if r.joinWithNext.boolValue {
+                    out += "J"
+                } else if isSpacer(c) {
+                    out += ">"
+                } else if isRegionalIndicator(c) {
+                    out += "L"
+                } else {
+                    out += "."
+                }
+            }
+        }
+        return out
+    }
+
+    /// Roles for a string using the actual StringToScreenChars layout (double-width flags
+    /// under the default), i.e. indicators separated by DWC_RIGHT spacers.
+    private func rolesForString(_ s: String) -> String {
+        let (buf, len, _) = callStringToScreenChars(s)
+        return roles(buf, len)
+    }
+
+    /// Roles for the same content with spacers stripped, simulating the single-width layout
+    /// (fullWidthFlags off, or a tmux -CC width model that reports indicators as width 1).
+    private func rolesForStringSingleWidth(_ s: String) -> String {
+        let (buf, len, _) = callStringToScreenChars(s)
+        var compact = [screen_char_t]()
+        for i in 0..<len where !isSpacer(buf[i]) {
+            compact.append(buf[i])
+        }
+        return roles(compact, compact.count)
+    }
+
+    // MARK: Predicate
+
+    func testPredicate_regionalIndicatorsAreClassified() {
+        let (buf, len, _) = callStringToScreenChars(stringFromCodePoints([regionalU, regionalS]))
+        var indicators = 0
+        for i in 0..<len where isRegionalIndicator(buf[i]) {
+            indicators += 1
+        }
+        XCTAssertEqual(indicators, 2)
+    }
+
+    func testPredicate_nonIndicatorsAreRejected() {
+        // Single-codepoint emoji, a ZWJ family, and the black-flag base are not indicators.
+        for s in ["\u{1F4CA}", "\u{1F469}\u{200D}\u{1F373}", "\u{1F3F4}"] {
+            let (buf, len, _) = callStringToScreenChars(s)
+            for i in 0..<len {
+                XCTAssertFalse(isRegionalIndicator(buf[i]), "unexpected indicator in \(s)")
+            }
+        }
+    }
+
+    // MARK: Pairing under the default (double-width) layout
+
+    func testPairing_singleFlag() {
+        XCTAssertEqual(rolesForString(stringFromCodePoints([regionalU, regionalS])), "J>C>")
+    }
+
+    func testPairing_twoFlags() {
+        let s = stringFromCodePoints([regionalU, regionalS, regionalF, regionalR])
+        XCTAssertEqual(rolesForString(s), "J>C>J>C>")
+    }
+
+    func testPairing_oddRunLeavesTrailingIndicatorLone() {
+        let s = stringFromCodePoints([regionalU, regionalS, regionalF])
+        XCTAssertEqual(rolesForString(s), "J>C>L>")
+    }
+
+    func testPairing_loneIndicator() {
+        XCTAssertEqual(rolesForString(stringFromCodePoints([regionalU])), "L>")
+    }
+
+    func testPairing_indicatorsSeparatedByTextDoNotPair() {
+        let s = stringFromCodePoints([regionalU, 0x41 /* A */, regionalS])
+        XCTAssertEqual(rolesForString(s), "L>.L>")
+    }
+
+    func testPairing_flagPrecededByText() {
+        let s = stringFromCodePoints([0x41 /* A */, regionalU, regionalS])
+        XCTAssertEqual(rolesForString(s), ".J>C>")
+    }
+
+    // MARK: Same pairing in the single-width layout
+
+    func testPairing_singleWidth_singleFlag() {
+        XCTAssertEqual(rolesForStringSingleWidth(stringFromCodePoints([regionalU, regionalS])), "JC")
+    }
+
+    func testPairing_singleWidth_oddRun() {
+        let s = stringFromCodePoints([regionalU, regionalS, regionalF])
+        XCTAssertEqual(rolesForStringSingleWidth(s), "JCL")
+    }
+
+    // MARK: The opening cell reconstructs the whole flag string
+
+    func testOpeningCellCarriesFullFlagString() {
+        let (buf, len, _) = callStringToScreenChars(stringFromCodePoints([regionalU, regionalS]))
+        var pendingOpen: ObjCBool = false
+        var reconstructed: String?
+        buf.withUnsafeBufferPointer { ptr in
+            for i in 0..<len {
+                let r: iTermRegionalIndicatorPairing = withUnsafeMutablePointer(to: &pendingOpen) { pop in
+                    iTermRegionalIndicatorPairingForCell(ptr.baseAddress, Int32(i), Int32(len), pop)
+                }
+                if r.joinWithNext.boolValue {
+                    let base = CharToStr(buf[i].code, buf[i].complexChar != 0) as String? ?? ""
+                    let successor = CharToStr(r.successorCode, true) as String? ?? ""
+                    reconstructed = base + successor
+                    break
+                }
+            }
+        }
+        XCTAssertEqual(reconstructed, stringFromCodePoints([regionalU, regionalS]))
+    }
+
+    // MARK: Wrap boundary
+
+    /// A flag that splits across a soft wrap becomes a lone indicator at the end of one row
+    /// and another lone indicator at the start of the next. Pairing state is per-row, so each
+    /// renders its fallback glyph, identically to the legacy renderer (which shapes each row
+    /// as its own CoreText run). Simulate by pairing each row independently.
+    func testWrapSplit_bothHalvesRenderLone() {
+        XCTAssertEqual(rolesForString(stringFromCodePoints([regionalU])), "L>")
+        XCTAssertEqual(rolesForString(stringFromCodePoints([regionalS])), "L>")
+    }
+}

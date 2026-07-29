@@ -17,7 +17,7 @@ class ClaudeWatcher: NSObject {
     private init?(_ placeholder: Void = ()) {
         super.init()
         if !Self.enabled {
-            DLog("ClaudeWatcher not enabled, returning nil")
+            RLog("ClaudeWatcher not enabled, returning nil")
             return nil
         }
         DLog("ClaudeWatcher initialized")
@@ -81,7 +81,7 @@ private extension ClaudeWatcher {
     func jobMonitorDidChange(_ notification: Notification) {
         defer {
             if !Self.enabled {
-                DLog("ClaudeWatcher no longer enabled, nilling instance")
+                RLog("ClaudeWatcher no longer enabled, nilling instance")
                 Self.instance = nil
             }
         }
@@ -92,10 +92,10 @@ private extension ClaudeWatcher {
             DLog("ClaudeWatcher ignoring notification: \(notification.userInfo ?? [:])")
             return
         }
-        DLog("ClaudeWatcher got \(sessions.count) claude session(s)")
+        RLog("ClaudeWatcher got \(sessions.count) claude session(s)")
         sessionIDs = sessions
         if sessionIDs.count >= threshold {
-            DLog("ClaudeWatcher threshold reached (\(threshold))")
+            RLog("ClaudeWatcher threshold reached (\(threshold))")
             thresholdReached()
         }
     }
@@ -106,24 +106,24 @@ private extension ClaudeWatcher {
                 DLog("ClaudeWatcher session \(sessionID) not found")
                 continue
             }
-            DLog("ClaudeWatcher offering status tool to session \(sessionID)")
+            RLog("ClaudeWatcher offering status tool to session \(sessionID)")
             offerClaudeCodeStatusTool(session: session)
         }
     }
 
     func offerClaudeCodeStatusTool(session: PTYSession) {
         session.naggingController.offerClaudeCodeStatusTool { [weak self] status in
-            DLog("ClaudeWatcher user responded: \(status)")
+            RLog("ClaudeWatcher user responded: \(status)")
             switch status {
             case .never:
-                DLog("ClaudeWatcher user chose never")
+                RLog("ClaudeWatcher user chose never")
                 iTermUserDefaults.userDefaults().set(true, forKey: Self.disabledUserDefaultsKey)
             case .accept:
-                DLog("ClaudeWatcher user accepted")
+                RLog("ClaudeWatcher user accepted")
                 iTermUserDefaults.userDefaults().set(true, forKey: Self.disabledUserDefaultsKey)
                 self?.userDidAccept()
             case .askLater:
-                DLog("ClaudeWatcher user chose ask later")
+                RLog("ClaudeWatcher user chose ask later")
                 if let self {
                     NotificationCenter.default.removeObserver(self)
                 }

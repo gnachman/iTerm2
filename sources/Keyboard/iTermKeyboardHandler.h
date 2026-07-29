@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 typedef struct {
     BOOL hasActionableKeyMapping;
+    BOOL hasBypassKeyMapping;
     iTermOptionKeyBehavior leftOptionKey;
     iTermOptionKeyBehavior rightOptionKey;
     BOOL autorepeatMode;
@@ -45,6 +46,12 @@ typedef struct {
 
 - (NSInteger)keyboardHandlerWindowNumber:(iTermKeyboardHandler *)keyboardhandler;
 - (BOOL)keyboardHandler:(iTermKeyboardHandler *)keyboardhandler shouldBackspaceAt:(NSUInteger)location;
+
+// Gives the delegate a chance to send this keystroke to a tmux control-mode
+// (-CC) pane as a key name (letting tmux re-encode it) instead of the mapper's
+// byte encoding. Returns YES if it consumed the event.
+- (BOOL)keyboardHandler:(iTermKeyboardHandler *)keyboardhandler
+    sendTmuxControlModeKeyEvent:(NSEvent *)event;
 
 @end
 

@@ -227,7 +227,7 @@ class PromptStateMachine: NSObject {
 
     @objc
     func willSendCommand() {
-        DLog("willSendCommand in \(state)")
+        RLog("willSendCommand in \(state)")
         if gDebugLogging.boolValue {
             currentEvent = "willSendCommand"
         }
@@ -433,12 +433,12 @@ class PromptStateMachine: NSObject {
     }
 
     private func revealComposer(prompt: [ScreenCharArray]) {
-        DLog("revealComposer because \(currentEvent) in \(state)")
+        RLog("revealComposer because \(currentEvent) in \(state)")
         delegate?.promptStateMachineRevealComposer(prompt: prompt)
     }
 
     private func dismissComposer() {
-        DLog("dismissComposer because \(currentEvent) in \(state)")
+        RLog("dismissComposer because \(currentEvent) in \(state)")
         delegate?.promptStateMachineDismissComposer()
     }
 

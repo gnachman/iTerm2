@@ -356,7 +356,7 @@ private extension MessagePrepPipeline {
         var currentBuilder = builder
         if addToVectorStore {
             if vectorStoreID == nil {
-                DLog("Need to create a vector store")
+                RLog("Need to create a vector store")
                 try currentBuilder.add(description: "Create vector store",
                                        actionClosure: createVectorStoreAction(chatID: chatID))
                 currentBuilder = currentBuilder.makeChild()
@@ -452,7 +452,7 @@ private extension MessagePrepPipeline {
             default:
                 completion(nil)
             }
-            DLog("disposition for \(chatID) is \(disposition)")
+            RLog("disposition for \(chatID) is \(disposition)")
         })
     }
 

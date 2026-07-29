@@ -396,7 +396,7 @@ class SSHFilePanelFileList: NSScrollView {
                 self.fileOutlineView.reloadData()
             } catch {
                 // Handle error - could show an alert or log
-                DLog("Error loading files: \(error)")
+                RLog("Error loading files: \(error)")
                 self.rootNodes.removeAll()
                 fileOutlineView.reloadData()
             }
@@ -436,7 +436,7 @@ class SSHFilePanelFileList: NSScrollView {
         } catch {
             await MainActor.run {
                 node.isLoading = false
-                DLog("Error loading children for \(node.file.name): \(error)")
+                RLog("Error loading children for \(node.file.name): \(error)")
             }
         }
     }
@@ -877,7 +877,7 @@ extension SSHFilePanelFileList: NSOutlineViewDelegate {
             }
             return tempFileURL
         } catch {
-            DLog("Failed to create temp file: \(error)")
+            RLog("Failed to create temp file: \(error)")
             return nil
         }
     }
@@ -911,7 +911,7 @@ extension SSHFilePanelFileList: NSOutlineViewDelegate {
                 pasteboardItem.setString(tempURL.absoluteString, forType: .fileURL)
             }
         } catch {
-            DLog("Failed to prepare pasteboard data: \(error)")
+            RLog("Failed to prepare pasteboard data: \(error)")
         }
 
         return pasteboardItem
@@ -946,7 +946,7 @@ extension SSHFilePanelFileList: NSOutlineViewDelegate {
                     }
                     pasteboard.setData(data, forType: type)
                 } catch {
-                    DLog("Failed to archive SSH node data: \(error)")
+                    RLog("Failed to archive SSH node data: \(error)")
                 }
             }
         }
@@ -1014,7 +1014,7 @@ extension SSHFilePanelFileList: NSFilePromiseProviderDelegate {
             completionHandler(error)
             return
         }
-        DLog("Downloading \(fullPath) to \(url)")
+        RLog("Downloading \(fullPath) to \(url)")
         delegate?.sshFilePanelList(write: node, endpoint: endpoint, to: url, completionHandler: completionHandler)
     }
 

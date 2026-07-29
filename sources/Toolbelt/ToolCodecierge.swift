@@ -17,15 +17,6 @@ fileprivate protocol ToolCodeciergeSessionDelegate: AnyObject {
     var sessionWindow: NSWindow? { get }
 }
 
-struct TerminalCommand: Codable {
-    var username: String?
-    var hostname: String?
-    var directory: String?
-    var command: String
-    var output: String
-    var exitCode: Int32
-    var url: URL
-}
 
 @objc(iTermToolCodecierge)
 class ToolCodecierge: NSView, ToolbeltTool {
@@ -297,7 +288,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                     case .success(let updated):
                         delegate?.session(session: self, didProduceText: updated.messages.last!.content ?? "")
                     case .failure(let error):
-                        DLog("\(error)")
+                        RLog("\(error)")
                         delegate?.session(session: self, didProduceText: "There was an error: \(error.localizedDescription)")
                     }
                 }
@@ -312,7 +303,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                     self.conversation = updated
                     delegate?.session(session: self, didProduceAdditionalText: updated.messages.last!.content ?? "")
                 case .failure(let error):
-                    DLog("\(error)")
+                    RLog("\(error)")
                     delegate?.session(session: self, didProduceAdditionalText: "There was an error: \(error.localizedDescription)")
                 }
             }
@@ -340,7 +331,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                 case .success(let updated):
                     self.conversation = updated
                 case .failure(let error):
-                    DLog("\(error)")
+                    RLog("\(error)")
                 }
                 closure(result)
                 dequeueIfPossible()
@@ -646,11 +637,6 @@ extension ToolCodecierge: ToolCodeciergeSessionDelegate {
     }
 }
 
-extension String {
-    var escapedForMarkdownCode: String {
-        return replacingOccurrences(of: "`", with: "\\`")
-    }
-}
 
 class CodeciergeOnboardingView: NSView {
     private let startCallback: () -> ()

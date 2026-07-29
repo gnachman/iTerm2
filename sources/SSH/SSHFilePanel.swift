@@ -241,7 +241,7 @@ extension SSHFilePanel {
 
     @MainActor
     private func dataSourceDidChange() {
-        DLog("dataSourceDidChange called, preferredSSHIdentity: \(String(describing: preferredSSHIdentity)), initialDirectory: \(String(describing: initialDirectory))")
+        RLog("dataSourceDidChange called, preferredSSHIdentity: \(String(describing: preferredSSHIdentity)), initialDirectory: \(String(describing: initialDirectory))")
         if !prepared {
             prepared = true
             prepareToShow()
@@ -287,7 +287,7 @@ extension SSHFilePanel {
     private func selectEndpoint(forIdentity sshIdentity: SSHIdentity,
                                 initialPath: String?,
                                 withHistory: Bool) async -> Bool {
-        DLog("selectEndpoint called with sshIdentity: \(sshIdentity), initialPath: \(String(describing: initialPath)), withHistory: \(withHistory)")
+        RLog("selectEndpoint called with sshIdentity: \(sshIdentity), initialPath: \(String(describing: initialPath)), withHistory: \(withHistory)")
         currentEndpoint = endpoint(for: sshIdentity)
         defer {
             delegate?.panel(self, didChangeToDirectory: currentPath)
@@ -367,7 +367,7 @@ extension SSHFilePanel {
                 return true
             }
         } catch {
-            DLog("Failed to navigate to path \(path): \(error)")
+            RLog("Failed to navigate to path \(path): \(error)")
         }
         return false
     }
@@ -1680,7 +1680,7 @@ extension SSHFilePanel {
 
     @discardableResult
     func navigateToPathWithHistory(_ path: SSHFileDescriptor) async -> Bool {
-        DLog("Navigate to \(path)")
+        RLog("Navigate to \(path)")
         // Save current path to history before navigating
         if historyIndex < navigationHistory.count - 1 {
             // Remove forward history if we're navigating to a new path
@@ -2022,7 +2022,7 @@ extension SSHFilePanel: SSHFilePanelFileListDelegate {
                     completionHandler(nil)
                 }
             } catch {
-                DLog("Download error: \(error)")
+                RLog("Download error: \(error)")
                 completionHandler(error)
             }
         }
@@ -2045,7 +2045,7 @@ extension SSHFilePanel: SSHFilePanelFileListDelegate {
                 }
             }
         } catch {
-            DLog("Error downloading directory contents: \(error)")
+            RLog("Error downloading directory contents: \(error)")
         }
     }
 

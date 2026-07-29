@@ -49,6 +49,13 @@ static NSString *const kGridSizeKey = @"Size";
     NSMutableData *resultLine_;
     screen_char_t savedDefaultChar_;
     NSTimeInterval _allDirtyTimestamp;
+    BOOL allDirty_;
+    // Base of a reserved block of line generations for the current all-dirty
+    // epoch. While allDirty_ is set, generationForLine: hands line y the identity
+    // _allDirtyGenerationBase + y so every line reports a distinct, never-reused
+    // generation (the per-row cache misses uniformly) without touching every
+    // VT100LineInfo. Reserved once per NO->YES transition; see setAllDirty:.
+    int64_t _allDirtyGenerationBase;
     NSMutableArray *_bidiInfo;  // iTermBidiDisplayInfo or NSNull
     BOOL _bidiDirty;  // Did _bidiInfo change?
     // Number of lines counting from the top that we know are DWC-free.
@@ -59,7 +66,6 @@ static NSString *const kGridSizeKey = @"Size";
 @synthesize scrollRegionRows = scrollRegionRows_;
 @synthesize scrollRegionCols = scrollRegionCols_;
 @synthesize useScrollRegionCols = useScrollRegionCols_;
-@synthesize allDirty = allDirty_;
 @synthesize lines = lines_;
 @synthesize savedDefaultChar = savedDefaultChar_;
 @synthesize cursor = cursor_;
@@ -388,6 +394,34 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     return [lineInfo dirtyRange];
 }
 
+- (BOOL)isAllDirty {
+    return allDirty_;
+}
+
+- (void)setAllDirty:(BOOL)allDirty {
+    if (allDirty && !allDirty_) {
+        // Entering an all-dirty epoch: reserve a fresh, never-reused block of
+        // `height` generations so generationForLine: can give each line a distinct
+        // identity below. O(1) (one atomic) rather than bumping every line, which
+        // matters because this is on the hot scroll path.
+        _allDirtyGenerationBase = VT100LineInfoAllocateGenerationBlock(MAX(1, size_.height));
+    }
+    allDirty_ = allDirty;
+}
+
+- (int64_t)generationForLine:(int)y {
+    const int64_t perLine = [[self lineInfoAtLineNumber:y] generation];
+    if (allDirty_) {
+        // Everything is dirty but setAllDirty: (unlike markAllCharsDirty:) does not
+        // advance per-line generations. Hand out a distinct fresh identity per line
+        // from the reserved block so the row cache misses uniformly. Take the max
+        // with the per-line value so a line individually dirtied after the epoch
+        // began (which got a generation past the reserved block) still wins.
+        return MAX(perLine, _allDirtyGenerationBase + y);
+    }
+    return perLine;
+}
+
 - (int)cursorX {
     return cursor_.x;
 }
@@ -700,6 +734,16 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
         const int j = VT100GridLineInfoIndex(self, line);
         [lineInfos_[j] resetMetadata];
     }
+
+    // Advance the generation of the recycled (now-blank) lines. setAllDirty:YES
+    // above only flips the allDirty_ flag and resetMetadata does not touch the
+    // generation, so without this the rotated-in bottom lines would keep
+    // advertising the generation (and content identity) of the top-of-screen
+    // rows they used to hold, and the per-row draw cache would render them as
+    // ghost copies of that old text.
+    [self markCharsDirty:YES
+              inRectFrom:VT100GridCoordMake(0, height - y - 1)
+                      to:VT100GridCoordMake(width - 1, height - 1)];
 }
 
 - (int)scrollWholeScreenUpIntoLineBuffer:(LineBuffer *)lineBuffer
@@ -1258,20 +1302,28 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     [self setSize:otherGrid.size];
     for (int i = 0; i < size_.height; i++) {
         const VT100GridRange dirtyRange = [otherGrid dirtyRangeForLine:i];
-        if (!didScroll && !sizeChanged && dirtyRange.length <= 0) {
-            continue;
+        if (didScroll || sizeChanged || dirtyRange.length > 0) {
+            screen_char_t *dest = [self screenCharsAtLineNumber:i];
+            const screen_char_t *source = [otherGrid immutableScreenCharsAtLineNumber:i];
+            memmove(dest,
+                    source,
+                    sizeof(screen_char_t) * (size_.width + 1));
+            iTermMetadata metadata = iTermMetadataCopy([otherGrid metadataAtLineNumber:i]);
+            [self setMetadata:metadata forLineNumber:i];
+            iTermMetadataRelease(metadata);
+            if (dirtyRange.length > 0) {
+                [[self lineInfoAtLineNumber:i] setDirty:YES inRange:dirtyRange updateTimestampTo:0];
+            }
         }
-        screen_char_t *dest = [self screenCharsAtLineNumber:i];
-        const screen_char_t *source = [otherGrid immutableScreenCharsAtLineNumber:i];
-        memmove(dest,
-                source,
-                sizeof(screen_char_t) * (size_.width + 1));
-        iTermMetadata metadata = iTermMetadataCopy([otherGrid metadataAtLineNumber:i]);
-        [self setMetadata:metadata forLineNumber:i];
-        iTermMetadataRelease(metadata);
-        if (dirtyRange.length > 0) {
-            [[self lineInfoAtLineNumber:i] setDirty:YES inRange:dirtyRange updateTimestampTo:0];
-        }
+        // Mirror the source's content generation onto the destination for EVERY
+        // line (cheap; no allocation), after any setDirty: above. Without this,
+        // scrolled/resized/bidi-only lines get new content here but keep the
+        // generation the cache already bound to their old content (screenTop_ is
+        // not propagated, so the source rotates while the dest slots are fixed).
+        // The mutable grid tracks generation correctly through rotation, so
+        // adopting it makes the immutable grid the renderer reads report the
+        // right identity while still hitting the cache for truly-unchanged lines.
+        [[self lineInfoAtLineNumber:i] setGeneration:[otherGrid generationForLine:i]];
     }
     _hasChanged = YES;
     [otherGrid copyMiscellaneousStateTo:self];
@@ -1541,6 +1593,15 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                 aLine[cursor_.x + charsToInsert].code = 0;
             }
             aLine[cursor_.x + charsToInsert].complexChar = NO;
+            // This cell is one past the copied run, so it is outside the
+            // markCharsDirty: rect above, and that dirty call is itself gated by the
+            // memcmp "did anything change" optimization. Mark this cell dirty
+            // explicitly so the DWC-skip/blank side-write always advances the line's
+            // content generation (otherwise a row cache keyed on it could serve a
+            // stale blob that draws a stray glyph here).
+            [self markCharsDirty:YES
+                      inRectFrom:VT100GridCoordMake(cursor_.x + charsToInsert, lineNumber)
+                              to:VT100GridCoordMake(cursor_.x + charsToInsert, lineNumber)];
         }
         self.cursorX = newx;
         idx += charsToInsert;
@@ -1851,6 +1912,12 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                 [self screenCharsAtLineNumber:lineNumberAboveScrollRegion];
             if (pred[size_.width].code == EOL_SOFT) {
                 pred[size_.width].code = EOL_HARD;
+                // This line is above the scrolled rect, so the markCharsDirty: above
+                // does not cover it. Mark it dirty so its generation advances and
+                // the changed continuation mark re-syncs to the immutable grid.
+                [self markCharsDirty:YES
+                          inRectFrom:VT100GridCoordMake(size_.width - 1, lineNumberAboveScrollRegion)
+                                  to:VT100GridCoordMake(size_.width - 1, lineNumberAboveScrollRegion)];
             }
         }
         if (rect.origin.x + rect.size.width == size_.width && !softBreak) {
@@ -2684,16 +2751,17 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 }
 
 - (void)setBidiInfo:(iTermBidiDisplayInfo *)bidiInfo forLine:(int)line {
-    if (bidiInfo) {
-        if ([_bidiInfo[line] isKindOfClass:[NSNull class]]) {
-            _bidiDirty = YES;
-        }
-        _bidiInfo[line] = bidiInfo;
-    } else {
-        if (![_bidiInfo[line] isKindOfClass:[NSNull class]]) {
-            _bidiDirty = YES;
-        }
-        _bidiInfo[line] = [NSNull null];
+    id newValue = bidiInfo ?: (id)[NSNull null];
+    // Compare by value (iTermBidiDisplayInfo has content-based isEqual:) so a
+    // reordering change to an already-present line is detected, not just a
+    // null<->non-null transition.
+    const BOOL changed = ![_bidiInfo[line] isEqual:newValue];
+    _bidiInfo[line] = newValue;
+    if (changed) {
+        _bidiDirty = YES;
+        // Bidi changes a line's visual order, so it changes rendered content; the
+        // per-line generation must advance even though no cells were marked dirty.
+        [[self lineInfoAtLineNumber:line] advanceGeneration];
     }
 }
 
@@ -3061,6 +3129,14 @@ static void DumpBuf(screen_char_t* p, int n) {
         } else {
             NSLog(@"Warning! EOL_DWC without DWC_SKIP at line %d", lineNumber);
         }
+        // A cell (and the continuation mark) on this line changed. Mark it dirty so
+        // its per-line generation advances and copyDirtyFromGrid: re-syncs the row;
+        // callers here (e.g. scrollRect: on the line above the region) do not
+        // otherwise cover this line, which would leave the row cache serving the
+        // stale DWC_SKIP glyph.
+        [self markCharsDirty:YES
+                  inRectFrom:VT100GridCoordMake(size_.width - 1, lineNumber)
+                          to:VT100GridCoordMake(size_.width - 1, lineNumber)];
     }
 }
 

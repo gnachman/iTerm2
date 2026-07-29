@@ -30,7 +30,7 @@
 # define SIXELAPI
 #endif
 
-#define LIBSIXEL_VERSION "1.8.7"
+#define LIBSIXEL_VERSION "1.8.7-r2"
 #define LIBSIXEL_ABI_VERSION "1:6:0"
 
 typedef unsigned char sixel_index_t;

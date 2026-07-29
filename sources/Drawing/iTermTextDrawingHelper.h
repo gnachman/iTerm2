@@ -140,6 +140,36 @@ extern const CGFloat iTermCursorGuideAlphaThreshold;
 // Is the cursor configured to blink?
 @property(nonatomic, assign) BOOL cursorBlinking;
 
+// When YES, a blinking cursor fades smoothly in and out (with dwell times at
+// the extremes) instead of toggling abruptly. The durations and curves below
+// are honored only when this is YES.
+@property(nonatomic) BOOL cursorSmoothBlink;
+@property(nonatomic) NSTimeInterval cursorBlinkFadeInDuration;
+@property(nonatomic) NSTimeInterval cursorBlinkFadeOutDuration;
+// 0=linear, 1=ease in, 2=ease out, 3=ease in-out (iTermCursorBlinkFadeCurve).
+@property(nonatomic) NSInteger cursorBlinkFadeInCurve;
+@property(nonatomic) NSInteger cursorBlinkFadeOutCurve;
+// How long to hold fully visible and fully hidden between fades, in seconds.
+@property(nonatomic) NSTimeInterval cursorBlinkVisibleDwell;
+@property(nonatomic) NSTimeInterval cursorBlinkHiddenDwell;
+
+// YES while the cursor is blinking and the rendering path should schedule
+// another redraw (after cursorBlinkFadeTimeUntilNextFrame seconds).
+@property(nonatomic, readonly) BOOL cursorBlinkFadeWantsRedraw;
+// Seconds until the next smooth-blink redraw is worthwhile: 0 mid-fade, or the
+// remaining dwell time while holding at an extreme.
+@property(nonatomic, readonly) NSTimeInterval cursorBlinkFadeTimeUntilNextFrame;
+
+// YES if the cursor is in its blinking state right now (configured to blink,
+// window key, session active and first responder, and not recently moved).
+- (BOOL)cursorBlinkConditionActive;
+
+// Returns the cursor alpha in [0, 1] for the current point in the smooth-blink
+// cycle. `blinking` is the value of cursorBlinkConditionActive. When
+// cursorSmoothBlink is NO this returns 1. Has per-frame side effects; call once
+// per frame from the active rendering path.
+- (CGFloat)cursorBlinkFadeAlphaForBlinking:(BOOL)blinking;
+
 // Should bar/underscore cursors have a shadow?
 @property(nonatomic) BOOL cursorShadow;
 

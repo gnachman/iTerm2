@@ -77,23 +77,24 @@
                            task:(id<iTermTask>)task
                      completion:(void (^)(iTermJobManagerForkAndExecStatus,
                                           NSNumber *))completion  {
-    __block iTermJobManagerForkAndExecStatus status = iTermJobManagerForkAndExecStatusSuccess;
-    dispatch_sync(self.queue, ^{
-        status =
+    dispatch_async(self.queue, ^{
+        const iTermJobManagerForkAndExecStatus status =
         [self queueForkAndExecWithTtyState:ttyState
                                    argpath:argpath
                                       argv:argv
                                 initialPwd:initialPwd
                                 newEnviron:newEnviron
                                       task:task];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (status == iTermJobManagerForkAndExecStatusSuccess) {
+                RLog(@"Register task for pid %@", @(self.childPid));
+                [[TaskNotifier sharedInstance] registerTask:task];
+            }
+            if (completion) {
+                completion(status, nil);
+            }
+        });
     });
-    if (status == iTermJobManagerForkAndExecStatusSuccess) {
-        DLog(@"Register task for pid %@", @(self.childPid));
-        [[TaskNotifier sharedInstance] registerTask:task];
-    }
-    if (completion) {
-        completion(status, nil);
-    }
 }
 
 - (iTermJobManagerForkAndExecStatus)queueForkAndExecWithTtyState:(iTermTTYState)ttyState
@@ -161,17 +162,17 @@
     }
     [[iTermProcessCache sharedInstance] unregisterTrackedPID:self.childPid];
     if (toProcessGroup) {
-        DLog(@"Kill process group %@ with signal %@", @(self.childPid), @(signo));
+        RLog(@"Kill process group %@ with signal %@", @(self.childPid), @(signo));
         killpg(self.childPid, signo);
     } else {
-        DLog(@"Kill process %@ with signal %@", @(self.childPid), @(signo));
+        RLog(@"Kill process %@ with signal %@", @(self.childPid), @(signo));
         kill(self.childPid, signo);
     }
     DLog(@"%@", [NSThread callStackSymbols]);
 }
 
 - (void)killWithMode:(iTermJobManagerKillingMode)mode {
-    DLog(@"%@ killWithMode:%@", self, @(mode));
+    RLog(@"%@ killWithMode:%@", self, @(mode));
     switch (mode) {
         case iTermJobManagerKillingModeRegular:
             [self sendSignal:SIGHUP toProcessGroup:NO];

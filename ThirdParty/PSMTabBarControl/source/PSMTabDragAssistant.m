@@ -1209,14 +1209,15 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     // mouse at beginning of tabs
     NSPoint mouseLoc = [self currentMouseLoc];
     PSMTabBarCell *proposedTarget = nil;
+    NSRect overCellRect = NSZeroRect;
+    PSMTabBarCell *overCell = nil;
 
     if ([self destinationTabBar] == control) {
         removeFlag = NO;
         if (mouseLoc.x < [[control style] leftMarginForTabBarControl]) {
             proposedTarget = [cells objectAtIndex:0];
         } else {
-            NSRect overCellRect;
-            PSMTabBarCell *overCell = [control cellForPoint:mouseLoc cellFrame:&overCellRect];
+            overCell = [control cellForPoint:mouseLoc cellFrame:&overCellRect];
             if (overCell) {
                 // mouse among cells - placeholder
                 if ([overCell isPlaceholder]) {
@@ -1246,43 +1247,26 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
             }
         }
 
-        // Apply hysteresis to prevent target bouncing due to animation-induced boundary shifts.
-        // Only change target if it's different AND the mouse is sufficiently into the new target area.
+        // Apply hysteresis around the real tab's midpoint, not the collapsed placeholder edge.
         PSMTabBarCell *currentTarget = [self targetCell];
-        if (proposedTarget != currentTarget && currentTarget != nil && proposedTarget != nil) {
-            // Check if mouse is far enough into the proposed target to accept the change
-            NSRect proposedFrame = [proposedTarget frame];
-            CGFloat hysteresis = 8.0; // pixels of hysteresis
+        if (proposedTarget != currentTarget && currentTarget != nil && proposedTarget != nil &&
+            overCell != nil && ![overCell isPlaceholder]) {
+            const CGFloat hysteresis = 8.0; // pixels of dead zone around the tab center
+            const NSInteger proposedIndex = [cells indexOfObject:proposedTarget];
+            const NSInteger currentIndex = [cells indexOfObject:currentTarget];
+            const BOOL movingForward = proposedIndex > currentIndex;
 
             if ([control orientation] == PSMTabBarHorizontalOrientation) {
-                NSInteger proposedIndex = [cells indexOfObject:proposedTarget];
-                NSInteger currentIndex = [cells indexOfObject:currentTarget];
-
-                if (proposedIndex > currentIndex) {
-                    // Moving right - mouse must be hysteresis pixels past the left edge of proposed target
-                    if (mouseLoc.x < proposedFrame.origin.x + hysteresis) {
-                        proposedTarget = currentTarget; // Keep current target
-                    }
-                } else {
-                    // Moving left - mouse must be hysteresis pixels before the right edge of proposed target
-                    if (mouseLoc.x > NSMaxX(proposedFrame) - hysteresis) {
-                        proposedTarget = currentTarget; // Keep current target
-                    }
+                const CGFloat boundary = overCellRect.origin.x + overCellRect.size.width / 2.0;
+                if ((movingForward && mouseLoc.x < boundary + hysteresis) ||
+                    (!movingForward && mouseLoc.x > boundary - hysteresis)) {
+                    proposedTarget = currentTarget;
                 }
             } else {
-                NSInteger proposedIndex = [cells indexOfObject:proposedTarget];
-                NSInteger currentIndex = [cells indexOfObject:currentTarget];
-
-                if (proposedIndex > currentIndex) {
-                    // Moving down
-                    if (mouseLoc.y < proposedFrame.origin.y + hysteresis) {
-                        proposedTarget = currentTarget;
-                    }
-                } else {
-                    // Moving up
-                    if (mouseLoc.y > NSMaxY(proposedFrame) - hysteresis) {
-                        proposedTarget = currentTarget;
-                    }
+                const CGFloat boundary = overCellRect.origin.y + overCellRect.size.height / 2.0;
+                if ((movingForward && mouseLoc.y < boundary + hysteresis) ||
+                    (!movingForward && mouseLoc.y > boundary - hysteresis)) {
+                    proposedTarget = currentTarget;
                 }
             }
         }

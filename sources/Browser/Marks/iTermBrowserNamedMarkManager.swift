@@ -59,7 +59,9 @@ extension iTermBrowserNamedMarkManager {
         init?(_ url: URL) {
             guard let fragment = url.fragment,
                   fragment.hasPrefix("iterm-mark:") else {
-                DLog("Invalid mark fragment: \(url.fragment ?? "nil")")
+                // A non-iterm fragment can be an OAuth token (#access_token=…); keep it
+                // out of the ring, logging only presence and length there.
+                RLog("Invalid mark fragment: \(redacted: url.fragment ?? "nil", or: "present=\(url.fragment != nil) length=\(url.fragment?.count ?? 0)")")
                 return nil
             }
 
@@ -138,7 +140,7 @@ extension iTermBrowserNamedMarkManager {
              clickPoint: NSPoint) async throws {
         // Check if the current page was loaded with GET
         guard httpMethod == "GET" || httpMethod == nil else {
-            DLog("Cannot create named mark: page was loaded with \(httpMethod ?? "unknown") method, not GET")
+            RLog("Cannot create named mark: page was loaded with \(httpMethod ?? "unknown") method, not GET")
             throw iTermError("Invalid HTTP method \(httpMethod.d)")
         }
 
@@ -219,7 +221,7 @@ extension iTermBrowserNamedMarkManager {
             // Set up layout change monitoring
             jsSetupLayoutChangeMonitoring(webView: webView)
         } else {
-            DLog("Navigation failed for \(webView.url.d) with pending mark \((pendingNavigationMark?.guid).d)")
+            RLog("Navigation failed for \(redacted: webView.url?.absoluteString ?? "nil", or: webView.url?.it_redactedDescription ?? "nil") with pending mark \((pendingNavigationMark?.guid).d)")
         }
     }
 
@@ -320,7 +322,7 @@ private extension iTermBrowserNamedMarkManager {
         }
 
         guard let location = Location(mark.url) else {
-            DLog("Invalid URL: \(mark.url)")
+            RLog("Invalid URL: \(redacted: mark.url, or: mark.url.it_redactedDescription)")
             return
         }
 
@@ -434,7 +436,7 @@ private extension iTermBrowserNamedMarkManager {
             do {
                 _ = try await webView.safelyEvaluateJavaScript(script, contentWorld: .defaultClient)
             } catch {
-                DLog("Error setting up layout change monitoring: \(error)")
+                RLog("Error setting up layout change monitoring: \(error)")
             }
         }
     }
@@ -464,7 +466,7 @@ private extension iTermBrowserNamedMarkManager {
                 try await safelyModifyDOM(in: webView) {
                     let result = try await webView.safelyEvaluateJavaScript(script, contentWorld: .defaultClient)
                     if let success = result as? Bool, !success {
-                        DLog("Failed to navigate to mark - element not found")
+                        RLog("Failed to navigate to mark - element not found")
                     }
                 }
             } catch {
@@ -540,7 +542,7 @@ private extension iTermBrowserNamedMarkManager {
 
         let guid = UUID().uuidString
         let success = await db.addNamedMark(guid: guid, url: markURL.absoluteString, name: name, text: "")
-        DLog("Database add result: \(success) for mark '\(name)' with URL: \(markURL.absoluteString)")
+        RLog("Database add result: \(success) for mark '\(name)' with URL: \(redacted: markURL.absoluteString, or: markURL.it_redactedDescription)")
 
         if !success {
             throw iTermError("Failed to save named mark to database")

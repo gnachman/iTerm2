@@ -28,7 +28,7 @@
     self = [super initWithKey:key identifier:identifier generation:generation];
     if (self) {
         if (previousRevision && !previousRevision.rowid) {
-            DLog(@"WARNING: Previous revision lacks a rowID: key=%@ id=%@ gen=%@ ptr=%p",
+            RLog(@"WARNING: Previous revision lacks a rowID: key=%@ id=%@ gen=%@ ptr=%p",
                  previousRevision.key, previousRevision.identifier, @(previousRevision.generation), previousRevision);
             ITBetaAssert(NO, @"Previous revision lacks a rowID: %@", previousRevision);
         }

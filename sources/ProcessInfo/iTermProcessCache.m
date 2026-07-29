@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermLSOF.h"
 #import "iTermProcessCache.h"
 #import "iTermProcessMonitor.h"
@@ -24,6 +25,13 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
 
 // Maps process id to deepest foreground job. _lockQueue
 @property (nonatomic) NSDictionary<NSNumber *, iTermProcessInfo *> *cachedDeepestForegroundJobLQ;
+// Maps process id to the deepest foreground job actually attached to the
+// session's tty (its stdin or stdout is the terminal), falling back to the
+// deepest foreground job when nothing qualifies. This is the user-facing job:
+// it hides foreground-process-group helpers that are piped to their parent (e.g.
+// an MCP server spawned by claude) or have their stdio redirected (e.g.
+// caffeinate). _lockQueue
+@property (nonatomic) NSDictionary<NSNumber *, iTermProcessInfo *> *cachedDisplayForegroundJobLQ;
 @property (atomic) BOOL forcingLQ;
 @end
 
@@ -36,10 +44,23 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
     BOOL _needsUpdateFlagLQ;  // _lockQueue
     iTermRateLimitedUpdate *_rateLimit;  // Main queue. keeps updateIfNeeded from eating all the CPU
     NSMutableIndexSet *_dirtyPIDsLQ;  // _lockQueue
+    // Caches each tracked root pid's controlling tty (its stdio device rdev) so we
+    // derive it just once per session rather than every update. The tty doesn't
+    // change for the life of the session. Keyed by pid; the value is
+    // @[@(rdev), rootStartTime] so a recycled pid (same number, different process)
+    // is detected by its start time and re-derived rather than inheriting the prior
+    // session's tty. Also pruned to the live tracked pids each update to bound size.
+    // _workQueue only (reallyUpdate always runs there).
+    NSMutableDictionary<NSNumber *, NSArray *> *_ttyRdevByPidWQ;
     // Last foreground-job ancestry (deepest first, lowercased) posted for each
     // tracked root pid. Used to diff and emit
     // iTermProcessCacheForegroundJobAncestorsDidChangeNotification. _lockQueue
     NSMutableDictionary<NSNumber *, NSArray<NSString *> *> *_lastAncestorsByPidLQ;
+    // Diagnostics (gated by the logForegroundJobAncestryDiagnostics advanced
+    // setting). Parallel to _lastAncestorsByPidLQ: the concrete pid that held each
+    // ancestor name last cycle, so an ancestry shrink can report what became of the
+    // vanished process. Only populated while the setting is on. _lockQueue
+    NSMutableDictionary<NSNumber *, NSArray<NSNumber *> *> *_lastChainPidsByPidLQ;
 }
 
 + (instancetype)sharedInstance {
@@ -59,6 +80,8 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
         _trackedPidsLQ = [NSMutableDictionary dictionary];
         _dirtyPIDsLQ = [NSMutableIndexSet indexSet];
         _lastAncestorsByPidLQ = [NSMutableDictionary dictionary];
+        _lastChainPidsByPidLQ = [NSMutableDictionary dictionary];  // ancestry diagnostics
+        _ttyRdevByPidWQ = [NSMutableDictionary dictionary];
         _blocksLQ = [NSMutableArray array];
 
         // I'm not fond of this pattern (code that sometimes is synchronous and sometimes not) but
@@ -208,6 +231,17 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
     return result;
 }
 
+// Any queue. Returns the precomputed tty-attached foreground job (see
+// reallyUpdate). The filtered walk and its proc_pidfdinfo syscalls happen on the
+// work queue during the update, not here, so this is just a dictionary read.
+- (iTermProcessInfo *)displayForegroundJobForPid:(pid_t)pid {
+    __block iTermProcessInfo *result;
+    dispatch_sync(_lockQueue, ^{
+        result = self.cachedDisplayForegroundJobLQ[@(pid)];
+    });
+    return result;
+}
+
 // Any queue
 - (void)registerTrackedPID:(pid_t)pid {
     dispatch_async(_lockQueue, ^{
@@ -219,7 +253,7 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
         }];
         iTermProcessInfo *info = [self->_collectionLQ infoForProcessID:pid];
         if (!info) {
-            DLog(@"Request update for %@", @(pid));
+            RLog(@"Request update for %@", @(pid));
             [self queueRequestUpdateWithCompletionQueue:self->_lockQueue block:^{
                 DLog(@"Got update for %@", @(pid));
                 [weakSelf didUpdateForPid:pid];
@@ -235,7 +269,7 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
 - (void)didUpdateForPid:(pid_t)pid {
     iTermProcessInfo *info = [self->_collectionLQ infoForProcessID:pid];
     if (!info) {
-        DLog(@":( no info for %@", @(pid));
+        RLog(@":( no info for %@", @(pid));
         return;
     }
     iTermProcessMonitor *monitor = self->_trackedPidsLQ[@(pid)];
@@ -287,6 +321,7 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
         // on a rescan because unregister + reap can race the rescan.
         NSArray<NSString *> *oldAncestors = self->_lastAncestorsByPidLQ[@(pid)];
         [self->_lastAncestorsByPidLQ removeObjectForKey:@(pid)];
+        [self->_lastChainPidsByPidLQ removeObjectForKey:@(pid)];  // ancestry diagnostics
         if (oldAncestors.count > 0) {
             [self postForegroundJobAncestorChanges:@{ @(pid): @[] }];
         }
@@ -336,20 +371,70 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
     return collection;
 }
 
-- (NSDictionary<NSNumber *, iTermProcessInfo *> *)newDeepestForegroundJobCacheWithCollection:(iTermProcessCollection *)collection {
-    NSMutableDictionary<NSNumber *, iTermProcessInfo *> *cache = [NSMutableDictionary dictionary];
+// _workQueue. Builds both the raw deepest-foreground-job cache and the
+// tty-attached display-job cache. The proc_pidfdinfo syscalls behind the display
+// job happen here (work queue), with the collection alive for the tree walk, so
+// the cache reads on other queues stay cheap. Each tracked root pid's controlling
+// tty is derived once from its own stdio and remembered in _ttyRdevByPidWQ.
+- (void)buildForegroundJobCachesWithCollection:(iTermProcessCollection *)collection
+                                       deepest:(NSDictionary<NSNumber *, iTermProcessInfo *> **)deepestOut
+                                       display:(NSDictionary<NSNumber *, iTermProcessInfo *> **)displayOut {
+    NSMutableDictionary<NSNumber *, iTermProcessInfo *> *deepest = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSNumber *, iTermProcessInfo *> *display = [NSMutableDictionary dictionary];
     __block NSSet<NSNumber *> *trackedPIDs;
     dispatch_sync(_lockQueue, ^{
         trackedPIDs = [self->_trackedPidsLQ.allKeys copy];
     });
     for (NSNumber *root in trackedPIDs) {
-        iTermProcessInfo *info = [collection infoForProcessID:root.integerValue].deepestForegroundJob;
-        DLog(@"iTermProcessCache: deepest fg job for %@ is %@", @(root.integerValue), @(info.processID));
-        if (info) {
-            cache[root] = info;
+        iTermProcessInfo *rootInfo = [collection infoForProcessID:root.integerValue];
+        iTermProcessInfo *deepestInfo = rootInfo.deepestForegroundJob;
+        DLog(@"iTermProcessCache: deepest fg job for %@ is %@", @(root.integerValue), @(deepestInfo.processID));
+        if (deepestInfo) {
+            deepest[root] = deepestInfo;
+        }
+        // The session's controlling tty doesn't change for its lifetime, so derive
+        // it once and remember it. Validate the cached entry against the root's
+        // start time so a recycled pid (a new session that reuses the numeric pid)
+        // re-derives rather than inheriting the previous session's tty.
+        NSDate *rootStartTime = rootInfo.startTime;
+        NSArray *cached = _ttyRdevByPidWQ[root];
+        NSNumber *rdevNumber = nil;
+        if (cached && rootStartTime && [cached[1] isEqual:rootStartTime]) {
+            rdevNumber = cached[0];
+        } else {
+            const dev_t derived = rootInfo.sessionControllingTTYRdev;
+            if (derived != 0) {
+                rdevNumber = @(derived);
+                if (rootStartTime) {
+                    _ttyRdevByPidWQ[root] = @[rdevNumber, rootStartTime];
+                }
+                DLog(@"iTermProcessCache: derived controlling tty rdev %d for session rooted at pid %@ (%@)", (int)derived, root, rootInfo.name);
+            } else {
+                // Don't keep a stale entry; re-derive next update in case the tty
+                // becomes readable later.
+                [_ttyRdevByPidWQ removeObjectForKey:root];
+                DLog(@"iTermProcessCache: could not derive controlling tty rdev for session rooted at pid %@ (%@); display job will fall back to the deepest foreground job", root, rootInfo.name);
+            }
+        }
+        iTermProcessInfo *displayInfo = [rootInfo deepestForegroundJobAttachedToTTYRdev:(dev_t)rdevNumber.intValue];
+        DLog(@"iTermProcessCache: display fg job for %@ (tty rdev %d) is %@ (%@)", @(root.integerValue), (int)rdevNumber.intValue, @(displayInfo.processID), displayInfo.name);
+        if (displayInfo) {
+            display[root] = displayInfo;
         }
     }
-    return cache;
+    // Drop cached ttys for pids that are no longer tracked to bound the map's
+    // size. This is not what protects against pid reuse (an unregister/re-register
+    // could both happen between updates, leaving the pid tracked here the whole
+    // time); the start-time check above is what handles that.
+    NSMutableArray<NSNumber *> *staleKeys = [NSMutableArray array];
+    for (NSNumber *key in _ttyRdevByPidWQ) {
+        if (![trackedPIDs containsObject:key]) {
+            [staleKeys addObject:key];
+        }
+    }
+    [_ttyRdevByPidWQ removeObjectsForKeys:staleKeys];
+    *deepestOut = deepest;
+    *displayOut = display;
 }
 
 // _workQueue
@@ -361,12 +446,17 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
         iTermProcessCollection *collection = [self.class newProcessCollection];
 
         // Save the tracked PIDs in the cache
-        NSDictionary<NSNumber *, iTermProcessInfo *> *cachedDeepestForegroundJob = [self newDeepestForegroundJobCacheWithCollection:collection];
+        NSDictionary<NSNumber *, iTermProcessInfo *> *cachedDeepestForegroundJob = nil;
+        NSDictionary<NSNumber *, iTermProcessInfo *> *cachedDisplayForegroundJob = nil;
+        [self buildForegroundJobCachesWithCollection:collection
+                                             deepest:&cachedDeepestForegroundJob
+                                             display:&cachedDisplayForegroundJob];
 
         // Flip to the new state.
         NSMutableDictionary<NSNumber *, NSArray<NSString *> *> *ancestorChanges = [NSMutableDictionary dictionary];
         dispatch_sync(_lockQueue, ^{
             self->_cachedDeepestForegroundJobLQ = cachedDeepestForegroundJob;
+            self->_cachedDisplayForegroundJobLQ = cachedDisplayForegroundJob;
             self->_collectionLQ = collection;
             self->_needsUpdateFlagLQ = NO;
             [_trackedPidsLQ enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, iTermProcessMonitor * _Nonnull monitor, BOOL * _Nonnull stop) {
@@ -380,12 +470,73 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
                 // waiting for the consumer's title poll.
                 NSArray<NSString *> *newAncestors = cachedDeepestForegroundJob[key].foregroundJobAncestorNames ?: @[];
                 NSArray<NSString *> *oldAncestors = self->_lastAncestorsByPidLQ[key] ?: @[];
+                // Optional deep diagnostics for a foreground-job ancestry that shrinks
+                // (an intermediate ancestor like the claude CLI vanishing for a single
+                // update). Gated behind the logForegroundJobAncestryDiagnostics advanced
+                // setting and off by default, so there is no per-cycle cost in normal
+                // use. The chain pids let a shrink name the concrete pid that held each
+                // vanished ancestor; they are only captured while the setting is on.
+                const BOOL logAncestryDiag = [iTermAdvancedSettingsModel logForegroundJobAncestryDiagnostics];
+                NSArray<NSNumber *> *newChainPids = logAncestryDiag ? (cachedDeepestForegroundJob[key].foregroundJobAncestorChainPids ?: @[]) : @[];
+                NSArray<NSNumber *> *oldChainPids = logAncestryDiag ? (self->_lastChainPidsByPidLQ[key] ?: @[]) : @[];
                 if (![newAncestors isEqualToArray:oldAncestors]) {
+                    if (logAncestryDiag) {
+                        // When a name present last cycle vanishes this cycle we may be
+                        // about to fire a bogus job-ended / claudeCode-workgroup teardown
+                        // for a process that never exited. Dump the exact tree state that
+                        // produced the short ancestry so a repro explains itself (see
+                        // foregroundJobAncestryDiagnostic). Only fires on a real shrink,
+                        // so it is naturally rate-limited to the anomaly.
+                        NSMutableArray<NSString *> *removedNames = [oldAncestors mutableCopy];
+                        [removedNames removeObjectsInArray:newAncestors];
+                        if (removedNames.count > 0) {
+                            iTermProcessInfo *deepest = cachedDeepestForegroundJob[key];
+                            RLog(@"[ANCESTRYDIAG] tracked pid %@: ancestry shrank %@ -> %@ (removed %@); deepest fg job pid=%@",
+                                 key, oldAncestors, newAncestors, removedNames,
+                                 deepest ? @(deepest.processID) : @"nil");
+                            // For each vanished ancestor, report what became of the pid
+                            // that held it last cycle. "ABSENT from collection but
+                            // aliveNow=YES" is the fingerprint of the allPids/ppid TOCTOU
+                            // in newProcessCollection (a live process dropped because its
+                            // ppid read failed after the pid snapshot).
+                            for (NSString *removedName in removedNames) {
+                                const NSUInteger idx = [oldAncestors indexOfObject:removedName];
+                                if (idx == NSNotFound || idx >= oldChainPids.count) {
+                                    RLog(@"[ANCESTRYDIAG]   removed \"%@\": no pid recorded for it last cycle", removedName);
+                                    continue;
+                                }
+                                const pid_t droppedPid = oldChainPids[idx].intValue;
+                                iTermProcessInfo *stillHere = [collection infoForProcessID:droppedPid];
+                                const BOOL aliveNow = (kill(droppedPid, 0) == 0);
+                                if (stillHere) {
+                                    RLog(@"[ANCESTRYDIAG]   removed \"%@\" was pid %@: STILL in this cycle's collection (name=%@ ppid=%@ parentPtr=%@ fg=%@) aliveNow=%@ -- it left the parent chain without leaving the process table",
+                                         removedName, @(droppedPid), stillHere.name ?: @"(nil)", @(stillHere.parentProcessID),
+                                         stillHere.parent ? @(stillHere.parent.processID) : @"nil",
+                                         @(stillHere.isForegroundJob), @(aliveNow));
+                                } else {
+                                    RLog(@"[ANCESTRYDIAG]   removed \"%@\" was pid %@: ABSENT from this cycle's collection; aliveNow=%@ -- if YES, we dropped a live process (allPids/ppid TOCTOU in newProcessCollection)",
+                                         removedName, @(droppedPid), @(aliveNow));
+                                }
+                            }
+                            if (deepest) {
+                                RLog(@"[ANCESTRYDIAG] upward walk from deepest fg job pid=%@:\n%@",
+                                     @(deepest.processID), [deepest foregroundJobAncestryDiagnostic]);
+                            } else {
+                                RLog(@"[ANCESTRYDIAG] no deepest fg job this cycle (whole chain gone)");
+                            }
+                        }
+                    }
                     self->_lastAncestorsByPidLQ[key] = newAncestors;
                     ancestorChanges[key] = newAncestors;
                 }
+                if (logAncestryDiag) {
+                    self->_lastChainPidsByPidLQ[key] = newChainPids;
+                }
             }];
         });
+        // Computing the ancestries above records resolved process names in the name
+        // cache; drop entries for pids that are no longer alive so it stays bounded.
+        [iTermProcessNameCache.shared pruneToLivePids:collection.processIDs];
         [self postForegroundJobAncestorChanges:ancestorChanges];
     }
 }
@@ -414,7 +565,7 @@ NSString *const iTermProcessCacheForegroundJobAncestorsKey = @"ancestors";
 
 // Main queue
 - (void)applicationDidBecomeActive:(NSNotification *)notification {
-    DLog(@"Application did become active (process cache)");
+    RLog(@"Application did become active (process cache)");
     _rateLimit.minimumInterval = 0.5;
 }
 

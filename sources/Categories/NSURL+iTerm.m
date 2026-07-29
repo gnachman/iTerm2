@@ -49,6 +49,22 @@ static BOOL NSStringIsValidURLScheme(NSString *scheme) {
 
 @implementation NSURL(iTerm)
 
+- (NSString *)it_redactedDescription {
+    NSURLComponents *components = [NSURLComponents componentsWithURL:self resolvingAgainstBaseURL:NO];
+    if (!components) {
+        // Non-hierarchical or unparseable (mailto:, data:, etc.); reveal only the scheme.
+        return [NSString stringWithFormat:@"<url scheme=%@ (redacted)>", self.scheme ?: @"?"];
+    }
+    // Strip the three places a secret hides: userinfo, query, and fragment.
+    components.user = nil;
+    components.password = nil;
+    components.query = nil;
+    components.fragment = nil;
+    NSString *host = components.host ?: @"";
+    NSString *path = components.path ?: @"";
+    return [NSString stringWithFormat:@"%@://%@%@", components.scheme ?: @"?", host, path];
+}
+
 + (nullable NSURL *)urlByReplacingFormatSpecifier:(NSString *)formatSpecifier
                                          inString:(NSString *)string
                                         withValue:(NSString *)value {
@@ -210,11 +226,25 @@ static BOOL NSStringIsValidURLScheme(NSString *scheme) {
 //
 // The reason there was a mostly is because it doesn't know about IDN. So we IDN-encode the
 // hostname before generating a URL.
-+ (NSURL *)URLWithUserSuppliedString:(NSString *)string {
++ (nullable NSURL *)URLWithUserSuppliedString:(NSString *)string {
     DLog(@"Trying to make a proper URL out of: %@", string);
 
     // First try the simple, stupid thing for well-formed URLs.
-    NSURL *url = [NSURL URLWithString:string];
+    //
+    // Before macOS 14, +URLWithString: returned nil for any string containing characters that are
+    // illegal in a URL (e.g. raw non-ASCII bytes), which funneled those inputs into the smarter
+    // -URLWithUserSuppliedStringImpl: below. macOS 14 made +URLWithString: lenient: it now behaves
+    // like +URLWithString:encodingInvalidCharacters:YES and, for a string that mixes existing
+    // percent-encoding with raw non-ASCII (like ripgrep's file:// hyperlinks), it re-encodes the
+    // percent signs. That turns Test%20Folder into Test%2520Folder, so the link resolves to the
+    // wrong path. Restore the old strict behavior so such inputs go through the Impl, which decodes
+    // and re-encodes correctly. See issue 12914.
+    NSURL *url;
+    if (@available(macOS 14, *)) {
+        url = [NSURL URLWithString:string encodingInvalidCharacters:NO];
+    } else {
+        url = [NSURL URLWithString:string];
+    }
     if (url) {
         DLog(@"Seems legit to me. %@", url.absoluteString);
         return url;

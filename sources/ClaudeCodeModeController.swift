@@ -189,7 +189,8 @@ class ClaudeCodeModeController: NSObject {
                         ClaudeCodeOnboarding.installWorkgroupIfNeeded()
                         iTermWorkgroupController.instance.enter(
                             workgroupUniqueIdentifier: ClaudeCodeWorkgroupTemplate.ID.workgroup,
-                            on: session)
+                            on: session,
+                            mechanism: .onboarding)
                         // First-time trial users almost certainly
                         // want the cc-status hook so Claude's state
                         // appears in the toolbelt — open the installer

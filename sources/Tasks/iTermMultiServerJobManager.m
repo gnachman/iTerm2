@@ -92,7 +92,7 @@ static const int iTermMultiServerMaximumSupportedRestorationIdentifierVersion = 
 
 - (instancetype)initWithQueue:(dispatch_queue_t)queue {
     if (![iTermMultiServerConnection available]) {
-        DLog(@"Not creating multiserver job manager because it isn't available. Long path to socket?");
+        RLog(@"Not creating multiserver job manager because it isn't available. Long path to socket?");
         return nil;
     }
     self = [super init];
@@ -190,7 +190,7 @@ typedef struct {
             });
         } error:
          ^(NSError * _Nonnull error) {
-            DLog(@"Fork and exec %@ failed. Set child to nil", self);
+            RLog(@"Fork and exec %@ failed. Set child to nil", self);
             state.child = nil;
             self.cachedChild = nil;
             assert([error.domain isEqualToString:iTermFileDescriptorMultiClientErrorDomain]);
@@ -292,7 +292,7 @@ typedef struct {
     [self.thread dispatchRecursiveSync:^(iTermMultiServerJobManagerState * _Nullable state) {
         if (!state.conn) {
             // This can happen while the connection is being set up.
-            DLog(@"Report nil session restoration identifier because state has no connection");
+            RLog(@"Report nil session restoration identifier because state has no connection");
             result = nil;
             return;
         }
@@ -425,7 +425,7 @@ typedef struct {
 }
 
 - (void)didAttachToProcess:(pid_t)pid task:(id<iTermTask>)task state:(iTermMainThreadState *)state {
-    DLog(@"Did attach to process with pid %@", @(pid));
+    RLog(@"Did attach to process with pid %@", @(pid));
     [state check];
 
     [[iTermProcessCache sharedInstance] registerTrackedPID:pid];
@@ -465,7 +465,7 @@ typedef struct {
                     return;
                 }
                 if (state.child.hasTerminated) {
-                    DLog(@"Found child with pid %@, but it already terminated.", @(serverConnection.multi.pid));
+                    RLog(@"Found child with pid %@, but it already terminated.", @(serverConnection.multi.pid));
                     const pid_t pid = state.child.pid;
                     [state.conn waitForChild:state.child
                           removePreemptively:NO
@@ -489,7 +489,7 @@ typedef struct {
                 [completionCallback invokeWithObject:child];
             }]];
         } error:^(NSError * _Nonnull error) {
-            DLog(@"FAILED to connect to daemon %@, while aiming to attach to child with pid %@.",
+            RLog(@"FAILED to connect to daemon %@, while aiming to attach to child with pid %@.",
                   @(serverConnection.multi.number),
                   @(serverConnection.multi.pid));
             DLog(@"Set conn of %@ to nil", self);

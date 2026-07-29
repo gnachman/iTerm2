@@ -136,6 +136,16 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
                                  flags:(int)flags;
 
 - (void)sendKeys:(NSString *)string toWindowPane:(int)windowPane;
+
+// Send a single keystroke to a window pane by tmux key name (e.g. @"C-j",
+// @"S-Enter"). tmux re-encodes it with input_key per the pane's own key mode
+// and extended-keys-format, matching what a native (non -CC) tmux client
+// produces. The name is quoted for tmux's command parser.
+- (void)sendKeyName:(NSString *)name toWindowPane:(int)windowPane;
+
+// YES if the server is new enough (tmux 3.2+) that send-keys by name is
+// re-encoded through extended-keys rather than collapsed by legacy input_key.
+- (BOOL)serverSupportsExtendedKeys;
 - (void)detach;
 - (void)forceDetach;
 - (void)doubleAttachDetectedForSessionGUID:(NSString *)sessionGuid;

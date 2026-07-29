@@ -94,6 +94,7 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
 
     IBOutlet NSButton *_forceKeyboard;
     IBOutlet NSPopUpButton *_keyboardLocale;
+    IBOutlet NSButton *_forceKeyboardOncePerSession;
     IBOutlet NSButton *_allowSymbolicHotKeys;
 
     IBOutlet NSButton *_repairKeyMappingsButton;
@@ -242,6 +243,11 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() { [weakSelf updateKeyboardLocaleEnabled]; };
 
+    info = [self defineControl:_forceKeyboardOncePerSession
+                           key:kPreferenceKeyForceKeyboardOncePerSession
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+
     info = [self defineControl:_allowSymbolicHotKeys
                            key:kPreferenceKeyAllowSymbolicHotKeys
                    relatedView:nil
@@ -275,8 +281,10 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
 }
 
 - (void)rebuildKeyboardLocales {
-    while (_keyboardLocale.menu.numberOfItems > 0) {
-        [_keyboardLocale.menu removeItemAtIndex:0];
+    NSPopUpButton *popup = _keyboardLocale;
+    NSString *key = kPreferenceKeyKeyboardLocale;
+    while (popup.menu.numberOfItems > 0) {
+        [popup.menu removeItemAtIndex:0];
     }
 
     // Convert system input sources into (display name, identifier) tuples.
@@ -309,19 +317,23 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
                                                       action:nil
                                                keyEquivalent:@""];
         item.representedObject = tuple.secondObject;
-        [_keyboardLocale.menu addItem:item];
+        [popup.menu addItem:item];
     }];
 
-    NSString *identifier = [self stringForKey:kPreferenceKeyKeyboardLocale];
+    NSString *identifier = [self stringForKey:key];
     NSInteger i = -1;
     if (identifier) {
-        i = [_keyboardLocale indexOfItemWithRepresentedObject:identifier];
+        i = [popup indexOfItemWithRepresentedObject:identifier];
     }
-    [_keyboardLocale selectItemAtIndex:i];
+    [popup selectItemAtIndex:i];
 }
 
 - (void)updateKeyboardLocaleEnabled {
-    _keyboardLocale.enabled = [self boolForKey:kPreferenceKeyForceKeyboard];
+    const BOOL force = [self boolForKey:kPreferenceKeyForceKeyboard];
+    _keyboardLocale.enabled = force;
+    // The once-per-session option is a refinement of "Force keyboard", so it is
+    // only meaningful when forcing is on.
+    _forceKeyboardOncePerSession.enabled = force;
 }
 
 - (void)viewWillAppear {

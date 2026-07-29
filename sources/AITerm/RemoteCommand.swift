@@ -4,6 +4,12 @@
 //
 //  Created by George Nachman on 8/18/25.
 //
+//  NOTE: This file is also compiled into the iTerm2 Companion iOS app. Keep it
+//  platform-neutral (Foundation only); Mac-only code (safety checks,
+//  preferences) lives in RemoteCommand+Mac.swift.
+//
+
+import Foundation
 
 // Generic wrapper around "a remote command the LLM wants to run".
 // Two flavors:
@@ -105,6 +111,7 @@ struct RemoteCommand: Codable {
     struct GetCommandBeforeCursor: Codable {}
     struct SearchCommandHistory: Codable { var query: String = "" }
     struct GetCommandOutput: Codable { var id: String = "" }
+    struct GetScreenContents: Codable { var lines: Int = 0 }
 
     struct GetTerminalSize: Codable {}
     struct GetShellType: Codable {}
@@ -129,6 +136,7 @@ struct RemoteCommand: Codable {
         var startingLineNumber: Int = 0
         var numberOfLines: Int = 0
     }
+    struct RestartSession: Codable {}
     enum Content: Codable, CaseIterable {
         static var allCases: [RemoteCommand.Content] {
             return [.isAtPrompt(IsAtPrompt()),
@@ -139,6 +147,7 @@ struct RemoteCommand: Codable {
                     .getCommandBeforeCursor(GetCommandBeforeCursor()),
                     .searchCommandHistory(SearchCommandHistory()),
                     .getCommandOutput(GetCommandOutput()),
+                    .getScreenContents(GetScreenContents()),
                     .getTerminalSize(GetTerminalSize()),
                     .getShellType(GetShellType()),
                     .detectSSHSession(DetectSSHSession()),
@@ -154,7 +163,8 @@ struct RemoteCommand: Codable {
                     .loadURL(LoadURL()),
                     .webSearch(WebSearch()),
                     .getURL(GetURL()),
-                    .readWebPage(ReadWebPage())
+                    .readWebPage(ReadWebPage()),
+                    .restartSession(RestartSession())
             ]
         }
 
@@ -166,6 +176,7 @@ struct RemoteCommand: Codable {
         case getCommandBeforeCursor(GetCommandBeforeCursor)
         case searchCommandHistory(SearchCommandHistory)
         case getCommandOutput(GetCommandOutput)
+        case getScreenContents(GetScreenContents)
         case getTerminalSize(GetTerminalSize)
         case getShellType(GetShellType)
         case detectSSHSession(DetectSSHSession)
@@ -182,22 +193,49 @@ struct RemoteCommand: Codable {
         case webSearch(WebSearch)
         case getURL(GetURL)
         case readWebPage(ReadWebPage)
+        case restartSession(RestartSession)
         // When adding a new command be sure to update allCases.
 
         enum PermissionCategory: String, Codable, CaseIterable {
             case checkTerminalState = "Check Terminal State"
             case runCommands = "Run Commands"
-            case viewHistory = "View History"
+            case viewContents = "View Contents"
             case writeToClipboard = "Write to the Clipboard"
-            case typeForYou = "Type for You"
+            case controlTerminal = "Control Terminal"
             case viewManpages = "View Manpages"
             case writeToFilesystem = "Write to the File System"
             case actInWebBrowser = "Act in Web Browser"
 
+            // Persisted per-chat permissions encode the category by rawValue, and the
+            // whole [Key: Permission] blob fails to decode if any single category is
+            // unknown (losing every category's grant for that chat). "View History"
+            // was renamed to "View Contents"; accept the legacy string so existing
+            // grants survive the rename.
+            init(from decoder: Decoder) throws {
+                let container = try decoder.singleValueContainer()
+                let raw = try container.decode(String.self)
+                if raw == "View History" {
+                    self = .viewContents
+                    return
+                }
+                // "Type for You" was renamed to "Control Terminal"; accept the
+                // legacy string so existing per-chat grants survive the rename.
+                if raw == "Type for You" {
+                    self = .controlTerminal
+                    return
+                }
+                guard let value = PermissionCategory(rawValue: raw) else {
+                    throw DecodingError.dataCorruptedError(
+                        in: container,
+                        debugDescription: "Unknown permission category \(raw)")
+                }
+                self = value
+            }
+
             var isBrowserSpecific: Bool {
                 switch self {
-                case .checkTerminalState, .runCommands, .viewHistory, .writeToClipboard,
-                        .typeForYou, .viewManpages, .writeToFilesystem:
+                case .checkTerminalState, .runCommands, .viewContents, .writeToClipboard,
+                        .controlTerminal, .viewManpages, .writeToFilesystem:
                     false
                 case .actInWebBrowser:
                     true
@@ -208,7 +246,9 @@ struct RemoteCommand: Codable {
                 switch self {
                 case .checkTerminalState:
                     "Provide Terminal State Automatically"
-                case .runCommands, .viewHistory, .writeToClipboard, .typeForYou, .viewManpages,
+                case .viewContents:
+                    "Provide Screen Contents Automatically"
+                case .runCommands, .writeToClipboard, .controlTerminal, .viewManpages,
                         .writeToFilesystem, .actInWebBrowser:
                     nil
                 }
@@ -218,7 +258,9 @@ struct RemoteCommand: Codable {
                 switch self {
                 case .checkTerminalState:
                     "By setting this permission to “Always Allow”, terminal state will be sent automatically on every message you send in this chat.\nThis includes:\n • The current or last command and its exit status\n •The window size\n • Your shell\n • The current working directory, username, and hostname."
-                case .runCommands, .viewHistory, .writeToClipboard, .typeForYou, .viewManpages,
+                case .viewContents:
+                    "By setting this permission to “Always Allow”, the current visible screen of your terminal session will be sent automatically on every message you send in this chat."
+                case .runCommands, .writeToClipboard, .controlTerminal, .viewManpages,
                         .writeToFilesystem, .actInWebBrowser:
                     nil
                 }
@@ -230,10 +272,26 @@ struct RemoteCommand: Codable {
 
             var autopopulatedWhenAlways: Bool {
                 switch self {
+                case .checkTerminalState, .viewContents:
+                    true
+                case .runCommands, .writeToClipboard, .controlTerminal, .viewManpages,
+                        .writeToFilesystem, .actInWebBrowser:
+                    false
+                }
+            }
+
+            // Whether "Provided automatically" also hides the on-request tools. Check
+            // Terminal State does: its autopopulated state fully replaces the state
+            // queries. View Contents does NOT: the autopopulated visible screen only
+            // covers the current grid, while the history tools reach off-screen
+            // content (command history, an earlier command's full output, the
+            // partially-typed command), so they stay available on request.
+            var suppressesOnRequestToolsWhenAlways: Bool {
+                switch self {
                 case .checkTerminalState:
                     true
-                case .runCommands, .viewHistory, .writeToClipboard, .typeForYou, .viewManpages,
-                        .writeToFilesystem, .actInWebBrowser:
+                case .viewContents, .runCommands, .writeToClipboard, .controlTerminal,
+                        .viewManpages, .writeToFilesystem, .actInWebBrowser:
                     false
                 }
             }
@@ -247,12 +305,12 @@ struct RemoteCommand: Codable {
             case .executeCommand:
                     .runCommands
             case .getCommandHistory, .getLastCommand, .getCommandBeforeCursor,
-                    .searchCommandHistory, .getCommandOutput:
-                    .viewHistory
+                    .searchCommandHistory, .getCommandOutput, .getScreenContents:
+                    .viewContents
             case .setClipboard:
                     .writeToClipboard
-            case .insertTextAtCursor, .deleteCurrentLine:
-                    .typeForYou
+            case .insertTextAtCursor, .deleteCurrentLine, .restartSession:
+                    .controlTerminal
             case .getManPage:
                     .viewManpages
             case .createFile:
@@ -272,6 +330,7 @@ struct RemoteCommand: Codable {
             case .getCommandBeforeCursor(let args): args
             case .searchCommandHistory(let args): args
             case .getCommandOutput(let args): args
+            case .getScreenContents(let args): args
             case .getTerminalSize(let args): args
             case .getShellType(let args): args
             case .detectSSHSession(let args): args
@@ -288,6 +347,7 @@ struct RemoteCommand: Codable {
             case .webSearch(let args): args
             case .getURL(let args): args
             case .readWebPage(let args): args
+            case .restartSession(let args): args
             }
         }
     }
@@ -297,99 +357,25 @@ struct RemoteCommand: Codable {
     var content: Content
 
     var needsSafetyCheck: Bool {
+        // NOTE: .createFile is deliberately NOT checked here. A session-bound
+        // file write surfaces in the chat UI where the user sees it before it
+        // lands. The ORCHESTRATOR, which runs autonomously, does classify its
+        // own create_file (OrchestratorDispatcher.handleSessionToolCall). Don't
+        // "fix" this asymmetry by flipping .createFile without also revisiting
+        // that autonomy distinction.
         switch content {
         case .isAtPrompt, .getLastExitStatus, .getCommandHistory, .getLastCommand,
                 .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput,
+                .getScreenContents,
                 .getTerminalSize, .getShellType, .detectSSHSession, .getRemoteHostname,
                 .getUserIdentity, .getCurrentDirectory, .setClipboard,
                 .deleteCurrentLine, .getManPage, .createFile, .searchBrowser,
-                .loadURL, .webSearch, .getURL, .readWebPage, .insertTextAtCursor:
+                .loadURL, .webSearch, .getURL, .readWebPage, .insertTextAtCursor,
+                .restartSession:
             return false
         case .executeCommand:
             return true
         }
-    }
-
-    // `force` makes the safety check mandatory regardless of the user
-    // preference (used for orchestration chats, where autonomous command
-    // execution always gets checked).
-    @MainActor
-    func isSafe(force: Bool) async -> Bool {
-        switch content {
-        case .isAtPrompt, .getLastExitStatus, .getCommandHistory, .getLastCommand,
-                .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput,
-                .getTerminalSize, .getShellType, .detectSSHSession, .getRemoteHostname,
-                .getUserIdentity, .getCurrentDirectory, .setClipboard,
-                .deleteCurrentLine, .getManPage, .createFile, .searchBrowser,
-                .loadURL, .webSearch, .getURL, .readWebPage, .insertTextAtCursor:
-            return true
-        case .executeCommand(let command):
-            // The safety check uses the configured conversation model, so it is
-            // available whenever AI is set up (not tied to any specific vendor
-            // or OS version).
-            if iTermAITermGatekeeper.allowed {
-                // Orchestration chats are checked unconditionally, so don't nag
-                // about the opt-in preference there.
-                if !force {
-                    let nagKey = kPreferenceKeyAISafetyCheckNagComplete
-                    if iTermUserDefaults.userDefaults().object(forKey: kPreferenceKeyAISafetyCheck) == nil &&
-                        !iTermUserDefaults.userDefaults().bool(forKey: nagKey) {
-                        let selection = iTermWarning.show(
-                            withTitle: "iTerm2 can use AI to check the safety of commands suggested by your AI agent. Would you like to enable safety checking?\n\nWhen enabled, each proposed command will be sent to your configured AI provider for a safety check.",
-                            actions: ["OK", "Cancel"],
-                            accessory: nil,
-                            identifier: nil,
-                            silenceable: .kiTermWarningTypePersistent,
-                            heading: "Enable Command Safety Checking?",
-                            window: nil)
-                        iTermPreferences.setBool(true, forKey: nagKey)
-                        if selection == .kiTermWarningSelection0 {
-                            iTermPreferences.setBool(true, forKey: kPreferenceKeyAISafetyCheck)
-                        }
-                    }
-                }
-                if force || iTermPreferences.bool(forKey: kPreferenceKeyAISafetyCheck) {
-                    if !force {
-                        Self.maybePromptToSwitchSafetyProvider()
-                    }
-                    return await CommandSafetyChecker.check(command.command)
-                }
-            }
-            return true
-        }
-    }
-
-    // Users who enabled the safety check while it ran on-device via Apple
-    // Intelligence (free) are asked once, before the next checked command,
-    // whether to switch to the configured model (more accurate, but may incur
-    // provider charges). Declining keeps Apple Intelligence. The migration in
-    // iTermMigrationHelper sets the pending flag and the Apple default.
-    @MainActor
-    private static func maybePromptToSwitchSafetyProvider() {
-        let defaults = iTermUserDefaults.userDefaults()
-        guard defaults.bool(forKey: kPreferenceKeyAISafetyCheckProviderSwitchPending) else {
-            return
-        }
-        // Only present the choice when on-device is actually available here.
-        // If it is not (the pref synced from an Apple Intelligence Mac, or the
-        // model is temporarily not ready), leave the prompt pending so we do
-        // not offer "Keep Apple Intelligence" where it cannot work. Until then
-        // the side-query fails closed rather than falling back to the cloud.
-        guard AIAvailabilityProbe.check() else {
-            return
-        }
-        defaults.set(false, forKey: kPreferenceKeyAISafetyCheckProviderSwitchPending)
-        let selection = iTermWarning.show(
-            withTitle: "Until now, iTerm2 checked the safety of AI-suggested commands on your Mac using Apple Intelligence, at no cost. It can now use your configured AI model instead, which is more accurate but sends each checked command to your AI provider and may incur charges.\n\nSwitch to your configured model? If you decline, iTerm2 keeps using Apple Intelligence.",
-            actions: ["Switch to My Model", "Keep Apple Intelligence"],
-            accessory: nil,
-            identifier: nil,
-            silenceable: .kiTermWarningTypePersistent,
-            heading: "Command Safety Checking Has Changed",
-            window: nil)
-        // Selection 0 == switch to the configured model; 1 == keep Apple.
-        defaults.set(selection != .kiTermWarningSelection0,
-                     forKey: kPreferenceKeyAISafetyCheckUsesAppleIntelligence)
     }
 
     var markdownDescription: String {
@@ -410,6 +396,8 @@ struct RemoteCommand: Codable {
             "Searching the history of commands you have run in this session"
         case .getCommandOutput:
             "Fetching the output of a previously run command"
+        case .getScreenContents:
+            "Reading the visible screen"
         case .getTerminalSize:
             "Querying the size of your terminal window"
         case .getShellType:
@@ -442,6 +430,8 @@ struct RemoteCommand: Codable {
             "Get the current URL"
         case .readWebPage:
             "View the current web page"
+        case .restartSession:
+            "Restarting this session"
         }
     }
 
@@ -463,6 +453,8 @@ struct RemoteCommand: Codable {
             "The AI Agent would like to search the history of commands you have run in this session"
         case .getCommandOutput:
             "The AI Agent would like to fetch the output of a previously run command"
+        case .getScreenContents:
+            "The AI Agent would like to read the visible screen of your terminal session"
         case .getTerminalSize:
             "The AI Agent would like to query the size of your terminal window"
         case .getShellType:
@@ -495,6 +487,8 @@ struct RemoteCommand: Codable {
             "The AI agent would like to write to get the current URL"
         case .readWebPage:
             "The AI agent would like to write to view the current web page"
+        case .restartSession:
+            "The AI Agent would like to restart this session, which kills any running jobs"
         }
     }
 
@@ -503,27 +497,13 @@ struct RemoteCommand: Codable {
         case .executeCommand:
             false
         case .isAtPrompt, .getLastExitStatus, .getCommandHistory, .getLastCommand,
-                .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput, .getTerminalSize,
+                .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput,
+                .getScreenContents, .getTerminalSize,
                 .getShellType, .detectSSHSession, .getRemoteHostname, .getUserIdentity,
                 .getCurrentDirectory, .setClipboard, .insertTextAtCursor, .deleteCurrentLine,
                 .getManPage, .createFile, .searchBrowser, .loadURL,
-                .webSearch, .getURL, .readWebPage:
+                .webSearch, .getURL, .readWebPage, .restartSession:
             true
-        }
-    }
-}
-
-extension RemoteCommand.Content.PermissionCategory {
-    var userDefaultsKey: String {
-        switch self {
-        case .checkTerminalState: kPreferenceKeyAIPermissionCheckTerminalState
-        case .runCommands: kPreferenceKeyAIPermissionRunCommands
-        case .viewHistory: kPreferenceKeyAIPermissionViewHistory
-        case .writeToClipboard: kPreferenceKeyAIPermissionWriteToClipboard
-        case .typeForYou: kPreferenceKeyAIPermissionTypeForYou
-        case .viewManpages: kPreferenceKeyAIPermissionViewManpages
-        case .writeToFilesystem: kPreferenceKeyAIPermissionWriteToFilesystem
-        case .actInWebBrowser: kPreferenceKeyAIPermissionActInWebBrowser
         }
     }
 }
@@ -547,6 +527,8 @@ extension RemoteCommand.Content {
             "search_command_history"
         case .getCommandOutput:
             "get_command_output"
+        case .getScreenContents:
+            "get_screen_contents"
         case .getTerminalSize:
             "get_terminal_size"
         case .getShellType:
@@ -579,6 +561,8 @@ extension RemoteCommand.Content {
             "get_current_url"
         case .readWebPage:
             "read_web_page_section"
+        case .restartSession:
+            "restart_session"
         }
     }
 
@@ -600,6 +584,8 @@ extension RemoteCommand.Content {
             ["query": "Search query for filtering command history."]
         case .getCommandOutput(_):
             ["id": "Unique identifier of the command whose output is requested."]
+        case .getScreenContents(_):
+            ["lines": "Number of trailing lines to return when the visible screen is a normal shell (the primary screen). Use 0 for the default of 100. Ignored for a full-screen application, where only the current screen is available."]
         case .getTerminalSize(_):
             [:]
         case .getShellType(_):
@@ -634,6 +620,8 @@ extension RemoteCommand.Content {
         case .readWebPage(_):
             ["startingLineNumber": "The line number to start reading at.",
              "numberOfLines": "The number of lines to return."]
+        case .restartSession(_):
+            [:]
         }
     }
 
@@ -642,7 +630,11 @@ extension RemoteCommand.Content {
         case .isAtPrompt(_):
             "Returns true if the terminal is at the command prompt, allowing safe command injection."
         case .executeCommand(_):
-            "Runs a shell command and returns its output."
+            "Runs a shell command and returns its output once the command finishes. "
+            + "Do NOT use it for interactive or full-screen (TUI) programs (for example "
+            + "vim, less, top, an ssh session, a REPL, or claude): it blocks until the "
+            + "command exits, so an interactive or long-running program never returns. To "
+            + "launch or drive a TUI from the command line, use insert_text_at_cursor instead."
         case .getLastExitStatus(_):
             "Retrieves the exit status of the last executed command."
         case .getCommandHistory(_):
@@ -655,6 +647,8 @@ extension RemoteCommand.Content {
             "Searches history for commands matching a query."
         case .getCommandOutput(_):
             "Returns the output of a previous command by its unique identifier."
+        case .getScreenContents(_):
+            "Returns the visible contents of this terminal session. For a normal shell the text is linear scrollback (real history; ask for more `lines` to see further back). For a full-screen application (vim, less, htop, a REPL, etc.) the text is only the current rendered screen: there is no scrollback or history beyond what is displayed. The result reports a `kind` field and an `is_snapshot` flag (true means do not assume any history is present) alongside the raw `text`. The text uses a few markup tokens (the angle brackets are U+27E8/U+27E9 and effectively never occur in real terminal output): \u{27E8}dim\u{27E9}\u{2026}\u{27E8}/dim\u{27E9} wraps faint/dimmed text (how shells and TUIs render inline suggestions and ghost completions); \u{27E8}cursor\u{27E9} marks the text cursor's position; \u{27E8}image\u{27E9} stands in for an inline image. These tokens are inserted by iTerm2 and are not literally present on the screen."
         case .getTerminalSize(_):
             "Returns (columns, rows) of the terminal window."
         case .getShellType(_):
@@ -670,7 +664,12 @@ extension RemoteCommand.Content {
         case .setClipboard(_):
             "Copies text to the clipboard."
         case .insertTextAtCursor(_):
-            "Inserts text into the terminal input at the cursor position."
+            "Inserts text into the terminal input at the cursor position, as if typed; "
+            + "end with a newline to submit it. Use this to launch and interact with "
+            + "interactive or full-screen (TUI) programs - start one from the command "
+            + "prompt (type the command plus a newline), choose a menu option, or send "
+            + "keystrokes to a running app - since unlike execute_command it does not wait "
+            + "for the program to finish."
         case .deleteCurrentLine(_):
             "Clears the current command line input (only at the prompt)."
         case .getManPage(_):
@@ -687,6 +686,8 @@ extension RemoteCommand.Content {
             "Returns some of the content (in markdown format) of the page visible in the associated web browser."
         case .searchBrowser(_):
             "Searches the current web page in the associated web browser (after converting to markdown format) for a substring."
+        case .restartSession(_):
+            "Restarts this terminal session: terminates any running jobs and relaunches the session’s command, equivalent to the Session > Restart Session menu item. Use this to recover a hung or misconfigured session. This is disruptive - every running process in the session is killed - so only use it when the user has asked to restart or when the session is unusable."
         }
     }
 
@@ -700,6 +701,7 @@ extension RemoteCommand.Content {
         case .getCommandBeforeCursor: .getCommandBeforeCursor(value as! RemoteCommand.GetCommandBeforeCursor)
         case .searchCommandHistory: .searchCommandHistory(value as! RemoteCommand.SearchCommandHistory)
         case .getCommandOutput: .getCommandOutput(value as! RemoteCommand.GetCommandOutput)
+        case .getScreenContents: .getScreenContents(value as! RemoteCommand.GetScreenContents)
         case .getTerminalSize: .getTerminalSize(value as! RemoteCommand.GetTerminalSize)
         case .getShellType: .getShellType(value as! RemoteCommand.GetShellType)
         case .detectSSHSession: .detectSSHSession(value as! RemoteCommand.DetectSSHSession)
@@ -716,6 +718,7 @@ extension RemoteCommand.Content {
         case .webSearch: .webSearch(value as! RemoteCommand.WebSearch)
         case .getURL: .getURL(value as! RemoteCommand.GetURL)
         case .readWebPage: .readWebPage(value as! RemoteCommand.ReadWebPage)
+        case .restartSession: .restartSession(value as! RemoteCommand.RestartSession)
         }
     }
 }

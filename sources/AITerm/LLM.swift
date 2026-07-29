@@ -4,6 +4,10 @@
 //
 //  Created by George Nachman on 6/3/24.
 //
+//  NOTE: This file is also compiled into the iTerm2 Companion iOS app. Keep it
+//  platform-neutral (Foundation only); Mac-only code (token counting, function
+//  invocation, auth) lives in LLM+Mac.swift.
+//
 
 import Foundation
 
@@ -53,6 +57,27 @@ extension LLM {
     }
 
     // This is a platform-independent representation of a message to or from an LLM.
+    /// One reasoning item from an OpenAI Responses turn: the server-minted id
+    /// plus the encrypted payload returned when the request asks for
+    /// include: ["reasoning.encrypted_content"] with store:false. Replayed
+    /// verbatim (id + encrypted_content) before the function_call items it
+    /// produced. Foundation-only and Codable so it can persist inside the
+    /// chat Message content JSON and cross the companion wire as an ignored
+    /// unknown key on older peers.
+    struct ReasoningItem: Codable, Equatable {
+        var id: String
+        var encryptedContent: String?
+        /// Human-readable summary texts (when the API produced any); kept for
+        /// fidelity, not required for replay.
+        var summary: [String]?
+
+        init(id: String, encryptedContent: String?, summary: [String]? = nil) {
+            self.id = id
+            self.encryptedContent = encryptedContent
+            self.summary = summary
+        }
+    }
+
     struct Message: Codable, Equatable {
         var responseID: String?
         var role: Role? = .user
@@ -329,11 +354,16 @@ extension LLM {
             }
         }
 
-        init(responseID: String? = nil, role: Role?, body: Body, reasoningContent: String? = nil) {
+        init(responseID: String? = nil,
+             role: Role?,
+             body: Body,
+             reasoningContent: String? = nil,
+             reasoningItems: [ReasoningItem]? = nil) {
             self.responseID = responseID
             self.role = role
             self.body = body
             self.reasoningContent = reasoningContent
+            self.reasoningItems = reasoningItems
         }
 
         // DeepSeek v4 returns a `reasoning_content` field on assistant turns when
@@ -346,14 +376,18 @@ extension LLM {
         // round-trip state, not a render input.
         var reasoningContent: String?
 
-        var approximateTokenCount: Int { AIMetadata.instance.tokens(in: (body.content)) + 1 }
-
-        var trimmedString: String? {
-            return String(body.content.trimmingLeadingCharacters(in: .whitespacesAndNewlines))
-        }
+        /// OpenAI Responses reasoning items (id + encrypted payload) emitted
+        /// alongside this assistant turn's function calls. The API requires
+        /// them to be replayed, in order, before their function_call items
+        /// whenever the conversation is re-sent (store:false / after a
+        /// reload); without them a reasoning model 400s on the historical
+        /// call. Persisted so a reloaded chat can keep using its tool
+        /// history. Forward+backward Codable compatible like
+        /// reasoningContent: unknown to old decoders, nil for old payloads.
+        var reasoningItems: [ReasoningItem]?
 
         enum CodingKeys: String, CodingKey {
-            case role, content, function_name, function_call_id, function_call, body, responseID, reasoningContent
+            case role, content, function_name, function_call_id, function_call, body, responseID, reasoningContent, reasoningItems
         }
 
         init(from decoder: Decoder) throws {
@@ -361,8 +395,10 @@ extension LLM {
             let responseID = try container.decodeIfPresent(String.self, forKey: .responseID)
             let role = try container.decodeIfPresent(Role.self, forKey: .role)
             let reasoning = try container.decodeIfPresent(String.self, forKey: .reasoningContent)
+            let reasoningItems = try container.decodeIfPresent([ReasoningItem].self, forKey: .reasoningItems)
             if let body = try container.decodeIfPresent(Body.self, forKey: .body) {
-                self = Message(responseID: responseID, role: role, body: body, reasoningContent: reasoning)
+                self = Message(responseID: responseID, role: role, body: body,
+                               reasoningContent: reasoning, reasoningItems: reasoningItems)
             } else {
                 // Legacy code path
                 let content = try container.decodeIfPresent(String.self, forKey: .content)
@@ -374,6 +410,7 @@ extension LLM {
                                name: functionName,
                                function_call: functionCall,
                                reasoningContent: reasoning)
+                self.reasoningItems = reasoningItems
             }
         }
 
@@ -383,6 +420,7 @@ extension LLM {
             try container.encodeIfPresent(role, forKey: .role)
             try container.encode(body, forKey: .body)
             try container.encodeIfPresent(reasoningContent, forKey: .reasoningContent)
+            try container.encodeIfPresent(reasoningItems, forKey: .reasoningItems)
         }
 
         mutating func tryAppend(_ additionalContent: Body) -> Bool {
@@ -400,53 +438,12 @@ extension LLM {
         }
     }
 
-    protocol AnyFunction {
-        var typeErasedParameterType: Any.Type { get }
-        var decl: ChatGPTFunctionDeclaration { get }
-        func invoke(message: LLM.Message,
-                    json: Data,
-                    completion: @escaping (Result<String, Error>) throws -> ())
-    }
-
-    struct Function<T: Codable>: AnyFunction {
-        typealias Impl = (LLM.Message, T, @escaping (Result<String, Error>) throws -> ()) throws -> ()
-
-        var decl: ChatGPTFunctionDeclaration
-        var call: Impl
-        var parameterType: T.Type
-
-        var typeErasedParameterType: Any.Type { parameterType }
-        func invoke(message: Message,
-                    json: Data,
-                    completion: @escaping (Result<String, Error>) throws -> ()) {
-            do {
-                var jsonString = json.lossyString
-                if jsonString.isEmpty {
-                    // Anthropic does this
-                    jsonString = "{}"
-                }
-                let value = try JSONSerialization.parseTruncatedJSON(jsonString, as: parameterType)
-                try call(message, value, completion)
-            } catch {
-                DLog("\(error.localizedDescription)")
-                try? completion(.failure(AIError.wrapping(
-                    error: error,
-                    context: "While parsing a function call request")))
-            }
-        }
-    }
-
     struct VectorStore {
         var name: String
         // Unique identifier provided by the server
         var id: String
     }
 
-    struct File {
-        var id: String  // file_id
-        var originalFilename: String
-        var originalHost: SSHIdentity?
-    }
 }
 
 struct HostedTools {
@@ -457,29 +454,6 @@ struct HostedTools {
     var webSearch = false
     var codeInterpreter = false
 }
-
-struct LLMAuthorizationProvider {
-    var provider: LLMProvider
-    var apiKey: String
-    var headers: [String: String] {
-        switch provider.model.api {
-        case .chatCompletions, .completions, .earlyO1, .responses, .deepSeek:
-            if LLMMetadata.hostIsAzureAIAPI(url: URL(string: provider.model.url)) {
-                ["api-key": apiKey.trimmingCharacters(in: .whitespacesAndNewlines) ]
-            } else {
-                ["Authorization": "Bearer " + apiKey.trimmingCharacters(in: .whitespacesAndNewlines)]
-            }
-        case .anthropic:
-            ["x-api-key": apiKey.trimmingCharacters(in: .whitespacesAndNewlines),
-             "anthropic-version": "2023-06-01"]
-        case .gemini, .llama, .appleIntelligence:
-            [:]
-        @unknown default:
-            [:]
-        }
-    }
-}
-
 
 protocol LLMResponseParser {
     // Throw on error, return nil on EOF (used by streaming parsers where EOF is in the message, not in the metadata like OpenAI's modern API)
@@ -494,3 +468,40 @@ protocol LLMStreamingResponseParser {
 }
 
 
+extension LLM.Message.StatusUpdate {
+    static func subpartsForDisplay(_ subparts: [LLM.Message.StatusUpdate]) -> [LLM.Message.StatusUpdate] {
+        // Keep the last "long" update plus everything after it
+        var singlePartUpdates = subparts.flatMap { $0.exploded }
+
+        let lastReasoningSummaryUpdateIndex = singlePartUpdates.lastIndex(where: { $0.isReasoningSummaryUpdate })
+        let lastWebSearchFinishedIndex = singlePartUpdates.lastIndex(where: { $0.isWebSearchFinished })
+        let lastCodeInterpreterFinishedIndex = singlePartUpdates.lastIndex(where: { $0 == .codeInterpreterFinished })
+        let keepStart = [lastReasoningSummaryUpdateIndex,
+                         lastWebSearchFinishedIndex,
+                         lastCodeInterpreterFinishedIndex].compactMap { $0 }.max()
+        if let keepStart {
+            singlePartUpdates.removeSubrange(..<keepStart)
+        }
+        return singlePartUpdates
+    }
+
+    var displayString: String {
+        switch self {
+        case .webSearchStarted:
+            "Searching the web…"
+        case .webSearchFinished(let query):
+            if let query {
+                "Finished searching the web for \(query)."
+            } else {
+                "Finished searching the web."
+            }
+        case .codeInterpreterStarted:
+            "Executing code…"
+        case .codeInterpreterFinished:
+            "Finished executing code"
+        case .reasoningSummaryUpdate(let text): text
+        case .multipart(let subparts):
+            Self.subpartsForDisplay(subparts).map { $0.displayString }.joined(separator: "\n")
+        }
+    }
+}

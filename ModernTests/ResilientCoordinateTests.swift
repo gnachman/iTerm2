@@ -456,6 +456,97 @@ class ResilientCoordinateTests: XCTestCase {
         assertContent(rc, matchesLine: 40)
     }
 
+    // MARK: - Plain replacement (Replace with Pretty-Printed JSON path)
+
+    /// Build a replacement line the same way SelectionReplacement's
+    /// executors do (see Base64Executor in SelectionReplacement.swift).
+    private func makeReplacementLine(_ text: String) -> ScreenCharArray {
+        let sca = MutableScreenCharArray()
+        sca.eol = EOL_HARD
+        var c = screen_char_t()
+        c.backgroundColorMode = ColorModeAlternate.rawValue
+        c.backgroundColor = UInt32(ALTSEM_DEFAULT)
+        c.foregroundColorMode = ColorModeAlternate.rawValue
+        c.foregroundColor = UInt32(ALTSEM_DEFAULT)
+        sca.append(text, style: c, continuation: sca.continuation)
+        return sca
+    }
+
+    /// Replace lines [startLine, endLine] with `count` fresh lines through
+    /// the same screen API that "Replace with Pretty-Printed JSON" and the
+    /// base64 encode/decode context menu items use (PTYTextView+ARC.m
+    /// -replaceSelectionWith:). promptLength is -1, so unlike a fold no
+    /// FoldMark is created: this is a plain content replacement that rides
+    /// the fold machinery and posts linesShifted with reason .fold.
+    private func replaceLines(startLine: Int, endLine: Int,
+                              withLineCount count: Int,
+                              screen sc: VT100Screen? = nil) {
+        let sc = sc ?? screen!
+        let lines = (0..<count).map { makeReplacementLine("replacement line \($0)") }
+        let range = VT100GridAbsCoordRangeMake(0, Int64(startLine),
+                                               sc.width(), Int64(endLine))
+        sc.replace(range, withLines: lines, promptLength: -1, blockMarks: [:])
+        sc.performBlock(joinedThreads: { _, _, _ in })
+    }
+
+    /// Replacing 5 lines with 8 makes the buffer GROW (delta +3). The
+    /// linesShifted post still carries reason .fold, whose handler asserts
+    /// delta < 0 — before the fix this test dies at
+    /// ResilientCoordinate.linesDidShift's it_assert rather than failing.
+    /// A coord below the replaced range must shift down and keep tracking
+    /// its content.
+    func testReplaceSelectionGrowth_CoordBelowShiftsDown() {
+        let rc = makeCoord(absY: 30)
+        assertContent(rc, matchesLine: 30)
+        replaceLines(startLine: 20, endLine: 24, withLineCount: 8)
+        XCTAssertEqual(rc.status, .valid)
+        assertContent(rc, matchesLine: 30)
+    }
+
+    /// Growth variant of the coord-inside case. Also crashes at the
+    /// delta < 0 assert before the fix. Once the assert is gone, the coord
+    /// sits inside a replaced range with no FoldMark to enter, so its
+    /// content is destroyed and it must become .invalid.
+    func testReplaceSelectionGrowth_CoordInsideBecomesInvalid() {
+        let rc = makeCoord(absY: 22)
+        replaceLines(startLine: 20, endLine: 24, withLineCount: 8)
+        XCTAssertEqual(rc.status, .invalid)
+    }
+
+    /// Replacing 5 lines with 2 SHRINKS the buffer (delta -3), so the
+    /// delta < 0 assert passes — but a coord inside the replaced range
+    /// falls through the entering-fold branch (there is no FoldMark) into
+    /// the "folded above us" branch and gets silently shifted up, staying
+    /// .valid while pointing at unrelated content. Its content was
+    /// destroyed by the replacement, so it must become .invalid.
+    func testReplaceSelectionShrink_CoordInsideBecomesInvalid() {
+        let rc = makeCoord(absY: 22)
+        replaceLines(startLine: 20, endLine: 24, withLineCount: 2)
+        XCTAssertEqual(rc.status, .invalid)
+    }
+
+    /// Same as above but on the first replaced line (coord.y == absLine),
+    /// which exercises a different hole: neither the entering-fold branch
+    /// (no mark) nor the shift-up branch (absLine is not < coord.y) fires,
+    /// so the coord keeps its old position, now pointing at the first
+    /// replacement line instead of its destroyed content.
+    func testReplaceSelectionShrink_CoordAtFirstReplacedLineBecomesInvalid() {
+        let rc = makeCoord(absY: 20)
+        replaceLines(startLine: 20, endLine: 24, withLineCount: 2)
+        XCTAssertEqual(rc.status, .invalid)
+    }
+
+    /// Control: the shrink case for a coord BELOW the replaced range works
+    /// today (the shift-by-delta branch is sign-agnostic). Proves the
+    /// harness wiring so the failures above isolate the actual bugs.
+    func testReplaceSelectionShrink_CoordBelowShiftsUp() {
+        let rc = makeCoord(absY: 30)
+        assertContent(rc, matchesLine: 30)
+        replaceLines(startLine: 20, endLine: 24, withLineCount: 2)
+        XCTAssertEqual(rc.status, .valid)
+        assertContent(rc, matchesLine: 30)
+    }
+
     // MARK: - Porthole: Add/Remove via real screen API
 
     func testPortholeAddedCoordBeforeUnchanged() {

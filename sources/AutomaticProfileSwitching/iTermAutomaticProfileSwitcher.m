@@ -50,7 +50,16 @@ NS_ASSUME_NONNULL_BEGIN
         state = [state dictionaryByRemovingNullValues];
         self.profile = state[kProfileKey];
         self.originalProfile = state[kOriginalProfileKey];
-        self.overriddenFields = state[kOverriddenFieldsKey];
+        // Overridden fields are serialized as an array (see -savedState) because NSSet is neither
+        // a property-list type nor in the basic-classes allowlist used to decode restorable state,
+        // which would otherwise drop the entire session arrangement on restore (issue 12866). Older
+        // saved state may still hold a set, so accept both forms.
+        id overriddenFields = state[kOverriddenFieldsKey];
+        if ([overriddenFields isKindOfClass:[NSArray class]]) {
+            self.overriddenFields = [NSMutableSet setWithArray:overriddenFields];
+        } else if ([overriddenFields isKindOfClass:[NSSet class]]) {
+            self.overriddenFields = [NSMutableSet setWithSet:overriddenFields];
+        }
     }
     return self;
 }
@@ -58,7 +67,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSDictionary *)savedState {
     return @{ kProfileKey: _profile,
               kOriginalProfileKey: _originalProfile ?: [NSNull null],
-              kOverriddenFieldsKey: _overriddenFields ?: [NSNull null] };
+              // Serialize as a sorted array rather than an NSSet. See -initWithSavedState: (issue 12866).
+              kOverriddenFieldsKey: [[_overriddenFields allObjects] sortedArrayUsingSelector:@selector(compare:)] ?: [NSNull null] };
 }
 
 @end

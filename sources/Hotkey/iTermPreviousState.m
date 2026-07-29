@@ -29,7 +29,7 @@
 
 - (instancetype)init {
     NSRunningApplication *runningApp = [[NSWorkspace sharedWorkspace] frontmostApplication];
-    DLog(@"Saving state: active app is %@", runningApp);
+    RLog(@"Saving state: active app is %@", runningApp);
     return [self initWithBundleIdentifier:runningApp.bundleIdentifier
                                 processID:runningApp.processIdentifier];
 }
@@ -63,9 +63,9 @@
         return app;
     }
 
-    DLog(@"Secure keyboard entry is enabled.");
+    RLog(@"Secure keyboard entry is enabled.");
     if (![[iTermSecureKeyboardEntryController sharedInstance] isDesired]) {
-        DLog(@"Some other app enabled secure keyboard entry");
+        RLog(@"Some other app enabled secure keyboard entry");
         static NSInteger count = 0;
         if (count++ == 0) {
             [[iTermNotificationController sharedInstance] notify:@"Can’t Switch Apps"
@@ -89,10 +89,10 @@
     NSRunningApplication *app = [self appToSwitchBackToIfAllowed];
     BOOL result = NO;
     if (app) {
-        DLog(@"Restore app %@", app);
+        RLog(@"Restore app %@", app);
         DLog(@"** Restore previously active app from\n%@", [NSThread callStackSymbols]);
         result = [app activateWithOptions:0];
-        DLog(@"activateWithOptions:0 returned %@", @(result));
+        RLog(@"activateWithOptions:0 returned %@", @(result));
     }
     DLog(@"Erase previouslyActiveAppPID");
     self.previouslyActiveAppPID = nil;
@@ -100,7 +100,7 @@
 }
 
 - (BOOL)restoreAllowingAppSwitch:(BOOL)allowAppSwitch {
-    DLog(@"Restore %p with previously active app %@ (%@)", self, _previouslyActiveAppPID, _previouslyActiveAppBundleID);
+    RLog(@"Restore %p with previously active app %@ (%@)", self, _previouslyActiveAppPID, _previouslyActiveAppBundleID);
     BOOL result = allowAppSwitch && [self restorePreviouslyActiveApp];
     if (self.itermWasActiveWhenHotkeyOpened) {
         PseudoTerminal *currentTerm = [[iTermController sharedInstance] currentTerminal];

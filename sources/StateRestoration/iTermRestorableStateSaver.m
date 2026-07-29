@@ -51,7 +51,7 @@
 
             NSData *plaintext = [self restorableStateForWindow:window];
             if (!plaintext) {
-                DLog(@"Failed to get plaintext for %@", @(window.windowNumber));
+                RLog(@"Failed to get plaintext for %@", @(window.windowNumber));
                 continue;
             }
 
@@ -59,7 +59,7 @@
                 DLog(@"Modify contents of %@", @(window.windowNumber));
                 record = [record withPlaintext:plaintext];
             } else {
-                DLog(@"Create new restorable state for %@", @(window.windowNumber));
+                RLog(@"Create new restorable state for %@", @(window.windowNumber));
                 record = [[iTermRestorableStateRecord alloc] initWithWindowNumber:window.windowNumber
                                                                        identifier:window.identifier
                                                                               key:[NSData randomAESKey]

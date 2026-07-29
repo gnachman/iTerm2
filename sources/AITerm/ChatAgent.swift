@@ -64,6 +64,33 @@ extension Message {
     }
 }
 
+// Ref-counts outstanding turn-parks that cleared the typing spinner (a turn parked
+// on the user's approval / Enable-Not-Now). The spinner is turned OFF on the first
+// park and back ON only when the LAST park resolves, so approving one of two
+// concurrent approval parks doesn't restore the spinner while another is still
+// parked. Pure value type so the ref-counting is unit-testable.
+struct ParkedTypingCounter {
+    private var count = 0
+    /// Register a park that clears typing. Returns true iff the spinner should be
+    /// turned OFF now (this is the first outstanding cleared-typing park).
+    mutating func park() -> Bool {
+        defer { count += 1 }
+        return count == 0
+    }
+    /// Register the resume of a cleared-typing park. Returns true iff the spinner
+    /// should be turned back ON now (this was the last outstanding one).
+    mutating func resume() -> Bool {
+        guard count > 0 else { return false }
+        count -= 1
+        return count == 0
+    }
+    /// Forget all outstanding parks (a turn teardown/cancel resolves them abnormally
+    /// without a matching resume; the ending turn's stopTyping handles the spinner).
+    mutating func reset() {
+        count = 0
+    }
+}
+
 @MainActor
 class ChatAgent {
     // Which tool surface this agent drives. Determined at init from
@@ -89,10 +116,12 @@ class ChatAgent {
     private var messageToPrompt = MessageToPromptStateMachine()
     private var pendingRemoteCommands = [UUID: PendingRemoteCommand]()
     private let broker: ChatBroker
-    private var renameConversation: AIConversation?
     private let prepPipeline: MessagePrepPipeline
     private var lastSystemMessage: String?
     private var toolProviders: [ToolProvider] = []
+    // The visible screen last auto-provided to the model for this chat, so an
+    // unchanged screen is sent as a short marker instead of resending the grid.
+    private var lastAutoProvidedScreen: String?
 
     // Optional developer-only console trace of chat-agent traffic.
     // Gated on the advanced setting "aiChatVerboseConsoleLogging";
@@ -104,9 +133,20 @@ class ChatAgent {
     // Enable or Not Now (or the chat tears down).
     private var pendingOrchestrationRequests: [String: (Result<String, Error>) throws -> ()] = [:]
 
+    // Ref-count of outstanding turn-parks that cleared the typing spinner (remote-
+    // command approval and orchestration-enable parks). See typingParkOnUser /
+    // typingResumeFromPark.
+    private var parkedTyping = ParkedTypingCounter()
+
     struct PendingRemoteCommand {
         var completion: (Result<String, Error>) throws -> ()
         var responseID: String?
+        // True iff parking this command cleared the agent's typing status because it
+        // blocks on the user's approval. handleRemoteCommandResponse restores typing
+        // only in that case: re-emitting typing(true) for an auto-executed mid-turn
+        // tool call would make the phone read the resume as a new-turn boundary and
+        // reset the turn's accumulated reply text before it can be notified.
+        var clearedTyping = false
     }
 
     private var permissions: Set<RemoteCommand.Content.PermissionCategory>!
@@ -169,6 +209,24 @@ class ChatAgent {
 
     // MARK: - request_orchestration_enable
 
+    // The single park/resume typing bracket, shared by every site where a turn
+    // parks on the user (remote-command approval, orchestration-enable). Clearing
+    // typing on park keeps the phone's spinner from sticking and, on a
+    // pre-turnLifecycle phone, lets the reply notification (which fires on typing
+    // false) fire. Ref-counted so concurrent approval parks turn the spinner off
+    // once and back on once, and so a new park site gets correct behavior for free
+    // instead of re-deriving the false-on-park / restore-on-resume dance.
+    private func typingParkOnUser() {
+        if parkedTyping.park() {
+            broker.publish(typingStatus: false, of: .agent, toChatID: chatID)
+        }
+    }
+    private func typingResumeFromPark() {
+        if parkedTyping.resume() {
+            broker.publish(typingStatus: true, of: .agent, toChatID: chatID)
+        }
+    }
+
     // Park the LLM-framework completion and publish the request bubble.
     // The chat UI renders Enable / Not Now buttons; clicking one
     // publishes a UserCommand.enableOrchestrationResponse which the
@@ -183,8 +241,14 @@ class ChatAgent {
                 chatID: chatID,
                 content: .clientLocal(
                     .init(action: .enableOrchestrationRequest(requestID: requestID))))
+            // The turn is now parked waiting for the user's Enable/Not Now, so the
+            // agent has stopped working. Clear the spinner (see typingParkOnUser):
+            // without this, typingStatus stays true (agentWorking only completes when
+            // the whole turn ends), leaving the phone's indicator stuck AND its
+            // session-reply notification (which fires on typing false) never firing.
+            typingParkOnUser()
         } catch {
-            DLog("Failed to publish enable-orchestration request: \(error)")
+            RLog("Failed to publish enable-orchestration request: \(error)")
             pendingOrchestrationRequests.removeValue(forKey: requestID)
             try? completion(.success("Failed to surface the request: \(error.localizedDescription)"))
         }
@@ -200,6 +264,10 @@ class ChatAgent {
         guard let completion = pendingOrchestrationRequests.removeValue(forKey: requestID) else {
             return
         }
+        // Resuming the parked turn: the agent is working again, so restore the
+        // spinner that parkOrchestrationRequest cleared (see typingResumeFromPark;
+        // ref-counted so a concurrent park keeps it off until the last resolves).
+        typingResumeFromPark()
         if approved {
             do {
                 try ChatListModel.instance?.setOrchestrationEnabled(true, forChatID: chatID)
@@ -209,7 +277,7 @@ class ChatAgent {
                 // next app launch would rebuild this chat as
                 // session-bound while the conversation history already
                 // references orchestrator tool calls.
-                DLog("Failed to set orchestrationEnabled: \(error)")
+                RLog("Failed to set orchestrationEnabled: \(error)")
                 try? completion(.success(
                     "Failed to enable orchestration: \(error.localizedDescription). "
                     + "The chat remains in its current mode."))
@@ -285,7 +353,8 @@ class ChatAgent {
         completion: @escaping (Result<String, Error>) throws -> ()
     ) {
         let requestID = UUID()
-        pendingRemoteCommands[requestID] = .init(completion: completion, responseID: nil)
+        pendingRemoteCommands[requestID] = .init(completion: completion,
+                                                 responseID: llmMessage.responseID)
         // Flush any accumulated agent narrative into the log before
         // the tool entry (keeps Console output in chronological order).
         flushPendingAgentText()
@@ -319,7 +388,7 @@ class ChatAgent {
         } catch {
             // Drop the parked completion and surface the failure to
             // the LLM rather than leaving it parked forever.
-            DLog("Failed to publish orchestration tool request: \(error)")
+            RLog("Failed to publish orchestration tool request: \(error)")
             pendingRemoteCommands.removeValue(forKey: requestID)
             try? completion(.failure(error))
         }
@@ -338,11 +407,7 @@ class ChatAgent {
                 break
             }
         }
-        // Pair any orphaned tool_result with a synthesized tool_use so the
-        // vendor doesn't reject the rebuilt prompt. Heals conversations that
-        // were serialized before this fix as well as new ones.
-        conversation.messages = AIChatToolCallRepair.repairingOrphanedToolResults(
-            translate(messages: messages))
+        conversation.messages = translate(messages: messages)
 
         switch mode {
         case .sessionBound:
@@ -364,131 +429,214 @@ class ChatAgent {
     // regardless of current mode, so old turns from the other mode
     // stay legible to the LLM.
     //
-    // Cross-message reconciliation: any .remoteCommandRequest without
-    // a matching .remoteCommandResponse (because iTerm2 was quit
-    // mid-tool-call) gets a synthetic "interrupted" functionOutput
-    // appended at the end so the LLM contract (every function_call
-    // followed by a function_output) holds.
+    // Persisted tool calls replay STRUCTURED (function_call/functionOutput
+    // items), never as prose: replaying them as assistant text taught the
+    // model to imitate the format and fabricate tool results instead of
+    // calling tools. OpenAI reasoning models require the reasoning item
+    // alongside a historical function_call; it is persisted with the call
+    // (llmMessage.reasoningItems) and rides here, while pre-persistence
+    // calls replay without their OpenAI item id so the API treats them as
+    // developer-provided context (see ResponsesBodyRequestBuilder). The
+    // repair pass heals both orphan directions (interrupted calls,
+    // auto-approved responses whose request was never persisted) so every
+    // vendor accepts the rebuilt prompt.
     private func translate(messages: [Message]) -> [AITermController.Message] {
-        struct PendingRequest {
-            let name: String
-            let functionCallID: LLM.Message.FunctionCallID?
+        let replayed = AIChatToolCallRepair.repairingOrphanedToolPairs(
+            Self.aiMessagesForStructuredReplay(messages, stateMachine: &messageToPrompt))
+        // Rewrite session guids the model wrote in prose (@-mentions) into the
+        // reload-durable stableID, so a chat that predates stableIDs shows the
+        // model references consistent with the stableIDs the <workgroups>
+        // snapshot now emits, without migrating any stored data. Only free text
+        // is rewritten: structured tool-call arguments carry vendor
+        // signatures/ids that must replay verbatim, and tool output stays a
+        // faithful copy of the terminal.
+        let resolve: (String) -> String? = { guid in
+            iTermController.sharedInstance()?.anySession(withGUID: guid)?.stableID
         }
-        var aiMessages: [AITermController.Message] = []
-        var pendingByRequestID: [UUID: PendingRequest] = [:]
-        var orderedPendingIDs: [UUID] = []
+        return replayed.map { message in
+            var message = message
+            message.body = Self.stabilizeSessionReferences(in: message.body, resolve: resolve)
+            return message
+        }
+    }
 
+    private static let sessionGuidRegex = try! NSRegularExpression(
+        pattern: "[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}")
+
+    // Rewrites each guid in `text` that `resolve` maps to a live session's
+    // stableID into that stableID, as a proper @-mention: if the guid was not
+    // already written as a mention (preceded by "@", "@session:", or "@wg-"),
+    // an "@" is prepended. That repairs a pre-stableID chat where the model
+    // wrote a bare session id without the sigil, turning it into a clickable
+    // link. A guid that does not resolve (a workgroup id, a dead session, a bare
+    // uuid in output) is left verbatim. Each distinct guid is resolved once.
+    static func stabilizeSessionGuids(in text: String, resolve: (String) -> String?) -> String {
+        let ns = text as NSString
+        let matches = sessionGuidRegex.matches(in: text,
+                                               range: NSRange(location: 0, length: ns.length))
+        guard !matches.isEmpty else {
+            return text
+        }
+        let result = NSMutableString()
+        var cursor = 0
+        var cache = [String: String?]()
+        for match in matches {
+            let range = match.range
+            if range.location > cursor {
+                result.append(ns.substring(with: NSRange(location: cursor,
+                                                         length: range.location - cursor)))
+            }
+            let guid = ns.substring(with: range)
+            let stableID: String?
+            if let cached = cache[guid] {
+                stableID = cached
+            } else {
+                stableID = resolve(guid)
+                cache[guid] = stableID
+            }
+            if let stableID {
+                if !Self.guidIsAlreadyMention(ns: ns, guidRange: range) {
+                    result.append("@")
+                }
+                result.append(stableID)
+            } else {
+                result.append(guid)
+            }
+            cursor = range.location + range.length
+        }
+        if cursor < ns.length {
+            result.append(ns.substring(from: cursor))
+        }
+        return result as String
+    }
+
+    // True when the guid at `guidRange` was already written as an @-mention:
+    // directly after "@" (a bare-id mention) or after "@session:" / "@wg-".
+    private static func guidIsAlreadyMention(ns: NSString, guidRange: NSRange) -> Bool {
+        let loc = guidRange.location
+        guard loc > 0 else {
+            return false
+        }
+        if ns.substring(with: NSRange(location: loc - 1, length: 1)) == "@" {
+            return true
+        }
+        for prefix in ["@session:", "@wg-"] {
+            let plen = (prefix as NSString).length
+            if loc >= plen,
+               ns.substring(with: NSRange(location: loc - plen, length: plen)).lowercased() == prefix {
+                return true
+            }
+        }
+        return false
+    }
+
+    private static func stabilizeSessionReferences(in body: LLM.Message.Body,
+                                                   resolve: (String) -> String?) -> LLM.Message.Body {
+        switch body {
+        case .text(let text):
+            return .text(stabilizeSessionGuids(in: text, resolve: resolve))
+        case .multipart(let bodies):
+            return .multipart(bodies.map { stabilizeSessionReferences(in: $0, resolve: resolve) })
+        case .uninitialized, .functionCall, .functionOutput, .attachment:
+            return body
+        }
+    }
+
+    private static func aiMessagesForStructuredReplay(_ messages: [Message],
+                                                      stateMachine: inout MessageToPromptStateMachine) -> [AITermController.Message] {
+        var aiMessages: [AITermController.Message] = []
         for message in messages {
             switch message.content {
             case .setPermissions, .clientLocal, .renameChat, .append, .appendAttachment,
-                    .commit, .vectorStoreCreated, .userCommand, .selectSessionRequest:
+                    .commit, .vectorStoreCreated, .userCommand, .selectSessionRequest,
+                    .unsupported:
                 continue
 
             case .remoteCommandRequest(let payload, safe: _):
-                guard let call = payload.llmMessage.function_call else { continue }
-                let fcID = payload.llmMessage.functionCallID
-                aiMessages.append(AITermController.Message(
-                    responseID: nil,
-                    role: .assistant,
-                    body: .functionCall(call, id: fcID)))
-                pendingByRequestID[message.uniqueID] = PendingRequest(
-                    name: payload.name,
-                    functionCallID: fcID)
-                orderedPendingIDs.append(message.uniqueID)
-
-            case .remoteCommandResponse(let result, let requestUUID, let name, let fcID):
-                // If we never saw a matching .remoteCommandRequest the
-                // tool_use record was squelched from the chat database.
-                // ChatClient.processRemoteCommandRequest's .always
-                // (auto-approve) and .never (auto-deny) paths return
-                // nil from the broker processor, which causes
-                // ChatBroker.publish to skip listModel.append entirely
-                // (ChatBroker.swift:132-140). The tool runs and its
-                // response is persisted normally, but no tool_use lands
-                // in the DB. On the NEXT turn (e.g. queued user message
-                // that arrived during the tool round-trip), load() calls
-                // back into translate which sees the orphaned
-                // tool_result; without this branch, Anthropic 400s:
-                //   messages.N.content.M: unexpected `tool_use_id` found
-                //   in `tool_result` blocks: …. Each `tool_result` block
-                //   must have a corresponding `tool_use` block in the
-                //   previous message.
-                // Synthesize the missing functionCall so the LLM
-                // contract (every tool_result preceded by a matching
-                // tool_use) holds. Args are empty because the original
-                // arguments aren't recoverable — they're not on the
-                // tool_result. The call_id is what matters for the
-                // pairing.
-                if pendingByRequestID[requestUUID] == nil {
-                    let synthesizedCall = LLM.FunctionCall(
-                        name: name,
-                        arguments: "{}",
-                        id: fcID?.callID)
-                    aiMessages.append(AITermController.Message(
-                        responseID: nil,
-                        role: .assistant,
-                        body: .functionCall(synthesizedCall, id: fcID)))
-                }
-                let output: String
-                switch result {
-                case .success(let value): output = value
-                case .failure(let error):
-                    output = "Tool call failed: \(error.localizedDescription)"
-                }
-                aiMessages.append(AITermController.Message(
-                    responseID: nil,
-                    role: .function,
-                    body: .functionOutput(name: name,
-                                          output: output,
-                                          id: fcID)))
-                pendingByRequestID.removeValue(forKey: requestUUID)
+                // A request with no function_call has nothing to replay
+                // (squelched/auto-approved shapes); its orphaned response,
+                // if any, is healed by the repair pass.
+                guard payload.llmMessage.function_call != nil else { continue }
+                var call = aiMessage(from: message, stateMachine: &stateMachine)
+                // The persisted llmMessage carries the turn's reasoning
+                // items; ride them onto the rebuilt call so the request
+                // builder can replay them ahead of it.
+                call.reasoningItems = payload.llmMessage.reasoningItems
+                aiMessages.append(call)
 
             case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                    .terminalCommand, .multipart, .watcherEvent:
-                aiMessages.append(aiMessage(from: message))
+                    .terminalCommand, .multipart, .watcherEvent, .remoteCommandResponse:
+                aiMessages.append(aiMessage(from: message, stateMachine: &stateMachine))
             }
         }
-
-        // Synthesize orphan filler outputs in insertion order so the
-        // function-call/output pairing remains legible.
-        for requestID in orderedPendingIDs {
-            guard let pending = pendingByRequestID.removeValue(forKey: requestID) else {
-                continue
-            }
-            aiMessages.append(AITermController.Message(
-                responseID: nil,
-                role: .function,
-                body: .functionOutput(
-                    name: pending.name,
-                    output: "[iTerm2 was restarted before this tool call completed. "
-                          + "The call did not finish; assume no side effects took place "
-                          + "and re-issue if needed.]",
-                    id: pending.functionCallID)))
-        }
-
         return aiMessages
+    }
+
+    /// Resolve a turn's model name the same way request routing does
+    /// (AIConversation.complete: manual models first, then the built-in
+    /// catalog, so a manual config wins over a built-in that shares its name).
+    /// nil for an unknown or absent name; the caller falls back to the global
+    /// default, keeping capability gating and routing in agreement.
+    static func resolvedModel(named name: String?) -> AIMetadata.Model? {
+        guard let name else { return nil }
+        return LLMMetadata.manualModels().first { $0.name == name }
+            ?? AIMetadata.instance.models.first { $0.name == name }
+    }
+
+    /// Hosted-tool enablement for a turn, pure over the effective model's
+    /// features and the turn's configuration so it can never silently read
+    /// the global default model.
+    static func hostedTools(features: Set<AIMetadata.Model.Feature>,
+                            configuration: Message.Configuration?) -> HostedTools {
+        var tools = HostedTools()
+        if features.contains(.hostedWebSearch), let configuration {
+            tools.webSearch = configuration.hostedWebSearchEnabled
+        } else {
+            tools.webSearch = false
+        }
+        tools.codeInterpreter = features.contains(.hostedCodeInterpreter)
+        if features.contains(.hostedFileSearch),
+           let vectorStoreIDs = configuration?.vectorStoreIDs, !vectorStoreIDs.isEmpty {
+            tools.fileSearch = .init(vectorstoreIDs: vectorStoreIDs)
+        } else {
+            tools.fileSearch = nil
+        }
+        return tools
+    }
+
+    private static func aiMessage(from message: Message,
+                                  stateMachine: inout MessageToPromptStateMachine) -> AITermController.Message {
+        let body = stateMachine.body(message: message)
+        return AITermController.Message(
+            responseID: message.responseID,
+            role: AITermController.Message.role(from: message),
+            body: body,
+            reasoningContent: message.agentReasoning)
     }
 
     private func updateSystemMessage(_ permissions: Set<RemoteCommand.Content.PermissionCategory>) {
         self.permissions = permissions
         var parts = [String]()
 
-        let key = if AITermController.provider?.functionsSupported != true || permissions.isEmpty {
+        // A session-bound chat can be linked to a terminal, a browser, both, or
+        // neither (the Link/Unlink Terminal and Web Browser menu items are
+        // independent). The permission set reflects what's actually linked:
+        // browser-specific categories appear only when a browser is linked, the
+        // rest only when a terminal is linked. Pick the prompt that matches the
+        // real combination so a browser-only chat isn't told it has a terminal.
+        let hasBrowser = permissions.contains(.actInWebBrowser)
+        let hasTerminal = permissions.contains { !$0.isBrowserSpecific }
+        let readWrite = permissions.contains(.runCommands) || permissions.contains(.controlTerminal)
+        let key = if AITermController.provider?.functionsSupported != true || (!hasTerminal && !hasBrowser) {
             kPreferenceKeyAIPromptAIChat
+        } else if hasBrowser && !hasTerminal {
+            kPreferenceKeyAIPromptAIChatBrowser
+        } else if hasBrowser {
+            readWrite ? kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser
+                      : kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser
         } else {
-            if permissions.contains(.actInWebBrowser) {
-                if permissions.contains(.runCommands) || permissions.contains(.typeForYou) {
-                    kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser
-                } else {
-                    kPreferenceKeyAIPromptAIChatReadOnlyTerminalBrowser
-                }
-            } else {
-                if permissions.contains(.runCommands) || permissions.contains(.typeForYou) {
-                    kPreferenceKeyAIPromptAIChatReadWriteTerminal
-                } else {
-                    kPreferenceKeyAIPromptAIChatReadOnlyTerminal
-                }
-            }
+            readWrite ? kPreferenceKeyAIPromptAIChatReadWriteTerminal
+                      : kPreferenceKeyAIPromptAIChatReadOnlyTerminal
         }
         parts.append(iTermPreferences.string(forKey: key))
         parts.append("If a zip file is provided (this is rare), you should extract it and analyze the contents in the context of the accompanying messages.")
@@ -518,13 +666,35 @@ class ChatAgent {
     private func updateOrchestrationSystemMessage() {
         let template = iTermPreferences.string(
             forKey: kPreferenceKeyAIPromptAIChatOrchestration) ?? ""
-        let resolved = Self.evaluateOrchestrationPromptTemplate(template)
+        let resolved = [
+            Self.evaluateOrchestrationPromptTemplate(template),
+            Self.orchestrationDisplayPolicy
+        ]
+            .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            .joined(separator: "\n\n")
         conversation.systemMessage = resolved
         if conversation.systemMessage != lastSystemMessage {
             conversation.systemMessageDirty = true
             lastSystemMessage = conversation.systemMessage
         }
     }
+
+    private static let orchestrationDisplayPolicy = """
+    Terminal output display policy:
+    - iTerm2 displays raw terminal command output to the user as its own code block.
+    - Do not repeat raw command output in prose, do not convert it into Markdown tables, and do not reformat listings such as ls, ps, df, netstat, or grep output.
+    - After running a command, summarize only non-obvious findings or ask what to do next.
+    - Speak at the user’s level: never expose internal identifiers or fields (session ids, workgroup ids, status_source, role_id) in prose. To point the user at a session, write its FULL @-prefixed id (iTerm2 renders it as the session’s clickable name) or name it by role (“the Code Review”, “your Chat”); a partial or bare id is dead text, not a link, so never abbreviate one.
+    - “Workgroup” is an internal grouping, not something the user named. Do not use the word “workgroup” or a wg-/workgroup_id with the user; refer to a session by its role, using the workgroup’s human name only if you truly must disambiguate.
+
+    Talking to the user:
+    - Be concise. This chat is a control surface, not a place to think out loud: say what changed or what you need, and nothing more.
+    - Do not narrate routine mechanics. Registering or re-registering a watch, reading a screen to check state, and the individual steps of a multi-tool action are not worth a message on their own; do them silently and report only the result.
+    - One message per meaningful outcome, not one per tool call. If a single event (say, a review finishing clean) leads you to check a screen, tell a session to continue, and re-arm a watch, that is one outcome: report it once, after you have acted, in a sentence or two.
+    - Treat a <status_update> as a system signal to act on, not a message to acknowledge. Do not thank it, restate it, or re-explain your standing plan each time one fires.
+    - When the user has set up a standing loop (“keep doing X until there are no steps left”), run it silently: speak up only when a step actually advances, when the loop finishes, or when something needs the user’s decision. Do not ask what to do next on each iteration; you already know the next step.
+    - Do not repeat yourself across turns. Announce a milestone once: once you have told the user a step finished (a fix applied, a review kicked off, a review came back clean), do not announce it again when a later tool result or status_update merely re-confirms the same thing. If nothing new has happened since your last message, say nothing.
+    """
 
     @MainActor
     private static func evaluateOrchestrationPromptTemplate(_ template: String) -> String {
@@ -538,25 +708,10 @@ class ChatAgent {
                 .map { "  - \($0.name)" }
                 .joined(separator: "\n")
         }
-        let owner = OrchestrationPromptScopeOwner()
-        let scope = iTermVariableScope()
-        let frame = iTermVariables(context: [], owner: owner)
-        scope.add(frame, toScopeNamed: "ai")
-        scope.setValue(defaultCodeReviewPrompt,
-                       forVariableNamed: "ai.default_code_review_prompt")
-        scope.setValue(savedPromptNames,
-                       forVariableNamed: "ai.saved_prompt_names")
-        let swifty = iTermSwiftyString(string: template,
-                                        scope: scope,
-                                        sideEffectsAllowed: false,
-                                        observer: nil)
-        var resolved = ""
-        swifty.evaluateSynchronously(true,
-                                      sideEffectsAllowed: false,
-                                      with: scope) { value, _, _ in
-            resolved = value ?? ""
-        }
-        return resolved
+        return AIPromptTemplateEvaluator.evaluateSynchronously(
+            template,
+            variables: ["default_code_review_prompt": defaultCodeReviewPrompt,
+                        "saved_prompt_names": savedPromptNames])
     }
 
     deinit {
@@ -593,19 +748,141 @@ class ChatAgent {
     }
 
     private func aiMessage(from message: Message) -> AITermController.Message {
-        let body = messageToPrompt.body(message: message)
-        return AITermController.Message(
-            responseID: message.responseID,
-            role: AITermController.Message.role(from: message),
-            body: body,
-            reasoningContent: message.agentReasoning)
+        Self.aiMessage(from: message, stateMachine: &messageToPrompt)
     }
 
     var supportsStreaming: Bool {
         return conversation.supportsStreaming
     }
 
+    /// The auto-provided context for a session-bound chat, or nil if this chat is
+    /// not session-bound, has no linked session, or has granted neither "provided
+    /// automatically" permission. Read at request time so it is fresh; an unchanged
+    /// visible screen collapses to a short marker rather than resending the grid.
+    private func autoProvidedContext() -> String? {
+        guard mode == .sessionBound else {
+            return nil
+        }
+        guard let guid = ChatListModel.instance?.chat(id: chatID)?.terminalSessionGuid,
+              let session = iTermController.sharedInstance().anySession(forReference: guid) else {
+            RLog("autoProvidedContext: chat \(chatID) is session-bound but has no linked session (guid=\(ChatListModel.instance?.chat(id: chatID)?.terminalSessionGuid ?? "nil")); not auto-providing")
+            return nil
+        }
+        let rce = RemoteCommandExecutor.instance
+        let stateP = rce.permission(chatID: chatID, inSessionGuid: guid, category: .checkTerminalState)
+        let contentsP = rce.permission(chatID: chatID, inSessionGuid: guid, category: .viewContents)
+        RLog("autoProvidedContext: chat \(chatID) session \(guid): Check Terminal State=\(stateP), View Contents=\(contentsP) (inject when .always)")
+        // Auto-send requires an explicit, informed global consent, not merely a
+        // per-chat .always permission: a legacy "Always" grant (e.g. an old
+        // "View History = Always" carried across the rename to "View Contents")
+        // reaches .always WITHOUT ever passing the per-chat "Send Automatically"
+        // confirmation, so gating on the permission alone would silently start
+        // sending the screen. Suppress until the user has granted consent (the
+        // per-chat confirmation grants it; the one-time prompt asks otherwise).
+        let wantsAutoSend = (stateP == .always || contentsP == .always)
+        if Self.shouldSuppressAutoProvide(wantsAutoSend: wantsAutoSend,
+                                          consent: iTermUserDefaults.autoProvideConsent) {
+            RLog("autoProvidedContext: chat \(chatID) wants auto-send but consent is not granted (\(iTermUserDefaults.autoProvideConsent.rawValue)); suppressing")
+            requestAutoProvideConsentIfNeeded()
+            return nil
+        }
+        var blocks = [String]()
+        if stateP == .always {
+            blocks.append("<terminal-state>\n" + Self.neutralizeContextDelimiters(session.aiState) + "\n</terminal-state>")
+        }
+        if contentsP == .always {
+            let screen = WorkgroupIntrospection.screenContents(
+                forSession: session,
+                requestedLines: Int(session.screen.height())).text
+            if screen == lastAutoProvidedScreen {
+                blocks.append("<visible-screen unchanged=\"true\"/>")
+            } else {
+                lastAutoProvidedScreen = screen
+                blocks.append("<visible-screen>\n" + Self.neutralizeContextDelimiters(screen) + "\n</visible-screen>")
+            }
+        }
+        return blocks.isEmpty ? nil : blocks.joined(separator: "\n")
+    }
 
+    // Set once the one-time auto-provide consent prompt has been shown this launch so
+    // it can't stack: autoProvidedContext re-evaluates every turn across all chats.
+    // Static (shared by every agent) so the user is asked at most once per launch. A
+    // persisted Granted/Denied ends it across launches.
+    private static var didAskAutoProvideConsentThisSession = false
+
+    /// Show the one-time consent prompt (non-blocking) when a turn wanted to auto-send
+    /// but the user has never decided. This turn already suppressed auto-send; once
+    /// the user grants, the next turn includes the screen. Shown asynchronously so the
+    /// in-flight turn is not held on a modal.
+    private func requestAutoProvideConsentIfNeeded() {
+        guard Self.shouldAskAutoProvideConsent(consent: iTermUserDefaults.autoProvideConsent,
+                                               alreadyAskedThisSession: Self.didAskAutoProvideConsentThisSession) else {
+            return
+        }
+        Self.didAskAutoProvideConsentThisSession = true
+        DispatchQueue.main.async {
+            // Re-check: a concurrent chat's prompt (or a per-chat opt-in) may have
+            // resolved consent while this was queued.
+            guard iTermUserDefaults.autoProvideConsent == .unknown else { return }
+            let selection = iTermWarning.show(
+                withTitle: "iTerm2 can include this session’s visible screen and terminal state with every message you send in AI chats where you’ve allowed it, so the assistant sees what you see. You can turn this off any time from a chat’s permission settings.",
+                actions: ["Turn On", "Not Now"],
+                accessory: nil,
+                identifier: nil,
+                silenceable: .kiTermWarningTypePersistent,
+                heading: "Share Terminal Contents Automatically?",
+                window: nil)
+            iTermUserDefaults.autoProvideConsent = (selection == .kiTermWarningSelection0) ? .granted : .denied
+        }
+    }
+
+    /// Whether auto-providing terminal state / visible screen must be suppressed:
+    /// true when a turn would auto-send (a category is at .always) but the user has
+    /// not granted the global auto-provide consent. This is what stops a legacy
+    /// "Always" grant from silently sending the screen before an informed choice.
+    nonisolated static func shouldSuppressAutoProvide(wantsAutoSend: Bool,
+                                                      consent: iTermAutoProvideConsent) -> Bool {
+        return wantsAutoSend && consent != .granted
+    }
+
+    /// Whether to show the one-time auto-provide consent prompt: only when the user
+    /// has never decided (Unknown) and it has not already been shown this launch
+    /// (autoProvidedContext re-evaluates every turn, so the modal must not stack).
+    /// A persisted Granted/Denied ends it across launches. Denied is an explicit
+    /// "no" - never nag again.
+    nonisolated static func shouldAskAutoProvideConsent(consent: iTermAutoProvideConsent,
+                                                        alreadyAskedThisSession: Bool) -> Bool {
+        return consent == .unknown && !alreadyAskedThisSession
+    }
+
+    /// Defang our control-tag delimiters in untrusted terminal content so it cannot
+    /// break out of the <visible-screen> / <terminal-state> wrappers and inject
+    /// trusted top-level context (prompt injection): terminal output that contains a
+    /// literal closing tag (a file the user cats, a hostile log line) would otherwise
+    /// close the block early and make everything after it read as top-level model
+    /// instructions. Mirrors the guillemet approach in
+    /// AutoModeClassifier.neutralizePromptDelimiters, but deliberately preserves
+    /// newlines because the visible screen's row layout is meaningful to the model.
+    nonisolated static func neutralizeContextDelimiters(_ s: String) -> String {
+        return s
+            .replacingOccurrences(of: "</visible-screen>", with: "\u{2039}/visible-screen\u{203A}")
+            .replacingOccurrences(of: "<visible-screen", with: "\u{2039}visible-screen")
+            .replacingOccurrences(of: "</terminal-state>", with: "\u{2039}/terminal-state\u{203A}")
+            .replacingOccurrences(of: "<terminal-state", with: "\u{2039}terminal-state")
+    }
+
+    /// Append an auto-provided context block to the outgoing user body, matching how
+    /// the orchestration provider prepends its snapshot.
+    private static func appending(context: String, to body: LLM.Message.Body) -> LLM.Message.Body {
+        switch body {
+        case .text(let text):
+            return .text(text + "\n" + context)
+        case .multipart(let parts):
+            return .multipart(parts + [.text(context)])
+        case .uninitialized, .functionCall, .functionOutput, .attachment:
+            return body
+        }
+    }
 
     func fetchCompletion(userMessage: Message,
                          history: [Message],
@@ -619,6 +896,7 @@ class ChatAgent {
     }
 
     private func cancelPendingCommands() {
+        drainPendingOrchestrationRequests(reason: "Cancelled.")
         if !pendingRemoteCommands.isEmpty {
             let saved = pendingRemoteCommands.values
             pendingRemoteCommands.removeAll()
@@ -631,12 +909,38 @@ class ChatAgent {
                 }
             }
         }
+        // This is the ONE choke point that abnormally resolves every parked
+        // completion (both drains above); none of them runs typingResumeFromPark, so
+        // forget the outstanding cleared-typing parks here. A leftover count would
+        // make the next turn's first park fail to clear the spinner (and, on a
+        // pre-turnLifecycle phone, its reply notification never fire). Resetting here
+        // covers ALL callers - stop(), transitionToOrchestration(), and
+        // fetchCompletionForRegularMessage() - not just stop().
+        parkedTyping.reset()
     }
 
     func stop() {
-        cancelPendingCommands()
+        cancelPendingCommands()   // resolves parked completions and resets parkedTyping
         drainPendingOrchestrationRequests(reason: "Cancelled.")
         conversation.cancelOutstandingOperation()
+        // Safety-net clear of TurnStatusModel. In the normal case the cancel walks
+        // back through fetchCompletion's completion to ChatService.finishTurn (see
+        // the handleUserCommand(.stop) and dropAgent comments; cancelPendingCommands
+        // resumes a parked continuation, which lets the conversation.complete
+        // callback fire the same way deliverToolResult's success path does), and
+        // finishTurn emits turnEvent(.ended) which clears the model - so this is
+        // then a redundant no-op. It bites only if a resumed/failed completion never
+        // reaches finishTurn, so an abandoned turn can't leave the chat permanently
+        // marked in-flight for the subscribe seed to read.
+        //
+        // This does NOT suppress finishTurn's turnEvent(.ended) fan-out on a Stop. A
+        // turnLifecycleRevision phone treats that .ended like the typing(false) it
+        // already receives today on a Stop (same content, same timing relative to
+        // the reply), and a parked request that surfaced via userActionRequest has
+        // already marked its preamble notified, so .ended fires nothing new. A
+        // stricter "never notify for an explicitly Stopped turn" rule would suppress
+        // the fan-out in finishTurn on the cancel path - a separate, deliberate change.
+        TurnStatusModel.instance.set(inProgress: false, chatID: chatID)
     }
 
     // Resume any parked request_orchestration_enable tool callbacks so
@@ -666,7 +970,7 @@ class ChatAgent {
             switch message.content {
             case .setPermissions, .renameChat, .selectSessionRequest, .clientLocal,
                     .append, .appendAttachment, .commit, .vectorStoreCreated, .userCommand,
-                    .watcherEvent:
+                    .watcherEvent, .unsupported:
                 false
 
             case .plainText, .markdown, .explanationRequest, .explanationResponse,
@@ -690,6 +994,14 @@ class ChatAgent {
                 .terminalCommand:
             break
         case .renameChat, .append:
+            // These content types drive no LLM round-trip. They are normally
+            // agent-authored deliveries (not routed here), but a user-authored one
+            // still reaches here as a turn: close it via completion(nil) rather than
+            // returning bare, so agentWorking's typing(true)/turnEvent(.started) is
+            // balanced by finishTurn (stopTyping + turnEvent(.ended)) and the queue
+            // head is popped. A bare return would strand typing, leave TurnStatusModel
+            // in-flight, and wedge the queue.
+            completion(nil)
             return
         case .remoteCommandResponse(let result, let messageID, _, _):
             if handleRemoteCommandResponse(messageID: messageID,
@@ -706,7 +1018,7 @@ class ChatAgent {
             // silently cancel any actively in-flight queued turn,
             // orphaning its completion and stalling the queue.
             // Pinned by AILiveHarness.test_chat_orphanToolResponseAfterStop_doesNotOrphanQueuedMessage.
-            DLog("Dropping orphan .remoteCommandResponse for cancelled tool")
+            RLog("Dropping orphan .remoteCommandResponse for cancelled tool")
             completion(nil)
             return
         case .setPermissions(let allowedCategories):
@@ -721,6 +1033,12 @@ class ChatAgent {
             it_fatalError("User-sent attachments not supported")
         case .watcherEvent:
             break
+        case .unsupported:
+            // A placeholder for a message type this build doesn't
+            // understand; it never feeds the LLM. Resolve the completion
+            // so the caller's turn doesn't hang.
+            completion(nil)
+            return
         }
         fetchCompletionForRegularMessage(userMessage: userMessage,
                                          history: filteredHistory,
@@ -733,6 +1051,13 @@ class ChatAgent {
         if let pending = pendingRemoteCommands[messageID] {
             NSLog("Agent handling remote command response to message \(messageID)")
             pendingRemoteCommands.removeValue(forKey: messageID)
+            // Restore typing only if parking this command cleared it (an approval
+            // park). Re-emitting typing(true) for an auto-executed tool call would
+            // make the phone treat the resume as a new turn and reset the turn's
+            // accumulated reply text before it can be notified.
+            if pending.clearedTyping {
+                typingResumeFromPark()
+            }
             try? pending.completion(Result(result))
             return true
         }
@@ -758,25 +1083,45 @@ class ChatAgent {
                                                   history: [Message],
                                                   streaming: ((StreamingUpdate) -> ())?,
                                                   completion: @escaping (Message?) -> ()) {
+        // Model-layer provider lock: the UI's picker lock can't cover turns
+        // that arrive with no configuration (the phone) or with a stale one,
+        // so the binding is enforced here on every turn, BEFORE any
+        // conversation state is touched. A rejected turn becomes an ordinary
+        // agent reply and never reaches the API.
+        let verdict = ChatProviderBinding.evaluate(
+            boundModelName: ChatListModel.instance?.modelName(forChatID: chatID),
+            turnModelName: userMessage.configuration?.model,
+            defaultModelName: LLMMetadata.model()?.name,
+            vendor: ChatProviderBinding.vendor(forModelName:))
+        let turnModelName: String?
+        switch verdict {
+        case .reject(let reason):
+            RLog("ChatAgent: rejected cross-provider turn in \(chatID): \(reason)")
+            completion(Message(chatID: userMessage.chatID,
+                               author: .agent,
+                               content: .markdown(reason),
+                               sentDate: Date(),
+                               uniqueID: UUID()))
+            return
+        case .proceed(let modelName, let bindChatTo):
+            turnModelName = modelName
+            if let bindChatTo {
+                try? ChatListModel.instance?.setModel(chatID: chatID, modelName: bindChatTo)
+            }
+        }
+
         cancelPendingCommands()
 
         let needsRenaming = !conversation.messages.anySatisfies({ $0.role == .user})
-        if LLMMetadata.model()?.features.contains(.hostedWebSearch) == true,
-           let configuration = userMessage.configuration {
-            conversation.hostedTools.webSearch = configuration.hostedWebSearchEnabled
-        } else {
-            conversation.hostedTools.webSearch = false
-        }
-
-        let useCodeInterpeter = (LLMMetadata.model()?.features.contains(.hostedCodeInterpreter) == true)
-        conversation.hostedTools.codeInterpreter = useCodeInterpeter
-
-        if LLMMetadata.model()?.features.contains(.hostedFileSearch) == true,
-           let vectorStoreIDs = userMessage.configuration?.vectorStoreIDs, !vectorStoreIDs.isEmpty {
-            conversation.hostedTools.fileSearch = .init(vectorstoreIDs: vectorStoreIDs)
-        } else {
-            conversation.hostedTools.fileSearch = nil
-        }
+        // Hosted-tool capability comes from the model the turn will ACTUALLY
+        // run on (the binding's verdict, resolved the same way request
+        // routing resolves conversation.model), not the global default.
+        // With the provider lock, a configuration-less turn runs on the
+        // chat's bound model, which can differ from the default; gating on
+        // the default could attach code_interpreter to a model that 400s it.
+        let effectiveModel = Self.resolvedModel(named: turnModelName) ?? LLMMetadata.model()
+        conversation.hostedTools = Self.hostedTools(features: effectiveModel?.features ?? [],
+                                                    configuration: userMessage.configuration)
 
         if let responseID = userMessage.inResponseTo {
             conversation.deleteMessages(after: responseID)
@@ -791,14 +1136,26 @@ class ChatAgent {
         for provider in toolProviders {
             transformedBody = provider.transform(outgoingUserBody: transformedBody)
         }
+        // Auto-provide the linked session's terminal state and/or visible screen when
+        // the user has granted the matching "provided automatically" permission for
+        // this chat (Check Terminal State -> state, View Contents -> visible screen).
+        // Done here (server-side) so phone- and desktop-originated turns both get it;
+        // the desktop compose path no longer injects it.
+        if let autoContext = autoProvidedContext() {
+            transformedBody = Self.appending(context: autoContext, to: transformedBody)
+        }
         let userAIMessage = AITermController.Message(
             responseID: baseUserAIMessage.responseID,
             role: baseUserAIMessage.role,
             body: transformedBody,
             reasoningContent: baseUserAIMessage.reasoningContent)
         conversation.add(userAIMessage)
-        conversation.model = userMessage.configuration?.model
+        // The binding's verdict, not the raw configuration: a turn with no
+        // configuration runs on the chat's bound model.
+        conversation.model = turnModelName
         conversation.shouldThink = userMessage.configuration?.shouldThink
+        conversation.reasoningEffort = userMessage.configuration?.reasoningEffort
+        conversation.serviceTier = userMessage.configuration?.serviceTier
 
         // Optional console trace (gated on the advanced setting). Not
         // coupled to orchestration mode anymore - any chat agent can
@@ -848,6 +1205,35 @@ class ChatAgent {
             guard let self else {
                 return
             }
+            #if ITERM_DEBUG
+            // TEMPORARY probe (Development builds only — ITERM_DEBUG is set only
+            // in the Development config, not Beta/Nightly/Deployment, and this
+            // target never defines DEBUG): a turn that completes while
+            // an orchestration tool call is still parked is the bug we're
+            // chasing — the agent swaps in a fresh conversation on completion
+            // and the parked tool's eventual result resumes a dead controller.
+            // Log the result shape, the last message body kind, and how many
+            // tool calls are still parked so a reproduction pins the trigger.
+            do {
+                let kind: String
+                switch result {
+                case .success: kind = "success"
+                case .failure(let e):
+                    kind = (e is PendingCommandCanceled) ? "cancelled" : "failure(\(e))"
+                }
+                let lastBody: String
+                switch result.successValue?.messages.last?.body {
+                case .some(.functionCall(let call, _)): lastBody = "functionCall(\(call.name ?? "?"))"
+                case .some(.text(let t)): lastBody = "text(\(OrchestrationToolProvider.snippet(of: String(t.prefix(60)))))"
+                case .some(.multipart): lastBody = "multipart"
+                case .some(.functionOutput): lastBody = "functionOutput"
+                case .some(.attachment): lastBody = "attachment"
+                case .some(.uninitialized): lastBody = "uninitialized"
+                case .none: lastBody = "none"
+                }
+                NSFuckingLog("ChatAgent.complete done: result=\(kind) lastBody=\(lastBody) parkedToolCalls=\(self.pendingRemoteCommands.count) needsRenaming=\(needsRenaming)")
+            }
+            #endif
             if result.failureValue is PendingCommandCanceled {
                 completion(nil)
                 return
@@ -881,21 +1267,54 @@ class ChatAgent {
             temp.responseID = nil
             return temp
         }
-        renameConversation = AIConversation(
+        var newConversation = AIConversation(
             registrationProvider: nil,
             messages: history)
-        renameConversation?.shouldThink = false
-        var failed = false
-        renameConversation?.complete { [weak self] (result: Result<AIConversation, Error>) in
-            if let newName = result.successValue?.messages.last?.body.content {
-                try? self?.renameChat(newName)
-                self?.renameConversation = nil
+        newConversation.shouldThink = false
+        AIConversation.completeOneShot(newConversation) { [weak self] (result: Result<AIConversation, Error>) in
+            // Sanitize the model's reply here, at the single point where
+            // titles are minted, so every .renameChat consumer (the chat
+            // list, the window title) sees the same value and a blank or
+            // padded reply can't blank or pad a title anywhere.
+            let newName = result.successValue?.messages.last?.body.content
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if let newName, !newName.isEmpty {
+                do {
+                    try self?.renameChat(newName)
+                    // Only after the rename actually landed: a thrown
+                    // rename means the chat keeps its old title, and an
+                    // icon for the never-applied title would both bill a
+                    // model call and display next to the wrong title.
+                    self?.requestIconGeneration(title: newName)
+                } catch {
+                    RLog("renameChat failed: \(error)")
+                }
             } else {
-                failed = true
+                RLog("Rename produced no usable title")
             }
         }
-        if failed {
-            renameConversation = nil
+    }
+
+    // Generate the chat-list icon for a freshly minted title. This lives
+    // here, next to the title generation it follows, rather than inside
+    // ChatListModel's persistence mutation: a .renameChat can flow
+    // through the model from paths that must not bill a model call
+    // (imports, replays, a future manual-rename UI). On failure the icon
+    // is cleared: for a first generation that's a no-op (the default
+    // icon stays), and after a re-rename it beats leaving the previous
+    // title's icon displayed forever next to the new title. There is no
+    // retry, and pre-existing chats are deliberately not backfilled,
+    // since that would bill one model call per chat without the user
+    // asking for anything.
+    private func requestIconGeneration(title: String) {
+        let chatID = self.chatID
+        ChatIconGenerator.instance.requestIcon(forChatID: chatID,
+                                               title: title) { data in
+            do {
+                try ChatListModel.instance?.setIcon(data, forChatID: chatID)
+            } catch {
+                RLog("Failed to save icon for chat \(chatID): \(error)")
+            }
         }
     }
 
@@ -945,10 +1364,13 @@ class ChatAgent {
                                uniqueID: UUID())
             }
 
+            let details = error.localizedDescription
+                .components(separatedBy: "\n")
+                .map { "    " + $0 }
+                .joined(separator: "\n")
             return Message(chatID: userMessage.chatID,
                            author: .agent,
-                           content: .plainText("🛑 I ran into a problem: \(error.localizedDescription)",
-                                               context: nil),
+                           content: .markdown("**Request failed**\n\n\(details)"),
                            sentDate: Date(),
                            uniqueID: UUID())
         }
@@ -989,7 +1411,8 @@ class ChatAgent {
                 uniqueID: messageID,
                 responseID: responseID)
         case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .appendAttachment, .vectorStoreCreated, .userCommand:
+                .commit, .setPermissions, .appendAttachment, .vectorStoreCreated, .userCommand,
+                .unsupported:
             it_fatalError()
         }
     }
@@ -1030,7 +1453,8 @@ class ChatAgent {
                 uniqueID: messageID,
                 responseID: responseID)
         case .remoteCommandRequest, .selectSessionRequest, .clientLocal, .renameChat, .append,
-                .commit, .setPermissions, .appendAttachment, .vectorStoreCreated, .userCommand:
+                .commit, .setPermissions, .appendAttachment, .vectorStoreCreated, .userCommand,
+                .unsupported:
             it_fatalError()
         }
     }
@@ -1076,7 +1500,9 @@ extension ChatAgent {
                                   completion: @escaping (Result<String, Error>) throws -> ()) throws {
         if remoteCommand.needsSafetyCheck {
             Task { @MainActor in
-                let safe = await remoteCommand.isSafe(force: mode == .orchestration)
+                let transcript = SafetyTranscript.forChat(chatID)
+                let safe = await remoteCommand.isSafe(force: mode == .orchestration,
+                                                      transcript: transcript)
                 do {
                     try reallyRunCommand(remoteCommand,
                                          responseID,
@@ -1098,8 +1524,19 @@ extension ChatAgent {
                                   safe: Bool?,
                                   completion: @escaping (Result<String, Error>) throws -> ()) throws {
         let requestID = UUID()
+        // If this command blocks on the user's approval, the agent is now waiting,
+        // not working: clear typing so the phone's spinner isn't stuck and (on a
+        // pre-turnLifecycle phone) the reply notification, which fires on typing
+        // false, still fires. The park condition mirrors
+        // ChatClient.processRemoteCommandRequest exactly (ask, or always+unsafe, or
+        // no resolvable session) via the shared Permission.parksOnApproval
+        // predicate. Auto-run (.always+safe) / auto-deny (.never) commands resolve
+        // without the user mid-turn, so leave typing alone - re-emitting it would
+        // make the phone read the resume as a new turn and drop the reply text.
+        let needsApproval = remoteCommandParksOnUser(remoteCommand, safe: safe)
         pendingRemoteCommands[requestID] = .init(completion: completion,
-                                                 responseID: responseID)
+                                                 responseID: responseID,
+                                                 clearedTyping: needsApproval)
         try broker.publish(message: .init(chatID: chatID,
                                           author: .agent,
                                           content: .remoteCommandRequest(.classic(remoteCommand), safe: safe),
@@ -1107,6 +1544,32 @@ extension ChatAgent {
                                           uniqueID: requestID),
                            toChatID: chatID,
                            partial: false)
+        if needsApproval {
+            typingParkOnUser()
+        }
+    }
+
+    // Predict whether this command will PARK on the user's approval, matching
+    // ChatClient.processRemoteCommandRequest exactly: guid selection by category
+    // (browser categories resolve browserSessionGuid, else terminalSessionGuid);
+    // no resolvable session -> a selectSessionRequest, which parks; otherwise the
+    // shared Permission.parksOnApproval mapping (ask, or always+unsafe). Kept in
+    // lockstep with the real gate via that shared predicate so a safe .ask command
+    // (which still parks) or a browser-category command (its own guid) can't
+    // mispredict and strand the phone's typing / reply-notification state.
+    private func remoteCommandParksOnUser(_ remoteCommand: RemoteCommand, safe: Bool?) -> Bool {
+        let category = remoteCommand.content.permissionCategory
+        let guid = category.isBrowserSpecific
+            ? ChatListModel.instance?.chat(id: chatID)?.browserSessionGuid
+            : ChatListModel.instance?.chat(id: chatID)?.terminalSessionGuid
+        guard let guid,
+              iTermController.sharedInstance().anySession(forReference: guid) != nil else {
+            return true
+        }
+        let permission = RemoteCommandExecutor.instance.permission(chatID: chatID,
+                                                                   inSessionGuid: guid,
+                                                                   category: category)
+        return permission.parksOnApproval(safe: safe)
     }
 }
 
@@ -1161,47 +1624,18 @@ extension ChatAgent {
     /// because `ChatAgent.init` requires a `ChatBroker`, and `ChatBroker`
     /// requires a real `ChatDatabase` / `ChatListModel` singleton that would
     /// write the user's actual chat DB during a test run. Mirror the body
-    /// here if `load(messages:)` ever changes — `AILiveHarness` reaches
-    /// `AIChatToolCallRepair` through this seam to validate the chat-restore
-    /// path end-to-end against real vendor APIs.
-    /// Translate a persisted transcript to LLM messages WITHOUT the orphan
-    /// repair pass. Production never sends this (aiMessagesForReloadingTranscript
-    /// always repairs), but the live negative-control test sends it to prove a
-    /// real vendor actually rejects an un-repaired orphan tool_result, so the
-    /// positive repair test cannot pass by accident.
-    static func transcriptMessagesBeforeRepair(_ messages: [Message]) -> [AITermController.Message] {
-        var stateMachine = MessageToPromptStateMachine()
-        return messages.compactMap { message -> AITermController.Message? in
-            switch message.content {
-            case .plainText, .markdown, .explanationRequest, .explanationResponse,
-                    .remoteCommandRequest, .remoteCommandResponse, .terminalCommand,
-                    .multipart, .watcherEvent:
-                let body = stateMachine.body(message: message)
-                return AITermController.Message(
-                    responseID: message.responseID,
-                    role: AITermController.Message.role(from: message),
-                    body: body,
-                    reasoningContent: message.agentReasoning)
-            case .selectSessionRequest, .clientLocal, .renameChat, .append, .appendAttachment,
-                    .commit, .vectorStoreCreated, .userCommand, .setPermissions:
-                return nil
-            }
-        }
-    }
-
+    /// here if `load(messages:)` ever changes so `AILiveHarness` validates
+    /// the chat-restore path end-to-end against real vendor APIs.
     static func aiMessagesForReloadingTranscript(_ messages: [Message]) -> [AITermController.Message] {
-        return AIChatToolCallRepair.repairingOrphanedToolResults(
+        AIChatToolCallRepair.repairingOrphanedToolPairs(
             transcriptMessagesBeforeRepair(messages))
     }
-}
 
-// Minimal iTermObject-conforming owner used so a transient
-// iTermVariables frame can be attached to the per-build scope that
-// evaluates the orchestration system prompt's swifty-string template.
-// The frame and scope are discarded immediately after evaluation, so
-// the owner has no real responsibilities; it just needs to satisfy
-// iTermVariables's owner-typed init.
-@objc private class OrchestrationPromptScopeOwner: NSObject, iTermObject {
-    func objectMethodRegistry() -> iTermBuiltInFunctions? { nil }
-    func objectScope() -> iTermVariableScope? { nil }
+    /// Test-only seam: the structured translation WITHOUT the orphan-repair
+    /// pass, for the live negative controls that prove vendors really do
+    /// reject un-repaired orphans (so the positive tests aren't vacuous).
+    static func transcriptMessagesBeforeRepair(_ messages: [Message]) -> [AITermController.Message] {
+        var stateMachine = MessageToPromptStateMachine()
+        return aiMessagesForStructuredReplay(messages, stateMachine: &stateMachine)
+    }
 }

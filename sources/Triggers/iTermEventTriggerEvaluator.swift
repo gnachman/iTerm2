@@ -63,6 +63,14 @@ class EventTriggerEvaluator: NSObject {
     /// Closure to fire a trigger. Set by PTYSession to forward to VT100Screen.
     @objc var fireTriggerHandler: ((Trigger, [String], Bool) -> Void)?
 
+    /// The owning session's variable scope. Set by PTYSession. Used to observe
+    /// arbitrary variables for the variable-changed match type.
+    @objc weak var variableScope: iTermVariableScope?
+
+    /// Variable references kept alive for variable-changed triggers. One per
+    /// enabled variable-changed trigger that names a variable.
+    private var variableReferences: [iTermVariableReference<AnyObject>] = []
+
     /// All event triggers grouped by match type
     private var eventTriggers: [iTermTriggerMatchType: [Trigger]] = [:]
 
@@ -86,26 +94,27 @@ class EventTriggerEvaluator: NSObject {
     @objc init(sessionDescription: String) {
         self.sessionDescription = sessionDescription
         super.init()
-        DLog("[\(sessionDescription)] EventTriggerEvaluator initialized")
+        RLog("[\(sessionDescription)] EventTriggerEvaluator initialized")
     }
 
     deinit {
-        DLog("[\(sessionDescription)] EventTriggerEvaluator deallocated")
+        RLog("[\(sessionDescription)] EventTriggerEvaluator deallocated")
         invalidateAllTimers()
+        teardownVariableObservers()
     }
 
     // MARK: - Loading Triggers
 
     /// Load event triggers from profile array
     @objc func loadFromProfileArray(_ array: [[String: Any]]) {
-        DLog("[\(sessionDescription)] Loading triggers from \(array.count) trigger definitions")
+        RLog("[\(sessionDescription)] Loading triggers from \(array.count) trigger definitions")
         invalidateAllTimers()
         eventTriggers.removeAll()
         isIdleForTrigger.removeAll()
 
         for dict in array {
             guard let trigger = Trigger(fromUntrustedDict: dict) else {
-                DLog("[\(sessionDescription)] Failed to create trigger from dict: \(dict)")
+                RLog("[\(sessionDescription)] Failed to create trigger from dict: \(dict)")
                 continue
             }
 
@@ -121,10 +130,13 @@ class EventTriggerEvaluator: NSObject {
             eventTriggers[matchType]?.append(trigger)
         }
 
-        DLog("[\(sessionDescription)] Loaded \(enabledEventTriggerCount) enabled event triggers across \(eventTriggers.count) event types")
+        RLog("[\(sessionDescription)] Loaded \(enabledEventTriggerCount) enabled event triggers across \(eventTriggers.count) event types")
 
         // Start idle timers for idle/activity-after-idle triggers
         startIdleTimers()
+
+        // Register observers for variable-changed triggers
+        setupVariableObservers()
     }
 
     /// Check if there are any event triggers loaded
@@ -248,7 +260,7 @@ class EventTriggerEvaluator: NSObject {
             // process is still running.
             guard let target = trigger.eventParams?["jobName"] as? String,
                   !target.isEmpty else {
-                DLog("[\(sessionDescription)] Skip trigger \(trigger.action) for job \(job) because no jobName filter is set")
+                RLog("[\(sessionDescription)] Skip trigger \(trigger.action) for job \(job) because no jobName filter is set")
                 continue
             }
             if target.lowercased() != jobLower {
@@ -267,13 +279,13 @@ class EventTriggerEvaluator: NSObject {
 
     /// Called when a prompt is detected
     @objc func promptDetected() {
-        DLog("[\(sessionDescription)] Prompt detected")
+        RLog("[\(sessionDescription)] Prompt detected")
         fireTriggersForMatchType(.eventPromptDetected)
     }
 
     /// Called when a command finishes
     @objc func commandFinished(info: EventCommandFinishedInfo) {
-        DLog("[\(sessionDescription)] Command finished: exitCode=\(info.exitCode) command=\(info.command ?? "(nil)") duration=\(info.duration)")
+        RLog("[\(sessionDescription)] Command finished: exitCode=\(info.exitCode) command=\(redacted: info.command ?? "(nil)", or: "len=\((info.command ?? "").count)") duration=\(info.duration)")
         // Stop all long-running timers since command finished
         for (_, timer) in longRunningTimers {
             timer.invalidate()
@@ -302,7 +314,7 @@ class EventTriggerEvaluator: NSObject {
 
     /// Called when the working directory changes
     @objc func directoryChanged(to path: String) {
-        DLog("[\(sessionDescription)] Directory changed to: \(path)")
+        RLog("[\(sessionDescription)] Directory changed to: \(path)")
         guard !disabled else {
             DLog("[\(sessionDescription)] Disabled, skipping directory changed triggers")
             return
@@ -323,7 +335,7 @@ class EventTriggerEvaluator: NSObject {
 
     /// Called when the remote host changes
     @objc func hostChanged(to host: String) {
-        DLog("[\(sessionDescription)] Host changed to: \(host)")
+        RLog("[\(sessionDescription)] Host changed to: \(host)")
         guard !disabled else {
             DLog("[\(sessionDescription)] Disabled, skipping host changed triggers")
             return
@@ -344,7 +356,7 @@ class EventTriggerEvaluator: NSObject {
 
     /// Called when the user changes
     @objc func userChanged(to user: String) {
-        DLog("[\(sessionDescription)] User changed to: \(user)")
+        RLog("[\(sessionDescription)] User changed to: \(user)")
         guard !disabled else {
             DLog("[\(sessionDescription)] Disabled, skipping user changed triggers")
             return
@@ -372,7 +384,7 @@ class EventTriggerEvaluator: NSObject {
             for trigger in triggers where !trigger.disabled {
                 let triggerId = ObjectIdentifier(trigger)
                 if isIdleForTrigger[triggerId] == true {
-                    DLog("[\(sessionDescription)] Activity after idle detected, firing trigger \(trigger.action)")
+                    RLog("[\(sessionDescription)] Activity after idle detected, firing trigger \(trigger.action)")
                     isIdleForTrigger[triggerId] = false
                     fireTrigger(trigger, capturedStrings: [])
                 }
@@ -393,7 +405,7 @@ class EventTriggerEvaluator: NSObject {
 
     /// Called when session ends
     @objc func sessionEnded() {
-        DLog("[\(sessionDescription)] Session ended")
+        RLog("[\(sessionDescription)] Session ended")
         invalidateAllTimers()
         fireTriggersForMatchType(.eventSessionEnded)
     }
@@ -406,7 +418,7 @@ class EventTriggerEvaluator: NSObject {
 
     /// Called when a command starts
     @objc func commandStarted(command: String?) {
-        DLog("[\(sessionDescription)] Command started: \(command ?? "(nil)")")
+        RLog("[\(sessionDescription)] Command started: \(redacted: command ?? "(nil)", or: "len=\((command ?? "").count)")")
         commandStartTime = Date()
         currentCommand = command
 
@@ -430,7 +442,7 @@ class EventTriggerEvaluator: NSObject {
             let threshold = (trigger.eventParams?["threshold"] as? NSNumber)?.doubleValue ?? 60.0
             let triggerId = ObjectIdentifier(trigger)
 
-            DLog("[\(sessionDescription)] Starting long-running timer for \(threshold)s for trigger \(trigger.action)")
+            RLog("[\(sessionDescription)] Starting long-running timer for \(threshold)s for trigger \(trigger.action)")
             longRunningTimers[triggerId]?.invalidate()
             longRunningTimers[triggerId] = Timer.scheduledTimer(
                 withTimeInterval: threshold,
@@ -467,7 +479,7 @@ class EventTriggerEvaluator: NSObject {
     /// `messages` contains the decoded text values from the notification (e.g., title, message, subtitle).
     /// The trigger fires if any of them matches the filter regex.
     @objc func notificationPosted(messages: [String]) {
-        DLog("[\(sessionDescription)] Notification posted: \(messages)")
+        RLog("[\(sessionDescription)] Notification posted: \(messages)")
         guard !disabled else {
             DLog("[\(sessionDescription)] Disabled, skipping notification posted triggers")
             return
@@ -489,7 +501,7 @@ class EventTriggerEvaluator: NSObject {
     /// Called when the progress bar appears or disappears
     /// - Parameter appeared: true if progress bar appeared, false if it disappeared
     @objc func progressBarChanged(appeared: Bool) {
-        DLog("[\(sessionDescription)] Progress bar \(appeared ? "appeared" : "disappeared")")
+        RLog("[\(sessionDescription)] Progress bar \(appeared ? "appeared" : "disappeared")")
         guard !disabled else {
             DLog("[\(sessionDescription)] Disabled, skipping progress bar changed triggers")
             return
@@ -508,11 +520,76 @@ class EventTriggerEvaluator: NSObject {
         }
     }
 
+    // MARK: - Variable Observation
+
+    /// Tear down all variable-changed observers. Safe to call repeatedly.
+    private func teardownVariableObservers() {
+        for ref in variableReferences {
+            ref.onChangeBlock = nil
+            ref.removeAllLinks()
+        }
+        variableReferences.removeAll()
+    }
+
+    /// Register an observer for each enabled variable-changed trigger that
+    /// names a variable. The reference fires its change block whenever the
+    /// named variable's value changes in the session scope (including when a
+    /// previously-unset variable becomes set), at which point we apply the
+    /// trigger's optional value regex and fire if it matches.
+    private func setupVariableObservers() {
+        teardownVariableObservers()
+
+        guard let scope = variableScope else {
+            RLog("[\(sessionDescription)] No variable scope set; cannot observe variable-changed triggers")
+            return
+        }
+        guard let triggers = eventTriggers[.eventVariableChanged] else {
+            return
+        }
+
+        for trigger in triggers where !trigger.disabled {
+            guard let name = trigger.eventParams?[kTriggerVariableNameKey] as? String, !name.isEmpty else {
+                RLog("[\(sessionDescription)] Skip variable-changed trigger \(trigger.action) because no variable name is set")
+                continue
+            }
+            let ref = iTermVariableReference<AnyObject>(path: name, vendor: scope)
+            // Set the change block after creating the reference so we don't
+            // fire for the variable's current value at load time.
+            ref.onChangeBlock = { [weak self, weak trigger] in
+                guard let self = self, let trigger = trigger else { return }
+                self.variableChanged(trigger: trigger, name: name)
+            }
+            RLog("[\(sessionDescription)] Observing variable '\(name)' for trigger \(trigger.action)")
+            variableReferences.append(ref)
+        }
+    }
+
+    private func variableChanged(trigger: Trigger, name: String) {
+        guard !disabled else {
+            DLog("[\(sessionDescription)] Disabled, skipping variable changed trigger")
+            return
+        }
+        guard !trigger.disabled else {
+            return
+        }
+        let value = variableScope?.stringValue(forVariableName: name) ?? ""
+        DLog("[\(sessionDescription)] Variable '\(name)' changed to '\(value)'")
+        if matchesVariableValueFilter(trigger: trigger, value: value) {
+            fireTrigger(trigger, capturedStrings: [value, name])
+        } else {
+            DLog("[\(sessionDescription)] Value '\(value)' did not match filter for trigger \(trigger.action)")
+        }
+    }
+
+    private func matchesVariableValueFilter(trigger: Trigger, value: String) -> Bool {
+        return matchesRegexParam(trigger: trigger, paramKey: kTriggerVariableValueRegexKey, value: value)
+    }
+
     // MARK: - Timer Management
 
     private func invalidateAllTimers() {
         if !idleTimers.isEmpty || !longRunningTimers.isEmpty {
-            DLog("[\(sessionDescription)] Invalidating all timers: \(idleTimers.count) idle, \(longRunningTimers.count) long-running")
+            RLog("[\(sessionDescription)] Invalidating all timers: \(idleTimers.count) idle, \(longRunningTimers.count) long-running")
         }
         for (_, timer) in idleTimers {
             timer.invalidate()
@@ -573,7 +650,7 @@ class EventTriggerEvaluator: NSObject {
     }
 
     private func idleTimerFired(for trigger: Trigger) {
-        DLog("[\(sessionDescription)] Idle timer fired for trigger \(trigger.action)")
+        RLog("[\(sessionDescription)] Idle timer fired for trigger \(trigger.action)")
         let triggerId = ObjectIdentifier(trigger)
         isIdleForTrigger[triggerId] = true
 
@@ -587,7 +664,7 @@ class EventTriggerEvaluator: NSObject {
     }
 
     private func longRunningTimerFired(for trigger: Trigger) {
-        DLog("[\(sessionDescription)] Long-running timer fired for trigger \(trigger.action)")
+        RLog("[\(sessionDescription)] Long-running timer fired for trigger \(trigger.action)")
         guard !trigger.disabled else {
             DLog("[\(sessionDescription)] Trigger is disabled, not firing")
             return
@@ -598,7 +675,7 @@ class EventTriggerEvaluator: NSObject {
 
         let elapsed = commandStartTime.map { -$0.timeIntervalSinceNow } ?? 0
         let command = currentCommand ?? ""
-        DLog("[\(sessionDescription)] Command '\(command)' has been running for \(Int(elapsed))s")
+        RLog("[\(sessionDescription)] Command '\(redacted: command, or: "len=\(command.count)")' has been running for \(Int(elapsed))s")
         fireTrigger(trigger, capturedStrings: [command, "\(Int(elapsed))"])
     }
 
@@ -628,7 +705,7 @@ class EventTriggerEvaluator: NSObject {
 
     private func fireTrigger(_ trigger: Trigger, capturedStrings: [String]) {
         guard let handler = fireTriggerHandler else {
-            DLog("[\(sessionDescription)] No fireTriggerHandler set, cannot fire trigger \(trigger.action)")
+            RLog("[\(sessionDescription)] No fireTriggerHandler set, cannot fire trigger \(trigger.action)")
             return
         }
         DLog("[\(sessionDescription)] Firing trigger \(trigger.action) with captures: \(capturedStrings)")
@@ -657,7 +734,7 @@ class EventTriggerEvaluator: NSObject {
             return matches
         } catch {
             let matches = fallbackToExactMatch ? (value == pattern) : value.contains(pattern)
-            DLog("[\(sessionDescription)] Invalid regex /\(pattern)/, falling back to \(fallbackToExactMatch ? "exact" : "substring") match: \(matches)")
+            RLog("[\(sessionDescription)] Invalid regex /\(pattern)/, falling back to \(fallbackToExactMatch ? "exact" : "substring") match: \(matches)")
             return matches
         }
     }

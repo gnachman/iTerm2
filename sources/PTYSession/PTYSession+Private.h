@@ -118,6 +118,7 @@ TriggerDelegate> {
 @property(nonatomic, assign) BOOL isUTF8;
 @property(nonatomic, copy) NSDictionary *substitutions;
 @property(nonatomic, copy) NSString *guid;
+@property(nonatomic, copy) NSString *stableID;
 @property(nonatomic, retain) iTermPasteHelper *pasteHelper;
 @property(nonatomic, copy) NSString *lastCommand;
 @property(nonatomic, retain) iTermExpectation *pasteBracketingOopsieExpectation;

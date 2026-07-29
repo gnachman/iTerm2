@@ -48,6 +48,17 @@ enum WorkgroupIntrospection {
     // read by the nonisolated chat renderer (ChatViewController) too.
     nonisolated static let spawnWorkgroupID = "spawn"
 
+    // Sentinel workgroupID used by the per-command safety-approval prompt
+    // (OrchestratorDispatcher.promptForCommandApproval). Like spawnWorkgroupID
+    // it is not a real workgroup_id: it rides the same workgroupPermissionRequest
+    // content type but the chat renderer keys off this exact string to show the
+    // "Run this command?" bubble copy instead of a workgroup/session-control
+    // prompt. Two sites must agree on the literal: the dispatcher emits it, the
+    // renderer (ChatViewController) consumes it.
+    // nonisolated: an immutable sentinel string with no main-thread state,
+    // read by the nonisolated chat renderer (ChatViewController) too.
+    nonisolated static let commandApprovalWorkgroupID = "command-approval"
+
     // MARK: - Listing
 
     // Returns every workgroup the orchestrator knows about. Real workgroups
@@ -87,7 +98,7 @@ enum WorkgroupIntrospection {
     static func displayName(forWorkgroupID workgroupID: String) -> String {
         if workgroupID.hasPrefix(syntheticWorkgroupIDPrefix) {
             let guid = String(workgroupID.dropFirst(syntheticWorkgroupIDPrefix.count))
-            if let session = session(forGUID: guid) {
+            if let session = session(forReference: guid) {
                 return sessionDisplayName(session)
             }
             return workgroupID
@@ -109,6 +120,7 @@ enum WorkgroupIntrospection {
         return WorkgroupSummary(
             workgroupID: instance.instanceUniqueIdentifier,
             workgroupName: workgroupName(for: instance),
+            provenance: instance.provenance,
             sessions: sessions)
     }
 
@@ -118,6 +130,7 @@ enum WorkgroupIntrospection {
         return WorkgroupSummary(
             workgroupID: workgroupID,
             workgroupName: roleName,
+            provenance: nil,
             sessions: [
                 sessionSummary(roleID: syntheticRoleID,
                                roleName: roleName,
@@ -145,7 +158,7 @@ enum WorkgroupIntrospection {
     // role are derived via context(for:) rather than supplied by the
     // caller. Returns nil only when no live session has that GUID.
     static func resolve(sessionGuid: String) -> ResolvedTarget? {
-        guard let session = session(forGUID: sessionGuid),
+        guard let session = session(forReference: sessionGuid),
               let ctx = context(for: session) else {
             return nil
         }
@@ -165,7 +178,7 @@ enum WorkgroupIntrospection {
     // OrchestratorCommand). Returns nil when no live session has that
     // GUID, in which case the caller surfaces an unknown_session error.
     static func claimScope(forSessionGuid guid: String) -> String? {
-        guard let session = session(forGUID: guid),
+        guard let session = session(forReference: guid),
               let ctx = context(for: session) else {
             return nil
         }
@@ -219,9 +232,11 @@ enum WorkgroupIntrospection {
             roleName: resolved.roleName,
             kind: kind(for: resolved.session),
             status: state(for: resolved.session),
-            lastActivityISO: nil,
+            statusSource: statusSource(for: resolved.session),
+            screenLastChanged: screenAgeDescription(for: resolved.session),
             currentCommand: currentCommand(for: resolved.session),
             lastMessage: lastMessage(for: resolved.session),
+            provenance: SessionProvenanceRegistry.instance.provenance(forSessionGUID: resolved.session.guid),
             pendingAction: pendingActionDescription(for: resolved.session))
     }
 
@@ -231,12 +246,34 @@ enum WorkgroupIntrospection {
         return SessionSummary(
             roleID: roleID,
             roleName: roleName,
-            sessionGuid: session.guid,
+            // The model copies this verbatim into tool calls; emit the reload-
+            // durable stableID so a copied reference survives a shell reload.
+            sessionGuid: session.stableID,
             kind: kind(for: session),
             status: state(for: session),
-            lastActivityISO: nil,
+            statusSource: statusSource(for: session),
+            screenLastChanged: screenAgeDescription(for: session),
             currentCommand: currentCommand(for: session),
+            provenance: SessionProvenanceRegistry.instance.provenance(forSessionGUID: session.guid),
             pendingAction: pendingActionDescription(for: session))
+    }
+
+    // MARK: - Recency
+
+    // Humanized "how long ago did this session's rendered screen last
+    // change" (e.g. "< 1 min ago", "27 min ago"). Screen text carries
+    // no recency cues of its own: a transcript from half an hour ago
+    // reads exactly like one printed a second ago, which has caused
+    // agents to mistake a stale screen for fresh work. nil until the
+    // session has rendered at least once: before then the change
+    // timestamp describes session creation, and reporting that as
+    // fresh would bias the agent toward reading an empty screen as
+    // current activity.
+    static func screenAgeDescription(for session: PTYSession) -> String? {
+        guard session.screenContentsHaveEverChanged else { return nil }
+        let age = session.timeSinceScreenContentsLastChanged
+        guard age >= 0 else { return nil }
+        return "\(DateFormatter.compactDateDifferenceString(fromTimeDelta: age)) ago"
     }
 
     // MARK: - Screen contents
@@ -260,20 +297,56 @@ enum WorkgroupIntrospection {
                                requestedLines: Int?) -> ScreenContents {
         let kind = kind(for: session)
         let pending = pendingActionDescription(for: session)
-        switch kind {
-        case .tui:
+        let surface = screenSurface(for: session)
+        let mouseReporting = scrollReportingSupported(for: session)
+        // The (soft) alternate screen is the deciding factor, not `kind`:
+        // a full-screen app repaints into scrollback, so the only
+        // meaningful text is the current grid. This holds even for
+        // claude-code sessions, which now run on the alternate screen
+        // (their Ink frames would otherwise look like dozens of duplicate
+        // screens in the transcript). Expose just the visible grid and let
+        // the agent scroll the wheel to reveal older content.
+        let screenAge = screenAgeDescription(for: session)
+        if surface == .alternate {
             return ScreenContents(text: snapshot(of: session),
-                                  kind: .tui,
-                                  isSnapshot: true,
-                                  pendingAction: pending)
-        case .shell, .claudeCode, .other:
-            let text = trailingTranscript(of: session,
-                                          lines: requestedLines ?? 100)
-            return ScreenContents(text: text,
                                   kind: kind,
-                                  isSnapshot: false,
-                                  pendingAction: pending)
+                                  isSnapshot: true,
+                                  screen: .alternate,
+                                  mouseReporting: mouseReporting,
+                                  pendingAction: pending,
+                                  screenLastChanged: screenAge)
         }
+        // Primary screen: scrollback is real linear history.
+        let text = trailingTranscript(of: session,
+                                      lines: requestedLines ?? 100)
+        return ScreenContents(text: text,
+                              kind: kind,
+                              isSnapshot: false,
+                              screen: .primary,
+                              mouseReporting: mouseReporting,
+                              pendingAction: pending,
+                              screenLastChanged: screenAge)
+    }
+
+    // Semantic screen surface: alternate when the program is on (or would
+    // be on, per the soft flag) the alternate buffer. We use the soft flag
+    // rather than which VT100Grid is actually visible so the answer
+    // reflects the program's intent even when the user has disabled
+    // iTerm2's alternate-screen feature. A soft-alternate session is
+    // almost certainly a TUI.
+    static func screenSurface(for session: PTYSession) -> ScreenSurface {
+        return session.screen.terminalSoftAlternateScreenMode ? .alternate : .primary
+    }
+
+    // Whether the foreground program reports scroll-wheel events, i.e.
+    // whether the scroll_wheel tool can do anything. This is the same
+    // predicate the scroll path itself gates on (highlight-tracking mode
+    // is excluded because it never reports scroll), so the mouse_reporting
+    // hint we surface and the tool's real behavior agree. Reads
+    // PTYSession's ObjC accessor so we don't reference the C MouseMode
+    // enum from Swift.
+    static func scrollReportingSupported(for session: PTYSession) -> Bool {
+        return session.scrollWheelReportingEnabled
     }
 
     // MARK: - Clippings
@@ -287,7 +360,7 @@ enum WorkgroupIntrospection {
         let clippings: [PTYSessionClipping]
         if workgroupID.hasPrefix(syntheticWorkgroupIDPrefix) {
             let guid = String(workgroupID.dropFirst(syntheticWorkgroupIDPrefix.count))
-            guard let session = session(forGUID: guid) else { return nil }
+            guard let session = session(forReference: guid) else { return nil }
             clippings = session.clippings
         } else {
             guard let instance = workgroupInstance(byID: workgroupID),
@@ -314,12 +387,14 @@ enum WorkgroupIntrospection {
             .first { $0.instanceUniqueIdentifier == id }
     }
 
-    private static func session(forGUID guid: String) -> PTYSession? {
-        // anySession(withGUID:) covers peer-port sessions (Code Review, Diff,
-        // side-pane peers) which allSessions() does not enumerate. allSessions()
-        // remains the right source for enumeration paths that explicitly walk
-        // standalone tab/split sessions only.
-        return iTermController.sharedInstance()?.anySession(withGUID: guid)
+    // Resolves a session reference (a stableID from the current snapshot, or a
+    // legacy guid the model echoed from an older transcript) to a live session.
+    // anySession(forReference:) covers peer-port sessions (Code Review, Diff,
+    // side-pane peers) which allSessions() does not enumerate, and dispatches on
+    // the reference form. allSessions() remains the right source for enumeration
+    // paths that explicitly walk standalone tab/split sessions only.
+    private static func session(forReference reference: String) -> PTYSession? {
+        return iTermController.sharedInstance()?.anySession(forReference: reference)
     }
 
     private static func allSessions() -> [PTYSession] {
@@ -327,7 +402,9 @@ enum WorkgroupIntrospection {
     }
 
     private static func syntheticWorkgroupID(for session: PTYSession) -> String {
-        return syntheticWorkgroupIDPrefix + session.guid
+        // Use the reload-durable stableID so a granted claim scope
+        // ("session:<stableID>") survives a shell reload that rotates the guid.
+        return syntheticWorkgroupIDPrefix + session.stableID
     }
 
     private static func workgroupName(for instance: iTermWorkgroupInstance) -> String {
@@ -363,6 +440,77 @@ enum WorkgroupIntrospection {
             return .tui
         }
         return .other
+    }
+
+    // There is deliberately NO coding-agent exemption from the safety gate. An
+    // earlier version skipped classification entirely when the foreground job
+    // basename was claude/codex, but a job name is a low-integrity signal the
+    // agent can spoof (e.g. `exec -a claude bash`, or `cp /bin/bash /tmp/claude`),
+    // which turned send_text into a fully unclassified channel. Coding-agent
+    // sessions run on the alternate screen, so they route through the
+    // screen-aware classifier like any full-screen app: prompting an agent
+    // classifies as safe there, and a spoofed shell does not (its screen shows a
+    // shell prompt, not the agent UI). The perf win of skipping the LLM
+    // round-trip for agent prompts was not worth a name-keyed bypass.
+
+    // Lowercased, login-shell leading "-" stripped, basename only.
+    nonisolated static func normalizedJobBasename(_ raw: String) -> String {
+        var name = raw.lowercased()
+        if name.hasPrefix("-") { name.removeFirst() }
+        if let slash = name.lastIndex(of: "/") {
+            name = String(name[name.index(after: slash)...])
+        }
+        return name
+    }
+
+    // The FOREGROUND (deepest) job's name for a session, lowercased -- the
+    // argv[0] of the process actually reading input. Distinct from
+    // GlobalJobMonitor's ancestor-chain match (which always contains the login
+    // shell): to tell a shell prompt from a REPL running under it we need the
+    // deepest job, which is the session's `jobName` variable.
+    static func foregroundJobName(_ session: PTYSession) -> String? {
+        (session.genericScope.value(forVariableName: "jobName") as? String)?.lowercased()
+    }
+
+    // Recognized interactive shells. Used to decide whether a primary-screen
+    // send should be judged as a shell command line. This is deliberately an
+    // allowlist of SHELLS, not of interpreters: anything whose foreground is
+    // NOT a recognized shell (a REPL such as psql/duckdb/iex/ghci, an unknown
+    // program, or a session with no job info) routes to the screen-aware
+    // classifier instead. That fail-safe direction means an unlisted REPL can't
+    // be mis-judged under shell rules ("DROP TABLE users;" is inert as a shell
+    // command but destructive in a SQL REPL).
+    //
+    // The job name comes from the process table (argv[0]/p_comm), not from
+    // screen content, so on-screen text can't spoof it. It CAN be spoofed by the
+    // process table itself: an agent could rename a REPL to look like a shell
+    // (`cp $(which psql) /tmp/zsh && /tmp/zsh`) to route destructive REPL input
+    // through the weaker shell classifier. That requires a setup command which
+    // is itself classified, so it's a hurdle rather than a free bypass; fully
+    // closing it would mean dropping the shell fast-path (classifying every
+    // shell command against the screen), a perf tradeoff not taken here.
+    nonisolated static let shellJobNames: Set<String> = [
+        "bash", "zsh", "sh", "fish", "dash", "ash", "ksh", "mksh", "pdksh",
+        "tcsh", "csh", "xonsh", "nu", "nushell", "elvish", "pwsh", "powershell",
+    ]
+
+    // Pure name test: lowercased, login-shell leading "-" stripped, basename
+    // only (so "-zsh" and "/bin/bash" both match).
+    nonisolated static func isShellJobName(_ raw: String) -> Bool {
+        return shellJobNames.contains(normalizedJobBasename(raw))
+    }
+
+    static func foregroundIsShell(_ session: PTYSession) -> Bool {
+        guard let job = foregroundJobName(session), !job.isEmpty else {
+            return false  // unknown foreground -> not a shell -> screen-aware (fail-safe)
+        }
+        return isShellJobName(job)
+        // jobName comes from iTermProcessCache (refreshed at ~0.5s intervals),
+        // so in principle a REPL launched microseconds ago could still read as
+        // the shell. In this gate's use that window doesn't bite: the
+        // orchestrator's sends are serialized one per LLM round-trip (seconds
+        // apart), so a session that just launched psql reports jobName=psql long
+        // before the next send arrives to be classified.
     }
 
     // Status reflects whether the role's *program* is doing anything.
@@ -408,6 +556,25 @@ enum WorkgroupIntrospection {
         return .idle
     }
 
+    // Like state(forTabStatus:) but returns .unknown when there is no
+    // explicit recognized statusText, instead of falling back to .idle. Used
+    // by the workgroup's idle-driven auto behaviors (auto-send clippings /
+    // auto-request review), whose working -> idle edge must reflect a program
+    // that actually finished. A session restart CLEARS the tab status, and
+    // the fallback .idle above would otherwise read as a spurious "finished"
+    // edge right after the restart and drive an infinite request/send loop.
+    static func reportedState(forTabStatus status: iTermSessionTabStatus) -> SessionState {
+        guard let text = status.statusText?.lowercased(), !text.isEmpty else {
+            return .unknown
+        }
+        switch text {
+        case "idle": return .idle
+        case "working": return .working
+        case "waiting": return .waiting
+        default: return .unknown
+        }
+    }
+
     // Whether the session exposes a machine-readable status source we
     // can build exact tab-status-transition watchers on. True only when
     // a recognized status string (idle/working/waiting) is currently
@@ -425,6 +592,13 @@ enum WorkgroupIntrospection {
             return false
         }
         return text == "idle" || text == "working" || text == "waiting"
+    }
+
+    // The agent-facing form of reportsSessionStatus, carried on
+    // list_workgroups and get_state output so the agent can tell whether
+    // `status` is authoritative before deciding how to watch a session.
+    static func statusSource(for session: PTYSession) -> StatusSource {
+        return reportsSessionStatus(session) ? .reported : .inferred
     }
 
     // Human-readable hint describing what the role is currently
@@ -457,7 +631,7 @@ enum WorkgroupIntrospection {
         // the line index.
         let scrollback = session.screen.numberOfScrollbackLines()
         let height = session.screen.height()
-        return extractScreenText(of: session,
+        return extractScreenText(ofScreen: session.screen,
                                   fromLine: scrollback,
                                   toLine: scrollback + height)
     }
@@ -472,8 +646,26 @@ enum WorkgroupIntrospection {
         let total = session.screen.numberOfLines()
         let clamped = Int32(max(1, min(2000, lines)))
         let start = max(Int32(0), total - clamped)
-        return extractScreenText(of: session, fromLine: start, toLine: total)
+        return extractScreenText(ofScreen: session.screen, fromLine: start, toLine: total)
     }
+
+    // Markup tokens woven into the extracted text so the agent can tell
+    // rendered decoration apart from real content. The angle-bracket
+    // characters are U+27E8/U+27E9 (mathematical angle brackets), which
+    // effectively never occur in real terminal output, so a literal
+    // occurrence won't be confused with our markup. These tokens are
+    // documented in the get_screen_contents tool description; keep the
+    // two in sync.
+    private static let dimOpenMarkup = "\u{27E8}dim\u{27E9}"
+    private static let dimCloseMarkup = "\u{27E8}/dim\u{27E9}"
+    private static let cursorMarkup = "\u{27E8}cursor\u{27E9}"
+    private static let imagePlaceholder = "\u{27E8}image\u{27E9}"
+
+    // Attribute key used to ferry the per-cell faint bit out of the
+    // extractor's attributeProvider and into renderAttributed. Internal
+    // (not private) only so unit tests can synthesize faint runs to feed
+    // renderAttributed directly.
+    static let faintAttributeKey = NSAttributedString.Key("iTermIntrospectionFaint")
 
     // Pull text for a half-open line range [fromLine, toLine) using
     // iTermTextExtractor. This is the same path PTYSession's
@@ -489,20 +681,35 @@ enum WorkgroupIntrospection {
     // representation, so we pass a non-nil attributeProvider to get
     // an NSAttributedString that carries NSTextAttachment markers at
     // image positions, then collapse consecutive cells of the same
-    // image into a single "[image]" placeholder.
-    private static func extractScreenText(of session: PTYSession,
-                                           fromLine startY: Int32,
-                                           toLine endY: Int32) -> String {
+    // image into a single ⟨image⟩ placeholder.
+    //
+    // The attributeProvider also tags faint (dim/SGR-2) cells so
+    // renderAttributed can wrap them in ⟨dim⟩…⟨/dim⟩. Inline shell
+    // suggestions (zsh-autosuggestions, fish autosuggest) and ghost
+    // completions in TUIs like Claude Code are rendered faint; without
+    // this marker they look byte-for-byte identical to text the user
+    // actually typed, which routinely fools an agent reading the screen.
+    // We also request the per-character grid coords so we can splice in
+    // a ⟨cursor⟩ marker at the cursor's position.
+    //
+    // Takes the VT100Screen rather than the owning PTYSession so unit
+    // tests can drive it with a screen built from raw terminal input.
+    static func extractScreenText(ofScreen screen: VT100Screen,
+                                  fromLine startY: Int32,
+                                  toLine endY: Int32) -> String {
         guard endY > startY else { return "" }
-        let extractor = iTermTextExtractor(dataSource: session.screen)
+        let extractor = iTermTextExtractor(dataSource: screen)
         let range = VT100GridWindowedRange(
             coordRange: VT100GridCoordRange(
                 start: VT100GridCoord(x: 0, y: startY),
                 end: VT100GridCoord(x: 0, y: endY)),
             columnWindow: VT100GridRange(location: 0, length: 0))
+        let coords = GridCoordArray()
         let content = extractor.content(
             in: range,
-            attributeProvider: { _, _, _ in [:] },
+            attributeProvider: { theChar, _, _ in
+                ScreenCharIsFaint(theChar) ? [faintAttributeKey: true] : [:]
+            },
             nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
             pad: false,
             includeLastNewline: false,
@@ -510,11 +717,16 @@ enum WorkgroupIntrospection {
             cappedAtSize: -1,
             truncateTail: false,
             continuationChars: nil,
-            coords: nil,
+            coords: coords,
             deduplicateDECDHL: true)
         let raw: String
         if let attributed = content as? NSAttributedString {
-            raw = collapseImageAttachments(attributed)
+            let cursorIndex = cursorMarkupIndex(coords: coords,
+                                                screen: screen,
+                                                fromLine: startY,
+                                                toLine: endY,
+                                                length: attributed.length)
+            raw = renderAttributed(attributed, cursorIndex: cursorIndex)
         } else if let plain = content as? String {
             raw = plain
         } else {
@@ -523,32 +735,112 @@ enum WorkgroupIntrospection {
         return stripTrailingBlankLines(raw)
     }
 
-    // Walk an attributed string and emit text verbatim, replacing
-    // runs of NSTextAttachment image cells with a single "[image]"
-    // placeholder per distinct image. The extractor builds a fresh
-    // NSTextAttachment per cell (so enumerateAttribute yields one
-    // run per cell), but every cell of the same image points its
-    // NSTextAttachment.image at the same NSImage instance — use
-    // identity comparison to dedupe.
-    private static func collapseImageAttachments(_ attributed: NSAttributedString) -> String {
+    // Returns the index into the attributed string where a ⟨cursor⟩
+    // marker should be spliced, or nil if the cursor is outside the
+    // extracted range. `coords` is the extractor's per-character grid
+    // coordinate array; it stays length-aligned with the attributed
+    // string (image attachments contribute one coord per
+    // object-replacement char). cursorX/cursorY from the screen are
+    // 1-based, matching PTYSession's own usage.
+    //
+    // Priority: (1) the first character at/after the cursor on the
+    // cursor's own line — this lands the marker exactly before a faint
+    // suggestion that begins at the cursor. (2) Otherwise just past the
+    // last character on the cursor line — the common "cursor sits at end
+    // of typed input, no suggestion" case, so the marker shouldn't jump
+    // to the next line. (3) Otherwise the start of the next line, or end
+    // of string. Coords are emitted in reading order (line-major), so a
+    // single forward pass suffices.
+    private static func cursorMarkupIndex(coords: GridCoordArray,
+                                          screen: VT100Screen,
+                                          fromLine startY: Int32,
+                                          toLine endY: Int32,
+                                          length: Int) -> Int? {
+        let cursorY = Int32(screen.numberOfScrollbackLines())
+            + Int32(screen.cursorY()) - 1
+        guard cursorY >= startY, cursorY < endY else { return nil }
+        let cursorX = Int32(screen.cursorX()) - 1
+        let count = min(coords.count, length)
+        var lastOnLineEnd: Int? = nil
+        for i in 0..<count {
+            let c = coords[i]
+            if c.y < cursorY {
+                continue
+            }
+            if c.y == cursorY {
+                if c.x >= cursorX {
+                    return i
+                }
+                lastOnLineEnd = i + 1
+            } else {
+                // Past the cursor line; everything on it has been seen.
+                return lastOnLineEnd ?? i
+            }
+        }
+        return lastOnLineEnd ?? length
+    }
+
+    // Walk an attributed string and emit text verbatim, replacing runs
+    // of NSTextAttachment image cells with a single ⟨image⟩ placeholder
+    // per distinct image, wrapping faint runs in ⟨dim⟩…⟨/dim⟩, and
+    // splicing a ⟨cursor⟩ marker at cursorIndex. The extractor builds a
+    // fresh NSTextAttachment per cell, but every cell of the same image
+    // points its NSTextAttachment.image at the same NSImage instance, so
+    // identity comparison dedupes consecutive image cells.
+    // Internal (not private) so unit tests can verify ⟨image⟩ markup,
+    // which is impractical to produce from a real screen in a test.
+    static func renderAttributed(_ attributed: NSAttributedString,
+                                 cursorIndex: Int?) -> String {
         let result = NSMutableString()
+        var dimIsOpen = false
         var lastImageID: ObjectIdentifier? = nil
-        attributed.enumerateAttribute(
-            .attachment,
-            in: NSRange(location: 0, length: attributed.length),
-            options: []
-        ) { value, range, _ in
-            if let attachment = value as? NSTextAttachment {
+        let length = attributed.length
+        var location = 0
+        while location < length {
+            var runRange = NSRange(location: 0, length: 0)
+            let attrs = attributed.attributes(at: location, effectiveRange: &runRange)
+            let runStart = location
+            let runEnd = runRange.location + runRange.length
+            let attachment = attrs[.attachment] as? NSTextAttachment
+            let isImage = attachment != nil
+            // Image cells carry no faint semantics; treat them as not dim.
+            let wantDim = !isImage && (attrs[faintAttributeKey] as? Bool == true)
+            if wantDim && !dimIsOpen {
+                result.append(dimOpenMarkup)
+                dimIsOpen = true
+            } else if !wantDim && dimIsOpen {
+                result.append(dimCloseMarkup)
+                dimIsOpen = false
+            }
+            if let attachment {
+                if let ci = cursorIndex, ci >= runStart, ci < runEnd {
+                    result.append(cursorMarkup)
+                }
                 let id = attachment.image.map { ObjectIdentifier($0) }
                 if id == nil || id != lastImageID {
-                    result.append("[image]")
+                    result.append(imagePlaceholder)
                     lastImageID = id
                 }
             } else {
-                let substring = attributed.attributedSubstring(from: range).string
-                result.append(substring)
                 lastImageID = nil
+                let runText = attributed.attributedSubstring(
+                    from: NSRange(location: runStart, length: runEnd - runStart)).string as NSString
+                if let ci = cursorIndex, ci >= runStart, ci < runEnd {
+                    let splitOffset = ci - runStart
+                    result.append(runText.substring(to: splitOffset))
+                    result.append(cursorMarkup)
+                    result.append(runText.substring(from: splitOffset))
+                } else {
+                    result.append(runText as String)
+                }
             }
+            location = runEnd
+        }
+        if dimIsOpen {
+            result.append(dimCloseMarkup)
+        }
+        if cursorIndex == length {
+            result.append(cursorMarkup)
         }
         return result as String
     }

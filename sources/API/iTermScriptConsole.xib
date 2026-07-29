@@ -9,8 +9,10 @@
         <customObject id="-2" userLabel="File's Owner" customClass="iTermScriptConsole">
             <connections>
                 <outlet property="_callsView" destination="3YB-9P-sUx" id="fn6-44-cee"/>
+                <outlet property="_clearTerminatedButton" destination="clr-Tr-b01" id="clr-Tr-o01"/>
                 <outlet property="_dateColumn" destination="cfh-qe-s6c" id="Cnv-Q2-ITI"/>
                 <outlet property="_filter" destination="nss-z8-191" id="2du-mr-AoM"/>
+                <outlet property="_inspectorButton" destination="63g-M2-ic1" id="ins-Bt-o01"/>
                 <outlet property="_logsView" destination="wrF-a6-UQL" id="Xln-Yy-DUn"/>
                 <outlet property="_nameColumn" destination="lw1-Nm-bBu" id="OUx-7s-ZBs"/>
                 <outlet property="_scriptFilterControl" destination="fNr-Eh-eoa" id="IoC-dk-zTZ"/>
@@ -63,7 +65,7 @@
                                                     <rect key="frame" x="1" y="1" width="124" height="17"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <subviews>
-                                                        <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ko0-Y4-ig8">
+                                                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ko0-Y4-ig8">
                                                             <rect key="frame" x="0.0" y="0.0" width="124" height="17"/>
                                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                             <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="Table View Cell" id="cWH-Mo-7cn">
@@ -95,7 +97,7 @@
                                                     <rect key="frame" x="127.5" y="1" width="97" height="17"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <subviews>
-                                                        <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="QaX-kh-oWc">
+                                                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="QaX-kh-oWc">
                                                             <rect key="frame" x="0.0" y="0.0" width="97" height="17"/>
                                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                             <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="Table View Cell" id="fkE-fZ-wke">
@@ -168,7 +170,7 @@
                             <action selector="scriptFilterDidChange:" target="-2" id="bZy-BP-BjD"/>
                         </connections>
                     </segmentedControl>
-                    <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nss-z8-191">
+                    <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nss-z8-191">
                         <rect key="frame" x="474" y="16" width="413" height="22"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" placeholderString="Filter" drawsBackground="YES" id="hqr-c6-ohx">
@@ -190,9 +192,9 @@
                         </buttonCell>
                     </button>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pZW-pd-tlH">
-                        <rect key="frame" x="204" y="13" width="74" height="32"/>
+                        <rect key="frame" x="90" y="13" width="36" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                        <buttonCell key="cell" type="push" title="Restart" bezelStyle="rounded" alignment="center" enabled="NO" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="gCN-kS-Kv7">
+                        <buttonCell key="cell" type="push" bezelStyle="rounded" imagePosition="only" alignment="center" enabled="NO" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="gCN-kS-Kv7">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
                         </buttonCell>
@@ -201,9 +203,9 @@
                         </connections>
                     </button>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Wrf-hV-O7i">
-                        <rect key="frame" x="107" y="13" width="85" height="32"/>
+                        <rect key="frame" x="52" y="13" width="36" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                        <buttonCell key="cell" type="push" title="Terminate" bezelStyle="rounded" alignment="center" enabled="NO" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="OSV-Yd-P1d">
+                        <buttonCell key="cell" type="push" bezelStyle="rounded" imagePosition="only" alignment="center" enabled="NO" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="OSV-Yd-P1d">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
                         </buttonCell>
@@ -212,14 +214,25 @@
                         </connections>
                     </button>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="63g-M2-ic1">
-                        <rect key="frame" x="14" y="13" width="82" height="32"/>
+                        <rect key="frame" x="14" y="13" width="36" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                        <buttonCell key="cell" type="push" title="Inspector" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="4ZP-ZI-BFG">
+                        <buttonCell key="cell" type="push" bezelStyle="rounded" imagePosition="only" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="4ZP-ZI-BFG">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
                         </buttonCell>
                         <connections>
                             <action selector="inspector:" target="-2" id="pXB-fC-UZs"/>
+                        </connections>
+                    </button>
+                    <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="clr-Tr-b01">
+                        <rect key="frame" x="138" y="13" width="36" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <buttonCell key="cell" type="push" bezelStyle="rounded" imagePosition="only" alignment="center" enabled="NO" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="clr-Tr-c01">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="clearTerminated:" target="-2" id="clr-Tr-a01"/>
                         </connections>
                     </button>
                 </subviews>

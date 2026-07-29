@@ -36,9 +36,22 @@ typedef struct {
 // array alive for the provider's lifetime. Storing an unretained back-pointer
 // instead of a copy-on-write trigger block avoids per-call Block_copy in tight
 // inner loops like -[LineBlock locationOfRawLineForWidth:lineNum:].
+//
+// The entry is identified by (array, index), not by an interior pointer:
+// willMutate can replace the backing storage with a copy-on-write split and
+// increaseCapacityTo: can realloc it, so a pointer captured at creation time
+// may not target the array's current storage by the time it is used. A
+// pointer that goes stale this way writes into the storage retained by the
+// OTHER sharer of the copy-on-write data, corrupting it across threads.
+// The accessors below instead resolve the entry at call time.
+//
+// _generation captures the array's structural generation at creation time.
+// The accessors assert it is unchanged, so a provider cannot silently alias
+// a different logical entry after removeLast/append churn reuses its index.
 typedef struct {
-    LineBlockMetadata *_metadata;
-    __unsafe_unretained LineBlockMetadataArray *_Nullable _array;
+    __unsafe_unretained LineBlockMetadataArray *_array;
+    int _index;
+    int64_t _generation;
 } iTermLineBlockMetadataProvider;
 
 
@@ -159,20 +172,32 @@ migrationIndex:(iTermExternalAttributeIndex * _Nullable)migrationIndex
 // Remove cache values in the last entry.
 - (void)eraseFirstLineCache;
 
+// Provider plumbing. Do not call directly; use
+// iTermLineBlockMetadataProviderGetImmutable/GetMutable, which resolve the
+// entry through the array's *current* storage. Asserts that `generation`
+// matches the current structural generation and that `index` names a live
+// entry. objc_direct keeps the provider accessors as cheap as the raw
+// pointer they replaced.
+- (LineBlockMetadata *)providerEntryAtIndex:(int)index
+                                 generation:(int64_t)generation __attribute__((objc_direct));
+
 @end
 
 // Defined after the @interface so -willMutate is visible at the call site.
 NS_INLINE const LineBlockMetadata *iTermLineBlockMetadataProviderGetImmutable(iTermLineBlockMetadataProvider provider) {
-    return provider._metadata;
+    return [provider._array providerEntryAtIndex:provider._index
+                                      generation:provider._generation];
 }
 
 NS_INLINE LineBlockMutableMetadata iTermLineBlockMetadataProvideGetMutable(iTermLineBlockMetadataProvider provider) {
-    if (provider._array) {
-        [provider._array willMutate];
-    }
+    // willMutate may replace the backing storage with a private copy
+    // (copy-on-write split), so the entry must be resolved after it returns.
+    [provider._array willMutate];
+    LineBlockMetadata *metadata = [provider._array providerEntryAtIndex:provider._index
+                                                             generation:provider._generation];
     return (LineBlockMutableMetadata) {
-        .metadata = provider._metadata,
-        .mutableBidiDisplayInfo = provider._metadata->bidi_display_info,
+        .metadata = metadata,
+        .mutableBidiDisplayInfo = metadata->bidi_display_info,
     };
 }
 

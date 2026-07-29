@@ -2,12 +2,14 @@
 //  ScreenWatchPoller.swift
 //  iTerm2SharedARC
 //
-//  Drives a headless AIConversation to decide when a status-less session
-//  has reached a target state by reading its rendered screen. This is the
-//  fallback the orchestrator dispatcher uses when a watched session reports
-//  no machine-readable status (no OSC 21337 / cc-status), so the exact
-//  tab-status-transition path can't fire. See OrchestratorDispatcher's
-//  startScreenPoll / screenPollFinished and WorkgroupIntrospection.reportsSessionStatus.
+//  Drives a headless AIConversation to decide when a session has reached
+//  its watch goal by reading its rendered screen. Used in two cases:
+//  state watchers on sessions that report no machine-readable status (no
+//  OSC 21337 / cc-status, so the exact tab-status-transition path can't
+//  fire), and plain-English condition watchers, which are always judged
+//  from the screen regardless of status reporting. See
+//  OrchestratorDispatcher's startScreenPoll / screenPollFinished and
+//  WorkgroupIntrospection.reportsSessionStatus.
 //
 //  Why a model instead of a screen-stability heuristic: a coding agent (or
 //  any program) churns silently while working — `sleep 10` leaves the screen
@@ -42,29 +44,88 @@ final class ScreenWatchPoller {
     // the run loop is awaiting.
     private var inflight: AIConversation?
 
-    // Stop and notify after this much wall-clock time without reaching the
-    // target. The session reports no status, so we can't wait forever on a
-    // signal that may never come; the agent gets a watchTimedOut update and
-    // decides what to do.
-    private static let deadline: TimeInterval = 300  // 5 minutes
+    // Give up and hand back to the orchestrator after this much wall-clock
+    // time without reaching the target. The old 5-minute cap woke the
+    // orchestrator (a full, user-visible model turn) for every watch that
+    // outran it, and a code review routinely runs longer, so that produced a
+    // stream of "watch timed out, re-registering" chatter for no user
+    // benefit. The poller now keeps watching on its own for hours, polling
+    // less and less often (see backoff), and only surfaces watchTimedOut as a
+    // rare backstop for a condition that may simply never come true.
+    static let deadline: TimeInterval = 6 * 3600  // 6 hours
 
-    // Quadratic backoff between polls: delay(n) = 3 + n*n seconds, with n
-    // the number of polls already completed. Tight at first (responsive on
-    // short tasks: 3, 4, 7, 12…), widening as a task drags on so a
-    // long-running job isn't billed a model round-trip every few seconds.
-    // The cumulative sum crosses the 5-minute cap at ~9 polls.
-    private static func backoff(pollIndex n: Int) -> TimeInterval {
-        return TimeInterval(3 + n * n)
+    /// A human-readable form of `deadline`, so the dispatcher's watchTimedOut
+    /// message can name the wait without a separate literal that drifts when
+    /// `deadline` changes.
+    static var deadlineDescription: String {
+        // Below an hour, name it in minutes: rounding hours would emit
+        // "0 hours" for any sub-30-minute deadline (e.g. the former 5-minute
+        // value), which reads as broken in the model-visible timeout message.
+        guard deadline >= 3600 else {
+            let minutes = max(1, Int((deadline / 60).rounded()))
+            return minutes == 1 ? "1 minute" : "\(minutes) minutes"
+        }
+        let hours = Int((deadline / 3600).rounded())
+        return hours == 1 ? "1 hour" : "\(hours) hours"
+    }
+
+    // Poll cadence widens the longer a watch runs, to bound token cost on a
+    // long wait (each poll is an economy-model round-trip):
+    //   * first 5 minutes: quadratic backoff 3 + n*n (responsive on short
+    //     tasks: 3, 4, 7, 12, 19, 28…), unchanged.
+    //   * after 5 minutes: no tighter than every 2 minutes.
+    //   * after 1 hour: no tighter than every 10 minutes.
+    // A 10-minute ceiling also caps how stale the reading can get once a
+    // watch is old, so a late completion is still noticed within ten minutes.
+    private static let slowAfter: TimeInterval = 300      // 5 minutes
+    private static let slowerAfter: TimeInterval = 3600   // 1 hour
+    private static let slowInterval: TimeInterval = 120   // >= 2 min after slowAfter
+    private static let slowerInterval: TimeInterval = 600 // >= 10 min after slowerAfter
+    private static let maxInterval: TimeInterval = 600    // never slower than 10 min
+
+    // Delay before the next poll, given how many polls have run (n) and how
+    // long the watch has been active. The quadratic keeps early detection
+    // tight; the elapsed-based floors slow it down in tiers so a multi-hour
+    // watch is not billed a model round-trip every minute or two.
+    private static func backoff(pollIndex n: Int, elapsed: TimeInterval) -> TimeInterval {
+        let quadratic = TimeInterval(3 + n * n)
+        let floor: TimeInterval
+        if elapsed >= slowerAfter {
+            floor = slowerInterval
+        } else if elapsed >= slowAfter {
+            floor = slowInterval
+        } else {
+            floor = 0
+        }
+        return min(max(quadratic, floor), maxInterval)
     }
 
     init(watcher: WorkgroupWatcher,
          sessionProvider: @escaping () -> PTYSession?,
-         onReached: @escaping () -> Void,
-         onTimedOut: @escaping () -> Void) {
+         onReached: @escaping () -> Void = {},
+         onTimedOut: @escaping () -> Void = {}) {
         self.watcher = watcher
         self.sessionProvider = sessionProvider
         self.onReached = onReached
         self.onTimedOut = onTimedOut
+    }
+
+    // One screen read + model judgement, with no run loop, deadline, or
+    // backoff. Returns true only when the model positively confirms the
+    // watcher's target. Used by the tab-status escalation backstop, which
+    // owns its own re-check cadence (a single check every few minutes)
+    // rather than running a continuous poll. The instance must be retained
+    // for the duration of the call so cancel() can abort the in-flight
+    // model request if the watch is resolved or dropped mid-check; an
+    // unreadable or cancelled judgement returns false (treated as not-yet,
+    // same as the run loop treats `unknown`).
+    func checkOnce() async -> Bool {
+        guard let session = sessionProvider() else { return false }
+        let contents = WorkgroupIntrospection.screenContents(
+            forSession: session, requestedLines: 150)
+        let capture = Capture(elapsed: 0, text: contents.text)
+        let verdict = await evaluate(window: [capture], kind: contents.kind)
+        return verdict == .reached
     }
 
     func start() {
@@ -90,7 +151,7 @@ final class ScreenWatchPoller {
     // logger, so this is the only window into what a statusless watch is
     // doing; replies are snippeted so a screen-derived answer stays short.
     private func log(_ message: String) {
-        DLog("[ScreenWatchPoller \(watcher.roleName)] \(message)")
+        RLog("[ScreenWatchPoller \(watcher.roleName)] \(message)")
     }
 
     private static func snippet(_ text: String, limit: Int = 200) -> String {
@@ -105,8 +166,8 @@ final class ScreenWatchPoller {
 
     private func run() async {
         let start = Date()
-        log("Started: watching by screen observation for target "
-            + "'\(watcher.targetState.rawValue)' (session reports no status).")
+        log("Started: watching by screen observation for "
+            + watcher.goalDescription + ".")
         var pollIndex = 0
         var first: Capture?
         var previous: Capture?
@@ -114,7 +175,7 @@ final class ScreenWatchPoller {
             let elapsed = Date().timeIntervalSince(start)
             if elapsed >= Self.deadline {
                 log("Timed out after \(Int(elapsed))s without reaching "
-                    + "'\(watcher.targetState.rawValue)'.")
+                    + watcher.goalDescription + ".")
                 onTimedOut()
                 return
             }
@@ -144,7 +205,7 @@ final class ScreenWatchPoller {
             // notYet or unknown: keep polling until the target shows up or
             // the time cap fires.
             previous = capture
-            let delay = Self.backoff(pollIndex: pollIndex)
+            let delay = Self.backoff(pollIndex: pollIndex, elapsed: elapsed)
             pollIndex += 1
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
         }
@@ -174,11 +235,45 @@ final class ScreenWatchPoller {
 
     // Judge one poll. If the first reply doesn't parse, ask once for a clean
     // REACHED/NOT_YET in the same conversation before giving up as unknown.
+    // Prefer a cheaper same-vendor model for these frequent, low-stakes
+    // judgements (e.g. Opus -> Haiku), where the primary chat model would be
+    // overkill and too expensive to run every few seconds. nil (no economy
+    // alternative, or an unconfigured/unknown model) leaves the conversation on
+    // the user's configured chat model. The returned model preserves the
+    // configured model's url/api, so a user's custom base URL (proxy/gateway) is
+    // honored and the API key is not leaked to the public vendor host.
+    private static func economyModel() -> AIMetadata.Model? {
+        // A user-designated economy model (toggled in Manual AI Models) wins. It
+        // is a full manual model with its own url/api/auth, so it is used
+        // verbatim, honoring a custom base URL and its own vendor's API key.
+        if let designated = userDesignatedEconomyModel() {
+            return designated
+        }
+        guard let configured = LLMMetadata.model() else {
+            return nil
+        }
+        return AIMetadata.economyModel(for: configured)
+    }
+
+    // The manual model the user marked as the economy model, if any, resolved to
+    // a full model. nil if unset or no longer present among the manual models.
+    private static func userDesignatedEconomyModel() -> AIMetadata.Model? {
+        guard let name = iTermPreferences.string(forKey: kPreferenceKeyAIEconomyModelName),
+              !name.isEmpty else {
+            return nil
+        }
+        return LLMMetadata.manualModels().first { $0.name == name }
+    }
+
     private func evaluate(window: [Capture], kind: SessionKind) async -> Verdict {
+        let economyModel = Self.economyModel()
         var conversation = AIConversation(registrationProvider: nil)
-        conversation.systemMessage = Self.systemPrompt(
-            targetState: watcher.targetState)
+        conversation.systemMessage = Self.systemPrompt(for: watcher)
         conversation.shouldThink = false
+        // Set via modelOverride (a full model), not `model` (a name that
+        // AIConversation re-resolves to the catalog's public endpoint), so the
+        // configured transport/auth is preserved.
+        conversation.modelOverride = economyModel
         conversation.add(text: Self.userPrompt(window: window, kind: kind),
                          role: .user)
         guard let (reply, amended) = await complete(conversation) else {
@@ -194,7 +289,12 @@ final class ScreenWatchPoller {
         // Unparseable: ask once for a clean answer in the same context, then
         // accept whatever we can parse (still unknown if it flubs it again).
         log("Unparseable reply; asking the model to rephrase.")
+        // AIConversation's copy initializer carries neither modelOverride nor
+        // shouldThink onto the amended conversation, so re-set both to keep the
+        // rephrase turn on the economy model with thinking off.
         var retry = amended
+        retry.modelOverride = economyModel
+        retry.shouldThink = false
         retry.add(text: "Reply with exactly one word and nothing else: "
                       + "REACHED or NOT_YET.",
                   role: .user)
@@ -251,12 +351,23 @@ final class ScreenWatchPoller {
         return .unknown
     }
 
-    // Target-specific instruction. The detection logic INVERTS by target:
-    // an activity indicator means "reached" for working but "not yet" for
-    // idle, so each target spells out its own positive evidence rather than
-    // sharing one finished-centric description.
-    private static func detectionInstruction(targetState: SessionState) -> String {
-        switch targetState {
+    // Goal-specific instruction. For state watchers the detection logic
+    // INVERTS by target: an activity indicator means "reached" for working
+    // but "not yet" for idle, so each target spells out its own positive
+    // evidence rather than sharing one finished-centric description.
+    // Condition watchers get the caller's plain-English condition verbatim.
+    private static func detectionInstruction(for watcher: WorkgroupWatcher) -> String {
+        if let condition = watcher.condition {
+            return "Your target is this plain-English condition, judged from "
+                + "the rendered screen:\n\n"
+                + condition + "\n\n"
+                + "Conclude REACHED only when the screen positively shows the "
+                + "condition is satisfied. If the screen is ambiguous, or the "
+                + "condition describes something that has not visibly happened "
+                + "yet, answer NOT_YET. Do not reinterpret the condition as a "
+                + "generic idle/busy check; judge exactly what it says."
+        }
+        switch watcher.targetState ?? .idle {
         case .waiting:
             return "Your target: the program is BLOCKED waiting for the user "
                 + "to answer a prompt or make a choice — a question, "
@@ -284,12 +395,11 @@ final class ScreenWatchPoller {
         }
     }
 
-    private static func systemPrompt(targetState: SessionState) -> String {
+    private static func systemPrompt(for watcher: WorkgroupWatcher) -> String {
         return """
         You are a silent monitor inside iTerm2. You are watching one terminal \
         session that an automated orchestrator is driving. The program in it \
-        (often a coding agent or another interactive TUI) does NOT report a \
-        machine-readable status, so the only way to tell what it is doing is by \
+        (often a coding agent or another interactive TUI) is being judged by \
         reading its rendered screen.
 
         Background on reading these screens: a program that is actively working \
@@ -302,7 +412,7 @@ final class ScreenWatchPoller {
         sleeping or waiting on a subprocess). Judge from positive evidence on \
         screen, not from the mere absence of change.
 
-        \(detectionInstruction(targetState: targetState))
+        \(detectionInstruction(for: watcher))
 
         Respond with EXACTLY one word on the first line: REACHED if the target \
         condition is satisfied, or NOT_YET if it is not. You may add a brief \

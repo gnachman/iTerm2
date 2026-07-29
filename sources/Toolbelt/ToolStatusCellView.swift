@@ -9,27 +9,39 @@ import Foundation
 
 // Indicator-only image view that never intercepts mouse clicks, so a
 // click on the bell still selects/reveals the row like clicking the text.
-private final class ToolStatusPassthroughImageView: NSImageView {
+// Internal (not private) because ToolStatusCellView exposes its bellView
+// to tests.
+final class ToolStatusPassthroughImageView: NSImageView {
     override func hitTest(_ point: NSPoint) -> NSView? {
         return nil
     }
 }
 
 class ToolStatusCellView: NSTableCellView {
+    // Subviews are internal (not private) so ModernTests can assert on
+    // the clear()/configure() blank-state contract directly.
     // Shown at the leading edge when this session has notify-on-change
     // armed, mirroring the Cockpit's row indicator.
-    private let bellView = ToolStatusPassthroughImageView()
-    private let dotView = NSImageView()
+    let bellView = ToolStatusPassthroughImageView()
+    let dotView = NSImageView()
     // Optional peer-group label inserted between the dot and the
     // session name when the session belongs to a multi-peer workgroup.
     // Hidden for solo sessions.
-    private let peerLabel = NSTextField(labelWithString: "")
-    private var nameLabel = iTermSwiftyStringTextField(labelWithString: "")
-    private let shortcutLabel = NSTextField(labelWithString: "")
-    private let statusLabel = NSTextField(labelWithString: "")
-    private let detailLabel = NSTextField(wrappingLabelWithString: "")
+    let peerLabel = NSTextField(labelWithString: "")
+    var nameLabel = iTermSwiftyStringTextField(labelWithString: "")
+    let shortcutLabel = NSTextField(labelWithString: "")
+    let statusLabel = NSTextField(labelWithString: "")
+    let detailLabel = NSTextField(wrappingLabelWithString: "")
+    // A horizontal rule drawn along the top edge of the first snoozed
+    // row, dividing the snoozed group from the active rows above it.
+    let separatorView = NSBox()
+    // Leading-edge glyph marking a snoozed row. Passthrough so clicking
+    // it still selects/reveals the row like clicking the text.
+    let snoozeIconView = ToolStatusPassthroughImageView()
 
     private let margin: CGFloat = 4
+    private let snoozeSize: CGFloat = 12
+    private let snoozeSpacing: CGFloat = 3
     private let bellSize: CGFloat = 12
     private let bellSpacing: CGFloat = 3
     private let dotSize: CGFloat = 10
@@ -88,6 +100,19 @@ class ToolStatusCellView: NSTableCellView {
         detailLabel.usesSingleLineMode = false
         detailLabel.isHidden = true
         addSubview(detailLabel)
+
+        separatorView.boxType = .separator
+        separatorView.isHidden = true
+        addSubview(separatorView)
+
+        let snoozeConfig = NSImage.SymbolConfiguration(pointSize: 10, weight: .regular)
+        snoozeIconView.image = NSImage(systemSymbolName: SFSymbol.moonZzz.rawValue,
+                                       accessibilityDescription: "Snoozed")?
+            .withSymbolConfiguration(snoozeConfig)
+        snoozeIconView.imageScaling = .scaleProportionallyDown
+        snoozeIconView.contentTintColor = .secondaryLabelColor
+        snoozeIconView.isHidden = true
+        addSubview(snoozeIconView)
     }
 
     required init?(coder: NSCoder) {
@@ -106,10 +131,16 @@ class ToolStatusCellView: NSTableCellView {
         if backgroundStyle == .emphasized {
             shortcutLabel.textColor = NSColor.white.withAlphaComponent(0.7)
             bellView.contentTintColor = .alternateSelectedControlTextColor
+            snoozeIconView.contentTintColor = .alternateSelectedControlTextColor
         } else {
             shortcutLabel.textColor = .tertiaryLabelColor
             bellView.contentTintColor = .controlAccentColor
+            snoozeIconView.contentTintColor = .secondaryLabelColor
         }
+    }
+
+    private var snoozeReserve: CGFloat {
+        return snoozeIconView.isHidden ? 0 : (snoozeSize + snoozeSpacing)
     }
 
     private var bellReserve: CGFloat {
@@ -118,7 +149,7 @@ class ToolStatusCellView: NSTableCellView {
 
     private var textLeft: CGFloat {
         let dotWidth = dotView.isHidden ? 0 : (dotSize + dotNameSpacing)
-        return margin + bellReserve + dotWidth
+        return margin + snoozeReserve + bellReserve + dotWidth
     }
 
     override func resizeSubviews(withOldSize oldSize: NSSize) {
@@ -128,6 +159,12 @@ class ToolStatusCellView: NSTableCellView {
 
     private func layoutManually() {
         let width = bounds.width
+
+        // Separator hugs the top edge, spanning the full width. It sits in
+        // the top margin above the content so it needs no extra row height.
+        if !separatorView.isHidden {
+            separatorView.frame = NSRect(x: 0, y: 0, width: width, height: 1)
+        }
         let textX = textLeft
         let textWidth = max(0, width - textX - margin)
         var y: CGFloat = margin / 2
@@ -177,16 +214,22 @@ class ToolStatusCellView: NSTableCellView {
                                          height: nameLabel.frame.height)
         }
 
-        // Bell — leading edge, vertically centered with the name row.
-        if !bellView.isHidden {
-            let bellY = y + (nameLabel.frame.height - bellSize) / 2
-            bellView.frame = NSRect(x: margin, y: bellY, width: bellSize, height: bellSize)
+        // Snooze icon — leading edge, vertically centered with the name row.
+        if !snoozeIconView.isHidden {
+            let snoozeY = y + (nameLabel.frame.height - snoozeSize) / 2
+            snoozeIconView.frame = NSRect(x: margin, y: snoozeY, width: snoozeSize, height: snoozeSize)
         }
 
-        // Dot — vertically centered with name label, after the bell.
+        // Bell — after the snooze icon, vertically centered with the name row.
+        if !bellView.isHidden {
+            let bellY = y + (nameLabel.frame.height - bellSize) / 2
+            bellView.frame = NSRect(x: margin + snoozeReserve, y: bellY, width: bellSize, height: bellSize)
+        }
+
+        // Dot — vertically centered with name label, after the snooze icon and bell.
         if !dotView.isHidden {
             let dotY = y + (nameLabel.frame.height - dotSize) / 2
-            dotView.frame = NSRect(x: margin + bellReserve, y: dotY, width: dotSize, height: dotSize)
+            dotView.frame = NSRect(x: margin + snoozeReserve + bellReserve, y: dotY, width: dotSize, height: dotSize)
         }
 
         y += nameLabel.frame.height + rowSpacing
@@ -232,6 +275,50 @@ class ToolStatusCellView: NSTableCellView {
         return NSSize(width: bounds.width, height: maxY + margin / 2)
     }
 
+    // Resets every field to its initial empty state. The single
+    // authority on what blank looks like, used by
+    // ToolStatus.configureCell when it bails on an unresolvable row
+    // without configuring.
+    func clear() {
+        nameLabel.clear()
+        bellView.isHidden = true
+        separatorView.isHidden = true
+        snoozeIconView.isHidden = true
+        setTextAlpha(1.0)
+        clearConditionalFields()
+    }
+
+    // Snoozed rows render their text at reduced opacity. Applies to every
+    // text label so the whole entry reads as backgrounded; the dot and
+    // bell keep full opacity.
+    private func setTextAlpha(_ alpha: CGFloat) {
+        nameLabel.alphaValue = alpha
+        peerLabel.alphaValue = alpha
+        shortcutLabel.alphaValue = alpha
+        statusLabel.alphaValue = alpha
+        detailLabel.alphaValue = alpha
+    }
+
+    // The subset of clear() covering the fields configure() assigns
+    // only when content is present. configure() starts here instead of
+    // with the full clear(): nameLabel and bellView are assigned
+    // unconditionally there, and a full clear would pointlessly
+    // invalidate and rebuild the name label's swifty string twice per
+    // configure (which runs twice per row per reload under status
+    // churn).
+    private func clearConditionalFields() {
+        dotView.image = nil
+        dotView.isHidden = true
+        peerLabel.stringValue = ""
+        peerLabel.isHidden = true
+        shortcutLabel.stringValue = ""
+        shortcutLabel.isHidden = true
+        statusLabel.stringValue = ""
+        statusLabel.isHidden = true
+        detailLabel.stringValue = ""
+        detailLabel.isHidden = true
+    }
+
     func configure(scope: iTermVariableScope,
                    dotImage: NSImage?,
                    peerLabel: String?,
@@ -239,33 +326,39 @@ class ToolStatusCellView: NSTableCellView {
                    statusText: String?,
                    statusColor: NSColor?,
                    detail: String?,
-                   armed: Bool) {
+                   armed: Bool,
+                   dimmed: Bool = false,
+                   showSeparator: Bool = false) {
+        // Self-clearing so a recycled cell can't keep a previous
+        // occupant's content; see clearConditionalFields for why this
+        // is not the full clear().
+        clearConditionalFields()
+        setTextAlpha(dimmed ? 0.5 : 1.0)
+        // A snoozed row both dims its text and shows the snooze glyph.
+        snoozeIconView.isHidden = !dimmed
+        separatorView.isHidden = !showSeparator
         nameLabel.set(interpolatedString: #"\(iterm2.private.session_name(session: id))"#, scope: scope)
         bellView.isHidden = !armed
-        dotView.image = dotImage
-        dotView.isHidden = dotImage == nil
-
-        let peerText = peerLabel ?? ""
-        self.peerLabel.stringValue = peerText
-        self.peerLabel.isHidden = peerText.isEmpty
-
-        shortcutLabel.stringValue = shortcut ?? ""
-        shortcutLabel.isHidden = (shortcut ?? "").isEmpty
-
-        statusLabel.stringValue = statusText ?? ""
-        if let statusColor {
-            statusLabel.textColor = statusColor
-        } else {
-            statusLabel.textColor = .secondaryLabelColor
+        if let dotImage {
+            dotView.image = dotImage
+            dotView.isHidden = false
         }
-        statusLabel.isHidden = (statusText ?? "").isEmpty
-
+        if let peerLabel, !peerLabel.isEmpty {
+            self.peerLabel.stringValue = peerLabel
+            self.peerLabel.isHidden = false
+        }
+        if let shortcut, !shortcut.isEmpty {
+            shortcutLabel.stringValue = shortcut
+            shortcutLabel.isHidden = false
+        }
+        if let statusText, !statusText.isEmpty {
+            statusLabel.stringValue = statusText
+            statusLabel.textColor = statusColor ?? .secondaryLabelColor
+            statusLabel.isHidden = false
+        }
         if let detail, !detail.isEmpty {
             detailLabel.stringValue = detail
             detailLabel.isHidden = false
-        } else {
-            detailLabel.stringValue = ""
-            detailLabel.isHidden = true
         }
 
         layoutManually()

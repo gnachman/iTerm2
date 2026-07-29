@@ -28,6 +28,11 @@
                                     <action selector="showTipOfTheDay:" target="201" id="mc2-ec-uGY"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Companion Device Settings" identifier="Pair Companion Device" id="Cmp-n0-De1">
+                                <connections>
+                                    <action selector="pairCompanionDevice:" target="201" id="Cmp-n0-Ac1"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="Dxk-DH-qzi">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
@@ -43,6 +48,12 @@
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="debugLogging:" target="-1" id="951"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Save Retrospective Debug Logs" enabled="NO" identifier="Save Retrospective Debug Logs" id="Rtr-Sv-Log">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="saveRetrospectiveDebugLogs:" target="-1" id="Rtr-Sv-Act"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Copy Performance Stats" identifier="Copy Performance Stats" id="cYu-lQ-5GD">
@@ -421,6 +432,12 @@ DQ
                                                 <action selector="downloadFiles:" target="-1" id="T2e-RW-XQ6"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Remote host can control iTerm2" identifier="ssh.Remote host can control iTerm2" id="it2-au-th0">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="toggleRemoteHostCanControlIterm2:" target="-1" id="it2-au-th1"/>
+                                            </connections>
+                                        </menuItem>
                                     </items>
                                 </menu>
                             </menuItem>
@@ -793,6 +810,11 @@ DQ
                                             <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                             <connections>
                                                 <action selector="addNoteAtCursor:" target="-1" id="B5P-c8-bDe"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Annotate Selection" keyEquivalent="" identifier="Marks and Annotations.Annotate Selection" id="aNs-El-c10">
+                                            <connections>
+                                                <action selector="annotateSelection:" target="-1" id="aNs-Ac-t10"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="Dk5-W1-EQg">
@@ -1904,6 +1926,12 @@ CQ
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="toggleSizeLocked:" target="-1" id="K1B-UU-I0m"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Lock Layout" identifier="Lock Layout" id="Lk1-Ly-Lt0">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="toggleLayoutLocked:" target="-1" id="Lk2-Ly-Lt1"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Notify on Status Change" keyEquivalent="X" identifier="Notify on Status Change" id="Ns0-Ch-G01">

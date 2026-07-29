@@ -132,7 +132,8 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
                     visibleLayout:(NSMutableDictionary *)visibleParseTree
                        inTerminal:(NSWindowController<iTermWindowController> *)term
                        tmuxWindow:(int)tmuxWindow
-                   tmuxController:(TmuxController *)tmuxController;
+                   tmuxController:(TmuxController *)tmuxController
+                 openInBackground:(BOOL)openInBackground;
 
 + (BOOL)arrangement:(NSDictionary *)arrangement
          passesTest:(BOOL (^NS_NOESCAPE)(NSDictionary *candidate))closure;
@@ -311,6 +312,11 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // after setting up tmux tabs.
 - (void)loadTitleFromSession;
 
+// Apply a profile's custom-tab-title template to a newly created tmux window's tab. The template is
+// evaluated against this tab's scope so the tmux window is renamed to a concrete value rather than
+// the literal template text. A blank result is ignored.
+- (void)applyProfileCustomTabTitleForNewTmuxWindow:(NSString *)template;
+
 // Update icons in tab.
 - (void)updateIcon;
 
@@ -346,6 +352,16 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // tree. Updates the view-to-session map and the session's delegate.
 // Used by the layout-application API for cross-tab moves.
 - (void)adoptSession:(PTYSession *)session;
+
+// Restore the window's first responder to the active session after a
+// view-hierarchy rebuild that reparented SessionViews. Reparenting (via
+// setRoot:) detaches whatever view held first-responder status, leaving
+// the window with a nil/stale responder. Unlike setActiveSession:, this
+// fires even when the active session pointer is unchanged, which is the
+// common case for an in-place reshape where the active pane survives.
+// Guarded to the current tab to avoid making a non-visible textview the
+// first responder (see the NSTextInput note in setActiveSession:).
+- (void)restoreFirstResponderAfterViewHierarchyRebuild;
 
 - (void)bounceMetal;
 - (void)makeActive;

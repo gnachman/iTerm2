@@ -454,7 +454,7 @@ static NSString *kCommandTimestamp = @"timestamp";
     // It's an instance of attacker-controlled values that we then output which could be used as user input.
     NSArray<NSString *> *components = [command captureComponentsMatchedByRegex:@"^%paste-buffer-changed (buffer[0-9]+)"];
     if (components.count != 2) {
-        DLog(@"Unexpected syntax: %@", command);
+        RLog(@"Unexpected syntax: %@", command);
         return;
     }
     [delegate_ tmuxSessionPasteDidChange:components[1]];
@@ -494,7 +494,7 @@ static NSString *kCommandTimestamp = @"timestamp";
         NSString *clientName = components[1];
         [delegate_ tmuxClientSessionChanged:clientName];
     } else {
-        DLog(@"Unexpected client-session-changed syntax: %@", command);
+        RLog(@"Unexpected client-session-changed syntax: %@", command);
     }
 }
 
@@ -505,7 +505,7 @@ static NSString *kCommandTimestamp = @"timestamp";
         NSString *clientName = components[1];
         [delegate_ tmuxClientDetached:clientName];
     } else {
-        DLog(@"Unexpected client-detached syntax: %@", command);
+        RLog(@"Unexpected client-detached syntax: %@", command);
     }
 }
 
@@ -606,13 +606,13 @@ static NSString *kCommandTimestamp = @"timestamp";
     }
     // Remove subsequent commands belonging to the same list so we can go back to life
     // as usual.
-    DLog(@"Automatically fail the next command.");
+    RLog(@"Automatically fail the next command.");
     return YES;
 }
 
 - (void)performInitializationOnCommandResponseWithError:(BOOL)withError {
     if ([currentCommand_[kCommandIsInitial] boolValue]) {
-        DLog(@"Begin accepting notifications");
+        RLog(@"Begin accepting notifications");
         acceptNotifications_ = YES;
     }
     if (_initialized) {
@@ -868,7 +868,7 @@ static NSString *kCommandTimestamp = @"timestamp";
         [self parseBegin:command];
     } else {
         if ([command hasPrefix:@"%"]) {
-            DLog(@"Unrecognized notification: %@", command);
+            RLog(@"Unrecognized notification: %@", command);
             return;
         }
         if (![iTermAdvancedSettingsModel tolerateUnrecognizedTmuxCommands]) {
@@ -878,7 +878,7 @@ static NSString *kCommandTimestamp = @"timestamp";
             return;
         }
         // We'll be tolerant of unrecognized commands.
-        DLog(@"Unrecognized command \"%@\"", command);
+        RLog(@"Unrecognized command \"%@\"", command);
         [strayMessages_ appendFormat:@"%@\n", command];
     }
 }
@@ -899,6 +899,39 @@ static NSString *kCommandTimestamp = @"timestamp";
         [encoded appendString:[self keyEncodedByte:bytes[i]]];
     }
     return encoded;
+}
+
+- (BOOL)serverSupportsExtendedKeys {
+    // extended-keys arrived in tmux 3.2. On older servers send-keys with a name
+    // collapses modified keys via legacy input_key (e.g. C-j -> 0x0a), so the
+    // caller should keep the byte path instead of delegating.
+    return [self versionAtLeastDecimalNumberWithString:@"3.2"];
+}
+
+- (void)sendKeyName:(NSString *)name toWindowPane:(int)windowPane {
+    // Quote the name for tmux's command parser. Single quotes are fully literal
+    // in tmux: no ';' separator, and no '$' (env) or '#' (format) expansion, both
+    // of which DO fire inside double quotes. Backslash is also literal inside
+    // single quotes on tmux >= 3.2 (broken on 3.0/3.0a, fixed in 3.1), and we
+    // only ever delegate on >= 3.2 (see -serverSupportsExtendedKeys), so any base
+    // key is safe single-quoted. The one name that cannot be single-quoted is the
+    // ctrl-apostrophe key; it contains only modifier prefixes plus "'", none of
+    // which expand, so it is safe to double-quote.
+    NSString *quoted;
+    if ([name containsString:@"'"]) {
+        quoted = [NSString stringWithFormat:@"\"%@\"", name];
+    } else {
+        quoted = [NSString stringWithFormat:@"'%@'", name];
+    }
+    NSString *command = [NSString stringWithFormat:@"send -t %%%d %@", windowPane, quoted];
+    NSDictionary *dict = [self dictionaryForCommand:command
+                                     responseTarget:nil
+                                   responseSelector:nil
+                                     responseObject:nil
+                                              flags:kTmuxGatewayCommandShouldTolerateErrors];
+    [delegate_ tmuxSetSecureLogging:YES];
+    [self sendCommandList:@[ dict ]];
+    [delegate_ tmuxSetSecureLogging:NO];
 }
 
 - (void)sendKeys:(NSString *)string toWindowPane:(int)windowPane {
@@ -1257,7 +1290,7 @@ static const NSTimeInterval TmuxUnresponsiveTimeout = 5;
         }
         [self enqueueCommandDict:amended];
         if (disconnected_) {
-            DLog(@"Aborting! Disconnected");
+            RLog(@"Aborting! Disconnected");
             return;
         }
         sep = @"; ";
@@ -1286,12 +1319,12 @@ static const NSTimeInterval TmuxUnresponsiveTimeout = 5;
         [delegate_ tmuxWriteString:string];
         return;
     }
-    DLog(@"Defer writing %@", string);
+    RLog(@"Defer writing %@", string);
     [_writeQueue appendString:string];
 }
 
 - (void)flushWriteQueue {
-    DLog(@"flushWriteQueue: %@", _writeQueue);
+    RLog(@"flushWriteQueue: %@", _writeQueue);
     if (!_writeQueue.length) {
         return;
     }

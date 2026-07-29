@@ -102,7 +102,7 @@
 
     entry = [[iTermCachedImage alloc] initWithPath:path image:&image];
     if (!image) {
-        DLog(@"Failed to load image from %@", path);
+        RLog(@"Failed to load image from %@", path);
         return nil;
     }
     [_cache setObject:entry forKey:path];

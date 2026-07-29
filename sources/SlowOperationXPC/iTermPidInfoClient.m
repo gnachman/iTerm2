@@ -55,7 +55,7 @@
     __block atomic_flag finished = ATOMIC_FLAG_INIT;
     const long waitResult = dispatch_semaphore_wait(_sema, DISPATCH_TIME_NOW);
     if (waitResult) {
-        DLog(@"semaphore_wait failed, return error");
+        RLog(@"semaphore_wait failed, return error");
         completion(-5, [NSData data]);
         return;
     }
@@ -76,7 +76,7 @@
         if (atomic_flag_test_and_set(&finished)) {
             return;
         }
-        DLog(@"Timed out");
+        RLog(@"Timed out");
         completion(-4, [NSData data]);
     });
 }
@@ -243,7 +243,7 @@
         struct proc_vnodepathinfo vpi;
         if (ret != sizeof(vpi)) {
             // Now this is very bad...
-            DLog(@"Got a struct of the wrong size back");
+            RLog(@"Got a struct of the wrong size back");
             dispatch_async(queue, ^{
                 completion(nil);
             });

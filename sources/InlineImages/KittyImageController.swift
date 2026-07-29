@@ -310,7 +310,7 @@ class KittyImageController: NSObject {
 
     @objc
     func clear() {
-        DLog("clear(): removing all images and \(placements.count) placements")
+        RLog("clear(): removing all images and \(placements.count) placements")
         _images.removeAll()
         accumulator = nil
         let hadPlacements = !placements.isEmpty
@@ -342,7 +342,7 @@ class KittyImageController: NSObject {
             // Have not yet recursed after allocating an image ID.
             DLog("executeTransmit: allocationAllowed && imageNumber > 0, checking identifier")
             if command.identifier > 0 {
-                DLog("executeTransmit: ERROR - both i and I specified")
+                RLog("executeTransmit: ERROR - both i and I specified")
                 respondToTransmit(command, display: display, error: "EINVAL:Can't give both i and I")
                 return false
             }
@@ -351,7 +351,7 @@ class KittyImageController: NSObject {
             modifiedCommand.identifier = allocateIdentifier()
             DLog("executeTransmit: allocated identifier=\(modifiedCommand.identifier)")
             if modifiedCommand.identifier == 0 {
-                DLog("executeTransmit: ERROR - out of identifiers")
+                RLog("executeTransmit: ERROR - out of identifiers")
                 respondToTransmit(command, display: display, error: "ENOSPC:Out of identifiers")
                 return false
             }
@@ -396,7 +396,7 @@ class KittyImageController: NSObject {
                 // it's likely a new single-chunk transmission, so process it fresh rather
                 // than returning an error. If it's expecting more chunks, return an error
                 // since we can't know which transmission it belongs to.
-                DLog("reallyExecuteTransmit: IDs don't match - clearing stale accumulator (accum.id=\(accumulator.transmission.identifier) (0x\(String(accumulator.transmission.identifier, radix: 16))), accum.decodedDataLength=\(accumulator.decodedData.count), cmd.id=\(command.identifier) (0x\(String(command.identifier, radix: 16))), cmd.more=\(command.more))")
+                RLog("reallyExecuteTransmit: IDs don't match - clearing stale accumulator (accum.id=\(accumulator.transmission.identifier) (0x\(String(accumulator.transmission.identifier, radix: 16))), accum.decodedDataLength=\(accumulator.decodedData.count), cmd.id=\(command.identifier) (0x\(String(command.identifier, radix: 16))), cmd.more=\(command.more))")
                 self.accumulator = nil
                 if command.more == .expectMore {
                     DLog("reallyExecuteTransmit: returning error because new chunk expects more but accumulator was stale")
@@ -456,7 +456,7 @@ class KittyImageController: NSObject {
                         respondToTransmit(modifiedCommand, display: display, error: nil)
                     } else {
                         let error = "ENOENT:Image not found after transmission"
-                        DLog("reallyExecuteTransmit: ERROR - image not found for key=\(imageKey) (id=\(modifiedCommand.identifier)) after transmission")
+                        RLog("reallyExecuteTransmit: ERROR - image not found for key=\(imageKey) (id=\(modifiedCommand.identifier)) after transmission")
                         respondToTransmit(modifiedCommand, display: display, error: error)
                         return error
                     }
@@ -539,7 +539,7 @@ class KittyImageController: NSObject {
             iTermImage.init(compressedData: data)
         }
         guard let image else {
-            DLog("handle: ERROR - invalid payload, could not create image (format=\(command.format), dataLength=\(data.count))")
+            RLog("handle: ERROR - invalid payload, could not create image (format=\(command.format), dataLength=\(data.count))")
             return "invalid payload"
         }
         DLog("handle: created image with size=\(image.size)")
@@ -745,11 +745,11 @@ class KittyImageController: NSObject {
         let fileURL = URL(fileURLWithPath: payload.base64Decoded ?? "").resolvingSymlinksInPath().standardizedFileURL.absoluteURL
         DLog("executeTransmitTemporaryFile: fileURL=\(fileURL.path) tempPath=\(tempPath)")
         if !fileURL.path.hasPrefix("/tmp/") && !fileURL.path.hasPrefix(tempPath) {
-            DLog("executeTransmitTemporaryFile: ERROR - invalid filename (not in /tmp/ or tempPath)")
+            RLog("executeTransmitTemporaryFile: ERROR - invalid filename (not in /tmp/ or tempPath)")
             return "EBADF:Invalid filename"
         }
         guard fileURL.path.contains("tty-graphics-protocol") else {
-            DLog("executeTransmitTemporaryFile: ERROR - bad filename (missing tty-graphics-protocol)")
+            RLog("executeTransmitTemporaryFile: ERROR - bad filename (missing tty-graphics-protocol)")
             return "EBADF:Bad filename"
         }
         defer {
@@ -799,14 +799,14 @@ class KittyImageController: NSObject {
                 return "EBADF:Not a file"
             }
             guard filenameIsSafe(fileURL: fileURL) else {
-                DLog("handle(fileURL): ERROR - unsafe filename")
+                RLog("handle(fileURL): ERROR - unsafe filename")
                 return "EBADF:Invalid path"
             }
             let content = try Data(contentsOf: fileURL)
             DLog("handle(fileURL): read \(content.count) bytes from file")
             return handle(command: command, data: content, query: query)
         } catch {
-            DLog("handle(fileURL): ERROR - \(error.localizedDescription)")
+            RLog("handle(fileURL): ERROR - \(error.localizedDescription)")
             return "EBADF:\(error.localizedDescription)"
         }
     }
@@ -817,7 +817,7 @@ class KittyImageController: NSObject {
         DLog("executeTransmitSharedMemory: id=\(command.identifier) (0x\(String(command.identifier, radix: 16))) payloadLength=\(payload.count)")
         do {
             guard let name = payload.base64Decoded else {
-                DLog("executeTransmitSharedMemory: ERROR - invalid name (base64 decode failed)")
+                RLog("executeTransmitSharedMemory: ERROR - invalid name (base64 decode failed)")
                 return "EBADF:Invalid name"
             }
             DLog("executeTransmitSharedMemory: shm name=\(name)")
@@ -825,7 +825,7 @@ class KittyImageController: NSObject {
             DLog("executeTransmitSharedMemory: read \(data.count) bytes from shared memory")
             return handle(command: command, data: data, query: query)
         } catch {
-            DLog("executeTransmitSharedMemory: ERROR - \(error.localizedDescription)")
+            RLog("executeTransmitSharedMemory: ERROR - \(error.localizedDescription)")
             return "EBADF:\(error.localizedDescription)"
         }
     }
@@ -938,7 +938,7 @@ class KittyImageController: NSObject {
                                  placement: command.placement,
                                  q: command.q)
             } else {
-                DLog("executeDisplay: NO IMAGE FOUND for identifier=\(command.identifier) (0x\(String(command.identifier, radix: 16))) - available keys: \(_images.keys.map { "0x\(String($0, radix: 16))" })")
+                RLog("executeDisplay: NO IMAGE FOUND for identifier=\(command.identifier) (0x\(String(command.identifier, radix: 16))) - available keys: \(_images.keys.map { "0x\(String($0, radix: 16))" })")
                 respondToDisplay(error: "ENOENT:Put command refers to non-existent image with id: \(command.identifier) and number: 0",
                                  identifier: command.identifier,
                                  placement: command.placement,
@@ -989,7 +989,7 @@ class KittyImageController: NSObject {
         DLog("executeDisplay(image): virtual=\(virtual) pixelOffset=\(String(describing: pixelOffset)) sourceRect=\(String(describing: sourceRect))")
         if virtual {
             if command.parentImageIdentifier != nil || command.parentPlacement != nil {
-                DLog("executeDisplay(image): ERROR - virtual placement cannot have parent")
+                RLog("executeDisplay(image): ERROR - virtual placement cannot have parent")
                 return "EINVAL"
             }
         }
@@ -1013,11 +1013,11 @@ class KittyImageController: NSObject {
                                   zIndex: command.z,
                                   virtual: virtual)
         if addingFormsCycle(placement: placement) {
-            DLog("executeDisplay(image): ERROR - adding would form cycle")
+            RLog("executeDisplay(image): ERROR - adding would form cycle")
             return "ECYCLE"
         }
         if placement.parentPlacementIdentifier != nil && placement.parent(finder: finder) == nil {
-            DLog("executeDisplay(image): ERROR - parent placement not found")
+            RLog("executeDisplay(image): ERROR - parent placement not found")
             return "ENOPARENT"
         }
         if command.placement != 0 {
@@ -1261,7 +1261,7 @@ class KittyImageController: NSObject {
 
         default:
             // Undocumented
-            DLog("executeDeleteImage: unrecognized delete command '\(command.d)'")
+            RLog("executeDeleteImage: unrecognized delete command '\(command.d)'")
             break
         }
 

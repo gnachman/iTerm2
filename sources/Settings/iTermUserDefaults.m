@@ -48,6 +48,10 @@ static NSString *const iTermUserDefaultsKeyWorkgroupsData = @"Workgroups";
 static NSString *const iTermUserDefaultsKeyWorkgroupShortcutsBackfilled = @"NoSyncWorkgroupShortcutsBackfilled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeDiffModeBackfilled = @"NoSyncClaudeCodeDiffModeBackfilled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeReviewSystemPromptCommandBackfilled = @"NoSyncClaudeCodeReviewSystemPromptCommandBackfilled";
+static NSString *const iTermUserDefaultsKeyClaudeCodeAutoSendClippingsBackfilled = @"NoSyncClaudeCodeAutoSendClippingsBackfilled";
+static NSString *const iTermUserDefaultsKeyClaudeCodeAutoRequestReviewBackfilled = @"NoSyncClaudeCodeAutoRequestReviewBackfilled";
+static NSString *const iTermUserDefaultsKeyAIModelCatalogUpdateConsent = @"NoSyncAIModelCatalogUpdateConsent";
+static NSString *const iTermUserDefaultsKeyAutoProvideConsent = @"NoSyncAutoProvideConsent";
 
 @implementation iTermUserDefaults
 
@@ -383,6 +387,42 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setClaudeCodeReviewSystemPromptCommandBackfilled:(BOOL)value {
     [self.userDefaults setBool:value
                         forKey:iTermUserDefaultsKeyClaudeCodeReviewSystemPromptCommandBackfilled];
+}
+
++ (BOOL)claudeCodeAutoSendClippingsBackfilled {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyClaudeCodeAutoSendClippingsBackfilled];
+}
+
++ (void)setClaudeCodeAutoSendClippingsBackfilled:(BOOL)value {
+    [self.userDefaults setBool:value
+                        forKey:iTermUserDefaultsKeyClaudeCodeAutoSendClippingsBackfilled];
+}
+
++ (BOOL)claudeCodeAutoRequestReviewBackfilled {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyClaudeCodeAutoRequestReviewBackfilled];
+}
+
++ (void)setClaudeCodeAutoRequestReviewBackfilled:(BOOL)value {
+    [self.userDefaults setBool:value
+                        forKey:iTermUserDefaultsKeyClaudeCodeAutoRequestReviewBackfilled];
+}
+
++ (iTermAIModelCatalogUpdateConsent)aiModelCatalogUpdateConsent {
+    return [self.userDefaults integerForKey:iTermUserDefaultsKeyAIModelCatalogUpdateConsent];
+}
+
++ (void)setAiModelCatalogUpdateConsent:(iTermAIModelCatalogUpdateConsent)value {
+    [self.userDefaults setInteger:value
+                           forKey:iTermUserDefaultsKeyAIModelCatalogUpdateConsent];
+}
+
++ (iTermAutoProvideConsent)autoProvideConsent {
+    return [self.userDefaults integerForKey:iTermUserDefaultsKeyAutoProvideConsent];
+}
+
++ (void)setAutoProvideConsent:(iTermAutoProvideConsent)value {
+    [self.userDefaults setInteger:value
+                           forKey:iTermUserDefaultsKeyAutoProvideConsent];
 }
 
 + (BOOL)lastShutdownWasClean {

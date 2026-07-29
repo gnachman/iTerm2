@@ -63,6 +63,21 @@ class ChatListModel: ChatListDataSource {
         return result
     }
 
+    /// Side-effect-free title lookup. Unlike chat(id:), this does NOT load the
+    /// chat's permissions into the process-global RemoteCommandExecutor, so it is
+    /// safe to call from a background, non-interactive path (e.g. the companion
+    /// push fetch) that must not reconfigure the live tool-call permission policy
+    /// an unrelated foreground session is relying on.
+    func title(forChatID chatID: String) -> String? {
+        chatStorage.first { $0.id == chatID }?.title
+    }
+
+    /// Side-effect-free model lookup (see title(forChatID:)): the chat's
+    /// pinned model, which also binds the chat's provider (ChatProviderBinding).
+    func modelName(forChatID chatID: String) -> String? {
+        chatStorage.first { $0.id == chatID }?.modelName
+    }
+
     func index(of chatID: String) -> Int? {
         return chatStorage.firstIndex {
             $0.id == chatID
@@ -91,7 +106,7 @@ class ChatListModel: ChatListDataSource {
             do {
                 try messages.removeAll(where: { _ in true })
             } catch {
-                DLog("Failed to delete messages for chat \(chatID): \(error)")
+                RLog("Failed to delete messages for chat \(chatID): \(error)")
             }
         }
         try chatStorage.remove(at: i)
@@ -114,14 +129,60 @@ class ChatListModel: ChatListDataSource {
 
     private func rename(chatID: String, newName: String) throws {
         guard let i = index(of: chatID) else { return }
-        var temp = chatStorage[i]
-        temp.title = newName
-        try chatStorage.set(at: i, temp)
+        let trimmedNewName = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedNewName.isEmpty {
+            // Defense in depth: ChatAgent sanitizes model-supplied titles
+            // before publishing, but nothing stops a future producer from
+            // publishing a blank .renameChat. Never blank the title.
+            RLog("Ignoring rename of \(chatID) to a blank title")
+            return
+        }
+        if chatStorage[i].title == trimmedNewName {
+            // A no-op rename must not rewrite the row or reload the list.
+            return
+        }
+        try chatStorage.modify(at: i) { chat in
+            chat.title = trimmedNewName
+            // The icon is drawn from the title, so a title change
+            // invalidates it. Behavior-neutral for the one current
+            // producer (ChatAgent renames a chat once, while its icon is
+            // still nil, and regenerates afterward), but it makes any
+            // future rename path correct by default: worst case is the
+            // default icon until something regenerates, never a stale
+            // icon for the previous title.
+            chat.icon = nil
+        }
         postMetadataChange()
     }
 
-    private func postMetadataChange() {
-        NotificationCenter.default.post(name: Self.metadataDidChange, object: nil)
+    // Persists an AI-generated icon (delivered by ChatAgent after it
+    // mints a title) or copies one to a new chat (the fork path, since a
+    // forked chat is never renamed and would otherwise keep the default
+    // icon forever). Nil clears the icon back to the default; the no-op
+    // guard matters because the common failure path delivers nil right
+    // after rename() already cleared the icon, which must not cost a row
+    // rewrite and a list reload. The notification carries the chatID so
+    // the list can reload just this row: an icon can't change row height
+    // or order.
+    func setIcon(_ data: Data?, forChatID chatID: String) throws {
+        guard let i = index(of: chatID) else { return }
+        if chatStorage[i].icon == data {
+            return
+        }
+        try chatStorage.modify(at: i) { chat in
+            chat.icon = data
+        }
+        postMetadataChange(chatID: chatID)
+    }
+
+    // When the change is scoped to one chat AND cannot affect row height
+    // or order (currently only icon changes), pass its ID so observers
+    // can reload a single row instead of every cell.
+    private func postMetadataChange(chatID: String? = nil) {
+        let userInfo: [AnyHashable: Any]? = chatID.map { [Self.chatIDUserInfoKey: $0] }
+        NotificationCenter.default.post(name: Self.metadataDidChange,
+                                        object: nil,
+                                        userInfo: userInfo)
     }
 
     // MARK: - Message-level operations
@@ -148,12 +209,18 @@ class ChatListModel: ChatListDataSource {
                         createIfNeeded: false)?.firstIndex { $0.uniqueID == messageID }
     }
 
+    // The no-maxLength form is the ChatListDataSource witness (a defaulted
+    // parameter can't satisfy a protocol requirement).
     func snippet(forChatID chatID: String) -> String? {
+        snippet(forChatID: chatID, maxLength: 40)
+    }
+
+    func snippet(forChatID chatID: String, maxLength: Int) -> String? {
         if let array = messageStorage[chatID] {
-            return array.last { $0.snippetText != nil }?.snippetText
+            return array.last { $0.snippetText != nil }?.content.snippetText(maxLength: maxLength)
         }
         for message in database.messageReverseIterator(inChat: chatID) {
-            if let snippet = message.snippetText {
+            if let snippet = message.content.snippetText(maxLength: maxLength) {
                 return snippet
             }
         }
@@ -167,7 +234,7 @@ class ChatListModel: ChatListDataSource {
         do {
             try messages.removeAll(where: { messageIDs.contains($0.uniqueID) })
         } catch {
-            DLog("Failed to delete messages from chat \(chatID): \(error)")
+            RLog("Failed to delete messages from chat \(chatID): \(error)")
         }
     }
 
@@ -262,7 +329,7 @@ class ChatListModel: ChatListDataSource {
         case .plainText, .markdown, .explanationRequest, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat,
                 .setPermissions, .terminalCommand, .multipart, .vectorStoreCreated,
-                .userCommand, .watcherEvent:
+                .userCommand, .watcherEvent, .unsupported:
             return false
         }
     }
@@ -291,8 +358,9 @@ class ChatListModel: ChatListDataSource {
     // MARK: - Session-binding helpers (session-bound chats)
 
     func firstIndex(forGuid guid: String) -> Int? {
+        let keys = iTermSessionReferenceKeys(forGuid: guid)
         return chatStorage.firstIndex { chat in
-            chat.terminalSessionGuid == guid || chat.browserSessionGuid == guid
+            chat.isLinked(toReferenceIn: keys)
         }
     }
 
@@ -321,8 +389,9 @@ class ChatListModel: ChatListDataSource {
     }
 
     func lastChat(guid: String) -> Chat? {
+        let keys = iTermSessionReferenceKeys(forGuid: guid)
         return chatStorage.last { chat in
-            chat.terminalSessionGuid == guid || chat.browserSessionGuid == guid
+            chat.isLinked(toReferenceIn: keys)
         }
     }
 
@@ -330,8 +399,9 @@ class ChatListModel: ChatListDataSource {
     // bump/rename re-prepends), so the first match is the chat with the
     // most recent activity for the given session guid.
     func mostRecentChat(forGuid guid: String) -> Chat? {
+        let keys = iTermSessionReferenceKeys(forGuid: guid)
         return chatStorage.first { chat in
-            chat.terminalSessionGuid == guid || chat.browserSessionGuid == guid
+            chat.isLinked(toReferenceIn: keys)
         }
     }
 
@@ -359,6 +429,16 @@ class ChatListModel: ChatListDataSource {
             try chatStorage.set(at: i, temp)
             postMetadataChange()
         }
+    }
+
+    func setModel(chatID: String, modelName: String?) throws {
+        guard let i = index(of: chatID) else {
+            return
+        }
+        var temp = chatStorage[i]
+        temp.modelName = modelName
+        try chatStorage.set(at: i, temp)
+        postMetadataChange()
     }
 
     // MARK: - Orchestrator-mode accessors
@@ -426,6 +506,7 @@ struct PersonChat: Hashable {
     var chatID: String
 }
 
+@MainActor
 class TypingStatusModel {
     static let instance = TypingStatusModel()
 
@@ -443,5 +524,33 @@ class TypingStatusModel {
     func isTyping(participant: Participant, chatID: String) -> Bool {
         let pc = PersonChat(participant: participant, chatID: chatID)
         return typing.contains(pc)
+    }
+}
+
+/// Per-chat "is an agent turn in flight" state. Set at turn start / cleared at
+/// turn end, so (unlike TypingStatusModel, which goes false during a mid-turn
+/// park) it stays true across parks: the accurate source for seeding a phone's
+/// turn-lifecycle state when it (re)subscribes mid-turn. Main-actor isolated to
+/// codify that all callers already run on the main actor.
+///
+/// Set by ChatService at turn start/end (via ChatBroker.publish(turnEvent:)). The
+/// consuming read - the subscribe snapshot that seeds a reconnecting phone's turn
+/// state from this - lands in a later step.
+@MainActor
+class TurnStatusModel {
+    static let instance = TurnStatusModel()
+
+    private var inFlight = Set<String>()
+
+    func set(inProgress: Bool, chatID: String) {
+        if inProgress {
+            inFlight.insert(chatID)
+        } else {
+            inFlight.remove(chatID)
+        }
+    }
+
+    func inProgress(chatID: String) -> Bool {
+        return inFlight.contains(chatID)
     }
 }

@@ -139,6 +139,7 @@ class MainMenuMangler: NSObject {
         "Open Autocomplete…": "text.badge.xmark",
         "Marks and Annotations.Set Mark": "bookmark",
         "Marks and Annotations.Add Annotation at Cursor": "pencil",
+        "Marks and Annotations.Annotate Selection": "square.and.pencil",
         "Marks and Annotations.Alerts.Alert on Next Mark": "bolt.badge.clock",
         "Marks and Annotations.Next Mark": "arrow.down",
         "Marks and Annotations.Previous Mark": "arrow.up",
@@ -295,6 +296,7 @@ class MainMenuMangler: NSObject {
         "Window Style.No Title Bar": "rectangle.dashed",
         "Window Style.Centered": "inset.filled.center.rectangle",
         "Lock Size": "lock",
+        "Lock Layout": "lock.rectangle.on.rectangle",
         "Notify on Status Change": "bell",
         "Save Window Arrangement": "square.and.arrow.down",
         "Save Current Window as Arrangement": "square.and.arrow.down",
@@ -501,7 +503,7 @@ class MainMenuMangler: NSObject {
 
         // Begin observing the new window’s firstResponder
         observedWindow = window
-        DLog("Start observing \(window)")
+        RLog("Start observing \(window)")
         window.addObserver(
             self,
             forKeyPath: "firstResponder",

@@ -117,7 +117,8 @@
                                                       isFirstResponder:(BOOL)isFirstResponder
                                                            dimOnlyText:(BOOL)dimOnlyText
                                                  adjustedDimmingAmount:(CGFloat)adjustedDimmingAmount
-                                                     transparencyAlpha:(CGFloat)transparencyAlpha {
+                                                     transparencyAlpha:(CGFloat)transparencyAlpha
+                                        tabHasMultipleDistinctTabColors:(BOOL)tabHasMultipleDistinctTabColors {
     NSString *customBg = [iTermAdvancedSettingsModel paneTitleBarBackgroundColor];
     if ([customBg hasPrefix:@"#"]) {
         NSColor *custom = [NSColor colorFromHexString:customBg];
@@ -129,6 +130,16 @@
         }
     }
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    if (self.useMinimalStyle && tabColor && tabHasMultipleDistinctTabColors) {
+        // In minimal the title bar usually blends with the session background
+        // (issue 10177) because the tab bar conveys the tab color. But when
+        // panes in this tab have differing tab colors the tab bar can't show
+        // them all, so tint each pane's title bar with its own tab color.
+        if (isFirstResponder) {
+            return tabColor;
+        }
+        return [tabColor it_colorByDimmingByAmount:0.3];
+    }
     if (!tabColor || self.useMinimalStyle) {
         return [self dimmedBackgroundColorWithAppearance:effectiveAppearance
                                   sessionBackgroundColor:sessionBackgroundColor
@@ -180,7 +191,8 @@
                                                               isFirstResponder:isFirstResponder
                                                                    dimOnlyText:dimOnlyText
                                                          adjustedDimmingAmount:adjustedDimmingAmount
-                                                             transparencyAlpha:transparencyAlpha];
+                                                             transparencyAlpha:transparencyAlpha
+                                               tabHasMultipleDistinctTabColors:NO];
     } else {
         return [self tabBarBackgroundColorForTabColor:tabColor
                                                 style:tabStyle
@@ -250,6 +262,18 @@
     }
 }
 
+#pragma mark Status Bar Edge Separator Color
+
+- (nullable NSColor *)statusBarEdgeSeparatorColorForTabStyle:(id<PSMTabStyle>)tabStyle {
+    if (!self.useMinimalStyle) {
+        // Callers fall back to the system separator color, which matches the
+        // workgroup toolbar's dividers in the non-minimal themes.
+        return nil;
+    }
+    PSMMinimalTabStyle *minimalStyle = [PSMMinimalTabStyle castFrom:tabStyle];
+    return [minimalStyle outlineColor];
+}
+
 #pragma mark - Private
 
 #pragma mark Session Decoration Background Color
@@ -305,7 +329,7 @@
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     if (self.useMinimalStyle) {
         NSColor *color = sessionBackgroundColor;
-        if ([iTermPreferences boolForKey:kPreferenceKeyDimOnlyText]) {
+        if (dimOnlyText) {
             if (PSMShouldExtendTransparencyIntoMinimalTabBar()) {
                 return [color colorWithAlphaComponent:transparencyAlpha];
             } else {

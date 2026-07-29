@@ -98,7 +98,7 @@
     }
     board = [NSPasteboard generalPasteboard];
     if (!board) {
-        DLog(@"Failed to get the general pasteboard!");
+        RLog(@"Failed to get the general pasteboard!");
         return nil;
     }
 
@@ -1208,13 +1208,13 @@ int decode_utf8_char(const unsigned char *datap,
     NSString *fontName = nil;
     [scanner scanUpToString:@" " intoString:&fontName];
     if (!fontName) {
-        DLog(@"Failed to scan font name from “%@” so using system standard font", self);
+        RLog(@"Failed to scan font name from “%@” so using system standard font", self);
         return [NSFont userFixedPitchFontOfSize:0.0] ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
     }
     scanner.charactersToBeSkipped = [NSCharacterSet characterSetWithCharactersInString:@" "];
     float fontSize = 0;
     if (![scanner scanFloat:&fontSize]) {
-        DLog(@"Failed to scan font size from “%@” so using system standard font", self);
+        RLog(@"Failed to scan font size from “%@” so using system standard font", self);
         return [NSFont userFixedPitchFontOfSize:0.0] ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
     }
     if (@available(macOS 12, *)) {
@@ -1260,7 +1260,7 @@ int decode_utf8_char(const unsigned char *datap,
     NSFontDescriptor *descriptor = [[NSFontDescriptor alloc] initWithFontAttributes:attributes];
     NSFont *aFont = [NSFont fontWithDescriptor:descriptor textTransform:nil];
     if (aFont == nil) {
-        DLog(@"Failed to look up font named %@. Falling back to to user font", fontName);
+        RLog(@"Failed to look up font named %@. Falling back to to user font", fontName);
         CGFloat fallbackSize = fontSize > 0 ? fontSize : 0.0;
         return [NSFont userFixedPitchFontOfSize:fallbackSize] ?: [NSFont systemFontOfSize:fallbackSize ?: [NSFont systemFontSize]];
     }

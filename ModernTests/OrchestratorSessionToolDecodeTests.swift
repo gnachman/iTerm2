@@ -160,7 +160,7 @@ final class OrchestratorSessionToolDecodeTests: XCTestCase {
         let writeCommands: [RemoteCommand.Content] = [
             .executeCommand(.init()),       // .runCommands
             .setClipboard(.init()),         // .writeToClipboard
-            .insertTextAtCursor(.init()),   // .typeForYou
+            .insertTextAtCursor(.init()),   // .controlTerminal
             .createFile(.init()),           // .writeToFilesystem
             .loadURL(.init()),              // .actInWebBrowser
         ]
@@ -201,6 +201,7 @@ final class OrchestratorSessionToolDecodeTests: XCTestCase {
         case .getCommandBeforeCursor(let p):  return try encoder.encode(p)
         case .searchCommandHistory(let p):    return try encoder.encode(p)
         case .getCommandOutput(let p):        return try encoder.encode(p)
+        case .getScreenContents(let p):       return try encoder.encode(p)
         case .getTerminalSize(let p):         return try encoder.encode(p)
         case .getShellType(let p):            return try encoder.encode(p)
         case .detectSSHSession(let p):        return try encoder.encode(p)
@@ -217,6 +218,7 @@ final class OrchestratorSessionToolDecodeTests: XCTestCase {
         case .webSearch(let p):               return try encoder.encode(p)
         case .getURL(let p):                  return try encoder.encode(p)
         case .readWebPage(let p):             return try encoder.encode(p)
+        case .restartSession(let p):          return try encoder.encode(p)
         }
     }
 }

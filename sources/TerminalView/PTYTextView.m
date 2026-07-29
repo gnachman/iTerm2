@@ -600,7 +600,9 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
         return self.findOnPageHelper.searchResults.count > 0;
     }
     if (item.action == @selector(movePane:)) {
-        return [[MovePaneController sharedInstance] session] == nil && ![self.delegate textViewIsLocked];
+        return ([[MovePaneController sharedInstance] session] == nil &&
+                ![self.delegate textViewIsLocked] &&
+                ![self.delegate textViewWindowIsLayoutLocked]);
     }
     SEL theSel = [item action];
     if ([NSStringFromSelector(theSel) hasPrefix:@"contextMenuAction"]) {
@@ -725,7 +727,25 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     // dispatched here. They're now handled centrally in
     // -[iTermApplication handleKeypressInTerminalWindow:] so they fire
     // regardless of first responder.
-    if ([[NSApp mainMenu] performKeyEquivalent:theEvent]) {
+    // During key-event replay (used by tests/modern-key-reporting-test.py) the
+    // synthetic events are posted through NSApp.postEvent, so they reach here on
+    // the "regular path" instead of being consumed by the terminal key handler.
+    // If we forwarded them to the main menu, macOS 15+ window-tiling items would
+    // claim them: those items match a bare Control-<key> because the Fn part of
+    // the gesture is not in the key equivalent (the OS enforces Fn at the HID
+    // layer, which a manual performKeyEquivalent: call bypasses). Replaying
+    // Control-C would then match "Center" and move the window instead of reaching
+    // the terminal. Skip the menu entirely while replaying so the event falls
+    // through to the keyboard handler below. Note we must check the flag before
+    // calling performKeyEquivalent:, since calling it is what triggers the tile.
+    BOOL mainMenuHandled = NO;
+#if DEBUG
+    if (![iTermKeyEventReplayer isReplaying])
+#endif
+    {
+        mainMenuHandled = [[NSApp mainMenu] performKeyEquivalent:theEvent];
+    }
+    if (mainMenuHandled) {
         // Originally I tried to detect when a key would be handled later by a
         // key equivalent by checking if Cmd is pressed, but that doesn't work
         // with the profoundly stupid macOS 15 window tiling shortcuts. They
@@ -1170,7 +1190,7 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     // imeLines counts the rows the marked text actually covers, which can extend
     // below numberOfLines * _lineHeight into the extra IME headroom.
     const int topRow = [_dataSource cursorY] - 1 + [_dataSource numberOfLines] - [_dataSource height];
-    const NSRect imeRect = NSMakeRect([iTermPreferences intForKey:kPreferenceKeySideMargins],
+    const NSRect imeRect = NSMakeRect([iTermPreferences sideMargins],
                                       topRow * _lineHeight,
                                       width * _charWidth,
                                       imeLines * _lineHeight);
@@ -1784,6 +1804,21 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                              startedThisFrame:startedLegacyAnimation];
     }];
     [self shiftTrackingChildWindows];
+
+    if (_drawingHelper.cursorBlinkFadeWantsRedraw) {
+        // Keep the smooth-blink cycle going by scheduling another cursor redraw.
+        // This is a self-sustaining loop that runs at the display refresh rate
+        // (like the cursor slide animator) rather than relying on the session's
+        // update cadence, which can be slow when idle. The delay is 0 mid-fade
+        // and the remaining dwell time while holding at an extreme, so we don't
+        // burn frames while the cursor is just sitting fully on or fully off.
+        const NSTimeInterval delay = MAX(0, _drawingHelper.cursorBlinkFadeTimeUntilNextFrame);
+        __weak __typeof(self) weakSelf = self;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            [weakSelf setCursorNeedsDisplay];
+        });
+    }
 }
 
 #pragma mark - Debug overlay for prompt-mark ranges
@@ -3180,17 +3215,6 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     _accessibilityPendingOutputCursorLineString = nil;
 }
 
-- (void)accessibilityPostOutputLayoutChangedNotification {
-    NSDictionary *info = @{
-        NSAccessibilityUIElementsKey: @[ self ],
-        NSAccessibilityPriorityKey: @(NSAccessibilityPriorityLow)
-    };
-    NSAccessibilityPostNotificationWithUserInfo(
-        self,
-        NSAccessibilityLayoutChangedNotification,
-        info);
-}
-
 + (NSArray<NSString *> *)accessibilityAnnouncementLinesForTrimmedLines:(NSArray<NSString *> *)trimmedLines
                                                      firstAbsoluteLine:(long long)firstAbsoluteLine
                                                        oldAbsoluteCursorY:(long long)oldAbsoluteCursorY
@@ -3243,12 +3267,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
     AccLog(@"Output settle: firstAbsY=%lld lastAbsY=%lld cursorAbsY=%lld overflow=%lld", firstAbsY, lastAbsY, absCursorY, overflow);
 
-    if (firstAbsY > lastAbsY) {
-        AccLog(@"No lines to announce (firstAbsY > lastAbsY)");
-        [self accessibilityClearPendingOutputState];
-        return;
-    }
-
+    // When firstAbsY > lastAbsY (e.g. a bare clear) the loop collects nothing and no
+    // announcement is made, but the clear+refresh tail below must still run.
     NSMutableArray<NSString *> *trimmedLines = [NSMutableArray array];
     for (long long absLine = firstAbsY; absLine <= lastAbsY; absLine++) {
         int relativeIndex = (int)(absLine - overflow);
@@ -3265,10 +3285,27 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     AccLog(@"Filtered %@ lines down to %@ (oldCursorLine=\"%@\")", @(trimmedLines.count), @(outputLines.count), _accessibilityPendingOutputCursorLineString);
     if (outputLines.count > 0) {
         [self accessibilityAnnounce:[outputLines componentsJoinedByString:@"\n"] target:NSApp];
-        [self accessibilityPostOutputLayoutChangedNotification];
     }
 
     [self accessibilityClearPendingOutputState];
+
+    // Must come after the announcement so VoiceOver does not read the prompt line
+    // first — the same premature read the in-burst suppression in
+    // -refreshAccessibility exists to prevent.
+    [self accessibilityPostSettleContentRefresh];
+}
+
+// Refresh VoiceOver's cached content after an output burst settles so an active
+// QuickNav interaction can reach the new text. Value-changed alone updates the cached
+// text but VoiceOver does not extend its navigable model until the accompanying
+// selected-text-changed arrives (the same pair -refreshAccessibility posts when not
+// suppressed). Do not post NSAccessibilityLayoutChangedNotification here: with
+// NSAccessibilityUIElementsKey it directs VoiceOver to move its cursor to the listed
+// element, relocating the user's review cursor to the top of the terminal.
+- (void)accessibilityPostSettleContentRefresh {
+    AccLog(@"Post notification: value changed + selected text changed (post-settle)");
+    NSAccessibilityPostNotification(self, NSAccessibilityValueChangedNotification);
+    NSAccessibilityPostNotification(self, NSAccessibilitySelectedTextChangedNotification);
 }
 
 // Update accessibility, to be called periodically.
@@ -5006,9 +5043,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 - (void)maybeUpload:(NSArray *)tuple {
     NSArray *propertyList = tuple[0];
     SCPPath *dropScpPath = tuple[1];
-    DLog(@"Confirm upload to %@", dropScpPath);
+    RLog(@"Confirm upload to %@", dropScpPath);
     if ([self confirmUploadOfFiles:propertyList toPath:dropScpPath]) {
-        DLog(@"initiating upload");
+        RLog(@"initiating upload");
         [self.delegate uploadFiles:propertyList toPath:dropScpPath];
     }
 }
@@ -5044,7 +5081,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [self.delegate textViewDidUpdateDropTargetVisibility];
     NSPasteboard *draggingPasteboard = [sender draggingPasteboard];
     NSDragOperation dragOperation = [sender draggingSourceOperationMask];
-    DLog(@"Perform drag operation");
+    RLog(@"Perform drag operation");
     if (dragOperation & (NSDragOperationCopy | NSDragOperationGeneric | NSDragOperationLink)) {
         DLog(@"Drag operation is acceptable");
         NSArray *types = [draggingPasteboard types];
@@ -5053,28 +5090,28 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
             if (filenames.count > 0) {
                 if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {
                     // Option key held - upload files
-                    DLog(@"Option key held, uploading files: %@", filenames);
+                    RLog(@"Option key held, uploading files: %@", RLogRedact(filenames, @(filenames.count)));
                     NSPoint windowDropPoint = [sender draggingLocation];
                     return [self uploadFilenamesOnPasteboard:draggingPasteboard location:windowDropPoint];
                 } else if ([self.delegate textViewIsOnLocalhost]) {
                     // On localhost, just paste the paths directly
-                    DLog(@"On localhost, pasting file paths directly: %@", filenames);
+                    RLog(@"On localhost, pasting file paths directly: %@", RLogRedact(filenames, @(filenames.count)));
                     return [self pasteValuesOnPasteboard:draggingPasteboard
                                            cdToDirectory:(dragOperation == NSDragOperationGeneric)];
                 } else {
                     // On remote host, show paste options dialog
-                    DLog(@"On remote host, showing paste options for dropped files: %@", filenames);
+                    RLog(@"On remote host, showing paste options for dropped files: %@", RLogRedact(filenames, @(filenames.count)));
                     [self.delegate textViewShowPasteOptionsForDroppedFiles:filenames];
                     return YES;
                 }
             }
         }
         // Fall back to pasting text values
-        DLog(@"No files, pasting text values");
+        RLog(@"No files, pasting text values");
         return [self pasteValuesOnPasteboard:draggingPasteboard
                                cdToDirectory:(dragOperation == NSDragOperationGeneric)];
     }
-    DLog(@"Drag/drop Failing");
+    RLog(@"Drag/drop Failing");
     return NO;
 }
 
@@ -6727,7 +6764,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 - (void)unfoldBlock:(NSString *)blockID {
     const VT100GridCoordRange range = [self.dataSource rangeOfBlockWithID:blockID];
     if (range.start.x < 0){
-        DLog(@"Failed to find block %@", blockID);
+        RLog(@"Failed to find block %@", blockID);
         return;
     }
     const long long offset = [self.dataSource totalScrollbackOverflow];
@@ -6739,7 +6776,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 - (void)foldBlock:(NSString *)blockID {
     const VT100GridCoordRange range = [self.dataSource rangeOfBlockWithID:blockID];
     if (range.start.x < 0 || range.start.y == range.end.y) {
-        DLog(@"Failed to fold block %@. range=%@", blockID, VT100GridCoordRangeDescription(range));
+        RLog(@"Failed to fold block %@. range=%@", blockID, VT100GridCoordRangeDescription(range));
         return;
     }
     const long long offset = [self.dataSource totalScrollbackOverflow];
@@ -6851,6 +6888,25 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 
 - (BOOL)isAccessibilityElement {
     return YES;
+}
+
+// Match Terminal.app's text-area accessibility surface while VoiceOver runs: Terminal
+// exposes neither AXDocument nor a settable AXValue. Advertising them (AXValue is
+// settable only because of the no-op setter kept for Full Keyboard Access, Issue
+// 10023) makes VoiceOver treat the terminal as more than a plain text area and wedges
+// QuickNav when the user interacts with it. The gate keeps Full Keyboard Access
+// working while VoiceOver is off; when both run at once, hiding AXValue wins because
+// QuickNav breaks otherwise. The sibling setAccessibilityContents: needs no gate:
+// AXContents is not advertised at all (it has no getter).
+- (BOOL)isAccessibilitySelectorAllowed:(SEL)selector {
+    // Check the selector first: this method runs for every accessibility attribute
+    // operation, and isVoiceOverEnabled is a preferences lookup, not an ivar read.
+    if ((selector == @selector(accessibilityDocument) ||
+         selector == @selector(setAccessibilityValue:)) &&
+        [[NSWorkspace sharedWorkspace] isVoiceOverEnabled]) {
+        return NO;
+    }
+    return [super isAccessibilitySelectorAllowed:selector];
 }
 
 - (NSInteger)accessibilityLineForIndex:(NSInteger)index {
@@ -7145,6 +7201,7 @@ static NSString *iTermStringFromRange(NSRange range) {
             loadContext:(iTermKeyboardHandlerContext *)context
                forEvent:(NSEvent *)event {
     context->hasActionableKeyMapping = [_delegate hasActionableKeyMappingForEvent:event];
+    context->hasBypassKeyMapping = [_delegate keyMapsToBypassActionForEvent:event];
     context->leftOptionKey = [_delegate optionKey];
     context->rightOptionKey = [_delegate rightOptionKey];
     context->autorepeatMode = [_dataSource terminalAutorepeatMode];
@@ -7162,6 +7219,11 @@ static NSString *iTermStringFromRange(NSRange range) {
 
 - (NSRange)keyboardHandlerMarkedTextRange:(iTermKeyboardHandler *)keyboardhandler {
     return _drawingHelper.inputMethodMarkedRange;
+}
+
+- (BOOL)keyboardHandler:(iTermKeyboardHandler *)keyboardhandler
+    sendTmuxControlModeKeyEvent:(NSEvent *)event {
+    return [self.delegate textViewSendTmuxControlModeKeyEvent:event];
 }
 
 - (void)keyboardHandler:(iTermKeyboardHandler *)keyboardhandler
@@ -7230,6 +7292,62 @@ static NSString *iTermStringFromRange(NSRange range) {
 
 - (void)setCursorShadow:(BOOL)cursorShadow {
     _drawingHelper.cursorShadow = cursorShadow;
+}
+
+- (void)setCursorSmoothBlink:(BOOL)cursorSmoothBlink {
+    _drawingHelper.cursorSmoothBlink = cursorSmoothBlink;
+}
+
+- (BOOL)cursorSmoothBlink {
+    return _drawingHelper.cursorSmoothBlink;
+}
+
+- (void)setCursorBlinkFadeInDuration:(NSTimeInterval)duration {
+    _drawingHelper.cursorBlinkFadeInDuration = duration;
+}
+
+- (NSTimeInterval)cursorBlinkFadeInDuration {
+    return _drawingHelper.cursorBlinkFadeInDuration;
+}
+
+- (void)setCursorBlinkFadeOutDuration:(NSTimeInterval)duration {
+    _drawingHelper.cursorBlinkFadeOutDuration = duration;
+}
+
+- (NSTimeInterval)cursorBlinkFadeOutDuration {
+    return _drawingHelper.cursorBlinkFadeOutDuration;
+}
+
+- (void)setCursorBlinkFadeInCurve:(NSInteger)curve {
+    _drawingHelper.cursorBlinkFadeInCurve = curve;
+}
+
+- (NSInteger)cursorBlinkFadeInCurve {
+    return _drawingHelper.cursorBlinkFadeInCurve;
+}
+
+- (void)setCursorBlinkFadeOutCurve:(NSInteger)curve {
+    _drawingHelper.cursorBlinkFadeOutCurve = curve;
+}
+
+- (NSInteger)cursorBlinkFadeOutCurve {
+    return _drawingHelper.cursorBlinkFadeOutCurve;
+}
+
+- (void)setCursorBlinkVisibleDwell:(NSTimeInterval)dwell {
+    _drawingHelper.cursorBlinkVisibleDwell = dwell;
+}
+
+- (NSTimeInterval)cursorBlinkVisibleDwell {
+    return _drawingHelper.cursorBlinkVisibleDwell;
+}
+
+- (void)setCursorBlinkHiddenDwell:(NSTimeInterval)dwell {
+    _drawingHelper.cursorBlinkHiddenDwell = dwell;
+}
+
+- (NSTimeInterval)cursorBlinkHiddenDwell {
+    return _drawingHelper.cursorBlinkHiddenDwell;
 }
 
 - (void)setHideCursorWhenUnfocused:(BOOL)hideCursorWhenUnfocused {

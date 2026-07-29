@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.anthropic.com\/v1\/messages\nanthropic-version: 2023-06-01\ncontent-type: application\/json\nx-api-key: <SECRET>\n\n{\"max_tokens\":64000,\"messages\":[{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Reply with exactly the single word: PINEAPPLE\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"claude-haiku-4-5\",\"temperature\":0}",
+  "key" : "dbb88af3aadb39bf3d9185c390d965a490d1a46c49da92db60f490d157bc518a",
+  "response" : {
+    "data" : "{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01GMsshqvfjbaMAFvf1BDHii\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"PINEAPPLE\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":19,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":8,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

@@ -43,6 +43,11 @@
 // Call this when the result of iTermTabBarShouldFlash would change.
 - (void)updateFlashing;
 
+// Sets the tab bar height (the per-tab cell height when vertical). On macOS 26 vertical tab
+// bars take their cell height from the style; `defaultHeight` is the horizontal bar height,
+// which is used in all other cases.
+- (void)updateHeightWithDefault:(CGFloat)defaultHeight;
+
 - (void)setAlphaValue:(CGFloat)alphaValue animated:(BOOL)animated;
 
 @end

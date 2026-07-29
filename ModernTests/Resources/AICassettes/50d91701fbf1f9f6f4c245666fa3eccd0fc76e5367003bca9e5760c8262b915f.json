@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttp:\/\/localhost:11434\/api\/chat\ncontent-type: application\/json\n\n{\"max_tokens\":127979,\"messages\":[{\"content\":\"Quote the value of the \\\"magic\\\" field shown.\\n<iterm2:attachment file=\\\"magic.json\\\" type=\\\"application\\\/json\\\">\\n{\\\"magic\\\":\\\"pinecone-42\\\"}\\n<\\\/iterm2:attachment>\",\"role\":\"user\"}],\"model\":\"llama3.3:latest\",\"stream\":false}",
+  "key" : "50d91701fbf1f9f6f4c245666fa3eccd0fc76e5367003bca9e5760c8262b915f",
+  "response" : {
+    "data" : "{\"model\":\"llama3.3:latest\",\"created_at\":\"2026-06-15T22:25:56.50535Z\",\"message\":{\"role\":\"assistant\",\"content\":\"The value of the \\\"magic\\\" field is:\\n\\n`pinecone-42`\"},\"done\":true,\"done_reason\":\"stop\",\"total_duration\":3145901917,\"load_duration\":672119084,\"prompt_eval_count\":52,\"prompt_eval_duration\":791181000,\"eval_count\":17,\"eval_duration\":1641061000}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

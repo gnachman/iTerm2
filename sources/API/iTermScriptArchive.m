@@ -165,7 +165,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
        offerAutoLaunch:(BOOL)offerAutoLaunch
                avoidUI:(BOOL)avoidUI
         withCompletion:(void (^)(NSError *, NSURL *location))completion {
-    DLog(@"trusted=%@ offerAutoLaunch=%@", @(trusted), @(offerAutoLaunch));
+    RLog(@"trusted=%@ offerAutoLaunch=%@", @(trusted), @(offerAutoLaunch));
     if (self.fullEnvironment) {
         [self installFullEnvironmentTrusted:trusted
                             offerAutoLaunch:offerAutoLaunch
@@ -234,7 +234,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
     NSString *setupCfg = [from stringByAppendingPathComponent:iTermScriptSetupCfgName];
     iTermSetupCfgParser *setupParser = [[iTermSetupCfgParser alloc] initWithPath:setupCfg];
     if (!setupParser) {
-        DLog(@"Can't find setup.cfg");
+        RLog(@"Can't find setup.cfg");
         NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: @"Cannot find setup.cfg" };
         NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:1 userInfo:userInfo];
         completion(error, nil);
@@ -243,7 +243,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
 
     NSArray<NSString *> *dependencies = setupParser.dependencies;
     if (setupParser.dependenciesError) {
-        DLog(@"deps error %@", setupParser.dependenciesError);
+        RLog(@"deps error %@", setupParser.dependenciesError);
         completion(setupParser.dependenciesError, nil);
         return;
     }
@@ -282,7 +282,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
                                          withDestinationPath:from
                                                        error:&error];
     if (error) {
-        DLog(@"%@", error);
+        RLog(@"%@", error);
         NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Could not write to %@", to] };
         NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:1 userInfo:userInfo];
         completion(error, nil);
@@ -326,7 +326,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
                                                                      dependencies:dependencies
                                                                    createSetupCfg:NO
                                                                        completion:^(NSError *errorStatus) {
-            DLog(@"Install python environment done with status %@", errorStatus);
+            RLog(@"Install python environment done with status %@", errorStatus);
             [self didInstallPythonRuntimeWithError:errorStatus
                                               from:from
                                                 to:to
@@ -361,7 +361,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
                                     from:(NSString *)from
                                       to:(NSString *)to
                               completion:(void (^)(NSError *))completion {
-    DLog(@"status=%@ from=%@ to=%@", errorStatus, from, to);
+    RLog(@"status=%@ from=%@ to=%@", errorStatus, from, to);
     [[NSFileManager defaultManager] removeItemAtPath:to error:nil];
     switch ((iTermInstallPythonStatus)errorStatus.code) {
         case iTermInstallPythonStatusOK:

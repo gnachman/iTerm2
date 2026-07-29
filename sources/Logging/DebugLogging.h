@@ -14,6 +14,16 @@
 // Rest of the file is Obj-C code path
 #import <Foundation/Foundation.h>
 extern BOOL gDebugLogging;
+
+// Logs the result of `messageBlock` once per (key, debug-logging
+// session). The key set clears each time logging starts, so a
+// diagnosis emitted into an earlier, discarded capture re-emits into
+// the next one. While logging is off this neither logs nor consumes
+// the key, so the one-shot can't be burned before the user enables
+// logging to capture it. The block runs only when the message will
+// actually be logged; expensive diagnostics belong inside it. Dedup
+// is global (one emission per key across all views/windows).
+void DLogOncePerLoggingSession(NSString *key, NSString *(^messageBlock)(void));
 #include "iTermCLogging.h"
 
 #define USE_STOPWATCH 0
@@ -95,7 +105,27 @@ extern BOOL gDebugLogging;
         DLog(args); \
         NSLog(args); \
     } while (0)
+
+// Retrospective log: like DLog, but when debug logging is OFF the message is
+// retained in a byte-bounded in-memory ring (instead of being dropped) so the
+// lead-up to a low-frequency event can be recovered after the fact. The ring is
+// deliberately NOT included in debug logs (the user never opted into capturing
+// it); retrieve it explicitly via iTermRetrospectiveLogString when you have a
+// specific reason to surface it. When debug logging is already on, this behaves
+// identically to DLog. Use for low-frequency events only; the format string is
+// always evaluated.
+#define RLog(args...) \
+    RetrospectiveLogImpl(__FILE__, __LINE__, __FUNCTION__, [NSString stringWithFormat:args])
 #endif
+
+// For use as an RLog format argument. Resolves to `full` when debug logging is
+// enabled and `redacted` when it is not. RLog feeds the live debug log when the
+// user has opted into debug logging and the always-on retrospective ring
+// otherwise; this lets a value be complete in the opt-in log but redacted in the
+// ring (which must not accumulate private data). Both arguments are evaluated
+// eagerly, so keep them cheap. Example:
+//   RLog(@"Key up: %@", RLogRedact(event, event.it_redactedDescription));
+NSObject *RLogRedact(id full, id redacted);
 
 #define ITAssert(condition) \
   do { \
@@ -206,6 +236,13 @@ void iTermFatalError(NSString *s) __attribute__((noreturn));
 NSString *iTermDebugLogHeaderString(void);
 void ToggleDebugLogging(void);
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
+void RetrospectiveLogImpl(const char *file, int line, const char *function, NSString *value);
+// Returns the current contents of the retrospective ring (lines retained by
+// RLog while debug logging was off). Deliberately NOT included in debug logs,
+// since the user never opted into capturing it; surface it only when you have a
+// specific reason to. iTermClearRetrospectiveLog empties the ring.
+NSString *iTermRetrospectiveLogString(void);
+void iTermClearRetrospectiveLog(void);
 void LogForNextCrash(const char *file, int line, const char *function, NSString* value, BOOL force);
 void TurnOnDebugLoggingSilently(void);
 BOOL TurnOffDebugLoggingSilently(void);

@@ -65,8 +65,9 @@ def unescape_string(s):
     return s
 
 # Function to read CSV and execute test steps
-def run_test_harness(csv_file, output_file):
+def run_test_harness(csv_file, output_file, manual_only=False, no_retry=False, start_index=None):
     results = []
+    manual_skipped = 0
 
     with open(csv_file, mode='r', encoding='utf-8') as file:
         reader = csv.DictReader(file)
@@ -75,11 +76,24 @@ def run_test_harness(csv_file, output_file):
         rows = list(reader)
 
         for index, row in enumerate(rows):
-            if len(sys.argv) > 1 and not sys.argv[1].startswith("--") and index < int(sys.argv[1]):
+            if start_index is not None and index < start_index:
                 continue
             step_number = index
             key = row['Key']
             if len(key) == 0:
+                continue
+
+            # Some steps can't be automated: they need a keyboard-layout switch or
+            # a modifier-remapping (Super/Hyper/Meta) that the harness can't make on
+            # its own, and their keystrokes can't be reliably replayed. Those are
+            # flagged TRUE in the Manual column. Skip them in a normal run and count
+            # them; a --manual run does the opposite and runs only those.
+            is_manual = ((row.get('Manual') or '').strip().upper() == 'TRUE')
+            if manual_only:
+                if not is_manual:
+                    continue
+            elif is_manual:
+                manual_skipped += 1
                 continue
 
             retrying = True
@@ -154,12 +168,12 @@ def run_test_harness(csv_file, output_file):
                     print("Actual:")
                     print(replace_control_chars(input_received))
                     print("")
-                    if len(sys.argv) < 2 or sys.argv[1] != "--no-retry":
+                    if no_retry:
+                        yn = "n"
+                    else:
                         print("Retry? [yn]")
                         yn = sys.stdin.read(1)
                         time.sleep(0.1)
-                    else:
-                        yn = "n"
                     retrying = yn != "n"
 
             result = {
@@ -172,21 +186,48 @@ def run_test_harness(csv_file, output_file):
     with open(output_file, mode='w') as file:
         json.dump(results, file, indent=4)
 
+    return manual_skipped
+
 if __name__ == "__main__":
     csv_file = 'steps.csv'  # Input CSV file with test steps
-    if len(sys.argv) > 1:
-        first = sys.argv[1]
+
+    # Flags may appear in any order:
+    #   --manual     run ONLY the tests flagged Manual in steps.csv
+    #   --no-retry   don't prompt to retry a failed step
+    #   <number>     start at that step index (skips earlier steps)
+    manual_only = "--manual" in sys.argv
+    no_retry = "--no-retry" in sys.argv
+    start_index = None
+    for arg in sys.argv[1:]:
+        if not arg.startswith("--") and arg.isdigit():
+            start_index = int(arg)
+            break
+
+    if manual_only:
+        suffix = "-manual"
+    elif start_index is not None:
+        suffix = str(start_index)
     else:
-        first = ""
-    output_file = f'harness{first}.json'  # Output JSON file with results
+        suffix = ""
+    output_file = f'harness{suffix}.json'  # Output JSON file with results
+
+    manual_skipped = 0
     try:
         print(f'\033[?1049h')
         # Save the current terminal settings
         old_settings = set_noncanonical_mode(sys.stdin.fileno())
 
         # Run the test harness
-        run_test_harness(csv_file, output_file)
+        manual_skipped = run_test_harness(csv_file, output_file,
+                                          manual_only=manual_only,
+                                          no_retry=no_retry,
+                                          start_index=start_index)
     finally:
         # Restore the terminal settings
         print(f'\033[?1049l')
         restore_mode(sys.stdin.fileno(), old_settings)
+
+    if not manual_only:
+        script = os.path.basename(sys.argv[0])
+        print(f'Skipped {manual_skipped} manual test(s) that must be run by hand.')
+        print(f'To run only the manual tests: python3.10 {script} --manual')

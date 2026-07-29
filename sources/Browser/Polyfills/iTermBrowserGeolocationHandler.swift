@@ -107,7 +107,7 @@ class iTermBrowserGeolocationHandler: NSObject {
             pendingPermissionRequests[origin] = continuation
             if let existingContinuation {
                 existingContinuation.resume(returning: false)
-                DLog("Cancelled existing permission request from origin: \(origin)")
+                RLog("Cancelled existing permission request from origin: \(origin)")
             }
             
 
@@ -176,7 +176,7 @@ class iTermBrowserGeolocationHandler: NSObject {
             case "watchPosition":
                 await handleWatchPosition(webView: webView, frame: frame, messageDict: messageDict)
             default:
-                DLog("Unknown geolocation message type: \(type)")
+                RLog("Unknown geolocation message type: \(type)")
             }
         }
     }
@@ -198,7 +198,7 @@ class iTermBrowserGeolocationHandler: NSObject {
         do {
             _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), in: frame, contentWorld: .page)
         } catch {
-            DLog("Error pushing geolocation permission state: \(error)")
+            RLog("Error pushing geolocation permission state: \(error)")
         }
     }
 
@@ -338,7 +338,7 @@ extension iTermBrowserGeolocationHandler {
         do {
             _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), in: frame, contentWorld: .page)
         } catch {
-            DLog("Error sending position success: \(error)")
+            RLog("Error sending position success: \(error)")
         }
     }
 
@@ -351,7 +351,7 @@ extension iTermBrowserGeolocationHandler {
         do {
             _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), in: frame, contentWorld: .page)
         } catch {
-            DLog("Error sending position error: \(error)")
+            RLog("Error sending position error: \(error)")
         }
     }
 
@@ -420,7 +420,7 @@ extension iTermBrowserGeolocationHandler: CLLocationManagerDelegate {
             let authorized = systemAuthorizationStatus == .systemAuthorized
             for (origin, continuation) in requests {
                 continuation.resume(returning: authorized)
-                DLog("Authorization result for \(origin): \(authorized)")
+                RLog("Authorization result for \(origin): \(authorized)")
             }
         }
     }

@@ -80,7 +80,7 @@ class iTermBrowserOnboardingHandler: NSObject, iTermBrowserPageHandler {
         guard let action = message["action"] as? String,
               let sessionSecret = message["sessionSecret"] as? String,
               sessionSecret == secret else {
-            DLog("Invalid or missing session secret for onboarding action")
+            RLog("Invalid or missing session secret for onboarding action")
             return
         }
 
@@ -123,7 +123,7 @@ class iTermBrowserOnboardingHandler: NSObject, iTermBrowserPageHandler {
             if let guid = createdProfileGuid ?? delegate?.onboardingHandlerFindBrowserProfileGuid(self) {
                 delegate?.onboardingHandlerSwitchToProfile(self, guid: guid)
             } else {
-                DLog("No browser profile found to switch to")
+                RLog("No browser profile found to switch to")
             }
             
         case "getSettingsStatus":
@@ -133,7 +133,7 @@ class iTermBrowserOnboardingHandler: NSObject, iTermBrowserPageHandler {
             iTermUserDefaults.userDefaults().set(true, forKey: "NoSyncBrowserOnboardingCompleted")
 
         default:
-            DLog("Unknown onboarding action: \(action)")
+            RLog("Unknown onboarding action: \(action)")
         }
     }
 

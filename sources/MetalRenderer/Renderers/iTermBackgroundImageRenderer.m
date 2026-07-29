@@ -96,7 +96,7 @@ NS_ASSUME_NONNULL_BEGIN
     DLog(@"setImage:%@ mode:%@ frame:%@ containerRect:%@", 
          image.image, @(mode), NSStringFromRect(frame), NSStringFromRect(containerRect));
     if (image != _image) {
-        DLog(@"Will create texture from image");
+        RLog(@"Will create texture from image");
         _texture = image ? [_metalRenderer textureFromImage:image context:context colorSpace:colorSpace] : nil;
     }
     _frame = frame;

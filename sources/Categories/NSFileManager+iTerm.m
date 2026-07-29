@@ -98,7 +98,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
         if (errorOut) {
             *errorOut = error;
         }
-        DLog(@"Create dir of %@ failed with %@, return nil", resolvedPath, error);
+        RLog(@"Create dir of %@ failed with %@, return nil", resolvedPath, error);
         return nil;
     }
 
@@ -325,7 +325,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
         NSError *error = nil;
         [self createDirectoryAtPath:dotdir withIntermediateDirectories:YES attributes:nil error:&error];
         if (error) {
-            DLog(@"Couldn't create %@: %@", dotdir, error);
+            RLog(@"Couldn't create %@: %@", dotdir, error);
             if (errorPtr) {
                 *errorPtr = error;
             }
@@ -385,7 +385,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     if (!result && error) {
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            DLog(@"Failed to create the config directory: %@", error);
+            RLog(@"Failed to create the config directory: %@", error);
             [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem finding or creating the config directory. You can set “Settings > Advanced > Folder for config files“ to set a custom location for this directory. Until this is fixed, some features will be disabled.\n%@", error.localizedDescription]
                                        actions:@[ @"OK" ]
                                      accessory:nil
@@ -462,7 +462,7 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     DLog(@"monitor %@", path);
     const int fileDescriptor = open(path.UTF8String, O_EVTONLY);
     if (fileDescriptor < 0) {
-        DLog(@"Failed to open %@", path);
+        RLog(@"Failed to open %@", path);
         return nil;
     }
 

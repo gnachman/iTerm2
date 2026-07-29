@@ -146,9 +146,10 @@
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    const int vmargin = [iTermPreferences topBottomMargins];
     NSRect rect = self.bounds;
-    rect.size.height -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
-    rect.origin.y = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    rect.size.height -= vmargin;
+    rect.origin.y = vmargin;
     if (!NSEqualRects(child_.frame, rect)) {
         child_.frame = rect;
         DLog(@"Set textview's frame to %@", NSStringFromRect(rect));

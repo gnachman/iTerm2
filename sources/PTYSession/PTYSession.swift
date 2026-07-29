@@ -53,6 +53,17 @@ class PTYSessionSwiftState: NSObject {
     // gates the deferred prompt-overlay launch path.
     var workgroupSessionMode: iTermWorkgroupSessionMode = .regular
 
+    // When true, this session's `endAction` always reports .default no
+    // matter what the profile's "Close Sessions On End" (KEY_SESSION_END_ACTION)
+    // is. Set on workgroup-spawned member sessions (peers, splits, tabs)
+    // so a profile sync — which reconciles non-overridden keys back to
+    // the shared profile — can't quietly flip a member to Close and make
+    // it auto-close when its program exits (e.g. a Diff pane whose
+    // difftool finishes), which would tear the whole workgroup down. The
+    // leader/main session is deliberately not marked, so it still honors
+    // its profile.
+    var forceDefaultEndAction = false
+
     // For .codeReview sessions, the raw (unwrapped, swifty-templated)
     // command — e.g. "claude \(codeReviewPrompt)". Cached so any future
     // relaunch (toolbar reload, broken-pipe restart announcement) can
@@ -73,6 +84,20 @@ class PTYSessionSwiftState: NSObject {
     // firePendingDiffLaunch after it runs so a subsequent poll doesn't
     // re-launch the same session.
     var pendingDiffLaunch: (() -> Void)?
+
+    // For .codeReview sessions, whether the "auto-send clippings when idle"
+    // toolbar toggle is on. When on, the workgroup peer port sends this
+    // session's clippings to the workgroup's main session each time the
+    // review session transitions from working to idle. Runtime-only and
+    // defaults off: re-entering a workgroup starts with the toggle off.
+    var autoSendClippingsWhenIdle = false
+
+    // For the main (root) session, whether the "auto-request review when
+    // idle" toolbar toggle is on. When on, the workgroup peer port asks
+    // the sole code-review session to run a review each time the main
+    // session transitions from working to idle. Runtime-only and defaults
+    // off, same as autoSendClippingsWhenIdle.
+    var autoRequestReviewWhenIdle = false
 
     var delegateObservers = [(PTYSessionDelegate) -> ()]()
 
@@ -308,7 +333,9 @@ extension PTYSession {
     }
 
     func execute(_ command: RemoteCommand, completion: @escaping (String, String) throws -> ()) throws {
-        DLog("\(command)")
+        // Keep the payload (a shell command string or arbitrary file contents) out of
+        // the ring; the opt-in debug log still gets the whole command.
+        RLog("execute remote command \(redacted: command, or: command.content.functionName)")
         cancelRemoteCommand()
         switch command.content {
         case .isAtPrompt(let isAtPrompt):
@@ -343,6 +370,10 @@ extension PTYSession {
             try ensureIsTerminal()
             try getCommandOutputRemoteCommand(getCommandOutput: getCommandOutput,
                                               completion: completion)
+        case .getScreenContents(let getScreenContents):
+            try ensureIsTerminal()
+            try getScreenContentsRemoteCommand(getScreenContents: getScreenContents,
+                                               completion: completion)
         case .getTerminalSize(let getTerminalSize):
             try ensureIsTerminal()
             try getTerminalSizeRemoteCommand(getTerminalSize: getTerminalSize,
@@ -402,6 +433,10 @@ extension PTYSession {
         case .readWebPage(let args):
             try ensureIsBrowser()
             try readWebPage(args: args, completion: completion)
+        case .restartSession(let restartSession):
+            try ensureIsTerminal()
+            try restartSessionRemoteCommand(restartSession: restartSession,
+                                            completion: completion)
         }
     }
 }
@@ -698,6 +733,22 @@ extension PTYSession {
                    "Session size provided to AI.")
     }
 
+    // Session-bound counterpart of the orchestrator's get_screen_contents.
+    // Reuses the same WorkgroupIntrospection core and returns the identical
+    // structured result the orchestrator emits, so the two tools behave the
+    // same. On the alternate screen the result is only the current grid with
+    // is_snapshot=true: there is no scrollback to reveal (this chat has no
+    // scroll_wheel tool), so we present it as having no history.
+    func getScreenContentsRemoteCommand(getScreenContents: RemoteCommand.GetScreenContents,
+                                        completion: @escaping (String, String) throws -> ()) throws {
+        let requestedLines = getScreenContents.lines > 0 ? getScreenContents.lines : nil
+        let contents = WorkgroupIntrospection.screenContents(forSession: self,
+                                                             requestedLines: requestedLines)
+        let data = try JSONEncoder().encode(OrchestratorResult.screenContents(contents))
+        let json = String(data: data, encoding: .utf8) ?? "{}"
+        try completion(json, "Screen contents provided to AI.")
+    }
+
     func getShellTypeRemoteCommand(getShellType: RemoteCommand.GetShellType,
                                    completion: @escaping (String, String) throws -> ()) rethrows {
         try completion(genericScope.stringValue(forVariableName: iTermVariableKeyShell),
@@ -753,6 +804,25 @@ extension PTYSession {
                                         completion: @escaping (String, String) throws -> ()) rethrows {
         writeTaskNoBroadcast("\u{15}")
         try completion("Done", "Current line deleted by AI.")
+    }
+
+    func restartSessionRemoteCommand(restartSession: RemoteCommand.RestartSession,
+                                     completion: @escaping (String, String) throws -> ()) rethrows {
+        // isRestartable() guards -restartSession, which asserts on entry. A
+        // session with no restartable program (e.g. a live tmux or SSH session)
+        // has nothing to relaunch, so report that back rather than aborting.
+        guard isRestartable() else {
+            try completion("This session cannot be restarted.",
+                           "AI tried to restart the session but it is not restartable.")
+            return
+        }
+        // restart() is the Swift-refined name for ObjC -restartSession. This
+        // kills any running jobs and relaunches the session's command, exactly
+        // like the Session > Restart Session menu (but without its confirmation
+        // warning, since the AI permission prompt already gated this).
+        restart()
+        try completion("The session is being restarted.",
+                       "Session restarted by AI.")
     }
 
     func getManPageRemoteCommand(getManPage: RemoteCommand.GetManPage,
@@ -834,7 +904,7 @@ extension PTYSession {
 
         do {
             try process.run()
-            DLog("Session \(self) running \(command)")
+            RLog("Session \(self) running \(redacted: command, or: "len=\(command.count)")")
             pipe.fileHandleForReading.readabilityHandler = { [weak pipe] handle in
                 let data = handle.availableData
                 if data.count == 0 {
@@ -899,7 +969,7 @@ extension PTYSession {
     private func webSearch(args: RemoteCommand.WebSearch, completion: @escaping (String, String) throws -> ()) rethrows {
         view?.browserViewController?.doWebSearch(for: args.query) { [weak self] error in
             if let error {
-                DLog("\(error)")
+                RLog("\(error)")
                 try? completion("Web search is not currently available", "Web search failed")
                 return
             }
@@ -960,7 +1030,7 @@ struct SubSelectionSerializationInfo {
         precondition(components.count == 4, "Invalid queryValue format")
 
         guard let mode = Int(components[0]) else {
-            DLog("Invalid mode in queryValue \(queryValue)")
+            RLog("Invalid mode in queryValue \(queryValue)")
             return nil
         }
 
@@ -973,7 +1043,7 @@ struct SubSelectionSerializationInfo {
             let parts = components[3].split(separator: ":", omittingEmptySubsequences: false).map(String.init)
             precondition(parts.count == 2, "Invalid range format")
             guard let lower = Int32(parts[0]), let upper = Int32(parts[1]) else {
-                DLog("Invalid range bounds in queryValue \(queryValue)")
+                RLog("Invalid range bounds in queryValue \(queryValue)")
                 return nil
             }
             return lower..<upper
@@ -1203,7 +1273,7 @@ extension PTYSession {
             candidate.channelUID == uid
         }
         guard let session else {
-            DLog("No buried session with channel uid \(uid)")
+            RLog("No buried session with channel uid \(uid)")
             return
         }
         delegate?.swapSession(self, withBuriedSession: session)
@@ -1264,7 +1334,7 @@ extension PTYSession {
     @objc(openURL:)
     func open(url: URL) {
         guard view?.isBrowser == true else {
-            DLog("Can't open \(url), not a browser")
+            RLog("Can't open \(url), not a browser")
             return
         }
         view?.browserViewController?.loadURL(url.absoluteString)
@@ -1578,7 +1648,7 @@ extension PTYSession {
 extension PTYSession {
     func saveArchive() {
         guard let destination = iTermProfilePreferences.string(forKey: KEY_ARCHIVEDIR, inProfile: justProfile) else {
-            DLog("No archive dir in profile")
+            RLog("No archive dir in profile")
             return
         }
         let term = delegate?.realParentWindow() as? PseudoTerminal
@@ -1616,7 +1686,7 @@ extension PTYSession {
                 try data.write(to: URL(fileURLWithPath: location.filename))
                 ArchivesMenuBuilder.shared?.didAdd(path: location.filename)
             } catch {
-                DLog("Saving to \(location.description) failed: \(error)")
+                RLog("Saving to \(location.description) failed: \(error)")
                 iTermNotificationController.sharedInstance().notify(
                     "Archiving to \(location.displayName) failed: \(error.localizedDescription)")
             }
@@ -1629,7 +1699,7 @@ extension PTYSession {
                     ArchivesMenuBuilder.shared?.didAdd(path: location.filename)
                 }
             } catch {
-                DLog("Saving to \(location.description) failed: \(error)")
+                RLog("Saving to \(location.description) failed: \(error)")
                 iTermNotificationController.sharedInstance().notify(
                     "Archiving to \(location.displayName) failed: \(error.localizedDescription)")
             }
@@ -1726,6 +1796,12 @@ extension PTYSession {
         set { swiftState.workgroupSessionMode = newValue }
     }
 
+    // See SwiftState.forceDefaultEndAction. Read by -[PTYSession endAction].
+    @objc var forceDefaultEndAction: Bool {
+        get { swiftState.forceDefaultEndAction }
+        set { swiftState.forceDefaultEndAction = newValue }
+    }
+
     // Raw (unwrapped, swifty-templated) command for .codeReview sessions.
     // Used by reload paths (toolbar reload, restart-after-exit) to
     // re-present the prompt overlay against the original template.
@@ -1737,7 +1813,7 @@ extension PTYSession {
     // Prompt text last submitted from the code-review overlay; used as the
     // default when re-presenting the overlay so prior (possibly hand-edited)
     // input is preserved across reloads. See PTYSession+CodeReviewPrompt.
-    var codeReviewLastUsedPrompt: String? {
+    @objc var codeReviewLastUsedPrompt: String? {
         get { swiftState.codeReviewLastUsedPrompt }
         set { swiftState.codeReviewLastUsedPrompt = newValue }
     }
@@ -1763,8 +1839,37 @@ extension PTYSession {
     func firePendingDiffLaunch() {
         let closure = swiftState.pendingDiffLaunch
         swiftState.pendingDiffLaunch = nil
+        // While the diff-waiting overlay is up, -mainResponder routes to
+        // its Run Anyway button, so the peer swap that revealed this
+        // session parked the window's first responder on that button.
+        // Dismissing the overlay removes that button; without reassigning,
+        // the window is left with a dead first responder and typing beeps
+        // (the first-visit "command runs but the terminal isn't first
+        // responder" bug). If the overlay owns focus right now, hand it
+        // back to the terminal once the overlay is gone and the deferred
+        // command has launched — mainResponder then resolves to the
+        // freshly-running text view.
+        let overlayOwnedFocus = diffWaitingOverlayOwnsFirstResponder
         view?.dismissDiffWaitingPromptOverlay()
         closure?()
+        if overlayOwnedFocus {
+            view?.window?.makeFirstResponder(mainResponder)
+        }
+    }
+
+    // True when the diff-waiting overlay (or one of its subviews, e.g.
+    // its Run Anyway button — see -mainResponder) currently holds the
+    // window's first responder. firePendingDiffLaunch consults this
+    // before tearing the overlay down so it only restores focus to the
+    // terminal when the overlay actually owned it, and leaves first
+    // responder alone when a poller-driven launch fires while the user's
+    // focus is elsewhere.
+    private var diffWaitingOverlayOwnsFirstResponder: Bool {
+        guard let overlay = view?.diffWaitingPromptOverlay,
+              let responder = overlay.window?.firstResponder as? NSView else {
+            return false
+        }
+        return responder.isDescendant(of: overlay)
     }
 
     // Drop the initial-spawn waiting overlay onto the session view.
@@ -1829,8 +1934,26 @@ extension PTYSession {
     // (split/tab) .diff session lands here. Both call sites bypass
     // the global isRestartable() guard for .diff because State A is a
     // legitimately reloadable state even though _program is nil.
-    @objc
-    func reloadDiffWithDeferralIfNeeded() {
+    //
+    // `resolveCommand` yields the login-shell-wrapped diff command
+    // matching the file picker's selection AT THE MOMENT IT RUNS
+    // (per-file when a file is picked, All Files otherwise). It is
+    // evaluated as late as possible: immediately for the ready path,
+    // or inside the deferred pendingDiffLaunch closure at fire time
+    // (the next poll tick or Run Anyway), so a picker pick or gitBase
+    // change between the reload click and the actual relaunch is
+    // reflected. Reload must run this rather than the session's
+    // last-launched _program, because the two can silently diverge:
+    // when the file the popup was on stops being a diffable change, a
+    // git poll resets the popup back to "All Files" in
+    // CCDiffSelectorItem.set(fileStatuses:) without restarting the
+    // session, leaving _program pointed at a now-clean per-file diff.
+    // Replaying that _program runs `git difftool` on a file with no
+    // changes, which prints nothing and exits 0, ending the session
+    // instead of re-diffing. A nil resolver (or one that yields nil)
+    // falls back to a plain restart() for callers (e.g. arrangement
+    // restoration) that have no selector selection to resolve.
+    func reloadDiffWithDeferralIfNeeded(resolveCommand: (() -> String?)? = nil) {
         let ready = workgroupInstance?.diffLaunchReady ?? false
         if hasPendingDiffLaunch {
             if ready {
@@ -1839,24 +1962,69 @@ extension PTYSession {
             return
         }
         guard isRestartable() else { return }
-        if ready {
-            restart()
-            return
-        }
         // No inner isRestartable() re-check inside the closure: under
         // current invariants -isRestartable becomes true once _program
         // is assigned and never flips back (no code path clears
         // _program; browser-ness is fixed at session creation). The
         // outer guard is enough, so the closure only needs the weak
         // self check.
-        pendingDiffLaunch = { [weak self] in
-            self?.restart()
+        let restartWithCurrentSelection: () -> Void = { [weak self] in
+            if let command = resolveCommand?() {
+                self?.restart(withCommand: command)
+            } else {
+                self?.restart()
+            }
         }
+        if ready {
+            restartWithCurrentSelection()
+            return
+        }
+        pendingDiffLaunch = restartWithCurrentSelection
         // Queued-reload variant of the overlay: the previous diff
         // output is still on screen behind the panel. Cancel clears
         // pendingDiffLaunch without firing it, so an accidental
         // Reload click can be undone.
         presentDiffWaitingPromptOverlayForQueuedReload()
+    }
+
+    // Whether the user can currently see this session: it has a live
+    // delegate (a buried peer has none) and its tab is the selected one.
+    // Gates the deferred .diff launch so the diff runs against the tree
+    // as it stands when the session is actually shown, not whenever the
+    // poller first happened to see a change.
+    var isVisibleForDeferredDiff: Bool {
+        return delegate?.sessionBelongsToVisibleTab() ?? false
+    }
+
+    // Called when a .diff session may have become visible (a peer swapped
+    // into its tab, or a tab selected). The initial diff launch is
+    // deferred until the session is actually shown, so if it is now
+    // visible and the poller already reports diffable changes, fire it
+    // rather than making the user wait for the next poll tick. If there's
+    // nothing diffable yet, the "waiting for changes" overlay stays up
+    // and the next poll tick fires it (the session is visible now, so
+    // fireDeferredDiffLaunches' gate passes).
+    //
+    // The isVisibleForDeferredDiff guard is load-bearing: a peer swap can
+    // complete on a background tab (workgroup restoration across tabs, a
+    // programmatic reveal), and firing there would run the diff against
+    // the swap-in-time tree instead of what's on screen when the user
+    // first sees it. A background swap is a no-op here; the tab-select
+    // hook or the next poll tick picks the session up once it truly
+    // reaches the foreground.
+    //
+    // This only ever fires the one deferred launch: firePendingDiffLaunch
+    // clears the closure, so re-showing a diff that already ran does
+    // nothing. Switching between peers never re-runs the diff.
+    @objc
+    func fireDeferredDiffLaunchIfVisibleNow() {
+        guard workgroupSessionMode == .diff,
+              hasPendingDiffLaunch,
+              isVisibleForDeferredDiff,
+              workgroupInstance?.diffLaunchReady == true else {
+            return
+        }
+        firePendingDiffLaunch()
     }
 
     // Build a peer session for a workgroup's configured peer, driven
@@ -1908,6 +2076,12 @@ extension PTYSession {
 
                     let newSession = factory.newSession(withProfile: profile,
                                                         parent: self)
+                    // Durably pin the default end action: the profile
+                    // override above sets the initial value, but a later
+                    // profile sync can revert a non-overridden key to the
+                    // shared profile's Close. This flag can't be reverted,
+                    // so the peer never auto-closes on program exit.
+                    newSession.forceDefaultEndAction = true
                     newSession.setScreenSize(myView.bounds.size,
                                              parent: delegate.realParentWindow())
                     newSession.setSize(screen.size)
@@ -2111,6 +2285,22 @@ extension PTYSession {
                 swiftState.clippings = newValue
             }
         }
+    }
+
+    // Runtime toggle backing the code-review "auto-send clippings when idle"
+    // toolbar item. Stored directly on the session (not peer-delegated) since
+    // it controls this one review session's behavior, not shared group state.
+    @objc var autoSendClippingsWhenIdle: Bool {
+        get { swiftState.autoSendClippingsWhenIdle }
+        set { swiftState.autoSendClippingsWhenIdle = newValue }
+    }
+
+    // Runtime toggle backing the main session's "auto-request review when
+    // idle" toolbar item. Stored on the main session; controls its own
+    // idle-driven behavior, not shared group state.
+    @objc var autoRequestReviewWhenIdle: Bool {
+        get { swiftState.autoRequestReviewWhenIdle }
+        set { swiftState.autoRequestReviewWhenIdle = newValue }
     }
 
     // Bypasses peer-port delegation. Used by PTYSessionPeerPort to talk to its
@@ -2349,11 +2539,21 @@ extension PTYSession {
         Notification.Name("iTermInlineChatDidChange")
 
     // Action for the View > Show Inline Chat menu item. If a chat is bound
-    // already, just toggle its panel visibility. Otherwise pick the most
-    // recently active chat linked to this session, or create a new one if
-    // none exists, then bind it inline. Intentionally does NOT route
-    // through ChatWindowController so the chat window stays unaffected and
-    // is not opened as a side effect.
+    // already, just toggle its panel visibility. The binding (inlineChatID)
+    // lives in memory and is saved/restored with the window arrangement, so
+    // re-toggling reuses the same chat across both panel hides and restarts.
+    //
+    // With no chat bound, fall back to the most recent chat the user
+    // EXPLICITLY linked to this session (via the offerLink "Link" button or
+    // from the chat window): that's all mostRecentChat(forGuid:) can match.
+    // Inline chats are created unlinked (see createInlineChat), so this
+    // fallback intentionally does NOT rediscover a prior inline chat whose
+    // inlineChatID was lost; the only thing that clears inlineChatID is
+    // deleting the chat, which removes it entirely, so there's no reusable
+    // unlinked chat left behind to rediscover. When nothing matches, create a
+    // fresh inline chat. Intentionally does NOT route through
+    // ChatWindowController so the chat window stays unaffected and is not
+    // opened as a side effect.
     @objc(toggleInlineChat)
     func toggleInlineChat() {
         if inlineChatID != nil {
@@ -2363,8 +2563,7 @@ extension PTYSession {
         guard iTermAITermGatekeeper.check() else {
             return
         }
-        guard let listModel = ChatListModel.instance,
-              let client = ChatClient.instance else {
+        guard let listModel = ChatListModel.instance else {
             return
         }
         let sessionGuid = self.guid
@@ -2373,29 +2572,83 @@ extension PTYSession {
             inlineChatVisible = true
             return
         }
+        if createInlineChat() != nil {
+            inlineChatVisible = true
+        }
+    }
+
+    // Re-bind an inline chat during arrangement restoration. Setting
+    // inlineChatID drives the right-extra layout cascade that instantiates the
+    // gutter panel and reserves the panel's width, the same as a live toggle.
+    //
+    // Deliberately NOT gated on iTermAITermGatekeeper, unlike the create/show
+    // entry points. Restoring a panel that shows past chat history is benign:
+    // it makes no AI calls until the user sends a message, which goes through
+    // the gate. Gating here would pay the plugin-load cost on the launch
+    // restore path and would drop the saved binding whenever AI is temporarily
+    // disabled.
+    //
+    // Validate against the chat list only if the chat DB is ALREADY open
+    // (instanceIfExists, which does not construct it). Reading
+    // ChatListModel.instance would force ChatDatabase to open chatdb.sqlite
+    // and run migrations synchronously here on the restore path. When the DB
+    // is open and the chat is gone (deleted since the arrangement was saved),
+    // skip binding so the panel doesn't reopen onto a missing chat; when it
+    // isn't open we can't tell, so bind optimistically. The width provider
+    // re-validates that the chat still exists once the DB is open and drops
+    // the binding (yielding no panel) if it has since been deleted.
+    //
+    // Edge case: if the chat DB cannot be opened at all this launch (e.g. a
+    // second iTerm2 instance holds the sqlite lock), the width provider yields
+    // 0 and the window restores at full terminal width with no panel. We still
+    // set the binding so it survives to a healthy launch. Reserving width for
+    // a panel that can't be constructed would crash the force-unwrapping panel
+    // factory, so we accept the wider window in that degraded state.
+    @objc(restoreInlineChatID:visible:)
+    func restoreInlineChat(id: String, visible: Bool) {
+        if ChatDatabase.instanceIfExists != nil,
+           let listModel = ChatListModel.instance,
+           listModel.index(of: id) == nil {
+            return
+        }
+        inlineChatID = id
+        inlineChatVisible = visible
+    }
+
+    // Create a brand-new chat for this session's inline panel and bind it via
+    // inlineChatID. The chat is created UNLINKED (no terminal/browser GUID) and
+    // carries a single .offerLink client-local message, mirroring the chat
+    // window's new-chat flow: the user picks "Link" (bind to this session) or
+    // "Enable Orchestration" from buttons in the conversation rather than the
+    // panel deciding for them. Returns the new chat ID, or nil on failure.
+    //
+    // The offer is published here (at creation) rather than in
+    // ChatViewController.attach(to:) because attach runs on every (re)attach;
+    // offering there would stack duplicate offer bubbles across detach/reattach
+    // cycles. Published client-local messages persist and replay when the panel
+    // loads the chat.
+    @discardableResult
+    func createInlineChat() -> String? {
+        guard let client = ChatClient.instance else {
+            return nil
+        }
         do {
             let title = "Chat about \(self.name)"
             let isBrowser = self.isBrowserSession()
             let chatID = try client.create(
                 chatWithTitle: title,
-                terminalSessionGuid: isBrowser ? nil : sessionGuid,
-                browserSessionGuid: isBrowser ? sessionGuid : nil,
+                terminalSessionGuid: nil,
+                browserSessionGuid: nil,
                 initialMessages: [],
                 permissions: "")
-            // Mirror the chat window's link flow so the inline chat
-            // starts with the same "linked to session" notice and
-            // permissions buttons.
-            let escapedName = self.name.escapedForMarkdownCode
-            try? client.publishNotice(
-                chatID: chatID,
-                notice: "This chat has been linked to \(isBrowser ? "web browser" : "terminal") session “\(escapedName)”")
             try? client.publishClientLocalMessage(
                 chatID: chatID,
-                action: .permissions(terminal: !isBrowser, guid: sessionGuid))
+                action: .offerLink(terminal: !isBrowser, guid: self.guid, name: self.name))
             inlineChatID = chatID
-            inlineChatVisible = true
+            return chatID
         } catch {
-            DLog("\(error)")
+            RLog("\(error)")
+            return nil
         }
     }
 }

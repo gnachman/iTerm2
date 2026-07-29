@@ -131,7 +131,7 @@ extension iTermBrowserCopyModeHandler: iTermCopyModeHandlerDelegate {
                     "await iTerm2CopyMode.copySelection('\(sessionSecret)');",
                     contentWorld: .defaultClient)
             } catch {
-                DLog("\(error)")
+                RLog("\(error)")
             }
         }
     }

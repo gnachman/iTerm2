@@ -99,7 +99,7 @@ class FilteringUpdater: HexAddressFormatting {
                                                absLineRange: absLineRange,
                                                cumulativeOverflow: cumulativeOverflow,
                                                width: width)
-        DLog("\(hexAddress): FilteringUpdater: Initialize with query=\(query) absLineRange=\(absLineRange)")
+        RLog("\(hexAddress): FilteringUpdater: Initialize with query=\(query) absLineRange=\(absLineRange)")
         if absLineRange.count == 0 {
             begin(at: lineBuffer.firstPosition())
         } else {
@@ -143,6 +143,11 @@ class FilteringUpdater: HexAddressFormatting {
     }
 
     func didAppendToLineBuffer() {
+        // Extend the stopping point to cover the newly appended content. Without this, a search
+        // that is already in progress (lastPosition == nil, status == .Searching) would stop at the
+        // stale stopAt computed before the append and never examine the new line. For a bounded
+        // absLineRange this is a no-op since computedStopAt stays pinned to the range boundary.
+        stopAt = computedStopAt
         if lastPosition != nil && ![.Searching, .Matched].contains(context.status) {
             // Ensure the next call to update() is able to continue searching even though the last
             // search did not return any results.
@@ -427,7 +432,7 @@ class AsyncFilter: NSObject {
         lastLineIsTemporary = refining?.lastLineIsTemporary ?? false
         super.init()
 
-        DLog("\(it_addressString): AsyncFilter: Initialize with updater \(updater.hexAddress), initial generation=\(initialLineBufferGeneration)")
+        RLog("\(it_addressString): AsyncFilter: Initialize with updater \(updater.hexAddress), initial generation=\(initialLineBufferGeneration)")
         updater.accept = { [weak self] (lineNumber: Int32, temporary: Bool) in
             self?.addFilterResult(lineNumber, temporary: temporary)
         }
@@ -462,7 +467,7 @@ class AsyncFilter: NSObject {
                         refiningUpdater != nil &&
                         query.range(of: refiningUpdater!.query) != nil
         if canRefine, let refiningUpdater {
-            DLog("\(it_addressString): Catch up")
+            RLog("\(it_addressString): Catch up")
             // If the refining filter's last line was temporary, remove it now.
             // We do this once at the start rather than in addFilterResult because
             // during catchUp the first line we add isn't necessarily a replacement
@@ -494,7 +499,7 @@ class AsyncFilter: NSObject {
     }
 
     @objc func cancel() {
-        DLog("\(it_addressString): AsyncFilter: Cancel, was \(state)")
+        RLog("\(it_addressString): AsyncFilter: Cancel, was \(state)")
         timer?.invalidate()
         timer = nil
         state = .cancelled

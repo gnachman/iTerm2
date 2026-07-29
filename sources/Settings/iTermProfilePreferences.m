@@ -13,6 +13,7 @@
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "iTermCursorBlinkFadeAnimator.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -291,6 +292,7 @@ typedef struct {
             KEY_ANIMATE_MOVEMENT, KEY_CURSOR_HIDDEN_WITHOUT_FOCUS,
             KEY_ANIMATE_MOVEMENT_ONLY_IN_INTERACTIVE_APPS,
             KEY_CURSOR_SMOOTH_SLIDE,
+            KEY_CURSOR_SMOOTH_BLINK,
 
             KEY_BRIGHTEN_BOLD_TEXT,
             KEY_BRIGHTEN_BOLD_TEXT COLORS_LIGHT_MODE_SUFFIX,
@@ -324,7 +326,7 @@ typedef struct {
             KEY_BOOKMARK_USER_NOTIFICATIONS, KEY_SEND_BELL_ALERT, KEY_SEND_IDLE_ALERT,
             KEY_SEND_NEW_OUTPUT_ALERT, KEY_SEND_SESSION_ENDED_ALERT,
             KEY_SEND_TERMINAL_GENERATED_ALERT, KEY_FLASHING_BELL, KEY_VISUAL_BELL,
-            KEY_SUPPRESS_ALERTS_IN_ACTIVE_SESSION,
+            KEY_SUPPRESS_ALERTS_IN_ACTIVE_SESSION, KEY_SEND_ALERTS_TO_COMPANION,
 
             KEY_REDUCE_FLICKER, KEY_SHOW_STATUS_BAR, KEY_SEND_CODE_WHEN_IDLE,
             KEY_APPLICATION_KEYPAD_ALLOWED, KEY_ALLOW_MODIFY_OTHER_KEYS,
@@ -412,6 +414,13 @@ typedef struct {
 
             KEY_BROWSER_ZOOM,
             KEY_WIDTH, KEY_HEIGHT,
+
+            KEY_CURSOR_BLINK_FADE_IN_DURATION,
+            KEY_CURSOR_BLINK_FADE_OUT_DURATION,
+            KEY_CURSOR_BLINK_FADE_IN_CURVE,
+            KEY_CURSOR_BLINK_FADE_OUT_CURVE,
+            KEY_CURSOR_BLINK_VISIBLE_DWELL,
+            KEY_CURSOR_BLINK_HIDDEN_DWELL,
 
             KEY_PROFILE_TYPE_PHONY
         ];
@@ -676,6 +685,13 @@ typedef struct {
             KEY_ANIMATE_MOVEMENT:                                   @"Whether to animate cursor movement",
             KEY_ANIMATE_MOVEMENT_ONLY_IN_INTERACTIVE_APPS:          @"Whether to animate cursor movement only in interactive apps",
             KEY_CURSOR_SMOOTH_SLIDE:                                @"Whether to smoothly slide underscore and vertical bar cursors",
+            KEY_CURSOR_SMOOTH_BLINK:                                @"Whether the cursor fades smoothly when it blinks instead of toggling abruptly",
+            KEY_CURSOR_BLINK_FADE_IN_DURATION:                      @"Duration in seconds for the cursor to fade in when smooth blink is enabled",
+            KEY_CURSOR_BLINK_FADE_OUT_DURATION:                     @"Duration in seconds for the cursor to fade out when smooth blink is enabled",
+            KEY_CURSOR_BLINK_FADE_IN_CURVE:                         @"Easing curve for the cursor fade-in (0=linear, 1=ease in, 2=ease out, 3=ease in-out)",
+            KEY_CURSOR_BLINK_FADE_OUT_CURVE:                        @"Easing curve for the cursor fade-out (0=linear, 1=ease in, 2=ease out, 3=ease in-out)",
+            KEY_CURSOR_BLINK_VISIBLE_DWELL:                         @"Seconds to hold the cursor fully visible between fades when smooth blink is enabled",
+            KEY_CURSOR_BLINK_HIDDEN_DWELL:                          @"Seconds to hold the cursor fully hidden between fades when smooth blink is enabled",
             KEY_USE_BOLD_FONT:                                      @"Whether to use bold font for bold text",
             KEY_THIN_STROKES:                                       @"Anti-aliased text stroke thickness setting",
             KEY_ASCII_LIGATURES:                                    @"Whether to render ligatures in ASCII text",
@@ -752,6 +768,7 @@ typedef struct {
             KEY_SEND_NEW_OUTPUT_ALERT:                              @"Whether to send notification on new output",
             KEY_SEND_SESSION_ENDED_ALERT:                           @"Whether to send notification when session ends",
             KEY_SEND_TERMINAL_GENERATED_ALERT:                      @"Whether to send notifications triggered by escape sequences",
+            KEY_SEND_ALERTS_TO_COMPANION:                          @"Whether to also send this profile's alerts to the paired iPhone",
             KEY_SUPPRESS_ALERTS_IN_ACTIVE_SESSION:                  @"Whether to suppress alerts sent by the active session",
             KEY_FLASHING_BELL:                                      @"Whether to flash the screen on bell",
             KEY_VISUAL_BELL:                                        @"Whether to show visual indicator on bell",
@@ -1003,6 +1020,13 @@ typedef struct {
                   KEY_ANIMATE_MOVEMENT: @NO,
                   KEY_ANIMATE_MOVEMENT_ONLY_IN_INTERACTIVE_APPS: @YES,
                   KEY_CURSOR_SMOOTH_SLIDE: @NO,
+                  KEY_CURSOR_SMOOTH_BLINK: @NO,
+                  KEY_CURSOR_BLINK_FADE_IN_DURATION: @0.2,
+                  KEY_CURSOR_BLINK_FADE_OUT_DURATION: @0.2,
+                  KEY_CURSOR_BLINK_FADE_IN_CURVE: @(iTermCursorBlinkFadeCurveEaseInOut),
+                  KEY_CURSOR_BLINK_FADE_OUT_CURVE: @(iTermCursorBlinkFadeCurveEaseInOut),
+                  KEY_CURSOR_BLINK_VISIBLE_DWELL: @0.3,
+                  KEY_CURSOR_BLINK_HIDDEN_DWELL: @0.3,
                   KEY_USE_BOLD_FONT: @YES,
                   KEY_THIN_STROKES: @(iTermThinStrokesSettingRetinaOnly),
                   KEY_ASCII_LIGATURES: @NO,
@@ -1091,6 +1115,7 @@ typedef struct {
                   KEY_SEND_NEW_OUTPUT_ALERT: @NO,
                   KEY_SEND_SESSION_ENDED_ALERT: @YES,
                   KEY_SEND_TERMINAL_GENERATED_ALERT: @YES,
+                  KEY_SEND_ALERTS_TO_COMPANION: @NO,
                   KEY_SUPPRESS_ALERTS_IN_ACTIVE_SESSION: @NO,
                   KEY_FLASHING_BELL: @NO,
                   KEY_VISUAL_BELL: @NO,

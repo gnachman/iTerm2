@@ -22,7 +22,7 @@ it2 session add-clipping --session=$TERM_SESSION_ID {TYPE} {TITLE} {DETAIL}
 
 The environment variable TERM_SESSION_ID is already set in the environment and `it2` is already in the $PATH.
 
-You should also produce the same output to the CLI as you normally would. This is purely additive.
+You should also produce the same output to the CLI as you normally would. This is purely additive. If a skill calls for machine-readable output (such as a findings JSON array), the clippings satisfy that requirement; the CLI message should be prose written for a human.
 
 Here is an example of a well-formed call. I recommend using a heredoc to simplify quoting of long strings.
 

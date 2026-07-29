@@ -31,6 +31,13 @@ final class iTermWorkgroupInstance: NSObject {
 
     @objc weak var mainSession: PTYSession?
 
+    // How this instance came to exist, e.g. "A trigger in session
+    // <guid> entered this workgroup". Set once by the controller right
+    // after entry/adoption and surfaced to orchestrator agents in the
+    // <workgroups> snapshot, so a chat that sees an unfamiliar
+    // workgroup appear can tell what created it instead of guessing.
+    @objc var provenance: String?
+
     // Config snapshot at entry time.
     let workgroup: iTermWorkgroup
 
@@ -61,6 +68,15 @@ final class iTermWorkgroupInstance: NSObject {
     // Insertion order so teardown terminates in spawn order.
     private var nonPeerOrderedConfigIDs: [String] = []
 
+    // Whether teardown() started, used as a reentrancy guard:
+    // peerPort.invalidate() synchronously terminates fulfilled peers,
+    // and terminate() synchronously posts iTermSessionWillTerminate,
+    // whose observer (below) can route right back into teardown()
+    // while the first pass is mid-flight. Readable outside this file
+    // so deferred callbacks (e.g. the nested-peer back-pointer fan-out
+    // in WorkgroupChildSpawning) can refuse to act on a dead instance.
+    private(set) var didTeardown = false
+
     // Non-peer sessions tracked for sessionWillTerminate matching but
     // not owned by us (e.g. peer children of a nested host — the
     // nested peer port already owns the lifecycle, but we want to
@@ -80,7 +96,9 @@ final class iTermWorkgroupInstance: NSObject {
     // need to walk every peer (e.g. to enumerate inactive members)
     // can iterate this without having to know about the nested-port
     // distinction.
-    var allPeerPorts: [iTermWorkgroupPeerPort] {
+    // @objc so iTermController's session-lookup registry pass can walk
+    // the ports; it consumes them as the PTYSessionPeerPort base.
+    @objc var allPeerPorts: [iTermWorkgroupPeerPort] {
         return [peerPort] + nestedPeerPorts
     }
 
@@ -146,6 +164,14 @@ final class iTermWorkgroupInstance: NSObject {
     @objc
     private func sessionWillTerminate(_ notification: Notification) {
         guard let session = notification.object as? PTYSession else { return }
+        // teardown() synchronously terminates fulfilled peers, and each
+        // terminate() synchronously posts this notification. Re-routing
+        // into the controller mid-teardown is at best redundant and at
+        // worst fires the orphan-recovery diagnostic spuriously: the
+        // dict entry is already removed but the leader's back-pointer
+        // isn't cleared until teardown ends, which reads exactly like
+        // the leader-death case that diagnostic exists to catch.
+        guard !didTeardown else { return }
         let isMine: Bool = {
             if mainSession === session { return true }
             if peerPort.contains(session: session) { return true }
@@ -162,13 +188,17 @@ final class iTermWorkgroupInstance: NSObject {
             return false
         }()
         guard isMine else { return }
-        guard let leader = mainSession else {
-            // Leader is gone too — just tear down directly. Nothing
-            // for the controller's per-session dict to release.
-            teardown()
-            return
+        // Tear down through the controller so the registration is
+        // removed first. exit(instance:) is keyed by the stable
+        // instanceUniqueIdentifier, so this works no matter which
+        // member is terminating or whether the leader still exists.
+        let leader = mainSession
+        iTermWorkgroupController.instance.exit(instance: self)
+        // The leader usually survives (e.g. the user closed a child
+        // pane); refresh its toolbar so the workgroup items disappear.
+        if let leader {
+            leader.delegate?.sessionDidChangeDesiredToolbarItems(leader)
         }
-        iTermWorkgroupController.instance.exit(on: leader)
     }
 
     // The toolbar items to show on a specific session's SessionView.
@@ -220,6 +250,24 @@ final class iTermWorkgroupInstance: NSObject {
                                 hostSession: PTYSession,
                                 hostConfig: iTermWorkgroupSessionConfig,
                                 peerChildrenPromises: [iTermPromise<PTYSession>]) {
+        // Backstop for a teardown that lands while the caller was
+        // spawning this port's peers: appending to a dead instance
+        // would leak the port (teardown already ran its invalidate
+        // loop), and invalidate() is the only thing that terminates a
+        // port's born-buried peers. Kill them now instead.
+        guard !didTeardown else {
+            RLog("iTermWorkgroupInstance.registerNestedPeerPort: instance torn down mid-spawn; invalidating port for \(hostConfig.uniqueIdentifier)")
+            port.invalidate()
+            // invalidate() deliberately spares the port's leader —
+            // which is the host pane, already installed in the window
+            // with the (now invalidated) port assigned by the caller.
+            // It was never registered anywhere, so no teardown sweep
+            // can reach it: unwind the port assignment and close it
+            // like any other stray spawn.
+            hostSession.peerPort = nil
+            closeStraySpawn(hostSession)
+            return
+        }
         nestedPeerPorts.append(port)
         // Same back-ref as the main port (set in enter) so a peer-
         // side gitBaseSelector inside the nested group can fan out
@@ -242,12 +290,26 @@ final class iTermWorkgroupInstance: NSObject {
     // pointer so its desiredToolbarItems can find us.
     func registerNonPeer(session: PTYSession,
                         config: iTermWorkgroupSessionConfig) {
+        // The sessionWillTerminate observer is live throughout the
+        // spawn loop, so a member dying mid-spawn can tear the
+        // instance down before the loop finishes; don't point further
+        // children at the corpse (same invariant as
+        // attachBackPointers).
+        guard !didTeardown else {
+            RLog("iTermWorkgroupInstance.registerNonPeer: ignoring \(config.uniqueIdentifier); instance already torn down")
+            return
+        }
         let items = buildNonPeerToolbarItems(for: config)
         nonPeerOrderedConfigIDs.append(config.uniqueIdentifier)
         nonPeerEntriesByConfigID[config.uniqueIdentifier] =
             NonPeerEntry(session: session, items: items)
         trackedSessionIdentities.insert(ObjectIdentifier(session))
         session.workgroupInstance = self
+        // Pin the default end action so this member can't auto-close on
+        // program exit (fresh spawns are already flagged by the spawner;
+        // this also covers the restore/adopt path). See
+        // PTYSession.forceDefaultEndAction.
+        session.forceDefaultEndAction = true
         // Refresh the new session's toolbar view to pick up its items.
         session.delegate?.sessionDidChangeDesiredToolbarItems(session)
     }
@@ -357,12 +419,52 @@ final class iTermWorkgroupInstance: NSObject {
         })
     }
 
+    // Configs of every code-review-mode session in the workgroup.
+    private var codeReviewSessionConfigs: [iTermWorkgroupSessionConfig] {
+        return workgroup.sessions.filter { $0.mode == .codeReview }
+    }
+
+    // Run a code review on the workgroup's sole code-review session, if there
+    // is exactly one. Called by the main session's auto-request-review toggle
+    // when the main session goes idle. Returns true if a review was started.
+    // No-op (returns false) when there isn't exactly one review session or it
+    // isn't live, which mirrors the toggle's disabled state.
+    @discardableResult
+    func requestCodeReviewFromSoleReviewSession() -> Bool {
+        let reviews = codeReviewSessionConfigs
+        guard reviews.count == 1,
+              let session = liveSession(forConfigID: reviews[0].uniqueIdentifier) else {
+            return false
+        }
+        guard session.autoRequestCodeReview() else { return false }
+        // Switch the peer switcher to the code-review session so focus follows
+        // the active side within the shared pane. This only swaps the peer view
+        // in (visible when that tab is already frontmost); it deliberately does
+        // NOT order the window front, activate the app, or change the selected
+        // tab, so the auto-request doesn't yank the user's window/tab focus away
+        // from whatever they're doing.
+        session.revealAsPeerWithoutActivatingWindow()
+        return true
+    }
+
     // Tear down peers, terminate non-peer children, and release
     // references. Leaves the main session in a clean state so a later
     // enter() can install a fresh port — PTYSession.set(peerPort:)
     // asserts the previous port is gone.
     @objc
     func teardown() {
+        if didTeardown {
+            RLog("iTermWorkgroupInstance.teardown: reentered for instance=\(instanceUniqueIdentifier); ignoring")
+            return
+        }
+        didTeardown = true
+        RLog("iTermWorkgroupInstance.teardown: workgroup=\(workgroupUniqueIdentifier) instance=\(instanceUniqueIdentifier) mainSession=\((mainSession?.guid).d) peerPort members=[\(peerPort.membersDebugDescription)] nestedPorts=\(nestedPeerPorts.count) nonPeerConfigIDs=\(nonPeerOrderedConfigIDs)")
+        // Captured before invalidate() empties the ports. Their
+        // back-pointers are cleared at the end of teardown so a peer
+        // that outlives the workgroup (terminated peers aren't
+        // deallocated synchronously) can't keep pointing at a
+        // torn-down instance.
+        let peerSessions = allPeerPorts.flatMap { $0.realizedPeerSessions }
         peerPort.invalidate()
         for port in nestedPeerPorts {
             port.invalidate()
@@ -388,19 +490,39 @@ final class iTermWorkgroupInstance: NSObject {
             // removeSession complete first, so when our close runs
             // the child is the only session left and the tab/window
             // closes naturally.
-            let session = entry.session
-            DispatchQueue.main.async {
-                session.delegate?.close(session)
-            }
+            Self.deferredClose(entry.session)
         }
         nonPeerOrderedConfigIDs.removeAll()
         nonPeerEntriesByConfigID.removeAll()
         trackedSessionIdentities.removeAll()
+        for session in peerSessions {
+            session.workgroupInstance = nil
+            // Also drop the (weak) port reference: set(peerPort:)
+            // asserts the old port is gone, and a surviving peer that
+            // is later joined to a new port could trip it while a
+            // lingering reference keeps the invalidated port alive.
+            session.peerPort = nil
+        }
         mainSession?.workgroupInstance = nil
         mainSession?.peerPort = nil
     }
 
     // MARK: - Entry
+
+    // The marker that distinguishes a workgroup instance ID from a
+    // session GUID (both are otherwise bare UUIDs) everywhere the ID
+    // travels: ITERM_WORKGROUP_ID, logs, saved arrangements, and
+    // @-mentions. Shared with OrchestrationMentionRenderer's parsing
+    // and reconstruction so the mint and the parsers can't diverge.
+    static let instanceIDPrefix = "wg-"
+
+    // Mints a fresh per-entry instance ID. Every site that needs a
+    // new one (fresh entry, the restore-descriptor fallback, the
+    // adopt-collision rename) must mint through here so the format
+    // can't silently diverge between them.
+    static func mintInstanceUniqueIdentifier() -> String {
+        return instanceIDPrefix + UUID().uuidString
+    }
 
     // Build a workgroup instance on the given main session. Tests can
     // pass a fake spawner; production callers should use the default.
@@ -409,13 +531,11 @@ final class iTermWorkgroupInstance: NSObject {
                       spawner: WorkgroupSessionSpawner = DefaultWorkgroupSessionSpawner()) -> iTermWorkgroupInstance? {
         guard let root = workgroup.root else { return nil }
 
-        // Per-entry UUID, generated upfront so peer spawns (which run
+        // Per-entry ID, generated upfront so peer spawns (which run
         // before the iTermWorkgroupInstance is constructed) can carry
         // it into the spawned sessions' environment as
-        // ITERM_WORKGROUP_ID. Prefixed so it's visually distinct from
-        // a PTYSession GUID (also a bare UUID) when it shows up in
-        // env dumps, logs, or external tooling.
-        let instanceUniqueIdentifier = "wg-" + UUID().uuidString
+        // ITERM_WORKGROUP_ID.
+        let instanceUniqueIdentifier = mintInstanceUniqueIdentifier()
 
         // Peer-group members = the root + its peer children.
         let peerChildren = workgroup.sessions.filter { s in
@@ -518,13 +638,21 @@ final class iTermWorkgroupInstance: NSObject {
             : nil
         poller?.includeDiffStats = true
 
+        // Workgroup-wide code-review session count, used to enable the main
+        // session's auto-request-review toggle only when there's exactly one
+        // unambiguous review target.
+        let codeReviewSessionCount = workgroup.sessions.filter {
+            $0.mode == .codeReview
+        }.count
+
         let port = iTermWorkgroupPeerPort(
             peers: peers,
             peerConfigs: peerConfigs,
             activeSessionIdentifier: activeSessionIdentifier,
             leaderIdentifier: root.uniqueIdentifier,
             leaderScope: mainSession.genericScope,
-            gitPoller: poller)
+            gitPoller: poller,
+            codeReviewSessionCount: codeReviewSessionCount)
 
         mainSession.peerPort = port
 
@@ -577,15 +705,9 @@ final class iTermWorkgroupInstance: NSObject {
             (gitBase == CCGitBaseSelectorItem.defaultBase) ? nil : gitBase
 
         // Propagate workgroupInstance to every peer (not just the
-        // main). desiredToolbarItems on a peer needs to reach the
-        // instance to return that peer's own items; without this, a
-        // peer ends up with an empty toolbar the moment it's
-        // activated.
-        for (_, promise) in peers {
-            promise.then { peerSession in
-                peerSession.workgroupInstance = instance
-            }
-        }
+        // main); see attachBackPointers for why and for the lifetime
+        // guard.
+        instance.attachBackPointers(toEach: Array(peers.values))
 
         return instance
     }
@@ -644,13 +766,41 @@ final class iTermWorkgroupInstance: NSObject {
         var peers: [String: iTermPromise<PTYSession>] = [:]
         peers[root.uniqueIdentifier] = iTermPromise<PTYSession>(value: mainSession)
         for peer in peerChildren {
-            if let session = peerSessionsByConfigID[peer.uniqueIdentifier] {
+            let restored = peerSessionsByConfigID[peer.uniqueIdentifier]
+            if let session = restored,
+               session.workgroupInstance == nil,
+               session.peerPort == nil {
                 // Adopt the reattached session and restore its mode tag
                 // (not persisted on the session arrangement) so reload /
                 // toolbar behavior matches a live workgroup.
                 session.workgroupSessionMode = peer.mode
+                // Re-pin the default end action; like the mode tag it's
+                // not persisted on the arrangement, so a restored peer
+                // would otherwise fall back to its profile's Close and
+                // auto-close on program exit. See PTYSession.forceDefaultEndAction.
+                session.forceDefaultEndAction = true
+                // Restore the raw command template too: reload of a
+                // code-review peer keys off codeReviewRawCommand to
+                // re-present the prompt overlay (see
+                // workgroupNavigationDidTapReload). Without this a
+                // restored peer falls through to a plain restart that
+                // silently reruns the last prompt with no panel. Mirrors
+                // the anchor path in WorkgroupRestorationCoordinator.
+                if peer.mode == .codeReview {
+                    session.codeReviewRawCommand = peer.command
+                }
                 peers[peer.uniqueIdentifier] = iTermPromise<PTYSession>(value: session)
             } else {
+                // Same GUID-collision hazard as the non-peer guard
+                // below: a peer resolved to a session that already
+                // belongs to a live instance must not be wired into a
+                // second port — the new port's init fan-out would trip
+                // set(peerPort:)'s release-enabled assert, and past it
+                // the copy's teardown would invalidate the original's
+                // port. Treat it as not-restored and spawn fresh.
+                if let stolen = restored {
+                    RLog("iTermWorkgroupInstance.adopt: peer \(peer.uniqueIdentifier) resolves to session \(stolen.guid) already owned by another workgroup; spawning fresh instead")
+                }
                 // Spawn fresh, exactly like enter(): .diff resolves
                 // gitBase at fire time, others substitute now.
                 let configToSpawn = peer.mode == .diff
@@ -679,6 +829,16 @@ final class iTermWorkgroupInstance: NSObject {
             guard let session = nonPeerSessionsByConfigID[child.uniqueIdentifier] else {
                 continue
             }
+            // A GUID collision (e.g. restoring the same arrangement
+            // twice while the workgroup is running; restored-with-
+            // contents sessions keep their saved GUIDs) can resolve a
+            // child to a pane that already belongs to another live
+            // instance. Stealing its back-pointer would let THIS
+            // instance's teardown close the other workgroup's pane.
+            guard session.workgroupInstance == nil else {
+                RLog("iTermWorkgroupInstance.adopt: child \(child.uniqueIdentifier) resolves to session \(session.guid) already owned by \(session.workgroupInstance!.instanceUniqueIdentifier); not adopting it")
+                continue
+            }
             switch child.kind {
             case .split, .tab:
                 instance.registerNonPeer(session: session, config: child)
@@ -688,6 +848,57 @@ final class iTermWorkgroupInstance: NSObject {
         }
 
         return instance
+    }
+
+    // Close a session that was spawned for this workgroup but can't be
+    // registered because teardown ran mid-spawn. teardown() only
+    // closes registered entries, so without this the pane would
+    // survive as a stray belonging to no workgroup. Route through the
+    // delegate exactly like teardown's close loop (in production the
+    // spawner already installed the session in a tab); a delegate-less
+    // stray can only be terminated directly.
+    func closeStraySpawn(_ session: PTYSession) {
+        RLog("iTermWorkgroupInstance.closeStraySpawn: closing \(session.guid); teardown ran mid-spawn")
+        guard session.delegate != nil else {
+            session.terminate()
+            return
+        }
+        Self.deferredClose(session)
+    }
+
+    // Close `session` on the next runloop tick (see the teardown loop
+    // for why the close is deferred), falling back to terminate() if
+    // the delegate has detached by the time the block runs — e.g. the
+    // session's tab/window was torn down in the same cascade. Without
+    // the fallback the optional-chained close would silently no-op and
+    // leave a stray running shell that no teardown sweep can reach.
+    static func deferredClose(_ session: PTYSession) {
+        RLog("deferredClose for session \(session.description)")
+        DispatchQueue.main.async {
+            if let delegate = session.delegate {
+                delegate.close(session)
+            } else if !session.exited {
+                session.terminate()
+            }
+        }
+    }
+
+    // Wire each (possibly still-spawning) member's workgroupInstance
+    // back-pointer to this instance. desiredToolbarItems on a member
+    // needs the back-pointer to reach the instance; without it the
+    // member's toolbar is empty. Weak capture plus the didTeardown
+    // check keep a late-fulfilling spawn (peer creation resolves its
+    // PWD asynchronously) from re-pointing a session at an instance
+    // that was torn down in the meantime — teardown's back-pointer
+    // sweep only covers peers realized by then. Single authority for
+    // this guard; every promise-based fan-out must route through it.
+    func attachBackPointers(toEach promises: [iTermPromise<PTYSession>]) {
+        for promise in promises {
+            promise.then { [weak self] session in
+                guard let self, !self.didTeardown else { return }
+                session.workgroupInstance = self
+            }
+        }
     }
 
     // Walk the config and spawn every split/tab descendant of the node
@@ -700,6 +911,13 @@ final class iTermWorkgroupInstance: NSObject {
             $0.parentID == parentConfigID
         }
         for child in children {
+            // A member dying mid-spawn can tear the instance down
+            // synchronously (the willTerminate observer is live);
+            // stop spawning into the dead workgroup.
+            guard !didTeardown else {
+                RLog("iTermWorkgroupInstance.spawnNonPeerChildren: aborting; instance torn down mid-spawn")
+                return
+            }
             switch child.kind {
             case .split:
                 spawnSplit(config: child, parent: session)
@@ -799,6 +1017,14 @@ final class iTermWorkgroupInstance: NSObject {
     // launch. Safe to call repeatedly: firePendingDiffLaunch clears
     // the closure as it runs, so a session that already launched is
     // a no-op on subsequent calls.
+    //
+    // The launch is gated on the session being visible: a buried .diff
+    // peer's diff must not start until the user actually switches to it,
+    // otherwise the diff reflects the tree at whatever moment the poller
+    // first saw a change (e.g. the instant the Claude Code leader touched
+    // a file) rather than what's there when the peer is first shown. The
+    // visibility hooks (peer swap, tab select) fire the launch directly
+    // for the session that just became visible.
     private func fireDeferredDiffLaunches() {
         var sessions: [PTYSession] = peerPort.realizedPeerSessions
         for port in nestedPeerPorts {
@@ -807,7 +1033,8 @@ final class iTermWorkgroupInstance: NSObject {
         for entry in nonPeerEntriesByConfigID.values {
             sessions.append(entry.session)
         }
-        for session in sessions where session.hasPendingDiffLaunch {
+        for session in sessions
+        where session.hasPendingDiffLaunch && session.isVisibleForDeferredDiff {
             session.firePendingDiffLaunch()
         }
     }
@@ -854,7 +1081,10 @@ extension iTermWorkgroupInstance: WorkgroupNavigationToolbarItemDelegate {
         // meaningful (poll-check + fire if ready). See
         // PTYSession.reloadDiffWithDeferralIfNeeded for state matrix.
         if session.workgroupSessionMode == .diff {
-            session.reloadDiffWithDeferralIfNeeded()
+            session.reloadDiffWithDeferralIfNeeded(
+                resolveCommand: { [weak self] in
+                    self?.resolvedDiffReloadCommand(forConfigID: configID)
+                })
             return
         }
         guard session.isRestartable() else { return }
@@ -876,6 +1106,28 @@ extension iTermWorkgroupInstance: WorkgroupNavigationToolbarItemDelegate {
             .items
             .compactMap { $0 as? CCDiffSelectorItem }
             .first
+    }
+
+    // The login-shell-wrapped diff command matching the non-peer host's
+    // diff popup CURRENT selection: the per-file command when a file is
+    // picked, the All Files command otherwise. Reload runs this rather
+    // than replaying the session's stale _program so a popup that
+    // silently reset to All Files (because its picked file went clean)
+    // reloads the all-files diff instead of a now-empty per-file diff.
+    // nil when there's no config or the resolved command is empty; the
+    // session then falls back to a plain restart.
+    private func resolvedDiffReloadCommand(forConfigID configID: String) -> String? {
+        guard let cfg = config(forConfigID: configID) else { return nil }
+        let picked = diffSelector(forNonPeerConfigID: configID)?.currentlySelectedFilename
+        let resolved: String
+        if let picked, !cfg.perFileCommand.isEmpty {
+            resolved = cfg.resolvedPerFileCommand(filename: picked,
+                                                  gitBase: currentGitBase)
+        } else {
+            resolved = cfg.resolvedCommand(gitBase: currentGitBase)
+        }
+        guard !resolved.isEmpty else { return nil }
+        return ITAddressBookMgr.commandByWrapping(inLoginShell: resolved)
     }
 
     // The navigation cluster for a non-peer host's toolbar, used to
@@ -1150,13 +1402,18 @@ extension iTermWorkgroupInstance {
                                        keystroke: keystroke) else {
                 continue
             }
-            if peerPort.activate(identifier: cfg.uniqueIdentifier) {
+            // Find the port that owns this identifier (main or nested).
+            // Once a port owns it, the chord belongs to this workgroup
+            // and must be consumed (return true) whether or not the
+            // activation succeeds — mirroring the digit-chord path. A
+            // refused activate() (the member's spawn already failed, or
+            // no anchor to swap on) would otherwise return false and
+            // let the chord fall through to the focused shell as input.
+            let owningPort = ([peerPort] + nestedPeerPorts)
+                .first { $0.ownsIdentifier(cfg.uniqueIdentifier) }
+            if let owningPort {
+                _ = owningPort.activate(identifier: cfg.uniqueIdentifier)
                 return true
-            }
-            for port in nestedPeerPorts {
-                if port.activate(identifier: cfg.uniqueIdentifier) {
-                    return true
-                }
             }
         }
         return false

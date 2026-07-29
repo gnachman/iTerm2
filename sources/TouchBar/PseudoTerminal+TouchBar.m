@@ -550,7 +550,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
     }
     iTermKeyBindingAction *action = [iTermKeyBindingAction withDictionary:binding];
     if (!action) {
-        DLog(@"Bogus binding: %@", binding);
+        RLog(@"Bogus binding: %@", binding);
         return;
     }
     [self.currentSession performKeyBindingAction:action event:[NSApp currentEvent]];

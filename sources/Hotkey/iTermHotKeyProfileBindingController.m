@@ -72,13 +72,13 @@
 
 - (void)registerHotKeysForProfile:(Profile *)profile {
     NSString *guid = [iTermProfilePreferences stringForKey:KEY_GUID inProfile:profile];
-    DLog(@"Register hotkey for guid %@ (%@)", guid, profile[KEY_NAME]);
+    RLog(@"Register hotkey for guid %@ (%@)", guid, profile[KEY_NAME]);
 
     BOOL hasModifierActivation = [iTermProfilePreferences boolForKey:KEY_HOTKEY_ACTIVATE_WITH_MODIFIER inProfile:profile];
     iTermHotKeyModifierActivation modifierActivation = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_ACTIVATION inProfile:profile];
     NSArray<iTermShortcut *> *shortcuts = [iTermShortcut shortcutsForProfile:profile];
     if (!shortcuts.count) {
-        DLog(@"None of the shortcuts in profile %@ are assigned", profile[KEY_NAME]);
+        RLog(@"None of the shortcuts in profile %@ are assigned", profile[KEY_NAME]);
 
         // Check if there's double-tap of modifier enabled.
         if (![profile[KEY_HOTKEY_ACTIVATE_WITH_MODIFIER] boolValue]) {
@@ -94,7 +94,7 @@
                                  hasModifierActivation:hasModifierActivation
                                     modifierActivation:modifierActivation
                                                profile:profile] autorelease];
-    DLog(@"Registered %@", hotKey);
+    RLog(@"Registered %@", hotKey);
     _guidToHotKeyMap[guid] = hotKey;
     [[iTermHotKeyController sharedInstance] addHotKey:hotKey];
 }
@@ -116,7 +116,7 @@
     iTermHotKeyModifierActivation modifierActivation = [iTermProfilePreferences unsignedIntegerForKey:KEY_HOTKEY_MODIFIER_ACTIVATION inProfile:profile];
 
     // Update the keycode and modifier and re-register.
-    DLog(@"Update registration for %@", hotKey);
+    RLog(@"Update registration for %@", hotKey);
     [hotKey setShortcuts:[iTermShortcut shortcutsForProfile:profile]
         hasModifierActivation:hasModifierActivation
            modifierActivation:modifierActivation];

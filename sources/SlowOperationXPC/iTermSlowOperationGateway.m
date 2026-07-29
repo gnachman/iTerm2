@@ -98,7 +98,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
         // https://developer.apple.com/library/archive/samplecode/EvenBetterAuthorizationSample/Introduction/Intro.html
         // seems to have been written carefully and states that you can retry creating the
         // connection on the main thread.
-        DLog(@"Invalidated");
+        RLog(@"Invalidated");
         dispatch_async(dispatch_get_main_queue(), ^{
             [weakSelf didInvalidateConnection];
         });
@@ -198,7 +198,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
             handlers = [_gitStateHandlers copy];
             [_gitStateHandlers removeAllObjects];
         }
-        DLog(@"didInterrupt. Run all %@ handlers", @(handlers.count));
+        RLog(@"didInterrupt. Run all %@ handlers", @(handlers.count));
         [handlers enumerateObjectsUsingBlock:^(iTermGitStateHandlerBox  *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             // Connection drops can mean many things — service crash, OS-initiated termination,
             // main app shutdown — and we have no way to tell which. Don't claim it was a timeout.
@@ -469,7 +469,9 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
                                       NSData *stderr,
                                       uint8_t status,
                                       NSTaskTerminationReason reason))completion {
-    DLog(@"executeShellCommand:%@ args:%@ dir:%@ env:%@", command, args, dir, env);
+    // args can carry passwords and env can carry secret variables (tokens, keys);
+    // keep them out of the ring (counts/keys only), while the opt-in debug log is complete.
+    RLog(@"executeShellCommand:%@ args:%@ dir:%@ env:%@", command, RLogRedact(args, @(args.count)), dir, RLogRedact(env, env.allKeys));
     id<pidinfoProtocol> proxy = [_connectionToService remoteObjectProxy];
     [proxy executeShellCommand:command
                           args:args
@@ -509,7 +511,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
                                               DISPATCH_QUEUE_SERIAL);
     });
     if (!self.ready) {
-        DLog(@"fetchUserShell: gateway not ready");
+        RLog(@"fetchUserShell: gateway not ready");
         dispatch_async(fallbackQueue, ^{
             completion(nil);
         });
@@ -529,7 +531,7 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
         if (atomic_flag_test_and_set(&finished)) {
             return;
         }
-        DLog(@"fetchUserShell: gave up waiting for XPC reply");
+        RLog(@"fetchUserShell: gave up waiting for XPC reply");
         completion(nil);
     });
 }

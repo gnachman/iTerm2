@@ -4,6 +4,11 @@
 //
 //  Created by George Nachman on 2/12/25.
 //
+//  NOTE: This file is also compiled into the iTerm2 Companion iOS app. Keep it
+//  platform-neutral (Foundation only). 
+//
+
+import Foundation
 
 struct NSDictionaryCodableBox: Codable {
     let dictionary: NSDictionary

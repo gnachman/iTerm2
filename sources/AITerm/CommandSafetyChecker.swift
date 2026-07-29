@@ -39,32 +39,59 @@ class CommandSafetyChecker {
     // the old free path who declined to switch (see AISafetyClassifierBackend).
     // Anything short of an unambiguous allow is treated as unsafe so the UI
     // prompts for manual approval; classification errors are fail-closed.
-    static func check(_ command: String) async -> Bool {
-        DLog("Check safety of command: \(command)")
-        let rules = TerminalHardRules()
-        var classifier = AutoModeClassifier(chat: AISafetyClassifierBackend(entries: []),
+    // The single-command classifier: deterministic TerminalHardRules first,
+    // falling through to the configured-model side-query. Shared with the
+    // orchestrator's session_* safety gate (OrchestratorSafetyGate) so both
+    // paths vet commands with identical rules and backend.
+    //
+    // `transcript` is recent chat history (projected by SafetyTranscript);
+    // it lets the classifier see whether the user actually asked for a risky
+    // command. `maxEntries` is deliberately lower than AutoModeClassifier's
+    // 40 default: for a safety judgment a tight recent window is enough to
+    // establish intent, and it cuts both token cost and the "implied
+    // momentum" that a long transcript can use to push toward allow.
+    // `applyTerminalHardRules` attaches the deterministic shell-line floor
+    // (TerminalHardRules). Pass false for actions that are NOT shell command
+    // lines -- e.g. a file write whose CONTENT would otherwise be scanned as a
+    // shell line, hard-blocking any file that merely contains an ESC byte (a
+    // .vimrc with colors), an `rm -rf` string, or a `sudo` line. Those rules
+    // analyze command lines, not file bodies, so the file-write path judges the
+    // action with the LLM alone (same reasoning as the TUI keystroke path).
+    static func makeClassifier(transcript: [TranscriptEntry] = [],
+                               maxEntries: Int = 15,
+                               applyTerminalHardRules: Bool = true) -> AutoModeClassifier {
+        var classifier = AutoModeClassifier(chat: AISafetyClassifierBackend(entries: transcript),
                                             rules: AutoModeRules())
-        classifier.hardRules = rules.evaluate
+        if applyTerminalHardRules {
+            classifier.hardRules = TerminalHardRules().evaluate
+        }
+        classifier.maxTranscriptEntries = maxEntries
+        return classifier
+    }
+
+    static func check(_ command: String, transcript: [TranscriptEntry] = []) async -> Bool {
+        DLog("Check safety of command: \(command)")
+        let classifier = makeClassifier(transcript: transcript)
         do {
             let decision = try await classifier.classify(
                 action: .toolCall(name: "RunShellCommand", input: command),
                 inTUI: false)
             switch decision {
             case .allow:
-                DLog("For '\(command)' classifier says: allow -> SAFE")
+                RLog("For '\(redacted: command, or: "len=\(command.count)")' classifier says: allow -> SAFE")
                 return true
             case .needsManualApproval(let reason):
-                DLog("For '\(command)' classifier says: needsManualApproval (\(reason)) -> unsafe")
+                RLog("For '\(redacted: command, or: "len=\(command.count)")' classifier says: needsManualApproval (\(reason)) -> unsafe")
                 return false
             case .block(let reason):
-                DLog("For '\(command)' classifier says: block (\(reason)) -> unsafe")
+                RLog("For '\(redacted: command, or: "len=\(command.count)")' classifier says: block (\(reason)) -> unsafe")
                 return false
             case .unparseable:
-                DLog("For '\(command)' classifier returned unparseable -> unsafe")
+                RLog("For '\(redacted: command, or: "len=\(command.count)")' classifier returned unparseable -> unsafe")
                 return false
             }
         } catch {
-            DLog("Error checking command '\(command)': \(error) - treating as unsafe")
+            RLog("Error checking command '\(redacted: command, or: "len=\(command.count)")': \(error) - treating as unsafe")
             return false
         }
     }

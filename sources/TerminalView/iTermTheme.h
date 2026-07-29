@@ -35,13 +35,20 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Returns the background color for decorative views (e.g., per-pane title bar,
 // default status bar background)
+// tabHasMultipleDistinctTabColors should be YES when two or more panes in this
+// session's tab have different (non-nil) tab colors. In the minimal theme the
+// per-pane title bar normally blends with the session background because the
+// shared tab bar already conveys the tab color; but when panes disagree the tab
+// bar can only show one color, so in that case the title bar is tinted with this
+// pane's own tab color instead.
 - (NSColor *)backgroundColorForDecorativeSubviewsInSessionWithTabColor:(NSColor *)tabColor
                                                    effectiveAppearance:(NSAppearance *)effectiveAppearance
                                                 sessionBackgroundColor:(NSColor *)sessionBackgroundColor
                                                       isFirstResponder:(BOOL)isFirstResponder
                                                            dimOnlyText:(BOOL)dimOnlyText
                                                  adjustedDimmingAmount:(CGFloat)adjustedDimmingAmount
-                                                     transparencyAlpha:(CGFloat)transparencyAlpha;
+                                                     transparencyAlpha:(CGFloat)transparencyAlpha
+                                        tabHasMultipleDistinctTabColors:(BOOL)tabHasMultipleDistinctTabColors;
 
 // Background color for fake title bar in minimal, shared status bar.
 - (NSColor *)tabBarBackgroundColorForTabColor:(nullable NSColor *)tabColor
@@ -65,6 +72,12 @@ NS_ASSUME_NONNULL_BEGIN
                                                       colorMap:(iTermColorMap *)colorMap
                                                       tabStyle:(id<PSMTabStyle>)tabStyle
                                                  mainAndActive:(BOOL)mainAndActive;
+
+// Color for the separator drawn between the status bar and the terminal
+// content. Returns nil in non-minimal themes, where callers should fall back to
+// the system separator color. In the minimal theme it returns the same color
+// used to outline the selected tab.
+- (nullable NSColor *)statusBarEdgeSeparatorColorForTabStyle:(id<PSMTabStyle>)tabStyle;
 
 @end
 

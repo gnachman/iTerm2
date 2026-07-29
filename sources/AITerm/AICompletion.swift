@@ -13,8 +13,6 @@ class AICompletion {
         var workingDirectory: String?
         var date: Date
     }
-    private static var conversations = [UUID: AIConversation]()
-
     static func suggestionCompletions(_ request: SuggestionRequest,
                                       history: ArraySlice<PreviouslyRunCommand>,
                                       files: [CompletionItem],
@@ -28,7 +26,7 @@ class AICompletion {
         let (prompt, prefix) = request.aiPrompt(history: history,
                                                 files: files.map { $0.value },
                                                 prefix: request.prefix)
-        var conversation =
+        let conversation =
         AIConversation(
             registrationProvider: nil,
             messages: [
@@ -37,10 +35,8 @@ class AICompletion {
                     content: prompt,
                     name: nil,
                     function_call: nil)])
-        let uuid = UUID()
-        conversations[uuid] = conversation
         DLog("Completing…")
-        conversation.complete(streaming: nil) { result in
+        AIConversation.completeOneShot(conversation) { result in
             DLog("Have completion")
             result.handle { updated in
                 DLog("Handle success")
@@ -109,7 +105,6 @@ class AICompletion {
                 DLog("Error: \(error.localizedDescription)")
                 completion(files)
             }
-            conversations.removeValue(forKey: uuid)
         }
     }
 }

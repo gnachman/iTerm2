@@ -61,6 +61,7 @@
                                     iTermVariableKeySessionWindowName,
                                     iTermVariableKeySessionJob,
                                     iTermVariableKeySessionProcessTitle,
+                                    iTermVariableKeySessionDeepestJob,
                                     iTermVariableKeySessionForegroundJobAncestors,
                                     iTermVariableKeySessionCommandLine,
                                     iTermVariableKeySessionPresentationName,
@@ -143,6 +144,8 @@
                          inContext:iTermVariablesSuggestionContextWindow];
     [self recordUseOfVariableNamed:iTermVariableKeyWindowIsHotkeyWindow
                          inContext:iTermVariablesSuggestionContextWindow];
+    [self recordUseOfVariableNamed:iTermVariableKeyWindowTitle
+                         inContext:iTermVariablesSuggestionContextWindow];
 
     // App context
     [self recordUseOfVariableNamed:iTermVariableKeyApplicationPID inContext:iTermVariablesSuggestionContextApp];
@@ -173,7 +176,7 @@
     iTermRecordedVariable *record = [[iTermRecordedVariable alloc] initTerminalWithName:name];
     NSMutableSet<iTermRecordedVariable *> *records = [self mutableRecordedVariableNamesInContext:context];
     if (![records containsObject:record]) {
-        DLog(@"Record %@ in context %@", name, [iTermVariableHistory stringForContext:context]);
+        RLog(@"Record %@ in context %@", name, [iTermVariableHistory stringForContext:context]);
         [records addObject:record];
         [self synchronizeRecordedNames];
     }
@@ -450,7 +453,7 @@
     iTermRecordedVariable *record = [[iTermRecordedVariable alloc] initNonterminalWithName:name context:leadingToContext];
     NSMutableSet<iTermRecordedVariable *> *records = [self mutableRecordedVariableNamesInContext:context];
     if (![records containsObject:record]) {
-        DLog(@"Record %@ in context %@", name, [iTermVariableHistory stringForContext:context]);
+        RLog(@"Record %@ in context %@", name, [iTermVariableHistory stringForContext:context]);
         [records addObject:record];
         [self synchronizeRecordedNames];
     }

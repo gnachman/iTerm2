@@ -91,7 +91,7 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
             assert(NO);
             return;
         }
-        DLog(@"PTYSession.openPartialAttachmentsForArrangement: SUCCESS for pid %@", @(generalConnection.multi.pid));
+        RLog(@"PTYSession.openPartialAttachmentsForArrangement: SUCCESS for pid %@", @(generalConnection.multi.pid));
         iTermPartialAttachment *attachment = [[iTermPartialAttachment alloc] init];
         attachment.jobManager = jobManager;
         attachment.partialResult = partialResult;
@@ -114,7 +114,7 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 #pragma mark - Launching
 
 - (void)failWithError:(NSError *)error {
-    DLog(@"%@", error);
+    RLog(@"%@", error);
     NSString *message =
         [NSString stringWithFormat:@"Cannot start logging to session with profile “%@”: %@",
          self.profile[KEY_NAME],

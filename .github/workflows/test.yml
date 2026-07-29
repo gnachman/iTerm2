@@ -74,6 +74,7 @@ jobs:
             "ANTHROPIC_API_KEY": "sk-ant-dummy-ci",
             "GEMINI_API_KEY": "dummy-ci",
             "DEEPSEEK_API_KEY": "sk-dummy-ci",
+            "LLAMA_API_KEY": "ollama-dummy-ci",
             "CASSETTE_MODE": "replay",
             "PROJECT_ROOT": "${GITHUB_WORKSPACE}"
           }

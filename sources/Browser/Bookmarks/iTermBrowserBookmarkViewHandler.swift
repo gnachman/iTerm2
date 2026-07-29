@@ -107,7 +107,7 @@ extension iTermBrowserBookmarkViewHandler {
         DLog("Loading bookmarks: offset=\(offset), limit=\(limit), query='\(searchQuery)', sortBy=\(sortBy), tags=\(tags)")
         
         guard let database = await BrowserDatabase.instance(for: user) else {
-            DLog("Failed to get database instance")
+            RLog("Failed to get database instance")
             await sendBookmarks([], hasMore: false, to: webView)
             return
         }
@@ -203,11 +203,11 @@ extension iTermBrowserBookmarkViewHandler {
                     let result = try await webView.safelyEvaluateJavaScript(script)
                     DLog("JavaScript executed successfully: \(String(describing: result))")
                 } catch {
-                    DLog("Failed to execute JavaScript: \(error)")
+                    RLog("Failed to execute JavaScript: \(error)")
                 }
             }
         } catch {
-            DLog("Failed to serialize bookmarks: \(error)")
+            RLog("Failed to serialize bookmarks: \(error)")
         }
     }
     

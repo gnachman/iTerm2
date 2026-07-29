@@ -3,6 +3,9 @@ PATH := /opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 ITERM_PID=$(shell pgrep "iTerm2")
 APPS := /Applications
 ITERM_CONF_PLIST = $(HOME)/Library/Preferences/com.googlecode.iterm2.plist
+# Local checkout of the iterm2-website repo, where built plugins are published.
+ITERM2_WEBSITE ?= $(HOME)/iterm2-website
+SUITE ?= $(notdir $(CURDIR))
 COMPACTDATE=$(shell date +"%Y%m%d")
 VERSION = $(shell cat version.txt | sed -e "s/%(extra)s/$(COMPACTDATE)/")
 NAME=$(shell echo $(VERSION) | sed -e "s/\\./_/g")
@@ -72,6 +75,8 @@ help:
 	@echo "  make dev          Build Development"
 	@echo "  make prod         Build Deployment"
 	@echo "  make run          Build and launch Development build"
+	@echo "  make run-keychain Signed dev build w/ keychain entitlement (test migration)"
+	@echo "  make purge-keychain-test  Wipe the app's data-protection keychain (test reset)"
 	@echo "  make watch        Build and launch with interactive r=reload q=quit loop"
 	@echo "  make test         Run unit tests"
 	@echo "  make install      Build Deployment and install to /Applications"
@@ -198,6 +203,8 @@ _setup-main:
 	@PATH="$(ORIG_PATH)" brew list pkg-config >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install pkg-config
 	@PATH="$(ORIG_PATH)" brew list automake >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install automake
 	@PATH="$(ORIG_PATH)" command -v perl >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install perl
+	@# gettext provides envsubst, used by tools/copy_shell_integration.sh to embed it2.py.
+	@PATH="$(ORIG_PATH)" brew list gettext >/dev/null 2>&1 || PATH="$(ORIG_PATH)" brew install gettext
 	@if ! test -x "$(HOMEBREW_PREFIX)/bin/python3"; then \
 		PATH="$(ORIG_PATH)" brew install python3; \
 		if ! PATH="$(ORIG_PATH)" brew link python@3 2>/dev/null; then \
@@ -261,6 +268,7 @@ install: | Deployment backup-old-iterm
 
 Development:
 	echo "Using PATH for build: $(PATH)"
+	cp plists/dev-iTerm2.plist plists/iTerm2.plist
 	xcodebuild -scheme iTerm2 -configuration Development -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" && \
 	chmod -R go+rX $(BUILD_DIR)/Development
 
@@ -278,15 +286,52 @@ Nightly: force
 	xcodebuild -scheme iTerm2 -configuration Nightly -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" ENABLE_ADDRESS_SANITIZER=NO
 	chmod -R go+rX $(BUILD_DIR)/Nightly
 
+companion-iphone: force
+	Companion/tools/run_on_iphone.sh $(COMPANION_DEVICE)
+
+open: Development
+	open -W -n "$(BUILD_DIR)/Development/iTerm2.app" --args -suite $(SUITE)
+
 run: Development
-	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(notdir $(CURDIR)) & \
+	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(SUITE) & \
 	pid=$$!; \
 	trap 'kill $$pid 2>/dev/null' INT TERM; \
 	( sleep 1 && osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $$pid) to true" >/dev/null 2>&1 ) & \
 	wait $$pid
 
+# Like `run`, but re-signs the built app with the keychain-access-groups entitlement
+# so the data-protection-keychain migration is actually exercised. Plain `make run`
+# uses iTerm2-Development.entitlements, which omits the entitlement to keep the fast
+# unsigned dev loop free of provisioning.
+#
+# Signing an Xcode BUILD with this entitlement needs a provisioning profile, and the
+# Development config's Apple Development profile is device-bound (a hassle we avoid).
+# Instead we build unsigned (the Development prerequisite) and re-sign the finished
+# .app with codesign. keychain-access-groups is a RESTRICTED entitlement: launchd
+# refuses to spawn the app unless an embedded provisioning profile authorizes it and
+# the signing cert is inside that profile, so tools/codesign_keychain_test.sh finds an
+# installed "iTerm2 Dev ID App Prov Prof" whose cert you hold, embeds it, and signs
+# with that cert. The signed app must be launched via `open` (LaunchServices), not by
+# exec'ing the binary directly (macOS kills a directly-exec'd signed app). `open -W`
+# blocks until it quits, like `run`. Runs with -suite; AI-key accounts are NOT
+# suite-namespaced, so AI-key migration touches your real keychain items. Drop -suite
+# below to test real companion pairing.
+run-keychain: Development
+	tools/codesign_keychain_test.sh "$(BUILD_DIR)/Development/iTerm2.app"
+	open -W -n "$(BUILD_DIR)/Development/iTerm2.app" --args -suite $(notdir $(CURDIR))
+
+# Reset the data-protection keychain between migration tests. Those items are
+# entitlement-gated, so the `security` CLI can't reach them; this signs the app (same as
+# run-keychain) and launches it with a DEBUG-only flag that deletes the app's own
+# data-protection items (scoped to our access group) and quits. Prints the count.
+purge-keychain-test: Development
+	tools/codesign_keychain_test.sh "$(BUILD_DIR)/Development/iTerm2.app"
+	rm -f /tmp/iterm2-keychain-purge-result.txt
+	open -W -n "$(BUILD_DIR)/Development/iTerm2.app" --args --iterm2-purge-data-protection-keychain-for-testing
+	@cat /tmp/iterm2-keychain-purge-result.txt 2>/dev/null || echo "no purge result written (build may lack the entitlement)"
+
 runbg: Development
-	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(notdir $(CURDIR)) & \
+	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(SUITE) & \
 	pid=$$!; \
 	trap 'kill $$pid 2>/dev/null' INT TERM; \
 	( sleep 1 && osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $$pid) to true" >/dev/null 2>&1 ) & \
@@ -338,7 +383,7 @@ preview:
 
 x86libsixel: force
 	mkdir -p submodules/libsixel/build-x86
-	cd submodules/libsixel/build-x86 && PKG_CONFIG=$(PKG_CONFIG) CC="/usr/bin/clang -target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" ../configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-x86 --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
+	cd submodules/libsixel/build-x86 && PKG_CONFIG=$(PKG_CONFIG) CC="/usr/bin/clang -target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LDFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" CFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" LIBTOOLFLAGS="-target x86_64-apple-macos$(DEPLOYMENT_TARGET)" ac_cv_func_malloc_0_nonnull=yes ac_cv_func_realloc_0_nonnull=yes ../configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-x86 --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
 
 armsixel: force
 	mkdir -p submodules/libsixel/build-arm
@@ -348,14 +393,17 @@ ifdef UNIVERSAL
 # Usage: go to an intel mac and run make x86libsixel and commit it. Go to an arm mac and run make armsixel && make libsixel.
 fatlibsixel: force armsixel x86libsixel
 	lipo -create -output ThirdParty/libsixel/lib/libsixel.a ThirdParty/libsixel-arm/lib/libsixel.a ThirdParty/libsixel-x86/lib/libsixel.a
+	cp ThirdParty/libsixel-arm/include/sixel.h ThirdParty/libsixel/include/sixel.h
 else
 fatlibsixel: force
 ifeq ($(NATIVE_ARCH),arm64)
 	$(MAKE) armsixel
 	cp ThirdParty/libsixel-arm/lib/libsixel.a ThirdParty/libsixel/lib/libsixel.a
+	cp ThirdParty/libsixel-arm/include/sixel.h ThirdParty/libsixel/include/sixel.h
 else
 	$(MAKE) x86libsixel
 	cp ThirdParty/libsixel-x86/lib/libsixel.a ThirdParty/libsixel/lib/libsixel.a
+	cp ThirdParty/libsixel-x86/include/sixel.h ThirdParty/libsixel/include/sixel.h
 endif
 endif
 
@@ -466,9 +514,33 @@ endif
 pwmadapters: force
 	cd pwmplugin/ && UNIVERSAL=$(UNIVERSAL) ./build.sh
 
+# Build, notarize, staple, and zip the companion consent plugin, then copy the
+# notarized zip into the website repo's downloads folder. build.sh prompts for
+# the notarization password, the EdDSA signing key, and the version.
+companion-plugin: force
+	cd iTermCompanion && WEBSITE_DOWNLOADS="$(ITERM2_WEBSITE)/downloads/companion-plugin" ./build.sh
+
+# Archive the iOS Companion app (Release) and export a signed App Store .ipa,
+# the same Release product Xcode's Archive produces (production aps-environment).
+# Upload it separately (Xcode Organizer, Transporter, or `xcrun altool
+# --upload-app`); that step needs App Store Connect credentials.
+companion-iphone-archive: force
+	cd Companion && xcodebuild -project iTerm2Companion.xcodeproj -scheme iTerm2Companion \
+	  -configuration Release -destination 'generic/platform=iOS' \
+	  -archivePath Build/ios/iTerm2Companion.xcarchive -allowProvisioningUpdates archive
+	cd Companion && xcodebuild -exportArchive \
+	  -archivePath Build/ios/iTerm2Companion.xcarchive \
+	  -exportOptionsPlist ExportOptions.plist \
+	  -exportPath Build/ios/export -allowProvisioningUpdates
+	@echo "Archive: Companion/Build/ios/iTerm2Companion.xcarchive"
+	@echo "IPA:     Companion/Build/ios/export/"
+
 it2cli: force
 	cd it2cli/ && UNIVERSAL=$(UNIVERSAL) ./build.sh
 	cp it2cli/.build/release/it2 it2cli/bin
+
+paranoid-it2cli: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) it2cli
 
 cc-status: force
 	cd cc-status/ && ./build.sh
@@ -482,6 +554,9 @@ sparkle: force
 	rm -rf ThirdParty/Sparkle.framework
 	cd submodules/Sparkle && xcodebuild -scheme Sparkle -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)' $(SIGNING_FLAGS) $(ARCH_FLAGS)
 	mv submodules/Sparkle/Build/Release/Sparkle.framework ThirdParty/Sparkle.framework
+
+paranoid-cc-status: force
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) cc-status
 
 paranoid-CoreParse: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) BUILD_DIR="$(BUILD_DIR)" CoreParse

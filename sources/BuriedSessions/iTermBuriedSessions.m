@@ -64,11 +64,11 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
 }
 
 - (void)addBuriedSession:(PTYSession *)sessionToBury {
-    DLog(@"addBuriedSession:%@", sessionToBury);
+    RLog(@"addBuriedSession:%@", sessionToBury);
     id<iTermWindowController> windowController = (PseudoTerminal *)sessionToBury.delegate.parentWindow;
     iTermRestorableSession *restorableSession = [windowController restorableSessionForSession:sessionToBury];
     if (!restorableSession) {
-        DLog(@"Failed to create restorable session");
+        RLog(@"Failed to create restorable session");
         return;
     }
     [self addRestorableSession:restorableSession forSession:sessionToBury];
@@ -122,7 +122,7 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
 
 - (void)restoreSession:(PTYSession *)session withRestorableSession:(iTermRestorableSession *)restorableSession {
     [_array removeObject:restorableSession];
-    DLog(@"Restore %@", session);
+    RLog(@"Restore %@", session);
     [session disinter];
     DLog(@"Look for terminal with guid %@", restorableSession.terminalGuid);
     PseudoTerminal *term = [[iTermController sharedInstance] terminalWithGuid:restorableSession.terminalGuid];
@@ -146,24 +146,22 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
                      sessions:restorableSession.sessions
                        revive:NO];
         } else {
-            DLog(@"The tab doesn't exist. Create a new tab and add the session to it");
+            RLog(@"The tab doesn't exist. Create a new tab and add the session to it");
             // Create a new tab and add the session to it.
             [term addRevivedSession:restorableSession.sessions[0]];
         }
     } else {
         // Create a new term and add the session to it.
-        DLog(@"Failed to find the terminal by uid. Create a new window and add the session to it.");
-        term = [[PseudoTerminal alloc] initWithSmartLayout:YES
-                                                windowType:restorableSession.windowType
-                                           savedWindowType:restorableSession.savedWindowType
-                                                percentage:restorableSession.percentage
-                                                    screen:restorableSession.screen
-                                                   profile:nil];
+        RLog(@"Failed to find the terminal by uid. Create a new window and add the session to it.");
+        term = [[iTermController sharedInstance] reviveSession:restorableSession.sessions[0]
+                                           inNewWindowWithType:restorableSession.windowType
+                                               savedWindowType:restorableSession.savedWindowType
+                                                    percentage:restorableSession.percentage
+                                                        screen:restorableSession.screen
+                                                  terminalGuid:restorableSession.terminalGuid];
         if (term) {
-            [[iTermController sharedInstance] addTerminalWindow:term];
-            term.terminalGuid = restorableSession.terminalGuid;
-            [term addRevivedSession:restorableSession.sessions[0]];
-            [term fitWindowToTabs];
+            // Restorable-state extras stay here: the shared revive
+            // helper only handles the create/add/fit sequence.
             if (restorableSession.windowTitle) {
                 [term.scope setValue:restorableSession.windowTitle
                     forVariableNamed:iTermVariableKeyWindowTitleOverrideFormat];
@@ -272,6 +270,7 @@ NSString *const iTermSessionBuriedStateChangeTabNotification = @"iTermSessionBur
 }
 
 - (void)terminateAll {
+    RLog(@"terminateAll");
     [_array enumerateObjectsUsingBlock:^(iTermRestorableSession * _Nonnull restorableSession, NSUInteger idx, BOOL * _Nonnull stop) {
         [restorableSession.sessions enumerateObjectsUsingBlock:^(PTYSession *session, NSUInteger idx, BOOL * _Nonnull stop) {
             if (!session.isTmuxClient) {

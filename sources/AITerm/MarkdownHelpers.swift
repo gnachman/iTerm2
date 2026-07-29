@@ -105,42 +105,8 @@ func AttributedStringForFilename(_ filename: String,
 }
 
 extension LLM.Message.StatusUpdate {
-    private static func subpartsForDisplay(_ subparts: [LLM.Message.StatusUpdate]) -> [LLM.Message.StatusUpdate] {
-        // Keep the last "long" update plus everything after it
-        var singlePartUpdates = subparts.flatMap { $0.exploded }
-
-        let lastReasoningSummaryUpdateIndex = singlePartUpdates.lastIndex(where: { $0.isReasoningSummaryUpdate })
-        let lastWebSearchFinishedIndex = singlePartUpdates.lastIndex(where: { $0.isWebSearchFinished })
-        let lastCodeInterpreterFinishedIndex = singlePartUpdates.lastIndex(where: { $0 == .codeInterpreterFinished })
-        let keepStart = [lastReasoningSummaryUpdateIndex,
-                         lastWebSearchFinishedIndex,
-                         lastCodeInterpreterFinishedIndex].compactMap { $0 }.max()
-        if let keepStart {
-            singlePartUpdates.removeSubrange(..<keepStart)
-        }
-        return singlePartUpdates
-    }
-
-    var displayString: String {
-        switch self {
-        case .webSearchStarted:
-            "Searching the web…"
-        case .webSearchFinished(let query):
-            if let query {
-                "Finished searching the web for \(query)."
-            } else {
-                "Finished searching the web."
-            }
-        case .codeInterpreterStarted:
-            "Executing code…"
-        case .codeInterpreterFinished:
-            "Finished executing code"
-        case .reasoningSummaryUpdate(let text): text
-        case .multipart(let subparts):
-            Self.subpartsForDisplay(subparts).map { $0.displayString }.joined(separator: "\n")
-        }
-    }
-
+    // displayString and subpartsForDisplay are shared with the iOS companion
+    // app and live in LLM.swift; this markdown variant is Mac-only.
     var displayMarkdownString: String {
         switch self {
         case .webSearchStarted:

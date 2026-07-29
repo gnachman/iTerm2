@@ -108,6 +108,7 @@ typedef NS_ENUM(NSUInteger, iTermAIPrompt) {
     iTermAIPromptAIChatReadWriteTerminalBrowser = 6,
     iTermAIPromptAIChatOrchestration = 7,
     iTermAIPromptCodeReviewSystem = 8,
+    iTermAIPromptChatIcon = 9,
 };
 
 typedef NS_ENUM(NSUInteger, iTermWindowPlacement) {
@@ -153,6 +154,16 @@ extern NSString *const kPreferenceKeyAIPromptAIChatReadWriteTerminalBrowser;
 extern NSString *const kPreferenceKeyAIPromptAIChatOrchestration;
 extern NSString *const kPreferenceKeyAIPromptCodeReview;
 extern NSString *const kPreferenceKeyAIPromptCodeReviewSystem;
+extern NSString *const kPreferenceKeyAIPromptChatIcon;
+// The shipped default for kPreferenceKeyAIPromptChatIcon. Exposed so
+// tests can verify the template independent of the machine's defaults.
+extern NSString *iTermDefaultAIPromptChatIcon;
+// Names of the variables (in the interpolated-string "ai" scope) that
+// templated prompts must reference. Shared by the feature code that
+// supplies the value and the Settings warning that checks the template
+// references it, so the two cannot drift.
+extern NSString *const iTermAIPromptVariablePrompt;   // Engage AI: the user's query
+extern NSString *const iTermAIPromptVariableSubject;  // Chat List Icon: the chat's title
 extern NSString *const kPreferenceKeyAIPromptPlaceholder;  // not a real setting, just there to make the prefs UI infra happy
 extern NSString *const kPreferenceKeyAIModel;
 extern NSString *const kPreferenceKeyAITokenLimit;
@@ -210,6 +221,12 @@ extern NSString *const kPreferenceKeyAIFeatureHostedWebSearch;
 extern NSString *const kPreferenceKeyAIFeatureFunctionCalling;
 extern NSString *const kPreferenceKeyAIFeatureStreamingResponses;
 extern NSString *const kPreferenceKeyAIVectorStore;
+extern NSString *const kPreferenceKeyAIManualModelConfigurations;  // NSArray of NSDictionary
+// Name of the manual model the user designated as the "economy" model: a
+// cheaper model used for frequent, low-stakes background judgements (command
+// safety, screen-idle detection). Empty string means none; the catalog's
+// per-model economy pointer is then used instead. See ScreenWatchPoller.
+extern NSString *const kPreferenceKeyAIEconomyModelName;
 extern NSString *const kPreferenceKeyUseRecommendedAIModel;
 extern NSString *const kPreferenceKeyAIVendor;  // iTermAIVendor
 extern NSString *const kPreferenceKeyAISafetyCheck;  // boolean
@@ -233,7 +250,7 @@ extern NSString *const kPreferenceKeyAIPermissionCheckTerminalState;
 extern NSString *const kPreferenceKeyAIPermissionRunCommands;
 extern NSString *const kPreferenceKeyAIPermissionViewHistory;
 extern NSString *const kPreferenceKeyAIPermissionWriteToClipboard;
-extern NSString *const kPreferenceKeyAIPermissionTypeForYou;
+extern NSString *const kPreferenceKeyAIPermissionControlTerminal;
 extern NSString *const kPreferenceKeyAIPermissionViewManpages;
 extern NSString *const kPreferenceKeyAIPermissionWriteToFilesystem;
 extern NSString *const kPreferenceKeyAIPermissionActInWebBrowser;
@@ -292,6 +309,7 @@ extern NSString *const kPreferenceKeyEmulateUSKeyboard;  // See issue 6994
 
 extern NSString *const kPreferenceKeyHotkeyEnabled;
 extern NSString *const kPreferenceKeyForceKeyboard;
+extern NSString *const kPreferenceKeyForceKeyboardOncePerSession;
 extern NSString *const kPreferenceKeyAllowSymbolicHotKeys;
 extern NSString *const kPreferenceKeyKeyboardLocale;
 extern NSString *const kPreferenceKeyHotKeyCode;
@@ -453,4 +471,7 @@ extern NSString *const iTermDefaultAIPrompt;
 + (BOOL)dimOnlyText;
 + (int)sideMargins;
 + (int)topBottomMargins;
++ (BOOL)perPaneBackgroundImage;
++ (double)splitPaneDimmingAmount;
++ (BOOL)dimBackgroundWindows;
 @end

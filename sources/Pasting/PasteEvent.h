@@ -74,6 +74,13 @@ typedef NS_OPTIONS(NSUInteger, iTermPasteFlags) {
 // commands the newlines must be between bracketed segments.
 @property(nonatomic, assign) BOOL shouldPasteNewlinesOutsideBrackets;
 
+// Seconds to wait, after this event becomes the head of the paste queue (i.e.
+// after any in-progress paste drains), before its first byte is written. 0
+// means write immediately, as usual. Used to send a submit key (a Return) a
+// beat after a bracketed paste so a TUI that debounces bracketed paste treats
+// the Return as a submit rather than absorbing it into the paste.
+@property(nonatomic, assign) NSTimeInterval initialDelay;
+
 + (instancetype)pasteEventWithString:(NSString *)string
                                flags:(iTermPasteFlags)flags
                     defaultChunkSize:(int)defaultChunkSize

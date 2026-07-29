@@ -114,6 +114,11 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 @property(nonatomic, strong) iTermPromise *fullScreenPromise;
 @property(nonatomic, strong) id<iTermPromiseSeal> fullScreenEnteredSeal;
 @property(nonatomic) BOOL automaticallySelectNewTabs;
+
+// If YES (the default), inserting a new tab orders its window to the front.
+// Set to NO to create tabs in the background without raising the window. A
+// brand-new window (its first tab) is still ordered front regardless.
+@property(nonatomic) BOOL automaticallyOrderFrontNewTabs;
 @property(nonatomic, readonly) iTermTerminalWindowSizeHelper *windowSizeHelper;
 
 // Tab whose color is being changed via the color picker.

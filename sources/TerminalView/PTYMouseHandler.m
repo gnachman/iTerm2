@@ -686,8 +686,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     [_threeFingerTapGestureRecognizer mouseDragged];
     const BOOL wasMakingThreeFingerSelection = _makingThreeFingerSelection;
-    _makingThreeFingerSelection = (_numTouches == 3);
-    DLog(@"_makingThreeFingerSelection <- %@", @(_makingThreeFingerSelection));
+    // Latch three-finger-selection mode for the duration of the drag. macOS can report all
+    // touches as ended mid-drag (e.g. when the Accessibility "three-finger drag" feature takes over
+    // the gesture), which collapses _numTouches to 0. Re-deriving the mode from _numTouches on every
+    // drag event would then flip it off partway through. This matters only when mouse reporting is
+    // off, where a three-finger drag makes a local selection: the flag must stay set so a selection
+    // is begun once and extended, rather than restarted or dropped mid-drag. Once we know this is a
+    // three-finger drag, keep it set until mouseUp resets it. Issue 12953.
+    if (_numTouches == 3) {
+        _makingThreeFingerSelection = YES;
+    }
+    DLog(@"_makingThreeFingerSelection <- %@ (numTouches=%d)", @(_makingThreeFingerSelection), _numTouches);
     const NSPoint locationInWindow = [event locationInWindow];
     const NSPoint mouseDownLocation = [_mouseDownEvent locationInWindow];
     const CGFloat dragDistance = EuclideanDistance(mouseDownLocation, locationInWindow);
@@ -727,8 +736,27 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     [_mouseReportingFrustrationDetector mouseDragged:event reported:[self mouseEventIsReportable:event]];
-    if ([self reportMouseEvent:event]) {
+
+    // When mouse reporting is active, forward every drag to the app and never make a native
+    // selection, exactly as a one-finger drag does. This deliberately includes three-finger drags:
+    // once macOS's Accessibility "three-finger drag" feature engages it lifts the physical touches
+    // and synthesizes a pointer drag, so the touch count iTerm2 sees is unreliable (0, 1, 2, or 3 for
+    // the same physical gesture). Keying selection ownership on the touch count produced inconsistent
+    // results, and letting only some events report produced a drag split between the app's selection
+    // and a local one. Hold Option to force a local selection while mouse reporting is on. Issues
+    // 12953 and 12950.
+    BOOL dragWasReportable = NO;
+    if ([self handleMouseEvent:event testOnly:NO deltaOut:NULL reportableOut:&dragWasReportable]) {
         DLog(@"Reported drag");
+        _committedToDrag = YES;
+        return iTermClickSideEffectsReport;
+    }
+    if (dragWasReportable) {
+        // The event was reportable (reporting mode on, coordinate reportable, clicks & drags allowed,
+        // Option not held) but emitted no report because the pointer stayed in the same cell. The app
+        // owns this drag, so do not fall through to a local selection, which would layer iTerm2's own
+        // selection on top of the app's. Slow drags linger in one cell and so hit this most often.
+        DLog(@"Drag reportable but stayed in the same cell; not starting a local selection");
         _committedToDrag = YES;
         return iTermClickSideEffectsReport;
     }
@@ -808,15 +836,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     if (!wasMakingThreeFingerSelection &&
         _makingThreeFingerSelection) {
+        // A three-finger drag reaches here only when mouse reporting is not active for this event
+        // (reporting off, or Option held to force a local selection); reportable drags were already
+        // forwarded to the app above. In that case begin a local selection, since there was no
+        // mouse-down to start one.
         DLog(@"Just started a three finger selection in mouseDragged (because of macOS bugs)");
-
-        // If setting enabled and mouse event was reported, skip selection
-        if ([iTermAdvancedSettingsModel threeFingerDragSendsMouseReports] &&
-            [self reportMouseEvent:event]) {
-            DLog(@"Reported 3-finger drag as mouse event");
-            _committedToDrag = YES;
-            return iTermClickSideEffectsReport;
-        }
 
         const BOOL shiftPressed = ([event it_modifierFlags] & NSEventModifierFlagShift) != 0;
         const BOOL isExtension = ([self.selection hasSelection] && shiftPressed);
@@ -845,15 +869,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             self.selection.resumable = YES;
         }
     } else {
-        // If continuing a 3-finger drag and mouse event was reported, skip selection
-        if (_makingThreeFingerSelection &&
-            [iTermAdvancedSettingsModel threeFingerDragSendsMouseReports] &&
-            [self reportMouseEvent:event]) {
-            DLog(@"Reported continued 3-finger drag as mouse event");
-            _committedToDrag = YES;
-            return iTermClickSideEffectsReport;
-        }
-
         DLog(@"Update live selection during drag");
         if ([self.mouseDelegate mouseHandler:self moveSelectionToGridCoord:VT100GridCoordMake(x, y)
                                    viewCoord:locationInTextView]) {

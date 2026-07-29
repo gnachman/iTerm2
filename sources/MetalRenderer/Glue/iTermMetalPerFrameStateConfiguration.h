@@ -10,6 +10,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermTextRendererCommon.h"
 #import "iTermLineStyleMarkRenderer.h"
+#import "iTermRowRenderInputs.h"
 #import "VT100GridTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -27,6 +28,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermMetalPerFrameStateConfiguration : NSObject {
 @public
+    // Frame-constant inputs consumed by the Metal row build. See
+    // iTermRowRenderInputs.h. Populated in loadSettingsWithDrawingHelper:.
+    iTermRowRenderInputs _renderInputs;
+
+    // Fingerprint of _renderInputs, computed at the end of loadSettings. Two
+    // frames with equal values share a value; used to key a per-row cache.
+    uint64_t _configGeneration;
+
     // Geometry
     CGSize _cellSize;
     CGSize _cellSizeWithoutSpacing;
@@ -43,40 +52,25 @@ NS_ASSUME_NONNULL_BEGIN
     NSColor *_defaultTextColor;
     vector_float4 _selectionColor;
     iTermLineStyleMarkColors _lineStyleMarkColors;
-    vector_float4 _unfocusedSelectionColor;
-    CGFloat _transparencyAlpha;
-    BOOL _transparencyAffectsOnlyDefaultBackgroundColor;
     NSColor *_cursorGuideColor;
     NSColorSpace *_colorSpace;
     BOOL _forceRegularBottomMargin;
 
     // Text
     iTermFontTable *_fontTable;
-    BOOL _useNonAsciiFont;
     BOOL _asciiAntialias;
     BOOL _nonasciiAntialias;
     iTermMetalUnderlineDescriptor _asciiUnderlineDescriptor;
     iTermMetalUnderlineDescriptor _nonAsciiUnderlineDescriptor;
     iTermMetalUnderlineDescriptor _strikethroughUnderlineDescriptor;
     CGFloat _baselineOffset;
-    iTermThinStrokesSetting _thinStrokes;
     BOOL _useBoldFont;
     BOOL _useItalicFont;
-    BOOL _reverseVideo;
-    BOOL _useCustomBoldColor;
-    BOOL _brightenBold;
-    BOOL _useNativePowerlineGlyphs;
-    BOOL _useSelectedTextColor;
-    BOOL _ligaturesEnabled;
 
     // Focus
-    BOOL _isFrontTextView;
     BOOL _isInKeyWindow;
     BOOL _textViewIsActiveSession;
     BOOL _textViewIsFirstResponder;
-
-    // Screen
-    BOOL _isRetina;
 
     // Cursor
     BOOL _shouldDrawFilledInCursor;
@@ -84,7 +78,6 @@ NS_ASSUME_NONNULL_BEGIN
 
     // Size
     VT100GridSize _gridSize;
-    BOOL _blinkAllowed;
     NSEdgeInsets _edgeInsets;
 
     // Background image

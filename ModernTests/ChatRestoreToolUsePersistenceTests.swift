@@ -195,10 +195,92 @@ final class ChatRestoreToolUsePersistenceTests: XCTestCase {
         XCTAssertEqual(rebuilt.compactMap { toolResultID($0) }.sorted(), ["call_a", "call_b"])
     }
 
+    // MARK: - Orphan request (tool_call with no response) keeps adjacency
+
+    /// A persisted tool call whose response never arrived (an abandoned
+    /// `.ask`, or a parked request cleared on the next user message),
+    /// followed by later messages, must reconstruct with its synthesized
+    /// "interrupted" output IMMEDIATELY after the call. The pre-fix code
+    /// appended that filler at the END of the transcript, leaving the
+    /// trailing user/agent messages between the tool_call and its output;
+    /// DeepSeek (and the legacy OpenAI chat-completions path) reject that
+    /// with HTTP 400 "insufficient tool messages following tool_calls
+    /// message" (GitLab #12883).
+    func testRestore_orphanRequestBeforeLaterMessages_outputIsAdjacent() throws {
+        let req = UUID()
+        let messages = [
+            userText("run a command"),
+            requestMessage(callID: "call_orphan", requestUUID: req),  // no response
+            userText("actually never mind, let's just chat"),
+            agentText("Sure, happy to chat."),
+        ]
+        let rebuilt = try restoreAndReconstruct(messages)
+        assertValidPairing(rebuilt)
+
+        guard let callIdx = rebuilt.firstIndex(where: { toolUseID($0) == "call_orphan" }) else {
+            XCTFail("orphan tool_call is missing from the rebuilt prompt")
+            return
+        }
+        XCTAssertLessThan(callIdx + 1, rebuilt.count,
+                          "orphan tool_call has nothing after it; its output was dropped")
+        XCTAssertEqual(toolResultID(rebuilt[callIdx + 1]), "call_orphan",
+                       "the orphan tool_call's output must immediately follow the call, not be deferred past the trailing messages to the end")
+    }
+
+    /// Two orphan calls interleaved with text: each call's synthesized
+    /// output lands right after that call, not all bunched at the end.
+    func testRestore_multipleOrphanRequests_eachOutputIsAdjacent() throws {
+        let r1 = UUID(), r2 = UUID()
+        let messages = [
+            userText("do the first thing"),
+            requestMessage(callID: "call_a", requestUUID: r1, command: "echo a"),  // orphan
+            agentText("working on it"),
+            requestMessage(callID: "call_b", requestUUID: r2, command: "echo b"),  // orphan
+            userText("and that's all"),
+        ]
+        let rebuilt = try restoreAndReconstruct(messages)
+        assertValidPairing(rebuilt)
+
+        for callID in ["call_a", "call_b"] {
+            guard let callIdx = rebuilt.firstIndex(where: { toolUseID($0) == callID }) else {
+                XCTFail("orphan tool_call \(callID) is missing from the rebuilt prompt")
+                return
+            }
+            XCTAssertEqual(toolResultID(rebuilt[callIdx + 1]), callID,
+                           "\(callID)'s output must immediately follow its call")
+        }
+    }
+
     // MARK: - View-model hiding of resolved requests
 
     /// A persisted request whose response is present is "resolved" and must be
     /// hidden from the chat UI (no stray Allow/Deny prompt).
+    /// Reasoning items persisted with the request's llmMessage must ride the
+    /// restore round-trip onto the rebuilt prompt's functionCall message, so
+    /// the request builder can replay them before the call.
+    func testRestore_persistedReasoningItems_rideRebuiltFunctionCall() throws {
+        let requestUUID = UUID()
+        var request = requestMessage(callID: "call_r", requestUUID: requestUUID)
+        guard case .remoteCommandRequest(.classic(var rc), let safe) = request.content else {
+            XCTFail("fixture changed shape")
+            return
+        }
+        rc.llmMessage.reasoningItems = [LLM.ReasoningItem(id: "rs_9",
+                                                          encryptedContent: "blob-9")]
+        request.content = .remoteCommandRequest(.classic(rc), safe: safe)
+        let rebuilt = try restoreAndReconstruct([
+            userText("run it"),
+            request,
+            responseMessage(callID: "call_r", requestUUID: requestUUID),
+        ])
+        guard let callMessage = rebuilt.first(where: { toolUseID($0) == "call_r" }) else {
+            XCTFail("rebuilt prompt lost the tool call")
+            return
+        }
+        XCTAssertEqual(callMessage.reasoningItems?.map(\.id), ["rs_9"])
+        XCTAssertEqual(callMessage.reasoningItems?.first?.encryptedContent, "blob-9")
+    }
+
     func testViewModel_resolvedRequest_isHidden() {
         let req = UUID()
         let messages = [

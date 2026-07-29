@@ -94,7 +94,7 @@ class iTermBrowserWelcomePageHandler: NSObject, iTermBrowserPageHandler {
         guard let action = message["action"] as? String,
               let sessionSecret = message["sessionSecret"] as? String,
               sessionSecret == secret else {
-            DLog("Invalid or missing session secret for welcome action")
+            RLog("Invalid or missing session secret for welcome action")
             return
         }
         
@@ -130,7 +130,7 @@ class iTermBrowserWelcomePageHandler: NSObject, iTermBrowserPageHandler {
         DLog("Loading top visited sites")
         
         guard let database = await BrowserDatabase.instance(for: user) else {
-            DLog("Could not get database instance")
+            RLog("Could not get database instance")
             await sendTopSitesResponse([], webView: webView)
             return
         }
@@ -163,10 +163,10 @@ class iTermBrowserWelcomePageHandler: NSObject, iTermBrowserPageHandler {
                 _ = try await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
                 DLog("Successfully sent top sites to page")
             } catch {
-                DLog("Error sending top sites response: \(error)")
+                RLog("Error sending top sites response: \(error)")
             }
         } catch {
-            DLog("Error serializing top sites: \(error)")
+            RLog("Error serializing top sites: \(error)")
         }
     }
 }

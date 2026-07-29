@@ -104,7 +104,7 @@ extension iTermBrowserPermissionsViewHandler {
         DLog("Loading permissions: offset=\(offset), limit=\(limit), query='\(searchQuery)', typeFilter='\(permissionTypeFilter)', statusFilter='\(statusFilter)'")
         
         guard let database = await BrowserDatabase.instance(for: user) else {
-            DLog("Failed to get database instance")
+            RLog("Failed to get database instance")
             await sendPermissions([], hasMore: false, to: webView)
             return
         }
@@ -221,11 +221,11 @@ extension iTermBrowserPermissionsViewHandler {
                     let result = try await webView.safelyEvaluateJavaScript(iife(script))
                     DLog("JavaScript executed successfully: \(String(describing: result))")
                 } catch {
-                    DLog("Failed to execute JavaScript: \(error)")
+                    RLog("Failed to execute JavaScript: \(error)")
                 }
             }
         } catch {
-            DLog("Failed to serialize permissions: \(error)")
+            RLog("Failed to serialize permissions: \(error)")
         }
     }
     

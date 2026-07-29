@@ -57,12 +57,33 @@ class AITermController {
     var representedObject: String?
     private(set) var functions = [LLM.AnyFunction]()
     var shouldThink: Bool?
+    var reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort?
+    var serviceTier: ResponsesRequestBody.ServiceTier?
+
+    // Bounds the tool-call failure retry loop. A failing tool result is fed
+    // back to the model so the turn can recover, but a tool that fails
+    // deterministically (and a model that keeps re-invoking it) would otherwise
+    // loop indefinitely, one API round-trip per failure. After this many
+    // consecutive failures with no intervening success we surface the error
+    // instead of re-requesting. Reset on any successful tool call or final
+    // answer.
+    private var consecutiveToolFailures = 0
+    static let maxConsecutiveToolFailures = 6
+
+    // Total assistant text surfaced to the delegate (via didStreamUpdate
+    // deltas) during the current streaming response. Reset at the start of
+    // each request round-trip. Used at stream finalization to stream only the
+    // un-surfaced tail if the completion callback raced ahead of the last text
+    // chunks (see the `final` branch of parseStreamingResponse).
+    private var streamedText = ""
+
     var truncate: (([Message]) -> ([Message]))?
 
     struct Registration {
         var apiKey: String
+        var vendor: iTermAIVendor?
 
-        init?(apiKey: String?) {
+        init?(apiKey: String?, vendor: iTermAIVendor? = nil) {
             guard let apiKey else {
                 return nil
             }
@@ -70,6 +91,11 @@ class AITermController {
                 return nil
             }
             self.apiKey = apiKey
+            self.vendor = vendor
+        }
+
+        func isValid(for vendor: iTermAIVendor) -> Bool {
+            return self.vendor == nil || self.vendor == vendor
         }
     }
 
@@ -129,11 +155,12 @@ class AITermController {
 
     private var _registration: Registration?
     var registration: Registration? {
-        if let _registration {
-            return _registration
-        }
         if isSelfHosted || providerIsAppleIntelligence {
             return Registration(apiKey: "Placeholder for self-hosted")
+        }
+        let vendor = requiredRegistrationVendor
+        if let _registration, _registration.isValid(for: vendor) {
+            return _registration
         }
         return nil
     }
@@ -154,11 +181,13 @@ class AITermController {
     }
 
     func request(query: String, stream: Bool = false) {
+        streamedText = ""
         state = .initialized(query: .completion(query), stream: stream)
         handle(event: .begin)
     }
 
     func request(messages: [Message], stream: Bool) {
+        streamedText = ""
         state = .initializedMessages(messages: messages, stream: stream)
         handle(event: .begin)
     }
@@ -225,6 +254,10 @@ class AITermController {
     // placeholder registration and never builds an HTTP request.
     private var providerIsAppleIntelligence: Bool {
         return llmProvider?.model.api == .appleIntelligence
+    }
+
+    var requiredRegistrationVendor: iTermAIVendor {
+        return llmProvider?.model.vendor ?? LLMMetadata.effectiveVendor
     }
 
     private func handle(event: Event) {
@@ -304,7 +337,7 @@ class AITermController {
                 }
                 delegate?.aitermControllerWillSendRequest(self)
             case .error(let error):
-                DLog("error: \(error)")
+                RLog("error: \(error)")
                 state = .ground
                 switch query {
                 case .completion(_):
@@ -319,7 +352,7 @@ class AITermController {
                                                                              error: error)
                 }
             case .pluginError(let error):
-                DLog("plugin error: \(error.reason)")
+                RLog("plugin error: \(error.reason)")
                 state = .ground
             case .webResponse:
                 DLog("Unexpected event \(event) in \(state)")
@@ -350,10 +383,10 @@ class AITermController {
                 }
                 delegate?.aitermControllerWillSendRequest(self)
             case .pluginError(let error):
-                DLog("plugin error: \(error.reason)")
+                RLog("plugin error: \(error.reason)")
                 state = .ground
             case .error(let error):
-                DLog("error: \(error)")
+                RLog("error: \(error)")
                 state = .ground
                 delegate?.aitermController(self, didFailWithError: error)
                 state = .ground
@@ -399,10 +432,14 @@ class AITermController {
                 delegate?.aitermControllerDidCancelOutstandingRequest(self)
                 state = .ground
             case .error(let error):
-                DLog("error: \(error)")
+                RLog("error: \(error)")
                 state = .ground
                 if streamParserState != nil && !(error is PendingCommandCanceled) {
-                    delegate?.aitermController(self, didStreamUpdate: "An error ocurred: \(error.localizedDescription)")
+                    let details = error.localizedDescription
+                        .components(separatedBy: "\n")
+                        .map { "    " + $0 }
+                        .joined(separator: "\n")
+                    delegate?.aitermController(self, didStreamUpdate: "\n\n**Request failed**\n\n\(details)")
                 }
                 delegate?.aitermController(self, didFailWithError: error)
             case .word(let word):
@@ -422,9 +459,20 @@ class AITermController {
     private func requestRegistration(continuation: State) {
         state = .ground
         delegate?.aitermControllerRequestRegistration(self) { [weak self] registration in
-            self?._registration = registration
-            self?.state = continuation
-            self?.handle(event: .begin)
+            guard let self else {
+                return
+            }
+            _registration = registration
+            state = continuation
+            // If the registration we just stored still doesn't satisfy the
+            // getter (e.g. it was issued for the wrong vendor), retrying
+            // .begin would request registration again and recurse forever.
+            // Fail instead of overflowing the stack.
+            guard self.registration != nil else {
+                handle(event: .error(AIError("Could not obtain a valid API key registration for this model’s provider.")))
+                return
+            }
+            handle(event: .begin)
         }
     }
 
@@ -477,7 +525,9 @@ class AITermController {
                                         functions: functions,
                                         hostedTools: hostedTools,
                                         previousResponseID: previousResponseID,
-                                        shouldThink: llmProvider.model.features.contains(.configurableThinking) ? shouldThink : nil)
+                                        shouldThink: llmProvider.model.features.contains(.configurableThinking) ? shouldThink : nil,
+                                        reasoningEffort: llmProvider.model.supports(reasoningEffort: reasoningEffort) ? reasoningEffort : nil,
+                                        serviceTier: llmProvider.model.supports(serviceTier: serviceTier) ? serviceTier : nil)
         builder.stream = stream != nil
         guard llmProvider.urlIsValid else {
             handle(event: .error(AIError("Invalid URL for AI provider of \(iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "(nil)")")))
@@ -656,7 +706,7 @@ class AITermController {
                     switch status {
                     case .cancelled, .failed:
                         state = .ground
-                        handle(event: .error(AIError("An error ocurred while ingesting files to vector storage")))
+                        handle(event: .error(AIError("An error occurred while ingesting files to vector storage")))
                         delegate?.aitermControllerDidFailToAddFilesToVectorStore(self, error: AIError("The file may not be well formed."))
                     case .completed:
                         delegate?.aitermControllerDidAddFilesToVectorStore(self)
@@ -740,7 +790,40 @@ class AITermController {
         }
         var accumulatingMessage = parserState.message
         if final {
-            if let functionCall = accumulatingMessage.function_call {
+            // The incremental `.word` channel can race the completion
+            // callback: the AI plugin may deliver the final WebResponse
+            // before the last stream chunks have been consumed, leaving
+            // `accumulatingMessage` missing trailing events. The most
+            // damaging case is a tool_use block whose `input_json_delta`
+            // argument fragments arrive only in that tail — the call would
+            // then dispatch with empty `{}` arguments and the tool rejects it
+            // as malformed. `data` here is the COMPLETE response body, so
+            // reparse it and prefer whichever message carries the more
+            // complete tool call before dispatching.
+            let authoritative = finalMessageByReparsingCompleteBody(data)
+            let incrementalCall = accumulatingMessage.function_call
+            let authoritativeCall = authoritative?.function_call
+            let preferAuthoritativeCall: Bool
+            if let authoritativeCall {
+                if let incrementalCall {
+                    // Same call; the incremental args may be truncated by the
+                    // race, so take the body's copy when it is longer.
+                    preferAuthoritativeCall =
+                        (authoritativeCall.arguments?.count ?? 0) > (incrementalCall.arguments?.count ?? 0)
+                } else {
+                    // The completion beat the tool_use block entirely: the
+                    // incremental accumulator has no call at all and would
+                    // otherwise finalize as a (truncated) text turn, ending
+                    // the conversation. The body has the real call.
+                    preferAuthoritativeCall = true
+                }
+            } else {
+                preferAuthoritativeCall = false
+            }
+
+            if preferAuthoritativeCall, let authoritative, let functionCall = authoritative.function_call {
+                doFunctionCall(authoritative, call: functionCall)
+            } else if let functionCall = incrementalCall {
                 doFunctionCall(accumulatingMessage, call: functionCall)
             } else {
                 // For streaming non-tool-call replies, the accumulator has
@@ -749,10 +832,33 @@ class AITermController {
                 // attach it to the persisted assistant Message. Tool-call
                 // paths preserve reasoning via doFunctionCall (its
                 // `amended.append(message)` keeps reasoningContent intact)
-                // so they don't need this hook.
-                if let reasoning = accumulatingMessage.reasoningContent, !reasoning.isEmpty {
+                // so they don't need this hook. Prefer the authoritative
+                // reasoning from the full body in case the tail was raced.
+                if let reasoning = authoritative?.reasoningContent ?? accumulatingMessage.reasoningContent,
+                   !reasoning.isEmpty {
                     delegate?.aitermController(self, didReceiveReasoning: reasoning)
                 }
+                // If the completion raced ahead of the streamed text deltas,
+                // the UI bubble is missing the tail (in the worst case it is
+                // empty). Surface whatever text was not yet streamed live.
+                //
+                // KNOWN BUG: dropFirst(streamedText.count) assumes streamedText
+                // is a character-count PREFIX of fullText. That holds for the
+                // common race, but when the incremental stream and the reparsed
+                // body diverge (ordering, whitespace, or across multiple text
+                // content-blocks) this splices an overlapping fragment onto the
+                // end of the bubble, garbling/duplicating the finalized message.
+                // AIStreamingTailSpliceTests pins both behaviors. A fix to
+                // reconcile against the authoritative body (rather than blindly
+                // appending a count-based tail) is being handled separately.
+                if let fullText = authoritative?.body.maybeContent, fullText.count > streamedText.count {
+                    let tail = String(fullText.dropFirst(streamedText.count))
+                    if !tail.isEmpty {
+                        streamedText += tail
+                        delegate?.aitermController(self, didStreamUpdate: tail)
+                    }
+                }
+                consecutiveToolFailures = 0
                 delegate?.aitermController(self, didStreamUpdate: nil)
             }
             state = .ground
@@ -773,6 +879,7 @@ class AITermController {
             case .text(let string):
                 if !string.isEmpty {
                     DLog("drain sending \(string). Accumulating message is: \(accumulatingMessage)")
+                    self.streamedText += string
                     self.delegate?.aitermController(self, didStreamUpdate: string)
                 }
                 DLog("Reset accumulating message to uninitialized")
@@ -838,6 +945,15 @@ class AITermController {
                                     accumulatingMessage.reasoningContent =
                                         (accumulatingMessage.reasoningContent ?? "") + reasoning
                                 }
+                                // Reasoning items are sibling state like
+                                // reasoningContent: accumulate them on the
+                                // turn so they ride into doFunctionCall (and
+                                // from there into the persisted tool-call
+                                // message) and the final assistant message.
+                                if let items = choice.reasoningItems, !items.isEmpty {
+                                    accumulatingMessage.reasoningItems =
+                                        (accumulatingMessage.reasoningItems ?? []) + items
+                                }
                                 if !accumulatingMessage.tryAppend(choice.body) {
                                     DLog("Failed to append \(choice.body) to \(accumulatingMessage). Drain and start a new message.")
                                     // drain() resets accumulatingMessage.body but does not
@@ -848,7 +964,8 @@ class AITermController {
                                         responseID: previousResponseID,
                                         role: choice.role,
                                         body: choice.body,
-                                        reasoningContent: accumulatingMessage.reasoningContent)
+                                        reasoningContent: accumulatingMessage.reasoningContent,
+                                        reasoningItems: accumulatingMessage.reasoningItems)
                                     DLog("accumulating message is now\n\(accumulatingMessage)")
                                 } else {
                                     DLog("Appended \(choice.body). accumulating message is now\n\(accumulatingMessage)")
@@ -870,6 +987,64 @@ class AITermController {
 
         DLog("parseStreamingResponse will return updated state with accumulating message:\n\(accumulatingMessage)")
         return StreamParserState(message: accumulatingMessage, buffer: rest.data(using: .utf8)!)
+    }
+
+    // Reparse a COMPLETE streamed response body (every SSE event) into the
+    // single logical assistant message it represents, with no delegate side
+    // effects. Used only at stream finalization to recover content the
+    // incremental `.word` channel may have missed when the completion
+    // callback raced ahead of the last chunks. Mirrors the accumulation in
+    // parseStreamingResponse: append each parsed choice, and on a
+    // non-mergeable part (e.g. a text preamble followed by a tool_use block)
+    // start a fresh message — the earlier part was already surfaced live, so
+    // only the final logical part is authoritative here. Returns nil if the
+    // provider has no streaming parser or the body yields nothing.
+    private func finalMessageByReparsingCompleteBody(_ data: Data) -> LLM.Message? {
+        guard let llmProvider,
+              let splitter = llmProvider.streamingResponseParser(stream: true) else {
+            return nil
+        }
+        let string = String(data: data, encoding: .utf8) ?? ""
+        var (first, rest) = splitter.splitFirstJSONEvent(from: string)
+        var message = LLM.Message(role: nil)
+        var started = false
+        while let event = first {
+            if event == "[DONE]" {
+                break
+            }
+            if let eventData = event.data(using: .utf8),
+               var parser = llmProvider.streamingResponseParser(stream: true),
+               let response = try? parser.parse(data: eventData),
+               !response.ignore {
+                for choice in response.choiceMessages {
+                    if let role = choice.role {
+                        message.role = role
+                    }
+                    if let reasoning = choice.reasoningContent, !reasoning.isEmpty {
+                        message.reasoningContent = (message.reasoningContent ?? "") + reasoning
+                    }
+                    if let items = choice.reasoningItems, !items.isEmpty {
+                        message.reasoningItems = (message.reasoningItems ?? []) + items
+                    }
+                    if !started {
+                        message.body = choice.body
+                        started = true
+                    } else if !message.tryAppend(choice.body) {
+                        message = LLM.Message(
+                            responseID: previousResponseID,
+                            role: choice.role,
+                            body: choice.body,
+                            reasoningContent: message.reasoningContent,
+                            reasoningItems: message.reasoningItems)
+                    }
+                }
+            }
+            guard let parser = llmProvider.streamingResponseParser(stream: true) else {
+                break
+            }
+            (first, rest) = parser.splitFirstJSONEvent(from: rest)
+        }
+        return started ? message : nil
     }
 
     private func parseNonStreamingResponse(data: Data) {
@@ -913,6 +1088,7 @@ class AITermController {
             if let reasoning = messageToDispatch.reasoningContent, !reasoning.isEmpty {
                 delegate?.aitermController(self, didReceiveReasoning: reasoning)
             }
+            consecutiveToolFailures = 0
             state = .ground
             delegate?.aitermController(self, offerChoice: choice)
         } catch {
@@ -982,6 +1158,7 @@ class AITermController {
                 }
                 switch result {
                 case .success(let text):
+                    self.consecutiveToolFailures = 0
                     self.state = .ground
                     self.delegate?.aitermController(self, offerChoice: text)
                 case .failure(let error):
@@ -1005,6 +1182,10 @@ class AITermController {
         case .querySent(let messages, let streamParserState):
             let shouldStream = streamParserState != nil
             var amended = messages
+            var messageForCall = message
+            if messageForCall.responseID == nil {
+                messageForCall.responseID = previousResponseID
+            }
             // The full `message` (including its reasoningContent scalar) is
             // appended here so the on-the-wire follow-up echoes
             // reasoning_content back to the vendor — which DeepSeek requires
@@ -1016,19 +1197,30 @@ class AITermController {
             // persists intermediate tool-call assistant turns to chat history,
             // they'll need to also surface reasoning via didReceiveReasoning
             // (or otherwise propagate `message.reasoningContent`) from here.
-            amended.append(message)
+            amended.append(messageForCall)
             if let impl = functions.first(where: { $0.decl.name == functionCall.name }) {
-                DLog("Invoke function with arguments \(functionCall.arguments ?? "")")
+                let functionName = functionCall.name ?? "?"
+                // Arguments can carry a shell command or other user data; keep them out
+                // of the ring while the opt-in debug log still gets them.
+                RLog("Invoke function \(functionName) with arguments \(redacted: functionCall.arguments ?? "")")
                 delegate?.aitermController(self, willInvokeFunction: impl)
-                impl.invoke(message: message,
+                impl.invoke(message: messageForCall,
                             json: (functionCall.arguments ?? "").data(using: .utf8)!) { [weak self] result in
-                    DLog("result of function call is \(result)")
+                    // The result is terminal content fed back to the model; keep it out
+                    // of the ring while the opt-in debug log still gets it.
+                    let outcome: String
+                    switch result {
+                    case .success: outcome = "success"
+                    case .failure: outcome = "failure"
+                    }
+                    RLog("function call \(functionName) completed: \(outcome). Result: \(redacted: result)")
                     guard let self else {
                         DLog("I have been released")
                         return
                     }
                     switch result {
                     case .success(let response):
+                        consecutiveToolFailures = 0
                         DLog("Response to function call with arguments \(functionCall.arguments ?? ""): \(response)")
                         // Defensive: every current parser that sets an inner
                         // FunctionCall.id also sets the outer FunctionCallID
@@ -1041,7 +1233,7 @@ class AITermController {
                         // for them. Kept so a future parser that populates
                         // only the inner id still round-trips through
                         // providers that require a tool_use_id reference.
-                        let outputCallID = message.functionCallID
+                        let outputCallID = messageForCall.functionCallID
                             ?? functionCall.id.map {
                                 LLM.Message.FunctionCallID(callID: $0, itemID: $0)
                             }
@@ -1058,14 +1250,61 @@ class AITermController {
                         return
                     case .failure(let error):
                         DLog("Trouble invoking a ChatGPT function: \(error.localizedDescription)")
-                        handle(event: .error(error))
+                        if error is PendingCommandCanceled {
+                            previousResponseID = nil
+                            consecutiveToolFailures = 0
+                            handle(event: .error(error))
+                            return
+                        }
+                        consecutiveToolFailures += 1
+                        if consecutiveToolFailures >= Self.maxConsecutiveToolFailures {
+                            DLog("Giving up after \(consecutiveToolFailures) consecutive tool failures")
+                            consecutiveToolFailures = 0
+                            previousResponseID = nil
+                            handle(event: .error(error))
+                            return
+                        }
+                        let outputCallID = messageForCall.functionCallID
+                            ?? functionCall.id.map {
+                                LLM.Message.FunctionCallID(callID: $0, itemID: $0)
+                            }
+                        amended.append(Message(role: .function,
+                                               content: "Tool call failed: \(error.localizedDescription)",
+                                               name: functionCall.name,
+                                               functionCallID: outputCallID))
+                        if let truncate {
+                            amended = truncate(amended)
+                        }
+                        DLog("Will send failed function call output, stream=\(shouldStream)")
+                        request(messages: amended, stream: shouldStream)
                         return
                     }
                 }
                 return
             }
-            amended.append(Message(role: .user,
-                                   content: "There is no registered function by that name. Try again."))
+            let missingFunction = "There is no registered function by that name. Try again."
+            // A model that keeps emitting an unknown/hallucinated tool name is
+            // the same runaway the real-tool failure branch guards against, so
+            // it shares the bound. Successful tool calls and final answers reset
+            // the counter, so a transient bad name still self-heals.
+            consecutiveToolFailures += 1
+            if consecutiveToolFailures >= Self.maxConsecutiveToolFailures {
+                DLog("Giving up after \(consecutiveToolFailures) consecutive unknown-function calls")
+                consecutiveToolFailures = 0
+                previousResponseID = nil
+                handle(event: .error(AIError(missingFunction)))
+                return
+            }
+            if let outputCallID = messageForCall.functionCallID
+                ?? functionCall.id.map({ LLM.Message.FunctionCallID(callID: $0, itemID: $0) }) {
+                amended.append(Message(role: .function,
+                                       content: missingFunction,
+                                       name: functionCall.name,
+                                       functionCallID: outputCallID))
+            } else {
+                amended.append(Message(role: .user,
+                                       content: missingFunction))
+            }
             request(messages: amended, stream: shouldStream)
         }
     }
@@ -1119,4 +1358,3 @@ func truncate(messages: [AITermController.Message], maxTokens: Int) -> [AITermCo
     }
     return messagesToSend
 }
-

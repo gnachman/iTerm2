@@ -658,7 +658,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
               withStatus:(int)status
                   runner:(iTermBufferedCommandRunner *)runner {
     [_commandRunners removeObject:runner];
-    DLog(@"Runner %@ finished with status %@. There are now %@ runners.", runner, @(status), @(_commandRunners.count));
+    RLog(@"Runner %@ finished with status %@. There are now %@ runners.", runner, @(status), @(_commandRunners.count));
     if (!status) {
         return;
     }
@@ -775,8 +775,8 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     columnNumber:(NSString *)columnNumber
           window:(NSWindow *)window
       completion:(void (^)(BOOL))completion {
-    DLog(@"openPath:%@ rawFileName:%@ substitutions:%@ lineNumber:%@ columnNumber:%@",
-         cleanedUpPath, rawFileName, substitutions, lineNumber, columnNumber);
+    RLog(@"openPath:%@ rawFileName:%@ substitutions:%@ lineNumber:%@ columnNumber:%@",
+         cleanedUpPath, rawFileName, RLogRedact(substitutions, @(substitutions.count)), lineNumber, columnNumber);
 
     NSString *path;
     BOOL isRawAction = [[self action] isEqualToString:kSemanticHistoryRawCommandAction];
@@ -826,7 +826,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
     BOOL isDirectory;
     if (![self.fileManager fileExistsAtPath:path isDirectory:&isDirectory]) {
-        DLog(@"No file exists at %@, not running semantic history", path);
+        RLog(@"No file exists at %@, not running semantic history", path);
         completion(NO);
         return;
     }

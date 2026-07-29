@@ -15,6 +15,23 @@ protocol ConductorDelegate: Any {
     func conductorStateDidChange()
     func conductorStopQueueingInput()
     @objc func conductorSendInitialText()
+    // Ask the user, via an in-session announcement (not a modal, so a stray Return
+    // cannot accept it), whether the remote it2 CLI described by `displayName` may use
+    // the iTerm2 API over this ssh connection. `completion` is called on the main
+    // thread with (granted, remember). An explicit Allow/Deny sets remember=true (cache
+    // the decision for the connection); closing or dismissing the announcement is not a
+    // decision, so it denies just the in-flight request with remember=false and the
+    // next command prompts again.
+    // `guid` keys the announcement per conductor so two conductors that share an ssh
+    // identity in one session cannot cross-cancel each other's prompt; `displayName` is
+    // only the human-readable title.
+    @objc(conductorRequestIT2AuthorizationWithGUID:displayName:completion:)
+    func conductorRequestIT2Authorization(guid: String, displayName: String,
+                                          completion: @escaping (_ granted: Bool, _ remember: Bool) -> Void)
+    // Dismiss the it2 authorization announcement for `guid` still on screen (e.g. the
+    // connection was resolved/torn down before the user answered). No-op if none.
+    @objc(conductorDismissIT2AuthorizationPromptWithGUID:)
+    func conductorDismissIT2AuthorizationPrompt(guid: String)
     var guid: String { get }
 }
 
@@ -68,6 +85,15 @@ class Conductor: NSObject, SSHIdentityProvider {
         var uname: String?
         var _terminalConfiguration: CodableNSDictionary?
         var discoveredHostname: String?
+        // it2 CLI proxy: the per-session auth nonce and remote socket path. Persisted
+        // so it2-over-ssh survives state restoration; on SSH recovery (init(recovery:))
+        // these start nil and are re-read from the surviving framer env on resync.
+        // it2-over-ssh proxy state (nonce/socket/authorization) for this connection,
+        // grouped so it travels as one value across recovery (see IT2ProxyState). The
+        // nonce/socket are persisted so it2-over-ssh survives state restoration; the
+        // authorization grant/denial is persisted so the user is not re-prompted after a
+        // relaunch (absent -> undecided -> prompt).
+        var it2Proxy = IT2ProxyState()
 
         init(sshargs: String,
              varsToSend: [String: String],
@@ -90,7 +116,8 @@ class Conductor: NSObject, SSHIdentityProvider {
              shell: String?,
              uname: String?,
              _terminalConfiguration: CodableNSDictionary?,
-             discoveredHostname: String?) {
+             discoveredHostname: String?,
+             it2Proxy: IT2ProxyState = IT2ProxyState()) {
             self.sshargs = sshargs
             self.varsToSend = varsToSend
             self.clientVars = clientVars
@@ -113,6 +140,7 @@ class Conductor: NSObject, SSHIdentityProvider {
             self.uname = uname
             self._terminalConfiguration = _terminalConfiguration
             self.discoveredHostname = discoveredHostname
+            self.it2Proxy = it2Proxy
         }
 
         private enum CodingKeys: CodingKey {
@@ -121,7 +149,11 @@ class Conductor: NSObject, SSHIdentityProvider {
                framedPID, remoteInfo, state, queue, boolArgs, dcsID, clientUniqueID,
                modifiedVars, modifiedCommandArgs, clientVars, shouldInjectShellIntegration,
                homeDirectory, shell, pythonversion, uname, terminalConfiguration,
-               discoveredHostname
+               discoveredHostname, it2Proxy,
+               // Legacy, decode-only: the committed HEAD schema persisted the it2 proxy as
+               // these two separate scalar keys before they were folded into it2Proxy. Kept
+               // so init(from:) can migrate an old blob; encode() never writes them.
+               it2Nonce, it2SocketPath
         }
 
         required init(from decoder: Decoder) throws {
@@ -150,6 +182,18 @@ class Conductor: NSObject, SSHIdentityProvider {
                 _terminalConfiguration = try? container.decode(CodableNSDictionary?.self,
                                                                forKey: .terminalConfiguration)
                 discoveredHostname = try? container.decode(String?.self, forKey: .discoveredHostname)
+                if let proxy = try? container.decode(IT2ProxyState.self, forKey: .it2Proxy) {
+                    it2Proxy = proxy
+                } else {
+                    // No it2Proxy key. Two cases: (a) a blob saved by the committed HEAD schema,
+                    // which persisted it2Nonce/it2SocketPath as separate scalar keys -> migrate
+                    // them so the restored session keeps its socket path and auth nonce (the old
+                    // schema never persisted `authorized`, so it stays nil -> re-prompt); (b) an
+                    // older blob from before any it2 field -> both absent -> default all-nil.
+                    let nonce = (try? container.decode(String?.self, forKey: .it2Nonce)) ?? nil
+                    let socketPath = (try? container.decode(String?.self, forKey: .it2SocketPath)) ?? nil
+                    it2Proxy = IT2ProxyState(nonce: nonce, socketPath: socketPath, authorized: nil)
+                }
             } catch {
                 DLogMain("Failed to restore conductor: \(error)")
                 throw error
@@ -180,6 +224,7 @@ class Conductor: NSObject, SSHIdentityProvider {
             try container.encode(uname, forKey: .uname)
             try container.encode(_terminalConfiguration, forKey: .terminalConfiguration)
             try container.encode(discoveredHostname, forKey: .discoveredHostname)
+            try container.encode(it2Proxy, forKey: .it2Proxy)
         }
     }
     let guid = UUID().uuidString
@@ -336,6 +381,53 @@ class Conductor: NSObject, SSHIdentityProvider {
     @objc var autopollEnabled = true
     var _queueWrites = true
     var autopoll = ""
+    // it2 CLI proxy (see Conductor+IT2). The demux is created lazily on the first
+    // %it2 frame; it2Nonce is the per-session secret injected into the remote env
+    // at startup, used to authorize incoming HELLOs; it2SocketPath is the remote
+    // unix socket framer binds (via it2Listen) and it2.py connects to (IT2_SOCK).
+    // The proxy state lives in RestorableState (it2Proxy) so it survives state
+    // restoration, and is carried in process across SSH recovery (adoptIT2RecoveryState).
+    var it2Demux: ConductorIT2Demux?
+    // Whether framer's most recent it2Listen actually bound the socket. Stored in it2Proxy so
+    // it is carried by value across an in-process SSH recovery (a recovered framer keeps its
+    // socket bound but never re-runs it2Listen, so without this the menu would go permanently
+    // disabled after any transient drop). Not persisted: it lives OUTSIDE IT2ProxyState.Persisted
+    // (the only fields IT2ProxyState's Codable encodes), and the custom init(from:) resets it to
+    // false on decode -- so on state restoration it2Listen re-runs and re-establishes it. Gates
+    // it2ProxyActive so the
+    // "Remote host can control iTerm2" menu reflects whether the remote can actually connect.
+    var it2ListenSucceeded: Bool {
+        get { restorableState.it2Proxy.listenSucceeded }
+        set { restorableState.it2Proxy.listenSucceeded = newValue }
+    }
+    // it2-over-ssh API authorization for THIS connection. The decision lives in
+    // restorableState (it2Authorized) so a grant/denial survives state restoration; one
+    // prompt per connection, and a malicious remote cannot spam prompts. The promise +
+    // seal below are the transient in-flight coordinator for the single live prompt: the
+    // promise fans the one answer out to every concurrent it2 command, and the Conductor
+    // owns the seal so it can resolve it exactly once (on answer, or fail-closed on
+    // teardown) and never leave it dangling. See authorizeIT2(then:) in Conductor+IT2.
+    var it2AuthPromise: iTermPromise<NSNumber>?
+    var it2AuthSeal: iTermPromiseSeal?
+    // The whole it2 proxy state as one value, so the recovery hand-off copies it in a
+    // single assignment (see adoptIT2RecoveryState). The three field accessors below are
+    // conveniences over it for the many call sites that touch just one.
+    var it2Proxy: IT2ProxyState {
+        get { restorableState.it2Proxy }
+        set { restorableState.it2Proxy = newValue }
+    }
+    var it2Authorized: Bool? {
+        get { restorableState.it2Proxy.authorized }
+        set { restorableState.it2Proxy.authorized = newValue }
+    }
+    var it2Nonce: String? {
+        get { restorableState.it2Proxy.nonce }
+        set { restorableState.it2Proxy.nonce = newValue }
+    }
+    var it2SocketPath: String? {
+        get { restorableState.it2Proxy.socketPath }
+        set { restorableState.it2Proxy.socketPath = newValue }
+    }
     // Jumps that children must do.
     var subsequentJumps: [SSHReconnectionInfo] = []
     // If non-nil, a jump that I haven't done yet.
@@ -486,7 +578,8 @@ class Conductor: NSObject, SSHIdentityProvider {
             shell: nil,
             uname: nil,
             _terminalConfiguration: nil,
-            discoveredHostname: nil),
+            discoveredHostname: nil,
+            it2Proxy: recovery.it2Proxy),
                   restored: true)
         _parent = recovery.parent
         framerVersion = .init(rawValue: recovery.version)
@@ -494,9 +587,23 @@ class Conductor: NSObject, SSHIdentityProvider {
     }
 
     deinit {
+        // Fulfill a pending it2 auth seal so iTermPromiseSeal.dealloc's not-fulfilled
+        // assertion does not trip (fail closed). deinit is nonisolated, so touch the
+        // seal directly rather than the main-actor resolveIT2Authorization method.
+        it2AuthSeal?.fulfill(NSNumber(value: false))
+        it2AuthSeal = nil
         let uniqueID = guid
         let sshid = restorableState.parsedSSHArguments.identity
+        // Stop any it2 command still looping on a background queue. cancelAll() mutates the
+        // demux's connections dictionary, which is NOT thread-safe and must run on main (the
+        // output sinks are dispatched there). deinit is nonisolated and can run off-main, so
+        // hop: fold it into this main-actor Task, which serializes it with any still-queued
+        // sendLine/finish. Capturing `demux` (not used again here) transfers it to the main
+        // actor. The normal teardown is the on-main unhook path (which already drains the
+        // demux); this covers an off-main last-release of a conductor with a live stream.
+        let demux = it2Demux
         Task { @MainActor in
+            demux?.cancelAll()
             ConductorRegistry.instance.remove(conductorGUID: uniqueID, sshIdentity: sshid)
         }
     }
@@ -833,6 +940,12 @@ extension Conductor {
         case framerGetenv(String)
         case framerExecPythonStatements(String)
 
+        // it2 CLI proxy: bind/accept a unix socket on the remote, relay bytes back
+        // to an accepted connection, and close it. See framer.py handle_it2*.
+        case framerIT2Listen(path: String)
+        case framerIT2Send(connid: String, data: Data)
+        case framerIT2Close(connid: String)
+
         var isFramer: Bool {
             switch self {
             case .execLoginShell, .setenv(_, _), .run(_), .runPython(_), .shell(_), .pythonversion,
@@ -841,7 +954,8 @@ extension Conductor {
 
             case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit, .framerRegister(_),
                     .framerDeregister(_), .framerPoll, .framerReset1, .framerReset2, .framerAutopoll, .framerSave(_),
-                    .framerFile(_), .framerEval, .framerGetenv, .framerExecPythonStatements:
+                    .framerFile(_), .framerEval, .framerGetenv, .framerExecPythonStatements,
+                    .framerIT2Listen, .framerIT2Send, .framerIT2Close:
                 return true
             }
         }
@@ -904,6 +1018,12 @@ extension Conductor {
                 return (["save"] + kvps).joined(separator: "\n")
             case .framerFile(let subcommand):
                 return "file\n" + subcommand.stringValue
+            case .framerIT2Listen(path: let path):
+                return ["it2listen", path].joined(separator: "\n")
+            case .framerIT2Send(connid: let connid, data: let data):
+                return ["it2send", connid, data.base64EncodedString()].joined(separator: "\n")
+            case .framerIT2Close(connid: let connid):
+                return ["it2close", connid].joined(separator: "\n")
             }
         }
 
@@ -963,6 +1083,12 @@ extension Conductor {
                 return "autopoll"
             case .framerFile(let subcommand):
                 return "file \(subcommand.operationDescription)"
+            case .framerIT2Listen(path: let path):
+                return "it2listen \(path)"
+            case .framerIT2Send(connid: let connid, data: let data):
+                return "it2send \(connid) \(data.semiVerboseDescription)"
+            case .framerIT2Close(connid: let connid):
+                return "it2close \(connid)"
             }
         }
     }
@@ -1038,6 +1164,8 @@ extension Conductor {
                     return "handleCheckForPython"
                 case .fireAndForget:
                     return "fireAndForget"
+                case .it2Listen:
+                    return "it2Listen"
                 case .handleFramerLogin(let output):
                     return "handleFramerLogin(\(output.string))"
                 case .handleJump:
@@ -1070,6 +1198,7 @@ extension Conductor {
             case failIfNonzeroStatus  // if .end(status) has status == 0 call fail("unexpected status")
             case handleCheckForPython(StringArray)
             case fireAndForget  // don't care what the result is
+            case it2Listen  // like fireAndForget but logs a non-zero framer bind status
             case handleFramerLogin(StringArray)
             case handleJump(StringArray)
             case writeOnSuccess(String)  // see runPython
@@ -1094,6 +1223,7 @@ extension Conductor {
                 case failIfNonzeroStatus
                 case handleCheckForPython
                 case fireAndForget
+                case it2Listen
                 case handleFramerLogin
                 case handleJump
                 case writeOnSuccess
@@ -1117,6 +1247,8 @@ extension Conductor {
                     return RawValues.handleCheckForPython.rawValue
                 case .fireAndForget:
                     return RawValues.fireAndForget.rawValue
+                case .it2Listen:
+                    return RawValues.it2Listen.rawValue
                 case .handleFramerLogin:
                     return RawValues.handleFramerLogin.rawValue
                 case .handleJump:
@@ -1150,7 +1282,7 @@ extension Conductor {
                 var container = encoder.container(keyedBy: Key.self)
                 try container.encode(rawValue, forKey: .rawValue)
                 switch self {
-                case .failIfNonzeroStatus, .fireAndForget, .handleFramerLogin(_), .handlePoll(_, _),
+                case .failIfNonzeroStatus, .fireAndForget, .it2Listen, .handleFramerLogin(_), .handlePoll(_, _),
                         .handleJump, .handleNonFramerLogin, .handleGetenv, .handleReset,
                         .handleGetHostname, .handleEphemeralCompletion:
                     break
@@ -1182,6 +1314,8 @@ extension Conductor {
                     self = .handleCheckForPython(try container.decode(StringArray.self, forKey: .stringArray))
                 case .fireAndForget:
                     self = .fireAndForget
+                case .it2Listen:
+                    self = .it2Listen
                 case .handleFramerLogin:
                     self = .handleFramerLogin(try container.decode(StringArray.self, forKey: .stringArray))
                 case .handleJump:
@@ -1233,7 +1367,7 @@ extension Conductor {
         // It's particularly important for keystrokes to reduce latency when typing quickly.
         var supportsPipelining: Bool {
             switch self.command {
-            case .framerSend:
+            case .framerSend, .framerIT2Send:
                 return true
             case .framerFile(let sub):
                 switch sub {
@@ -1250,9 +1384,18 @@ extension Conductor {
             precondition(supportsPipelining)
             switch self.command {
             case .framerSend:
-                // This only needs to be a rough approximation of the size (for example it doesn't
-                // include line breaks or try to account for UTF-8 encoding)
+                // Unchanged from before it2: measure the base64-encoded command form. Since
+                // stringValue already base64-encodes the payload (~4/3), this is ~data.count *
+                // 16/9. Keystroke payloads are tiny, so building stringValue to measure is
+                // negligible, and keeping it preserves existing keystroke backpressure exactly
+                // (do NOT fold this into the raw-count estimate below -- that quietly shrinks
+                // the hot-path window ~25%).
                 return command.stringValue.count * 4 / 3
+            case .framerIT2Send(connid: _, data: let data):
+                // it2 carries large API responses. Approximate from the raw payload (base64
+                // inflates ~4/3) rather than base64-encoding the whole thing here just to
+                // measure it and then again in stringValue/encode() to send it.
+                return data.count * 4 / 3
             case .framerFile(let sub):
                 switch sub {
                 case .fetch:
@@ -1663,6 +1806,10 @@ extension Conductor {
         forceReturnToGroundState()
         resetTransitively()
         exfiltrateUsefulFramerInfo()
+        // it2 proxy state (nonce/socket/authorization) is carried across recovery in
+        // process from the pre-recovery conductor (see init(recovery:)), not re-read
+        // from the framer: a fresh $SHELL -c getenv cannot see the one-time-injected
+        // nonce, and the authorization grant must not be re-derivable from the remote.
         DLog(self.debugDescription)
     }
 
@@ -1752,6 +1899,11 @@ extension Conductor {
                     "sshargs": sshargs,
                     "boolArgs": boolArgs,
                     "clientUniqueID": clientUniqueID])
+        // Bind the it2 proxy socket now that framer is running. The path/nonce were
+        // minted and injected into the shell env during the shell-integration setup.
+        if let path = it2SocketPath {
+            it2Listen(path: path)
+        }
         runRemoteCommand(iTermAdvancedSettingsModel.unameCommand()) { [weak self] data, status in
             if status == 0 {
                 self?.uname = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1817,6 +1969,23 @@ extension Conductor {
 
     private func framerSend(data: Data, pid: Int32) {
         send(.framerSend(data, pid: pid), .fireAndForget)
+    }
+
+    // it2 CLI proxy senders. The demux (see Conductor+IT2) drives these to open a
+    // listening socket on the remote, push bytes back to an accepted it2.py
+    // connection, and tear it down.
+    func it2Listen(path: String) {
+        // .it2Listen (not .fireAndForget): the framer bind can fail, and that status must not
+        // be swallowed -- it drives it2ListenSucceeded / it2ProxyActive and a DLog.
+        send(.framerIT2Listen(path: path), .it2Listen)
+    }
+
+    func it2Send(connid: String, data: Data) {
+        send(.framerIT2Send(connid: connid, data: data), .fireAndForget)
+    }
+
+    func it2Close(connid: String) {
+        send(.framerIT2Close(connid: connid), .fireAndForget)
     }
 
     private func framerKill(pid: Int) {
@@ -1990,6 +2159,24 @@ extension Conductor {
             }
         case .fireAndForget:
             return
+        case .it2Listen:
+            // Otherwise fire-and-forget, but a framer bind failure (read-only or full $HOME,
+            // EACCES on the dir, lock contention, start_unix_server error) returns non-zero
+            // and would vanish silently -- the remote it2 then just cannot connect with no
+            // diagnostic on either side. Record success so it2ProxyActive reflects reality (the
+            // menu is enabled only when the socket is actually bound), and DLog for the field.
+            switch result {
+            case .end(let status):
+                it2ListenSucceeded = (status == 0)
+                if status != 0 {
+                    DLog("it2Listen: framer failed to bind the it2 socket (status \(status)); it2 over ssh will not work for this session")
+                }
+            case .abort, .canceled:
+                it2ListenSucceeded = false
+            case .line(_), .sideChannelLine(line: _, channel: _, pid: _):
+                break
+            }
+            return
         case .handleReset(let code, let lines):
             switch result {
             case .line(let message):
@@ -2143,15 +2330,34 @@ extension Conductor {
                         shell: shell,
                         argv: Array(parsedSSHArguments.commandArgs.dropFirst()))
                     if let firstArg = parsedSSHArguments.commandArgs.first {
+                        // The user gave an explicit command/shell (`it2ssh host <argv0> …`); keep it
+                        // as argv[0] so the framer runs it (through its `-c` path).
                         modifiedCommandArgs?.insert(firstArg, at: 0)
-                    } else {
+                    } else if modifiedCommandArgs?.isEmpty == false {
+                        // Plain interactive session whose injection modified argv (bash's --posix).
+                        // The shell must be named explicitly so those args take effect, which routes
+                        // through the framer's `-c` path (there the interactive child still honors
+                        // env-based injection like bash's $ENV loader).
                         modifiedCommandArgs?.insert(shell, at: 0)
                     }
+                    // Otherwise: a plain interactive session with purely env-based injection
+                    // (zsh/fish/xonsh add no argv). Leave modifiedCommandArgs empty so framerLogin
+                    // passes no args and the framer execs the login shell *interactively*, inheriting
+                    // the injected environment (e.g. ZDOTDIR). If we named the shell here the framer
+                    // would run `login_shell -c "<shell>"`; when the login shell is the same shell
+                    // (notably zsh) the outer non-interactive shell reads and dismantles the injection
+                    // before the inner interactive shell runs -- zsh's injected .zshenv unsets ZDOTDIR
+                    // and skips its interactive-only shell-integration load -- so integration would
+                    // never load.
                     let dict = ShellIntegrationInjector.instance.files(
                         destinationBase: URL(fileURLWithPath: "/$HOME/.iterm2/shell-integration"))
                     for (local, remote) in dict {
                         payloads.append(Payload(path: local.path,
                                                 destination: remote.path))
+                    }
+                    if var vars = modifiedVars {
+                        activateIT2Proxy(home: home, env: &vars)
+                        modifiedVars = vars
                     }
                 }
                 self.shell = shell
@@ -2237,6 +2443,11 @@ extension Conductor {
             queue.removeFirst()
             try? update(executionContext: pending, result: .abort)
         }
+        // Cancel any in-flight it2 commands so a streaming command (monitor
+        // --follow) does not keep looping on a background queue holding an
+        // in-process API connection after the conductor is gone.
+        it2Demux?.cancelAll()
+        resolveIT2Authorization(false, persist: false)
         state = .unhooked
         ConductorRegistry.instance.remove(conductorGUID: guid, sshIdentity: sshIdentity)
     }
@@ -2343,6 +2554,22 @@ extension Conductor {
                 }
             }
         }
+    }
+
+    // Remote it2 CLI RPC. Framer emits "%it2 <connid> <event> [<base64>]" frames
+    // that arrive here whole (see SSH_IT2 / VT100ConductorParser). Route by depth
+    // so a frame is handled by the conductor that owns its nesting level, then hand
+    // it to the per-connid demux (Conductor+IT2) which reconstructs the it2.py wire
+    // protocol and dispatches through the in-process API server.
+    @objc(handleIT2:depth:)
+    func handleIT2(_ string: String, depth: Int32) {
+        if depth != self.depth {
+            DLog("Pass it2 frame with depth \(depth) to parent \(String(describing: parent)) because my depth is \(self.depth)")
+            parent?.handleIT2(string, depth: depth)
+            return
+        }
+        DLog("handleIT2 \(string.semiVerboseDescription) depth=\(depth)")
+        it2DemuxForHandling().handle(string)
     }
 
     @objc(handleSideChannelOutput:pid:channel:depth:)
@@ -2506,7 +2733,8 @@ extension Conductor {
                                                  boolArgs: finished.boolArgs,
                                                  clientUniqueID: finished.clientUniqueID,
                                                  version: finished.version,
-                                                 parent: parent)
+                                                 parent: parent,
+                                                 it2Proxy: it2Proxy)
                     }
                     return nil
                 }

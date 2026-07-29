@@ -42,7 +42,7 @@ void *const iTermDeclineFirstResponderAssociatedObjectKey = (void *)"iTermDeclin
         [self _zoomFill:self.contentView.superview];
         return;
     }
-    DLog(@"Unknown action %@", doubleClickAction);
+    RLog(@"Unknown action %@", doubleClickAction);
 }
 
 - (BOOL)isFullScreen {

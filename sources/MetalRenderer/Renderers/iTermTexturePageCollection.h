@@ -150,7 +150,7 @@ namespace iTerm2 {
                 _openPage = NULL;
             }
             _allPages.erase(pageToPrune);
-            bool freed = pageToPrune->release(this);
+            [[maybe_unused]] bool freed = pageToPrune->release(this);
 #if DEBUG
             assert(!freed);
 #endif

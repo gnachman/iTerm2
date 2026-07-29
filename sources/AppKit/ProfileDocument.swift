@@ -62,7 +62,7 @@ class ProfileDocument: NSObject {
                                                 in: controller.currentTerminal,
                                                 respectTabbingMode: false)
         } catch {
-            DLog("Failed to open \(filename): \(error)")
+            RLog("Failed to open \(filename): \(error)")
         }
     }
 
@@ -90,7 +90,7 @@ class ProfileDocument: NSObject {
                     let contents = guid + "\n" + name
                     try contents.write(to: realURL, atomically: false, encoding: .utf8)
                 } catch {
-                    DLog("Failed to write to \(realURL.absoluteString): \(error)")
+                    RLog("Failed to write to \(realURL.absoluteString): \(error)")
                     return
                 }
 
@@ -99,7 +99,7 @@ class ProfileDocument: NSObject {
                     try FileManager.default.createSymbolicLink(atPath: linkURL.path,
                                                                withDestinationPath: realURL.lastPathComponent)
                 } catch {
-                    DLog("Failed to link \(linkURL.absoluteString) to \(realURL.absoluteString): \(error)")
+                    RLog("Failed to link \(linkURL.absoluteString) to \(realURL.absoluteString): \(error)")
                     return
                 }
                 cache[guid] = name

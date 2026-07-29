@@ -124,7 +124,7 @@ static const UInt64 kKnownAppleMultitouchDeviceMultitouchIDs[] = {
             const UInt64 multitouchDeviceMultitouchID = kKnownAppleMultitouchDeviceMultitouchIDs[index];
             const CFTypeRef actuatorRef = _MTActuatorCreateFromDeviceID(multitouchDeviceMultitouchID);
             if (actuatorRef) {
-                DLog(@"Use MTActuatorCreateFromDeviceID: 0x%llx", multitouchDeviceMultitouchID);
+                RLog(@"Use MTActuatorCreateFromDeviceID: 0x%llx", multitouchDeviceMultitouchID);
                 _actuatorRef = actuatorRef;
                 self.lastKnownMultitouchDeviceMultitouchID = multitouchDeviceMultitouchID;
                 break;
@@ -153,7 +153,7 @@ static const UInt64 kKnownAppleMultitouchDeviceMultitouchIDs[] = {
     
     const IOReturn error = _MTActuatorClose(_actuatorRef);
     if (error != kIOReturnSuccess) {
-        DLog(@"Fail to MTActuatorClose: %p error: 0x%x", _actuatorRef, error);
+        RLog(@"Fail to MTActuatorClose: %p error: 0x%x", _actuatorRef, error);
     }
     CFRelease(_actuatorRef);
     _actuatorRef = NULL;

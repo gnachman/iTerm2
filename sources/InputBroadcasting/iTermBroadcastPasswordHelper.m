@@ -57,7 +57,7 @@ static NSMutableArray<iTermBroadcastPasswordHelper *> *sBroadcastPasswordHelpers
 
     self = [super init];
     if (self) {
-        DLog(@"%p Broadcast password to sessions %@", self, sessions);
+        RLog(@"%p Broadcast password to sessions %@", self, sessions);
         _password = [password copy];
         _sessions = [sessions copy];
         _completion = [completion copy];
@@ -100,7 +100,7 @@ static NSMutableArray<iTermBroadcastPasswordHelper *> *sBroadcastPasswordHelpers
     if (_cleaningUp) {
         return;
     }
-    DLog(@"Clean up %@", self);
+    RLog(@"Clean up %@", self);
     _cleaningUp = YES;
     [_proxies enumerateObjectsUsingBlock:^(iTermEchoProbeDelegateProxy * _Nonnull proxy, NSUInteger idx, BOOL * _Nonnull stop) {
         PTYSession *session = proxy.session;
@@ -116,7 +116,7 @@ static NSMutableArray<iTermBroadcastPasswordHelper *> *sBroadcastPasswordHelpers
     if (_successes.count + _failures.count + _indeterminate < _proxies.count) {
         return;
     }
-    DLog(@"Finished with successes=%@ failures=%@ indeterminate=%@", _successes, _failures, @(_indeterminate));
+    RLog(@"Finished with successes=%@ failures=%@ indeterminate=%@", _successes, _failures, @(_indeterminate));
     for (PTYSession *session in _completion(_successes, _failures)) {
         DLog(@"Send password to %@", session);
         NSString *string;
@@ -162,7 +162,7 @@ static NSMutableArray<iTermBroadcastPasswordHelper *> *sBroadcastPasswordHelpers
 
 - (void)echoProbeDidSucceed:(iTermEchoProbe *)echoProbe {
     PTYSession *session = self.session;
-    DLog(@"Echo probe %@ succeeded for %@", echoProbe, session);
+    RLog(@"Echo probe %@ succeeded for %@", echoProbe, session);
     if (session) {
         [self.passwordHelper addSuccess:session];
     } else {
@@ -173,7 +173,7 @@ static NSMutableArray<iTermBroadcastPasswordHelper *> *sBroadcastPasswordHelpers
 
 - (void)echoProbeDidFail:(iTermEchoProbe *)echoProbe {
     PTYSession *session = self.session;
-    DLog(@"Echo probe %@ failed for session %@", echoProbe, session);
+    RLog(@"Echo probe %@ failed for session %@", echoProbe, session);
     if (session) {
         [self.passwordHelper addFailure:session];
     } else {
@@ -188,7 +188,7 @@ static NSMutableArray<iTermBroadcastPasswordHelper *> *sBroadcastPasswordHelpers
 }
 
 - (void)echoProbeDelegateWillChange:(iTermEchoProbe *)echoProbe {
-    DLog(@"Echo probe %@ delegate will change", echoProbe);
+    RLog(@"Echo probe %@ delegate will change", echoProbe);
     [self.passwordHelper cleanup];
 }
 

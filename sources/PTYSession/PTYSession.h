@@ -64,6 +64,11 @@ extern NSString *const PTYSessionArrangementOptionsForDuplication;
 extern NSString *const PTYSessionArrangementOptionsUnlimitedHistory;
 extern NSString *const PTYSessionArrangementOptionsArchive;
 extern NSString *const PTYSessionArrangementOptionsLargeContentProvider;
+// When set, restoration will not launch a replacement program if there is
+// no running program to attach to; the session is finalized showing its
+// restored contents. Used for code-review/diff workgroup peers so a dead
+// peer leaves its last output on screen instead of spawning a stray shell.
+extern NSString *const PTYSessionArrangementOptionsInhibitRelaunch;
 
 @class CapturedOutput;
 @protocol ExternalSearchResultsController;
@@ -190,6 +195,9 @@ typedef enum {
 // Is this session active in a currently selected tab? This ignores whether the
 // window is key.
 - (BOOL)sessionIsActiveInSelectedTab:(PTYSession *)session;
+
+// Do two or more panes in this tab have different (non-nil) tab colors?
+- (BOOL)sessionTabHasMultipleDistinctTabColors;
 
 // Session-initiated name change.
 - (void)nameOfSession:(PTYSession *)session didChangeTo:(NSString *)newName;
@@ -387,6 +395,24 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // This comes from prefs and is kept up to date.
 @property(nonatomic, readonly) BOOL alertOnMarksinOffscreenSessions;
 @property(nonatomic, copy, nullable) NSColor *tabColor;
+
+// Seconds (monotonic) since the rendered screen contents last changed, i.e.
+// since the last textViewDidFindDirtyRects. Used by the orchestrator's
+// tab-status escalation backstop to tell an actively-updating session from a
+// visually quiet one.
+@property(nonatomic, readonly) NSTimeInterval timeSinceScreenContentsLastChanged;
+
+// The monotonic (it_timeSinceBoot) timestamp of that last change. Compared
+// for equality across checks so the backstop can tell whether the screen has
+// changed since it last read it (an unchanged screen yields the same verdict,
+// so there's no point re-checking).
+@property(nonatomic, readonly) NSTimeInterval screenContentsLastChangedAt;
+
+// Whether textViewDidFindDirtyRects has fired at least once. Until it has,
+// the two properties above describe session creation, not an actual screen
+// change, so consumers reporting "screen last changed N ago" should treat
+// the age as unknown rather than implying fresh output.
+@property(nonatomic, readonly) BOOL screenContentsHaveEverChanged;
 
 @property(nonatomic, readonly, nullable) DVR *dvr;
 @property(nonatomic, readonly, nullable) DVRDecoder *dvrDecoder;
@@ -634,6 +660,13 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // Also used by the websocket API to reference a session.
 @property(nonatomic, readonly) NSString *guid;
 
+// A stable identifier that, unlike guid, survives a shell reload
+// (replaceTerminatedShellWithNewInstance rotates guid but leaves this alone) and
+// is serialized into the arrangement so it also survives state restoration.
+// Format "ptys_" + Crockford base32 (see iTermStableSessionID). Preferred over
+// guid for binding a chat or a companion reference to a session.
+@property(nonatomic, readonly) NSString *stableID;
+
 // Indicates if this session predates a tmux split pane. Used to figure out which pane is new when
 // layout changes due to a user-initiated pane split.
 @property(nonatomic, assign) BOOL sessionIsSeniorToTmuxSplitPane;
@@ -665,6 +698,7 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 @property(nonatomic, readonly) iTermEchoProbe *echoProbe;
 @property(nonatomic, readonly) BOOL canOpenPasswordManager;
 @property(nonatomic) BOOL shortLivedSingleUse;
+@property(nonatomic) BOOL needsNewTerminalKeyboardForced;
 
 // nil unless this session has an active workgroup instance.
 @property(nonatomic, readonly, nullable) NSArray<iTermSessionToolbarItem *> *desiredToolbarItems;
@@ -681,6 +715,11 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 @property(nonatomic, readonly, nullable) PTYSessionZoomState *stateToSaveForZoom;  // current state to restore after exiting zoom in the future
 @property(nonatomic, strong, nullable) PTYSessionZoomState *savedStateForZoom;  // set in synthetic sessions, not in live sessions.
 @property(nonatomic) BOOL inScreenshotMode;  // set for synthetic sessions used for screenshot capture
+// Set on the synthetic session when entering instant replay: the window frame from
+// before replay. Instant replay shrinks the window because the synthetic session drops
+// the live session's chrome (peer-mode toolbar, gutter panels); this lets the exit
+// restore the window exactly instead of leaving it short. nil for non-replay synthetics.
+@property(nonatomic, strong, nullable) NSValue *savedWindowFrameForInstantReplay;
 
 // Excludes SESSION_ARRANGEMENT_CONTENTS. Nil if session not created from arrangement.
 @property(nonatomic, copy, nullable) NSDictionary *foundingArrangement;
@@ -734,6 +773,11 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 + (void)selectMenuItem:(NSString*)theName;
 + (void)registerBuiltInFunctions;
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap;
+
+// The it2 authorization announcement identifier, keyed on the conductor's guid so
+// distinct conductors (even sharing an ssh display name) get distinct announcements and
+// cannot cross-cancel each other's prompt. Exposed for testing.
++ (NSString *)it2AuthorizationAnnouncementIdentifierForGUID:(NSString *)guid;
 
 // Register the contents in the arrangement so that if the session is later
 // restored from an arrangement with the same guid as |arrangement|, the
@@ -797,6 +841,10 @@ backgroundColor:(nullable NSColor *)backgroundColor;
                          workingDirectory:(NSString *)workingDirectory
                                      size:(VT100GridSize)size;
 + (nullable NSString *)guidInArrangement:(NSDictionary *)arrangement;
+
+// The canonicalized stableID stored in an arrangement, or nil if the
+// arrangement predates the stableID (or carries a malformed one).
++ (nullable NSString *)stableIDInArrangement:(NSDictionary *)arrangement;
 + (nullable NSString *)initialWorkingDirectoryFromArrangement:(NSDictionary *)arrangement;
 
 - (void)textViewFontDidChange;
@@ -864,6 +912,51 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 
 - (void)writeLatin1EncodedData:(NSData *)data broadcastAllowed:(BOOL)broadcast reporting:(BOOL)reporting;
 
+// Inject a synthesized key event into the session as if the user typed it at the
+// keyboard. Runs it through the SAME path a physical key takes - the accept/gating
+// check (keystroke monitors, copy mode, tmux unpause), profile key bindings (e.g.
+// Delete sends ^H), the browser guard, and the session's key mapper - so behavior
+// matches a real press, then (for a discrete tap) delivers the matching key-up when
+// the program wants key-ups. Broadcast to split panes is suppressed. Used by the
+// companion app's on-screen keyboard.
+//
+// If literalText is non-nil/non-empty, the character has no single-keystroke mapping
+// on the mac's layout (accented letter, emoji, dead-key result) and its synthesized
+// key code would be mis-encoded by the CSI-u mapper; the text is then written
+// literally instead of mapped, but still behind the same accept-gate and broadcast
+// suppression.
+- (void)injectSynthesizedKeyEvent:(NSEvent *)event literalText:(nullable NSString *)literalText
+    NS_SWIFT_NAME(injectSynthesizedKeyEvent(_:literalText:));
+
+// Inject a mouse scroll-wheel report into the session as if the user
+// scrolled the wheel `lines` notches over the middle of the screen.
+// up=YES scrolls toward older content (MOUSE_BUTTON_SCROLLUP), up=NO
+// toward newer content. Returns NO without writing anything when the
+// foreground program hasn't enabled mouse reporting
+// (terminalMouseMode == MOUSE_REPORTING_NONE): there is no scroll
+// sequence to send in that case. Used by the orchestrator's
+// scroll_wheel tool to page through a full-screen app's own scrollback
+// when it's on the (soft) alternate screen.
+- (BOOL)reportScrollWheelForOrchestratorUp:(BOOL)up lines:(NSInteger)lines
+    NS_SWIFT_NAME(reportScrollWheelForOrchestrator(up:lines:));
+
+// YES when a scroll-wheel report would actually be sent for this session,
+// matching the full gate the live wheel path uses
+// (PTYMouseHandler.terminalWantsMouseReports plus its wheel sub-gate):
+// the profile's mouse-reporting setting (xtermMouseReporting, including
+// its restrict-to-alternate-screen rule) AND the "report mouse wheel
+// events" sub-setting (xtermMouseReportingAllowMouseWheel) AND a mouse
+// mode that reports the wheel (normal / button-motion / any-motion;
+// highlight-tracking mode reports selection clicks but never scroll, so
+// it's excluded). This is the single source of truth for "scroll
+// reporting is possible": both reportScrollWheelForOrchestratorUp:lines:
+// and the mouse_reporting hint the orchestrator surfaces to the agent
+// read it, so the advertised capability and the actual behavior can't
+// drift apart, and we never inject scroll bytes the user opted out of.
+// Exposed so Swift callers can gate the scroll_wheel tool without
+// referencing the C MouseMode enum directly.
+@property (nonatomic, readonly) BOOL scrollWheelReportingEnabled;
+
 - (void)updateViewBackgroundImage;
 - (void)invalidateBlend;
 - (void)setShowAlternateScreen:(BOOL)showAlternateScreen announce:(BOOL)announce;
@@ -882,6 +975,11 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 - (void)pageDown:(nullable id)sender;
 - (void)paste:(nullable id)sender;
 - (void)pasteString:(NSString *)str flags:(PTYSessionPasteFlags)flags;
+// Paste `string` literally (no bracketing, no warnings), waiting `delay` seconds
+// after any in-progress paste drains before writing it. Used to submit a
+// preceding bracketed paste with a Return without the Return being absorbed into
+// the paste. See -[iTermPasteHelper pasteLiteralString:afterDelay:].
+- (void)pasteLiteralString:(NSString *)string afterDelay:(NSTimeInterval)delay;
 - (void)deleteBackward:(nullable id)sender;
 - (void)deleteForward:(nullable id)sender;
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move;
@@ -900,6 +998,19 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 
 // Change the size of the session and its tty.
 - (void)setSize:(VT100GridSize)size;
+
+// Resize the grid the way a terminal-initiated resize does, honoring the same
+// window-fitting logic. Note the unusual argument convention: proposedSize.width
+// is the desired row count and proposedSize.height is the desired column count
+// (a value of -1 means "keep the current dimension" and 0 means "as many as the
+// window allows").
+- (void)reallySetCellSize:(VT100GridSize)proposedSize;
+
+// Whether a terminal/content-initiated resize (reallySetCellSize:) would actually
+// take effect right now: YES only for a freely-resizable, non-fullscreen window
+// whose width is not locked. NO for maximized, edge-attached (fixed by percentage
+// or cells), and full-screen windows.
+- (BOOL)companionSessionCanResizeWindow;
 
 // Returns the number of pixels over or under the an ideal size.
 // Will never exceed +/- cell size/2.
@@ -994,6 +1105,7 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 - (void)toggleTmuxPausePane;
 
 - (void)addNoteAtCursor;
+- (void)addNoteToSelection;
 - (void)previousMark;
 - (void)nextMark;
 - (void)previousAnnotation;
@@ -1010,6 +1122,10 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 
 // Select this session and tab and bring window to foreground.
 - (void)reveal;
+// Switch the workgroup peer switcher to this session within its shared pane,
+// if needed, without ordering the window front, activating the app, or
+// changing the selected tab. See the implementation for details.
+- (void)revealAsPeerWithoutActivatingWindow;
 - (void)revealSelection:(iTermSelection *)selection;
 - (void)highlightMarkOrNote:(nullable id<IntervalTreeImmutableObject>)obj;
 
@@ -1026,6 +1142,20 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // possible (e.g. empty visible range, zero-width textview frame, missing data
 // source), so the returned image may include chrome or be empty in those cases.
 - (nullable NSImage *)terminalContentSnapshot;
+
+// Renders one slice of the session's configured background (a background image
+// with its mode and default-background blend, or the solid background color when
+// there's no image) for compositing behind a screenshot whose content has
+// transparent margins and uncovered areas. The background is laid out as though
+// the pane were `totalSize`; `sliceRect` (in that full space, origin bottom-left)
+// selects the region to render, so callers can render large screenshots in bounded
+// pieces. Must be called on the main thread. The result is opaque.
+- (nullable NSImage *)screenshotBackgroundSliceForRect:(NSRect)sliceRect
+                                           ofTotalSize:(NSSize)totalSize;
+
+// Renders the visible screen contents to PNG data for the scripting API. The
+// session’s own background fill is applied by the shared snapshot path.
+- (nullable NSData *)screenshotPNGData;
 
 - (void)enterPassword:(NSString *)password;
 

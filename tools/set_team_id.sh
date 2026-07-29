@@ -30,6 +30,8 @@ PROJECT_FILES=(
     "SignPlugin/SignPlugin.xcodeproj/project.pbxproj"
     "iTermAI/iTermAI.xcodeproj/project.pbxproj"
     "iTermBrowserPlugin/iTermBrowserPlugin.xcodeproj/project.pbxproj"
+    "iTermCompanion/iTermCompanion.xcodeproj/project.pbxproj"
+    "Companion/iTerm2Companion.xcodeproj/project.pbxproj"
     "submodules/MultiCursor/MultiCursor.xcodeproj/project.pbxproj"
     "submodules/Highlightr/Highlightr.xcodeproj/project.pbxproj"
     "submodules/SwiftyMarkdown/SwiftyMarkdown.xcodeproj/project.pbxproj"

@@ -25,7 +25,7 @@
         ensureiTerm2Present:(BOOL)ensureiTerm2Present
               pythonVersion:(NSString *)pythonVersion
          environmentVersion:(NSInteger)environmentVersion {
-    DLog(@"file=%@ name=%@ deps=%@", file, name, dependencies);
+    RLog(@"file=%@ name=%@ deps=%@", file, name, dependencies);
     assert(pythonVersion);
 
     NSString *sanitizedPythonVersion = pythonVersion;
