@@ -693,6 +693,98 @@ extension AILiveHarness {
                       "model B must recall the fact from model A's blob-replayed round; got: \(lastAgentText)")
     }
 
+    /// A user-sent ATTACHMENT round (an image via .multipart) is captured as a blob
+    /// and replayed verbatim on the next turn. Turn 1 sends an image + question; turn 2
+    /// is a plain follow-up that must splice the image round's blob bytes verbatim and
+    /// be accepted by Anthropic (an image content block round-tripping through blob
+    /// capture/replay). Guards the attachment path through the blob layer, which the
+    /// offline attachment matrix (serialization only) and the other live tests (text
+    /// only) don't cover.
+    func test_chat_blobNativeReplay_userAttachmentRoundTrips() throws {
+        guard let apiKey = Self.blobConfigValue("ANTHROPIC_API_KEY"), !apiKey.isEmpty else {
+            throw XCTSkip("No ANTHROPIC_API_KEY")
+        }
+        guard let projectRoot = Self.blobConfigValue("PROJECT_ROOT"), !projectRoot.isEmpty else {
+            throw XCTSkip("PROJECT_ROOT missing from live config")
+        }
+        let anthropicModel =
+            AIMetadata.instance.models.first(where: { $0.vendor == .anthropic && !$0.name.lowercased().contains("haiku") })
+            ?? AIMetadata.instance.models.first(where: { $0.vendor == .anthropic })
+        guard let anthropicModel else { throw XCTSkip("No Anthropic model in AIMetadata") }
+        guard let broker = ChatBroker.instance else { throw XCTSkip("ChatBroker.instance unavailable") }
+        Self.blobSuspendProcessors(broker, on: self)
+
+        let pngPath = (projectRoot as NSString).appendingPathComponent("ModernTests")
+            + "/Resources/AttachmentFixtures/magic.png"
+        let pngData = try Data(contentsOf: URL(fileURLWithPath: pngPath))
+
+        let wire = BlobWireCapture()
+        iTermAIClient.liveObserver = { capture in
+            switch capture.request.body {
+            case .string(let s): wire.requests.append(s)
+            case .bytes(let b): wire.requests.append("<\(b.count) bytes>")
+            }
+            if let response = capture.response { wire.responses.append(response.data) }
+            else if !capture.streamChunks.isEmpty { wire.responses.append(capture.streamChunks.joined()) }
+        }
+        defer { iTermAIClient.liveObserver = nil }
+
+        let chatID = try broker.create(
+            chatWithTitle: "live attachment \(UUID().uuidString.prefix(8))",
+            terminalSessionGuid: "blob-attach-test",
+            browserSessionGuid: nil,
+            permissions: "",
+            initialMessages: [])
+        addTeardownBlock { try? broker.delete(chatID: chatID) }
+        try broker.listModel.setModel(chatID: chatID, modelName: anthropicModel.name)
+
+        let registrationProvider = BlobTestRegistrationProvider(apiKey: apiKey)
+        let registrationSub = broker.subscribe(chatID: chatID, registrationProvider: registrationProvider) { _ in }
+        defer { registrationSub.unsubscribe() }
+
+        func runTurn(_ content: Message.Content) throws {
+            let ended = expectation(description: "turn ends")
+            var done = false
+            let sub = broker.subscribe(chatID: chatID, registrationProvider: nil) { update in
+                if case .turnLifecycle(let event) = update, event == .ended, !done { done = true; ended.fulfill() }
+            }
+            defer { sub.unsubscribe() }
+            var msg = Message(chatID: chatID, author: .user, content: content, sentDate: Date(), uniqueID: UUID())
+            msg.configuration = Message.Configuration(hostedWebSearchEnabled: false, vectorStoreIDs: [],
+                                                      model: anthropicModel.name, shouldThink: false)
+            try broker.publish(message: msg, toChatID: chatID, partial: false)
+            wait(for: [ended], timeout: 120)
+        }
+
+        // Turn 1: an image attachment + a question, as a .multipart user message.
+        let attachment = LLM.Message.Attachment(
+            inline: true, id: "att-\(UUID().uuidString.prefix(6))",
+            type: .file(.init(name: "magic.png", content: pngData, mimeType: "image/png", localPath: nil)))
+        try runTurn(.multipart([.plainText("Briefly, what is in this image?"), .attachment(attachment)],
+                               vectorStoreID: nil))
+        try Self.skipIfTransientVendorError(
+            broker.listModel.messages(forChat: chatID, createIfNeeded: false).map { Array($0) } ?? [])
+
+        let db = broker.listModel.chatDatabase
+        XCTAssertGreaterThanOrEqual(db.blobCount(inChat: chatID), 1,
+                                    "the attachment turn must be captured as a blob")
+        // The image round's blob carries the image content block (base64 PNG).
+        let attachmentRound = String(decoding: db.blobs(inChat: chatID)[0].payload, as: UTF8.self)
+        XCTAssertTrue(attachmentRound.contains("image/png") || attachmentRound.contains("\"image\""),
+                      "the attachment round's blob must encode the image content block")
+
+        // Turn 2 (plain) replays the image round from its blob, verbatim, and is accepted.
+        let requestsBeforeTurn2 = wire.requests.count
+        try runTurn(.plainText("Thanks. Reply with only: OK", context: nil))
+        try Self.skipIfTransientVendorError(
+            broker.listModel.messages(forChat: chatID, createIfNeeded: false).map { Array($0) } ?? [])
+        XCTAssertGreaterThanOrEqual(db.blobCount(inChat: chatID), 2,
+                                    "turn 2 replaying the image round from a blob must be accepted")
+        let firstRoundInner = String(decoding: try ChatBlobAssembler.stitchInner([db.blobs(inChat: chatID)[0]]), as: UTF8.self)
+        XCTAssertTrue(wire.requests[requestsBeforeTurn2...].contains { $0.contains(firstRoundInner) },
+                      "turn 2 must splice the image round's blob bytes verbatim")
+    }
+
     // MARK: - Helpers (file-local; the queue test's private helpers are not visible here)
 
     private static func blobConfigValue(_ key: String) -> String? {
