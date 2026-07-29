@@ -264,6 +264,7 @@
 #import "iTermCharacterSourceTestHelper.h"
 #import "iTermImageComparison.h"
 #import "iTermBackgroundColorRLETestHelper.h"
+#import "iTermAttributedStringBuilderBenchmark.h"
 #import "iTermUnderlineSpanTestHelper.h"
 #import "iTermShortcut.h"
 #import "iTermCarbonHotKeyController.h"

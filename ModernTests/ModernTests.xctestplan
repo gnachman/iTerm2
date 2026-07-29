@@ -59,6 +59,9 @@
   "testTargets" : [
     {
       "parallelizable" : true,
+      "skippedTests" : [
+        "iTermAttributedStringBuilderBenchmarkTest"
+      ],
       "target" : {
         "containerPath" : "container:iTerm2.xcodeproj",
         "identifier" : "A6A723AD2DC04C2200A8115D",

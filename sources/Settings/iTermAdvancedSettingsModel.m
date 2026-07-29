@@ -632,7 +632,7 @@ DEFINE_BOOL(disableSmartSelectionActionsOnClick, NO, SECTION_SEMANTIC_HISTORY @"
 DEFINE_BOOL(startDebugLoggingAutomatically, NO, SECTION_DEBUGGING @"Start debug logging automatically when iTerm2 is launched.");
 DEFINE_BOOL(appendToExistingDebugLog, NO, SECTION_DEBUGGING @"Append to existing debug log rather than replacing it.");
 DEFINE_BOOL(logDrawingPerformance, NO, SECTION_DEBUGGING @"Log stats about text drawing performance to console.\nUsed for performance testing.");
-DEFINE_BOOL(showDirtyRectsInLegacyRenderer, NO, SECTION_DEBUGGING @"Outline dirty rects in the legacy renderer with random colors.\nUseful for visually verifying which regions of the text view are being repainted each frame. Only affects the legacy (non-Metal) renderer.");
+DEFINE_BOOL(showDirtyRectsInLegacyRenderer, NO, SECTION_DEBUGGING @"Outline dirty rects in the legacy renderer with random colors.\nUseful for visually verifying which regions of the text view are being repainted each frame. This affects only the legacy (non-GPU) renderer and does nothing when the GPU (Metal) renderer is active, so it is not a way to tell whether the GPU renderer is engaged. To use it, first turn off the GPU renderer in Settings → General → Magic.");
 DEFINE_BOOL(logRestorableStateSize, NO, SECTION_DEBUGGING @"Log restorable state size info to /tmp/statesize.*.txt.");
 DEFINE_BOOL(showBlockBoundaries, NO, SECTION_DEBUGGING @"Show line buffer block boundaries (issue 6207)");
 DEFINE_BOOL(logToSyslog, NO, SECTION_DEBUGGING @"Debug logs also write to the system log.");

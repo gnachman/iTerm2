@@ -705,6 +705,10 @@ Core Improvements:
 - Significant Metal rendering speedups for
   non-ASCII text should result in higher frame
   rates.
+- Faster rendering of text with many colors (e.g.
+  syntax-highlighted code) by reusing attribute
+  dictionaries across runs instead of rebuilding
+  one per color span.
 - Framerate is capped at 30 fps in low-power mode.
 - Crash-log search was moved off the main thread
   so app launch does not hang when there are a

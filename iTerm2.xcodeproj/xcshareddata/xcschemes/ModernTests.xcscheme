@@ -42,6 +42,9 @@
             reference = "container:ModernTests/ModernTests.xctestplan"
             default = "YES">
          </TestPlanReference>
+         <TestPlanReference
+            reference = "container:ModernTests/Benchmark.xctestplan">
+         </TestPlanReference>
       </TestPlans>
       <Testables>
          <TestableReference
