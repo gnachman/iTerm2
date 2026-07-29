@@ -259,11 +259,13 @@ extension AILiveHarness {
                       "model must recall the tool output from the blob-replayed tool_result; got: \(lastAgentText)")
     }
 
-    /// Second protocol/vendor: DeepSeek uses the chatCompletions wire shape (a
-    /// different splice path than Anthropic, and the strict tool-adjacency vendor
-    /// from issue #12883). Proves a real non-Anthropic vendor accepts the frozen
-    /// history spliced into its messages array across turns. No cache assertion
-    /// (DeepSeek has no prompt-cache pricing).
+    /// Second protocol/vendor: DeepSeek uses the `.deepSeek` protocol (its OWN
+    /// encoder branch DeepSeekRequestBuilder.Message + DeepSeek.swift splice, NOT the
+    /// `.chatCompletions` CompletionsMessage/ModernBodyRequestBuilder path). Proves a
+    /// real non-Anthropic vendor accepts the frozen history spliced into its messages
+    /// array across turns. No cache assertion (DeepSeek has no prompt-cache pricing).
+    /// NOTE the `.chatCompletions` protocol itself (Azure OpenAI / OpenRouter / local
+    /// vLLM etc.) has offline byte-faithfulness tests but no live blob-replay proof.
     func test_chat_blobNativeReplay_multiTurnDeepSeekAccepted() throws {
         guard let apiKey = Self.blobConfigValue("DEEPSEEK_API_KEY"), !apiKey.isEmpty else {
             throw XCTSkip("No DEEPSEEK_API_KEY")
@@ -783,6 +785,90 @@ extension AILiveHarness {
         let firstRoundInner = String(decoding: try ChatBlobAssembler.stitchInner([db.blobs(inChat: chatID)[0]]), as: UTF8.self)
         XCTAssertTrue(wire.requests[requestsBeforeTurn2...].contains { $0.contains(firstRoundInner) },
                       "turn 2 must splice the image round's blob bytes verbatim")
+    }
+
+    /// The central justification for the blob redesign: opaque vendor reasoning state
+    /// must survive capture and replay verbatim - vendors 400 on corrupted/missing
+    /// reasoning. DeepSeek's reasoning_content is exactly such a field (iTerm2 added
+    /// round-tripping it specifically because the vendor rejects the follow-up turn
+    /// without it), and DeepSeek uses the `.deepSeek` protocol where blob-native fully
+    /// engages. Turn 1 runs with thinking ON so the assistant round carries
+    /// reasoning_content; turn 2 replays that round from its blob and must be ACCEPTED.
+    /// This is the one path offline byte-faithfulness tests can't prove: a real vendor
+    /// accepting the replayed reasoning bytes. (No Anthropic/Gemini model advertises
+    /// configurableThinking in the catalog, so their reasoning paths aren't
+    /// exercisable here; the Responses reasoning-item path rides delta mode and is
+    /// covered by the Phase-4 full-replay test.)
+    func test_chat_blobNativeReplay_deepSeekReasoningRoundReplaysAccepted() throws {
+        guard let apiKey = Self.blobConfigValue("DEEPSEEK_API_KEY"), !apiKey.isEmpty else {
+            throw XCTSkip("No DEEPSEEK_API_KEY")
+        }
+        guard let reasoningModel = AIMetadata.instance.models.first(where: {
+            $0.vendor == .deepSeek && $0.features.contains(.configurableThinking)
+        }) else {
+            throw XCTSkip("No thinking-capable DeepSeek model in AIMetadata")
+        }
+        guard let broker = ChatBroker.instance else { throw XCTSkip("ChatBroker.instance unavailable") }
+        Self.blobSuspendProcessors(broker, on: self)
+
+        let wire = BlobWireCapture()
+        iTermAIClient.liveObserver = { capture in
+            switch capture.request.body {
+            case .string(let s): wire.requests.append(s)
+            case .bytes(let b): wire.requests.append("<\(b.count) bytes>")
+            }
+            if let response = capture.response { wire.responses.append(response.data) }
+            else if !capture.streamChunks.isEmpty { wire.responses.append(capture.streamChunks.joined()) }
+        }
+        defer { iTermAIClient.liveObserver = nil }
+
+        let chatID = try broker.create(
+            chatWithTitle: "live reasoning replay \(UUID().uuidString.prefix(8))",
+            terminalSessionGuid: "blob-reason-test",
+            browserSessionGuid: nil,
+            permissions: "",
+            initialMessages: [])
+        addTeardownBlock { try? broker.delete(chatID: chatID) }
+        try broker.listModel.setModel(chatID: chatID, modelName: reasoningModel.name)
+
+        let registrationProvider = BlobTestRegistrationProvider(apiKey: apiKey)
+        let registrationSub = broker.subscribe(chatID: chatID, registrationProvider: registrationProvider) { _ in }
+        defer { registrationSub.unsubscribe() }
+
+        func runThinkingTurn(_ body: String) throws {
+            let ended = expectation(description: "turn ends")
+            var done = false
+            let sub = broker.subscribe(chatID: chatID, registrationProvider: nil) { update in
+                if case .turnLifecycle(let event) = update, event == .ended, !done { done = true; ended.fulfill() }
+            }
+            defer { sub.unsubscribe() }
+            var msg = Message(chatID: chatID, author: .user, content: .plainText(body, context: nil),
+                              sentDate: Date(), uniqueID: UUID())
+            msg.configuration = Message.Configuration(hostedWebSearchEnabled: false, vectorStoreIDs: [],
+                                                      model: reasoningModel.name, shouldThink: true)
+            try broker.publish(message: msg, toChatID: chatID, partial: false)
+            wait(for: [ended], timeout: 180)
+        }
+
+        try runThinkingTurn("Think step by step, then tell me: what is 17 times 23?")
+        try Self.skipIfTransientVendorError(
+            broker.listModel.messages(forChat: chatID, createIfNeeded: false).map { Array($0) } ?? [])
+
+        let db = broker.listModel.chatDatabase
+        XCTAssertGreaterThanOrEqual(db.blobCount(inChat: chatID), 1, "the reasoning turn must be captured")
+
+        // Turn 2 replays the reasoning-bearing round from its blob. If the reasoning
+        // bytes were dropped/corrupted, DeepSeek would 400 and no blob would be written.
+        try runThinkingTurn("Now what is that result plus 5? Reply with only the number.")
+        try Self.skipIfTransientVendorError(
+            broker.listModel.messages(forChat: chatID, createIfNeeded: false).map { Array($0) } ?? [])
+        XCTAssertGreaterThanOrEqual(db.blobCount(inChat: chatID), 2,
+                                    "replaying the reasoning-bearing round must be accepted (a rejected turn writes no blob)")
+
+        // The reasoning-bearing round's blob bytes are spliced verbatim into turn 2.
+        let firstRoundInner = String(decoding: try ChatBlobAssembler.stitchInner([db.blobs(inChat: chatID)[0]]), as: UTF8.self)
+        XCTAssertTrue(wire.requests.dropFirst().contains { $0.contains(firstRoundInner) },
+                      "turn 2 must splice the reasoning round's blob bytes verbatim")
     }
 
     // MARK: - Helpers (file-local; the queue test's private helpers are not visible here)
