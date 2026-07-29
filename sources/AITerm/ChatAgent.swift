@@ -114,6 +114,17 @@ class ChatAgent {
     private let chatID: String
     private var brokerSubscription: ChatBroker.Subscription?
     private var messageToPrompt = MessageToPromptStateMachine()
+    // True when load() pre-reduced conversation.messages to just the current round
+    // for this turn's blob-native send (the frozen prefix lives in blobs, so
+    // translating it here just to have the send path drop it again is pure waste).
+    // Read by the send path (frozenRoundCount 0 in blobReplayPlan) and by the
+    // needs-renaming check (a pre-reduced chat always has prior history). Reset each
+    // load(); the else branch translates the whole history exactly as before.
+    private var blobsCoverHistoryThisTurn = false
+    // When pre-reduced, the full-history reconstructor for the rare blob-path bail
+    // (protocol switch, oversized round). Recomputes translate() on demand so the
+    // codec fallback still sends everything. nil when NOT pre-reduced.
+    private var fullHistoryReconstructor: (() -> [AITermController.Message])?
     private var pendingRemoteCommands = [UUID: PendingRemoteCommand]()
     private let broker: ChatBroker
     private let prepPipeline: MessagePrepPipeline
@@ -401,7 +412,7 @@ class ChatAgent {
         }
     }
 
-    private func load(messages: [Message]) {
+    private func load(messages: [Message], reduceForReplay: Bool = false) {
         // Pre-pass: extract the latest setPermissions as agent state.
         // The translator below skips .setPermissions itself; this is
         // the only side effect history translation needs. Walk
@@ -414,7 +425,37 @@ class ChatAgent {
                 break
             }
         }
-        conversation.messages = translate(messages: messages)
+        // Blob-native fast path: when this chat's frozen blobs already cover its
+        // WHOLE prior history (one blob per round, and the row count equals the
+        // round count the reload would produce), the frozen prefix is sent verbatim
+        // from those blobs. Translating it here only to have the send path drop it
+        // again (messagesPastFrozenRounds) is O(history) waste every turn, which is
+        // exactly what blobs exist to avoid. Skip it: conversation.messages becomes
+        // just [system] + the current round (the new user turn is added after load,
+        // the tool loop grows it during the turn). The count is computed WITHOUT
+        // building any message body (reconstructedRoundCount), so the decision is
+        // cheap even for a chat whose rounds hold megabytes of tool output. A
+        // mismatch (partial capture, or a protocol switch caught downstream) falls to
+        // the full translate below, and the send path's fullHistoryProvider rebuilds
+        // everything if the blob path later bails.
+        let blobCount = reduceForReplay ? broker.listModel.chatDatabase.blobCount(inChat: chatID) : 0
+        if blobCount > 0 && Self.reconstructedRoundCount(messages) == blobCount {
+            conversation.messages = []
+            blobsCoverHistoryThisTurn = true
+            fullHistoryReconstructor = { [weak self] in
+                self?.translate(messages: messages) ?? []
+            }
+            // Carry the frozen-away last assistant turn's response id forward so a
+            // pre-reduced Responses chat still enters delta mode on this turn's first
+            // request (see AITermController.reducedHistoryPreviousResponseID).
+            conversation.controller.reducedHistoryPreviousResponseID =
+                Self.carriedPreviousResponseID(messages)
+        } else {
+            conversation.messages = translate(messages: messages)
+            blobsCoverHistoryThisTurn = false
+            fullHistoryReconstructor = nil
+            conversation.controller.reducedHistoryPreviousResponseID = nil
+        }
 
         switch mode {
         case .sessionBound:
@@ -577,6 +618,61 @@ class ChatAgent {
             }
         }
         return aiMessages
+    }
+
+    /// The number of rounds `translate(messages:)` would produce, WITHOUT building
+    /// any LLM message body (no repair, no stabilize, no copying megabyte tool
+    /// outputs) -- just the round boundaries. Used by load() to decide whether a
+    /// chat's blobs cover its whole history and the frozen-prefix translate can be
+    /// skipped, so it has to be far cheaper than translate itself.
+    ///
+    /// It MUST stay in lockstep with aiMessagesForStructuredReplay's content filter
+    /// (which messages become LLM messages) and role(from:) (which are role .user =
+    /// round starts) and ChatBlobCapture.rounds (a round begins at each user message
+    /// and the very first message always opens one), so it exactly equals
+    /// rounds(from: translate(messages)).count. That equality is pinned by test:
+    /// an UNDERCOUNT here would let the fast path silently drop un-frozen history.
+    /// Repair only synthesizes .function items, never adds or removes a .user
+    /// message, so it cannot change the round count; that is why counting the
+    /// pre-repair boundaries is exact.
+    static func reconstructedRoundCount(_ messages: [Message]) -> Int {
+        var rounds = 0
+        var started = false
+        for message in messages {
+            switch message.content {
+            case .setPermissions, .clientLocal, .renameChat, .append, .appendAttachment,
+                    .commit, .vectorStoreCreated, .userCommand, .selectSessionRequest,
+                    .unsupported:
+                continue
+            case .remoteCommandRequest(let payload, safe: _):
+                // A request with no function_call is skipped by the replay filter
+                // (its orphaned response is healed by repair), so it opens no round.
+                guard payload.llmMessage.function_call != nil else { continue }
+            default:
+                break
+            }
+            if AITermController.Message.role(from: message) == .user || !started {
+                rounds += 1
+            }
+            started = true
+        }
+        return rounds
+    }
+
+    /// The previous_response_id to carry forward when load() pre-reduces a chat for
+    /// blob replay (AITermController.reducedHistoryPreviousResponseID). It MUST select
+    /// the SAME id AIConversation.complete would from the non-reduced conversation --
+    /// `self.messages.last { $0.role == .assistant }?.responseID` -- i.e. the LAST
+    /// assistant turn's id EVEN WHEN IT IS nil. The nil case is load-bearing: a
+    /// Responses chat whose terminal assistant turn recorded no id (an interrupted
+    /// turn) must fall back to a full resend, NOT revive an earlier turn's stale id
+    /// (which would silently drop the tail from the server's context). So do not add a
+    /// `responseID != nil` filter -- returning the last assistant's nil is the point.
+    /// (This mirrors the display->assistant mapping without translating; the only
+    /// unmodeled divergence is a repair-synthesized terminal tool_use, which is out of
+    /// scope for delta mode.)
+    static func carriedPreviousResponseID(_ messages: [Message]) -> String? {
+        messages.last { AITermController.Message.role(from: $0) == .assistant }?.responseID
     }
 
     /// Resolve a turn's model name the same way request routing does
@@ -1008,7 +1104,7 @@ class ChatAgent {
                          cancelPendingUploads: Bool,
                          streaming: ((StreamingUpdate) -> ())?,
                          completion: @escaping (Message?) -> ()) throws {
-        load(messages: history)
+        load(messages: history, reduceForReplay: true)
 
         // Remove items that won't have a previous response ID.
         let filteredHistory = history.filter { message in
@@ -1157,7 +1253,13 @@ class ChatAgent {
 
         cancelPendingCommands()
 
-        let needsRenaming = !conversation.messages.anySatisfies({ $0.role == .user})
+        // A pre-reduced conversation (blobsCoverHistoryThisTurn) intentionally holds
+        // no prior rounds, so the user-message probe below would misfire; but a
+        // blob-native chat has by definition already had a user turn, so it never
+        // needs renaming. Only the full-translate path (a brand-new or blobless chat)
+        // consults conversation.messages.
+        let needsRenaming = !blobsCoverHistoryThisTurn
+            && !conversation.messages.anySatisfies({ $0.role == .user})
         // Hosted-tool capability comes from the model the turn will ACTUALLY
         // run on (the binding's verdict, resolved the same way request
         // routing resolves conversation.model), not the global default.
@@ -1227,10 +1329,12 @@ class ChatAgent {
             // so the truncation budget counts the whole request. Captured by
             // reference; evaluated only on the blob path (envelopeTokens is a thunk).
             let replayController = conversation.controller
+            let messagesAreReduced = blobsCoverHistoryThisTurn
             conversation.blobReplayProvider = { [weak self] fullMessages in
                 ChatBlobAssembler.blobReplayPlan(
                     chatID: replayChatID, fullMessages: fullMessages, expectedProtocol: captureAPI,
                     contextWindow: contextWindow, outputReserve: outputReserve, policy: policy,
+                    messagesAreReduced: messagesAreReduced,
                     tokenEstimate: { AIMetadata.instance.tokens(in: String(decoding: $0, as: UTF8.self)) },
                     envelopeTokens: {
                         // PEEK the volatile context for sizing only (commit: false):
@@ -1247,6 +1351,16 @@ class ChatAgent {
             }
         } else {
             conversation.blobReplayProvider = nil
+        }
+        // If load() pre-reduced conversation.messages for the blob path, hand the send
+        // path a reconstructor of the full history so a blob-path bail (protocol
+        // switch, oversized round, undecodable blob) still sends everything rather than
+        // just the current round. Set alongside blobReplayProvider and with the same
+        // per-turn lifecycle. nil when not pre-reduced (conversation.messages is whole).
+        if blobsCoverHistoryThisTurn, let fullHistoryReconstructor {
+            conversation.fullHistoryProvider = fullHistoryReconstructor
+        } else {
+            conversation.fullHistoryProvider = nil
         }
         conversation.add(baseUserAIMessage)
         // The binding's verdict, not the raw configuration: a turn with no

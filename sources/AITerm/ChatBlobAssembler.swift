@@ -333,6 +333,7 @@ enum ChatBlobAssembler {
                                contextWindow: Int,
                                outputReserve: Int,
                                policy: TruncationPolicy,
+                               messagesAreReduced: Bool = false,
                                tokenEstimate: (Data) -> Int,
                                envelopeTokens: () -> Int,
                                database: ChatDatabase) -> (messages: [LLM.Message], frozen: Data)? {
@@ -340,7 +341,13 @@ enum ChatBlobAssembler {
                                              database: database) else {
             return nil
         }
-        guard let reduced = messagesPastFrozenRounds(fullMessages, frozenRoundCount: blobs.count) else {
+        // When the chat layer already pre-reduced `fullMessages` to [system] + the
+        // current round (skipping the wasted translate of the frozen prefix), there is
+        // nothing left to drop here, so the frozen count is 0 and the list passes
+        // through unchanged. Otherwise the list is the whole conversation and we drop
+        // the first blobs.count rounds (the frozen prefix) to leave the current round.
+        let frozenRoundCount = messagesAreReduced ? 0 : blobs.count
+        guard let reduced = messagesPastFrozenRounds(fullMessages, frozenRoundCount: frozenRoundCount) else {
             return nil
         }
         let weights = blobs.map { $0.tokenCount ?? tokenEstimate($0.payload) }

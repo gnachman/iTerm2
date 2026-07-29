@@ -279,6 +279,41 @@ final class ChatBlobAssemblerTests: XCTestCase {
         XCTAssertEqual(plan.frozen, try ChatBlobAssembler.stitchInner(db.blobs(inChat: "A")))
     }
 
+    /// messagesAreReduced=true: the chat layer already pre-reduced `fullMessages` to
+    /// [system, newUser] (skipping the wasted translate of the frozen prefix), so the
+    /// plan must NOT drop any round from the list (frozenRoundCount 0). It returns the
+    /// pre-reduced list unchanged plus ALL blobs, and its wire is byte-identical to the
+    /// non-pre-reduced plan fed the whole conversation -- proving the fast path sends
+    /// exactly what the full path would.
+    func test_blobReplayPlan_messagesAreReduced_matchesFullPath() throws {
+        var model = try baseModel(); model.api = .chatCompletions
+        let db = try makeTempDB()
+        let rounds = capture3Rounds(db, model: model)
+        let system = LLM.Message(role: .system, content: "You are helpful.")
+        let newUser = user("next?")
+
+        // The full path: hand the whole conversation, let the plan reduce it.
+        let fullPath = try XCTUnwrap(ChatBlobAssembler.blobReplayPlan(
+            chatID: "A", fullMessages: [system] + rounds.flatMap { $0 } + [newUser],
+            expectedProtocol: .chatCompletions,
+            contextWindow: 1_000_000, outputReserve: 1000, policy: .fitOnly,
+            tokenEstimate: { _ in 1 }, envelopeTokens: { 0 }, database: db))
+
+        // The fast path: hand the pre-reduced list, tell the plan not to reduce again.
+        let reducedPath = try XCTUnwrap(ChatBlobAssembler.blobReplayPlan(
+            chatID: "A", fullMessages: [system, newUser], expectedProtocol: .chatCompletions,
+            contextWindow: 1_000_000, outputReserve: 1000, policy: .fitOnly,
+            messagesAreReduced: true,
+            tokenEstimate: { _ in 1 }, envelopeTokens: { 0 }, database: db))
+
+        XCTAssertEqual(reducedPath.messages, [system, newUser])
+        XCTAssertEqual(reducedPath.messages, fullPath.messages)
+        XCTAssertEqual(reducedPath.frozen, fullPath.frozen)
+        let reducedWire = try messagesArray(builder(model, messages: reducedPath.messages, frozen: reducedPath.frozen), key: "messages")
+        let fullWire = try messagesArray(builder(model, messages: fullPath.messages, frozen: fullPath.frozen), key: "messages")
+        XCTAssertEqual(reducedWire as NSArray, fullWire as NSArray)
+    }
+
     /// Over budget: drops the oldest whole round and the result byte-matches the live
     /// builder fed the TRUNCATED history (composes reduction + truncation + splice).
     func test_blobReplayPlan_overBudget_dropsOldestRound_matchesTruncatedLive() throws {

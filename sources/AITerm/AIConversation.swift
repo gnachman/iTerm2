@@ -208,6 +208,18 @@ struct AIConversation {
         }
     }
 
+    // Passthrough to the controller: the full-history reconstructor the chat layer
+    // sets when it pre-reduced conversation.messages for blob replay. See
+    // AITermController.fullHistoryProvider and outgoingRequest below.
+    var fullHistoryProvider: (() -> [AITermController.Message])? {
+        get {
+            controller.fullHistoryProvider
+        }
+        set {
+            controller.fullHistoryProvider = newValue
+        }
+    }
+
     // The vendor's reported total input tokens for the turn just completed (nil if no
     // usage). Read by the chat layer at turn end (before it swaps in the amended copy,
     // which has a fresh controller) to derive the round's real token weight.
@@ -411,7 +423,12 @@ struct AIConversation {
             controller.previousResponseID = nil
             systemMessageDirty = false
         } else {
+            // Fall back to the pre-reduce carry-forward when the (pre-reduced)
+            // message list has no assistant turn yet, so a blob-native Responses
+            // chat keeps delta mode on the turn's first request. Once the turn's
+            // own assistant reply is appended, lastAssistantMessage wins again.
             controller.previousResponseID = lastAssistantMessage?.responseID
+                ?? controller.reducedHistoryPreviousResponseID
         }
 
         // Decide the outgoing message list + any frozen-history bytes ONCE, and stamp
@@ -484,10 +501,20 @@ struct AIConversation {
     // to truncatedMessages (which itself picks delta vs full) with no frozen bytes.
     private func outgoingRequest() -> (messages: [AITermController.Message], frozen: Data?) {
         let inDeltaMode = controller.supportsPreviousResponseID && controller.previousResponseID != nil
-        if !inDeltaMode,
-           let provider = controller.blobReplayProvider,
-           let replay = provider(messages) {
-            return (replay.messages, replay.frozen)
+        if !inDeltaMode {
+            if let provider = controller.blobReplayProvider,
+               let replay = provider(messages) {
+                return (replay.messages, replay.frozen)
+            }
+            // Blob replay declined (protocol switch needing a re-freeze, an oversized
+            // round the codec must elide, or corrupt/undecodable blobs) but the chat
+            // layer pre-reduced `messages` to just the current round for the blob path.
+            // Rebuild the full history so the codec fallback never sends a history-less
+            // request, then truncate it the normal way. Delta mode skips this: it needs
+            // only messages.last, which the pre-reduced list still carries.
+            if let full = controller.fullHistoryProvider?() {
+                return (truncate(messages: full, maxTokens: maxTokens), nil)
+            }
         }
         return (truncatedMessages, nil)
     }

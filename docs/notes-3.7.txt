@@ -2338,3 +2338,9 @@ Bug Fixes:
   stays valid across turns (including turns
   that ran a tool) and long conversations keep
   getting cheaper and faster.
+- Sending a message in a long AI chat is now
+  faster: when the whole history is already
+  stored as sent-bytes, it is no longer
+  reprocessed to build each request, so the
+  per-message work stays small no matter how
+  long the conversation gets.

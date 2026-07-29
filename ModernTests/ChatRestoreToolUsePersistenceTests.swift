@@ -303,4 +303,122 @@ final class ChatRestoreToolUsePersistenceTests: XCTestCase {
         XCTAssertFalse(ChatViewControllerModel.resolvedRequestIDs(in: messages).contains(req),
                        "a pending request with no response must remain visible")
     }
+
+    // MARK: - reconstructedRoundCount pin (blob-native fast path)
+
+    /// The blob-native fast path in load() decides "do the chat's blobs cover its
+    /// whole history?" by comparing the stored blob count to
+    /// ChatAgent.reconstructedRoundCount(displayMessages) -- a cheap counter that
+    /// builds NO message body. If it ever UNDERCOUNTS the real round count, the fast
+    /// path would skip translating (and so drop) un-frozen history. This pins it to
+    /// the production round count: rounds(from: translate(messages)).count, across a
+    /// spread of transcripts (plain turns, tool pairs, orphan request, orphan
+    /// response, leading agent turn, filtered-out content).
+    private func assertRoundCountMatchesTranslate(_ messages: [Message],
+                                                  _ label: String,
+                                                  file: StaticString = #file,
+                                                  line: UInt = #line) {
+        let viaTranslate = ChatBlobCapture.rounds(
+            from: ChatAgent.translateForTesting(messages, resolve: { _ in nil })).count
+        let cheap = ChatAgent.reconstructedRoundCount(messages)
+        XCTAssertEqual(cheap, viaTranslate,
+                       "reconstructedRoundCount drifted from translate+rounds for: \(label)",
+                       file: file, line: line)
+    }
+
+    func testReconstructedRoundCount_matchesTranslateAcrossTranscripts() {
+        let r1 = UUID(), r2 = UUID(), r3 = UUID()
+        assertRoundCountMatchesTranslate([], "empty")
+        assertRoundCountMatchesTranslate([userText("hi")], "single user")
+        assertRoundCountMatchesTranslate(
+            [userText("hi"), agentText("hello")], "one full round")
+        assertRoundCountMatchesTranslate(
+            [userText("a"), agentText("b"), userText("c"), agentText("d")],
+            "two plain rounds")
+        assertRoundCountMatchesTranslate(
+            [userText("run"),
+             requestMessage(callID: "c1", requestUUID: r1),
+             responseMessage(callID: "c1", requestUUID: r1),
+             agentText("done"),
+             userText("again"),
+             requestMessage(callID: "c2", requestUUID: r2),
+             responseMessage(callID: "c2", requestUUID: r2),
+             agentText("done2")],
+            "two rounds each with a tool pair")
+        // A tool RESPONSE is user-authored but role .function -- it must NOT open a
+        // round. If the counter treated it as a user turn it would overcount here.
+        assertRoundCountMatchesTranslate(
+            [userText("run"),
+             agentText("ok"),
+             responseMessage(callID: "orphan", requestUUID: r3),
+             agentText("recovered")],
+            "orphan tool response (user-authored, not a round start)")
+        // A request with no matching response (orphan request): still one round.
+        assertRoundCountMatchesTranslate(
+            [userText("go"), requestMessage(callID: "cx", requestUUID: UUID())],
+            "orphan tool request")
+        // History that opens with an agent turn: the first message still opens a round.
+        assertRoundCountMatchesTranslate(
+            [agentText("greeting"), userText("hi"), agentText("bye")],
+            "leading agent turn")
+    }
+
+    // MARK: - carriedPreviousResponseID (blob-native pre-reduce delta mode)
+
+    private func agentTextWithID(_ s: String, _ responseID: String?) -> Message {
+        var m = agentText(s)
+        m.responseID = responseID
+        return m
+    }
+
+    /// The id load() carries forward for a pre-reduced Responses chat must equal what
+    /// AIConversation would pick from the non-reduced conversation --
+    /// translate(messages).last { .assistant }?.responseID -- INCLUDING when that id
+    /// is nil. The `nil` case is the whole point: a terminal assistant turn with no
+    /// id must yield nil (full resend), never an earlier turn's stale id.
+    private func assertCarriedIDMatchesTranslate(_ messages: [Message],
+                                                 _ label: String,
+                                                 file: StaticString = #file,
+                                                 line: UInt = #line) {
+        let viaTranslate = ChatAgent.translateForTesting(messages, resolve: { _ in nil })
+            .last { $0.role == .assistant }?.responseID
+        let carried = ChatAgent.carriedPreviousResponseID(messages)
+        XCTAssertEqual(carried, viaTranslate,
+                       "carriedPreviousResponseID diverged from translate for: \(label)",
+                       file: file, line: line)
+    }
+
+    func testCarriedPreviousResponseID_mirrorsTranslateSelection() {
+        // Normal Responses chat: the last assistant's id is carried.
+        assertCarriedIDMatchesTranslate(
+            [userText("a"), agentTextWithID("b", "resp_1"),
+             userText("c"), agentTextWithID("d", "resp_2")],
+            "carries the last assistant id")
+        XCTAssertEqual(
+            ChatAgent.carriedPreviousResponseID(
+                [userText("a"), agentTextWithID("b", "resp_1"),
+                 userText("c"), agentTextWithID("d", "resp_2")]),
+            "resp_2")
+
+        // The reviewer's case: terminal assistant turn has NO id but an earlier one
+        // does. Must yield nil (full resend), NOT the stale earlier id.
+        let staleTrap = [userText("a"), agentTextWithID("b", "resp_1"),
+                         userText("c"), agentTextWithID("d", nil)]
+        assertCarriedIDMatchesTranslate(staleTrap, "nil terminal id does not revive earlier id")
+        XCTAssertNil(ChatAgent.carriedPreviousResponseID(staleTrap),
+                     "a nil-id terminal assistant turn must not carry an earlier turn's id")
+
+        // Trailing tool_result (role .function) after an assistant with an id: the id
+        // is still carried (the function turn is skipped), matching translate.
+        let req = UUID()
+        assertCarriedIDMatchesTranslate(
+            [userText("run"),
+             { var m = requestMessage(callID: "c1", requestUUID: req); m.responseID = "resp_9"; return m }(),
+             responseMessage(callID: "c1", requestUUID: req)],
+            "trailing tool_result skipped; assistant id carried")
+
+        // No assistant turn at all: nil.
+        assertCarriedIDMatchesTranslate([userText("hi")], "no assistant -> nil")
+        XCTAssertNil(ChatAgent.carriedPreviousResponseID([userText("hi")]))
+    }
 }

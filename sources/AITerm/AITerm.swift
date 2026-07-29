@@ -258,6 +258,25 @@ class AITermController {
     // where `messages` carries the whole conversation.
     var frozenHistoryElements: Data?
 
+    // Blob-native replay escape hatch, set each turn by the chat layer ALONGSIDE
+    // blobReplayProvider (same lifecycle). When the chat layer pre-reduces
+    // conversation.messages to just the current round for the blob path (skipping
+    // the wasted translate of the frozen prefix), it hands this reconstructor of
+    // the FULL history so a bail (a protocol switch that needs re-freezing, or an
+    // oversized round the codec must elide) never sends a history-less request.
+    // nil when the turn was NOT pre-reduced (conversation.messages already holds
+    // the whole conversation) or for non-chat callers.
+    var fullHistoryProvider: (() -> [Message])?
+
+    // Blob-native pre-reduce: the previous_response_id from the frozen-away history's
+    // last assistant turn. Pre-reducing drops the prior assistant messages from
+    // conversation.messages, so complete() can no longer read the last one's
+    // responseID; this carries it forward so a pre-reduced Responses conversation
+    // still enters delta mode (send only the new turn + id) on the turn's first
+    // request instead of falling back to a full blob replay. Consulted only when
+    // conversation.messages has no assistant message yet. nil when not pre-reduced.
+    var reducedHistoryPreviousResponseID: String?
+
     // The vendor's reported total input (prompt) tokens from the most recent
     // response of the current turn (kept as the last non-nil value across a stream,
     // since usage rides a single event). Read by the chat layer at turn end to derive
