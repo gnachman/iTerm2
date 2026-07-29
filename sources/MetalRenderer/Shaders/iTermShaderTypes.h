@@ -34,6 +34,7 @@ typedef enum {
     iTermFragmentInputIndexColor = 6,  // float4. Gives color for letterboxes/pillarboxes
     iTermFragmentBufferIndexScale = 7,  // backing scale factor float
     iTermFragmentBufferIndexBgColorChecksumReport = 9,  // Issue 12791: device atomic_uint
+    iTermFragmentBufferIndexBgColorCoverageReport = 10,  // Issue 12791: device atomic_uint[2], per-triangle rasterized coverage
 } iTermFragmentBufferIndex;
 
 // AND with mask to remove strikethrough bit

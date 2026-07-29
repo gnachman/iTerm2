@@ -15,6 +15,12 @@ typedef struct {
     float4 color;
     bool cancel;
     float isValid;  // Issue 12791: 1.0 = geometry witness passed, 0.0 = mismatch/non-finite
+    // Issue 12791: coverage witness. triangleId (0 or 1) is which of the quad's two
+    // triangles this fragment belongs to; isBigQuad is 1 for the merged multi-row
+    // (numRows>1) default-background run - the corner-to-corner quad the diagonal tracks.
+    // Integer stage_in members must be flat: they cannot be interpolated.
+    uint triangleId [[flat]];
+    uint isBigQuad [[flat]];
 } iTermBackgroundColorVertexFunctionOutput;
 
 // Issue 12791: FNV-1a-32 over the vertex array, hashed float-by-float to avoid struct
@@ -96,6 +102,12 @@ iTermBackgroundColorVertexShader(uint vertexID [[ vertex_id ]],
     out.color = iTermPremultiply(iTermBlendColors(perInstanceUniforms[iid].color,
                                                   info->defaultBackgroundColor));
 
+    // Issue 12791: Tag this vertex for the fragment-side coverage witness. vertexID 0..2 is
+    // the first triangle, 3..5 the second. numRows>1 marks the merged multi-row default-
+    // background run whose corner-to-corner quad the diagonal artifact tracks.
+    out.triangleId = vertexID / 3u;
+    out.isBigQuad = (perInstanceUniforms[iid].numRows > 1) ? 1u : 0u;
+
     // Issue 12791: Independent geometry witness. The expected hash arrives via
     // setVertexBytes (inline command-buffer payload, not an MTLBuffer), so a stomp on the
     // pooled unit-quad buffer between CPU write and GPU read produces a mismatch. The hash
@@ -124,7 +136,8 @@ iTermBackgroundColorVertexShader(uint vertexID [[ vertex_id ]],
 // Trivial changes in this implementation trigger metal compiler bugs (like putting `return in.color` in an else clause).
 fragment float4
 iTermBackgroundColorFragmentShader(iTermBackgroundColorVertexFunctionOutput in [[stage_in]],
-                                   device atomic_uint *checksumReport [[ buffer(iTermFragmentBufferIndexBgColorChecksumReport) ]]) {
+                                   device atomic_uint *checksumReport [[ buffer(iTermFragmentBufferIndexBgColorChecksumReport) ]],
+                                   device atomic_uint *coverageReport [[ buffer(iTermFragmentBufferIndexBgColorCoverageReport) ]]) {
     if (in.cancel) {
         discard_fragment();
         return float4(0, 0, 0, 0);
@@ -135,6 +148,19 @@ iTermBackgroundColorFragmentShader(iTermBackgroundColorVertexFunctionOutput in [
     if (in.isValid < 0.5) {
         atomic_fetch_or_explicit(checksumReport, iTermBgColorReportWitnessFailed, memory_order_relaxed);
         return float4(1.0, 0.0, 0.0, 1.0);
+    }
+    // Issue 12791: per-triangle rasterizer coverage witness. Count how many fragments each of
+    // the merged quad's two triangles actually rasterizes. Sparse-sample (1 fragment in 256)
+    // to bound atomic contention; that is plenty to tell "covers ~half the screen" from
+    // "rasterized ~nothing". If one triangle of the big quad comes back ~0 while the other
+    // covers the screen, the triangle is being dropped after the vertex stage (clip/guard-
+    // band) with valid geometry - the one failure the geometry checksum above cannot see.
+    if (in.isBigQuad != 0u) {
+        const uint px = uint(in.clipSpacePosition.x);
+        const uint py = uint(in.clipSpacePosition.y);
+        if ((px & 15u) == 0u && (py & 15u) == 0u) {
+            atomic_fetch_add_explicit(&coverageReport[min(in.triangleId, 1u)], 1u, memory_order_relaxed);
+        }
     }
     return in.color;
 }

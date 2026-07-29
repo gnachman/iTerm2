@@ -76,12 +76,22 @@ static NSString *iTermBgColorGeometryDegenerateReason(const iTermVertex *v, uint
 @property (nonatomic) vector_uint2 capturedViewportSize;
 @property (nonatomic) iTermBackgroundColorRendererMode capturedMode;
 @property (nullable, nonatomic, copy) NSString *cpuDegenerateReason;
+// Issue 12791: per-triangle rasterizer coverage witness. coverageReportBuffer holds two
+// atomic_uint sample counters (triangle 0, triangle 1) for the merged multi-row default-
+// background quad; the bigQuad* fields record that quad's PIU for the diagnostic dump.
+@property (nullable, nonatomic, strong) id<MTLBuffer> coverageReportBuffer;
+@property (nonatomic) uint32_t bigQuadRunLength;
+@property (nonatomic) uint32_t bigQuadNumRows;
+@property (nonatomic) vector_float2 bigQuadOffset;
 - (void)setOwner:(iTermBackgroundColorRenderer *)owner;
 @end
 
 @interface iTermBackgroundColorRenderer (TransientStateReports)
 - (void)reportFailureForTransientState:(iTermBackgroundColorRendererTransientState *)tState
                                 report:(uint32_t)report;
+- (void)reportCoverageForTransientState:(iTermBackgroundColorRendererTransientState *)tState
+                              triangle0:(uint32_t)triangle0
+                              triangle1:(uint32_t)triangle1;
 @end
 
 @implementation iTermBackgroundColorRendererTransientState {
@@ -98,15 +108,20 @@ static NSString *iTermBgColorGeometryDegenerateReason(const iTermVertex *v, uint
 // check already found the buffer degenerate at submit (which the GPU checksum, reading
 // the same stable bytes, would not flag).
 - (void)didComplete {
-    if (!_checksumReportBuffer) {
-        return;
+    if (_checksumReportBuffer) {
+        uint32_t report = 0;
+        memcpy(&report, _checksumReportBuffer.contents, sizeof(report));
+        if (report != 0 || _cpuDegenerateReason != nil) {
+            [_owner reportFailureForTransientState:self report:report];
+        }
     }
-    uint32_t report = 0;
-    memcpy(&report, _checksumReportBuffer.contents, sizeof(report));
-    if (report == 0 && _cpuDegenerateReason == nil) {
-        return;
+    // Issue 12791: read back the per-triangle coverage counters. The owner decides whether
+    // the coverage is balanced (baseline) or severely asymmetric (dropped triangle).
+    if (_coverageReportBuffer) {
+        uint32_t coverage[2] = {0, 0};
+        memcpy(coverage, _coverageReportBuffer.contents, sizeof(coverage));
+        [_owner reportCoverageForTransientState:self triangle0:coverage[0] triangle1:coverage[1]];
     }
-    [_owner reportFailureForTransientState:self report:report];
 }
 
 - (NSUInteger)sizeOfNewPIUBuffer {
@@ -162,6 +177,8 @@ static NSString *iTermBgColorGeometryDegenerateReason(const iTermVertex *v, uint
 #endif
     iTermMetalMixedSizeBufferPool *_piuPool;
     id<MTLDevice> _device;  // Issue 12791: for per-frame checksum report buffers
+    BOOL _wroteCoverageBaseline;  // Issue 12791: one-shot balanced-coverage baseline dump
+    int _coverageAsymmetricFilesWritten;  // Issue 12791: cap asymmetry dumps so a stuck artifact can't flood the folder
 }
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -271,6 +288,15 @@ static NSString *iTermBgColorGeometryDegenerateReason(const iTermVertex *v, uint
                                                                 options:MTLResourceStorageModeShared];
         checksumReportBuffer.label = @"BG color checksum report";
         tState.checksumReportBuffer = checksumReportBuffer;
+
+        // Issue 12791: two zeroed atomic_uint coverage counters (triangle 0, triangle 1).
+        const uint32_t zero2[2] = {0, 0};
+        id<MTLBuffer> coverageReportBuffer = [_device newBufferWithBytes:zero2
+                                                                 length:sizeof(zero2)
+                                                                options:MTLResourceStorageModeShared];
+        coverageReportBuffer.label = @"BG color coverage report";
+        tState.coverageReportBuffer = coverageReportBuffer;
+
         tState.capturedViewportSize = (vector_uint2){
             (uint32_t)tState.configuration.viewportSize.x,
             (uint32_t)tState.configuration.viewportSize.y
@@ -284,6 +310,7 @@ static NSString *iTermBgColorGeometryDegenerateReason(const iTermVertex *v, uint
         tState.cpuDegenerateReason = iTermBgColorGeometryDegenerateReason(geometry, vertexCount);
     }
     id<MTLBuffer> checksumReportBuffer = tState.checksumReportBuffer;
+    id<MTLBuffer> coverageReportBuffer = tState.coverageReportBuffer;
     const iTermBgColorChecksumParams params = {
         tState.expectedGeometryChecksum,
         (uint32_t)(tState.vertexBuffer.length / sizeof(iTermVertex))
@@ -293,6 +320,19 @@ static NSString *iTermBgColorGeometryDegenerateReason(const iTermVertex *v, uint
     [tState enumerateSegments:^(const iTermBackgroundColorPIU *pius, size_t numberOfInstances) {
         if (numberOfInstances == 0) {
             return;
+        }
+        // Issue 12791: record the largest merged multi-row (numRows>1) run for the coverage
+        // diagnostic. This is the corner-to-corner quad the fragment shader witnesses.
+        for (size_t i = 0; i < numberOfInstances; i++) {
+            if (pius[i].numRows <= 1) {
+                continue;
+            }
+            const uint32_t area = (uint32_t)pius[i].runLength * (uint32_t)pius[i].numRows;
+            if (area > tState.bigQuadRunLength * tState.bigQuadNumRows) {
+                tState.bigQuadRunLength = pius[i].runLength;
+                tState.bigQuadNumRows = pius[i].numRows;
+                tState.bigQuadOffset = pius[i].offset;
+            }
         }
         id<MTLBuffer> piuBuffer = [self->_piuPool requestBufferFromContext:tState.poolContext
                                                                       size:numberOfInstances * sizeof(*pius)
@@ -315,7 +355,8 @@ static NSString *iTermBgColorGeometryDegenerateReason(const iTermVertex *v, uint
                                                 @(iTermVertexInputIndexOffset): tState.offsetBuffer,
                                                 @(iTermVertexInputIndexDefaultBackgroundColorInfo): infoBuffer
                                }
-                             fragmentBuffers:@{ @(iTermFragmentBufferIndexBgColorChecksumReport): checksumReportBuffer }
+                             fragmentBuffers:@{ @(iTermFragmentBufferIndexBgColorChecksumReport): checksumReportBuffer,
+                                                @(iTermFragmentBufferIndexBgColorCoverageReport): coverageReportBuffer }
                                     textures:@{} ];
     }];
     if (tState.suppressedBottomHeight > 0) {
@@ -394,7 +435,8 @@ static NSString *iTermBgColorGeometryDegenerateReason(const iTermVertex *v, uint
                                                 @(iTermVertexInputIndexOffset): tState.offsetBuffer,
                                                 @(iTermVertexInputIndexDefaultBackgroundColorInfo): infoBuffer
                                }
-                             fragmentBuffers:@{ @(iTermFragmentBufferIndexBgColorChecksumReport): checksumReportBuffer }
+                             fragmentBuffers:@{ @(iTermFragmentBufferIndexBgColorChecksumReport): checksumReportBuffer,
+                                                @(iTermFragmentBufferIndexBgColorCoverageReport): coverageReportBuffer }
                                     textures:@{} ];
 
         tState.suppressedTopHeight = savedTop;
@@ -448,6 +490,82 @@ static NSString *iTermBgColorGeometryDegenerateReason(const iTermVertex *v, uint
     ITCriticalError(NO,
                     @"Background color GPU geometry checksum failed. Diagnostic written to %@",
                     path);
+}
+
+// Issue 12791: Per-triangle rasterizer coverage readout. triangle0/triangle1 are sparse
+// fragment-sample counts (1 fragment in 256) for the two triangles of the merged multi-row
+// default-background quad. Balanced counts mean both triangles rasterized; a near-zero
+// count on one side while the other covered the screen means that triangle was dropped
+// after the vertex stage - the failure the geometry checksum cannot see. We write a one-
+// shot baseline (to confirm the witness is live and show normal numbers) and a file every
+// time we see severe asymmetry (correlate its appearance with a diagonal sighting).
+- (void)reportCoverageForTransientState:(iTermBackgroundColorRendererTransientState *)tState
+                              triangle0:(uint32_t)triangle0
+                              triangle1:(uint32_t)triangle1 {
+    const uint32_t total = triangle0 + triangle1;
+    if (total == 0) {
+        // No merged multi-row quad was drawn this frame (e.g. a full screen of text).
+        return;
+    }
+    const uint32_t lo = MIN(triangle0, triangle1);
+    const uint32_t hi = MAX(triangle0, triangle1);
+    // Severe asymmetry: one triangle rasterized almost nothing while the other covered a
+    // meaningful area. hi>=64 filters out tiny quads where sampling noise dominates.
+    const BOOL asymmetric = (hi >= 64 && lo * 8 < hi);
+    if (!asymmetric && _wroteCoverageBaseline) {
+        return;
+    }
+    // Cap asymmetry dumps: a stuck artifact under rapid blend changes could otherwise write
+    // a file every frame. 20 is plenty to characterize it. The baseline is separate.
+    static const int kMaxAsymmetricFiles = 20;
+    if (asymmetric && _coverageAsymmetricFilesWritten >= kMaxAsymmetricFiles) {
+        return;
+    }
+
+    NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
+    NSString *filename = [NSString stringWithFormat:@"bgcolor-diag-coverage-%f.txt",
+                          [NSDate timeIntervalSinceReferenceDate]];
+    NSString *path = [appSupport stringByAppendingPathComponent:filename];
+
+    // Sampling is 1 fragment in 16x16=256, so multiply back to estimate covered pixels.
+    const uint64_t estPixels0 = (uint64_t)triangle0 * 256;
+    const uint64_t estPixels1 = (uint64_t)triangle1 * 256;
+
+    NSMutableString *dump = [NSMutableString string];
+    [dump appendFormat:@"Timestamp: %@\n", [NSDate date]];
+    [dump appendFormat:@"Verdict: %@\n", asymmetric ? @"ASYMMETRIC - one triangle rasterized almost nothing"
+                                                     : @"baseline (balanced coverage; witness is live)"];
+    if (asymmetric) {
+        const int droppedTriangle = (triangle0 < triangle1) ? 0 : 1;
+        [dump appendFormat:@"Under-covered triangle: %d (vertices %@)\n",
+            droppedTriangle, droppedTriangle == 0 ? @"0,1,2" : @"3,4,5"];
+    }
+    [dump appendFormat:@"Triangle 0 samples: %u (~%llu px)\n", triangle0, estPixels0];
+    [dump appendFormat:@"Triangle 1 samples: %u (~%llu px)\n", triangle1, estPixels1];
+    [dump appendFormat:@"Sampling: 1 fragment in 256 (16x16 grid)\n"];
+    [dump appendFormat:@"Viewport: %u x %u\n", tState.capturedViewportSize.x, tState.capturedViewportSize.y];
+    [dump appendFormat:@"CellSize: %.2f x %.2f\n",
+        tState.cellConfiguration.cellSize.width, tState.cellConfiguration.cellSize.height];
+    [dump appendFormat:@"Largest merged run: runLength=%u numRows=%u offset=(%.2f, %.2f)\n",
+        tState.bigQuadRunLength, tState.bigQuadNumRows,
+        tState.bigQuadOffset.x, tState.bigQuadOffset.y];
+    [dump appendFormat:@"Renderer mode: %d\n", (int)tState.capturedMode];
+
+    NSError *error = nil;
+    [dump writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:&error];
+    if (error) {
+        ELog(@"Failed to write bg-color coverage diagnostic: %@", error);
+    }
+    if (asymmetric) {
+        _coverageAsymmetricFilesWritten++;
+        ITCriticalError(NO,
+                        @"Background color quad triangle under-covered (t0=%u t1=%u). Diagnostic written to %@",
+                        triangle0, triangle1, path);
+    } else {
+        _wroteCoverageBaseline = YES;
+        DLog(@"Issue 12791: bg-color coverage baseline written to %@ (t0=%u t1=%u)",
+             path, triangle0, triangle1);
+    }
 }
 
 #pragma mark - iTermMetalDebugInfoFormatter
