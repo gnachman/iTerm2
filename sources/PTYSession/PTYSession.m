@@ -3638,6 +3638,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     // session into an inconsistent restartable-but-never-launched
     // state, so the early return covers both halves.
     if (!self.isRestartable) {
+        DLog(@"restartSessionWithCommand: session %@ is not restartable, ignoring", self);
         return;
     }
     if (command.length > 0) {

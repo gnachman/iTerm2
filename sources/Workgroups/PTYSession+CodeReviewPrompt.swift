@@ -28,9 +28,11 @@ extension PTYSession {
                                          windowController: PseudoTerminal?,
                                          oldCWD: String?,
                                          workgroupInstanceID: String) {
+        RLog("PTYSession[\(guid)]: presentCodeReviewPromptOverlay (initial deferred launch)")
         codeReviewRawCommand = rawCommand
         showCodeReviewPromptOverlay { [weak self] text in
             guard let self else { return }
+            RLog("PTYSession[\(self.guid)]: code-review overlay Start pressed, launching deferred program")
             let wrapped = self.wrappedCommandForCodeReview(text: text,
                                                             rawCommand: rawCommand)
             let request = iTermSessionAttachOrLaunchRequest(
@@ -66,9 +68,14 @@ extension PTYSession {
     // carries forward across reloads.
     @objc
     func reloadCodeReviewPromptOverlay() {
-        guard let rawCommand = codeReviewRawCommand else { return }
+        RLog("PTYSession[\(guid)]: reloadCodeReviewPromptOverlay")
+        guard let rawCommand = codeReviewRawCommand else {
+            RLog("PTYSession[\(guid)]: reloadCodeReviewPromptOverlay aborted, codeReviewRawCommand is nil")
+            return
+        }
         showCodeReviewPromptOverlay { [weak self] text in
             guard let self else { return }
+            RLog("PTYSession[\(self.guid)]: code-review overlay Start pressed, restarting program")
             let wrapped = self.wrappedCommandForCodeReview(text: text,
                                                             rawCommand: rawCommand)
             self.restart(withCommand: wrapped ?? "")
@@ -90,20 +97,35 @@ extension PTYSession {
     //      Gated on isRestartable() exactly like the toolbar Reload button.
     @objc @discardableResult
     func autoRequestCodeReview() -> Bool {
-        guard workgroupSessionMode == .codeReview else { return false }
+        RLog("PTYSession[\(guid)]: autoRequestCodeReview")
+        guard workgroupSessionMode == .codeReview else {
+            RLog("PTYSession[\(guid)]: autoRequestCodeReview aborted, not a code-review session (mode=\(workgroupSessionMode))")
+            return false
+        }
         if let overlay = view?.codeReviewPromptOverlay {
+            RLog("PTYSession[\(guid)]: autoRequestCodeReview submitting existing overlay")
             overlay.onStart?(overlay.text)
             return true
         }
-        guard isRestartable(), codeReviewRawCommand != nil else { return false }
+        guard isRestartable(), codeReviewRawCommand != nil else {
+            RLog("PTYSession[\(guid)]: autoRequestCodeReview aborted, restartable=\(isRestartable()) hasRawCommand=\(codeReviewRawCommand != nil)")
+            return false
+        }
         reloadCodeReviewPromptOverlay()
-        guard let overlay = view?.codeReviewPromptOverlay else { return false }
+        guard let overlay = view?.codeReviewPromptOverlay else {
+            RLog("PTYSession[\(guid)]: autoRequestCodeReview aborted, overlay not present after reload")
+            return false
+        }
+        RLog("PTYSession[\(guid)]: autoRequestCodeReview submitting freshly-presented overlay")
         overlay.onStart?(overlay.text)
         return true
     }
 
     private func showCodeReviewPromptOverlay(onStart: @escaping (String) -> Void) {
-        guard let sessionView: SessionView = view else { return }
+        guard let sessionView: SessionView = view else {
+            RLog("PTYSession[\(guid)]: showCodeReviewPromptOverlay aborted, session has no view")
+            return
+        }
         // On the second and later presentations for this session, default to
         // the prompt the user last submitted (a preset or a hand-edited
         // value) rather than the store's last-selected preset. The first
@@ -156,6 +178,7 @@ extension PTYSession {
 
         let resolvedCommand = evaluateSwiftyTemplate(rawCommand)
         if resolvedCommand.isEmpty {
+            DLog("wrappedCommandForCodeReview: resolved command is empty, returning nil")
             return nil
         }
         return ITAddressBookMgr.commandByWrapping(inLoginShell: resolvedCommand)

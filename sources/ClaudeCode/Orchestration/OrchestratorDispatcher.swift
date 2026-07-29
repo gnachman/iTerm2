@@ -2441,6 +2441,7 @@ final class OrchestratorDispatcher {
         let overlay = resolved.session.view?.codeReviewPromptOverlay
         let isReviewRole = (resolved.roleID == ClaudeCodeWorkgroupTemplate.ID.review)
         let sessionState = WorkgroupIntrospection.state(for: resolved.session)
+        RLog("OrchestratorDispatcher.doStartCodeReview role=\(resolved.roleName) workgroup=\(resolved.workgroupName) hasOverlay=\(overlay != nil) isReviewRole=\(isReviewRole) state=\(sessionState.rawValue) restartable=\(resolved.session.isRestartable())")
         if overlay == nil {
             guard isReviewRole else {
                 throw OrchestratorError.unsupported(reason: "Target \(resolved.roleName) in \(resolved.workgroupName) is not the Code Review role. start_code_review only targets the Code Review role; use send_text if you want to type text into another role.")
@@ -2503,9 +2504,11 @@ final class OrchestratorDispatcher {
             // the resolved command) so a fresh review runs rather than typing
             // the prompt into the already-running TUI. Guarded above on
             // isRestartable() + codeReviewRawCommand.
+            RLog("OrchestratorDispatcher.doStartCodeReview re-presenting overlay in restart mode (\(promptLabel))")
             resolved.session.reloadCodeReviewPromptOverlay()
         }
         guard let liveOverlay = resolved.session.view?.codeReviewPromptOverlay else {
+            RLog("OrchestratorDispatcher.doStartCodeReview overlay unavailable after reload for role=\(resolved.roleName)")
             throw OrchestratorError.unsupported(reason: "Code Review overlay unavailable on \(resolved.roleName) in \(resolved.workgroupName).")
         }
         // Fire the overlay's Start handler with the resolved prompt. Whether

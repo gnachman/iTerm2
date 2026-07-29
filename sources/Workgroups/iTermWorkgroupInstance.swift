@@ -1057,15 +1057,20 @@ extension iTermWorkgroupInstance: iTermGitPollerDelegate {
 extension iTermWorkgroupInstance: WorkgroupNavigationToolbarItemDelegate {
     func workgroupNavigationDidTapBack(ownerPeerID: String?) {
         guard let configID = ownerPeerID else { return }
-        diffSelector(forNonPeerConfigID: configID)?.selectPreviousFile()
+        let selector = diffSelector(forNonPeerConfigID: configID)
+        RLog("iTermWorkgroupInstance: nav Back config=\(configID) selector=\(selector != nil)")
+        selector?.selectPreviousFile()
     }
 
     func workgroupNavigationDidTapForward(ownerPeerID: String?) {
         guard let configID = ownerPeerID else { return }
-        diffSelector(forNonPeerConfigID: configID)?.selectNextFile()
+        let selector = diffSelector(forNonPeerConfigID: configID)
+        RLog("iTermWorkgroupInstance: nav Forward config=\(configID) selector=\(selector != nil)")
+        selector?.selectNextFile()
     }
 
     func workgroupNavigationDidTapReload(ownerPeerID: String?) {
+        RLog("iTermWorkgroupInstance: nav Reload config=\(ownerPeerID ?? "nil")")
         guard let configID = ownerPeerID else { return }
         // "Reload" means redo what's currently running, i.e.
         // re-execute the session's program. After a per-file pick
@@ -1074,27 +1079,36 @@ extension iTermWorkgroupInstance: WorkgroupNavigationToolbarItemDelegate {
         // pull cfg.command here because that would always reset to
         // the original entry command, which is not what users
         // expect from a reload button (cf. browser reload).
-        guard let session = liveSession(forConfigID: configID) else { return }
+        guard let session = liveSession(forConfigID: configID) else {
+            RLog("iTermWorkgroupInstance: nav Reload aborted, no live session for config=\(configID)")
+            return
+        }
         // Diff hosts handle their own restartability: a waiting host
         // (pendingDiffLaunch != nil, _program nil) reports
         // isRestartable() == false, but Reload there is still
         // meaningful (poll-check + fire if ready). See
         // PTYSession.reloadDiffWithDeferralIfNeeded for state matrix.
         if session.workgroupSessionMode == .diff {
+            RLog("iTermWorkgroupInstance: nav Reload dispatching to diff-deferral path for config=\(configID)")
             session.reloadDiffWithDeferralIfNeeded(
                 resolveCommand: { [weak self] in
                     self?.resolvedDiffReloadCommand(forConfigID: configID)
                 })
             return
         }
-        guard session.isRestartable() else { return }
+        guard session.isRestartable() else {
+            RLog("iTermWorkgroupInstance: nav Reload aborted, session not restartable config=\(configID) mode=\(session.workgroupSessionMode)")
+            return
+        }
         // Code-review hosts re-show the prompt overlay so the user
         // can edit their prompt before the program is rerun.
         if session.workgroupSessionMode == .codeReview,
            session.codeReviewRawCommand != nil {
+            RLog("iTermWorkgroupInstance: nav Reload re-showing code-review overlay for config=\(configID)")
             session.reloadCodeReviewPromptOverlay()
             return
         }
+        RLog("iTermWorkgroupInstance: nav Reload restarting session config=\(configID) mode=\(session.workgroupSessionMode)")
         session.restart()
     }
 
@@ -1145,10 +1159,12 @@ extension iTermWorkgroupInstance: WorkgroupNavigationToolbarItemDelegate {
 // here (the peer-toolbar version goes through iTermWorkgroupPeerPort).
 extension iTermWorkgroupInstance: CCDiffSelectorItemDelegate {
     func diffDidSelect(filename: String, sender: CCDiffSelectorItem) {
+        RLog("iTermWorkgroupInstance.diffDidSelect owner=\(sender.ownerPeerID ?? "nil")")
         guard let configID = sender.ownerPeerID,
               let cfg = config(forConfigID: configID),
               !cfg.perFileCommand.isEmpty,
               let session = liveSession(forConfigID: configID) else {
+            RLog("iTermWorkgroupInstance.diffDidSelect aborted, no config/session or empty perFileCommand for owner=\(sender.ownerPeerID ?? "nil")")
             return
         }
         let command = cfg.resolvedPerFileCommand(filename: filename,
@@ -1158,12 +1174,14 @@ extension iTermWorkgroupInstance: CCDiffSelectorItemDelegate {
     }
 
     func diffDidSelectAllFiles(sender: CCDiffSelectorItem) {
+        RLog("iTermWorkgroupInstance.diffDidSelectAllFiles owner=\(sender.ownerPeerID ?? "nil")")
         // See iTermWorkgroupPeerPort.diffDidSelectAllFiles for why
         // there's no isRestartable gate here.
         guard let configID = sender.ownerPeerID,
               let cfg = config(forConfigID: configID),
               !cfg.command.isEmpty,
               let session = liveSession(forConfigID: configID) else {
+            RLog("iTermWorkgroupInstance.diffDidSelectAllFiles aborted, no config/session or empty command for owner=\(sender.ownerPeerID ?? "nil")")
             return
         }
         let resolved = cfg.resolvedCommand(gitBase: currentGitBase)
@@ -1179,6 +1197,7 @@ extension iTermWorkgroupInstance: CCDiffSelectorItemDelegate {
     func diffNavigationStateDidChange(sender: CCDiffSelectorItem) {
         guard let configID = sender.ownerPeerID,
               let nav = navigationItem(forNonPeerConfigID: configID) else {
+            DLog("diffNavigationStateDidChange: no navigation item for owner=\(sender.ownerPeerID ?? "nil")")
             return
         }
         let position = sender.visibleFilePosition
@@ -1362,19 +1381,23 @@ extension iTermWorkgroupInstance {
             switch item {
             case .navigation(let shortcuts):
                 if Self.shortcutMatches(shortcuts.back, keystroke: keystroke) {
+                    RLog("iTermWorkgroupInstance: keyboard shortcut matched Back config=\(configID) delegate=\(delegate != nil)")
                     delegate?.workgroupNavigationDidTapBack(ownerPeerID: configID)
                     return true
                 }
                 if Self.shortcutMatches(shortcuts.forward, keystroke: keystroke) {
+                    RLog("iTermWorkgroupInstance: keyboard shortcut matched Forward config=\(configID) delegate=\(delegate != nil)")
                     delegate?.workgroupNavigationDidTapForward(ownerPeerID: configID)
                     return true
                 }
                 if Self.shortcutMatches(shortcuts.reload, keystroke: keystroke) {
+                    RLog("iTermWorkgroupInstance: keyboard shortcut matched Reload (navigation) config=\(configID) delegate=\(delegate != nil)")
                     delegate?.workgroupNavigationDidTapReload(ownerPeerID: configID)
                     return true
                 }
             case .reload(let shortcut):
                 if Self.shortcutMatches(shortcut, keystroke: keystroke) {
+                    RLog("iTermWorkgroupInstance: keyboard shortcut matched Reload config=\(configID) delegate=\(delegate != nil)")
                     delegate?.workgroupNavigationDidTapReload(ownerPeerID: configID)
                     return true
                 }
