@@ -249,6 +249,37 @@ final class ChatBlobCaptureTests: XCTestCase {
                       "a multi-round migration capture must not credit one turn's usage to a round")
     }
 
+    /// Finding 3 (interrupted/cancelled tool round): an orphaned tool_use (no
+    /// tool_result, e.g. a tool cancelled mid-turn) must NOT be frozen into a blob as
+    /// a broken pairing that a vendor 400s on replay. Capture reconstructs via the
+    /// same repair pass ChatAgent runs (repairingOrphanedToolPairs), which heals the
+    /// orphan BEFORE freezing, so the captured blob carries a well-formed
+    /// tool_use/tool_result pair. This pins that chain deterministically (the live
+    /// path is covered indirectly by the queue tests' orphan scenarios).
+    func testCapture_healsOrphanedToolUse_intoWellFormedBlob() throws {
+        let db = try makeTempDB()
+        // A round whose assistant tool_use never got a tool_result (interrupted).
+        let orphaned: [LLM.Message] = [
+            user("run a command"),
+            LLM.Message(role: .assistant,
+                        function_call: LLM.FunctionCall(name: "execute_command", arguments: "{}",
+                                                        id: "call_orphan", thoughtSignature: nil)),
+        ]
+        // Capture heals via the repair pass, exactly as ChatAgent's translate() does.
+        let healed = AIChatToolCallRepair.repairingOrphanedToolPairs(orphaned)
+        ChatBlobCapture.captureNewRounds(chatID: "A", allMessages: healed, api: .anthropic,
+                                         modelName: nil, hostedTools: HostedTools(), database: db)
+        let blobs = db.blobs(inChat: "A")
+        XCTAssertFalse(blobs.isEmpty, "the healed round must be frozen")
+        for blob in blobs {
+            let payload = String(decoding: blob.payload, as: UTF8.self)
+            if payload.contains("tool_use") {
+                XCTAssertTrue(payload.contains("tool_result"),
+                              "a captured round with a tool_use must be healed to carry its tool_result")
+            }
+        }
+    }
+
     func testCapture_recordsResponseID_fromRoundTail() throws {
         let db = try makeTempDB()
         // Responses-style: the round's final assistant message carries a responseID.

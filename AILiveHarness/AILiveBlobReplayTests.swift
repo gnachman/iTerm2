@@ -891,8 +891,11 @@ extension AILiveHarness {
         Self.blobSuspendProcessors(broker, on: self)
 
         // Lower the token budget so a few padded rounds force truncation; restore it.
-        let savedLimit = iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit)
-        let savedResponseLimit = iTermPreferences.int(forKey: kPreferenceKeyAIResponseTokenLimit)
+        // Clamp the restore targets to a sane floor: if a PRIOR run crashed before its
+        // teardown, the "saved" value could be the small test value itself, which would
+        // then persist and break normal chats. Never restore something that small.
+        let savedLimit = max(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit), 128000)
+        let savedResponseLimit = max(iTermPreferences.int(forKey: kPreferenceKeyAIResponseTokenLimit), 8000)
         // Big enough that turn 1 (system prompt + one round) fits, small enough that a
         // handful of ~1000-token rounds exceed it and force head-drops.
         iTermPreferences.setObject(NSNumber(value: 8000), forKey: kPreferenceKeyAITokenLimit)
@@ -977,6 +980,8 @@ extension AILiveHarness {
     }
 
     // MARK: - Helpers (file-local; the queue test's private helpers are not visible here)
+
+
 
     private static func blobConfigValue(_ key: String) -> String? {
         let configPath = AILiveHarness.configFilePath()
