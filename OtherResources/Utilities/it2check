@@ -48,7 +48,7 @@ stty -echo -icanon raw min 0 time 0
 
 # Consume all pending input.
 if [ "${BASH_VERSINFO[0]:-0}" -ge 4 ]; then
-  while read -t 0.1 -n 10000 none; do :; done
+  while read -t 0.01 -n 10000 none; do :; done
 else
   while read none; do :; done
 fi
