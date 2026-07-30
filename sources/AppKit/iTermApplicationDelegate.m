@@ -1507,6 +1507,7 @@ void TurnOnDebugLoggingAutomatically(void) {
                                    heading:@"Deprecation Notice"
                                     window:nil];
     }
+    [iTermMacOS13RequirementNotice maybeShow];
     DLog(@"didFinishLaunching");
 
     // Test-only: if launched with the purge flag, wipe the app's data-protection

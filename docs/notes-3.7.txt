@@ -719,6 +719,9 @@ Search and Selection Improvements:
 - New pointer action to copy link address.
 
 Menus and Miscellaneous:
+- Heads up: future betas will require macOS 13
+  (Ventura) or later. This is the last version to
+  support macOS 12. Sorry for the inconvenience!
 - New menu item to open new tabs next to the
   current tab or at the end (opposite of the
   default).

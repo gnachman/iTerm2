@@ -52,6 +52,7 @@ static NSString *const iTermUserDefaultsKeyClaudeCodeAutoSendClippingsBackfilled
 static NSString *const iTermUserDefaultsKeyClaudeCodeAutoRequestReviewBackfilled = @"NoSyncClaudeCodeAutoRequestReviewBackfilled";
 static NSString *const iTermUserDefaultsKeyAIModelCatalogUpdateConsent = @"NoSyncAIModelCatalogUpdateConsent";
 static NSString *const iTermUserDefaultsKeyAutoProvideConsent = @"NoSyncAutoProvideConsent";
+static NSString *const iTermUserDefaultsKeyHaveShownMacOS13RequirementNotice = @"NoSyncHaveShownMacOS13RequirementNotice";
 
 @implementation iTermUserDefaults
 
@@ -271,6 +272,15 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setHaveWarnedAboutUndoCloseShortcutChange:(BOOL)haveWarnedAboutUndoCloseShortcutChange {
     [self.userDefaults setBool:haveWarnedAboutUndoCloseShortcutChange
                         forKey:iTermUserDefaultsKeyHaveWarnedAboutUndoCloseShortcutChange];
+}
+
++ (BOOL)haveShownMacOS13RequirementNotice {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyHaveShownMacOS13RequirementNotice];
+}
+
++ (void)setHaveShownMacOS13RequirementNotice:(BOOL)haveShownMacOS13RequirementNotice {
+    [self.userDefaults setBool:haveShownMacOS13RequirementNotice
+                        forKey:iTermUserDefaultsKeyHaveShownMacOS13RequirementNotice];
 }
 
 + (BOOL)ignoreSystemWindowRestoration {
