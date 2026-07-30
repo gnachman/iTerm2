@@ -2313,3 +2313,10 @@ Bug Fixes:
   instead of a terminal, unless you’ve
   bound the scheme to a specific profile.
   Issue 12431.
+- Fixed the iPhone companion connection
+  getting stuck after the relay dropped an
+  idle socket. A keepalive ping that never
+  got a reply could hang forever, so the Mac
+  kept believing it was connected and never
+  reconnected. The ping now times out and
+  forces a reconnect.
