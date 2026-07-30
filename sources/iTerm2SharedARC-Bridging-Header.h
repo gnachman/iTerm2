@@ -118,6 +118,7 @@
 #import "iTermProfileSearchToken.h"
 #import "iTermPromise.h"
 #import "iTermPublisher.h"
+#import "iTermOptionalComponentDownloadWindowController.h"
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermRateLimitedUpdate.h"
 #import "iTermScriptArchive.h"
