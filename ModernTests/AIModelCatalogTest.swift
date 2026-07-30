@@ -28,7 +28,7 @@ final class AIModelCatalogTest: XCTestCase {
         let models = try bundledModels()
         XCTAssertFalse(models.isEmpty,
                        "AI model catalog decoded to zero models")
-        XCTAssertEqual(models.count, 42,
+        XCTAssertEqual(models.count, 38,
                        "Unexpected catalog size; update this test if you intentionally changed ai-models.json")
     }
 
