@@ -251,6 +251,29 @@ final class ChatBlobAssemblerTests: XCTestCase {
                                                       retainedBlobRefs: [b0.blobID.uuidString, UUID().uuidString]))
     }
 
+    // MARK: - AIConversation pre-reduce bail (must not drop the current round)
+
+    /// When the chat layer pre-reduces conversation.messages to the current round and
+    /// the blob path then DECLINES (protocol switch / oversized round / corrupt blob),
+    /// the fallback rebuilds the full history from fullHistoryProvider -- which yields
+    /// only the PRIOR rounds (translate(history) excludes the current turn). The
+    /// outgoing request must therefore be prior + current, never prior alone, or it
+    /// would resend the previous conversation with no new question.
+    @MainActor
+    func test_outgoingRequest_preReduceBail_includesCurrentRound() {
+        var convo = AIConversation(registrationProvider: nil, messages: [])
+        let currentUser = user("the NEW question")
+        convo.messages = [currentUser]  // pre-reduced: current round only
+        let prior = [user("old q"), asst("old a")]
+        convo.controller.blobReplayProvider = { _ in nil }   // force the blob path to bail
+        convo.controller.fullHistoryProvider = { prior }     // prior rounds only (excludes current)
+
+        let out = convo.outgoingRequestForTesting()
+        XCTAssertEqual(out.messages, prior + [currentUser],
+                       "bail must send prior rounds AND the current round")
+        XCTAssertNil(out.frozen)
+    }
+
     // MARK: - blobReplayPlan (full send decision: gate + reduce + truncate + splice)
 
     private func capture3Rounds(_ db: ChatDatabase, model: AIMetadata.Model) -> [[LLM.Message]] {

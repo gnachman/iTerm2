@@ -509,11 +509,15 @@ struct AIConversation {
             // Blob replay declined (protocol switch needing a re-freeze, an oversized
             // round the codec must elide, or corrupt/undecodable blobs) but the chat
             // layer pre-reduced `messages` to just the current round for the blob path.
-            // Rebuild the full history so the codec fallback never sends a history-less
-            // request, then truncate it the normal way. Delta mode skips this: it needs
+            // fullHistoryProvider reconstructs the PRIOR rounds only (it is
+            // translate(history), and history excludes the current turn), so append
+            // `messages` -- the current round the pre-reduce grew (the new user turn
+            // plus any tool-loop items) -- or the fallback would resend the prior
+            // conversation with no new question (and mid-loop, no tool results). Then
+            // truncate the whole thing the normal way. Delta mode skips this: it needs
             // only messages.last, which the pre-reduced list still carries.
             if let full = controller.fullHistoryProvider?() {
-                return (truncate(messages: full, maxTokens: maxTokens), nil)
+                return (truncate(messages: full + messages, maxTokens: maxTokens), nil)
             }
         }
         return (truncatedMessages, nil)
@@ -525,6 +529,12 @@ struct AIConversation {
             return truncate(messages: [lastMessage], maxTokens: maxTokens)
         }
         return truncate(messages: messages, maxTokens: maxTokens)
+    }
+
+    // Test seam: exposes the outgoing-message decision (blob replay vs pre-reduce
+    // bail vs delta/full) so the fallback can be pinned without driving a live request.
+    func outgoingRequestForTesting() -> (messages: [AITermController.Message], frozen: Data?) {
+        outgoingRequest()
     }
 }
 

@@ -408,54 +408,78 @@ final class ChatRestoreToolUsePersistenceTests: XCTestCase {
         return m
     }
 
-    /// The id load() carries forward for a pre-reduced Responses chat must equal what
-    /// AIConversation would pick from the non-reduced conversation --
-    /// translate(messages).last { .assistant }?.responseID -- INCLUDING when that id
-    /// is nil. The `nil` case is the whole point: a terminal assistant turn with no
-    /// id must yield nil (full resend), never an earlier turn's stale id.
-    private func assertCarriedIDMatchesTranslate(_ messages: [Message],
-                                                 _ label: String,
-                                                 file: StaticString = #file,
-                                                 line: UInt = #line) {
+    /// A persisted assistant request whose llmMessage has NO function_call (a
+    /// squelched/auto-approved shape). aiMessagesForStructuredReplay skips it, so it is
+    /// never the terminal assistant, even though role(from:) calls it .assistant.
+    private func requestMessageNoFunctionCall(_ responseID: String?) -> Message {
+        let llm = LLM.Message(role: .assistant, content: "no call here")
+        let rc = RemoteCommand(llmMessage: llm, content: .executeCommand(.init(command: "x")))
+        var m = Message(chatID: chatID, author: .agent,
+                        content: .remoteCommandRequest(.classic(rc), safe: nil),
+                        sentDate: Date(timeIntervalSince1970: 1_000), uniqueID: UUID())
+        m.responseID = responseID
+        return m
+    }
+
+    /// carriedPreviousResponseID is CONSERVATIVE: it returns EITHER the id translate
+    /// would pick (translate(messages).last { .assistant }?.responseID) OR nil, never a
+    /// DIFFERENT non-nil id. A wrong non-nil id is the only unsafe outcome (a stale
+    /// delta anchor that silently drops the tail from the server); nil just forces a
+    /// safe full resend.
+    private func assertCarriedIsSafe(_ messages: [Message], _ label: String,
+                                     file: StaticString = #file, line: UInt = #line) {
         let viaTranslate = ChatAgent.translateForTesting(messages, resolve: { _ in nil })
             .last { $0.role == .assistant }?.responseID
         let carried = ChatAgent.carriedPreviousResponseID(messages)
-        XCTAssertEqual(carried, viaTranslate,
-                       "carriedPreviousResponseID diverged from translate for: \(label)",
-                       file: file, line: line)
+        XCTAssertTrue(carried == viaTranslate || carried == nil,
+                      "unsafe carry: carried=\(carried ?? "nil") translate=\(viaTranslate ?? "nil") for: \(label)",
+                      file: file, line: line)
     }
 
-    func testCarriedPreviousResponseID_mirrorsTranslateSelection() {
-        // Normal Responses chat: the last assistant's id is carried.
-        assertCarriedIDMatchesTranslate(
-            [userText("a"), agentTextWithID("b", "resp_1"),
-             userText("c"), agentTextWithID("d", "resp_2")],
-            "carries the last assistant id")
-        XCTAssertEqual(
-            ChatAgent.carriedPreviousResponseID(
-                [userText("a"), agentTextWithID("b", "resp_1"),
-                 userText("c"), agentTextWithID("d", "resp_2")]),
-            "resp_2")
+    func testCarriedPreviousResponseID_conservativeAndSafe() {
+        // Normal Responses chat: carries the last assistant id exactly.
+        let normal = [userText("a"), agentTextWithID("b", "resp_1"),
+                      userText("c"), agentTextWithID("d", "resp_2")]
+        assertCarriedIsSafe(normal, "normal")
+        XCTAssertEqual(ChatAgent.carriedPreviousResponseID(normal), "resp_2")
 
-        // The reviewer's case: terminal assistant turn has NO id but an earlier one
-        // does. Must yield nil (full resend), NOT the stale earlier id.
+        // Terminal assistant with NO id but an earlier one has one: nil (full resend),
+        // never the stale earlier id.
         let staleTrap = [userText("a"), agentTextWithID("b", "resp_1"),
                          userText("c"), agentTextWithID("d", nil)]
-        assertCarriedIDMatchesTranslate(staleTrap, "nil terminal id does not revive earlier id")
-        XCTAssertNil(ChatAgent.carriedPreviousResponseID(staleTrap),
-                     "a nil-id terminal assistant turn must not carry an earlier turn's id")
+        assertCarriedIsSafe(staleTrap, "nil terminal id")
+        XCTAssertNil(ChatAgent.carriedPreviousResponseID(staleTrap))
 
-        // Trailing tool_result (role .function) after an assistant with an id: the id
-        // is still carried (the function turn is skipped), matching translate.
+        // Reviewer 3.1: terminal is a squelched function_call==nil request carrying an
+        // id. translate SKIPS it -> the id is the earlier real assistant's. carried must
+        // skip it too, not return the request's id.
+        let skippedReq = [userText("a"), agentTextWithID("real", "resp_real"),
+                          requestMessageNoFunctionCall("resp_stale")]
+        assertCarriedIsSafe(skippedReq, "skipped nil-fn request terminal")
+        XCTAssertEqual(ChatAgent.carriedPreviousResponseID(skippedReq), "resp_real",
+                       "a function_call==nil request must not be taken as the terminal assistant")
+
+        // Reviewer 3.2: terminal is an ORPHAN tool_result. translate+repair heals it
+        // into a nil-id tool_use, so its terminal id is nil; carried must be nil, not
+        // the earlier real assistant's id.
+        let orphan = [userText("a"), agentTextWithID("real", "resp_real"),
+                      responseMessage(callID: "orphan", requestUUID: UUID())]
+        assertCarriedIsSafe(orphan, "orphan tool_result terminal")
+        XCTAssertNil(ChatAgent.carriedPreviousResponseID(orphan),
+                     "an orphan tool_result terminal (repaired to a nil-id tool_use) carries nil")
+
+        // Safe-but-not-exact: a history ending with a COMPLETE tool pair and no final
+        // reply is unreachable for a pre-reduced chat (a completed round ends with an
+        // agent reply); carried is the safe nil rather than translate's tool_use id.
         let req = UUID()
-        assertCarriedIDMatchesTranslate(
-            [userText("run"),
-             { var m = requestMessage(callID: "c1", requestUUID: req); m.responseID = "resp_9"; return m }(),
-             responseMessage(callID: "c1", requestUUID: req)],
-            "trailing tool_result skipped; assistant id carried")
+        let midLoop = [userText("run"),
+                       { var m = requestMessage(callID: "c1", requestUUID: req); m.responseID = "resp_9"; return m }(),
+                       responseMessage(callID: "c1", requestUUID: req)]
+        assertCarriedIsSafe(midLoop, "complete pair terminal (unreachable for pre-reduce)")
+        XCTAssertNil(ChatAgent.carriedPreviousResponseID(midLoop))
 
-        // No assistant turn at all: nil.
-        assertCarriedIDMatchesTranslate([userText("hi")], "no assistant -> nil")
+        // No assistant at all: nil.
+        assertCarriedIsSafe([userText("hi")], "no assistant")
         XCTAssertNil(ChatAgent.carriedPreviousResponseID([userText("hi")]))
     }
 }

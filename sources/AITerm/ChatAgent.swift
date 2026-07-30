@@ -439,7 +439,8 @@ class ChatAgent {
         // the full translate below, and the send path's fullHistoryProvider rebuilds
         // everything if the blob path later bails.
         let blobCount = reduceForReplay ? broker.listModel.chatDatabase.blobCount(inChat: chatID) : 0
-        if blobCount > 0 && Self.reconstructedRoundCount(messages) == blobCount {
+        if blobCount > 0 && Self.reconstructedRoundCount(messages) == blobCount
+            && !Self.historyUsesExplainFeature(messages) {
             conversation.messages = []
             blobsCoverHistoryThisTurn = true
             fullHistoryReconstructor = { [weak self] in
@@ -686,20 +687,56 @@ class ChatAgent {
         return Array(messages[starts[existing]...])
     }
 
+    /// True if the history uses the Explain feature. MessageToPromptStateMachine.mode
+    /// is the one piece of translate() state that CROSSES a round boundary: an
+    /// .explanationRequest sets a mode consumed by the NEXT round's first user turn
+    /// (wrapping it via conversationalPrompt). The reduced send path skips translate
+    /// entirely and the tail-only capture path translates a suffix through a fresh
+    /// state machine, so a mode leaked from a prior round would render the boundary
+    /// turn's bytes differently than the whole-history translate -- breaking the
+    /// byte-identical invariant (and, on Anthropic's byte-prefix cache, perturbing the
+    /// frozen prefix). Explain chats are rare, so both fast paths fall back to the full
+    /// translate when one is present rather than model the mode carry.
+    static func historyUsesExplainFeature(_ messages: [Message]) -> Bool {
+        messages.contains {
+            if case .explanationRequest = $0.content { return true }
+            return false
+        }
+    }
+
     /// The previous_response_id to carry forward when load() pre-reduces a chat for
-    /// blob replay (AITermController.reducedHistoryPreviousResponseID). It MUST select
-    /// the SAME id AIConversation.complete would from the non-reduced conversation --
-    /// `self.messages.last { $0.role == .assistant }?.responseID` -- i.e. the LAST
-    /// assistant turn's id EVEN WHEN IT IS nil. The nil case is load-bearing: a
-    /// Responses chat whose terminal assistant turn recorded no id (an interrupted
-    /// turn) must fall back to a full resend, NOT revive an earlier turn's stale id
-    /// (which would silently drop the tail from the server's context). So do not add a
-    /// `responseID != nil` filter -- returning the last assistant's nil is the point.
-    /// (This mirrors the display->assistant mapping without translating; the only
-    /// unmodeled divergence is a repair-synthesized terminal tool_use, which is out of
-    /// scope for delta mode.)
+    /// blob replay (AITermController.reducedHistoryPreviousResponseID). It approximates
+    /// what AIConversation.complete would pick from the non-reduced conversation --
+    /// `translate(messages).last { $0.role == .assistant }?.responseID` -- WITHOUT
+    /// translating, and is deliberately CONSERVATIVE: it never returns a non-nil id
+    /// that translate would not, because a wrong non-nil id is the only unsafe outcome
+    /// (delta mode would resume from a stale point and silently drop the tail); a nil
+    /// just falls back to a full, always-correct resend.
+    ///
+    /// It walks from the end applying aiMessagesForStructuredReplay's SAME content
+    /// filter (so a squelched function_call==nil request -- which role(from:) calls
+    /// .assistant but replay drops -- is skipped, not mistaken for the terminal
+    /// assistant) and returns the last INCLUDED message's id only if that message is
+    /// an assistant turn. A trailing user turn or tool-result turn yields nil: the
+    /// tool-result case matches translate, whose repair pass heals a trailing orphan
+    /// into a nil-id tool_use; the rarer incomplete-history cases resolve to the safe
+    /// full resend. The nil-inclusive assistant case is load-bearing (an interrupted
+    /// terminal turn with no id must not revive an earlier id).
     static func carriedPreviousResponseID(_ messages: [Message]) -> String? {
-        messages.last { AITermController.Message.role(from: $0) == .assistant }?.responseID
+        for message in messages.reversed() {
+            switch message.content {
+            case .setPermissions, .clientLocal, .renameChat, .append, .appendAttachment,
+                    .commit, .vectorStoreCreated, .userCommand, .selectSessionRequest,
+                    .unsupported:
+                continue
+            case .remoteCommandRequest(let payload, safe: _):
+                guard payload.llmMessage.function_call != nil else { continue }
+            default:
+                break
+            }
+            return AITermController.Message.role(from: message) == .assistant ? message.responseID : nil
+        }
+        return nil
     }
 
     /// Resolve a turn's model name the same way request routing does
@@ -1304,6 +1341,19 @@ class ChatAgent {
         let captureHostedTools = conversation.hostedTools
 
         if let responseID = userMessage.inResponseTo {
+            // deleteMessages both truncates conversation.messages at the anchor and
+            // stamps the delta previousResponseID. On a pre-reduced turn
+            // conversation.messages holds only the current round, so an anchor pointing
+            // into a PRIOR round can do neither -- it silently no-ops and the frozen
+            // history past the edit point still replays. Unreachable today: a non-tail
+            // anchor comes only from an edit/resume, which clears the chat's blobs
+            // (ChatListModel.delete -> replaceBlobs) and forces a NON-reduced turn; a
+            // normal send's anchor is the tail (a no-op anyway). Trip loudly if that
+            // coupling ever breaks rather than send stale history silently.
+            if blobsCoverHistoryThisTurn,
+               responseID != history.last(where: { $0.responseID != nil })?.responseID {
+                RLog("ChatAgent: non-tail inResponseTo anchor on a pre-reduced turn in \(chatID); stale frozen history may replay (edit-clears-blobs invariant violated?)")
+            }
             conversation.deleteMessages(after: responseID)
         }
 
@@ -1634,7 +1684,7 @@ class ChatAgent {
                                       database: ChatDatabase) -> Int {
         let existing = database.blobCount(inChat: chatID)
         let sameProtocol = existing == 0 || database.storedBlobProtocol(inChat: chatID) == Int(api.rawValue)
-        if existing > 0, sameProtocol,
+        if existing > 0, sameProtocol, !Self.historyUsesExplainFeature(display),
            let tail = Self.displayTailForNewRounds(display, existing: existing) {
             let tailMessages = translate(messages: tail)
             // The tail must begin at a clean round boundary (a user turn). It does by
