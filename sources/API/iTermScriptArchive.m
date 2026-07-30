@@ -8,6 +8,8 @@
 #import "iTermScriptArchive.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermSetupCfgParser.h"
 #import "iTermWarning.h"
@@ -286,6 +288,26 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
         NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Could not write to %@", to] };
         NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:1 userInfo:userInfo];
         completion(error, nil);
+        return;
+    }
+
+    if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+        // uv path: downloading uv and building the .venv are one step, so skip the
+        // legacy runtime download/install entirely and provision into `from`.
+        DLog(@"Will provision uv environment at %@", from);
+        [[iTermUvProvisioner shared] downloadAndProvisionFullEnvironmentWithContainer:from
+                                                              requestedPythonVersion:setupParser.pythonVersion ?: @"3.12"
+                                                                        dependencies:dependencies ?: @[]
+                                                                      createSetupCfg:NO
+                                                                          completion:^(NSError *errorStatus) {
+            [self didInstallPythonRuntimeWithError:errorStatus
+                                              from:from
+                                                to:to
+                                        completion:^(NSError *runtimeInstallError) {
+                completion(runtimeInstallError,
+                           runtimeInstallError == nil ? [NSURL fileURLWithPath:to] : nil);
+            }];
+        }];
         return;
     }
 

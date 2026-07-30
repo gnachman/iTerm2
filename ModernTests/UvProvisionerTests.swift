@@ -192,4 +192,74 @@ final class UvProvisionerLiveTests: XCTestCase {
         let out = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
         XCTAssertTrue(out.contains("uv "), "unexpected uv --version output: \(out)")
     }
+
+    // Tier C flagship: install uv, then use it to provision a full-environment
+    // script (uv venv + uv pip install iterm2), and confirm the resulting venv can
+    // import iterm2. Skipped by default; run with ITERM2_UV_LIVE=1.
+    func testProvisionFullEnvironmentEndToEnd() throws {
+        try XCTSkipUnless(ProcessInfo.processInfo.environment["ITERM2_UV_LIVE"] == "1",
+                          "Set ITERM2_UV_LIVE=1 to run the live uv provisioning test")
+        let entry = try XCTUnwrap(iTermUvProvisioner.selectedEntry(forMacOSVersion: "13.0"))
+        let root = (NSTemporaryDirectory() as NSString).appendingPathComponent("uvprov-\(UUID().uuidString)")
+        addTeardownBlock { try? FileManager.default.removeItem(atPath: root) }
+
+        // Install uv into a temp location.
+        let uvPath = (root as NSString).appendingPathComponent("bin/uv")
+        let uvData = try Data(contentsOf: try XCTUnwrap(URL(string: entry.url)))
+        XCTAssertNil(iTermUvProvisioner.installDownloadedTarball(
+            data: uvData, entry: entry, destinationBinaryPath: uvPath))
+
+        // Provision a full-environment script with it.
+        let container = (root as NSString).appendingPathComponent("MyScript")
+        try FileManager.default.createDirectory(atPath: container, withIntermediateDirectories: true)
+        let result = iTermUvProvisioner.provisionFullEnvironment(
+            uvPath: uvPath,
+            uvVersion: entry.uvVersion,
+            pythonInstallDir: (root as NSString).appendingPathComponent("python"),
+            cacheDir: (root as NSString).appendingPathComponent("cache"),
+            container: container,
+            requestedPythonVersion: "3.9",
+            dependencies: [])
+        switch result {
+        case .failure(let error):
+            XCTFail("provisioning failed: \(error)")
+            return
+        case .success(let marker):
+            XCTAssertEqual(marker.python, "3.9")
+            XCTAssertNil(marker.remappedFrom)
+        }
+
+        // It is recognized as a uv environment and its interpreter can import iterm2.
+        XCTAssertEqual(iTermScriptRuntime.backend(forScriptContainer: container), .uv)
+        let venvPython = try XCTUnwrap(iTermScriptRuntime.uvInterpreterPath(forScriptContainer: container))
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: venvPython)
+        process.arguments = ["-c", "import iterm2; import certifi; print('ok')"]
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+        try process.run()
+        process.waitUntilExit()
+        let out = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        XCTAssertEqual(process.terminationStatus, 0, "import failed: \(out)")
+        XCTAssertTrue(out.contains("ok"))
+
+        // The uv REPL runs `python -m asyncio`, which must support top-level await
+        // (that is the whole reason apython/aioconsole can be dropped).
+        let repl = Process()
+        repl.executableURL = URL(fileURLWithPath: venvPython)
+        repl.arguments = iTermReplLauncher.arguments(usesUV: true)
+        let stdinPipe = Pipe()
+        let stdoutPipe = Pipe()
+        repl.standardInput = stdinPipe
+        repl.standardOutput = stdoutPipe
+        repl.standardError = stdoutPipe
+        try repl.run()
+        stdinPipe.fileHandleForWriting.write(Data("import iterm2\nawait asyncio.sleep(0)\nprint('REPL_OK')\n".utf8))
+        stdinPipe.fileHandleForWriting.closeFile()
+        repl.waitUntilExit()
+        let replOut = String(data: stdoutPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        XCTAssertTrue(replOut.contains("REPL_OK"),
+                      "asyncio REPL did not evaluate top-level await: \(replOut)")
+    }
 }

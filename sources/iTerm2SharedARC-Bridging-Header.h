@@ -121,6 +121,7 @@
 #import "iTermOptionalComponentDownloadWindowController.h"
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermRateLimitedUpdate.h"
+#import "iTermAPIScriptLauncher.h"
 #import "iTermScriptArchive.h"
 #import "iTermSignatureVerifier.h"
 #import "SIGIdentity.h"

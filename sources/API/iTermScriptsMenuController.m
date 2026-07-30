@@ -784,22 +784,35 @@ NS_ASSUME_NONNULL_BEGIN
     RLog(@"url=%@ deps=%@ pythonVersion=%@ selectedEnvironment=%@", url, dependencies, pythonVersion, @(picker.selectedEnvironment));
     if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
         NSURL *folder = [NSURL fileURLWithPath:[self folderForFullEnvironmentSavePanelURL:url]];
-        NSURL *existingEnv = [folder URLByAppendingPathComponent:@"iterm2env"];
-        [[NSFileManager defaultManager] removeItemAtURL:existingEnv error:nil];
-        [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder
-                                                                     dependencies:dependencies
-                                                                    pythonVersion:pythonVersion
-                                                                       completion:^(NSError *errorStatus) {
+        void (^installCompletion)(NSError *) = ^(NSError *errorStatus) {
             if (errorStatus != nil) {
                  NSAlert *alert = [[NSAlert alloc] init];
                  alert.messageText = @"Installation Failed";
-                 alert.informativeText = [NSString stringWithFormat:@"An error ocurred while installing the Python runtime. Remove ~/Library/Application Support/iTerm2/iterm2env and try again. The error was: %@", errorStatus.localizedDescription];
+                 if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+                     alert.informativeText = [NSString stringWithFormat:@"An error occurred while creating the Python environment. The error was: %@", errorStatus.localizedDescription];
+                 } else {
+                     alert.informativeText = [NSString stringWithFormat:@"An error ocurred while installing the Python runtime. Remove ~/Library/Application Support/iTerm2/iterm2env and try again. The error was: %@", errorStatus.localizedDescription];
+                 }
                  [alert runModal];
                  return;
              }
              [self finishInstallingNewPythonScriptForPicker:picker url:url];
              [self build];
-         }];
+        };
+        if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+            [[iTermUvProvisioner shared] downloadAndProvisionFullEnvironmentWithContainer:folder.path
+                                                                  requestedPythonVersion:pythonVersion ?: @"3.12"
+                                                                            dependencies:dependencies ?: @[]
+                                                                          createSetupCfg:YES
+                                                                              completion:installCompletion];
+        } else {
+            NSURL *existingEnv = [folder URLByAppendingPathComponent:@"iterm2env"];
+            [[NSFileManager defaultManager] removeItemAtURL:existingEnv error:nil];
+            [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder
+                                                                         dependencies:dependencies
+                                                                        pythonVersion:pythonVersion
+                                                                           completion:installCompletion];
+        }
     } else {
         [self finishInstallingNewPythonScriptForPicker:picker url:url];
     }

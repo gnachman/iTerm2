@@ -277,6 +277,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)killSessionsOnLogout;
 + (NSString *)lastpassGroups;
 + (BOOL)laxNilPolicyInInterpolatedStrings;
++ (BOOL)pythonRuntimeUsesUV;
 + (BOOL)leftAlignTitleBarMinimalTahoe;
 + (double)lightModeInactiveTabDarkness;
 + (NSString *)llmPlatform;

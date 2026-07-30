@@ -3245,10 +3245,50 @@ static iTermKeyEventReplayer *gReplayer;
     [self.scriptsMenuController build];
 }
 
+- (void)launchREPLWithCommand:(NSString *)command arguments:(NSArray<NSString *> *)arguments {
+    NSURL *bannerURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
+    NSString *bannerText = [NSString stringWithContentsOfURL:bannerURL encoding:NSUTF8StringEncoding error:nil];
+    NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCookie];
+    NSString *key = [[NSUUID UUID] UUIDString];
+    NSString *identifier = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
+    iTermScriptHistoryEntry *entry = [[[iTermScriptHistoryEntry alloc] initWithName:@"REPL"
+                                                                           fullPath:nil
+                                                                         identifier:identifier
+                                                                          relaunch:nil] autorelease];
+    [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
+    NSDictionary *environment = @{ @"ITERM2_COOKIE": cookie,
+                                   @"ITERM2_KEY": key };
+
+    [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
+                                                           arguments:arguments
+                                                              inject:[bannerText dataUsingEncoding:NSUTF8StringEncoding]
+                                                         environment:environment
+                                                                 pwd:nil
+                                                             options:iTermSingleUseWindowOptionsDoNotEscapeArguments
+                                                      didMakeSession:nil
+                                                          completion:nil];
+}
+
 - (IBAction)openREPL:(id)sender {
     DLog(@"%@", sender);
     if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
         DLog(@"Not homeDirectoryDotDir");
+        return;
+    }
+    if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+        [[iTermUvProvisioner shared] downloadAndProvisionSharedVenvWithRequestedPythonVersion:@"3.12"
+                                                                                  completion:^(NSError *uvError, NSString *sharedPython) {
+            if (uvError != nil || sharedPython == nil) {
+                return;
+            }
+            if (![iTermAPIHelper sharedInstanceFromExplicitUserAction]) {
+                return;
+            }
+            // A uv venv has no apython shim; the stdlib asyncio REPL provides
+            // top-level await.
+            [self launchREPLWithCommand:[sharedPython stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]
+                              arguments:[iTermReplLauncher argumentsWithUsesUV:YES]];
+        }];
         return;
     }
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
@@ -3272,27 +3312,7 @@ static iTermKeyEventReplayer *gReplayer;
             return;
         }
         NSString *apython = [[[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPythonWithPythonVersion:nil] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"] stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
-        NSURL *bannerURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
-        NSString *bannerText = [NSString stringWithContentsOfURL:bannerURL encoding:NSUTF8StringEncoding error:nil];
-        NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCookie];
-        NSString *key = [[NSUUID UUID] UUIDString];
-        NSString *identifier = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
-        iTermScriptHistoryEntry *entry = [[[iTermScriptHistoryEntry alloc] initWithName:@"REPL"
-                                                                               fullPath:nil
-                                                                             identifier:identifier
-                                                                              relaunch:nil] autorelease];
-        [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
-        NSDictionary *environment = @{ @"ITERM2_COOKIE": cookie,
-                                       @"ITERM2_KEY": key };
-
-        [[iTermController sharedInstance] openSingleUseWindowWithCommand:apython
-                                                               arguments:@[ @"--banner=\\\"\\\"" ]
-                                                                  inject:[bannerText dataUsingEncoding:NSUTF8StringEncoding]
-                                                             environment:environment
-                                                                     pwd:nil
-                                                                 options:iTermSingleUseWindowOptionsDoNotEscapeArguments
-                                                          didMakeSession:nil
-                                                              completion:nil];
+        [self launchREPLWithCommand:apython arguments:[iTermReplLauncher argumentsWithUsesUV:NO]];
     }];
 }
 

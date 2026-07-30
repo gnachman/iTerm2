@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermAPIConnectionIdentifierController.h"
 #import "iTermAPIHelper.h"
 #import "iTermController.h"
@@ -30,6 +31,10 @@
 #import "PTYTask.h"
 
 static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallbackNotification = @"iTermAPIScriptLauncherScriptDidFailUserNotificationCallbackNotification";
+
+@interface iTermAPIScriptLauncher ()
++ (NSString *)uvCertifiPathInVenv:(NSString *)venvDirectory;
+@end
 
 @implementation iTermAPIScriptLauncher
 
@@ -175,6 +180,12 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                     virtualEnv:(NSString *)originalVirtualenv
                                     completion:(void (^)(NSString *))completion {
     DLog(@"fullPath=%@ originalVirtualenv=%@", fullPath, originalVirtualenv);
+    // A uv-provisioned script has no legacy iterm2env version to check; the legacy
+    // runtime-upgrade path does not apply to it, so launch it directly.
+    if ([iTermScriptRuntime backendForScriptContainer:fullPath] == iTermScriptRuntimeBackendUv) {
+        completion(originalVirtualenv);
+        return;
+    }
     NSString *virtualenv = originalVirtualenv;
     NSString *iterm2env = [fullPath stringByAppendingPathComponent:@"iterm2env"];
     NSString *saved = [fullPath stringByAppendingPathComponent:@"saved-iterm2env"];
@@ -241,6 +252,29 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         }
 
         NSString *pythonVersion = [self inferredPythonVersionFromScriptAt:filename];
+        if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+            // Basic scripts share a per-minor uv venv. Ensure it exists (downloading
+            // uv and provisioning on first use), then launch the script with it. Once
+            // provisioned this is offline; launch is a bare exec of the venv python.
+            [[iTermUvProvisioner shared] downloadAndProvisionSharedVenvWithRequestedPythonVersion:pythonVersion ?: @"3.12"
+                                                                                      completion:^(NSError *uvError, NSString *sharedPython) {
+                if (uvError != nil || sharedPython == nil) {
+                    NSAlert *alert = [[NSAlert alloc] init];
+                    alert.messageText = @"Python Environment Unavailable";
+                    alert.informativeText = [NSString stringWithFormat:@"Could not prepare the Python environment for this script: %@",
+                                             uvError.localizedDescription ?: @"unknown error"];
+                    [alert runModal];
+                    return;
+                }
+                [self reallyLaunchScript:filename
+                                fullPath:fullPath
+                               arguments:arguments
+                          withVirtualEnv:sharedPython
+                           pythonVersion:pythonVersion
+                      explicitUserAction:explicitUserAction];
+            }];
+            return;
+        }
         [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                             pythonVersion:pythonVersion
                                                                                 minimumEnvironmentVersion:0
@@ -521,22 +555,52 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     // OpenSSL bakes in the directory where you compiled it so it can find root certs.
     // That works great if you happen to be me, but it seems that most people aren't.
     // Luckily it lets you set some environment variables to find cert stores.
-    NSString *version = [[virtualenv stringByDeletingLastPathComponent] stringByDeletingLastPathComponent];
-    environment[@"SSL_CERT_FILE"] = [version stringByAppendingPathComponents:@[
-        @"lib",
-        [NSString stringWithFormat:@"python%@", pythonVersion],
-        @"site-packages",
-        @"pip",
-        @"_vendor",
-        @"certifi",
-        @"cacert.pem"
-    ]];
-    environment[@"SSL_CERT_DIR"] = [version stringByAppendingPathComponents:@[
-        @"openssl",
-        @"ssl",
-        @"certs"
-    ]];
+    NSString *venvDirectory = [[virtualenv stringByDeletingLastPathComponent] stringByDeletingLastPathComponent];
+    NSString *pyvenvCfg = [venvDirectory stringByAppendingPathComponent:@"pyvenv.cfg"];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:pyvenvCfg]) {
+        // A uv-provisioned venv (a per-script .venv or a shared basic-script venv):
+        // certifi is an ordinary wheel and there is no baked-in openssl cert
+        // directory, so point at the venv's certifi and do not set SSL_CERT_DIR.
+        NSString *certifi = [self uvCertifiPathInVenv:venvDirectory];
+        if (certifi) {
+            environment[@"SSL_CERT_FILE"] = certifi;
+        }
+    } else {
+        environment[@"SSL_CERT_FILE"] = [venvDirectory stringByAppendingPathComponents:@[
+            @"lib",
+            [NSString stringWithFormat:@"python%@", pythonVersion],
+            @"site-packages",
+            @"pip",
+            @"_vendor",
+            @"certifi",
+            @"cacert.pem"
+        ]];
+        environment[@"SSL_CERT_DIR"] = [venvDirectory stringByAppendingPathComponents:@[
+            @"openssl",
+            @"ssl",
+            @"certs"
+        ]];
+    }
     return environment;
+}
+
+// The certifi cacert.pem inside a uv .venv, whose interpreter-relative lib path is
+// lib/python<X.Y>/site-packages/certifi/cacert.pem. The minor version is discovered
+// from the single python* directory so we do not depend on the requested version
+// (which may have been remapped during provisioning).
++ (NSString *)uvCertifiPathInVenv:(NSString *)venvDirectory {
+    NSString *lib = [venvDirectory stringByAppendingPathComponent:@"lib"];
+    NSArray<NSString *> *entries = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:lib error:nil];
+    for (NSString *entry in entries) {
+        if (![entry hasPrefix:@"python"]) {
+            continue;
+        }
+        NSString *candidate = [lib stringByAppendingPathComponents:@[ entry, @"site-packages", @"certifi", @"cacert.pem" ]];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:candidate]) {
+            return candidate;
+        }
+    }
+    return nil;
 }
 
 + (NSArray *)argumentsToRunScript:(NSString *)filename
@@ -662,6 +726,13 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         if (![[NSFileManager defaultManager] fileExistsAtPath:expectedPath isDirectory:nil]) {
             return nil;
         }
+    }
+
+    // A uv-provisioned script is detected purely from what is on disk (a .venv plus
+    // the python-runtime.json marker), independent of the pythonRuntimeUsesUV gate,
+    // so toggling the gate never strands an already-provisioned script.
+    if ([iTermScriptRuntime backendForScriptContainer:path] == iTermScriptRuntimeBackendUv) {
+        return [iTermScriptRuntime uvInterpreterPathForScriptContainer:path];
     }
 
     // Does it have a pyenv?
