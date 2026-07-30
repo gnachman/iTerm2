@@ -513,6 +513,100 @@ extension AILiveHarness {
                       "model must recall the seeded name from the full replay; got: \(lastAgentText)")
     }
 
+    /// Responses DELTA mode survives the send-side pre-reduce. A pre-reduced turn
+    /// drops the prior assistant turns from conversation.messages, so the delta anchor
+    /// (previous_response_id) can no longer be read from the message list; ChatAgent
+    /// carries it forward (carriedPreviousResponseID -> reducedHistoryPreviousResponseID).
+    /// This drives a multi-turn Responses chat and asserts that a LATER turn still
+    /// enters delta mode (its request carries previous_response_id and omits the seed
+    /// history), and that the server-held context is intact (the model recalls a secret
+    /// from turn 1). If the carry-forward regressed, the turn would silently fall back
+    /// to a full stateless replay (no previous_response_id) -- caught here.
+    func test_chat_responses_deltaModeSurvivesPreReduce() throws {
+        guard let apiKey = Self.blobConfigValue("OPENAI_API_KEY"), !apiKey.isEmpty else {
+            throw XCTSkip("No OPENAI_API_KEY")
+        }
+        guard let responsesModel = AIMetadata.instance.models.first(where: { $0.api == .responses }) else {
+            throw XCTSkip("No Responses-API model in AIMetadata")
+        }
+        guard let broker = ChatBroker.instance else { throw XCTSkip("ChatBroker.instance unavailable") }
+        Self.blobSuspendProcessors(broker, on: self)
+
+        let wire = BlobWireCapture()
+        iTermAIClient.liveObserver = { capture in
+            switch capture.request.body {
+            case .string(let s): wire.requests.append(s)
+            case .bytes(let b): wire.requests.append("<\(b.count) bytes>")
+            }
+            if let response = capture.response { wire.responses.append(response.data) }
+            else if !capture.streamChunks.isEmpty { wire.responses.append(capture.streamChunks.joined()) }
+        }
+        defer { iTermAIClient.liveObserver = nil }
+
+        let chatID = try broker.create(
+            chatWithTitle: "live responses delta \(UUID().uuidString.prefix(8))",
+            terminalSessionGuid: "blob-resp-delta",
+            browserSessionGuid: nil,
+            permissions: "",
+            initialMessages: [])
+        addTeardownBlock { try? broker.delete(chatID: chatID) }
+        try broker.listModel.setModel(chatID: chatID, modelName: responsesModel.name)
+
+        let registrationProvider = BlobTestRegistrationProvider(apiKey: apiKey)
+        let registrationSub = broker.subscribe(chatID: chatID, registrationProvider: registrationProvider) { _ in }
+        defer { registrationSub.unsubscribe() }
+
+        func runTurn(_ body: String) throws {
+            let ended = expectation(description: "turn ends")
+            var done = false
+            let sub = broker.subscribe(chatID: chatID, registrationProvider: nil) { update in
+                if case .turnLifecycle(let event) = update, event == .ended, !done { done = true; ended.fulfill() }
+            }
+            defer { sub.unsubscribe() }
+            var msg = Message(chatID: chatID, author: .user,
+                              content: .plainText(body, context: nil),
+                              sentDate: Date(), uniqueID: UUID())
+            msg.configuration = Message.Configuration(hostedWebSearchEnabled: false, vectorStoreIDs: [],
+                                                      model: responsesModel.name, shouldThink: false)
+            try broker.publish(message: msg, toChatID: chatID, partial: false)
+            wait(for: [ended], timeout: 120)
+        }
+
+        let secret = "TOPAZ-LYNX-3390"
+        try runTurn("Remember this secret code exactly: \(secret). Reply with only: OK")
+        // Turn 2 is pre-reduced (turn 1's round is frozen). Delta mode must engage from
+        // the carried previous_response_id, not a full blob replay.
+        try runTurn("What is 2 + 2? Reply with only the digit.")
+        try runTurn("What was the secret code I gave you earlier? Reply with only the code.")
+
+        let db = broker.listModel.chatDatabase
+        try Self.skipIfTransientVendorError(
+            broker.listModel.messages(forChat: chatID, createIfNeeded: false).map { Array($0) } ?? [])
+
+        // Every turn accepted (a blob per successful round).
+        XCTAssertEqual(db.blobCount(inChat: chatID), 3,
+                       "one blob per accepted round; fewer means a turn was rejected")
+
+        // The KEY assertion: a later turn entered DELTA mode from a pre-reduced chat.
+        // Delta mode is the ONLY way previous_response_id reaches the wire, and on a
+        // pre-reduced turn that id can come ONLY from the carry-forward.
+        XCTAssertFalse(wire.requests.isEmpty)
+        XCTAssertFalse(wire.requests[0].contains("previous_response_id"),
+                       "the first turn has no prior response to resume from")
+        XCTAssertTrue(wire.requests.dropFirst().contains { $0.contains("previous_response_id") },
+                      "a later pre-reduced turn must enter delta mode via the carried previous_response_id; "
+                      + "its absence means the carry-forward regressed to a full replay")
+
+        // The server-held context is intact across the delta turns: the model recalls
+        // the secret it was told in turn 1.
+        let messages: [Message] = broker.listModel.messages(forChat: chatID, createIfNeeded: false)
+            .map { Array($0) } ?? []
+        let lastAgentText = messages.reversed().first(where: { $0.author == .agent })
+            .flatMap { Self.blobText($0.content) } ?? ""
+        XCTAssertTrue(lastAgentText.contains(secret),
+                      "model must recall the secret across delta-mode turns; got: \(lastAgentText)")
+    }
+
     /// Phase 5 (migration, end-to-end): a legacy chat that predates blobs (seeded
     /// history, blobProtocol nil) migrates on its FIRST turn - capture reconstructs
     /// the whole history via translate() and freezes every round - then is blob-native
