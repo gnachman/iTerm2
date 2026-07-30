@@ -186,6 +186,23 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         completion(originalVirtualenv);
         return;
     }
+    if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+        // Gate on and this is still a legacy script: migrate it to uv (once), then
+        // launch under the new .venv. On failure the legacy env is restored and the
+        // script launches on it as before.
+        [[iTermUvProvisioner shared] migrateLegacyScriptToUvWithContainer:fullPath
+                                                  requestedPythonVersion:configParser.pythonVersion ?: @"3.12"
+                                                            dependencies:configParser.dependencies ?: @[]
+                                                              completion:^(NSError *migrationError) {
+            if (migrationError != nil) {
+                RLog(@"uv migration of %@ failed; launching on the legacy environment: %@", fullPath, migrationError);
+                completion(originalVirtualenv);
+                return;
+            }
+            completion([iTermScriptRuntime uvInterpreterPathForScriptContainer:fullPath]);
+        }];
+        return;
+    }
     NSString *virtualenv = originalVirtualenv;
     NSString *iterm2env = [fullPath stringByAppendingPathComponent:@"iterm2env"];
     NSString *saved = [fullPath stringByAppendingPathComponent:@"saved-iterm2env"];

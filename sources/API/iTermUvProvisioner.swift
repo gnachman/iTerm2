@@ -40,6 +40,11 @@ class iTermUvProvisioner: NSObject {
     private var downloadInProgress = false
     private var pendingDownloadCompletions: [(Error?) -> Void] = []
 
+    // Coalesces concurrent migrations of the same script so two launches never race
+    // the backup/provide into one container.
+    private let migrationLock = NSLock()
+    private var migrationsInFlight: [String: [(NSError?) -> Void]] = [:]
+
     init(fetcher: iTermUvTarballFetcher) {
         self.fetcher = fetcher
         super.init()
@@ -373,6 +378,55 @@ class iTermUvProvisioner: NSObject {
                     resultError = error as NSError
                 }
                 DispatchQueue.main.async { completion(resultError) }
+            }
+        }
+    }
+
+    // MARK: - Migrating a legacy script to uv
+
+    // Rebuild an existing legacy full-environment script as a uv .venv, with
+    // rollback: the legacy iterm2env is moved aside first and restored if the uv
+    // provision fails, so a failure leaves the script runnable on its old runtime.
+    // Completion runs on the main queue with nil on success.
+    @objc func migrateLegacyScriptToUv(container: String,
+                                       requestedPythonVersion: String,
+                                       dependencies: [String],
+                                       completion: @escaping (NSError?) -> Void) {
+        migrationLock.lock()
+        if migrationsInFlight[container] != nil {
+            migrationsInFlight[container]?.append(completion)
+            migrationLock.unlock()
+            return
+        }
+        migrationsInFlight[container] = [completion]
+        migrationLock.unlock()
+
+        let finishAll: (NSError?) -> Void = { [weak self] error in
+            guard let self = self else { return }
+            self.migrationLock.lock()
+            let waiters = self.migrationsInFlight.removeValue(forKey: container) ?? []
+            self.migrationLock.unlock()
+            for waiter in waiters {
+                waiter(error)
+            }
+        }
+
+        do {
+            try iTermUvMigration.backUpLegacyEnvironment(container: container)
+        } catch {
+            finishAll(error as NSError)
+            return
+        }
+        downloadAndProvisionFullEnvironment(container: container,
+                                            requestedPythonVersion: requestedPythonVersion,
+                                            dependencies: dependencies,
+                                            createSetupCfg: false) { error in
+            if let error = error {
+                try? iTermUvMigration.restoreLegacyEnvironment(container: container)
+                finishAll(error)
+            } else {
+                iTermUvMigration.discardLegacyBackup(container: container)
+                finishAll(nil)
             }
         }
     }

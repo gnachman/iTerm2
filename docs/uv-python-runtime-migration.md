@@ -328,8 +328,12 @@ call.
   -> `it2_api_wrapper.sh <venv-python> <script.py>`), so a `.py` shebang is used only
   by `inferredPythonVersionFromScriptAt:` for version inference. Basic-script shebangs
   are left stale-but-harmless (re-inferred and re-remapped each launch). Full-env main
-  scripts are untouched; their version record is `setup.cfg` `python_requires`, which
-  IS rewritten on a forced remap. The one shebang rewrite done today
+  scripts are untouched. `setup.cfg` `python_requires` is ALSO left as-is: the
+  authoritative resolved version for a uv script is the `python-runtime.json` marker
+  (which records `python` and `remapped_from`), and re-resolving a stale pin is
+  idempotent (3.7 re-resolves to 3.9 again), so rewriting setup.cfg would only risk
+  clobbering the user's other setup.cfg content for no behavioral gain. The one shebang
+  rewrite done today
   (`replaceShebangInScriptAtPath:`, `:913`, fixing the pip3 console-script) is deleted
   outright - uv writes correct absolute shebangs for `.venv/bin/*` itself.
 - Rebuild-with-rollback: reuse `upgradeFullEnvironmentScriptAt:` (`:62`) structure -
@@ -340,8 +344,8 @@ call.
   - Preserve the pinned minor whenever pbs offers it (discover via `uv python list`).
   - Auto-bump patch only (e.g. 3.9.2 -> newest 3.9.x); no warning.
   - Force a minor bump only when pbs has no build for that minor - in practice only
-    3.7 -> 3.9. Rewrite the remapped version into setup.cfg during migration; leave
-    basic-script shebangs alone (inference-only).
+    3.7 -> 3.9. The resolved version is recorded in `python-runtime.json`; setup.cfg
+    and shebangs are left as-is (inference/re-resolution is idempotent).
 - Warning for forced minor bumps (real dialog, not just console):
   - One consolidated modal `iTermWarning` at migration listing every affected script
     (e.g. `"MyScript": 3.7 -> 3.9`), not one dialog per script.

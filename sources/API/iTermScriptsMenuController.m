@@ -20,6 +20,7 @@
 #import "iTermScriptImporter.h"
 #import "iTermScriptTemplatePickerWindowController.h"
 #import "iTermTuple.h"
+#import "iTermSetupCfgParser.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
@@ -200,6 +201,55 @@ NS_ASSUME_NONNULL_BEGIN
     [self removeMenuItemsAfterSeparator];
     [self addMenuItemsTo:_scriptsMenu];
     _allScripts = [self allScriptsFromMenu];
+    [self maybeWarnAboutUvVersionBumps];
+}
+
+// When uv is enabled, warn once (across launch, and permanently silenceable) that
+// migrating existing legacy scripts will bump some pinned Python versions that
+// python-build-standalone cannot provide (in practice 3.7 -> 3.9). Scripts are
+// migrated lazily on launch; this is the up-front heads-up.
+- (void)maybeWarnAboutUvVersionBumps {
+    static BOOL shownThisLaunch = NO;
+    if (shownThisLaunch) {
+        return;
+    }
+    if (![iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+        return;
+    }
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *scriptsPath = [fm scriptsPathWithoutSpaces];
+    // Scan the top level and the AutoLaunch subfolder, since AutoLaunch scripts are
+    // migrated too (at startup) and should be included in the heads-up.
+    NSArray<NSString *> *roots = @[ scriptsPath, [scriptsPath stringByAppendingPathComponent:@"AutoLaunch"] ];
+    NSMutableDictionary<NSString *, NSString *> *requested = [NSMutableDictionary dictionary];
+    for (NSString *root in roots) {
+        for (NSString *name in [fm contentsOfDirectoryAtPath:root error:nil]) {
+            NSString *container = [root stringByAppendingPathComponent:name];
+            NSString *setupCfg = [container stringByAppendingPathComponent:@"setup.cfg"];
+            if (![fm fileExistsAtPath:setupCfg]) {
+                continue;
+            }
+            if ([iTermScriptRuntime backendForScriptContainer:container] != iTermScriptRuntimeBackendLegacy) {
+                continue;
+            }
+            iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:setupCfg];
+            if (parser.pythonVersion) {
+                requested[name] = parser.pythonVersion;
+            }
+        }
+    }
+    NSString *text = [iTermUvMigration pendingVersionBumpWarningWithRequestedVersionsByScript:requested];
+    if (!text) {
+        return;
+    }
+    shownThisLaunch = YES;
+    [iTermWarning showWarningWithTitle:text
+                               actions:@[ @"OK" ]
+                             accessory:nil
+                            identifier:@"NoSyncUvVersionBumpWarning"
+                           silenceable:kiTermWarningTypePermanentlySilenceable
+                               heading:@"Python Version Changes"
+                                window:nil];
 }
 
 - (NSArray<iTermScriptItem *> *)scriptItems {
