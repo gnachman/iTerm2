@@ -3,7 +3,7 @@
 // work off Cloudflare, the secret check still gates delivery, and the idempotent
 // write survives the whole stack (the fix that motivated the migration).
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { createPushRelay } from "../host/server.js";
 
 // Throwaway P-256 key so the worker's APNs-JWT signer succeeds; never verified
@@ -112,5 +112,65 @@ describe("self-hosted push relay (end-to-end)", () => {
     expect((await call("/nope", {})).status).toBe(404);
     const get = await fetch(base + "/push", { method: "GET" });
     expect(get.status).toBe(405);
+  });
+});
+
+// An APNs rejection (non-2xx from Apple) is the only record of *why* a push
+// failed — the worker folds it into a 502 body, and Cloudflare replaces that
+// body with its own page before the client sees it. So the host must log it,
+// or the reason is lost. Separate relay: this stub rejects instead of delivering.
+describe("push relay logs APNs delivery failures", () => {
+  let relay;
+  let base;
+
+  const apnsFetch = async () => ({
+    ok: false,
+    status: 400,
+    text: async () => JSON.stringify({ reason: "BadDeviceToken" }),
+  });
+  apnsFetch.close = () => {};
+
+  beforeAll(async () => {
+    relay = createPushRelay({
+      dbPath: ":memory:",
+      apnsFetch,
+      env: {
+        APNS_TOPIC: "com.googlecode.iterm2.companion",
+        APNS_TEAM_ID: "TEAMID1234",
+        APNS_KEY_ID: "KEYID56789",
+        APNS_P8: TEST_APNS_P8,
+        REGISTRATION_TTL_SECONDS: "3600",
+      },
+    });
+    await relay.listen(0, "127.0.0.1");
+    base = `http://127.0.0.1:${relay.address().port}`;
+  });
+  afterAll(async () => { await relay.close(); });
+
+  it("returns 502 and logs Apple's status + reason", async () => {
+    const token = freshToken();
+    const { secret, secretHash } = await makeCreds();
+    await fetch(base + "/register", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ token, secretHash, sandbox: false }),
+    });
+
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const push = await fetch(base + "/push", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ token, secret, title: "hi", body: "there" }),
+      });
+      expect(push.status).toBe(502);
+      expect(errSpy).toHaveBeenCalledTimes(1);
+      const line = errSpy.mock.calls[0].join(" ");
+      expect(line).toContain("/push");
+      expect(line).toContain("APNs 400");
+      expect(line).toContain("BadDeviceToken");
+    } finally {
+      errSpy.mockRestore();
+    }
   });
 });
