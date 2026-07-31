@@ -784,6 +784,11 @@ private struct PythonRuntimesImporterExporter {
 
 
     private func install(requirement: Requirement?) -> Bool {
+        if iTermAdvancedSettingsModel.pythonRuntimeUsesUV() {
+            // With uv there is no shared runtime to pre-fetch during import; each
+            // restored script is provisioned (or migrated) on first launch.
+            return true
+        }
         var result: Bool?
         DLog("Begin \(String(describing: requirement))")
         iTermPythonRuntimeDownloader.sharedInstance().downloadOptionalComponentsIfNeeded(

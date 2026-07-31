@@ -762,6 +762,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)newPythonScript {
     DLog(@"begin");
+    if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+        // With uv there is no shared runtime to pre-download; a full-environment
+        // script is provisioned per-script during creation, and a basic script needs
+        // nothing at creation time.
+        [self reallyCreateNewPythonScript];
+        return;
+    }
     __weak __typeof(self) weakSelf = self;
     iTermPythonRuntimeDownloader *downloader = [iTermPythonRuntimeDownloader sharedInstance];
     [downloader downloadOptionalComponentsIfNeededWithConfirmation:YES
@@ -801,7 +808,15 @@ NS_ASSUME_NONNULL_BEGIN
     NSString *pythonVersion = nil;
     NSURL *url = [self runSavePanelForNewScriptWithPicker:picker dependencies:&dependencies pythonVersion:&pythonVersion];
     DLog(@"%@", url);
-    if (url) {
+    if (!url) {
+        return;
+    }
+    if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+        // No legacy runtime download under uv; provisioning happens per-script below.
+        [self reallyCreateNewPythonScriptAtURL:url picker:picker dependencies:dependencies pythonVersion:pythonVersion];
+        return;
+    }
+    {
         [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                             pythonVersion:pythonVersion
                                                                                 minimumEnvironmentVersion:0
