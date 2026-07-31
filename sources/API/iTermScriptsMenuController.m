@@ -878,8 +878,15 @@ NS_ASSUME_NONNULL_BEGIN
     RLog(@"url=%@ deps=%@ pythonVersion=%@ selectedEnvironment=%@", url, dependencies, pythonVersion, @(picker.selectedEnvironment));
     if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
         NSURL *folder = [NSURL fileURLWithPath:[self folderForFullEnvironmentSavePanelURL:url]];
+        __block iTermProvisioningProgressWindowController *progress = nil;
         void (^installCompletion)(NSError *) = ^(NSError *errorStatus) {
+            [progress dismiss];
+            progress = nil;
             if (errorStatus != nil) {
+                 if ([iTermUvProvisioner isCancelationError:errorStatus]) {
+                     // The user declined the download; do not report a failure.
+                     return;
+                 }
                  NSAlert *alert = [[NSAlert alloc] init];
                  alert.messageText = @"Installation Failed";
                  if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
@@ -894,6 +901,8 @@ NS_ASSUME_NONNULL_BEGIN
              [self build];
         };
         if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+            progress = [[iTermProvisioningProgressWindowController alloc] init];
+            [progress showWithMessage:@"Setting up the Python environment…"];
             [[iTermUvProvisioner shared] downloadAndProvisionFullEnvironmentWithContainer:folder.path
                                                                   requestedPythonVersion:pythonVersion ?: [iTermScriptRuntime defaultPythonVersion]
                                                                             dependencies:dependencies ?: @[]

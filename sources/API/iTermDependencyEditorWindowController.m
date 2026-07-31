@@ -445,8 +445,15 @@
     __weak __typeof(self) weakSelf = self;
     NSString *pythonVersion =
     [iTermAPIScriptLauncher inferredPythonVersionFromScriptAt:item.path];
+    __block iTermProvisioningProgressWindowController *progress = nil;
     void (^upgradeCompletion)(NSError *) = ^(NSError *errorStatus) {
+        [progress dismiss];
+        progress = nil;
         if (errorStatus != nil) {
+            if ([iTermUvProvisioner isCancelationError:errorStatus]) {
+                // The user declined the download; do not report a failure.
+                return;
+            }
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Installation Failed";
             alert.informativeText = [NSString stringWithFormat:@"Please file a bug report at https://iterm2.com/bugs. The following error occurred while upgrading a dependency: %@", errorStatus.localizedDescription];
@@ -459,6 +466,8 @@
     if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
         // Converting a basic script to a full environment is a form of migration, so
         // honor the gate and build a uv .venv rather than a legacy iterm2env.
+        progress = [[iTermProvisioningProgressWindowController alloc] init];
+        [progress showWithMessage:@"Setting up the Python environment…"];
         [[iTermUvProvisioner shared] downloadAndProvisionFullEnvironmentWithContainer:folder.path
                                                               requestedPythonVersion:pythonVersion ?: [iTermScriptRuntime defaultPythonVersion]
                                                                         dependencies:@[]
