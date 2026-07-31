@@ -187,7 +187,11 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
     }
     [_task setStandardInput:_inputPipe];
     [_task setStandardOutput:_pipe];
-    [_task setStandardError:_pipe];
+    if (self.discardStandardError) {
+        [_task setStandardError:[NSFileHandle fileHandleWithNullDevice]];
+    } else {
+        [_task setStandardError:_pipe];
+    }
     _task.launchPath = self.command;
     if (self.currentDirectoryPath) {
         _task.currentDirectoryPath = self.currentDirectoryPath;

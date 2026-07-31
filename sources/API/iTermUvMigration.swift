@@ -106,8 +106,19 @@ class iTermUvMigration: NSObject {
         let saved = savedPath(container)
         let legacy = legacyPath(container)
 
-        // Recover an orphaned backup from an interrupted prior migration.
-        if fm.fileExists(atPath: saved) && !fm.fileExists(atPath: legacy) {
+        // A saved-iterm2env means a previous upgrade or migration was interrupted, and
+        // saved-iterm2env is ALWAYS the good copy (this matches the legacy launcher's
+        // saved-restore). Consume it back to iterm2env before we make our own backup:
+        //  - No iterm2env: a uv migration was interrupted after moving the legacy env
+        //    aside. Move it back.
+        //  - iterm2env also present: a legacy runtime upgrade was interrupted and left a
+        //    broken partial iterm2env. Discard that partial and restore the good saved
+        //    one. (The old code did the opposite, deleting the good saved env and later
+        //    restoring the broken partial on a failed migration.)
+        if fm.fileExists(atPath: saved) {
+            if fm.fileExists(atPath: legacy) {
+                try fm.removeItem(atPath: legacy)
+            }
             try fm.moveItem(atPath: saved, toPath: legacy)
         }
         // Discard any partial uv artifacts from an interrupted prior attempt so the
@@ -115,12 +126,9 @@ class iTermUvMigration: NSObject {
         for partial in [venvPath(container), markerPath(container)] where fm.fileExists(atPath: partial) {
             try fm.removeItem(atPath: partial)
         }
-        // Back up the legacy env. Removing a stale saved is safe here because a legacy
-        // env exists to repopulate it.
+        // Back up the (now known-good) legacy env before provisioning uv. saved does not
+        // exist here: it was either absent or just consumed above.
         if fm.fileExists(atPath: legacy) {
-            if fm.fileExists(atPath: saved) {
-                try fm.removeItem(atPath: saved)
-            }
             try fm.moveItem(atPath: legacy, toPath: saved)
         }
     }

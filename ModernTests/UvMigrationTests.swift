@@ -88,15 +88,23 @@ final class UvMigrationTests: XCTestCase {
             "legacy")
     }
 
-    func testBackupReplacesStaleSavedFolder() throws {
+    func testBackupTreatsSavedAsTheGoodCopyWhenBothExist() throws {
+        // A leftover saved-iterm2env alongside an iterm2env means a legacy runtime
+        // upgrade was interrupted: saved-iterm2env is the GOOD copy and iterm2env is a
+        // broken partial. Backing up must preserve the good copy and discard the
+        // partial, not the reverse (which would lose the user's working environment if
+        // the uv migration then failed).
         let c = try makeContainer()
-        try write((c as NSString).appendingPathComponent("saved-iterm2env/stale"), "old")
-        try write((c as NSString).appendingPathComponent("iterm2env/current"), "new")
+        try write((c as NSString).appendingPathComponent("saved-iterm2env/good"), "good")
+        try write((c as NSString).appendingPathComponent("iterm2env/partial"), "partial")
         try iTermUvMigration.backUpLegacyEnvironment(container: c)
         let fm = FileManager.default
-        XCTAssertFalse(fm.fileExists(atPath: (c as NSString).appendingPathComponent("saved-iterm2env/stale")))
+        // The good env is moved aside as the backup for the migration.
+        XCTAssertFalse(fm.fileExists(atPath: (c as NSString).appendingPathComponent("iterm2env")))
         XCTAssertEqual(
-            try String(contentsOfFile: (c as NSString).appendingPathComponent("saved-iterm2env/current")), "new")
+            try String(contentsOfFile: (c as NSString).appendingPathComponent("saved-iterm2env/good")), "good")
+        // The broken partial is gone, not preserved as the backup.
+        XCTAssertFalse(fm.fileExists(atPath: (c as NSString).appendingPathComponent("saved-iterm2env/partial")))
     }
 
     func testRestoreUndoesAFailedMigration() throws {

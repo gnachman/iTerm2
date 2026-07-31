@@ -85,7 +85,13 @@ class iTermUvProvisioner: NSObject {
     // MARK: - On-disk layout
 
     private static var uvDirectory: String {
-        let appSupport = FileManager.default.spacelessAppSupportCreatingLink() ?? NSTemporaryDirectory()
+        guard let appSupport = FileManager.default.spacelessAppSupportCreatingLink() else {
+            // Falling back to a temp directory silently would install uv somewhere the
+            // OS can clear out from under us, breaking every later launch with no clue
+            // why. Log loudly (this shows up in a debug log) before the fallback.
+            RLog("uv: could not create the spaceless Application Support link; falling back to a temporary directory. uv installs will not persist.")
+            return (NSTemporaryDirectory() as NSString).appendingPathComponent("uv")
+        }
         return (appSupport as NSString).appendingPathComponent("uv")
     }
 
@@ -247,6 +253,10 @@ class iTermUvProvisioner: NSObject {
         let runner = iTermBufferedCommandRunner(command: uvPath,
                                                 withArguments: ["--version"],
                                                 path: NSTemporaryDirectory())
+        // Same UV_* environment (incl. UV_NO_CONFIG) as the other invocations, and
+        // stderr kept out of the parsed output.
+        runner.environment = provisionEnvironment()
+        runner.discardStandardError = true
         _ = runner.blockingRun()
         let output = runner.output.flatMap { String(data: $0, encoding: .utf8) } ?? ""
         return parseUvVersion(fromVersionOutput: output)
@@ -311,6 +321,10 @@ class iTermUvProvisioner: NSObject {
                                                 withArguments: iTermUvCommand.pythonListArgs(),
                                                 path: NSTemporaryDirectory())
         runner.environment = environment
+        // `uv python list --output-format json` prints JSON on stdout; any warning on
+        // stderr would otherwise be merged in and break the JSON parse, silently
+        // disabling version remapping.
+        runner.discardStandardError = true
         _ = runner.blockingRun()
         guard let output = runner.output else {
             return []
