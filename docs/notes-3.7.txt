@@ -2562,3 +2562,11 @@ Bug Fixes:
   because your input method changed the
   character a key produces, iTerm2 now offers
   to interpret key bindings by physical key.
+- Fixed right-to-left text getting scrambled in
+  full-screen programs and AI agent CLIs that
+  scroll or repaint their output region: the
+  per-line right-to-left annotation now moves
+  with the content when a scroll region shifts
+  rows, so Persian, Arabic, and Hebrew lines
+  keep their correct display order instead of
+  falling back to logical order.
