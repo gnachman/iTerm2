@@ -2578,3 +2578,11 @@ Bug Fixes:
   surrounding text still follows the standard
   bidi rules. Aimed at terminals that mix
   technical English into right-to-left prose.
+- Fixed right-to-left text getting scrambled in
+  full-screen programs and AI agent CLIs that
+  scroll or repaint their output region: the
+  per-line right-to-left annotation now moves
+  with the content when a scroll region shifts
+  rows, so Persian, Arabic, and Hebrew lines
+  keep their correct display order instead of
+  falling back to logical order.
