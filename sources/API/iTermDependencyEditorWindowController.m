@@ -373,7 +373,7 @@
 }
 
 - (void)uninstallDidFailForPackage:(NSString *)package {
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Uninstall of %@ failed. Check the output of pip3 for errors.",package]
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Uninstall of %@ failed. Check the pip output for errors.",package]
                                actions:@[ @"OK" ]
                              accessory:nil
                             identifier:@"DependencyEditorInstallationFailed"
@@ -386,7 +386,7 @@
                   selectedScriptPath:(NSString *)selectedScriptPath
                    newDependencyName:(NSString *)newDependencyName {
     if (!ok) {
-        [iTermWarning showWarningWithTitle:@"Check the output of pip3 for errors."
+        [iTermWarning showWarningWithTitle:@"Check the pip output for errors."
                                    actions:@[ @"OK" ]
                                  accessory:nil
                                 identifier:@"DependencyEditorInstallationFailed"

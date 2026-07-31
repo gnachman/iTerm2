@@ -471,12 +471,40 @@ class iTermUvProvisioner: NSObject {
                             pythonVersion: marker.python,
                             environmentVersion: Int(iTermMinimumPythonEnvironmentVersion))
                     }
+                    // If uv could not provide the script's pinned Python version and had
+                    // to bump it, tell the user (once, suppressibly). Every provisioning
+                    // path (create, import, migrate) funnels through here.
+                    if let from = marker.remappedFrom {
+                        Self.reportForcedRemap(container: container, from: from, to: marker.python)
+                    }
                     resultError = nil
                 case .failure(let error):
                     resultError = error as NSError
                 }
                 DispatchQueue.main.async { completion(resultError) }
             }
+        }
+    }
+
+    // Surface a forced Python-version bump: a Script Console line for the record and a
+    // suppressible modal so the user knows their script may need small changes. Design
+    // decision 7 / Phase 3. Called off the main thread.
+    private static func reportForcedRemap(container: String, from: String, to: String) {
+        let scriptName = (container as NSString).lastPathComponent
+        let remap = iTermUvPythonRemap(scriptName: scriptName,
+                                       fromVersion: iTermUvPythonVersion.twoPartVersion(from),
+                                       toVersion: to)
+        let text = iTermUvMigration.consolidatedWarningText(remaps: [remap])
+        RLog("uv: \(text)")
+        DispatchQueue.main.async {
+            iTermScriptHistoryEntry.global().addOutput(text + "\n", completion: {})
+            iTermWarning.show(withTitle: text,
+                              actions: ["OK"],
+                              accessory: nil,
+                              identifier: "NoSyncUvForcedPythonRemap",
+                              silenceable: .kiTermWarningTypePersistent,
+                              heading: "Python Version Changed",
+                              window: nil)
         }
     }
 

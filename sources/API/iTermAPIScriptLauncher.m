@@ -194,8 +194,18 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         // Gate on and this is still a legacy script: migrate it to uv (once), then
         // launch under the new .venv. On failure the legacy env is restored and the
         // script launches on it as before.
+        if (configParser == nil || configParser.dependenciesError != nil) {
+            // No parseable setup.cfg means we cannot know the script's dependencies.
+            // Migrating with an empty dependency list would silently produce a broken
+            // uv environment (missing packages), so leave the script on its working
+            // legacy environment and log loudly instead.
+            RLog(@"Not migrating %@ to uv: setup.cfg is missing or unparseable (%@). Launching on the legacy environment.",
+                 fullPath, configParser.dependenciesError);
+            completion(originalVirtualenv);
+            return;
+        }
         [[iTermUvProvisioner shared] migrateLegacyScriptToUvWithContainer:fullPath
-                                                  requestedPythonVersion:configParser.pythonVersion ?: @"3.12"
+                                                  requestedPythonVersion:configParser.pythonVersion ?: [iTermScriptRuntime defaultPythonVersion]
                                                             dependencies:configParser.dependencies ?: @[]
                                                               completion:^(NSError *migrationError) {
             if (migrationError != nil) {
