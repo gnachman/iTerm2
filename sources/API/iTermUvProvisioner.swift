@@ -67,11 +67,18 @@ class iTermUvProvisioner: NSObject {
         guard let data = try? Data(contentsOf: manifestURL) else {
             return .failure(error("Could not download the uv manifest from \(urlString)."))
         }
+        return selectedEntry(fromManifestData: data, runningMacOSVersion: runningMacOSVersionString())
+    }
+
+    // The pure parse -> select -> floor step, split from the network fetch so it is
+    // unit-testable with crafted manifest bytes (no network, no real uv).
+    static func selectedEntry(fromManifestData data: Data,
+                              runningMacOSVersion: String) -> Result<iTermUvManifestEntry, Error> {
         guard let entries = iTermUvManifest.parse(data) else {
             return .failure(error("The uv manifest could not be parsed."))
         }
         guard let entry = iTermUvManifest.select(entries: entries,
-                                                 runningMacOSVersion: runningMacOSVersionString()) else {
+                                                 runningMacOSVersion: runningMacOSVersion) else {
             return .failure(error("uv is not available for this version of macOS."))
         }
         // The manifest itself is not signed (only the tarball is), so a compromised
@@ -81,6 +88,12 @@ class iTermUvProvisioner: NSObject {
             return .failure(error("The offered uv version (\(entry.uvVersion)) is older than the minimum required (\(minimumUvVersion))."))
         }
         return .success(entry)
+    }
+
+    // Whether a background check should replace the installed uv with the manifest's:
+    // only when the manifest is strictly newer (never equal, never older).
+    static func shouldUpgradeUv(installedVersion: String, manifestVersion: String) -> Bool {
+        return iTermDottedVersion.compare(manifestVersion, installedVersion) == .orderedDescending
     }
 
     // The oldest uv the app will install. Bump when a newer uv becomes required.
@@ -733,7 +746,7 @@ class iTermUvProvisioner: NSObject {
             return
         }
         let installed = installedUvVersion(uvPath: uvBinaryPath)
-        guard iTermDottedVersion.compare(entry.uvVersion, installed) == .orderedDescending else {
+        guard shouldUpgradeUv(installedVersion: installed, manifestVersion: entry.uvVersion) else {
             return
         }
         guard let url = URL(string: entry.url), let data = try? Data(contentsOf: url) else {

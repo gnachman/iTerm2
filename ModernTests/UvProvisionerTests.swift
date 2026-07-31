@@ -100,6 +100,61 @@ final class UvProvisionerTests: XCTestCase {
         XCTAssertEqual(iTermUvProvisioner.parseUvVersion(fromVersionOutput: "garbage"), "unknown")
     }
 
+    // MARK: - Manifest selection and upgrade decision (background upgrade, [7])
+
+    private func manifestData(_ entries: [(uv: String, minMacOS: String, maxMacOS: String?)]) -> Data {
+        let objects = entries.map { entry -> String in
+            let maxField = entry.maxMacOS.map { "\"\($0)\"" } ?? "null"
+            return """
+            { "uv_version": "\(entry.uv)", "url": "https://x/uv-\(entry.uv).tar.gz",
+              "signature": "sig", "size": 1,
+              "minimum_macos_version": "\(entry.minMacOS)", "maximum_macos_version": \(maxField) }
+            """
+        }
+        return "[\(objects.joined(separator: ","))]".data(using: .utf8)!
+    }
+
+    func testSelectedEntryPicksNewestCompatible() {
+        let data = manifestData([("0.12.0", "13.0", nil), ("0.13.0", "13.0", nil)])
+        switch iTermUvProvisioner.selectedEntry(fromManifestData: data, runningMacOSVersion: "14.1.0") {
+        case .success(let entry): XCTAssertEqual(entry.uvVersion, "0.13.0")
+        case .failure(let error): XCTFail("unexpected failure: \(error)")
+        }
+    }
+
+    func testSelectedEntryRejectsVersionBelowFloor() {
+        // 0.11.0 is below iTermUvProvisioner.minimumUvVersion (0.12.0): a rollback the
+        // background upgrade / install must refuse even though it parses and matches OS.
+        let data = manifestData([("0.11.0", "13.0", nil)])
+        switch iTermUvProvisioner.selectedEntry(fromManifestData: data, runningMacOSVersion: "14.1.0") {
+        case .success: XCTFail("must reject a version below the minimum floor")
+        case .failure: break
+        }
+    }
+
+    func testSelectedEntryRejectsIncompatibleMacOS() {
+        let data = manifestData([("0.13.0", "26.0", nil)])
+        switch iTermUvProvisioner.selectedEntry(fromManifestData: data, runningMacOSVersion: "13.4.0") {
+        case .success: XCTFail("must reject when the running OS is below the entry minimum")
+        case .failure: break
+        }
+    }
+
+    func testSelectedEntryFailsOnGarbageManifest() {
+        switch iTermUvProvisioner.selectedEntry(fromManifestData: Data("not json".utf8),
+                                                runningMacOSVersion: "14.0.0") {
+        case .success: XCTFail("must fail to parse")
+        case .failure: break
+        }
+    }
+
+    func testShouldUpgradeUvOnlyWhenStrictlyNewer() {
+        XCTAssertTrue(iTermUvProvisioner.shouldUpgradeUv(installedVersion: "0.12.0", manifestVersion: "0.13.0"))
+        XCTAssertTrue(iTermUvProvisioner.shouldUpgradeUv(installedVersion: "0.12.0", manifestVersion: "0.12.1"))
+        XCTAssertFalse(iTermUvProvisioner.shouldUpgradeUv(installedVersion: "0.12.0", manifestVersion: "0.12.0"))
+        XCTAssertFalse(iTermUvProvisioner.shouldUpgradeUv(installedVersion: "0.13.0", manifestVersion: "0.12.0"))
+    }
+
     // MARK: - installDownloadedTarball / extractAndInstall
 
     func testRejectsInvalidSignature() throws {
