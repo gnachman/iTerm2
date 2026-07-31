@@ -10,6 +10,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/un.h>
 #include <unistd.h>
@@ -95,6 +96,40 @@ int iTermFileDescriptorClientConnect(const char *path) {
     int flags;
 
     FDLog(LOG_DEBUG, "Trying to connect to %s", path);
+
+    // The mono-server rendezvous lives in a world-writable, sticky shared
+    // directory (P_tmpdir, i.e. /var/tmp) with a predictable name
+    // (iTerm2.socket.<pid>). A local attacker of any uid can pre-create such a
+    // socket before we launch, then hand us an attacker-controlled pty master
+    // via SCM_RIGHTS and man-in-the-middle the "restored" session. The
+    // authoritative defense is the getpeereid() check after connect() below;
+    // it is race-free because the kernel reports the credentials of the peer on
+    // the established connection, no matter what the path resolved to.
+    //
+    // This lstat() is only a cheap early reject (and clearer diagnostics), NOT
+    // a security boundary: it is inherently TOCTOU with the connect() that
+    // follows, so do not rely on it. It just avoids a pointless connect() to
+    // the common case of a foreign-owned or non-socket file sitting in the
+    // directory at scan time.
+    struct stat sb;
+    if (lstat(path, &sb) != 0) {
+        FDLog(LOG_NOTICE, "lstat(%s) failed: %s\n", path, strerror(errno));
+        return -1;
+    }
+    if (!S_ISSOCK(sb.st_mode)) {
+        FDLog(LOG_NOTICE, "Refusing to connect: %s is not a socket (mode %o)\n", path, sb.st_mode);
+        // lstat succeeded, so errno is unspecified. Set it so the caller's
+        // strerror(errno) reflects the real reason for the refusal.
+        errno = ENOTSOCK;
+        return -1;
+    }
+    if (sb.st_uid != geteuid()) {
+        FDLog(LOG_NOTICE, "Refusing to connect: %s is owned by uid %d, not %d\n",
+              path, (int)sb.st_uid, (int)geteuid());
+        errno = EPERM;
+        return -1;
+    }
+
     do {
         FDLog(LOG_DEBUG, "Calling socket()");
         socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -130,6 +165,29 @@ int iTermFileDescriptorClientConnect(const char *path) {
             }
             FDLog(LOG_DEBUG, "Trying again because connect returned EINTR.");
         } else {
+            // Security: this is the authoritative peer check (see the lstat
+            // comment above). getpeereid returns the credentials captured by
+            // the kernel for the peer on this established connection, so it is
+            // not subject to any path-swapping race: whatever the pathname
+            // resolved to, if the process on the other end is not us, reject
+            // before we recvmsg its SCM_RIGHTS fd. It does not defend against a
+            // same-uid process, which is not a security boundary on macOS.
+            uid_t euid = 0;
+            gid_t egid = 0;
+            if (getpeereid(socketFd, &euid, &egid) != 0) {
+                FDLog(LOG_NOTICE, "Refusing to connect: getpeereid failed: %s\n", strerror(errno));
+                close(socketFd);
+                return -1;
+            }
+            if (euid != geteuid()) {
+                FDLog(LOG_NOTICE, "Refusing to connect: peer euid %d != %d\n",
+                      (int)euid, (int)geteuid());
+                close(socketFd);
+                // getpeereid succeeded, so errno is unspecified; set it so the
+                // caller's strerror(errno) reflects the real reason.
+                errno = EPERM;
+                return -1;
+            }
             // Make socket block again.
             interrupted = 0;
             FDLog(LOG_DEBUG, "Connected. Calling fcntl() 3");
