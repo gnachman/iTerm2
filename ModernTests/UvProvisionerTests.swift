@@ -75,10 +75,17 @@ final class UvProvisionerTests: XCTestCase {
         try writeFile((staging as NSString).appendingPathComponent("uv-x/uv"), "new")
         let destDir = try makeTempDir()
         let dest = (destDir as NSString).appendingPathComponent("uv/bin/uv")
+        // Simulate the recovery scenario: a non-executable (0644) partial left by an
+        // earlier interrupted attempt. The reinstall must end up executable, or
+        // isInstalled would stay false forever and re-download every launch.
         try writeFile(dest, "old")
+        try FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: dest)
 
         try iTermUvProvisioner.install(fromExtractedDirectory: staging, to: dest)
         XCTAssertEqual(try String(contentsOfFile: dest, encoding: .utf8), "new")
+        XCTAssertTrue(FileManager.default.isExecutableFile(atPath: dest))
+        let perms = try FileManager.default.attributesOfItem(atPath: dest)[.posixPermissions] as? NSNumber
+        XCTAssertEqual(perms?.int16Value, 0o755)
     }
 
     func testInstallThrowsWhenBinaryMissing() throws {
@@ -153,6 +160,45 @@ final class UvProvisionerTests: XCTestCase {
         XCTAssertTrue(iTermUvProvisioner.shouldUpgradeUv(installedVersion: "0.12.0", manifestVersion: "0.12.1"))
         XCTAssertFalse(iTermUvProvisioner.shouldUpgradeUv(installedVersion: "0.12.0", manifestVersion: "0.12.0"))
         XCTAssertFalse(iTermUvProvisioner.shouldUpgradeUv(installedVersion: "0.13.0", manifestVersion: "0.12.0"))
+    }
+
+    func testShouldUpgradeUvTreatsUnknownInstalledAsUpgradable() {
+        // A failed `uv --version` yields "unknown"; a real manifest version must win so
+        // a broken/unreadable binary self-heals on the next background check.
+        XCTAssertTrue(iTermUvProvisioner.shouldUpgradeUv(installedVersion: "unknown", manifestVersion: "0.12.0"))
+    }
+
+    private func sizedManifest(uv: String, size: Int64) -> Data {
+        return """
+        [ { "uv_version": "\(uv)", "url": "https://x/uv.tar.gz", "signature": "s",
+            "size": \(size), "minimum_macos_version": "13.0", "maximum_macos_version": null } ]
+        """.data(using: .utf8)!
+    }
+
+    func testSelectedEntryRejectsZeroSize() {
+        // size 0 previously disabled the download cap entirely.
+        switch iTermUvProvisioner.selectedEntry(fromManifestData: sizedManifest(uv: "0.13.0", size: 0),
+                                                runningMacOSVersion: "14.0.0") {
+        case .success: XCTFail("must reject a zero size")
+        case .failure: break
+        }
+    }
+
+    func testSelectedEntryRejectsImplausiblyLargeSize() {
+        switch iTermUvProvisioner.selectedEntry(fromManifestData: sizedManifest(uv: "0.13.0", size: 999_999_999_999),
+                                                runningMacOSVersion: "14.0.0") {
+        case .success: XCTFail("must reject an implausibly large size")
+        case .failure: break
+        }
+    }
+
+    func testSelectedEntryAcceptsVersionEqualToFloor() {
+        // The minimum-version floor is inclusive: exactly minimumUvVersion is allowed.
+        switch iTermUvProvisioner.selectedEntry(fromManifestData: sizedManifest(uv: "0.12.0", size: 1000),
+                                                runningMacOSVersion: "14.0.0") {
+        case .success(let entry): XCTAssertEqual(entry.uvVersion, "0.12.0")
+        case .failure(let error): XCTFail("floor should be inclusive: \(error)")
+        }
     }
 
     // MARK: - installDownloadedTarball / extractAndInstall

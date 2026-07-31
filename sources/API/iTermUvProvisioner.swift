@@ -64,7 +64,7 @@ class iTermUvProvisioner: NSObject {
               let manifestURL = URL(string: urlString) else {
             return .failure(error("The uv manifest URL is not valid."))
         }
-        guard let data = try? Data(contentsOf: manifestURL) else {
+        guard let data = boundedDownload(from: manifestURL, maxBytes: maxManifestBytes) else {
             return .failure(error("Could not download the uv manifest from \(urlString)."))
         }
         return selectedEntry(fromManifestData: data, runningMacOSVersion: runningMacOSVersionString())
@@ -87,8 +87,21 @@ class iTermUvProvisioner: NSObject {
         guard iTermDottedVersion.compare(entry.uvVersion, minimumUvVersion) != .orderedAscending else {
             return .failure(error("The offered uv version (\(entry.uvVersion)) is older than the minimum required (\(minimumUvVersion))."))
         }
+        // The manifest is unsigned, so `size` is attacker-controlled if the host is
+        // compromised. Require a sane positive size here, before any bytes are fetched,
+        // so the download cap and the consent-dialog arithmetic can trust it: a huge
+        // value would otherwise overflow (crash), and a zero would disable the cap.
+        guard entry.size > 0 && entry.size <= maxTarballBytes else {
+            return .failure(error("The uv manifest declares an implausible download size (\(entry.size) bytes)."))
+        }
         return .success(entry)
     }
+
+    // Absolute ceilings for what the (unsigned) manifest can make us download, so a
+    // compromised host cannot exhaust memory regardless of what it claims. The uv
+    // universal tarball is ~37 MB; the manifest itself is a few hundred bytes.
+    static let maxTarballBytes = 200 * 1024 * 1024
+    static let maxManifestBytes = 1 * 1024 * 1024
 
     // Whether a background check should replace the installed uv with the manifest's:
     // only when the manifest is strictly newer (never equal, never older).
@@ -190,13 +203,17 @@ class iTermUvProvisioner: NSObject {
         try? fm.removeItem(atPath: tempPath)
         do {
             try fm.copyItem(atPath: source, toPath: tempPath)
-            try fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: tempPath)
             if fm.fileExists(atPath: destinationBinaryPath) {
                 _ = try fm.replaceItemAt(URL(fileURLWithPath: destinationBinaryPath),
                                          withItemAt: URL(fileURLWithPath: tempPath))
             } else {
                 try fm.moveItem(atPath: tempPath, toPath: destinationBinaryPath)
             }
+            // Set the mode on the destination AFTER the swap: replaceItemAt preserves
+            // the ORIGINAL file's permissions, so a non-executable partial left by an
+            // interrupted earlier attempt would otherwise stay non-executable, and
+            // isInstalled would never become true (an endless re-download loop).
+            try fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: destinationBinaryPath)
         } catch {
             try? fm.removeItem(atPath: tempPath)
             throw error
@@ -749,7 +766,11 @@ class iTermUvProvisioner: NSObject {
         guard shouldUpgradeUv(installedVersion: installed, manifestVersion: entry.uvVersion) else {
             return
         }
-        guard let url = URL(string: entry.url), let data = try? Data(contentsOf: url) else {
+        // Cap the silent background download at the manifest-declared size plus slack
+        // (size is validated at selection, so this cannot overflow), so a compromised
+        // host cannot exhaust memory during a background upgrade.
+        guard let url = URL(string: entry.url),
+              let data = boundedDownload(from: url, maxBytes: entry.size + 16 * 1024 * 1024) else {
             return
         }
         if let error = installDownloadedTarball(data: data,
@@ -806,6 +827,60 @@ class iTermUvProvisioner: NSObject {
     @objc static func isCancelationError(_ error: NSError) -> Bool {
         return error.domain == errorDomain && error.code == cancelErrorCode
     }
+
+    // Synchronously download up to maxBytes from url, or nil on error / oversize. The
+    // transfer is canceled as soon as the accumulated bytes exceed the cap, so a host
+    // that serves far more than it declared cannot exhaust memory. Blocks, so call it
+    // off the main thread (both callers run on provisionQueue).
+    static func boundedDownload(from url: URL, maxBytes: Int) -> Data? {
+        let semaphore = DispatchSemaphore(value: 0)
+        var succeeded = false
+        let delegate = iTermBoundedDownloadDelegate(maxBytes: maxBytes) { ok in
+            succeeded = ok
+            semaphore.signal()
+        }
+        let session = URLSession(configuration: .ephemeral, delegate: delegate, delegateQueue: nil)
+        session.dataTask(with: url).resume()
+        semaphore.wait()
+        session.finishTasksAndInvalidate()
+        return succeeded ? delegate.data : nil
+    }
+}
+
+// URLSession delegate for boundedDownload: accumulates the body and cancels the moment
+// it exceeds maxBytes. All delegate callbacks arrive on one serial queue, and the
+// completion is signaled from didComplete, so the caller reads `data` only after the
+// transfer has ended.
+private final class iTermBoundedDownloadDelegate: NSObject, URLSessionDataDelegate {
+    private let maxBytes: Int
+    private let completion: (Bool) -> Void
+    fileprivate private(set) var data = Data()
+    private var overflowed = false
+    private var finished = false
+
+    init(maxBytes: Int, completion: @escaping (Bool) -> Void) {
+        self.maxBytes = maxBytes
+        self.completion = completion
+    }
+
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive chunk: Data) {
+        guard !overflowed else {
+            return
+        }
+        data.append(chunk)
+        if data.count > maxBytes {
+            overflowed = true
+            dataTask.cancel()
+        }
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        guard !finished else {
+            return
+        }
+        finished = true
+        completion(error == nil && !overflowed)
+    }
 }
 
 // Default fetcher: reuses the optional-component download window controller for the
@@ -815,8 +890,13 @@ final class iTermUvWindowControllerFetcher: iTermUvTarballFetcher {
     private var controller: iTermOptionalComponentDownloadWindowController?
 
     func fetch(url: URL, title: String, byteCount: Int, completion: @escaping (Result<Data, Error>) -> Void) {
+        // Clamp the declared size to a sane range before any arithmetic. The one real
+        // caller passes a manifest size already validated to (0, maxTarballBytes], but
+        // this protocol method must not overflow (crash) or under/over-cap on a bogus
+        // value from any future caller.
+        let declaredSize = min(max(byteCount, 0), iTermUvProvisioner.maxTarballBytes)
         // Ask before downloading, like the legacy runtime download did.
-        let megabytes = max(1, (byteCount + 512 * 1024) / (1024 * 1024))
+        let megabytes = max(1, (declaredSize + 512 * 1024) / (1024 * 1024))
         let alert = NSAlert()
         alert.messageText = "Download Python Support?"
         alert.informativeText = "To run Python scripts, iTerm2 needs to download uv "
@@ -836,9 +916,13 @@ final class iTermUvWindowControllerFetcher: iTermUvTarballFetcher {
 
         var downloadedData: Data?
         var overflowed = false
-        // Cap the in-memory accumulation at the manifest-declared size plus generous
-        // slack, so a manipulated size or a runaway response cannot exhaust memory.
-        let maxBytes = byteCount > 0 ? byteCount + 16 * 1024 * 1024 : Int.max
+        // Cap the in-memory accumulation at the (clamped) declared size plus generous
+        // slack, so a manipulated size or a runaway response cannot exhaust memory. A
+        // zero/absent declared size falls back to the absolute ceiling rather than an
+        // unbounded Int.max so the cap is never disabled.
+        let maxBytes = declaredSize > 0
+            ? declaredSize + 16 * 1024 * 1024
+            : iTermUvProvisioner.maxTarballBytes + 16 * 1024 * 1024
         let phase = iTermOptionalComponentDownloadPhase(
             url: url,
             title: title,

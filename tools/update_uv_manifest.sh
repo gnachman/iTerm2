@@ -100,6 +100,10 @@ try:
     with os.fdopen(fd, "w") as f:
         json.dump(entries, f, indent=2)
         f.write("\n")
+    # mkstemp creates the temp file 0600 and os.replace preserves that mode; the web
+    # server runs as a different user, so without this the manifest would be served as
+    # 403 (the same failure sign_and_copy_uv.sh guards against for the tarball).
+    os.chmod(tmp_path, 0o644)
     os.replace(tmp_path, path)
 except BaseException:
     try:
