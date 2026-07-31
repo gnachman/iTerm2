@@ -1007,6 +1007,11 @@ NS_ASSUME_NONNULL_BEGIN
         }
         if (defaultMenuItem) {
             [popUpButton selectItem:defaultMenuItem];
+        } else if (popUpButton.numberOfItems > 0) {
+            // defaultPythonVersion is expected to be in knownAvailableMinors; if it ever
+            // is not, select the newest offered minor (the list is ascending) rather
+            // than silently defaulting to the oldest.
+            [popUpButton selectItemAtIndex:popUpButton.numberOfItems - 1];
         }
         return popUpButton;
     }

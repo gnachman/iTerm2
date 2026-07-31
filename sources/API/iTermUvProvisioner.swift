@@ -741,7 +741,14 @@ class iTermUvProvisioner: NSObject {
     }
 
     private static func markSharedVenvProvisioned(forMinor minor: String) {
-        try? Data().write(to: URL(fileURLWithPath: sharedVenvMarkerPath(forMinor: minor)))
+        do {
+            try Data().write(to: URL(fileURLWithPath: sharedVenvMarkerPath(forMinor: minor)))
+        } catch {
+            // If this fails (e.g. disk full), sharedVenvIsProvisioned stays false and the
+            // venv is rebuilt on every launch. Log so that is diagnosable rather than a
+            // silent perpetual re-provision.
+            RLog("uv: could not write the shared-venv marker for \(minor): \(error.localizedDescription)")
+        }
     }
 
     // MARK: - Periodic background upgrades

@@ -150,8 +150,13 @@ class iTermUvMigration: NSObject {
         }
     }
 
-    // Migration succeeded: drop the backup.
+    // Migration succeeded (or a completed migration's backup was found orphaned): drop
+    // the backup. The saved iterm2env can be hundreds of MB, so remove it off the main
+    // thread to avoid a beachball at launch / migration completion. Fire-and-forget.
     @objc static func discardLegacyBackup(container: String) {
-        try? FileManager.default.removeItem(atPath: savedPath(container))
+        let path = savedPath(container)
+        DispatchQueue.global(qos: .utility).async {
+            try? FileManager.default.removeItem(atPath: path)
+        }
     }
 }

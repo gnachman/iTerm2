@@ -223,8 +223,9 @@ target bump is deferred to Phase 4.
    `minimum_iterm_version`/`maximum_iterm_version` bracketing. Consequence: uv's
    supported macOS floor can never strand a user - a future uv that drops macOS 13 is
    simply not offered to macOS 13 users, who keep the last bracketed-compatible build.
-   Each hosted uv version is pinned and tested; bump deliberately on iTerm2 releases
-   via `performPeriodicUpgradeCheck`.
+   Each hosted uv version is pinned and tested; publishing a newer one in the manifest
+   is how uv is rolled out (see the background-upgrade item below for how installed
+   clients pick it up).
 3. Provision-time environment (uv subprocesses only):
    - `UV_PYTHON_INSTALL_DIR = <spacelessAppSupport>/uv/python`
    - `UV_CACHE_DIR = <spacelessAppSupport>/uv/cache`

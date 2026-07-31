@@ -3298,7 +3298,7 @@ static iTermKeyEventReplayer *gReplayer;
                 return;
             }
             if (uvError != nil || sharedPython == nil) {
-                NSAlert *alert = [[NSAlert alloc] init];
+                NSAlert *alert = [[[NSAlert alloc] init] autorelease];
                 alert.messageText = @"Python Environment Unavailable";
                 alert.informativeText = [NSString stringWithFormat:@"Could not prepare the Python environment for the REPL: %@",
                                          uvError.localizedDescription ?: @"unknown error"];

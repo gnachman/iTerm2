@@ -267,13 +267,23 @@ echo "  not the sha256 above."
 # ---- RSA sign + stage in the website downloads dir (optional) -------------
 
 if [[ -n "$RSA_KEY" ]]; then
+    # The manifest records uv_version verbatim and it is compared as a dotted number,
+    # so a bare commit SHA passed as --rev would parse as version 0 and quietly poison
+    # the newest-version selection. Require X.Y[.Z] before signing/publishing.
+    if [[ ! "$REV" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+        die "--rev '$REV' is not a dotted version (X.Y[.Z]); refusing to publish a manifest entry with a non-version uv_version"
+    fi
     echo
     log "Running sign_and_copy_uv.sh"
     # sign_and_copy_uv.sh fetches from a URL; a file:// URL points it at the
     # archive we just built so it stages exactly these bytes and signs them.
     # It also needs the uv version and the minimum macOS floor for the manifest
-    # entry: reuse the same $REV and $DEPLOYMENT_TARGET this build targeted.
-    "$SIGN_AND_COPY" "file://$OUTPUT_DIR/$ARCHIVE_FILE" "$RSA_KEY" \
+    # entry: reuse the same $REV and $DEPLOYMENT_TARGET this build targeted. Pass the
+    # sha256 we just computed so sign_and_copy's UV_EXPECTED_SHA256 cross-check
+    # actually runs (otherwise it is inert in the automated path). Percent-encode
+    # spaces in the file:// path so curl accepts it.
+    UV_EXPECTED_SHA256="$SHA256" \
+        "$SIGN_AND_COPY" "file://${OUTPUT_DIR// /%20}/$ARCHIVE_FILE" "$RSA_KEY" \
         "$REV" "$DEPLOYMENT_TARGET"
 else
     echo "  To RSA-sign and stage in the website downloads dir, re-run with"

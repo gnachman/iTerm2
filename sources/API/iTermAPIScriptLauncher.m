@@ -199,8 +199,8 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
             // Migrating with an empty dependency list would silently produce a broken
             // uv environment (missing packages), so leave the script on its working
             // legacy environment and log loudly instead.
-            RLog(@"Not migrating %@ to uv: setup.cfg is missing or unparseable (%@). Launching on the legacy environment.",
-                 fullPath, configParser.dependenciesError);
+            NSString *reason = configParser == nil ? @"setup.cfg is missing" : configParser.dependenciesError.localizedDescription ?: @"setup.cfg could not be parsed";
+            RLog(@"Not migrating %@ to uv: %@. Launching on the legacy environment.", fullPath, reason);
             completion(originalVirtualenv);
             return;
         }
