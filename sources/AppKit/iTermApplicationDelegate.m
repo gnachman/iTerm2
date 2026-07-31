@@ -1529,6 +1529,12 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     [iTermLaunchExperienceController applicationDidFinishLaunching];
     [[iTermLaunchServices sharedInstance] registerForiTerm2Scheme];
+    // Once a day at most, check for a newer uv (silently replace it) and refresh the
+    // iterm2 module in provisioned basic-script venvs. A no-op until uv is installed.
+    // Skipped under unit tests to avoid network access.
+    if (![NSApp isRunningUnitTests]) {
+        [[iTermUvProvisioner shared] performPeriodicUpgradeCheck];
+    }
     // Skip the Companion launch hooks under unit tests. They read
     // keychain-backed pairing material at launch, and a locked login keychain
     // turns that read into a modal unlock prompt that hangs an unattended test

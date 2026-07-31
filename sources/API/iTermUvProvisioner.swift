@@ -699,6 +699,76 @@ class iTermUvProvisioner: NSObject {
         try? Data().write(to: URL(fileURLWithPath: sharedVenvMarkerPath(forMinor: minor)))
     }
 
+    // MARK: - Periodic background upgrades
+
+    // Throttled across launches (persisted) so the check runs about once a day.
+    private static let upgradeRateLimit =
+        iTermPersistentRateLimitedUpdate(name: "CheckForUpdatedUv", minimumInterval: 24 * 60 * 60)
+
+    // Once a day at most: if the manifest offers a newer uv, silently replace the
+    // installed binary, and upgrade iterm2/certifi/pyobjc to the latest in every
+    // provisioned shared basic-script venv. A no-op until uv has been installed, so it
+    // is safe (and intended) to call at every launch. Without this, a first-installed
+    // uv is never re-checked, so a broken uv could never be replaced and basic scripts'
+    // iterm2 module would never update.
+    @objc func performPeriodicUpgradeCheck() {
+        guard Self.isInstalled else {
+            return
+        }
+        Self.upgradeRateLimit.performRateLimitedBlock {
+            Self.provisionQueue.async {
+                Self.upgradeUvBinaryIfNewerAvailable()
+                Self.upgradeSharedVenvModules()
+            }
+        }
+    }
+
+    // Re-fetch the manifest and, if it offers a newer uv than installed, download and
+    // install it (RSA-verified, atomic replace). Silent: the user already consented to
+    // uv, so there is no confirmation window. Any failure (offline, older manifest) is
+    // a no-op retried next time. The minimum-version floor still applies via
+    // fetchSelectedEntry, so this never installs an older uv.
+    private static func upgradeUvBinaryIfNewerAvailable() {
+        guard case .success(let entry) = fetchSelectedEntry() else {
+            return
+        }
+        let installed = installedUvVersion(uvPath: uvBinaryPath)
+        guard iTermDottedVersion.compare(entry.uvVersion, installed) == .orderedDescending else {
+            return
+        }
+        guard let url = URL(string: entry.url), let data = try? Data(contentsOf: url) else {
+            return
+        }
+        if let error = installDownloadedTarball(data: data,
+                                                encodedSignature: entry.signature,
+                                                destinationBinaryPath: uvBinaryPath) {
+            RLog("uv: background upgrade to \(entry.uvVersion) failed: \(error.localizedDescription)")
+        } else {
+            RLog("uv: upgraded uv from \(installed) to \(entry.uvVersion)")
+        }
+    }
+
+    // Upgrade the always-installed packages to the latest in every provisioned shared
+    // basic-script venv. Full-environment scripts manage their own dependencies
+    // (setup.cfg / Dependency Editor) and are intentionally left untouched.
+    private static func upgradeSharedVenvModules() {
+        let venvsRoot = (uvDirectory as NSString).appendingPathComponent("venvs")
+        guard let minors = try? FileManager.default.contentsOfDirectory(atPath: venvsRoot) else {
+            return
+        }
+        let environment = mergedEnvironment(pythonInstallDir: pythonInstallDirectory, cacheDir: cacheDirectory)
+        for minor in minors where sharedVenvIsProvisioned(forMinor: minor) {
+            let interpreter = sharedVenvPython(forMinor: minor)
+            if let error = run(uvBinaryPath,
+                               iTermUvCommand.pipInstallArgs(venvPythonPath: interpreter,
+                                                             packages: alwaysInstalledPackages,
+                                                             upgrade: true),
+                               environment) {
+                RLog("uv: background module upgrade for the \(minor) venv failed: \(error.localizedDescription)")
+            }
+        }
+    }
+
     // The code used by user-cancellation errors, so callers can distinguish “the
     // user clicked Cancel” (stay silent) from a real failure (show an alert). Any
     // other code in this domain is a genuine failure.
@@ -737,7 +807,9 @@ final class iTermUvWindowControllerFetcher: iTermUvTarballFetcher {
         let alert = NSAlert()
         alert.messageText = "Download Python Support?"
         alert.informativeText = "To run Python scripts, iTerm2 needs to download uv "
-            + "(about \(megabytes) MB) and a Python interpreter. OK to download it now?"
+            + "(about \(megabytes) MB) and a Python interpreter. Additional Python "
+            + "versions are downloaded automatically later if a script needs them. "
+            + "OK to download it now?"
         alert.addButton(withTitle: "OK")
         alert.addButton(withTitle: "Cancel")
         guard alert.runModal() == .alertFirstButtonReturn else {

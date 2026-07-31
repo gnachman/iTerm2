@@ -235,6 +235,14 @@ target bump is deferred to Phase 4.
    (discover which minors pbs offers).
 5. `iTermUv` and the runtime downloader are defined behind protocols so tests can
    inject a fake (see Testing). Bake this into the API from the start.
+6. Background upgrades (`iTermUvProvisioner.performPeriodicUpgradeCheck`, called once
+   at launch, throttled to about daily by a persistent rate limit): if the manifest
+   offers a newer uv than installed, silently download and atomically replace it
+   (RSA-verified; the minimum-version floor still blocks downgrades). Then upgrade
+   iterm2/certifi/pyobjc to the latest in every provisioned shared basic-script venv so
+   basic scripts do not go stale. Full-environment scripts manage their own
+   dependencies (setup.cfg / Dependency Editor) and are left untouched. Without this a
+   first-installed uv would never be re-checked, so a broken uv could never be replaced.
 
 Exit: given a version, `iTermUv` produces a working venv with `iterm2` installed.
 
@@ -422,6 +430,13 @@ default has proven out in the field, not a measured-adoption threshold.
 - Keep `iTermSignatureVerifier` + `rsa_pub.pem` (now verifies the uv binary).
 - Retire the external build repos (`~/git/iterm2-pyenv`, the `~/git/pyenv` fork);
   stop hosting runtime zips once no supported iTerm2 fetches them.
+- Reclaim uv disk (deferred from the review as [20.1]): there is currently no GC of uv
+  interpreters, shared venvs, or `UV_CACHE_DIR` (only the orphaned `saved-iterm2env`
+  from an interrupted migration is reclaimed, at launch). Add a retention pass that
+  runs `uv cache prune`, keeps only interpreter minors still referenced by a shared
+  venv or a full-environment marker, and removes the rest. It lands here because it is
+  coupled to removing the legacy runtime and needs a referenced-interpreter policy so
+  it never deletes one a script still uses.
 
 ## Testing
 

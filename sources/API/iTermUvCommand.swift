@@ -41,8 +41,12 @@ enum iTermUvCommand {
     // Install packages into an existing venv, wheels only. --only-binary :all: is
     // what enforces the no-compiler guarantee: a source-only dependency fails
     // loudly instead of silently trying to build.
-    static func pipInstallArgs(venvPythonPath: String, packages: [String]) -> [String] {
-        return ["pip", "install", "--python", venvPythonPath, "--only-binary", ":all:"] + packages
+    static func pipInstallArgs(venvPythonPath: String, packages: [String], upgrade: Bool = false) -> [String] {
+        var arguments = ["pip", "install", "--python", venvPythonPath, "--only-binary", ":all:"]
+        if upgrade {
+            arguments.append("--upgrade")
+        }
+        return arguments + packages
     }
 
     // List interpreters uv knows about (installed and downloadable) as JSON, used
