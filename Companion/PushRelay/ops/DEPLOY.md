@@ -75,6 +75,11 @@ sudo $EDITOR /etc/iterm2-push-relay.env   # set APNS_TEAM_ID (Membership) and
                                           # check. (Keeps the already-installed key.)
 ```
 
+> **The auth key must cover BOTH APNs environments** ("Sandbox & Production" in
+> the Apple Developer portal). A Sandbox-only key silently works for development
+> builds but 403s (`BadEnvironmentKeyInToken`) on every push to a release/App
+> Store device. See [Troubleshooting](#troubleshooting).
+
 `deploy.sh` deliberately does NOT touch the reverse proxy (the one piece of
 shared Apache config the companion relay depends on) — that's the next section.
 
@@ -153,10 +158,39 @@ Counters mirror the worker's decisions — `pushrelay_register_written_total` vs
 (live registrations). The Cloudflare Worker does not expose this (observability is
 off there); it's a host-only feature for the on-box dashboard.
 
+Counters tell you a push failed but not *why*. The host also logs each APNs
+failure (the `_apns_error_total` case) with Apple's status and reason, e.g.
+`push-relay: APNs delivery failed: /push -> {"error":"APNs 410: {\"reason\":\"Unregistered\"}"}`,
+and any pre-response transport error (APNs timeout / dead h2 session) — visible in
+`journalctl -u iterm2-push-relay`. This is the only record of the reason: the
+worker folds it into a 502 body, which Cloudflare replaces with its own error page
+before the client sees it.
+
 The **relay dashboard** (`mcnachman.cloud/relay-dashboard`) scrapes this endpoint
 and renders a "Push relay" section; see that service's `ops/DASHBOARD.md`. It
 defaults to `http://127.0.0.1:8790/metrics`, so no config is needed once both run
 on the same box.
+
+## Troubleshooting
+
+**`APNs 403: BadEnvironmentKeyInToken` in the log (every push to real devices
+fails).** The configured auth key is scoped to Sandbox only, but release/App
+Store devices register `sandbox=false` and are pushed via `api.push.apple.com`
+(production). The `.p8` doesn't encode its environment, so this can't be caught at
+deploy time — only Apple's rejection at push time reveals it. Fix: use a key
+enabled for **Sandbox & Production**, then swap it in (Team ID and topic are
+unchanged — only the Key ID and `.p8` differ):
+
+```sh
+sudo cp -a /etc/iterm2-push-relay/apns.p8 /etc/iterm2-push-relay/apns.p8.bak   # rollback safety
+sudo install -o root -g root -m 600 ~/AuthKey_<NEWID>.p8 /etc/iterm2-push-relay/apns.p8
+sudo sed -i 's/^APNS_KEY_ID=.*/APNS_KEY_ID=<NEWID>/' /etc/iterm2-push-relay.env
+sudo systemctl restart iterm2-push-relay      # reloads the credential + clears the cached provider JWT
+```
+
+Verify: `curl -s 127.0.0.1:8790/metrics | grep pushrelay_push_` — `_delivered_total`
+climbs, `_apns_error_total` holds. (`api.sandbox.push.apple.com` is used only for
+development builds, which register `sandbox=true`.)
 
 ## Deploying a code change
 
