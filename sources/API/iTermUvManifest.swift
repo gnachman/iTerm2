@@ -40,7 +40,7 @@ enum iTermDottedVersion {
 struct iTermUvManifestEntry: Equatable, Codable {
     let uvVersion: String
     let url: String
-    let signature: String                  // pinned SHA-256 hex now; RSA later
+    let signature: String                  // base64 RSA-SHA256 signature over the bytes
     let size: Int
     let minimumMacOSVersion: String        // inclusive lower bound, e.g. "13.0"
     let maximumMacOSVersion: String?       // inclusive upper bound; nil = unbounded

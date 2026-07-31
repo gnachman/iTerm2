@@ -3,9 +3,9 @@
 //  ModernTests
 //
 //  Phase 1 of the uv Python-runtime migration. Pure pieces of the uv download:
-//  parsing the download manifest JSON, and verifying a downloaded tarball against
-//  a pinned SHA-256 (the trust mechanism for the dev source; RSA is added when
-//  hosting moves to iterm2.com). See docs/uv-python-runtime-migration.md (Phase 1).
+//  parsing the download manifest JSON. Tarball trust is an RSA signature verified
+//  against the bundled public key (see UvProvisionerTests); there is no SHA-256
+//  path. See docs/uv-python-runtime-migration.md (Phase 1).
 //
 
 import XCTest
@@ -45,29 +45,5 @@ final class UvDownloadTests: XCTestCase {
     func testMalformedManifestReturnsNil() {
         XCTAssertNil(iTermUvManifest.parse("{ not an array }".data(using: .utf8)!))
         XCTAssertNil(iTermUvManifest.parse(Data()))
-    }
-
-    // MARK: - SHA-256 verification
-
-    func testMatchesKnownDigest() {
-        // sha256("abc")
-        let data = "abc".data(using: .utf8)!
-        let expected = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
-        XCTAssertTrue(iTermUvDownload.matchesSHA256(data: data, expectedHex: expected))
-    }
-
-    func testMatchIsCaseInsensitive() {
-        let data = "abc".data(using: .utf8)!
-        let expectedUpper = "BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD"
-        XCTAssertTrue(iTermUvDownload.matchesSHA256(data: data, expectedHex: expectedUpper))
-    }
-
-    func testRejectsWrongDigest() {
-        let data = "abc".data(using: .utf8)!
-        XCTAssertFalse(iTermUvDownload.matchesSHA256(data: data, expectedHex: String(repeating: "0", count: 64)))
-        // Tampered content must not match the digest of the original.
-        let tampered = "abd".data(using: .utf8)!
-        let abcDigest = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
-        XCTAssertFalse(iTermUvDownload.matchesSHA256(data: tampered, expectedHex: abcDigest))
     }
 }
