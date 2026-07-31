@@ -946,6 +946,7 @@ static NSString *iTermDefaultPythonRuntimeDownloadURL(void) {
 }
 
 DEFINE_STRING(pythonRuntimeDownloadURL, iTermDefaultPythonRuntimeDownloadURL(), SECTION_SCRIPTING @"URL to check for new versions of the Python scripting runtime.");
+DEFINE_STRING(uvManifestDownloadURL, @"https://iterm2.com/downloads/uv/manifest.json", SECTION_SCRIPTING @"URL of the uv download manifest (used when the Python runtime is provisioned with uv).");
 DEFINE_STRING(pythonRuntimeBetaDownloadURL, @"https://iterm2.com/downloads/pyenv/betamanifest.json", SECTION_SCRIPTING @"URL to check for new Beta versions of the Python scripting runtime.");
 DEFINE_BOOL(laxNilPolicyInInterpolatedStrings, YES, SECTION_SCRIPTING @"Should references to undefined variables in interpolated strings be converted to empty string?\nWhen enabled, an expression in an interpolated string that references an undefined variable will be treated as an empty string. For example, “\\(bogus)”. References to undefined variables as arguments to function calls, such as “\\(f(bogus))”, are still errors.");
 DEFINE_BOOL(pythonRuntimeUsesUV, NO, SECTION_SCRIPTING @"Use uv to provision the Python runtime for API scripts?\nExperimental. When enabled, iTerm2 uses uv to download Python and build per-script environments instead of the bundled Python runtime. Scripts already provisioned continue to run regardless of this setting; it only affects creating, importing, and migrating scripts.");

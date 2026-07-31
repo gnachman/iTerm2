@@ -6,9 +6,9 @@
 //  installs the uv binary. The network fetch is behind an injectable protocol
 //  (iTermUvTarballFetcher) so later phases and tests can provision without hitting
 //  the network; the default fetcher reuses the optional-component download window
-//  controller for progress UI. Trust is a pinned SHA-256 for the development
-//  source (Astral's unsigned tarball); RSA verification via iTermSignatureVerifier
-//  is added when hosting moves to iterm2.com. No path ever skips verification.
+//  controller for progress UI. The manifest is fetched from iterm2.com and the
+//  downloaded binary is verified with an RSA signature (iTermSignatureVerifier)
+//  against the app's bundled public key. No path ever skips verification.
 //  See docs/uv-python-runtime-migration.md (Phase 1).
 //
 
@@ -55,25 +55,26 @@ class iTermUvProvisioner: NSObject {
         self.init(fetcher: iTermUvWindowControllerFetcher())
     }
 
-    // Development manifest: a single pinned, SHA-256-verified uv build. When
-    // hosting moves to iterm2.com this is replaced by a manifest fetched over the
-    // network whose entries carry RSA signatures. The macOS bracket is honored via
-    // iTermUvManifest.select so a future uv that raises its floor never strands an
-    // older-macOS user.
-    static let devManifest: [iTermUvManifestEntry] = [
-        iTermUvManifestEntry(
-            uvVersion: "0.12.0",
-            url: "https://releases.astral.sh/github/uv/releases/download/0.12.0/uv-aarch64-apple-darwin.tar.gz",
-            signature: "2b9e582af54f84fa50c115427451a6c13e80f43b52f8282b8af5791077317bbf",
-            size: 17387877,
-            minimumMacOSVersion: "13.0",
-            maximumMacOSVersion: nil),
-    ]
-
-    // The uv build to use for the given running macOS ("major.minor"), or nil if
-    // none is compatible.
-    static func selectedEntry(forMacOSVersion macOSVersion: String) -> iTermUvManifestEntry? {
-        return iTermUvManifest.select(entries: devManifest, runningMacOSVersion: macOSVersion)
+    // Download the uv manifest from iterm2.com and pick the entry whose macOS bracket
+    // includes the running OS (the newest compatible uv version). Runs synchronously,
+    // so call it off the main thread. The `signature` on the chosen entry is an RSA
+    // signature verified against the app's bundled public key at install time.
+    static func fetchSelectedEntry() -> Result<iTermUvManifestEntry, Error> {
+        guard let urlString = iTermAdvancedSettingsModel.uvManifestDownloadURL(),
+              let manifestURL = URL(string: urlString) else {
+            return .failure(error("The uv manifest URL is not valid."))
+        }
+        guard let data = try? Data(contentsOf: manifestURL) else {
+            return .failure(error("Could not download the uv manifest from \(urlString)."))
+        }
+        guard let entries = iTermUvManifest.parse(data) else {
+            return .failure(error("The uv manifest could not be parsed."))
+        }
+        guard let entry = iTermUvManifest.select(entries: entries,
+                                                 runningMacOSVersion: runningMacOSVersionString()) else {
+            return .failure(error("uv is not available for this version of macOS."))
+        }
+        return .success(entry)
     }
 
     static func runningMacOSVersionString() -> String {
@@ -156,16 +157,45 @@ class iTermUvProvisioner: NSObject {
         try fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: destinationBinaryPath)
     }
 
-    // Verify the pinned SHA-256, then extract the tarball and install the binary.
-    // Returns nil on success or an error describing the first failure. Verification
-    // happens on the in-memory bytes before anything is written, and the same bytes
-    // are extracted, so there is no time-of-check/time-of-use gap.
+    // Verify the RSA signature of the downloaded bytes against the app's bundled
+    // public key (rsa_pub.pem), then extract the tarball and install the binary.
+    // Verification happens before anything is extracted; the same bytes are then
+    // extracted, so there is no time-of-check/time-of-use gap.
     static func installDownloadedTarball(data: Data,
-                                         entry: iTermUvManifestEntry,
+                                         encodedSignature: String,
                                          destinationBinaryPath: String) -> Error? {
-        guard iTermUvDownload.matchesSHA256(data: data, expectedHex: entry.signature) else {
-            return error("The downloaded uv binary failed its integrity check.")
+        if let verifyError = verifyDownloadedTarball(data: data, encodedSignature: encodedSignature) {
+            return verifyError
         }
+        return extractAndInstall(data: data, destinationBinaryPath: destinationBinaryPath)
+    }
+
+    // RSA-SHA256 signature check against the bundled public key. iTermSignatureVerifier
+    // takes a file URL, so the bytes are written to a temp file first.
+    static func verifyDownloadedTarball(data: Data, encodedSignature: String) -> Error? {
+        guard let keyURL = Bundle.main.url(forResource: "rsa_pub", withExtension: "pem"),
+              let publicKey = try? String(contentsOf: keyURL, encoding: .utf8) else {
+            return error("Could not load the uv signature public key.")
+        }
+        let tempFile = (NSTemporaryDirectory() as NSString)
+            .appendingPathComponent("uv-verify-" + UUID().uuidString)
+        do {
+            try data.write(to: URL(fileURLWithPath: tempFile))
+            defer { try? FileManager.default.removeItem(atPath: tempFile) }
+            if let verifyError = iTermSignatureVerifier.validateFileURL(URL(fileURLWithPath: tempFile),
+                                                                        withEncodedSignature: encodedSignature,
+                                                                        publicKey: publicKey) {
+                return verifyError
+            }
+            return nil
+        } catch {
+            return error
+        }
+    }
+
+    // Extract the tarball and install the uv binary (no verification). Split out so
+    // the risk-bearing filesystem logic is unit-testable without a signature.
+    static func extractAndInstall(data: Data, destinationBinaryPath: String) -> Error? {
         let fm = FileManager.default
         let staging = (NSTemporaryDirectory() as NSString)
             .appendingPathComponent("uv-install-" + UUID().uuidString)
@@ -189,6 +219,24 @@ class iTermUvProvisioner: NSObject {
         }
     }
 
+    // Parse `uv --version` output ("uv 0.12.0 (hash date)") into the version. The
+    // output has a trailing newline and may lack the parenthesized suffix, so trim
+    // before splitting.
+    static func parseUvVersion(fromVersionOutput output: String) -> String {
+        let parts = output.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: " ")
+        return parts.count >= 2 ? String(parts[1]) : "unknown"
+    }
+
+    // The version of the installed uv binary, for recording in the marker.
+    static func installedUvVersion(uvPath: String) -> String {
+        let runner = iTermBufferedCommandRunner(command: uvPath,
+                                                withArguments: ["--version"],
+                                                path: NSTemporaryDirectory())
+        _ = runner.blockingRun()
+        let output = runner.output.flatMap { String(data: $0, encoding: .utf8) } ?? ""
+        return parseUvVersion(fromVersionOutput: output)
+    }
+
     // MARK: - Full-environment provisioning (runs uv; integration-tested live)
 
     // The full environment uv builds under a script container: a .venv plus the
@@ -196,7 +244,6 @@ class iTermUvProvisioner: NSObject {
     // the marker on success (its remappedFrom tells the caller whether to warn the
     // user that the Python version changed), or an error.
     static func provisionFullEnvironment(uvPath: String,
-                                         uvVersion: String,
                                          pythonInstallDir: String,
                                          cacheDir: String,
                                          container: String,
@@ -223,7 +270,7 @@ class iTermUvProvisioner: NSObject {
             return .failure(error)
         }
 
-        let marker = iTermPythonRuntimeMarker(uvVersion: uvVersion,
+        let marker = iTermPythonRuntimeMarker(uvVersion: installedUvVersion(uvPath: uvPath),
                                               python: resolved.version,
                                               remappedFrom: resolved.remappedFrom)
         do {
@@ -293,13 +340,7 @@ class iTermUvProvisioner: NSObject {
             finish(nil)
             return
         }
-        guard let entry = Self.selectedEntry(forMacOSVersion: Self.runningMacOSVersionString()),
-              let url = URL(string: entry.url) else {
-            finish(Self.error("uv is not available for this version of macOS."))
-            return
-        }
-
-        // Coalesce concurrent downloads: only the first caller starts the fetch; the
+        // Coalesce concurrent downloads: only the first caller does the work; the
         // rest wait and share its result.
         downloadLock.lock()
         if Self.isInstalled {
@@ -327,15 +368,31 @@ class iTermUvProvisioner: NSObject {
                 completion(resultError)
             }
         }
-        fetcher.fetch(url: url, title: "Downloading uv…", byteCount: entry.size) { result in
-            switch result {
+
+        // Fetch the manifest off-main (it is a blocking network read), then confirm
+        // and download the chosen build on main.
+        Self.provisionQueue.async {
+            switch Self.fetchSelectedEntry() {
             case .failure(let error):
                 deliver(error)
-            case .success(let data):
-                Self.provisionQueue.async {
-                    deliver(Self.installDownloadedTarball(data: data,
-                                                          entry: entry,
-                                                          destinationBinaryPath: Self.uvBinaryPath))
+            case .success(let entry):
+                guard let url = URL(string: entry.url) else {
+                    deliver(Self.error("The uv download URL is not valid."))
+                    return
+                }
+                DispatchQueue.main.async {
+                    self.fetcher.fetch(url: url, title: "Downloading uv…", byteCount: entry.size) { result in
+                        switch result {
+                        case .failure(let error):
+                            deliver(error)
+                        case .success(let data):
+                            Self.provisionQueue.async {
+                                deliver(Self.installDownloadedTarball(data: data,
+                                                                      encodedSignature: entry.signature,
+                                                                      destinationBinaryPath: Self.uvBinaryPath))
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -349,10 +406,8 @@ class iTermUvProvisioner: NSObject {
                                                    dependencies: [String],
                                                    createSetupCfg: Bool,
                                                    completion: @escaping (NSError?) -> Void) {
-        guard let entry = Self.selectedEntry(forMacOSVersion: Self.runningMacOSVersionString()) else {
-            completion(Self.error("uv is not available for this version of macOS."))
-            return
-        }
+        // downloadIfNeeded fetches the manifest and reports "not available for this
+        // macOS" if no compatible uv build exists, so no separate check is needed.
         downloadIfNeeded { error in
             if let error = error {
                 completion(error as NSError)
@@ -360,7 +415,6 @@ class iTermUvProvisioner: NSObject {
             }
             Self.provisionQueue.async {
                 let result = Self.provisionFullEnvironment(uvPath: Self.uvBinaryPath,
-                                                           uvVersion: entry.uvVersion,
                                                            pythonInstallDir: Self.pythonInstallDirectory,
                                                            cacheDir: Self.cacheDirectory,
                                                            container: container,
@@ -483,10 +537,6 @@ class iTermUvProvisioner: NSObject {
     // the main queue.
     @objc func downloadAndProvisionSharedVenv(requestedPythonVersion: String,
                                               completion: @escaping (NSError?, String?) -> Void) {
-        guard Self.selectedEntry(forMacOSVersion: Self.runningMacOSVersionString()) != nil else {
-            completion(Self.error("uv is not available for this version of macOS."), nil)
-            return
-        }
         downloadIfNeeded { error in
             if let error = error {
                 completion(error as NSError, nil)

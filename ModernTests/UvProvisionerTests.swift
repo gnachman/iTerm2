@@ -2,17 +2,16 @@
 //  UvProvisionerTests.swift
 //  ModernTests
 //
-//  Phase 1 of the uv Python-runtime migration. The provisioner downloads,
-//  verifies, extracts, and installs the uv binary. The risk-bearing filesystem
-//  logic (locating the binary in the extracted tree and placing it executable) is
-//  unit-tested hermetically here; the full download+verify+extract+install against
-//  the real Astral tarball is a skip-guarded live test (Tier B). The window-
-//  controller download orchestration is the thin integration shell validated on
-//  device / by review. See docs/uv-python-runtime-migration.md (Phase 1).
+//  Phase 1 of the uv Python-runtime migration. The provisioner downloads (from the
+//  iterm2.com manifest), RSA-verifies, extracts, and installs the uv binary. The
+//  risk-bearing filesystem logic (locating the binary and placing it executable, and
+//  extraction) is unit-tested hermetically here; RSA verification cannot be tested
+//  for success without the private key, so the full manifest->download->verify->
+//  install path is a skip-guarded live test against the real hosted build (Tier B).
+//  See docs/uv-python-runtime-migration.md (Phase 1).
 //
 
 import XCTest
-import CryptoKit
 @testable import iTerm2SharedARC
 
 final class UvProvisionerTests: XCTestCase {
@@ -34,10 +33,10 @@ final class UvProvisionerTests: XCTestCase {
     // MARK: - locateUvBinary
 
     func testLocateFindsBinaryInSubdirectory() throws {
-        // The Astral tarball extracts to uv-<arch>-apple-darwin/uv, so the binary
-        // is one level down, not at the root.
+        // The tarball extracts to uv-<arch>-apple-darwin/uv, so the binary is one
+        // level down, not at the root.
         let dir = try makeTempDir()
-        let nested = (dir as NSString).appendingPathComponent("uv-aarch64-apple-darwin/uv")
+        let nested = (dir as NSString).appendingPathComponent("uv-universal2-apple-darwin/uv")
         try writeFile(nested, "binary")
         XCTAssertEqual(iTermUvProvisioner.locateUvBinary(inDirectory: dir), nested)
     }
@@ -58,7 +57,7 @@ final class UvProvisionerTests: XCTestCase {
 
     func testInstallPlacesBinaryExecutable() throws {
         let staging = try makeTempDir()
-        let src = (staging as NSString).appendingPathComponent("uv-aarch64-apple-darwin/uv")
+        let src = (staging as NSString).appendingPathComponent("uv-universal2-apple-darwin/uv")
         try writeFile(src, "#!/bin/sh\necho uv\n")
         let dest = (try makeTempDir() as NSString).appendingPathComponent("uv/bin/uv")
 
@@ -88,41 +87,34 @@ final class UvProvisionerTests: XCTestCase {
         XCTAssertThrowsError(try iTermUvProvisioner.install(fromExtractedDirectory: staging, to: dest))
     }
 
-    // MARK: - entry selection / destination
-
-    func testSelectsDevEntryOnSupportedMacOS() {
-        XCTAssertEqual(iTermUvProvisioner.selectedEntry(forMacOSVersion: "13.4")?.uvVersion, "0.12.0")
-        XCTAssertEqual(iTermUvProvisioner.selectedEntry(forMacOSVersion: "26.0")?.uvVersion, "0.12.0")
-    }
-
-    func testSelectsNothingOnUnsupportedMacOS() {
-        // The dev entry requires macOS 13; a 12.x user gets nothing (Phase 0 warned them).
-        XCTAssertNil(iTermUvProvisioner.selectedEntry(forMacOSVersion: "12.6"))
-    }
-
     func testBinaryDestinationShape() {
         XCTAssertTrue(iTermUvProvisioner.uvBinaryPath.hasSuffix("/uv/bin/uv"),
                       "unexpected uv path: \(iTermUvProvisioner.uvBinaryPath)")
     }
 
-    // MARK: - installDownloadedTarball (the trust invariant, hermetically)
+    // MARK: - parseUvVersion
 
-    private func entry(signature: String, size: Int) -> iTermUvManifestEntry {
-        return iTermUvManifestEntry(uvVersion: "x", url: "u", signature: signature, size: size,
-                                    minimumMacOSVersion: "13.0", maximumMacOSVersion: nil)
+    func testParseUvVersion() {
+        XCTAssertEqual(iTermUvProvisioner.parseUvVersion(fromVersionOutput: "uv 0.12.0 (abc 2026-01-01)"), "0.12.0")
+        XCTAssertEqual(iTermUvProvisioner.parseUvVersion(fromVersionOutput: "uv 0.13.1\n"), "0.13.1")
+        XCTAssertEqual(iTermUvProvisioner.parseUvVersion(fromVersionOutput: "garbage"), "unknown")
     }
 
-    func testInstallDownloadedTarballRejectsHashMismatch() throws {
+    // MARK: - installDownloadedTarball / extractAndInstall
+
+    func testRejectsInvalidSignature() throws {
+        // An RSA signature that does not validate (against the bundled public key)
+        // must fail and install nothing. This is the central trust invariant.
         let dest = (try makeTempDir() as NSString).appendingPathComponent("uv/bin/uv")
-        let data = Data("not the expected bytes".utf8)
-        let wrongHash = String(repeating: "0", count: 64)
         let error = iTermUvProvisioner.installDownloadedTarball(
-            data: data, entry: entry(signature: wrongHash, size: data.count), destinationBinaryPath: dest)
-        XCTAssertNotNil(error, "a hash mismatch must fail")
-        XCTAssertFalse(FileManager.default.fileExists(atPath: dest), "nothing may be installed on mismatch")
+            data: Data("some bytes".utf8),
+            encodedSignature: "bm90LWEtdmFsaWQtc2lnbmF0dXJl",  // base64 of "not-a-valid-signature"
+            destinationBinaryPath: dest)
+        XCTAssertNotNil(error, "an invalid signature must fail")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: dest), "nothing may be installed on failure")
     }
 
-    func testInstallDownloadedTarballExtractsAndInstallsVerifiedTarball() throws {
+    func testExtractAndInstallExtractsRealTarball() throws {
         // Build a real gzipped tar containing uv-x/uv, hermetically (no network).
         let pkg = try makeTempDir()
         try writeFile((pkg as NSString).appendingPathComponent("uv-x/uv"), "#!/bin/sh\necho hi\n")
@@ -135,50 +127,46 @@ final class UvProvisionerTests: XCTestCase {
         XCTAssertEqual(tar.terminationStatus, 0)
 
         let data = try Data(contentsOf: URL(fileURLWithPath: tgz))
-        // Independent SHA-256 (CryptoKit) so we are not testing the verifier against itself.
-        let sha = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
         let dest = (try makeTempDir() as NSString).appendingPathComponent("uv/bin/uv")
 
-        let error = iTermUvProvisioner.installDownloadedTarball(
-            data: data, entry: entry(signature: sha, size: data.count), destinationBinaryPath: dest)
-        XCTAssertNil(error)
+        XCTAssertNil(iTermUvProvisioner.extractAndInstall(data: data, destinationBinaryPath: dest))
         XCTAssertTrue(FileManager.default.isExecutableFile(atPath: dest))
         XCTAssertEqual(try String(contentsOfFile: dest, encoding: .utf8), "#!/bin/sh\necho hi\n")
     }
 
-    func testInstallDownloadedTarballFailsOnVerifiedNonTarArchive() throws {
-        // Bytes that pass the hash check but are not a valid tar.gz: extraction must
-        // fail (tar nonzero) and nothing may be installed.
-        let data = Data("this passes the hash but is not a tarball".utf8)
-        let sha = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    func testExtractAndInstallFailsOnNonTar() throws {
         let dest = (try makeTempDir() as NSString).appendingPathComponent("uv/bin/uv")
-        let error = iTermUvProvisioner.installDownloadedTarball(
-            data: data, entry: entry(signature: sha, size: data.count), destinationBinaryPath: dest)
+        let error = iTermUvProvisioner.extractAndInstall(data: Data("not a tarball".utf8),
+                                                         destinationBinaryPath: dest)
         XCTAssertNotNil(error)
         XCTAssertFalse(FileManager.default.fileExists(atPath: dest))
     }
 }
 
 final class UvProvisionerLiveTests: XCTestCase {
-    // Tier B: downloads the real Astral tarball, verifies its pinned SHA-256,
-    // extracts and installs it, and runs `uv --version`. Skipped by default so the
-    // suite stays hermetic; run with ITERM2_UV_LIVE=1.
-    func testDownloadVerifyExtractInstallRealTarball() throws {
+    // Tier B: fetch the real iterm2.com manifest, download the chosen build,
+    // RSA-verify it against the bundled public key, install, and run `uv --version`.
+    // Skipped by default; run with ITERM2_UV_LIVE=1.
+    func testFetchManifestDownloadVerifyInstall() throws {
         try XCTSkipUnless(ProcessInfo.processInfo.environment["ITERM2_UV_LIVE"] == "1",
                           "Set ITERM2_UV_LIVE=1 to run the live uv download test")
-        let entry = try XCTUnwrap(iTermUvProvisioner.selectedEntry(forMacOSVersion: "13.0"))
+        let entry: iTermUvManifestEntry
+        switch iTermUvProvisioner.fetchSelectedEntry() {
+        case .failure(let error):
+            throw error
+        case .success(let selected):
+            entry = selected
+        }
         let data = try Data(contentsOf: try XCTUnwrap(URL(string: entry.url)))
         let dest = (NSTemporaryDirectory() as NSString)
             .appendingPathComponent("uvlive-\(UUID().uuidString)/bin/uv")
         addTeardownBlock {
-            try? FileManager.default.removeItem(
-                atPath: (dest as NSString).deletingLastPathComponent)
+            try? FileManager.default.removeItem(atPath: (dest as NSString).deletingLastPathComponent)
         }
 
-        let error = iTermUvProvisioner.installDownloadedTarball(data: data,
-                                                               entry: entry,
-                                                               destinationBinaryPath: dest)
-        XCTAssertNil(error)
+        XCTAssertNil(iTermUvProvisioner.installDownloadedTarball(data: data,
+                                                                encodedSignature: entry.signature,
+                                                                destinationBinaryPath: dest))
         XCTAssertTrue(FileManager.default.isExecutableFile(atPath: dest))
 
         let process = Process()
@@ -193,28 +181,31 @@ final class UvProvisionerLiveTests: XCTestCase {
         XCTAssertTrue(out.contains("uv "), "unexpected uv --version output: \(out)")
     }
 
-    // Tier C flagship: install uv, then use it to provision a full-environment
-    // script (uv venv + uv pip install iterm2), and confirm the resulting venv can
-    // import iterm2. Skipped by default; run with ITERM2_UV_LIVE=1.
+    // Tier C flagship: install uv (from the hosted manifest), then use it to
+    // provision a full-environment script and confirm the venv can import iterm2 and
+    // that its asyncio REPL supports top-level await. Skipped by default.
     func testProvisionFullEnvironmentEndToEnd() throws {
         try XCTSkipUnless(ProcessInfo.processInfo.environment["ITERM2_UV_LIVE"] == "1",
                           "Set ITERM2_UV_LIVE=1 to run the live uv provisioning test")
-        let entry = try XCTUnwrap(iTermUvProvisioner.selectedEntry(forMacOSVersion: "13.0"))
+        let entry: iTermUvManifestEntry
+        switch iTermUvProvisioner.fetchSelectedEntry() {
+        case .failure(let error): throw error
+        case .success(let selected): entry = selected
+        }
         let root = (NSTemporaryDirectory() as NSString).appendingPathComponent("uvprov-\(UUID().uuidString)")
         addTeardownBlock { try? FileManager.default.removeItem(atPath: root) }
 
-        // Install uv into a temp location.
+        // Install uv into a temp location (with RSA verification).
         let uvPath = (root as NSString).appendingPathComponent("bin/uv")
         let uvData = try Data(contentsOf: try XCTUnwrap(URL(string: entry.url)))
         XCTAssertNil(iTermUvProvisioner.installDownloadedTarball(
-            data: uvData, entry: entry, destinationBinaryPath: uvPath))
+            data: uvData, encodedSignature: entry.signature, destinationBinaryPath: uvPath))
 
         // Provision a full-environment script with it.
         let container = (root as NSString).appendingPathComponent("MyScript")
         try FileManager.default.createDirectory(atPath: container, withIntermediateDirectories: true)
         let result = iTermUvProvisioner.provisionFullEnvironment(
             uvPath: uvPath,
-            uvVersion: entry.uvVersion,
             pythonInstallDir: (root as NSString).appendingPathComponent("python"),
             cacheDir: (root as NSString).appendingPathComponent("cache"),
             container: container,
@@ -227,6 +218,7 @@ final class UvProvisionerLiveTests: XCTestCase {
         case .success(let marker):
             XCTAssertEqual(marker.python, "3.9")
             XCTAssertNil(marker.remappedFrom)
+            XCTAssertFalse(marker.uvVersion.isEmpty)
         }
 
         // It is recognized as a uv environment and its interpreter can import iterm2.
@@ -244,8 +236,7 @@ final class UvProvisionerLiveTests: XCTestCase {
         XCTAssertEqual(process.terminationStatus, 0, "import failed: \(out)")
         XCTAssertTrue(out.contains("ok"))
 
-        // The uv REPL runs `python -m asyncio`, which must support top-level await
-        // (that is the whole reason apython/aioconsole can be dropped).
+        // The uv REPL runs `python -m asyncio`, which must support top-level await.
         let repl = Process()
         repl.executableURL = URL(fileURLWithPath: venvPython)
         repl.arguments = iTermReplLauncher.arguments(usesUV: true)

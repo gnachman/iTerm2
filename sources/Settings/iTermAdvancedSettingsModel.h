@@ -409,6 +409,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)promptForPasteWhenNotAtPrompt;
 + (NSString *)pythonRuntimeBetaDownloadURL;
 + (NSString *)pythonRuntimeDownloadURL;
++ (NSString *)uvManifestDownloadURL;
 + (void)setPromptForPasteWhenNotAtPrompt:(BOOL)value;
 + (BOOL)proportionalScrollWheelReporting;
 + (int)quickPasteBytesPerCall;

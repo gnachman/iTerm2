@@ -52,6 +52,10 @@ trap 'rm -f "$tmp_file"' EXIT
 echo "Downloading $source_url ..."
 curl -fSL "$source_url" -o "$tmp_file"
 mv -f "$tmp_file" "$dest_file"
+# mktemp creates the temp file mode 600, and mv preserves it; the web server runs as
+# a different user, so without this the hosted tarball would 403. Match the 644 that
+# the sig/manifest get from the default umask.
+chmod 644 "$dest_file"
 echo "Placed:    $dest_file"
 
 # RSA-SHA256 signature, base64-encoded on a single line, of the exact hosted bytes.
