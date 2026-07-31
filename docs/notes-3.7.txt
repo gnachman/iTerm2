@@ -2377,3 +2377,11 @@ Bug Fixes:
   you adjust the width reserved for the
   window buttons before the inline tab bar
   in the Compact and Minimal themes.
+- Fixed a bug where Undo Close (⌘Z) could
+  leave behind an invisible empty window when
+  the closed session could not be restored.
+  Besides being a leak, these phantom windows
+  crashed Python API scripts with a
+  RecursionError. Empty windows are now closed,
+  and the Python API no longer reports a
+  selected tab for a window that has none.

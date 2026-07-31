@@ -123,6 +123,14 @@ class App(
         self.app_active = None
         self.current_terminal_window_id = None
 
+        # Guards against unbounded recursion in async_refresh. A focus
+        # notification that references a tab or session absent from the current
+        # layout (for example an empty window) asks _async_focus_change to
+        # reconcile by refreshing; if that happens while a refresh is already in
+        # flight, another refresh would fetch the same inconsistent state and
+        # recurse forever.
+        self._refreshing = False
+
     async def async_activate(
             self,
             raise_all_windows: bool = True,
@@ -292,8 +300,19 @@ class App(
         the REPL to pick up changes to the state, since it doesn't receive
         notifications at the Python prompt.
         """
-        layout = await iterm2.rpc.async_list_sessions(self.connection)
-        return await self._async_handle_layout_change(self.connection, layout)
+        if self._refreshing:
+            # Already refreshing. A nested refresh is triggered when focus info
+            # references a tab or session that isn't present in the layout we
+            # just fetched (e.g. an empty window). Re-fetching would return the
+            # same inconsistent state and recurse without bound, so stop here.
+            return None
+        self._refreshing = True
+        try:
+            layout = await iterm2.rpc.async_list_sessions(self.connection)
+            return await self._async_handle_layout_change(
+                self.connection, layout)
+        finally:
+            self._refreshing = False
 
     # pylint: disable=too-many-locals
     async def _async_handle_layout_change(

@@ -3273,9 +3273,19 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     [response.notificationsArray addObject:focusChange];
 
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        PTYTab *currentTab = term.currentTab;
+        if (!currentTab) {
+            // A window with no current tab (for example one left empty by a
+            // failed restore) has no selected tab to report. Emitting a
+            // selected_tab of “0” here (the value produced by messaging a nil
+            // tab) would reference a tab that appears in no window, which sends
+            // API clients such as the iterm2 Python library into an infinite
+            // refresh loop. Skip it, mirroring how list_sessions represents
+            // such a window as simply having no tabs.
+            continue;
+        }
         focusChange = [[ITMFocusChangedNotification alloc] init];
-        PTYTab *tab = term.currentTab;
-        focusChange.selectedTab = [@(tab.uniqueId) stringValue];
+        focusChange.selectedTab = [@(currentTab.uniqueId) stringValue];
         [response.notificationsArray addObject:focusChange];
 
         for (PTYTab *tab in term.tabs) {

@@ -3049,6 +3049,19 @@ static iTermKeyEventReplayer *gReplayer;
                 term.terminalGuid = restorableSession.terminalGuid;
                 break;
         }
+
+        // Every branch above registers its window with the controller before
+        // populating it. If the restore failed to add any tab (for example the
+        // session could not be revived), don't leave an empty window behind: it
+        // would be invisible, never torn down, and would linger in the
+        // controller's terminal list. Besides being a leak, such a phantom
+        // confuses consumers that enumerate windows, notably the Python API's
+        // focus reporting, which would advertise a selected tab that exists in
+        // no window. Closing it here is the only way to deregister it, since
+        // removal is driven exclusively by the window close notification.
+        if (term && term.numberOfTabs == 0) {
+            [[term window] close];
+        }
     }
 
     [iTermUndoCloseShortcutChangeWarning maybeShowForTriggeringEvent:triggeringEvent
