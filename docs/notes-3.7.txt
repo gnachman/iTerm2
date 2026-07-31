@@ -2351,3 +2351,7 @@ Bug Fixes:
   reprocessed to build each request, so the
   per-message work stays small no matter how
   long the conversation gets.
+- Fix “Save contents…” suggesting a
+  filename containing colons/slashes in
+  the timestamp, which macOS shows as “/”
+  and disallows. Issue 12931.

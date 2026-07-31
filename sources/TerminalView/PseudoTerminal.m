@@ -11872,6 +11872,13 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     NSString *suggestedFilename = [NSString stringWithFormat:@"iTerm2 Session %@ at %@.txt",
                                    [dateFormatter stringFromDate:now],
                                    [timeFormatter stringFromDate:now]];
+    // The localized time format uses colons as separators (e.g. “1:49:43 PM”)
+    // regardless of the dot-separated template above. Colons and slashes are
+    // both problematic in filenames on macOS (a colon is the legacy path
+    // separator and is shown as “/” by the save panel and Finder), so replace
+    // them with filename-safe characters.
+    suggestedFilename = [[suggestedFilename stringByReplacingOccurrencesOfString:@":" withString:@"."]
+                         stringByReplacingOccurrencesOfString:@"/" withString:@"-"];
 
     __weak __typeof(self) weakSelf = self;
     [iTermSavePanel asyncShowWithOptions:kSavePanelOptionFileFormatAccessory | kSavePanelOptionIncludeTimestampsAccessory | kSavePanelOptionDefaultToLocalhost
