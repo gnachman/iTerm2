@@ -895,7 +895,7 @@ NS_ASSUME_NONNULL_BEGIN
         };
         if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
             [[iTermUvProvisioner shared] downloadAndProvisionFullEnvironmentWithContainer:folder.path
-                                                                  requestedPythonVersion:pythonVersion ?: @"3.12"
+                                                                  requestedPythonVersion:pythonVersion ?: [iTermScriptRuntime defaultPythonVersion]
                                                                             dependencies:dependencies ?: @[]
                                                                           createSetupCfg:YES
                                                                               completion:installCompletion];
@@ -951,6 +951,25 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSPopUpButton *)newPythonVersionPopup {
     NSPopUpButton *popUpButton = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(10, 0, 50, 50)];
+
+    if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+        // The legacy iterm2env/versions folder is empty on a uv-only machine. Offer the
+        // minors uv can provide (the exact version is re-resolved at provision time),
+        // defaulting to the shared default.
+        NSString *best = [iTermScriptRuntime defaultPythonVersion];
+        NSMenuItem *defaultMenuItem = nil;
+        for (NSString *minor in [iTermUvMigration knownAvailableMinors]) {
+            NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:minor action:NULL keyEquivalent:@""];
+            if ([minor isEqualToString:best]) {
+                defaultMenuItem = menuItem;
+            }
+            [popUpButton.menu addItem:menuItem];
+        }
+        if (defaultMenuItem) {
+            [popUpButton selectItem:defaultMenuItem];
+        }
+        return popUpButton;
+    }
 
     NSArray<NSString *> *components = @[ @"iterm2env", @"versions" ];
     NSString *path = [[NSFileManager defaultManager] spacelessAppSupportCreatingLink];

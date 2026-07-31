@@ -288,7 +288,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
             // Basic scripts share a per-minor uv venv. Ensure it exists (downloading
             // uv and provisioning on first use), then launch the script with it. Once
             // provisioned this is offline; launch is a bare exec of the venv python.
-            [[iTermUvProvisioner shared] downloadAndProvisionSharedVenvWithRequestedPythonVersion:pythonVersion ?: @"3.12"
+            [[iTermUvProvisioner shared] downloadAndProvisionSharedVenvWithRequestedPythonVersion:pythonVersion ?: [iTermScriptRuntime defaultPythonVersion]
                                                                                       completion:^(NSError *uvError, NSString *sharedPython) {
                 if (uvError != nil && [iTermUvProvisioner isCancelationError:uvError]) {
                     // The user declined the download; do not report a failure.

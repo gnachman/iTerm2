@@ -296,7 +296,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
         // legacy runtime download/install entirely and provision into `from`.
         DLog(@"Will provision uv environment at %@", from);
         [[iTermUvProvisioner shared] downloadAndProvisionFullEnvironmentWithContainer:from
-                                                              requestedPythonVersion:setupParser.pythonVersion ?: @"3.12"
+                                                              requestedPythonVersion:setupParser.pythonVersion ?: [iTermScriptRuntime defaultPythonVersion]
                                                                         dependencies:dependencies ?: @[]
                                                                       createSetupCfg:NO
                                                                           completion:^(NSError *errorStatus) {

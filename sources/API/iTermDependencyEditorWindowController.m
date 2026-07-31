@@ -460,7 +460,7 @@
         // Converting a basic script to a full environment is a form of migration, so
         // honor the gate and build a uv .venv rather than a legacy iterm2env.
         [[iTermUvProvisioner shared] downloadAndProvisionFullEnvironmentWithContainer:folder.path
-                                                              requestedPythonVersion:pythonVersion ?: @"3.12"
+                                                              requestedPythonVersion:pythonVersion ?: [iTermScriptRuntime defaultPythonVersion]
                                                                         dependencies:@[]
                                                                       createSetupCfg:YES
                                                                           completion:upgradeCompletion];
