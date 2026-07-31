@@ -165,13 +165,21 @@ not by measuring adoption):
 
 ## Target on-disk layout
 
+All uv artifacts live under the spaceless Application Support symlink (venv shebangs
+and interpreter symlinks dislike spaces), which the provisioner resolves via
+`spacelessAppSupportCreatingLink()`:
+
 - uv binary: `<spacelessAppSupport>/uv/bin/uv`
-- uv-managed interpreters: `<AppSupport>/uv/python/` (`UV_PYTHON_INSTALL_DIR`)
-- uv cache: `<AppSupport>/uv/cache/` (`UV_CACHE_DIR`)
-- shared basic-script venvs: `<AppSupport>/uv/venvs/<minor>/`
+- uv-managed interpreters: `<spacelessAppSupport>/uv/python/` (`UV_PYTHON_INSTALL_DIR`)
+- uv cache: `<spacelessAppSupport>/uv/cache/` (`UV_CACHE_DIR`)
+- shared basic-script venvs: `<spacelessAppSupport>/uv/venvs/<minor>/`
 - per full-env script venv: `<script>/.venv/` (flat `bin/python`)
 - per full-env script marker: `<script>/python-runtime.json`, schema:
-  `{ "schema": 1, "backend": "uv", "uv_version": "...", "python": "3.9.x", "remapped_from": "3.7" }`
+  `{ "schema": 1, "backend": "uv", "uv_version": "...", "python": "3.9", "remapped_from": "3.7" }`
+  The `python` value records only the resolved minor (e.g. `3.9`), not a full patch
+  version. Note: the marker is currently written non-atomically (`Data.write(to:)`
+  without `.atomic`), a minor robustness gap (a crash mid-write could leave a truncated
+  marker).
 
 Launch contract (both kinds): `exec <venv>/bin/python <main.py> <args>` with
 `ITERM2_COOKIE` / `ITERM2_KEY` / `SSL_CERT_FILE` in the environment. No uv, no network.
@@ -218,8 +226,8 @@ target bump is deferred to Phase 4.
    Each hosted uv version is pinned and tested; bump deliberately on iTerm2 releases
    via `performPeriodicUpgradeCheck`.
 3. Provision-time environment (uv subprocesses only):
-   - `UV_PYTHON_INSTALL_DIR = <AppSupport>/uv/python`
-   - `UV_CACHE_DIR = <AppSupport>/uv/cache`
+   - `UV_PYTHON_INSTALL_DIR = <spacelessAppSupport>/uv/python`
+   - `UV_CACHE_DIR = <spacelessAppSupport>/uv/cache`
    - `UV_PYTHON_PREFERENCE = only-managed`
    - `UV_NO_CONFIG = 1`
    - `UV_PYTHON_DOWNLOADS = automatic`
@@ -280,12 +288,16 @@ Consequences:
   interpreter minor while any venv references it. This replaces the current
   runtime-version GC (`finishInstallingRuntimeVersion:`) with a simpler "keep
   interpreters some venv uses" rule.
-- Relocation: uv bakes absolute paths into `pyvenv.cfg` and console-script shebangs.
-  We create `.venv` in-place at the final path, so no templatization is needed (this
-  is why `__ITERM2_ENV__` / `performSubstitutions:` can be deleted). Moving/renaming a
-  script dir later breaks its `.venv` - the same failure mode as moving a substituted
-  `iterm2env` today. Mitigation: detect a path mismatch on launch and re-provision
-  (cheap with uv).
+- Relocation: we create the venv with `uv venv --relocatable`, which writes relative
+  paths into the console-script shebangs instead of baking in the absolute venv path.
+  This keeps the venv working when the script folder is later moved or renamed (and
+  lets the import path provision a venv and then move it into its final location). No
+  templatization is needed (this is why `__ITERM2_ENV__` / `performSubstitutions:` can
+  be deleted). Residual gap: `--relocatable` only handles a moved venv directory. A
+  renamed home directory or a different machine still breaks the venv, because the
+  interpreter is reached through an absolute symlink into `UV_PYTHON_INSTALL_DIR` and
+  the `home` key in `pyvenv.cfg` is an absolute path. Those cases still require a full
+  re-provision (cheap with uv).
 
 ### 2b. Basic scripts (shared venv, eager, offline launch)
 
@@ -320,11 +332,17 @@ call.
 - Detection: a script with a legacy `iterm2env` and no `python-runtime.json` is
   legacy and must be migrated. (No integer "generation" number - that would reuse the
   conflated metadata we are moving away from.)
-- Timing: migrate EAGERLY when the `pythonRuntimeUsesUV` gate is first enabled - scan
-  all full-env scripts, compute which need a forced minor bump, show the one
-  consolidated warning, then migrate them all. This pairs with the batched warning and
-  makes testing deterministic (flip it, everything migrates). Newly imported/created
-  scripts while the gate is on are provisioned via uv directly.
+- Timing: migrate LAZILY, per script, at launch time. A legacy script is migrated the
+  first time it is launched (not when the gate flips), so flipping the gate on does not
+  by itself rewrite anything on disk. To give the user advance notice, a predictive,
+  one-time-per-launch startup warning scans all full-env scripts and, without invoking
+  uv (it resolves against `iTermUvMigration.knownAvailableMinors`), computes which pins
+  will need a forced minor bump and shows the one consolidated warning up front
+  (`iTermScriptsMenuController maybeWarnAboutUvVersionBumps` +
+  `iTermUvMigration.pendingVersionBumpWarning` / `forcedRemaps`). Consequence: the
+  heads-up is predictive and batched, but the actual migration of any given script
+  happens on its first launch. Newly imported/created scripts while the gate is on are
+  provisioned via uv directly.
 - Shebangs: no user-authored file is edited. iTerm2 never executes a script via its
   shebang - the launcher invokes the interpreter explicitly (`argumentsToRunScript:`
   -> `it2_api_wrapper.sh <venv-python> <script.py>`), so a `.py` shebang is used only
@@ -349,7 +367,8 @@ call.
     3.7 -> 3.9. The resolved version is recorded in `python-runtime.json`; setup.cfg
     and shebangs are left as-is (inference/re-resolution is idempotent).
 - Warning for forced minor bumps (real dialog, not just console):
-  - One consolidated modal `iTermWarning` at migration listing every affected script
+  - One consolidated modal `iTermWarning`, shown once at startup (predictively, before
+    any script is actually migrated), listing every affected script
     (e.g. `"MyScript": 3.7 -> 3.9`), not one dialog per script.
   - Body states plainly that Python minor versions are not guaranteed source-
     compatible, so a script may need changes.
