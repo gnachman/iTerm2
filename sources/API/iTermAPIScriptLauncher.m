@@ -564,6 +564,17 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         environment[@"IT2_SUITE"] = suiteName;
     }
     environment[@"HOME"] = NSHomeDirectory();
+
+    // When this build runs under a custom -suite (e.g. a developer build launched
+    // alongside the user’s main iTerm2), the API server’s unix socket lives under
+    // ~/Library/Application Support/<suite>/private/socket. The iterm2 Python module
+    // reads IT2_SUITE to find that path; without it a menu-launched script would
+    // default to “iTerm2” and connect to the main instance’s socket instead. Mirror
+    // what PTYSession does for terminal sessions.
+    NSString *suiteName = [iTermUserDefaults customSuiteName];
+    if (suiteName) {
+        environment[@"IT2_SUITE"] = suiteName;
+    }
     if (shell) {
         environment[@"SHELL"] = shell;
     }
