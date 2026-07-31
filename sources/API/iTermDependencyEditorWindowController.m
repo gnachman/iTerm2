@@ -467,11 +467,15 @@
         // Converting a basic script to a full environment is a form of migration, so
         // honor the gate and build a uv .venv rather than a legacy iterm2env.
         progress = [[iTermProvisioningProgressWindowController alloc] init];
-        [progress showWithMessage:@"Setting up the Python environment…"];
+        // Show progress only once the download phase is done and the venv build starts,
+        // so it does not float over the download confirmation and progress window.
         [[iTermUvProvisioner shared] downloadAndProvisionFullEnvironmentWithContainer:folder.path
                                                               requestedPythonVersion:pythonVersion ?: [iTermScriptRuntime defaultPythonVersion]
                                                                         dependencies:@[]
                                                                       createSetupCfg:YES
+                                                                provisioningDidBegin:^{
+            [progress showWithMessage:@"Setting up the Python environment…"];
+        }
                                                                           completion:upgradeCompletion];
     } else {
         [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder

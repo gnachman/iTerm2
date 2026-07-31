@@ -933,11 +933,16 @@ NS_ASSUME_NONNULL_BEGIN
         };
         if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
             progress = [[iTermProvisioningProgressWindowController alloc] init];
-            [progress showWithMessage:@"Setting up the Python environment…"];
+            // Show progress only once the download phase is done and the venv build
+            // starts, so it does not float over the download confirmation and progress
+            // window.
             [[iTermUvProvisioner shared] downloadAndProvisionFullEnvironmentWithContainer:folder.path
                                                                   requestedPythonVersion:pythonVersion ?: [iTermScriptRuntime defaultPythonVersion]
                                                                             dependencies:dependencies ?: @[]
                                                                           createSetupCfg:YES
+                                                                    provisioningDidBegin:^{
+                [progress showWithMessage:@"Setting up the Python environment…"];
+            }
                                                                               completion:installCompletion];
         } else {
             NSURL *existingEnv = [folder URLByAppendingPathComponent:@"iterm2env"];
@@ -1388,7 +1393,10 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - SCEventListenerProtocol
 
 - (void)pathWatcher:(SCEvents *)pathWatcher eventOccurred:(SCEvent *)event {
-    if ([[iTermPythonRuntimeDownloader sharedInstance] busy]) {
+    if ([[iTermPythonRuntimeDownloader sharedInstance] busy] ||
+        [iTermUvProvisioner isProvisioningFullEnvironment]) {
+        // A uv .venv build under Scripts/<name>/ emits thousands of file events; do not
+        // rebuild the menu for each. build runs once at the provision's completion.
         return;
     }
     DLog(@"Path watcher noticed a change to scripts directory");

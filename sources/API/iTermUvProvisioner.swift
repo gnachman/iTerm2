@@ -477,13 +477,41 @@ class iTermUvProvisioner: NSObject {
         }
     }
 
+    // True while a full-environment .venv is being built under the Scripts folder. The
+    // scripts-folder watcher checks this to suppress the storm of menu rebuilds that the
+    // thousands of file events from `uv venv` + `uv pip install` would otherwise cause.
+    // Shared basic-script venvs live outside Scripts and do not need this.
+    private static let provisioningLock = NSLock()
+    private static var provisioningCount = 0
+
+    @objc static var isProvisioningFullEnvironment: Bool {
+        provisioningLock.lock()
+        defer { provisioningLock.unlock() }
+        return provisioningCount > 0
+    }
+
+    private static func beginProvisioning() {
+        provisioningLock.lock()
+        provisioningCount += 1
+        provisioningLock.unlock()
+    }
+
+    private static func endProvisioning() {
+        provisioningLock.lock()
+        provisioningCount -= 1
+        provisioningLock.unlock()
+    }
+
     // Download uv if needed, then provision a full-environment script's .venv. The
-    // completion runs on the main queue with nil on success or an error. Callable
-    // from the Obj-C create/import paths.
+    // completion runs on the main queue with nil on success or an error. provisioningDidBegin
+    // (if given) runs on the main queue once the download phase is done and the venv build
+    // is starting, so a caller can show progress only after the download window closes.
+    // Callable from the Obj-C create/import paths.
     @objc func downloadAndProvisionFullEnvironment(container: String,
                                                    requestedPythonVersion: String,
                                                    dependencies: [String],
                                                    createSetupCfg: Bool,
+                                                   provisioningDidBegin: (() -> Void)? = nil,
                                                    completion: @escaping (NSError?) -> Void) {
         // downloadIfNeeded fetches the manifest and reports "not available for this
         // macOS" if no compatible uv build exists, so no separate check is needed.
@@ -493,6 +521,11 @@ class iTermUvProvisioner: NSObject {
                 return
             }
             Self.provisionQueue.async {
+                Self.beginProvisioning()
+                defer { Self.endProvisioning() }
+                if let provisioningDidBegin = provisioningDidBegin {
+                    DispatchQueue.main.async { provisioningDidBegin() }
+                }
                 let result = Self.provisionFullEnvironment(uvPath: Self.uvBinaryPath,
                                                            pythonInstallDir: Self.pythonInstallDirectory,
                                                            cacheDir: Self.cacheDirectory,

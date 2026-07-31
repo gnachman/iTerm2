@@ -299,6 +299,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
                                                               requestedPythonVersion:setupParser.pythonVersion ?: [iTermScriptRuntime defaultPythonVersion]
                                                                         dependencies:dependencies ?: @[]
                                                                       createSetupCfg:NO
+                                                                provisioningDidBegin:nil
                                                                           completion:^(NSError *errorStatus) {
             [self didInstallPythonRuntimeWithError:errorStatus
                                               from:from
