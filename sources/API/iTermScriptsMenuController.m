@@ -114,12 +114,14 @@ NS_ASSUME_NONNULL_BEGIN
     SCEvents *_events;
     NSArray<NSString *> *_allScripts;
     BOOL _disableEnumeration;
+    BOOL _uvGateLastSeen;
 }
 
 - (instancetype)initWithMenu:(NSMenu *)menu {
     self = [super init];
     if (self) {
         _allScripts = [NSMutableArray array];
+        _uvGateLastSeen = [iTermAdvancedSettingsModel pythonRuntimeUsesUV];
         _scriptsMenu = menu;
         _events = [[SCEvents alloc] init];
         _events.delegate = self;
@@ -143,9 +145,19 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)advancedSettingsDidChange:(NSNotification *)notification {
-    // Enabling the uv gate mid-session should still show the one-time version-bump
-    // heads-up, even though -build already ran at launch when the gate was off.
-    [self maybeWarnAboutUvVersionBumps];
+    // The notification carries no key, and it fires for every advanced setting. Only
+    // act when the uv gate itself changed to ON, so an unrelated setting change does
+    // not re-walk the scripts tree on the main thread. Enabling the gate mid-session
+    // still shows the one-time version-bump heads-up even though -build ran at launch
+    // with the gate off.
+    const BOOL gate = [iTermAdvancedSettingsModel pythonRuntimeUsesUV];
+    if (gate == _uvGateLastSeen) {
+        return;
+    }
+    _uvGateLastSeen = gate;
+    if (gate) {
+        [self maybeWarnAboutUvVersionBumps];
+    }
 }
 
 - (void)dealloc {
@@ -256,6 +268,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)collectLegacyFullEnvironmentScriptsUnder:(NSString *)root
                                      scriptsRoot:(NSString *)scriptsRoot
                                             into:(NSMutableDictionary<NSString *, NSString *> *)requested {
+    [self collectLegacyFullEnvironmentScriptsUnder:root scriptsRoot:scriptsRoot depth:0 into:requested];
+}
+
+- (void)collectLegacyFullEnvironmentScriptsUnder:(NSString *)root
+                                     scriptsRoot:(NSString *)scriptsRoot
+                                           depth:(int)depth
+                                            into:(NSMutableDictionary<NSString *, NSString *> *)requested {
     NSFileManager *fm = [NSFileManager defaultManager];
     NSString *setupCfg = [root stringByAppendingPathComponent:@"setup.cfg"];
     if ([fm fileExistsAtPath:setupCfg]) {
@@ -269,14 +288,26 @@ NS_ASSUME_NONNULL_BEGIN
         }
         return;
     }
+    // Bound the recursion. Script containers live at most a couple of levels below the
+    // Scripts folder; a deeper tree is not ours and not worth walking on the main thread.
+    if (depth >= 8) {
+        return;
+    }
     for (NSString *name in [fm contentsOfDirectoryAtPath:root error:nil]) {
         if ([name hasPrefix:@"."]) {
             continue;
         }
         NSString *child = [root stringByAppendingPathComponent:name];
-        BOOL isDirectory = NO;
-        if ([fm fileExistsAtPath:child isDirectory:&isDirectory] && isDirectory) {
-            [self collectLegacyFullEnvironmentScriptsUnder:child scriptsRoot:scriptsRoot into:requested];
+        // lstat (does not resolve the final symlink) so we can skip symlinked entries:
+        // following them risks a cycle (infinite recursion / stack overflow at every
+        // launch) or walking an arbitrarily large tree. Real script folders are not
+        // symlinks.
+        NSDictionary *attributes = [fm attributesOfItemAtPath:child error:nil];
+        if ([attributes.fileType isEqualToString:NSFileTypeDirectory]) {
+            [self collectLegacyFullEnvironmentScriptsUnder:child
+                                               scriptsRoot:scriptsRoot
+                                                     depth:depth + 1
+                                                      into:requested];
         }
     }
 }

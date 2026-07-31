@@ -757,13 +757,24 @@ class iTermUvProvisioner: NSObject {
     // uv is never re-checked, so a broken uv could never be replaced and basic scripts'
     // iterm2 module would never update.
     @objc func performPeriodicUpgradeCheck() {
-        guard Self.isInstalled else {
-            return
-        }
         Self.upgradeRateLimit.performRateLimitedBlock {
-            Self.provisionQueue.async {
+            // Run on a background queue, NOT provisionQueue: the network fetch has
+            // unbounded latency and must never block a user-visible provision or launch
+            // queued behind it. The install swap and pip upgrades hop onto provisionQueue
+            // themselves so they stay serialized with provisioning. This runs even with
+            // the gate off (guarded only by isInstalled): a script provisioned under uv
+            // keeps using it regardless of the gate, so keeping uv and the shared modules
+            // current is intended.
+            DispatchQueue.global(qos: .utility).async {
+                // Re-check installed state now: the persistent rate limit can defer this
+                // block up to ~a day, during which the user may have removed uv.
+                guard Self.isInstalled else {
+                    return
+                }
                 Self.upgradeUvBinaryIfNewerAvailable()
-                Self.upgradeSharedVenvModules()
+                Self.provisionQueue.async {
+                    Self.upgradeSharedVenvModules()
+                }
             }
         }
     }
@@ -772,7 +783,9 @@ class iTermUvProvisioner: NSObject {
     // install it (RSA-verified, atomic replace). Silent: the user already consented to
     // uv, so there is no confirmation window. Any failure (offline, older manifest) is
     // a no-op retried next time. The minimum-version floor still applies via
-    // fetchSelectedEntry, so this never installs an older uv.
+    // fetchSelectedEntry, so this never installs an older uv. Call off provisionQueue;
+    // the install swap is hopped onto provisionQueue so it is serialized with any
+    // concurrent provisioning.
     private static func upgradeUvBinaryIfNewerAvailable() {
         guard case .success(let entry) = fetchSelectedEntry() else {
             return
@@ -788,18 +801,31 @@ class iTermUvProvisioner: NSObject {
               let data = boundedDownload(from: url, maxBytes: entry.size + 16 * 1024 * 1024) else {
             return
         }
-        if let error = installDownloadedTarball(data: data,
-                                                encodedSignature: entry.signature,
-                                                destinationBinaryPath: uvBinaryPath) {
-            RLog("uv: background upgrade to \(entry.uvVersion) failed: \(error.localizedDescription)")
-        } else {
-            RLog("uv: upgraded uv from \(installed) to \(entry.uvVersion)")
+        provisionQueue.async {
+            // Re-check under the queue: a concurrent provision or a prior iteration may
+            // have already updated the binary.
+            let current = installedUvVersion(uvPath: uvBinaryPath)
+            guard shouldUpgradeUv(installedVersion: current, manifestVersion: entry.uvVersion) else {
+                return
+            }
+            if let error = installDownloadedTarball(data: data,
+                                                    encodedSignature: entry.signature,
+                                                    destinationBinaryPath: uvBinaryPath) {
+                RLog("uv: background upgrade to \(entry.uvVersion) failed: \(error.localizedDescription)")
+            } else {
+                RLog("uv: upgraded uv from \(current) to \(entry.uvVersion)")
+            }
         }
     }
 
     // Upgrade the always-installed packages to the latest in every provisioned shared
     // basic-script venv. Full-environment scripts manage their own dependencies
-    // (setup.cfg / Dependency Editor) and are intentionally left untouched.
+    // (setup.cfg / Dependency Editor) and are intentionally left untouched. Runs on
+    // provisionQueue so it never races a concurrent shared-venv build. Note: `uv pip
+    // install --upgrade` is not transactional across the package set, so a mid-run
+    // failure can leave one package upgraded and others not (retried next day), and it
+    // can rewrite site-packages while a basic script is running from that venv; that is
+    // accepted as low risk for a once-a-day background refresh.
     private static func upgradeSharedVenvModules() {
         let venvsRoot = (uvDirectory as NSString).appendingPathComponent("venvs")
         guard let minors = try? FileManager.default.contentsOfDirectory(atPath: venvsRoot) else {
