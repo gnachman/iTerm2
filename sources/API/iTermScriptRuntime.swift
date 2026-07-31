@@ -82,4 +82,14 @@ class iTermScriptRuntime: NSObject {
         }
         return venvInterpreterPath(forScriptContainer: container)
     }
+
+    // The resolved Python version recorded in a script's python-runtime.json marker
+    // (e.g. "3.10"), or nil if the marker is absent or unreadable.
+    @objc static func pythonVersion(forScriptContainer container: String) -> String? {
+        let marker = (container as NSString).appendingPathComponent(markerFileName)
+        guard let data = FileManager.default.contents(atPath: marker) else {
+            return nil
+        }
+        return iTermPythonRuntimeMarker.from(jsonData: data)?.python
+    }
 }

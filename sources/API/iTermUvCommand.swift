@@ -31,8 +31,11 @@ enum iTermUvCommand {
 
     // Create a virtual environment at venvPath using the given Python version
     // (uv downloads that python-build-standalone interpreter if needed).
+    // --relocatable keeps the venv working if the script folder is later moved or
+    // renamed (and lets the import path provision then move it into place), by using
+    // relative paths in console-script shebangs rather than baking in the venv path.
     static func venvArgs(pythonVersion: String, venvPath: String) -> [String] {
-        return ["venv", "--python", pythonVersion, venvPath]
+        return ["venv", "--relocatable", "--python", pythonVersion, venvPath]
     }
 
     // Install packages into an existing venv, wheels only. --only-binary :all: is
@@ -46,5 +49,18 @@ enum iTermUvCommand {
     // to discover which minor versions python-build-standalone offers for remap.
     static func pythonListArgs() -> [String] {
         return ["python", "list", "--all-versions", "--output-format", "json"]
+    }
+
+    // Run a pip subcommand (e.g. ["show", "requests"], ["install", "requests"],
+    // ["install", "requests", "--upgrade"], ["uninstall", "requests"]) through uv pip
+    // against a specific venv. `install` is forced wheels-only so a source-only
+    // dependency fails loudly rather than needing a compiler, matching provisioning.
+    static func pipPassthroughArgs(pipArguments: [String], venvPythonPath: String) -> [String] {
+        var arguments = ["pip"] + pipArguments
+        if pipArguments.first == "install" {
+            arguments += ["--only-binary", ":all:"]
+        }
+        arguments += ["--python", venvPythonPath]
+        return arguments
     }
 }

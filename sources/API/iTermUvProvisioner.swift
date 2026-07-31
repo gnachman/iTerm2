@@ -104,6 +104,12 @@ class iTermUvProvisioner: NSObject {
         return (uvDirectory as NSString).appendingPathComponent("cache")
     }
 
+    // The full environment for running uv as a subprocess (process env + UV_*
+    // overrides). Exposed for callers that run uv in a visible session.
+    @objc static func provisionEnvironment() -> [String: String] {
+        return mergedEnvironment(pythonInstallDir: pythonInstallDirectory, cacheDir: cacheDirectory)
+    }
+
     // MARK: - Pure filesystem helpers (unit-tested)
 
     // Find the uv executable inside an extracted tarball. The Astral tarball places
@@ -428,6 +434,33 @@ class iTermUvProvisioner: NSObject {
                 iTermUvMigration.discardLegacyBackup(container: container)
                 finishAll(nil)
             }
+        }
+    }
+
+    // MARK: - Dependency editing (uv pip against a script's .venv)
+
+    // Obj-C-visible bridge to the pip passthrough arg builder (iTermUvCommand is a
+    // Swift enum). `<uvBinaryPath> <these args>` runs a pip subcommand against a venv.
+    @objc static func uvPipArguments(pipArguments: [String], venvPython: String) -> [String] {
+        return iTermUvCommand.pipPassthroughArgs(pipArguments: pipArguments, venvPythonPath: venvPython)
+    }
+
+    // Run a pip subcommand through uv against a venv and capture the combined
+    // stdout+stderr. completion runs on the main queue with (success, output),
+    // mirroring the legacy runPip3InContainer signature.
+    @objc func runUvPip(pipArguments: [String],
+                        venvPython: String,
+                        completion: @escaping (Bool, Data) -> Void) {
+        Self.provisionQueue.async {
+            let runner = iTermBufferedCommandRunner(
+                command: Self.uvBinaryPath,
+                withArguments: iTermUvCommand.pipPassthroughArgs(pipArguments: pipArguments, venvPythonPath: venvPython),
+                path: NSTemporaryDirectory())
+            runner.environment = Self.mergedEnvironment(pythonInstallDir: Self.pythonInstallDirectory,
+                                                        cacheDir: Self.cacheDirectory)
+            let status = runner.blockingRun()
+            let output = runner.output ?? Data()
+            DispatchQueue.main.async { completion(status == 0, output) }
         }
     }
 

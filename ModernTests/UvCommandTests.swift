@@ -14,7 +14,7 @@ import XCTest
 final class UvCommandTests: XCTestCase {
     func testVenvArgs() {
         XCTAssertEqual(iTermUvCommand.venvArgs(pythonVersion: "3.9", venvPath: "/scripts/A/.venv"),
-                       ["venv", "--python", "3.9", "/scripts/A/.venv"])
+                       ["venv", "--relocatable", "--python", "3.9", "/scripts/A/.venv"])
     }
 
     func testPipInstallArgsAreWheelsOnly() {
@@ -36,6 +36,25 @@ final class UvCommandTests: XCTestCase {
     func testPythonListArgsRequestJSONAndAllVersions() {
         XCTAssertEqual(iTermUvCommand.pythonListArgs(),
                        ["python", "list", "--all-versions", "--output-format", "json"])
+    }
+
+    func testPipPassthroughShow() {
+        XCTAssertEqual(
+            iTermUvCommand.pipPassthroughArgs(pipArguments: ["show", "requests"], venvPythonPath: "/v/bin/python"),
+            ["pip", "show", "requests", "--python", "/v/bin/python"])
+    }
+
+    func testPipPassthroughInstallIsWheelsOnly() {
+        XCTAssertEqual(
+            iTermUvCommand.pipPassthroughArgs(pipArguments: ["install", "requests", "--upgrade"],
+                                              venvPythonPath: "/v/bin/python"),
+            ["pip", "install", "requests", "--upgrade", "--only-binary", ":all:", "--python", "/v/bin/python"])
+    }
+
+    func testPipPassthroughUninstallHasNoOnlyBinary() {
+        XCTAssertEqual(
+            iTermUvCommand.pipPassthroughArgs(pipArguments: ["uninstall", "requests"], venvPythonPath: "/v/bin/python"),
+            ["pip", "uninstall", "requests", "--python", "/v/bin/python"])
     }
 
     func testProvisionEnvironmentPinsManagedOfflineSafeSettings() {

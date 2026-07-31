@@ -299,9 +299,11 @@ Consequences:
 ### 2c. REPL - drop aioconsole
 
 - Replace bundled `aioconsole`/`apython` with stdlib `python -m asyncio` run against
-  the shared venv, same cookie/key env (`iTermApplicationDelegate.m:3208`). A tiny
-  startup shim blanks the stdlib REPL header so `repl_banner.txt` still shows
-  (cosmetic).
+  the shared venv, same cookie/key env (`iTermApplicationDelegate.m:3208`). The stdlib
+  asyncio REPL prints a short "Use await directly" header that is not suppressible via
+  a flag (`-q` does not silence it) and would require reimplementing CPython internals
+  to blank across versions. Since iTerm2's injected `repl_banner.txt` already explains
+  top-level await, we accept the extra header rather than maintain a fragile shim.
 
 ### 2d. Certs
 

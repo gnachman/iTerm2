@@ -7,7 +7,9 @@
 
 #import "iTermDependencyEditorWindowController.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermAPIScriptLauncher.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
@@ -80,20 +82,29 @@
     }
 }
 
+- (BOOL)selectedScriptIsUv {
+    return [iTermScriptRuntime backendForScriptContainer:_selectedScriptItem.path] == iTermScriptRuntimeBackendUv;
+}
+
 - (void)fetchVersionOfPackage:(NSString *)packageName completion:(void (^)(BOOL ok, NSString *result))completion {
+    void (^handle)(BOOL, NSData *) = ^(BOOL ok, NSData *output) {
+        if (!ok) {
+            completion(NO, [[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding]);
+        } else {
+            completion(YES, [self versionInPipOutput:output]);
+        }
+    };
+    if ([self selectedScriptIsUv]) {
+        [[iTermUvProvisioner shared] runUvPipWithPipArguments:@[ @"show", packageName ]
+                                                   venvPython:[iTermScriptRuntime uvInterpreterPathForScriptContainer:_selectedScriptItem.path]
+                                                   completion:handle];
+        return;
+    }
     NSURL *container = [NSURL fileURLWithPath:_selectedScriptItem.path];
     [[iTermPythonRuntimeDownloader sharedInstance] runPip3InContainer:container
                                                         pythonVersion:_pythonVersion
                                                         withArguments:@[ @"show", packageName ]
-                                                           completion:^(BOOL ok, NSData *output) {
-                                                               if (!ok) {
-                                                                   completion(NO, [[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding]);
-                                                                   return;
-                                                               } else {
-                                                                   NSString *version = [self versionInPipOutput:output];
-                                                                   completion(YES, version);
-                                                               }
-                                                           }];
+                                                           completion:handle];
 }
 
 - (void)loadPackageAtIndex:(NSInteger)index {
@@ -176,6 +187,17 @@
 }
 
 - (void)loadPythonVersionsSelecting:(NSString *)selectedVersion {
+    if ([self selectedScriptIsUv]) {
+        // A uv script has a single interpreter (the .venv); show just that version.
+        NSString *version = [iTermScriptRuntime pythonVersionForScriptContainer:_selectedScriptItem.path] ?: selectedVersion ?: @"";
+        _pythonVersion = version;
+        [_pythonVersionButton.menu removeAllItems];
+        if (version.length) {
+            [_pythonVersionButton addItemWithTitle:version];
+        }
+        _pythonVersionButton.title = version;
+        return;
+    }
     NSString *const env = [[_selectedScriptItem.path stringByAppendingPathComponent:@"iterm2env"] stringByAppendingPathComponent:@"versions"];
     _pythonVersion = selectedVersion ?: [iTermPythonRuntimeDownloader bestPythonVersionAt:env];
     NSArray<NSString *> *versions = [[[[iTermPythonRuntimeDownloader pythonVersionsAt:env] mapWithBlock:^id(NSString *version) {
@@ -298,12 +320,23 @@
 }
 
 - (void)runPip3WithArguments:(NSArray<NSString *> *)arguments completion:(void (^)(void))completion {
-    NSURL *container = [NSURL fileURLWithPath:_selectedScriptItem.path];
-    NSString *pip3 = [[iTermPythonRuntimeDownloader sharedInstance] pip3At:[container.path stringByAppendingPathComponent:@"iterm2env"]
+    NSString *executable;
+    NSArray<NSString *> *executableArguments;
+    NSDictionary<NSString *, NSString *> *environment;
+    if ([self selectedScriptIsUv]) {
+        NSString *venvPython = [iTermScriptRuntime uvInterpreterPathForScriptContainer:_selectedScriptItem.path];
+        executable = [iTermUvProvisioner uvBinaryPath];
+        executableArguments = [iTermUvProvisioner uvPipArgumentsWithPipArguments:arguments venvPython:venvPython];
+        environment = [iTermUvProvisioner provisionEnvironment];
+    } else {
+        executable = [[iTermPythonRuntimeDownloader sharedInstance] pip3At:[_selectedScriptItem.path stringByAppendingPathComponent:@"iterm2env"]
                                                              pythonVersion:_pythonVersion];
+        executableArguments = arguments;
+        environment = nil;
+    }
     NSString *command =
-    [[pip3 stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]
-     stringByAppendingFormat:@" %@", [[arguments mapWithBlock:^id(NSString *anObject) {
+    [[executable stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]
+     stringByAppendingFormat:@" %@", [[executableArguments mapWithBlock:^id(NSString *anObject) {
         return [anObject stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
     }] componentsJoinedByString:@" "]];
     iTermWarningSelection selection = [iTermWarning showWarningWithTitle:command
@@ -316,11 +349,11 @@
     if (selection == kiTermWarningSelection1) {
         return;
     }
-    // Escape the path to pip3 because it gets evaluated as a swifty string.
-    [[iTermController sharedInstance] openSingleUseWindowWithCommand:pip3
-                                                           arguments:arguments
+    // Escape the path because it gets evaluated as a swifty string.
+    [[iTermController sharedInstance] openSingleUseWindowWithCommand:executable
+                                                           arguments:executableArguments
                                                               inject:nil
-                                                         environment:nil
+                                                         environment:environment
                                                                  pwd:nil
                                                              options:iTermSingleUseWindowOptionsCommandNotSwiftyString
                                                       didMakeSession:nil
@@ -412,10 +445,7 @@
     __weak __typeof(self) weakSelf = self;
     NSString *pythonVersion =
     [iTermAPIScriptLauncher inferredPythonVersionFromScriptAt:item.path];
-    [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder
-                                                                 dependencies:@[]
-                                                                pythonVersion:pythonVersion
-                                                                   completion:^(NSError *errorStatus) {
+    void (^upgradeCompletion)(NSError *) = ^(NSError *errorStatus) {
         if (errorStatus != nil) {
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Installation Failed";
@@ -425,7 +455,21 @@
         }
         [weakSelf finishUpgradingScriptItem:item toFullEnvironmentAt:folder];
         // TODO: Rebuild menus
-    }];
+    };
+    if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+        // Converting a basic script to a full environment is a form of migration, so
+        // honor the gate and build a uv .venv rather than a legacy iterm2env.
+        [[iTermUvProvisioner shared] downloadAndProvisionFullEnvironmentWithContainer:folder.path
+                                                              requestedPythonVersion:pythonVersion ?: @"3.12"
+                                                                        dependencies:@[]
+                                                                      createSetupCfg:YES
+                                                                          completion:upgradeCompletion];
+    } else {
+        [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder
+                                                                     dependencies:@[]
+                                                                    pythonVersion:pythonVersion
+                                                                       completion:upgradeCompletion];
+    }
 }
 
 - (void)finishUpgradingScriptItem:(iTermScriptItem *)item

@@ -84,6 +84,19 @@ final class ScriptRuntimeBackendTests: XCTestCase {
         XCTAssertEqual(iTermPythonRuntimeMarker.from(jsonData: data), marker)
     }
 
+    func testMarkerPythonVersionReadFromContainer() throws {
+        let c = try makeContainer()
+        try write((c as NSString).appendingPathComponent(".venv/bin/python"))
+        let marker = iTermPythonRuntimeMarker(uvVersion: "0.12.0", python: "3.11", remappedFrom: nil)
+        try marker.jsonData().write(to: URL(fileURLWithPath: (c as NSString).appendingPathComponent("python-runtime.json")))
+        XCTAssertEqual(iTermScriptRuntime.pythonVersion(forScriptContainer: c), "3.11")
+    }
+
+    func testMarkerPythonVersionNilWithoutMarker() throws {
+        let c = try makeContainer()
+        XCTAssertNil(iTermScriptRuntime.pythonVersion(forScriptContainer: c))
+    }
+
     func testMarkerDefaultsSchemaAndBackend() throws {
         let marker = iTermPythonRuntimeMarker(uvVersion: "0.12.0", python: "3.11", remappedFrom: nil)
         XCTAssertEqual(marker.schema, 1)
