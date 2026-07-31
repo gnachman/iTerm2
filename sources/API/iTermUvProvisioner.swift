@@ -12,13 +12,14 @@
 //  See docs/uv-python-runtime-migration.md (Phase 1).
 //
 
-import Foundation
+import AppKit
 
 // The network fetch step, isolated so it can be faked in tests / later phases.
 protocol iTermUvTarballFetcher: AnyObject {
-    // Download the tarball at url, showing progress titled `title`. Completion may
-    // run on any queue.
-    func fetch(url: URL, title: String, completion: @escaping (Result<Data, Error>) -> Void)
+    // Confirm with the user (byteCount is the download size), then download the
+    // tarball at url showing progress titled `title`. Completion may run on any
+    // queue; a user cancellation completes with a failure.
+    func fetch(url: URL, title: String, byteCount: Int, completion: @escaping (Result<Data, Error>) -> Void)
 }
 
 @objc(iTermUvProvisioner)
@@ -326,7 +327,7 @@ class iTermUvProvisioner: NSObject {
                 completion(resultError)
             }
         }
-        fetcher.fetch(url: url, title: "Downloading uv…") { result in
+        fetcher.fetch(url: url, title: "Downloading uv…", byteCount: entry.size) { result in
             switch result {
             case .failure(let error):
                 deliver(error)
@@ -533,7 +534,20 @@ class iTermUvProvisioner: NSObject {
 final class iTermUvWindowControllerFetcher: iTermUvTarballFetcher {
     private var controller: iTermOptionalComponentDownloadWindowController?
 
-    func fetch(url: URL, title: String, completion: @escaping (Result<Data, Error>) -> Void) {
+    func fetch(url: URL, title: String, byteCount: Int, completion: @escaping (Result<Data, Error>) -> Void) {
+        // Ask before downloading, like the legacy runtime download did.
+        let megabytes = max(1, (byteCount + 512 * 1024) / (1024 * 1024))
+        let alert = NSAlert()
+        alert.messageText = "Download Python Support?"
+        alert.informativeText = "To run Python scripts, iTerm2 needs to download uv "
+            + "(about \(megabytes) MB) and a Python interpreter. OK to download it now?"
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Cancel")
+        guard alert.runModal() == .alertFirstButtonReturn else {
+            completion(.failure(iTermUvProvisioner.error("The uv download was canceled.")))
+            return
+        }
+
         let controller = iTermOptionalComponentDownloadWindowController(
             windowNibName: "iTermOptionalComponentDownloadWindowController")
         self.controller = controller
