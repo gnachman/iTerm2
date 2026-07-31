@@ -385,24 +385,29 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
                               completion:(void (^)(NSError *))completion {
     RLog(@"status=%@ from=%@ to=%@", errorStatus, from, to);
     [[NSFileManager defaultManager] removeItemAtPath:to error:nil];
-    switch ((iTermInstallPythonStatus)errorStatus.code) {
-        case iTermInstallPythonStatusOK:
-            DLog(@"ok");
-            break;
-        case iTermInstallPythonStatusGeneralFailure: {
-            DLog(@"general failure");
-            NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Failed to install Python Runtime: %@", errorStatus.localizedDescription] };
-            NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:1 userInfo:userInfo];
-            completion(error);
+    if (errorStatus != nil) {
+        // Any non-nil error means provisioning did not finish. Never fall through to
+        // the move-into-place (success) path below, or a half-provisioned directory
+        // (no .venv, no marker) would be installed and reported as a working script.
+        // The uv path reports errors in its own domain with code -1 (and cancel -2),
+        // which do not match iTermInstallPythonStatus (0/1/2); the previous switch had
+        // no default, so those errors silently reached the success path.
+        if ([iTermUvProvisioner isCancelationError:errorStatus]) {
+            // The user declined the download; forward it so the caller stays silent.
+            DLog(@"canceled");
+            completion(errorStatus);
             return;
         }
-        case iTermInstallPythonStatusDependencyFailed: {
-            DLog(@"Dep failed");
-            NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Failed to install Python package: %@", errorStatus.localizedDescription] };
-            NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive" code:2 userInfo:userInfo];
-            completion(error);
-            return;
-        }
+        const BOOL dependencyFailed = (errorStatus.code == iTermInstallPythonStatusDependencyFailed);
+        NSString *description = dependencyFailed
+            ? [NSString stringWithFormat:@"Failed to install Python package: %@", errorStatus.localizedDescription]
+            : [NSString stringWithFormat:@"Failed to install Python Runtime: %@", errorStatus.localizedDescription];
+        DLog(@"failure: %@", description);
+        NSError *error = [NSError errorWithDomain:@"com.iterm2.scriptarchive"
+                                             code:(dependencyFailed ? 2 : 1)
+                                         userInfo:@{ NSLocalizedDescriptionKey: description }];
+        completion(error);
+        return;
     }
 
     // Finally, move it to its destination.

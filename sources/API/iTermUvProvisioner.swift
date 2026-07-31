@@ -150,11 +150,26 @@ class iTermUvProvisioner: NSObject {
         let fm = FileManager.default
         let destinationDirectory = (destinationBinaryPath as NSString).deletingLastPathComponent
         try fm.createDirectory(atPath: destinationDirectory, withIntermediateDirectories: true)
-        if fm.fileExists(atPath: destinationBinaryPath) {
-            try fm.removeItem(atPath: destinationBinaryPath)
+        // Copy to a temp file in the same directory, mark it executable, then rename it
+        // over the destination. Rename within a directory is atomic, so a crash mid-copy
+        // leaves only the temp file, never a partial uv/bin/uv that isExecutableFile
+        // would trust forever.
+        let tempPath = (destinationDirectory as NSString)
+            .appendingPathComponent(".uv-install-" + UUID().uuidString)
+        try? fm.removeItem(atPath: tempPath)
+        do {
+            try fm.copyItem(atPath: source, toPath: tempPath)
+            try fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: tempPath)
+            if fm.fileExists(atPath: destinationBinaryPath) {
+                _ = try fm.replaceItemAt(URL(fileURLWithPath: destinationBinaryPath),
+                                         withItemAt: URL(fileURLWithPath: tempPath))
+            } else {
+                try fm.moveItem(atPath: tempPath, toPath: destinationBinaryPath)
+            }
+        } catch {
+            try? fm.removeItem(atPath: tempPath)
+            throw error
         }
-        try fm.copyItem(atPath: source, toPath: destinationBinaryPath)
-        try fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: destinationBinaryPath)
     }
 
     // Verify the RSA signature of the downloaded bytes against the app's bundled
@@ -237,6 +252,14 @@ class iTermUvProvisioner: NSObject {
         return parseUvVersion(fromVersionOutput: output)
     }
 
+    // Packages every uv environment gets in addition to a script’s declared
+    // dependencies. iterm2 is the API module; certifi supplies TLS roots (there is
+    // no baked-in openssl cert directory as in the legacy runtime); pyobjc restores
+    // the objc/AppKit/Foundation bindings that the legacy bundled runtime always
+    // shipped, so scripts that `import objc` keep working. All are wheels-only
+    // (--only-binary :all:), and pyobjc publishes universal2 wheels.
+    static let alwaysInstalledPackages = ["iterm2", "certifi", "pyobjc"]
+
     // MARK: - Full-environment provisioning (runs uv; integration-tested live)
 
     // The full environment uv builds under a script container: a .venv plus the
@@ -261,9 +284,9 @@ class iTermUvProvisioner: NSObject {
         }
 
         let venvPython = (venvPath as NSString).appendingPathComponent("bin/python")
-        // iterm2 (the API module) and certifi (TLS roots for user scripts) are always
-        // present, in addition to the script's declared dependencies.
-        let packages = orderedUnique(dependencies + ["iterm2", "certifi"])
+        // The always-installed packages (iterm2, certifi, pyobjc) come in addition to
+        // the script's declared dependencies.
+        let packages = orderedUnique(dependencies + alwaysInstalledPackages)
         if let error = run(uvPath,
                            iTermUvCommand.pipInstallArgs(venvPythonPath: venvPython, packages: packages),
                            environment) {
@@ -530,6 +553,34 @@ class iTermUvProvisioner: NSObject {
         return (sharedVenvDirectory(forMinor: minor) as NSString).appendingPathComponent("bin/python")
     }
 
+    // A sentinel written only after the packages finish installing. `uv venv` creates
+    // bin/python before pip runs, so the interpreter existing does not mean the venv
+    // is usable; a healthy venv has both the interpreter and this marker. Without it,
+    // a pip failure (or a kill mid-install) would leave a half-built venv that every
+    // later launch treats as done, yielding “ModuleNotFoundError: iterm2” forever.
+    private static let sharedVenvMarkerName = ".provisioned"
+
+    private static func sharedVenvMarkerPath(forMinor minor: String) -> String {
+        return (sharedVenvDirectory(forMinor: minor) as NSString).appendingPathComponent(sharedVenvMarkerName)
+    }
+
+    static func sharedVenvIsProvisioned(forMinor minor: String) -> Bool {
+        let fm = FileManager.default
+        return fm.isExecutableFile(atPath: sharedVenvPython(forMinor: minor)) &&
+               fm.fileExists(atPath: sharedVenvMarkerPath(forMinor: minor))
+    }
+
+    // "3.12" / "3.12.3" -> "3.12"; nil if not of the form X.Y[.Z] with numeric parts.
+    // Used to check for an already-provisioned venv without asking uv to resolve.
+    static func normalizedMinor(_ version: String) -> String? {
+        let parts = version.split(separator: ".")
+        guard parts.count >= 2,
+              parts.allSatisfy({ !$0.isEmpty && $0.allSatisfy(\.isNumber) }) else {
+            return nil
+        }
+        return "\(parts[0]).\(parts[1])"
+    }
+
     // Ensure a shared venv (with iterm2 + certifi) exists for the resolved minor of
     // requestedPythonVersion, downloading uv and provisioning it if needed, and
     // return that venv's interpreter. Basic scripts share this per-minor, so once it
@@ -537,6 +588,15 @@ class iTermUvProvisioner: NSObject {
     // the main queue.
     @objc func downloadAndProvisionSharedVenv(requestedPythonVersion: String,
                                               completion: @escaping (NSError?, String?) -> Void) {
+        // Fast path: if the requested version is already a bare minor whose venv is
+        // fully provisioned, return its interpreter without downloading uv, running
+        // `uv python list`, or touching the network. This is the common repeat-launch
+        // case; only a first launch (or a remapped version) falls through to uv.
+        if let minor = Self.normalizedMinor(requestedPythonVersion),
+           Self.sharedVenvIsProvisioned(forMinor: minor) {
+            completion(nil, Self.sharedVenvPython(forMinor: minor))
+            return
+        }
         downloadIfNeeded { error in
             if let error = error {
                 completion(error as NSError, nil)
@@ -549,32 +609,65 @@ class iTermUvProvisioner: NSObject {
                 let resolved = iTermUvPythonVersion.resolve(requested: requestedPythonVersion, available: available)
                 let interpreter = Self.sharedVenvPython(forMinor: resolved.version)
 
-                if FileManager.default.isExecutableFile(atPath: interpreter) {
+                // Re-check with the marker (not just the interpreter) in case a
+                // concurrent launch finished, or a prior attempt left a half-built venv.
+                if Self.sharedVenvIsProvisioned(forMinor: resolved.version) {
                     DispatchQueue.main.async { completion(nil, interpreter) }
                     return
                 }
                 let venvDirectory = Self.sharedVenvDirectory(forMinor: resolved.version)
+                // Start from a clean directory so a previously interrupted build can't
+                // leave stray files behind.
+                try? FileManager.default.removeItem(atPath: venvDirectory)
                 if let error = Self.run(Self.uvBinaryPath,
                                         iTermUvCommand.venvArgs(pythonVersion: resolved.version, venvPath: venvDirectory),
                                         environment) {
+                    try? FileManager.default.removeItem(atPath: venvDirectory)
                     DispatchQueue.main.async { completion(error, nil) }
                     return
                 }
                 if let error = Self.run(Self.uvBinaryPath,
-                                        iTermUvCommand.pipInstallArgs(venvPythonPath: interpreter, packages: ["iterm2", "certifi"]),
+                                        iTermUvCommand.pipInstallArgs(venvPythonPath: interpreter, packages: Self.alwaysInstalledPackages),
                                         environment) {
+                    // Do not leave a half-built venv: the interpreter exists but the
+                    // packages do not, and every later launch would trust it.
+                    try? FileManager.default.removeItem(atPath: venvDirectory)
                     DispatchQueue.main.async { completion(error, nil) }
                     return
                 }
+                Self.markSharedVenvProvisioned(forMinor: resolved.version)
                 DispatchQueue.main.async { completion(nil, interpreter) }
             }
         }
     }
 
+    private static func markSharedVenvProvisioned(forMinor minor: String) {
+        try? Data().write(to: URL(fileURLWithPath: sharedVenvMarkerPath(forMinor: minor)))
+    }
+
+    // The code used by user-cancellation errors, so callers can distinguish “the
+    // user clicked Cancel” (stay silent) from a real failure (show an alert). Any
+    // other code in this domain is a genuine failure.
+    @objc static let cancelErrorCode = -2
+
     static func error(_ message: String) -> NSError {
         return NSError(domain: errorDomain,
                        code: -1,
                        userInfo: [NSLocalizedDescriptionKey: message])
+    }
+
+    // A failure that represents the user declining/canceling the download. Callers
+    // treat this as a silent no-op rather than reporting an installation failure.
+    static func cancelError() -> NSError {
+        return NSError(domain: errorDomain,
+                       code: cancelErrorCode,
+                       userInfo: [NSLocalizedDescriptionKey: "The download was canceled."])
+    }
+
+    // Whether an error is the user-cancellation sentinel (so ObjC callers can stay
+    // silent instead of showing “Installation Failed / file a bug report”).
+    @objc static func isCancelationError(_ error: NSError) -> Bool {
+        return error.domain == errorDomain && error.code == cancelErrorCode
     }
 }
 
@@ -594,7 +687,7 @@ final class iTermUvWindowControllerFetcher: iTermUvTarballFetcher {
         alert.addButton(withTitle: "OK")
         alert.addButton(withTitle: "Cancel")
         guard alert.runModal() == .alertFirstButtonReturn else {
-            completion(.failure(iTermUvProvisioner.error("The uv download was canceled.")))
+            completion(.failure(iTermUvProvisioner.cancelError()))
             return
         }
 

@@ -247,7 +247,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
         return;
     }
-    [self installRosettaIfNeededThen:^{
+    void (^afterRosetta)(void) = ^{
         DLog(@"virtualenv=%@", virtualenv);
         if (virtualenv != nil) {
             // This is a full-environment script. Check if its environment version is supported and
@@ -262,6 +262,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                 fullPath:fullPath
                                arguments:arguments
                           withVirtualEnv:updatedVirtualEnv
+                       isFullEnvironment:YES
                            pythonVersion:pythonVersion
                       explicitUserAction:explicitUserAction];
             }];
@@ -275,6 +276,10 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
             // provisioned this is offline; launch is a bare exec of the venv python.
             [[iTermUvProvisioner shared] downloadAndProvisionSharedVenvWithRequestedPythonVersion:pythonVersion ?: @"3.12"
                                                                                       completion:^(NSError *uvError, NSString *sharedPython) {
+                if (uvError != nil && [iTermUvProvisioner isCancelationError:uvError]) {
+                    // The user declined the download; do not report a failure.
+                    return;
+                }
                 if (uvError != nil || sharedPython == nil) {
                     NSAlert *alert = [[NSAlert alloc] init];
                     alert.messageText = @"Python Environment Unavailable";
@@ -287,6 +292,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                 fullPath:fullPath
                                arguments:arguments
                           withVirtualEnv:sharedPython
+                       isFullEnvironment:NO
                            pythonVersion:pythonVersion
                       explicitUserAction:explicitUserAction];
             }];
@@ -306,6 +312,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                     fullPath:fullPath
                                    arguments:arguments
                               withVirtualEnv:virtualenv
+                           isFullEnvironment:NO
                                pythonVersion:pythonVersion
                           explicitUserAction:explicitUserAction];
                     break;
@@ -317,7 +324,19 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                     break;
             }
         }];
-    }];
+    };
+    // uv interpreters are native (universal2); Rosetta is only needed for the legacy
+    // x86_64 runtime. Skip the Rosetta prompt/install when this launch will use uv:
+    // either the gate is on (basic scripts use a uv venv, legacy scripts migrate), or
+    // this particular script is already uv-backed. This also matters after macOS 27,
+    // which drops Rosetta entirely.
+    const BOOL willUseUV = [iTermAdvancedSettingsModel pythonRuntimeUsesUV] ||
+        (fullPath != nil && [iTermScriptRuntime backendForScriptContainer:fullPath] == iTermScriptRuntimeBackendUv);
+    if (willUseUV) {
+        afterRosetta();
+    } else {
+        [self installRosettaIfNeededThen:afterRosetta];
+    }
 }
 
 + (BOOL)rosettaIsInstalled {
@@ -422,13 +441,15 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                   fullPath:(NSString *)fullPath
                  arguments:(NSArray<NSString *> *)arguments
             withVirtualEnv:(NSString *)virtualenv
+           isFullEnvironment:(BOOL)isFullEnvironment
              pythonVersion:(NSString *)pythonVersion
         explicitUserAction:(BOOL)explicitUserAction {
-     RLog(@"reallyLaunchScript:%@ fullPath:%@ arguments:%@ withVirtualEnv:%@ pythonVersion:%@ explicitUserAction:%@",
+     RLog(@"reallyLaunchScript:%@ fullPath:%@ arguments:%@ withVirtualEnv:%@ isFullEnvironment:%@ pythonVersion:%@ explicitUserAction:%@",
           filename,
           fullPath,
           RLogRedact(arguments, @(arguments.count)),
           virtualenv,
+          @(isFullEnvironment),
           pythonVersion,
           @(explicitUserAction));
 
@@ -445,8 +466,10 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     NSString *key = [[NSUUID UUID] UUIDString];
     NSString *identifier = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
     NSString *name = [[filename lastPathComponent] stringByDeletingPathExtension];
-    if (virtualenv) {
-        // Convert /foo/bar/Name/Name/main.py to Name
+    if (isFullEnvironment) {
+        // Convert /foo/bar/Name/Name/main.py to Name. A basic uv script also has a
+        // (shared) virtualenv, so full-environment status is passed explicitly rather
+        // than inferred from virtualenv != nil.
         name = [[[filename stringByDeletingLastPathComponent] pathComponents] lastObject];
     }
     iTermScriptHistoryEntry *entry = [[iTermScriptHistoryEntry alloc] initWithName:name
@@ -458,6 +481,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                                                             fullPath:fullPath
                                                                            arguments:arguments
                                                                       withVirtualEnv:virtualenv
+                                                                   isFullEnvironment:isFullEnvironment
                                                                        pythonVersion:pythonVersion
                                                                   explicitUserAction:explicitUserAction];
                                       }];
@@ -574,6 +598,10 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     NSString *suiteName = [iTermUserDefaults customSuiteName];
     if (suiteName) {
         environment[@"IT2_SUITE"] = suiteName;
+    } else {
+        // Do not let a stale IT2_SUITE inherited from our own environment leak through
+        // to the script and point it at the wrong instance's socket.
+        [environment removeObjectForKey:@"IT2_SUITE"];
     }
     if (shell) {
         environment[@"SHELL"] = shell;
