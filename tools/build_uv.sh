@@ -77,7 +77,7 @@ BUILD_TARGETS=("x86_64-apple-darwin" "aarch64-apple-darwin")
 # ---- Argument parsing -----------------------------------------------------
 
 usage() {
-    sed -n '2,60p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,53p' "$0" | sed 's/^# \{0,1\}//'
     exit "${1:-0}"
 }
 
@@ -153,6 +153,16 @@ fi
 RESOLVED_SHA="$(git -C "$CLONE" rev-parse HEAD)"
 log "Building uv $REV ($RESOLVED_SHA)"
 
+# Optional supply-chain pin: because --rev may be a mutable tag/branch, allow the
+# caller to assert the exact commit it must resolve to. A mismatch means the tag
+# was moved (or points somewhere unexpected), so abort rather than build it.
+if [[ -n "${UV_EXPECTED_COMMIT:-}" ]]; then
+    if [[ "$RESOLVED_SHA" != "$UV_EXPECTED_COMMIT" ]]; then
+        die "resolved commit $RESOLVED_SHA does not match UV_EXPECTED_COMMIT $UV_EXPECTED_COMMIT (tag $REV may have moved)"
+    fi
+    log "Verified resolved commit matches UV_EXPECTED_COMMIT"
+fi
+
 # ---- Build each architecture ---------------------------------------------
 
 export MACOSX_DEPLOYMENT_TARGET="$DEPLOYMENT_TARGET"
@@ -207,7 +217,7 @@ for bin in uv uvx; do
         minos="$(vtool -arch "$arch" -show-build "$STAGE/$bin" 2>/dev/null \
             | awk '/minos/ {print $2; exit}')"
         if [[ "$minos" != "$DEPLOYMENT_TARGET" ]]; then
-            log "Warning: $bin ($arch) minos is $minos, expected $DEPLOYMENT_TARGET"
+            die "$bin ($arch) minos is $minos, expected $DEPLOYMENT_TARGET; refusing to ship a binary with the wrong macOS floor"
         fi
     done
 done
@@ -249,8 +259,10 @@ echo "  Floor:    macOS $DEPLOYMENT_TARGET"
 echo "  Contents:"
 tar tzf "$OUTPUT_DIR/$ARCHIVE_FILE" | sed 's/^/    /'
 echo
-echo "  These sha256 + size values are the ones iTermUvProvisioner.devManifest"
-echo "  expects (signature = sha256)."
+echo "  The size value is the one the uv manifest records. The manifest"
+echo "  signature is a separate RSA-SHA256 signature over these exact bytes,"
+echo "  produced by sign_and_copy_uv.sh (verified against rsa_pub.pem); it is"
+echo "  not the sha256 above."
 
 # ---- RSA sign + stage in the website downloads dir (optional) -------------
 
@@ -259,7 +271,10 @@ if [[ -n "$RSA_KEY" ]]; then
     log "Running sign_and_copy_uv.sh"
     # sign_and_copy_uv.sh fetches from a URL; a file:// URL points it at the
     # archive we just built so it stages exactly these bytes and signs them.
-    "$SIGN_AND_COPY" "file://$OUTPUT_DIR/$ARCHIVE_FILE" "$RSA_KEY"
+    # It also needs the uv version and the minimum macOS floor for the manifest
+    # entry: reuse the same $REV and $DEPLOYMENT_TARGET this build targeted.
+    "$SIGN_AND_COPY" "file://$OUTPUT_DIR/$ARCHIVE_FILE" "$RSA_KEY" \
+        "$REV" "$DEPLOYMENT_TARGET"
 else
     echo "  To RSA-sign and stage in the website downloads dir, re-run with"
     echo "  --rsa-key PATH (invokes tools/sign_and_copy_uv.sh on success)."

@@ -58,6 +58,20 @@ mv -f "$tmp_file" "$dest_file"
 chmod 644 "$dest_file"
 echo "Placed:    $dest_file"
 
+# Optional integrity cross-check: if the caller pins the expected sha256 of the
+# tarball (e.g. the value build_uv.sh printed), verify the downloaded bytes match
+# before signing so we never RSA-sign an unexpected/corrupted archive.
+if [[ -n "${UV_EXPECTED_SHA256:-}" ]]; then
+    actual_sha256="$(shasum -a 256 "$dest_file" | awk '{print $1}')"
+    if [[ "$actual_sha256" != "$UV_EXPECTED_SHA256" ]]; then
+        echo "Error: sha256 mismatch for $dest_file" >&2
+        echo "  expected: $UV_EXPECTED_SHA256" >&2
+        echo "  actual:   $actual_sha256" >&2
+        exit 1
+    fi
+    echo "Verified sha256 matches UV_EXPECTED_SHA256."
+fi
+
 # RSA-SHA256 signature, base64-encoded on a single line, of the exact hosted bytes.
 signature="$(openssl dgst -sha256 -sign "$private_key" "$dest_file" | openssl enc -base64 -A)"
 sig_file="$dest_file.sig"

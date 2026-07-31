@@ -61,7 +61,7 @@ mkdir -p "$(dirname "$manifest")"
 UV_VERSION="$uv_version" URL="$url" SIGNATURE="$signature" SIZE="$size" \
 MIN_MACOS="$min_macos" MAX_MACOS="$max_macos" MANIFEST="$manifest" \
 python3 - <<'PY'
-import json, os, sys
+import json, os, sys, tempfile
 
 path = os.environ["MANIFEST"]
 try:
@@ -91,9 +91,22 @@ replaced = any(e.get("uv_version") == version for e in entries)
 entries = [e for e in entries if e.get("uv_version") != version]
 entries.append(entry)
 
-with open(path, "w") as f:
-    json.dump(entries, f, indent=2)
-    f.write("\n")
+# Write to a temp file in the same directory and atomically replace the
+# destination, so an interrupted run can never leave a truncated/corrupt
+# manifest.json in the served directory.
+dir_name = os.path.dirname(os.path.abspath(path))
+fd, tmp_path = tempfile.mkstemp(prefix=".manifest.", suffix=".json.tmp", dir=dir_name)
+try:
+    with os.fdopen(fd, "w") as f:
+        json.dump(entries, f, indent=2)
+        f.write("\n")
+    os.replace(tmp_path, path)
+except BaseException:
+    try:
+        os.unlink(tmp_path)
+    except OSError:
+        pass
+    raise
 
 print("%s %s in %s (%d total)" % ("Replaced" if replaced else "Added", version, path, len(entries)))
 PY
