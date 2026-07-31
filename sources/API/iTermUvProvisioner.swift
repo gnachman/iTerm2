@@ -912,7 +912,10 @@ class iTermUvProvisioner: NSObject {
     // Synchronously download up to maxBytes from url, or nil on error / oversize. The
     // transfer is canceled as soon as the accumulated bytes exceed the cap, so a host
     // that serves far more than it declared cannot exhaust memory. Blocks, so call it
-    // off the main thread (both callers run on provisionQueue).
+    // off the main thread. The byte cap does not bound time, so also set a resource
+    // timeout: on the user-visible path this call runs on provisionQueue (via
+    // fetchSelectedEntry in downloadIfNeeded), and a host trickling bytes slower than
+    // the idle timeout would otherwise wedge every launch/provision indefinitely.
     static func boundedDownload(from url: URL, maxBytes: Int) -> Data? {
         let semaphore = DispatchSemaphore(value: 0)
         var succeeded = false
@@ -920,7 +923,9 @@ class iTermUvProvisioner: NSObject {
             succeeded = ok
             semaphore.signal()
         }
-        let session = URLSession(configuration: .ephemeral, delegate: delegate, delegateQueue: nil)
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.timeoutIntervalForResource = 120
+        let session = URLSession(configuration: configuration, delegate: delegate, delegateQueue: nil)
         session.dataTask(with: url).resume()
         semaphore.wait()
         session.finishTasksAndInvalidate()

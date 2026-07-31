@@ -186,7 +186,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         // If a prior migration completed (the .venv and marker are present) but the app
         // died before dropping the backup, a saved-iterm2env (potentially multi-GB) is
         // orphaned here and no later code path would ever remove it. Reclaim it now.
-        [iTermUvMigration discardLegacyBackupWithContainer:fullPath];
+        [iTermUvMigration discardLegacyBackupWithContainer:fullPath completion:nil];
         completion(originalVirtualenv);
         return;
     }

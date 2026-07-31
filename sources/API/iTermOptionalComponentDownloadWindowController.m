@@ -408,6 +408,12 @@ didCompleteWithError:(nullable NSError *)error {
 - (void)windowDidLoad {
     [super windowDidLoad];
 
+    // Remove the title-bar close box. It bypasses the Cancel button, leaving the
+    // transfer running with no completion delivered, which wedges the caller (e.g. a
+    // stuck .its import). The always-present Cancel/OK button is the only dismiss path,
+    // and it routes through the phase-cancel/completion logic correctly.
+    self.window.styleMask &= ~NSWindowStyleMaskClosable;
+
     _titleLabel.stringValue = @"Initializing…";
     _progressLabel.stringValue = [NSString stringWithFormat:@""];
 }

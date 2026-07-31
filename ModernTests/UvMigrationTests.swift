@@ -163,7 +163,13 @@ final class UvMigrationTests: XCTestCase {
     func testDiscardBackupRemovesSaved() throws {
         let c = try makeContainer()
         try write((c as NSString).appendingPathComponent("saved-iterm2env/x"), "y")
-        iTermUvMigration.discardLegacyBackup(container: c)
+        // The removal happens on a background queue, so wait for the completion rather
+        // than asserting synchronously (which would race).
+        let removed = expectation(description: "backup removed")
+        iTermUvMigration.discardLegacyBackup(container: c) {
+            removed.fulfill()
+        }
+        wait(for: [removed], timeout: 10)
         XCTAssertFalse(FileManager.default.fileExists(atPath: (c as NSString).appendingPathComponent("saved-iterm2env")))
     }
 }
