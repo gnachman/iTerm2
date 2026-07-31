@@ -8,6 +8,7 @@
 #import "iTermScriptImporter.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermBuildingScriptWindowController.h"
 #import "iTermCommandRunner.h"
 #import "iTermScriptArchive.h"
@@ -324,6 +325,11 @@ static BOOL sInstallingScript;
                     avoidUI:avoidUI
              withCompletion:^(NSError *error, NSURL *location) {
         RLog(@"Install finished with %@", error);
+        if (error != nil && [iTermUvProvisioner isCancelationError:error]) {
+            // The user declined the uv download; finish quietly with no error dialog.
+            completion(nil, YES, nil);
+            return;
+        }
         completion(error.localizedDescription, NO, location);
     }];
 }

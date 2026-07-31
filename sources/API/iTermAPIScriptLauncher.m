@@ -340,13 +340,17 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         }];
     };
     // uv interpreters are native (universal2); Rosetta is only needed for the legacy
-    // x86_64 runtime. Skip the Rosetta prompt/install when this launch will use uv:
-    // either the gate is on (basic scripts use a uv venv, legacy scripts migrate), or
-    // this particular script is already uv-backed. This also matters after macOS 27,
-    // which drops Rosetta entirely.
-    const BOOL willUseUV = [iTermAdvancedSettingsModel pythonRuntimeUsesUV] ||
+    // x86_64 runtime. Skip the Rosetta prompt/install only when this launch is CERTAIN
+    // to use uv: an already-uv-backed full-env script, or a basic script under the gate
+    // (which runs from a native shared venv). A legacy full-env script under the gate is
+    // NOT certain: if its migration fails or is canceled it falls back to the x86_64
+    // legacy env, which still needs Rosetta, so keep the check for that case (harmless
+    // if the migration then succeeds; the script becomes uv-backed and skips it next
+    // time). This also matters after macOS 27, which drops Rosetta entirely.
+    const BOOL scriptIsUvBacked =
         (fullPath != nil && [iTermScriptRuntime backendForScriptContainer:fullPath] == iTermScriptRuntimeBackendUv);
-    if (willUseUV) {
+    const BOOL basicUnderUvGate = (virtualenv == nil) && [iTermAdvancedSettingsModel pythonRuntimeUsesUV];
+    if (scriptIsUvBacked || basicUnderUvGate) {
         afterRosetta();
     } else {
         [self installRosettaIfNeededThen:afterRosetta];

@@ -517,7 +517,8 @@ class iTermUvProvisioner: NSObject {
                     // to bump it, tell the user (once, suppressibly). Every provisioning
                     // path (create, import, migrate) funnels through here.
                     if let from = marker.remappedFrom {
-                        Self.reportForcedRemap(container: container, from: from, to: marker.python)
+                        Self.reportForcedRemap(scriptName: (container as NSString).lastPathComponent,
+                                               from: from, to: marker.python)
                     }
                     resultError = nil
                 case .failure(let error):
@@ -530,21 +531,30 @@ class iTermUvProvisioner: NSObject {
 
     // Surface a forced Python-version bump: a Script Console line for the record and a
     // suppressible modal so the user knows their script may need small changes. Design
-    // decision 7 / Phase 3. Called off the main thread.
-    private static func reportForcedRemap(container: String, from: String, to: String) {
-        let scriptName = (container as NSString).lastPathComponent
-        let remap = iTermUvPythonRemap(scriptName: scriptName,
-                                       fromVersion: iTermUvPythonVersion.twoPartVersion(from),
-                                       toVersion: to)
-        let text = iTermUvMigration.consolidatedWarningText(remaps: [remap])
+    // decision 7 / Phase 3. Called off the main thread. scriptName is nil for a shared
+    // basic-script venv (which is not tied to one script), giving a generic message.
+    private static func reportForcedRemap(scriptName: String?, from: String, to: String) {
+        let fromMinor = iTermUvPythonVersion.twoPartVersion(from)
+        let caveat = "Python versions are not always compatible across releases, so a bumped script may need small changes."
+        let text: String
+        if let scriptName = scriptName {
+            text = iTermUvMigration.consolidatedWarningText(
+                remaps: [iTermUvPythonRemap(scriptName: scriptName, fromVersion: fromMinor, toVersion: to)])
+        } else {
+            text = "A script was written for Python \(fromMinor), which is no longer available, "
+                + "so it now uses Python \(to). " + caveat
+        }
         RLog("uv: \(text)")
         DispatchQueue.main.async {
             iTermScriptHistoryEntry.global().addOutput(text + "\n", completion: {})
+            // PermanentlySilenceable so the modal actually shows a suppression checkbox
+            // (Persistent does not). Shares the identifier with the predictive startup
+            // warning so silencing version-bump warnings once silences both.
             iTermWarning.show(withTitle: text,
                               actions: ["OK"],
                               accessory: nil,
-                              identifier: "NoSyncUvForcedPythonRemap",
-                              silenceable: .kiTermWarningTypePersistent,
+                              identifier: "NoSyncUvVersionBumpWarning",
+                              silenceable: .kiTermWarningTypePermanentlySilenceable,
                               heading: "Python Version Changed",
                               window: nil)
         }
@@ -720,6 +730,11 @@ class iTermUvProvisioner: NSObject {
                     return
                 }
                 Self.markSharedVenvProvisioned(forMinor: resolved.version)
+                // If the shebang's Python version was not available and got bumped, tell
+                // the user once (suppressibly), just like the full-environment path.
+                if let from = resolved.remappedFrom {
+                    Self.reportForcedRemap(scriptName: nil, from: from, to: resolved.version)
+                }
                 DispatchQueue.main.async { completion(nil, interpreter) }
             }
         }
@@ -940,8 +955,15 @@ final class iTermUvWindowControllerFetcher: iTermUvTarballFetcher {
         controller.completion = { [weak self] finalPhase in
             self?.controller?.window?.close()
             self?.controller = nil
-            if let phaseError = finalPhase?.error {
-                completion(.failure(phaseError))
+            if let phaseError = finalPhase?.error as NSError? {
+                // Canceling the in-progress download window reports com.iterm2 -999.
+                // Translate it to the cancel sentinel so callers stay silent instead of
+                // showing "Installation Failed ... error -999".
+                if phaseError.domain == "com.iterm2" && phaseError.code == -999 {
+                    completion(.failure(iTermUvProvisioner.cancelError()))
+                } else {
+                    completion(.failure(phaseError))
+                }
             } else if overflowed {
                 completion(.failure(iTermUvProvisioner.error("The uv download was larger than expected and was rejected.")))
             } else if let data = downloadedData {
