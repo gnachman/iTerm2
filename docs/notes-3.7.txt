@@ -105,6 +105,11 @@ Major New Features:
 - A new tmux window opened with Command-T now
   picks up the profile’s custom tab title, if
   one is set.
+- Fixed a bug where modified function keys (such
+  as Shift-F5) lost their modifier in a tmux
+  integration session, sending the unmodified
+  sequence instead of the xterm form like
+  ^[[15;2~.
 - Fixed a bug where auto-sending code review
   results to the main session sometimes failed to
   submit because the Return arrived too soon after
