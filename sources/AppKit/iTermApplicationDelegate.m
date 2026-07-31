@@ -435,6 +435,15 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
             return NO;
         }
     }
+    if (action == @selector(installPythonRuntime:) ||
+        action == @selector(installAlreadyDownloadedPythonRuntime:)) {
+        // These manage the legacy bundled Python runtime. With the uv backend enabled,
+        // scripts no longer use that runtime, so downloading or updating it is not
+        // meaningful. (A dedicated uv upgrade mechanism is a Phase 4 item.)
+        if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+            return NO;
+        }
+    }
     if ([menuItem action] == @selector(toggleUseBackgroundPatternIndicator:)) {
       [menuItem setState:[self useBackgroundPatternIndicator]];
       return YES;
@@ -3276,9 +3285,18 @@ static iTermKeyEventReplayer *gReplayer;
         return;
     }
     if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
-        [[iTermUvProvisioner shared] downloadAndProvisionSharedVenvWithRequestedPythonVersion:@"3.12"
+        [[iTermUvProvisioner shared] downloadAndProvisionSharedVenvWithRequestedPythonVersion:[iTermScriptRuntime defaultPythonVersion]
                                                                                   completion:^(NSError *uvError, NSString *sharedPython) {
+            if (uvError != nil && [iTermUvProvisioner isCancelationError:uvError]) {
+                // The user declined the download; stay silent.
+                return;
+            }
             if (uvError != nil || sharedPython == nil) {
+                NSAlert *alert = [[NSAlert alloc] init];
+                alert.messageText = @"Python Environment Unavailable";
+                alert.informativeText = [NSString stringWithFormat:@"Could not prepare the Python environment for the REPL: %@",
+                                         uvError.localizedDescription ?: @"unknown error"];
+                [alert runModal];
                 return;
             }
             if (![iTermAPIHelper sharedInstanceFromExplicitUserAction]) {

@@ -52,6 +52,12 @@ class iTermScriptRuntime: NSObject {
     @objc static let markerFileName = "python-runtime.json"
     @objc static let legacyDirectoryName = "iterm2env"
 
+    // The Python version a new or exported script defaults to when none can be
+    // determined (no shebang, no setup.cfg, and no legacy runtime installed to report
+    // its latest version). Kept in one place so every fallback agrees; uv remaps it to
+    // an available minor at provision time if necessary.
+    @objc static let defaultPythonVersion = "3.12"
+
     // The interpreter inside a uv .venv is at the flat venv location, unlike the
     // legacy pyenv tree (iterm2env/versions/<X.Y.Z>/bin/python3).
     private static func venvInterpreterPath(forScriptContainer container: String) -> String {

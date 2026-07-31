@@ -7,6 +7,7 @@
 
 #import "iTermScriptExporter.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermCommandRunner.h"
 #import "iTermPythonRuntimeDownloader.h"
 #import "iTermSetupCfgParser.h"
@@ -48,6 +49,7 @@
     BOOL fullEnvironment = NO;
     if (![self urlContainsScript:fullURL fullEnvironment:&fullEnvironment]) {
         completion(@"No found script at selected location.", nil);
+        return;
     }
     NSString *name = [fullURL.path lastPathComponent];
     if (!fullEnvironment) {
@@ -169,7 +171,11 @@
 + (void)copySimpleScriptAtURL:(NSURL *)simpleScriptSourceURL
                         named:(NSString *)name
           toFullEnvironmentIn:(NSString *)destination {
-    NSString *pythonVersion = [iTermPythonRuntimeDownloader latestPythonVersion];
+    // latestPythonVersion is nil on a uv-only machine (no legacy runtime installed).
+    // writeSetupCfgToFile asserts on a nil pythonVersion (asserts are on in release),
+    // so fall back to the shared default. The value is only a hint recorded in the
+    // exported setup.cfg; uv re-resolves it on import.
+    NSString *pythonVersion = [iTermPythonRuntimeDownloader latestPythonVersion] ?: [iTermScriptRuntime defaultPythonVersion];
     [iTermSetupCfgParser writeSetupCfgToFile:[destination stringByAppendingPathComponent:[NSString stringWithFormat:@"setup.cfg"]]
                                         name:name
                                 dependencies:@[]
@@ -204,15 +210,22 @@
         return YES;
     }
     if (isDirectory) {
-        // Legal scripts must have a setup.cfg, iterm2env, and appropriately named source folder and file.
+        // Legal full-environment scripts have a setup.cfg, an appropriately named
+        // source folder and file, and a runtime environment. The runtime is either the
+        // legacy iterm2env tree or (for uv-provisioned/migrated scripts) the
+        // python-runtime.json marker beside a .venv. The environment itself is rebuilt
+        // on import, so it is not part of the archive; here we only need to recognize
+        // the script.
         NSString *setupCfg = [url.path stringByAppendingPathComponent:@"setup.cfg"];
         NSString *iterm2env = [url.path stringByAppendingPathComponent:@"iterm2env"];
+        NSString *uvMarker = [url.path stringByAppendingPathComponent:[iTermScriptRuntime markerFileName]];
         NSString *name = url.path.lastPathComponent;
         NSString *folder = [url.path stringByAppendingPathComponent:name];
         NSString *mainPy = [folder stringByAppendingPathComponent:[name stringByAppendingPathExtension:@"py"]];
 
+        const BOOL hasRuntime = [fileManager fileExistsAtPath:iterm2env] || [fileManager fileExistsAtPath:uvMarker];
         if  ([fileManager fileExistsAtPath:setupCfg] &&
-             [fileManager fileExistsAtPath:iterm2env] &&
+             hasRuntime &&
              [fileManager fileExistsAtPath:mainPy]) {
             if (fullEnvironment) {
                 *fullEnvironment = YES;
