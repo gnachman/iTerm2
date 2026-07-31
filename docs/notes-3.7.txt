@@ -523,6 +523,12 @@ AI Improvements:
   name. Values are stored unencrypted in
   iTerm2’s preferences.
 - PDF chat attachments now work on Anthropic.
+- When AI chat types into a terminal, a newline
+  is now sent as Return (carriage return) so it
+  submits the line in programs like Claude Code
+  instead of inserting a literal newline. The
+  tool also reports how many characters were
+  inserted.
 
 Python API Improvements:
 - Move sessions to new tabs or windows via the

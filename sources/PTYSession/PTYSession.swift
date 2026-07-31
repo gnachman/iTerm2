@@ -796,8 +796,23 @@ extension PTYSession {
                        "AI tried to insert text but the escape sequence was malformed.")
             return
         }
-        writeTaskNoBroadcast(decoded)
-        try completion("Inserted", "Text inserted by AI.")
+        // A terminal Return key sends CR (0x0D), not LF (0x0A). Many
+        // raw-mode programs (shell line editors, REPLs, TUIs like Claude
+        // Code) treat a bare LF as "insert a literal newline" rather than
+        // "submit the line", so an AI-supplied \n often fails to act as
+        // Return. Translate LF to CR here. Collapse CRLF to a single CR
+        // first so we don't emit a double Return.
+        let normalized = decoded
+            .replacingOccurrences(of: "\r\n", with: "\r")
+            .replacingOccurrences(of: "\n", with: "\r")
+        writeTaskNoBroadcast(normalized)
+        // A bare "Inserted" reads as ambiguous to the model (did anything
+        // actually get typed?), which invites a duplicate insertion "to
+        // be sure." Report the concrete character count so the result is
+        // unmistakably a success.
+        let count = normalized.count
+        let noun = count == 1 ? "character" : "characters"
+        try completion("Inserted \(count) \(noun).", "Text inserted by AI.")
     }
 
     func deleteCurrentLineRemoteCommand(deleteCurrentLine: RemoteCommand.DeleteCurrentLine,
