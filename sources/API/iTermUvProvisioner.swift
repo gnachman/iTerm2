@@ -74,12 +74,24 @@ class iTermUvProvisioner: NSObject {
                                                  runningMacOSVersion: runningMacOSVersionString()) else {
             return .failure(error("uv is not available for this version of macOS."))
         }
+        // The manifest itself is not signed (only the tarball is), so a compromised
+        // host could offer an older, still-validly-signed uv (a rollback). Refuse any
+        // build older than the minimum the app requires.
+        guard iTermDottedVersion.compare(entry.uvVersion, minimumUvVersion) != .orderedAscending else {
+            return .failure(error("The offered uv version (\(entry.uvVersion)) is older than the minimum required (\(minimumUvVersion))."))
+        }
         return .success(entry)
     }
 
+    // The oldest uv the app will install. Bump when a newer uv becomes required.
+    static let minimumUvVersion = "0.12.0"
+
     static func runningMacOSVersionString() -> String {
         let v = ProcessInfo.processInfo.operatingSystemVersion
-        return "\(v.majorVersion).\(v.minorVersion)"
+        // Include the patch component so manifest brackets can express patch bounds if
+        // ever needed; iTermDottedVersion.compare handles the length mismatch against
+        // two-part bounds like "13.0".
+        return "\(v.majorVersion).\(v.minorVersion).\(v.patchVersion)"
     }
 
     // MARK: - On-disk layout
@@ -738,12 +750,20 @@ final class iTermUvWindowControllerFetcher: iTermUvTarballFetcher {
         self.controller = controller
 
         var downloadedData: Data?
+        var overflowed = false
+        // Cap the in-memory accumulation at the manifest-declared size plus generous
+        // slack, so a manipulated size or a runaway response cannot exhaust memory.
+        let maxBytes = byteCount > 0 ? byteCount + 16 * 1024 * 1024 : Int.max
         let phase = iTermOptionalComponentDownloadPhase(
             url: url,
             title: title,
             nextPhaseFactory: { completedPhase in
                 if let stream = completedPhase?.stream {
-                    downloadedData = Self.readStream(stream)
+                    if let data = Self.readStream(stream, maxBytes: maxBytes) {
+                        downloadedData = data
+                    } else {
+                        overflowed = true
+                    }
                 }
                 return nil  // end the chain; the controller's completion reports the result
             })
@@ -753,6 +773,8 @@ final class iTermUvWindowControllerFetcher: iTermUvTarballFetcher {
             self?.controller = nil
             if let phaseError = finalPhase?.error {
                 completion(.failure(phaseError))
+            } else if overflowed {
+                completion(.failure(iTermUvProvisioner.error("The uv download was larger than expected and was rejected.")))
             } else if let data = downloadedData {
                 completion(.success(data))
             } else {
@@ -763,7 +785,9 @@ final class iTermUvWindowControllerFetcher: iTermUvTarballFetcher {
         controller.begin(phase)
     }
 
-    private static func readStream(_ stream: InputStream) -> Data {
+    // Read the whole stream into memory, or nil if it exceeds maxBytes (refusing to
+    // buffer an unexpectedly large download).
+    private static func readStream(_ stream: InputStream, maxBytes: Int) -> Data? {
         if stream.streamStatus == .notOpen {
             stream.open()
         }
@@ -777,6 +801,9 @@ final class iTermUvWindowControllerFetcher: iTermUvTarballFetcher {
                 break
             }
             data.append(buffer, count: count)
+            if data.count > maxBytes {
+                return nil
+            }
         }
         return data
     }

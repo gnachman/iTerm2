@@ -134,8 +134,18 @@ NS_ASSUME_NONNULL_BEGIN
                                                  selector:@selector(didInstallPythonRuntime:)
                                                      name:iTermPythonRuntimeDownloaderDidInstallRuntimeNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(advancedSettingsDidChange:)
+                                                     name:iTermAdvancedSettingsDidChange
+                                                   object:nil];
     }
     return self;
+}
+
+- (void)advancedSettingsDidChange:(NSNotification *)notification {
+    // Enabling the uv gate mid-session should still show the one-time version-bump
+    // heads-up, even though -build already ran at launch when the gate was off.
+    [self maybeWarnAboutUvVersionBumps];
 }
 
 - (void)dealloc {
@@ -218,26 +228,13 @@ NS_ASSUME_NONNULL_BEGIN
     }
     NSFileManager *fm = [NSFileManager defaultManager];
     NSString *scriptsPath = [fm scriptsPathWithoutSpaces];
-    // Scan the top level and the AutoLaunch subfolder, since AutoLaunch scripts are
-    // migrated too (at startup) and should be included in the heads-up.
-    NSArray<NSString *> *roots = @[ scriptsPath, [scriptsPath stringByAppendingPathComponent:@"AutoLaunch"] ];
+    // Walk the whole scripts tree (AutoLaunch and any nested folders), keyed by each
+    // container's path relative to the scripts folder so Scripts/foo and
+    // AutoLaunch/foo do not collide.
     NSMutableDictionary<NSString *, NSString *> *requested = [NSMutableDictionary dictionary];
-    for (NSString *root in roots) {
-        for (NSString *name in [fm contentsOfDirectoryAtPath:root error:nil]) {
-            NSString *container = [root stringByAppendingPathComponent:name];
-            NSString *setupCfg = [container stringByAppendingPathComponent:@"setup.cfg"];
-            if (![fm fileExistsAtPath:setupCfg]) {
-                continue;
-            }
-            if ([iTermScriptRuntime backendForScriptContainer:container] != iTermScriptRuntimeBackendLegacy) {
-                continue;
-            }
-            iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:setupCfg];
-            if (parser.pythonVersion) {
-                requested[name] = parser.pythonVersion;
-            }
-        }
-    }
+    [self collectLegacyFullEnvironmentScriptsUnder:scriptsPath
+                                        scriptsRoot:scriptsPath
+                                               into:requested];
     NSString *text = [iTermUvMigration pendingVersionBumpWarningWithRequestedVersionsByScript:requested];
     if (!text) {
         return;
@@ -250,6 +247,38 @@ NS_ASSUME_NONNULL_BEGIN
                            silenceable:kiTermWarningTypePermanentlySilenceable
                                heading:@"Python Version Changes"
                                 window:nil];
+}
+
+// Recursively collect legacy full-environment script containers under `root`, keyed
+// by their path relative to `scriptsRoot` and mapped to their pinned Python version.
+// A directory with a setup.cfg is a container: it is recorded (if legacy) and not
+// descended into, so we never walk into .venv/iterm2env or a package's own setup.cfg.
+- (void)collectLegacyFullEnvironmentScriptsUnder:(NSString *)root
+                                     scriptsRoot:(NSString *)scriptsRoot
+                                            into:(NSMutableDictionary<NSString *, NSString *> *)requested {
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *setupCfg = [root stringByAppendingPathComponent:@"setup.cfg"];
+    if ([fm fileExistsAtPath:setupCfg]) {
+        if ([iTermScriptRuntime backendForScriptContainer:root] == iTermScriptRuntimeBackendLegacy) {
+            iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:setupCfg];
+            if (parser.pythonVersion) {
+                NSString *relative = [root substringFromIndex:scriptsRoot.length];
+                relative = [relative stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
+                requested[relative.length ? relative : root.lastPathComponent] = parser.pythonVersion;
+            }
+        }
+        return;
+    }
+    for (NSString *name in [fm contentsOfDirectoryAtPath:root error:nil]) {
+        if ([name hasPrefix:@"."]) {
+            continue;
+        }
+        NSString *child = [root stringByAppendingPathComponent:name];
+        BOOL isDirectory = NO;
+        if ([fm fileExistsAtPath:child isDirectory:&isDirectory] && isDirectory) {
+            [self collectLegacyFullEnvironmentScriptsUnder:child scriptsRoot:scriptsRoot into:requested];
+        }
+    }
 }
 
 - (NSArray<iTermScriptItem *> *)scriptItems {
