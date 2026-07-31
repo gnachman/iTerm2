@@ -2360,3 +2360,7 @@ Bug Fixes:
   filename containing colons/slashes in
   the timestamp, which macOS shows as “/”
   and disallows. Issue 12931.
+- The command info popover’s “Started at”
+  time now honors the system 24-Hour Time
+  setting instead of always using a
+  12-hour clock. Issue 12929.

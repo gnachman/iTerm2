@@ -270,9 +270,15 @@ class CommandInfoViewController: NSViewController {
     }
 
     private func formattedDate(_ date: Date) -> String {
+        let timeFormatter = DateFormatter()
+        // "j" resolves to a 12- or 24-hour clock according to the user's locale
+        // and the system 24-Hour Time setting, unlike a hardcoded "h".
+        timeFormatter.dateFormat = DateFormatter.dateFormat(fromTemplate: "jmmss",
+                                                            options: 0,
+                                                            locale: .current)
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "h:mm:ss 'on' MMM d, yyyy"
-        return dateFormatter.string(from: date)
+        dateFormatter.dateFormat = "MMM d, yyyy"
+        return "\(timeFormatter.string(from: date)) on \(dateFormatter.string(from: date))"
     }
 
     private func updateOutputProgress(_ progress: Double) {
