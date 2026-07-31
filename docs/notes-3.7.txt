@@ -2385,3 +2385,9 @@ Bug Fixes:
   RecursionError. Empty windows are now closed,
   and the Python API no longer reports a
   selected tab for a window that has none.
+- Fixed a bug where a Python API script
+  launched from the Scripts menu of a
+  secondary iTerm2 instance (one started with
+  -suite) connected to the main instance's API
+  server instead of its own, controlling the
+  wrong app.

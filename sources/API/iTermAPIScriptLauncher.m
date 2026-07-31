@@ -19,6 +19,7 @@
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermSetupCfgParser.h"
+#import "iTermUserDefaults.h"
 #import "iTermWarning.h"
 #import "iTermWebSocketCookieJar.h"
 #import "NSArray+iTerm.h"
@@ -501,6 +502,16 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 
     environment[@"ITERM2_COOKIE"] = cookie;
     environment[@"ITERM2_KEY"] = key;
+    NSString *suiteName = [iTermUserDefaults customSuiteName];
+    if (suiteName) {
+        // Point the script's API client at this instance's socket. Without it
+        // the iterm2 Python library falls back to the default “iTerm2” suite
+        // and would connect to a different instance's API server (for example
+        // a separately running production build), operating on the wrong app.
+        // Terminal sessions already export this (see PTYSession); menu-launched
+        // API scripts need it too.
+        environment[@"IT2_SUITE"] = suiteName;
+    }
     environment[@"HOME"] = NSHomeDirectory();
     if (shell) {
         environment[@"SHELL"] = shell;
