@@ -276,7 +276,6 @@ static NSString *const SESSION_ARRANGEMENT_TMUX_DCS_ID = @"Tmux DCS ID";
 static NSString *const SESSION_ARRANGEMENT_CONDUCTOR_DCS_ID = @"Conductor DCS ID";
 static NSString *const SESSION_ARRANGEMENT_CONDUCTOR_TREE = @"Conductor Parser Tree";
 static NSString *const SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID = @"Tmux Gateway Session ID";
-static NSString *const SESSION_ARRANGEMENT_TMUX_FOCUS_REPORTING = @"Tmux Focus Reporting";
 static NSString *const SESSION_ARRANGEMENT_NAME_CONTROLLER_STATE = @"Name Controller State";
 static NSString *const __attribute__((unused)) DEPRECATED_SESSION_ARRANGEMENT_DEFAULT_NAME_DEPRECATED = @"Session Default Name";  // manually set name
 static NSString *const __attribute__((unused)) DEPRECATED_SESSION_ARRANGEMENT_WINDOW_TITLE_DEPRECATED = @"Session Window Title";  // server-set window name
@@ -2016,13 +2015,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [aSession setScreenSize:[sessionView frame].size parent:[delegate realParentWindow]];
 
-    if ([arrangement[SESSION_ARRANGEMENT_TMUX_FOCUS_REPORTING] boolValue]) {
-        // This has to be done after setScreenSize:parent: because it has a side-effect of enabling
-        // the terminal.
-        [aSession.screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-            terminal.reportFocus = [iTermAdvancedSettingsModel focusReportingEnabled];
-        }];
-    }
+    // Note: tmux panes are deliberately not seeded with focus reporting here. Each pane's
+    // emulator enables focus reporting only when its foreground app emits DECSET 1004 (which
+    // tmux forwards in %output), matching non-tmux sessions. Previously we force-enabled focus
+    // reporting on every pane whenever the tmux server had focus-events on, which injected stray
+    // focus reports into panes whose apps never asked for them (issue 12933).
 
     NSDictionary *state = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_STATE];
     if (state) {
@@ -7031,7 +7028,6 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [result setObject:bookmark forKey:SESSION_ARRANGEMENT_BOOKMARK];
     [result setObject:@"" forKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY];
     [result setObject:[parseNode objectForKey:kLayoutDictWindowPaneKey] forKey:SESSION_ARRANGEMENT_TMUX_PANE];
-    result[SESSION_ARRANGEMENT_TMUX_FOCUS_REPORTING] = parseNode[kLayoutDictFocusReportingKey] ?: @NO;
     NSDictionary *hotkey = parseNode[kLayoutDictHotkeyKey];
     if (hotkey) {
         [result setObject:hotkey forKey:SESSION_ARRANGEMENT_HOTKEY];

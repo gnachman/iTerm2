@@ -2396,3 +2396,10 @@ Bug Fixes:
   when the profile enabled them and the font
   supported them. Screenshots now ligate the
   same way the terminal does.
+- Fixed a bug where tmux panes received stray
+  focus-report escape sequences on focus
+  changes even when no program in the pane had
+  turned on focus reporting. Reports now go
+  only to panes whose app requested them (by
+  emitting DECSET 1004), matching how non-tmux
+  sessions behave.
