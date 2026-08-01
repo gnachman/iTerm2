@@ -121,7 +121,10 @@ final class AIChatHistoryCacheStabilityTests: XCTestCase {
         XCTAssertTrue((orchestration.volatileContext() ?? "").contains("<workgroups>"),
                       "orchestration must surface the current snapshot as volatile context")
         // ...but only orchestration turns carry it.
-        let sessionBound = OrchestrationToolProvider.sessionBound(enableRequestHandler: { _ in })
+        let sessionBound = OrchestrationToolProvider.sessionBound(
+            enableRequestHandler: { _ in },
+            externalInvoker: { _, _, _, _ in },
+            offerWatchers: { false })
         XCTAssertNil(sessionBound.volatileContext(),
                      "non-orchestration turns carry no workgroups snapshot")
         // The persisted/replayed user turn contains no snapshot, so it cannot

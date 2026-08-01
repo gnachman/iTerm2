@@ -1314,6 +1314,12 @@ extension ChatViewController {
         if let chatID {
             do {
                 try listModel.setTerminalGuid(for: chatID, to: nil)
+                // The chat no longer has a linked session, so any session-bound
+                // watchers it registered (which observed that session) are
+                // orphaned. Drop them. This does NOT run when a chat leaves its
+                // link by becoming an orchestration chat: that goes through
+                // setOrchestrationEnabled, which deliberately keeps watchers.
+                OrchestratorClient.instance?.cancelWatchers(forChatID: chatID)
                 try? client.publishNotice(
                     chatID: chatID,
                     notice: "This chat is no longer linked to a terminal session.")
@@ -1906,7 +1912,11 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
             case .permissions(terminal: _, guid: let guid):
                 enableButtons = (iTermController.sharedInstance()?.anySession(forReference: guid) != nil)
             case .workgroupPermissionRequest:
-                // Never appears in a session-bound chat. Cover for exhaustivity.
+                // The only workgroupPermissionRequest a session-bound chat shows
+                // is the one-time watch screen-read consent prompt (View Contents
+                // = Ask). Keep Approve/Deny tappable while it's the last message
+                // (the default isLast gating); once answered, the resulting
+                // message makes it no longer last and it greys out.
                 break
             case .enableOrchestrationRequest:
                 // Enable / Not Now stay tappable until the user answers.
@@ -2558,6 +2568,11 @@ extension Message.Content {
                     // user to approve it before it runs. The specifics live in
                     // the summary the dispatcher built.
                     body = "**Run this command?**\n\n\(summary)"
+                } else if workgroupID == WorkgroupIntrospection.watchApprovalWorkgroupID {
+                    // One-time consent for a session-bound watch to read the
+                    // screen repeatedly when View Contents is set to Ask. Details
+                    // (which session, what it watches for) live in the summary.
+                    body = "**Allow repeated screen reads?**\n\n\(summary)"
                 } else {
                     let kind = workgroupID.hasPrefix(WorkgroupIntrospection.syntheticWorkgroupIDPrefix)
                         ? "session"

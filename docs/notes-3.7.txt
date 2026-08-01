@@ -54,6 +54,14 @@ Major New Features:
   The “Type for You” permission was renamed
   “Control Terminal” and now also gates this.
 
+- AI chat linked to a terminal session can now
+  watch that session and tell you when it reaches
+  a state or a described condition, without
+  polling. Previously only orchestration chats
+  could set watches. If your phone is paired it
+  can also push you a notification when the watch
+  fires.
+
 - Claude Code integration was added. It enables
   the new Session Status feature for claude code
   sessions so you can see at a glance which

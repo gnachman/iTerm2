@@ -196,6 +196,16 @@ class ChatAgent {
                 OrchestrationToolProvider.sessionBound(
                     enableRequestHandler: { [weak self] completion in
                         self?.parkOrchestrationRequest(completion: completion)
+                    },
+                    externalInvoker: { [weak self] name, llmMessage, args, completion in
+                        self?.publishExternalToolRequest(
+                            name: name,
+                            llmMessage: llmMessage,
+                            args: args,
+                            completion: completion)
+                    },
+                    offerWatchers: { [weak self] in
+                        self?.sessionBoundWatchersAvailable ?? false
                     }),
             ]
         case .orchestration:
@@ -364,6 +374,75 @@ class ChatAgent {
     // completion the same way the session-bound RemoteCommand path
     // does. The agent never touches PTYSession or the dispatcher
     // directly — the broker is the only transport.
+    // Which watch forms are satisfiable for this chat's linked terminal right
+    // now, or nil if the chat isn't terminal-linked. Derived from the dispatcher's
+    // single policy (watchReadRequirement + watchFormSatisfiable) so the tool
+    // offer/guidance can't drift from the per-call gate. Uses the raw permission
+    // SETTING (not the tool-exposure `permissions` set), because Check Terminal
+    // State = Always is deliberately dropped from the exposure set (the state is
+    // auto-provided) yet is the MOST permissive setting -- treating exposure as
+    // permission would invert it and hide watches from the user who granted the
+    // most access. Resolved live so a Link/Unlink or permission change is
+    // reflected on the next tool registration.
+    // Set for the span of one updateSystemMessage() pass so the guidance and the
+    // provider's offerWatchers() (invoked from the registerToolProviders() at the
+    // end of that pass) share a single computation instead of each redoing the
+    // session-graph resolve + permission reads. .valid gates the cache; .forms
+    // may itself be nil (chat not terminal-linked).
+    private var reusableWatchForms: (valid: Bool, forms: (condition: Bool, targetState: Bool)?) = (false, nil)
+
+    private var sessionBoundWatchForms: (condition: Bool, targetState: Bool)? {
+        if reusableWatchForms.valid {
+            return reusableWatchForms.forms
+        }
+        guard let terminal = broker.listModel.chat(id: chatID)?.terminalSessionGuid else {
+            return nil
+        }
+        let rce = RemoteCommandExecutor.instance
+        let viewContents = rce.permission(chatID: chatID, inSessionGuid: terminal,
+                                          category: .viewContents) != .never
+        let checkTerminalState = rce.permission(chatID: chatID, inSessionGuid: terminal,
+                                                category: .checkTerminalState) != .never
+        // Whether the session reports machine-readable status decides whether a
+        // target_state watch is satisfiable without View Contents (a reporting
+        // session fires from the transition; a statusless one must read the
+        // screen). Resolve best-effort; unresolvable -> non-reporting. When the
+        // session is genuinely gone, the dispatcher's gate also rejects (it can't
+        // resolve either), so the offer and the gate agree. The only divergence is
+        // a TRANSIENT resolve miss on a live session, which downgrades a
+        // status-reporting session to "statusless" and can hide a target_state
+        // form the gate would accept; it self-corrects on the next rebuild. Log it
+        // so a persistent case is diagnosable.
+        let resolvedTarget = WorkgroupIntrospection.resolve(sessionGuid: terminal)
+        if resolvedTarget == nil {
+            DLog("Watch offer: linked session \(terminal) did not resolve; treating as statusless, which may transiently hide the target_state form.")
+        }
+        let reportsStatus = resolvedTarget
+            .map { WorkgroupIntrospection.reportsSessionStatus($0.session) } ?? false
+        let conditionReq = OrchestratorDispatcher.watchReadRequirement(
+            condition: true, sessionReportsStatus: reportsStatus)
+        let targetStateReq = OrchestratorDispatcher.watchReadRequirement(
+            condition: false, sessionReportsStatus: reportsStatus)
+        return (
+            condition: OrchestratorDispatcher.watchFormSatisfiable(
+                requirement: conditionReq,
+                viewContentsPermitted: viewContents,
+                checkTerminalStatePermitted: checkTerminalState),
+            targetState: OrchestratorDispatcher.watchFormSatisfiable(
+                requirement: targetStateReq,
+                viewContentsPermitted: viewContents,
+                checkTerminalStatePermitted: checkTerminalState))
+    }
+
+    // Watchers observe a single terminal session, so they're offered only when
+    // this chat is linked to one AND at least one watch form is satisfiable for
+    // the current session/permission combination. Offering when nothing is
+    // satisfiable would advertise a tool the per-call dispatcher gate rejects.
+    private var sessionBoundWatchersAvailable: Bool {
+        guard let forms = sessionBoundWatchForms else { return false }
+        return forms.condition || forms.targetState
+    }
+
     private func publishExternalToolRequest(
         name: String,
         llmMessage: AITermController.Message,
@@ -781,6 +860,25 @@ class ChatAgent {
             reasoningContent: message.agentReasoning)
     }
 
+    // Short pointer so the model knows watchers exist on a terminal-linked
+    // session-bound chat; register_watch's own description carries the details.
+    // Takes the satisfiable-form flags (computed via the dispatcher's single
+    // policy in sessionBoundWatchForms) so it never advertises a form the
+    // per-call gate would reject. Returns nil when neither form is satisfiable.
+    private static func sessionBoundWatcherGuidance(conditionForm: Bool,
+                                                    targetStateForm: Bool) -> String? {
+        var forms = [String]()
+        if targetStateForm {
+            forms.append("a target_state (idle, working, or waiting) to fire when the program reports that transition")
+        }
+        if conditionForm {
+            forms.append("a plain-English condition an AI judges by reading the screen (e.g. a build printing a success or failure line)")
+        }
+        guard !forms.isEmpty else { return nil }
+        let formsText = forms.joined(separator: ", or ")
+        return "You can watch this terminal session for a future state instead of polling: call register_watch with \(formsText). It returns immediately and does not block your turn; when the watch fires, iTerm2 delivers a <status_update> message as a separate turn for you to act on. Use list_watches and unregister_watch to manage active watches, and do not repeatedly read the screen yourself while a watch is pending."
+    }
+
     private func updateSystemMessage(_ permissions: Set<RemoteCommand.Content.PermissionCategory>) {
         self.permissions = permissions
         var parts = [String]()
@@ -807,6 +905,24 @@ class ChatAgent {
         }
         parts.append(iTermPreferences.string(forKey: key))
         parts.append("If a zip file is provided (this is rare), you should extract it and analyze the contents in the context of the accompanying messages.")
+
+        // When the chat is linked to a terminal session and the model can call
+        // tools, tell it the watch capability exists (the tool descriptions
+        // carry the details). Tailored to the granted read permissions so the
+        // prose never advertises a form the per-call gate would reject; nil
+        // (neither permission) means no guidance and no watch tools. Compute the
+        // forms once here and cache them for the registerToolProviders() below,
+        // whose offerWatchers() would otherwise recompute the same thing.
+        let watchForms = sessionBoundWatchForms
+        reusableWatchForms = (valid: true, forms: watchForms)
+        defer { reusableWatchForms = (valid: false, forms: nil) }
+        if AITermController.provider?.functionsSupported == true,
+           let forms = watchForms,
+           let guidance = Self.sessionBoundWatcherGuidance(
+               conditionForm: forms.condition,
+               targetStateForm: forms.targetState) {
+            parts.append(guidance)
+        }
 
         conversation.systemMessage = parts.joined(separator: " ")
         if conversation.systemMessage != lastSystemMessage {

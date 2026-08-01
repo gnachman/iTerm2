@@ -88,6 +88,26 @@ private let sessionGuidSchema: [String: Any] =
 // MARK: - Tool list
 
 extension OrchestratorCommand {
+    // The register_watch notify_user paragraph, shared by both surfaces so it
+    // can't drift. Empty when no companion phone is paired.
+    private static var registerWatchNotifyClause: String {
+        CompanionPushRegistry.devicePaired
+            ? " When the user asked to be told or alerted when this happens, set notify_user=true: iTerm2 then sends a push notification to their iPhone automatically when the watch fires (a chat reply alone won't reach a user who is away from the Mac). If notifications aren't enabled yet, call request_notification_permission before registering."
+            : ""
+    }
+
+    // Builds a register_watch description from the shared spine (the
+    // <status_update> paragraph, the notify clause, the dedup/already-satisfied
+    // sentence) plus the four parts that differ between the orchestration and
+    // session-bound surfaces. Keeping the spine here means the two surfaces can't
+    // drift on it (they had already diverged in punctuation before this).
+    private static func registerWatchDescription(target: String,
+                                                 blocking: String,
+                                                 formChoice: String,
+                                                 persistence: String) -> String {
+        return "Register an async watcher on \(target). Supply exactly ONE of target_state or condition. \(blocking) When the watch fires, iTerm2 delivers a `<status_update>...</status_update>` message into the chat as a separate turn; treat that as a system event from iTerm2 (not a new user request) and act on it directly, messaging the user only when a step advances, a task finishes, or you need a decision (not on every event).\(registerWatchNotifyClause) \(formChoice) Watchers are de-duplicated on (session, target_state, condition): registering the same watch twice returns the existing watcher_id. If the goal is already satisfied at registration time, the watcher fires immediately. \(persistence)"
+    }
+
     // Computed (not a stored let) because parts of the text depend on
     // runtime state: push-related guidance only appears when a companion
     // device is paired. Evaluated at agent creation, like the tool list
@@ -189,7 +209,11 @@ extension OrchestratorCommand {
 
         ToolDefinition(
             name: ToolName.registerWatch.rawValue,
-            description: "Register an async watcher on a session. Supply exactly ONE of target_state or condition. This call returns immediately and does NOT block your turn. When the watch fires, iTerm2 delivers a `<status_update>...</status_update>` message into the chat as a separate turn; treat that as a system event from iTerm2 (not a new user request) and act on it directly, messaging the user only when a step advances, a task finishes, or you need a decision (not on every event).\(CompanionPushRegistry.devicePaired ? " When the user asked to be told or alerted when this happens, set notify_user=true: iTerm2 then sends a push notification to their iPhone automatically when the watch fires (a chat reply alone won't reach a user who is away from the Mac). If notifications aren't enabled yet, call request_notification_permission before registering." : "") Choosing the form: use target_state (idle/working/waiting) when the session's status_source is \u{201C}reported\u{201D} (see list_workgroups / get_state) — the watch then fires on the program's own exact status transitions. When status_source is \u{201C}inferred\u{201D}, or when what you're waiting for isn't really an idle/working/waiting transition (e.g. \u{201C}emacs has exited and a shell prompt is showing\u{201D}, \u{201C}the build printed a success or failure line\u{201D}, \u{201C}a password prompt appeared\u{201D}), prefer condition: a plain-English description that an AI judge evaluates by periodically reading the session's screen. Inferred idle/busy is ambiguous (a program parked at a splash screen counts as \u{201C}idle\u{201D}), so a specific condition is far more accurate there. Screen-judged watches (all condition watches, and target_state watches on \u{201C}inferred\u{201D} sessions) keep watching on their own, polling less often the longer they run, and only time out (reason=\u{201C}watchTimedOut\u{201D}) after several hours; re-register then if you still need to wait. Watchers are de-duplicated on (session, target_state, condition): registering the same watch twice returns the existing watcher_id. If the goal is already satisfied at registration time, the watcher fires immediately. Watchers persist across iTerm2 restarts; if a watched session can't be restored, you get a status_update with reason=\u{201C}watcherDropped\u{201D}. Either way, do NOT poll yourself.",
+            description: registerWatchDescription(
+                target: "a session",
+                blocking: "This call returns immediately and does NOT block your turn.",
+                formChoice: "Choosing the form: use target_state (idle/working/waiting) when the session's status_source is \u{201C}reported\u{201D} (see list_workgroups / get_state) — the watch then fires on the program's own exact status transitions. When status_source is \u{201C}inferred\u{201D}, or when what you're waiting for isn't really an idle/working/waiting transition (e.g. \u{201C}emacs has exited and a shell prompt is showing\u{201D}, \u{201C}the build printed a success or failure line\u{201D}, \u{201C}a password prompt appeared\u{201D}), prefer condition: a plain-English description that an AI judge evaluates by periodically reading the session's screen. Inferred idle/busy is ambiguous (a program parked at a splash screen counts as \u{201C}idle\u{201D}), so a specific condition is far more accurate there. Screen-judged watches (all condition watches, and target_state watches on \u{201C}inferred\u{201D} sessions) keep watching on their own, polling less often the longer they run, and only time out (reason=\u{201C}watchTimedOut\u{201D}) after several hours; re-register then if you still need to wait.",
+                persistence: "Watchers persist across iTerm2 restarts; if a watched session can't be restored, you get a status_update with reason=\u{201C}watcherDropped\u{201D}. Either way, do NOT poll yourself."),
             inputSchema: object([
                 ("session_guid", sessionGuidSchema),
                 // "unknown" is included in the enum so the schema matches
@@ -203,17 +227,11 @@ extension OrchestratorCommand {
                 ("notify_user", boolean("Set true when the user asked to be told/alerted when this happens. iTerm2 sends a push notification to their iPhone automatically when the watch fires; you do not need to call notify yourself.")),
             ] : []), required: ["session_guid"])),
 
-        ToolDefinition(
-            name: ToolName.unregisterWatch.rawValue,
-            description: "Cancel a registered watcher by its watcher_id (from register_watch or list_watches). No-op if the watcher has already fired or doesn't exist.",
-            inputSchema: object([
-                ("watcher_id", stringSchema),
-            ], required: ["watcher_id"])),
-
-        ToolDefinition(
-            name: ToolName.listWatches.rawValue,
-            description: "List every async watcher currently registered for this chat.",
-            inputSchema: emptyObjectSchema),
+        // unregister_watch / list_watches are identical across the orchestration
+        // and session-bound surfaces, so they live in one place and are reused by
+        // both (see sessionBoundWatchToolDefinitions).
+        unregisterWatchDefinition,
+        listWatchesDefinition,
 
         // -------- Companion phone --------
 
@@ -233,5 +251,53 @@ extension OrchestratorCommand {
             name: ToolName.requestNotificationPermission.rawValue,
             description: "Ask the user, on their paired iPhone, for permission to receive notifications. Call this before the first notify when the user asks to be alerted about something (e.g. \u{201C}let me know when my job finishes\u{201D}) and notifications aren't enabled yet. iOS shows its standard permission dialog on the phone; this returns the outcome. If the user previously declined, the dialog cannot be shown again and they must enable notifications in iOS Settings, which the result will say. This is a valuable feature that users won't discover on their own, so offer this when they ask to be notified (for example, if you create a watcher, you should probably request notification permission). If the result is a decline, accept it: do not call this again or lobby the user about Settings unless they bring it up.",
             inputSchema: emptyObjectSchema),
+    ] }
+
+    // The unregister_watch / list_watches definitions, shared verbatim by the
+    // orchestration surface (allToolDefinitions) and the session-bound surface
+    // (sessionBoundWatchToolDefinitions) so the two can't drift.
+    static var unregisterWatchDefinition: ToolDefinition {
+        ToolDefinition(
+            name: ToolName.unregisterWatch.rawValue,
+            description: "Cancel a registered watcher by its watcher_id (from register_watch or list_watches). No-op if the watcher has already fired or doesn't exist.",
+            inputSchema: object([
+                ("watcher_id", stringSchema),
+            ], required: ["watcher_id"]))
+    }
+
+    static var listWatchesDefinition: ToolDefinition {
+        ToolDefinition(
+            name: ToolName.listWatches.rawValue,
+            description: "List every async watcher currently registered for this chat.",
+            inputSchema: emptyObjectSchema)
+    }
+
+    // The watch tools offered to a session-bound chat (one linked terminal
+    // session). unregister_watch / list_watches are the shared definitions; the
+    // register_watch description is built from the shared spine
+    // (registerWatchDescription) with four session-bound parts: it takes NO
+    // session_guid (the target is the chat's linked session, filled in by the
+    // dispatcher), its blocking clause notes the one-time Ask consent wait, its
+    // form-choice paragraph drops the orchestration-only vocabulary
+    // (list_workgroups, status_source), and its persistence clause matches the
+    // lazy re-arm. request_notification_permission is offered separately by the
+    // provider (it filters on companion state and reuses the shared definition).
+    static var sessionBoundWatchToolDefinitions: [ToolDefinition] { [
+        ToolDefinition(
+            name: ToolName.registerWatch.rawValue,
+            description: registerWatchDescription(
+                target: "the terminal session this chat is linked to",
+                blocking: "This normally returns immediately and does NOT block your turn; the one exception is a screen-reading watch on a session whose View Contents permission is set to Ask, where it first asks the user to approve repeated screen reads and waits for that answer before returning.",
+                formChoice: "Choosing the form: use target_state (idle/working/waiting) to fire when the running program reports that transition. Use condition, a plain-English description an AI judge evaluates by periodically reading the session's screen, when what you're waiting for isn't an idle/working/waiting transition (e.g. \u{201C}emacs has exited and a shell prompt is showing\u{201D}, \u{201C}the build printed a success or failure line\u{201D}, \u{201C}a password prompt appeared\u{201D}); a specific condition is more accurate for those. Screen-judged watches keep watching on their own, polling less often the longer they run, and only time out (reason=\u{201C}watchTimedOut\u{201D}) after several hours; re-register then if you still need to wait.",
+                persistence: "Watchers are saved across iTerm2 restarts and resume when you next return to this chat (if the linked session no longer exists then, you get a status_update with reason=\u{201C}watcherDropped\u{201D}). Do NOT poll yourself."),
+            inputSchema: object([
+                ("target_state", string("State to watch for. Must be a transition target: \u{201C}idle\u{201D}, \u{201C}working\u{201D}, or \u{201C}waiting\u{201D}. Mutually exclusive with condition.", enumValues: ["idle", "working", "waiting"])),
+                ("condition", string("Plain-English condition to watch for, judged by an AI reading the session's screen, e.g. \u{201C}emacs has exited and a shell prompt is showing\u{201D}. Describe what will be VISIBLE on screen when the condition holds. Mutually exclusive with target_state.")),
+            ] + (CompanionPushRegistry.devicePaired ? [
+                ("notify_user", boolean("Set true when the user asked to be told/alerted when this happens. iTerm2 sends a push notification to their iPhone automatically when the watch fires; you do not need to call notify yourself.")),
+            ] : []), required: [])),
+
+        unregisterWatchDefinition,
+        listWatchesDefinition,
     ] }
 }

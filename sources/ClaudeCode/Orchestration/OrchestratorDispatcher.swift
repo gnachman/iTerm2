@@ -308,8 +308,28 @@ final class OrchestratorDispatcher {
     private func handle(brokerUpdate update: ChatBroker.Update) {
         if tornDown { return }
         guard case let .delivery(message, _, _) = update,
-              message.author == .user,
-              case let .userCommand(command) = message.content else {
+              message.author == .user else {
+            return
+        }
+        if case .setPermissions = message.content {
+            // A session-bound chat's per-chat permissions changed. Re-gate now so a
+            // just-revoked read drops its watchers promptly with a notification.
+            //
+            // This is a PROMPTNESS optimization, not the security boundary. It only
+            // fires for per-chat toggles (which post .setPermissions); a global
+            // default-permission flip posts nothing and never reaches here. The
+            // authoritative enforcement is at every point of USE -- the tab-status
+            // and screen-poll fire gates and the poller/escalation mayRead checks --
+            // each of which re-reads the LIVE permission (watcherReadDenial /
+            // mayReadScreen / chatMayReadState) before reporting or reading, so a
+            // non-routed global flip can never leak a read; it just drops the watch
+            // at the next fire/read instead of immediately. Keeping the boundary at
+            // the point of use means adding a future read site can't silently
+            // bypass a central trigger that was never wired to it.
+            regateScreenReadingWatchers()
+            return
+        }
+        guard case let .userCommand(command) = message.content else {
             return
         }
         switch command {
@@ -329,8 +349,11 @@ final class OrchestratorDispatcher {
             // clears the queued backlog; cancel this chat's registered watchers
             // too, so a later status transition can't publish a watcherEvent
             // that silently re-arms the orchestration loop after the user asked
-            // everything to stop.
+            // everything to stop. Also resume any parked permission prompt (e.g. a
+            // watch consent bubble) so a suspended awaitPermission doesn't outlive
+            // the stopped turn.
             cancelAllWatchers()
+            resumePendingPermissionPrompts()
         case .enableOrchestrationResponse, .revokeOrchestrationPermission:
             // Consumed elsewhere (ChatAgent / OrchestratorClient via their own
             // broker subscriptions). Not the dispatcher's concern.
@@ -393,6 +416,19 @@ final class OrchestratorDispatcher {
                 && $0.effectiveMode == .tabStatus
         }
         guard !matches.isEmpty else { return }
+        // A tab-status fire reports the session's reported state into the chat.
+        // If the chat's Check Terminal State permission was revoked since
+        // registration, don't leak it: drop these watchers instead of firing.
+        // This is the authoritative gate that also backstops the non-routed
+        // revoke path (a global default flip posts no .setPermissions, so
+        // regateScreenReadingWatchers never runs). dropWatchers removes them from
+        // `watchers`, tears down auxiliaries, and tells the agent.
+        guard chatMayReadState() else {
+            dropWatchers(matches) { fired in
+                "Watch dropped: the \u{201C}Check Terminal State\u{201D} permission was turned off, so it can no longer observe \(Self.watcherTargetLabel(role: fired.roleName, workgroup: fired.workgroupName, workgroupID: fired.workgroupID))'s state."
+            }
+            return
+        }
         let matchedIDs = Set(matches.map { $0.watcherID })
         watchers.removeAll { matchedIDs.contains($0.watcherID) }
         persistWatchers()
@@ -408,7 +444,7 @@ final class OrchestratorDispatcher {
                 watcher: fired,
                 reason: .stateReached,
                 stateReached: newState.rawValue,
-                detail: "\(fired.roleName) in \(fired.workgroupName) reached state '\(newState.rawValue)'.")
+                detail: "\(Self.watcherTargetLabel(role: fired.roleName, workgroup: fired.workgroupName, workgroupID: fired.workgroupID)) reached state '\(newState.rawValue)'.")
         }
     }
 
@@ -420,6 +456,18 @@ final class OrchestratorDispatcher {
         if tornDown { return }
         guard let session = notification.object as? PTYSession else { return }
         let guid = session.guid
+        // If a session-bound chat's LINKED session is terminating while its watch
+        // consent prompt is up, that continuation would strand the same way an
+        // unlink does (this handler drops watchers but the chat stays linked, so
+        // tearDown never runs). Resume it. Gated on a pending prompt first so the
+        // resolve only runs in the rare case, and on session identity so an
+        // unrelated session's termination doesn't cancel a still-valid prompt.
+        if !pendingPermissionPrompts.isEmpty,
+           let chat = broker?.listModel.chat(id: chatID), !chat.orchestrationEnabled,
+           let terminal = chat.terminalSessionGuid,
+           WorkgroupIntrospection.resolve(sessionGuid: terminal)?.session === session {
+            resumePendingPermissionPrompts()
+        }
         // Drop the per-session history entry alongside the watchers. History is
         // keyed by stableID now; clear that (and the guid, defensively) so it
         // doesn't grow unbounded or leave a stale "previous state" behind.
@@ -441,7 +489,7 @@ final class OrchestratorDispatcher {
                 watcher: watcher,
                 reason: .watcherDropped,
                 stateReached: "",
-                detail: "Watch dropped: the session for \(watcher.roleName) in \(watcher.workgroupName) terminated before \(watcher.goalDescription) was reached.")
+                detail: "Watch dropped: the session for \(Self.watcherTargetLabel(role: watcher.roleName, workgroup: watcher.workgroupName, workgroupID: watcher.workgroupID)) terminated before \(watcher.goalDescription) was reached.")
         }
     }
 
@@ -470,7 +518,7 @@ final class OrchestratorDispatcher {
                     watcher: watcher,
                     reason: .watcherDropped,
                     stateReached: "",
-                    detail: "Watch dropped after iTerm2 restart: the session for \(watcher.roleName) in \(watcher.workgroupName) could not be restored.")
+                    detail: "Watch dropped after iTerm2 restart: the session for \(Self.watcherTargetLabel(role: watcher.roleName, workgroup: watcher.workgroupName, workgroupID: watcher.workgroupID)) could not be restored.")
             }
         }
         // Seed history for every surviving watcher's session. Use the
@@ -485,21 +533,27 @@ final class OrchestratorDispatcher {
                 sessionStateHistory[session.stableID] = Self.seedState(for: session)
             }
         }
-        // Screen-poll watchers have no persisted running loop; restart one
-        // per surviving watcher. Its watch deadline (ScreenWatchPoller.deadline)
-        // restarts from now, which is the intended behavior after a relaunch.
-        for watcher in watchers where watcher.effectiveMode == .screenPoll {
-            startScreenPoll(for: watcher)
+        // Re-arm each surviving watcher's mechanism, or drop it if a read it
+        // requires was revoked while shut down (else it would sit armed-but-dead,
+        // or fire and leak a state/screen the user has denied). One policy via
+        // watcherReadDenial: a .screenPoll watcher restarts its poller (deadline
+        // counts from now); a .tabStatus watcher re-arms its escalation backstop
+        // (armScreenEscalation self-guards on screen permission, so a chat without
+        // View Contents keeps only its screen-free tab-status trigger).
+        var revoked = [WorkgroupWatcher]()
+        for watcher in watchers {
+            if watcherReadDenial(watcher) != nil {
+                revoked.append(watcher)
+                continue
+            }
+            switch watcher.effectiveMode {
+            case .screenPoll:
+                startScreenPoll(for: watcher)
+            case .tabStatus:
+                armScreenEscalation(for: watcher)
+            }
         }
-        // Tab-status watchers get a fresh escalation timer, also counted
-        // from now (the running timer can't be serialized any more than the
-        // poll loop can). A watcher that already escalated to a live poller
-        // before the relaunch starts over: the timer re-arms, and if the
-        // status transition still hasn't come 5 minutes later it escalates
-        // again.
-        for watcher in watchers where watcher.effectiveMode == .tabStatus {
-            armScreenEscalation(for: watcher)
-        }
+        dropWatchers(revoked) { self.revokedReadDetail($0, afterRestart: true) }
     }
 
     // Compute the seed value for sessionStateHistory. state(for:) returns
@@ -532,8 +586,8 @@ final class OrchestratorDispatcher {
                 RLog("[Orchestrator \(chatID)] watcher push suppressed: chat is muted")
                 pushed = false
             } else if CompanionPushRegistry.canNotify {
-                let title = watcher.workgroupName == watcher.roleName
-                    ? watcher.workgroupName
+                let title = Self.isSyntheticWorkgroup(id: watcher.workgroupID)
+                    ? watcher.roleName
                     : "\(watcher.workgroupName): \(watcher.roleName)"
                 let body = detail
                 Task {
@@ -583,16 +637,31 @@ final class OrchestratorDispatcher {
     // poller never keeps a torn-down dispatcher alive.
     @MainActor
     private func startScreenPoll(for watcher: WorkgroupWatcher) {
+        // Screen polling reads the session screen; a session-bound chat needs
+        // View Contents. doRegisterWatch already validated this for new watches,
+        // but reconcilePersistedWatchers restarts pollers after a relaunch when
+        // the permission may since have been revoked. Fail closed: don't read.
+        guard watcherReadsPermitted(watcher) else {
+            RLog("[Orchestrator \(chatID)] screen-poll watcher \(watcher.watcherID) not started: a required read is not permitted for this chat")
+            return
+        }
         let id = watcher.watcherID
         let guid = watcher.sessionGUID
         let poller = ScreenWatchPoller(
             watcher: watcher,
             sessionProvider: { [weak self] in self?.sessionByGUID(guid) },
+            // Stop (and drop) if EITHER required read is revoked mid-run -- screen
+            // (View Contents) or, for a statusless target_state watch, state (Check
+            // Terminal State). Covers the non-routed global-default-flip path.
+            mayRead: { [weak self] in self?.watcherReadsPermitted(watcher) ?? false },
             onReached: { [weak self] in
                 self?.screenPollFinished(watcherID: id, timedOut: false)
             },
             onTimedOut: { [weak self] in
                 self?.screenPollFinished(watcherID: id, timedOut: true)
+            },
+            onPermissionLost: { [weak self] in
+                self?.dropScreenPollWatcherForRevokedRead(watcherID: id)
             })
         screenPollers[id] = poller
         poller.start()
@@ -632,6 +701,12 @@ final class OrchestratorDispatcher {
     private func armScreenEscalation(for watcher: WorkgroupWatcher) {
         guard watcher.effectiveMode == .tabStatus else { return }
         guard watcher.targetState != .working else { return }
+        // The backstop reads the screen; a session-bound chat needs View
+        // Contents (and, under Ask, this watcher's consent -- see mayReadScreen).
+        // Skipping it leaves the watch on tab-status only (still fires on the
+        // reported transition), never reading a screen the user hasn't permitted.
+        // Covers both the register path and reconcile re-arm.
+        guard mayReadScreen(for: watcher) else { return }
         let id = watcher.watcherID
         guard escalationTimers[id] == nil else { return }
         escalationTimers[id] = Task { @MainActor [weak self] in
@@ -655,6 +730,18 @@ final class OrchestratorDispatcher {
             }
             guard let session = sessionByGUID(watcher.sessionGUID) else {
                 // Session gone; the terminate handler owns watcher cleanup.
+                return
+            }
+            // Stop escalating if the chat's screen-read permission was revoked
+            // mid-watch. The tab-status trigger doesn't read the screen and
+            // stays armed, so the watch keeps working on a reported transition.
+            // Clear our own timer slot before returning: this self-return has no
+            // external caller (unlike screenPollFinished / tab-status fire /
+            // unregister, which call removeWatcherAuxiliaries). A stale entry here
+            // would make armScreenEscalation's `escalationTimers[id] == nil` guard
+            // refuse to re-arm the backstop after View Contents is granted again.
+            guard mayReadScreen(for: watcher) else {
+                escalationTimers.removeValue(forKey: id)
                 return
             }
             // Active output resets the quiet clock (textViewDidFindDirtyRects),
@@ -711,7 +798,12 @@ final class OrchestratorDispatcher {
         let guid = watcher.sessionGUID
         let poller = ScreenWatchPoller(
             watcher: watcher,
-            sessionProvider: { [weak self] in self?.sessionByGUID(guid) })
+            sessionProvider: { [weak self] in self?.sessionByGUID(guid) },
+            // Fail closed like the continuous poller: checkOnce re-checks this
+            // before reading, so it can't screenshot a session whose View
+            // Contents was revoked, even if a future refactor inserts a suspension
+            // point between runScreenEscalation's guard and this read.
+            mayRead: { [weak self] in self?.mayReadScreen(for: watcher) ?? false })
         screenPollers[id] = poller
         let reached = await poller.checkOnce()
         // Only clear our own entry; a concurrent teardown may have already
@@ -757,7 +849,7 @@ final class OrchestratorDispatcher {
                 watcher: watcher,
                 reason: .watchTimedOut,
                 stateReached: "",
-                detail: "Watch timed out: \(watcher.roleName) in \(watcher.workgroupName) "
+                detail: "Watch timed out: \(Self.watcherTargetLabel(role: watcher.roleName, workgroup: watcher.workgroupName, workgroupID: watcher.workgroupID)) "
                     + "did not reach \(watcher.goalDescription) after "
                     + "\(ScreenWatchPoller.deadlineDescription) of watching its screen. "
                     + "Check it with get_screen_contents, "
@@ -767,9 +859,25 @@ final class OrchestratorDispatcher {
                 watcher: watcher,
                 reason: .conditionMet,
                 stateReached: "",
-                detail: "\(watcher.roleName) in \(watcher.workgroupName) met the watched "
+                detail: "\(Self.watcherTargetLabel(role: watcher.roleName, workgroup: watcher.workgroupName, workgroupID: watcher.workgroupID)) met the watched "
                     + "condition '\(condition)' (detected by screen observation).")
         } else {
+            // A state (target_state) watch reports the session's state. If Check
+            // Terminal State was revoked since the poller started -- including via
+            // a non-routed global-default flip that never triggered regate -- do
+            // not leak it: report a drop instead of the state. This is the
+            // screen-poll counterpart to the tab-status fire-time gate, and covers
+            // both a statusless .screenPoll state watch and a .tabStatus watch that
+            // escalated to a screen poll. (The screen reads themselves were gated
+            // by the poller's mayRead; this gates the STATE report.)
+            guard chatMayReadState() else {
+                publishStatusUpdate(
+                    watcher: watcher,
+                    reason: .watcherDropped,
+                    stateReached: "",
+                    detail: revokedReadDetail(watcher, afterRestart: false))
+                return
+            }
             let target = watcher.targetState?.rawValue ?? "unknown"
             // A screen poller on a .tabStatus watcher is the escalation
             // backstop: the session does report status, it was just stale
@@ -786,7 +894,7 @@ final class OrchestratorDispatcher {
                 watcher: watcher,
                 reason: .stateReached,
                 stateReached: target,
-                detail: "\(watcher.roleName) in \(watcher.workgroupName) reached state "
+                detail: "\(Self.watcherTargetLabel(role: watcher.roleName, workgroup: watcher.workgroupName, workgroupID: watcher.workgroupID)) reached state "
                     + "'\(target)' (\(how)).")
         }
     }
@@ -820,6 +928,60 @@ final class OrchestratorDispatcher {
     // contract sessionByGUID reads. Not private so a test can pin it.
     static func watcherKey(for session: PTYSession) -> String {
         return session.stableID
+    }
+
+    // Resolve the session a register_watch call targets, enforcing the
+    // session-vs-orchestration policy:
+    //   - Orchestration chats MUST supply an explicit session_guid (copied from
+    //     list_workgroups); they can watch any session they can see.
+    //   - Session-bound chats can watch ONLY their one linked terminal session.
+    //     They omit session_guid, so the target is always the linked session.
+    //     An explicit guid is honored only if it matches the linked session
+    //     (defense against a model, or a vendor that ignores the schema, emitting
+    //     a foreign guid); any other value is rejected rather than silently
+    //     letting a confined chat watch an arbitrary session.
+    // Empty strings are treated as absent. Throwing + nonisolated so a test can
+    // pin the policy without a live dispatcher.
+    nonisolated static func resolveWatchTarget(explicit: String?,
+                                               orchestrationEnabled: Bool,
+                                               linkedTerminal: String?) throws -> String {
+        let explicitGuid = (explicit?.isEmpty == false) ? explicit : nil
+        if orchestrationEnabled {
+            guard let explicitGuid else {
+                throw OrchestratorError.malformedArgs(reason:
+                    "session_guid is required. Copy it verbatim from a role in list_workgroups.")
+            }
+            return explicitGuid
+        }
+        guard let linkedTerminal, !linkedTerminal.isEmpty else {
+            throw OrchestratorError.malformedArgs(reason:
+                "No session to watch: this chat is not linked to a terminal session.")
+        }
+        if let explicitGuid, explicitGuid != linkedTerminal {
+            throw OrchestratorError.unsupported(reason:
+                "This chat can only watch the terminal session it is linked to, not another session. Omit session_guid.")
+        }
+        return linkedTerminal
+    }
+
+    // Human label for a watched target in status_update text. A standalone
+    // session is modeled as a synthetic single-session workgroup where the role
+    // and workgroup names are identical (both the session name); collapse THAT
+    // so the text reads "Terminal reached ..." instead of "Terminal in Terminal
+    // reached ...". Keyed on the synthetic workgroup ID, not name equality, so a
+    // real workgroup whose role name happens to equal its workgroup name keeps
+    // the "role in workgroup" form.
+    nonisolated static func watcherTargetLabel(role: String,
+                                               workgroup: String,
+                                               workgroupID: String) -> String {
+        return isSyntheticWorkgroup(id: workgroupID) ? role : "\(role) in \(workgroup)"
+    }
+
+    // A synthetic single-session workgroup (a standalone session) vs a real
+    // orchestration workgroup, distinguished by the ID prefix rather than any
+    // name coincidence.
+    nonisolated static func isSyntheticWorkgroup(id: String) -> Bool {
+        return id.hasPrefix(WorkgroupIntrospection.syntheticWorkgroupIDPrefix)
     }
 
     private static let iso8601: ISO8601DateFormatter = {
@@ -1702,28 +1864,83 @@ final class OrchestratorDispatcher {
                 + "transition. Pick \u{201C}idle\u{201D}, \u{201C}working\u{201D}, or \u{201C}waiting\u{201D} instead, "
                 + "or use condition for anything else.")
         }
-        let resolved = try resolveSessionOrThrow(args.sessionGuid)
+        // Resolve the target under the session-vs-orchestration policy: a
+        // session-bound chat can only watch its one linked terminal session; an
+        // orchestration chat supplies an explicit session_guid. Read
+        // orchestrationEnabled once (nil chat -> not orchestration) so the two
+        // uses below can't diverge.
+        let chat = broker?.listModel.chat(id: chatID)
+        let orchestrationEnabled = chat?.orchestrationEnabled ?? false
+        let sessionBound = !orchestrationEnabled
+        let targetGuid = try Self.resolveWatchTarget(
+            explicit: args.sessionGuid,
+            orchestrationEnabled: orchestrationEnabled,
+            linkedTerminal: chat?.terminalSessionGuid)
+        let resolved = try resolveSessionOrThrow(targetGuid)
         let session = resolved.session
+        // Capture the session's status-reporting flag ONCE. The consent prompt
+        // below can suspend for a human delay during which the program may start
+        // or stop reporting cc-status; reading it twice (once for the requirement,
+        // once for the mode) could then build a tab-status watcher that discards
+        // the just-granted screen consent. One read keeps requirement, mode, and
+        // consent consistent.
+        let reportsStatus = WorkgroupIntrospection.reportsSessionStatus(session)
         // Key on the reload-durable stableID, not session.guid (see watcherKey);
         // `guid` below is really that stableID and flows into sessionGUID +
         // sessionStateHistory so both survive a shell reload.
         let guid = Self.watcherKey(for: session)
-        if let existing = watchers.first(where: {
-            $0.targets(stableID: session.stableID, guid: session.guid)
-                && $0.targetState == args.targetState
-                && $0.condition == condition
-        }) {
+        // Dedup on (session, target_state, condition). Reused before AND after the
+        // consent await: re-registering an already-armed watch returns the
+        // existing watcher_id without re-prompting, and a concurrent identical
+        // register_watch may append while this one is suspended on its prompt.
+        func existingMatch() -> WorkgroupWatcher? {
+            watchers.first(where: {
+                $0.targets(stableID: session.stableID, guid: session.guid)
+                    && $0.targetState == args.targetState
+                    && $0.condition == condition
+            })
+        }
+        if let existing = existingMatch() {
             return .watcherRegistered(Self.description(of: existing))
         }
-        // Screen-observation path, taken when either:
-        //   - a condition was supplied (conditions are always judged by
-        //     reading the screen, even on status-reporting sessions), or
-        //   - the session has no machine-readable status source, so there
-        //     are no tab-status transitions to fire a state watcher on.
-        // The AI poller fires the same status_update via
-        // screenPollFinished. No seedState / already-reached fast path
-        // here — the poller's first read detects an already-true goal.
-        if condition != nil || !WorkgroupIntrospection.reportsSessionStatus(session) {
+        // Session-bound chats stay governed by the per-category permission
+        // model: linking a terminal is not consent to read it. Enforce the read
+        // permission the chosen watch form needs before arming anything (and, for
+        // a screen-reading watch on a session whose View Contents is "Ask", get a
+        // one-time consent prompt). Orchestration chats use the claim model
+        // instead and skip this.
+        var screenReadConsented = false
+        if sessionBound {
+            screenReadConsented = try await enforceSessionBoundWatchReadPermission(
+                condition: condition != nil,
+                sessionReportsStatus: reportsStatus,
+                resolved: resolved,
+                linkedTerminal: targetGuid)
+            // The consent prompt can suspend for a while. If the chat was unlinked
+            // (or relinked elsewhere) during it, the unlink's cancel already ran
+            // and cleared the watcher list -- but this in-flight watcher wasn't in
+            // it yet. Bail so we don't append an orphan the unlink can't remove
+            // (it would sit dead until the next relaunch's reconcile).
+            if broker?.listModel.chat(id: chatID)?.terminalSessionGuid != targetGuid {
+                throw OrchestratorError.unsupported(reason:
+                    "The chat was unlinked from this session before the watch could be registered.")
+            }
+            // Re-dedup: a concurrent identical register_watch may have appended
+            // while we were suspended on the prompt. Return that watcher rather
+            // than create a duplicate (its own poller, doubled firings).
+            if let existing = existingMatch() {
+                return .watcherRegistered(Self.description(of: existing))
+            }
+        }
+        // Screen-observation path (see WorkgroupWatcher.isScreenPollMode): taken
+        // when a condition was supplied, or the session reports no machine-
+        // readable status so there is no tab-status transition to fire on. The AI
+        // poller fires the same status_update via screenPollFinished. No seedState
+        // / already-reached fast path here — the poller's first read detects an
+        // already-true goal. Uses the SAME reportsStatus captured above.
+        if WorkgroupWatcher.isScreenPollMode(
+            hasCondition: condition != nil,
+            sessionReportsStatus: reportsStatus) {
             let watcher = WorkgroupWatcher(
                 watcherID: UUID().uuidString,
                 sessionGUID: guid,
@@ -1735,7 +1952,11 @@ final class OrchestratorDispatcher {
                 registeredAt: Date(),
                 mode: .screenPoll,
                 condition: condition,
-                notifyUser: args.notifyUser)
+                notifyUser: args.notifyUser,
+                // Records the one-time Ask consent (true) so the poller may keep
+                // reading under Ask; nil under Always/Never (no standing consent),
+                // which stops the reads if View Contents is later downgraded to Ask.
+                screenReadConsented: screenReadConsented ? true : nil)
             watchers.append(watcher)
             persistWatchers()
             startScreenPoll(for: watcher)
@@ -1768,11 +1989,28 @@ final class OrchestratorDispatcher {
                 notifyUser: args.notifyUser)
             let reachedState = currentState.rawValue
             DispatchQueue.main.async { [weak self] in
-                self?.publishStatusUpdate(
+                guard let self else { return }
+                // Re-check at publish time: a .setPermissions revoking Check
+                // Terminal State could land between the synchronous read above and
+                // this deferred block (regate is a no-op here -- this synthetic
+                // watcher was never appended to `watchers`). Consistent with the
+                // tab-status and screen-poll state-report gates: report a drop
+                // rather than leak the state the user just revoked. The
+                // register_watch call already returned .watcherRegistered, so the
+                // agent needs the drop to know the watch is gone.
+                guard self.chatMayReadState() else {
+                    self.publishStatusUpdate(
+                        watcher: synthetic,
+                        reason: .watcherDropped,
+                        stateReached: "",
+                        detail: self.revokedReadDetail(synthetic, afterRestart: false))
+                    return
+                }
+                self.publishStatusUpdate(
                     watcher: synthetic,
                     reason: .stateReached,
                     stateReached: reachedState,
-                    detail: "\(synthetic.roleName) in \(synthetic.workgroupName) was already in state '\(reachedState)' at watch registration.")
+                    detail: "\(Self.watcherTargetLabel(role: synthetic.roleName, workgroup: synthetic.workgroupName, workgroupID: synthetic.workgroupID)) was already in state '\(reachedState)' at watch registration.")
             }
             return .watcherRegistered(Self.description(of: synthetic))
         }
@@ -1792,7 +2030,223 @@ final class OrchestratorDispatcher {
         // Tab-status watcher: arm the screen-observation backstop so a
         // dropped status event can't hang the watch indefinitely.
         armScreenEscalation(for: watcher)
-        return .watcherRegistered(Self.description(of: watcher))
+        // The backstop reads the screen, so it only arms when View Contents is
+        // granted (mayReadScreen). Without it, an idle/waiting tab-status watch
+        // relies SOLELY on the status hook and has no timeout -- if that hook
+        // stops firing (the program crashes or detaches) the watch would hang
+        // silently forever. Tell the model at registration so it can grant View
+        // Contents or plan to check manually. (.working watchers never escalate by
+        // design, so they get no note.)
+        var note: String?
+        if sessionBound,
+           watcher.targetState != .working,
+           !mayReadScreen(for: watcher) {
+            note = "No screen backstop: View Contents isn't granted for this session, so this watch fires only on the program's own status updates and has no timeout. If that status source stops (the program crashes or detaches) the watch will not fire. Grant View Contents (Always) for a screen-based fallback, or plan to check the session yourself if it goes quiet."
+        }
+        return .watcherRegistered(Self.description(of: watcher, note: note))
+    }
+
+    // Enforce the per-category read permission a session-bound watch needs
+    // before it's armed, and return whether a one-time Ask screen-read consent
+    // was obtained (the caller stamps it on the watcher so continuing to read
+    // under Ask needs no re-prompt). Throws a clear, model-facing error when a
+    // required category is Never. For a screen-reading watch whose View Contents
+    // is Ask, shows a one-time consent prompt (a background watcher reads the
+    // screen repeatedly and can't prompt per read; Always skips the prompt, Never
+    // denies). All permission reads that matter are taken AFTER the (possibly
+    // suspending) consent prompt, so a revoke that races the prompt fails closed.
+    // Note the asymmetry: Check Terminal State = Ask is permitted WITHOUT a prompt
+    // (it is the default, and a target_state watch reports only idle/working/
+    // waiting -- far less than the screen -- so requesting the watch is treated as
+    // consent). Only called for session-bound chats (orchestration uses claims).
+    @MainActor
+    private func enforceSessionBoundWatchReadPermission(
+        condition: Bool,
+        sessionReportsStatus: Bool,
+        resolved: WorkgroupIntrospection.ResolvedTarget,
+        linkedTerminal: String) async throws -> Bool {
+        let requirement = Self.watchReadRequirement(
+            condition: condition,
+            sessionReportsStatus: sessionReportsStatus)
+        let rce = RemoteCommandExecutor.instance
+        func permission(_ category: RemoteCommand.Content.PermissionCategory)
+        -> RemoteCommandExecutor.Permission {
+            rce.permission(chatID: chatID, inSessionGuid: linkedTerminal, category: category)
+        }
+        // Screen consent first (may suspend on the Ask prompt), then re-read every
+        // relevant permission below so a change during the await is caught.
+        var screenConsent = false
+        if requirement.needsScreen, permission(.viewContents) == .ask {
+            let approved = await promptForWatchScreenRead(resolved: resolved)
+            if !approved {
+                throw OrchestratorError.unsupported(reason:
+                    "The user declined to let this watch read the screen. Ask them to enable View Contents (Always) for this session if they want it.")
+            }
+            screenConsent = true  // validated against the post-await permission below
+        }
+        if requirement.needsScreen {
+            switch permission(.viewContents) {
+            case .never:
+                throw Self.watchReadDenied(.viewContents)
+            case .always:
+                screenConsent = false  // Always permits; no standing Ask consent needed
+            case .ask:
+                // Still Ask: it must have been consented above. If not (it became
+                // Ask during the await from a state where we didn't prompt), fail
+                // closed rather than read the screen without consent.
+                if !screenConsent {
+                    throw Self.watchReadDenied(.viewContents)
+                }
+            }
+        }
+        if requirement.needsState, permission(.checkTerminalState) == .never {
+            throw Self.watchReadDenied(.checkTerminalState)
+        }
+        return screenConsent
+    }
+
+    // Registration-time requirement, derived from the same canonical policy as
+    // the runtime WorkgroupWatcher.readRequirement. A non-condition watch is a
+    // target_state watch (exactly one of condition/target_state is set), and its
+    // mode is decided by WorkgroupWatcher.isScreenPollMode. nonisolated so it can
+    // be unit-tested without a live dispatcher.
+    nonisolated static func watchReadRequirement(condition: Bool,
+                                                 sessionReportsStatus: Bool)
+    -> (needsScreen: Bool, needsState: Bool) {
+        return WorkgroupWatcher.readRequirement(
+            hasCondition: condition,
+            hasTargetState: !condition,
+            isScreenPoll: WorkgroupWatcher.isScreenPollMode(
+                hasCondition: condition, sessionReportsStatus: sessionReportsStatus))
+    }
+
+    // Whether a watch form is offerable/satisfiable under the given permissions
+    // (each "permitted" == not Never; Ask counts because registration prompts for
+    // the one-time consent). The single satisfiability policy shared by the
+    // dispatcher and the UI offer/guidance so they can't drift.
+    nonisolated static func watchFormSatisfiable(
+        requirement: (needsScreen: Bool, needsState: Bool),
+        viewContentsPermitted: Bool,
+        checkTerminalStatePermitted: Bool) -> Bool {
+        if requirement.needsScreen, !viewContentsPermitted { return false }
+        if requirement.needsState, !checkTerminalStatePermitted { return false }
+        return true
+    }
+
+    nonisolated private static func watchReadDenied(
+        _ category: RemoteCommand.Content.PermissionCategory) -> OrchestratorError {
+        return .unsupported(reason:
+            "This chat isn't allowed to watch the linked session: the \u{201C}\(category.rawValue)\u{201D} permission is set to never. Ask the user to enable it first.")
+    }
+
+    // One-time consent for a session-bound watch to read the session's screen on
+    // a timer, used when View Contents is set to Ask (a background watcher can't
+    // prompt per read). Reuses the workgroup-permission prompt path with a
+    // dedicated sentinel workgroupID so the UI renders watch-specific wording.
+    @MainActor
+    private func promptForWatchScreenRead(
+        resolved: WorkgroupIntrospection.ResolvedTarget) async -> Bool {
+        let summary = "This watch reads \(Self.watcherTargetLabel(role: resolved.roleName, workgroup: resolved.workgroupName, workgroupID: resolved.workgroupID))'s screen repeatedly while it waits. View Contents is set to Ask for this session, so allow this background reading until the watch finishes?"
+        return await awaitPermission(
+            workgroupID: WorkgroupIntrospection.watchApprovalWorkgroupID,
+            workgroupName: resolved.workgroupName,
+            summary: summary)
+    }
+
+    // Whether this chat may currently READ THE SCREEN for a specific watcher.
+    // Orchestration chats read freely (claim model). A session-bound chat is
+    // governed by its one linked terminal's View Contents setting: Never denies,
+    // Always permits, and Ask permits ONLY when the watcher holds the one-time
+    // consent recorded at registration (screenReadConsented). That consent gate
+    // is why this is per-watcher, not per-chat: a watcher armed under Always
+    // carries no Ask consent, so downgrading View Contents to Ask stops its reads
+    // (it has no standing consent), while a watcher armed under Ask keeps going.
+    // Gates every screen-reading mechanism (pollers, tab-status escalation) and
+    // the reconcile/regate paths.
+    @MainActor
+    private func mayReadScreen(for watcher: WorkgroupWatcher) -> Bool {
+        guard let chat = broker?.listModel.chat(id: chatID) else { return false }
+        if chat.orchestrationEnabled { return true }
+        guard let terminal = chat.terminalSessionGuid else { return false }
+        switch RemoteCommandExecutor.instance.permission(
+            chatID: chatID, inSessionGuid: terminal, category: .viewContents) {
+        case .never: return false
+        case .always: return true
+        case .ask: return watcher.screenReadConsented == true
+        }
+    }
+
+    // Whether this chat may currently READ the session's reported terminal state
+    // (Check Terminal State). Orchestration reads freely; a session-bound chat's
+    // one linked terminal governs it -- Never denies, Ask/Always permit (Ask is
+    // the default and a state read is one-shot idle/working/waiting; see the
+    // asymmetry note on enforceSessionBoundWatchReadPermission). Not per-watcher:
+    // there is no consent token for state, so the linked terminal's setting is
+    // the whole story.
+    @MainActor
+    private func chatMayReadState() -> Bool {
+        guard let chat = broker?.listModel.chat(id: chatID) else { return false }
+        if chat.orchestrationEnabled { return true }
+        guard let terminal = chat.terminalSessionGuid else { return false }
+        return RemoteCommandExecutor.instance.permission(
+            chatID: chatID, inSessionGuid: terminal, category: .checkTerminalState) != .never
+    }
+
+    // The read category a watcher currently LACKS permission for, or nil if all
+    // its required reads are permitted. Derived from the watcher's frozen
+    // readRequirement so runtime enforcement (reconcile / regate) matches the
+    // registration gate. Note a .tabStatus watcher needs only state here (its
+    // screen-escalation backstop is optional and gated separately by
+    // armScreenEscalation), so losing only View Contents doesn't "deny" it --
+    // callers keep it and just cancel the backstop.
+    @MainActor
+    private func watcherReadDenial(_ watcher: WorkgroupWatcher)
+    -> RemoteCommand.Content.PermissionCategory? {
+        let requirement = watcher.readRequirement
+        if requirement.needsScreen, !mayReadScreen(for: watcher) {
+            return .viewContents
+        }
+        if requirement.needsState, !chatMayReadState() {
+            return .checkTerminalState
+        }
+        return nil
+    }
+
+    // Whether ALL of a watcher's required reads are currently permitted. Used as
+    // the continuous screen poller's mayRead so it stops (and drops via
+    // onPermissionLost) when EITHER View Contents or Check Terminal State is
+    // revoked -- e.g. a statusless target_state watch (which needs both) must
+    // stop when Check Terminal State goes away, not only View Contents.
+    @MainActor
+    private func watcherReadsPermitted(_ watcher: WorkgroupWatcher) -> Bool {
+        return watcherReadDenial(watcher) == nil
+    }
+
+    // The watcherDropped detail text for a watcher whose read permission was
+    // revoked, phrased for the category it lost. `afterRestart` distinguishes the
+    // reconcile drop (permission was off at launch) from the live regate drop.
+    @MainActor
+    private func revokedReadDetail(_ watcher: WorkgroupWatcher, afterRestart: Bool) -> String {
+        let name = Self.watcherTargetLabel(role: watcher.roleName,
+                                           workgroup: watcher.workgroupName,
+                                           workgroupID: watcher.workgroupID)
+        let action: String
+        let categoryName: String
+        switch watcherReadDenial(watcher) {
+        case .viewContents:
+            action = "read \(name)'s screen"
+            categoryName = "View Contents"
+        case .checkTerminalState:
+            action = "observe \(name)'s state"
+            categoryName = "Check Terminal State"
+        default:
+            action = "watch \(name)"
+            categoryName = "required"
+        }
+        if afterRestart {
+            return "Watch dropped after iTerm2 restart: the \u{201C}\(categoryName)\u{201D} permission is off, so it can no longer \(action). Re-register it if you enable \(categoryName) again."
+        }
+        return "Watch dropped: the \u{201C}\(categoryName)\u{201D} permission was turned off, so it can no longer \(action)."
     }
 
     @MainActor
@@ -1829,12 +2283,117 @@ final class OrchestratorDispatcher {
         RLog("[Orchestrator \(chatID)] Stop: cancelled \(ids.count) watcher(s)")
     }
 
+    // Cancel all of this chat's watchers without publishing status_updates.
+    // Called when the chat is unlinked from its terminal session while staying
+    // session-bound: the watchers observed the now-detached session, so they're
+    // orphaned. Same teardown as Stop's cancel (pollers/timers dropped, the
+    // persisted set cleared). Public so OrchestratorClient can drive it from the
+    // unlink action.
+    @MainActor
+    func cancelWatchersOnUnlink() {
+        cancelAllWatchers()
+        // An in-flight register_watch may be suspended on the "Allow repeated
+        // screen reads?" consent prompt for the session we just unlinked. Its
+        // Approve/Deny buttons grey out once the unlink notice becomes the last
+        // message, and the chat stays session-bound (so tearDown never runs), so
+        // the continuation would otherwise hang forever (stalling the turn and
+        // leaking the dispatcher). Resume it as declined so the awaited call
+        // returns and the turn unblocks.
+        resumePendingPermissionPrompts()
+    }
+
+    // Resume every parked permission prompt (watch consent / claim / spawn) as
+    // declined. For teardown paths that would otherwise strand a suspended
+    // awaitPermission continuation: the user unlinks the session or presses Stop
+    // while a prompt bubble is up. The awaited call then takes its declined path
+    // and the turn unblocks. Independent of the watchers list (the in-flight
+    // watcher isn't appended yet), unlike cancelAllWatchers.
+    @MainActor
+    private func resumePendingPermissionPrompts() {
+        guard !pendingPermissionPrompts.isEmpty else { return }
+        let prompts = pendingPermissionPrompts
+        pendingPermissionPrompts.removeAll()
+        for (_, cont) in prompts {
+            cont.resume(returning: false)
+        }
+    }
+
+    // Remove a set of watchers and tell the agent each one is gone. Cancels
+    // their auxiliaries (poller/escalation timer), rewrites the persisted set
+    // once, then publishes a watcherDropped status_update per watcher so the
+    // "every drop tells the agent" invariant holds. The detail text is per
+    // watcher (the drop reason differs: revoke vs restart-with-revoked-permission).
+    @MainActor
+    private func dropWatchers(_ toDrop: [WorkgroupWatcher],
+                              detail: (WorkgroupWatcher) -> String) {
+        guard !toDrop.isEmpty else { return }
+        let ids = Set(toDrop.map { $0.watcherID })
+        for id in ids {
+            removeWatcherAuxiliaries(watcherID: id)
+        }
+        watchers.removeAll { ids.contains($0.watcherID) }
+        persistWatchers()
+        for watcher in toDrop {
+            publishStatusUpdate(watcher: watcher,
+                                reason: .watcherDropped,
+                                stateReached: "",
+                                detail: detail(watcher))
+        }
+    }
+
+    // Drop a single screen-poll watcher whose chat lost screen-read permission
+    // mid-run (reported by the poller's onPermissionLost). Idempotent: a no-op if
+    // the watcher was already removed (e.g. a concurrent regate). Preserves the
+    // "every drop tells the agent" invariant on the non-routed revoke path.
+    @MainActor
+    private func dropScreenPollWatcherForRevokedRead(watcherID: String) {
+        guard let watcher = watchers.first(where: { $0.watcherID == watcherID }) else {
+            return
+        }
+        dropWatchers([watcher]) { self.revokedReadDetail($0, afterRestart: false) }
+    }
+
+    // Re-evaluate every watcher's read permission after a permission change and
+    // bring its mechanism into line, in BOTH directions, via the single policy in
+    // watcherReadDenial. Orchestration chats read freely and are unaffected.
+    //   - A watch whose required read is now denied (a .screenPoll watcher that
+    //     lost View Contents, or ANY target_state watch that lost Check Terminal
+    //     State -- including a statusless .screenPoll one) can't function: drop it
+    //     and tell the agent. This is the routed counterpart to the tab-status
+    //     fire-time gate and the poller's onPermissionLost, which backstop the
+    //     non-routed (global-default-flip) path.
+    //   - A still-permitted .tabStatus watcher: sync its screen-escalation
+    //     backstop with the current screen permission -- re-arm it if View Contents
+    //     is back (restores it after a revoke+grant cycle) or cancel it if View
+    //     Contents is off, keeping the watcher on its screen-free tab-status
+    //     trigger. armScreenEscalation is idempotent, so re-arming is safe.
+    @MainActor
+    private func regateScreenReadingWatchers() {
+        guard !watchers.isEmpty else { return }
+        var revoked = [WorkgroupWatcher]()
+        for watcher in watchers {
+            if watcherReadDenial(watcher) != nil {
+                revoked.append(watcher)
+                continue
+            }
+            if watcher.effectiveMode == .tabStatus {
+                if mayReadScreen(for: watcher) {
+                    armScreenEscalation(for: watcher)
+                } else {
+                    removeWatcherAuxiliaries(watcherID: watcher.watcherID)
+                }
+            }
+        }
+        dropWatchers(revoked) { self.revokedReadDetail($0, afterRestart: false) }
+    }
+
     @MainActor
     private func doListWatches() -> OrchestratorResult {
         return .watcherList(watchers.map { Self.description(of: $0) })
     }
 
-    private static func description(of watcher: WorkgroupWatcher) -> WatcherDescription {
+    private static func description(of watcher: WorkgroupWatcher,
+                                   note: String? = nil) -> WatcherDescription {
         return WatcherDescription(
             watcherID: watcher.watcherID,
             workgroupID: watcher.workgroupID,
@@ -1843,7 +2402,8 @@ final class OrchestratorDispatcher {
             roleName: watcher.roleName,
             targetState: watcher.targetState,
             condition: watcher.condition,
-            registeredAt: iso8601.string(from: watcher.registeredAt))
+            registeredAt: iso8601.string(from: watcher.registeredAt),
+            note: note)
     }
 
     // Writes `text` to the target session's PTY as if the user typed
