@@ -196,6 +196,13 @@ fileprivate struct KeyEventInfo: CustomDebugStringConvertible, Codable {
                 57444
             case kVK_RightCommand:
                 57450
+            case kVK_CapsLock:
+                // Caps Lock has a dedicated functional key code in the Kitty
+                // protocol. Without this, csiUNumber is 0, the key-number is
+                // omitted from the CSI u sequence, and the caps-lock modifier
+                // value slides into the number slot, so a toggle reports as
+                // \e[65u (codepoint 65 = "A"). Issue 12922.
+                57358
             default:
                 0
             }

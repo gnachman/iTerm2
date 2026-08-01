@@ -810,6 +810,12 @@ Settings Improvements:
   changes.
 
 Bug Fixes:
+- Toggling Caps Lock no longer inserts an “A”
+  in programs that use the Kitty keyboard
+  protocol with “report all keys as escape
+  codes.” Now it reports the key’s own code
+  (57358) instead of a stray modifier value
+  that got read as an “A.” Issue 12922.
 - Split-pane dividers in different rows or columns
   can now be dragged into alignment: a divider
   snaps to a matching divider elsewhere in the tab
