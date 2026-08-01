@@ -4315,6 +4315,22 @@ typedef struct {
 
 #pragma mark - Other Utility Methods
 
+// The single definition of "ASCII ligatures available": the profile enabled
+// them and the default (ASCII) font actually supports them. Both the onscreen
+// path (updateCachedMetrics) and the offscreen path
+// (configureForOffscreenRenderingWithFrame:visibleRect:) call this so they can
+// never drift apart and reintroduce an offscreen/onscreen ligature mismatch.
+- (BOOL)computeAsciiLigaturesAvailable {
+    BOOL ignore1 = NO, ignore2 = NO;
+    UTF32Char ignore3;
+    PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:'a'
+                                                      isComplex:NO
+                                                     renderBold:&ignore1
+                                                   renderItalic:&ignore2
+                                                       remapped:&ignore3];
+    return (fontInfo.ligatureLevel > 0 || fontInfo.hasDefaultLigatures) && _asciiLigatures;
+}
+
 - (void)updateCachedMetrics {
     _frame = _delegate.frame;
     _visibleRectExcludingTopMargin = [_delegate textDrawingHelperVisibleRectExcludingTopMargin];
@@ -4323,15 +4339,7 @@ typedef struct {
     _scrollViewDocumentVisibleRect = _visibleRectExcludingTopMargin;
     _preferSpeedToFullLigatureSupport = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];
     _lowFiCombiningMarks = [iTermAdvancedSettingsModel lowFiCombiningMarks];
-
-    BOOL ignore1 = NO, ignore2 = NO;
-    UTF32Char ignore3;
-    PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:'a'
-                                                      isComplex:NO
-                                                     renderBold:&ignore1
-                                                   renderItalic:&ignore2
-                                                       remapped:&ignore3];
-    _asciiLigaturesAvailable = (fontInfo.ligatureLevel > 0 || fontInfo.hasDefaultLigatures) && _asciiLigatures;
+    _asciiLigaturesAvailable = [self computeAsciiLigaturesAvailable];
 }
 
 - (void)configureForOffscreenRenderingWithFrame:(NSRect)frame
@@ -4346,7 +4354,20 @@ typedef struct {
     _scrollViewDocumentVisibleRect = visibleRect;
     _preferSpeedToFullLigatureSupport = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];
     _lowFiCombiningMarks = [iTermAdvancedSettingsModel lowFiCombiningMarks];
-    _asciiLigaturesAvailable = NO;  // Safe default for offscreen rendering
+
+    // Compute ASCII ligature availability exactly as the onscreen path does.
+    // Hardcoding NO here made screenshots (and streamed frames) drop ASCII
+    // ligatures that the profile enabled and the font supports, because
+    // _asciiLigaturesAvailable gates whether ASCII runs take the CoreText
+    // (ligated) path or the glyph-by-glyph fast path.
+    _asciiLigaturesAvailable = [self computeAsciiLigaturesAvailable];
+
+    // This is called after newDrawingHelperForOffscreenRendering builds the
+    // helper, so finish setup here (mirroring the onscreen sequence of
+    // updateCachedMetrics followed by didFinishSetup) to propagate the freshly
+    // computed _asciiLigaturesAvailable and zippy state into the attributed
+    // string builder.
+    [self didFinishSetup];
 }
 
 - (void)startTiming {

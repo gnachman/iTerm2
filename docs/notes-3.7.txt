@@ -2391,3 +2391,8 @@ Bug Fixes:
   -suite) connected to the main instance's API
   server instead of its own, controlling the
   wrong app.
+- Fixed a bug where Make Screenshot did not
+  render ASCII ligatures (like -> or =>) even
+  when the profile enabled them and the font
+  supported them. Screenshots now ligate the
+  same way the terminal does.

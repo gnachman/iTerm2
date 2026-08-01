@@ -2204,7 +2204,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     iTermTextDrawingHelper *helper = [[iTermTextDrawingHelper alloc] init];
     helper.delegate = (id<iTermTextDrawingHelperDelegate>)self;
     [self configureDrawingHelper:helper forOffscreen:YES];
-    [helper didFinishSetup];
+    // didFinishSetup is deferred to configureForOffscreenRenderingWithFrame:visibleRect:,
+    // which the caller invokes next. That method computes _asciiLigaturesAvailable
+    // before finishing setup, so ligature state is propagated correctly. Calling
+    // didFinishSetup here would snapshot a stale (NO) value into the builder.
     return helper;
 }
 
