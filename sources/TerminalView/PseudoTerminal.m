@@ -5297,7 +5297,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (NSEdgeInsets)tabBarInsetsForCompactWindow NS_AVAILABLE_MAC(10_14) {
-    CGFloat stoplightButtonsWidth = 75;
+    CGFloat stoplightButtonsWidth = MAX(0, [iTermAdvancedSettingsModel compactTabBarStoplightButtonsWidth]);
     if (@available(macOS 26, *)) {
         stoplightButtonsWidth += 3;
     }

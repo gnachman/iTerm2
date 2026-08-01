@@ -223,6 +223,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)experimentalKeyHandling;
 + (BOOL)extendBackgroundColorIntoMargins;
 + (double)extraSpaceBeforeCompactTopTabBar;
++ (double)compactTabBarStoplightButtonsWidth;
 + (double)fakeNotchHeight;
 + (NSString *)fakeFullyQualifiedDomainName;
 + (NSString *)fallbackLCCType;
