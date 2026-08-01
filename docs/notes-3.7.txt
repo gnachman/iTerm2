@@ -802,6 +802,14 @@ Settings Improvements:
   changes.
 
 Bug Fixes:
+- Split-pane dividers in different rows or columns
+  can now be dragged into alignment: a divider
+  snaps to a matching divider elsewhere in the tab
+  when it comes within half a cell, fixing a
+  sub-cell misalignment that whole-cell steps
+  could not correct. Double-clicking a horizontal
+  divider to equalize the two panes also no
+  longer computes the wrong size.
 - Retrospective debug logging no longer fills its
   in-memory ring so quickly on busy hosts. Several
   high-frequency sites that logged large payloads

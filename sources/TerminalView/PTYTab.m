@@ -6751,7 +6751,104 @@ typedef struct {
     if (proposedPosition < originalPosition) {
         allowedDiff *= -1;
     }
-    return originalPosition + allowedDiff;
+    const CGFloat quantizedPosition = originalPosition + allowedDiff;
+
+    // Whole-cell quantization moves the divider in integer character-cell steps
+    // relative to its current position. When two independent split views (e.g. the
+    // top and bottom rows of a 2x2 grid) have dividers that are misaligned by less
+    // than one cell, that sub-cell offset can never be reached by dragging, so the
+    // rows cannot be lined up. Allow the divider to snap to an aligned divider
+    // elsewhere in the tab so the user can correct the misalignment by hand. See
+    // issue 12932.
+    return [self positionForDivider:dividerIndex
+                        inSplitView:splitView
+                  quantizedPosition:quantizedPosition
+                   proposedPosition:proposedPosition
+                               step:step];
+}
+
+// Window-base coordinate of a with-grain axis position measured within a view's
+// own coordinate system. Using window coordinates makes positions comparable
+// across split views regardless of each view's flippedness.
+- (CGFloat)windowAxisPositionForLocalPosition:(CGFloat)local
+                                   isVertical:(BOOL)isVertical
+                                       inView:(NSView *)view {
+    const NSPoint p = isVertical ? NSMakePoint(local, 0) : NSMakePoint(0, local);
+    const NSPoint w = [view convertPoint:p toView:nil];
+    return isVertical ? w.x : w.y;
+}
+
+// Collect every split view in this tab whose orientation matches isVertical,
+// walking only the split tree (stopping at SessionViews).
+- (void)collectParallelSplitViewsUnder:(NSSplitView *)splitView
+                            isVertical:(BOOL)isVertical
+                                  into:(NSMutableArray<NSSplitView *> *)result {
+    if (splitView.isVertical == isVertical) {
+        [result addObject:splitView];
+    }
+    for (NSView *subview in splitView.subviews) {
+        if ([subview isKindOfClass:[NSSplitView class]]) {
+            [self collectParallelSplitViewsUnder:(NSSplitView *)subview
+                                      isVertical:isVertical
+                                            into:result];
+        }
+    }
+}
+
+// Given the cell-quantized position for a divider being dragged, return a snapped
+// position if the raw (continuous) drag brings it within half a cell of a divider
+// in some other split view of the tab. Otherwise return the quantized position.
+- (CGFloat)positionForDivider:(NSInteger)dividerIndex
+                  inSplitView:(NSSplitView *)splitView
+            quantizedPosition:(CGFloat)quantizedPosition
+             proposedPosition:(CGFloat)proposedPosition
+                         step:(CGFloat)step {
+    const BOOL isVertical = splitView.isVertical;
+    const CGFloat rawWindow = [self windowAxisPositionForLocalPosition:proposedPosition
+                                                            isVertical:isVertical
+                                                                inView:splitView];
+    CGFloat bestDelta = step / 2.0;
+    CGFloat bestWindow = 0;
+    BOOL found = NO;
+
+    NSMutableArray<NSSplitView *> *splitViews = [NSMutableArray array];
+    [self collectParallelSplitViewsUnder:root_ isVertical:isVertical into:splitViews];
+    for (NSSplitView *other in splitViews) {
+        if (other == splitView) {
+            // Snapping a divider to another divider in its own split view is
+            // meaningless; only line up with dividers in other split views.
+            continue;
+        }
+        const NSInteger count = other.subviews.count;
+        for (NSInteger i = 0; i + 1 < count; i++) {
+            const CGFloat otherLocal = [self _positionOfDivider:(int)i inSplitView:other];
+            const CGFloat otherWindow = [self windowAxisPositionForLocalPosition:otherLocal
+                                                                     isVertical:isVertical
+                                                                         inView:other];
+            const CGFloat delta = fabs(otherWindow - rawWindow);
+            if (delta < bestDelta) {
+                bestDelta = delta;
+                bestWindow = otherWindow;
+                found = YES;
+            }
+        }
+    }
+    if (!found) {
+        return quantizedPosition;
+    }
+
+    // Convert the sibling's window position back into this split view's coordinates.
+    const NSPoint w = isVertical ? NSMakePoint(bestWindow, 0) : NSMakePoint(0, bestWindow);
+    const NSPoint local = [splitView convertPoint:w fromView:nil];
+    const CGFloat snappedPosition = isVertical ? local.x : local.y;
+
+    // Don't let the snap push a session below its minimum size.
+    const CGFloat minCoord = [self splitView:splitView constrainMinCoordinate:0 ofSubviewAt:dividerIndex];
+    const CGFloat maxCoord = [self splitView:splitView constrainMaxCoordinate:CGFLOAT_MAX ofSubviewAt:dividerIndex];
+    if (snappedPosition < minCoord || snappedPosition > maxCoord) {
+        return quantizedPosition;
+    }
+    return snappedPosition;
 }
 
 - (BOOL)sessionIsActiveInTab:(PTYSession *)session {

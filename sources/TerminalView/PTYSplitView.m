@@ -226,7 +226,7 @@
     if (self.isVertical) {
         combined = first.frame.size.width + second.frame.size.width;
     } else {
-        combined = second.frame.size.height + second.frame.size.height;
+        combined = first.frame.size.height + second.frame.size.height;
     }
     const CGFloat newFirst = round(combined / 2.0);
     const CGFloat newSecond = combined - newFirst;
