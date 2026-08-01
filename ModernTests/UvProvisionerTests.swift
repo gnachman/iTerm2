@@ -241,6 +241,35 @@ final class UvProvisionerTests: XCTestCase {
         XCTAssertNil(iTermUvProvisioner.provisionedSharedVenvInterpreter(forRequestedVersion: "3.12", venvsRoot: root))
     }
 
+    // MARK: - Runtime menu decision (item 1)
+
+    func testRuntimeMenuActionUnderGate() {
+        XCTAssertEqual(iTermScriptRuntime.pythonRuntimeMenuAction(uvGateEnabled: true, uvInstalled: false, legacyInstalled: false), .uvInstall)
+        XCTAssertEqual(iTermScriptRuntime.pythonRuntimeMenuAction(uvGateEnabled: true, uvInstalled: true, legacyInstalled: false), .uvCheckForUpdate)
+        // Under the gate, a leftover legacy runtime must NOT change the decision (the bug
+        // where the item retargeted the legacy updater with the gate on).
+        XCTAssertEqual(iTermScriptRuntime.pythonRuntimeMenuAction(uvGateEnabled: true, uvInstalled: false, legacyInstalled: true), .uvInstall)
+        XCTAssertEqual(iTermScriptRuntime.pythonRuntimeMenuAction(uvGateEnabled: true, uvInstalled: true, legacyInstalled: true), .uvCheckForUpdate)
+    }
+
+    func testRuntimeMenuActionGateOff() {
+        XCTAssertEqual(iTermScriptRuntime.pythonRuntimeMenuAction(uvGateEnabled: false, uvInstalled: false, legacyInstalled: false), .legacyInstall)
+        XCTAssertEqual(iTermScriptRuntime.pythonRuntimeMenuAction(uvGateEnabled: false, uvInstalled: false, legacyInstalled: true), .legacyCheckForUpdate)
+        // uv present but gate off: still the legacy decision.
+        XCTAssertEqual(iTermScriptRuntime.pythonRuntimeMenuAction(uvGateEnabled: false, uvInstalled: true, legacyInstalled: false), .legacyInstall)
+    }
+
+    func testRuntimeMenuItemTitleAndCheckFlag() {
+        XCTAssertEqual(iTermScriptRuntime.pythonRuntimeMenuItemTitle(for: .uvInstall), "Install Python Runtime")
+        XCTAssertEqual(iTermScriptRuntime.pythonRuntimeMenuItemTitle(for: .uvCheckForUpdate), "Check for Updated Runtime")
+        XCTAssertEqual(iTermScriptRuntime.pythonRuntimeMenuItemTitle(for: .legacyInstall), "Install Python Runtime")
+        XCTAssertEqual(iTermScriptRuntime.pythonRuntimeMenuItemTitle(for: .legacyCheckForUpdate), "Check for Updated Runtime")
+        XCTAssertTrue(iTermScriptRuntime.isCheckForUpdate(.uvCheckForUpdate))
+        XCTAssertTrue(iTermScriptRuntime.isCheckForUpdate(.legacyCheckForUpdate))
+        XCTAssertFalse(iTermScriptRuntime.isCheckForUpdate(.uvInstall))
+        XCTAssertFalse(iTermScriptRuntime.isCheckForUpdate(.legacyInstall))
+    }
+
     // MARK: - installDownloadedTarball / extractAndInstall
 
     func testRejectsInvalidSignature() throws {

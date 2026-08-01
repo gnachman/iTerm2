@@ -2501,3 +2501,6 @@ Bug Fixes:
   again. The old View > Always Show Alerts with
   Remembered Selections command now lives in
   this panel as a checkbox.
+- Scripts > Manage can install and update
+  the uv-based Python runtime when the uv
+  advanced setting is enabled.

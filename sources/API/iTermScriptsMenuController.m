@@ -155,6 +155,8 @@ NS_ASSUME_NONNULL_BEGIN
         return;
     }
     _uvGateLastSeen = gate;
+    // The gate flip changes which runtime the Manage menu item installs/updates.
+    [self updateInstallRuntimeMenuItem];
     if (gate) {
         [self maybeWarnAboutUvVersionBumps];
     }
@@ -180,7 +182,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)didInstallPythonRuntime:(NSNotification *)notification {
-    [self changeInstallToUpdate];
+    [self updateInstallRuntimeMenuItem];
 }
 
 - (NSInteger)separatorIndex {
@@ -505,15 +507,33 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setInstallRuntimeMenuItem:(NSMenuItem *)installRuntimeMenuItem {
     _installRuntimeMenuItem = installRuntimeMenuItem;
-    if ([[iTermPythonRuntimeDownloader sharedInstance] isPythonRuntimeInstalled]) {
-        [self changeInstallToUpdate];
-    }
+    [self updateInstallRuntimeMenuItem];
 }
 
-- (void)changeInstallToUpdate {
-    _installRuntimeMenuItem.title = @"Check for Updated Runtime";
-    _installRuntimeMenuItem.action = @selector(userRequestedCheckForUpdate);
-    _installRuntimeMenuItem.target = [iTermPythonRuntimeDownloader sharedInstance];
+// The one place that titles/targets the Scripts > Manage runtime menu item, routed
+// through the gate so it never updates the wrong runtime. Called when the outlet is set,
+// after a uv/legacy install, and when the gate flips.
+- (void)updateInstallRuntimeMenuItem {
+    if (!_installRuntimeMenuItem) {
+        return;
+    }
+    const iTermPythonRuntimeMenuAction action =
+        [iTermScriptRuntime pythonRuntimeMenuActionWithUvGateEnabled:[iTermAdvancedSettingsModel pythonRuntimeUsesUV]
+                                                         uvInstalled:[iTermUvProvisioner isInstalled]
+                                                     legacyInstalled:[[iTermPythonRuntimeDownloader sharedInstance] isPythonRuntimeInstalled]];
+    _installRuntimeMenuItem.title = [iTermScriptRuntime pythonRuntimeMenuItemTitleFor:action];
+    if (action == iTermPythonRuntimeMenuActionLegacyCheckForUpdate) {
+        // Only the legacy check-for-update targets the legacy downloader directly.
+        _installRuntimeMenuItem.action = @selector(userRequestedCheckForUpdate);
+        _installRuntimeMenuItem.target = [iTermPythonRuntimeDownloader sharedInstance];
+    } else {
+        // uv install, uv check-for-update, and legacy install all route to the app
+        // delegate's installPythonRuntime: (a XIB-wired IBAction with no header, so
+        // resolve the selector at runtime), with a nil target so it goes up the
+        // responder chain to the app delegate.
+        _installRuntimeMenuItem.action = NSSelectorFromString(@"installPythonRuntime:");
+        _installRuntimeMenuItem.target = nil;
+    }
 }
 
 - (void)chooseAndExportScript {

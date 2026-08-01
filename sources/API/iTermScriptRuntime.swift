@@ -46,8 +46,38 @@ struct iTermPythonRuntimeMarker: Codable, Equatable {
     }
 }
 
+// What the "Install Python Runtime" menu item should do, decided from the gate and what
+// is installed. The menu controller maps this to a title/action/target.
+@objc enum iTermPythonRuntimeMenuAction: Int {
+    case uvInstall            // uv gate on, uv not installed
+    case uvCheckForUpdate     // uv gate on, uv installed
+    case legacyInstall        // uv gate off, legacy runtime not installed
+    case legacyCheckForUpdate // uv gate off, legacy runtime installed
+}
+
 @objc(iTermScriptRuntime)
 class iTermScriptRuntime: NSObject {
+
+    // The single place that decides the Scripts > Manage runtime menu item, so the title
+    // and target never disagree with the gate (the bug where a leftover legacy runtime
+    // retargeted the item at the legacy updater even with the gate on). Pure and tested.
+    @objc static func pythonRuntimeMenuAction(uvGateEnabled: Bool,
+                                              uvInstalled: Bool,
+                                              legacyInstalled: Bool) -> iTermPythonRuntimeMenuAction {
+        if uvGateEnabled {
+            return uvInstalled ? .uvCheckForUpdate : .uvInstall
+        }
+        return legacyInstalled ? .legacyCheckForUpdate : .legacyInstall
+    }
+
+    @objc static func isCheckForUpdate(_ action: iTermPythonRuntimeMenuAction) -> Bool {
+        return action == .uvCheckForUpdate || action == .legacyCheckForUpdate
+    }
+
+    @objc static func pythonRuntimeMenuItemTitle(for action: iTermPythonRuntimeMenuAction) -> String {
+        return isCheckForUpdate(action) ? "Check for Updated Runtime" : "Install Python Runtime"
+    }
+
     @objc static let venvDirectoryName = ".venv"
     @objc static let markerFileName = "python-runtime.json"
     @objc static let legacyDirectoryName = "iterm2env"

@@ -435,11 +435,11 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
             return NO;
         }
     }
-    if (action == @selector(installPythonRuntime:) ||
-        action == @selector(installAlreadyDownloadedPythonRuntime:)) {
-        // These manage the legacy bundled Python runtime. With the uv backend enabled,
-        // scripts no longer use that runtime, so downloading or updating it is not
-        // meaningful. (A dedicated uv upgrade mechanism is a Phase 4 item.)
+    if (action == @selector(installAlreadyDownloadedPythonRuntime:)) {
+        // Installing a hand-downloaded LEGACY runtime zip is meaningless under the uv
+        // backend. (installPythonRuntime: is not disabled here: under the gate it routes
+        // to the uv install / check-for-update flow instead, decided in one place in
+        // iTermScriptsMenuController updateInstallRuntimeMenuItem.)
         if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
             return NO;
         }
@@ -3206,6 +3206,10 @@ static iTermKeyEventReplayer *gReplayer;
         DLog(@"Not homeDirectoryDotDir");
         return;
     }
+    if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+        [self installOrCheckUvRuntime];
+        return;
+    }
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:NO
                                                                                         pythonVersion:nil
                                                                             minimumEnvironmentVersion:0
@@ -3222,6 +3226,41 @@ static iTermKeyEventReplayer *gReplayer;
                                          window:nil];
          }
      }];
+}
+
+// Under the uv gate, the "Install Python Runtime" / "Check for Updated Runtime" menu
+// item routes here. If uv is not yet installed, download it (with the existing consent +
+// progress UI) and eagerly provision the default-minor shared venv so basic scripts
+// later launch offline, mirroring the legacy pre-install. If uv is installed, run a
+// user-invoked upgrade check that bypasses the daily throttle and reports the result.
+- (void)installOrCheckUvRuntime {
+    if ([iTermUvProvisioner isInstalled]) {
+        [[iTermUvProvisioner shared] userRequestedUpgradeCheckWithCompletion:^(BOOL ok, NSString *message) {
+            [[iTermScriptHistoryEntry globalEntry] addOutput:[message stringByAppendingString:@"\n"] completion:^{}];
+            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            alert.messageText = ok ? @"Python Runtime" : @"Update Failed";
+            alert.informativeText = message;
+            [alert runModal];
+        }];
+        return;
+    }
+    [[iTermUvProvisioner shared] downloadAndProvisionSharedVenvWithRequestedPythonVersion:[iTermScriptRuntime defaultPythonVersion]
+                                                                              completion:^(NSError *error, NSString *python) {
+        if (error != nil && [iTermUvProvisioner isCancelationError:error]) {
+            // The user declined the download; stay silent.
+            return;
+        }
+        if (error != nil || python == nil) {
+            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            alert.messageText = @"Installation Failed";
+            alert.informativeText = [NSString stringWithFormat:@"Could not install the Python runtime: %@",
+                                     error.localizedDescription ?: @"unknown error"];
+            [alert runModal];
+            return;
+        }
+        // uv is now installed; retitle the menu item to "Check for Updated Runtime".
+        [self.scriptsMenuController updateInstallRuntimeMenuItem];
+    }];
 }
 
 - (IBAction)installAlreadyDownloadedPythonRuntime:(id)sender {

@@ -875,7 +875,14 @@ class iTermUvProvisioner: NSObject {
                 guard Self.isInstalled else {
                     return
                 }
-                Self.upgradeUvBinaryIfNewerAvailable()
+                switch Self.upgradeUvBinaryIfNewerAvailable() {
+                case .upgraded(let from, let to):
+                    RLog("uv: upgraded uv from \(from) to \(to)")
+                case .failed(let message):
+                    RLog("uv: background upgrade check failed: \(message)")
+                case .upToDate:
+                    break
+                }
                 Self.provisionQueue.async {
                     Self.upgradeSharedVenvModules()
                 }
@@ -883,43 +890,84 @@ class iTermUvProvisioner: NSObject {
         }
     }
 
+    // User-invoked "Check for Updated Runtime": bypasses the daily rate limit, runs the
+    // same upgrade pair, and reports a result instead of being fire-and-forget. Because
+    // installedUvVersion returns "unknown" for a corrupt or unreadable binary (which
+    // loses to any manifest version), this also repairs such a binary. completion runs
+    // on the main queue with (success, user-facing message).
+    @objc func userRequestedUpgradeCheck(completion: @escaping (Bool, String) -> Void) {
+        DispatchQueue.global(qos: .utility).async {
+            guard Self.isInstalled else {
+                DispatchQueue.main.async { completion(false, "uv is not installed.") }
+                return
+            }
+            let outcome = Self.upgradeUvBinaryIfNewerAvailable()
+            // Refresh the shared-venv modules regardless, so a check also picks up newer
+            // iterm2/certifi/pyobjc even when uv itself is already current.
+            Self.provisionQueue.sync { Self.upgradeSharedVenvModules() }
+            let ok: Bool
+            let message: String
+            switch outcome {
+            case .upToDate(let version):
+                ok = true
+                message = "uv \(version) is up to date."
+            case .upgraded(let from, let to):
+                ok = true
+                message = "Upgraded uv \(from) to \(to). Updated the Python modules in shared environments."
+            case .failed(let failureMessage):
+                ok = false
+                message = failureMessage
+            }
+            DispatchQueue.main.async { completion(ok, message) }
+        }
+    }
+
+    // The result of a uv-binary upgrade check, so a user-invoked check can report it.
+    private enum UvBinaryUpgradeOutcome {
+        case upToDate(version: String)
+        case upgraded(from: String, to: String)
+        case failed(message: String)
+    }
+
     // Re-fetch the manifest and, if it offers a newer uv than installed, download and
-    // install it (RSA-verified, atomic replace). Silent: the user already consented to
-    // uv, so there is no confirmation window. Any failure (offline, older manifest) is
-    // a no-op retried next time. The minimum-version floor still applies via
-    // fetchSelectedEntry, so this never installs an older uv. Call off provisionQueue;
-    // the install swap is hopped onto provisionQueue so it is serialized with any
-    // concurrent provisioning.
-    private static func upgradeUvBinaryIfNewerAvailable() {
+    // install it (RSA-verified, atomic replace). The minimum-version floor still applies
+    // via fetchSelectedEntry, so this never installs an older uv. Returns the outcome so
+    // the caller can log (background) or report it (user-invoked). MUST be called off
+    // both the main thread and provisionQueue (it does the swap via provisionQueue.sync,
+    // which would deadlock if already on that queue).
+    private static func upgradeUvBinaryIfNewerAvailable() -> UvBinaryUpgradeOutcome {
         guard case .success(let entry) = fetchSelectedEntry() else {
-            return
+            return .failed(message: "Could not check for a uv update (offline, or the manifest could not be read).")
         }
         let installed = installedUvVersion(uvPath: uvBinaryPath)
         guard shouldUpgradeUv(installedVersion: installed, manifestVersion: entry.uvVersion) else {
-            return
+            return .upToDate(version: installed)
         }
-        // Cap the silent background download at the manifest-declared size plus slack
-        // (size is validated at selection, so this cannot overflow), so a compromised
-        // host cannot exhaust memory during a background upgrade.
+        // Cap the download at the manifest-declared size plus slack (size is validated at
+        // selection, so this cannot overflow), so a compromised host cannot exhaust memory.
         guard let url = URL(string: entry.url),
               let data = boundedDownload(from: url, maxBytes: entry.size + 16 * 1024 * 1024) else {
-            return
+            return .failed(message: "Could not download the uv update.")
         }
-        provisionQueue.async {
+        var outcome: UvBinaryUpgradeOutcome = .upToDate(version: installed)
+        // Do the swap on provisionQueue so it is serialized with any concurrent provisioning.
+        provisionQueue.sync {
             // Re-check under the queue: a concurrent provision or a prior iteration may
             // have already updated the binary.
             let current = installedUvVersion(uvPath: uvBinaryPath)
             guard shouldUpgradeUv(installedVersion: current, manifestVersion: entry.uvVersion) else {
+                outcome = .upToDate(version: current)
                 return
             }
             if let error = installDownloadedTarball(data: data,
                                                     encodedSignature: entry.signature,
                                                     destinationBinaryPath: uvBinaryPath) {
-                RLog("uv: background upgrade to \(entry.uvVersion) failed: \(error.localizedDescription)")
+                outcome = .failed(message: error.localizedDescription)
             } else {
-                RLog("uv: upgraded uv from \(current) to \(entry.uvVersion)")
+                outcome = .upgraded(from: current, to: entry.uvVersion)
             }
         }
+        return outcome
     }
 
     // Upgrade the always-installed packages to the latest in every provisioned shared

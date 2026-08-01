@@ -244,6 +244,15 @@ target bump is deferred to Phase 4.
    basic scripts do not go stale. Full-environment scripts manage their own
    dependencies (setup.cfg / Dependency Editor) and are left untouched. Without this a
    first-installed uv would never be re-checked, so a broken uv could never be replaced.
+   The same upgrade pair is also reachable on demand from Scripts > Manage: with the gate
+   on, that item is "Install Python Runtime" (downloads uv and provisions the default
+   shared venv) when uv is absent, and "Check for Updated Runtime" once installed, which
+   calls `iTermUvProvisioner.userRequestedUpgradeCheck` to run the same upgrade
+   bypassing the daily throttle and report the result (up to date / upgraded / failed).
+   Because a corrupt binary reports version "unknown" (which loses to any manifest
+   version), that item also repairs it. The title/target is decided in one place
+   (`iTermScriptRuntime.pythonRuntimeMenuAction`) so a leftover legacy runtime never
+   retargets the item at the legacy updater under the gate.
 
 Exit: given a version, `iTermUv` produces a working venv with `iterm2` installed.
 
