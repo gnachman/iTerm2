@@ -204,12 +204,29 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
             completion(originalVirtualenv);
             return;
         }
+        __block iTermProvisioningProgressWindowController *progress = [[iTermProvisioningProgressWindowController alloc] init];
         [[iTermUvProvisioner shared] migrateLegacyScriptToUvWithContainer:fullPath
                                                   requestedPythonVersion:configParser.pythonVersion ?: [iTermScriptRuntime defaultPythonVersion]
                                                             dependencies:configParser.dependencies ?: @[]
+                                                    provisioningDidBegin:^{
+            // Show progress only once the download phase is done and the venv build
+            // starts, so a launch-time migration is not a silent multi-second stall.
+            [progress showWithMessage:@"Migrating this script to the new Python runtime…"];
+        }
                                                               completion:^(NSError *migrationError) {
+            [progress dismiss];
+            progress = nil;
             if (migrationError != nil) {
                 RLog(@"uv migration of %@ failed; launching on the legacy environment: %@", fullPath, migrationError);
+                if (![iTermUvProvisioner isCancelationError:migrationError]) {
+                    // A real failure (not the user declining the download): the script
+                    // silently ran on its old runtime, so leave a Script Console record so
+                    // an opted-in user can discover why nothing changed. No modal.
+                    NSString *name = [[fullPath pathComponents] lastObject] ?: fullPath;
+                    NSString *line = [NSString stringWithFormat:@"Could not migrate “%@” to the uv Python runtime (%@). It launched on the existing runtime instead.\n",
+                                      name, migrationError.localizedDescription];
+                    [[iTermScriptHistoryEntry globalEntry] addOutput:line completion:^{}];
+                }
                 completion(originalVirtualenv);
                 return;
             }

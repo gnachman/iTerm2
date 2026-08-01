@@ -602,6 +602,7 @@ class iTermUvProvisioner: NSObject {
     @objc func migrateLegacyScriptToUv(container: String,
                                        requestedPythonVersion: String,
                                        dependencies: [String],
+                                       provisioningDidBegin: (() -> Void)? = nil,
                                        completion: @escaping (NSError?) -> Void) {
         migrationLock.lock()
         if migrationsInFlight[container] != nil {
@@ -631,7 +632,8 @@ class iTermUvProvisioner: NSObject {
         downloadAndProvisionFullEnvironment(container: container,
                                             requestedPythonVersion: requestedPythonVersion,
                                             dependencies: dependencies,
-                                            createSetupCfg: false) { error in
+                                            createSetupCfg: false,
+                                            provisioningDidBegin: provisioningDidBegin) { error in
             if let error = error {
                 try? iTermUvMigration.restoreLegacyEnvironment(container: container)
                 finishAll(error)

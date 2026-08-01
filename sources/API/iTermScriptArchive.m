@@ -166,14 +166,17 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
 - (void)installTrusted:(BOOL)trusted
        offerAutoLaunch:(BOOL)offerAutoLaunch
                avoidUI:(BOOL)avoidUI
+  provisioningDidBegin:(void (^)(void))provisioningDidBegin
         withCompletion:(void (^)(NSError *, NSURL *location))completion {
     RLog(@"trusted=%@ offerAutoLaunch=%@", @(trusted), @(offerAutoLaunch));
     if (self.fullEnvironment) {
         [self installFullEnvironmentTrusted:trusted
                             offerAutoLaunch:offerAutoLaunch
                                     avoidUI:avoidUI
+                       provisioningDidBegin:provisioningDidBegin
                                  completion:completion];
     } else {
+        // A basic script install is an instant file move; no provisioning phase.
         [self installBasicTrusted:trusted
                   offerAutoLaunch:offerAutoLaunch
                           avoidUI:avoidUI
@@ -229,6 +232,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
 - (void)installFullEnvironmentTrusted:(BOOL)trusted
                       offerAutoLaunch:(BOOL)offerAutoLaunch
                               avoidUI:(BOOL)avoidUI
+                 provisioningDidBegin:(void (^)(void))provisioningDidBegin
                            completion:(void (^)(NSError *, NSURL *location))completion {
     DLog(@"trusted=%@ offerAutoLaunch=%@", @(trusted), @(offerAutoLaunch));
     NSString *from = [self.container stringByAppendingPathComponent:self.name];
@@ -299,7 +303,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
                                                               requestedPythonVersion:setupParser.pythonVersion ?: [iTermScriptRuntime defaultPythonVersion]
                                                                         dependencies:dependencies ?: @[]
                                                                       createSetupCfg:NO
-                                                                provisioningDidBegin:nil
+                                                                provisioningDidBegin:provisioningDidBegin
                                                                           completion:^(NSError *errorStatus) {
             [self didInstallPythonRuntimeWithError:errorStatus
                                               from:from

@@ -90,12 +90,17 @@ static BOOL sInstallingScript;
             return;
         }
 
-        iTermBuildingScriptWindowController *pleaseWait;
-        if (!reveal) {
+        // Do not show the please-wait window eagerly: a uv full-environment install first
+        // asks for download consent (and may prompt to replace an existing script), and a
+        // premature "Building Script…" window would float over those. Show it only once
+        // provisioning actually begins (after the download/consent), matching the
+        // create/Dependency-Editor progress sequencing. Unzip is effectively instant, and
+        // basic/legacy installs have their own UI or none.
+        iTermBuildingScriptWindowController *pleaseWait = reveal ? nil : [iTermBuildingScriptWindowController newPleaseWaitWindowController];
+        void (^provisioningDidBegin)(void) = ^{
             DLog(@"Open please wait window");
-            pleaseWait = [iTermBuildingScriptWindowController newPleaseWaitWindowController];
             [pleaseWait.window makeKeyAndOrderFront:nil];
-        }
+        };
         NSString *tempDir = [[NSFileManager defaultManager] it_temporaryDirectory];
 
         DLog(@"Unzip %@", url);
@@ -116,6 +121,7 @@ static BOOL sInstallingScript;
                          offerAutoLaunch:offerAutoLaunch
                                   reveal:reveal
                                  avoidUI:avoidUI
+                    provisioningDidBegin:provisioningDidBegin
                           withCompletion:
              ^(NSString *errorMessage, BOOL quiet, NSURL *location) {
                 RLog(@"All done! errorMessage=%@", errorMessage);
@@ -259,6 +265,7 @@ static BOOL sInstallingScript;
                offerAutoLaunch:(BOOL)offerAutoLaunch
                         reveal:(BOOL)reveal
                        avoidUI:(BOOL)avoidUI
+          provisioningDidBegin:(void (^)(void))provisioningDidBegin
                 withCompletion:(void (^)(NSString *errorMessage, BOOL, NSURL *location))completion {
     DLog(@"didUnzipSuccessfullyTo:%@, trusted:%@, offerAutoLaunch:%@, reveal:%@, avoidUI:%@",
          tempDir,
@@ -312,6 +319,7 @@ static BOOL sInstallingScript;
                          offerAutoLaunch:offerAutoLaunch
                                   reveal:reveal
                                  avoidUI:avoidUI
+                    provisioningDidBegin:provisioningDidBegin
                           withCompletion:completion];
             return;
         }
@@ -323,6 +331,7 @@ static BOOL sInstallingScript;
     [archive installTrusted:trusted
             offerAutoLaunch:offerAutoLaunch
                     avoidUI:avoidUI
+       provisioningDidBegin:provisioningDidBegin
              withCompletion:^(NSError *error, NSURL *location) {
         RLog(@"Install finished with %@", error);
         if (error != nil && [iTermUvProvisioner isCancelationError:error]) {
