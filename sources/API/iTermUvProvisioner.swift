@@ -671,13 +671,73 @@ class iTermUvProvisioner: NSObject {
 
     // MARK: - Shared basic-script venvs
 
+    static var sharedVenvsRoot: String {
+        return (uvDirectory as NSString).appendingPathComponent("venvs")
+    }
+
     @objc static func sharedVenvDirectory(forMinor minor: String) -> String {
-        return ((uvDirectory as NSString).appendingPathComponent("venvs") as NSString)
-            .appendingPathComponent(minor)
+        return (sharedVenvsRoot as NSString).appendingPathComponent(minor)
     }
 
     @objc static func sharedVenvPython(forMinor minor: String) -> String {
         return (sharedVenvDirectory(forMinor: minor) as NSString).appendingPathComponent("bin/python")
+    }
+
+    // A remapped shebang (e.g. python3.7 when 3.7 is unavailable) provisions a venv for
+    // the resolved minor (3.9). Record requested->resolved under venvs/.remaps/<requested>
+    // so a later OFFLINE launch can find the working venv without asking uv to resolve
+    // again (which needs the network / a uv spawn and, offline, fails).
+    private static let sharedVenvRemapsDirectoryName = ".remaps"
+
+    private static func sharedVenvRemapPath(forRequestedMinor minor: String, venvsRoot: String) -> String {
+        return ((venvsRoot as NSString).appendingPathComponent(sharedVenvRemapsDirectoryName) as NSString)
+            .appendingPathComponent(minor)
+    }
+
+    // The interpreter for an already-provisioned shared venv for requestedVersion, using
+    // only the filesystem (no uv, no network), or nil if none is provisioned yet. Handles
+    // a direct minor match and a recorded requested->resolved remap. venvsRoot is injected
+    // so the decision is hermetically testable; the production overload uses the real root.
+    static func provisionedSharedVenvInterpreter(forRequestedVersion requestedVersion: String,
+                                                 venvsRoot: String) -> String? {
+        guard let requestedMinor = normalizedMinor(requestedVersion) else {
+            return nil
+        }
+        let fm = FileManager.default
+        func interpreterPath(_ minor: String) -> String {
+            return ((venvsRoot as NSString).appendingPathComponent(minor) as NSString)
+                .appendingPathComponent("bin/python")
+        }
+        func isProvisioned(_ minor: String) -> Bool {
+            let markerPath = ((venvsRoot as NSString).appendingPathComponent(minor) as NSString)
+                .appendingPathComponent(sharedVenvMarkerName)
+            return fm.isExecutableFile(atPath: interpreterPath(minor)) && fm.fileExists(atPath: markerPath)
+        }
+        if isProvisioned(requestedMinor) {
+            return interpreterPath(requestedMinor)
+        }
+        if let data = fm.contents(atPath: sharedVenvRemapPath(forRequestedMinor: requestedMinor, venvsRoot: venvsRoot)),
+           let resolvedMinor = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !resolvedMinor.isEmpty,
+           isProvisioned(resolvedMinor) {
+            return interpreterPath(resolvedMinor)
+        }
+        return nil
+    }
+
+    static func provisionedSharedVenvInterpreter(forRequestedVersion requestedVersion: String) -> String? {
+        return provisionedSharedVenvInterpreter(forRequestedVersion: requestedVersion, venvsRoot: sharedVenvsRoot)
+    }
+
+    private static func recordSharedVenvRemap(fromRequestedMinor requestedMinor: String, toResolvedMinor resolvedMinor: String) {
+        let path = sharedVenvRemapPath(forRequestedMinor: requestedMinor, venvsRoot: sharedVenvsRoot)
+        do {
+            try FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent,
+                                                    withIntermediateDirectories: true)
+            try Data(resolvedMinor.utf8).write(to: URL(fileURLWithPath: path))
+        } catch {
+            RLog("uv: could not record shared-venv remap \(requestedMinor)->\(resolvedMinor): \(error.localizedDescription)")
+        }
     }
 
     // A sentinel written only after the packages finish installing. `uv venv` creates
@@ -715,13 +775,13 @@ class iTermUvProvisioner: NSObject {
     // the main queue.
     @objc func downloadAndProvisionSharedVenv(requestedPythonVersion: String,
                                               completion: @escaping (NSError?, String?) -> Void) {
-        // Fast path: if the requested version is already a bare minor whose venv is
-        // fully provisioned, return its interpreter without downloading uv, running
-        // `uv python list`, or touching the network. This is the common repeat-launch
-        // case; only a first launch (or a remapped version) falls through to uv.
-        if let minor = Self.normalizedMinor(requestedPythonVersion),
-           Self.sharedVenvIsProvisioned(forMinor: minor) {
-            completion(nil, Self.sharedVenvPython(forMinor: minor))
+        // Fast path: if a shared venv for the requested version is already provisioned,
+        // return its interpreter without downloading uv, running `uv python list`, or
+        // touching the network. This covers a direct minor match and a recorded
+        // requested->resolved remap (so an offline relaunch of a python3.7 shebang that
+        // was bumped to 3.9 still works). Only a genuine first launch falls through to uv.
+        if let interpreter = Self.provisionedSharedVenvInterpreter(forRequestedVersion: requestedPythonVersion) {
+            completion(nil, interpreter)
             return
         }
         downloadIfNeeded { error in
@@ -763,9 +823,13 @@ class iTermUvProvisioner: NSObject {
                     return
                 }
                 Self.markSharedVenvProvisioned(forMinor: resolved.version)
-                // If the shebang's Python version was not available and got bumped, tell
-                // the user once (suppressibly), just like the full-environment path.
+                // If the shebang's Python version was not available and got bumped, record
+                // the requested->resolved mapping so an offline relaunch finds this venv,
+                // and tell the user once (suppressibly), like the full-environment path.
                 if let from = resolved.remappedFrom {
+                    if let requestedMinor = Self.normalizedMinor(requestedPythonVersion) {
+                        Self.recordSharedVenvRemap(fromRequestedMinor: requestedMinor, toResolvedMinor: resolved.version)
+                    }
                     Self.reportForcedRemap(scriptName: nil, from: from, to: resolved.version)
                 }
                 DispatchQueue.main.async { completion(nil, interpreter) }

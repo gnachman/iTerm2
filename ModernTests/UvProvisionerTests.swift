@@ -201,6 +201,46 @@ final class UvProvisionerTests: XCTestCase {
         }
     }
 
+    // MARK: - Offline shared-venv resolution (remapped shebang, item 2)
+
+    private func provisionVenv(_ minor: String, inRoot root: String) throws -> String {
+        let python = ((root as NSString).appendingPathComponent(minor) as NSString).appendingPathComponent("bin/python")
+        try writeFile(python, "#!/bin/sh\n")
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: python)
+        try writeFile(((root as NSString).appendingPathComponent(minor) as NSString).appendingPathComponent(".provisioned"), "")
+        return python
+    }
+
+    func testProvisionedSharedVenvInterpreterFollowsRemap() throws {
+        let root = try makeTempDir()
+        let py39 = try provisionVenv("3.9", inRoot: root)
+        // Record that a requested 3.7 maps to the provisioned 3.9 venv.
+        try writeFile(((root as NSString).appendingPathComponent(".remaps") as NSString).appendingPathComponent("3.7"), "3.9")
+
+        // Offline (pure filesystem, no uv): requested 3.7 resolves to the 3.9 interpreter.
+        XCTAssertEqual(iTermUvProvisioner.provisionedSharedVenvInterpreter(forRequestedVersion: "3.7", venvsRoot: root), py39)
+        // A direct minor match still works, including with a patch component.
+        XCTAssertEqual(iTermUvProvisioner.provisionedSharedVenvInterpreter(forRequestedVersion: "3.9.4", venvsRoot: root), py39)
+        // A version with neither a venv nor a remap returns nil (falls through to uv).
+        XCTAssertNil(iTermUvProvisioner.provisionedSharedVenvInterpreter(forRequestedVersion: "3.11", venvsRoot: root))
+    }
+
+    func testProvisionedSharedVenvInterpreterIgnoresRemapToUnprovisionedVenv() throws {
+        let root = try makeTempDir()
+        // Remap 3.7 -> 3.9 exists, but 3.9 was never provisioned (no interpreter/marker).
+        try writeFile(((root as NSString).appendingPathComponent(".remaps") as NSString).appendingPathComponent("3.7"), "3.9")
+        XCTAssertNil(iTermUvProvisioner.provisionedSharedVenvInterpreter(forRequestedVersion: "3.7", venvsRoot: root))
+    }
+
+    func testProvisionedSharedVenvInterpreterNeedsMarkerNotJustInterpreter() throws {
+        let root = try makeTempDir()
+        // Interpreter present but no .provisioned marker (a half-built venv) must not count.
+        let python = ((root as NSString).appendingPathComponent("3.12") as NSString).appendingPathComponent("bin/python")
+        try writeFile(python, "#!/bin/sh\n")
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: python)
+        XCTAssertNil(iTermUvProvisioner.provisionedSharedVenvInterpreter(forRequestedVersion: "3.12", venvsRoot: root))
+    }
+
     // MARK: - installDownloadedTarball / extractAndInstall
 
     func testRejectsInvalidSignature() throws {
