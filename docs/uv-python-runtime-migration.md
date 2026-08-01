@@ -499,7 +499,7 @@ real uv, which covers the full migration path in Tiers B/C.
 
 ### Tier B - provisioning integration (new harness, network, no full app)
 
-New `tools/run_python_runtime_e2e.sh` (modeled on `run_ai_live.sh`), scoped by filter:
+`tools/run_python_runtime_e2e.sh` (modeled on `run_ai_live.sh`), scoped by filter:
 
 - Download + verify the signed uv binary.
 - `uv venv` + install `iterm2 pyobjc certifi` with `--only-binary=:all:` - a passing
@@ -507,6 +507,16 @@ New `tools/run_python_runtime_e2e.sh` (modeled on `run_ai_live.sh`), scoped by f
 - Assert: `.venv` layout + `python-runtime.json`; `import iterm2`; `import objc` plus
   touching an AppKit symbol; `certifi.where()` resolves; selected Python version;
   and native arch (`platform.machine()` == host, no Rosetta).
+
+Status: implemented as `tools/run_python_runtime_e2e.sh`, which wraps the
+`ITERM2_UV_LIVE`-gated `UvProvisionerLiveTests` (it sets `TEST_RUNNER_ITERM2_UV_LIVE`
+so xcodebuild forwards the opt-in). `testFetchManifestDownloadVerifyInstall` covers the
+download + RSA verify + install + `uv --version`; `testProvisionFullEnvironmentEndToEnd`
+covers `uv venv` + wheels-only install of iterm2/certifi/pyobjc, the `.venv` +
+`python-runtime.json` assertions, the selected version, and `import iterm2, certifi,
+objc, AppKit` with `certifi.where()`. The explicit native-arch assertion is not yet
+automated (the interpreter is a native universal2 build; arch is checked manually per
+the plan below).
 
 ### Tier C - end-to-end: a script drives the API (flagship)
 
@@ -531,6 +541,16 @@ Stand up a real API endpoint and run a provisioned script against it:
   a gate-OFF run asserting the legacy path still works, and a toggle run (provision via
   uv, flip gate OFF, assert it still launches).
 
+Status: partially automated. The provisioning-and-import slice (provision a full
+environment with real uv, confirm the interpreter imports iterm2/certifi/objc/AppKit,
+and that `python -m asyncio` supports the top-level await the REPL needs) runs in
+`testProvisionFullEnvironmentEndToEnd` via `tools/run_python_runtime_e2e.sh provision`.
+The rest of the flagship - an in-process `iTermAPIServer` driven by a launched script,
+the transport/offline-relaunch assertions, the real migration + bogus-dependency
+rollback, and the full cache/gate matrix - is not yet automated and is exercised by
+`tests/uv-migration-manual-test-plan.md`. Building it out as in-process XCTests remains
+future work; until then the manual plan is the source of truth for that coverage.
+
 ### Tier D - cross-architecture
 
 Run tiers B and C on both an Intel and an Apple Silicon Mac on macOS 13. The Intel run
@@ -538,8 +558,9 @@ proves the core motivation (native x86_64 Python, no Rosetta).
 
 ### Follow-up
 
-Add a CLAUDE.md workflow note (like the `run_ai_live.sh` one) directing that changes to
-the uv provisioner / launcher / migration run `tools/run_python_runtime_e2e.sh`.
+Done: CLAUDE.md now has the workflow note (like the `run_ai_live.sh` one) directing that
+changes to the uv provisioner / launcher / migration run
+`tools/run_python_runtime_e2e.sh`.
 
 ## Risks
 

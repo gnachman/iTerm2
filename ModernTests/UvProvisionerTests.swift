@@ -391,12 +391,15 @@ final class UvProvisionerLiveTests: XCTestCase {
             XCTAssertFalse(marker.uvVersion.isEmpty)
         }
 
-        // It is recognized as a uv environment and its interpreter can import iterm2.
+        // It is recognized as a uv environment and its interpreter can import the
+        // always-installed modules: iterm2 (the API), certifi (TLS roots, resolvable via
+        // certifi.where()), and objc/AppKit (pyobjc, so scripts that import objc work).
         XCTAssertEqual(iTermScriptRuntime.backend(forScriptContainer: container), .uv)
         let venvPython = try XCTUnwrap(iTermScriptRuntime.uvInterpreterPath(forScriptContainer: container))
         let process = Process()
         process.executableURL = URL(fileURLWithPath: venvPython)
-        process.arguments = ["-c", "import iterm2; import certifi; print('ok')"]
+        process.arguments = ["-c",
+                             "import iterm2, certifi, objc, AppKit; assert certifi.where(); print('ok')"]
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = pipe
