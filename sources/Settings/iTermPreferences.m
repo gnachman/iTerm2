@@ -736,7 +736,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
                   kPreferenceKeyEnableAPIServer: @NO,
                   kPreferenceKeyAPIAuthentication: @0,  // ignored — synthetic value
                   kPreferenceKeyEnableAI: @NO,  // ignored - synthetic value
-                  kPreferenceKeyBidi: @NO,
+                  kPreferenceKeyBidi: @YES,
                   kPreferenceKeySshIntegrationForURLs: @NO,
                   kPreferenceKeyOpenAIAPIKey: @"",
                   kPreferenceKeyAIAPIKey: @"",

@@ -352,6 +352,11 @@ Major New Features:
   session’s scrollback in a new window.
 
 New Features in Terminal Sessions:
+- Right-to-left script support (bidi
+  reordering plus Arabic and Persian
+  cursive joining) is now enabled by
+  default. You can turn it off in
+  Settings > General > Experimental.
 - Double-width and double-height lines
   (DECDWL, DECDHL, DECSWL) are now supported
   via ESC #3, #4, #5, and #6.
