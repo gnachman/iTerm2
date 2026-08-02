@@ -57,7 +57,7 @@ class FrameCanonicalizer: NSObject {
             return canonicalizedNoOp()
         case .WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             return canonicalizedTraditionalFullScreen()
-        case .WINDOW_TYPE_CENTERED:
+        case .WINDOW_TYPE_CENTERED, .WINDOW_TYPE_COMPACT_CENTERED:
             return canonicalizedCentered()
         case .WINDOW_TYPE_TOP_PERCENTAGE:
             return canonicalizedTopPercentage()

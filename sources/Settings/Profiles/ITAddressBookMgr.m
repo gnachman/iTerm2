@@ -93,6 +93,10 @@ iTermWindowType iTermUnthemedWindowType(iTermWindowType windowType) {
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return WINDOW_TYPE_MAXIMIZED;
 
+        case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
+            return WINDOW_TYPE_CENTERED;
+
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
             return WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
@@ -101,7 +105,6 @@ iTermWindowType iTermUnthemedWindowType(iTermWindowType windowType) {
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
-        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
@@ -149,6 +152,23 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
             assert(false);
             return windowType;
 
+        case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED:
+            switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+                case TAB_STYLE_COMPACT:
+                case TAB_STYLE_MINIMAL:
+                    return WINDOW_TYPE_COMPACT_CENTERED;
+
+                case TAB_STYLE_AUTOMATIC:
+                case TAB_STYLE_LIGHT:
+                case TAB_STYLE_DARK:
+                case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                case TAB_STYLE_DARK_HIGH_CONTRAST:
+                    return WINDOW_TYPE_CENTERED;
+            }
+            assert(false);
+            return windowType;
+
         case WINDOW_TYPE_TOP_PERCENTAGE:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
@@ -156,7 +176,6 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
-        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_BOTTOM_CELLS:
@@ -199,6 +218,7 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
             case WINDOW_TYPE_MAXIMIZED:
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
             case WINDOW_TYPE_CENTERED:
+            case WINDOW_TYPE_COMPACT_CENTERED:
                 width = -1;
                 break;
         }
@@ -230,6 +250,7 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
             case WINDOW_TYPE_MAXIMIZED:
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
             case WINDOW_TYPE_CENTERED:
+            case WINDOW_TYPE_COMPACT_CENTERED:
                 height = -1;
                 break;
         }

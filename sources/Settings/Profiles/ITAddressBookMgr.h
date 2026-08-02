@@ -461,7 +461,8 @@ typedef NS_ENUM(int, iTermWindowType) {
     WINDOW_TYPE_MAXIMIZED = 15,
     WINDOW_TYPE_COMPACT_MAXIMIZED = 16,
     
-    WINDOW_TYPE_CENTERED = 17,
+    WINDOW_TYPE_CENTERED = 17,  // May be converted to compact-centered depending on theme
+    WINDOW_TYPE_COMPACT_CENTERED = 18,
 };
 
 iTermWindowType iTermWindowDefaultType(void);

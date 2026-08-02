@@ -234,6 +234,7 @@ NSString *const iTermWindowStateKeyGUID = @"guid";
                 case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
                 case WINDOW_TYPE_TOP_PERCENTAGE:
                 case WINDOW_TYPE_CENTERED:
+                case WINDOW_TYPE_COMPACT_CENTERED:
                 case WINDOW_TYPE_TOP_CELLS:
                 case WINDOW_TYPE_BOTTOM_PERCENTAGE:
                 case WINDOW_TYPE_BOTTOM_CELLS:

@@ -829,6 +829,12 @@ Bug Fixes:
   could not correct. Double-clicking a horizontal
   divider to equalize the two panes also no
   longer computes the wrong size.
+- The Centered window style now looks and behaves
+  just like a normal window (title bar,
+  close/minimize/zoom buttons, and the same chrome
+  in the Minimal and Compact themes), except that
+  it stays centered. It also no longer changes
+  size when you minimize and restore it.
 - Retrospective debug logging no longer fills its
   in-memory ring so quickly on busy hosts. Several
   high-frequency sites that logged large payloads
