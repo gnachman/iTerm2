@@ -414,9 +414,15 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 }
 
 + (void)installRosettaIfNeededThen:(void (^)(void))completion {
-    if ([self rosettaIsNeeded] && ![self rosettaIsInstalled]) {
+    const BOOL hasARM = [NSProcessInfo it_hasARMProcessor];
+    if (hasARM && ![self rosettaIsInstalled] &&
+        [iTermRosettaSupport shouldPromptForRosettaWithHasARM:hasARM
+                                            canInstallRosetta:[iTermRosettaSupport canInstallRosetta]]) {
         [self installRosettaIfUserConsentsWithCompletion:completion];
     } else {
+        // No ARM, Rosetta already present, or (macOS 27+) Rosetta cannot be installed:
+        // do not prompt or run `softwareupdate --install-rosetta` (it cannot succeed
+        // there). Continue; the x86-leftover handling deals with an unrunnable env.
         completion();
     }
 }
