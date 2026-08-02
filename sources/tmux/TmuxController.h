@@ -10,6 +10,7 @@
 #import "iTermInitialDirectory.h"
 #import "iTermTmuxSessionObject.h"
 #import "TmuxGateway.h"
+#import "TmuxLayoutParser.h"
 #import "WindowControllerInterface.h"
 
 @class iTermFontTable;
@@ -88,6 +89,11 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (instancetype)init NS_UNAVAILABLE;
 
 - (Profile *)profileForWindow:(int)window;
+
+// tmux's pane-border-status option for the given window, as last learned from
+// list-windows. Defaults to off. Used to correct layout geometry (issue 12925).
+- (iTermTmuxPaneBorderStatus)paneBorderStatusForWindow:(int)window;
+- (void)setPaneBorderStatus:(iTermTmuxPaneBorderStatus)status forWindow:(int)window;
 - (NSString *)perWindowSettingsForWindowWithGUID:(NSString *)terminalGUID;
 - (NSString *)perTabSettingsForTabWithWindowID:(int)wid;
 - (NSDictionary *)fontOverridesForWindow:(int)window;

@@ -43,10 +43,37 @@ typedef NS_ENUM(NSInteger, LayoutNodeType) {
     kVSplitLayoutNode
 };
 
+// Value of tmux's per-window pane-border-status option.
+typedef NS_ENUM(NSInteger, iTermTmuxPaneBorderStatus) {
+    iTermTmuxPaneBorderStatusOff,
+    iTermTmuxPaneBorderStatusTop,
+    iTermTmuxPaneBorderStatusBottom
+};
+
+// Maps the string tmux reports for the pane-border-status option (off/top/bottom)
+// to iTermTmuxPaneBorderStatus. Unknown values are treated as off.
+iTermTmuxPaneBorderStatus iTermTmuxPaneBorderStatusFromString(NSString *value);
+
 @interface TmuxLayoutParser : NSObject
 
 + (instancetype)sharedInstance;
 - (NSMutableDictionary *)parsedLayoutFromString:(NSString *)layout;
+
+// tmux reserves a row of each pane for pane-border-status, but the layout string it
+// sends control clients does not encode that reservation: it reports the full window
+// height for every pane (see issue 12925). This adjusts leaf geometry in place so it
+// matches the real pane grid tmux gives the shell. Returns parseTree for convenience.
+//
+// The rule (verified against tmux 3.7b for single, side-by-side, stacked, and nested
+// layouts):
+//   top:    a leaf whose top edge is the window's top edge (yoff == 0) gives up its
+//           first row: yoff += 1, height -= 1. Others are unchanged (they reuse the
+//           border row of the split above them).
+//   bottom: a leaf whose bottom edge is the window's bottom edge
+//           (yoff + height == windowHeight) gives up its last row: height -= 1.
+// Width and x-offset are never affected.
+- (NSMutableDictionary *)parseTree:(NSMutableDictionary *)parseTree
+        adjustedForPaneBorderStatus:(iTermTmuxPaneBorderStatus)status;
 - (NSMutableDictionary *)windowPane:(int)windowPane
                         inParseTree:(NSMutableDictionary *)parseTree;
 - (NSArray *)windowPanesInParseTree:(NSDictionary *)parseTree;

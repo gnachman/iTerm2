@@ -38,6 +38,16 @@ NSString *kLayoutDictTabIndex = @"tab-index";
 NSString *kLayoutDictTabColorKey = @"x-tab-color";
 NSString *kLayoutDictAllInitialWindowsAdded = @"all-initial-windows-added";
 
+iTermTmuxPaneBorderStatus iTermTmuxPaneBorderStatusFromString(NSString *value) {
+    if ([value isEqualToString:@"top"]) {
+        return iTermTmuxPaneBorderStatusTop;
+    }
+    if ([value isEqualToString:@"bottom"]) {
+        return iTermTmuxPaneBorderStatusBottom;
+    }
+    return iTermTmuxPaneBorderStatusOff;
+}
+
 @implementation TmuxLayoutParser
 
 + (TmuxLayoutParser *)sharedInstance
@@ -106,6 +116,56 @@ NSString *kLayoutDictAllInitialWindowsAdded = @"all-initial-windows-added";
         return [self coalescedTree:tree];
     } else {
         return nil;
+    }
+}
+
+- (NSMutableDictionary *)parseTree:(NSMutableDictionary *)parseTree
+       adjustedForPaneBorderStatus:(iTermTmuxPaneBorderStatus)status {
+    if (status == iTermTmuxPaneBorderStatusOff) {
+        return parseTree;
+    }
+    // The root node's height is the window height (set by parsedLayoutFromString:).
+    const int windowHeight = [parseTree[kLayoutDictHeightKey] intValue];
+    if (windowHeight <= 0) {
+        return parseTree;
+    }
+    [self adjustLeavesInNode:parseTree
+         forPaneBorderStatus:status
+                windowHeight:windowHeight];
+    return parseTree;
+}
+
+- (void)adjustLeavesInNode:(NSMutableDictionary *)node
+       forPaneBorderStatus:(iTermTmuxPaneBorderStatus)status
+              windowHeight:(int)windowHeight {
+    if ([node[kLayoutDictNodeType] intValue] != kLeafLayoutNode) {
+        for (NSMutableDictionary *child in node[kLayoutDictChildrenKey]) {
+            [self adjustLeavesInNode:child
+                 forPaneBorderStatus:status
+                        windowHeight:windowHeight];
+        }
+        return;
+    }
+    const int yoff = [node[kLayoutDictYOffsetKey] intValue];
+    const int height = [node[kLayoutDictHeightKey] intValue];
+    if (height <= 1) {
+        // Refuse to shrink a pane out of existence.
+        return;
+    }
+    switch (status) {
+        case iTermTmuxPaneBorderStatusOff:
+            break;
+        case iTermTmuxPaneBorderStatusTop:
+            if (yoff == 0) {
+                node[kLayoutDictYOffsetKey] = @(yoff + 1);
+                node[kLayoutDictHeightKey] = @(height - 1);
+            }
+            break;
+        case iTermTmuxPaneBorderStatusBottom:
+            if (yoff + height == windowHeight) {
+                node[kLayoutDictHeightKey] = @(height - 1);
+            }
+            break;
     }
 }
 

@@ -4458,11 +4458,29 @@ typedef struct {
 
 
 - (NSSize)tmuxSize {
+    NSSize size;
     if (self.tmuxController.variableWindowSize) {
-        return [self variableTmuxSize];
+        size = [self variableTmuxSize];
     } else {
-        return [self fixedTmuxSize];
+        size = [self fixedTmuxSize];
     }
+    // pane-border-status makes tmux carve one row out of the window for the
+    // border, which it does not reflect in the layout it sends control clients.
+    // Report the window one row taller than the content fits so that after tmux
+    // takes its row the pane still matches our sessions. Without this the window
+    // would lose a row on every resize (issue 12925).
+    //
+    // Limitation: pane-border-status is per window, but in non-variable-window
+    // sessions -[PseudoTerminal tmuxCompatibleSize] takes the MIN of every tab's
+    // tmuxSize and sends one shared client size. A bordered window sharing a
+    // session with a shorter unbordered one can still be shrunk below its needed
+    // height. That is inherent to one client size across windows; variable window
+    // size (the default for modern tmux) does not have the problem.
+    if (size.height > 0 &&
+        [self.tmuxController paneBorderStatusForWindow:self.tmuxWindow] != iTermTmuxPaneBorderStatusOff) {
+        size.height += 1;
+    }
+    return size;
 }
 
 // Returns the size in characters of the window size that fits this tab's contents.
@@ -4914,6 +4932,9 @@ typedef struct {
 - (void)setTmuxSizesFromSplitTreeNode:(ITMSplitTreeNode *)node {
     iTermTmuxLayoutBuilderNode *root = [self layoutBuilderNodeForSplitTreeNode:node];
     iTermTmuxLayoutBuilder *builder = [[iTermTmuxLayoutBuilder alloc] initWithRootNode:root];
+    // Add back the row(s) tmux reserves for pane-border-status so the size and
+    // layout we report keep the window at its true height (issue 12925).
+    [builder adjustForPaneBorderStatus:[self.tmuxController paneBorderStatusForWindow:self.tmuxWindow]];
     if (!self.realParentWindow.anyFullScreen) {
         VT100GridSize clientSize = builder.clientSize;
         [self.tmuxController setSize:NSMakeSize(clientSize.width, clientSize.height)
@@ -5291,13 +5312,19 @@ typedef struct {
         kLayoutDictXOffsetKey: @0,
         kLayoutDictYOffsetKey: @0,
     } mutableCopy];
-    return [@{ kLayoutDictChildrenKey: @[ child ],
+    NSMutableDictionary *tree = [@{ kLayoutDictChildrenKey: @[ child ],
                kLayoutDictWidthKey: parseTree[kLayoutDictWidthKey],
                kLayoutDictHeightKey: parseTree[kLayoutDictHeightKey],
                kLayoutDictNodeType: @(kVSplitLayoutNode),
                kLayoutDictXOffsetKey: @0,
                kLayoutDictYOffsetKey: @0,
             } mutableCopy];
+    // This synthetic tree is built from the uncorrected root (window) height, so
+    // apply the same pane-border-status correction the normal leaf path gets;
+    // otherwise a zoomed pane is a row too tall (issue 12925).
+    return [[TmuxLayoutParser sharedInstance]
+        parseTree:tree
+        adjustedForPaneBorderStatus:[self.tmuxController paneBorderStatusForWindow:self.tmuxWindow]];
 }
 
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
@@ -5509,6 +5536,12 @@ typedef struct {
         } else {
             gridSize = VT100GridSizeMake([parseTree_[kLayoutDictWidthKey] intValue],
                                          [parseTree_[kLayoutDictHeightKey] intValue]);
+        }
+        // These are the root (window) height, but a zoomed pane fills the window
+        // and so loses the pane-border-status row like any edge pane (issue 12925).
+        if (gridSize.height > 1 &&
+            [self.tmuxController paneBorderStatusForWindow:self.tmuxWindow] != iTermTmuxPaneBorderStatusOff) {
+            gridSize.height -= 1;
         }
         [self resizeSession:self.activeSession toSize:gridSize];
 

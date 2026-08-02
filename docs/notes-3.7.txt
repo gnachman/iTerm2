@@ -835,6 +835,11 @@ Bug Fixes:
   in the Minimal and Compact themes), except that
   it stays centered. It also no longer changes
   size when you minimize and restore it.
+- In tmux -CC sessions with pane-border-status set
+  to top or bottom, the pane no longer ends up a
+  row too tall. Previously the bottom line went
+  unused and the cursor landed a row high after
+  reattaching.
 - Retrospective debug logging no longer fills its
   in-memory ring so quickly on busy hosts. Several
   high-frequency sites that logged large payloads

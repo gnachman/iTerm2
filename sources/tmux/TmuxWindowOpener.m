@@ -78,13 +78,27 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     return self;
 }
 
+// Parses a layout string and corrects the pane geometry for this window's
+// pane-border-status option, which tmux omits from the layout it sends control
+// clients (issue 12925).
+- (NSMutableDictionary *)parsedAdjustedLayoutFromString:(NSString *)layout {
+    TmuxLayoutParser *parser = [TmuxLayoutParser sharedInstance];
+    NSMutableDictionary *parseTree = [parser parsedLayoutFromString:layout];
+    if (!parseTree) {
+        return nil;
+    }
+    const iTermTmuxPaneBorderStatus status =
+        [self.controller paneBorderStatusForWindow:self.windowIndex];
+    return [parser parseTree:parseTree adjustedForPaneBorderStatus:status];
+}
+
 - (BOOL)openWindows:(BOOL)initial {
     RLog(@"openWindows initial=%d", (int)initial);
     if (!self.layout) {
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Can't open window: missing layout"]];
         return NO;
     }
-    self.parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
+    self.parseTree = [self parsedAdjustedLayoutFromString:self.layout];
     if (!self.parseTree) {
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Error parsing layout %@", self.layout]];
         return NO;
@@ -135,22 +149,21 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
         return NO;
     }
 
-    TmuxLayoutParser *parser = [TmuxLayoutParser sharedInstance];
-    self.parseTree = [parser parsedLayoutFromString:self.layout];
+    self.parseTree = [self parsedAdjustedLayoutFromString:self.layout];
     if (!self.parseTree) {
         RLog(@"Failed to create parse tree for %@", self.layout);
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Error parsing layout %@", self.layout]];
         return NO;
     }
     if (self.visibleLayout.length > 0) {
-        self.visibleParseTree = [parser parsedLayoutFromString:self.visibleLayout];
+        self.visibleParseTree = [self parsedAdjustedLayoutFromString:self.visibleLayout];
         if (!self.visibleParseTree) {
             RLog(@"Failed to parse visible layout %@, soldiering on anyway", self.visibleLayout);
         }
     }
     NSSet *oldPanes = [NSSet setWithArray:[tab windowPanes]];
     NSMutableArray *cmdList = [NSMutableArray array];
-    for (NSNumber *addedPane in [parser windowPanesInParseTree:self.parseTree]) {
+    for (NSNumber *addedPane in [[TmuxLayoutParser sharedInstance] windowPanesInParseTree:self.parseTree]) {
         if (![oldPanes containsObject:addedPane]) {
             [self appendRequestsForWindowPane:addedPane
                                       toArray:cmdList];
@@ -515,14 +528,14 @@ static int OctalValue(const char *bytes) {
             RLog(@"Opened a new window %@", term);
         }
     }
-    NSMutableDictionary *parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
+    NSMutableDictionary *parseTree = [self parsedAdjustedLayoutFromString:self.layout];
     if (!parseTree) {
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Error parsing layout %@", self.layout]];
         return;
     }
     NSMutableDictionary *visibleParseTree = nil;
     if (self.visibleLayout.length > 0) {
-        visibleParseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.visibleLayout];
+        visibleParseTree = [self parsedAdjustedLayoutFromString:self.visibleLayout];
         if (visibleParseTree) {
             [self decorateParseTree:visibleParseTree];
         } else {
