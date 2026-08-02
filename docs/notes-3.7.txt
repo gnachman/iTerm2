@@ -2441,3 +2441,7 @@ Bug Fixes:
   instance) and passes the path before the
   --line option, which the current launcher
   requires. Issue 12958.
+- Fixed a bug where the OSC 9;4 progress
+  bar was hidden by the border around the
+  active pane. The bar now draws on top of
+  the border's top edge. Issue 12960.
