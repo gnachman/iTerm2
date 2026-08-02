@@ -328,24 +328,45 @@ class iTermUvProvisioner: NSObject {
         let available = availableMinors(uvPath: uvPath, environment: environment)
         let resolved = iTermUvPythonVersion.resolve(requested: requestedPythonVersion, available: available)
 
+        let fileManager = FileManager.default
         let venvPath = (container as NSString).appendingPathComponent(iTermScriptRuntime.venvDirectoryName)
-        // Remove any existing .venv so re-provisioning at a different Python version (the
-        // Dependency Editor's version change) rebuilds cleanly rather than depending on
-        // `uv venv`'s replace behavior. A no-op for a fresh container (create/import/migrate).
-        try? FileManager.default.removeItem(atPath: venvPath)
+        // Build the new venv aside and swap it into place only after it is fully
+        // populated, so a failed re-provision (e.g. the Dependency Editor changing to a
+        // Python version where a pinned dependency has no wheel) leaves the existing
+        // working .venv intact instead of destroying it. The venv is created
+        // --relocatable, so moving it after the build keeps its shebangs valid. A fresh
+        // container (create/import/migrate) has no existing .venv, so the swap at the end
+        // is just a rename into place.
+        let buildPath = (container as NSString).appendingPathComponent(iTermScriptRuntime.venvDirectoryName + ".building")
+        try? fileManager.removeItem(atPath: buildPath)
         if let error = run(uvPath,
-                           iTermUvCommand.venvArgs(pythonVersion: resolved.version, venvPath: venvPath),
+                           iTermUvCommand.venvArgs(pythonVersion: resolved.version, venvPath: buildPath),
                            environment) {
+            try? fileManager.removeItem(atPath: buildPath)
             return .failure(error)
         }
 
-        let venvPython = (venvPath as NSString).appendingPathComponent("bin/python")
+        let venvPython = (buildPath as NSString).appendingPathComponent("bin/python")
         // The always-installed packages (iterm2, certifi, pyobjc) come in addition to
         // the script's declared dependencies.
         let packages = orderedUnique(dependencies + alwaysInstalledPackages)
         if let error = run(uvPath,
                            iTermUvCommand.pipInstallArgs(venvPythonPath: venvPython, packages: packages),
                            environment) {
+            try? fileManager.removeItem(atPath: buildPath)
+            return .failure(error)
+        }
+
+        // Everything the new venv needs is present; atomically replace the old one.
+        do {
+            if fileManager.fileExists(atPath: venvPath) {
+                _ = try fileManager.replaceItemAt(URL(fileURLWithPath: venvPath),
+                                                  withItemAt: URL(fileURLWithPath: buildPath))
+            } else {
+                try fileManager.moveItem(atPath: buildPath, toPath: venvPath)
+            }
+        } catch {
+            try? fileManager.removeItem(atPath: buildPath)
             return .failure(error)
         }
 

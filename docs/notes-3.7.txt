@@ -2522,3 +2522,8 @@ Bug Fixes:
   change a uv script’s Python version to any
   version uv provides, rebuilding its
   environment, not just the installed one.
+- A failed Python version change (e.g. to a
+  version where a pinned dependency has no
+  wheel) no longer destroys a uv script’s
+  working environment; the new one is built
+  aside and swapped in only if it succeeds.
