@@ -2514,3 +2514,7 @@ Bug Fixes:
   environment finished installing) launching
   on the shared runtime and failing to
   import its own dependencies.
+- Fix the Script Dependency Editor showing
+  [Error] for a package’s installed version
+  when its dependency has a version
+  constraint (e.g. aiohttp>=3.14.3).

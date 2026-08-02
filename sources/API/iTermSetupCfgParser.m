@@ -146,10 +146,7 @@ static int iTermSetupCfgParserIniHandler(void *user,
 
 @end
 
-@interface NSString(SetupCfg)
-// Convert [package] [operator] [version] to [package] or nil if it doesn't match the pattern.
-- (NSString *)pythonPackage;
-@end
+// pythonPackage is now declared in iTermSetupCfgParser.h.
 
 // <    >    ==
 // <=   >=   !=

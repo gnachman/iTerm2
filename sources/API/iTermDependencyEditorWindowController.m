@@ -87,6 +87,9 @@
 }
 
 - (void)fetchVersionOfPackage:(NSString *)packageName completion:(void (^)(BOOL ok, NSString *result))completion {
+    // `pip show` (and uv's, which is strict) wants a bare package name, but a dependency
+    // may be a full requirement like "aiohttp>=3.14.3". Pass just the name.
+    NSString *baseName = [packageName pythonPackage] ?: packageName;
     void (^handle)(BOOL, NSData *) = ^(BOOL ok, NSData *output) {
         if (!ok) {
             completion(NO, [[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding]);
@@ -95,7 +98,7 @@
         }
     };
     if ([self selectedScriptIsUv]) {
-        [[iTermUvProvisioner shared] runUvPipWithPipArguments:@[ @"show", packageName ]
+        [[iTermUvProvisioner shared] runUvPipWithPipArguments:@[ @"show", baseName ]
                                                    venvPython:[iTermScriptRuntime uvInterpreterPathForScriptContainer:_selectedScriptItem.path]
                                                    completion:handle];
         return;
@@ -103,7 +106,7 @@
     NSURL *container = [NSURL fileURLWithPath:_selectedScriptItem.path];
     [[iTermPythonRuntimeDownloader sharedInstance] runPip3InContainer:container
                                                         pythonVersion:_pythonVersion
-                                                        withArguments:@[ @"show", packageName ]
+                                                        withArguments:@[ @"show", baseName ]
                                                            completion:handle];
 }
 
@@ -248,7 +251,10 @@
             if (!ok) {
                 return;
             }
-            [iTermDependencyEditorWindowController setDependency:[NSString stringWithFormat:@"%@>=%@", tuple.firstObject, result]
+            // Re-pin to the just-installed version using the bare name, so an already
+            // versioned dependency does not become "aiohttp>=3.14.3>=3.14.3".
+            NSString *baseName = [tuple.firstObject pythonPackage] ?: tuple.firstObject;
+            [iTermDependencyEditorWindowController setDependency:[NSString stringWithFormat:@"%@>=%@", baseName, result]
                                                       scriptPath:scriptPath];
         }];
     }
