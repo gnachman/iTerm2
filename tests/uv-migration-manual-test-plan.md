@@ -198,6 +198,37 @@ On a uv-backed full-env script, open the Dependency Editor:
 
 ---
 
+## 11. macOS 27 (Rosetta removed)
+
+Run on a macOS 27 beta (Rosetta 2 cannot be installed there). An "x86 fixture env"
+means a legacy full-env script whose `iterm2env` python is Intel-only (copy one from a
+macOS <= 26 install, or an old backup).
+
+1. No Rosetta prompt, ever: with the gate OFF and no Python runtime installed, launch
+   any Python script.
+   - Expect: no "Install Rosetta?" dialog and no `softwareupdate --install-rosetta`
+     window at any point.
+2. Gate OFF, fresh install: launch a basic script with no runtime present.
+   - Expect: the runtime downloads and is Apple Silicon (`file` on the runtime python
+     shows arm64); the script runs.
+3. Gate OFF, x86 fixture full-env script: launch it.
+   - Expect: a Script Console line saying it is Intel-only and being rebuilt for Apple
+     Silicon; the env is rebuilt from setup.cfg (arm64) and the script runs. If the
+     rebuild fails, a clear error appears (not a cryptic exec failure).
+4. Gate OFF, x86 fixture shared runtime: with an Intel-only shared runtime present,
+   launch a basic script.
+   - Expect: the shared runtime is replaced with the arm64 build and the script runs
+     (or a clear "could not download" error, never an exec failure).
+5. Gate ON, legacy script: launch an un-migrated legacy full-env script.
+   - Expect: it migrates to uv and runs.
+6. Gate ON, forced migration failure (e.g. add a bogus dependency to setup.cfg so the
+   uv provision fails) on an x86 fixture env:
+   - Expect: rollback restores `saved-iterm2env`; a clear alert + Script Console error
+     says the env is Intel-only and cannot run, and to turn off the uv setting to
+     rebuild. No exec failure, and the script folder is intact.
+
+---
+
 ## Cleanup
 
 Quit the instance; `rm -rf ~/Library/Application\ Support/iterm2-alt5/uv` and any test

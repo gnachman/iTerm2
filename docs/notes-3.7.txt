@@ -2504,3 +2504,8 @@ Bug Fixes:
 - Scripts > Manage can install and update
   the uv-based Python runtime when the uv
   advanced setting is enabled.
+- On macOS 27, which removes Rosetta, no
+  longer prompt to install Rosetta for
+  Python scripts, and rebuild or replace
+  Intel-only Python environments for
+  Apple Silicon instead of failing.
