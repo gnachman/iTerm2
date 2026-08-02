@@ -2518,3 +2518,7 @@ Bug Fixes:
   [Error] for a package’s installed version
   when its dependency has a version
   constraint (e.g. aiohttp>=3.14.3).
+- The Script Dependency Editor can now
+  change a uv script’s Python version to any
+  version uv provides, rebuilding its
+  environment, not just the installed one.

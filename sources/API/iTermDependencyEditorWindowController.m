@@ -191,14 +191,27 @@
 
 - (void)loadPythonVersionsSelecting:(NSString *)selectedVersion {
     if ([self selectedScriptIsUv]) {
-        // A uv script has a single interpreter (the .venv); show just that version.
-        NSString *version = [iTermScriptRuntime pythonVersionForScriptContainer:_selectedScriptItem.path] ?: selectedVersion ?: @"";
-        _pythonVersion = version;
+        // uv can provision any of these minors on demand, so offer them all (not just the
+        // one currently installed) and let the user upgrade. Include the current version
+        // in case it is outside the known set.
+        NSString *current = [iTermScriptRuntime pythonVersionForScriptContainer:_selectedScriptItem.path] ?: selectedVersion;
+        NSMutableArray<NSString *> *versions = [[iTermUvMigration knownAvailableMinors] mutableCopy];
+        if (current.length && ![versions containsObject:current]) {
+            [versions addObject:current];
+        }
+        [versions sortUsingComparator:^NSComparisonResult(NSString *a, NSString *b) {
+            return [a compare:b options:NSNumericSearch];
+        }];
+        _pythonVersion = current.length ? current : versions.lastObject ?: @"";
         [_pythonVersionButton.menu removeAllItems];
-        if (version.length) {
+        for (NSString *version in versions) {
             [_pythonVersionButton addItemWithTitle:version];
         }
-        _pythonVersionButton.title = version;
+        _pythonVersionButton.title = _pythonVersion;
+        const NSInteger idx = [versions indexOfObject:_pythonVersion];
+        if (idx != NSNotFound) {
+            [_pythonVersionButton selectItemAtIndex:idx];
+        }
         return;
     }
     NSString *const env = [[_selectedScriptItem.path stringByAppendingPathComponent:@"iterm2env"] stringByAppendingPathComponent:@"versions"];
@@ -639,6 +652,39 @@
     NSString *path = [_selectedScriptItem.path stringByAppendingPathComponent:@"setup.cfg"];
     iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:path];
     NSArray<NSString *> *dependencies = [parser.dependencies copy];
+    if ([self selectedScriptIsUv]) {
+        // For uv, `uv pip install` would keep the existing interpreter, so actually
+        // rebuild the .venv at the new version. downloadAndProvisionFullEnvironment
+        // rebuilds the venv, reinstalls the dependencies (and iterm2), and rewrites
+        // setup.cfg with the new version.
+        NSString *container = _selectedScriptItem.path;
+        __block iTermProvisioningProgressWindowController *progress = [[iTermProvisioningProgressWindowController alloc] init];
+        __weak __typeof(self) weakSelf = self;
+        [[iTermUvProvisioner shared] downloadAndProvisionFullEnvironmentWithContainer:container
+                                                              requestedPythonVersion:selectedVersion
+                                                                        dependencies:dependencies ?: @[]
+                                                                      createSetupCfg:YES
+                                                                provisioningDidBegin:^{
+            [progress showWithMessage:@"Rebuilding the Python environment…"];
+        }
+                                                                          completion:^(NSError *error) {
+            [progress dismiss];
+            progress = nil;
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            if (error != nil && ![iTermUvProvisioner isCancelationError:error]) {
+                NSAlert *alert = [[NSAlert alloc] init];
+                alert.messageText = @"Could Not Change Python Version";
+                alert.informativeText = error.localizedDescription ?: @"Unknown error";
+                [alert runModal];
+            }
+            // Refresh the editor from the (rebuilt) environment and setup.cfg.
+            [strongSelf didSelectScriptAtIndex:strongSelf->_scriptsButton.indexOfSelectedItem];
+        }];
+        return;
+    }
     [iTermSetupCfgParser writeSetupCfgToFile:path
                                         name:parser.name
                                 dependencies:@[]

@@ -329,6 +329,10 @@ class iTermUvProvisioner: NSObject {
         let resolved = iTermUvPythonVersion.resolve(requested: requestedPythonVersion, available: available)
 
         let venvPath = (container as NSString).appendingPathComponent(iTermScriptRuntime.venvDirectoryName)
+        // Remove any existing .venv so re-provisioning at a different Python version (the
+        // Dependency Editor's version change) rebuilds cleanly rather than depending on
+        // `uv venv`'s replace behavior. A no-op for a fresh container (create/import/migrate).
+        try? FileManager.default.removeItem(atPath: venvPath)
         if let error = run(uvPath,
                            iTermUvCommand.venvArgs(pythonVersion: resolved.version, venvPath: venvPath),
                            environment) {
