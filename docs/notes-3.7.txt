@@ -2433,3 +2433,11 @@ Bug Fixes:
   only to panes whose app requested them (by
   emitting DECSET 1004), matching how non-tmux
   sessions behave.
+- Fixed Semantic History (Cmd-Click) failing
+  to open files in JetBrains IDEs such as
+  IntelliJ IDEA, WebStorm, and Rider. iTerm2
+  now runs the IDE’s command-line launcher
+  directly (forwarding to the already-running
+  instance) and passes the path before the
+  --line option, which the current launcher
+  requires. Issue 12958.
