@@ -2511,17 +2511,30 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         case VT100CSI_SET_KEY_REPORTING_MODE:
             self.dirty = YES;
-            [self.currentKeyReportingModeStack removeAllObjects];
-            switch (token.csi->p[1]) {
-                case 1:  // all set bits are set and all unset bits are reset
-                    _keyReportingFlags = token.csi->p[0];
-                    break;
-                case 2:  // all set bits are set, unset bits are left unchanged
-                    _keyReportingFlags |= token.csi->p[0];
-                    break;
-                case 3:  // all set bits are reset, unset bits are left unchanged
-                    _keyReportingFlags &= ~token.csi->p[0];
-                    break;
+            {
+                VT100TerminalKeyReportingFlags effective;
+                if (self.currentKeyReportingModeStack.count) {
+                    effective = self.currentKeyReportingModeStack.lastObject.intValue;
+                } else {
+                    effective = _keyReportingFlags;
+                }
+                switch (token.csi->p[1]) {
+                    case 1:  // all set bits are set and all unset bits are reset
+                        effective = token.csi->p[0];
+                        break;
+                    case 2:  // all set bits are set, unset bits are left unchanged
+                        effective |= token.csi->p[0];
+                        break;
+                    case 3:  // all set bits are reset, unset bits are left unchanged
+                        effective &= ~token.csi->p[0];
+                        break;
+                }
+                if (self.currentKeyReportingModeStack.count) {
+                    [self.currentKeyReportingModeStack removeLastObject];
+                    [self.currentKeyReportingModeStack addObject:@(effective)];
+                } else {
+                    _keyReportingFlags = effective;
+                }
             }
             [self.delegate terminalKeyReportingFlagsDidChange];
             break;
