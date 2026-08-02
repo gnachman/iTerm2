@@ -361,6 +361,24 @@ class iTermUvProvisioner: NSObject {
         return .success(marker)
     }
 
+    // The Python minors the INSTALLED uv can actually provide (from `uv python list`),
+    // delivered on the main queue. Empty if uv is not installed or the query fails.
+    // Spawns uv, so it runs off the main thread. Use this to populate version pickers so
+    // they reflect the installed uv's real capabilities rather than a hardcoded guess
+    // (which could offer versions an older installed uv cannot provide).
+    @objc func availableMinors(completion: @escaping ([String]) -> Void) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard Self.isInstalled else {
+                DispatchQueue.main.async { completion([]) }
+                return
+            }
+            let environment = Self.mergedEnvironment(pythonInstallDir: Self.pythonInstallDirectory,
+                                                     cacheDir: Self.cacheDirectory)
+            let minors = Self.availableMinors(uvPath: Self.uvBinaryPath, environment: environment)
+            DispatchQueue.main.async { completion(minors) }
+        }
+    }
+
     // The available stable CPython minors uv can provide, or [] if the query fails.
     static func availableMinors(uvPath: String, environment: [String: String]) -> [String] {
         let runner = iTermBufferedCommandRunner(command: uvPath,

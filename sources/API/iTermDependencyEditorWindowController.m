@@ -191,27 +191,40 @@
 
 - (void)loadPythonVersionsSelecting:(NSString *)selectedVersion {
     if ([self selectedScriptIsUv]) {
-        // uv can provision any of these minors on demand, so offer them all (not just the
-        // one currently installed) and let the user upgrade. Include the current version
-        // in case it is outside the known set.
-        NSString *current = [iTermScriptRuntime pythonVersionForScriptContainer:_selectedScriptItem.path] ?: selectedVersion;
-        NSMutableArray<NSString *> *versions = [[iTermUvMigration knownAvailableMinors] mutableCopy];
-        if (current.length && ![versions containsObject:current]) {
-            [versions addObject:current];
-        }
-        [versions sortUsingComparator:^NSComparisonResult(NSString *a, NSString *b) {
-            return [a compare:b options:NSNumericSearch];
-        }];
-        _pythonVersion = current.length ? current : versions.lastObject ?: @"";
+        // Offer exactly what the INSTALLED uv can provide (uv python list), so the list
+        // never claims a version the current uv cannot install. The current version is
+        // shown immediately; the full list fills in asynchronously (it spawns uv).
+        NSString *current = [iTermScriptRuntime pythonVersionForScriptContainer:_selectedScriptItem.path] ?: selectedVersion ?: @"";
+        _pythonVersion = current;
         [_pythonVersionButton.menu removeAllItems];
-        for (NSString *version in versions) {
-            [_pythonVersionButton addItemWithTitle:version];
+        if (current.length) {
+            [_pythonVersionButton addItemWithTitle:current];
+            _pythonVersionButton.title = current;
         }
-        _pythonVersionButton.title = _pythonVersion;
-        const NSInteger idx = [versions indexOfObject:_pythonVersion];
-        if (idx != NSNotFound) {
-            [_pythonVersionButton selectItemAtIndex:idx];
-        }
+        NSString *container = _selectedScriptItem.path;
+        __weak __typeof(self) weakSelf = self;
+        [[iTermUvProvisioner shared] availableMinorsWithCompletion:^(NSArray<NSString *> *minors) {
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf || strongSelf->_selectedScriptItem.path != container) {
+                return;  // the user switched scripts while uv was queried
+            }
+            NSMutableArray<NSString *> *versions = [minors mutableCopy];
+            if (current.length && ![versions containsObject:current]) {
+                [versions addObject:current];
+            }
+            [versions sortUsingComparator:^NSComparisonResult(NSString *a, NSString *b) {
+                return [a compare:b options:NSNumericSearch];
+            }];
+            [strongSelf->_pythonVersionButton.menu removeAllItems];
+            for (NSString *version in versions) {
+                [strongSelf->_pythonVersionButton addItemWithTitle:version];
+            }
+            strongSelf->_pythonVersionButton.title = strongSelf->_pythonVersion;
+            const NSInteger idx = [versions indexOfObject:strongSelf->_pythonVersion];
+            if (idx != NSNotFound) {
+                [strongSelf->_pythonVersionButton selectItemAtIndex:idx];
+            }
+        }];
         return;
     }
     NSString *const env = [[_selectedScriptItem.path stringByAppendingPathComponent:@"iterm2env"] stringByAppendingPathComponent:@"versions"];

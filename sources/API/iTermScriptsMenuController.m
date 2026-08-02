@@ -1029,26 +1029,31 @@ NS_ASSUME_NONNULL_BEGIN
     NSPopUpButton *popUpButton = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(10, 0, 50, 50)];
 
     if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
-        // The legacy iterm2env/versions folder is empty on a uv-only machine. Offer the
-        // minors uv can provide (the exact version is re-resolved at provision time),
-        // defaulting to the shared default.
+        // Offer exactly what the INSTALLED uv can provide (uv python list), never a
+        // hardcoded set that an older installed uv might not support. Show the default as
+        // a placeholder immediately (the popup must be non-empty when returned), then
+        // fill the real list asynchronously. If uv is not installed yet, the default is
+        // the only choice and the first provision downloads uv and resolves it.
         NSString *best = [iTermScriptRuntime defaultPythonVersion];
-        NSMenuItem *defaultMenuItem = nil;
-        for (NSString *minor in [iTermUvMigration knownAvailableMinors]) {
-            NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:minor action:NULL keyEquivalent:@""];
-            if ([minor isEqualToString:best]) {
-                defaultMenuItem = menuItem;
+        [popUpButton addItemWithTitle:best];
+        [popUpButton selectItemAtIndex:0];
+        [[iTermUvProvisioner shared] availableMinorsWithCompletion:^(NSArray<NSString *> *minors) {
+            if (minors.count == 0) {
+                return;  // uv not installed / query failed: keep the default placeholder.
             }
-            [popUpButton.menu addItem:menuItem];
-        }
-        if (defaultMenuItem) {
-            [popUpButton selectItem:defaultMenuItem];
-        } else if (popUpButton.numberOfItems > 0) {
-            // defaultPythonVersion is expected to be in knownAvailableMinors; if it ever
-            // is not, select the newest offered minor (the list is ascending) rather
-            // than silently defaulting to the oldest.
-            [popUpButton selectItemAtIndex:popUpButton.numberOfItems - 1];
-        }
+            NSArray<NSString *> *versions = [minors sortedArrayUsingComparator:^NSComparisonResult(NSString *a, NSString *b) {
+                return [a compare:b options:NSNumericSearch];
+            }];
+            [popUpButton.menu removeAllItems];
+            for (NSString *version in versions) {
+                [popUpButton addItemWithTitle:version];
+            }
+            // Prefer the default if this uv provides it, else the newest available.
+            [popUpButton selectItemWithTitle:best];
+            if (popUpButton.indexOfSelectedItem < 0 && popUpButton.numberOfItems > 0) {
+                [popUpButton selectItemAtIndex:popUpButton.numberOfItems - 1];
+            }
+        }];
         return popUpButton;
     }
 
