@@ -24,6 +24,10 @@
 + (NSString *)environmentForScript:(NSString *)path
                       checkForMain:(BOOL)checkForMain
                      checkForSaved:(BOOL)checkForSaved;
+// If path is the inner main.py of a full-environment script (Foo/Foo/Foo.py with a valid
+// environment at Foo), returns the container Foo; otherwise nil. Lets a launch by the
+// inner .py path (stale index / Open Quickly / direct) still use the full environment.
++ (NSString *)fullEnvironmentContainerForMainPyPath:(NSString *)path;
 + (NSString *)prospectivePythonPathForPyenvScriptNamed:(NSString *)name;
 + (NSString *)pathToVersionsFolderForPyenvScriptNamed:(NSString *)name;
 + (NSString *)inferredPythonVersionFromScriptAt:(NSString *)path;

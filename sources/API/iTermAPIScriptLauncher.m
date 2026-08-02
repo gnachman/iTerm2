@@ -913,6 +913,26 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     return path;
 }
 
++ (NSString *)fullEnvironmentContainerForMainPyPath:(NSString *)path {
+    if (![[path pathExtension] isEqualToString:@"py"]) {
+        return nil;
+    }
+    // A full-environment script's main is at <container>/<name>/<name>.py.
+    NSString *container = [[path stringByDeletingLastPathComponent] stringByDeletingLastPathComponent];
+    NSString *name = container.lastPathComponent;
+    NSString *expectedMain = [[[container stringByAppendingPathComponent:name]
+                               stringByAppendingPathComponent:name] stringByAppendingPathExtension:@"py"];
+    if (![path isEqualToString:expectedMain]) {
+        return nil;
+    }
+    // Only redirect when the container actually has a runnable full environment; a plain
+    // folder of .py files must still launch as basic scripts.
+    if (![self environmentForScript:container checkForMain:YES checkForSaved:YES]) {
+        return nil;
+    }
+    return container;
+}
+
 + (NSString *)environmentForScript:(NSString *)path
                       checkForMain:(BOOL)checkForMain
                      checkForSaved:(BOOL)checkForSaved {

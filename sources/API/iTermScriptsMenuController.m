@@ -724,6 +724,17 @@ NS_ASSUME_NONNULL_BEGIN
                            arguments:(NSArray<NSString *> *)arguments
                   explicitUserAction:(BOOL)explicitUserAction {
     RLog(@"launch path=%@ args=%@", fullPath, RLogRedact(arguments, @(arguments.count)));
+    // If handed the inner main.py of a full-environment script (Foo/Foo/Foo.py) rather
+    // than its container (Foo), resolve to the container. This happens when the script is
+    // launched from a stale index (e.g. Open Quickly built before the environment was
+    // provisioned) or by its .py path directly; without this it would launch as a basic
+    // script on the shared standard runtime and miss its own dependencies. Issue: a full
+    // env script imported and then launched too soon showed ModuleNotFoundError.
+    NSString *fullEnvContainer = [iTermAPIScriptLauncher fullEnvironmentContainerForMainPyPath:fullPath];
+    if (fullEnvContainer) {
+        RLog(@"Redirecting main.py launch to full-environment container %@", fullEnvContainer);
+        fullPath = fullEnvContainer;
+    }
     NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath
                                                      checkForMain:YES
                                                     checkForSaved:YES];

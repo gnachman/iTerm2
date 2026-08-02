@@ -2509,3 +2509,8 @@ Bug Fixes:
   Python scripts, and rebuild or replace
   Intel-only Python environments for
   Apple Silicon instead of failing.
+- Fix a full-environment Python script run
+  from Open Quickly (or before its
+  environment finished installing) launching
+  on the shared runtime and failing to
+  import its own dependencies.
