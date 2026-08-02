@@ -99,4 +99,14 @@ final class KittyDnDMessageTests: XCTestCase {
         XCTAssertFalse(bytes.contains(0x0a), "serialized output must not contain LF")
         XCTAssertFalse(bytes.contains(0x0d), "serialized output must not contain CR")
     }
+
+    func testMetadataValueNewlinesAreStrippedOnSerialize() {
+        // Even a metadata value that somehow contains CR/LF must not leak them
+        // into the wire form.
+        let msg = KittyDnDMessage(metadata: ["t": "a", "z": "ab\r\ncd"])
+        let bytes = Array(msg.serialized().utf8)
+        XCTAssertFalse(bytes.contains(0x0a))
+        XCTAssertFalse(bytes.contains(0x0d))
+        XCTAssertEqual(msg.serializedContent(), "t=a:z=abcd")
+    }
 }

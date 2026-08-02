@@ -84,4 +84,64 @@ final class KittyDnDChunkerTests: XCTestCase {
         XCTAssertEqual(result?.type, "M")
         XCTAssertEqual(result?.payload, Data("abc".utf8))
     }
+
+    // Exact chunk-count boundaries: maxRawChunkSize bytes fit in one chunk;
+    // one more byte forces a second.
+    func testChunkCountBoundary() {
+        let boundary = KittyDnDChunker.maxRawChunkSize
+        let atLimit = Data(repeating: 0xab, count: boundary)
+        XCTAssertEqual(
+            KittyDnDChunker.messages(baseMetadata: ["t": "r"], payload: atLimit).count, 1)
+        let overLimit = Data(repeating: 0xab, count: boundary + 1)
+        XCTAssertEqual(
+            KittyDnDChunker.messages(baseMetadata: ["t": "r"], payload: overLimit).count, 2)
+    }
+
+    // The reassembler preserves the nil-vs-empty-payload distinction, matching
+    // KittyDnDMessage's single-message parsing.
+    func testReassemblerNoPayloadSection() {
+        let reassembler = KittyDnDChunkReassembler()
+        let result = reassembler.accept("t=a")
+        XCTAssertEqual(result?.type, "a")
+        XCTAssertNil(result?.payload)
+    }
+
+    func testReassemblerEmptyPayloadSection() {
+        let reassembler = KittyDnDChunkReassembler()
+        let result = reassembler.accept("t=r:x=1;")
+        XCTAssertEqual(result?.payload, Data())
+    }
+
+    // One reassembler must handle a second complete message after the first,
+    // i.e. its internal state resets.
+    func testReassemblerReusableAcrossMessages() {
+        let reassembler = KittyDnDChunkReassembler()
+        _ = reassembler.accept("t=r:x=1:m=1;YWJj")   // "abc", more coming
+        let first = reassembler.accept("t=r:x=1:m=0;ZGVm")  // "def", final
+        XCTAssertEqual(first?.payload, Data("abcdef".utf8))
+
+        // A fresh message reuses the same reassembler.
+        let second = reassembler.accept("t=M:x=9;Z2hp")  // "ghi"
+        XCTAssertEqual(second?.type, "M")
+        XCTAssertEqual(second?.intValue("x"), 9)
+        XCTAssertEqual(second?.payload, Data("ghi".utf8))
+    }
+
+    // The meaningful robustness property: a peer that splits the base64 *stream*
+    // at an arbitrary position (not a 4-char group boundary) still reassembles,
+    // because we concatenate raw base64 and decode once.
+    func testReassemblesArbitraryBase64StreamSplit() {
+        let payload = Data((0..<500).map { UInt8(($0 * 13) & 0xff) })
+        let fullBase64 = payload.base64EncodedString()
+        // Split at position 5, which is inside the first 4-char group boundary
+        // region and leaves neither piece independently valid base64.
+        let splitIndex = fullBase64.index(fullBase64.startIndex, offsetBy: 5)
+        let piece1 = String(fullBase64[..<splitIndex])
+        let piece2 = String(fullBase64[splitIndex...])
+
+        let reassembler = KittyDnDChunkReassembler()
+        XCTAssertNil(reassembler.accept("t=r:x=1:m=1;\(piece1)"))
+        let result = reassembler.accept("t=r:x=1:m=0;\(piece2)")
+        XCTAssertEqual(result?.payload, payload)
+    }
 }

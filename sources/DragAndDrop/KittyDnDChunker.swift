@@ -60,22 +60,38 @@ enum KittyDnDChunker {
 /// message in order; it returns nil while chunks are outstanding (m=1) and the
 /// completed message when the final chunk (m=0 or absent) arrives.
 ///
-/// Reassembly accumulates the raw base64 strings and decodes once at the end, so
-/// it is robust even if a peer splits payloads on non-3-byte boundaries.
+/// Reassembly concatenates the raw base64 of every chunk and decodes once at the
+/// end. This matches the protocol's "4096-byte limit applied post-encoding"
+/// model, where a peer may split the base64 *stream* at arbitrary positions
+/// (including inside a 4-character base64 group): those pieces are not
+/// individually valid base64, but their concatenation is. Our own outbound
+/// chunker splits on 3-byte-aligned boundaries, which is a special case that
+/// works under either interpretation.
+///
+/// The final message is built by feeding the reassembled content back through
+/// `KittyDnDMessage(oscContent:)`, so validation (including base64 correctness
+/// and the nil-vs-empty-payload distinction) is identical to the single-message
+/// path. A corrupt payload therefore yields nil (and a log line), never a
+/// silently-empty payload.
 final class KittyDnDChunkReassembler {
     private var accumulatedBase64 = ""
     private var pendingMetadata: [String: String]?
+    private var sawPayloadSection = false
 
-    /// Returns the completed message, or nil if more chunks are expected.
+    /// Returns the completed message, or nil if more chunks are expected or the
+    /// reassembled payload could not be decoded.
     func accept(_ oscContent: String) -> KittyDnDMessage? {
         let metadataString: String
         let payloadString: String
+        let hasPayloadSection: Bool
         if let semicolon = oscContent.firstIndex(of: ";") {
             metadataString = String(oscContent[oscContent.startIndex..<semicolon])
             payloadString = String(oscContent[oscContent.index(after: semicolon)...])
+            hasPayloadSection = true
         } else {
             metadataString = oscContent
             payloadString = ""
+            hasPayloadSection = false
         }
         let metadata = KittyDnDMetadata.parse(metadataString)
 
@@ -84,28 +100,35 @@ final class KittyDnDChunkReassembler {
             pendingMetadata = metadata
         }
         accumulatedBase64 += payloadString
+        sawPayloadSection = sawPayloadSection || hasPayloadSection
 
         if metadata["m"] == "1" {
             // More chunks to come.
             return nil
         }
 
-        // Final chunk: assemble.
+        // Final chunk: rebuild the complete OSC content and parse it through the
+        // same path as an unchunked message.
         var finalMetadata = pendingMetadata ?? metadata
         finalMetadata.removeValue(forKey: "m")
-        let hadPayloadSection = oscContent.contains(";") || !accumulatedBase64.isEmpty
-        let payload: Data?
-        if hadPayloadSection {
-            payload = Data(base64Encoded: accumulatedBase64) ?? Data()
-        } else {
-            payload = nil
-        }
+        let base64 = accumulatedBase64
+        let hadPayloadSection = sawPayloadSection
         reset()
-        return KittyDnDMessage(metadata: finalMetadata, payload: payload)
+
+        var content = KittyDnDMetadata.serialize(finalMetadata)
+        if hadPayloadSection {
+            content += ";\(base64)"
+        }
+        guard let message = KittyDnDMessage(oscContent: content) else {
+            DLog("Dropping Kitty DnD chunked message with undecodable payload")
+            return nil
+        }
+        return message
     }
 
     private func reset() {
         accumulatedBase64 = ""
         pendingMetadata = nil
+        sawPayloadSection = false
     }
 }

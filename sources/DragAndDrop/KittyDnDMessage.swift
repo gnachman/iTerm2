@@ -38,15 +38,28 @@ enum KittyDnDMetadata {
 
     /// Serialize with a deterministic key order: `t` first, then the remaining
     /// keys sorted ascending. Determinism lets tests assert exact bytes.
+    ///
+    /// Values are sanitized of CR/LF so the serialized output can never contain
+    /// a 0x0a/0x0d byte regardless of what a value holds. This is the security
+    /// invariant: a metadata value is only ever a number or an echoed MIME type
+    /// (neither of which legitimately contains a newline), so stripping CR/LF is
+    /// both safe and guarantees no control-input injection.
     static func serialize(_ metadata: [String: String]) -> String {
         var parts: [String] = []
         if let t = metadata["t"] {
-            parts.append("t=\(t)")
+            parts.append("t=\(sanitize(t))")
         }
         for key in metadata.keys.sorted() where key != "t" {
-            parts.append("\(key)=\(metadata[key]!)")
+            parts.append("\(key)=\(sanitize(metadata[key]!))")
         }
         return parts.joined(separator: ":")
+    }
+
+    private static func sanitize(_ value: String) -> String {
+        guard value.utf8.contains(where: { $0 == 0x0a || $0 == 0x0d }) else {
+            return value
+        }
+        return String(value.unicodeScalars.filter { $0 != "\n" && $0 != "\r" })
     }
 }
 
