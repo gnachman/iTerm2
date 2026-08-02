@@ -124,6 +124,11 @@ Major New Features:
   the paste. The Return now waits a moment (see
   the workgroupAutoSendSubmitDelay advanced
   setting).
+- Fixed a bug where a sixel image whose
+  terminator had a doubled escape (ESC ESC \
+  instead of ESC \) was discarded entirely,
+  leaving a stray backslash on the screen. The
+  image now renders.
 - Security: the retrospective debug log (used by
   Save Retrospective Debug Logs) no longer retains
   typed characters, command lines, passwords,
