@@ -357,17 +357,34 @@ class iTermUvProvisioner: NSObject {
             return .failure(error)
         }
 
-        // Everything the new venv needs is present; atomically replace the old one.
-        do {
-            if fileManager.fileExists(atPath: venvPath) {
-                _ = try fileManager.replaceItemAt(URL(fileURLWithPath: venvPath),
-                                                  withItemAt: URL(fileURLWithPath: buildPath))
-            } else {
-                try fileManager.moveItem(atPath: buildPath, toPath: venvPath)
+        // Everything the new venv needs is present; put it in place. When an old .venv
+        // exists, swap the two directory inodes in a single atomic syscall
+        // (renamex_np/RENAME_SWAP) rather than a multi-step replace, so a concurrent
+        // reader (e.g. the Dependency Editor's `pip show`) can never observe a partial
+        // or missing .venv, then discard the old one (now at buildPath). A fresh
+        // container has no .venv, so a plain rename into place suffices.
+        if fileManager.fileExists(atPath: venvPath) {
+            let swapped = buildPath.withCString { newC in
+                venvPath.withCString { oldC in
+                    renamex_np(newC, oldC, UInt32(RENAME_SWAP))
+                }
             }
-        } catch {
+            if swapped != 0 {
+                let code = errno
+                try? fileManager.removeItem(atPath: buildPath)
+                return .failure(NSError(domain: NSPOSIXErrorDomain,
+                                        code: Int(code),
+                                        userInfo: [NSLocalizedDescriptionKey:
+                                                    "Could not install the rebuilt Python environment (errno \(code))."]))
+            }
             try? fileManager.removeItem(atPath: buildPath)
-            return .failure(error)
+        } else {
+            do {
+                try fileManager.moveItem(atPath: buildPath, toPath: venvPath)
+            } catch {
+                try? fileManager.removeItem(atPath: buildPath)
+                return .failure(error)
+            }
         }
 
         let marker = iTermPythonRuntimeMarker(uvVersion: installedUvVersion(uvPath: uvPath),
