@@ -134,18 +134,18 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     // env whose pip cannot exec. Ensure the shared runtime is arm64 first (refetching it
     // if needed), then rebuild. On macOS <=26, or when it is already native, this is an
     // immediate no-op.
-    [self ensureArm64StandardRuntimeForPythonVersion:configParser.pythonVersion completion:^(BOOL ok, BOOL canceled) {
-        if (canceled) {
-            // The user declined the runtime download; stay silent rather than blaming the
-            // network. The script keeps its (unrunnable) env; nothing was changed.
+    [self ensureArm64StandardRuntimeForPythonVersion:configParser.pythonVersion completion:^(BOOL ok, BOOL shouldAlert) {
+        if (ok) {
+            [self hardLinkRebuildFullEnvironmentScriptAt:fullPath configParser:configParser completion:completion];
             return;
         }
-        if (!ok) {
+        // Not usable. Only alert here when the download reported success yet is not arm64;
+        // on a download failure or user cancel the downloader already showed its own modal,
+        // so shouldAlert is NO and we stay silent to avoid stacking a second.
+        if (shouldAlert) {
             [self showIntelOnlyUnrunnableErrorForScript:fullPath
                                                recovery:@"The Apple Silicon runtime could not be downloaded. Check your network connection and try again."];
-            return;
         }
-        [self hardLinkRebuildFullEnvironmentScriptAt:fullPath configParser:configParser completion:completion];
     }];
 }
 
@@ -576,14 +576,25 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     }];
 }
 
+// Whether a downloader status is a clean success (it downloaded, or nothing was needed).
+// On any other status the downloader has already presented its own alert or the user
+// canceled, so a caller must not stack a second alert.
++ (BOOL)runtimeDownloadSucceeded:(iTermPythonRuntimeDownloaderStatus)status {
+    return (status == iTermPythonRuntimeDownloaderStatusDownloaded ||
+            status == iTermPythonRuntimeDownloaderStatusNotNeeded);
+}
+
 // Ensure the shared standard runtime for pythonVersion has an arm64 slice, so a caller
 // about to hard-link it into a script env does not produce an Intel-only, unrunnable env
 // on a Rosetta-less macOS. On macOS <=26, when there is no runtime yet (a later download
 // fetches the arm64 build), or when it is already native, completes (YES, NO) immediately
-// with no UI. Otherwise it refetches, completing (native, canceled). completion runs on the
-// main queue.
+// with no UI. Otherwise it refetches, completing (native, shouldAlert). shouldAlert is YES
+// only when the download reported success yet the binary is still not arm64 (an unexpected
+// case the downloader did not itself report); on a download failure or user cancel the
+// downloader already showed a modal, so shouldAlert is NO to avoid stacking a second.
+// completion runs on the main queue.
 + (void)ensureArm64StandardRuntimeForPythonVersion:(NSString *)pythonVersion
-                                        completion:(void (^)(BOOL ok, BOOL canceled))completion {
+                                        completion:(void (^)(BOOL ok, BOOL shouldAlert))completion {
     iTermPythonRuntimeDownloader *downloader = [iTermPythonRuntimeDownloader sharedInstance];
     NSString *stdPython = [downloader pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
     if ([iTermRosettaSupport canInstallRosetta] || stdPython == nil ||
@@ -593,12 +604,12 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     }
     [self refetchArm64StandardRuntimeForPythonVersion:pythonVersion
                                            completion:^(iTermPythonRuntimeDownloaderStatus status) {
-        if (status == iTermPythonRuntimeDownloaderStatusCanceledByUser) {
-            completion(NO, YES);
+        NSString *refreshed = [downloader pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
+        if (refreshed != nil && [iTermRosettaSupport binaryHasArm64SliceAtPath:refreshed]) {
+            completion(YES, NO);
             return;
         }
-        NSString *refreshed = [downloader pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
-        completion(refreshed != nil && [iTermRosettaSupport binaryHasArm64SliceAtPath:refreshed], NO);
+        completion(NO, [self runtimeDownloadSucceeded:status]);
     }];
 }
 
@@ -612,24 +623,24 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                            explicitUserAction:(BOOL)explicitUserAction {
     [self refetchArm64StandardRuntimeForPythonVersion:pythonVersion
                                            completion:^(iTermPythonRuntimeDownloaderStatus status) {
-        if (status == iTermPythonRuntimeDownloaderStatusCanceledByUser) {
-            // The user deliberately declined; stay silent rather than blaming the network.
-            return;
-        }
         iTermPythonRuntimeDownloader *downloader = [iTermPythonRuntimeDownloader sharedInstance];
         NSString *stdPython = [downloader pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
-        if (stdPython == nil || ![iTermRosettaSupport binaryHasArm64SliceAtPath:stdPython]) {
-            [self showIntelOnlyUnrunnableErrorForScript:fullPath
-                                               recovery:@"The Apple Silicon runtime could not be downloaded. Check your network connection and try again."];
+        if (stdPython != nil && [iTermRosettaSupport binaryHasArm64SliceAtPath:stdPython]) {
+            [self reallyLaunchScript:filename
+                            fullPath:fullPath
+                           arguments:arguments
+                      withVirtualEnv:nil
+                   isFullEnvironment:NO
+                       pythonVersion:pythonVersion
+                  explicitUserAction:explicitUserAction];
             return;
         }
-        [self reallyLaunchScript:filename
-                        fullPath:fullPath
-                       arguments:arguments
-                  withVirtualEnv:nil
-               isFullEnvironment:NO
-                   pythonVersion:pythonVersion
-              explicitUserAction:explicitUserAction];
+        // Not usable. Only alert when the download reported success yet is not arm64; on a
+        // download failure or user cancel the downloader already showed its own modal.
+        if ([self runtimeDownloadSucceeded:status]) {
+            [self showIntelOnlyUnrunnableErrorForScript:fullPath
+                                               recovery:@"The Apple Silicon runtime could not be downloaded. Check your network connection and try again."];
+        }
     }];
 }
 
