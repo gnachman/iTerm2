@@ -17731,9 +17731,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)screenDidReceiveKittyDragAndDrop:(NSString *)content {
     // The Kitty drag-and-drop controller is wired up in a later phase. For now
-    // the raw OSC 72 content is received and logged so the parser plumbing can
-    // be exercised end to end.
-    DLog(@"Received Kitty DnD OSC 72 content: %@", content);
+    // just note receipt so the parser plumbing can be exercised end to end. Log
+    // only the length, not the content, since a data payload can carry the bytes
+    // of a dropped file.
+    DLog(@"Received Kitty DnD OSC 72 sequence of length %@", @(content.length));
 }
 
 - (void)screenSetPointerShape:(NSString *)pointerShape {

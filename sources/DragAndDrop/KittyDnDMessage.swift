@@ -5,12 +5,19 @@
 //  Kitty drag-and-drop protocol (OSC 72). See docs/kitty-dnd-design.md.
 //
 //  A KittyDnDMessage is one complete, reassembled OSC 72 message: the
-//  colon-separated key/value metadata plus an optional decoded payload. This is
-//  the pure wire layer; it has no knowledge of the terminal, AppKit, or I/O.
+//  colon-separated key/value metadata plus an optional payload. This is the pure
+//  wire layer; it has no knowledge of the terminal, AppKit, or I/O.
 //
 //  Wire format:
-//     OSC 72 ; <metadata> [ ; <base64-payload> ] ST
+//     OSC 72 ; <metadata> [ ; <payload> ] ST
 //  where OSC = ESC ] and ST = ESC \.
+//
+//  The payload's encoding depends on the message type, so this type stores it
+//  UNDECODED (`rawPayload`) and exposes it two ways:
+//    - textPayload: plain UTF-8, for MIME lists (t=a/m/M/o), machine ids, and
+//      error strings.
+//    - dataPayload: base64-decoded bytes, for file/image data (t=r/p/k).
+//  The caller decodes according to the message's `t=` type.
 //
 
 import Foundation
@@ -55,7 +62,9 @@ enum KittyDnDMetadata {
         return parts.joined(separator: ":")
     }
 
-    private static func sanitize(_ value: String) -> String {
+    /// Remove CR/LF. Used for both metadata values and the (possibly plain-text)
+    /// payload so a serialized OSC 72 message can never carry a newline.
+    static func sanitize(_ value: String) -> String {
         guard value.utf8.contains(where: { $0 == 0x0a || $0 == 0x0d }) else {
             return value
         }
@@ -67,41 +76,40 @@ struct KittyDnDMessage: Equatable {
     /// Raw metadata key/value pairs (values are strings, as on the wire).
     var metadata: [String: String]
 
-    /// Decoded payload bytes. `nil` means there was no payload section at all;
-    /// an empty `Data` means there was a payload section but it was empty (the
-    /// protocol uses that as a completion signal for `t=r`).
-    var payload: Data?
+    /// The undecoded payload text between the metadata and ST. `nil` means there
+    /// was no payload section at all; an empty string means there was a payload
+    /// section but it was empty (the protocol uses that as a completion signal
+    /// for t=r). Decode via `textPayload` or `dataPayload`.
+    var rawPayload: String?
 
-    init(metadata: [String: String], payload: Data? = nil) {
+    init(metadata: [String: String], rawPayload: String? = nil) {
         self.metadata = metadata
-        self.payload = payload
+        self.rawPayload = rawPayload
     }
 
-    /// Parse the OSC 72 content, i.e. everything between `OSC 72 ;` and `ST`.
-    /// Returns nil only if a present payload section is not valid base64.
-    init?(oscContent: String) {
-        let metadataString: String
-        let payloadString: String?
-        if let semicolon = oscContent.firstIndex(of: ";") {
-            metadataString = String(oscContent[oscContent.startIndex..<semicolon])
-            payloadString = String(oscContent[oscContent.index(after: semicolon)...])
-        } else {
-            metadataString = oscContent
-            payloadString = nil
-        }
+    /// Construct with a plain-text payload (MIME list, machine id, error string).
+    init(metadata: [String: String], textPayload: String) {
+        self.metadata = metadata
+        self.rawPayload = textPayload
+    }
 
-        if let payloadString {
-            if payloadString.isEmpty {
-                self.payload = Data()
-            } else if let decoded = Data(base64Encoded: payloadString) {
-                self.payload = decoded
-            } else {
-                return nil
-            }
+    /// Construct with a binary payload; it is base64-encoded on the wire.
+    init(metadata: [String: String], dataPayload: Data) {
+        self.metadata = metadata
+        self.rawPayload = dataPayload.base64EncodedString()
+    }
+
+    /// Parse the OSC 72 content, i.e. everything between `OSC 72 ;` and `ST`. The
+    /// payload is kept undecoded, so this never fails; validity of a binary
+    /// payload is checked lazily by `dataPayload`.
+    init(oscContent: String) {
+        if let semicolon = oscContent.firstIndex(of: ";") {
+            self.metadata = KittyDnDMetadata.parse(String(oscContent[oscContent.startIndex..<semicolon]))
+            self.rawPayload = String(oscContent[oscContent.index(after: semicolon)...])
         } else {
-            self.payload = nil
+            self.metadata = KittyDnDMetadata.parse(oscContent)
+            self.rawPayload = nil
         }
-        self.metadata = KittyDnDMetadata.parse(metadataString)
     }
 
     // MARK: - Typed accessors
@@ -121,15 +129,29 @@ struct KittyDnDMessage: Equatable {
         return metadata["m"] == "1"
     }
 
+    /// The payload interpreted as plain UTF-8 text (MIME lists, machine ids).
+    var textPayload: String? {
+        return rawPayload
+    }
+
+    /// The payload interpreted as base64-encoded bytes (file/image data). Returns
+    /// nil if the payload is absent or not valid base64.
+    var dataPayload: Data? {
+        guard let rawPayload else {
+            return nil
+        }
+        return Data(base64Encoded: rawPayload)
+    }
+
     // MARK: - Serialization
 
-    /// The OSC 72 content: `<metadata>[;<base64>]`, without the OSC/ST wrapper.
+    /// The OSC 72 content: `<metadata>[;<payload>]`, without the OSC/ST wrapper.
     func serializedContent() -> String {
         let meta = KittyDnDMetadata.serialize(metadata)
-        guard let payload else {
+        guard let rawPayload else {
             return meta
         }
-        return "\(meta);\(payload.base64EncodedString())"
+        return "\(meta);\(KittyDnDMetadata.sanitize(rawPayload))"
     }
 
     /// The full escape sequence including the OSC 72 introducer and ST.
