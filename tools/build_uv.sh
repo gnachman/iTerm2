@@ -97,7 +97,16 @@ while [[ $# -gt 0 ]]; do
 done
 
 ARCHIVE_NAME="uv-${ARCHIVE_TRIPLE}"
-ARCHIVE_FILE="${ARCHIVE_NAME}.tar.gz"
+# Version-qualify the output filename when --rev is a real uv version, so the file
+# staged and published is self-describing and immutable per version (sign_and_copy_uv.sh
+# derives the hosted name from this basename and must never clobber a prior release's
+# bytes that an older manifest entry still references). The tarball's internal top-level
+# directory stays uv-<triple>/ (the app locates the binary one level down regardless).
+if [[ "$REV" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+    ARCHIVE_FILE="uv-${REV}-${ARCHIVE_TRIPLE}.tar.gz"
+else
+    ARCHIVE_FILE="${ARCHIVE_NAME}.tar.gz"
+fi
 
 log() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 die() { printf '\033[1;31mError:\033[0m %s\n' "$*" >&2; exit 1; }

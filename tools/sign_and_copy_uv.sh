@@ -43,6 +43,19 @@ if [[ -z "$filename" || "$filename" == "/" ]]; then
     echo "Error: could not determine a filename from the URL: $source_url" >&2
     exit 1
 fi
+# The hosted filename MUST be version-qualified so each manifest entry references
+# immutable bytes. The manifest keeps old entries so users whose macOS selects an
+# older bracket can still install (the macOS-bracket design). If two annual builds
+# both published as e.g. uv-universal2-apple-darwin.tar.gz, the second would clobber
+# the file the older entry's URL and RSA signature still point at, breaking install
+# and upgrade for exactly the population the bracket exists to protect. If the source
+# basename does not already contain the version, insert it after the leading "uv-".
+if [[ "$filename" != *"$uv_version"* ]]; then
+    case "$filename" in
+        uv-*) filename="uv-${uv_version}-${filename#uv-}" ;;
+        *)    filename="uv-${uv_version}-${filename}" ;;
+    esac
+fi
 dest_file="$dest_dir/$filename"
 
 # Download to a temp file first so a failed download never leaves a partial or
