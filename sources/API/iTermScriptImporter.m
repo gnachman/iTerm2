@@ -28,6 +28,11 @@ static BOOL sInstallingScript;
 static NSString *const iTermReplaceBackupPrefix = @".replacing-";
 static const NSUInteger iTermReplaceBackupUUIDSuffixLength = 1 + 36;  // "-" + UUID
 
+// The dotted staging name iTermScriptArchive uses to rename a finished install into place
+// atomically. A leftover at launch is always an orphan (a completed install renames it
+// away), so the recovery sweep just deletes it.
+static NSString *const iTermInstallStagingPrefix = @".installing-";
+
 @implementation iTermScriptImporter
 
 + (void)importScriptFromURL:(NSURL *)downloadedURL
@@ -348,12 +353,15 @@ static const NSUInteger iTermReplaceBackupUUIDSuffixLength = 1 + 36;  // "-" + U
         if (selection == kiTermWarningSelection0) {
             DLog(@"Move aside and retry");
             // Move the existing script aside rather than deleting it, so a failed or
-            // canceled (re)install can restore it. Deleting up front meant a canceled uv
-            // download left the user with no script and a quiet "success". If the move
-            // fails we fall back to the old delete so the install can still proceed.
+            // canceled (re)install can restore it. If the move-aside itself fails, do NOT
+            // fall back to deleting the original and proceeding: a later cancel would then
+            // report a quiet success with the script already gone (the very bug this
+            // move-aside flow fixed). Abort the replace and leave the script untouched.
             NSString *backup = [self moveAsideScriptNamed:archive.name];
             if (backup == nil) {
-                [self removeScriptNamed:archive.name];
+                completion([NSString stringWithFormat:@"Could not replace “%@”: the existing script could not be moved aside, so it was left unchanged.", archive.name],
+                           NO, nil);
+                return;
             }
             [self didUnzipSuccessfullyTo:tempDir
                                  trusted:trusted
@@ -469,6 +477,13 @@ static const NSUInteger iTermReplaceBackupUUIDSuffixLength = 1 + 36;  // "-" + U
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSString *scriptsPath = [fileManager scriptsPath];
     for (NSString *entry in [fileManager contentsOfDirectoryAtPath:scriptsPath error:nil]) {
+        if ([entry hasPrefix:iTermInstallStagingPrefix]) {
+            // An orphaned atomic-install staging dir; a completed install renames it away.
+            NSString *stagingPath = [scriptsPath stringByAppendingPathComponent:entry];
+            RLog(@"Removing orphaned install staging dir %@", stagingPath);
+            [fileManager removeItemAtPath:stagingPath error:nil];
+            continue;
+        }
         if (![entry hasPrefix:iTermReplaceBackupPrefix]) {
             continue;
         }

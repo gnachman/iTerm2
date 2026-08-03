@@ -427,13 +427,34 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
     // Remove the symlink that should have been dropped there.
     DLog(@"remove symlink %@", to);
     [fileManager removeItemAtPath:to error:nil];
+
+    // Make the destination appear atomically. `from` (the temp extraction dir) may be on a
+    // different volume than the scripts folder (customScriptsFolder), where moveItemAtPath
+    // does a non-atomic copy+delete; a crash mid-copy would leave a partial REAL directory
+    // at `to` that the import crash-recovery sweep would mistake for a completed install and
+    // delete the user's backup. So stage on the DESTINATION volume under a dotted name
+    // (skipped by the menu walk and the recovery sweep) and then rename into place, which is
+    // same-volume and atomic. `to` therefore exists only once fully populated.
+    NSString *staging = [[to stringByDeletingLastPathComponent]
+                         stringByAppendingPathComponent:[NSString stringWithFormat:@".installing-%@-%@",
+                                                         to.lastPathComponent, [[NSUUID UUID] UUIDString]]];
+    [fileManager removeItemAtPath:staging error:nil];
     NSError *error = nil;
-    DLog(@"move %@ to %@", from, to);
-    [fileManager moveItemAtPath:from
-                         toPath:to
-                          error:&error];
-    DLog(@"move error=%@", error);
-    completion(error);
+    DLog(@"move %@ to staging %@", from, staging);
+    if (![fileManager moveItemAtPath:from toPath:staging error:&error]) {
+        DLog(@"move to staging failed: %@", error);
+        [fileManager removeItemAtPath:staging error:nil];
+        completion(error);
+        return;
+    }
+    DLog(@"rename staging %@ to %@", staging, to);
+    if (![fileManager moveItemAtPath:staging toPath:to error:&error]) {
+        DLog(@"rename into place failed: %@", error);
+        [fileManager removeItemAtPath:staging error:nil];
+        completion(error);
+        return;
+    }
+    completion(nil);
 }
 
 @end
