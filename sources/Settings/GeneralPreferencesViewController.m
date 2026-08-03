@@ -1121,6 +1121,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     IBOutlet NSButton *_manualAIConfiguration;
     IBOutlet NSPopUpButton *_aiVendor;
     IBOutlet NSButton *_aiSafetyCheck;
+    IBOutlet NSButton *_aiZeroDataRetention;
 
     IBOutlet NSTextField *_checkTerminalStateLabel; // Check Terminal State
     IBOutlet NSPopUpButton *_checkTerminalStateButton;
@@ -1912,6 +1913,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     [self defineControl:_aiSafetyCheck
                     key:kPreferenceKeyAISafetyCheck
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_aiZeroDataRetention
+                    key:kPreferenceKeyAIZeroDataRetention
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 

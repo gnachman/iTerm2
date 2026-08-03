@@ -54,6 +54,13 @@ Major New Features:
   “ping 10.0.0.1” failing with “no route to
   host”.
 
+- Added a Zero Data Retention setting under
+  Settings > General > AI. Turn it on if your
+  OpenAI organization has Zero Data Retention
+  enabled. iTerm2 then stops sending
+  previous_response_id and sets store=false, so
+  chats no longer fail on the second message.
+
 - There's a new kind of AI chat called
   "orchestration" which can view all your
   sessions and operate iTerm2 for you.

@@ -738,7 +738,7 @@ Gw
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="gZI-PG-peZ">
                             <rect key="frame" x="1" y="1" width="373" height="353"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" autosaveColumns="NO" id="5845">
                                     <rect key="frame" x="0.0" y="0.0" width="373" height="353"/>
@@ -945,7 +945,7 @@ DQ
                                 <autoresizingMask key="autoresizingMask" heightSizable="YES"/>
                                 <clipView key="contentView" drawsBackground="NO" id="Yde-8Q-TRE">
                                     <rect key="frame" x="1" y="1" width="256" height="133"/>
-                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                    <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsUndo="YES" textCompletion="NO" id="235-ob-yuB">
                                             <rect key="frame" x="0.0" y="0.0" width="256" height="133"/>
@@ -1000,7 +1000,7 @@ DQ
                         <autoresizingMask key="autoresizingMask"/>
                         <clipView key="contentView" drawsBackground="NO" id="XnQ-nh-5wv">
                             <rect key="frame" x="1" y="1" width="379" height="83"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <autoresizingMask key="autoresizingMask"/>
                             <subviews>
                                 <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" textCompletion="NO" id="ucv-8U-BE7" customClass="iTermPlaygroundTextView">
                                     <rect key="frame" x="0.0" y="0.0" width="379" height="83"/>
@@ -1313,6 +1313,7 @@ CA
                 <outlet property="_aiTokenLimit" destination="LoW-Oy-QZ4" id="2FW-Wo-mUA"/>
                 <outlet property="_aiTokenLimitLabel" destination="fmU-E4-OGJ" id="BCc-qU-CJX"/>
                 <outlet property="_aiVendor" destination="K1Q-f3-Cx1" id="K7f-Zb-s45"/>
+                <outlet property="_aiZeroDataRetention" destination="A62-Nk-vzF" id="0n7-gy-5sh"/>
                 <outlet property="_allowClipboardAccessFromTerminal" destination="6383" id="u1Z-Xo-qFM"/>
                 <outlet property="_allowsSendingClipboardContents" destination="SKn-XX-BF5" id="lcY-bI-aPB"/>
                 <outlet property="_allowsSendingClipboardContentsLabel" destination="cGv-dv-quI" id="oAc-gf-3QA"/>
@@ -1328,6 +1329,8 @@ CA
                 <outlet property="_checkUpdate" destination="5048" id="Oi0-3Y-fu1"/>
                 <outlet property="_clickToSelectCommand" destination="2Pt-rH-WYj" id="kzN-to-jNw"/>
                 <outlet property="_confirmClosingMultipleSessions" destination="1996" id="1wi-R8-LGb"/>
+                <outlet property="_controlTerminalButton" destination="03z-Hc-UG1" id="mnk-OA-cCl"/>
+                <outlet property="_controlTerminalLabel" destination="MLB-vf-Zmf" id="liH-lp-qqH"/>
                 <outlet property="_copyLastNewline" destination="5747" id="y4f-IT-rUT"/>
                 <outlet property="_customAIEndpoint" destination="1ex-YA-kns" id="0uj-2P-Lhd"/>
                 <outlet property="_customScriptsFolder" destination="llA-8R-abf" id="38A-bU-e4J"/>
@@ -1385,8 +1388,6 @@ CA
                 <outlet property="_tmuxPauseModeAgeLimit" destination="hXw-El-HMF" id="mRQ-0c-gkM"/>
                 <outlet property="_tmuxWarnBeforePausing" destination="QSK-Li-EpK" id="R4e-84-nAB"/>
                 <outlet property="_tripleClickSelectsFullLines" destination="GD3-XJ-mYL" id="3nb-ii-SgM"/>
-                <outlet property="_controlTerminalButton" destination="03z-Hc-UG1" id="mnk-OA-cCl"/>
-                <outlet property="_controlTerminalLabel" destination="MLB-vf-Zmf" id="liH-lp-qqH"/>
                 <outlet property="_unpauseTmuxAutomatically" destination="Xpa-up-i7z" id="P3K-mQ-k3Y"/>
                 <outlet property="_useAutoSaveFrames" destination="vhk-ek-NHd" id="NZN-Fd-ngN"/>
                 <outlet property="_useCustomScriptsFolder" destination="dDY-rB-g7q" id="ywW-pn-co0"/>
@@ -7259,7 +7260,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                     </textFieldCell>
                                                                 </textField>
                                                                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NWy-P0-vFd">
-                                                                    <rect key="frame" x="9" y="91" width="96" height="16"/>
+                                                                    <rect key="frame" x="9" y="57" width="96" height="16"/>
                                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Timeout:" id="QCf-5I-BAp">
                                                                         <font key="font" metaFont="system"/>
@@ -7288,7 +7289,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                     </connections>
                                                                 </popUpButton>
                                                                 <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NXy-ee-e7f">
-                                                                    <rect key="frame" x="111" y="89" width="46" height="19"/>
+                                                                    <rect key="frame" x="104" y="55" width="46" height="19"/>
                                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                     <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="msT-5w-tIt">
                                                                         <font key="font" metaFont="smallSystem"/>
@@ -7302,7 +7303,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                     </connections>
                                                                 </textField>
                                                                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fQF-pe-zZ0">
-                                                                    <rect key="frame" x="163" y="91" width="56" height="16"/>
+                                                                    <rect key="frame" x="156" y="57" width="56" height="16"/>
                                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                     <textFieldCell key="cell" lineBreakMode="clipping" title="seconds" id="BuS-g8-Dfb">
                                                                         <font key="font" usesAppearanceFont="YES"/>
@@ -7311,7 +7312,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                     </textFieldCell>
                                                                 </textField>
                                                                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eel-aL-P0T">
-                                                                    <rect key="frame" x="111" y="65" width="467" height="16"/>
+                                                                    <rect key="frame" x="104" y="31" width="467" height="16"/>
                                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                                     <buttonCell key="cell" type="check" title="Use AI to check safety of commands before running them" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="9Vb-hW-Jh0">
                                                                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -7330,6 +7331,17 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                     </buttonCell>
                                                                     <connections>
                                                                         <action selector="showManualAIConfigurationPanel:" target="9Se-ld-UJa" id="Rb0-wO-bu3"/>
+                                                                    </connections>
+                                                                </button>
+                                                                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="A62-Nk-vzF">
+                                                                    <rect key="frame" x="104" y="92" width="467" height="16"/>
+                                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                    <buttonCell key="cell" type="check" title="Enable “zero data retention” (send whole conversation every time)" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="IPS-cD-eC7">
+                                                                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                                        <font key="font" metaFont="system"/>
+                                                                    </buttonCell>
+                                                                    <connections>
+                                                                        <action selector="settingChanged:" target="9Se-ld-UJa" id="Pg7-ue-C1A"/>
                                                                     </connections>
                                                                 </button>
                                                             </subviews>
@@ -11213,7 +11225,7 @@ instead of the system keyboard.</string>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" drawsBackground="NO" id="hOb-2P-p9q">
                         <rect key="frame" x="1" y="1" width="373" height="152"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" rowHeight="24" rowSizeStyle="automatic" headerView="ro7-kI-yRc" viewBased="YES" id="ywj-8r-IOx" customClass="CompetentTableView" customModule="iTerm2SharedARC">
                                 <rect key="frame" x="0.0" y="0.0" width="373" height="124"/>
@@ -11235,7 +11247,7 @@ instead of the system keyboard.</string>
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView identifier="name" id="MCc-qq-hfd">
-                                                <rect key="frame" x="8" y="0.0" width="161" height="24"/>
+                                                <rect key="frame" x="18" y="0.0" width="161" height="24"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wtu-8W-B3T">
@@ -11267,7 +11279,7 @@ instead of the system keyboard.</string>
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView identifier="value" id="OZw-yp-kiQ">
-                                                <rect key="frame" x="186" y="0.0" width="178" height="24"/>
+                                                <rect key="frame" x="196" y="0.0" width="178" height="24"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="f5K-ky-Pvc">

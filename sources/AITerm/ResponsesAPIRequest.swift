@@ -1921,6 +1921,14 @@ struct ResponsesBodyRequestBuilder {
             body.include = [.reasoningEncryptedContent]
         }
         body.serviceTier = serviceTier
+        // Zero Data Retention orgs must not have their responses stored server-side.
+        // store defaults to true when omitted, so send it explicitly here. This pairs
+        // with supportsPreviousResponseID returning false (no previous_response_id is
+        // sent), keeping every turn a full stateless replay. Encrypted reasoning is
+        // still returned regardless of store, so tool-call replay keeps working.
+        if iTermPreferences.bool(forKey: kPreferenceKeyAIZeroDataRetention) {
+            body.store = false
+        }
         let bodyEncoder = JSONEncoder()
         // OpenAI prompt caching needs a byte-exact prefix match, and the
         // tools array serializes [String: Property] / [String: AnyCodable]

@@ -587,7 +587,11 @@ class AITermController {
                                         messages: messages,
                                         functions: functions,
                                         hostedTools: hostedTools,
-                                        previousResponseID: previousResponseID,
+                                        // Only reference server-side stored state when the provider
+                                        // actually supports it. This is nil for non-Responses APIs and,
+                                        // crucially, for Zero Data Retention orgs (supportsPreviousResponseID
+                                        // returns false there), keeping the request a full stateless replay.
+                                        previousResponseID: llmProvider.supportsPreviousResponseID ? previousResponseID : nil,
                                         shouldThink: llmProvider.model.features.contains(.configurableThinking) ? shouldThink : nil,
                                         reasoningEffort: llmProvider.model.supports(reasoningEffort: reasoningEffort) ? reasoningEffort : nil,
                                         serviceTier: llmProvider.model.supports(serviceTier: serviceTier) ? serviceTier : nil,
