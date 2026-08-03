@@ -37,6 +37,7 @@
 #import "NSArray+iTerm.h"
 #import "NSBundle+iTerm.h"
 #import "NSData+GZIP.h"
+#import "NSDateFormatterExtras.h"
 #import "NSFileManager+iTerm.h"
 #import "NSFont+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -523,8 +524,23 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     } else if (menuItem.action == @selector(debugLogging:)) {
         menuItem.state = gDebugLogging ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
-    } else if (menuItem.action == @selector(toggleShowAlertsWithRememberedSelections:)) {
-        menuItem.state = gShowRememberedAlerts ? NSControlStateValueOn : NSControlStateValueOff;
+    } else if (menuItem.action == @selector(showSuppressedAlerts:)) {
+        // Always enabled: even with nothing suppressed, the panel hosts the
+        // "always show alerts with remembered selections" toggle.
+        NSArray<iTermSuppressedAlert *> *suppressed = [[iTermSuppressedAlerts sharedInstance] currentlySuppressedAlerts];
+        const NSInteger n = suppressed.count;
+        if (n == 0) {
+            menuItem.title = @"Suppressed Alerts…";
+            return YES;
+        }
+        NSString *countPart = (n == 1) ? @"1 Alert Suppressed" : [NSString stringWithFormat:@"%@ Alerts Suppressed", @(n)];
+        NSDate *recent = suppressed.firstObject.lastSuppressed;
+        if (recent) {
+            NSString *rel = [NSDateFormatter compactDateDifferenceStringFromDate:recent];
+            menuItem.title = [NSString stringWithFormat:@"%@ (%@ ago)…", countPart, rel];
+        } else {
+            menuItem.title = [NSString stringWithFormat:@"%@…", countPart];
+        }
         return YES;
     } else if (menuItem.action == @selector(arrangeSplitPanesEvenly:)) {
         PTYTab *tab = [[[iTermController sharedInstance] currentTerminal] currentTab];
@@ -3133,8 +3149,8 @@ static iTermKeyEventReplayer *gReplayer;
     }
 }
 
-- (IBAction)toggleShowAlertsWithRememberedSelections:(id)sender {
-    [iTermWarning toggleShowRememberedAlerts];
+- (IBAction)showSuppressedAlerts:(id)sender {
+    [[iTermSuppressedAlertsWindowController sharedInstance] showWindow:sender];
 }
 
 - (IBAction)openQuickly:(id)sender {

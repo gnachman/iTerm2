@@ -2488,3 +2488,13 @@ Bug Fixes:
   tab color”, and Color Presets) could not
   be found with the preferences search box
   while editing a profile.
+- Added iTerm2 > Suppressed Alerts, which lists
+  warnings that are being answered automatically
+  because you chose to remember your response
+  (for example, declining terminal-initiated
+  image display, which silently stops inline
+  images from appearing). You can select an
+  alert and un-suppress it so it will be shown
+  again. The old View > Always Show Alerts with
+  Remembered Selections command now lives in
+  this panel as a checkbox.

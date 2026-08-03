@@ -179,7 +179,7 @@ class MainMenuMangler: NSObject {
         "Make Text Normal Size": "textformat.size",
         "Start Instant Replay": "restart.circle",
         "Clear Instant Replay": "xmark.circle",
-        "Always Show Alerts with Remembered Selections": "bell.badge",
+        "Suppressed Alerts": "bell.badge",
         "Pin Hotkey Window": "pin.fill",
         "Render Selection Natively": "square.dashed",
         "Replace Selection.Replace with Pretty-Printed JSON": "curlybraces.square",
