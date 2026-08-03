@@ -13,7 +13,7 @@ class AIMenuBarStatusController: NSObject {
     private let defaultsObserver = iTermUserDefaultsObserver()
     private var brokerSubscription: ChatBroker.Subscription?
 
-    override init() {
+    private override init() {
         let image = NSImage(named: "StatusItem")
         image?.isTemplate = true
         self.baseImage = image
@@ -75,7 +75,10 @@ class AIMenuBarStatusController: NSObject {
 
     private func refreshOnMain() {
         let prefOn = iTermAdvancedSettingsModel.showMenuBarItem()
-        let legacyMode = iTermPreferences.bool(forKey: kPreferenceKeyUIElement) &&
+        // The effective UI-element state, not the raw preference: with
+        // UIElementRequiresHotkeys set, updateProcessType turns it off while
+        // ordinary windows are open, and the legacy item went away with it.
+        let legacyMode = iTermApplication.shared().isUIElement &&
             iTermAdvancedSettingsModel.statusBarIcon()
         let shouldShow = prefOn || legacyMode
         if shouldShow {
