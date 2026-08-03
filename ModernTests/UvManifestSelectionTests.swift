@@ -91,4 +91,60 @@ final class UvManifestSelectionTests: XCTestCase {
         XCTAssertNil(iTermUvManifest.select(entries: entries, runningMacOSVersion: "12.9"))
         XCTAssertNil(iTermUvManifest.select(entries: entries, runningMacOSVersion: "13.5"))
     }
+
+    func testTwoPartMaxIsFamilyCapIncludingPointReleases() {
+        // Regression: a cap of "13.4" must bound the whole 13.4.x family. The running
+        // macOS string is always three-part, so comparing "13.4.1" against "13.4"
+        // must not exclude that user (13.4.1 > 13.4.0 under full comparison).
+        let entries = [entry("0.12.0", min: "13.0", max: "13.4")]
+        XCTAssertEqual(iTermUvManifest.select(entries: entries, runningMacOSVersion: "13.4.1")?.uvVersion, "0.12.0")
+        XCTAssertEqual(iTermUvManifest.select(entries: entries, runningMacOSVersion: "13.4.9")?.uvVersion, "0.12.0")
+        XCTAssertEqual(iTermUvManifest.select(entries: entries, runningMacOSVersion: "13.4.0")?.uvVersion, "0.12.0")
+        // Still excluded outside the family.
+        XCTAssertNil(iTermUvManifest.select(entries: entries, runningMacOSVersion: "13.5.0"))
+        XCTAssertNil(iTermUvManifest.select(entries: entries, runningMacOSVersion: "12.9.1"))
+    }
+
+    func testMajorOnlyMaxCapsWholeMajorFamily() {
+        let entries = [entry("0.12.0", min: "13.0", max: "13")]
+        XCTAssertEqual(iTermUvManifest.select(entries: entries, runningMacOSVersion: "13.7.2")?.uvVersion, "0.12.0")
+        XCTAssertEqual(iTermUvManifest.select(entries: entries, runningMacOSVersion: "13.0.0")?.uvVersion, "0.12.0")
+        XCTAssertNil(iTermUvManifest.select(entries: entries, runningMacOSVersion: "14.0.0"))
+    }
+}
+
+final class UvManifestParseToleranceTests: XCTestCase {
+    func testSkipsUndecodableEntriesButKeepsValidOnes() {
+        // A future entry with an unfamiliar shape (here: a missing signature and a
+        // renamed size field) must not discard the whole manifest and strand this
+        // shipped build; the compatible entry it still serves must survive.
+        let json = """
+        [
+          { "uv_version": "0.20.0", "url": "https://x/uv-0.20.0.tar.gz", "size_bytes": "big", "minimum_macos_version": "26.0" },
+          { "uv_version": "0.12.0", "url": "https://x/uv-0.12.0.tar.gz", "signature": "sig", "size": 1000, "minimum_macos_version": "13.0" }
+        ]
+        """
+        let parsed = iTermUvManifest.parse(Data(json.utf8))
+        XCTAssertEqual(parsed?.map { $0.uvVersion }, ["0.12.0"])
+    }
+
+    func testAllValidEntriesAreKept() {
+        let json = """
+        [
+          { "uv_version": "0.11.0", "url": "u1", "signature": "s1", "size": 1, "minimum_macos_version": "13.0" },
+          { "uv_version": "0.12.0", "url": "u2", "signature": "s2", "size": 2, "minimum_macos_version": "13.0", "maximum_macos_version": "13.4" }
+        ]
+        """
+        let parsed = iTermUvManifest.parse(Data(json.utf8))
+        XCTAssertEqual(parsed?.count, 2)
+    }
+
+    func testNonArrayTopLevelReturnsNil() {
+        XCTAssertNil(iTermUvManifest.parse(Data(#"{"uv_version":"0.12.0"}"#.utf8)))
+        XCTAssertNil(iTermUvManifest.parse(Data("not json".utf8)))
+    }
+
+    func testEmptyArrayParsesToEmpty() {
+        XCTAssertEqual(iTermUvManifest.parse(Data("[]".utf8))?.count, 0)
+    }
 }

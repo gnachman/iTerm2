@@ -23,17 +23,19 @@ enum iTermDottedVersion {
         return string.split(separator: ".").map { Int($0) ?? 0 }
     }
 
-    static func compare(_ lhs: String, _ rhs: String) -> ComparisonResult {
-        let a = components(lhs)
-        let b = components(rhs)
-        let count = max(a.count, b.count)
+    static func compare(_ lhs: [Int], _ rhs: [Int]) -> ComparisonResult {
+        let count = max(lhs.count, rhs.count)
         for i in 0..<count {
-            let x = i < a.count ? a[i] : 0
-            let y = i < b.count ? b[i] : 0
+            let x = i < lhs.count ? lhs[i] : 0
+            let y = i < rhs.count ? rhs[i] : 0
             if x < y { return .orderedAscending }
             if x > y { return .orderedDescending }
         }
         return .orderedSame
+    }
+
+    static func compare(_ lhs: String, _ rhs: String) -> ComparisonResult {
+        return compare(components(lhs), components(rhs))
     }
 }
 
@@ -43,7 +45,8 @@ struct iTermUvManifestEntry: Equatable, Codable {
     let signature: String                  // base64 RSA-SHA256 signature over the bytes
     let size: Int
     let minimumMacOSVersion: String        // inclusive lower bound, e.g. "13.0"
-    let maximumMacOSVersion: String?       // inclusive upper bound; nil = unbounded
+    let maximumMacOSVersion: String?       // inclusive family cap at the given precision
+                                           // (e.g. "13.4" caps all of 13.4.x); nil = unbounded
 
     enum CodingKeys: String, CodingKey {
         case uvVersion = "uv_version"
@@ -56,9 +59,27 @@ struct iTermUvManifestEntry: Equatable, Codable {
 }
 
 enum iTermUvManifest {
-    // Decode the manifest JSON array. Returns nil on any malformed input.
+    // Wraps an entry so one undecodable element does not fail the whole array. The
+    // initializer never throws: an entry this build cannot decode becomes nil.
+    private struct FailableEntry: Decodable {
+        let entry: iTermUvManifestEntry?
+        init(from decoder: Decoder) throws {
+            entry = try? iTermUvManifestEntry(from: decoder)
+        }
+    }
+
+    // Decode the manifest JSON array, tolerantly and per entry. The manifest is
+    // updated annually and already-shipped clients must keep working against future
+    // manifests, so a single future entry with an unfamiliar shape (a missing or
+    // renamed field, a retyped value) must not discard the entire manifest and
+    // strand shipped builds that a still-compatible entry serves. Undecodable
+    // entries are skipped; the rest are kept. Returns nil only when the top level is
+    // not a JSON array at all.
     static func parse(_ data: Data) -> [iTermUvManifestEntry]? {
-        return try? JSONDecoder().decode([iTermUvManifestEntry].self, from: data)
+        guard let wrapped = try? JSONDecoder().decode([FailableEntry].self, from: data) else {
+            return nil
+        }
+        return wrapped.compactMap { $0.entry }
     }
 
     // The newest uv build whose macOS bracket includes the running OS, or nil if
@@ -71,7 +92,15 @@ enum iTermUvManifest {
                                                         entry.minimumMacOSVersion) != .orderedAscending
             let atMostMax: Bool
             if let maximum = entry.maximumMacOSVersion {
-                atMostMax = iTermDottedVersion.compare(runningMacOSVersion, maximum) != .orderedDescending
+                // Treat the maximum as a family cap at the precision the manifest
+                // provides: a cap of "13.4" bounds the whole 13.4.x family (so 13.4.1
+                // is still included), and "13" bounds all of 13.x. Comparing the full
+                // three-part running version against a two-part cap would wrongly
+                // exclude every later point release of the capped family (13.4.1 >
+                // 13.4.0). So compare only as many leading components as the cap gives.
+                let maxComponents = iTermDottedVersion.components(maximum)
+                let runningComponents = Array(iTermDottedVersion.components(runningMacOSVersion).prefix(maxComponents.count))
+                atMostMax = iTermDottedVersion.compare(runningComponents, maxComponents) != .orderedDescending
             } else {
                 atMostMax = true
             }

@@ -5,6 +5,9 @@
 #   { uv_version, url, signature, size, minimum_macos_version, maximum_macos_version }
 # The app downloads only an entry whose [minimum_macos_version, maximum_macos_version]
 # bracket includes the running macOS, and picks the newest compatible uv_version.
+# maximum_macos_version is a family cap at whatever precision you give it: --max-macos 13.4
+# caps the entire 13.4.x family (13.4.1 is still included) and --max-macos 13 caps all of
+# 13.x. Use the precision that matches the family you mean to cap.
 #
 # Runnable on its own (e.g. with the size/signature that sign_and_copy_uv.sh printed),
 # and also called by sign_and_copy_uv.sh.
