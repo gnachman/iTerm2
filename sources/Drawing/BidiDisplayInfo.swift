@@ -156,13 +156,19 @@ fileprivate struct IntermediateLookupTable {
     // has no cell.
     init(line: CTLine, string: NSString, cellForIndex: [Int32], count: Int) {
         self.count = count
-        // When Latin runs are isolated, guillemets keep their natural glyph
-        // (« opens on the right in Persian, and stays un-flipped around English)
-        // rather than following the standard bidi mirroring the user found
-        // inverted. Brackets still mirror.
-        let dontMirrorQuotes = iTermAdvancedSettingsModel.isolateLatinRunsInRTL()
+        // When Latin runs are isolated, guillemets and brackets keep their typed
+        // glyph instead of following the standard bidi mirroring, which native
+        // Persian readers found inverted (a list marker «۱۰)» reading «۱۰(», and
+        // «(تهران)» flipping to «)تهران(»). Off by default; only when the Latin-
+        // islands setting is on, which already deviates from other apps by design.
+        let dontMirrorPunctuation = iTermAdvancedSettingsModel.isolateLatinRunsInRTL()
         func isGuillemet(_ c: unichar) -> Bool {
             return c == 0x00AB || c == 0x00BB || c == 0x2039 || c == 0x203A
+        }
+        func isBracket(_ c: unichar) -> Bool {
+            return c == 0x28 || c == 0x29 ||   // ( )
+                   c == 0x5B || c == 0x5D ||   // [ ]
+                   c == 0x7B || c == 0x7D      // { }
         }
         let runs = CTLineGetGlyphRuns(line) as! [CTRun]
 
@@ -212,7 +218,8 @@ fileprivate struct IntermediateLookupTable {
                         var chars: [unichar] = [ch]
                         var defaultGlyphs = [CGGlyph](repeating: 0, count: 1)
                         CTFontGetGlyphsForCharacters(font, &chars, &defaultGlyphs, 1)
-                        if glyphs[i] != defaultGlyphs[0] && !(dontMirrorQuotes && isGuillemet(ch)) {
+                        if glyphs[i] != defaultGlyphs[0] &&
+                           !(dontMirrorPunctuation && (isGuillemet(ch) || isBracket(ch))) {
                             mirroredIndexes.insert(sourceCell)
                         }
                     }
