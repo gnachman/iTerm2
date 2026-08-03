@@ -1882,11 +1882,18 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
                     [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
                         const NSInteger cancelCount = [weakSelf incrBusy]; // 3
                         [weakSelf decrBusy];  // (2)
-                        [[weakSelf currentDataSource] addUserName:userName
-                                                      accountName:accountName
-                                                         password:password
-                                                          context:context
-                                                       completion:^(id<PasswordManagerAccount> _Nullable replacement, NSError * _Nullable error) {
+                        // Preserve vault on delete-then-re-add (Classic vs Nested).
+                        NSDictionary *readdFlags = nil;
+                        if ([(id)entry respondsToSelector:@selector(sourceLabel)]) {
+                            NSString *source = entry.sourceLabel;
+                            if ([source caseInsensitiveCompare:@"Classic"] == NSOrderedSame) {
+                                readdFlags = @{ @"useClassicPermission": @YES };
+                            } else if ([source caseInsensitiveCompare:@"Nested"] == NSOrderedSame) {
+                                readdFlags = @{ @"useClassicPermission": @NO };
+                            }
+                        }
+                        void (^onReaddComplete)(id<PasswordManagerAccount>, NSError *) =
+                            ^(id<PasswordManagerAccount> _Nullable replacement, NSError * _Nullable error) {
                             [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
                                 DLog(@"%@", error);
                                 const NSInteger cancelCount = [weakSelf incrBusy]; // 4
@@ -1900,7 +1907,23 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
                                     }];
                                 }];
                             }];
-                        }];
+                        };
+                        id<PasswordManagerDataSource> ds = [weakSelf currentDataSource];
+                        SEL flagsSel = @selector(addUserName:accountName:password:flags:context:completion:);
+                        if (readdFlags != nil && [(id)ds respondsToSelector:flagsSel]) {
+                            [ds addUserName:userName
+                                accountName:accountName
+                                password:password
+                                    flags:readdFlags
+                                    context:context
+                                completion:onReaddComplete];
+                        } else {
+                            [ds addUserName:userName
+                                accountName:accountName
+                                password:password
+                                    context:context
+                                completion:onReaddComplete];
+                        }
                     }];
                 }];
             }];

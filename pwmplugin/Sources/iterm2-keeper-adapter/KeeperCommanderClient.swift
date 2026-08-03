@@ -517,11 +517,8 @@ enum KeeperRecordSource: String {
     case nested
 
     static func fromLabel(_ label: String?) -> KeeperRecordSource? {
-        switch label?.lowercased() {
-        case "classic": return .classic
-        case "nested":  return .nested
-        default:        return nil
-        }
+        guard let label else { return nil }
+        return KeeperRecordSource(rawValue: label.lowercased())
     }
 }
 
@@ -591,22 +588,21 @@ private func parseListingPayload(_ data: Data) -> [KeeperRecord] {
     return []
 }
 
-private func taggedAsNested(_ records: [KeeperRecord]) -> [KeeperRecord] {
+private func taggedWithCategory(_ records: [KeeperRecord], _ category: String) -> [KeeperRecord] {
     return records.map { rec in
         if rec.sourceLabel != nil {
             return rec
         }
-        return rec.withRecordCategory("Nested")
+        return rec.withRecordCategory(category)
     }
 }
 
+private func taggedAsNested(_ records: [KeeperRecord]) -> [KeeperRecord] {
+    taggedWithCategory(records, "Nested")
+}
+
 private func taggedAsClassic(_ records: [KeeperRecord]) -> [KeeperRecord] {
-    return records.map { rec in
-        if rec.sourceLabel != nil {
-            return rec
-        }
-        return rec.withRecordCategory("Classic")
-    }
+    taggedWithCategory(records, "Classic")
 }
 
 func validateApiKey(apiKey: String, client: KeeperCommanderClient) throws {
@@ -767,13 +763,15 @@ func setPassword(apiKey: String,
 
     let classic = makeAttempt(verb: "record-update")
     let nested = makeAttempt(verb: "nsf-record-update")
-    // Known vault: use only that family. Unknown: nested first — classic record-update
-    // returns status=success as a no-op for NSF UIDs on live Commander.
+    // Known vault: use only that family. Unknown: refuse to guess
+    // (classic record-update can no-op-succeed on NSF UIDs; nested may do the reverse).
     let attempts: [KeeperMutationAttempt]
     switch source {
     case .classic: attempts = [classic]
     case .nested: attempts = [nested]
-    case nil: attempts = [nested, classic]
+    case nil:
+        throw KeeperClientError.message(
+            "Cannot update password: vault is unknown. Reload accounts and try again.")
     }
     KeeperAdapterLog.write("setPassword: source=\(source?.rawValue ?? "unknown") attempts=\(attempts.map(\.label))")
 
@@ -828,41 +826,49 @@ func deleteRecord(apiKey: String,
         formatFailure: { keeperHumanReadableError(fromResponseData: $0) ?? "Delete failed" })
 }
 
+/// Only treat clear “NSF not available” as a reason to use classic record-add.
+private func isNsfUnavailableError(_ error: Error) -> Bool {
+    let s = error.localizedDescription.lowercased()
+    return s.contains("nested shared folder")
+        && (s.contains("not available") || s.contains("unavailable") || s.contains("not enabled"))
+}
+
 func addRecord(apiKey: String,
                userName: String,
                accountName: String,
                password: String?,
                useClassicPermission: Bool,
                client: KeeperCommanderClient) throws -> String {
-    let verbs: [String]
     if useClassicPermission {
-        verbs = ["record-add"]
-    } else {
-        // Default path is NSF; fall back to classic when NSF is unavailable.
-        verbs = ["nsf-record-add", "record-add"]
+        return try addRecordOnce(apiKey: apiKey,
+                                 userName: userName,
+                                 accountName: accountName,
+                                 password: password,
+                                 verb: "record-add",
+                                 client: client)
     }
 
-    var firstError: Error?
-    for verb in verbs {
-        do {
-            return try addRecordOnce(apiKey: apiKey,
-                                     userName: userName,
-                                     accountName: accountName,
-                                     password: password,
-                                     verb: verb,
-                                     client: client)
-        } catch {
-            KeeperAdapterLog.write("addRecord: verb=\(verb) failed: \(error.localizedDescription)")
-            if firstError == nil {
-                firstError = error
-            }
-            if verbs.count == 1 || verb == verbs.last {
-                break
-            }
-            KeeperAdapterLog.write("addRecord: trying fallback after \(verb) failure")
+    // Nested only. Fall back to classic solely when NSF is unavailable.
+    do {
+        return try addRecordOnce(apiKey: apiKey,
+                                 userName: userName,
+                                 accountName: accountName,
+                                 password: password,
+                                 verb: "nsf-record-add",
+                                 client: client)
+    } catch {
+        KeeperAdapterLog.write("addRecord: nsf-record-add failed: \(error.localizedDescription)")
+        guard isNsfUnavailableError(error) else {
+            throw error
         }
+        KeeperAdapterLog.write("addRecord: NSF unavailable; falling back to record-add (vault changed to Classic)")
+        return try addRecordOnce(apiKey: apiKey,
+                                userName: userName,
+                                accountName: accountName,
+                                password: password,
+                                verb: "record-add",
+                                client: client)
     }
-    throw firstError ?? KeeperClientError.message("Add failed")
 }
 
 private func addRecordOnce(apiKey: String,

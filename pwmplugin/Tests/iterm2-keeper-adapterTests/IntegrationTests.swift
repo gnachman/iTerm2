@@ -133,6 +133,9 @@ class H(BaseHTTPRequestHandler):
                 if SCENARIO == "nsf_add_fail":
                     _send(self, 200, {"error": "Nested Shared Folder not available", "status": "error"})
                     return
+                if SCENARIO == "nsf_add_generic_fail":
+                    _send(self, 200, {"error": "temporary server error", "status": "error"})
+                    return
                 _send(self, 200, {
                     "command": "nsf-record-add",
                     "data": None,
@@ -342,9 +345,16 @@ server.serve_forever()
 
     func testSetPasswordSuccess() throws {
         let server = try MockKeeperServer()
-        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"newPassword":"new-pass"}"#
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"sourceLabel":"Classic","newPassword":"new-pass"}"#
         let result = try run("set-password", input: input)
         XCTAssertEqual(result.status, 0, result.output)
+    }
+
+    func testSetPasswordFailsWhenSourceLabelMissing() throws {
+        let server = try MockKeeperServer()
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"newPassword":"new-pass"}"#
+        let result = try run("set-password", input: input)
+        XCTAssertNotEqual(result.status, 0, result.output)
     }
 
     func testAddAccountClassicPermissionUsesRecordAdd() throws {
@@ -422,6 +432,13 @@ server.serve_forever()
         let json = try decodeJSON(result.output)
         let accountIdentifier = try XCTUnwrap(json["accountIdentifier"] as? [String: Any])
         XCTAssertEqual(accountIdentifier["accountID"] as? String, "NEWUID1234567890")
+    }
+
+    func testAddAccountDoesNotFallBackOnGenericNsfError() throws {
+        let server = try MockKeeperServer(scenario: "nsf_add_generic_fail")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","userName":"user@example.com","accountName":"Example","password":"new-pass"}"#
+        let result = try run("add-account", input: input)
+        XCTAssertNotEqual(result.status, 0, result.output)
     }
 
     func testListAccountsWarnsWhenNsfListFails() throws {

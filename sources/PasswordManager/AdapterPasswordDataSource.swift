@@ -333,8 +333,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
 
     private func hydratePersistedCredentialsIfNeeded() {
         guard handshakeInfo?.persistsCredentials == true else { return }
-        // One-time cleanup of pre-migration Settings apiKey keychain entries.
-        deleteOrphanedLegacyApiKeySettings()
+        migrateLegacyApiKeyIfNeeded()
         if pathToDatabase == nil {
             if let u = iTermUserDefaults.userDefaults().string(forKey: "PathToDatabase_\(identifier)"), !u.isEmpty {
                 pathToDatabase = u
@@ -343,7 +342,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         guard masterPassword == nil else { return }
 
         if let persisted = loadPersistedCredentials(),
-           !persisted.isEmpty {
+        !persisted.isEmpty {
             masterPassword = persisted
         }
     }
@@ -380,24 +379,48 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
     }
 
     private func deleteAllSettingsFieldStorage() {
-        guard let fields = handshakeInfo?.settingsFields else {
-            deleteOrphanedLegacyApiKeySettings()
-            return
-        }
-        for field in fields {
-            if field.persistInKeychain {
-                _ = SSKeychain.deletePassword(forService: keychainCredentialServiceName, account: field.key)
-            } else {
-                iTermUserDefaults.userDefaults().removeObject(forKey: "AdapterSetting_\(identifier)_\(field.key)")
+        if let fields = handshakeInfo?.settingsFields {
+            for field in fields {
+                if field.persistInKeychain {
+                    _ = SSKeychain.deletePassword(forService: keychainCredentialServiceName, account: field.key)
+                } else {
+                    iTermUserDefaults.userDefaults().removeObject(forKey: "AdapterSetting_\(identifier)_\(field.key)")
+                }
             }
         }
         deleteOrphanedLegacyApiKeySettings()
     }
 
-    /// Pre-round-3 builds stored the API key under settings account "apiKey". That field is gone;
-    /// purge the orphan so Reset Configuration fully clears credentials.
+    private var legacyApiKeyMigratedDefaultsKey: String {
+        "NoSyncKeeperLegacyApiKeyMigrated_\(identifier)"
+    }
+
+    /// Pre-round-3 builds stored the API key under settings account "apiKey".
+    /// Migrate into the master-password keychain slot once, then delete the orphan.
+    private func migrateLegacyApiKeyIfNeeded() {
+        let defaults = iTermUserDefaults.userDefaults()
+        let flagKey = legacyApiKeyMigratedDefaultsKey
+        if defaults.bool(forKey: flagKey) {
+            return
+        }
+        if let legacy = try? SSKeychain.password(forService: keychainCredentialServiceName, account: "apiKey"),
+        !legacy.isEmpty {
+            let current = loadPersistedCredentials()
+            if current == nil || current!.isEmpty {
+                persistCredentialsToKeychain(legacy)
+                if masterPassword == nil || masterPassword!.isEmpty {
+                    masterPassword = legacy
+                }
+            }
+            _ = SSKeychain.deletePassword(forService: keychainCredentialServiceName, account: "apiKey")
+        }
+        defaults.set(true, forKey: flagKey)
+    }
+
+    /// Purge orphan settings apiKey (reset path). Does not migrate.
     private func deleteOrphanedLegacyApiKeySettings() {
         _ = SSKeychain.deletePassword(forService: keychainCredentialServiceName, account: "apiKey")
+        iTermUserDefaults.userDefaults().removeObject(forKey: legacyApiKeyMigratedDefaultsKey)
     }
 
     private func ensureAuthentication(window: NSWindow?, _ completion: @escaping (Error?) -> ()) {
@@ -610,12 +633,12 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 if let warning = response.warning?.trimmingCharacters(in: .whitespacesAndNewlines), !warning.isEmpty {
                     DispatchQueue.main.async {
                         iTermWarning.show(withTitle: warning,
-                                          actions: ["OK"],
-                                          accessory: nil,
-                                          identifier: "NoSyncKeeperListPartialFailure",
-                                          silenceable: .kiTermWarningTypePersistent,
-                                          heading: "Password Manager",
-                                          window: nil)
+                                            actions: ["OK"],
+                                            accessory: nil,
+                                            identifier: nil,
+                                            silenceable: .kiTermWarningTypePersistent,
+                                            heading: "Password Manager",
+                                            window: nil)
                     }
                 }
 
@@ -934,7 +957,6 @@ extension AdapterPasswordDataSource {
         iTermUserDefaults.userDefaults().removeObject(forKey: "PathToExecutable_\(identifier)")
         deletePersistedCredentials()
         deleteAllSettingsFieldStorage()
-        deleteOrphanedLegacyApiKeySettings()
         handshakeInfo = nil
     }
 
