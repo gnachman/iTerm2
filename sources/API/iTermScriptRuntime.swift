@@ -136,15 +136,27 @@ class iTermScriptRuntime: NSObject {
     // default with no forced-remap warning. The on-disk version is authoritative.
     @objc(legacyEnvironmentPythonVersionForContainer:)
     static func legacyEnvironmentPythonVersion(container: String) -> String? {
-        let versionsDir = ((container as NSString).appendingPathComponent(legacyDirectoryName) as NSString)
-            .appendingPathComponent("versions")
-        guard let entries = try? FileManager.default.contentsOfDirectory(atPath: versionsDir) else {
-            return nil
+        // Prefer the live env; fall back to a saved backup. A container killed
+        // mid-migration has only saved-iterm2env until the rollback restores it, and this
+        // is queried before that restore, so without the fallback such a script would
+        // still migrate to the default with no warning.
+        for envName in [legacyDirectoryName, "saved-" + legacyDirectoryName] {
+            let versionsDir = ((container as NSString).appendingPathComponent(envName) as NSString)
+                .appendingPathComponent("versions")
+            guard let entries = try? FileManager.default.contentsOfDirectory(atPath: versionsDir) else {
+                continue
+            }
+            // Version directories like "3.7.9": at least two dot-separated, all-numeric
+            // parts. Pick the NUMERIC maximum (matching the interpreter selection), not a
+            // lexicographic order that would sort "3.10.4" before "3.8.6".
+            let versions = entries.filter { entry in
+                let parts = entry.split(separator: ".")
+                return parts.count >= 2 && parts.allSatisfy { !$0.isEmpty && $0.allSatisfy(\.isNumber) }
+            }
+            if let best = versions.max(by: { iTermDottedVersion.compare($0, $1) == .orderedAscending }) {
+                return best
+            }
         }
-        // A version directory like "3.7.9": at least two dot-separated, all-numeric parts.
-        return entries.sorted().first { entry in
-            let parts = entry.split(separator: ".")
-            return parts.count >= 2 && parts.allSatisfy { !$0.isEmpty && $0.allSatisfy(\.isNumber) }
-        }
+        return nil
     }
 }

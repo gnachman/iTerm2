@@ -130,4 +130,26 @@ final class ScriptRuntimeBackendTests: XCTestCase {
         let c = try makeContainer()
         XCTAssertNil(iTermScriptRuntime.legacyEnvironmentPythonVersion(container: c))
     }
+
+    func testLegacyEnvironmentPythonVersionPicksNumericMaxNotLexicographic() throws {
+        // Lexicographic order would sort "3.10.4" before "3.8.6" and pick the wrong one;
+        // the numeric maximum (matching interpreter selection) is 3.9.2 here.
+        let c = try makeContainer()
+        for v in ["3.8.6", "3.9.2"] {
+            try FileManager.default.createDirectory(
+                atPath: (c as NSString).appendingPathComponent("iterm2env/versions/\(v)"),
+                withIntermediateDirectories: true)
+        }
+        XCTAssertEqual(iTermScriptRuntime.legacyEnvironmentPythonVersion(container: c), "3.9.2")
+    }
+
+    func testLegacyEnvironmentPythonVersionFallsBackToSavedEnv() throws {
+        // A container killed mid-migration has only saved-iterm2env until rollback; the
+        // derivation runs before that, so it must consult the saved backup.
+        let c = try makeContainer()
+        try FileManager.default.createDirectory(
+            atPath: (c as NSString).appendingPathComponent("saved-iterm2env/versions/3.7.9"),
+            withIntermediateDirectories: true)
+        XCTAssertEqual(iTermScriptRuntime.legacyEnvironmentPythonVersion(container: c), "3.7.9")
+    }
 }
