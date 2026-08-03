@@ -1883,20 +1883,65 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
 
 - (iTermLocatedString *)locatedStringByWalkingForwardFrom:(VT100GridCoord)coord
                                              characterSet:(NSCharacterSet *)characterSet
-                                                 maxChars:(int)maxChars {
+                                                 maxChars:(int)maxChars
+                                      respectHardNewlines:(BOOL)respectHardNewlines {
     iTermLocatedString *result = [[iTermLocatedString alloc] init];
-    VT100GridCoord previousCoord = coord;
-    VT100GridCoord next = [self successorOfCoord:coord];
-    while (result.length < maxChars && !VT100GridCoordEquals(next, previousCoord)) {
-        const screen_char_t c = [self characterAt:next];
-        const unichar ch = c.code;
-        if (c.code == 0 || c.complexChar || ![characterSet characterIsMember:ch]) {
-            break;
+    // Enumerate from `coord`'s line to the end of the buffer, letting the shared enumeration handle
+    // soft/hard line boundaries and terminal nulls. `coord` itself is skipped (the caller already
+    // has its character). Each cell is decoded to its actual character(s) and judged against
+    // `characterSet`, so composed graphemes and non-BMP characters are treated exactly as the set
+    // intends. The run ends at the first cell that is not a member, and the eolBlock ends it at a
+    // hard line break when we are respecting hard newlines.
+    NSCharacterSet *const nonMembers = [characterSet invertedSet];
+    // In enumerateCharsInRange: a block returns YES to end the enumeration and NO to continue.
+    const VT100GridWindowedRange range =
+        VT100GridWindowedRangeMake(VT100GridCoordRangeMake(coord.x,
+                                                           coord.y,
+                                                           [_dataSource width],
+                                                           [_dataSource numberOfLines] - 1),
+                                   _logicalWindow.location,
+                                   _logicalWindow.length);
+    [self enumerateCharsInRange:range
+                    supportBidi:NO
+                      charBlock:^BOOL(const screen_char_t *currentLine,
+                                      screen_char_t theChar,
+                                      iTermExternalAttribute *ea,
+                                      VT100GridCoord logicalCoord,
+                                      VT100GridCoord visualCoord) {
+        if (VT100GridCoordEquals(logicalCoord, coord)) {
+            // The starting cell is already the caller's; skip it and keep going.
+            return NO;
         }
-        [result appendString:[NSString stringWithCharacters:&ch length:1] at:next];
-        previousCoord = next;
-        next = [self successorOfCoord:next];
+        if (result.length >= (NSUInteger)maxChars) {
+            return YES;
+        }
+        // An image is never a member of the set, so it ends the run. Test this before comparing
+        // `code` below: for an image `code` is an image number, not a code point, and could happen
+        // to equal a DWC sentinel.
+        if (theChar.image) {
+            return YES;
+        }
+        // Double-width spacers belong to the preceding wide character and carry no character of
+        // their own, so skip them without ending the run.
+        if (!theChar.complexChar && (theChar.code == DWC_RIGHT ||
+                                     theChar.code == DWC_SKIP ||
+                                     theChar.code == DWL_SPACER)) {
+            return NO;
+        }
+        // Decode the cell to its actual character(s) and end the run at anything that is not a
+        // member of the set (an empty cell decodes to no character and ends the run here too).
+        NSString *const string = ScreenCharToStr(&theChar) ?: @"";
+        if (string.length == 0 ||
+            [string rangeOfCharacterFromSet:nonMembers].location != NSNotFound) {
+            return YES;
+        }
+        [result appendString:string at:logicalCoord];
+        return NO;
     }
+                       eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
+        // Stop at a hard line break when respecting hard newlines.
+        return respectHardNewlines && code == EOL_HARD;
+    }];
     return result;
 }
 

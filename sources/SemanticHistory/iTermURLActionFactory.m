@@ -649,7 +649,8 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
     iTermLocatedString *extension =
         [self.extractor locatedStringByWalkingForwardFrom:lastCoord
                                              characterSet:urlCharacterSet
-                                                 maxChars:maxURLLength];
+                                                 maxChars:maxURLLength
+                                      respectHardNewlines:self.respectHardNewlines];
     if (extension.length > 0) {
         DLog(@"URL ran to end of suffix window; extended by %@ chars", @(extension.length));
         [self.locatedSuffix appendLocatedString:extension];
