@@ -1266,6 +1266,19 @@ class iTermUvProvisioner: NSObject {
         }
     }
 
+    // The interpreter of the newest provisioned shared venv, or nil if none exists. An
+    // offline fallback (e.g. the REPL) for when a specific requested version cannot be
+    // provisioned but some iterm2-equipped venv is already on disk: legacy apython used
+    // whatever runtime was installed rather than demanding one exact version.
+    @objc func newestProvisionedSharedVenvInterpreter() -> String? {
+        guard let newest = Self.provisionedSharedVenvMinors().max(by: {
+            iTermDottedVersion.compare($0, $1) == .orderedAscending
+        }) else {
+            return nil
+        }
+        return Self.sharedVenvPython(forMinor: newest)
+    }
+
     private static func provisionedSharedVenvMinors() -> [String] {
         let venvsRoot = (uvDirectory as NSString).appendingPathComponent("venvs")
         guard let minors = try? FileManager.default.contentsOfDirectory(atPath: venvsRoot) else {

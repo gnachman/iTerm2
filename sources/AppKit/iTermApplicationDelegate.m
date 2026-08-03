@@ -3338,7 +3338,14 @@ static iTermKeyEventReplayer *gReplayer;
                 // The user declined the download; stay silent.
                 return;
             }
-            if (uvError != nil || sharedPython == nil) {
+            NSString *interpreter = sharedPython;
+            if (uvError != nil || interpreter == nil) {
+                // The default version could not be provisioned (commonly offline). Fall back
+                // to any already-provisioned shared venv (they all carry iterm2) rather than
+                // failing outright, matching how legacy apython used whatever was installed.
+                interpreter = [[iTermUvProvisioner shared] newestProvisionedSharedVenvInterpreter];
+            }
+            if (interpreter == nil) {
                 NSAlert *alert = [[[NSAlert alloc] init] autorelease];
                 alert.messageText = @"Python Environment Unavailable";
                 alert.informativeText = [NSString stringWithFormat:@"Could not prepare the Python environment for the REPL: %@",
@@ -3351,7 +3358,7 @@ static iTermKeyEventReplayer *gReplayer;
             }
             // A uv venv has no apython shim; the stdlib asyncio REPL provides
             // top-level await.
-            [self launchREPLWithCommand:[sharedPython stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]
+            [self launchREPLWithCommand:[interpreter stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]
                               arguments:[iTermReplLauncher argumentsWithUsesUV:YES]];
         }];
         return;
