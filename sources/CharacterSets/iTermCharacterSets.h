@@ -54,4 +54,11 @@ CFIndex iTermFindFirstCodePointWithOwnCell(const UniChar *chars,
                                            CFIndex length,
                                            BOOL aggressive);
 
+// Returns the Bidi_Mirroring_Glyph counterpart of cp (e.g. '(' -> ')'), or cp
+// itself if it has none. Implements rule L4 of the Unicode bidirectional
+// algorithm: a mirrorable character whose resolved direction is right-to-left
+// must be drawn as its counterpart. Display-time only; the model keeps the
+// logical character.
+unichar iTermBidiMirroredCounterpart(unichar cp);
+
 #endif /* iTermCharacterSets_h */
