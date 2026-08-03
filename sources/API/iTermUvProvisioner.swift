@@ -299,7 +299,7 @@ class iTermUvProvisioner: NSObject {
         // stderr kept out of the parsed output.
         runner.environment = provisionEnvironment()
         runner.discardStandardError = true
-        _ = runner.blockingRun()
+        _ = runner.blockingRun(withTimeout: uvQueryTimeout)
         let output = runner.output.flatMap { String(data: $0, encoding: .utf8) } ?? ""
         return parseUvVersion(fromVersionOutput: output)
     }
@@ -451,7 +451,7 @@ class iTermUvProvisioner: NSObject {
         // stderr would otherwise be merged in and break the JSON parse, silently
         // disabling version remapping.
         runner.discardStandardError = true
-        _ = runner.blockingRun()
+        _ = runner.blockingRun(withTimeout: uvQueryTimeout)
         guard let output = runner.output else {
             return []
         }
@@ -466,10 +466,20 @@ class iTermUvProvisioner: NSObject {
         return environment
     }
 
+    // A generous safety-net timeout for uv build operations (venv creation, pip install)
+    // that download from the network. It is NOT a "slow link" cap (uv has its own HTTP
+    // timeouts and legitimate first provisioning on a slow link finishes well under this);
+    // it only bounds a pathologically hung subprocess so it cannot wedge provisionQueue,
+    // and every provision/launch queued behind it, forever.
+    private static let uvBuildTimeout: TimeInterval = 3600
+    // A short timeout for quick metadata queries (`uv --version`, `uv python list`), which
+    // never legitimately take long, so a hang there does not stall the queue for an hour.
+    private static let uvQueryTimeout: TimeInterval = 60
+
     private static func run(_ path: String, _ arguments: [String], _ environment: [String: String]) -> NSError? {
         let runner = iTermBufferedCommandRunner(command: path, withArguments: arguments, path: NSTemporaryDirectory())
         runner.environment = environment
-        let status = runner.blockingRun()
+        let status = runner.blockingRun(withTimeout: uvBuildTimeout)
         guard status == 0 else {
             // Include uv's own output (the real reason: an unresolved dependency, a
             // missing wheel under --only-binary, etc.) so a failure is diagnosable
@@ -749,7 +759,7 @@ class iTermUvProvisioner: NSObject {
                 path: NSTemporaryDirectory())
             runner.environment = Self.mergedEnvironment(pythonInstallDir: Self.pythonInstallDirectory,
                                                         cacheDir: Self.cacheDirectory)
-            let status = runner.blockingRun()
+            let status = runner.blockingRun(withTimeout: Self.uvBuildTimeout)
             let output = runner.output ?? Data()
             DispatchQueue.main.async { completion(status == 0, output) }
         }

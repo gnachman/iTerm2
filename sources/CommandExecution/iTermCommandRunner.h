@@ -52,6 +52,10 @@ callbackQueue:(dispatch_queue_t)callbackQueue
 - (void)run;
 - (void)runWithTimeout:(NSTimeInterval)timeout;
 - (int)blockingRun;
+// Like blockingRun, but if the process has not finished after `timeout` seconds it is
+// SIGKILLed and this returns its (nonzero) exit code, so a hung subprocess cannot block
+// the caller forever. A timeout <= 0 waits forever (same as blockingRun).
+- (int)blockingRunWithTimeout:(NSTimeInterval)timeout;
 - (void)write:(NSData *)data completion:(void (^ _Nullable)(size_t, int))completion;
 - (void)terminate;
 
