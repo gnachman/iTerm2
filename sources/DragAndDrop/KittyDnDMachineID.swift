@@ -12,10 +12,31 @@
 
 import Foundation
 import CryptoKit
+import IOKit
 
 enum KittyDnDMachineID {
     /// Fixed HMAC key mandated by the protocol.
     static let hmacKey = "tty-dnd-protocol-machine-id"
+
+    /// The hashed id of the machine we are running on, derived from the hardware
+    /// platform UUID. Falls back to a fixed string if the UUID is unavailable
+    /// (only affects local-vs-remote detection, which then defaults to local).
+    static func localHashed() -> String {
+        return hashed(localBaseID() ?? "unknown-machine")
+    }
+
+    private static func localBaseID() -> String? {
+        let service = IOServiceGetMatchingService(kIOMainPortDefault,
+                                                  IOServiceMatching("IOPlatformExpertDevice"))
+        guard service != 0 else {
+            return nil
+        }
+        defer { IOObjectRelease(service) }
+        let property = IORegistryEntryCreateCFProperty(service,
+                                                       "IOPlatformUUID" as CFString,
+                                                       kCFAllocatorDefault, 0)
+        return property?.takeRetainedValue() as? String
+    }
 
     /// Hash a base machine id into the wire form "1:<lowercase hex>".
     static func hashed(_ baseID: String) -> String {

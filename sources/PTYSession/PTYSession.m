@@ -661,6 +661,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     id<iTermKeyMapper> _keyMapper;
     iTermKeyMappingMode _keyMappingMode;
 
+    // Kitty drag-and-drop protocol (OSC 72). Created lazily on the first OSC 72
+    // sequence.
+    iTermKittyDnDBridge *_kittyDnDBridge;
+
     NSString *_badgeFontName;
     iTermVariableScope *_variablesScope;
 
@@ -17730,11 +17734,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenDidReceiveKittyDragAndDrop:(NSString *)content {
-    // The Kitty drag-and-drop controller is wired up in a later phase. For now
-    // just note receipt so the parser plumbing can be exercised end to end. Log
-    // only the length, not the content, since a data payload can carry the bytes
-    // of a dropped file.
-    DLog(@"Received Kitty DnD OSC 72 sequence of length %@", @(content.length));
+    if (!_kittyDnDBridge) {
+        __weak __typeof(self) weakSelf = self;
+        _kittyDnDBridge = [[iTermKittyDnDBridge alloc] initWithReport:^(NSData *data) {
+            [weakSelf screenSendReportData:data];
+        }];
+    }
+    [_kittyDnDBridge handleInboundSequence:content];
 }
 
 - (void)screenSetPointerShape:(NSString *)pointerShape {
