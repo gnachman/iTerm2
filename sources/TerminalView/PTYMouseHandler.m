@@ -283,6 +283,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return YES;
     }
 
+    // Convert the visual click to a LOGICAL coordinate. The whole selection model
+    // (character drag, word/line/smart ranges, the highlight, and copy) works in
+    // logical space, so every mode begins from the logical coordinate.
     const VT100GridCoord clickPointCoord =
         [self.mouseDelegate mouseHandler:self
               logicalCoordForVisualCoord:[self.mouseDelegate mouseHandler:self

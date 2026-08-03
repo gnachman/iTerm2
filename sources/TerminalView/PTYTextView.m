@@ -4051,7 +4051,13 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                     range:(VT100GridWindowedRange *)rangePtr
           respectDividers:(BOOL)respectDividers {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
-    extractor.supportBidi = [iTermPreferences bidiEnabled];
+    // The caller (word selection) passes a coordinate that has already been
+    // converted from visual to logical. Run the extractor in logical space
+    // (supportBidi off) so it neither re-converts the input — which would land on
+    // the mirror-image cell — nor converts the result back to visual. That keeps
+    // the returned word range logical, matching how the selection is stored,
+    // highlighted, and copied.
+    extractor.supportBidi = NO;
     VT100GridCoord coord = VT100GridCoordMake(x, y);
     if (respectDividers) {
         [extractor restrictToLogicalWindowIncludingCoord:coord];
