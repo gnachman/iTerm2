@@ -766,23 +766,14 @@ class iTermUvProvisioner: NSObject {
             return nil
         }
         let fm = FileManager.default
-        func interpreterPath(_ minor: String) -> String {
-            return ((venvsRoot as NSString).appendingPathComponent(minor) as NSString)
-                .appendingPathComponent("bin/python")
-        }
-        func isProvisioned(_ minor: String) -> Bool {
-            let markerPath = ((venvsRoot as NSString).appendingPathComponent(minor) as NSString)
-                .appendingPathComponent(sharedVenvMarkerName)
-            return fm.isExecutableFile(atPath: interpreterPath(minor)) && fm.fileExists(atPath: markerPath)
-        }
-        if isProvisioned(requestedMinor) {
-            return interpreterPath(requestedMinor)
+        if sharedVenvIsProvisioned(forMinor: requestedMinor, venvsRoot: venvsRoot) {
+            return sharedVenvInterpreterPath(forMinor: requestedMinor, venvsRoot: venvsRoot)
         }
         if let data = fm.contents(atPath: sharedVenvRemapPath(forRequestedMinor: requestedMinor, venvsRoot: venvsRoot)),
            let resolvedMinor = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
            !resolvedMinor.isEmpty,
-           isProvisioned(resolvedMinor) {
-            return interpreterPath(resolvedMinor)
+           sharedVenvIsProvisioned(forMinor: resolvedMinor, venvsRoot: venvsRoot) {
+            return sharedVenvInterpreterPath(forMinor: resolvedMinor, venvsRoot: venvsRoot)
         }
         return nil
     }
@@ -813,10 +804,27 @@ class iTermUvProvisioner: NSObject {
         return (sharedVenvDirectory(forMinor: minor) as NSString).appendingPathComponent(sharedVenvMarkerName)
     }
 
-    static func sharedVenvIsProvisioned(forMinor minor: String) -> Bool {
+    // The interpreter path for a shared venv minor under an arbitrary venvsRoot.
+    static func sharedVenvInterpreterPath(forMinor minor: String, venvsRoot: String) -> String {
+        return ((venvsRoot as NSString).appendingPathComponent(minor) as NSString)
+            .appendingPathComponent("bin/python")
+    }
+
+    // The single "a shared venv is fully provisioned" predicate: an executable interpreter
+    // AND the .provisioned marker (written only after packages install, so a half-built
+    // venv does not count). venvsRoot is injected for hermetic testing; the production
+    // overload uses the real root. All callers go through here so the fast path, the
+    // stale-remap fallback, and the module-refresh scan cannot disagree about what counts.
+    static func sharedVenvIsProvisioned(forMinor minor: String, venvsRoot: String) -> Bool {
         let fm = FileManager.default
-        return fm.isExecutableFile(atPath: sharedVenvPython(forMinor: minor)) &&
-               fm.fileExists(atPath: sharedVenvMarkerPath(forMinor: minor))
+        let markerPath = ((venvsRoot as NSString).appendingPathComponent(minor) as NSString)
+            .appendingPathComponent(sharedVenvMarkerName)
+        return fm.isExecutableFile(atPath: sharedVenvInterpreterPath(forMinor: minor, venvsRoot: venvsRoot)) &&
+               fm.fileExists(atPath: markerPath)
+    }
+
+    static func sharedVenvIsProvisioned(forMinor minor: String) -> Bool {
+        return sharedVenvIsProvisioned(forMinor: minor, venvsRoot: sharedVenvsRoot)
     }
 
     // "3.12" / "3.12.3" -> "3.12"; nil if not of the form X.Y[.Z] with numeric parts.
@@ -884,6 +892,20 @@ class iTermUvProvisioner: NSObject {
                     return
                 }
                 let venvDirectory = Self.sharedVenvDirectory(forMinor: resolved.version)
+                // Building the resolved minor failed. Commonly this is offline: either the
+                // minor's CPython is not downloaded (uv venv fails) or its packages are not
+                // cached (uv pip install fails). Both are "could not build the resolved
+                // venv"; if a uv upgrade invalidated an earlier resolution for this request
+                // but that resolution's venv is still provisioned, fall back to it so an
+                // offline launch of a previously-working remapped script keeps working. A
+                // later online launch re-resolves and builds the now-available minor.
+                func completeWithBuildFailure(_ error: NSError) {
+                    if let fallback = Self.provisionedStaleRemapInterpreter(forRequestedVersion: requestedPythonVersion) {
+                        DispatchQueue.main.async { completion(nil, fallback) }
+                        return
+                    }
+                    DispatchQueue.main.async { completion(error, nil) }
+                }
                 // Start from a clean directory so a previously interrupted build can't
                 // leave stray files behind.
                 try? FileManager.default.removeItem(atPath: venvDirectory)
@@ -891,17 +913,7 @@ class iTermUvProvisioner: NSObject {
                                         iTermUvCommand.venvArgs(pythonVersion: resolved.version, venvPath: venvDirectory),
                                         environment) {
                     try? FileManager.default.removeItem(atPath: venvDirectory)
-                    // Building the resolved minor failed (commonly: offline, and this
-                    // minor's CPython is not downloaded). If a uv upgrade invalidated an
-                    // earlier resolution for this request but that resolution's venv is
-                    // still provisioned, fall back to it so an offline launch of a
-                    // previously-working remapped script keeps working. A later online
-                    // launch will re-resolve and build the now-available minor.
-                    if let fallback = Self.provisionedStaleRemapInterpreter(forRequestedVersion: requestedPythonVersion) {
-                        DispatchQueue.main.async { completion(nil, fallback) }
-                        return
-                    }
-                    DispatchQueue.main.async { completion(error, nil) }
+                    completeWithBuildFailure(error)
                     return
                 }
                 if let error = Self.run(Self.uvBinaryPath,
@@ -910,7 +922,7 @@ class iTermUvProvisioner: NSObject {
                     // Do not leave a half-built venv: the interpreter exists but the
                     // packages do not, and every later launch would trust it.
                     try? FileManager.default.removeItem(atPath: venvDirectory)
-                    DispatchQueue.main.async { completion(error, nil) }
+                    completeWithBuildFailure(error)
                     return
                 }
                 Self.markSharedVenvProvisioned(forMinor: resolved.version)
@@ -1072,21 +1084,34 @@ class iTermUvProvisioner: NSObject {
     // Invalidate recorded requested->resolved shared-venv remaps after a uv binary upgrade,
     // so stale resolutions do not pin scripts to a bumped Python minor the newer uv may now
     // provide directly. Move (not delete) them aside to .remaps-stale so an offline launch
-    // that cannot build the now-available minor can still fall back. Missing dir is a no-op.
+    // that cannot build the now-available minor can still fall back. MERGE per file rather
+    // than replacing the whole .remaps-stale directory: a second upgrade must not discard
+    // records left by the first for scripts that were never relaunched in between (a rarely
+    // used script plausibly skips a whole upgrade cycle). Missing dir is a no-op.
     private static func invalidateSharedVenvRemaps() {
         let fm = FileManager.default
         let remapsDir = (sharedVenvsRoot as NSString).appendingPathComponent(sharedVenvRemapsDirectoryName)
-        guard fm.fileExists(atPath: remapsDir) else {
+        guard let entries = try? fm.contentsOfDirectory(atPath: remapsDir), !entries.isEmpty else {
+            // Missing or empty: nothing fresh to invalidate. Drop an empty dir if present.
+            try? fm.removeItem(atPath: remapsDir)
             return
         }
         let staleDir = (sharedVenvsRoot as NSString).appendingPathComponent(sharedVenvStaleRemapsDirectoryName)
-        try? fm.removeItem(atPath: staleDir)
-        do {
-            try fm.moveItem(atPath: remapsDir, toPath: staleDir)
-            RLog("uv: marked shared-venv remap cache stale after a uv upgrade")
-        } catch {
-            RLog("uv: could not mark the shared-venv remap cache stale: \(error.localizedDescription)")
+        try? fm.createDirectory(atPath: staleDir, withIntermediateDirectories: true)
+        for entry in entries {
+            let source = (remapsDir as NSString).appendingPathComponent(entry)
+            let destination = (staleDir as NSString).appendingPathComponent(entry)
+            // The newer resolution wins for a same-named entry; other stale entries persist.
+            try? fm.removeItem(atPath: destination)
+            do {
+                try fm.moveItem(atPath: source, toPath: destination)
+            } catch {
+                RLog("uv: could not stale remap record \(entry): \(error.localizedDescription)")
+            }
         }
+        // The fresh dir is now empty; drop it so the live fast path stops consulting it.
+        try? fm.removeItem(atPath: remapsDir)
+        RLog("uv: merged \(entries.count) remap record(s) into the stale cache after a uv upgrade")
     }
 
     // A provisioned venv that a now-invalidated (stale) remap resolved this request to, or
@@ -1104,16 +1129,11 @@ class iTermUvProvisioner: NSObject {
             .appendingPathComponent(requestedMinor)
         guard let data = fm.contents(atPath: stalePath),
               let resolvedMinor = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !resolvedMinor.isEmpty else {
+              !resolvedMinor.isEmpty,
+              sharedVenvIsProvisioned(forMinor: resolvedMinor, venvsRoot: venvsRoot) else {
             return nil
         }
-        let resolvedDir = (venvsRoot as NSString).appendingPathComponent(resolvedMinor)
-        let interpreter = (resolvedDir as NSString).appendingPathComponent("bin/python")
-        let marker = (resolvedDir as NSString).appendingPathComponent(sharedVenvMarkerName)
-        if fm.isExecutableFile(atPath: interpreter) && fm.fileExists(atPath: marker) {
-            return interpreter
-        }
-        return nil
+        return sharedVenvInterpreterPath(forMinor: resolvedMinor, venvsRoot: venvsRoot)
     }
 
     static func provisionedStaleRemapInterpreter(forRequestedVersion requestedVersion: String) -> String? {
