@@ -858,6 +858,20 @@ class iTermUvProvisioner: NSObject {
                 let resolved = iTermUvPythonVersion.resolve(requested: requestedPythonVersion, available: available)
                 let interpreter = Self.sharedVenvPython(forMinor: resolved.version)
 
+                // Record and report a forced version remap BEFORE any early return. If the
+                // resolved venv already exists (e.g. venvs/3.9 was built for another
+                // script), the offline fast path missed only because THIS script's
+                // requested->resolved record was never written; writing it now lets that
+                // fast path match next launch, and tells the user once that the version was
+                // bumped. Doing this only on the build path below would leave both
+                // permanently unreachable once the resolved venv is provisioned.
+                if let from = resolved.remappedFrom {
+                    if let requestedMinor = Self.normalizedMinor(requestedPythonVersion) {
+                        Self.recordSharedVenvRemap(fromRequestedMinor: requestedMinor, toResolvedMinor: resolved.version)
+                    }
+                    Self.reportForcedRemap(scriptName: nil, from: from, to: resolved.version)
+                }
+
                 // Re-check with the marker (not just the interpreter) in case a
                 // concurrent launch finished, or a prior attempt left a half-built venv.
                 if Self.sharedVenvIsProvisioned(forMinor: resolved.version) {
@@ -885,15 +899,8 @@ class iTermUvProvisioner: NSObject {
                     return
                 }
                 Self.markSharedVenvProvisioned(forMinor: resolved.version)
-                // If the shebang's Python version was not available and got bumped, record
-                // the requested->resolved mapping so an offline relaunch finds this venv,
-                // and tell the user once (suppressibly), like the full-environment path.
-                if let from = resolved.remappedFrom {
-                    if let requestedMinor = Self.normalizedMinor(requestedPythonVersion) {
-                        Self.recordSharedVenvRemap(fromRequestedMinor: requestedMinor, toResolvedMinor: resolved.version)
-                    }
-                    Self.reportForcedRemap(scriptName: nil, from: from, to: resolved.version)
-                }
+                // The requested->resolved remap (if any) was already recorded and reported
+                // above, before the already-provisioned early return.
                 DispatchQueue.main.async { completion(nil, interpreter) }
             }
         }
@@ -945,9 +952,7 @@ class iTermUvProvisioner: NSObject {
                 case .upToDate:
                     break
                 }
-                Self.provisionQueue.async {
-                    Self.upgradeSharedVenvModules()
-                }
+                Self.enqueuePeriodicSharedVenvModuleUpgrades()
             }
         }
     }
@@ -1008,7 +1013,11 @@ class iTermUvProvisioner: NSObject {
         // Cap the download at the manifest-declared size plus slack (size is validated at
         // selection, so this cannot overflow), so a compromised host cannot exhaust memory.
         guard let url = URL(string: entry.url),
-              let data = boundedDownload(from: url, maxBytes: entry.size + 16 * 1024 * 1024) else {
+              // Generous total cap (1 hour): the ~37 MB tarball must complete on slow
+              // links. The 60 s idle timeout still fails a genuinely stalled transfer.
+              let data = boundedDownload(from: url,
+                                         maxBytes: entry.size + 16 * 1024 * 1024,
+                                         resourceTimeout: 3600) else {
             return .failed(message: "Could not download the uv update.")
         }
         var outcome: UvBinaryUpgradeOutcome = .upToDate(version: installed)
@@ -1026,10 +1035,33 @@ class iTermUvProvisioner: NSObject {
                                                     destinationBinaryPath: uvBinaryPath) {
                 outcome = .failed(message: error.localizedDescription)
             } else {
+                // A newer uv embeds newer python-build-standalone metadata, so a minor
+                // that was unavailable (and got remapped, e.g. 3.13->3.12) may now be
+                // available. The .remaps records are a cache of resolutions made against
+                // the OLD uv and are consulted unconditionally by the launch fast path, so
+                // without this a remapped script would stay on the bumped minor forever.
+                // Drop them so the next launch re-resolves against the new uv.
+                invalidateSharedVenvRemaps()
                 outcome = .upgraded(from: current, to: entry.uvVersion)
             }
         }
         return outcome
+    }
+
+    // Remove all recorded requested->resolved shared-venv remaps. Called after a uv
+    // binary upgrade so stale resolutions do not pin scripts to a bumped Python minor
+    // that the newer uv may now provide directly. Missing directory is not an error.
+    private static func invalidateSharedVenvRemaps() {
+        let venvsRoot = (uvDirectory as NSString).appendingPathComponent("venvs")
+        let remapsDir = (venvsRoot as NSString).appendingPathComponent(sharedVenvRemapsDirectoryName)
+        do {
+            try FileManager.default.removeItem(atPath: remapsDir)
+            RLog("uv: cleared shared-venv remap cache after a uv upgrade")
+        } catch CocoaError.fileNoSuchFile {
+            // Nothing recorded yet; nothing to invalidate.
+        } catch {
+            RLog("uv: could not clear the shared-venv remap cache: \(error.localizedDescription)")
+        }
     }
 
     // Upgrade the always-installed packages to the latest in every provisioned shared
@@ -1040,20 +1072,50 @@ class iTermUvProvisioner: NSObject {
     // failure can leave one package upgraded and others not (retried next day), and it
     // can rewrite site-packages while a basic script is running from that venv; that is
     // accepted as low risk for a once-a-day background refresh.
-    private static func upgradeSharedVenvModules() {
-        let venvsRoot = (uvDirectory as NSString).appendingPathComponent("venvs")
-        guard let minors = try? FileManager.default.contentsOfDirectory(atPath: venvsRoot) else {
+    // Upgrade the always-installed modules in ONE shared venv. The caller decides how it
+    // is scheduled on provisionQueue.
+    private static func upgradeModulesInSharedVenv(minor: String, environment: [String: String]) {
+        guard sharedVenvIsProvisioned(forMinor: minor) else {
             return
         }
+        let interpreter = sharedVenvPython(forMinor: minor)
+        if let error = run(uvBinaryPath,
+                           iTermUvCommand.pipInstallArgs(venvPythonPath: interpreter,
+                                                         packages: alwaysInstalledPackages,
+                                                         upgrade: true),
+                           environment) {
+            RLog("uv: background module upgrade for the \(minor) venv failed: \(error.localizedDescription)")
+        }
+    }
+
+    private static func provisionedSharedVenvMinors() -> [String] {
+        let venvsRoot = (uvDirectory as NSString).appendingPathComponent("venvs")
+        guard let minors = try? FileManager.default.contentsOfDirectory(atPath: venvsRoot) else {
+            return []
+        }
+        return minors.filter { sharedVenvIsProvisioned(forMinor: $0) }
+    }
+
+    // Synchronous, one pass over every provisioned shared venv. Used by the user-invoked
+    // check (the user is waiting, so occupying provisionQueue for the whole pass is fine).
+    private static func upgradeSharedVenvModules() {
         let environment = mergedEnvironment(pythonInstallDir: pythonInstallDirectory, cacheDir: cacheDirectory)
-        for minor in minors where sharedVenvIsProvisioned(forMinor: minor) {
-            let interpreter = sharedVenvPython(forMinor: minor)
-            if let error = run(uvBinaryPath,
-                               iTermUvCommand.pipInstallArgs(venvPythonPath: interpreter,
-                                                             packages: alwaysInstalledPackages,
-                                                             upgrade: true),
-                               environment) {
-                RLog("uv: background module upgrade for the \(minor) venv failed: \(error.localizedDescription)")
+        for minor in provisionedSharedVenvMinors() {
+            upgradeModulesInSharedVenv(minor: minor, environment: environment)
+        }
+    }
+
+    // Background daily refresh: enqueue EACH venv's upgrade as its own provisionQueue
+    // item, not one block that does all N sequentially. Each `uv pip install --upgrade`
+    // is a network-bound PyPI round trip, and provisionQueue also serves user-visible
+    // work (script launches, full-env provisioning, the Dependency Editor's pip calls).
+    // Per-venv items let a user request arriving mid-refresh be serviced between venvs
+    // instead of waiting minutes for the whole refresh on a slow link.
+    private static func enqueuePeriodicSharedVenvModuleUpgrades() {
+        let environment = mergedEnvironment(pythonInstallDir: pythonInstallDirectory, cacheDir: cacheDirectory)
+        for minor in provisionedSharedVenvMinors() {
+            provisionQueue.async {
+                upgradeModulesInSharedVenv(minor: minor, environment: environment)
             }
         }
     }
@@ -1090,7 +1152,13 @@ class iTermUvProvisioner: NSObject {
     // timeout: on the user-visible path this call runs on provisionQueue (via
     // fetchSelectedEntry in downloadIfNeeded), and a host trickling bytes slower than
     // the idle timeout would otherwise wedge every launch/provision indefinitely.
-    static func boundedDownload(from url: URL, maxBytes: Int) -> Data? {
+    // resourceTimeout caps the ENTIRE transfer. That is right for the tiny manifest on
+    // the user-visible provisionQueue (a host trickling bytes must not wedge every
+    // launch), but wrong for the ~37 MB uv tarball: a total cap of 120 s means any link
+    // below ~2.5 Mbps fails every upgrade forever, so a broken installed uv could never
+    // self-heal. For the tarball, pass a generous resourceTimeout and rely on the idle
+    // (per-request) timeout to catch a truly stalled connection instead.
+    static func boundedDownload(from url: URL, maxBytes: Int, resourceTimeout: TimeInterval = 120) -> Data? {
         let semaphore = DispatchSemaphore(value: 0)
         var succeeded = false
         let delegate = iTermBoundedDownloadDelegate(maxBytes: maxBytes) { ok in
@@ -1098,7 +1166,10 @@ class iTermUvProvisioner: NSObject {
             semaphore.signal()
         }
         let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForResource = 120
+        // Idle timeout: fail if no bytes arrive for this long. Bounds a stalled transfer
+        // without penalizing a slow-but-progressing one.
+        configuration.timeoutIntervalForRequest = 60
+        configuration.timeoutIntervalForResource = resourceTimeout
         let session = URLSession(configuration: configuration, delegate: delegate, delegateQueue: nil)
         session.dataTask(with: url).resume()
         semaphore.wait()
