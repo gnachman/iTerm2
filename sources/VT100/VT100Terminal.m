@@ -2642,6 +2642,15 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             }
             break;
         }
+        case XTERMCC_KITTY_DND:
+            // OSC 72: one escape sequence of the Kitty drag-and-drop protocol.
+            // token.string is the content after "72;" (metadata plus optional
+            // base64 payload). Chunk reassembly and interpretation happen in the
+            // per-session controller; here we just forward the raw content.
+            if (token.string) {
+                [_delegate terminalDidReceiveKittyDragAndDrop:token.string];
+            }
+            break;
         case XTERMCC_RESET_COLOR:
             [self resetColors:token.string];
             break;

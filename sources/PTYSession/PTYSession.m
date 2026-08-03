@@ -17729,6 +17729,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return [_textview rangeOfVisibleLines];
 }
 
+- (void)screenDidReceiveKittyDragAndDrop:(NSString *)content {
+    // The Kitty drag-and-drop controller is wired up in a later phase. For now
+    // the raw OSC 72 content is received and logged so the parser plumbing can
+    // be exercised end to end.
+    DLog(@"Received Kitty DnD OSC 72 content: %@", content);
+}
+
 - (void)screenSetPointerShape:(NSString *)pointerShape {
     NSDictionary *cursors = @{
         @"X_cursor": ^{ return [NSCursor operationNotAllowedCursor]; },

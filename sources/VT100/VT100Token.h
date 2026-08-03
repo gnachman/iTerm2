@@ -209,6 +209,7 @@ typedef enum {
     // See comment above XTERMCC_MULTITOKEN_BODY for details.
     XTERMCC_MULTITOKEN_HEADER_SET_KVP,
     XTERMCC_PASTE64,
+    XTERMCC_KITTY_DND,  // OSC 72: Kitty drag-and-drop protocol
     XTERMCC_FINAL_TERM,
     XTERMCC_FRAMER_WRAPPER,
     XTERMCC_RESET_COLOR,
