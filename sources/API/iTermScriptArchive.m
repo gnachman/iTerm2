@@ -346,6 +346,13 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
         }
         NSURL *toURL = [NSURL fileURLWithPath:to];
         DLog(@"Will install python environment to %@", from);
+        // Show the please-wait window now (gate off): the env copy + pip install below is
+        // the slow part and, unlike the uv path (where downloadAndProvisionFullEnvironment
+        // invokes this itself), the legacy install has no progress UI of its own. Doing it
+        // here keeps the window deferred past the download-consent prompt.
+        if (provisioningDidBegin) {
+            provisioningDidBegin();
+        }
         [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:[NSURL fileURLWithPath:from]
                                                                  eventualLocation:toURL
                                                                     pythonVersion:setupParser.pythonVersion
