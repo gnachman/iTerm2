@@ -241,15 +241,20 @@ final class KittyDnDController {
         case 2:
             isOfferingDrags = false
         default:
+            // A t=o with neither x nor o is not a declaration; ignore it rather
+            // than destroying an in-progress offer (unknown variants are no-ops).
+            guard message.metadata["o"] != nil else {
+                return
+            }
             // The program's offer declaration for a started gesture: operations
-            // plus the offered MIME list. Resets any prior half-built offer.
+            // plus the offered MIME list. Abandon any prior half-built offer and
+            // drain its outstanding data requests before starting fresh.
+            resetOfferInProgress()
             offerOperations = message.intValue("o") ?? 0
             offerMimeTypes = (message.textPayload ?? "")
                 .split(separator: " ")
                 .map(String.init)
                 .filter { !Self.isMachineIDToken($0) }
-            offerData = [:]
-            offerImage = nil
         }
     }
 
@@ -345,6 +350,9 @@ final class KittyDnDController {
     /// Ask the program for the data at `mimeIndex` (the lazy path, used when it
     /// was not pre-sent). `completion` is called with the bytes, or nil on error.
     func requestDragData(mimeIndex: Int, completion: @escaping (Data?) -> Void) {
+        // Fail any request already outstanding for this index so its completion
+        // is never leaked when we overwrite it.
+        pendingDataRequests[mimeIndex]?(nil)
         pendingDataRequests[mimeIndex] = completion
         send(KittyDnDMessage(metadata: ["t": "e", "x": "5", "y": String(mimeIndex)]))
     }

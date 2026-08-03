@@ -256,4 +256,61 @@ final class KittyDnDOfferTests: XCTestCase {
         c.handleInboundSequence("t=E:y=-1")
         XCTAssertEqual(host.cancelCount, 1)
     }
+
+    // Re-requesting the same index must not leak the first completion.
+    func testDoubleDataRequestFailsFirstCompletion() {
+        let recorder = Recorder()
+        let c = startedController(host: FakeDragHost(), recorder: recorder)
+        var firstResult: Data? = Data("sentinel".utf8)
+        var firstCalled = false
+        c.requestDragData(mimeIndex: 0) { firstCalled = true; firstResult = $0 }
+        c.requestDragData(mimeIndex: 0) { _ in }
+        XCTAssertTrue(firstCalled)
+        XCTAssertNil(firstResult)
+    }
+
+    // A pending request must be drained (with nil) when the drag finishes.
+    func testFinishDrainsPendingRequestWithNil() {
+        let recorder = Recorder()
+        let c = startedController(host: FakeDragHost(), recorder: recorder)
+        var called = false
+        var result: Data? = Data("sentinel".utf8)
+        c.requestDragData(mimeIndex: 0) { called = true; result = $0 }
+        c.dragFinished(canceled: false)
+        XCTAssertTrue(called)
+        XCTAssertNil(result)
+    }
+
+    // A bare t=o (neither x nor o) must not destroy an in-progress offer.
+    func testBareOfferIsIgnored() {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = makeController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:o=1;text/plain")
+        presend(c, index: 0, data: Data("hello".utf8))
+        c.handleInboundSequence("t=o")  // bare, must be ignored
+        c.handleInboundSequence("t=P:x=-1")
+        XCTAssertEqual(host.begun.first?.mimeTypes, ["text/plain"])
+        XCTAssertEqual(host.begun.first?.data[0], Data("hello".utf8))
+    }
+
+    // A second full offer cycle on the same controller must work (state resets).
+    func testSecondOfferCycleReusesController() {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = startedController(host: host, recorder: recorder)  // first cycle
+        c.dragFinished(canceled: false)
+
+        // Second cycle with different content.
+        c.dragGestureDetected(cellX: 1, cellY: 1, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:o=2;text/uri-list")
+        presend(c, index: 0, data: Data("world".utf8))
+        c.handleInboundSequence("t=P:x=-1")
+        XCTAssertEqual(host.begun.count, 2)
+        XCTAssertEqual(host.begun.last?.mimeTypes, ["text/uri-list"])
+        XCTAssertEqual(host.begun.last?.data[0], Data("world".utf8))
+        XCTAssertEqual(host.begun.last?.operations, 2)
+    }
 }
