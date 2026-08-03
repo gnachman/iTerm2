@@ -10,6 +10,7 @@ class AIMenuBarStatusController: NSObject {
     private var renderedCount: Int?
     private let baseImage: NSImage?
     private var sessionStatusObserverToken: NotifyingDictionaryObserverToken?
+    private let defaultsObserver = iTermUserDefaultsObserver()
     private var brokerSubscription: ChatBroker.Subscription?
 
     override init() {
@@ -24,11 +25,14 @@ class AIMenuBarStatusController: NSObject {
             name: NSNotification.Name("iTermProcessTypeDidChangeNotification"),
             object: nil)
 
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(defaultsChanged),
-            name: UserDefaults.didChangeNotification,
-            object: nil)
+        // Only the keys that feed shouldShow, so unrelated defaults writes cost nothing.
+        for key in [kPreferenceKeyUIElement,
+                    "ShowMenuBarItem",
+                    "StatusBarIcon"] {
+            defaultsObserver.observeKey(key) { [weak self] in
+                self?.refresh()
+            }
+        }
 
         sessionStatusObserverToken = SessionStatusController.instance.addObserver { [weak self] _, _, _ in
             self?.refresh()
@@ -60,10 +64,6 @@ class AIMenuBarStatusController: NSObject {
     }
 
     @objc func start() {
-        refresh()
-    }
-
-    @objc private func defaultsChanged() {
         refresh()
     }
 
@@ -106,28 +106,21 @@ class AIMenuBarStatusController: NSObject {
         renderedCount = nil
     }
 
+    // WorkgroupIntrospection and TypingStatusModel are @MainActor; this only runs
+    // from refreshOnMain().
     private func busyCount() -> Int {
-        // hasIndicator is set independently of the status text, and agents such as
-        // Claude Code keep the dot set while idle. Only the text says “working”.
-        let workingSessionIDs = SessionStatusController.instance.statuses.values
-            .filter { Self.isWorkingStatus($0.statusText) }
-            .map { $0.sessionID }
-        // TypingStatusModel is @MainActor; this only runs from refreshOnMain().
-        let busyChatIDs = MainActor.assumeIsolated {
-            TypingStatusModel.instance.chatIDs(forParticipant: .agent)
+        MainActor.assumeIsolated {
+            // hasIndicator is set independently of the status text, and agents such
+            // as Claude Code keep the dot set while idle, so classify on the text.
+            let workingSessionIDs = SessionStatusController.instance.statuses.values
+                .filter { WorkgroupIntrospection.state(forTabStatus: $0) == .working }
+                .map { $0.sessionID }
+            let busyChatIDs = TypingStatusModel.instance.chatIDs(forParticipant: .agent)
+            var unique = Set<String>()
+            for id in workingSessionIDs { unique.insert("session:\(id)") }
+            for id in busyChatIDs { unique.insert("chat:\(id)") }
+            return unique.count
         }
-        var unique = Set<String>()
-        for id in workingSessionIDs { unique.insert("session:\(id)") }
-        for id in busyChatIDs { unique.insert("chat:\(id)") }
-        return unique.count
-    }
-
-    // Prefix, not equality: emitters append progress, e.g. “Working… 24s”.
-    private static func isWorkingStatus(_ text: String?) -> Bool {
-        guard let text = text?.trimmingCharacters(in: .whitespaces) else {
-            return false
-        }
-        return text.lowercased().hasPrefix("working")
     }
 
     private func updateImage() {
