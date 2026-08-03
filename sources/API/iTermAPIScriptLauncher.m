@@ -134,7 +134,12 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     // env whose pip cannot exec. Ensure the shared runtime is arm64 first (refetching it
     // if needed), then rebuild. On macOS <=26, or when it is already native, this is an
     // immediate no-op.
-    [self ensureArm64StandardRuntimeForPythonVersion:configParser.pythonVersion completion:^(BOOL ok) {
+    [self ensureArm64StandardRuntimeForPythonVersion:configParser.pythonVersion completion:^(BOOL ok, BOOL canceled) {
+        if (canceled) {
+            // The user declined the runtime download; stay silent rather than blaming the
+            // network. The script keeps its (unrunnable) env; nothing was changed.
+            return;
+        }
         if (!ok) {
             [self showIntelOnlyUnrunnableErrorForScript:fullPath
                                                recovery:@"The Apple Silicon runtime could not be downloaded. Check your network connection and try again."];
@@ -531,71 +536,87 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     return NO;
 }
 
-// Ensure the shared standard runtime for pythonVersion has an arm64 slice, so a caller
-// about to hard-link it into a script env does not produce an Intel-only, unrunnable env
-// on a Rosetta-less macOS. On macOS <=26, when there is no runtime yet (a later download
-// fetches the arm64 build), or when it is already native, completes YES immediately with
-// no UI. Otherwise it removes the Intel-only runtime and refetches the arm64 build the
-// manifest now serves, completing with whether the result is native. completion runs on
-// the main queue.
-+ (void)ensureArm64StandardRuntimeForPythonVersion:(NSString *)pythonVersion
-                                        completion:(void (^)(BOOL ok))completion {
-    iTermPythonRuntimeDownloader *downloader = [iTermPythonRuntimeDownloader sharedInstance];
-    NSString *stdPython = [downloader pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
-    if ([iTermRosettaSupport canInstallRosetta] || stdPython == nil ||
-        [iTermRosettaSupport binaryHasArm64SliceAtPath:stdPython]) {
-        completion(YES);
+// Shared refetch of the Intel-only shared standard runtime with the arm64 build the
+// manifest now serves. Confirms with the user BEFORE the destructive delete (so declining
+// leaves the existing runtime in place rather than deleting it and then, on a canceled
+// download, leaving nothing), then deletes and downloads with confirmation:NO since consent
+// was already given. completion carries the downloader status so callers can stay silent on
+// cancel and distinguish it from a genuine download failure. Runs completion on the main
+// queue.
++ (void)refetchArm64StandardRuntimeForPythonVersion:(NSString *)pythonVersion
+                                         completion:(void (^)(iTermPythonRuntimeDownloaderStatus status))completion {
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:@"The shared Python runtime is Intel-only and cannot run on this version of macOS. Download the Apple Silicon version now?"
+                               actions:@[ @"Download", @"Cancel" ]
+                             accessory:nil
+                            identifier:@"NoSyncRefetchArm64Runtime"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Download Apple Silicon Runtime?"
+                                window:nil];
+    if (selection != kiTermWarningSelection0) {
+        completion(iTermPythonRuntimeDownloaderStatusCanceledByUser);
         return;
     }
+    iTermPythonRuntimeDownloader *downloader = [iTermPythonRuntimeDownloader sharedInstance];
     NSString *pyenvDir = [downloader pathToStandardPyenvWithVersion:pythonVersion creatingSymlinkIfNeeded:NO];
     if (pyenvDir.length > 0) {
         NSError *error = nil;
         [[NSFileManager defaultManager] removeItemAtPath:pyenvDir error:&error];
         RLog(@"Removed Intel-only standard runtime at %@: %@", pyenvDir, error);
     }
-    [[iTermScriptHistoryEntry globalEntry] addOutput:@"The shared Python runtime is Intel-only and cannot run on this version of macOS. Downloading the Apple Silicon runtime…\n"
+    [[iTermScriptHistoryEntry globalEntry] addOutput:@"Downloading the Apple Silicon Python runtime…\n"
                                           completion:^{}];
-    [downloader downloadOptionalComponentsIfNeededWithConfirmation:YES
+    // confirmation:NO: we already obtained consent above; the delete makes it "needed".
+    [downloader downloadOptionalComponentsIfNeededWithConfirmation:NO
                                                     pythonVersion:pythonVersion
                                         minimumEnvironmentVersion:0
                                                requiredToContinue:YES
                                                    withCompletion:^(iTermPythonRuntimeDownloaderStatus status) {
+        completion(status);
+    }];
+}
+
+// Ensure the shared standard runtime for pythonVersion has an arm64 slice, so a caller
+// about to hard-link it into a script env does not produce an Intel-only, unrunnable env
+// on a Rosetta-less macOS. On macOS <=26, when there is no runtime yet (a later download
+// fetches the arm64 build), or when it is already native, completes (YES, NO) immediately
+// with no UI. Otherwise it refetches, completing (native, canceled). completion runs on the
+// main queue.
++ (void)ensureArm64StandardRuntimeForPythonVersion:(NSString *)pythonVersion
+                                        completion:(void (^)(BOOL ok, BOOL canceled))completion {
+    iTermPythonRuntimeDownloader *downloader = [iTermPythonRuntimeDownloader sharedInstance];
+    NSString *stdPython = [downloader pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
+    if ([iTermRosettaSupport canInstallRosetta] || stdPython == nil ||
+        [iTermRosettaSupport binaryHasArm64SliceAtPath:stdPython]) {
+        completion(YES, NO);
+        return;
+    }
+    [self refetchArm64StandardRuntimeForPythonVersion:pythonVersion
+                                           completion:^(iTermPythonRuntimeDownloaderStatus status) {
         if (status == iTermPythonRuntimeDownloaderStatusCanceledByUser) {
-            completion(NO);
+            completion(NO, YES);
             return;
         }
         NSString *refreshed = [downloader pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
-        completion(refreshed != nil && [iTermRosettaSupport binaryHasArm64SliceAtPath:refreshed]);
+        completion(refreshed != nil && [iTermRosettaSupport binaryHasArm64SliceAtPath:refreshed], NO);
     }];
 }
 
 // A pre-existing Intel-only shared runtime is current by version but unrunnable on a
-// Rosetta-less macOS. Remove it so the (version-based) download refetches the arm64 build
-// the manifest now serves, then launch. If it still is not native, show a clear error.
+// Rosetta-less macOS. Refetch the arm64 build (with consent), then launch. Stay silent if
+// the user cancels; show a clear error if the download fails or is still not native.
 + (void)refetchArm64StandardRuntimeThenLaunch:(NSString *)filename
                                      fullPath:(NSString *)fullPath
                                     arguments:(NSArray<NSString *> *)arguments
                                 pythonVersion:(NSString *)pythonVersion
                            explicitUserAction:(BOOL)explicitUserAction {
-    iTermPythonRuntimeDownloader *downloader = [iTermPythonRuntimeDownloader sharedInstance];
-    NSString *pyenvDir = [downloader pathToStandardPyenvWithVersion:pythonVersion creatingSymlinkIfNeeded:NO];
-    if (pyenvDir.length > 0) {
-        NSError *error = nil;
-        [[NSFileManager defaultManager] removeItemAtPath:pyenvDir error:&error];
-        RLog(@"Removed Intel-only standard runtime at %@: %@", pyenvDir, error);
-    }
-    [[iTermScriptHistoryEntry globalEntry] addOutput:@"The shared Python runtime is Intel-only and cannot run on this version of macOS. Downloading the Apple Silicon runtime…\n"
-                                          completion:^{}];
-    [downloader downloadOptionalComponentsIfNeededWithConfirmation:YES
-                                                    pythonVersion:pythonVersion
-                                        minimumEnvironmentVersion:0
-                                               requiredToContinue:YES
-                                                   withCompletion:^(iTermPythonRuntimeDownloaderStatus status) {
+    [self refetchArm64StandardRuntimeForPythonVersion:pythonVersion
+                                           completion:^(iTermPythonRuntimeDownloaderStatus status) {
         if (status == iTermPythonRuntimeDownloaderStatusCanceledByUser) {
-            // The user deliberately declined the download; stay silent rather than
-            // blaming the network for a missing runtime (it was just removed above).
+            // The user deliberately declined; stay silent rather than blaming the network.
             return;
         }
+        iTermPythonRuntimeDownloader *downloader = [iTermPythonRuntimeDownloader sharedInstance];
         NSString *stdPython = [downloader pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
         if (stdPython == nil || ![iTermRosettaSupport binaryHasArm64SliceAtPath:stdPython]) {
             [self showIntelOnlyUnrunnableErrorForScript:fullPath
