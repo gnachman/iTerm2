@@ -2293,6 +2293,12 @@ static NSRange NSMakeRangeFromHalfOpenInterval(NSUInteger lowerBound, NSUInteger
     if (!_supportBidi) {
         return visualCoord;
     }
+    // An off-screen line (selection auto-scroll passes a negative y; mouse
+    // overflow can pass one past the end) has nothing to reorder. Fetching it
+    // would assert in the line buffer, so treat it as an identity mapping.
+    if (visualCoord.y < 0 || visualCoord.y >= [_dataSource numberOfLines]) {
+        return visualCoord;
+    }
     iTermBidiDisplayInfo *bidi = nil;
     ScreenCharArray *sca = [_dataSource screenCharArrayForLine:visualCoord.y];
     bidi = sca.bidiInfo;

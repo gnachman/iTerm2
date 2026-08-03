@@ -283,10 +283,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return YES;
     }
 
-    const VT100GridCoord clickPointCoord = [self.mouseDelegate mouseHandler:self
-                                                                 clickPoint:event
-                                                              allowOverflow:YES
-                                                                 firstMouse:_mouseDownWasFirstMouse];
+    const VT100GridCoord clickPointCoord =
+        [self.mouseDelegate mouseHandler:self
+              logicalCoordForVisualCoord:[self.mouseDelegate mouseHandler:self
+                                                               clickPoint:event
+                                                            allowOverflow:YES
+                                                               firstMouse:_mouseDownWasFirstMouse]];
     const int x = clickPointCoord.x;
     const int y = clickPointCoord.y;
     if ([self.mouseDelegate mouseHandler:self coordIsMutable:VT100GridCoordMake(x, y)] &&
