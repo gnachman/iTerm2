@@ -280,6 +280,17 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                                             recovery:@"Its environment is intact; turn off the uv advanced setting to rebuild it for Apple Silicon."]) {
                     return;
                 }
+                // Enforce the same minimum-environment-version security gate the gate-off
+                // path applies below: a restored legacy env below the floor must be upgraded
+                // before launch, not run directly. Otherwise declining the uv download would
+                // run an environment the legacy path refuses to launch "for security reasons".
+                NSString *restoredEnv = [fullPath stringByAppendingPathComponent:@"iterm2env"];
+                if ([self environmentVersionAt:restoredEnv] < iTermMinimumPythonEnvironmentVersion) {
+                    [self upgradeFullEnvironmentScriptAt:fullPath
+                                            configParser:configParser
+                                              completion:completion];
+                    return;
+                }
                 completion(restored);
                 return;
             }
