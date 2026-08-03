@@ -233,13 +233,22 @@ NS_ASSUME_NONNULL_BEGIN
 // python-build-standalone cannot provide (in practice 3.7 -> 3.9). Scripts are
 // migrated lazily on launch; this is the up-front heads-up.
 - (void)maybeWarnAboutUvVersionBumps {
-    static BOOL shownThisLaunch = NO;
-    if (shownThisLaunch) {
+    // Latch AFTER the gate check but BEFORE the scan, and regardless of whether the scan
+    // produces a warning. -build runs on every launch, every SCEvents file event under
+    // the Scripts tree, every install, and scriptsFolderDidChange; the tree walk below is
+    // a synchronous main-thread recursive scan with a per-entry stat and a setup.cfg
+    // parse. Latching only after a non-nil warning (the old behavior) meant the common
+    // case (gate on, no pending bumps) re-walked the whole tree on every one of those
+    // events. Leaving the gate-off case unlatched preserves the one scan if the user
+    // enables uv later in the session.
+    static BOOL checkedThisLaunch = NO;
+    if (checkedThisLaunch) {
         return;
     }
     if (![iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
         return;
     }
+    checkedThisLaunch = YES;
     NSFileManager *fm = [NSFileManager defaultManager];
     NSString *scriptsPath = [fm scriptsPathWithoutSpaces];
     // Walk the whole scripts tree (AutoLaunch and any nested folders), keyed by each
@@ -253,7 +262,6 @@ NS_ASSUME_NONNULL_BEGIN
     if (!text) {
         return;
     }
-    shownThisLaunch = YES;
     [iTermWarning showWarningWithTitle:text
                                actions:@[ @"OK" ]
                              accessory:nil
