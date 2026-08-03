@@ -150,9 +150,26 @@ fileprivate struct IntermediateLookupTable {
     var sourceCellToPositionRange: Array<ClosedRange<CGFloat>?>
     var count: Int
 
-    init(line: CTLine, string: NSString, deltas: UnsafePointer<Int32>, count: Int) {
+    // `string` is what CoreText laid out (which may contain inserted isolate
+    // controls when Latin runs are isolated). `cellForIndex` maps each UTF-16
+    // index of `string` to a source cell, or -1 for an inserted control that
+    // has no cell.
+    init(line: CTLine, string: NSString, cellForIndex: [Int32], count: Int) {
         self.count = count
+        // When Latin runs are isolated, guillemets keep their natural glyph
+        // (« opens on the right in Persian, and stays un-flipped around English)
+        // rather than following the standard bidi mirroring the user found
+        // inverted. Brackets still mirror.
+        let dontMirrorQuotes = iTermAdvancedSettingsModel.isolateLatinRunsInRTL()
+        func isGuillemet(_ c: unichar) -> Bool {
+            return c == 0x00AB || c == 0x00BB || c == 0x2039 || c == 0x203A
+        }
         let runs = CTLineGetGlyphRuns(line) as! [CTRun]
+
+        func cell(_ stringIndex: Int) -> Int {
+            guard stringIndex >= 0 && stringIndex < cellForIndex.count else { return -1 }
+            return Int(cellForIndex[stringIndex])
+        }
 
         // Source cell to range of positions
         sourceCellToPositionRange = Array<ClosedRange<CGFloat>?>(repeating: nil, count: count)
@@ -163,8 +180,8 @@ fileprivate struct IntermediateLookupTable {
             // Update rtlIndexes
             if isRTL {
                 for stringIndex in run.stringRange {
-                    let sourceCell = Int(CellOffsetFromUTF16Offset(Int32(stringIndex), deltas))
-                    rtlIndexes.insert(sourceCell)
+                    let sourceCell = cell(stringIndex)
+                    if sourceCell >= 0 { rtlIndexes.insert(sourceCell) }
                 }
             }
 
@@ -174,7 +191,8 @@ fileprivate struct IntermediateLookupTable {
             let font = run.font
             for i in 0..<run.glyphCount {
                 let stringIndex = stringIndices[i]
-                let sourceCell = Int(CellOffsetFromUTF16Offset(Int32(stringIndex), deltas))
+                let sourceCell = cell(stringIndex)
+                if sourceCell < 0 { continue }  // inserted isolate control: no cell
                 if var existing = sourceCellToPositionRange[sourceCell] {
                     existing.formUnion(positions[i].x...positions[i].x)
                     sourceCellToPositionRange[sourceCell] = existing
@@ -194,7 +212,7 @@ fileprivate struct IntermediateLookupTable {
                         var chars: [unichar] = [ch]
                         var defaultGlyphs = [CGGlyph](repeating: 0, count: 1)
                         CTFontGetGlyphsForCharacters(font, &chars, &defaultGlyphs, 1)
-                        if glyphs[i] != defaultGlyphs[0] {
+                        if glyphs[i] != defaultGlyphs[0] && !(dontMirrorQuotes && isGuillemet(ch)) {
                             mirroredIndexes.insert(sourceCell)
                         }
                     }
@@ -239,33 +257,129 @@ fileprivate struct IntermediateLookupTable {
     }
 }
 
+// Wrap maximal runs of non-space ASCII text that contain a Latin letter in
+// isolate controls (LRI…PDI) so CoreText lays them out as left-to-right
+// islands: English words, file paths, and code keep their natural order and
+// their surrounding brackets stay un-mirrored. Returns the isolated string and,
+// per UTF-16 index of it, the source cell (-1 for an inserted control).
+private let iTermLRI: unichar = 0x2066
+private let iTermRLI: unichar = 0x2067
+private let iTermFSI: unichar = 0x2068
+private let iTermPDI: unichar = 0x2069
+
+fileprivate func isolateLatinRuns(_ s: NSString, deltas: UnsafePointer<Int32>) -> (NSString, [Int32]) {
+    // Accented Latin letters (Müggelsee, café, Tegernsee, …). Latin-1 Supplement
+    // and Latin Extended-A letters, minus the two math signs × and ÷.
+    func isLatinExtendedLetter(_ c: unichar) -> Bool {
+        if c == 0xD7 || c == 0xF7 { return false }
+        return (c >= 0xC0 && c <= 0xFF) || (c >= 0x100 && c <= 0x17F)
+    }
+    func isLetter(_ c: unichar) -> Bool {
+        return (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A) || isLatinExtendedLetter(c)
+    }
+    // Island content: printable ASCII (no space), plus accented Latin letters so
+    // a word like "Müggelsee" is not split at the ü.
+    func isIsland(_ c: unichar) -> Bool { (c > 0x20 && c < 0x7F) || isLatinExtendedLetter(c) }
+    func isDigit(_ c: unichar) -> Bool { c >= 0x30 && c <= 0x39 }
+    func isAlnum(_ c: unichar) -> Bool { isLetter(c) || isDigit(c) }
+    func isOpeningBracket(_ c: unichar) -> Bool { c == 0x28 || c == 0x5B || c == 0x7B }
+    let n = s.length
+    var out = [unichar]()
+    var map = [Int32]()
+    out.reserveCapacity(n + 8)
+    map.reserveCapacity(n + 8)
+    var i = 0
+    while i < n {
+        let c = s.character(at: i)
+        if isIsland(c) {
+            // Extend across island characters, and across interior spaces that
+            // have island content on the far side, so a multi-word phrase like
+            // "Tempelhofer Feld" or "Google Chrome" stays a single island. A
+            // trailing space before non-island (e.g. Persian) content ends it.
+            var j = i
+            var hasLetter = false
+            while j < n {
+                let cj = s.character(at: j)
+                if isIsland(cj) {
+                    if isLetter(cj) { hasLetter = true }
+                    j += 1
+                } else if cj == 0x20 {
+                    // Span an interior space when more Latin content follows, so a
+                    // multi-word phrase ("Google Chrome", "Windows 11", "Berlin
+                    // (capital)") stays a single island. Look through an opening
+                    // bracket to what it introduces: a bracket that opens Latin
+                    // content belongs to the phrase, but one that opens the next
+                    // Persian phrase — as in "School of Hip Hop (فصل …" — is left
+                    // outside the island so it mirrors normally.
+                    var k = j
+                    while k < n && s.character(at: k) == 0x20 { k += 1 }
+                    var probe = k
+                    if probe < n && isOpeningBracket(s.character(at: probe)) { probe += 1 }
+                    if probe < n && isAlnum(s.character(at: probe)) {
+                        j = k  // interior space before more Latin content: keep going
+                    } else {
+                        break  // island ends here
+                    }
+                } else {
+                    break
+                }
+            }
+            if hasLetter {
+                out.append(iTermLRI); map.append(-1)
+                for k in i..<j { out.append(s.character(at: k)); map.append(CellOffsetFromUTF16Offset(Int32(k), deltas)) }
+                out.append(iTermPDI); map.append(-1)
+            } else {
+                for k in i..<j { out.append(s.character(at: k)); map.append(CellOffsetFromUTF16Offset(Int32(k), deltas)) }
+            }
+            i = j
+        } else {
+            out.append(c); map.append(CellOffsetFromUTF16Offset(Int32(i), deltas))
+            i += 1
+        }
+    }
+    return (NSString(characters: out, length: out.count), map)
+}
+
 // Make a lookup table that maps source cell to display cell.
-fileprivate func makeLookupTable(_ attributedString: NSAttributedString,
-                                     deltas: UnsafePointer<Int32>,
+fileprivate func makeLookupTable(_ string: NSString,
+                                 cellForIndex: [Int32],
                                  count: Int) -> ([Int32], IndexSet, IndexSet, Bool) {
+    let attributedString = NSAttributedString(string: string as String,
+                                              attributes: [.paragraphStyle: BidiDisplayInfo.paragraphStyleForLookup])
     // Create a CTLine from the attributed string
     let line = CTLineCreateWithAttributedString(attributedString)
     let intermediate = IntermediateLookupTable(line: line,
-                                               string: attributedString.string as NSString,
-                                               deltas: deltas,
+                                               string: string,
+                                               cellForIndex: cellForIndex,
                                                count: count)
 
-    let firstStrongLTR = attributedString.string.rangeOfCharacter(from: NSCharacterSet.strongLTRCodePoints())
-    let firstStrongRTL = attributedString.string.rangeOfCharacter(from: NSCharacterSet.strongRTLCodePoints())
-
     let paragraphIsRTL: Bool =
-        if iTermAdvancedSettingsModel.detectParagraphDirection() {
-            if let firstStrongLTR, let firstStrongRTL {
-                firstStrongLTR.lowerBound > firstStrongRTL.lowerBound
-            } else if firstStrongRTL != nil {
-                true
-            } else {
-                false
-            }
-        } else {
-            false
-        }
+        iTermAdvancedSettingsModel.detectParagraphDirection() &&
+        firstStrongIsRTL(string)
     return (intermediate.lut, intermediate.rtlIndexes, intermediate.mirroredIndexes, paragraphIsRTL)
+}
+
+// Base direction from the first strong directional character that is NOT inside
+// a Latin isolate. Without the isolate feature (no LRI/PDI) this is just the
+// first strong character, so behavior is unchanged. With it, a line that opens
+// with an English word is still treated as right-to-left when its real content
+// is right-to-left, instead of following that leading English word.
+fileprivate func firstStrongIsRTL(_ s: NSString) -> Bool {
+    guard let ltr = NSCharacterSet.strongLTRCodePoints(),
+          let rtl = NSCharacterSet.strongRTLCodePoints() else {
+        return false
+    }
+    var isolateDepth = 0
+    for i in 0..<s.length {
+        let c = s.character(at: i)
+        if c == iTermLRI || c == iTermRLI || c == iTermFSI { isolateDepth += 1; continue }
+        if c == iTermPDI { if isolateDepth > 0 { isolateDepth -= 1 }; continue }
+        if isolateDepth > 0 { continue }
+        guard let scalar = Unicode.Scalar(c) else { continue }
+        if rtl.contains(scalar) { return true }
+        if ltr.contains(scalar) { return false }
+    }
+    return false
 }
 
 extension IndexSet {
@@ -765,12 +879,29 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
         self.paragraphIsRTL = paragraphIsRTL
     }
 
-    private static var paragraphStyle: NSParagraphStyle {
+    static var paragraphStyleForLookup: NSParagraphStyle {
         let paragraphStyle = NSMutableParagraphStyle()
         if !iTermAdvancedSettingsModel.detectParagraphDirection() {
             paragraphStyle.baseWritingDirection = .leftToRight
         }
         return paragraphStyle
+    }
+
+    // Builds the string CoreText should lay out and a per-UTF-16-index map to
+    // source cells. With Latin-run isolation on, the string gains isolate
+    // controls (mapping to cell -1); otherwise it is the input with an identity
+    // cell map.
+    fileprivate static func mappedString(_ s: NSString,
+                                         deltas: UnsafePointer<Int32>) -> (NSString, [Int32]) {
+        if iTermAdvancedSettingsModel.isolateLatinRunsInRTL() {
+            return isolateLatinRuns(s, deltas: deltas)
+        }
+        var map = [Int32]()
+        map.reserveCapacity(s.length)
+        for k in 0..<s.length {
+            map.append(CellOffsetFromUTF16Offset(Int32(k), deltas))
+        }
+        return (s, map)
     }
 
     // Fails if no RTL was found
@@ -787,10 +918,9 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
             free(buffer)
         }
 
-        let attributedString = NSAttributedString(string: string,
-                                                  attributes: [.paragraphStyle: Self.paragraphStyle])
-        (lut, rtlIndexes, mirroredIndexes, paragraphIsRTL) = makeLookupTable(attributedString,
-                                                                            deltas: deltas!,
+        let (laidOut, cellForIndex) = Self.mappedString(string as NSString, deltas: deltas!)
+        (lut, rtlIndexes, mirroredIndexes, paragraphIsRTL) = makeLookupTable(laidOut,
+                                                                            cellForIndex: cellForIndex,
                                                                             count: Int(nonEmptyCount))
         if rtlIndexes.isEmpty {
             return nil
@@ -798,10 +928,9 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
     }
 
     init?(deltaString: DeltaString, usedCount: Int) {
-        let attributedString = NSAttributedString(string: deltaString.unsafeString as String,
-                                                  attributes: [.paragraphStyle: Self.paragraphStyle])
-        (lut, rtlIndexes, mirroredIndexes, paragraphIsRTL) = makeLookupTable(attributedString,
-                                                                            deltas: deltaString.deltas,
+        let (laidOut, cellForIndex) = Self.mappedString(deltaString.unsafeString, deltas: deltaString.deltas)
+        (lut, rtlIndexes, mirroredIndexes, paragraphIsRTL) = makeLookupTable(laidOut,
+                                                                            cellForIndex: cellForIndex,
                                                                             count: usedCount)
         if rtlIndexes.isEmpty {
             return nil

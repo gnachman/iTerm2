@@ -166,6 +166,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)defaultIconsUsingLetters;
 + (BOOL)defaultWideMode;
 + (BOOL)detectParagraphDirection;
++ (BOOL)isolateLatinRunsInRTL;
 + (BOOL)detectPasswordInput;
 + (double)detectPasswordInputDebounce;
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;
