@@ -2569,3 +2569,12 @@ Bug Fixes:
   resolution, so a bracket around an English
   phrase inside Persian is handled the same
   way other Mac apps handle it.
+- New Advanced setting, off by default: “Treat
+  Latin words as left-to-right islands in
+  right-to-left text.” Turn it on and English
+  words, file paths, and code inside Persian or
+  Arabic keep their natural left-to-right order
+  and un-flipped brackets, while the
+  surrounding text still follows the standard
+  bidi rules. Aimed at terminals that mix
+  technical English into right-to-left prose.

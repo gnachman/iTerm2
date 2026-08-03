@@ -24,6 +24,16 @@ class BidiMirrorSelectionTests: XCTestCase {
     override func setUp() { super.setUp(); setBidiPreference(true) }
     override func tearDown() { setBidiPreference(false); super.tearDown() }
 
+    // NOTE ON CONFIGURATION: these assertions describe the default paragraph
+    // direction (forced LTR base, i.e. "auto-detect paragraph direction" OFF).
+    // There, bracket pairs whose content matches the LTR base (an English run)
+    // resolve to LTR and are NOT mirrored, while brackets around RTL content
+    // are. When auto-detect is ON, a Persian-first line gets an RTL base and
+    // CoreText then mirrors BOTH pairs; the production code follows CoreText's
+    // decision either way (it is not hard-coded here), so it stays correct in
+    // both configurations. The value of this fix is precisely that: mirroring
+    // tracks CoreText's real per-character resolution instead of run direction.
+
     // For an all-BMP, no-combining string, cell index == UTF-16 index.
     private func info(_ s: String) -> BidiDisplayInfoObjc? {
         let sca = screenCharArrayWithDefaultStyle(s, eol: EOL_HARD)
