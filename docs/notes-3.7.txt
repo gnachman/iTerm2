@@ -137,6 +137,11 @@ Major New Features:
   instead of ESC \) was discarded entirely,
   leaving a stray backslash on the screen. The
   image now renders.
+- Fixed a bug where a left- or right-of-screen
+  window could suddenly change width (growing or
+  shrinking to a second tab’s profile size) after
+  a display-configuration change, instead of
+  keeping its own width.
 - Security: the retrospective debug log (used by
   Save Retrospective Debug Logs) no longer retains
   typed characters, command lines, passwords,
