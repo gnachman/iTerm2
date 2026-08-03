@@ -2537,3 +2537,12 @@ Bug Fixes:
 - Legacy scripts whose setup.cfg has no exact
   Python pin now get the same version-change
   warning as pinned ones when migrating to uv.
+- On macOS without Rosetta, iTerm2 now asks
+  before replacing an Intel-only Python runtime
+  with the Apple Silicon build, and stays quiet
+  if you decline.
+- A script whose replacement is interrupted by
+  a crash mid-install is now restored on the
+  next launch instead of being lost.
+- The Scripts menu no longer lists files or
+  folders whose names begin with a dot.
