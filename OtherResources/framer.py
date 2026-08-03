@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
+import atexit
 import base64
 import contextlib
 import errno
@@ -48,6 +49,39 @@ READSTATE=0
 BASEID=str(random.randint(0, 1048576)) + str(os.getpid()) + str(int(time.time() * 1000000))
 IDCOUNT=0
 SEARCH_TASK = None
+# it2-over-ssh: the unix-socket server the remote `it2` connects to, and the
+# accepted connections (connid -> asyncio StreamWriter). Dormant until iTerm2
+# sends the "it2listen" command.
+IT2_SERVER = None
+IT2_CONNS = {}
+# connids whose close iTerm2 initiated via it2close. The reader coroutine checks this in its
+# finally so it does NOT echo a duplicate `%it2 close` back for a connid iTerm2 already tore
+# down. A framer/client-initiated teardown (client disconnect, buffer-cap abort) is NOT in
+# here, so it still emits close to inform iTerm2. Each entry is discarded by the reader.
+IT2_LOCALLY_CLOSED = set()
+# Path of the bound it2 socket, remembered so we can unlink it on shutdown (it
+# lives in a persistent, per-user directory, so a leaked socket would linger).
+IT2_SOCKET_PATH = None
+# Liveness lock for the bound socket: a live framer holds an exclusive advisory flock on
+# a sidecar "<socket>.lock" file for its entire lifetime. The kernel releases that lock
+# when the process dies (including SIGKILL when an ssh connection drops), so another
+# framer can tell a leaked socket from a live one by whether its lock is acquirable,
+# with no timing race and without connecting to the socket. IT2_LOCK_FD is kept open the
+# whole time precisely to hold the lock; IT2_LOCK_PATH is its file, unlinked on teardown.
+IT2_LOCK_FD = None
+IT2_LOCK_PATH = None
+# Upper bound on a single it2 client's unsent (buffered) bytes. it2send writes without
+# awaiting drain() -- draining on the shared command loop would let a stalled consumer's
+# backpressure freeze send/kill/file/poll for the whole SSH session -- so instead we bound
+# memory: a stalled consumer whose buffer grows past this is dropped, not the loop.
+IT2_WRITE_BUFFER_MAX = 4 * 1024 * 1024  # 4 MiB
+# framer emits one OSC 134 "%it2 <connid> data <b64>" frame per socket read (via
+# send_esc), and iTerm2's conductor OSC parser accumulates a frame's payload one
+# char at a time (O(n^2) in its length). Normal up-traffic is only tiny
+# HELLO/CANCEL, so this cap is inert in practice; it just stops a misbehaving or
+# hostile client on the socket from feeding one giant frame to that parser. The
+# demux reassembles the it2.py wire frames across chunks.
+IT2_READ_CHUNK = 1024
 
 def squash(i):
     a = list(map(chr, list(range(48,58))+list(range(65,91))+list(range(97,123))))
@@ -80,12 +114,31 @@ def send_esc(q, text):
 def lock():
     return []
 
+def _write_all(fd, data):
+    # os.write can write FEWER bytes than requested (a signal such as SIGWINCH delivered after
+    # a partial write, or a full pipe). PEP 475 only auto-retries on EINTR when zero bytes were
+    # written, so a partial write is NOT retried -- loop until every byte is out. Dropping the
+    # tail here silently truncates an up-channel OSC frame and desyncs iTerm2's conductor
+    # parser for the whole ssh session, not just one it2 command.
+    if isinstance(data, str):
+        data = data.encode('utf-8')
+    view = memoryview(data)
+    total = 0
+    length = len(view)
+    while total < length:
+        try:
+            written = os.write(fd, view[total:])
+        except InterruptedError:
+            continue  # EINTR with no progress: retry
+        if written <= 0:
+            break  # fd closed / unwritable; give up rather than spin
+        total += written
+
+
 def unlock(writes):
     if writes:
         for data in writes:
-            if isinstance(data, str):
-                data = data.encode('utf-8')
-            os.write(sys.stdout.fileno(), data)
+            _write_all(sys.stdout.fileno(), data)
         sys.stdout.flush()
 
 class Process:
@@ -1247,7 +1300,13 @@ async def handle_file_chmod_u(q, identifier, path, mode):
 async def handle_recover(identifier, args):
     log("handle_recover")
     q = lock()
+    # Keep this section await-free through unlock(q): the begin-recovery..end-recovery
+    # block must stay contiguous. _it2_close_connections() aborts orphaned it2 connections
+    # whose reader coroutines emit a `%it2 close` in their finally; abort() defers that via
+    # call_soon so it runs only after we return, but a stray await here could let a woken
+    # reader interleave that line into the recovery block.
     reset()
+    _it2_close_connections()
     send_esc(q, f'begin-recovery')
     send_esc(q, f'recovery: version 2')
     for pid in PROCESSES:
@@ -1369,6 +1428,7 @@ async def handle_quit(identifier, args):
         except asyncio.CancelledError:
             log('autopoll is now canceled')
         AUTOPOLL_TASK = None
+    _it2_teardown_socket()
     return True
 
 ## Helpers for run()
@@ -1563,6 +1623,295 @@ def on_sigwinch(_sig, _stack):
         READSTATE = 2
     asyncio.run_coroutine_threadsafe(update_pty_size(), RUNLOOP)
 
+# it2-over-ssh: proxy a remote unix socket to iTerm2. iTerm2's embedded it2 runs
+# the command; framer.py is a dumb byte pipe. Frames up: "%it2 <connid> open",
+# "%it2 <connid> data <base64>", "%it2 <connid> close". Commands down: "it2send
+# <connid> <base64>", "it2close <connid>".
+def _it2_teardown_socket():
+    """Close the it2 server, unlink its socket, and release+remove its liveness lock.
+    Idempotent and safe from atexit; everything lives in a persistent per-user dir so a
+    leak would linger."""
+    global IT2_SERVER, IT2_SOCKET_PATH, IT2_LOCK_FD, IT2_LOCK_PATH
+    if IT2_SERVER is not None:
+        with contextlib.suppress(Exception):
+            IT2_SERVER.close()
+        IT2_SERVER = None
+    if IT2_SOCKET_PATH is not None:
+        with contextlib.suppress(OSError):
+            os.unlink(IT2_SOCKET_PATH)
+        IT2_SOCKET_PATH = None
+    if IT2_LOCK_PATH is not None:
+        with contextlib.suppress(OSError):
+            os.unlink(IT2_LOCK_PATH)
+        IT2_LOCK_PATH = None
+    if IT2_LOCK_FD is not None:
+        with contextlib.suppress(OSError):
+            os.close(IT2_LOCK_FD)  # closing the fd drops the advisory lock
+        IT2_LOCK_FD = None
+
+# Covers exits that skip handle_quit (read error, SIGHUP-then-clean-exit, etc.).
+atexit.register(_it2_teardown_socket)
+
+def _it2_close_connections():
+    """Abort every accepted it2 client connection (but keep the listening socket).
+    Called on recovery: iTerm2 restarted/reattached, so the demux that owned these
+    connections is gone and their commands can never complete. Aborting each writer
+    gives the orphaned it2.py client an EOF/RST so it exits instead of blocking forever
+    on recv (its socket stayed open because this framer survived the restart)."""
+    global IT2_CONNS
+    for writer in list(IT2_CONNS.values()):
+        # abort(), not close(): a graceful close() waits for the send buffer to flush
+        # before sending FIN, which never completes for a stalled follow-stream whose
+        # client stopped reading (exactly the mid-send connection this must unblock).
+        # abort() RSTs immediately so the orphaned it2.py gets EOF/error and exits.
+        with contextlib.suppress(Exception):
+            writer.transport.abort()
+    IT2_CONNS = {}
+
+def _it2_lock_path(sock_path):
+    return sock_path + ".lock"
+
+
+def _it2_lock_is_held(lock_path):
+    """True iff some live framer currently holds the exclusive advisory lock on lock_path.
+    We test it non-blocking by trying to take it and dropping it immediately (closing the fd
+    releases our test lock; a real owner's lock lives on a different fd and is untouched). A
+    missing lock file is not held. An unopenable one is treated as held, i.e. we keep the
+    socket rather than risk reclaiming a live one."""
+    try:
+        fd = os.open(lock_path, os.O_RDWR)
+    except FileNotFoundError:
+        return False
+    except OSError:
+        return True
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return False  # acquired -> nobody holds it
+    except OSError:
+        return True   # a live framer holds it
+    finally:
+        os.close(fd)
+
+
+def _it2_sweep_stale_sockets(socket_dir, keep):
+    """Reclaim it2 sockets leaked by prior sessions. When an ssh connection drops, framer is
+    killed (SIGHUP/SIGKILL) before handle_quit or the atexit hook can unlink its socket, and
+    each session used a fresh random name, so the owner-only dir accumulates dead sockets.
+    Validity is decided by the liveness lock, not by connecting: the owner holds an exclusive
+    flock on <socket>.lock for its whole life and the kernel drops it on death, so a socket
+    whose lock is not held (dead owner) -- or has no lock at all (a leftover predating this
+    scheme, e.g. the sockets already piled up on a host) -- is stale and reclaimable, while a
+    held lock proves a live owner. Unlike a connect probe this cannot race a bind-in-progress
+    or disturb a live peer. `keep` (the path we are about to bind) is skipped."""
+    try:
+        names = os.listdir(socket_dir)
+    except OSError:
+        return
+    for name in names:
+        full = os.path.join(socket_dir, name)
+        if name.endswith(".sock") and full != keep:
+            # Stale iff no live owner holds its lock (or there is no lock sidecar at all).
+            if not _it2_lock_is_held(_it2_lock_path(full)):
+                with contextlib.suppress(OSError):
+                    os.unlink(full)
+                with contextlib.suppress(OSError):
+                    os.unlink(_it2_lock_path(full))
+        elif name.endswith(".sock.lock") and full != _it2_lock_path(keep):
+            # An orphan lock whose socket is already gone (owner died between locking and
+            # binding, or after its socket was reclaimed above): drop it if unheld.
+            sock_path = full[: -len(".lock")]
+            if not os.path.exists(sock_path) and not _it2_lock_is_held(full):
+                with contextlib.suppress(OSError):
+                    os.unlink(full)
+
+
+async def handle_it2listen(identifier, args):
+    q = begin(identifier)
+    global IT2_SERVER
+    if IT2_SERVER is not None:
+        end(q, identifier, 0)
+        return
+    if not args:
+        end(q, identifier, 1)
+        return
+    path = args[0]
+    global IT2_SOCKET_PATH, IT2_LOCK_FD, IT2_LOCK_PATH
+    try:
+        # Contain the socket in an owner-only (0700) directory. The socket file
+        # itself is created 0700 (umask) then chmod 0600, but bind-time socket
+        # permissions are not portable across platforms, so a 0700 parent is the
+        # authoritative guard: no other local user can traverse to the socket to
+        # connect to it, and none can pre-create/substitute it (this dir is under
+        # $HOME, which only the owner can write). chmod fixes a pre-existing dir.
+        socket_dir = os.path.dirname(path)
+        if socket_dir:
+            os.makedirs(socket_dir, mode=0o700, exist_ok=True)
+            os.chmod(socket_dir, stat.S_IRWXU)
+            # Reclaim sockets leaked by prior sessions killed before they could clean up.
+            _it2_sweep_stale_sockets(socket_dir, keep=path)
+        # Take the liveness lock BEFORE binding, so a concurrent sweeper always sees a live
+        # owner for this socket and never reclaims it mid-bind. Held for our whole lifetime
+        # via IT2_LOCK_FD; released by the kernel if we are killed. LOCK_NB fails only if
+        # another live framer already owns this exact (random) path, which cannot happen in
+        # practice -- treat it as a hard failure rather than blocking.
+        lock_path = _it2_lock_path(path)
+        lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            os.close(lock_fd)
+            raise
+        IT2_LOCK_FD = lock_fd
+        IT2_LOCK_PATH = lock_path
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+        # Bind under an owner-only umask so the socket is created as 0700 with no
+        # window during which another local user could connect; the chmod then
+        # narrows it to 0600 as belt-and-suspenders. umask only ever makes files
+        # more restrictive, so leaking it to a concurrent task is harmless.
+        old_umask = os.umask(0o077)
+        try:
+            IT2_SERVER = await asyncio.start_unix_server(handle_it2_connection, path=path)
+        finally:
+            os.umask(old_umask)
+        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
+        IT2_SOCKET_PATH = path
+        end(q, identifier, 0)
+    except Exception as e:
+        log(f'handle_it2listen failed: {e}')
+        # Do not leave a live, possibly non-owner-restricted socket behind after
+        # reporting failure: tear down whatever start_unix_server created and
+        # reset the global so a later it2listen can retry instead of no-opping.
+        if IT2_SERVER is not None:
+            with contextlib.suppress(Exception):
+                IT2_SERVER.close()
+            IT2_SERVER = None
+        IT2_SOCKET_PATH = None
+        with contextlib.suppress(OSError):
+            os.unlink(path)
+        # Release + remove the liveness lock if we took it before the failure.
+        if IT2_LOCK_FD is not None:
+            with contextlib.suppress(OSError):
+                os.close(IT2_LOCK_FD)
+            IT2_LOCK_FD = None
+        with contextlib.suppress(OSError):
+            os.unlink(_it2_lock_path(path))
+        IT2_LOCK_PATH = None
+        end(q, identifier, 1)
+
+async def handle_it2_connection(reader, writer):
+    connid = makeid()
+    # Register and emit `open` INSIDE the try, so that if the `open` emission (unlock's
+    # os.write to the ssh up-channel) raises -- e.g. iTerm2's read side already closed --
+    # the finally still pops IT2_CONNS and closes the writer instead of leaking both.
+    try:
+        IT2_CONNS[connid] = writer
+        q = lock()
+        send_esc(q, f'%it2 {connid} open')
+        unlock(q)
+        while True:
+            data = await reader.read(IT2_READ_CHUNK)
+            if not data:
+                break
+            q = lock()
+            send_esc(q, f'%it2 {connid} data {base64.b64encode(data).decode("ascii")}')
+            unlock(q)
+    except Exception as e:
+        log(f'it2 connection {connid}: {e}')
+    finally:
+        IT2_CONNS.pop(connid, None)
+        # Emit `close` UNLESS iTerm2 itself initiated the teardown via it2close (then it already
+        # forgot the connid and a close echo would be a duplicate/unsolicited frame). A
+        # framer/client-initiated teardown -- client disconnect, or a buffer-cap abort that
+        # popped connid -- is NOT flagged here, so it still emits close so iTerm2 learns the
+        # connection died. Suppress() so a failing close emission cannot skip writer.close().
+        locally_closed = connid in IT2_LOCALLY_CLOSED
+        IT2_LOCALLY_CLOSED.discard(connid)
+        if not locally_closed:
+            with contextlib.suppress(Exception):
+                q = lock()
+                send_esc(q, f'%it2 {connid} close')
+                unlock(q)
+        with contextlib.suppress(Exception):
+            writer.close()
+
+async def handle_it2send(identifier, args):
+    q = begin(identifier)
+    if len(args) < 2 or args[0] not in IT2_CONNS:
+        end(q, identifier, 1)
+        return
+    writer = IT2_CONNS[args[0]]
+    # Sample the unsent buffer BEFORE writing. The cap guards against a *stalled* consumer
+    # whose buffer grows without bound across successive sends; a single frame onto a healthy
+    # (near-empty) buffer is bounded memory, not a leak, so it must pass even if it alone
+    # exceeds the cap. Sampling AFTER the write would abort a perfectly healthy fast client on
+    # one oversized down-frame: write() does a single optimistic synchronous send (bounded by
+    # the ~200 KB socket wmem) and buffers the rest, and there is no await before the sample,
+    # so the event loop never runs to flush first -> the whole frame reads as over-cap. A
+    # genuinely wedged consumer is still caught on its NEXT send, when the accumulated unsent
+    # buffer is over the cap before we even write.
+    try:
+        buffered = writer.transport.get_write_buffer_size()
+    except Exception:
+        buffered = 0
+    if buffered > IT2_WRITE_BUFFER_MAX:
+        log(f'handle_it2send: write buffer {buffered} over cap for {args[0]}; dropping connection')
+        IT2_CONNS.pop(args[0], None)
+        with contextlib.suppress(Exception):
+            writer.transport.abort()
+        end(q, identifier, 1)
+        return
+    # Decode OUTSIDE the socket try/except: a malformed base64 payload (bad padding, a
+    # corrupted/truncated command line) raises binascii.Error/ValueError, which is NOT a dead
+    # socket. Skip just this frame and keep the connection alive rather than tearing it down
+    # (pop+abort) the way a genuine write failure must.
+    try:
+        payload = base64.b64decode(args[1])
+    except (ValueError, TypeError) as e:
+        log(f'handle_it2send: bad base64 for {args[0]}: {e}; dropping this frame')
+        end(q, identifier, 1)
+        return
+    try:
+        writer.write(payload)
+    except Exception as e:
+        # A write failure (e.g. the peer RST'd the socket mid-stream ->
+        # ConnectionResetError/BrokenPipeError) leaves a dead writer. Drop and abort it so
+        # later sends do not re-enter and repeat the failing write.
+        log(f'handle_it2send: {e}')
+        IT2_CONNS.pop(args[0], None)
+        with contextlib.suppress(Exception):
+            writer.transport.abort()
+        end(q, identifier, 1)
+        return
+    # Do NOT await drain() here. This is the single serial command loop (mainloop does
+    # `await handle(args)` and reads no further command until it returns), so blocking on a
+    # stalled consumer's backpressure would freeze send/kill/file/poll for the WHOLE ssh
+    # session. write() only buffers; asyncio flushes it in the background as the socket
+    # drains, so a live-but-slow consumer keeps working.
+    end(q, identifier, 0)
+
+async def handle_it2close(identifier, args):
+    q = begin(identifier)
+    connid = args[0] if args else None
+    writer = IT2_CONNS.pop(connid, None) if connid is not None else None
+    if writer is not None:
+        # Flag this as an iTerm2-initiated close so the still-live reader coroutine's finally
+        # does not echo a duplicate close back up. Only meaningful while the reader is alive
+        # (connid was still registered); it discards the flag when it unwinds.
+        IT2_LOCALLY_CLOSED.add(connid)
+        # abort(), not close(): a graceful close() defers FIN until the send buffer flushes,
+        # which never happens for a stalled follow-stream client (paused stdout consumer, so the
+        # down buffer is non-empty). That would leave the socket fd open, the reader coroutine
+        # blocked on read() forever, and its IT2_LOCALLY_CLOSED flag leaked for the ssh
+        # session's life. abort() RSTs immediately, giving the reader EOF so it unwinds. Matches
+        # the twin _it2_close_connections().
+        with contextlib.suppress(Exception):
+            writer.transport.abort()
+    end(q, identifier, 0)
+
+
 HANDLERS = {
     "run": handle_run,
     "login": handle_login,
@@ -1580,7 +1929,10 @@ HANDLERS = {
     "file": handle_file,
     "eval": handle_eval,
     "getenv": handle_getenv,
-    "runpy": handle_runpy
+    "runpy": handle_runpy,
+    "it2listen": handle_it2listen,
+    "it2send": handle_it2send,
+    "it2close": handle_it2close
 }
 
 def _silence_shutdown_unraisable(unraisable):

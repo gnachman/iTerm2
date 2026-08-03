@@ -41,7 +41,7 @@ class iTermBrowserPasswordManagerHandler {
               let type = messageDict["type"] as? String,
               let sessionSecret = messageDict["sessionSecret"] as? String,
               sessionSecret == secret else {
-            DLog("Invalid notification message format")
+            RLog("Invalid notification message format")
             return nil
         }
         switch type {
@@ -53,7 +53,7 @@ class iTermBrowserPasswordManagerHandler {
             }
             return .openPasswordManagerForUser
         default:
-            DLog("Unknown type \(type)")
+            RLog("Unknown type \(type)")
             return nil
         }
     }

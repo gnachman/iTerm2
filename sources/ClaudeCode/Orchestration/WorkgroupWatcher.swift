@@ -35,6 +35,13 @@ enum WatchMode: String, Codable {
 // condition absent.
 struct WorkgroupWatcher: Codable, Equatable {
     var watcherID: String
+    // The session this watcher targets, identified by a reload-durable
+    // reference: the session's stableID for watchers registered under
+    // reference keying, or a raw guid for watchers persisted before it.
+    // Match through `targets(stableID:guid:)`, never a bare `==`: a
+    // stableID-keyed watcher must follow an in-place shell reload (which
+    // rotates the guid but keeps the stableID), while a legacy guid-keyed
+    // watcher still matches its original session. The field name is historical.
     var sessionGUID: String
     var workgroupID: String
     var workgroupName: String
@@ -54,7 +61,48 @@ struct WorkgroupWatcher: Codable, Equatable {
     // support existed.
     var notifyUser: Bool? = nil
 
+    // Set true when this (session-bound, screen-reading) watch was armed while
+    // View Contents was "Ask" and the user gave the one-time consent prompt.
+    // It records that repeated background screen reads are allowed to continue
+    // under Ask. nil means the watch never needed it -- it was armed under
+    // "Always" (or reads no screen), so it holds no standing Ask consent and
+    // must stop if View Contents is later downgraded to Ask. Absent in watchers
+    // persisted before the consent prompt existed (treated as no consent).
+    var screenReadConsented: Bool? = nil
+
     var effectiveMode: WatchMode { mode ?? .tabStatus }
+
+    // Which read categories this watch's mechanism uses, derived from its frozen
+    // shape via the single policy below so registration and runtime enforcement
+    // can't drift.
+    var readRequirement: (needsScreen: Bool, needsState: Bool) {
+        return Self.readRequirement(hasCondition: condition != nil,
+                                    hasTargetState: targetState != nil,
+                                    isScreenPoll: effectiveMode == .screenPoll)
+    }
+
+    // THE read-category policy, on booleans, so every site derives from one
+    // source: the registration gate (OrchestratorDispatcher.watchReadRequirement),
+    // the runtime instance property above, and the offer/guidance
+    // (watchFormSatisfiable). A screen-poll mechanism reads the screen (View
+    // Contents); condition watches always do. A target_state watch reports the
+    // session's state (Check Terminal State); a condition watch reports only a
+    // screen condition.
+    static func readRequirement(hasCondition: Bool,
+                                hasTargetState: Bool,
+                                isScreenPoll: Bool) -> (needsScreen: Bool, needsState: Bool) {
+        return (needsScreen: hasCondition || isScreenPoll,
+                needsState: hasTargetState)
+    }
+
+    // THE mode decision: a watch is judged by reading the screen (screen-poll)
+    // when a plain-English condition was supplied, or when the session reports no
+    // machine-readable status (so there is no tab-status transition to fire on).
+    // Shared by doRegisterWatch (which mode to create) and watchReadRequirement
+    // (which reads that mode implies) so the two can't disagree.
+    static func isScreenPollMode(hasCondition: Bool, sessionReportsStatus: Bool) -> Bool {
+        return hasCondition || !sessionReportsStatus
+    }
 
     // Human-readable goal for log lines and status_update details:
     // "state 'idle'" or "condition 'emacs has exited'".
@@ -63,6 +111,19 @@ struct WorkgroupWatcher: Codable, Equatable {
             return "condition '\(condition)'"
         }
         return "state '\(targetState?.rawValue ?? "unknown")'"
+    }
+
+    // Whether this watcher targets the session identified by `stableID` (its
+    // reload-durable id, nil when the session can't be resolved) and `guid`
+    // (its current, rotating id). A watcher keyed on the stableID follows a
+    // shell reload; a legacy watcher keyed on a guid matches only its original
+    // (unrotated) session. Comparing against both covers both keyings and is
+    // the single chokepoint through which every watcher/session match runs.
+    func targets(stableID: String?, guid: String) -> Bool {
+        if let stableID, sessionGUID == stableID {
+            return true
+        }
+        return sessionGUID == guid
     }
 }
 

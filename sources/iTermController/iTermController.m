@@ -112,7 +112,7 @@ static iTermController *gSharedInstance;
 }
 
 + (void)releaseSharedInstance {
-    DLog(@"releaseSharedInstance");
+    RLog(@"releaseSharedInstance");
     [gSharedInstance cleanUpIfNeeded];
     gSharedInstance = nil;
 }
@@ -212,9 +212,9 @@ static iTermController *gSharedInstance;
         //
         // In either case, we only get here if we're pretty sure everything will get restored
         // nicely.
-        DLog(@"Intentionally leaving sessions running on quit");
+        RLog(@"Intentionally leaving sessions running on quit");
     } else {
-        DLog(@"Will close all terminal windows to kill jobs: %@", _terminalWindows);
+        RLog(@"Will close all terminal windows to kill jobs: %@", _terminalWindows);
         // Terminate buried sessions
         [[iTermBuriedSessions sharedInstance] terminateAll];
         // Close all terminal windows, killing jobs.
@@ -291,7 +291,7 @@ static iTermController *gSharedInstance;
 }
 
 - (void)newWindow:(id)sender possiblyTmux:(BOOL)possiblyTmux {
-    DLog(@"newWindow:%@ possiblyTmux:%@", sender, @(possiblyTmux));
+    RLog(@"newWindow:%@ possiblyTmux:%@", sender, @(possiblyTmux));
     if (possiblyTmux &&
         _frontTerminalWindowController &&
         [[_frontTerminalWindowController currentSession] isTmuxClient]) {
@@ -711,7 +711,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification {
-    DLog(@"Controller: window exited fullscreen");
+    RLog(@"Controller: window exited fullscreen");
     if (_arrangeHorizontallyPendingFullScreenTransitions &&
         [[iTermFullScreenWindowManager sharedInstance] numberOfQueuedTransitions] == 0) {
         _arrangeHorizontallyPendingFullScreenTransitions = NO;
@@ -1070,6 +1070,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
             case WINDOW_TYPE_MAXIMIZED:
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
             case WINDOW_TYPE_CENTERED:
+            case WINDOW_TYPE_COMPACT_CENTERED:
                 *percentage = (iTermPercentage){ .width = -1, .height = -1 };
                 break;
 
@@ -1423,7 +1424,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (void)killRestorableSessions {
-    DLog(@"killRestorableSessions");
+    RLog(@"killRestorableSessions");
     assert([iTermAdvancedSettingsModel runJobsInServers]);
     for (iTermRestorableSession *restorableSession in _restorableSessions) {
         for (PTYSession *aSession in restorableSession.sessions) {
@@ -1550,7 +1551,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                                                                 screen:screen
                                                                profile:nil];
     if (!term) {
-        DLog(@"Failed to create a window to revive %@", session);
+        RLog(@"Failed to create a window to revive %@", session);
         return nil;
     }
     [self addTerminalWindow:term];
@@ -1590,6 +1591,39 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         }
     }];
     return result;
+}
+
+- (PTYSession *)anySessionWithStableID:(NSString *)stableID {
+    if (!stableID) {
+        return nil;
+    }
+    NSString *canonical = [iTermStableSessionID canonical:stableID];
+    if (!canonical) {
+        return nil;
+    }
+    __block PTYSession *result = nil;
+    [self enumerateSessionLookupLocations:^(PTYSession *session,
+                                            iTermSessionLookupLocation location,
+                                            BOOL *stop) {
+        if ([session.stableID isEqualToString:canonical]) {
+            result = session;
+            *stop = YES;
+        }
+    }];
+    return result;
+}
+
+- (PTYSession *)anySessionForReference:(NSString *)reference {
+    if (!reference) {
+        return nil;
+    }
+    // A stableID is self-describing (canonical() validates prefix + checksum) and
+    // a legacy guid is a UUID that never starts with the stable prefix, so
+    // dispatching on canonical() is unambiguous.
+    if ([iTermStableSessionID canonical:reference]) {
+        return [self anySessionWithStableID:reference];
+    }
+    return [self anySessionWithGUID:reference];
 }
 
 - (void)enumerateSessionLookupLocations:(void (^NS_NOESCAPE)(PTYSession *session,
@@ -1882,7 +1916,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         case iTermOpenStyleVerticalSplit:
         case iTermOpenStyleHorizontalSplit:
             term = [self currentTerminal];
-            if (term) {
+            if (term && !(term.layoutLocked && term.numberOfTabs > 0)) {
                 return [self openURLInSplitPane:url
                                          target:target
                                          window:term
@@ -1892,6 +1926,13 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                                splitSessionGuid:term.currentSession.guid];
             }
             break;
+    }
+    if (term.layoutLocked && term.numberOfTabs > 0) {
+        // The current window’s layout is locked. Don’t split it or add a tab;
+        // open the URL in a new window so the lock is honored and the open still
+        // succeeds.
+        RLog(@"Current window is layout-locked; opening URL in a new window instead");
+        term = nil;
     }
     if (!term) {
         term = [[PseudoTerminal alloc] initWithSmartLayout:YES
@@ -1980,7 +2021,8 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
                                                profile:windowProfile];
     [self addTerminalWindow:term];
 
-    DLog(@"Open single-use browser window with url: %@", url);
+    // The URL can carry secrets in its query string; redact it for the ring.
+    RLog(@"Open single-use browser window with url: %@", RLogRedact(url, url.it_redactedDescription));
     PTYSession *(^makeSession)(Profile *, PseudoTerminal *) =
     ^PTYSession *(Profile *profile, PseudoTerminal *term) {
         profile = [profile dictionaryBySettingObject:kProfilePreferenceCommandTypeBrowserValue
@@ -2101,7 +2143,8 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     if (options & iTermSingleUseWindowOptionsCommandNotSwiftyString) {
         command = [command stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
     }
-    DLog(@"Open single-use window with command: %@", command);
+    // The command line can carry passwords/tokens; keep it out of the ring.
+    RLog(@"Open single-use window with command: %@", RLogRedact(command, @(command.length)));
     void (^makeSession)(Profile *, PseudoTerminal *, void (^)(PTYSession *)) =
     ^(Profile *profile, PseudoTerminal *term, void (^makeSessionCompletion)(PTYSession *))  {
         profile = [profile dictionaryBySettingObject:@"" forKey:KEY_INITIAL_TEXT];

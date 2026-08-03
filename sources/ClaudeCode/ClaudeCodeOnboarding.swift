@@ -124,7 +124,7 @@ class ClaudeCodeOnboarding: NSObject {
             .appendingPathComponent(".claude")
             .appendingPathComponent("settings.json")
         guard FileManager.default.fileExists(atPath: settingsURL.path) else {
-            DLog("Onboarding: no settings.json, nothing to uninstall")
+            RLog("Onboarding: no settings.json, nothing to uninstall")
             iTermUserDefaults.claudeCodeHooksInstalled = false
             return .success
         }
@@ -132,7 +132,7 @@ class ClaudeCodeOnboarding: NSObject {
         do {
             data = try Data(contentsOf: settingsURL)
         } catch {
-            DLog("Onboarding: couldn't read settings.json: \(error)")
+            RLog("Onboarding: couldn't read settings.json: \(error)")
             return .unreadable
         }
         let parsed: Any
@@ -204,7 +204,7 @@ class ClaudeCodeOnboarding: NSObject {
             DLog("Onboarding: uninstalled cc-status hooks")
             return .success
         } catch {
-            DLog("Onboarding: failed to write settings.json during uninstall: \(error)")
+            RLog("Onboarding: failed to write settings.json during uninstall: \(error)")
             return .writeFailed
         }
     }
@@ -561,7 +561,7 @@ class ClaudeCodeOnboarding: NSObject {
         guard iTermUserDefaults.claudeCodeHooksInstalled else {
             return
         }
-        DLog("Onboarding: migrating claudeCodeIntegrationCompleted=true (hook on disk, previous launch was pre-flag build \(previousVersion))")
+        RLog("Onboarding: migrating claudeCodeIntegrationCompleted=true (hook on disk, previous launch was pre-flag build \(previousVersion))")
         iTermUserDefaults.claudeCodeIntegrationCompleted = true
     }
 
@@ -627,7 +627,7 @@ class ClaudeCodeOnboarding: NSObject {
         guard changed else {
             return
         }
-        DLog("Onboarding: migrated Exit Workgroup triggers to leaderOnly (previous launch was pre-leaderOnly build \(previousVersion))")
+        RLog("Onboarding: migrated Exit Workgroup triggers to leaderOnly (previous launch was pre-leaderOnly build \(previousVersion))")
         ProfileModel.sharedInstance()?.flush()
         NotificationCenter.default.post(name: NSNotification.Name(kReloadAllProfiles),
                                         object: nil)
@@ -1205,7 +1205,7 @@ class ClaudeCodeOnboarding: NSObject {
     static func ensureCCStatusSymlink() -> String? {
         guard let bundlePath = Bundle.main.path(forResource: "utilities/cc-status",
                                                 ofType: nil) else {
-            DLog("Onboarding: cc-status not found in bundle")
+            RLog("Onboarding: cc-status not found in bundle")
             return nil
         }
         let fm = FileManager.default
@@ -1233,7 +1233,7 @@ class ClaudeCodeOnboarding: NSObject {
             try fm.createSymbolicLink(atPath: symlinkURL.path,
                                        withDestinationPath: bundlePath)
         } catch {
-            DLog("Onboarding: couldn't create cc-status symlink: \(error)")
+            RLog("Onboarding: couldn't create cc-status symlink: \(error)")
             return nil
         }
         DLog("Onboarding: cc-status symlink \(symlinkURL.path) -> \(bundlePath)")
@@ -1270,6 +1270,10 @@ class ClaudeCodeOnboarding: NSObject {
         "PreToolUse",
         "PostToolUse",
         "SessionStart",
+        // Keeps the background-task count current between turns: it is
+        // the only event that fires when a background subagent finishes
+        // while the main loop sits at the prompt.
+        "SubagentStop",
     ]
 
     private func claudeSessionGUIDs() -> Set<String> {
@@ -1293,7 +1297,7 @@ class ClaudeCodeOnboarding: NSObject {
 
     private func doInstallHook() -> Bool {
         guard let ccStatusPath = Self.ensureCCStatusSymlink() else {
-            DLog("Onboarding: couldn't prepare cc-status symlink")
+            RLog("Onboarding: couldn't prepare cc-status symlink")
             return false
         }
         DLog("Onboarding: cc-status hook will point at \(ccStatusPath)")
@@ -1324,20 +1328,38 @@ class ClaudeCodeOnboarding: NSObject {
         for eventName in Self.hookEventNames {
             var eventHookGroups = (hooks[eventName] as? [[String: Any]]) ?? []
 
-            // Check if cc-status is already installed in any group.
-            let alreadyInstalled = eventHookGroups.contains { group in
-                guard let groupHooks = group["hooks"] as? [[String: Any]] else {
-                    return false
+            // Find any existing cc-status hook and rewrite it to the current
+            // path. A previously installed hook may point at a stale dot dir
+            // (for example a `-suite` instance wrote ~/.config/iterm2-alt4/
+            // cc-status and we're now reinstalling from the default instance
+            // that wants ~/.config/iterm2/cc-status). Matching on the
+            // "/cc-status" suffix lets us adopt and correct that entry instead
+            // of leaving it stale or appending a duplicate.
+            var foundCCStatus = false
+            for groupIndex in eventHookGroups.indices {
+                guard var groupHooks = eventHookGroups[groupIndex]["hooks"] as? [[String: Any]] else {
+                    continue
                 }
-                return groupHooks.contains { entry in
-                    guard let command = entry["command"] as? String else {
-                        return false
+                var groupChanged = false
+                for entryIndex in groupHooks.indices {
+                    guard let command = groupHooks[entryIndex]["command"] as? String,
+                          command.hasSuffix("/cc-status") else {
+                        continue
                     }
-                    return command.hasSuffix("/cc-status")
+                    foundCCStatus = true
+                    if command != ccStatusPath {
+                        groupHooks[entryIndex]["command"] = ccStatusPath
+                        groupChanged = true
+                        DLog("Onboarding: updated stale cc-status hook for \(eventName) from \(command) to \(ccStatusPath)")
+                    }
+                }
+                if groupChanged {
+                    eventHookGroups[groupIndex]["hooks"] = groupHooks
                 }
             }
-            if alreadyInstalled {
-                DLog("Onboarding: hook for \(eventName) already installed, skipping")
+            if foundCCStatus {
+                hooks[eventName] = eventHookGroups
+                DLog("Onboarding: hook for \(eventName) already present, ensured path is current")
                 continue
             }
 
@@ -1362,7 +1384,7 @@ class ClaudeCodeOnboarding: NSObject {
             try data.write(to: settingsURL, options: .atomic)
             DLog("Onboarding: wrote settings.json")
         } catch {
-            DLog("Onboarding: failed to write settings.json: \(error)")
+            RLog("Onboarding: failed to write settings.json: \(error)")
             let alert = NSAlert()
             alert.messageText = "Failed to install hook"
             alert.informativeText = "Could not write to \(settingsURL.path): \(error.localizedDescription)"
@@ -1376,7 +1398,7 @@ class ClaudeCodeOnboarding: NSObject {
         // our hook out of settings.json after the fact. Only the
         // Uninstall menu flow clears it.
         iTermUserDefaults.claudeCodeIntegrationCompleted = true
-        DLog("Onboarding: doInstallHook complete")
+        RLog("Onboarding: doInstallHook complete")
         return true
     }
 
@@ -1482,7 +1504,7 @@ class ClaudeCodeOnboarding: NSObject {
     private func doInstallTriggers() -> Bool {
         guard let enter = Self.makeEnterWorkgroupTrigger(),
               let exit = Self.makeExitWorkgroupTrigger() else {
-            DLog("Onboarding: failed to construct trigger objects")
+            RLog("Onboarding: failed to construct trigger objects")
             return false
         }
         let listWidth: CGFloat = 360
@@ -1731,7 +1753,7 @@ class ClaudeCodeOnboarding: NSObject {
                 object: nil)
         }
         Self.reconcileTriggersCache()
-        DLog("Onboarding: installed Enter/Exit workgroup triggers on \(guidsToInstall.count) profile(s)")
+        RLog("Onboarding: installed Enter/Exit workgroup triggers on \(guidsToInstall.count) profile(s)")
         return true
     }
 

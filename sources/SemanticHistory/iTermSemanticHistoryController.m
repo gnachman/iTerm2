@@ -124,11 +124,6 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     [self launchAppWithBundleIdentifier:bundleIdentifier args:@[ path ]];
 }
 
-- (void)openAppWithBundleIdentifier:(NSString *)bundleIdentifier args:(NSArray *)args {
-    args = [@[ @"-nb", bundleIdentifier, @"--args" ] arrayByAddingObjectsFromArray: args];
-    [self launchTaskWithPath:@"/usr/bin/open" arguments:args completion:nil];
-}
-
 - (NSBundle *)applicationBundleWithIdentifier:(NSString *)bundleIdentifier {
     NSString *bundlePath =
         [[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:bundleIdentifier].path;
@@ -240,11 +235,6 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     executable = [executable stringByAppendingPathComponent:@"emacsclient"];
     DLog(@"I guess emacsclient is %@", executable);
     return executable;
-}
-
-- (NSString *)intelliJIDEALauncherInApplicationBundle:(NSBundle *)bundle {
-    DLog(@"Trying to find IntelliJ IDEA launcher in %@", bundle.bundlePath);
-    return [[[[bundle.bundleURL URLByAppendingPathComponent:@"Contents"] URLByAppendingPathComponent:@"MacOS"] URLByAppendingPathComponent:@"idea"] path];
 }
 
 - (void)launchAppWithBundleIdentifier:(NSString *)bundleIdentifier args:(NSArray *)args {
@@ -597,12 +587,22 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         NSArray<NSString *> *args = @[];
         if (path) {
             if (lineNumber) {
-                args = @[ @"--line", lineNumber, path ];
+                // The path must come before --line. JetBrains’ rewritten native
+                // launcher rejects option-first argument order (it reports
+                // “unrecognized option: --line”), while the older launcher accepts
+                // either order, so path-first is safe everywhere. Issue 12958.
+                args = @[ path, @"--line", lineNumber ];
             } else {
                 args = @[ path ];
             }
         }
-        [self openAppWithBundleIdentifier:identifier args:args];
+        // Invoke the IDE’s launcher binary directly (Contents/MacOS/idea, webstorm, …)
+        // rather than going through `open -nb <id> --args …`. `open -n` forces a brand
+        // new IDE instance instead of forwarding the open-file request to the instance
+        // that is already running, so the file silently never appears in the user’s
+        // project window. The launcher binary detects the running instance and forwards
+        // to it, matching how VS Code, Cursor, and Zed are handled. Issue 12958.
+        [self launchAppWithBundleIdentifier:identifier args:args];
         return;
     }
 
@@ -658,7 +658,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
               withStatus:(int)status
                   runner:(iTermBufferedCommandRunner *)runner {
     [_commandRunners removeObject:runner];
-    DLog(@"Runner %@ finished with status %@. There are now %@ runners.", runner, @(status), @(_commandRunners.count));
+    RLog(@"Runner %@ finished with status %@. There are now %@ runners.", runner, @(status), @(_commandRunners.count));
     if (!status) {
         return;
     }
@@ -775,8 +775,8 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     columnNumber:(NSString *)columnNumber
           window:(NSWindow *)window
       completion:(void (^)(BOOL))completion {
-    DLog(@"openPath:%@ rawFileName:%@ substitutions:%@ lineNumber:%@ columnNumber:%@",
-         cleanedUpPath, rawFileName, substitutions, lineNumber, columnNumber);
+    RLog(@"openPath:%@ rawFileName:%@ substitutions:%@ lineNumber:%@ columnNumber:%@",
+         cleanedUpPath, rawFileName, RLogRedact(substitutions, @(substitutions.count)), lineNumber, columnNumber);
 
     NSString *path;
     BOOL isRawAction = [[self action] isEqualToString:kSemanticHistoryRawCommandAction];
@@ -826,7 +826,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
     BOOL isDirectory;
     if (![self.fileManager fileExistsAtPath:path isDirectory:&isDirectory]) {
-        DLog(@"No file exists at %@, not running semantic history", path);
+        RLog(@"No file exists at %@, not running semantic history", path);
         completion(NO);
         return;
     }

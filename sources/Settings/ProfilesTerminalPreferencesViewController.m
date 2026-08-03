@@ -61,6 +61,13 @@
     IBOutlet NSButton *_terminalGeneratedAlerts;
     IBOutlet NSButton *_dragToScrollInAlternateScreenModeDisabled;
     IBOutlet NSButton *_suppressAlertsInActiveSession;
+    // Opt in to also delivering this profile's alerts to the paired iPhone. Enabled
+    // whenever an eligible (revision >= 2) companion device is paired; turning it on
+    // requests notification permission. See iTermCompanionAlertBridge.
+    IBOutlet NSButton *_sendAlertsToCompanion;
+    // Help text under the checkbox guiding the user to a working setup (pair, open
+    // the app, allow notifications), driven by sendToPhoneStatusMessage.
+    IBOutlet NSTextField *_sendAlertsToCompanionStatus;
 
     IBOutlet NSButton *_automaticallyEnableAlternatemouseScroll;
     IBOutlet NSButton *_restrictAlternateMouseScrollToVertical;
@@ -258,6 +265,25 @@
     [self defineUnsearchableControl:_suppressAlertsInActiveSession
                                 key:KEY_SUPPRESS_ALERTS_IN_ACTIVE_SESSION
                                type:kPreferenceInfoTypeCheckbox];
+    PreferenceInfo *sendAlertsInfo =
+        [self defineUnsearchableControl:_sendAlertsToCompanion
+                                    key:KEY_SEND_ALERTS_TO_COMPANION
+                                   type:kPreferenceInfoTypeCheckbox];
+    // onChange (unlike observer) fires ONLY on a user toggle, not on load, so
+    // opening Settings never prompts the phone. Turning it ON is the immediate need
+    // that asks the phone for notification permission (now if connected, else on
+    // its next connection).
+    sendAlertsInfo.onChange = ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        if ([strongSelf boolForKey:KEY_SEND_ALERTS_TO_COMPANION]) {
+            [iTermCompanionAlertBridge userEnabledAlertsToPhone];
+        }
+        [strongSelf updateSendAlertsToCompanionAvailability];
+    };
+    [self updateSendAlertsToCompanionAvailability];
 
     [self defineControl:_flashingBell
                     key:KEY_FLASHING_BELL
@@ -358,7 +384,7 @@
             if (ctype) {
                 _localeName.stringValue = [NSString stringWithFormat:@"LC_CTYPE=%@", ctype];
             } else {
-                DLog(@"enc=%@ %@", @([self unsignedIntegerForKey:KEY_CHARACTER_ENCODING]), [guesser dictionaryWithLC_CTYPE]);
+                RLog(@"enc=%@ %@", @([self unsignedIntegerForKey:KEY_CHARACTER_ENCODING]), [guesser dictionaryWithLC_CTYPE]);
                 _localeName.stringValue = @"Unexpectedly missing LC_CTYPE. Report a bug.";
             }
             break;
@@ -427,7 +453,18 @@ static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
     [iTermShellHistoryController showInformationalMessageInWindow:self.view.window];
 }
 
+// The "send to phone" capability (a paired revision-2 phone that can be notified)
+// is reported asynchronously over the companion connection, so it usually becomes
+// true AFTER this pane first loads. Recompute the checkbox's enabled state each
+// time the Filter Alerts panel is shown, not just once at setup, so a phone paired
+// (or its notification permission granted) while Settings is open is reflected.
+- (void)updateSendAlertsToCompanionAvailability {
+    _sendAlertsToCompanion.enabled = [iTermCompanionAlertBridge canEnableAlertsToPhone];
+    _sendAlertsToCompanionStatus.stringValue = [iTermCompanionAlertBridge sendToPhoneStatusMessage];
+}
+
 - (IBAction)showFilterAlertsPanel:(id)sender {
+    [self updateSendAlertsToCompanionAvailability];
     __weak __typeof(self) weakSelf = self;
     [self.view.window beginSheet:_filterAlertsPanel completionHandler:^(NSModalResponse returnCode) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;

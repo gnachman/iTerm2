@@ -1,0 +1,26 @@
+Mac:/var/folders/jk/2nklbh0x5ksc192jsm9nhnhc0000gn/T/tmp.UCQlHvVkF4/proj% python3
+Python 3.9.12 (v3.9.12:b28265d7e6, Mar 23 2022, 18:22:40)
+[Clang 13.0.0 (clang-1300.0.29.30)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import os, shutil
+>>> os.system('rm -rf /tmp/scratch-data')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

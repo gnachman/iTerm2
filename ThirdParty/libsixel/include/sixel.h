@@ -30,7 +30,7 @@
 # define SIXELAPI
 #endif
 
-#define LIBSIXEL_VERSION "1.8.6"
+#define LIBSIXEL_VERSION "1.8.7-r2"
 #define LIBSIXEL_ABI_VERSION "1:6:0"
 
 typedef unsigned char sixel_index_t;
@@ -506,7 +506,7 @@ extern "C" {
 #endif
 
 /* create allocator object */
-SIXELSTATUS
+SIXELAPI SIXELSTATUS
 sixel_allocator_new(
     sixel_allocator_t   /* out */ **ppallocator,  /* allocator object to be created */
     sixel_malloc_t      /* in */  fn_malloc,      /* custom malloc() function */
@@ -1008,6 +1008,12 @@ typedef SIXELSTATUS (* sixel_load_image_function)(
     sixel_frame_t /* in */     *frame,
     void          /* in/out */ *context);
 
+/* Note: this function returns SIXEL_OK without calling FN_LOAD when the file
+   content is empty or 1-byte LF.  This implies an assumption that CONTEXT is
+   initialized to be the default value for the empty file before calling this
+   function.  If it is not the case, the caller needs to properly detect it and
+   handle this, or otherwise, CONTEXT can be used uninitialized in subsequent
+   codes. */
 SIXELAPI SIXELSTATUS
 sixel_helper_load_image_file(
     char const                /* in */     *filename,     /* source file name */

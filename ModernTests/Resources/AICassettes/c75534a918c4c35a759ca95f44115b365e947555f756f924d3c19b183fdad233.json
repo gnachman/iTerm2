@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.anthropic.com\/v1\/messages\nanthropic-version: 2023-06-01\ncontent-type: application\/json\nx-api-key: <SECRET>\n\n{\"max_tokens\":64000,\"messages\":[{\"content\":[{\"text\":\"Quote the magic phrase exactly as written.\",\"type\":\"text\"},{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"The magic phrase is pinecone-42.\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"claude-haiku-4-5\",\"temperature\":0}",
+  "key" : "c75534a918c4c35a759ca95f44115b365e947555f756f924d3c19b183fdad233",
+  "response" : {
+    "data" : "{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_01WTZVLuxtHRtRMu51o57PXP\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"pinecone-42\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":25,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":8,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}",
+    "error" : ""
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

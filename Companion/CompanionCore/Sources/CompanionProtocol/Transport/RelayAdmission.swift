@@ -27,10 +27,18 @@ public enum RelayAdmission {
     public struct Hello: Codable, Equatable {
         public var v: Int
         public var role: Role
+        /// When true, the relay REJECTS this join if the role slot is already
+        /// occupied, instead of displacing the occupant. Only the NSE sets it,
+        /// so it yields to a foreground app rather than fighting it for the
+        /// slot. Absent/nil == false == the default displacing behavior;
+        /// synthesized Codable omits the key when nil, so an older relay (which
+        /// ignores it) and older clients (which never send it) are unaffected.
+        public var nonDisplacing: Bool?
 
-        public init(v: Int, role: Role) {
+        public init(v: Int, role: Role, nonDisplacing: Bool? = nil) {
             self.v = v
             self.role = role
+            self.nonDisplacing = nonDisplacing
         }
     }
 

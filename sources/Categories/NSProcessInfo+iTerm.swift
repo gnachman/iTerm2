@@ -40,7 +40,7 @@ extension ProcessInfo {
     private static var cumulativeOwnTotalCPUUsage: Double? {
         var usage = rusage()
         guard getrusage(RUSAGE_SELF, &usage) == 0 else {
-            DLog("getrusage failed with errno \(errno)")
+            RLog("getrusage failed with errno \(errno)")
             return nil
         }
         return usage.totalCPUUsage

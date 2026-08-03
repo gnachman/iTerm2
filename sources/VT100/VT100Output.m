@@ -375,7 +375,16 @@ typedef enum {
 }
 
 - (BOOL)isLikeXterm {
-    return [_termType hasPrefix:@"xterm"];
+    // This gates whether modified function keys get the xterm CSI modifier
+    // encoding (e.g. Shift+F5 -> ^[[15;2~) instead of the bare terminfo lookup,
+    // which has no modified-key entries and so silently drops the modifier.
+    // The prefix test exists to keep TERM=screen on the terminfo path (screen
+    // does not reliably parse xterm modified sequences on input). tmux and
+    // tmux-256color are more modern and do parse them, exactly as they would
+    // from a plain xterm-256color client, so they are treated as xterm-like.
+    // This matters for tmux -CC sessions, whose term type is tmux's
+    // default-terminal (tmux-256color) rather than xterm-256color.
+    return [_termType hasPrefix:@"xterm"] || [_termType hasPrefix:@"tmux"];
 }
 
 // https://invisible-island.net/xterm/xterm-function-keys.html hints at this but is incomplete.

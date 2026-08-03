@@ -8,7 +8,7 @@ import Foundation
 // The tool surface the chat-orchestration mode presents to the LLM.
 // Mirrors AITerm's RemoteCommand in role but with a fundamentally
 // different domain: instead of a single session's actions
-// (.runCommand / .typeForYou / .actInWebBrowser), the orchestrator
+// (.runCommand / .controlTerminal / .actInWebBrowser), the orchestrator
 // drives many workgroups, addresses sessions by their GUID, and
 // supports multiplexed waits over a monitored set.
 //
@@ -61,8 +61,32 @@ struct GetScreenContentsArgs: Codable {
     }
 }
 
-struct RegisterWatchArgs: Codable {
+enum ScrollDirection: String, Codable {
+    case up    // reveal OLDER content (scroll the view up)
+    case down  // reveal NEWER content (scroll the view back down)
+}
+
+struct ScrollWheelArgs: Codable {
     let sessionGuid: String
+    // Number of scroll-wheel notches to send. Each notch is one wheel
+    // event; how many lines that moves depends on the app.
+    let lines: Int
+    // nil treated as .up (the common case: page back through history).
+    let direction: ScrollDirection?
+
+    enum CodingKeys: String, CodingKey {
+        case sessionGuid = "session_guid"
+        case lines
+        case direction
+    }
+}
+
+struct RegisterWatchArgs: Codable {
+    // Optional: orchestration chats copy an explicit session_guid from
+    // list_workgroups; a session-bound chat omits it and the dispatcher
+    // fills in the chat's one linked terminal session
+    // (OrchestratorDispatcher.resolveWatchTarget).
+    let sessionGuid: String?
     // Exactly one of targetState / condition must be supplied; the
     // dispatcher validates and rejects otherwise.
     let targetState: SessionState?
@@ -135,6 +159,19 @@ enum SessionKind: String, Codable {
     case other                       // fallback when classification fails
 }
 
+// Which logical screen the session is showing, from the soft alternate
+// screen flag (set by DECSET 1049/1047/47, and tracked even when the
+// user has disabled iTerm2's alternate-screen feature, so it reflects
+// what the program *intends*). Surfaced on get_screen_contents so the
+// agent knows whether it's looking at the linear primary buffer (where
+// scrollback is real history) or a full-screen app's alternate buffer
+// (where only the current grid is meaningful and older content has to
+// be revealed by scrolling).
+enum ScreenSurface: String, Codable {
+    case primary
+    case alternate
+}
+
 // Where a session's idle/working/waiting status comes from. Surfaced on
 // list_workgroups and get_state so the agent knows whether `status` is
 // authoritative (the program announces it via OSC 21337 / the cc-status
@@ -156,6 +193,7 @@ enum ToolName: String, CaseIterable {
     case listWorkgroups = "list_workgroups"
     case getState = "get_state"
     case getScreenContents = "get_screen_contents"
+    case scrollWheel = "scroll_wheel"
     case listWorkgroupClippings = "list_workgroup_clippings"
     case sendText = "send_text"
     case interrupt = "interrupt"
@@ -176,6 +214,10 @@ enum OrchestratorCommand {
     case listWorkgroups
     case getState(sessionGuid: String)
     case getScreenContents(GetScreenContentsArgs)
+    // Inject scroll-wheel events to page through a full-screen app's own
+    // history while it's on the alternate screen. A read aid, not a
+    // control action: it only moves the app's viewport.
+    case scrollWheel(ScrollWheelArgs)
     case listWorkgroupClippings(workgroupID: String, typeFilter: String?)
 
     // Action
@@ -217,8 +259,11 @@ enum OrchestratorCommand {
 
     var category: Category {
         switch self {
-        case .listWorkgroups, .getState, .getScreenContents,
+        case .listWorkgroups, .getState, .getScreenContents, .scrollWheel,
                 .listWorkgroupClippings:
+            // scroll_wheel injects bytes but only moves a full-screen
+            // app's viewport to reveal its own history; it's the read-side
+            // companion to get_screen_contents, so it claims nothing.
             return .readOnly
         case .sendText, .interrupt, .addWorkgroupClipping, .startCodeReview:
             return .write
@@ -254,7 +299,7 @@ enum OrchestratorCommand {
             return .session(args.sessionGuid)
         case .addWorkgroupClipping(let args):
             return .workgroup(args.workgroupID)
-        case .listWorkgroups, .getState, .getScreenContents,
+        case .listWorkgroups, .getState, .getScreenContents, .scrollWheel,
                 .listWorkgroupClippings,
                 .startSession,
                 .registerWatch, .unregisterWatch, .listWatches,
@@ -360,6 +405,10 @@ struct WatcherDescription: Codable {
     let targetState: SessionState?
     let condition: String?
     let registeredAt: String  // ISO 8601
+    // Optional advisory surfaced to the model at registration, e.g. a tab-status
+    // watch that has no screen-based backstop because View Contents isn't
+    // granted. Omitted from the JSON when nil (synthesized encodeIfPresent).
+    let note: String?
     enum CodingKeys: String, CodingKey {
         case watcherID = "watcher_id"
         case workgroupID = "workgroup_id"
@@ -369,6 +418,7 @@ struct WatcherDescription: Codable {
         case targetState = "target_state"
         case condition
         case registeredAt = "registered_at"
+        case note
     }
 }
 
@@ -389,27 +439,56 @@ struct ScreenContents: Codable {
     let text: String
     let kind: SessionKind
     let isSnapshot: Bool
+    // Which logical screen this text came from. On `.alternate` the
+    // returned text is only the current grid (the visible screen);
+    // scrollback isn't returned because a full-screen app repaints into
+    // it, so it holds duplicate/garbled intermediate frames rather than
+    // real history. To see older content the agent scrolls with the
+    // scroll_wheel tool (when mouse_reporting is true) and re-reads.
+    let screen: ScreenSurface
+    // Whether the foreground program reports scroll-wheel events (the
+    // mouse modes that carry the wheel: normal/button-motion/any-motion;
+    // highlight-tracking mode is excluded because it never reports
+    // scroll). When true (and screen is `.alternate`), the scroll_wheel
+    // tool can shift the app's view to reveal content above/below what's
+    // shown. When false, scroll_wheel will error: there's no way to
+    // scroll a full-screen app that doesn't report the wheel.
+    let mouseReporting: Bool
     // Same surface as SessionStateInfo.pendingAction. Mirrored here
     // because the agent often calls get_screen_contents to figure
     // out what's going on; the screen alone won't tell it that a
     // prompt overlay is up (the overlay is an NSView, not in the PTY
     // buffer), so we surface it explicitly.
     let pendingAction: String?
+    // How long ago the rendered screen last changed, humanized (e.g.
+    // "< 1 min ago", "27 min ago"). The screen text itself carries no
+    // recency cues, so without this a stale transcript from half an
+    // hour ago reads exactly like something that just happened.
+    let screenLastChanged: String?
     enum CodingKeys: String, CodingKey {
         case text
         case kind
         case isSnapshot = "is_snapshot"
+        case screen
+        case mouseReporting = "mouse_reporting"
         case pendingAction = "pending_action"
+        case screenLastChanged = "screen_last_changed"
     }
 }
 
 struct WorkgroupSummary: Codable {
     let workgroupID: String
     let workgroupName: String
+    // How this workgroup came to exist, e.g. "A trigger in session
+    // <guid> entered this workgroup." Lets an agent that sees an
+    // unfamiliar workgroup (another window's, typically) trace where
+    // it came from instead of asking the user or guessing.
+    let provenance: String?
     let sessions: [SessionSummary]
     enum CodingKeys: String, CodingKey {
         case workgroupID = "workgroup_id"
         case workgroupName = "workgroup_name"
+        case provenance
         case sessions
     }
 }
@@ -426,8 +505,16 @@ struct SessionSummary: Codable {
     // Whether `status` is announced by the program (reported) or a
     // best-effort guess (inferred). See StatusSource.
     let statusSource: StatusSource
-    let lastActivityISO: String?
+    // How long ago the rendered screen last changed, humanized (e.g.
+    // "< 1 min ago", "27 min ago"). Gives status a recency dimension:
+    // an "idle" session whose screen changed seconds ago is between
+    // steps; one untouched for half an hour is genuinely done.
+    let screenLastChanged: String?
     let currentCommand: String?
+    // How this session came to exist when iTerm2 knows it wasn't the
+    // user, e.g. "Created by the agent in chat X." Absent for
+    // user-created sessions.
+    let provenance: String?
     // Same surface as SessionStateInfo.pendingAction. Carried on the
     // snapshot so the agent doesn't have to call get_state on every
     // .waiting role to find out what it's blocked on — without this,
@@ -440,8 +527,9 @@ struct SessionSummary: Codable {
         case kind
         case status
         case statusSource = "status_source"
-        case lastActivityISO = "last_activity_iso"
+        case screenLastChanged = "screen_last_changed"
         case currentCommand = "current_command"
+        case provenance
         case pendingAction = "pending_action"
     }
 }
@@ -456,9 +544,12 @@ struct SessionStateInfo: Codable {
     // Whether `status` is announced by the program (reported) or a
     // best-effort guess (inferred). See StatusSource.
     let statusSource: StatusSource
-    let lastActivityISO: String?
+    // See SessionSummary.screenLastChanged.
+    let screenLastChanged: String?
     let currentCommand: String?
     let lastMessage: String?  // last cc-status detail for CC sessions
+    // See SessionSummary.provenance.
+    let provenance: String?
     // Non-nil when the role is blocked on a UI affordance the agent
     // can act on (e.g. the Code Review prompt overlay). The string
     // describes what's expected and how to unblock it; the agent
@@ -472,9 +563,10 @@ struct SessionStateInfo: Codable {
         case kind
         case status
         case statusSource = "status_source"
-        case lastActivityISO = "last_activity_iso"
+        case screenLastChanged = "screen_last_changed"
         case currentCommand = "current_command"
         case lastMessage = "last_message"
+        case provenance
         case pendingAction = "pending_action"
     }
 }

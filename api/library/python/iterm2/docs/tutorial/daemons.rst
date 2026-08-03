@@ -115,7 +115,7 @@ its body has a `while True` infinite loop. Here's how you do that:
     # Define more wrappers and create more tasks
 
 As you browse the documentation you will find many different context managers
-that allow you to perform actions when something hapens. For example:
+that allow you to perform actions when something happens. For example:
 
 * :class:`iterm2.FocusMonitor`
 * :class:`iterm2.KeystrokeFilter`

@@ -206,7 +206,7 @@ static NSDictionary *gGlobalKeyMapping;
         if (rowIndex >= 0 && rowIndex < [allKeys count]) {
             originalKeystroke = [[iTermKeystroke alloc] initWithSerialized:allKeys[rowIndex]];
         } else {
-            DLog(@"Invalid index %@", @(rowIndex));
+            RLog(@"Invalid index %@", @(rowIndex));
             return;
         }
     } else if ([keyStroke keyInBindingDictionary:mutableKeyMapping]) {

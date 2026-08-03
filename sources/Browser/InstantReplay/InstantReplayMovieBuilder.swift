@@ -76,7 +76,7 @@ final class InstantReplayMovieBuilder: NSObject {
 
         // Observe view window changes  
         viewWindowObservation = view.observe(\.window, options: [.new]) { [weak self] _, change in
-            DLog("View's window changed")
+            RLog("View's window changed")
             Task { @MainActor in
                 // Re-setup frame observations when window changes
                 self?.setupFrameObservations()
@@ -241,7 +241,7 @@ private extension InstantReplayMovieBuilder {
                 DLog("addRecorder: removed \(ObjectIdentifier(removed)) with \(removedMemory) bytes, total now \(totalMemory) bytes")
             }
         } catch {
-            DLog("addRecorder failed: \(error)")
+            RLog("addRecorder failed: \(error)")
         }
     }
 
@@ -256,7 +256,7 @@ private extension InstantReplayMovieBuilder {
             
             guard let window = view.window,
                   let scWindow = availableContent.windows.first(where: { $0.windowID == CGWindowID(exactly: window.windowNumber) }) else {
-                DLog("Could not find window for screen capture")
+                RLog("Could not find window for screen capture")
                 return
             }
             
@@ -289,7 +289,7 @@ private extension InstantReplayMovieBuilder {
             try await stream?.startCapture()
             
         } catch {
-            DLog("setupScreenCapture failed: \(error)")
+            RLog("setupScreenCapture failed: \(error)")
         }
     }
 }
@@ -297,7 +297,7 @@ private extension InstantReplayMovieBuilder {
 // MARK: - SCStreamDelegate  
 extension InstantReplayMovieBuilder: SCStreamDelegate {
     nonisolated func stream(_ stream: SCStream, didStopWithError error: Error) {
-        DLog("Screen capture stopped with error: \(error)")
+        RLog("Screen capture stopped with error: \(error)")
     }
     
     func handleStreamOutput(sampleBuffer: CMSampleBuffer, type: SCStreamOutputType) async {
@@ -401,7 +401,7 @@ extension InstantReplayMovieBuilder: SCStreamDelegate {
         
         // If we weren't capturing but now can, start capture
         if !wasCapturing && canCapture {
-            DLog("Starting capture - size: \(currentWindowSize), scale: \(currentScaleFactor)")
+            RLog("Starting capture - size: \(currentWindowSize), scale: \(currentScaleFactor)")
             windowSize = currentWindowSize
             scaleFactor = currentScaleFactor
             addRecorder()
@@ -415,7 +415,7 @@ extension InstantReplayMovieBuilder: SCStreamDelegate {
             
             // Scale factor change requires clearing all recorders (different pixel dimensions)
             if currentScaleFactor != scaleFactor {
-                DLog("Scale factor changed - clearing all recorders")
+                RLog("Scale factor changed - clearing all recorders")
                 recorders.removeAll()
             }
             
@@ -427,7 +427,7 @@ extension InstantReplayMovieBuilder: SCStreamDelegate {
         
         // If we were capturing but no longer can (e.g., window removed), stop
         if wasCapturing && !canCapture {
-            DLog("Stopping capture - no longer valid")
+            RLog("Stopping capture - no longer valid")
             if let currentStream = stream {
                 try? await currentStream.stopCapture()
                 stream = nil

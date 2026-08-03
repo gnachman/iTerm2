@@ -30,7 +30,7 @@
 - (void)handleExecScriptCommand:(NSScriptCommand *)aCommand {
     // if we are already doing something, get out.
     if ([self.shell pid] > 0) {
-        DLog(@"Beep: Can't execute script because there's already a process");
+        RLog(@"Beep: Can't execute script because there's already a process");
         NSBeep();
         return;
     }

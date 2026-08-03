@@ -16,7 +16,7 @@
 
 - (void)setCurrentTerminal:(PseudoTerminal *)thePseudoTerminal {
     _generation++;
-    DLog(@"setCurrentTerminal:%@ generation<-%@", thePseudoTerminal, @(_generation));
+    RLog(@"setCurrentTerminal:%@ generation<-%@", thePseudoTerminal, @(_generation));
     [self setCurrentTerminal:thePseudoTerminal generation:_generation isRetry:NO];
 }
 
@@ -41,7 +41,7 @@
 
 - (void)scheduleSetCurrentTerminalRetry:(PseudoTerminal *)thePseudoTerminal generation:(NSInteger)generation {
     __weak PseudoTerminal *term = thePseudoTerminal;
-    DLog(@"Defer making terminal current generation=%@", @(generation));
+    RLog(@"Defer making terminal current generation=%@", @(generation));
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         if (term) {
@@ -52,7 +52,7 @@
 
 - (void)setCurrentTerminal:(PseudoTerminal *)thePseudoTerminal generation:(NSInteger)generation isRetry:(BOOL)isRetry {
     if (isRetry && generation != _generation) {
-        DLog(@"Give up on setCurrentTerminal for generation %@", @(generation));
+        RLog(@"Give up on setCurrentTerminal for generation %@", @(generation));
         return;
     }
     if ([self shouldDeferSetCurrentTerminal:thePseudoTerminal]) {

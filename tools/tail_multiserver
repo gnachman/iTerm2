@@ -1,0 +1,2 @@
+#!/bin/sh
+log stream --level debug --style compact --predicate 'process BEGINSWITH "iTermServer"'

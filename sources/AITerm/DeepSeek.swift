@@ -11,6 +11,7 @@ struct DeepSeekRequestBuilder {
     var functions = [LLM.AnyFunction]()
     var stream: Bool
     var shouldThink: Bool? = nil
+    var frozenHistoryElements: Data? = nil  // blob-native replay; see LLMRequestBuilder
 
     private struct Body: Codable {
         var model: String?
@@ -208,6 +209,9 @@ struct DeepSeekRequestBuilder {
             model: provider.dynamicModelsSupported ? provider.model.name : nil,
             messages: messages.compactMap { Message($0) },
             max_tokens: provider.maxTokens(functions: functions, messages: messages),
+            // Omit temperature for models that reject it, matching
+            // CompletionsAnthropic. nil drops the key.
+            temperature: provider.model.supportsTemperature ? 0 : nil,
             tools: maybeDecls,
             function_call: functions.isEmpty ? nil : "auto",
             stream: stream,
@@ -218,7 +222,9 @@ struct DeepSeekRequestBuilder {
         }
         let bodyEncoder = JSONEncoder()
         let bodyData = try! bodyEncoder.encode(body)
-        return bodyData
+        return try ChatBlobAssembler.spliceFrozenHistory(
+            frozenHistoryElements, into: bodyData, arrayKey: "messages",
+            afterCount: messages.filter { $0.role == .system }.count)
 
     }
 }

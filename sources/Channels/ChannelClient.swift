@@ -145,12 +145,12 @@ class UnixDomainSocketMux {
 
         // Clean up any existing socket file
         if FileManager.default.fileExists(atPath: self.socketPath) {
-            DLog("Unlinking existing socket at \(self.socketPath)")
+            RLog("Unlinking existing socket at \(self.socketPath)")
             try? FileManager.default.removeItem(atPath: self.socketPath)
         }
 
         // Bind socket
-        DLog("Binding to \(self.socketPath)")
+        RLog("Binding to \(self.socketPath)")
         var addr = sockaddr_un()
         addr.sun_family = sa_family_t(AF_UNIX)
 
@@ -177,7 +177,7 @@ class UnixDomainSocketMux {
         flags |= O_NONBLOCK
         let result = fcntl(socket, F_SETFL, flags)
         if result == -1 {
-            DLog("Failed to set socket to non-blocking mode: \(StrError())")
+            RLog("Failed to set socket to non-blocking mode: \(StrError())")
         }
 
         _ = send(message: Data())
@@ -189,7 +189,7 @@ class UnixDomainSocketMux {
         do {
             return try reallySend(message: message)
         } catch {
-            DLog("Send error: \(error.localizedDescription)")
+            RLog("Send error: \(error.localizedDescription)")
             return 0
         }
     }
@@ -256,7 +256,7 @@ class UnixDomainSocketMux {
 
             if sent == -1 {
                 if errno == ECONNREFUSED {
-                    DLog("Connection refused - peer has disconnected")
+                    RLog("Connection refused - peer has disconnected")
                     isConnected = false
                     return bytesSent
                 }
@@ -297,7 +297,7 @@ class UnixDomainSocketMux {
                 // No data available (non-blocking socket)
                 return nil
             } else {
-                DLog("Error receiving data: \(StrError())")
+                RLog("Error receiving data: \(StrError())")
                 return nil
             }
         }

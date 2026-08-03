@@ -226,7 +226,7 @@ typedef NS_ENUM(NSUInteger, iTermInstantReplayState) {
                !cancel) {
         long long end = [_delegate instantReplayCurrentTimestamp];
         if (end < _start) {
-            DLog(@"Beep: end is before start");
+            RLog(@"Beep: end is before start");
             NSBeep();
             return;
         }

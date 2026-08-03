@@ -50,7 +50,6 @@ extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;
 @property (nonatomic, assign) BOOL manuallyOpened;
 @property (nonatomic, assign) BOOL allInitialWindowsAdded;
 @property (nonatomic, copy) NSDictionary<NSNumber *, NSString *> *tabColors;
-@property (nonatomic) BOOL focusReporting;
 @property (nonatomic, copy) Profile *profile;
 
 // Are we just attaching to a tmux session initially? If false, the initial window restoration has completed.

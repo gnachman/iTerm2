@@ -85,7 +85,7 @@
     for (NSURL *url in urls) {
         if (![[NSFileManager defaultManager] removeItemAtURL:url
                                                        error:&error]) {
-            DLog(@"Failed to unlink %@: %@", url.path, error);
+            RLog(@"Failed to unlink %@: %@", url.path, error);
         }
     }
 }
@@ -220,7 +220,7 @@ typedef enum {
 } iTermDatabaseIntegrityCheckState;
 
 - (void)integrityCheckDidTimeOut:(NSObject *)lock state:(iTermDatabaseIntegrityCheckState *)statePtr {
-    DLog(@"integrityCheckDidTimeOut");
+    RLog(@"integrityCheckDidTimeOut");
     if (!self.timeoutHandler) {
         DLog(@"There is no timeout handler");
         return;
@@ -234,18 +234,18 @@ typedef enum {
         DLog(@"Timeout check running while still querying");
     }
 
-    DLog(@"Invoke timeout handler");
+    RLog(@"Invoke timeout handler");
     if (!self.timeoutHandler()) {
-        DLog(@"User declined to delete the db");
+        RLog(@"User declined to delete the db");
         return;
     }
 
     @synchronized(lock) {
         if (*statePtr != iTermDatabaseIntegrityCheckStateQuerying) {
-            DLog(@"Succeeded on second chance");
+            RLog(@"Succeeded on second chance");
             return;
         }
-        DLog(@"Interrupt db check");
+        RLog(@"Interrupt db check");
         [_db interrupt];
         DLog(@"state<-interrupted");
         *statePtr = iTermDatabaseIntegrityCheckStateInterrupted;
@@ -285,7 +285,7 @@ typedef enum {
         DLog(@"Returned from results.next");
         value = [results stringForColumn:checkType];
     } else {
-        DLog(@"%@ check failed - no next result", checkType);
+        RLog(@"%@ check failed - no next result", checkType);
     }
     BOOL failed = NO;
     @synchronized(lock) {
@@ -305,7 +305,7 @@ typedef enum {
     }
     [results close];
     if (failed || ![value isEqualToString:@"ok"]) {
-        DLog(@"%@ check failed: %@", checkType, value);
+        RLog(@"%@ check failed: %@", checkType, value);
         return NO;
     }
     return YES;
@@ -317,7 +317,7 @@ typedef enum {
     // At this point we always return with the lock held.
     const BOOL ok = [_db open];
     if (!ok) {
-        DLog(@"Failed to open db: %@", _db.lastError);
+        RLog(@"Failed to open db: %@", _db.lastError);
         return NO;
     }
     if (![self passesIntegrityCheck]) {
@@ -363,11 +363,11 @@ typedef enum {
         fd = open(self.advisoryLockPath.UTF8String, O_CREAT | O_TRUNC | O_EXLOCK | O_NONBLOCK, 0600);
     } while (fd < 0 && errno == EINTR);
     if (fd >= 0) {
-        DLog(@"Lock acquired");
+        RLog(@"Lock acquired");
         _advisoryLock = [[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES];
         return YES;
     } else {
-        DLog(@"Failed: %s", strerror(errno));
+        RLog(@"Failed: %s", strerror(errno));
     }
     return NO;
 }
@@ -396,7 +396,7 @@ typedef enum {
         DLog(@"Commit");
         result = [_db commit];
         if (!result) {
-            DLog(@"error in commit: %@", _db.lastError);
+            RLog(@"error in commit: %@", _db.lastError);
         }
     } else {
         DLog(@"Rollback: %@", _db.lastError);

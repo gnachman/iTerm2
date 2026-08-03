@@ -69,7 +69,7 @@ const int iTermMinimumPythonEnvironmentVersion = 72;
 }
 
 - (void)download {
-    DLog(@"begin %@", self);
+    RLog(@"begin %@", self);
     assert(!_urlSession);
     assert(!_task);
 
@@ -84,7 +84,7 @@ const int iTermMinimumPythonEnvironmentVersion = 72;
 }
 
 - (void)cancel {
-    DLog(@"cancel %@", self);
+    RLog(@"cancel %@", self);
     const BOOL wasDownloading = self.downloading;
     self.downloading = NO;
     [_task cancel];
@@ -117,7 +117,7 @@ totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite {
 - (void)URLSession:(NSURLSession *)session
       downloadTask:(NSURLSessionDownloadTask *)downloadTask
 didFinishDownloadingToURL:(NSURL *)location {
-    DLog(@"didFinishDownloadingToURL:%@ %@", location, self);
+    RLog(@"didFinishDownloadingToURL:%@ %@", location, self);
     _stream = [NSInputStream inputStreamWithURL:location];
     [_stream open];
 }
@@ -125,7 +125,7 @@ didFinishDownloadingToURL:(NSURL *)location {
 - (void)URLSession:(NSURLSession *)session
               task:(NSURLSessionTask *)task
 didCompleteWithError:(nullable NSError *)error {
-    DLog(@"didCompleteWithError:%@ %@", error, self);
+    RLog(@"didCompleteWithError:%@ %@", error, self);
     if ([error.domain isEqualToString:NSURLErrorDomain] &&
         error.code == kCFURLErrorNetworkConnectionLost &&
         _continuationsLeft > 0) {
@@ -140,7 +140,7 @@ didCompleteWithError:(nullable NSError *)error {
         // This is an attempt to route around the damage. I was able to reproduce the problem and
         // verify that this fixes it.
         NSData *resumeData = [error.userInfo objectForKey:NSURLSessionDownloadTaskResumeData];
-        DLog(@"Big Sur bug detected. resumeData.length=%@", @(resumeData.length));
+        RLog(@"Big Sur bug detected. resumeData.length=%@", @(resumeData.length));
         if (resumeData.length > 0) {
             DLog(@"Resuming");
             _continuationsLeft -= 1;
@@ -306,14 +306,14 @@ didCompleteWithError:(nullable NSError *)error {
 - (void)URLSession:(NSURLSession *)session
               task:(NSURLSessionTask *)task
 didCompleteWithError:(nullable NSError *)error {
-    DLog(@"didCompleteWithError:%@ - %@", error, self);
+    RLog(@"didCompleteWithError:%@ - %@", error, self);
     if (!error) {
         dispatch_async(dispatch_get_main_queue(), ^{
             NSDictionary *dict = [self parsedManifestFromInputStream:self.stream];
             NSError *innerError = nil;
             const int version = [dict[@"version"] intValue];
             if (version < iTermMinimumPythonEnvironmentVersion) {
-                DLog(@"%@ < %@: %@", @(version), @(iTermMinimumPythonEnvironmentVersion), self);
+                RLog(@"%@ < %@: %@", @(version), @(iTermMinimumPythonEnvironmentVersion), self);
                 innerError = [NSError errorWithDomain:@"com.iterm2" code:3 userInfo:@{ NSLocalizedDescriptionKey: @"☹️ No usable version found." }];
             } else if (dict) {
                 self->_fullComponent =
@@ -339,13 +339,13 @@ didCompleteWithError:(nullable NSError *)error {
                 DLog(@"version=%@ pythonVersionsInArchive=%@ sitePackageDependencies=%@ self=%@",
                      @(self->_version), self->_pythonVersionsInArchive, NSStringFromRange(self->_sitePackagesDependencies), self);
             } else {
-                DLog(@"malformed manifest");
+                RLog(@"malformed manifest");
                 innerError = [NSError errorWithDomain:@"com.iterm2" code:2 userInfo:@{ NSLocalizedDescriptionKey: @"☹️ Malformed manifest." }];
             }
             [super URLSession:session task:task didCompleteWithError:innerError];
         });
     } else {
-        DLog(@"fail");
+        RLog(@"fail");
         [super URLSession:session task:task didCompleteWithError:error];
     }
 }
@@ -413,7 +413,7 @@ didCompleteWithError:(nullable NSError *)error {
 }
 
 - (void)beginPhase:(iTermOptionalComponentDownloadPhase *)phase {
-    DLog(@"begin phase %@ - %@", phase, self);
+    RLog(@"begin phase %@ - %@", phase, self);
     const BOOL determinant = phase.progressIsDeterminant;
     if (phase.willBegin) {
         phase.willBegin();
@@ -463,7 +463,7 @@ didCompleteWithError:(nullable NSError *)error {
 }
 
 - (void)downloadDidFailWithError:(NSError *)error {
-    DLog(@"error=%@ %@", error, self);
+    RLog(@"error=%@ %@", error, self);
     _button.enabled = YES;
     _button.title = @"Try Again";
     if (error.code == -999 && [error.domain isEqualToString:@"com.iterm2"]) {
@@ -482,7 +482,7 @@ didCompleteWithError:(nullable NSError *)error {
 #pragma mark - iTermOptionalComponentDownloadPhaseDelegate
 
 - (void)optionalComponentDownloadPhaseDidComplete:(iTermOptionalComponentDownloadPhase *)sender {
-    DLog(@"optionalComponentDownloadPhaseDidComplete:%@ %@", sender, self);
+    RLog(@"optionalComponentDownloadPhaseDidComplete:%@ %@", sender, self);
     if (sender.error) {
         DLog(@"%@", sender.error);
         [self downloadDidFailWithError:sender.error];
@@ -490,7 +490,7 @@ didCompleteWithError:(nullable NSError *)error {
     }
     iTermOptionalComponentDownloadPhase *nextPhase = sender.nextPhaseFactory ? sender.nextPhaseFactory(_currentPhase) : nil;
     if (nextPhase) {
-        DLog(@"Next phase is %@", nextPhase);
+        RLog(@"Next phase is %@", nextPhase);
         [self beginPhase:nextPhase];
         return;
     }

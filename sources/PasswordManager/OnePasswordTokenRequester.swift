@@ -33,7 +33,7 @@ class OnePasswordUtils {
                 defaultPath = goodPath
             }
             if usable == nil && goodPath == nil {
-                DLog("usability fail")
+                RLog("usability fail")
                 usable = false
                 showUnavailableMessage(normalPaths.joined(separator: " or "))
             } else {
@@ -163,7 +163,7 @@ class OnePasswordUtils {
             DLog("scan failed")
             return nil
         }
-        DLog("Didn't get a version number")
+        RLog("Didn't get a version number")
         return nil
     }
 }
@@ -212,7 +212,9 @@ class OnePasswordAccountPicker {
         }
         let decoder = JSONDecoder()
         guard let accounts = try? decoder.decode([Account].self, from: output.stdout) else {
-            DLog("Failed to parse \(output)")
+            // output's debug description dumps stdout/stderr, which here is the 1Password
+            // account list (emails, sign-in URLs). Keep it out of the ring (byte count only).
+            RLog("Failed to parse account list: \(redacted: output, or: "byteCount=\(output.stdout.count)")")
             completion(.failure(OnePasswordDataSource.OPError.unexpectedError))
             return
         }
@@ -257,15 +259,15 @@ class OnePasswordTokenRequester {
                 }
                 switch availability {
                 case .some(true):
-                    DLog("biometrics are available")
+                    RLog("biometrics are available")
                     Self.biometricsAvailable = true
                     completion(.success(.biometric))
                 case .some(false):
-                    DLog("biometrics unavailable, continue with regular auth")
+                    RLog("biometrics unavailable, continue with regular auth")
                     Self.biometricsAvailable = false
                     self.asyncGetWithoutBiometrics(completion)
                 case .none:
-                    DLog("Failed to look up biometrics")
+                    RLog("Failed to look up biometrics")
                     completion(.failure(OnePasswordDataSource.OPError.canceledByUser))
                 }
             }
@@ -308,7 +310,7 @@ class OnePasswordTokenRequester {
                 DLog("But the return code is nonzero")
                 DLog("signin failed")
                 let reason = String(data: output.stderr, encoding: .utf8) ?? "An unknown error occurred."
-                DLog("Failure reason is: \(reason)")
+                RLog("Failure reason is: \(reason)")
                 if reason.contains("connecting to desktop app timed out") {
                     completion(.failure(OnePasswordDataSource.OPError.unusableCLI))
                     return
@@ -364,7 +366,7 @@ class OnePasswordTokenRequester {
             DLog("garbage output")
             return false
         }
-        DLog("op signin returned \(string)")
+        RLog("op signin returned \(string)")
         if string.contains("error initializing client: authorization prompt dismissed, please try again") {
             return nil
         }
@@ -401,7 +403,7 @@ class OnePasswordTokenRequester {
                     completion(false)
                     return
                 }
-                DLog("op signin returned \(string)")
+                RLog("op signin returned \(string)")
                 if string.contains("error initializing client: authorization prompt dismissed, please try again") {
                     completion(nil)
                     return

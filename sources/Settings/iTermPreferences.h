@@ -221,6 +221,12 @@ extern NSString *const kPreferenceKeyAIFeatureHostedWebSearch;
 extern NSString *const kPreferenceKeyAIFeatureFunctionCalling;
 extern NSString *const kPreferenceKeyAIFeatureStreamingResponses;
 extern NSString *const kPreferenceKeyAIVectorStore;
+extern NSString *const kPreferenceKeyAIManualModelConfigurations;  // NSArray of NSDictionary
+// Name of the manual model the user designated as the "economy" model: a
+// cheaper model used for frequent, low-stakes background judgements (command
+// safety, screen-idle detection). Empty string means none; the catalog's
+// per-model economy pointer is then used instead. See ScreenWatchPoller.
+extern NSString *const kPreferenceKeyAIEconomyModelName;
 extern NSString *const kPreferenceKeyUseRecommendedAIModel;
 extern NSString *const kPreferenceKeyAIVendor;  // iTermAIVendor
 extern NSString *const kPreferenceKeyAISafetyCheck;  // boolean
@@ -244,7 +250,7 @@ extern NSString *const kPreferenceKeyAIPermissionCheckTerminalState;
 extern NSString *const kPreferenceKeyAIPermissionRunCommands;
 extern NSString *const kPreferenceKeyAIPermissionViewHistory;
 extern NSString *const kPreferenceKeyAIPermissionWriteToClipboard;
-extern NSString *const kPreferenceKeyAIPermissionTypeForYou;
+extern NSString *const kPreferenceKeyAIPermissionControlTerminal;
 extern NSString *const kPreferenceKeyAIPermissionViewManpages;
 extern NSString *const kPreferenceKeyAIPermissionWriteToFilesystem;
 extern NSString *const kPreferenceKeyAIPermissionActInWebBrowser;
@@ -303,6 +309,7 @@ extern NSString *const kPreferenceKeyEmulateUSKeyboard;  // See issue 6994
 
 extern NSString *const kPreferenceKeyHotkeyEnabled;
 extern NSString *const kPreferenceKeyForceKeyboard;
+extern NSString *const kPreferenceKeyForceKeyboardOncePerSession;
 extern NSString *const kPreferenceKeyAllowSymbolicHotKeys;
 extern NSString *const kPreferenceKeyKeyboardLocale;
 extern NSString *const kPreferenceKeyHotKeyCode;
@@ -464,4 +471,7 @@ extern NSString *const iTermDefaultAIPrompt;
 + (BOOL)dimOnlyText;
 + (int)sideMargins;
 + (int)topBottomMargins;
++ (BOOL)perPaneBackgroundImage;
++ (double)splitPaneDimmingAmount;
++ (BOOL)dimBackgroundWindows;
 @end

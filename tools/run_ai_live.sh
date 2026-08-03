@@ -34,12 +34,13 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-# Write the config to /tmp explicitly. macOS's per-user $TMPDIR under
-# /var/folders/.../T/ has a periodic cleanup that races with long test
-# sweeps: with 96 test cases the run takes ~70s and the cleanup deletes
-# the config file mid-sweep, after which every remaining test XCTSkip's
-# with "Live AI harness is opt-in." /tmp doesn't have that rotation.
-CONFIG_FILE="/tmp/iterm2-ai-live.json"
+# Write the config at the REPO ROOT (gitignored), not /tmp. This scopes it to
+# THIS worktree, so a leftover here can't drive the live harness in another
+# checkout (the failure mode the old shared /tmp path had); run_tests.expect can
+# delete this exact file defensively; and it isn't subject to the $TMPDIR
+# periodic reaping that broke long sweeps. AILiveHarness.configFilePath() derives
+# the same path from its own source location.
+CONFIG_FILE="$PROJECT_DIR/.iterm2-ai-live.json"
 
 cleanup() {
     rm -f "$CONFIG_FILE"
@@ -50,9 +51,10 @@ cleanup() {
 # that the trap (which fires on bash exec replacement on some systems)
 # would delete the config before AILiveHarness.setUpWithError could
 # read it. Result: every test in the long sweep XCTSkip'd with
-# "Live AI harness is opt-in". The config file is harmless to leave
-# behind in $TMPDIR/iterm2-ai-live.json and macOS rotates that
-# directory on reboot.
+# "Live AI harness is opt-in". A leftover at the repo root is gitignored (never
+# committable), shows under `git status --ignored`, makes the harness log "Live
+# AI harness ACTIVE" loudly, and run_tests.expect deletes it defensively on the
+# next plain test run.
 trap cleanup INT TERM HUP
 
 # JSON-quote a value for safe embedding (handles backslash and quote).

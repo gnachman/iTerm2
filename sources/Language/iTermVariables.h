@@ -50,8 +50,9 @@ extern NSString *const iTermVariableKeySessionAutoName;  // Evaluated value of a
 extern NSString *const iTermVariableKeySessionIconName;  // set by esc code
 extern NSString *const iTermVariableKeySessionTriggerName;
 extern NSString *const iTermVariableKeySessionWindowName;  // set by esc code
-extern NSString *const iTermVariableKeySessionJob;  // job name, not affected by modifying argv[0]
+extern NSString *const iTermVariableKeySessionJob;  // name of the deepest foreground job attached to the tty (stdin/stdout is the terminal), not affected by modifying argv[0]
 extern NSString *const iTermVariableKeySessionProcessTitle;  // process title, affected by modifying argv[0]. see issue 4214 for details.
+extern NSString *const iTermVariableKeySessionDeepestJob;  // name of the raw deepest foreground job, which may be a helper not attached to the tty (e.g. an MCP server piped to its parent). See jobName for the tty-attached job.
 extern NSString *const iTermVariableKeySessionForegroundJobAncestors;  // Newline-separated lowercased argv0 values of foreground process and its ancestors up to the login shell.
 extern NSString *const iTermVariableKeySessionCommandLine;  // Current foreground job with arguments
 extern NSString *const iTermVariableKeySessionPresentationName;  // What's shown in the session title view

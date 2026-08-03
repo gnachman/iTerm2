@@ -8,6 +8,7 @@
 #import "iTermAttributedStringBuilder.h"
 
 #import "NSDictionary+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermBackgroundColorRun.h"
 #import "iTermBoxDrawingBezierCurveFactory.h"
@@ -84,6 +85,50 @@ NSString *const iTermKittyImageRowAttribute = @"iTermKittyImageRowAttribute";
 NSString *const iTermKittyImageColumnAttribute = @"iTermKittyImageColumnAttribute";
 NSString *const iTermKittyImageIDAttribute = @"iTermKittyImageIDAttribute";
 NSString *const iTermKittyImagePlacementIDAttribute = @"iTermKittyImagePlacementIDAttribute";
+
+// Cache key capturing exactly the fields that determine
+// -dictionaryForCharacterAttributes:'s output, so identical attribute
+// combinations reuse one interned NSDictionary instead of rebuilding it per run.
+// The foreground color uses value equality (the delegate hands back a fresh
+// NSColor per cell, so pointer identity would never hit); the font uses pointer
+// equality (the font table returns stable instances, and a distinct instance just
+// costs a rebuild, never a wrong result) so hash and equality stay consistent.
+@interface iTermCharAttrsDictKey : NSObject <NSCopying>
+@end
+
+@implementation iTermCharAttrsDictKey {
+@public
+    uint64_t _scalars;  // all scalar fields, including the underline color, packed
+    NSColor *_fg;
+    NSFont *_font;
+    NSUInteger _hash;
+}
+- (NSUInteger)hash {
+    return _hash;
+}
+- (BOOL)isEqual:(id)object {
+    if (object == self) {
+        return YES;
+    }
+    if (![object isKindOfClass:[iTermCharAttrsDictKey class]]) {
+        return NO;
+    }
+    iTermCharAttrsDictKey *other = object;
+    return (_scalars == other->_scalars &&
+            _font == other->_font &&
+            (_fg == other->_fg || [_fg isEqual:other->_fg]));
+}
+- (id)copyWithZone:(NSZone *)zone {
+    // A real copy: a single instance is reused for lookups (mutated in place), so
+    // the stored key must be a stable snapshot.
+    iTermCharAttrsDictKey *copy = [[iTermCharAttrsDictKey alloc] init];
+    copy->_scalars = _scalars;
+    copy->_fg = _fg;
+    copy->_font = _font;
+    copy->_hash = _hash;
+    return copy;
+}
+@end
 
 static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAttributes *newAttributes,
                                                                iTermCharacterAttributes *previousAttributes) {
@@ -235,8 +280,28 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
     }
 }
 
+// Attribute-dictionary cache tuning.
+enum {
+    // Drop the cache wholesale once it holds this many entries, rather than paying
+    // for LRU bookkeeping on a per-run hot path.
+    kDictCacheMaxEntries = 1024,
+    // Number of lookups to observe before deciding whether caching pays off.
+    kDictCacheWarmupLookups = 2000,
+    // Disable caching if fewer than 1/this of warmup lookups hit (i.e. <25%).
+    kDictCacheMinHitRateDivisor = 4,
+};
+
 @implementation iTermAttributedStringBuilder {
     int _statsCount;
+    // Interns -dictionaryForCharacterAttributes: results across runs and frames.
+    // The builder is used serially (one per Metal per-frame state; rows built in
+    // order), so no locking is needed. Bounded to avoid unbounded growth on
+    // pathological unique-color content.
+    NSMutableDictionary<iTermCharAttrsDictKey *, NSDictionary *> *_dictCache;
+    iTermCharAttrsDictKey *_dictLookupKey;  // Reused for lookups to avoid per-run allocation.
+    NSInteger _dictCacheLookups;
+    NSInteger _dictCacheHits;
+    BOOL _dictCacheDisabled;  // Set when the hit rate is too low to be worth the overhead.
 }
 
 - (instancetype)initWithStats:(iTermAttributedStringBuilderStatsPointers)stats {
@@ -254,6 +319,7 @@ static BOOL iTermTextDrawingHelperShouldAntiAlias(screen_char_t *c,
          asciiLigaturesAvailable:(BOOL)asciiLigaturesAvailable
                   asciiLigatures:(BOOL)asciiLigatures
 preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
+             lowFiCombiningMarks:(BOOL)lowFiCombiningMarks
                         cellSize:(NSSize)cellSize
             blinkingItemsVisible:(BOOL)blinkingItemsVisible
                     blinkAllowed:(BOOL)blinkAllowed
@@ -276,6 +342,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
     _asciiLigaturesAvailable = asciiLigaturesAvailable;
     _asciiLigatures = asciiLigatures;
     _preferSpeedToFullLigatureSupport = preferSpeedToFullLigatureSupport;
+    _lowFiCombiningMarks = lowFiCombiningMarks;
     _cellSize = cellSize;
     _blinkingItemsVisible = blinkingItemsVisible;
     _blinkAllowed = blinkAllowed;
@@ -321,7 +388,8 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         .previousForegroundColor = nil,
     };
     NSDictionary *previousImageAttributes = nil;
-    iTermMutableAttributedStringBuilder *builder = [[iTermMutableAttributedStringBuilder alloc] init];
+    iTermMutableAttributedStringBuilder *builder = [[iTermMutableAttributedStringBuilder alloc] initWithPreferSpeedToFullLigatureSupport:_preferSpeedToFullLigatureSupport
+                                                                    lowFiCombiningMarks:_lowFiCombiningMarks];
     builder.hasBidi = bidiInfo != nil;
     builder.startColumn = indexRange.location;
     builder.zippy = self.zippy;
@@ -527,7 +595,8 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
             if (builtString.length > 0) {
                 [attributedStrings addObject:builtString];
             }
-            builder = [[iTermMutableAttributedStringBuilder alloc] init];
+            builder = [[iTermMutableAttributedStringBuilder alloc] initWithPreferSpeedToFullLigatureSupport:_preferSpeedToFullLigatureSupport
+                                                                    lowFiCombiningMarks:_lowFiCombiningMarks];
             builder.hasBidi = bidiInfo != nil;
             builder.startColumn = i;
             builder.zippy = self.zippy;
@@ -773,6 +842,53 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
 }
 
 - (NSDictionary *)dictionaryForCharacterAttributes:(iTermCharacterAttributes *)attributes {
+    // Fast path: return an interned dictionary if we have already built one for
+    // this exact attribute combination. A single lookup key is reused (mutated in
+    // place) so a cache hit costs no allocation.
+    iTermCharAttrsDictKey *key = nil;
+    if (!_dictCacheDisabled) {
+        if (!_dictLookupKey) {
+            _dictLookupKey = [[iTermCharAttrsDictKey alloc] init];
+        }
+        key = _dictLookupKey;
+        // Bits 0-31: scalar flags/enums. Bits 32-63: underline color (only when
+        // present), so a single word captures every field the dictionary depends on.
+        uint64_t scalars = (((uint64_t)attributes->underlineType) |
+                            ((uint64_t)attributes->strikethrough << 4) |
+                            ((uint64_t)attributes->isURL << 5) |
+                            ((uint64_t)attributes->shouldAntiAlias << 6) |
+                            ((uint64_t)attributes->boxDrawing << 7) |
+                            ((uint64_t)attributes->fakeBold << 8) |
+                            ((uint64_t)attributes->bold << 9) |
+                            ((uint64_t)attributes->faint << 10) |
+                            ((uint64_t)attributes->fakeItalic << 11) |
+                            ((uint64_t)attributes->hasUnderlineColor << 12) |
+                            ((uint64_t)attributes->rtlStatus << 13) |
+                            ((uint64_t)(attributes->ligatureLevel & 0xffff) << 16));
+        if (attributes->hasUnderlineColor) {
+            scalars |= (((uint64_t)(attributes->underlineColor.red & 0xff) << 32) |
+                        ((uint64_t)(attributes->underlineColor.green & 0xff) << 40) |
+                        ((uint64_t)(attributes->underlineColor.blue & 0xff) << 48) |
+                        ((uint64_t)(attributes->underlineColor.mode & 0xff) << 56));
+        }
+        key->_scalars = scalars;
+        key->_fg = attributes->foregroundColor;
+        key->_font = attributes->font;
+        // Cheap multiplicative mix of the packed scalars, the (value-based) color
+        // hash, and the font pointer. Avoids the byte-loop hashing and the
+        // per-lookup -[NSFont hash] message send.
+        NSUInteger h = (NSUInteger)(scalars ^ (scalars >> 32));
+        h = h * 1099511628211ULL + key->_fg.hash;
+        h = h * 1099511628211ULL + (NSUInteger)(__bridge void *)key->_font;
+        key->_hash = h;
+        _dictCacheLookups++;
+        NSDictionary *cached = _dictCache[key];
+        if (cached) {
+            _dictCacheHits++;
+            return cached;
+        }
+    }
+
     NSUnderlineStyle underlineStyle = NSUnderlineStyleNone;
     switch (attributes->underlineType) {
         case iTermCharacterAttributesUnderlineNone:
@@ -808,17 +924,34 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         paragraphStyle.tabStops = @[];
         paragraphStyle.baseWritingDirection = NSWritingDirectionLeftToRight;
     });
-    NSWritingDirection writingDirection;
-    switch (attributes->rtlStatus) {
-        case RTLStatusUnknown:
-        case RTLStatusLTR:
-            writingDirection = NSWritingDirectionLeftToRight | (NSWritingDirection)NSWritingDirectionOverride;
-            break;
-        case RTLStatusRTL:
-            writingDirection = NSWritingDirectionRightToLeft | (NSWritingDirection)NSWritingDirectionOverride;
-            break;
+    // The writing-direction attribute has only two possible values, so intern the
+    // two one-element arrays instead of allocating one per run.
+    static NSArray *ltrWritingDirection;
+    static NSArray *rtlWritingDirection;
+    static dispatch_once_t writingDirectionOnce;
+    dispatch_once(&writingDirectionOnce, ^{
+        ltrWritingDirection = @[@(NSWritingDirectionLeftToRight | (NSWritingDirection)NSWritingDirectionOverride)];
+        rtlWritingDirection = @[@(NSWritingDirectionRightToLeft | (NSWritingDirection)NSWritingDirectionOverride)];
+    });
+    NSArray *writingDirection = (attributes->rtlStatus == RTLStatusRTL) ? rtlWritingDirection : ltrWritingDirection;
+
+    // The underline-color components array is only read when hasUnderlineColor is
+    // set (see -underlineColorForAttributes:), which is rare. Use a shared
+    // placeholder otherwise so the common case allocates no array.
+    static NSArray *placeholderUnderlineColor;
+    static dispatch_once_t underlineColorOnce;
+    dispatch_once(&underlineColorOnce, ^{
+        placeholderUnderlineColor = @[@0, @0, @0, @0];
+    });
+    NSArray *underlineColor = placeholderUnderlineColor;
+    if (attributes->hasUnderlineColor) {
+        underlineColor = @[ @(attributes->underlineColor.red),
+                            @(attributes->underlineColor.green),
+                            @(attributes->underlineColor.blue),
+                            @(attributes->underlineColor.mode) ];
     }
-    return @{ (NSString *)kCTLigatureAttributeName: @(attributes->ligatureLevel),
+
+    NSDictionary *result = @{ (NSString *)kCTLigatureAttributeName: @(attributes->ligatureLevel),
               (NSString *)kCTForegroundColorAttributeName: (id)[attributes->foregroundColor CGColor],
               NSFontAttributeName: attributes->font,
               iTermAntiAliasAttribute: @(attributes->shouldAntiAlias),
@@ -828,15 +961,38 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
               iTermFaintAttribute: @(attributes->faint),
               iTermFakeItalicAttribute: @(attributes->fakeItalic),
               iTermHasUnderlineColorAttribute: @(attributes->hasUnderlineColor),
-              iTermUnderlineColorAttribute: @[ @(attributes->underlineColor.red),
-                                               @(attributes->underlineColor.green),
-                                               @(attributes->underlineColor.blue),
-                                               @(attributes->underlineColor.mode) ],
+              iTermUnderlineColorAttribute: underlineColor,
               NSUnderlineStyleAttributeName: @(underlineStyle),
               NSStrikethroughStyleAttributeName: @(strikethroughStyle),
               NSParagraphStyleAttributeName: paragraphStyle,
-              NSWritingDirectionAttributeName: @[@(writingDirection)],
+              NSWritingDirectionAttributeName: writingDirection,
     };
+
+    if (key) {
+        if (!_dictCache) {
+            _dictCache = [[NSMutableDictionary alloc] init];
+        } else if (_dictCache.count >= kDictCacheMaxEntries) {
+            // Bound memory on pathological unique-color content by dropping it
+            // wholesale rather than paying for LRU bookkeeping.
+            [_dictCache removeAllObjects];
+        }
+        // Store a stable copy; the lookup key is reused and mutated in place.
+        _dictCache[[key copyWithZone:NULL]] = result;
+
+        // Adaptive: on content whose attribute combinations are almost all unique
+        // (e.g. a different truecolor per cell) the cache never hits and only adds
+        // overhead, so after a warmup we stop caching for the life of this builder.
+        // The disable is deliberately permanent: the target workload is a sustained
+        // full-screen color animation, where re-probing each frame would just pay
+        // the warmup cost repeatedly.
+        if (_dictCacheLookups >= kDictCacheWarmupLookups &&
+            _dictCacheHits * kDictCacheMinHitRateDivisor < _dictCacheLookups) {
+            _dictCacheDisabled = YES;
+            _dictCache = nil;
+            _dictLookupKey = nil;
+        }
+    }
+    return result;
 }
 
 - (BOOL)character:(const screen_char_t *)c
@@ -945,6 +1101,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     _asciiLigaturesAvailable = other.asciiLigaturesAvailable;
     _asciiLigatures = other.asciiLigatures;
     _preferSpeedToFullLigatureSupport = other.preferSpeedToFullLigatureSupport;
+    _lowFiCombiningMarks = other.lowFiCombiningMarks;
     _cellSize = other.cellSize;
     _blinkingItemsVisible = other.blinkingItemsVisible;
     _blinkAllowed = other.blinkAllowed;

@@ -222,6 +222,18 @@ typedef NS_ENUM(NSInteger, iTermSessionLookupLocation) {
 // which is why the peer-port legs matter.
 - (PTYSession *)anySessionWithGUID:(NSString *)identifier;
 
+// Like -anySessionWithGUID: but matches on the reload-durable stableID
+// (PTYSession.stableID) instead of the guid. Accepts any-case / Crockford-
+// confusable input (it canonicalizes before comparing). Returns nil if
+// stableID is not a well-formed stable identifier.
+- (PTYSession *)anySessionWithStableID:(NSString *)stableID;
+
+// Resolves an opaque session reference that may be either a stableID
+// ("ptys_...") or a legacy guid, dispatching on the form. This is the entry
+// point for chat/companion bindings, which store whichever form the session had
+// when linked. Prefer this over -anySessionWithGUID: for reload-durable lookups.
+- (PTYSession *)anySessionForReference:(NSString *)reference;
+
 // sessionID is of the form "w0t0p0:guid"
 - (void)revealSessionID:(NSString *)sessionID;
 - (void)revealSessionWithGUID:(NSString *)guid;

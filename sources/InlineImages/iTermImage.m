@@ -19,7 +19,11 @@
 #import "iTermSandboxedWorkerClient.h"
 #if DECODE_IMAGES_IN_PROCESS
 #import "iTermImage+ImageWithData.h"
-#warning Decoding images in process because address sanitizer is enabled.
+// Informational note (not a #warning): under AddressSanitizer the sandboxed
+// image-decoding worker is bypassed and images decode in this process. Emitted
+// via #pragma message so it stays visible in the build log without tripping
+// -Werror in the ASan-instrumented test build.
+#pragma message("Decoding images in process because address sanitizer is enabled.")
 #endif
 
 static const CGFloat kMaxDimension = 10000;

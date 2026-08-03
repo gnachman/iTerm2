@@ -50,7 +50,7 @@ extension iTermSwiftyStringTextField {
                                          sideEffectsAllowed: false,
                                          observer: { [weak self] newValue, error in
             if let error {
-                DLog("\(error) for \(d(self?.swiftyString))")
+                RLog("\(error) for \(d(self?.swiftyString))")
                 return newValue
             }
             let string = if let newValue, let s = newValue as? String {

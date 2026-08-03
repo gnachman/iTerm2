@@ -111,12 +111,12 @@ static NSString *const iTermStatusBarLayoutKeyClass = @"class";
         NSString *className = dict[iTermStatusBarLayoutKeyClass];
         Class theClass = NSClassFromString(className);
         if (![theClass conformsToProtocol:@protocol(iTermStatusBarComponent)]) {
-            DLog(@"Bogus class %@", theClass);
+            RLog(@"Bogus class %@", theClass);
             continue;
         }
         NSDictionary *configuration = dict[iTermStatusBarLayoutKeyConfiguration];
         if (!configuration) {
-            DLog(@"Missing configuration for %@", dict);
+            RLog(@"Missing configuration for %@", dict);
             continue;
         }
         configuration = [configuration dictionaryBySettingObject:dictionary[iTermStatusBarLayoutKeyAdvancedConfiguration] ?: @{}

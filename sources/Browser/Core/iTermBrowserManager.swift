@@ -535,7 +535,7 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         let containsOrigin = await checkWebViewContainsOrigin(origin)
         
         if containsOrigin {
-            DLog("Reloading browser session \(sessionGuid) due to revoked permission for origin: \(origin)")
+            RLog("Reloading browser session \(sessionGuid) due to revoked permission for origin: \(origin)")
             reload()
         }
     }
@@ -1226,7 +1226,46 @@ extension iTermBrowserManager: WKNavigationDelegate {
     func webView(_ webView: WKWebView,
                  didReceive challenge: URLAuthenticationChallenge,
                  completionHandler: @escaping @MainActor (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        completionHandler(.performDefaultHandling, nil)
+        let protectionSpace = challenge.protectionSpace
+        switch protectionSpace.authenticationMethod {
+        case NSURLAuthenticationMethodHTTPBasic,
+             NSURLAuthenticationMethodHTTPDigest,
+             NSURLAuthenticationMethodNTLM:
+            promptForCredential(challenge: challenge, completionHandler: completionHandler)
+        default:
+            // Server trust and everything else falls back to system handling.
+            completionHandler(.performDefaultHandling, nil)
+        }
+    }
+
+    private func promptForCredential(
+        challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping @MainActor (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        // If we already offered a credential and it was rejected, cancel rather
+        // than looping forever on the same bad credential.
+        let protectionSpace = challenge.protectionSpace
+        let host = protectionSpace.host
+        let realm = protectionSpace.realm
+        let promptText: String
+        if let realm, !realm.isEmpty {
+            promptText = "The website “\(host)” requires a user name and password for “\(realm)”."
+        } else {
+            promptText = "The website “\(host)” requires a user name and password."
+        }
+
+        let alert = ModalPasswordAlert(promptText)
+        // A non-nil username makes ModalPasswordAlert show a user name field.
+        alert.username = challenge.proposedCredential?.user ?? ""
+        alert.runAsync(window: webView.window) { password in
+            guard let password else {
+                completionHandler(.cancelAuthenticationChallenge, nil)
+                return
+            }
+            let credential = URLCredential(user: alert.username ?? "",
+                                           password: password,
+                                           persistence: .forSession)
+            completionHandler(.useCredential, credential)
+        }
     }
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
@@ -1296,7 +1335,7 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         let nsError = error as NSError
-        DLog("🔌 didFailNavigation: domain=\(nsError.domain) code=\(nsError.code) — \(nsError.localizedDescription)")
+        RLog("🔌 didFailNavigation: domain=\(nsError.domain) code=\(nsError.code) — \(nsError.localizedDescription)")
         let failedURL = navigationState.lastRequestedURL
 
         navigationState.didCompleteLoading(error: error)
@@ -1816,9 +1855,9 @@ extension iTermBrowserManager {
             let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(proxyHost), port: NWEndpoint.Port(integerLiteral: UInt16(proxyPort)))
             let proxyConfig = ProxyConfiguration(httpCONNECTProxy: endpoint)
             dataStore.proxyConfigurations = [proxyConfig]
-            DLog("Configured browser proxy: \(proxyHost):\(proxyPort)")
+            RLog("Configured browser proxy: \(proxyHost):\(proxyPort)")
         } else {
-            DLog("Proxy disabled")
+            RLog("Proxy disabled")
             dataStore.proxyConfigurations = []
         }
     }

@@ -58,7 +58,7 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
 - (void)toggle {
     // Set _desired to the opposite of the current state.
     _enabledByUserDefault = !_enabledByUserDefault;
-    DLog(@"toggle called. Setting desired to %@", @(_enabledByUserDefault));
+    RLog(@"toggle called. Setting desired to %@", @(_enabledByUserDefault));
 
     // Try to set the system's state of secure input to the desired state.
     [self update];
@@ -107,7 +107,7 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
 }
 
 - (void)temporaryDisablementDidExpire {
-    DLog(@"temporaryDisablementDidExpire _temporarilyDisabled=%@", @(_temporarilyDisabled));
+    RLog(@"temporaryDisablementDidExpire _temporarilyDisabled=%@", @(_temporarilyDisabled));
     _backstop = nil;
     _temporarilyDisabled = NO;
     [self update];
@@ -120,14 +120,14 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
     [_backstop invalidate];
     _backstop = nil;
     if (_count > 0) {
-        DLog(@"Application resigning active.");
+        RLog(@"Application resigning active.");
         [self update];
     }
 }
 
 - (void)applicationDidBecomeActive:(NSNotification *)notification {
     if (self.isDesired) {
-        DLog(@"Application became active.");
+        RLog(@"Application became active.");
         [self update];
     }
 }
@@ -156,7 +156,7 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
 }
 
 - (void)update {
-    DLog(@"Update secure keyboard entry. desired=%@ active=%@ focusStolen=%@",
+    RLog(@"Update secure keyboard entry. desired=%@ active=%@ focusStolen=%@",
          @(self.isDesired), @([NSApp isActive]), @(_focusStolen));
     const BOOL secure = self.isDesired && [self allowed];
 
@@ -176,20 +176,20 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
             [self warnIfNeeded];
         }
         OSErr err = EnableSecureEventInput();
-        DLog(@"EnableSecureEventInput err=%d", (int)err);
+        RLog(@"EnableSecureEventInput err=%d", (int)err);
         if (err) {
             XLog(@"EnableSecureEventInput failed with error %d", (int)err);
         } else {
-            DLog(@"Secure keyboard entry enabled");
+            RLog(@"Secure keyboard entry enabled");
             _count += 1;
         }
     } else {
         OSErr err = DisableSecureEventInput();
-        DLog(@"DisableSecureEventInput err=%d", (int)err);
+        RLog(@"DisableSecureEventInput err=%d", (int)err);
         if (err) {
             XLog(@"DisableSecureEventInput failed with error %d", (int)err);
         } else {
-            DLog(@"Secure keyboard entry disabled");
+            RLog(@"Secure keyboard entry disabled");
             _count -= 1;
         }
     }

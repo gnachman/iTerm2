@@ -300,7 +300,7 @@ static NSString *const kIntervalTreeObjectsKey = @"objects";
     Interval *interval = [[[Interval alloc] initWithLocation:[dict[kIntervalLocationKey] longLongValue]
                                                       length:[dict[kIntervalLengthKey] longLongValue]] autorelease];
     if (![interval isValid]) {
-        DLog(@"Invalid interval from dictionary: location=%@, length=%@",
+        RLog(@"Invalid interval from dictionary: location=%@, length=%@",
              dict[kIntervalLocationKey], dict[kIntervalLengthKey]);
         return nil;
     }

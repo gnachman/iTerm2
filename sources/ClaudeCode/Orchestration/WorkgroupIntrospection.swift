@@ -48,6 +48,25 @@ enum WorkgroupIntrospection {
     // read by the nonisolated chat renderer (ChatViewController) too.
     nonisolated static let spawnWorkgroupID = "spawn"
 
+    // Sentinel workgroupID used by the per-command safety-approval prompt
+    // (OrchestratorDispatcher.promptForCommandApproval). Like spawnWorkgroupID
+    // it is not a real workgroup_id: it rides the same workgroupPermissionRequest
+    // content type but the chat renderer keys off this exact string to show the
+    // "Run this command?" bubble copy instead of a workgroup/session-control
+    // prompt. Two sites must agree on the literal: the dispatcher emits it, the
+    // renderer (ChatViewController) consumes it.
+    // nonisolated: an immutable sentinel string with no main-thread state,
+    // read by the nonisolated chat renderer (ChatViewController) too.
+    nonisolated static let commandApprovalWorkgroupID = "command-approval"
+
+    // Sentinel workgroupID used by the one-time screen-read consent prompt for a
+    // session-bound watch whose View Contents is set to Ask
+    // (OrchestratorDispatcher.promptForWatchScreenRead). Same mechanism and
+    // two-site contract as commandApprovalWorkgroupID: the dispatcher emits it,
+    // the chat renderer keys off it to show the "Allow repeated screen reads?"
+    // bubble copy.
+    nonisolated static let watchApprovalWorkgroupID = "watch-approval"
+
     // MARK: - Listing
 
     // Returns every workgroup the orchestrator knows about. Real workgroups
@@ -87,7 +106,7 @@ enum WorkgroupIntrospection {
     static func displayName(forWorkgroupID workgroupID: String) -> String {
         if workgroupID.hasPrefix(syntheticWorkgroupIDPrefix) {
             let guid = String(workgroupID.dropFirst(syntheticWorkgroupIDPrefix.count))
-            if let session = session(forGUID: guid) {
+            if let session = session(forReference: guid) {
                 return sessionDisplayName(session)
             }
             return workgroupID
@@ -109,6 +128,7 @@ enum WorkgroupIntrospection {
         return WorkgroupSummary(
             workgroupID: instance.instanceUniqueIdentifier,
             workgroupName: workgroupName(for: instance),
+            provenance: instance.provenance,
             sessions: sessions)
     }
 
@@ -118,6 +138,7 @@ enum WorkgroupIntrospection {
         return WorkgroupSummary(
             workgroupID: workgroupID,
             workgroupName: roleName,
+            provenance: nil,
             sessions: [
                 sessionSummary(roleID: syntheticRoleID,
                                roleName: roleName,
@@ -145,7 +166,7 @@ enum WorkgroupIntrospection {
     // role are derived via context(for:) rather than supplied by the
     // caller. Returns nil only when no live session has that GUID.
     static func resolve(sessionGuid: String) -> ResolvedTarget? {
-        guard let session = session(forGUID: sessionGuid),
+        guard let session = session(forReference: sessionGuid),
               let ctx = context(for: session) else {
             return nil
         }
@@ -165,7 +186,7 @@ enum WorkgroupIntrospection {
     // OrchestratorCommand). Returns nil when no live session has that
     // GUID, in which case the caller surfaces an unknown_session error.
     static func claimScope(forSessionGuid guid: String) -> String? {
-        guard let session = session(forGUID: guid),
+        guard let session = session(forReference: guid),
               let ctx = context(for: session) else {
             return nil
         }
@@ -220,9 +241,10 @@ enum WorkgroupIntrospection {
             kind: kind(for: resolved.session),
             status: state(for: resolved.session),
             statusSource: statusSource(for: resolved.session),
-            lastActivityISO: nil,
+            screenLastChanged: screenAgeDescription(for: resolved.session),
             currentCommand: currentCommand(for: resolved.session),
             lastMessage: lastMessage(for: resolved.session),
+            provenance: SessionProvenanceRegistry.instance.provenance(forSessionGUID: resolved.session.guid),
             pendingAction: pendingActionDescription(for: resolved.session))
     }
 
@@ -232,13 +254,34 @@ enum WorkgroupIntrospection {
         return SessionSummary(
             roleID: roleID,
             roleName: roleName,
-            sessionGuid: session.guid,
+            // The model copies this verbatim into tool calls; emit the reload-
+            // durable stableID so a copied reference survives a shell reload.
+            sessionGuid: session.stableID,
             kind: kind(for: session),
             status: state(for: session),
             statusSource: statusSource(for: session),
-            lastActivityISO: nil,
+            screenLastChanged: screenAgeDescription(for: session),
             currentCommand: currentCommand(for: session),
+            provenance: SessionProvenanceRegistry.instance.provenance(forSessionGUID: session.guid),
             pendingAction: pendingActionDescription(for: session))
+    }
+
+    // MARK: - Recency
+
+    // Humanized "how long ago did this session's rendered screen last
+    // change" (e.g. "< 1 min ago", "27 min ago"). Screen text carries
+    // no recency cues of its own: a transcript from half an hour ago
+    // reads exactly like one printed a second ago, which has caused
+    // agents to mistake a stale screen for fresh work. nil until the
+    // session has rendered at least once: before then the change
+    // timestamp describes session creation, and reporting that as
+    // fresh would bias the agent toward reading an empty screen as
+    // current activity.
+    static func screenAgeDescription(for session: PTYSession) -> String? {
+        guard session.screenContentsHaveEverChanged else { return nil }
+        let age = session.timeSinceScreenContentsLastChanged
+        guard age >= 0 else { return nil }
+        return "\(DateFormatter.compactDateDifferenceString(fromTimeDelta: age)) ago"
     }
 
     // MARK: - Screen contents
@@ -262,20 +305,56 @@ enum WorkgroupIntrospection {
                                requestedLines: Int?) -> ScreenContents {
         let kind = kind(for: session)
         let pending = pendingActionDescription(for: session)
-        switch kind {
-        case .tui:
+        let surface = screenSurface(for: session)
+        let mouseReporting = scrollReportingSupported(for: session)
+        // The (soft) alternate screen is the deciding factor, not `kind`:
+        // a full-screen app repaints into scrollback, so the only
+        // meaningful text is the current grid. This holds even for
+        // claude-code sessions, which now run on the alternate screen
+        // (their Ink frames would otherwise look like dozens of duplicate
+        // screens in the transcript). Expose just the visible grid and let
+        // the agent scroll the wheel to reveal older content.
+        let screenAge = screenAgeDescription(for: session)
+        if surface == .alternate {
             return ScreenContents(text: snapshot(of: session),
-                                  kind: .tui,
-                                  isSnapshot: true,
-                                  pendingAction: pending)
-        case .shell, .claudeCode, .other:
-            let text = trailingTranscript(of: session,
-                                          lines: requestedLines ?? 100)
-            return ScreenContents(text: text,
                                   kind: kind,
-                                  isSnapshot: false,
-                                  pendingAction: pending)
+                                  isSnapshot: true,
+                                  screen: .alternate,
+                                  mouseReporting: mouseReporting,
+                                  pendingAction: pending,
+                                  screenLastChanged: screenAge)
         }
+        // Primary screen: scrollback is real linear history.
+        let text = trailingTranscript(of: session,
+                                      lines: requestedLines ?? 100)
+        return ScreenContents(text: text,
+                              kind: kind,
+                              isSnapshot: false,
+                              screen: .primary,
+                              mouseReporting: mouseReporting,
+                              pendingAction: pending,
+                              screenLastChanged: screenAge)
+    }
+
+    // Semantic screen surface: alternate when the program is on (or would
+    // be on, per the soft flag) the alternate buffer. We use the soft flag
+    // rather than which VT100Grid is actually visible so the answer
+    // reflects the program's intent even when the user has disabled
+    // iTerm2's alternate-screen feature. A soft-alternate session is
+    // almost certainly a TUI.
+    static func screenSurface(for session: PTYSession) -> ScreenSurface {
+        return session.screen.terminalSoftAlternateScreenMode ? .alternate : .primary
+    }
+
+    // Whether the foreground program reports scroll-wheel events, i.e.
+    // whether the scroll_wheel tool can do anything. This is the same
+    // predicate the scroll path itself gates on (highlight-tracking mode
+    // is excluded because it never reports scroll), so the mouse_reporting
+    // hint we surface and the tool's real behavior agree. Reads
+    // PTYSession's ObjC accessor so we don't reference the C MouseMode
+    // enum from Swift.
+    static func scrollReportingSupported(for session: PTYSession) -> Bool {
+        return session.scrollWheelReportingEnabled
     }
 
     // MARK: - Clippings
@@ -289,7 +368,7 @@ enum WorkgroupIntrospection {
         let clippings: [PTYSessionClipping]
         if workgroupID.hasPrefix(syntheticWorkgroupIDPrefix) {
             let guid = String(workgroupID.dropFirst(syntheticWorkgroupIDPrefix.count))
-            guard let session = session(forGUID: guid) else { return nil }
+            guard let session = session(forReference: guid) else { return nil }
             clippings = session.clippings
         } else {
             guard let instance = workgroupInstance(byID: workgroupID),
@@ -316,12 +395,14 @@ enum WorkgroupIntrospection {
             .first { $0.instanceUniqueIdentifier == id }
     }
 
-    private static func session(forGUID guid: String) -> PTYSession? {
-        // anySession(withGUID:) covers peer-port sessions (Code Review, Diff,
-        // side-pane peers) which allSessions() does not enumerate. allSessions()
-        // remains the right source for enumeration paths that explicitly walk
-        // standalone tab/split sessions only.
-        return iTermController.sharedInstance()?.anySession(withGUID: guid)
+    // Resolves a session reference (a stableID from the current snapshot, or a
+    // legacy guid the model echoed from an older transcript) to a live session.
+    // anySession(forReference:) covers peer-port sessions (Code Review, Diff,
+    // side-pane peers) which allSessions() does not enumerate, and dispatches on
+    // the reference form. allSessions() remains the right source for enumeration
+    // paths that explicitly walk standalone tab/split sessions only.
+    private static func session(forReference reference: String) -> PTYSession? {
+        return iTermController.sharedInstance()?.anySession(forReference: reference)
     }
 
     private static func allSessions() -> [PTYSession] {
@@ -329,7 +410,9 @@ enum WorkgroupIntrospection {
     }
 
     private static func syntheticWorkgroupID(for session: PTYSession) -> String {
-        return syntheticWorkgroupIDPrefix + session.guid
+        // Use the reload-durable stableID so a granted claim scope
+        // ("session:<stableID>") survives a shell reload that rotates the guid.
+        return syntheticWorkgroupIDPrefix + session.stableID
     }
 
     private static func workgroupName(for instance: iTermWorkgroupInstance) -> String {
@@ -365,6 +448,77 @@ enum WorkgroupIntrospection {
             return .tui
         }
         return .other
+    }
+
+    // There is deliberately NO coding-agent exemption from the safety gate. An
+    // earlier version skipped classification entirely when the foreground job
+    // basename was claude/codex, but a job name is a low-integrity signal the
+    // agent can spoof (e.g. `exec -a claude bash`, or `cp /bin/bash /tmp/claude`),
+    // which turned send_text into a fully unclassified channel. Coding-agent
+    // sessions run on the alternate screen, so they route through the
+    // screen-aware classifier like any full-screen app: prompting an agent
+    // classifies as safe there, and a spoofed shell does not (its screen shows a
+    // shell prompt, not the agent UI). The perf win of skipping the LLM
+    // round-trip for agent prompts was not worth a name-keyed bypass.
+
+    // Lowercased, login-shell leading "-" stripped, basename only.
+    nonisolated static func normalizedJobBasename(_ raw: String) -> String {
+        var name = raw.lowercased()
+        if name.hasPrefix("-") { name.removeFirst() }
+        if let slash = name.lastIndex(of: "/") {
+            name = String(name[name.index(after: slash)...])
+        }
+        return name
+    }
+
+    // The FOREGROUND (deepest) job's name for a session, lowercased -- the
+    // argv[0] of the process actually reading input. Distinct from
+    // GlobalJobMonitor's ancestor-chain match (which always contains the login
+    // shell): to tell a shell prompt from a REPL running under it we need the
+    // deepest job, which is the session's `jobName` variable.
+    static func foregroundJobName(_ session: PTYSession) -> String? {
+        (session.genericScope.value(forVariableName: "jobName") as? String)?.lowercased()
+    }
+
+    // Recognized interactive shells. Used to decide whether a primary-screen
+    // send should be judged as a shell command line. This is deliberately an
+    // allowlist of SHELLS, not of interpreters: anything whose foreground is
+    // NOT a recognized shell (a REPL such as psql/duckdb/iex/ghci, an unknown
+    // program, or a session with no job info) routes to the screen-aware
+    // classifier instead. That fail-safe direction means an unlisted REPL can't
+    // be mis-judged under shell rules ("DROP TABLE users;" is inert as a shell
+    // command but destructive in a SQL REPL).
+    //
+    // The job name comes from the process table (argv[0]/p_comm), not from
+    // screen content, so on-screen text can't spoof it. It CAN be spoofed by the
+    // process table itself: an agent could rename a REPL to look like a shell
+    // (`cp $(which psql) /tmp/zsh && /tmp/zsh`) to route destructive REPL input
+    // through the weaker shell classifier. That requires a setup command which
+    // is itself classified, so it's a hurdle rather than a free bypass; fully
+    // closing it would mean dropping the shell fast-path (classifying every
+    // shell command against the screen), a perf tradeoff not taken here.
+    nonisolated static let shellJobNames: Set<String> = [
+        "bash", "zsh", "sh", "fish", "dash", "ash", "ksh", "mksh", "pdksh",
+        "tcsh", "csh", "xonsh", "nu", "nushell", "elvish", "pwsh", "powershell",
+    ]
+
+    // Pure name test: lowercased, login-shell leading "-" stripped, basename
+    // only (so "-zsh" and "/bin/bash" both match).
+    nonisolated static func isShellJobName(_ raw: String) -> Bool {
+        return shellJobNames.contains(normalizedJobBasename(raw))
+    }
+
+    static func foregroundIsShell(_ session: PTYSession) -> Bool {
+        guard let job = foregroundJobName(session), !job.isEmpty else {
+            return false  // unknown foreground -> not a shell -> screen-aware (fail-safe)
+        }
+        return isShellJobName(job)
+        // jobName comes from iTermProcessCache (refreshed at ~0.5s intervals),
+        // so in principle a REPL launched microseconds ago could still read as
+        // the shell. In this gate's use that window doesn't bite: the
+        // orchestrator's sends are serialized one per LLM round-trip (seconds
+        // apart), so a session that just launched psql reports jobName=psql long
+        // before the next send arrives to be classified.
     }
 
     // Status reflects whether the role's *program* is doing anything.
@@ -408,6 +562,25 @@ enum WorkgroupIntrospection {
         // is the best we can do for sessions without a status source.
         if status.hasIndicator { return .working }
         return .idle
+    }
+
+    // Like state(forTabStatus:) but returns .unknown when there is no
+    // explicit recognized statusText, instead of falling back to .idle. Used
+    // by the workgroup's idle-driven auto behaviors (auto-send clippings /
+    // auto-request review), whose working -> idle edge must reflect a program
+    // that actually finished. A session restart CLEARS the tab status, and
+    // the fallback .idle above would otherwise read as a spurious "finished"
+    // edge right after the restart and drive an infinite request/send loop.
+    static func reportedState(forTabStatus status: iTermSessionTabStatus) -> SessionState {
+        guard let text = status.statusText?.lowercased(), !text.isEmpty else {
+            return .unknown
+        }
+        switch text {
+        case "idle": return .idle
+        case "working": return .working
+        case "waiting": return .waiting
+        default: return .unknown
+        }
     }
 
     // Whether the session exposes a machine-readable status source we

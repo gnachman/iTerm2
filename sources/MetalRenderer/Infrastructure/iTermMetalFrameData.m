@@ -23,8 +23,6 @@
 static NSMutableDictionary *sHistograms;
 
 void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
-    iTermPreciseTimerSetEnabled(YES);
-
     const char *names[iTermMetalFrameDataStatCount] = {
         "endToEnd",
 

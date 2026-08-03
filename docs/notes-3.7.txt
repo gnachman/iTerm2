@@ -20,10 +20,62 @@ Major New Features:
   different
   networks, and end-to-end encryption ensures that
   your data is only visible to you.
+  First-time setup is now a guided wizard: it
+  installs the AI and companion plugins, turns on
+  both features with a single password prompt,
+  takes your API key, and walks you through
+  pairing your phone.
+
+- The Companion app can now receive push
+  notifications for terminal alerts. Turn on
+  "Send alerts to paired iPhone" in a profile's
+  Terminal settings (Filter Alerts) to have
+  "alert on next mark" and Post Notification
+  triggers also notify your phone. Pushes are
+  content-free: the phone fetches the text over
+  the encrypted channel, so the relay and Apple
+  never see it or which chat it belongs to.
+
+- The Companion app’s live session video feed
+  now scales its bitrate to the window’s
+  resolution, so large windows stay sharp
+  instead of being pinned to a fixed low rate.
+  Very large windows trade frame rate for
+  sharpness so bandwidth stays reasonable.
+  Advanced settings can tune the feed’s
+  bitrate multiplier and the flow-control
+  back-off thresholds.
+
+- iTerm2 now probes the local network on
+  every launch so macOS keeps it in the
+  Local Network privacy list. This recovers
+  the permission after a tccutil reset or an
+  OS upgrade, fixing commands like
+  “ping 10.0.0.1” failing with “no route to
+  host”.
 
 - There's a new kind of AI chat called
   "orchestration" which can view all your
   sessions and operate iTerm2 for you.
+
+- AI chat can now restart a session for you.
+  The “Type for You” permission was renamed
+  “Control Terminal” and now also gates this.
+
+- AI chat linked to a terminal session can now
+  watch that session and tell you when it reaches
+  a state or a described condition, without
+  polling. Previously only orchestration chats
+  could set watches. If your phone is paired it
+  can also push you a notification when the watch
+  fires.
+
+- The manual AI model editor now offers presets
+  for OpenAI-compatible providers (Ollama,
+  OpenRouter, z.ai, Qwen, MiniMax) that fill in
+  the endpoint for you, plus a Test Connection
+  button that verifies your settings and API key
+  before you save.
 
 - Claude Code integration was added. It enables
   the new Session Status feature for claude code
@@ -73,6 +125,224 @@ Major New Features:
   The Claude Code integration uses Clippings to
   store code review comments so they can be shared
   between related sessions in a Workgroup.
+- A new tmux window opened with Command-T now
+  picks up the profile’s custom tab title, if
+  one is set.
+- Fixed a bug where modified function keys (such
+  as Shift-F5) lost their modifier in a tmux
+  integration session, sending the unmodified
+  sequence instead of the xterm form like
+  ^[[15;2~.
+- Fixed a bug where auto-sending code review
+  results to the main session sometimes failed to
+  submit because the Return arrived too soon after
+  the paste. The Return now waits a moment (see
+  the workgroupAutoSendSubmitDelay advanced
+  setting).
+- Fixed a bug where a sixel image whose
+  terminator had a doubled escape (ESC ESC \
+  instead of ESC \) was discarded entirely,
+  leaving a stray backslash on the screen. The
+  image now renders.
+- Fixed a bug where a left- or right-of-screen
+  window could suddenly change width (growing or
+  shrinking to a second tab’s profile size) after
+  a display-configuration change, instead of
+  keeping its own width.
+- Security: the retrospective debug log (used by
+  Save Retrospective Debug Logs) no longer retains
+  typed characters, command lines, passwords,
+  tokens, or AI chat content. These could
+  previously accumulate in memory with debug
+  logging off.
+- In AI chat orchestration mode, references
+  to a session or workgroup now appear as a
+  clickable link, marked with a terminal
+  icon, showing its current name instead of
+  a raw identifier. Clicking the link
+  reveals that session. The tool-call
+  activity lines (e.g. “Reading screen of
+  …”) now use these same links, and show a
+  grayed-out, non-clickable “[defunct
+  session]” link once the target is gone
+  instead of leaking a raw GUID.
+
+- AI chat orchestration is now much less
+  chatty. While it runs a loop (for example,
+  waiting for a Code Review to finish and
+  then telling a session to continue), it
+  acts on each event and reports one line per
+  real outcome instead of narrating every
+  step and asking what to do next each time.
+
+- A screen-watched condition in orchestration
+  mode now checks less often the longer it
+  runs, and no longer interrupts the chat with
+  a “watch timed out” note every few minutes.
+  The watch keeps running on its own and only
+  gives up after several hours.
+
+- An orchestration watch now follows a Code
+  Review (or any peer) that restarts in place.
+  A reload gives the session a new internal id;
+  the watch used to lose track of it and stall
+  silently, but it now tracks the session across
+  the reload and keeps going.
+
+- In AI chat orchestration mode, pressing Stop
+  now halts the whole pipeline: it cancels the
+  in-flight reply, drops any queued turns, and
+  cancels the chat’s registered watchers, so a
+  session going idle can no longer restart the
+  loop after you asked it to stop. A message you
+  type also jumps ahead of pending status
+  updates instead of waiting behind them.
+
+- A new AI chat created without a session to
+  link to now offers to enable orchestration
+  mode, mirroring the link offer shown when a
+  session is available.
+
+- AI chat now asks before it starts including
+  your terminal’s visible screen and state with
+  messages automatically. A permission left at
+  “Always” from an earlier version no longer
+  shares your screen until you confirm once.
+
+- AI chat history entries can now be deleted
+  from the chat list.
+
+- AI chat tool activity is now rendered as
+  compact, code-formatted output instead of
+  prominent centered status panels.
+
+- AI chat no longer sends unsupported
+  additionalProperties fields in Gemini tool
+  schemas.
+
+- AI chat no longer offers deprecated
+  Gemini 2.0 models in the model picker.
+
+- AI chat no longer offers the shut-down
+  Gemini 3 Pro Preview model or the
+  deprecated Claude 4.0 Opus and Sonnet
+  models in the picker.
+
+- AI settings now let you manage API keys
+  for OpenAI, Anthropic, Gemini, and
+  DeepSeek in one sheet.
+
+- AI chats now keep the provider chosen at
+  creation time. Settings choose the default
+  provider for new chats, while existing
+  chats only offer models from their saved
+  provider.
+
+- Workgroups let you configure a session
+  to be transformed into a group of related
+  sessions — peers, split panes, or tabs —
+  each with its own toolbar. Configure
+  them in Settings > Shortcuts >
+  Workgroups. Still a work in progress.
+
+- Enter Workgroup and Exit Workgroup are
+  also available as URL-regex triggers on
+  browser profiles, so a navigation event
+  can change the active workgroup.
+
+- Workgroup sessions now have a Mode
+  setting. The new Code Review mode shows
+  an in-session prompt overlay with a Start
+  button before the program runs; the
+  entered text is exposed as the variable
+  codeReviewPrompt for swifty interpolation
+  in the command. The Claude Code
+  workgroup’s review peer uses this mode
+  by default.
+
+- The Code Review prompt overlay can save
+  multiple named prompts. A pulldown menu
+  on the overlay loads any saved prompt;
+  a dedicated Manage Prompts… window
+  handles add/rename/edit/reorder/delete.
+  The single Code Review prompt previously
+  managed in Settings > General > AI >
+  Prompts is migrated to a Default entry
+  on first launch and the entry has been
+  removed from Settings.
+
+- The Code Review system prompt is now
+  editable in Settings > General > AI >
+  Prompts. It defaults to the bundled
+  prompt and is passed to Claude Code at
+  launch.
+
+- Code Review peers have an Auto-Send
+  Clippings When Idle toolbar toggle. When
+  on, the review session’s clippings are
+  pasted into the workgroup’s main session
+  each time the review finishes. The
+  Claude Code workgroup’s review peer
+  includes it by default; the toggle itself
+  starts off.
+
+- The main session has a companion
+  Auto-Request Review When Idle toolbar
+  toggle. When on, a code review is
+  requested from the workgroup’s sole
+  code-review session each time the main
+  session goes idle. It is disabled unless
+  the workgroup has exactly one code-review
+  session. The Claude Code workgroup’s main
+  session includes it by default; the toggle
+  starts off.
+
+- Switching to a Code Review peer that is
+  still showing its prompt overlay now
+  focuses the prompt text field so you can
+  start typing immediately.
+
+- A Diff session now waits to run its diff
+  until you first switch to it, so the diff
+  reflects your changes at that moment
+  instead of from whenever they first began.
+  It is not re-run when you switch away and
+  back.
+
+- Switching to a Diff peer for the first
+  time now keeps the terminal focused once
+  its command starts. Previously keystrokes
+  went nowhere (and beeped) until you
+  clicked the terminal.
+
+- Workgroups now survive a restart. When
+  the app relaunches (for example after a
+  Sparkle upgrade), an active workgroup is
+  rebuilt: its Diff and Code Review peers,
+  split/tab children, toolbar, and peer
+  switching all come back with their
+  content intact.
+
+- Clippings now keep history. An archive
+  button in the clippings panel snapshots
+  the current list and clears it; back and
+  forward buttons walk the history. The
+  new `it2 session archive-clippings`
+  command and matching `iterm2.archive_
+  clippings` API call do the same. Claude
+  Code reviews now automatically archive
+  before each pass, so each review starts
+  with a clean list while old findings
+  remain reachable.
+
+- The clippings and inline AI chat panels
+  can now be resized by dragging their left
+  edge. The chosen width is remembered per
+  machine.
+
+- The Shell > Workgroups submenu now has
+  an Exit Workgroup item to leave the
+  current session’s workgroup.
 
 - The new Fold All menu item folds everything
   (aside from folds at the very top of history).
@@ -82,6 +352,20 @@ Major New Features:
 - You can now create screenshots including
   highlights and redactions using the Make
   Screenshot menu item.
+
+- The screenshot window adds a Save As… button
+  to choose where the file goes. The Save button
+  writes to the folder set by the
+  screenshotSaveLocation advanced setting, or
+  the Desktop if unset.
+
+- The screenshot window’s Copy to Clipboard
+  button now flashes a “Copied!” confirmation
+  so you get feedback that the image was copied.
+
+- The Python API can now capture a session
+  screenshot with session.async_screenshot(),
+  which returns PNG data.
 
 - Session archives were added. The new Session >
   Archives menu has “Save Archive of Current
@@ -93,6 +377,11 @@ Major New Features:
   session’s scrollback in a new window.
 
 New Features in Terminal Sessions:
+- Right-to-left script support (bidi
+  reordering plus Arabic and Persian
+  cursive joining) is now enabled by
+  default. You can turn it off in
+  Settings > General > Experimental.
 - Double-width and double-height lines
   (DECDWL, DECDHL, DECSWL) are now supported
   via ESC #3, #4, #5, and #6.
@@ -199,6 +488,11 @@ Tabs, Windows, and UI:
   list of open files and network
   connections.
 
+- Improve tab dragging: keep Metal enabled
+  for normal tab drags, switch reorder
+  slots near tab midpoints, and stabilize
+  split-pane target highlights.
+
 
 Triggers Improvements:
 - Event-based triggers can fire on events such as
@@ -219,6 +513,18 @@ Triggers Improvements:
 
 
 AI Improvements:
+- The AI chat “View History” permission is now
+  “View Contents”. When it is set to provide
+  contents automatically, a session-bound chat
+  includes the terminal’s visible screen with
+  each message, not just on-request history
+  tools.
+- An AI chat linked to a terminal session now
+  stays linked when the session's shell restarts
+  (which happens often with the Claude Code
+  integration). Previously the link, its command
+  permissions, and orchestrator @-mentions of the
+  session were lost on every restart.
 - Chats in the AI chat list now get an icon
   drawn by your AI model from the chat
   title. Chats without one show a default
@@ -234,7 +540,17 @@ AI Improvements:
   asked once whether to switch to their model.
 - AI chat can connect to LAN-hosted models
   over HTTP.
+- Anthropic prompt caching now also covers the
+  conversation history, not just the system
+  prompt and tools. A rolling cache breakpoint
+  on the latest message lets long chats reread
+  the prior turns from cache instead of paying
+  full input price every turn.
 - AI models updated.
+- The built-in AI model list is now
+  data-driven and refreshes in the
+  background, so new models appear
+  without updating iTerm2.
 - DeepSeek v4 thinking mode is now supported.
   Toggle the lightbulb in the chat toolbar to
   enable. Reasoning summaries appear live in
@@ -250,6 +566,12 @@ AI Improvements:
   name. Values are stored unencrypted in
   iTerm2’s preferences.
 - PDF chat attachments now work on Anthropic.
+- When AI chat types into a terminal, a newline
+  is now sent as Return (carriage return) so it
+  submits the line in programs like Claude Code
+  instead of inserting a literal newline. The
+  tool also reports how many characters were
+  inserted.
 
 Python API Improvements:
 - Move sessions to new tabs or windows via the
@@ -265,6 +587,19 @@ Python API Improvements:
   sessions across tabs and windows. New
   sessions can be created in place with
   new_session leaves.
+- The API server no longer lets a client flood it
+  with frames to exhaust memory: it bounds how
+  much unparsed inbound data it buffers, and a
+  client that floods pings but stops reading the
+  pongs is disconnected as misbehaving rather than
+  having its pongs buffered without limit. The it2
+  command-line client handles a flood of ping
+  frames iteratively instead of recursively.
+  Credit to NSEcho for the find
+- The Script Console has a Clear Terminated
+  button that removes stopped sessions from the
+  list, so it no longer grows without bound when
+  you repeatedly restart a script.
 
 Password Manager Improvements:
 - Bitwarden is now a supported password manager.
@@ -287,6 +622,8 @@ SSH Integration Improvements:
   improved.
 
 Tmux Improvements:
+- Add an advanced setting to open tmux
+  windows and tabs without taking focus.
 - Bracketed paste state is restored on attach
   (prep for tmux’s upcoming bracket_paste_flag
   format).
@@ -297,6 +634,11 @@ Tmux Improvements:
   correct key reporting mode active.
 - Saner defaults for which window and tab a tmux
   attach uses.
+- The advanced setting for where tmux windows
+  created outside iTerm2 open is now a three-way
+  choice: a new window, the focused window, or
+  the topmost window already hosting that tmux
+  session.
 
 Expressions and Variables:
 - Arithmetic expressions and comparisons are
@@ -322,6 +664,12 @@ UI Improvements:
   text from tab subtitles while keeping the
   colored dot. Toggle it from the gear menu
   in the Session Status toolbelt tool.
+- Right-click a row in the Session Status
+  toolbelt tool and choose Snooze to move it
+  below a divider at the bottom of the list
+  and dim it. A snoozed entry un-snoozes
+  automatically the next time its status
+  changes.
 - Contextual alternates (calt) are enabled by
   default for ligature-capable fonts.
 - Rename dialogs, the pane menu, and the context
@@ -385,18 +733,45 @@ Menus and Miscellaneous:
   time you press ⌘⇧T in full screen, an alert
   explains the change and can restore ⌘⇧T to
   Show Tabs in Fullscreen with a key binding.
+- Added Edit > Marks and Annotations >
+  Annotate Selection, so annotating a
+  selection can now be given a keyboard
+  shortcut. Previously this was only on the
+  right-click menu.
+- The job name shown in titles, the session
+  icon, and automatic profile switching now
+  reflect the foreground job actually attached
+  to the terminal, hiding helper subprocesses
+  that run in the foreground process group but
+  are piped to their parent (for example an MCP
+  server spawned by claude, or caffeinate). The
+  raw deepest job is still available as the
+  deepestJob variable. Note that automatic
+  profile switching now matches the tty-attached
+  job, so a rule keyed on such a helper name will
+  no longer fire for it.
 
 Core Improvements:
 - Significant Metal rendering speedups for
   non-ASCII text should result in higher frame
   rates.
+- Faster rendering of text with many colors (e.g.
+  syntax-highlighted code) by reusing attribute
+  dictionaries across runs instead of rebuilding
+  one per color span.
 - Framerate is capped at 30 fps in low-power mode.
 - Crash-log search was moved off the main thread
   so app launch does not hang when there are a
   huge number of crash logs.
 - Prompt for local-network permission on launch.
+- New iTerm2 menu item, Save Retrospective Debug
+  Logs, writes recently captured low-frequency
+  diagnostics to a file you choose, even when
+  debug logging was never turned on.
 
 Settings Improvements:
+- Add an advanced setting to change the relay
+  origin used for companion iOS device pairing.
 - Window frames are remembered per-profile rather
   than globally. When you open a window, the
   default frame will come from a previous window
@@ -419,6 +794,12 @@ Settings Improvements:
   menu’s “Put Chat in Linked Session” item
   and toggle visibility from View > Show
   Inline Chat.
+- The inline chat panel now has a toolbar to
+  create a new chat, switch chats, open the
+  session/link menu, and hide the panel. New
+  inline chats ask whether to link to the
+  session or become an orchestrator instead
+  of linking automatically.
 - Open Quickly now uses recency as a
   tiebreaker, so the session list (whether
   the query is empty or matches several
@@ -435,8 +816,192 @@ Settings Improvements:
   that works while another app is in
   front, without activating iTerm2 until
   you commit a selection.
+- Blinking cursors can now fade smoothly
+  in and out instead of toggling abruptly.
+  Turn on “Smooth blink” in Settings >
+  Profiles > Text, where you can tune the
+  fade-in and fade-out durations, easing
+  curves, and how long the cursor dwells
+  fully visible and fully hidden between
+  fades. Off by default.
+- On macOS 27 and later, the Python API
+  runtime now downloads from
+  manifest-new.json by default. Older OS
+  versions continue to use manifest.json.
+- When you load settings from a custom
+  folder, snippets, global notes, and
+  session icon customizations can now sync
+  along with your other settings. Because
+  notes and snippets can hold sensitive
+  text, iTerm2 asks once before including
+  them. If the same item changed both on
+  this Mac and in the folder, it asks which
+  copy to keep rather than overwriting your
+  changes.
 
 Bug Fixes:
+- Toggling Caps Lock no longer inserts an “A”
+  in programs that use the Kitty keyboard
+  protocol with “report all keys as escape
+  codes.” Now it reports the key’s own code
+  (57358) instead of a stray modifier value
+  that got read as an “A.” Issue 12922.
+- Split-pane dividers in different rows or columns
+  can now be dragged into alignment: a divider
+  snaps to a matching divider elsewhere in the tab
+  when it comes within half a cell, fixing a
+  sub-cell misalignment that whole-cell steps
+  could not correct. Double-clicking a horizontal
+  divider to equalize the two panes also no
+  longer computes the wrong size.
+- The Centered window style now looks and behaves
+  just like a normal window (title bar,
+  close/minimize/zoom buttons, and the same chrome
+  in the Minimal and Compact themes), except that
+  it stays centered. It also no longer changes
+  size when you minimize and restore it.
+- In tmux -CC sessions with pane-border-status set
+  to top or bottom, the pane no longer ends up a
+  row too tall. Previously the bottom line went
+  unused and the cursor landed a row high after
+  reattaching.
+- Retrospective debug logging no longer fills its
+  in-memory ring so quickly on busy hosts. Several
+  high-frequency sites that logged large payloads
+  (window descriptions, view hierarchies, and stack
+  traces) were trimmed or moved back to regular
+  debug logging, extending how far back the ring
+  reaches.
+- The proxy icon in Compact and Minimal theme
+  windows now hides and reveals along with the
+  stoplight buttons instead of staying visible
+  when they are hidden.
+- Hiding a hotkey window on macOS 26 no longer
+  briefly flashes background iTerm2 windows to
+  the front. The window now waits for the
+  previously active app to come forward before
+  ordering out.
+- Global search no longer shows blank snippets
+  for results found on the main screen while an
+  alternate-screen app (such as a full-screen TUI)
+  is running. Snippets are now extracted from the
+  same snapshot the search ran against instead of
+  a freshly captured one that could drift.
+- Smart tab-title truncation no longer flickers
+  between head and tail truncation when a tab
+  title begins with an animated status glyph
+  (such as a Claude Code spinner). The glyph is
+  no longer counted when deciding which end of
+  the title to truncate.
+- Session Status tool: with “Merge workgroup
+  statuses” on, a merged row now shows the status
+  of the peer you’re actually looking at (the
+  visible peer of the switcher) instead of
+  whichever peer changed most recently. A busy
+  code-review peer holding a steady “working”
+  status no longer loses the row to a sibling
+  chat peer the moment it goes idle.
+- Tab subtitle: when a tab is split into
+  multiple panes, the status of the pane you’re
+  focused on now drives the subtitle instead of a
+  background pane winning on status priority. For
+  example, an idle pane no longer overrides the
+  working pane you’re looking at. A focused pane
+  with no status falls back to the highest
+  priority sibling pane.
+- Code review and diff workgroup sessions now
+  restore showing their last output instead of
+  launching a stray replacement shell when the
+  original program is gone. The code review prompt
+  panel reappears only if it was open when you
+  quit, and its reload button remembers the prompt
+  you last submitted.
+- Session restoration no longer breaks when iTerm2
+  receives a signal (such as ^C when it was
+  started from a terminal): the background process
+  server is now insulated from signals sent to
+  iTerm2, so your running programs survive to be
+  reattached on the next launch.
+- Fixed a rare case where a Claude Code workgroup
+  was torn down even though its claude process was
+  still running, due to a momentary misread of the
+  foreground job ancestor list.
+- Fixed a case where a Claude Code workgroup pane
+  (such as Diff or Code Review) could close itself
+  when its command exited and take the whole
+  workgroup down with it. Spawned workgroup panes
+  now pin their end action so the profile’s “Close
+  Sessions On End” setting can no longer flip them
+  to close on their own.
+- AI chat: fixed a race where a streamed tool
+  call could be dispatched with empty arguments
+  when the response completed before its argument
+  chunks were consumed. The agent would loop
+  retrying the same call, and the turn could end
+  with an empty message. Finalization now
+  reconciles against the full response body.
+- SSH integration now runs the ssh command
+  through your login shell, so dotfiles set up
+  your environment first. A custom SSH_AUTH_SOCK
+  (pointing at an agent that holds your keys) is
+  now honored, fixing “Permission denied
+  (publickey)” failures that only happened with
+  the SSH command type.
+- On macOS Tahoe the tab activity/progress
+  indicator now draws as an outline around the
+  pill-shaped tab instead of a bar that crowded
+  the tab title and status text.
+- Fixed a crash in Replace Selection (e.g.,
+  Replace with Pretty-Printed JSON) when the
+  replacement had more lines than the selection.
+  Also, saved locations (marks, prompt ranges)
+  inside the replaced region are now invalidated
+  instead of drifting onto unrelated lines.
+- tmux integration now parses pane state
+  correctly on macOS 26 and later. A new
+  system NSString method had shadowed ours
+  and caused numeric fields to be dropped.
+- The companion device no longer triggers a
+  keychain confirmation prompt when it connects
+  or when a notification is sent. The paired
+  identity is now read once at launch, while you
+  are present, instead of mid-connection.
+- When a companion device is paired, your AI
+  API keys are now loaded at launch, and when a
+  phone pairs, so a query sent from your phone
+  while you are away never has to prompt for
+  keychain access.
+- Opening Settings no longer reads the keychain
+  or prompts for access. The AI API key row no
+  longer shows an “N of 4 configured” count.
+- Restoring a window with an open inline AI chat
+  panel now reopens the panel on the chat it was
+  showing, instead of widening the terminal.
+- Chat lists now mark orchestrator chats with a
+  wand glyph. The inline chat switcher bolds chats
+  linked to the current session.
+- Orchestrator chats now handle full-screen apps
+  on the alternate screen (like Claude Code)
+  better: they see just the current screen and
+  can use a new scroll-wheel tool to page back
+  through the app’s own history.
+- Saved and copied screenshots now fill margins
+  and other uncovered areas with the session’s
+  background (including a background image, with
+  its blend and scaling) instead of leaving them
+  transparent.
+- The session-logging and archive folder
+  pickers now use the folder you select rather
+  than its parent when you don’t open it first.
+- SSH integration no longer leaves Ctrl+C unable
+  to interrupt programs on remote hosts whose
+  Python is older than 3.7 (e.g. CentOS 7,
+  AlmaLinux 8). The login shell handoff was
+  leaving signal generation disabled on the tty.
+- Clicking a notification posted by a background
+  tab of a dedicated hotkey window now selects the
+  source tab and pane instead of leaving the
+  previously-selected tab in front.
 - AI chat with DeepSeek no longer fails with an
   "insufficient tool messages" error after a tool
   call that was interrupted or left unapproved.
@@ -532,6 +1097,9 @@ Bug Fixes:
   Korean) in the AI Chat input no longer
   prematurely submits the unfinalized
   candidate text.
+- Command-clicking links in terminal output
+  no longer crashes when command-mark data
+  is unavailable.
 - Open Quickly now updates the MRU order
   when you jump to a session, so repeated
   Cmd-Shift-O Enter cycles between the two
@@ -557,6 +1125,13 @@ Bug Fixes:
   appearance variant of the profile key so
   it persists until OSC 110/111 or a manual
   reset clears it.
+- In an AI orchestration chat, @-mentioning a
+  session or workgroup now grants the chat
+  standing permission to control it, so the
+  agent acts there without the one-time
+  approval prompt. A notice with a Revoke
+  button is posted so you can take the
+  permission back whenever you want.
 - The orchestrator’s send_text tool
   now routes payloads containing control bytes
   (ESC, Ctrl-C, etc.) as raw keystrokes instead
@@ -623,6 +1198,18 @@ Bug Fixes:
   as a smaller inner rounded rectangle. Its view
   could be left at a stale size and was not kept
   in sync with the window. Issue 12882.
+- The heavy window border now has a uniform
+  width: its corners no longer look thinner than
+  its edges and no longer pick up semi-
+  transparent pixels. It is drawn entirely
+  inside the window instead of straddling the
+  window edge and relying on the system mask to
+  clip its outer half. Issue 12882.
+- The window border color advanced settings now
+  accept a four-part color like #rrggbbaa (or
+  p3#rrggbbaa) to set the border opacity. A
+  color without an alpha component is still
+  drawn at 75% opacity. Issue 12882.
 - The legacy (non-GPU) renderer now invalidates
   only the lines that actually changed, instead
   of repainting the entire view on every cell
@@ -1284,6 +1871,13 @@ Bug Fixes:
   agent picks the reliable watch form
   instead of misreading a splash
   screen as “idle”.
+- An orchestrator watcher waiting on a
+  session's reported status no longer
+  hangs forever if that status gets
+  stuck. After five minutes without the
+  expected change it falls back to
+  reading the screen to confirm the
+  real state.
 - Workgroup code-review/diff sessions no
   longer hang on “waiting for changes” in
   a checkout full of untracked files. The
@@ -1386,3 +1980,499 @@ Bug Fixes:
   request so OpenAI prompt caching gets
   a stable prefix and reliably hits the
   cache.
+- Terminal-initiated downloads (it2dl)
+  now ask whether to save to the
+  Downloads folder or to choose a
+  destination. The choice is
+  silenceable, so you can make it
+  always save to Downloads or always
+  show a save panel. Issue 12897.
+- Settings > Keys > “Force keyboard” gains
+  an option to only force the keyboard
+  locale once per session, the first time
+  a newly created terminal receives
+  keyboard focus, instead of forcing it
+  continuously. Restored sessions are not
+  affected.
+- Fix a bug where a pane could restore
+  in your home directory instead of its
+  previous working directory after
+  restarting iTerm2. Sessions that used
+  automatic profile switching saved a
+  value that could not be read back,
+  which silently dropped the rest of
+  the restored session state.
+- OSC 9;4 progress bars now draw over
+  the profile's background color
+  instead of a fixed black or white
+  background, so they blend with your
+  theme. Issue 12916.
+- Fix OSC 8 file:// hyperlinks whose
+  path mixes percent-encoding with raw
+  non-ASCII characters (such as
+  ripgrep's --hyperlink-format=file
+  output) opening the wrong file. The
+  percent signs were being double-
+  encoded on macOS 14 and later. Issue
+  12914.
+- Fix a bug where a dashed underline on
+  screen, with ligatures enabled, could
+  make box-drawing lines (such as a TUI
+  input box) render dashed instead of
+  solid. Issue 12907.
+- In the Minimal theme, when panes in a
+  tab have two or more different tab
+  colors, each pane's title bar is now
+  tinted with its own tab color so you
+  can tell them apart. When the panes
+  share one color (or none) the title
+  bar keeps blending with the terminal
+  background as before. Issue 12903.
+- Fix dead-key composition (such as US
+  International apostrophe then e) losing
+  its accent under the Kitty keyboard
+  protocol when both “report all keys as
+  escape codes” and “report associated
+  text” are enabled. Issue 12906.
+- AI Chat messages now use a narrower,
+  more readable layout with clearer
+  command and error formatting.
+- AI Chat permission prompts now show
+  proposed commands in code blocks.
+- AI Chat command output now renders
+  as rounded Markdown code blocks.
+- AI Chat terminal-command transcripts
+  now render captured output as rounded
+  code blocks.
+- AI Chat's floating toolbar now omits
+  the chat title and resizes when model
+  controls appear or disappear.
+- AI Chat can select model-supported
+  reasoning effort and OpenAI service
+  tier from the chat toolbar.
+- AI Chat now hides reasoning effort
+  and OpenAI service tier choices for
+  models that do not declare support
+  for them.
+- AI Chat can hide and show its chat
+  list without reopening the window.
+- AI Chat's chat-list toggle now stays
+  at the top of the chat area when a
+  window is first restored.
+- AI Chat history entries can now be
+  selected in groups and deleted with a
+  single confirmation.
+- AI Chat history entries can now be
+  renamed from the chat list.
+- AI Chat no longer sends unsupported
+  low reasoning effort to OpenAI Pro
+  models.
+- AI Chat now reloads past tool runs as
+  transcript text, preventing OpenAI
+  reasoning models from rejecting old
+  function calls after a chat is
+  reopened.
+- AI Chat now closes OpenAI Responses
+  tool calls with an explicit tool
+  output on local tool failures, which
+  prevents follow-up turns from failing
+  with missing function output errors.
+- AI Chat no longer crashes while opening
+  if the toolbar refreshes before the chat
+  view is loaded.
+- AI Chat now keeps API keys separate per
+  provider, so Claude is not sent a key
+  saved for another AI service.
+- AI Chat no longer asks for an API key
+  when the active provider already has
+  one saved in Keychain.
+- AI Chat now checks saved API keys
+  before showing plugin setup warnings.
+- AI Chat now sends Gemini-compatible
+  function schemas for tool arguments
+  that accept multiple JSON types.
+- AI Chat now renders orchestration
+  session command tool calls as command
+  blocks instead of exposing raw session
+  GUIDs and JSON arguments.
+- AI Chat now lets new chats choose their
+  AI provider from the chat toolbar, while
+  keeping the provider fixed after the
+  conversation starts.
+- AI Chat's provider picker now includes
+  local Llama models and a manual model
+  configuration option when configured.
+- AI Chat can now manage multiple manual
+  AI model configurations and select them
+  from the chat model picker.
+- A manual AI model now takes precedence
+  over a built-in model with the same
+  name, so you can proxy a known model
+  through a custom URL by reusing its
+  name.
+- Manual AI models now have a “Supports
+  temperature” checkbox, set from the
+  preset, so a manual model cloned from
+  Anthropic Opus 4.7+ no longer sends a
+  temperature the API rejects. Existing
+  manual models inherit this from the
+  matching built-in. The OpenAI and
+  DeepSeek request paths now honor this
+  setting too, not just Anthropic.
+- Manual AI models now have a
+  “Configurable thinking” checkbox, set
+  from the preset, so a manual reasoning
+  model (such as a GPT-5 or DeepSeek model
+  behind a proxy) keeps its thinking
+  toggle. Same-named clones also inherit
+  the built-in’s reasoning-effort and
+  service-tier choices.
+- Manual AI model settings now show saved
+  models in a list instead of a pop-up
+  menu.
+- AI Chat now locks the provider picker
+  immediately after a conversation starts.
+- AI Chat now locks the model picker
+  immediately after a conversation starts.
+- AI Chat now shows orchestration terminal
+  command results as raw code blocks and
+  keeps session GUIDs out of user-facing
+  tool summaries.
+- AI settings now choose the default
+  model for new chats from one selector,
+  including saved manual AI models.
+- You can now designate a manual AI model
+  as the “economy” model (leaf toggle in
+  Manual AI Models). It is used for cheap
+  background jobs like command-safety
+  checks and screen-idle detection instead
+  of your main model.
+- Fixed a crash when using Undo after
+  closing a split pane that contained a
+  command composer.
+- Closing the inline AI chat panel now
+  returns keyboard focus to the terminal.
+- Companion relay connections now retry
+  with capped backoff after failures,
+  instead of reconnecting (and, during
+  pairing, regenerating the QR code) many
+  times per second when the relay is
+  unreachable, for example due to a bad
+  TLS certificate. Connection errors
+  during pairing are now shown in the
+  pairing window.
+- Companion pairing connection failures
+  now report the underlying error (for
+  example the TLS or HTTP problem)
+  instead of an unhelpful generic
+  PluginError message.
+- The Claude Code integration's session status
+  now stays “working” while background agents
+  or background tasks are still running, so
+  AI chat watchers no longer fire on the idle
+  lulls between subagent phases. Requires
+  Claude Code 2.1.198 or later.
+- AI orchestration: workgroups and sessions in
+  the agent's snapshot now carry provenance,
+  such as which trigger entered a workgroup
+  and which chat's agent created a session,
+  so an agent is not confused by workgroups
+  that other windows or chats created.
+- AI orchestration: session snapshots, screen
+  contents, and watcher status updates now
+  report how long ago the screen last
+  changed, so agents can tell stale content
+  from fresh activity.
+- The AI chat wire log now redacts API keys
+  (in request headers, URLs, and bodies),
+  keeping only a short fingerprint.
+- Chats can now be muted from the iTerm2
+  Buddy app. A muted chat sends no push
+  notifications to the phone, even for
+  permission requests, until it is
+  unmuted. The muted set is remembered
+  on the Mac so it applies even while
+  the phone is unreachable.
+- AI chats reopened after a restart now
+  replay their tool-call history to the
+  model faithfully. Reasoning state
+  (OpenAI encrypted reasoning, Gemini
+  thought signatures) is saved with the
+  chat and replayed, so reasoning models
+  no longer reject reopened chats or
+  invent fake tool results. Chats from
+  older versions keep working through a
+  compatibility path.
+- A chat is now locked to the AI
+  provider it started with, enforced in
+  the model layer as well as the UI.
+  Messages sent from the iTerm2 Buddy
+  app now run on the chat's own model
+  instead of the global default.
+- The iTerm2 companion relay servers moved
+  to new addresses. If you paired an iPhone
+  on an earlier build, iTerm2 now asks you
+  to pair it again so it keeps working.
+- AI orchestration: commands the agent runs in
+  a session now go through the same automatic
+  safety check as regular AI chat, instead of
+  running once a session is approved. This
+  covers both execute_command and commands the
+  agent types at a shell prompt and submits.
+  Risky commands are held for your approval
+  rather than run automatically.
+- AI orchestration: keystrokes the agent sends
+  into a full-screen program (vim, less, htop,
+  a coding agent, etc.) are now safety-checked
+  too. The AI reads the current screen and the
+  conversation to judge whether the keystroke
+  is safe given what you asked for, and holds
+  anything dangerous or unrequested for your
+  approval.
+- AI orchestration: the automatic command
+  safety check no longer hard-blocks anything.
+  Refusing a command outright could dead-end a
+  task you asked for (like deleting a directory
+  you had just created). Instead the AI now
+  judges each command against what you asked
+  for, and a scary-but-legitimate one is held
+  for one-tap approval rather than refused.
+  Deleting a subdirectory you requested just
+  runs; only a real root or home wipe, or a
+  suspicious command, stops to ask first.
+- Companion: a paired device that still worked
+  no longer nags you to re-pair on every launch
+  after installing a new version. The re-pair
+  prompt now only appears after a genuine relay
+  move, and a normal reconnect records the
+  current relay so the false alarm stops.
+- Companion: when the relay hits its daily
+  data limit, the Mac now shows “Daily relay
+  data limit reached” in Companion settings
+  and backs off instead of retrying in a
+  tight loop until the limit resets.
+- Companion: push notifications to a paired
+  iPhone are now coalesced and more accurate.
+  A burst of agent activity no longer sends a
+  wakeup for each step, and the generic “Your
+  agent has an update.” placeholder is gone
+  for ordinary replies. A permission request
+  that blocks the agent now shows what it
+  needs and plays a sound instead of a silent
+  placeholder, while the agent’s own automatic
+  tool calls stay quiet.
+- The it2 command-line tool now works on hosts
+  you reach through SSH integration. Its API
+  requests are routed back to your local iTerm2
+  over the conductor and run there, gated by a
+  per-session permission prompt naming the host.
+  it2 is installed automatically wherever shell
+  integration loads. Shell > SSH > “Remote host
+  can control iTerm2” toggles this permission for
+  the current connection and shows a checkmark
+  while it is granted.
+- Session-bound AI chats can now read the
+  visible screen on request with the same
+  get_screen_contents tool the orchestrator
+  uses, gated by the “View Contents”
+  permission. In a full-screen app it returns
+  just the current screen, with no scrollback.
+- AI chats linked to only a web browser now
+  use a browser-appropriate system prompt
+  instead of one that described a terminal
+  they were not attached to.
+- Workgroups: reloading a diff session now
+  re-runs the command matching the file
+  picker’s current selection. Previously, if
+  the file you were viewing stopped having
+  changes and the picker snapped back to “All
+  Files”, reload would rerun the old per-file
+  diff, find nothing, and exit immediately,
+  closing the session.
+- The built-in web browser now prompts for a
+  user name and password when a site returns
+  an HTTP authentication challenge (Basic,
+  Digest, or NTLM) instead of failing to load.
+- The keychain permission prompt that appeared
+  after upgrading, for AI API keys and for a
+  paired companion device, no longer recurs on
+  every update. Those secrets now live in an
+  entitlement-scoped keychain group that stays
+  readable across signed builds. Upgrading to
+  this version prompts once more to move them.
+- The Companion Device Settings window now
+  shows the paired device’s relay room name
+  in hex, so you can match it against the
+  phone and the relay logs when reporting a
+  problem.
+- Companion pairing moved to the new sharded
+  relay resolver. A Mac still using the old
+  direct relay is switched over
+  automatically, and a one-time notice
+  reminds you to update iTerm2 Buddy on your
+  iPhone so the two keep connecting. Older
+  iPhone apps can no longer pair and are
+  told to update.
+- Fixed a bug where flag emoji (such as a
+  country flag) rendered as blank cells or
+  flickered under the GPU renderer. The two
+  regional indicators that make up a flag are
+  now shaped together, matching the non-GPU
+  renderer.
+- Debug logging now caps memory use at about
+  200MB (discarding the oldest entries when it
+  grows past that) and no longer freezes the
+  app while saving the log when you turn it
+  off.
+- Companion: if you never paired a device,
+  iTerm2 no longer touches the companion
+  keychain items at launch. This stops a
+  spurious keychain permission prompt for
+  people who alternate differently-signed
+  builds (such as a released build and one
+  built from source).
+- A saved status bar layout whose RPC-provided
+  text component is missing its registration
+  request is now dropped instead of showing up
+  as a blank “ghost” cell.
+- Fix a memory corruption bug that could crash
+  iTerm2 intermittently, most often when
+  closing a tmux window caused surviving
+  sessions to resize while output was still
+  streaming. Lazily cached line-wrapping info
+  could be written into scrollback storage
+  shared with another thread. Issue 12941.
+- Reduced redundant preference reads on hot
+  paths (margins, dimming, and per-pane
+  background image). Idle windows no longer
+  read these settings thousands of times per
+  second, which quiets excessive CoreFoundation
+  logging and saves a little CPU.
+- Fixed modified keys such as Ctrl-J and
+  Shift-Enter not reaching some apps (for
+  example Codex) running under tmux
+  integration (tmux -CC). iTerm2 now hands
+  these keys to tmux by name so tmux encodes
+  them just as it does outside control mode,
+  honoring its extended-keys-format.
+- Fixed a three-finger drag over a mouse-
+  reporting app (such as tmux with mouse
+  mode on, or vim with mouse=a) producing
+  both an iTerm2 selection and the app's own
+  selection at once. Three-finger drags are
+  now forwarded to the app like one-finger
+  drags when mouse reporting is active, so
+  the app owns the selection. Hold Option
+  during the drag to make a local iTerm2
+  selection instead. Issues 12953 and 12950.
+- Added a Copy URL context menu item that
+  copies the URL under the cursor, stitching
+  wrapped URLs back together so you can paste
+  a clean link into a browser other than your
+  default. Issue 12944.
+- Fix VoiceOver QuickNav navigation not
+  engaging after interacting with the
+  terminal, which previously required
+  toggling QuickNav off and on.
+- Fix VoiceOver reading stale terminal
+  text when the screen was cleared and
+  new output arrived while interacting.
+- Fix VoiceOver focus jumping to the top
+  of the terminal when new output
+  arrived, and make new output reachable
+  without re-interacting.
+- Web links handed to iTerm2 by the system
+  (for example when it’s your default
+  browser, or via “open -a iTerm2 <url>”)
+  now open in the built-in web browser
+  instead of a terminal, unless you’ve
+  bound the scheme to a specific profile.
+  Issue 12431.
+- Fixed the iPhone companion connection
+  getting stuck after the relay dropped an
+  idle socket. A keepalive ping that never
+  got a reply could hang forever, so the Mac
+  kept believing it was connected and never
+  reconnected. The ping now times out and
+  forces a reconnect.
+- AI chats that control or coordinate your
+  terminal sessions now use far fewer tokens
+  on long conversations. The live snapshot of
+  session state sent each turn is no longer
+  part of the cached prompt prefix, so the
+  conversation history is reused from cache
+  instead of being reprocessed every turn.
+- Fixed a bug where a tab reshaped by the
+  Python API’s apply_layout could end up with
+  no focused pane, so typing went nowhere until
+  you clicked a pane. Focus is now restored
+  after the layout is applied.
+- AI chat history is now replayed to the model
+  from the exact bytes previously sent rather
+  than rebuilt each turn, so the prompt cache
+  stays valid across turns (including turns
+  that ran a tool) and long conversations keep
+  getting cheaper and faster.
+- Sending a message in a long AI chat is now
+  faster: when the whole history is already
+  stored as sent-bytes, it is no longer
+  reprocessed to build each request, so the
+  per-message work stays small no matter how
+  long the conversation gets.
+- Fix “Save contents…” suggesting a
+  filename containing colons/slashes in
+  the timestamp, which macOS shows as “/”
+  and disallows. Issue 12931.
+- The command info popover’s “Started at”
+  time now honors the system 24-Hour Time
+  setting instead of always using a
+  12-hour clock. Issue 12929.
+- A new advanced setting,
+  CompactTabBarStoplightButtonsWidth, lets
+  you adjust the width reserved for the
+  window buttons before the inline tab bar
+  in the Compact and Minimal themes.
+- Fixed a bug where Undo Close (⌘Z) could
+  leave behind an invisible empty window when
+  the closed session could not be restored.
+  Besides being a leak, these phantom windows
+  crashed Python API scripts with a
+  RecursionError. Empty windows are now closed,
+  and the Python API no longer reports a
+  selected tab for a window that has none.
+- Fixed a bug where a Python API script
+  launched from the Scripts menu of a
+  secondary iTerm2 instance (one started with
+  -suite) connected to the main instance's API
+  server instead of its own, controlling the
+  wrong app.
+- Fixed a bug where Make Screenshot did not
+  render ASCII ligatures (like -> or =>) even
+  when the profile enabled them and the font
+  supported them. Screenshots now ligate the
+  same way the terminal does.
+- Fixed a bug where tmux panes received stray
+  focus-report escape sequences on focus
+  changes even when no program in the pane had
+  turned on focus reporting. Reports now go
+  only to panes whose app requested them (by
+  emitting DECSET 1004), matching how non-tmux
+  sessions behave.
+- Fixed Semantic History (Cmd-Click) failing
+  to open files in JetBrains IDEs such as
+  IntelliJ IDEA, WebStorm, and Rider. iTerm2
+  now runs the IDE’s command-line launcher
+  directly (forwarding to the already-running
+  instance) and passes the path before the
+  --line option, which the current launcher
+  requires. Issue 12958.
+- Fixed a bug where the OSC 9;4 progress
+  bar was hidden by the border around the
+  active pane. The bar now draws on top of
+  the border's top edge. Issue 12960.
+- Fixed a bug where some profile settings
+  that apply to all profile types (such as
+  “Border around active pane”, “Use custom
+  tab color”, and Color Presets) could not
+  be found with the preferences search box
+  while editing a profile.

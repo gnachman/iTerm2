@@ -12,6 +12,11 @@
 //      pairing channel. Re-registering overwrites: only a caller who knows
 //      the token can do so, and tokens are unguessable.
 //
+//    /push/mutable {token, secret, collapse}
+//      Called by the MAC for the Notification Service Extension: a content-free
+//      mutable-content push with a generic fallback alert, collapsed per chat by
+//      the opaque `collapse` id. Same auth + rate limit as /push; no title/body.
+//
 //    /push      {token, secret, title, body}
 //      Called by the MAC. The relay verifies sha256(secret) matches the
 //      registration, rate-limits per token, and forwards to APNs. So a push
@@ -55,6 +60,8 @@ export default {
           return await register(payload, env, request);
         case "/push":
           return await push(payload, env);
+        case "/push/mutable":
+          return await pushMutable(payload, env);
         default:
           return json(404, { error: "no such endpoint" });
       }
@@ -85,6 +92,14 @@ const isHex = (s, minLen, maxLen) =>
   s.length <= maxLen &&
   /^[0-9a-f]+$/.test(s);
 
+// The push nonce is an opaque base64 ciphertext (sealed under the room secret),
+// not hex; the relay only forwards it, so just bound the length and charset.
+const isBase64 = (s, minLen, maxLen) =>
+  typeof s === "string" &&
+  s.length >= minLen &&
+  s.length <= maxLen &&
+  /^[A-Za-z0-9+/]+={0,2}$/.test(s);
+
 async function register(payload, env, request) {
   const { token, secretHash, sandbox } = payload;
   if (!isHex(token, 32, 256) || !isHex(secretHash, 64, 64)) {
@@ -102,12 +117,41 @@ async function register(payload, env, request) {
       return json(429, { error: "rate limited" });
     }
   }
+  // Idempotent write: KV writes are the scarce resource (the free plan caps
+  // daily puts, and the phone re-registers on EVERY connection — see the header
+  // doc), whereas reads are effectively unmetered. So read first and skip the
+  // put when nothing that matters changed. Without this a reconnect storm (e.g.
+  // a flapping pairing) exhausts the daily write budget, after which a genuine
+  // secret rotation can no longer be persisted and every push 403s "bad secret".
+  //
+  // Two things still force a write:
+  //   1. secretHash or sandbox changed — the whole point of /register; a rotated
+  //      secret (reinstall / re-pair) MUST reach KV or pushes break.
+  //   2. the record is more than halfway to its TTL — re-arm the self-expiry so
+  //      a live pairing's registration never lapses, while a dead pairing (which
+  //      stops re-registering) still ages out. Halfway means an active device
+  //      writes at most once per TTL/2, not once per connection.
+  const ttl = registrationTtlSeconds(env);
+  const existing = await env.PUSH_KV.get(`device:${token}`, "json");
+  const now = Date.now();
+  const unchanged = existing &&
+    existing.secretHash === secretHash &&
+    !!existing.sandbox === !!sandbox;
+  const fresh = unchanged &&
+    typeof existing.registeredAt === "number" &&
+    now - existing.registeredAt < (ttl * 1000) / 2;
+  if (fresh) {
+    // Nothing to persist; the existing record already authorizes this device
+    // and its expiry is not near. `skipped` is advisory (aids debugging); the
+    // caller treats any 2xx as success.
+    return json(200, { ok: true, skipped: true });
+  }
   // Self-expiring write: a registration that is never refreshed (a dead pairing)
   // ages out instead of lingering forever.
   await env.PUSH_KV.put(
     `device:${token}`,
-    JSON.stringify({ secretHash, sandbox: !!sandbox, registeredAt: Date.now() }),
-    { expirationTtl: registrationTtlSeconds(env) }
+    JSON.stringify({ secretHash, sandbox: !!sandbox, registeredAt: now }),
+    { expirationTtl: ttl }
   );
   return json(200, { ok: true });
 }
@@ -119,6 +163,7 @@ function registrationTtlSeconds(env) {
     : DEFAULT_REGISTRATION_TTL_SECONDS;
 }
 
+// Legacy plaintext push (the notify tool): a visible alert carrying title/body.
 async function push(payload, env) {
   const { token, secret, title, body } = payload;
   if (!isHex(token, 32, 256) || !isHex(secret, 64, 64)) {
@@ -127,41 +172,100 @@ async function push(payload, env) {
   if (typeof title !== "string" || typeof body !== "string") {
     return json(400, { error: "title and body are required strings" });
   }
+  const auth = await authorizeDevice(token, secret, env);
+  if (auth.error) return auth.error;
+  if (await overPushRateLimit(token, env)) return json(429, { error: "rate limited" });
+  return deliverToAPNs(env, token, auth.record, {
+    aps: { alert: { title, body }, sound: "default" },
+  });
+}
 
+// Content-free "mutable" push for the Notification Service Extension. The aps
+// payload carries NO real content: just mutable-content + a generic fallback
+// alert, collapsed per chat by an opaque collapse id (HMAC(roomSecret, chatID),
+// computed on the device - the relay never sees the chatID). The NSE wakes,
+// fetches the real content over Noise, and rewrites the notification; if it
+// can't, the fallback shows. Sound is omitted (the NSE adds it on delivery, so
+// the silent push doesn't double-buzz). Auth and rate limit are shared with
+// /push; the legacy /push payload is untouched.
+async function pushMutable(payload, env) {
+  const { token, secret, collapse, nonce } = payload;
+  if (!isHex(token, 32, 256) || !isHex(secret, 64, 64)) {
+    return json(400, { error: "bad token or secret" });
+  }
+  if (!isHex(collapse, 1, 64)) {
+    return json(400, { error: "bad collapse id" });
+  }
+  // Optional one-time nonce: a base64 ciphertext (sealed under the room secret)
+  // the NSE decrypts and echoes back over the relay so the mac can recognize its
+  // own solicited fetch and skip the presence warning. Opaque to the relay; just
+  // validated as bounded base64 and forwarded in the payload.
+  if (nonce !== undefined && !isBase64(nonce, 1, 256)) {
+    return json(400, { error: "bad nonce" });
+  }
+  const auth = await authorizeDevice(token, secret, env);
+  if (auth.error) return auth.error;
+  if (await overPushRateLimit(token, env)) return json(429, { error: "rate limited" });
+  const apsBody = {
+    aps: {
+      "mutable-content": 1,
+      alert: { title: "iTerm2 Buddy", body: "Your agent has an update." },
+    },
+  };
+  // Custom top-level key the NSE reads from the delivered notification's
+  // userInfo. Outside `aps` per APNs convention.
+  if (nonce !== undefined) {
+    apsBody.n = nonce;
+  }
+  return deliverToAPNs(env, token, auth.record, apsBody, { "apns-collapse-id": collapse });
+}
+
+// Look up + authenticate a device. Returns { record } or { error: Response }.
+async function authorizeDevice(token, secret, env) {
   const record = await env.PUSH_KV.get(`device:${token}`, "json");
   if (!record) {
-    return json(403, { error: "unknown device token" });
+    return { error: json(403, { error: "unknown device token" }) };
   }
   if ((await sha256Hex(secret)) !== record.secretHash) {
-    return json(403, { error: "bad secret" });
+    return { error: json(403, { error: "bad secret" }) };
   }
+  return { record };
+}
 
-  // Per-token rate limit. KV is eventually consistent, so this is a soft
-  // limit, but it stops runaway loops cold.
+// Per-token soft rate limit (KV is eventually consistent, but it stops runaway
+// loops cold). Returns true when over the limit.
+async function overPushRateLimit(token, env) {
   const bucket = `rl:${token}:${Math.floor(Date.now() / 60000)}`;
   const count = parseInt((await env.PUSH_KV.get(bucket)) || "0", 10);
   if (count >= PUSHES_PER_MINUTE) {
-    return json(429, { error: "rate limited" });
+    return true;
   }
   await env.PUSH_KV.put(bucket, String(count + 1), { expirationTtl: 120 });
+  return false;
+}
 
+// POST an aps payload to APNs for a device. extraHeaders adds per-call headers
+// such as apns-collapse-id. Returns a Response to relay back to the caller.
+async function deliverToAPNs(env, token, record, apsBody, extraHeaders = {}) {
   const host = record.sandbox
     ? "api.sandbox.push.apple.com"
     : "api.push.apple.com";
-  const response = await fetch(`https://${host}/3/device/${token}`, {
+  // APNs requires HTTP/2. On Cloudflare the global `fetch` speaks it natively,
+  // so env.fetchImpl is undefined and this is a plain fetch. Under Node, whose
+  // global fetch is HTTP/1.1 (which APNs refuses), the self-hosted host injects
+  // env.fetchImpl — an HTTP/2 client with the same (url, init) -> Response shape
+  // (see ../host/apns.js). The rest of the worker is transport-agnostic.
+  const doFetch = env.fetchImpl || fetch;
+  const response = await doFetch(`https://${host}/3/device/${token}`, {
     method: "POST",
     headers: {
       authorization: `bearer ${await providerJWT(env)}`,
       "apns-topic": env.APNS_TOPIC,
       "apns-push-type": "alert",
       "apns-priority": "10",
+      ...extraHeaders,
     },
-    body: JSON.stringify({
-      aps: {
-        alert: { title, body },
-        sound: "default",
-      },
-    }),
+    body: JSON.stringify(apsBody),
   });
   if (response.ok) {
     return json(200, { ok: true });

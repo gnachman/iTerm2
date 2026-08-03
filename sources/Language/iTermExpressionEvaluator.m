@@ -156,7 +156,7 @@ static NSMutableArray *iTermExpressionEvaluatorGlobalStore(void) {
         if (self.retryUntil.timeIntervalSinceNow > 0 &&
             [error.domain isEqual:iTermAPIHelperErrorDomain] &&
             error.code == iTermAPIHelperErrorCodeUnregisteredFunction) {
-            DLog(@"Schedule retry of %@", descr);
+            RLog(@"Schedule retry of %@", descr);
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 DLog(@"Retrying");
                 [weakSelf reallyEvaluateWithTimeout:timeout

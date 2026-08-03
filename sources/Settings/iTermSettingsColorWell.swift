@@ -15,7 +15,7 @@ class SettingsColorWell: CPKColorWell, ExpressionBindableView {
     @objc var expression: String? {
         didSet {
             if expression != oldValue {
-                DLog("Change to \(expression ?? "(nil)")")
+                RLog("Change to \(expression ?? "(nil)")")
                 updateIcon()
             }
         }

@@ -50,6 +50,12 @@
                                     <action selector="debugLogging:" target="-1" id="951"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Save Retrospective Debug Logs" enabled="NO" identifier="Save Retrospective Debug Logs" id="Rtr-Sv-Log">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="saveRetrospectiveDebugLogs:" target="-1" id="Rtr-Sv-Act"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Copy Performance Stats" identifier="Copy Performance Stats" id="cYu-lQ-5GD">
                                 <connections>
                                     <action selector="copyPerformanceStats:" target="201" id="Q9K-AS-x9Q"/>
@@ -426,6 +432,12 @@ DQ
                                                 <action selector="downloadFiles:" target="-1" id="T2e-RW-XQ6"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Remote host can control iTerm2" identifier="ssh.Remote host can control iTerm2" id="it2-au-th0">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="toggleRemoteHostCanControlIterm2:" target="-1" id="it2-au-th1"/>
+                                            </connections>
+                                        </menuItem>
                                     </items>
                                 </menu>
                             </menuItem>
@@ -798,6 +810,11 @@ DQ
                                             <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                             <connections>
                                                 <action selector="addNoteAtCursor:" target="-1" id="B5P-c8-bDe"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Annotate Selection" keyEquivalent="" identifier="Marks and Annotations.Annotate Selection" id="aNs-El-c10">
+                                            <connections>
+                                                <action selector="annotateSelection:" target="-1" id="aNs-Ac-t10"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="Dk5-W1-EQg">

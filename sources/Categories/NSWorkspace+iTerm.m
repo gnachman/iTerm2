@@ -227,7 +227,7 @@ completionHandler:^(NSRunningApplication *app, NSError *error) {
              style:(iTermOpenStyle)style
             upsell:(BOOL)upsell
             window:(NSWindow *)window {
-    DLog(@"%@", url);
+    RLog(@"%@", url);
     if (!url) {
         return;
     }
@@ -285,7 +285,7 @@ completionHandler:^(NSRunningApplication *app, NSError *error) {
     NSString *bundleID = [iTermAdvancedSettingsModel browserBundleID];
     if ([bundleID stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].length == 0) {
         // No custom app configured in advanced settings so use the systemwide default.
-        DLog(@"Empty custom bundle ID “%@”", bundleID);
+        RLog(@"Empty custom bundle ID “%@”", bundleID);
         [self openURL:url configuration:configuration completionHandler:^(NSRunningApplication *app, NSError *error) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 completion(app, error);
@@ -296,7 +296,7 @@ completionHandler:^(NSRunningApplication *app, NSError *error) {
     NSURL *appURL = [self URLForApplicationWithBundleIdentifier:bundleID];
     if (!appURL) {
         // The custom app configured in advanced settings isn't installed. Use the sytemwide default.
-        DLog(@"No url for bundle ID %@", bundleID);
+        RLog(@"No url for bundle ID %@", bundleID);
         [self openURL:url configuration:configuration completionHandler:^(NSRunningApplication *app, NSError *error) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 completion(app, error);
@@ -306,7 +306,7 @@ completionHandler:^(NSRunningApplication *app, NSError *error) {
     }
 
     // Open with the advanced-settings-configured default browser.
-    DLog(@"Open %@ with %@", url, appURL);
+    RLog(@"Open %@ with %@", url, appURL);
     [self openURLs:@[ url ]
 withApplicationAtURL:appURL
      configuration:configuration
@@ -481,7 +481,7 @@ static NSMutableSet<NSString * > *urlTokens;
 - (void)it_revealInFinder:(NSString *)path {
     NSURL *finderURL = [[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:@"com.apple.finder"];
     if (!finderURL) {
-        DLog(@"Can't find Finder");
+        RLog(@"Can't find Finder");
         return;
     }
     [[NSWorkspace sharedWorkspace] openURLs:@[ [NSURL fileURLWithPath:path] ]

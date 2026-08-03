@@ -134,6 +134,8 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)textViewSessionIsBroadcastingInput:(BOOL)asReceiver;
 - (BOOL)textViewIsMaximized;
 - (BOOL)textViewIsLocked;
+// YES when the enclosing window's layout is locked.
+- (BOOL)textViewWindowIsLayoutLocked;
 - (void)textViewToggleLock;
 - (void)textViewLockAllInTab;
 - (void)textViewUnlockAllInTab;
@@ -224,6 +226,11 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)isRestartable;
 - (void)textViewToggleAnnotations;
 - (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event;
+
+// For a tmux control-mode (-CC) pane, send this keystroke to tmux by key name
+// so tmux re-encodes it in the pane's own key mode + extended-keys-format.
+// Returns YES if it consumed the event.
+- (BOOL)textViewSendTmuxControlModeKeyEvent:(NSEvent *)event;
 - (void)textViewDidReceiveFlagsChangedEvent:(NSEvent *)event;
 - (void)textViewHaveVisibleBlocksDidChange;
 - (iTermExpect *)textViewExpect;
@@ -306,6 +313,11 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (void)textViewDidAddOrRemovePorthole;
 - (NSString *)textViewCurrentSSHSessionName;
 - (void)textViewDisconnectSSH;
+// Returns whether the remote host currently has an it2-over-ssh grant (menu checkmark), and
+// sets *available to whether the menu item should be enabled at all (an it2-capable ssh
+// session). *available is always written.
+- (BOOL)textViewRemoteHostCanControlIterm2:(out BOOL *)available;
+- (void)textViewToggleRemoteHostCanControlIterm2;
 - (void)textViewShowFindIndicator:(VT100GridWindowedRange)range;
 - (void)textViewOpen:(NSString *)string
     workingDirectory:(NSString *)folder
@@ -427,6 +439,15 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 
 // Should cursor blink?
 @property(nonatomic, assign) BOOL blinkingCursor;
+
+// Should a blinking cursor fade smoothly instead of toggling abruptly?
+@property(nonatomic) BOOL cursorSmoothBlink;
+@property(nonatomic) NSTimeInterval cursorBlinkFadeInDuration;
+@property(nonatomic) NSTimeInterval cursorBlinkFadeOutDuration;
+@property(nonatomic) NSInteger cursorBlinkFadeInCurve;
+@property(nonatomic) NSInteger cursorBlinkFadeOutCurve;
+@property(nonatomic) NSTimeInterval cursorBlinkVisibleDwell;
+@property(nonatomic) NSTimeInterval cursorBlinkHiddenDwell;
 
 // Should bar/underscore cursors have a shadow?
 @property(nonatomic) BOOL cursorShadow;
@@ -727,6 +748,9 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries;
 // Add a search result for highlighting in yellow.
 - (void)addSearchResult:(SearchResult *)searchResult;
 - (void)removeSearchResultsInRange:(VT100GridAbsCoordRange)range;
+
+// Add an annotation to the current selection. No-op if there is no selection.
+- (void)addNote;
 
 // When a new note is created, call this to add a view for it.
 - (void)addViewForNote:(id<PTYAnnotationReading>)annotation focus:(BOOL)focus visible:(BOOL)visible;

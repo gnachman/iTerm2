@@ -27,9 +27,11 @@ final class PairingCodeTests: XCTestCase {
     }
 
     func testRejectsWrongVersion() {
-        XCTAssertThrowsError(try PairingCode.parse(url(v: "2"))) { error in
+        // v1 (direct) and v2 (resolved) are supported; a higher version means the
+        // code came from a newer app and must steer the user to update.
+        XCTAssertThrowsError(try PairingCode.parse(url(v: "3"))) { error in
             XCTAssertEqual(error as? PairingCode.ParseError,
-                           .unsupportedVersion(found: "2"))
+                           .unsupportedVersion(found: "3"))
         }
     }
 
@@ -63,5 +65,26 @@ final class PairingCodeTests: XCTestCase {
         let original = try PairingCode.parse(url())
         let rebuilt = try PairingCode.parse(original.urlString())
         XCTAssertEqual(original, rebuilt)
+    }
+
+    // The pairing code is stored as a JSON blob in the keychain (so it survives
+    // an app reinstall) and decoded by both the app and the NSE, so its Codable
+    // round-trip must be stable.
+    func testCodableRoundTrip() throws {
+        let original = PairingCode(responderStaticPublicKey: Data(repeating: 0xAB, count: 32),
+                                   pairingID: "pid-123",
+                                   relayOrigin: "https://relay.example.com")
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(PairingCode.self, from: data)
+        XCTAssertEqual(decoded, original)
+    }
+
+    func testCodableRoundTripWithNilRelayOrigin() throws {
+        let original = PairingCode(responderStaticPublicKey: Data(repeating: 1, count: 32),
+                                   pairingID: "pid", relayOrigin: nil)
+        let decoded = try JSONDecoder().decode(PairingCode.self,
+                                               from: try JSONEncoder().encode(original))
+        XCTAssertEqual(decoded, original)
+        XCTAssertNil(decoded.relayOrigin)
     }
 }

@@ -67,23 +67,62 @@ public enum CompanionTransports {
     /// - pairingTicket: the single-use App Attest admission ticket the phone
     ///   earned (RelayAttestationClient) for a fresh pairing under attestation;
     ///   nil for open mode or for reconnects (which sign with roomSecret).
+    /// - shardResolver: for resolved (v2) codes, the resolver that maps the
+    ///   code's resolver URL + room to an owning relay origin. Pass a shared,
+    ///   long-lived one (per pairing) so its monotonic floor and cached map
+    ///   survive reconnects; when nil a transient resolver is created from the
+    ///   code's resolver URL (functional, but re-fetches and keeps no floor
+    ///   across attempts). Ignored for direct (v1) codes.
     public static func connector(for code: PairingCode,
                                  webSocketFactory: RelayWebSocketFactory = URLSessionRelayWebSocketFactory(),
                                  roomSecret: (@Sendable () -> Data?)? = nil,
-                                 pairingTicket: String? = nil) -> TransportConnector {
-        guard let relayOrigin = code.relayOrigin else {
-            return UnavailableTransportConnector()
+                                 pairingTicket: String? = nil,
+                                 nonDisplacing: Bool = false,
+                                 shardResolver: ShardHostResolving? = nil) -> TransportConnector {
+        // Direct mode (v1): connect straight to the relay origin in the code.
+        if let relayOrigin = code.relayOrigin {
+            let proof: (@Sendable (RelayAdmission.Challenge, String) throws -> RelayAdmission.Proof) =
+                { @Sendable challenge, roomName in
+                    try admissionProof(role: .phone, challenge: challenge, roomName: roomName,
+                                       origin: relayOrigin, roomSecret: roomSecret?(),
+                                       pairingTicket: pairingTicket)
+                }
+            // nonDisplacing is set only by the NSE, so a background fetch yields to
+            // a foreground app holding the phone slot rather than displacing it.
+            return RelayTransportConnector(relayOrigin: relayOrigin,
+                                           responderStaticKey: code.responderStaticPublicKey,
+                                           joinProof: proof,
+                                           nonDisplacing: nonDisplacing,
+                                           webSocketFactory: webSocketFactory)
         }
-        let proof: (@Sendable (RelayAdmission.Challenge, String) throws -> RelayAdmission.Proof) =
-            { @Sendable challenge, roomName in
-                try admissionProof(role: .phone, challenge: challenge, roomName: roomName,
-                                   origin: relayOrigin, roomSecret: roomSecret?(),
-                                   pairingTicket: pairingTicket)
+        // Resolved mode (v2): resolve the owning origin from the shard map at
+        // connect time, then join it the same way.
+        if let resolverURL = code.resolverURL {
+            let resolver: ShardHostResolving
+            if let shardResolver {
+                resolver = shardResolver
+            } else {
+                // Constructing a URLSession fetcher here means the phone (which has
+                // no consent plugin; the plugin is a Mac-only egress chokepoint).
+                // The Mac never reaches this factory (it parks via listener(),
+                // routing all egress through the plugin), so assert we are on iOS:
+                // reaching this on the Mac would fetch the shard map off the
+                // sanctioned egress path. On iOS this branch is the normal path.
+                #if !os(iOS)
+                assertionFailure("CompanionTransports.connector's URLSession shard-map fetch is phone-only; the Mac must route it through the consent plugin (pass a plugin-backed shardResolver, or use listener())")
+                #endif
+                resolver = ShardHostResolver(resolverURL: resolverURL,
+                                             fetcher: URLSessionShardMapFetcher(session: CompanionURLSession.shared))
             }
-        return RelayTransportConnector(relayOrigin: relayOrigin,
-                                       responderStaticKey: code.responderStaticPublicKey,
-                                       joinProof: proof,
-                                       webSocketFactory: webSocketFactory)
+            return ResolvingTransportConnector(code: code,
+                                               resolver: resolver,
+                                               webSocketFactory: webSocketFactory,
+                                               roomSecret: roomSecret,
+                                               pairingTicket: pairingTicket,
+                                               nonDisplacing: nonDisplacing)
+        }
+        // Neither: no transport.
+        return UnavailableTransportConnector()
     }
 
     /// Mac side: the listener for a pairing. Parks in the relay room when a

@@ -68,12 +68,27 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
     // port's peers in the handler.
     private var tabStatusObserver: NSObjectProtocol?
 
+    // Last observed idle/working/waiting state per peer identifier. Used to
+    // detect the working -> idle edge that drives the code-review auto-send-
+    // clippings toggle (see maybeAutoSendClippings) and the main session's
+    // auto-request-review toggle (see maybeAutoRequestReview).
+    private var lastPeerState: [String: SessionState] = [:]
+
+    // Count of code-review-mode sessions across the WHOLE workgroup (not just
+    // this port's peers). The main session's auto-request-review toggle is
+    // enabled only when this is exactly 1. Passed in by assemble, which has
+    // the full workgroup config; defaults 0 for ports built without it (e.g.
+    // nested peer ports, which never host the main session's toggle).
+    private let codeReviewSessionCount: Int
+
     init(peers: [String: iTermPromise<PTYSession>],
          peerConfigs: [iTermWorkgroupSessionConfig],
          activeSessionIdentifier: String,
          leaderIdentifier: String,
          leaderScope: iTermVariableScope,
-         gitPoller: iTermGitPoller?) {
+         gitPoller: iTermGitPoller?,
+         codeReviewSessionCount: Int = 0) {
+        self.codeReviewSessionCount = codeReviewSessionCount
         self.peerMembers = peerConfigs.map { cfg in
             (identifier: cfg.uniqueIdentifier,
              label: cfg.displayName.isEmpty ? "Peer" : cfg.displayName,
@@ -109,7 +124,14 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
                 navigationDelegate: self,
                 diffSelectorDelegate: self,
                 gitBaseSelectorDelegate: self,
-                displayName: cfg.displayName)
+                displayName: cfg.displayName,
+                autoSendClippingsDelegate: self,
+                autoSendClippingsInitiallyOn:
+                    peers[cfg.uniqueIdentifier]?.maybeValue?.autoSendClippingsWhenIdle ?? false,
+                autoRequestReviewDelegate: self,
+                autoRequestReviewInitiallyOn:
+                    peers[cfg.uniqueIdentifier]?.maybeValue?.autoRequestReviewWhenIdle ?? false,
+                autoRequestReviewEnabled: codeReviewSessionCount == 1)
             var views: [SessionToolbarGenericView] = []
             let augmented = WorkgroupToolbarBuilder
                 .injectAutoItems(into: cfg.toolbarItems)
@@ -168,8 +190,157 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
               let identifier = identifier(for: session) else {
             return
         }
-        let working = WorkgroupIntrospection.state(forTabStatus: status) == .working
-        setBusy(working, forPeerIdentifier: identifier)
+        // The busy spinner reflects the general state (indicator included).
+        setBusy(WorkgroupIntrospection.state(forTabStatus: status) == .working,
+                forPeerIdentifier: identifier)
+        // The idle-driven auto behaviors track the STRICT reported state so a
+        // session restart (which clears the tab status) doesn't register as a
+        // working -> idle edge. Read the prior state once and advance it here
+        // so both behaviors below see the same edge.
+        let reported = WorkgroupIntrospection.reportedState(forTabStatus: status)
+        let previous = lastPeerState[identifier]
+        lastPeerState[identifier] = reported
+        maybeAutoSendClippings(session: session,
+                               previousState: previous,
+                               newState: reported)
+        maybeAutoRequestReview(session: session,
+                               previousState: previous,
+                               newState: reported)
+    }
+
+    // Pure decision behind the main session's auto-request-review: whether a
+    // review should be requested on this state change. Split out for the same
+    // testability reason as clippingsToAutoSend. `reviewCount` is the count of
+    // code-review sessions in the workgroup; the request needs exactly one
+    // unambiguous target.
+    static func shouldAutoRequestReview(previousState: SessionState?,
+                                        newState: SessionState,
+                                        isMainSession: Bool,
+                                        toggleOn: Bool,
+                                        reviewCount: Int) -> Bool {
+        guard previousState == .working, newState == .idle else { return false }
+        guard isMainSession, toggleOn, reviewCount == 1 else { return false }
+        return true
+    }
+
+    // When the main session (with the toggle on) transitions working -> idle
+    // and the workgroup has exactly one code-review session, ask the
+    // workgroup instance to run a review on it. Same working -> idle edge and
+    // rationale as maybeAutoSendClippings.
+    @MainActor
+    private func maybeAutoRequestReview(session: PTYSession,
+                                        previousState: SessionState?,
+                                        newState: SessionState) {
+        guard let instance = workgroupInstance else { return }
+        guard Self.shouldAutoRequestReview(
+                previousState: previousState,
+                newState: newState,
+                isMainSession: instance.mainSession === session,
+                toggleOn: session.autoRequestReviewWhenIdle,
+                reviewCount: codeReviewSessionCount) else {
+            return
+        }
+        RLog("iTermWorkgroupPeerPort: auto-requesting review after main session \(session.guid) went idle")
+        instance.requestCodeReviewFromSoleReviewSession()
+    }
+
+    // When a code-review peer with the auto-send toggle on transitions from
+    // working to idle, paste its clippings into the workgroup's main session
+    // and submit them with a Return. Gated to the working -> idle edge (not
+    // any -> idle) so a spurious first status, or a session that is idle at
+    // launch, never fires; it also means one send per completed review run
+    // rather than a resend on every idle notification. Clippings are the
+    // peer-group's shared list (anchored on the main session), so this
+    // delivers the review's findings as input to whatever is running in the
+    // main session.
+    // Pure decision behind the auto-send: the text to deliver to the main
+    // session on a state change, or nil to do nothing. Split out from the
+    // wiring below so the gating (edge, mode, toggle, main-session state,
+    // non-empty) can be unit-tested without a live port, sessions, or the
+    // paste path.
+    static func clippingsToAutoSend(previousState: SessionState?,
+                                    newState: SessionState,
+                                    mode: iTermWorkgroupSessionMode,
+                                    toggleOn: Bool,
+                                    mainSessionState: SessionState,
+                                    clippings: [PTYSessionClipping]) -> String? {
+        guard previousState == .working, newState == .idle else { return nil }
+        guard mode == .codeReview, toggleOn else { return nil }
+        // Don't inject while the main session's agent is mid-turn: an autonomous
+        // paste + submit would land on top of whatever the agent (or the user) is
+        // doing and clobber in-progress input. Only .working defers -- idle /
+        // waiting / unknown proceed. Dropping this run is safer than interrupting:
+        // a review can be re-requested, but a clobbered turn cannot be undone.
+        guard mainSessionState != .working else { return nil }
+        let text = clippings.joinedForSending()
+        return text.isEmpty ? nil : text
+    }
+
+    @MainActor
+    private func maybeAutoSendClippings(session: PTYSession,
+                                        previousState: SessionState?,
+                                        newState: SessionState) {
+        guard let mainSession = workgroupInstance?.mainSession,
+              mainSession !== session else { return }
+        // Read the shared clipping list straight from the leader (main
+        // session). Reading through the review session's own `clippings` goes
+        // via its peer-port weak ref, which a GUID-changing restart (the
+        // reload path) can leave stale — then the review would see an empty
+        // list and never send. The leader owns the canonical list.
+        let clippings = mainSession.clippings
+        // Log the guard inputs on every code-review idle so a field debug log
+        // shows why a send did or didn't happen (the guards below are
+        // otherwise silent on the not-sent path).
+        if session.workgroupSessionMode == .codeReview, newState == .idle {
+            RLog("iTermWorkgroupPeerPort.maybeAutoSendClippings: review=\(session.guid) prev=\(previousState.map { "\($0)" } ?? "nil") toggle=\(session.autoSendClippingsWhenIdle) reviewHasPeerPort=\(session.peerPort != nil) reviewClippings=\(session.clippings.count) mainClippings=\(clippings.count)")
+        }
+        guard let text = Self.clippingsToAutoSend(
+                previousState: previousState,
+                newState: newState,
+                mode: session.workgroupSessionMode,
+                toggleOn: session.autoSendClippingsWhenIdle,
+                mainSessionState: WorkgroupIntrospection.state(for: mainSession),
+                clippings: clippings) else {
+            return
+        }
+        RLog("iTermWorkgroupPeerPort: auto-sending \(clippings.count) clipping(s) from code-review peer \(session.guid) to main session \(mainSession.guid)")
+        // Paste the content (bracketed, so the coding agent treats it as pasted
+        // input), then submit with a Return sent as its OWN literal paste with
+        // bracketing disabled. Paste events serialize through the paste helper's
+        // queue, so the \r is written only AFTER the last content chunk drains,
+        // regardless of payload size, and lands OUTSIDE the bracketed region so
+        // it actually submits. A fixed timer raced the chunked paste for large
+        // reviews (>~9 KB): the \r landed mid-stream, became a literal newline
+        // inside the bracket, and never submitted. \r is the Enter key at the TTY
+        // (\n would leave the line unsubmitted).
+        //
+        // The Return also waits a beat after the content drains before it's
+        // written. Ordering alone isn't enough: Claude Code applies every key
+        // parsed from one stdin read in a single batched render, so a paste and
+        // a Return that arrive together run as one batch and the Return's submit
+        // sees the pre-paste (empty) input and no-ops, leaving the review
+        // unsent. Delaying the Return lands it in a later read, after the paste
+        // has committed, so it submits. The delay is measured from when the
+        // content finishes (not a fixed timer from paste start) and defaults to
+        // Claude Code's 500 ms paste-settling window. See
+        // pasteLiteralString(_:afterDelay:).
+        mainSession.paste(text, flags: [])
+        mainSession.pasteLiteralString("\r",
+                                       afterDelay: iTermAdvancedSettingsModel.workgroupAutoSendSubmitDelay())
+        // Archive the sent clippings (snapshot into history, clear the live
+        // list) so the next review's idle doesn't resend the same ones. This is
+        // also what breaks the auto-request/auto-send loop: once sent, the live
+        // list is empty, so a subsequent review-idle finds nothing to send and
+        // stops feeding the main session. Archive on the leader for the same
+        // stale-peer-port reason as the read above.
+        mainSession.archiveClippings()
+        // Switch the peer switcher to the main session so focus follows the
+        // active side within the shared pane. This only swaps the peer view in
+        // (visible when that tab is already frontmost); it deliberately does
+        // NOT order the window front, activate the app, or change the selected
+        // tab, so the auto-send doesn't yank the user's window/tab focus away
+        // from whatever they're doing.
+        mainSession.revealAsPeerWithoutActivatingWindow()
     }
 
     // Reflect a peer's busy state on every switcher in the group: each
@@ -193,11 +364,17 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
     private func seedBusyStates() {
         for session in realizedPeerSessions {
             guard let identifier = identifier(for: session),
-                  let status = session.tabStatus,
-                  WorkgroupIntrospection.state(forTabStatus: status) == .working else {
+                  let status = session.tabStatus else {
                 continue
             }
-            setBusy(true, forPeerIdentifier: identifier)
+            // Record the current state so the first observed transition is a
+            // real edge (a peer already working at re-entry, then finishing,
+            // still fires the auto-send working -> idle path).
+            let state = WorkgroupIntrospection.state(forTabStatus: status)
+            lastPeerState[identifier] = state
+            if state == .working {
+                setBusy(true, forPeerIdentifier: identifier)
+            }
         }
     }
 
@@ -220,6 +397,17 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
     // active.
     override func activationDidRollBack(to identifier: String) {
         syncModeSwitchers(to: identifier)
+    }
+
+    // A .diff peer's initial launch is deferred until the peer is shown.
+    // Its view was just swapped into the tab, so give it a chance to fire
+    // the deferred launch. fireDeferredDiffLaunchIfVisibleNow self-checks
+    // visibility (the swap can land on a background tab) and firing
+    // state, so this is a no-op for a background swap, a non-diff peer, or
+    // a diff that already launched; switching between peers never re-runs
+    // the diff.
+    override func didSwapInPeer(_ session: PTYSession) {
+        session.fireDeferredDiffLaunchIfVisibleNow()
     }
 
     private func syncModeSwitchers(to identifier: String) {
@@ -263,7 +451,7 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
             // Returning false would let ⌥⇧⌘<digit> fall through the
             // dispatch chain and reach the focused shell as input;
             // consume it as a no-op instead.
-            DLog("iTermWorkgroupPeerPort.activatePeer(byShortcutDigit:): consuming chord for \(identifier), whose spawn failed")
+            RLog("iTermWorkgroupPeerPort.activatePeer(byShortcutDigit:): consuming chord for \(identifier), whose spawn failed")
             return true
         }
         return activate(identifier: identifier)
@@ -492,22 +680,54 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
             session.restart(withCommand: wrapped)
         }
     }
+
+    // The login-shell-wrapped diff command matching the peer's diff
+    // popup CURRENT selection: the per-file command when a file is
+    // picked, the All Files command otherwise. Reload runs this rather
+    // than replaying the session's stale _program so a popup that
+    // silently reset to All Files (because its picked file went clean)
+    // reloads the all-files diff instead of a now-empty per-file diff.
+    // nil when there's no config or the resolved command is empty; the
+    // session then falls back to a plain restart.
+    private func resolvedDiffReloadCommand(forPeerID peerID: String) -> String? {
+        guard let cfg = peerConfigs.first(where: {
+            $0.uniqueIdentifier == peerID
+        }) else {
+            return nil
+        }
+        let picked = diffSelector(forPeerID: peerID)?.currentlySelectedFilename
+        let resolved: String
+        if let picked, !cfg.perFileCommand.isEmpty {
+            resolved = cfg.resolvedPerFileCommand(filename: picked,
+                                                  gitBase: currentGitBase)
+        } else {
+            resolved = cfg.resolvedCommand(gitBase: currentGitBase)
+        }
+        guard !resolved.isEmpty else { return nil }
+        return ITAddressBookMgr.commandByWrapping(inLoginShell: resolved)
+    }
 }
 
 // MARK: - Navigation delegate
 
 extension iTermWorkgroupPeerPort: WorkgroupNavigationToolbarItemDelegate {
     func workgroupNavigationDidTapBack(ownerPeerID: String?) {
-        diffSelector(forPeerID: ownerPeerID)?.selectPreviousFile()
+        let selector = diffSelector(forPeerID: ownerPeerID)
+        RLog("iTermWorkgroupPeerPort: nav Back owner=\(ownerPeerID ?? "nil") selector=\(selector != nil)")
+        selector?.selectPreviousFile()
     }
 
     func workgroupNavigationDidTapForward(ownerPeerID: String?) {
-        diffSelector(forPeerID: ownerPeerID)?.selectNextFile()
+        let selector = diffSelector(forPeerID: ownerPeerID)
+        RLog("iTermWorkgroupPeerPort: nav Forward owner=\(ownerPeerID ?? "nil") selector=\(selector != nil)")
+        selector?.selectNextFile()
     }
 
     func workgroupNavigationDidTapReload(ownerPeerID: String?) {
+        RLog("iTermWorkgroupPeerPort: nav Reload owner=\(ownerPeerID ?? "nil")")
         guard let ownerPeerID,
               let session = session(forIdentifier: ownerPeerID) else {
+            RLog("iTermWorkgroupPeerPort: nav Reload aborted, no session for owner=\(ownerPeerID ?? "nil")")
             return
         }
         // Diff peers handle their own restartability: a waiting peer
@@ -516,20 +736,29 @@ extension iTermWorkgroupPeerPort: WorkgroupNavigationToolbarItemDelegate {
         // meaningful (poll-check + fire if ready). See
         // PTYSession.reloadDiffWithDeferralIfNeeded for state matrix.
         if session.workgroupSessionMode == .diff {
-            session.reloadDiffWithDeferralIfNeeded()
+            RLog("iTermWorkgroupPeerPort: nav Reload dispatching to diff-deferral path for owner=\(ownerPeerID)")
+            session.reloadDiffWithDeferralIfNeeded(
+                resolveCommand: { [weak self] in
+                    self?.resolvedDiffReloadCommand(forPeerID: ownerPeerID)
+                })
             return
         }
-        guard session.isRestartable() else { return }
+        guard session.isRestartable() else {
+            RLog("iTermWorkgroupPeerPort: nav Reload aborted, session not restartable owner=\(ownerPeerID) mode=\(session.workgroupSessionMode)")
+            return
+        }
         // Code-review peers re-show the prompt overlay so the user can
         // edit their prompt before the program is rerun.
         if session.workgroupSessionMode == .codeReview,
            session.codeReviewRawCommand != nil {
+            RLog("iTermWorkgroupPeerPort: nav Reload re-showing code-review overlay for owner=\(ownerPeerID)")
             session.reloadCodeReviewPromptOverlay()
             return
         }
         // Reload re-runs whatever the session is currently set to run
         // (its _program), not the original cfg.command. Same rationale
         // as the workgroup instance's reload path.
+        RLog("iTermWorkgroupPeerPort: nav Reload restarting session owner=\(ownerPeerID) mode=\(session.workgroupSessionMode)")
         session.restart()
     }
 }
@@ -539,7 +768,9 @@ extension iTermWorkgroupPeerPort: WorkgroupNavigationToolbarItemDelegate {
 extension iTermWorkgroupPeerPort: WorkgroupModeSwitcherItemDelegate {
     func workgroupModeSwitcher(_ item: WorkgroupModeSwitcherItem,
                                didSelect identifier: String) {
+        RLog("iTermWorkgroupPeerPort: mode switcher selected identifier=\(identifier)")
         if !activate(identifier: identifier) {
+            RLog("iTermWorkgroupPeerPort: mode switcher activation refused for identifier=\(identifier), resyncing to \(activeSessionIdentifier)")
             // The control tracks .selectOne, so AppKit already
             // highlighted the clicked segment before this delegate
             // ran. A refused activation (spawn already failed, no
@@ -555,13 +786,14 @@ extension iTermWorkgroupPeerPort: WorkgroupModeSwitcherItemDelegate {
 extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
     func diffDidSelect(filename: String,
                        sender: CCDiffSelectorItem) {
-        DLog("iTermWorkgroupPeerPort.diffDidSelect \(filename) owner=\(sender.ownerPeerID ?? "nil")")
+        RLog("iTermWorkgroupPeerPort.diffDidSelect \(filename) owner=\(sender.ownerPeerID ?? "nil")")
         guard let ownerPeerID = sender.ownerPeerID,
               let cfg = peerConfigs.first(where: {
                   $0.uniqueIdentifier == ownerPeerID
               }),
               !cfg.perFileCommand.isEmpty,
               let session = session(forIdentifier: ownerPeerID) else {
+            RLog("iTermWorkgroupPeerPort.diffDidSelect aborted, no config/session or empty perFileCommand for owner=\(sender.ownerPeerID ?? "nil")")
             return
         }
         // Substitute \(file) and \(gitBase) before sending so the
@@ -569,7 +801,10 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
         // backslash-paren shell parsing.
         let command = cfg.resolvedPerFileCommand(filename: filename,
                                                  gitBase: currentGitBase)
-        guard !command.isEmpty else { return }
+        guard !command.isEmpty else {
+            RLog("iTermWorkgroupPeerPort.diffDidSelect aborted, resolved per-file command is empty for owner=\(ownerPeerID)")
+            return
+        }
         let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: command)
         session.restart(withCommand: wrapped)
     }
@@ -581,7 +816,10 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
     // — so the cluster reflects state immediately for both
     // synchronous user actions and asynchronous repo changes.
     func diffNavigationStateDidChange(sender: CCDiffSelectorItem) {
-        guard let nav = navigationItem(forPeerID: sender.ownerPeerID) else { return }
+        guard let nav = navigationItem(forPeerID: sender.ownerPeerID) else {
+            DLog("diffNavigationStateDidChange: no navigation item for owner=\(sender.ownerPeerID ?? "nil")")
+            return
+        }
         let position = sender.visibleFilePosition
         let progress = position > 0
             ? "\(position)/\(sender.navigableFileCount)"
@@ -596,7 +834,7 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
     // entry command — what diff would show with no filter. Restart
     // the peer with cfg.command, NOT cfg.perFileCommand.
     func diffDidSelectAllFiles(sender: CCDiffSelectorItem) {
-        DLog("iTermWorkgroupPeerPort.diffDidSelectAllFiles owner=\(sender.ownerPeerID ?? "nil")")
+        RLog("iTermWorkgroupPeerPort.diffDidSelectAllFiles owner=\(sender.ownerPeerID ?? "nil")")
         // No isRestartable gate — restart(withCommand:) early-returns
         // for non-restartable sessions internally (PTYSession.m:3399),
         // and matching the per-file path's lack of gate keeps both
@@ -607,11 +845,36 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
               }),
               !cfg.command.isEmpty,
               let session = session(forIdentifier: ownerPeerID) else {
+            RLog("iTermWorkgroupPeerPort.diffDidSelectAllFiles aborted, no config/session or empty command for owner=\(sender.ownerPeerID ?? "nil")")
             return
         }
         let resolved = cfg.resolvedCommand(gitBase: currentGitBase)
         let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: resolved)
         session.restart(withCommand: wrapped)
+    }
+}
+
+// MARK: - Auto-send-clippings toggle delegate
+
+extension iTermWorkgroupPeerPort: WorkgroupAutoSendClippingsToolbarItemDelegate {
+    func workgroupAutoSendClippings(ownerPeerID: String?, isOn: Bool) {
+        guard let ownerPeerID,
+              let session = session(forIdentifier: ownerPeerID) else {
+            return
+        }
+        RLog("iTermWorkgroupPeerPort.workgroupAutoSendClippings owner=\(ownerPeerID) isOn=\(isOn)")
+        session.autoSendClippingsWhenIdle = isOn
+    }
+}
+
+extension iTermWorkgroupPeerPort: WorkgroupAutoRequestReviewToolbarItemDelegate {
+    func workgroupAutoRequestReview(ownerPeerID: String?, isOn: Bool) {
+        guard let ownerPeerID,
+              let session = session(forIdentifier: ownerPeerID) else {
+            return
+        }
+        RLog("iTermWorkgroupPeerPort.workgroupAutoRequestReview owner=\(ownerPeerID) isOn=\(isOn)")
+        session.autoRequestReviewWhenIdle = isOn
     }
 }
 
@@ -625,7 +888,7 @@ extension iTermWorkgroupPeerPort: CCGitBaseSelectorItemDelegate {
     // a selector on a different port commits.
     func gitBaseDidChange(base: String,
                           sender: CCGitBaseSelectorItem) {
-        DLog("iTermWorkgroupPeerPort.gitBaseDidChange \(base) owner=\(sender.ownerPeerID ?? "nil")")
+        RLog("iTermWorkgroupPeerPort.gitBaseDidChange \(base) owner=\(sender.ownerPeerID ?? "nil")")
         workgroupInstance?.gitBaseChanged(base, fromSender: sender)
     }
 }

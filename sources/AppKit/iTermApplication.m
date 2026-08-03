@@ -160,7 +160,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 
 // Giant pile of private API hacks for issue 7521.
 - (void)it_windowDidOrderOnScreen:(NSNotification *)notification {
-    DLog(@"windowDidOrderOnScreen");
+    RLog(@"windowDidOrderOnScreen");
     NSObject *object = notification.object;
     if ([NSStringFromClass(object.class) isEqualToString:@"NSPanelViewBridge"]) {
         _it_imeOpen = YES;
@@ -169,7 +169,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 }
 
 - (void)it_windowDidOrderOffScreen:(NSNotification *)notification {
-    DLog(@"windowDidOrderOffScreen");
+    RLog(@"windowDidOrderOffScreen");
     NSObject *object = notification.object;
     if ([NSStringFromClass(object.class) isEqualToString:@"NSPanelViewBridge"]) {
         _it_imeOpen = NO;
@@ -178,7 +178,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 }
 
 - (void)it_applicationDidResignActive:(NSNotification *)notification {
-    DLog(@"Resign active");
+    RLog(@"Resign active");
     if (_leader) {
         [self toggleLeader];
     }
@@ -215,7 +215,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 }
 
 - (void)it_modalWindowDidChangeFrom:(NSWindow *)oldValue to:(NSWindow *)newValue {
-    DLog(@"modal window did change from %@ to %@", oldValue, newValue);
+    RLog(@"modal window did change from %@ to %@", oldValue, newValue);
     if (oldValue == nil && newValue != nil) {
         _it_modalWindowOpen = YES;
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationWillShowModalWindow object:nil];
@@ -258,7 +258,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
     @try {
         cgEvent = event.CGEvent;
     } @catch (NSException *exception) {
-        DLog(@"Can't get CGEvent from %@", event);
+        RLog(@"Can't get CGEvent from %@", event);
         return nil;
     }
     CGEventRef maybeRemappedCGEvent = [[iTermModifierRemapper sharedInstance] eventByRemappingEvent:cgEvent
@@ -267,7 +267,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         return nil;
     }
     event = [NSEvent eventWithCGEvent:maybeRemappedCGEvent];
-    DLog(@"Remapped modifiers to %@", event);
+    RLog(@"Remapped modifiers to %@", RLogRedact(event, event.it_redactedDescription));
     return event;
 }
 
@@ -278,7 +278,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         // The event tap is not working, but we can still remap modifiers for non-system
         // keys. Only things like cmd-tab will not be remapped in this case. Otherwise,
         // the event tap performs the remapping.
-        DLog(@"May need remapping because secure input is on or event tap not running");
+        RLog(@"May need remapping because secure input is on or event tap not running");
         return [self eventByRemappingEvent:event];
     }
     return event;
@@ -309,15 +309,15 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 - (BOOL)routeEventToShortcutInputView:(NSEvent *)event {
     iTermShortcutInputView *shortcutView = [self focusedShortcutInputView];
     if (!shortcutView) {
-        DLog(@"No shortcut input view");
+        RLog(@"No shortcut input view");
         return NO;
     }
     if (event.keyCode == iTermBogusVirtualKeyCode) {
         // You can't register a carbon hotkey for these so just ignore them when listening for a shortcut.
-        DLog(@"Bogus keycode");
+        RLog(@"Bogus keycode");
         return YES;
     }
-    DLog(@"Routing event to shortcut input view");
+    RLog(@"Routing event to shortcut input view");
     [shortcutView handleShortcutEvent:event];
     return YES;
 }
@@ -373,7 +373,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         int digit = [self digitKeyForEvent:event];
         if (digit >= 1 && digit <= 9) {
             PseudoTerminal* termWithNumber = [[iTermController sharedInstance] terminalWithNumber:(digit - 1)];
-            DLog(@"Switching windows");
+            RLog(@"Switching windows");
             if (termWithNumber) {
                 if ([termWithNumber isHotKeyWindow] && [[termWithNumber window] alphaValue] < 1) {
                     iTermProfileHotKey *hotKey =
@@ -468,13 +468,13 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
             int numSessions = [orderedSessions count];
             if (digit == 9 && numSessions > 0) {
                 // Modifier+9: Switch to last split pane if there are fewer than 9.
-                DLog(@"Switching to last split pane");
+                RLog(@"Switching to last split pane");
                 ok = YES;
                 return [orderedSessions lastObject];
             }
             if (digit >= 1 && digit <= numSessions) {
                 // Modifier+number: Switch to split pane by number.
-                DLog(@"Switching to split pane");
+                RLog(@"Switching to split pane");
                 ok = YES;
                 return orderedSessions[digit - 1];
             }
@@ -495,13 +495,13 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         int digit = [self digitKeyForEvent:event];
         if (digit == 9 && [tabView numberOfTabViewItems] > 0) {
             // Command (or selected modifier)+9: Switch to last tab if there are fewer than 9.
-            DLog(@"Switching to last tab");
+            RLog(@"Switching to last tab");
             [tabView selectTabViewItemAtIndex:[tabView numberOfTabViewItems]-1];
             return YES;
         }
         if (digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
             // Command (or selected modifier)+number: Switch to tab by number.
-            DLog(@"Switching tabs");
+            RLog(@"Switching tabs");
             [tabView selectTabViewItemAtIndex:digit-1];
             return YES;
         }
@@ -541,7 +541,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
             return NO;
         }
         // Remap key.
-        DLog(@"Remapping to actionable event");
+        RLog(@"Remapping to actionable event");
         [currentSession keyDown:event];
         return YES;
     }
@@ -550,11 +550,11 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 
 - (BOOL)handleLeader:(NSEvent *)event {
     if (event.modifierFlags & (NSEventModifierFlags)iTermLeaderModifierFlag) {
-        DLog(@"Leader flag unset");
+        RLog(@"Leader flag unset");
         return NO;
     }
     if (_leader) {
-        DLog(@"Re-send event with leader modifier flag set");
+        RLog(@"Re-send event with leader modifier flag set");
         NSEvent *modified = [NSEvent keyEventWithType:NSEventTypeKeyDown
                                              location:event.locationInWindow
                                         modifierFlags:event.modifierFlags | (NSEventModifierFlags)iTermLeaderModifierFlag
@@ -566,16 +566,16 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
                                             isARepeat:event.isARepeat
                                               keyCode:event.keyCode];
         [self sendEvent:modified];
-        DLog(@"Now disable leader");
+        RLog(@"Now disable leader");
         [self toggleLeader];
         return YES;
     }
     if ([[iTermKeyMappings leader] isEqual:[iTermKeystroke withEvent:event]]) {
         // Pressed the leader
-        DLog(@"Leader pressed");
+        RLog(@"Leader pressed");
         iTermShortcutInputView *shortcutInputView = [self focusedShortcutInputView];
         if (!shortcutInputView || shortcutInputView.leaderAllowed) {
-            DLog(@"Not in a shortcut input view. Toggle leader.");
+            RLog(@"Not in a shortcut input view. Toggle leader.");
             [self toggleLeader];
             return YES;
         }
@@ -588,7 +588,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         [[iTermHotKeyController sharedInstance] eventIsHotkey:event]) {
         // User pressed the hotkey while secure input is enabled so the event
         // tap won't get it. Do what the event tap would do in this case.
-        DLog(@"Directing to hotkey handler");
+        RLog(@"Directing to hotkey handler");
         [[iTermHotKeyController sharedInstance] hotkeyPressed:event];
         return YES;
     }
@@ -608,7 +608,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         if ([self inputMethodHandlerTakesPrecedenceForResponder:responder]) {
             // Let the IM process it (I used to call interpretKeyEvents:
             // here but it caused bug 2882).
-            DLog(@"Sending to input method handler");
+            RLog(@"Sending to input method handler");
             [super sendEvent:event];
             return YES;
         }
@@ -656,7 +656,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
     }
     // A special key binding action that works regardless of first responder.
     if ([PTYSession handleShortcutWithoutTerminal:event]) {
-        DLog(@"handled by session");
+        RLog(@"handled by session");
         return YES;
     }
     return NO;
@@ -700,7 +700,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
     event.it_functionModifierPressed = _functionPressed;
 
     if (_leader && !(event.modifierFlags & (NSEventModifierFlags)iTermLeaderModifierFlag)) {
-        DLog(@"Flags changed while leader on. Rewrite event with leader flag and resend");
+        RLog(@"Flags changed while leader on. Rewrite event with leader flag and resend");
         NSEvent *flagChangedPlusHelp = [NSEvent keyEventWithType:NSEventTypeFlagsChanged
                                                         location:event.locationInWindow
                                                    modifierFlags:event.modifierFlags | (NSEventModifierFlags)iTermLeaderModifierFlag
@@ -718,7 +718,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         [[iTermFlagsChangedEventTap sharedInstanceCreatingIfNeeded:NO] resetCount];
         return YES;
     }
-    DLog(@"Posting flags-changed notification for event %@", event);
+    RLog(@"Posting flags-changed notification for event %@", event);
     [[iTermFlagsChangedNotification notificationWithEvent:event] post];
 
     if ([[self sessionOfFirstResponder] handleFlagsChangedWithBuckyBits:event]) {
@@ -738,9 +738,9 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 }
 
 - (BOOL)handleKeyDownEvent:(NSEvent *)event {
-    DLog(@"Received KeyDown event: %@. Key window is %@. First responder is %@", event, [self keyWindow], [[self keyWindow] firstResponder]);
+    RLog(@"Received KeyDown event: %@. Key window is %@. First responder is %@", RLogRedact(event, event.it_redactedDescription), [self keyWindow], [[self keyWindow] firstResponder]);
     if ((event.modifierFlags & (NSEventModifierFlags)iTermLeaderModifierFlag)) {
-        DLog(@"Leader flag set");
+        RLog(@"Leader flag set");
     }
     if (event.isARepeat) {
         _lastRepeatTime = [NSDate it_timeSinceBoot];
@@ -795,7 +795,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
     while (current) {
         if ([current respondsToSelector:@selector(it_wantsScrollWheelMomentumEvents)] &&
             [current it_wantsScrollWheelMomentumEvents]) {
-            DLog(@"Deliver scroll event %@ to %@", event, current);
+            RLog(@"Deliver scroll event %@ to %@", event, current);
             [current it_scrollWheelMomentum:event];
             return;
         }
@@ -826,20 +826,22 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 - (void)sendEvent:(NSEvent *)event {
     switch (event.type) {
         case NSEventTypeFlagsChanged: {
-            DLog(@"begin flags-changed");
+            RLog(@"begin flags-changed");
 #if DEBUG
             [iTermKeyEventRecorder.instance record:event];
 #endif
             if (_leader) {
                 [self makeCursorSparkles];
             }
+#if DEBUG
             const NSEventModifierFlags originalFlags = event.modifierFlags;
+#endif
             event = [self eventByRemappingForSecureInput:event];
             if (!event) {
 #if DEBUG
                 _it_modifierFlags = originalFlags;
 #endif
-                DLog(@"Disard event");
+                RLog(@"Disard event");
                 return;
             }
 #if DEBUG
@@ -851,14 +853,14 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
             break;
         }
         case NSEventTypeKeyDown:
-            DLog(@"begin key-down");
+            RLog(@"begin key-down");
 #if DEBUG
             [iTermKeyEventRecorder.instance record:event];
 #endif
             event.it_functionModifierPressed = _functionPressed;
             event = [self eventByRemappingForSecureInput:event];
             if (!event) {
-                DLog(@"Disard event");
+                RLog(@"Disard event");
                 return;
             }
             if ([self handleKeyDownEvent:event]) {
@@ -867,14 +869,14 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 #if DEBUG
             _it_modifierFlags = event.it_modifierFlags;
 #endif
-            DLog(@"NSKeyDown event taking the regular path");
+            RLog(@"NSKeyDown event taking the regular path");
             break;
         case NSEventTypeKeyUp:
-            DLog(@"begin key-up");
+            RLog(@"begin key-up");
 #if DEBUG
             [iTermKeyEventRecorder.instance record:event];
 #endif
-            DLog(@"Key up: %@", event);
+            RLog(@"Key up: %@", RLogRedact(event, event.it_redactedDescription));
             event.it_functionModifierPressed = _functionPressed;
             event = [self eventByRemappingForSecureInput:event];
             if (_leader) {
@@ -888,7 +890,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
             }
             break;
         case NSEventTypeScrollWheel:
-            DLog(@"begin scroll-wheel");
+            RLog(@"begin scroll-wheel");
             event = [self eventByRemappingEvent:event];
             event.it_functionModifierPressed = _functionPressed;
             if (event.momentumPhase == NSEventPhaseChanged ||
@@ -955,7 +957,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         // Gotta wait for a spin of the runloop or else it doesn't activate. That's bad news
         // when toggling the preference because all the windows disappear.
         dispatch_async(dispatch_get_main_queue(), ^{
-            DLog(@"uiElement=%@", @(uiElement));
+            RLog(@"uiElement=%@", @(uiElement));
             [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
         });
 
@@ -986,23 +988,23 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 }
 
 - (void)activateIgnoringOtherApps:(BOOL)flag {
-    DLog(@"flag=%@\n%@", @(flag), [NSThread callStackSymbols]);
+    RLog(@"activateIgnoringOtherApps flag=%@", @(flag));
     [super activateIgnoringOtherApps:flag];
 }
 
 - (void)activate {
-    DLog(@"%@", [NSThread callStackSymbols]);
+    RLog(@"activate");
     [super activate];
 }
 
 - (void)activateAppWithCompletion:(void (^)(void))completion {
-    DLog(@"Activate with completion...");
+    RLog(@"Activate with completion...");
     if ([self isActive]) {
-        DLog(@"Application already active. Run completion block synchronously");
+        RLog(@"Application already active. Run completion block synchronously");
         completion();
         return;
     }
-    DLog(@"activateAppWithCompletion");
+    RLog(@"activateAppWithCompletion");
     _activated = NO;
     _activationStartTime = [NSDate it_timeSinceBoot];
 
@@ -1036,7 +1038,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
             return;
         }
         strongSelf->_activated = YES;
-        DLog(@"Application did become active. Invoke completion block");
+        RLog(@"Application did become active. Invoke completion block");
         finish();
     }];
 
@@ -1046,26 +1048,26 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
     // this further, [self activateIgnoringOtherApps:YES] and [NSApp activate] *also* fail when
     // a carbon hotkey is pressed. I considered filing a radar but I think wishing on a star
     // would be a better use of my time so I'll do that instead.
-    DLog(@"activateAppWithCompletion doing dispatch_async");
+    RLog(@"activateAppWithCompletion doing dispatch_async");
     [self performSelector:@selector(activateWithRetry:) withObject:[finish copy] afterDelay:0];
 }
 
 - (void)activateWithRetry:(void (^)(void))finish {
     if (_activated) {
-        DLog(@"Already activated");
+        RLog(@"Already activated");
         return;
     }
-    DLog(@"Call activateWithOptions:.ignoringOtherApps");
+    RLog(@"Call activateWithOptions:.ignoringOtherApps");
     [[NSRunningApplication currentApplication] activateWithOptions:NSApplicationActivateIgnoringOtherApps];
     const NSTimeInterval elapsed = [NSDate it_timeSinceBoot] - _activationStartTime;
     if (elapsed < 2.0) {
-        DLog(@"rescheduling with interval 0");
+        RLog(@"rescheduling with interval 0");
         [self performSelector:@selector(activateWithRetry:) withObject:finish afterDelay:0];
     } else if (elapsed < 6.0) {
-        DLog(@"rescheduling with interval 0.2");
+        RLog(@"rescheduling with interval 0.2");
         [self performSelector:@selector(activateWithRetry:) withObject:finish afterDelay:0.2];
     } else {
-        DLog(@"giving up; running completion anyway so callers don't get stuck");
+        RLog(@"giving up; running completion anyway so callers don't get stuck");
         finish();
     }
 }
@@ -1080,7 +1082,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         if (window.level == kCGDockWindowLevel &&
             [NSStringFromClass(window.class) isEqualToString:@"NSPanel.ViewBridge.rendezvous"] &&
             window.alphaValue == 1) {
-            DLog(@"%@ loks like a character accent menu to me", window);
+            RLog(@"%@ loks like a character accent menu to me", window);
             return YES;
         }
     }
@@ -1093,9 +1095,9 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         return;
     }
     const BOOL accentMenuOpen = [self it_accentMenuOpen];
-    DLog(@"accent menu open=%@, previous value is %@", @(accentMenuOpen), @(_characterAccentWindowWasOpen));
+    RLog(@"accent menu open=%@, previous value is %@", @(accentMenuOpen), @(_characterAccentWindowWasOpen));
     if (_characterAccentWindowWasOpen != accentMenuOpen) {
-        DLog(@"post");
+        RLog(@"post");
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermApplicationCharacterAccentMenuVisibilityDidChange
                                                             object:nil];
         _characterAccentWindowWasOpen = accentMenuOpen;
@@ -1108,9 +1110,9 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
     }
     if (_lastRepeatTime > 0) {
         const NSTimeInterval delta = [NSDate it_timeSinceBoot] - _lastRepeatTime;
-        DLog(@"_lastRepeatTime=%@, timesinceboot=%@, delta=%@", @(_lastRepeatTime), @([NSDate it_timeSinceBoot]), @(delta));
+        RLog(@"_lastRepeatTime=%@, timesinceboot=%@, delta=%@", @(_lastRepeatTime), @([NSDate it_timeSinceBoot]), @(delta));
         if (delta < 5.0) {
-            DLog(@"Repeat was recent");
+            RLog(@"Repeat was recent");
             return YES;
         }
         _lastRepeatTime = 0;
@@ -1153,7 +1155,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 
 - (void)toggleLeader {
     if (_leader) {
-        DLog(@"leader up");
+        RLog(@"leader up");
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.01 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             [[NSCursor arrowCursor] set];
         });
@@ -1170,7 +1172,7 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
                                             keyCode:kVK_Help];
         [self sendEvent:flagUp];
     } else {
-        DLog(@"leader down");
+        RLog(@"leader down");
         [self makeCursorSparkles];
         NSEvent *event = [self currentEvent];
         NSEvent *flagDown = [NSEvent keyEventWithType:NSEventTypeFlagsChanged
@@ -1242,15 +1244,15 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
 // Prevent this by canceling the roll-out.
 - (NSModalResponse)runModalForWindow:(NSWindow *)window {
     PseudoTerminal *pseudoterminal = [PseudoTerminal castFrom:[window.sheetParent delegate]];
-    DLog(@"pseudoterminal is %@", pseudoterminal);
+    RLog(@"pseudoterminal is %@", pseudoterminal);
     if (pseudoterminal) {
         iTermProfileHotKey *hotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:pseudoterminal];
-        DLog(@"hotkey is %@", hotkey);
+        RLog(@"hotkey is %@", hotkey);
         if ([hotkey rollOutCancelable]) {
-            DLog(@"cancel roll out");
+            RLog(@"cancel roll out");
             [hotkey cancelRollOut];
         } else if (window.alphaValue < 1) {
-            DLog(@"show hotkey window");
+            RLog(@"show hotkey window");
             [hotkey showHotKeyWindow];
         }
     }

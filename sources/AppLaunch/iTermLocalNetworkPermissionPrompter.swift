@@ -13,10 +13,13 @@ import Network
 /// tries to access the local network. Without this, users may find that commands like
 /// `ping 10.0.0.1` fail with "No route to host" until they reboot.
 ///
-/// The prompt is only requested once per app version to avoid annoying the user.
+/// The probe runs on every launch. macOS shows its prompt only when TCC has no recorded
+/// decision for the app, so re-probing an app that's already been allowed or denied is
+/// silent. Probing unconditionally lets us recover the permission after events that clear
+/// the TCC record (a `tccutil reset`, or an OS upgrade) without waiting for an app-version
+/// bump, which a version-gated probe could not do (see issue 12956).
 @objc(iTermLocalNetworkPermissionPrompter)
 class LocalNetworkPermissionPrompter: NSObject {
-    private static let userDefaultsKey = "NoSyncLocalNetworkPermissionPromptedVersion"
     private var browser: NWBrowser?
 
     @objc static let shared = LocalNetworkPermissionPrompter()
@@ -25,33 +28,11 @@ class LocalNetworkPermissionPrompter: NSObject {
         super.init()
     }
 
-    /// Requests the local network permission prompt if needed for this app version.
-    /// Should be called early in app launch (e.g., applicationWillFinishLaunching).
-    @objc func promptIfNeeded() {
-        guard shouldPrompt() else {
-            DLog("Local network permission already prompted for this version")
-            return
-        }
-
-        DLog("Requesting local network permission prompt")
+    /// Probes the local network to surface the permission prompt if macOS hasn't recorded a
+    /// decision yet. Should be called early in app launch (e.g., applicationWillFinishLaunching).
+    @objc func prompt() {
+        RLog("Probing local network to request permission if needed")
         startBrowsing()
-        recordPrompted()
-    }
-
-    private func shouldPrompt() -> Bool {
-        guard let currentVersion = Bundle.main.infoDictionary?[kCFBundleVersionKey as String] as? String else {
-            return false
-        }
-
-        let lastPromptedVersion = iTermUserDefaults.userDefaults().string(forKey: Self.userDefaultsKey)
-        return lastPromptedVersion != currentVersion
-    }
-
-    private func recordPrompted() {
-        guard let currentVersion = Bundle.main.infoDictionary?[kCFBundleVersionKey as String] as? String else {
-            return
-        }
-        iTermUserDefaults.userDefaults().set(currentVersion, forKey: Self.userDefaultsKey)
     }
 
     private func startBrowsing() {
@@ -64,7 +45,7 @@ class LocalNetworkPermissionPrompter: NSObject {
         browser = NWBrowser(for: descriptor, using: parameters)
 
         browser?.stateUpdateHandler = { [weak self] state in
-            DLog("Local network browser state: \(state)")
+            RLog("Local network browser state: \(state)")
             switch state {
             case .ready:
                 // Browser is ready - permission was granted or prompt shown
@@ -73,7 +54,7 @@ class LocalNetworkPermissionPrompter: NSObject {
                     self?.stopBrowser()
                 }
             case .failed(let error):
-                DLog("Local network browser failed: \(error)")
+                RLog("Local network browser failed: \(error)")
                 self?.stopBrowser()
             case .cancelled:
                 break

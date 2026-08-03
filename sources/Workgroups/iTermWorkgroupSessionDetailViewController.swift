@@ -959,6 +959,21 @@ class iTermWorkgroupSessionDetailViewController: NSViewController {
             if metadata.kind == .gitBaseSelector && !hasChangedFileSelector {
                 continue
             }
+            // Auto-send-clippings-when-idle only does something on a
+            // code-review peer (its whole point is to forward the
+            // review's clippings to the main session when the review
+            // finishes). Hide it from every other mode.
+            if metadata.kind == .autoSendClippingsWhenIdle
+                && session?.mode != .codeReview {
+                continue
+            }
+            // Auto-request-review-when-idle drives the workgroup's sole
+            // code-review session from the main (root) session, so it's
+            // only meaningful there. Hide it from non-root sessions.
+            if metadata.kind == .autoRequestReviewWhenIdle
+                && session?.kind != .root {
+                continue
+            }
             let item = menu.addItem(withTitle: metadata.displayName,
                                     action: #selector(addToolbarItemMenuSelected(_:)),
                                     keyEquivalent: "")

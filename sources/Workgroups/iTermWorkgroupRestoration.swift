@@ -133,6 +133,54 @@ final class iTermWorkgroupRestoration: NSObject {
         return result
     }
 
+    // Whether restoration should refrain from launching a replacement
+    // program for the anchor session described by `state` when there is
+    // no running program to attach to. True only for a code-review or
+    // diff workgroup session that had a live program at save time (i.e.
+    // was NOT sitting on its pre-launch overlay): relaunching such a
+    // session would spawn a stray shell, so instead we leave the restored
+    // last output on screen. When the anchor WAS showing its overlay
+    // (anchorPending), the coordinator re-presents it and relies on the
+    // relaunched shell, so we must not suppress the launch then.
+    @objc(shouldInhibitRelaunchForAnchorState:)
+    static func shouldInhibitRelaunch(forAnchorState state: [AnyHashable: Any]) -> Bool {
+        return shouldInhibitRelaunch(forAnchorState: state) {
+            iTermWorkgroupModel.instance.workgroup(uniqueIdentifier: $0)
+        }
+    }
+
+    // Injectable-model variant so tests can classify an anchor without
+    // touching the shared iTermWorkgroupModel singleton (whose mutators
+    // persist to user defaults and post change notifications).
+    static func shouldInhibitRelaunch(forAnchorState state: [AnyHashable: Any],
+                                      workgroupForID: (String) -> iTermWorkgroup?) -> Bool {
+        let K = Key.self
+        guard let workgroupID = state[K.workgroupID] as? String,
+              let anchorID = state[K.anchorID] as? String,
+              let workgroup = workgroupForID(workgroupID),
+              let cfg = workgroup.session(withUniqueIdentifier: anchorID) else {
+            return false
+        }
+        if (state[K.anchorPending] as? Bool) ?? false {
+            return false
+        }
+        return modeInhibitsRelaunch(cfg.mode)
+    }
+
+    // Single source of truth for which workgroup modes suppress the
+    // stray-shell relaunch when a restored session has no program to
+    // attach to. The anchor path (shouldInhibitRelaunch(forAnchorState:))
+    // and the buried-peer path (WorkgroupRestorationCoordinator) are two
+    // halves of the same feature and must agree, so both call this.
+    static func modeInhibitsRelaunch(_ mode: iTermWorkgroupSessionMode) -> Bool {
+        switch mode {
+        case .codeReview, .diff:
+            return true
+        case .regular:
+            return false
+        }
+    }
+
     // Route a decoded descriptor to the coordinator. Called from
     // PTYSession.sessionFromArrangement.
     @objc(registerForRestorationWithSession:state:)

@@ -30,6 +30,11 @@ static NSDictionary *iTermGlobalSearchSnippetRegularAttributes(void) {
 }
 
 @interface iTermGlobalSearchEngineCursor()<iTermSearchEngineDelegate>
+// Diagnostics only: scrollback overflow captured when the search began, so a
+// per-result log can show how far the buffer scrolled between find time and
+// snippet-extraction time (the drift suspected behind empty snippets).
+@property (nonatomic) long long searchStartOverflow;
+@property (nonatomic) long long searchStartNumberOfLines;
 @end
 
 @implementation iTermGlobalSearchEngineCursor
@@ -95,6 +100,8 @@ static NSDictionary *iTermGlobalSearchSnippetRegularAttributes(void) {
         self.query = query;
         self.mode = mode;
         self.currentScreenIsAlternate = screen.showingAlternateScreen;
+        self.searchStartOverflow = screen.totalScrollbackOverflow;
+        self.searchStartNumberOfLines = screen.numberOfLines;
     }
     return self;
 }
@@ -150,17 +157,16 @@ typedef struct iTermGlobalSearchEngineCursorSearchOutput {
                                                        rangeOut:&range
                                                    absLineRange:NSMakeRange(0, 0)
                                                   rangeSearched:NULL];
-    iTermTextExtractor *extractor;
-    switch (self.pass) {
-        case iTermGlobalSearchEngineCursorPassCurrentScreen:
-            extractor = [[iTermTextExtractor alloc] initWithDataSource:self.session.screen];
-            break;
-        case iTermGlobalSearchEngineCursorPassMainScreen: {
-            iTermTerminalContentSnapshot *snapshot = [self.session.screen snapshotWithPrimaryGrid];
-            extractor = [[iTermTextExtractor alloc] initWithDataSource:snapshot];
-            break;
-        }
-    }
+    // Extract snippets from the exact snapshot the search engine ran against, not
+    // a freshly taken one. The results index into coordinates recorded when the
+    // search began; re-snapshotting can drift out from under them (e.g. a
+    // main-screen search whose primary grid has since been emptied), producing
+    // out-of-bounds coordinates and blank snippets. Fall back to the live screen
+    // only if the engine has no snapshot (no active search), which shouldn't
+    // happen while there are results to render.
+    iTermTerminalContentSnapshot *snapshot = self.searchEngine.searchedSnapshot;
+    iTermTextExtractor *extractor =
+        [[iTermTextExtractor alloc] initWithDataSource:snapshot ?: (id<iTermTextDataSource>)self.session.screen];
     id<ExternalSearchResultsController> esrc = self.session.externalSearchResultsController;
     NSArray<iTermExternalSearchResult *> *externals =
         [esrc externalSearchResultsForQuery:query
@@ -213,6 +219,25 @@ typedef struct iTermGlobalSearchEngineCursorSearchOutput {
         } else {
             result.onMainScreen = !self.currentScreenIsAlternate;
         }
+        // Diagnostics only: heartbeat for every result so we can confirm this
+        // path is exercised, measure the empty-snippet rate, and correlate an
+        // empty snippet with find-time state. deltaOverflow/deltaLines show how
+        // far the buffer moved since the search began (the suspected drift).
+        const long long nowOverflow = self.session.screen.totalScrollbackOverflow;
+        const long long nowLines = self.session.screen.numberOfLines;
+        DLog(@"GS RESULT pass=%@ alt=%@ external=%@ absMatch=(%d,%lld)-(%d,%lld) gridStartAbsY=%lld "
+             @"snippetLen=%@ snippet=\"%@\" searchStartOverflow=%lld nowOverflow=%lld deltaOverflow=%lld "
+             @"searchStartLines=%lld nowLines=%lld deltaLines=%lld",
+             self.pass == iTermGlobalSearchEngineCursorPassMainScreen ? @"main" : @"current",
+             self.currentScreenIsAlternate ? @"Y" : @"N",
+             anObject.isExternal ? @"Y" : @"N",
+             anObject.internalStartX, anObject.internalAbsStartY,
+             anObject.internalEndX, anObject.internalAbsEndY,
+             gridStartAbsY,
+             @(result.snippet.length),
+             [result.snippet.string stringByReplacingOccurrencesOfString:@"\n" withString:@"\\n"] ?: @"",
+             self.searchStartOverflow, nowOverflow, nowOverflow - self.searchStartOverflow,
+             self.searchStartNumberOfLines, nowLines, nowLines - self.searchStartNumberOfLines);
         return result;
     }];
     return (iTermGlobalSearchEngineCursorSearchOutput){

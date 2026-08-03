@@ -45,19 +45,25 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     func generateSettingsHTML() -> String {
         let isDevNull = (user == .devNull)
         
-        // Check if extensions should be shown
-        var showExtensions = false
+        // Whether to show the extensions row. Only wired up in debug builds; in
+        // release builds it is always hidden. Computing the style per config
+        // (rather than a ternary on an always-false flag) avoids a
+        // "will never be executed" warning on the dead branch in release builds.
 #if ITERM_DEBUG
+        var showExtensions = false
         if #available(macOS 14, *) {
             showExtensions = true
         }
+        let showExtensionsStyle = showExtensions ? "" : "display: none;"
+#else
+        let showExtensionsStyle = "display: none;"
 #endif
         
         let substitutions = ["ADBLOCK_ENABLED": iTermAdvancedSettingsModel.webKitAdblockEnabled() ? "checked" : "",
                              "ADBLOCK_URL": iTermAdvancedSettingsModel.adblockListURL().replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "\"", with: "&quot;"),
                              "SECRET": secret,
                              "DEV_NULL_NOTE": isDevNull ? "" : "display: none;",
-                             "SHOW_EXTENSIONS": showExtensions ? "" : "display: none;"]
+                             "SHOW_EXTENSIONS": showExtensionsStyle]
         
         return iTermBrowserTemplateLoader.loadTemplate(named: "settings-page",
                                                        type: "html",
@@ -104,7 +110,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         guard let action = message["action"] as? String,
               let sessionSecret = message["sessionSecret"] as? String,
               sessionSecret == secret else {
-            DLog("Invalid or missing session secret for settings action")
+            RLog("Invalid or missing session secret for settings action")
             return
         }
         
@@ -227,7 +233,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         iTermAdvancedSettingsModel.setWebKitAdblockEnabled(enabled)
         delegate?.settingsHandlerDidUpdateAdblockSettings(self)
         
-        DLog("Ad blocking \(enabled ? "enabled" : "disabled")")
+        RLog("Ad blocking \(enabled ? "enabled" : "disabled")")
         
         let message = enabled ? "Ad blocking enabled" : "Ad blocking disabled"
         showStatusMessage(message, type: "success", in: webView)
@@ -245,7 +251,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     
     private func forceAdblockUpdate(webView: iTermBrowserWebView) {
         delegate?.settingsHandlerDidRequestAdblockUpdate(self)
-        DLog("Force update of ad block rules requested")
+        RLog("Force update of ad block rules requested")
     }
     
     private func sendAdblockSettings(to webView: iTermBrowserWebView) {
@@ -266,7 +272,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             _ = try? await webView.safelyEvaluateJavaScript(iife(script), contentWorld: .page)
         }
         } catch {
-            DLog("Failed to encode adblock settings: \(error)")
+            RLog("Failed to encode adblock settings: \(error)")
         }
     }
     
@@ -363,7 +369,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
     private func setProxyEnabled(_ enabled: Bool, webView: iTermBrowserWebView) {
         iTermAdvancedSettingsModel.setBrowserProxyEnabled(enabled)
         
-        DLog("Browser proxy \(enabled ? "enabled" : "disabled")")
+        RLog("Browser proxy \(enabled ? "enabled" : "disabled")")
         
         let message = enabled ? "Proxy enabled" : "Proxy disabled"
         showStatusMessage(message, type: "success", in: webView)
@@ -498,7 +504,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
         let extensionId = ExtensionID(stringValue: extensionIdString)
         extensionManager.set(id: extensionId, enabled: enabled)
         
-        DLog("Extension \(extensionIdString) \(enabled ? "enabled" : "disabled")")
+        RLog("Extension \(extensionIdString) \(enabled ? "enabled" : "disabled")")
         
         let message = enabled ? "Extension enabled" : "Extension disabled"
         showStatusMessage(message, type: "success", in: webView)
@@ -571,7 +577,7 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
             return
         }
 
-        DLog("Link opening preference updated to: \(preference)")
+        RLog("Link opening preference updated to: \(preference)")
     }
 
     private func sendLinkOpeningPreference(to webView: iTermBrowserWebView) {

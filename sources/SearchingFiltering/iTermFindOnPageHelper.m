@@ -193,7 +193,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
                                                             totalScrollbackOverflow,
                                                             &ok);
                     if (!ok) {
-                        DLog(@"Failed to convert find cursor coord so using end");
+                        RLog(@"Failed to convert find cursor coord so using end");
                     }
                     break;
                 }

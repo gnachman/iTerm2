@@ -1,0 +1,135 @@
+Version 3.7.0beta5 was built on June 23, 2026.
+
+Note: if you are beta testing the iPhone companion
+app iTerm2 Buddy, you'll need to update it after
+upgrading iTerm2 to this version.
+
+Changes since 3.7.0beta4:
+
+New Features:
+- Blinking cursors can now fade smoothly in and
+  out instead of toggling abruptly. Turn on
+  “Smooth blink” in Settings > Profiles > Text,
+  where you can tune the fade-in and fade-out
+  durations, easing curves, and how long the
+  cursor stays fully visible and fully hidden
+  between fades. Off by default.
+- The status bar can now draw a separator line
+  between itself and the terminal content. Turn
+  it on in the status bar layout’s settings.
+
+Improvements:
+- The job name shown in titles, the session
+  icon, and automatic profile switching now
+  reflects the foreground job actually attached
+  to the terminal, hiding helper subprocesses
+  that run in the foreground process group but
+  are piped to their parent (for example an MCP
+  server spawned by claude, or caffeinate). The
+  raw deepest job is still available as the
+  deepestJob variable. Note that automatic
+  profile switching now matches the tty-attached
+  job, so a rule keyed on such a helper name
+  will no longer fire for it.
+- You can now choose where tmux windows created
+  outside iTerm2 open: a new window, the focused
+  window, or the topmost window already hosting
+  that tmux session.
+- Terminal-initiated downloads (it2dl) now ask
+  whether to save to the Downloads folder or to
+  choose a destination. The choice is
+  silenceable, so you can always save to
+  Downloads or always show a save panel.
+  Issue 12897.
+- Added Edit > Marks and Annotations > Annotate
+  Selection, so annotating a selection can now
+  be given a keyboard shortcut. Previously it
+  was only on the right-click menu.
+- In an AI orchestration chat, @-mentioning a
+  session or workgroup now grants the chat
+  standing permission to control it, so the
+  agent acts there without the one-time approval
+  prompt. A notice with a Revoke button lets you
+  take the permission back whenever you want.
+- Anthropic prompt caching now also covers the
+  conversation history, not just the system
+  prompt and tools, so long chats reread the
+  earlier turns from cache instead of paying
+  full input price every turn.
+- Right-click a row in the Session Status
+  toolbelt tool and choose Snooze to move it
+  below a divider at the bottom of the list
+  and dim it. A snoozed entry un-snoozes
+  automatically the next time its status
+  changes.
+- The inline chat panel now has a toolbar to
+  create a new chat, switch chats, open the
+  session/link menu, and hide the panel. New
+  inline chats ask whether to link to the
+  session or become an orchestrator instead
+  of linking automatically.
+- Chat lists now mark orchestrator chats with a
+  wand glyph. The inline chat switcher bolds chats
+  linked to the current session.
+
+Bug Fixes:
+- Fixed a bug where a pane could restore in your
+  home directory instead of its previous working
+  directory after restarting iTerm2. Sessions
+  that used automatic profile switching saved a
+  value that could not be read back, which
+  silently dropped the rest of the restored
+  session state.
+- SSH integration no longer leaves Ctrl+C unable
+  to interrupt programs on remote hosts whose
+  Python is older than 3.7 (e.g. CentOS 7,
+  AlmaLinux 8). The login shell handoff was
+  leaving signal generation disabled on the tty.
+- The heavy window border now has a uniform
+  width: its corners no longer look thinner than
+  its edges or pick up semi-transparent pixels.
+  It is now drawn entirely inside the window
+  instead of straddling the window edge.
+  Issue 12882.
+- The session-logging and archive folder pickers
+  now use the folder you select rather than its
+  parent when you don’t open it first.
+- Clicking a notification posted by a background
+  tab of a dedicated hotkey window now selects
+  the source tab and pane instead of leaving the
+  previously-selected tab in front. Issue 12902.
+- A full-screen program that does not use the
+  alternate screen (such as Claude Code) and
+  repaints from the top no longer overwrites a
+  fold above the cursor. The fold is scrolled
+  into history instead of being clobbered and
+  left with an orphaned unfold icon in the
+  margin. This works even without shell
+  integration installed.
+- AI chat with DeepSeek no longer fails with an
+  “insufficient tool messages” error after a
+  tool call that was interrupted or left
+  unapproved.
+- The AI orchestrator’s get_screen_contents tool
+  now marks faint text and the cursor position.
+  Inline shell suggestions and ghost completions
+  are drawn faint, so the agent used to mistake
+  a suggestion for a command you actually typed.
+- An AI orchestrator watcher waiting on a
+  session’s reported status no longer hangs
+  forever if that status gets stuck. After five
+  minutes without the expected change it falls
+  back to reading the screen to confirm the real
+  state.
+- OpenAI prompt caching is more reliable: the
+  Responses API request now sorts its JSON keys
+  so the cached prefix stays stable.
+- Restoring a window with an open inline AI chat
+  panel now reopens the panel on the chat it was
+  showing, instead of widening the terminal.
+- The companion device no longer triggers a
+  keychain confirmation prompt when it connects
+  or when a notification is sent. The paired
+  identity is now read once at launch, while you
+  are present, instead of mid-connection.
+

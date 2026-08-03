@@ -37,7 +37,7 @@ class iTermBrowserNotificationHandler {
               let type = messageDict["type"] as? String,
               let sessionSecret = messageDict["sessionSecret"] as? String,
               sessionSecret == secret else {
-            DLog("Invalid notification message format")
+            RLog("Invalid notification message format")
             return
         }
         let origin = message.frameInfo.securityOrigin
@@ -62,7 +62,7 @@ class iTermBrowserNotificationHandler {
                 }
                 await handleCloseNotification(messageDict)
             default:
-                DLog("Unknown notification message type: \(type)")
+                RLog("Unknown notification message type: \(type)")
             }
         }
     }
@@ -77,7 +77,7 @@ class iTermBrowserNotificationHandler {
                                          originString: String,
                                          sessionSecret: String) async {
         guard let requestId = messageDict["requestId"] as? Int else {
-            DLog("Missing requestId in permission request")
+            RLog("Missing requestId in permission request")
             return
         }
         
@@ -94,14 +94,14 @@ class iTermBrowserNotificationHandler {
         do {
             _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), contentWorld: .page)
         } catch {
-            DLog("Error sending permission response: \(error)")
+            RLog("Error sending permission response: \(error)")
         }
     }
     
     private func handleShowNotification(_ messageDict: [String: Any], originString: String) async {
         guard let notificationId = messageDict["id"] as? String,
               let title = messageDict["title"] as? String else {
-            DLog("Missing required fields in show notification message")
+            RLog("Missing required fields in show notification message")
             return
         }
 
@@ -118,7 +118,7 @@ class iTermBrowserNotificationHandler {
     
     private func handleCloseNotification(_ messageDict: [String: Any]) async {
         guard let notificationId = messageDict["id"] as? String else {
-            DLog("Missing notification ID in close message")
+            RLog("Missing notification ID in close message")
             return
         }
         
@@ -161,7 +161,7 @@ class iTermBrowserNotificationHandler {
             try await center.add(request)
             DLog("Showed notification for \(origin): \(title)")
         } catch {
-            DLog("Failed to show notification: \(error)")
+            RLog("Failed to show notification: \(error)")
         }
     }
     
@@ -179,7 +179,7 @@ class iTermBrowserNotificationHandler {
         do {
             _ = try await webView.safelyEvaluateJavaScript(iife(jsCode), contentWorld: .page)
         } catch {
-            DLog("Error updating permission state: \(error)")
+            RLog("Error updating permission state: \(error)")
         }
     }
 }

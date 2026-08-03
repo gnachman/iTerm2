@@ -12,16 +12,20 @@ import Foundation
 extension RemoteCommand {
     // `force` makes the safety check mandatory regardless of the user
     // preference (used for orchestration chats, where autonomous command
-    // execution always gets checked).
+    // execution always gets checked). `transcript` is recent chat history
+    // for the classifier, so it can tell a risky command the user asked for
+    // from one it didn't; empty by default for callers that have none.
     @MainActor
-    func isSafe(force: Bool) async -> Bool {
+    func isSafe(force: Bool, transcript: [TranscriptEntry] = []) async -> Bool {
         switch content {
         case .isAtPrompt, .getLastExitStatus, .getCommandHistory, .getLastCommand,
                 .getCommandBeforeCursor, .searchCommandHistory, .getCommandOutput,
+                .getScreenContents,
                 .getTerminalSize, .getShellType, .detectSSHSession, .getRemoteHostname,
                 .getUserIdentity, .getCurrentDirectory, .setClipboard,
                 .deleteCurrentLine, .getManPage, .createFile, .searchBrowser,
-                .loadURL, .webSearch, .getURL, .readWebPage, .insertTextAtCursor:
+                .loadURL, .webSearch, .getURL, .readWebPage, .insertTextAtCursor,
+                .restartSession:
             return true
         case .executeCommand(let command):
             // The safety check uses the configured conversation model, so it is
@@ -52,7 +56,8 @@ extension RemoteCommand {
                     if !force {
                         Self.maybePromptToSwitchSafetyProvider()
                     }
-                    return await CommandSafetyChecker.check(command.command)
+                    return await CommandSafetyChecker.check(command.command,
+                                                            transcript: transcript)
                 }
             }
             return true
@@ -98,9 +103,9 @@ extension RemoteCommand.Content.PermissionCategory {
         switch self {
         case .checkTerminalState: kPreferenceKeyAIPermissionCheckTerminalState
         case .runCommands: kPreferenceKeyAIPermissionRunCommands
-        case .viewHistory: kPreferenceKeyAIPermissionViewHistory
+        case .viewContents: kPreferenceKeyAIPermissionViewHistory
         case .writeToClipboard: kPreferenceKeyAIPermissionWriteToClipboard
-        case .typeForYou: kPreferenceKeyAIPermissionTypeForYou
+        case .controlTerminal: kPreferenceKeyAIPermissionControlTerminal
         case .viewManpages: kPreferenceKeyAIPermissionViewManpages
         case .writeToFilesystem: kPreferenceKeyAIPermissionWriteToFilesystem
         case .actInWebBrowser: kPreferenceKeyAIPermissionActInWebBrowser

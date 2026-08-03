@@ -348,7 +348,7 @@ private extension iTermModernSavePanel {
             accessoryView.removeFromSuperview()
         }
         sshFilePanel.accessoryView = accessoryView
-        DLog("makePanel: setting preferredSSHIdentity: \(String(describing: preferredSSHIdentity)), initialDirectory: \(String(describing: directoryURL))")
+        RLog("makePanel: setting preferredSSHIdentity: \(String(describing: preferredSSHIdentity)), initialDirectory: \(String(describing: directoryURL))")
         sshFilePanel.preferredSSHIdentity = preferredSSHIdentity
         sshFilePanel.initialDirectory = directoryURL
         sshFilePanel.allowedContentTypes = allowedContentTypes

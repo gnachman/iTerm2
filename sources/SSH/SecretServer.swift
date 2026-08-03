@@ -34,7 +34,7 @@ class SecretServer: NSObject {
                                                     withIntermediateDirectories: true,
                                                     attributes: [ FileAttributeKey.posixPermissions: S_IRWXU ])
         } catch {
-            DLog("\(error)")
+            RLog("\(error)")
         }
         guard let address = iTermSocketAddress(path: socketURL.path) else {
             throw Exception.badAddress

@@ -34,6 +34,9 @@ public protocol AppAttestService: Sendable {
 public protocol AttestKeyStore: Sendable {
     func keyId(forRoom roomName: String) -> String?
     func setKeyId(_ keyId: String?, forRoom roomName: String)
+    /// Forget every stored attest key id, for a clean wipe of all key material
+    /// on unpair (not just the current room's).
+    func removeAll()
 }
 
 /// UserDefaults-backed store. The key id is local device state, not a setting,
@@ -55,6 +58,12 @@ public final class UserDefaultsAttestKeyStore: AttestKeyStore, @unchecked Sendab
             defaults.set(keyId, forKey: prefix + roomName)
         } else {
             defaults.removeObject(forKey: prefix + roomName)
+        }
+    }
+
+    public func removeAll() {
+        for key in defaults.dictionaryRepresentation().keys where key.hasPrefix(prefix) {
+            defaults.removeObject(forKey: key)
         }
     }
 }

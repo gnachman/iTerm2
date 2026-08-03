@@ -25,6 +25,18 @@ static NSString* gDebugLogHeader = nil;
 static NSMutableString* gDebugLogStr = nil;
 
 static NSMutableDictionary *gPinnedMessages;
+
+// Retrospective log: a single, byte-bounded ring of recent RLog lines
+// retained while debug logging is OFF, so a low-frequency event's lead-up
+// is captured even though nobody enabled logging ahead of time. Guarded by
+// GetDebugLogLock(). Deliberately NOT included in ordinary debug logs: the
+// user never opted into capturing it, and folding it in would surface lines
+// from before they turned logging on. It is surfaced only by the explicit
+// Save Retrospective Debug Logs action (via iTermRetrospectiveLogString).
+static NSMutableArray<NSString *> *gRetrospectiveLog;
+static NSUInteger gRetrospectiveLogBytes;
+static const NSUInteger kRetrospectiveLogMaxBytes = 10 * 1024 * 1024;
+
 BOOL gDebugLogging = NO;
 // Keys already emitted by DLogOncePerLoggingSession this logging
 // session. Guarded by GetDebugLogLock(); cleared in StartDebugLogging.
@@ -121,43 +133,58 @@ static void WriteDebugLogHeader(void) {
     gDebugLogHeader = [iTermDebugLogHeaderString() copy];
 }
 
-static void WriteDebugLogFooter(void) {
+static NSString *DebugLogFooterString(void) {
   NSMutableString *windows = [NSMutableString string];
   for (NSWindow *window in [[NSApplication sharedApplication] windows]) {
       AppendWindowDescription(window, windows);
   }
-  NSString *footer = [NSString stringWithFormat:
-                      @"------ BEGIN FOOTER -----\n"
-                      @"Screens: %@\n"
-                      @"Windows: %@\n"
-                      @"Ordered windows: %@\n",
+  return [NSString stringWithFormat:
+          @"------ BEGIN FOOTER -----\n"
+          @"Screens: %@\n"
+          @"Windows: %@\n"
+          @"Ordered windows: %@\n",
 
-                      iTermScreensInfo(),
-                      windows,
-                      [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels]];
-  [gDebugLogStr appendString:footer];
+          iTermScreensInfo(),
+          windows,
+          [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels]];
 }
 
 static void FlushDebugLog(void) {
     [GetDebugLogLock() lock];
-    NSMutableString *log = [NSMutableString string];
-    [log appendString:gDebugLogHeader ?: @""];
-    WriteDebugLogFooter();
-    [log appendString:gDebugLogStr ?: @""];
+    // Encode the header, body, and footer as three separate chunks rather than
+    // concatenating them into one full-size string (and then a full-size NSData)
+    // first. On a large capture that concatenation was the peak-memory spike at
+    // stop; three streamed writes keep at most one body-sized copy alive.
+    NSData *headerData = [(gDebugLogHeader ?: @"") dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES];
+    NSData *bodyData = [(gDebugLogStr ?: @"") dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES];
+    NSData *footerData = [DebugLogFooterString() dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES];
 
-    if ([iTermAdvancedSettingsModel appendToExistingDebugLog] &&
-        [[NSFileManager defaultManager] fileExistsAtPath:kDebugLogFilename]) {
-        NSFileHandle *fileHandle = [NSFileHandle fileHandleForWritingAtPath:kDebugLogFilename];
+    const BOOL append = ([iTermAdvancedSettingsModel appendToExistingDebugLog] &&
+                         [[NSFileManager defaultManager] fileExistsAtPath:kDebugLogFilename]);
+    NSError *error = nil;
+    BOOL ok = YES;
+    if (!append) {
+        // Truncate (or create) the file so we start from empty.
+        ok = [[NSFileManager defaultManager] createFileAtPath:kDebugLogFilename contents:nil attributes:nil];
+    }
+    NSFileHandle *fileHandle = ok ? [NSFileHandle fileHandleForWritingAtPath:kDebugLogFilename] : nil;
+    ok = ok && (fileHandle != nil);
+    if (ok && append) {
         [fileHandle seekToEndOfFile];
-        [fileHandle writeData:[log dataUsingEncoding:NSUTF8StringEncoding]];
-        [fileHandle closeFile];
-    } else {
-        NSData *data = [log dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES];
-        NSError *error = nil;
-        const BOOL ok = [data writeToFile:kDebugLogFilename options:0 error:&error];
+    }
+    for (NSData *chunk in @[ headerData, bodyData, footerData ]) {
         if (!ok) {
-            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Failed to save debug log: %@", error.localizedDescription] actions:@[ @"OK" ] accessory:nil identifier:nil silenceable:kiTermWarningTypePersistent heading:@"Problem Saving Debug Log" window:nil];
+            break;
         }
+        ok = [fileHandle writeData:chunk error:&error];
+    }
+    [fileHandle closeFile];
+    if (!ok) {
+        // writeData:error: populates `error`, but a failed createFileAtPath: or a
+        // nil file handle leaves it nil; fall back to a concrete message so the
+        // user gets an actionable reason instead of "(null)".
+        NSString *reason = error.localizedDescription ?: [NSString stringWithFormat:@"could not open %@ for writing", kDebugLogFilename];
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Failed to save debug log: %@", reason] actions:@[ @"OK" ] accessory:nil identifier:nil silenceable:kiTermWarningTypePersistent heading:@"Problem Saving Debug Log" window:nil];
     }
 
     [gDebugLogStr setString:@""];
@@ -212,6 +239,104 @@ void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...) {
     [GetDebugLogLock() unlock];
 }
 
+// Defense in depth for the always-on ring: even though callers are expected to
+// avoid logging typed characters (see -[NSEvent it_redactedDescription]), a
+// stray RLog(@"…%@", event) would otherwise reintroduce chars="…"/unmodchars="…"
+// into a buffer the user never opted into. Scrub those values on the way in so a
+// future regression cannot silently leak keystrokes. This only runs on the
+// debug-logging-off path; when logging is on the caller opted in and we don't
+// touch the value.
+static NSString *iTermScrubRetrospectiveValue(NSString *value) {
+    if ([value rangeOfString:@"chars=\""].location == NSNotFound) {
+        // Fast path: the vast majority of RLog lines never mention an NSEvent.
+        return value;
+    }
+    static NSRegularExpression *regex;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        // Matches chars="…" and unmodchars="…" as emitted by -[NSEvent description].
+        regex = [NSRegularExpression regularExpressionWithPattern:@"(unmodchars|chars)=\"[^\"]*\""
+                                                          options:0
+                                                            error:nil];
+    });
+    return [regex stringByReplacingMatchesInString:value
+                                           options:0
+                                             range:NSMakeRange(0, value.length)
+                                      withTemplate:@"$1=\"[redacted]\""];
+}
+
+@interface iTermRedactedLogValue : NSObject
+@property (nonatomic, strong) id full;
+@property (nonatomic, strong) id redacted;
+@end
+
+@implementation iTermRedactedLogValue
+- (NSString *)description {
+    id value = gDebugLogging ? _full : _redacted;
+    return [value description] ?: @"(null)";
+}
+@end
+
+NSObject *RLogRedact(id full, id redacted) {
+    iTermRedactedLogValue *result = [[iTermRedactedLogValue alloc] init];
+    result.full = full;
+    result.redacted = redacted;
+    return result;
+}
+
+void RetrospectiveLogImpl(const char *file, int line, const char *function, NSString *value) {
+    // When debug logging is on, behave exactly like DLog: the message lands
+    // in the live debug log and we keep nothing extra in the ring.
+    if (gDebugLogging) {
+        DebugLogImpl(file, line, function, value);
+        return;
+    }
+    value = iTermScrubRetrospectiveValue(value);
+
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    const char *lastSlash = strrchr(file, '/');
+    if (!lastSlash) {
+        lastSlash = file;
+    } else {
+        lastSlash++;
+    }
+    NSString *entry = [NSString stringWithFormat:@"%lld.%06lld %s:%d (%s): %@\n",
+                       (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function, value];
+
+    [GetDebugLogLock() lock];
+    if (!gRetrospectiveLog) {
+        gRetrospectiveLog = [[NSMutableArray alloc] init];
+    }
+    [gRetrospectiveLog addObject:entry];
+    gRetrospectiveLogBytes += entry.length;
+    // Evict oldest lines until back under the cap, but always keep the most
+    // recent line even if it alone exceeds the cap.
+    while (gRetrospectiveLogBytes > kRetrospectiveLogMaxBytes && gRetrospectiveLog.count > 1) {
+        NSString *oldest = gRetrospectiveLog[0];
+        gRetrospectiveLogBytes -= oldest.length;
+        [gRetrospectiveLog removeObjectAtIndex:0];
+    }
+    [GetDebugLogLock() unlock];
+#if ITERM_DEBUG
+    fputs(entry.UTF8String, stderr);
+#endif
+}
+
+NSString *iTermRetrospectiveLogString(void) {
+    [GetDebugLogLock() lock];
+    NSString *result = [gRetrospectiveLog componentsJoinedByString:@""] ?: @"";
+    [GetDebugLogLock() unlock];
+    return result;
+}
+
+void iTermClearRetrospectiveLog(void) {
+    [GetDebugLogLock() lock];
+    [gRetrospectiveLog removeAllObjects];
+    gRetrospectiveLogBytes = 0;
+    [GetDebugLogLock() unlock];
+}
+
 void iTermFatalError(NSString *s) {
     __assert_rtn("iTermFatalError", __FILE__, __LINE__, s.UTF8String);
 }
@@ -230,52 +355,60 @@ int CDebugLogImpl(const char *file, int line, const char *function, const char *
 
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value)
 {
-    if (gDebugLogging) {
-        struct timeval tv;
-        gettimeofday(&tv, NULL);
-
-        [GetDebugLogLock() lock];
-        const char *lastSlash = strrchr(file, '/');
-        if (!lastSlash) {
-            lastSlash = file;
-        } else {
-            lastSlash++;
-        }
-        if ([iTermAdvancedSettingsModel logToSyslog]) {
-            // Stream with:
-            // log stream --predicate 'eventMessage contains "iTerm2DebugLog"' --level=debug
-            NSString *message = [NSString stringWithFormat:@"%lld.%06lld %s:%d (%s): ",
-                                 (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function];
-            os_log_with_type(OS_LOG_DEFAULT, OS_LOG_TYPE_DEBUG, "iTerm2DebugLog: %{public}s", message.UTF8String);
-        }
-
-        const char *thread;
-        if ([iTermGCD onMainQueue]) {
-            if ([iTermGCD joined]) {
-                thread = "joined";
-            } else {
-                thread = "main";
-            }
-        } else if ([iTermGCD onMutationQueue]) {
-            if ([iTermGCD joined]) {
-                thread = "joined";
-            } else {
-                thread = "mut";
-            }
-        } else {
-            thread = "other";
-        }
-        [gDebugLogStr appendFormat:@"%lld.%06lld %s:%d (%s) %s: ",
-            (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function, thread];
-        [gDebugLogStr appendString:value];
-        [gDebugLogStr appendString:@"\n"];
-        static const NSInteger kMaxLogSize = 1000000000;
-        if ([gDebugLogStr length] > kMaxLogSize) {
-            [gDebugLogStr replaceCharactersInRange:NSMakeRange(0, kMaxLogSize / 2)
-                                        withString:@"*GIANT LOG TRUNCATED*\n"];
-        }
-        [GetDebugLogLock() unlock];
+    if (!gDebugLogging) {
+        return 1;
     }
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+
+    const char *lastSlash = strrchr(file, '/');
+    if (!lastSlash) {
+        lastSlash = file;
+    } else {
+        lastSlash++;
+    }
+    if ([iTermAdvancedSettingsModel logToSyslog]) {
+        // Stream with:
+        // log stream --predicate 'eventMessage contains "iTerm2DebugLog"' --level=debug
+        NSString *message = [NSString stringWithFormat:@"%lld.%06lld %s:%d (%s): ",
+                             (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function];
+        os_log_with_type(OS_LOG_DEFAULT, OS_LOG_TYPE_DEBUG, "iTerm2DebugLog: %{public}s", message.UTF8String);
+    }
+
+    const char *thread;
+    if ([iTermGCD onMainQueue]) {
+        if ([iTermGCD joined]) {
+            thread = "joined";
+        } else {
+            thread = "main";
+        }
+    } else if ([iTermGCD onMutationQueue]) {
+        if ([iTermGCD joined]) {
+            thread = "joined";
+        } else {
+            thread = "mut";
+        }
+    } else {
+        thread = "other";
+    }
+
+    // Format the whole entry up front so the only work done under the lock is
+    // mutating the shared string. Everything above (timestamp, thread, syslog)
+    // is thread-safe on its own and doesn't touch gDebugLogStr.
+    NSString *entry = [NSString stringWithFormat:@"%lld.%06lld %s:%d (%s) %s: %@\n",
+                       (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function, thread, value];
+
+    [GetDebugLogLock() lock];
+    [gDebugLogStr appendString:entry];
+    // Cap in-memory use at ~200 MB (matching the Toggle Debug Logging menu tip).
+    // On overflow, discard the oldest half: a debug log is captured right after
+    // the bug reproduces, so the newest entries are the ones worth keeping.
+    static const NSInteger kMaxLogSize = 200 * 1024 * 1024;
+    if ([gDebugLogStr length] > kMaxLogSize) {
+        [gDebugLogStr replaceCharactersInRange:NSMakeRange(0, kMaxLogSize / 2)
+                                    withString:@"*GIANT LOG TRUNCATED*\n"];
+    }
+    [GetDebugLogLock() unlock];
     return 1;
 }
 

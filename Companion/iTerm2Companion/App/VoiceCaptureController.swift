@@ -62,14 +62,33 @@ final class VoiceCaptureController {
     private var passTask: Task<Void, Never>?
     private var finalizeTask: Task<String, Never>?
     private var interruptionObserver: NSObjectProtocol?
+    /// A recording epoch, bumped each time start() begins a fresh recording. A
+    /// stale finalize/pass task from a PRIOR recording can outlive a cancel (its
+    /// `kit.transcribe` await is non-throwing, so cancelling the task doesn't resume
+    /// it early - it stays parked until the transcribe finishes). By then a second
+    /// bar may have started recording on this shared controller; the stale task
+    /// compares its captured epoch to this and no-ops any teardown / liveText /
+    /// passTask mutation when superseded, so it can't tear down the fresh recording.
+    private var generation = 0
+
+    /// Called when the recorder is stopped by something OTHER than a controlled
+    /// stop/cancel - i.e. an audio-session interruption (a call / Siri / another
+    /// app). DictationController uses this to release ownership, so the recorder
+    /// can never reset itself to .idle while an owner token is still held (which
+    /// would leave the mic button dead until a nav change).
+    var onInterrupted: (() -> Void)?
 
     init(modelManager: WhisperModelManager) {
         self.modelManager = modelManager
     }
 
     /// Begin recording and live transcription.
-    func start() async throws {
-        guard state == .idle else { return }
+    /// Returns true if THIS call actually started the recorder (transitioned
+    /// idle -> listening); false if it no-oped because a recording was already in
+    /// progress. Lets the caller avoid cancelling a recording it didn't start.
+    @discardableResult
+    func start() async throws -> Bool {
+        guard state == .idle else { return false }
         await modelManager.prepare()
         guard modelManager.whisperKit != nil else {
             throw VoiceCaptureError.modelNotReady
@@ -77,6 +96,18 @@ final class VoiceCaptureController {
         guard await AudioProcessor.requestRecordPermission() else {
             throw VoiceCaptureError.microphonePermissionDenied
         }
+        // Re-check after the awaits above (model prep + permission): start() itself
+        // can't be cancelled mid-await, so if another composer bar's start() ran to
+        // completion while this one was parked (state is now .listening, not .idle),
+        // bail before touching any shared state. Without this, resuming here would
+        // reconfigure the session and resetState() (blanking the winner's buffer),
+        // then overwrite audioProcessor with a fresh one - dropping the only
+        // reference to the winner's processor, which keeps its mic tap live forever,
+        // and leaving the winner silently dead (state flipped out from under it).
+        guard state == .idle, !Task.isCancelled else { return false }
+        // Open a new recording epoch so any stale task from a prior recording that
+        // is still parked (see `generation`) no-ops rather than clobbering this one.
+        generation &+= 1
         // From here on the audio session is active and/or a processor exists, so
         // any failure must release them before rethrowing - otherwise the session
         // stays active (other apps stay ducked) and a retry stacks a second
@@ -100,6 +131,7 @@ final class VoiceCaptureController {
         }
         state = .listening
         observeInterruptions()
+        return true
     }
 
     /// Stop recording, run one final pass so trailing audio is captured, and
@@ -111,19 +143,28 @@ final class VoiceCaptureController {
             return await finalizeTask.value
         }
         guard state == .listening else { return liveText }
+        let epoch = generation
         let task = Task { @MainActor () -> String in
             state = .transcribing
             audioProcessor?.stopRecording()
             stopObservingInterruptions()
             await passTask?.value      // let any in-flight routine pass finish
-            // If cancel() ran while we were suspended (e.g. the user left the
-            // chat mid-finalize), bail without finalizing or returning a
-            // transcript the caller would commit/send for an abandoned message.
-            if Task.isCancelled { teardown(); return "" }
+            // Bail if this finalize was cancelled (the user left the chat mid-
+            // finalize), OR if a NEWER recording superseded it during the await (a
+            // second bar started on this shared controller). Only tear down when this
+            // is still the current recording; if superseded, return without touching
+            // the fresh recording's processor/state/session.
+            if Task.isCancelled || epoch != generation {
+                if epoch == generation { teardown() }
+                return ""
+            }
             if sawSpeech {
                 await performPass()    // final pass on the full buffer
             }
-            if Task.isCancelled { teardown(); return "" }
+            if Task.isCancelled || epoch != generation {
+                if epoch == generation { teardown() }
+                return ""
+            }
             let result = liveText
             teardown()
             return result
@@ -187,15 +228,22 @@ final class VoiceCaptureController {
     /// pass before this one is recorded.
     private func triggerPass() {
         guard passTask == nil else { return }
+        let epoch = generation
         passTask = Task { @MainActor in
             await performPass()
-            passTask = nil
+            // Only clear the shared passTask slot if this is still our recording: a
+            // stale pass (transcribe outlived a cancel) that resumes after a newer
+            // recording started its own pass must NOT null the fresh passTask, or a
+            // buffer callback could start a second concurrent transcribe (breaking
+            // the single-flight invariant).
+            if epoch == generation { passTask = nil }
         }
     }
 
     /// Transcribe the entire recording so far and publish the full text.
     private func performPass() async {
         guard let kit = modelManager.whisperKit else { return }
+        let epoch = generation
         let samples = captureBuffer.snapshot()
         guard !samples.isEmpty else { return }
         lastConsumedCount = samples.count
@@ -207,9 +255,10 @@ final class VoiceCaptureController {
                                       withoutTimestamps: true)
         do {
             let results = try await kit.transcribe(audioArray: samples, decodeOptions: options)
-            // Abandoned while transcribing (cancel() cancels this task): don't
-            // overwrite liveText, which cancel() blanked.
-            if Task.isCancelled { return }
+            // Abandoned while transcribing (cancel() cancels this task), or a newer
+            // recording superseded this one: don't overwrite liveText (cancel()
+            // blanked it, or it now belongs to the fresh recording).
+            if Task.isCancelled || epoch != generation { return }
             let text = Self.sanitized(results.map { $0.text }.joined(separator: " "))
             if !text.isEmpty { // keep prior text rather than blanking on an empty window
                 liveText = text
@@ -241,7 +290,12 @@ final class VoiceCaptureController {
             queue: .main) { [weak self] note in
             guard let type = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
                   AVAudioSession.InterruptionType(rawValue: type) == .began else { return }
-            Task { @MainActor in self?.cancel() }
+            Task { @MainActor in
+                self?.cancel()
+                // Notify the owner (DictationController) so ownership is released -
+                // cancel() alone only resets the recorder, stranding owner == token.
+                self?.onInterrupted?()
+            }
         }
     }
 

@@ -111,7 +111,7 @@ class AppSwitchingPreventionDetector: NSObject {
     }
 
     private func showWarning() {
-        DLog("show warning")
+        RLog("show warning")
         delegate?.appSwitchingPreventionDetectorDidDetectFailure()
     }
 }

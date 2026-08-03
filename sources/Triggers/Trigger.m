@@ -68,12 +68,12 @@ NSString * const kTriggerVariableValueRegexKey = @"variableValueRegex";
 + (nullable Trigger *)triggerFromUntrustedDict:(NSDictionary *)dict {
     NSString *className = [NSString castFrom:[dict objectForKey:kTriggerActionKey]];
     if (!className) {
-        DLog(@"Bad class name in %@", dict);
+        RLog(@"Bad class name in %@", dict);
         return nil;
     }
     Class class = NSClassFromString(className);
     if (![class isSubclassOfClass:[Trigger class]] || class == [Trigger class]) {
-        DLog(@"Bad class for valid name in %@", dict);
+        RLog(@"Bad class for valid name in %@", dict);
         return nil;
     }
     Trigger *trigger = [[class alloc] init];

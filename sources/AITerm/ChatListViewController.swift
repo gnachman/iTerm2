@@ -6,12 +6,68 @@
 //
 
 import AppKit
+import Carbon.HIToolbox
 
 protocol ChatListViewControllerDelegate: AnyObject, ChatSearchResultsViewControllerDelegate {
     func chatListViewControllerDidTapNewChat(_ viewController: ChatListViewController)
     func chatListViewController(_ chatListViewController: ChatListViewController,
                                 didSelectChat chatID: String?)
+    func chatListViewController(_ chatListViewController: ChatListViewController,
+                                renameChat chatID: String)
+    func chatListViewController(_ chatListViewController: ChatListViewController,
+                                deleteChats chatIDs: [String])
+}
 
+private protocol ChatListTableViewDelegate: AnyObject {
+    func chatListTableView(_ tableView: ChatListTableView,
+                           didReceiveMouseDown event: NSEvent) -> Bool
+    func chatListTableViewDidRequestRenameSelectedChat(_ tableView: ChatListTableView)
+    func chatListTableViewDidRequestDeleteSelectedChat(_ tableView: ChatListTableView)
+    func chatListTableView(_ tableView: ChatListTableView, menuForRow row: Int) -> NSMenu?
+}
+
+private class ChatListTableView: NSTableView {
+    weak var chatListTableViewDelegate: ChatListTableViewDelegate?
+
+    override func mouseDown(with event: NSEvent) {
+        if chatListTableViewDelegate?.chatListTableView(self, didReceiveMouseDown: event) == true {
+            return
+        }
+        super.mouseDown(with: event)
+    }
+
+    override func rightMouseDown(with event: NSEvent) {
+        guard let menu = menu(for: event) else {
+            super.rightMouseDown(with: event)
+            return
+        }
+        NSMenu.popUpContextMenu(menu, with: event, for: self)
+    }
+
+    override func keyDown(with event: NSEvent) {
+        let key = Int(event.keyCode)
+        if key == kVK_Delete || key == kVK_ForwardDelete {
+            chatListTableViewDelegate?.chatListTableViewDidRequestDeleteSelectedChat(self)
+            return
+        }
+        if key == kVK_Return || key == kVK_ANSI_KeypadEnter {
+            chatListTableViewDelegate?.chatListTableViewDidRequestRenameSelectedChat(self)
+            return
+        }
+        super.keyDown(with: event)
+    }
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        let location = convert(event.locationInWindow, from: nil)
+        let row = self.row(at: location)
+        guard row >= 0 else {
+            return nil
+        }
+        if !selectedRowIndexes.contains(row) {
+            selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+        }
+        return chatListTableViewDelegate?.chatListTableView(self, menuForRow: row)
+    }
 }
 
 class ChatListViewController: NSViewController {
@@ -21,8 +77,9 @@ class ChatListViewController: NSViewController {
                                              chat: nil,
                                              dataSource: nil,
                                              autoupdateDate: false)
-    private let tableView = NSTableView()
+    private let tableView = ChatListTableView()
     private let scrollView = NSScrollView()
+    private var contextMenuEventMonitor: Any?
     private let searchField = {
         let field = NSSearchField()
         field.translatesAutoresizingMaskIntoConstraints = false
@@ -66,6 +123,10 @@ class ChatListViewController: NSViewController {
         vc.view.isHidden = true
         return vc
     }()
+
+    deinit {
+        removeContextMenuEventMonitor()
+    }
 
     override func loadView() {
         searchField.delegate = self
@@ -160,18 +221,38 @@ class ChatListViewController: NSViewController {
                 return
             }
             ignoreSelectionChange = true
-            let chatID = self.selectedChatID
+            let activeChatID = self.selectedChatID
+            let selectedChatIDs = self.selectedChatIDs()
             self.tableView.reloadData()
-            if let chatID, let i = dataSource?.chatListViewController(self, indexOfChatID: chatID) {
-                tableView.selectRowIndexes(IndexSet(integer: i),
-                                           byExtendingSelection: false)
-            } else {
-                tableView.selectRowIndexes(IndexSet(), byExtendingSelection: false)
+            var selectedRows = IndexSet()
+            for chatID in selectedChatIDs {
+                if let row = dataSource?.chatListViewController(self, indexOfChatID: chatID) {
+                    selectedRows.insert(row)
+                }
             }
+            if selectedRows.isEmpty,
+               let activeChatID,
+               let row = dataSource?.chatListViewController(self, indexOfChatID: activeChatID) {
+                selectedRows.insert(row)
+            }
+            tableView.selectRowIndexes(selectedRows, byExtendingSelection: false)
+            selectionAnchorRow = selectedRows.first
             ignoreSelectionChange = false
         }
     }
+
+    override func viewDidAppear() {
+        super.viewDidAppear()
+        installContextMenuEventMonitor()
+    }
+
+    override func viewWillDisappear() {
+        super.viewWillDisappear()
+        removeContextMenuEventMonitor()
+    }
+
     private var ignoreSelectionChange = false
+    private var selectionAnchorRow: Int?
     var selectedChatID: String?
 
     private func setupTableView() {
@@ -181,6 +262,10 @@ class ChatListViewController: NSViewController {
         tableView.headerView = nil
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.chatListTableViewDelegate = self
+        tableView.allowsMultipleSelection = true
+        tableView.allowsEmptySelection = true
+        tableView.menu = NSMenu()
         tableView.translatesAutoresizingMaskIntoConstraints = false
 
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("ChatColumn"))
@@ -208,6 +293,7 @@ class ChatListViewController: NSViewController {
             found = false
         }
         tableView.selectRowIndexes(IndexSet(integer: index), byExtendingSelection: false)
+        selectionAnchorRow = index
         selectedChatID = findSelectedChatID()
         return found
     }
@@ -238,6 +324,91 @@ class ChatListViewController: NSViewController {
 
         selectedChatID = chatID
         tableView.selectRowIndexes(IndexSet(integer: i), byExtendingSelection: false)
+        selectionAnchorRow = i
+    }
+
+    @objc private func deleteSelectedChats(_ sender: Any?) {
+        let chatIDs = selectedChatIDs()
+        guard !chatIDs.isEmpty else {
+            return
+        }
+        delegate?.chatListViewController(self, deleteChats: chatIDs)
+    }
+
+    @objc private func renameSelectedChat(_ sender: Any?) {
+        let chatIDs = selectedChatIDs()
+        guard chatIDs.count == 1,
+              let chatID = chatIDs.first else {
+            return
+        }
+        delegate?.chatListViewController(self, renameChat: chatID)
+    }
+
+    private func installContextMenuEventMonitor() {
+        guard contextMenuEventMonitor == nil else {
+            return
+        }
+        contextMenuEventMonitor = NSEvent.addLocalMonitorForEvents(
+            matching: [.rightMouseDown]) { [weak self] event in
+                guard let self else {
+                    return event
+                }
+                return self.handleContextMenuEvent(event)
+            }
+    }
+
+    private func removeContextMenuEventMonitor() {
+        if let contextMenuEventMonitor {
+            NSEvent.removeMonitor(contextMenuEventMonitor)
+            self.contextMenuEventMonitor = nil
+        }
+    }
+
+    private func handleContextMenuEvent(_ event: NSEvent) -> NSEvent? {
+        guard let window = view.window,
+              event.window === window else {
+            return event
+        }
+        let point = tableView.convert(event.locationInWindow, from: nil)
+        guard tableView.bounds.contains(point) else {
+            return event
+        }
+        let row = tableView.row(at: point)
+        guard row >= 0,
+              row < tableView.numberOfRows else {
+            return event
+        }
+        if !tableView.selectedRowIndexes.contains(row) {
+            tableView.selectRowIndexes(IndexSet(integer: row),
+                                       byExtendingSelection: false)
+        }
+        selectedChatID = dataSource?.chatListViewController(self, chatAt: row).id
+        guard let menu = contextMenu(forRow: row) else {
+            return event
+        }
+        menu.popUp(positioning: nil, at: point, in: tableView)
+        return nil
+    }
+
+    private func contextMenu(forRow row: Int) -> NSMenu? {
+        guard dataSource != nil,
+              row >= 0,
+              row < tableView.numberOfRows else {
+            return nil
+        }
+        let menu = NSMenu()
+        let count = max(1, selectedChatIDs().count)
+        if count == 1 {
+            menu.addItem(withTitle: "Rename Chat",
+                         action: #selector(renameSelectedChat(_:)),
+                         target: self)
+            menu.addItem(.separator())
+        }
+        let title = count == 1 ? "Delete Chat" : "Delete \(count) Chats"
+        menu.addItem(withTitle: title,
+                     action: #selector(deleteSelectedChats(_:)),
+                     target: self)
+        return menu
     }
 }
 
@@ -300,18 +471,36 @@ extension ChatListViewController: NSTableViewDelegate {
     }
 
     func findSelectedChatID() -> String? {
-        let selectedRow = tableView.selectedRow
-        guard selectedRow >= 0 else {
+        guard let selectedRow = tableView.selectedRowIndexes.first else {
             return nil
         }
         return dataSource?.chatListViewController(self, chatAt: selectedRow).id
+    }
+
+    func selectedChatIDs() -> [String] {
+        guard let dataSource else {
+            return []
+        }
+        return tableView.selectedRowIndexes.compactMap { row in
+            guard row >= 0, row < dataSource.numberOfChats(in: self) else {
+                return nil
+            }
+            return dataSource.chatListViewController(self, chatAt: row).id
+        }
     }
 
     func tableViewSelectionDidChange(_ notification: Notification) {
         if ignoreSelectionChange {
             return
         }
-        let chatID = findSelectedChatID()
+        let selectedIDs = selectedChatIDs()
+        let chatID: String?
+        if let selectedChatID,
+           selectedIDs.contains(selectedChatID) {
+            chatID = selectedChatID
+        } else {
+            chatID = selectedIDs.first
+        }
         selectedChatID = chatID
         delegate?.chatListViewController(self, didSelectChat: chatID)
     }
@@ -335,5 +524,54 @@ extension ChatListViewController: ChatSearchResultsViewControllerDelegate {
         canExitSearchMode = false
         delegate?.chatSearchResultsDidSelect(result)
         canExitSearchMode = true
+    }
+}
+
+extension ChatListViewController: ChatListTableViewDelegate {
+    fileprivate func chatListTableView(_ tableView: ChatListTableView,
+                                       didReceiveMouseDown event: NSEvent) -> Bool {
+        let point = tableView.convert(event.locationInWindow, from: nil)
+        let row = tableView.row(at: point)
+        guard row >= 0 else {
+            return false
+        }
+        tableView.window?.makeFirstResponder(tableView)
+
+        var selectedRows = tableView.selectedRowIndexes
+        let modifiers = event.modifierFlags.intersection([.command, .shift])
+        if modifiers.contains(.shift) {
+            let anchor = selectionAnchorRow ?? selectedRows.first ?? row
+            let range = IndexSet(integersIn: min(anchor, row)...max(anchor, row))
+            if modifiers.contains(.command) {
+                selectedRows.formUnion(range)
+                tableView.selectRowIndexes(selectedRows, byExtendingSelection: false)
+            } else {
+                tableView.selectRowIndexes(range, byExtendingSelection: false)
+            }
+        } else if modifiers.contains(.command) {
+            if selectedRows.contains(row) {
+                selectedRows.remove(row)
+            } else {
+                selectedRows.insert(row)
+            }
+            tableView.selectRowIndexes(selectedRows, byExtendingSelection: false)
+            selectionAnchorRow = row
+        } else {
+            tableView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+            selectionAnchorRow = row
+        }
+        return true
+    }
+
+    fileprivate func chatListTableViewDidRequestDeleteSelectedChat(_ tableView: ChatListTableView) {
+        deleteSelectedChats(tableView)
+    }
+
+    fileprivate func chatListTableViewDidRequestRenameSelectedChat(_ tableView: ChatListTableView) {
+        renameSelectedChat(tableView)
+    }
+
+    fileprivate func chatListTableView(_ tableView: ChatListTableView, menuForRow row: Int) -> NSMenu? {
+        contextMenu(forRow: row)
     }
 }

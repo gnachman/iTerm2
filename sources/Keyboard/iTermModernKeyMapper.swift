@@ -196,6 +196,13 @@ fileprivate struct KeyEventInfo: CustomDebugStringConvertible, Codable {
                 57444
             case kVK_RightCommand:
                 57450
+            case kVK_CapsLock:
+                // Caps Lock has a dedicated functional key code in the Kitty
+                // protocol. Without this, csiUNumber is 0, the key-number is
+                // omitted from the CSI u sequence, and the caps-lock modifier
+                // value slides into the number slot, so a toggle reports as
+                // \e[65u (codepoint 65 = "A"). Issue 12922.
+                57358
             default:
                 0
             }
@@ -555,7 +562,30 @@ fileprivate class ModernKeyMapperImpl {
         guard let phonyEvent else {
             return text
         }
-        let event = KeyEventInfo(event: phonyEvent, configuration: configuration, flags: flags)
+        var event = KeyEventInfo(event: phonyEvent, configuration: configuration, flags: flags)
+
+        // A dead-key composition (for example US International apostrophe then e,
+        // producing é) generates text the physical key cannot produce on its own.
+        // KeyEventInfo derives its text-as-codepoints from the physical keyCode via
+        // charactersByApplyingModifiers, which runs with a fresh dead-key state and
+        // therefore yields the base character ("e"), discarding the composed result
+        // ("é"). Here we know exactly what the input system committed, so when it
+        // differs from the physically-derived text, report the committed text as the
+        // associated codepoints. The unicode-key-code stays the physical key, matching
+        // how option-composed characters are already reported. Issue 12906.
+        //
+        // Guard against the pre-Cocoa path: for keys handled before Cocoa (control
+        // combinations, etc.) iTermKeyboardHandler routes the mapper's own finished
+        // escape sequence (for example control-shift-2 -> ESC[50;6u) back through
+        // insertText:, so `text` may be a control sequence rather than typed text.
+        // Its bytes must not leak into the associated-text field. A genuine
+        // composition never begins with a control character.
+        let textIsControlSequence = (text.it_firstUnicodeScalarValue ?? 0x20) < 0x20
+        let committedCodepoints = text.it_ucs4CodePoints.filter { $0 >= 32 }
+        if !textIsControlSequence && committedCodepoints != event.textAsCodepoints {
+            DLog("Composed text \(text) differs from physically-derived codepoints \(event.textAsCodepoints); using committed codepoints \(committedCodepoints)")
+            event.textAsCodepoints = committedCodepoints
+        }
         let keyReport = KeyReport(type: .press, event: event)
         let encoded = keyReport.encoded(enhancementFlags: flags)
         switch encoded {

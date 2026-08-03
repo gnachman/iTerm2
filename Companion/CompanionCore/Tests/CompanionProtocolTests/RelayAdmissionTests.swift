@@ -34,6 +34,19 @@ final class RelayAdmissionTests: XCTestCase {
         let data = Data(#"{"v":1,"role":"mac"}"#.utf8)
         let hello = try dec.decode(RelayAdmission.Hello.self, from: data)
         XCTAssertEqual(hello.role, .mac)
+        XCTAssertNil(hello.nonDisplacing)   // legacy Hello (no field) decodes as nil
+    }
+
+    func test_helloOmitsNonDisplacingWhenNil() throws {
+        // Backward-compat: a default join must look byte-identical to old clients
+        // so an older relay (which ignores the field) is unaffected.
+        let obj = try json(RelayAdmission.Hello(v: 1, role: .phone))
+        XCTAssertNil(obj["nonDisplacing"])
+    }
+
+    func test_helloEncodesNonDisplacingWhenSet() throws {
+        let obj = try json(RelayAdmission.Hello(v: 1, role: .phone, nonDisplacing: true))
+        XCTAssertEqual(obj["nonDisplacing"] as? Bool, true)
     }
 
     func test_challengeNonceIsBase64() throws {

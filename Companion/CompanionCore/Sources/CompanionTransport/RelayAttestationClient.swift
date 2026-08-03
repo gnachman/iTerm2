@@ -28,6 +28,18 @@ public enum RelayAttestationError: Error, Equatable {
     case invalidOrigin
 }
 
+/// Throw the re-resolve transport error for a stale-map rejection on a room-scoped
+/// HTTP call (HTTP 421, §6.9), so the caller re-resolves the current owner and
+/// retries the request there, instead of treating it as a generic HTTP failure. A
+/// no-op for any other status. The owner hint is omitted: RelayHTTPClient does not
+/// surface response headers, and the hint is diagnostic-only anyway (the client
+/// re-resolves via the shard map, the sole authority).
+func throwIfStaleMapRejection(_ status: Int) throws {
+    if status == 421 {
+        throw TransportError.reResolve(ownerHint: nil)
+    }
+}
+
 /// The tiny HTTP surface the attestation client needs: a POST to a relay path
 /// with the room header and an optional JSON body, returning status + bytes.
 /// Injected so the orchestration can run against an in-process fake.
@@ -132,6 +144,7 @@ public struct RelayAttestationClient: Sendable {
             CompanionLog.log("obtainTicket: relay in open mode; no ticket")
             return nil
         default:
+            try throwIfStaleMapRejection(status)
             throw RelayAttestationError.http(status, errorMessage(body) ?? "")
         }
     }
@@ -164,6 +177,7 @@ public struct RelayAttestationClient: Sendable {
         let (status, body) = try await http.post(path: "/attest/challenge", roomName: roomName, json: nil)
         guard status == 200 else {
             CompanionLog.log("attestation: /attest/challenge -> HTTP \(status) (\(errorMessage(body) ?? ""))")
+            try throwIfStaleMapRejection(status)
             throw RelayAttestationError.http(status, errorMessage(body) ?? "")
         }
         guard let challenge = decode(body, AttestResponse.self)?.challenge else {

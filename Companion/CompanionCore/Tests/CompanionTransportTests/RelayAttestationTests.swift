@@ -59,6 +59,15 @@ private final class InMemoryKeyStore: AttestKeyStore, @unchecked Sendable {
     private var keys: [String: String] = [:]
     func keyId(forRoom roomName: String) -> String? { keys[roomName] }
     func setKeyId(_ keyId: String?, forRoom roomName: String) { keys[roomName] = keyId }
+    func removeAll() { keys.removeAll() }
+}
+
+/// Returns a fixed HTTP status for every call, to exercise status-based branches.
+private struct FixedStatusHTTP: RelayHTTPClient {
+    let status: Int
+    func post(path: String, roomName: String, json: [String: String]?) async throws -> (status: Int, body: Data) {
+        (status, Data("{}".utf8))
+    }
 }
 
 /// An in-process relay that speaks the two endpoints the client calls
@@ -216,6 +225,24 @@ final class RelayAttestationTests: XCTestCase {
         XCTAssertTrue(attest.generatedKeys.isEmpty)
         XCTAssertNil(store.keyId(forRoom: "room"))
         XCTAssertTrue(worker.requestPaths.isEmpty, "an unsupported device never calls the relay")
+    }
+
+    func test_obtainTicket_staleMapRejection_throwsReResolve() async {
+        // A 421 on /attest/challenge means this host does not own the bucket, so the
+        // client surfaces reResolve (§6.9) rather than a generic HTTP error; the
+        // caller re-resolves the owner and retries the attestation there.
+        let client = RelayAttestationClient(origin: origin,
+                                            service: FakeAppAttest(supported: true),
+                                            store: InMemoryKeyStore(),
+                                            http: FixedStatusHTTP(status: 421))
+        do {
+            _ = try await client.obtainTicket(roomName: "room")
+            XCTFail("expected reResolve")
+        } catch let error as TransportError {
+            XCTAssertEqual(error, .reResolve(ownerHint: nil))
+        } catch {
+            XCTFail("expected TransportError.reResolve, got \(error)")
+        }
     }
 
     func test_obtainTicket_openMode_returnsNilAndDoesNotStoreKey() async throws {

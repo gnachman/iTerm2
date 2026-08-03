@@ -14,6 +14,7 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAttributedStringBuilder.h"
+#import "iTermCursorBlinkFadeAnimator.h"
 #import "iTermAttributedStringProxy.h"
 #import "iTermBackgroundColorRun.h"
 #import "iTermBoxDrawingBezierCurveFactory.h"
@@ -129,6 +130,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
     BOOL _blinkingFound;
 
+    // Drives the smooth cursor blink fade. Lazily created.
+    iTermCursorBlinkFadeAnimator *_blinkFadeAnimator;
+
     // Line attribute of the line currently being drawn. Used to apply 2x
     // scaling for double-width lines in the text drawing methods.
     iTermLineAttribute _currentLineAttribute;
@@ -158,13 +162,13 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     NSMutableDictionary<iTermAttributedStringProxy *, id> *_replacementLineRefCache;
 
     BOOL _preferSpeedToFullLigatureSupport;
+    BOOL _lowFiCombiningMarks;
     NSMutableDictionary<NSNumber *, NSImage *> *_cachedMarks;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        iTermPreciseTimerSetEnabled(YES);
         iTermPreciseTimerStatsInit(&_stats[TIMER_TOTAL_DRAW_RECT], "Total drawRect");
         iTermPreciseTimerStatsInit(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS], "Construct BG runs");
         iTermPreciseTimerStatsInit(&_stats[TIMER_DRAW_BACKGROUND], "Draw BG");
@@ -224,6 +228,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                   asciiLigaturesAvailable:_asciiLigaturesAvailable
                            asciiLigatures:_asciiLigatures
          preferSpeedToFullLigatureSupport:_preferSpeedToFullLigatureSupport
+                      lowFiCombiningMarks:_lowFiCombiningMarks
                                  cellSize:_cellSize
                      blinkingItemsVisible:_blinkingItemsVisible
                              blinkAllowed:_blinkAllowed
@@ -246,7 +251,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                         rectCount:(NSInteger)rectCount
                     virtualOffset:(CGFloat)virtualOffset {
     DLog(@"begin drawRect:%@ in view %@", [NSValue valueWithRect:rect], _delegate);
-    iTermPreciseTimerSetEnabled(YES);
     _debug = [iTermAdvancedSettingsModel showDirtyRectsInLegacyRenderer];
     if (_debug) {
         [[NSColor redColor] set];
@@ -3782,16 +3786,41 @@ typedef struct {
               virtualOffset:(CGFloat)virtualOffset {
     DLog(@"drawCursor:%@", @(outline));
 
-    // Update the last time the cursor moved.
+    // Update the last time the cursor moved. A move makes
+    // cursorBlinkConditionActive return NO for the next half second, which
+    // resets the fade cycle so the cursor is solid immediately rather than
+    // fading in at the new location.
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     if (!VT100GridCoordEquals(_cursorCoord, _oldCursorPosition)) {
         _lastTimeCursorMoved = now;
     }
 
+    // For smooth blink we draw the cursor even when it is blinked out (using a
+    // reduced alpha) and skip drawing only once it has fully faded away. The
+    // alpha covers the whole cursor (box fill plus inverted glyph) via
+    // CGContextSetAlpha, and the shadow via cursor.fadeAlpha.
+    CGFloat alpha = 1.0;
+    BOOL draw;
+    if (_cursorSmoothBlink) {
+        alpha = [self cursorBlinkFadeAlphaForBlinking:[self cursorBlinkConditionActive]];
+        draw = (alpha > 0.001) && [self shouldDrawCursorConsideringBlink:NO];
+    } else {
+        draw = [self shouldDrawCursor];
+    }
+
     iTermCursor *cursor = nil;
-    if ([self shouldDrawCursor]) {
+    if (draw) {
         cursor = [iTermCursor cursorOfType:_cursorType];
         cursor.delegate = self;
+        cursor.fadeAlpha = alpha;
+
+        CGContextRef ctx = NULL;
+        const BOOL fading = (alpha < 1.0);
+        if (fading) {
+            ctx = [[NSGraphicsContext currentContext] CGContext];
+            CGContextSaveGState(ctx);
+            CGContextSetAlpha(ctx, alpha);
+        }
         NSRect rect = [self reallyDrawCursor:cursor
                              backgroundColor:cursorBackgroundColor
                                           at:_cursorCoord
@@ -3820,6 +3849,9 @@ typedef struct {
                                hints:nil
                        virtualOffset:virtualOffset];
             }
+        }
+        if (fading) {
+            CGContextRestoreGState(ctx);
         }
     }
 
@@ -3985,14 +4017,48 @@ typedef struct {
     return [_colorMap colorByDimmingTextColor:color];
 }
 
+- (iTermCursorBlinkFadeAnimator *)blinkFadeAnimator {
+    if (!_blinkFadeAnimator) {
+        _blinkFadeAnimator = [[iTermCursorBlinkFadeAnimator alloc] init];
+    }
+    _blinkFadeAnimator.fadeInDuration = _cursorBlinkFadeInDuration;
+    _blinkFadeAnimator.fadeOutDuration = _cursorBlinkFadeOutDuration;
+    _blinkFadeAnimator.fadeInCurve = (iTermCursorBlinkFadeCurve)_cursorBlinkFadeInCurve;
+    _blinkFadeAnimator.fadeOutCurve = (iTermCursorBlinkFadeCurve)_cursorBlinkFadeOutCurve;
+    _blinkFadeAnimator.visibleDwellDuration = _cursorBlinkVisibleDwell;
+    _blinkFadeAnimator.hiddenDwellDuration = _cursorBlinkHiddenDwell;
+    return _blinkFadeAnimator;
+}
+
+- (CGFloat)cursorBlinkFadeAlphaForBlinking:(BOOL)blinking {
+    if (!_cursorSmoothBlink) {
+        return 1.0;
+    }
+    return [self.blinkFadeAnimator alphaForBlinking:blinking atTime:CACurrentMediaTime()];
+}
+
+- (BOOL)cursorBlinkFadeWantsRedraw {
+    return _cursorSmoothBlink && _blinkFadeAnimator.wantsRedraw;
+}
+
+- (NSTimeInterval)cursorBlinkFadeTimeUntilNextFrame {
+    return _blinkFadeAnimator.timeUntilNextFrame;
+}
+
+// The condition under which the cursor blinks, factored out of shouldShowCursor
+// so smooth blink can drive its own cycle from it.
+- (BOOL)cursorBlinkConditionActive {
+    return (_cursorBlinking &&
+            self.isInKeyWindow &&
+            _textViewIsActiveSession &&
+            _textViewIsFirstResponder &&
+            [NSDate timeIntervalSinceReferenceDate] - _lastTimeCursorMoved > 0.5);
+}
+
 - (BOOL)shouldShowCursor {
-    if (_cursorBlinking &&
-        self.isInKeyWindow &&
-        _textViewIsActiveSession &&
-        _textViewIsFirstResponder &&
-        [NSDate timeIntervalSinceReferenceDate] - _lastTimeCursorMoved > 0.5) {
-        // Allow the cursor to blink if it is configured, the window is key, this session is active
-        // in the tab, and the cursor has not moved for half a second.
+    // Allow the cursor to blink if it is configured, the window is key, this session is active
+    // in the tab, and the cursor has not moved for half a second.
+    if ([self cursorBlinkConditionActive]) {
         return _blinkingItemsVisible;
     } else {
         return YES;
@@ -4023,7 +4089,14 @@ typedef struct {
 }
 
 - (BOOL)shouldDrawCursor {
-    const BOOL shouldShowCursor = [self shouldShowCursor];
+    return [self shouldDrawCursorConsideringBlink:YES];
+}
+
+// When considerBlink is NO the blinked-out state is ignored, so the cursor is
+// considered drawable even mid-blink. Smooth blink uses this and conveys the
+// blink via alpha instead.
+- (BOOL)shouldDrawCursorConsideringBlink:(BOOL)considerBlink {
+    const BOOL shouldShowCursor = considerBlink ? [self shouldShowCursor] : YES;
     const int column = _cursorCoord.x;
     const int row = _cursorCoord.y;
     const int width = _gridSize.width;
@@ -4242,14 +4315,12 @@ typedef struct {
 
 #pragma mark - Other Utility Methods
 
-- (void)updateCachedMetrics {
-    _frame = _delegate.frame;
-    _visibleRectExcludingTopMargin = [_delegate textDrawingHelperVisibleRectExcludingTopMargin];
-    _visibleRectIncludingTopMargin = [_delegate textDrawingHelperVisibleRectIncludingTopMargin];
-    _scrollViewContentSize = _delegate.enclosingScrollView.contentSize;
-    _scrollViewDocumentVisibleRect = _visibleRectExcludingTopMargin;
-    _preferSpeedToFullLigatureSupport = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];
-
+// The single definition of "ASCII ligatures available": the profile enabled
+// them and the default (ASCII) font actually supports them. Both the onscreen
+// path (updateCachedMetrics) and the offscreen path
+// (configureForOffscreenRenderingWithFrame:visibleRect:) call this so they can
+// never drift apart and reintroduce an offscreen/onscreen ligature mismatch.
+- (BOOL)computeAsciiLigaturesAvailable {
     BOOL ignore1 = NO, ignore2 = NO;
     UTF32Char ignore3;
     PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:'a'
@@ -4257,7 +4328,18 @@ typedef struct {
                                                      renderBold:&ignore1
                                                    renderItalic:&ignore2
                                                        remapped:&ignore3];
-    _asciiLigaturesAvailable = (fontInfo.ligatureLevel > 0 || fontInfo.hasDefaultLigatures) && _asciiLigatures;
+    return (fontInfo.ligatureLevel > 0 || fontInfo.hasDefaultLigatures) && _asciiLigatures;
+}
+
+- (void)updateCachedMetrics {
+    _frame = _delegate.frame;
+    _visibleRectExcludingTopMargin = [_delegate textDrawingHelperVisibleRectExcludingTopMargin];
+    _visibleRectIncludingTopMargin = [_delegate textDrawingHelperVisibleRectIncludingTopMargin];
+    _scrollViewContentSize = _delegate.enclosingScrollView.contentSize;
+    _scrollViewDocumentVisibleRect = _visibleRectExcludingTopMargin;
+    _preferSpeedToFullLigatureSupport = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];
+    _lowFiCombiningMarks = [iTermAdvancedSettingsModel lowFiCombiningMarks];
+    _asciiLigaturesAvailable = [self computeAsciiLigaturesAvailable];
 }
 
 - (void)configureForOffscreenRenderingWithFrame:(NSRect)frame
@@ -4271,7 +4353,21 @@ typedef struct {
     _scrollViewContentSize = NSMakeSize(frame.size.width, frame.size.height + margins);
     _scrollViewDocumentVisibleRect = visibleRect;
     _preferSpeedToFullLigatureSupport = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];
-    _asciiLigaturesAvailable = NO;  // Safe default for offscreen rendering
+    _lowFiCombiningMarks = [iTermAdvancedSettingsModel lowFiCombiningMarks];
+
+    // Compute ASCII ligature availability exactly as the onscreen path does.
+    // Hardcoding NO here made screenshots (and streamed frames) drop ASCII
+    // ligatures that the profile enabled and the font supports, because
+    // _asciiLigaturesAvailable gates whether ASCII runs take the CoreText
+    // (ligated) path or the glyph-by-glyph fast path.
+    _asciiLigaturesAvailable = [self computeAsciiLigaturesAvailable];
+
+    // This is called after newDrawingHelperForOffscreenRendering builds the
+    // helper, so finish setup here (mirroring the onscreen sequence of
+    // updateCachedMetrics followed by didFinishSetup) to propagate the freshly
+    // computed _asciiLigaturesAvailable and zippy state into the attributed
+    // string builder.
+    [self didFinishSetup];
 }
 
 - (void)startTiming {

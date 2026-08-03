@@ -305,7 +305,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)smartLayout {
-    DLog(@"Begin smartLayout");
+    RLog(@"Begin smartLayout");
 
     int currentScreen = [self screenNumber];
     NSRect screenRect = [[self screen] visibleFrame];
@@ -350,7 +350,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    DLog(@"Using smart layout place window at %@ given frames %@", NSStringFromRect(bestFrame), frames);
+    RLog(@"Using smart layout place window at %@ given frames %@", NSStringFromRect(bestFrame), frames);
     [self setFrameOrigin:bestFrame.origin];
 }
 
@@ -362,7 +362,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)makeKeyAndOrderFront:(nullable id)sender {
     DLog(@"%@ makeKeyAndOrderFront: layoutDone=%@ %@", self, @(_layoutDone), [NSThread callStackSymbols]);
     if (!_layoutDone) {
-        DLog(@"try to call windowWillShowInitial");
+        RLog(@"try to call windowWillShowInitial");
         [self setLayoutDone];
         if ([[self delegate] respondsToSelector:@selector(windowWillShowInitial)]) {
             [[self delegate] performSelector:@selector(windowWillShowInitial)];
@@ -562,11 +562,11 @@ ITERM_WEAKLY_REFERENCEABLE
     if ([sender isKindOfClass:[NSScreen class]]) {
         [self.ptyDelegate terminalWindowWillMoveToScreen:sender];
     }
-    DLog(@"_isMovingScreen = YES");
+    RLog(@"_isMovingScreen = YES");
     _isMovingScreen = YES;
     [super _moveToScreen:sender];
     _isMovingScreen = NO;
-    DLog(@"_isMovingScreen = NO");
+    RLog(@"_isMovingScreen = NO");
     if ([sender isKindOfClass:[NSScreen class]]) {
         [self.ptyDelegate terminalWindowDidMoveToScreen:sender];
     }
@@ -580,12 +580,12 @@ ITERM_WEAKLY_REFERENCEABLE
                                       springSettings:(id)springSettings
                                           completion:(id)completion NS_AVAILABLE_MAC(15_0) {
     _resizingForTilingCount += 1;
-    DLog(@"incr _resizingForTilingCount to %@", @(_resizingForTilingCount));
+    RLog(@"incr _resizingForTilingCount to %@", @(_resizingForTilingCount));
     [super _resizeFromWindowManagerWithTargetGeometry:geometry
                                        springSettings:springSettings
                                            completion:completion];
     _resizingForTilingCount -= 1;
-    DLog(@"decr _resizingForTilingCount to %@", @(_resizingForTilingCount));
+    RLog(@"decr _resizingForTilingCount to %@", @(_resizingForTilingCount));
 }
 
 - (BOOL)it_resizingForTiling {
@@ -602,7 +602,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // restoration. Otherwise we'd get an infinite recursion when AppKit tries to resize
         // the window to fit the fullscreen tile.
         if ([self.ptyDelegate terminalWindowIsEnteringLionFullScreen]) {
-            DLog(@"Allowing frame change during Lion fullscreen transition");
+            RLog(@"Allowing frame change during Lion fullscreen transition");
             [super setFrame:frameRect display:flag];
             return;
         }
@@ -612,7 +612,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // window size from the restoration completion block. This has the effect of reversing the
         // width adjustment that we make to the window to account for a change in the scrollbar
         // style change. See _widthAdjustment in PseudoTerminal.m for details. Issue 9877
-        DLog(@"Disregarding frame change");
+        RLog(@"Disregarding frame change");
         return;
     }
     [super setFrame:frameRect display:flag];

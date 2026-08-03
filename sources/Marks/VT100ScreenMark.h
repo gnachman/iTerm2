@@ -38,6 +38,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) BOOL isPrompt;
 @property(nonatomic, readonly) NSInteger clearCount;
 
+// Like -description but with the command line omitted, for logging into the
+// always-on retrospective ring (RLog). -description embeds firstLineOfCommand,
+// so logging a mark with %@ would otherwise leak the command line. Use
+// RLogRedact(mark, mark.redactedDescription) at RLog sites. See DebugLogging.h.
+@property(nonatomic, readonly) NSString *redactedDescription;
+
 // Array of CapturedOutput objects.
 @property(nonatomic, readonly, nullable) NSArray<id<CapturedOutputReading>> *capturedOutput;
 

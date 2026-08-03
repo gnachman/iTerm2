@@ -41,6 +41,9 @@ extension Data {
     }
 }
 
+// Big-endian fixed-width integer framing moved to Data+BigEndian.swift so it can be
+// shared with the standalone Companion Xcode project (which does not compile this file).
+
 extension Data {
     func chunks(of size: Int) -> [SubData] {
         var result: [SubData] = []

@@ -151,10 +151,21 @@ extension MovePaneController {
                 return nil
             }
 
-            _ = try extractAndInsert(session,
-                                     from: source,
-                                     into: newTerm,
-                                     at: 0)
+            do {
+                _ = try extractAndInsert(session,
+                                         from: source,
+                                         into: newTerm,
+                                         at: 0)
+            } catch {
+                // terminalDraggedFromAnotherWindow already registered the new
+                // window, but the move failed to give it a tab. Close it so it
+                // does not linger registered-but-empty in the controller's
+                // window list.
+                if newTerm.numberOfTabs() == 0 {
+                    newTerm.window?.close()
+                }
+                throw error
+            }
             return newTerm.terminalGuid
         } catch {
             return nil

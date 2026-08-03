@@ -455,7 +455,7 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
 - (void)controlTextDidChange:(NSNotification *)obj {
     NSInteger i = _tableView.selectedRow;
     if (i < 0 || i >= _model.count) {
-        DLog(@"Bogus selected row %@", @(i));
+        RLog(@"Bogus selected row %@", @(i));
         return;
     }
     [self pushUndo];
@@ -476,7 +476,7 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
 - (IBAction)actionDidChange:(id)sender {
     NSInteger i = _tableView.selectedRow;
     if (i < 0 || i >= _model.count) {
-        DLog(@"Bogus selected row %@", @(i));
+        RLog(@"Bogus selected row %@", @(i));
         return;
     }
     [self pushUndo];

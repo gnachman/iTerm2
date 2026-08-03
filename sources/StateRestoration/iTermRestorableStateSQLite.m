@@ -95,7 +95,7 @@
     NSError *error = nil;
     NSInteger windowNumber = [_windows[i] integerWithKey:@"__windowNumber" error:&error];
     if (error || !identifier) {
-        DLog(@"identifier=%@, error=%@", identifier, error);
+        RLog(@"identifier=%@, error=%@", identifier, error);
         return nil;
     }
     return [[iTermRestorableStateSQLiteRecord alloc] initWithIndex:i
@@ -214,7 +214,7 @@
         i = [coder decodeIntegerForKey:@"index"];
         [coder finishDecoding];
     } @catch (NSException *exception) {
-        DLog(@"Failed to decode index: %@", exception);
+        RLog(@"Failed to decode index: %@", exception);
         completion(nil, nil);
         return;
     }
@@ -226,19 +226,19 @@
     iTermEncoderGraphRecord *windowRecord = windowIndex[i];
     DLog(@"Done creating index");
     if (!windowRecord) {
-        DLog(@"Have no windowRecord");
+        RLog(@"Have no windowRecord");
         completion(nil, nil);
         return;
     }
 
     NSString *identifier = windowRecord.identifier;
-    DLog(@"Will restore window %@", identifier);
+    RLog(@"Will restore window %@", identifier);
     assert(identifier.length > 0);
     [self.delegate restorableStateRestoreWithRecord:windowRecord
                                          identifier:identifier
                                          completion:^(NSWindow *window,
                                                       NSError *error) {
-        DLog(@"did restore window %@", identifier);
+        RLog(@"did restore window %@", identifier);
         completion(identifier, window);
     }];
 }

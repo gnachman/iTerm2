@@ -63,6 +63,10 @@ static NSString *const kArrangement = @"Arrangement";
     BOOL _activationPending;
     iTermHotkeyRollOutStage _rollOutStage;
     void (^_cancelAnimation)(void);
+
+    // macOS 26+: set while we're waiting for iTerm2 to resign active before
+    // ordering out the hotkey window. See -deferOrderOutUntilResignActive.
+    BOOL _orderOutAfterResignActive;
 }
 
 - (instancetype)initWithShortcuts:(NSArray<iTermShortcut *> *)shortcuts
@@ -167,7 +171,7 @@ static NSString *const kArrangement = @"Arrangement";
         return;
     }
 
-    DLog(@"Create new window controller for profile hotkey");
+    RLog(@"Create new window controller for profile hotkey");
     PseudoTerminal *windowController = [self windowControllerFromRestorableState];
     [_windowController release];
     _windowController = nil;
@@ -235,7 +239,7 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)activeSpaceDidChange:(NSNotification *)notification {
-    DLog(@"activeSpaceDidChangei %@", self.windowController);
+    RLog(@"activeSpaceDidChangei %@", self.windowController);
     if (!self.isHotKeyWindowOpen) {
         DLog(@"Not open");
         return;
@@ -431,6 +435,7 @@ static NSString *const kArrangement = @"Arrangement";
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             return [windowController canonicalFrameForScreen:screen];
 
         case WINDOW_TYPE_NORMAL:
@@ -460,6 +465,7 @@ static NSString *const kArrangement = @"Arrangement";
     DLog(@"Basing hidden origin on screen frame (IHD) %@", NSStringFromRect(screen.visibleFrameIgnoringHiddenDock));
     switch (self.windowController.windowType) {
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             return rect.origin;
 
         case WINDOW_TYPE_TOP_PERCENTAGE:
@@ -635,6 +641,7 @@ static NSString *const kArrangement = @"Arrangement";
             break;
 
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
@@ -652,13 +659,13 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)rollInAnimated:(BOOL)animated {
-    DLog(@"Roll in [show] hotkey window");
+    RLog(@"Roll in [show] hotkey window");
     if (_rollingIn) {
         DLog(@"Already rolling in");
         return;
     }
     if (self.rollingOut) {
-        DLog(@"Rolling out. Cancel roll in");
+        RLog(@"Rolling out. Cancel roll in");
         return;
     }
     _rollingIn = YES;
@@ -699,6 +706,7 @@ static NSString *const kArrangement = @"Arrangement";
             case WINDOW_TYPE_NORMAL:
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_CENTERED:
+            case WINDOW_TYPE_COMPACT_CENTERED:
             case WINDOW_TYPE_COMPACT:
             case WINDOW_TYPE_MAXIMIZED:
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
@@ -723,7 +731,7 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)rollOut:(BOOL)causedByKeypress {
-    DLog(@"Roll out [hide] hotkey window");
+    RLog(@"Roll out [hide] hotkey window");
     DLog(@"\n%@", [NSThread callStackSymbols]);
     if (self.rollingOut) {
         DLog(@"Already rolling out");
@@ -732,7 +740,7 @@ static NSString *const kArrangement = @"Arrangement";
     // Note: the test for alpha is because when you become an LSUIElement, the
     // window's alpha could be 1 but it's still invisible.
     if (self.windowController.window.alphaValue == 0) {
-        DLog(@"RollOutHotkeyTerm returning because term isn't visible.");
+        RLog(@"RollOutHotkeyTerm returning because term isn't visible.");
         return;
     }
 
@@ -763,6 +771,7 @@ static NSString *const kArrangement = @"Arrangement";
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:  // Framerate drops too much to roll this (2014 5k iMac)
             case WINDOW_TYPE_ACCESSORY:
             case WINDOW_TYPE_CENTERED:
+            case WINDOW_TYPE_COMPACT_CENTERED:
                 [self fadeOut:causedByKeypress];
                 break;
 
@@ -872,14 +881,14 @@ static NSString *const kArrangement = @"Arrangement";
             }
         });
     } else {
-        DLog(@"Cannot cancel. cancelable=%@ rollingOut=%@", @(_rollOutCancelable), @(self.rollingOut));
+        RLog(@"Cannot cancel. cancelable=%@ rollingOut=%@", @(_rollOutCancelable), @(self.rollingOut));
     }
 }
 
 #pragma mark - Protected
 
 - (NSArray<iTermBaseHotKey *> *)hotKeyPressedWithSiblings:(NSArray<iTermBaseHotKey *> *)genericSiblings {
-    DLog(@"hotKeypressedWithSiblings called on %@ with siblings %@", self, genericSiblings);
+    RLog(@"hotKeypressedWithSiblings called on %@ with siblings %@", self, genericSiblings);
     DLog(@"Secure input=%@", @([[iTermSecureKeyboardEntryController sharedInstance] isEnabled]));
     if (@available(macOS 12.0, *)) {
         if ([[iTermSecureKeyboardEntryController sharedInstance] isEnabled] &&
@@ -919,7 +928,7 @@ static NSString *const kArrangement = @"Arrangement";
         return result;
     }];
     if (anyTransitioning) {
-        DLog(@"One or more siblings is transitioning so I'm returning without doing anything.");
+        RLog(@"One or more siblings is transitioning so I'm returning without doing anything.");
         return siblings;
     }
     DLog(@"toggle window %@. siblings=%@", self, siblings);
@@ -932,7 +941,7 @@ static NSString *const kArrangement = @"Arrangement";
         return anObject.windowController.window.isKeyWindow;
     }];
 
-    DLog(@"Hotkey pressed. All open=%@  any is key=%@  siblings=%@",
+    RLog(@"Hotkey pressed. All open=%@  any is key=%@  siblings=%@",
          @(allSiblingsOpen), @(anyIsKey), siblings);
     for (iTermProfileHotKey *sibling in [NSSet setWithArray:[siblings arrayByAddingObject:self]]) {
         DLog(@"Invoking handleHotkeyPressWithAllOpen:%@ anyIsKey:%@ on %@", @(allSiblingsOpen), @(anyIsKey), sibling);
@@ -1049,7 +1058,7 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)rollInFinished {
-    DLog(@"Roll-in finished for %@", self);
+    RLog(@"Roll-in finished for %@", self);
     _rollingIn = NO;
     if (self.windowController.window) {
         [[iTermApplication sharedApplication] it_makeWindowKey:self.windowController.window];
@@ -1060,6 +1069,55 @@ static NSString *const kArrangement = @"Arrangement";
     [[iTermPresentationController sharedInstance] update];
 }
 
+// macOS 26+: order out the hotkey window once iTerm2 is no longer the active
+// application, so that ordering it out doesn't briefly promote a background
+// iTerm2 window in front of the app we're switching back to. A short fallback
+// covers the case where we never resign active (e.g., the previous app couldn't
+// be activated), in which case keeping iTerm2 frontmost is the right outcome
+// anyway.
+- (void)deferOrderOutUntilResignActive {
+    DLog(@"Defer order-out until iTerm2 resigns active");
+    // Avoid a duplicate registration if a previous defer is still pending (e.g.,
+    // a rapid hide/show/hide). removeObserver:name:object: is idempotent.
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:NSApplicationDidResignActiveNotification
+                                                  object:NSApp];
+    _orderOutAfterResignActive = YES;
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(applicationDidResignActive:)
+                                                 name:NSApplicationDidResignActiveNotification
+                                               object:NSApp];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (self->_orderOutAfterResignActive) {
+            DLog(@"Resign-active fallback timer fired");
+        }
+        [self finishDeferredOrderOut];
+    });
+}
+
+- (void)applicationDidResignActive:(NSNotification *)notification {
+    DLog(@"iTerm2 resigned active");
+    [self finishDeferredOrderOut];
+}
+
+- (void)finishDeferredOrderOut {
+    if (!_orderOutAfterResignActive) {
+        // The other path (notification or fallback) already handled it, or the
+        // rollout was cancelled.
+        return;
+    }
+    _orderOutAfterResignActive = NO;
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:NSApplicationDidResignActiveNotification
+                                                  object:NSApp];
+    if (self.rollingOut) {
+        DLog(@"Order out (deferred until resign-active) with secure keyboard entry=%@",
+             @(IsSecureEventInputEnabled()));
+        _rollOutCancelable = NO;
+        [self orderOut];
+    }
+}
+
 - (void)didFinishRollingOut:(BOOL)causedByKeypress {
     DLog(@"didFinishRollingOut");
     _activationPending = NO;
@@ -1067,7 +1125,28 @@ static NSString *const kArrangement = @"Arrangement";
     BOOL activatingOtherApp = [self.delegate willFinishRollingOutProfileHotKey:self
                                                               causedByKeypress:causedByKeypress];
     if (activatingOtherApp) {
-        if (@available(macOS 14, *)) {
+        if (@available(macOS 26, *)) {
+            // On macOS 26 (Tahoe) the previously active app, activated via
+            // activateWithOptions:, becomes frontmost a few runloop turns later than
+            // it did on earlier systems. If we order out the hotkey window while
+            // iTerm2 is still the active app, AppKit promotes a background iTerm2
+            // window to the front until the other app finishes activating, which the
+            // user sees as a flash. Wait until iTerm2 actually resigns active before
+            // ordering out. This keeps issue 11372 fixed (we don't wait a fixed
+            // delay; we order out exactly when the app switch lands) while avoiding
+            // the flash from issue 5313.
+            if (!NSApp.isActive) {
+                // Already yielded; nothing would be promoted, so order out now.
+                if (self.rollingOut) {
+                    DLog(@"Order out with secure keyboard entry=%@", @(IsSecureEventInputEnabled()));
+                    _rollOutCancelable = NO;
+                    [self orderOut];
+                }
+            } else {
+                _rollOutStage = iTermHotkeyRollOutStageWaiting;
+                [self deferOrderOutUntilResignActive];
+            }
+        } else if (@available(macOS 14, *)) {
             // I'm no longer able to reproduce the bad behavior mentioned in the else clause.
             // In issue 11372 it's noted that the delay prevents you from typing in the previously
             // active app.
@@ -1128,7 +1207,7 @@ static NSString *const kArrangement = @"Arrangement";
     }
     const BOOL hotkeyWindowOnOtherSpace = ![self.windowController.window isOnActiveSpace];
     if (hotkeyWindowOnOtherSpace || activateStickyHotkeyWindow) {
-        DLog(@"Hotkey window is active on another space, or else it doesn't autohide but isn't key. Switch to it.");
+        RLog(@"Hotkey window is active on another space, or else it doesn't autohide but isn't key. Switch to it.");
         if (self.hotkeyWindowType != iTermHotkeyWindowTypeFloatingPanel) {
             [NSApp activateIgnoringOtherApps:YES];
         }

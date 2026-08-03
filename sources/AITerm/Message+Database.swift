@@ -17,18 +17,28 @@ extension Message: iTermDatabaseElement {
         case chatID
         case responseID
         case agentReasoning
+        case firstBlobRef
+        // A global, monotonic, delete-immune sequence the relay-push feature
+        // uses as a watermark cursor. INTEGER PRIMARY KEY AUTOINCREMENT: SQLite
+        // assigns it on every insert and (unlike bare rowid or a plain INTEGER
+        // PRIMARY KEY) never reuses a value, even after the top row is deleted.
+        // It is a DB-only column: not present on the shared Message struct and
+        // not bound by appendQuery/updateQuery, so the engine owns it.
+        case seq
     }
 
     static func schema() -> String {
         """
         create table if not exists Message
-            (\(Columns.uniqueID.rawValue) text,
+            (\(Columns.seq.rawValue) integer primary key autoincrement,
+             \(Columns.uniqueID.rawValue) text,
              \(Columns.author.rawValue) text not null,
              \(Columns.chatID.rawValue) text not null,
              \(Columns.content.rawValue) text not null,
              \(Columns.sentDate.rawValue) integer not null,
              \(Columns.responseID.rawValue) text,
-             \(Columns.agentReasoning.rawValue) text)
+             \(Columns.agentReasoning.rawValue) text,
+             \(Columns.firstBlobRef.rawValue) text)
         """
     }
 
@@ -40,6 +50,9 @@ extension Message: iTermDatabaseElement {
         if !existingColumns.contains(Columns.agentReasoning.rawValue) {
             result.append(.init(query: "ALTER TABLE Message ADD COLUMN \(Columns.agentReasoning.rawValue) text", args: []))
         }
+        if !existingColumns.contains(Columns.firstBlobRef.rawValue) {
+            result.append(.init(query: "ALTER TABLE Message ADD COLUMN \(Columns.firstBlobRef.rawValue) text", args: []))
+        }
         return result
     }
 
@@ -50,6 +63,50 @@ extension Message: iTermDatabaseElement {
 
     static func query(forChatID chatID: String) -> (String, [Any?]) {
         ("select * from Message where chatID=?", [chatID])
+    }
+
+    /// Newest-first window of a chat's rows with seq greater than `seq`, for the
+    /// relay-push messagesSince responder. Over-fetches (windowLimit) because
+    /// hiddenFromClient is a computed property and cannot be filtered in SQL;
+    /// the responder drops hidden rows and keeps the newest visible ones.
+    static func messagesSinceQuery(chatID: String, seq: Int64, windowLimit: Int) -> (String, [Any?]) {
+        ("""
+         select * from Message
+         where \(Columns.chatID.rawValue)=? and \(Columns.seq.rawValue)>?
+         order by \(Columns.seq.rawValue) desc limit ?
+         """,
+         [chatID, seq, windowLimit])
+    }
+
+    /// The chat's highest seq (0 if the chat has no rows). The watermark jumps
+    /// to this tip so a backlog can't re-notify.
+    static func maxSeqQuery(chatID: String) -> (String, [Any?]) {
+        ("select max(\(Columns.seq.rawValue)) as maxseq from Message where \(Columns.chatID.rawValue)=?",
+         [chatID])
+    }
+
+    /// A window of rows ACROSS ALL CHATS with seq greater than `seq`, for the
+    /// unified contentless-wakeup (syncSince) responder. Carries the chatID column
+    /// so the host can group rows by chat. Over-fetches (windowLimit) for the same
+    /// hiddenFromClient reason as messagesSinceQuery.
+    ///
+    /// `ascending` selects the window's END: ASC returns the LOWEST seqs above the
+    /// floor (the normal drain - the floor then advances only to what was covered,
+    /// so a truncated window leaves the tail for the next wakeup), DESC returns the
+    /// HIGHEST (the first-run teaser - show the newest few, jump the floor to the
+    /// tip, skip the backlog).
+    static func messagesSinceGlobalQuery(seq: Int64, windowLimit: Int, ascending: Bool) -> (String, [Any?]) {
+        ("""
+         select * from Message
+         where \(Columns.seq.rawValue)>?
+         order by \(Columns.seq.rawValue) \(ascending ? "asc" : "desc") limit ?
+         """,
+         [seq, windowLimit])
+    }
+
+    /// The global highest seq across all chats (0 if the table is empty).
+    static func maxSeqGlobalQuery() -> (String, [Any?]) {
+        ("select max(\(Columns.seq.rawValue)) as maxseq from Message", [])
     }
 
     static func tableInfoQuery() -> String {
@@ -68,8 +125,9 @@ extension Message: iTermDatabaseElement {
                 \(Columns.content.rawValue),
                 \(Columns.sentDate.rawValue),
                 \(Columns.responseID.rawValue),
-                \(Columns.agentReasoning.rawValue))
-            values (?, ?, ?, ?, ?, ?, ?)
+                \(Columns.agentReasoning.rawValue),
+                \(Columns.firstBlobRef.rawValue))
+            values (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 uniqueID.uuidString,
@@ -78,7 +136,8 @@ extension Message: iTermDatabaseElement {
                 jsonString,
                 sentDate.timeIntervalSince1970,
                 responseID,
-                agentReasoning
+                agentReasoning,
+                firstBlobRef
             ]
         )
     }
@@ -98,7 +157,8 @@ extension Message: iTermDatabaseElement {
                                 \(Columns.content.rawValue) = ?,
                                 \(Columns.sentDate.rawValue) = ?,
                                 \(Columns.responseID.rawValue) = ?,
-                                \(Columns.agentReasoning.rawValue) = ?
+                                \(Columns.agentReasoning.rawValue) = ?,
+                                \(Columns.firstBlobRef.rawValue) = ?
             where \(Columns.uniqueID.rawValue) = ?
             """,
             [
@@ -108,6 +168,7 @@ extension Message: iTermDatabaseElement {
                 sentDate.timeIntervalSince1970,
                 responseID,
                 agentReasoning,
+                firstBlobRef,
                 uniqueID.uuidString,
             ]
         )
@@ -133,5 +194,6 @@ extension Message: iTermDatabaseElement {
         self.sentDate = sentDate
         self.responseID = result.string(forColumn: Columns.responseID.rawValue)
         self.agentReasoning = result.string(forColumn: Columns.agentReasoning.rawValue)
+        self.firstBlobRef = result.string(forColumn: Columns.firstBlobRef.rawValue)
     }
 }

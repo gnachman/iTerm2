@@ -100,7 +100,7 @@
 - (BOOL)shouldSetSizeTo:(VT100GridSize)size {
     [self.temporaryDoubleBuffer reset];
 
-    DLog(@"Resize session to %@", VT100GridSizeDescription(size));
+    RLog(@"Resize session to %@", VT100GridSizeDescription(size));
     DLog(@"Before:\n%@", [self.currentGrid compactLineDumpWithContinuationMarks]);
     DLog(@"Cursor at %d,%d", self.currentGrid.cursorX, self.currentGrid.cursorY);
     if (self.commandStartCoord.x != -1) {
@@ -259,13 +259,13 @@ static void SwapInt(int *a, int *b) {
                                               VT100GridCoordMake(endX, endY),
                                               self.currentGrid.size.width);
     if (run.length <= 0) {
-        DLog(@"Run has length %@ given start and end of %@ and %@", @(run.length), VT100GridCoordDescription(start),
+        RLog(@"Run has length %@ given start and end of %@ and %@", @(run.length), VT100GridCoordDescription(start),
              VT100GridCoordDescription(end));
         return NO;
     }
     run = [self runByTrimmingNullsFromRun:run];
     if (run.length == 0) {
-        DLog(@"After trimming, run has length 0 given start and end of %@ and %@", VT100GridCoordDescription(start),
+        RLog(@"After trimming, run has length 0 given start and end of %@ and %@", VT100GridCoordDescription(start),
              VT100GridCoordDescription(end));
         return NO;
     }
@@ -416,7 +416,7 @@ static void SwapInt(int *a, int *b) {
             if (positionRange) {
                 [altScreenSubSelectionTuples addObject:@[ positionRange, sub ]];
             } else {
-                DLog(@"Failed to get position range for selection on alt screen %@",
+                RLog(@"Failed to get position range for selection on alt screen %@",
                      VT100GridCoordRangeDescription(range));
             }
         });
@@ -471,7 +471,7 @@ static void SwapInt(int *a, int *b) {
                  positionRange.end);
             [triples addObject:@[ note, positionRange.start, positionRange.end ]];
         } else {
-            DLog(@"Failed to get position range while in alt screen for note %@ with range %@",
+            RLog(@"Failed to get position range while in alt screen for note %@ with range %@",
                  note, VT100GridCoordRangeDescription(range));
         }
     }
@@ -965,14 +965,14 @@ static void SwapInt(int *a, int *b) {
             // Skip empty ranges after clamping.
             if (newRange.end.y < newRange.start.y ||
                 (newRange.end.y == newRange.start.y && newRange.end.x <= newRange.start.x)) {
-                DLog(@"  *SKIPPED EMPTY RANGE AFTER CLAMPING*");
+                RLog(@"  *SKIPPED EMPTY RANGE AFTER CLAMPING*");
                 continue;
             }
             Interval *interval = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeFromCoordRange(newRange, self.cumulativeScrollbackOverflow)
                                                               width:newSize.width];
             [self.mutableIntervalTree addObject:note withInterval:interval];
         } else {
-            DLog(@"  *FAILED TO CONVERT*");
+            RLog(@"  *FAILED TO CONVERT*");
         }
     }
 }
@@ -1128,7 +1128,7 @@ static void SwapInt(int *a, int *b) {
             // broadcast (built against altScreenLineBuffer); no
             // per-field rewrite needed here.
         } else {
-            DLog(@"Failed to convert");
+            RLog(@"Failed to convert");
         }
     }
 }
@@ -1299,7 +1299,7 @@ static void SwapInt(int *a, int *b) {
     [iTermGCD assertMainQueueSafe];
 
     DLog(@"------------ reallySetSize");
-    DLog(@"Set size to %@", VT100GridSizeDescription(newSize));
+    RLog(@"Set size to %@", VT100GridSizeDescription(newSize));
 
     const VT100GridCoordRange previouslyVisibleLines =
     VT100GridCoordRangeMake(0,

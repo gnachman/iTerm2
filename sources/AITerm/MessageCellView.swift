@@ -86,7 +86,7 @@ class MessageCellView: NSView {
             return menu
         }
         set {
-            DLog("Unexpected call to set menu")
+            RLog("Unexpected call to set menu")
         }
     }
 

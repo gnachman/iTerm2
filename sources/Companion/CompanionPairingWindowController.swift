@@ -15,7 +15,6 @@
 import AppKit
 import CompanionProtocol
 import CoreImage
-import LocalAuthentication
 
 @MainActor
 @objc(iTermCompanionPairingWindowController)
@@ -36,7 +35,16 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     // wrappingLabel, not label: a plain label cell is single-line and ignores
     // maximumNumberOfLines, silently truncating long error messages.
     private let statusLabel = NSTextField(wrappingLabelWithString: "")
+    // The mac's live relay status with a ticking timer (connected for…/last try…),
+    // updated once a second by relayStatusTimer while the window is open.
+    private let relayStatusLabel = NSTextField(labelWithString: "")
+    private var relayStatusTimer: Timer?
     private let unpairButton = NSButton(title: "Unpair", target: nil, action: nil)
+    // Shown in the paired state: a caption and the pairing's relay room name in
+    // lowercase hex, selectable so it can be copied for support. Both hidden
+    // outside the paired state (hideTopContent).
+    private let roomNameCaptionLabel = NSTextField(labelWithString: "Relay room name")
+    private let roomNameLabel = NSTextField(wrappingLabelWithString: "")
     // A remedy for the AI/admin prerequisites (e.g. "Reveal in Settings"). The
     // companion plugin and consent have their own controls in the bottom
     // section, so this is only used for the AI-side gates.
@@ -81,7 +89,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         // A floating panel so it isn't covered by the What's New onboarding
         // panel (a floating utility NSPanel) when opened from there, matching
         // the Claude Code installer's behavior.
-        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 360, height: 570),
+        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 360, height: 600),
                             styleMask: [.titled, .closable],
                             backing: .buffered,
                             defer: false)
@@ -155,7 +163,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
             return
         }
         currentGate = gate
-        DLog("Companion pairing window: gate is now \(gate)")
+        RLog("Companion pairing window: gate is now \(gate)")
         switch gate {
         case .aiAdminDisabled:
             // No remedy to offer: this is an administrator decision.
@@ -193,11 +201,75 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
                 self?.refreshGateState()
             }
         }
+        // A separate 1s tick so the relay status's elapsed time counts smoothly
+        // (the 2s gate poll would skip seconds).
+        relayStatusTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.updateRelayStatusLabel()
+            }
+        }
+        updateRelayStatusLabel()
     }
 
     private func stopGatePolling() {
         gatePollTimer?.invalidate()
         gatePollTimer = nil
+        relayStatusTimer?.invalidate()
+        relayStatusTimer = nil
+    }
+
+    /// Refresh the live relay-status line (connected-for / last-try timers). Shown
+    /// only when paired and the feature is allowed; hidden otherwise.
+    private func updateRelayStatusLabel() {
+        guard window?.isVisible == true,
+              CompanionPairingController.gate() == .allowed else {
+            relayStatusLabel.isHidden = true
+            return
+        }
+        switch controller.relayStatus {
+        case .idle:
+            relayStatusLabel.isHidden = true
+        case .connected(let since):
+            relayStatusLabel.isHidden = false
+            relayStatusLabel.textColor = .secondaryLabelColor
+            relayStatusLabel.stringValue = "Connected to relay for \(Self.elapsed(since))"
+        case .reconnecting(let lastAttempt):
+            relayStatusLabel.isHidden = false
+            relayStatusLabel.textColor = .systemYellow
+            if let lastAttempt {
+                relayStatusLabel.stringValue = "Not connected to relay (last try \(Self.elapsed(lastAttempt)) ago)"
+            } else {
+                relayStatusLabel.stringValue = "Not connected to relay"
+            }
+        case .quotaExceeded(let retryAt):
+            relayStatusLabel.isHidden = false
+            relayStatusLabel.textColor = .systemOrange
+            let wait = Self.remaining(until: retryAt)
+            relayStatusLabel.stringValue = wait.isEmpty
+                ? "Daily relay data limit reached (reconnecting…)"
+                : "Daily relay data limit reached (retry in \(wait))"
+        }
+    }
+
+    /// Compact elapsed-time string for the relay timers: "5s", "3m 12s",
+    /// "1h 04m". Whole seconds, since the label ticks once a second.
+    private static func elapsed(_ since: Date) -> String {
+        let total = max(0, Int(Date().timeIntervalSince(since)))
+        let h = total / 3600, m = (total % 3600) / 60, s = total % 60
+        if h > 0 { return "\(h)h \(String(format: "%02d", m))m" }
+        if m > 0 { return "\(m)m \(String(format: "%02d", s))s" }
+        return "\(s)s"
+    }
+
+    /// Compact countdown to a future date ("29m 58s"), same format as `elapsed`.
+    /// Empty once the deadline has passed, so the caller can show "reconnecting…".
+    private static func remaining(until date: Date) -> String {
+        let total = Int(date.timeIntervalSinceNow.rounded())
+        guard total > 0 else { return "" }
+        let h = total / 3600, m = (total % 3600) / 60, s = total % 60
+        if h > 0 { return "\(h)h \(String(format: "%02d", m))m" }
+        if m > 0 { return "\(m)m \(String(format: "%02d", s))s" }
+        return "\(s)s"
     }
 
     // MARK: Bottom settings section
@@ -319,6 +391,8 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         qrImageView.isHidden = true
         checkmarkImageView.isHidden = true
         unpairButton.isHidden = true
+        roomNameCaptionLabel.isHidden = true
+        roomNameLabel.isHidden = true
         sasField.isHidden = true
         sasVerifyButton.isHidden = true
         sasCancelButton.isHidden = true
@@ -406,18 +480,13 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     @objc private func sasVerifyPressed(_ sender: Any) {
         // Ignore an incomplete code, in case Return reaches here while the Verify
         // button is disabled.
-        guard isCompleteSAS(sasField.stringValue) else { return }
+        guard CompanionPairingController.isCompleteSAS(sasField.stringValue) else { return }
         controller.submitSASEntry(sasField.stringValue)
         sasField.stringValue = ""
     }
 
-    /// The SAS is exactly six decimal digits.
-    private func isCompleteSAS(_ s: String) -> Bool {
-        s.count == 6 && s.allSatisfy { ("0"..."9").contains($0) }
-    }
-
     private func updateSASVerifyEnabled() {
-        sasVerifyButton.isEnabled = isCompleteSAS(sasField.stringValue)
+        sasVerifyButton.isEnabled = CompanionPairingController.isCompleteSAS(sasField.stringValue)
     }
 
     func controlTextDidChange(_ obj: Notification) {
@@ -485,6 +554,14 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         hideTopContent()
         checkmarkImageView.isHidden = false
         unpairButton.isHidden = false
+        // Show the pairing's relay room name (hidden if it cannot be derived, e.g.
+        // the mac key is momentarily unavailable), so it does not show a stale or
+        // empty value.
+        if let room = controller.pairedRoomName {
+            roomNameLabel.stringValue = room
+            roomNameCaptionLabel.isHidden = false
+            roomNameLabel.isHidden = false
+        }
         updatePairedConnectionText()
         setStatus("To pair a different device, unpair first. Unpairing kicks the device off and deletes the pairing keys.",
                   color: .secondaryLabelColor)
@@ -507,6 +584,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
             instructionsLabel.stringValue = "A companion device is paired but iTerm2 isn’t listening for it yet. Reconnecting…"
             checkmarkImageView.contentTintColor = .systemYellow
         }
+        updateRelayStatusLabel()
     }
 
     /// Require the device owner to authenticate before showing a fresh pairing
@@ -520,7 +598,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         showBlockedTop("Authenticate to pair a companion device with this Mac.")
         Task { [weak self] in
             guard let self else { return }
-            let authenticated = await self.authenticateToPair()
+            let authenticated = await self.controller.authenticateToPair()
             self.pairingAuthInFlight = false
             // The gate may have changed while the sheet was up (consent revoked,
             // a device reconnected, the window closed): only show the QR if a
@@ -537,29 +615,6 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
                                     remedyTitle: "Authenticate") { [weak self] in
                     self?.startFreshPairingFlow()
                 }
-            }
-        }
-    }
-
-    private func authenticateToPair() async -> Bool {
-        let context = LAContext()
-        var error: NSError?
-        // .deviceOwnerAuthentication uses biometrics when available and falls
-        // back to the device passcode/login password otherwise.
-        guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
-            // No biometrics and no passcode configured: there is nothing to
-            // authenticate against, so let pairing proceed (the Mac is unsecured
-            // regardless).
-            DLog("Companion: no device authentication available (\(error?.localizedDescription ?? "none")); proceeding")
-            return true
-        }
-        return await withCheckedContinuation { continuation in
-            context.evaluatePolicy(.deviceOwnerAuthentication,
-                                   localizedReason: "pair a companion device with this Mac") { success, authError in
-                if let authError {
-                    DLog("Companion: pairing authentication failed: \(authError.localizedDescription)")
-                }
-                continuation.resume(returning: success)
             }
         }
     }
@@ -586,8 +641,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     func windowWillClose(_ notification: Notification) {
         stopGatePolling()
         currentGate = nil
-        DLog("Companion windowWillClose (hasPairedDevice=\(controller.hasPairedDevice)): "
-             + (controller.hasPairedDevice ? "keeping listener" : "stopAdvertising"))
+        RLog("Companion windowWillClose (hasPairedDevice=\(controller.hasPairedDevice)): \(controller.hasPairedDevice ? "keeping listener" : "stopAdvertising")")
         if controller.hasPairedDevice {
             // A pairing happened: the listener that handled it keeps running in
             // the background to serve the connection and accept reconnects.
@@ -608,8 +662,18 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         let title = NSTextField(labelWithString: "Companion Device Settings")
         title.font = .boldSystemFont(ofSize: 18)
         title.alignment = .center
-        title.frame = NSRect(x: 20, y: 526, width: 320, height: 28)
+        title.frame = NSRect(x: 20, y: 556, width: 320, height: 28)
         content.addSubview(title)
+
+        // Live relay status with a ticking timer, just under the title. Hidden
+        // until paired (updateRelayStatusLabel manages visibility + text).
+        relayStatusLabel.alignment = .center
+        relayStatusLabel.font = .systemFont(ofSize: 12)
+        relayStatusLabel.textColor = .secondaryLabelColor
+        relayStatusLabel.lineBreakMode = .byTruncatingTail
+        relayStatusLabel.frame = NSRect(x: 20, y: 530, width: 320, height: 18)
+        relayStatusLabel.isHidden = true
+        content.addSubview(relayStatusLabel)
 
         installAppButton.target = self
         installAppButton.action = #selector(installAppPressed(_:))
@@ -646,6 +710,27 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         checkmarkImageView.image = checkImage
         checkmarkImageView.isHidden = true
         content.addSubview(checkmarkImageView)
+
+        // Paired-state relay room name: a small caption above the lowercase-hex
+        // value, in the band between the checkmark and the Unpair button. The hex
+        // is monospaced and selectable so it can be copied; it wraps to two lines
+        // (64 chars) by character. Both hidden until showPairedState reveals them.
+        roomNameCaptionLabel.alignment = .center
+        roomNameCaptionLabel.font = .systemFont(ofSize: 9)
+        roomNameCaptionLabel.textColor = .tertiaryLabelColor
+        roomNameCaptionLabel.frame = NSRect(x: 20, y: 262, width: 320, height: 12)
+        roomNameCaptionLabel.isHidden = true
+        content.addSubview(roomNameCaptionLabel)
+
+        roomNameLabel.alignment = .center
+        roomNameLabel.font = .monospacedSystemFont(ofSize: 10.5, weight: .regular)
+        roomNameLabel.textColor = .secondaryLabelColor
+        roomNameLabel.isSelectable = true
+        roomNameLabel.lineBreakMode = .byCharWrapping
+        roomNameLabel.maximumNumberOfLines = 2
+        roomNameLabel.frame = NSRect(x: 16, y: 234, width: 328, height: 26)
+        roomNameLabel.isHidden = true
+        content.addSubview(roomNameLabel)
 
         // Sits low, just above the "To pair a different device…" status text.
         unpairButton.target = self

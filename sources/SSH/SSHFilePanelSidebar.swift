@@ -604,7 +604,7 @@ extension SSHFilePanelSidebar: NSOutlineViewDataSource {
                     return true
                 }
             } catch {
-                DLog("Failed to decode SSH file node data: \(error)")
+                RLog("Failed to decode SSH file node data: \(error)")
             }
         }
 

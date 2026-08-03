@@ -38,6 +38,17 @@ enum iTermWorkgroupToolbarItemKind: String, Codable, CaseIterable {
     // navigation, only meaningful paired with .changedFileSelector,
     // so the settings UI hides it from sessions without one.
     case gitBaseSelector
+    // On/off toggle, defaulting off, for .codeReview peers. When on,
+    // the review session's clippings are sent to the workgroup's main
+    // session each time the review session goes idle. The settings UI
+    // only offers this item on sessions whose mode is .codeReview.
+    case autoSendClippingsWhenIdle
+    // On/off toggle, defaulting off, for the main (root) session. When
+    // on, a code review is auto-requested from the workgroup's sole
+    // code-review session each time the main session goes idle. Disabled
+    // unless the workgroup has exactly one code-review session. The
+    // settings UI only offers this item on root sessions.
+    case autoRequestReviewWhenIdle
     // Auto-injected at runtime — never user-addable, never written to
     // disk. The decoder still understands it so a future change that
     // does persist it wouldn't trip an old client.
@@ -57,6 +68,8 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
     case reload(WorkgroupToolbarShortcut?)
     case spacer(minWidth: CGFloat, maxWidth: CGFloat)
     case gitBaseSelector
+    case autoSendClippingsWhenIdle
+    case autoRequestReviewWhenIdle
     case name
 
     var kind: iTermWorkgroupToolbarItemKind {
@@ -68,6 +81,8 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
         case .reload: return .reload
         case .spacer: return .spacer
         case .gitBaseSelector: return .gitBaseSelector
+        case .autoSendClippingsWhenIdle: return .autoSendClippingsWhenIdle
+        case .autoRequestReviewWhenIdle: return .autoRequestReviewWhenIdle
         case .name: return .name
         }
     }
@@ -96,7 +111,8 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
         case .reload(let shortcut):
             try c.encodeIfPresent(shortcut, forKey: .shortcut)
         case .gitStatus, .changedFileSelector, .modeSwitcher,
-             .gitBaseSelector, .name:
+             .gitBaseSelector, .autoSendClippingsWhenIdle,
+             .autoRequestReviewWhenIdle, .name:
             break
         }
     }
@@ -131,6 +147,8 @@ enum iTermWorkgroupToolbarItem: Codable, Equatable, Hashable {
             let maxWidth = try c.decode(CGFloat.self, forKey: .maxWidth)
             self = .spacer(minWidth: minWidth, maxWidth: maxWidth)
         case .gitBaseSelector: self = .gitBaseSelector
+        case .autoSendClippingsWhenIdle: self = .autoSendClippingsWhenIdle
+        case .autoRequestReviewWhenIdle: self = .autoRequestReviewWhenIdle
         case .name: self = .name
         }
     }

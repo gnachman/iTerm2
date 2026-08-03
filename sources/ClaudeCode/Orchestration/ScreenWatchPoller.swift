@@ -34,8 +34,22 @@ final class ScreenWatchPoller {
 
     private let watcher: WorkgroupWatcher
     private let sessionProvider: () -> PTYSession?
+    // Re-checked before every screen read so a permission revoked mid-watch
+    // (e.g. the user turns View Contents to never on a session-bound chat) stops
+    // the reads immediately, not just at the next registration. The dispatcher
+    // also tears the poller down on a permission-change message; this is the
+    // belt-and-suspenders path for changes that don't route through it (e.g. a
+    // global default-permission change). Defaults to always-allowed so existing
+    // callers and orchestration watches are unaffected.
+    private let mayRead: @MainActor () -> Bool
     private let onReached: () -> Void
     private let onTimedOut: () -> Void
+    // Invoked when `mayRead` goes false mid-run: the chat lost screen-read
+    // permission, so this poller (whose only job is reading the screen) can't
+    // continue. Routed back to the dispatcher to drop the watcher and tell the
+    // agent, preserving the "every drop tells the agent" invariant on the
+    // non-routed revoke path (a global default flip that posts no .setPermissions).
+    private let onPermissionLost: () -> Void
 
     private var task: Task<Void, Never>?
     // Held only for its lifetime so cancel() can abort an in-flight model
@@ -44,29 +58,94 @@ final class ScreenWatchPoller {
     // the run loop is awaiting.
     private var inflight: AIConversation?
 
-    // Stop and notify after this much wall-clock time without reaching the
-    // target. The session reports no status, so we can't wait forever on a
-    // signal that may never come; the agent gets a watchTimedOut update and
-    // decides what to do.
-    private static let deadline: TimeInterval = 300  // 5 minutes
+    // Give up and hand back to the orchestrator after this much wall-clock
+    // time without reaching the target. The old 5-minute cap woke the
+    // orchestrator (a full, user-visible model turn) for every watch that
+    // outran it, and a code review routinely runs longer, so that produced a
+    // stream of "watch timed out, re-registering" chatter for no user
+    // benefit. The poller now keeps watching on its own for hours, polling
+    // less and less often (see backoff), and only surfaces watchTimedOut as a
+    // rare backstop for a condition that may simply never come true.
+    static let deadline: TimeInterval = 6 * 3600  // 6 hours
 
-    // Quadratic backoff between polls: delay(n) = 3 + n*n seconds, with n
-    // the number of polls already completed. Tight at first (responsive on
-    // short tasks: 3, 4, 7, 12…), widening as a task drags on so a
-    // long-running job isn't billed a model round-trip every few seconds.
-    // The cumulative sum crosses the 5-minute cap at ~9 polls.
-    private static func backoff(pollIndex n: Int) -> TimeInterval {
-        return TimeInterval(3 + n * n)
+    /// A human-readable form of `deadline`, so the dispatcher's watchTimedOut
+    /// message can name the wait without a separate literal that drifts when
+    /// `deadline` changes.
+    static var deadlineDescription: String {
+        // Below an hour, name it in minutes: rounding hours would emit
+        // "0 hours" for any sub-30-minute deadline (e.g. the former 5-minute
+        // value), which reads as broken in the model-visible timeout message.
+        guard deadline >= 3600 else {
+            let minutes = max(1, Int((deadline / 60).rounded()))
+            return minutes == 1 ? "1 minute" : "\(minutes) minutes"
+        }
+        let hours = Int((deadline / 3600).rounded())
+        return hours == 1 ? "1 hour" : "\(hours) hours"
+    }
+
+    // Poll cadence widens the longer a watch runs, to bound token cost on a
+    // long wait (each poll is an economy-model round-trip):
+    //   * first 5 minutes: quadratic backoff 3 + n*n (responsive on short
+    //     tasks: 3, 4, 7, 12, 19, 28…), unchanged.
+    //   * after 5 minutes: no tighter than every 2 minutes.
+    //   * after 1 hour: no tighter than every 10 minutes.
+    // A 10-minute ceiling also caps how stale the reading can get once a
+    // watch is old, so a late completion is still noticed within ten minutes.
+    private static let slowAfter: TimeInterval = 300      // 5 minutes
+    private static let slowerAfter: TimeInterval = 3600   // 1 hour
+    private static let slowInterval: TimeInterval = 120   // >= 2 min after slowAfter
+    private static let slowerInterval: TimeInterval = 600 // >= 10 min after slowerAfter
+    private static let maxInterval: TimeInterval = 600    // never slower than 10 min
+
+    // Delay before the next poll, given how many polls have run (n) and how
+    // long the watch has been active. The quadratic keeps early detection
+    // tight; the elapsed-based floors slow it down in tiers so a multi-hour
+    // watch is not billed a model round-trip every minute or two.
+    private static func backoff(pollIndex n: Int, elapsed: TimeInterval) -> TimeInterval {
+        let quadratic = TimeInterval(3 + n * n)
+        let floor: TimeInterval
+        if elapsed >= slowerAfter {
+            floor = slowerInterval
+        } else if elapsed >= slowAfter {
+            floor = slowInterval
+        } else {
+            floor = 0
+        }
+        return min(max(quadratic, floor), maxInterval)
     }
 
     init(watcher: WorkgroupWatcher,
          sessionProvider: @escaping () -> PTYSession?,
-         onReached: @escaping () -> Void,
-         onTimedOut: @escaping () -> Void) {
+         mayRead: @escaping @MainActor () -> Bool = { true },
+         onReached: @escaping () -> Void = {},
+         onTimedOut: @escaping () -> Void = {},
+         onPermissionLost: @escaping () -> Void = {}) {
         self.watcher = watcher
         self.sessionProvider = sessionProvider
+        self.mayRead = mayRead
         self.onReached = onReached
         self.onTimedOut = onTimedOut
+        self.onPermissionLost = onPermissionLost
+    }
+
+    // One screen read + model judgement, with no run loop, deadline, or
+    // backoff. Returns true only when the model positively confirms the
+    // watcher's target. Used by the tab-status escalation backstop, which
+    // owns its own re-check cadence (a single check every few minutes)
+    // rather than running a continuous poll. The instance must be retained
+    // for the duration of the call so cancel() can abort the in-flight
+    // model request if the watch is resolved or dropped mid-check; an
+    // unreadable or cancelled judgement returns false (treated as not-yet,
+    // same as the run loop treats `unknown`).
+    func checkOnce() async -> Bool {
+        // Don't read the screen if the chat's permission to do so was revoked.
+        guard mayRead() else { return false }
+        guard let session = sessionProvider() else { return false }
+        let contents = WorkgroupIntrospection.screenContents(
+            forSession: session, requestedLines: 150)
+        let capture = Capture(elapsed: 0, text: contents.text)
+        let verdict = await evaluate(window: [capture], kind: contents.kind)
+        return verdict == .reached
     }
 
     func start() {
@@ -92,7 +171,7 @@ final class ScreenWatchPoller {
     // logger, so this is the only window into what a statusless watch is
     // doing; replies are snippeted so a screen-derived answer stays short.
     private func log(_ message: String) {
-        DLog("[ScreenWatchPoller \(watcher.roleName)] \(message)")
+        RLog("[ScreenWatchPoller \(watcher.roleName)] \(message)")
     }
 
     private static func snippet(_ text: String, limit: Int = 200) -> String {
@@ -118,6 +197,17 @@ final class ScreenWatchPoller {
                 log("Timed out after \(Int(elapsed))s without reaching "
                     + watcher.goalDescription + ".")
                 onTimedOut()
+                return
+            }
+            // Stop reading if the chat's permission to read the screen was
+            // revoked mid-watch. Route the stop back to the dispatcher via
+            // onPermissionLost so it drops the watcher and tells the agent (a
+            // fired/timed-out callback would be misleading). This unifies the
+            // non-routed revoke path (a global default flip that posts no
+            // .setPermissions) with the reconcile/regate drops.
+            guard mayRead() else {
+                log("Screen reads no longer permitted; stopping.")
+                onPermissionLost()
                 return
             }
             guard let session = sessionProvider() else {
@@ -146,7 +236,7 @@ final class ScreenWatchPoller {
             // notYet or unknown: keep polling until the target shows up or
             // the time cap fires.
             previous = capture
-            let delay = Self.backoff(pollIndex: pollIndex)
+            let delay = Self.backoff(pollIndex: pollIndex, elapsed: elapsed)
             pollIndex += 1
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
         }
@@ -176,10 +266,45 @@ final class ScreenWatchPoller {
 
     // Judge one poll. If the first reply doesn't parse, ask once for a clean
     // REACHED/NOT_YET in the same conversation before giving up as unknown.
+    // Prefer a cheaper same-vendor model for these frequent, low-stakes
+    // judgements (e.g. Opus -> Haiku), where the primary chat model would be
+    // overkill and too expensive to run every few seconds. nil (no economy
+    // alternative, or an unconfigured/unknown model) leaves the conversation on
+    // the user's configured chat model. The returned model preserves the
+    // configured model's url/api, so a user's custom base URL (proxy/gateway) is
+    // honored and the API key is not leaked to the public vendor host.
+    private static func economyModel() -> AIMetadata.Model? {
+        // A user-designated economy model (toggled in Manual AI Models) wins. It
+        // is a full manual model with its own url/api/auth, so it is used
+        // verbatim, honoring a custom base URL and its own vendor's API key.
+        if let designated = userDesignatedEconomyModel() {
+            return designated
+        }
+        guard let configured = LLMMetadata.model() else {
+            return nil
+        }
+        return AIMetadata.economyModel(for: configured)
+    }
+
+    // The manual model the user marked as the economy model, if any, resolved to
+    // a full model. nil if unset or no longer present among the manual models.
+    private static func userDesignatedEconomyModel() -> AIMetadata.Model? {
+        guard let name = iTermPreferences.string(forKey: kPreferenceKeyAIEconomyModelName),
+              !name.isEmpty else {
+            return nil
+        }
+        return LLMMetadata.manualModels().first { $0.name == name }
+    }
+
     private func evaluate(window: [Capture], kind: SessionKind) async -> Verdict {
+        let economyModel = Self.economyModel()
         var conversation = AIConversation(registrationProvider: nil)
         conversation.systemMessage = Self.systemPrompt(for: watcher)
         conversation.shouldThink = false
+        // Set via modelOverride (a full model), not `model` (a name that
+        // AIConversation re-resolves to the catalog's public endpoint), so the
+        // configured transport/auth is preserved.
+        conversation.modelOverride = economyModel
         conversation.add(text: Self.userPrompt(window: window, kind: kind),
                          role: .user)
         guard let (reply, amended) = await complete(conversation) else {
@@ -195,7 +320,12 @@ final class ScreenWatchPoller {
         // Unparseable: ask once for a clean answer in the same context, then
         // accept whatever we can parse (still unknown if it flubs it again).
         log("Unparseable reply; asking the model to rephrase.")
+        // AIConversation's copy initializer carries neither modelOverride nor
+        // shouldThink onto the amended conversation, so re-set both to keep the
+        // rephrase turn on the economy model with thinking off.
         var retry = amended
+        retry.modelOverride = economyModel
+        retry.shouldThink = false
         retry.add(text: "Reply with exactly one word and nothing else: "
                       + "REACHED or NOT_YET.",
                   role: .user)

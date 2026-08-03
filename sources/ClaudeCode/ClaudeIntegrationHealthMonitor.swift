@@ -135,12 +135,12 @@ final class ClaudeIntegrationHealthMonitor: NSObject {
         // next claude-launch notification retries; the broken
         // state is real and the user should still see the prompt.
         if iTermWarning.showingWarning() {
-            DLog("Health: another warning came up during disk read, deferring")
+            RLog("Health: another warning came up during disk read, deferring")
             alertInFlight = false
             hasEvaluated = false
             return
         }
-        DLog("Health: integration completed but hook is missing on disk — prompting")
+        RLog("Health: integration completed but hook is missing on disk — prompting")
         let warning = iTermWarning()
         warning.heading = "Claude Code Integration Looks Broken"
         warning.title = "iTerm2\u{2019}s cc-status hook is no longer in "

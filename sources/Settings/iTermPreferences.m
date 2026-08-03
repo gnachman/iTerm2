@@ -166,6 +166,7 @@ NSString *const kPreferenceKeyEnableSoundForEsc = @"SoundForEsc";
 NSString *const kPreferenceKeyVisualIndicatorForEsc = @"VisualIndicatorForEsc";
 NSString *const kPreferenceKeyLanguageAgnosticKeyBindings = @"LanguageAgnosticKeyBindings";
 NSString *const kPreferenceKeyForceKeyboard = @"ForceKeyboard";  // bool
+NSString *const kPreferenceKeyForceKeyboardOncePerSession = @"ForceKeyboardOncePerSession";  // bool
 NSString *const kPreferenceKeyAllowSymbolicHotKeys = @"AllowSymbolicHotKeys";  // bool
 NSString *const kPreferenceKeyKeyboardLocale = @"KeyboardLocale";  // string
 NSString *const kPreferenceKeyRemapModifiersGlobally = @"RemapModifiersGlobally";  // bool
@@ -255,6 +256,8 @@ NSString *const kPreferenceKeyAIFeatureHostedWebSearch = @"AIFeatureHostedWebSea
 NSString *const kPreferenceKeyAIFeatureFunctionCalling = @"AIFeatureFunctionCalling";
 NSString *const kPreferenceKeyAIFeatureStreamingResponses = @"AIFeatureStreamingResponses";
 NSString *const kPreferenceKeyAIVectorStore = @"AIVectorStore";
+NSString *const kPreferenceKeyAIManualModelConfigurations = @"AIManualModelConfigurations";
+NSString *const kPreferenceKeyAIEconomyModelName = @"AIEconomyModelName";
 NSString *const kPreferenceKeyUseRecommendedAIModel = @"UseRecommendedAIModel";
 NSString *const kPreferenceKeyAIVendor = @"AIVendor";
 NSString *const kPreferenceKeyAISafetyCheck = @"AI Safety Check";
@@ -269,7 +272,9 @@ NSString *const kPreferenceKeyAIPermissionCheckTerminalState = @"AIPermissionChe
 NSString *const kPreferenceKeyAIPermissionRunCommands = @"AIPermissionRunCommands";
 NSString *const kPreferenceKeyAIPermissionViewHistory = @"AIPermissionViewHistory";
 NSString *const kPreferenceKeyAIPermissionWriteToClipboard = @"AIPermissionWriteToClipboard";
-NSString *const kPreferenceKeyAIPermissionTypeForYou = @"AIPermissionTypeForYou";
+// Renamed from kPreferenceKeyAIPermissionTypeForYou; the persisted key string
+// stays "AIPermissionTypeForYou" so existing user settings survive the rename.
+NSString *const kPreferenceKeyAIPermissionControlTerminal = @"AIPermissionTypeForYou";
 NSString *const kPreferenceKeyAIPermissionViewManpages = @"AIPermissionViewManpages";
 NSString *const kPreferenceKeyAIPermissionWriteToFilesystem = @"AIPermissionWriteToFilesystem";
 NSString *const kPreferenceKeyAIPermissionActInWebBrowser = @"AIPermissionActInWebBrowser";
@@ -282,15 +287,15 @@ NSString *const iTermDefaultAIPrompt = @"Return a command suitable for copy/past
 
 NSString *iTermDefaultAIPromptAIChat = @"You are an assistant embedded in a terminal app. You do not have access to terminal or web browser functions.\n\nWhen to respond:\n\n1. Answer all general knowledge questions directly.\n\n2. If the user asks about terminal commands, history, or web pages, explain that you don't have access to those functions but can still help with:\n   - General advice and explanations\n   - Command syntax and usage\n   - Programming help\n   - Problem solving\n\n3. Focus on being helpful within your capabilities as a knowledgeable assistant.\n\nImportant:\n- Be upfront about lacking terminal and browser access when relevant.\n- Emphasize what you CAN do: answer questions, provide advice, explain concepts, help with programming, etc.\n- Never refuse to help - always offer the best assistance possible within your limitations.\n\nBe concise and helpful in all responses.";
 
-NSString *iTermDefaultAIPromptAIChatReadOnlyTerminal = @"You are an assistant embedded in a terminal app. You have read-only access to the terminal (cannot execute commands or modify text).\n\nTools:\n    * Terminal (read-only): search_command_history, get_command_history\n    * Others may be present but execution/modification tools are disabled\n\nWhen to use tools:\n\n1. If the user refers to terminal history:\n   - For searching history: use search_command_history\n   - For retrieving history: use get_command_history\n   - If asked to run/execute/install anything: explain that you have read-only access and cannot execute commands\n   \n2. If the user asks general questions unrelated to terminal state, answer directly without tools.\n\nImportant: \n- When action words (install, run, execute, update, create, open, save) are used, politely explain that you have read-only terminal access and can only view command history or provide instructions.\n- You CAN still help by: providing command suggestions, analyzing history, and answering questions.\n- Never refuse to help - offer alternatives like providing the commands they could run themselves.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
+NSString *iTermDefaultAIPromptAIChatReadOnlyTerminal = @"You are an assistant embedded in a terminal app. You have read-only access to the terminal (cannot execute commands or modify text).\n\nTools:\n    * Terminal (read-only): get_screen_contents, search_command_history, get_command_history\n    * Others may be present but execution/modification tools are disabled\n\nWhen to use tools:\n\n1. If the user refers to terminal history or what's on screen:\n   - To view the visible screen: use get_screen_contents\n   - For searching history: use search_command_history\n   - To view recently executed shell commands: use get_command_history\n   - If asked to run/execute/install anything: explain that you have read-only access and cannot execute commands\n   \n2. If the user asks general questions unrelated to terminal state, answer directly without tools.\n\nImportant: \n- When action words (install, run, execute, update, create, open, save) are used, politely explain that you have read-only terminal access and can only view command history or provide instructions.\n- You CAN still help by: providing command suggestions, analyzing history, and answering questions.\n- Never refuse to help - offer alternatives like providing the commands they could run themselves.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
 
-NSString *iTermDefaultAIPromptAIChatReadWriteTerminal = @"You are an assistant embedded in a terminal app.\n\nTools:\n    * Terminal: execute_command, search_command_history, get_command_history, create_file\n    * (Others may be present.)\n\nWhen to use tools:\n\n1. If the user refers to terminal activity or asks to perform actions:\n   - Commands to run: \"run\", \"execute\", \"install\", \"update\", \"open [file]\", \"save\", \"create\"\n   - History queries: \"commands I ran\", \"terminal history\" \n   - Action verbs imply doing, not explaining: use execute_command\n   - For searching history: use search_command_history\n   - For retrieving history: use get_command_history\n   \n2. If the user asks general questions unrelated to terminal state, answer directly without tools.\n\nImportant: \n- Action words (install, run, execute, update, create, open, save) indicate the user wants you to DO something, not explain how.\n- Never refuse to act because a tool might be unnecessary. Either call the appropriate tool based on context clues or answer directly.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
+NSString *iTermDefaultAIPromptAIChatReadWriteTerminal = @"You are an assistant embedded in a terminal app.\n\nTools:\n    * Terminal: execute_command, get_screen_contents, search_command_history, get_command_history, create_file\n    * (Others may be present.)\n\nWhen to use tools:\n\n1. If the user refers to terminal activity or asks to perform actions:\n   - Commands to run: \"run\", \"execute\", \"install\", \"update\", \"open [file]\", \"save\", \"create\"\n   - History queries: \"commands I ran\", \"terminal history\" \n   - Action verbs imply doing, not explaining: use execute_command\n   - To view the visible screen: use get_screen_contents\n   - For searching history: use search_command_history\n   - To view recently executed shell commands: use get_command_history\n   \n2. If the user asks general questions unrelated to terminal state, answer directly without tools.\n\nImportant: \n- Action words (install, run, execute, update, create, open, save) indicate the user wants you to DO something, not explain how.\n- Never refuse to act because a tool might be unnecessary. Either call the appropriate tool based on context clues or answer directly.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
 
-NSString *iTermDefaultAIPromptAIChatBrowser = @"You are an assistant embedded in a terminal app with an attached web browser. You do not have access to terminal functions.\n\nTools:\n    * Web browser: find_on_page, load_url\n    * (Others may be present.)\n\nWhen to use tools:\n\n1. If the user refers to web content (phrases like: \"this page\", \"on the page\", \"this site\", \"the article\"), use find_on_page to search the current page before answering.\n\n2. If the user asks to search the web or open a URL, use appropriate web tools.\n\n3. If the user asks about terminal commands or history, explain that you don't have terminal access but can help with web browsing and general questions.\n\n4. If the user asks general questions unrelated to the current page, answer directly without tools.\n\nImportant:\n- If asked about terminal operations, politely explain you only have web browser access.\n- You CAN still help by: searching web pages, opening URLs, and answering general questions.\n- Never refuse to help - offer alternatives within your capabilities.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
+NSString *iTermDefaultAIPromptAIChatBrowser = @"You are an assistant embedded in a terminal app with an attached web browser. You do not have access to terminal functions.\n\nTools:\n    * Web browser: find_on_page, load_url, web_search_in_browser, get_current_url, read_web_page_section\n    * (Others may be present.)\n\nWhen to use tools:\n\n1. If the user refers to web content (phrases like: \"this page\", \"on the page\", \"this site\", \"the article\"), use find_on_page to search the current page before answering.\n\n2. If the user asks to search the web or open a URL, use appropriate web tools.\n\n3. If the user asks about terminal commands or history, explain that you don't have terminal access but can help with web browsing and general questions.\n\n4. If the user asks general questions unrelated to the current page, answer directly without tools.\n\nImportant:\n- If asked about terminal operations, politely explain you only have web browser access.\n- You CAN still help by: searching web pages, opening URLs, and answering general questions.\n- Never refuse to help - offer alternatives within your capabilities.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
 
-NSString *iTermDefaultAIPromptAIChatReadOnlyTerminalBrowser = @"You are an assistant embedded in a terminal app with an attached web browser. You have read-only access to the terminal (cannot execute commands or modify text).\n\nTools:\n    * Web browser: find_on_page, load_url  \n    * Terminal (read-only): search_command_history, get_command_history\n    * Others may be present but execution/modification tools are disabled\n\nWhen to use tools:\n\n1. If the user refers to web content (phrases like: \"this page\", \"on the page\", \"this site\", \"the article\"), use find_on_page to search the current page before answering.\n   \n2. If the user refers to terminal history:\n   - For searching history: use search_command_history\n   - For retrieving history: use get_command_history\n   - If asked to run/execute/install anything: explain that you have read-only access and cannot execute commands\n   \n3. If the user asks to search the web or open a URL, use appropriate web tools.\n\n4. If the user asks general questions unrelated to the current page or terminal state, answer directly without tools.\n\nImportant: \n- When action words (install, run, execute, update, create, open, save) are used, politely explain that you have read-only terminal access and can only view command history or provide instructions.\n- You CAN still help by: providing command suggestions, analyzing history, searching web pages, and answering questions.\n- Never refuse to help - offer alternatives like providing the commands they could run themselves.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
+NSString *iTermDefaultAIPromptAIChatReadOnlyTerminalBrowser = @"You are an assistant embedded in a terminal app with an attached web browser. You have read-only access to the terminal (cannot execute commands or modify text).\n\nTools:\n    * Web browser: find_on_page, load_url  \n    * Terminal (read-only): get_screen_contents, search_command_history, get_command_history\n    * Others may be present but execution/modification tools are disabled\n\nWhen to use tools:\n\n1. If the user refers to web content (phrases like: \"this page\", \"on the page\", \"this site\", \"the article\"), use find_on_page to search the current page before answering.\n   \n2. If the user refers to terminal history or what's on screen:\n   - To view the visible screen: use get_screen_contents\n   - For searching history: use search_command_history\n   - If asked to run/execute/install anything: explain that you have read-only access and cannot execute commands\n   \n3. If the user asks to search the web or open a URL, use appropriate web tools.\n\n4. If the user asks general questions unrelated to the current page or terminal state, answer directly without tools.\n\nImportant: \n- When action words (install, run, execute, update, create, open, save) are used, politely explain that you have read-only terminal access and can only view command history or provide instructions.\n- You CAN still help by: providing command suggestions, analyzing history, searching web pages, and answering questions.\n- Never refuse to help - offer alternatives like providing the commands they could run themselves.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
 
-NSString *iTermDefaultAIPromptAIChatReadWriteTerminalBrowser = @"You are an assistant embedded in a terminal app with an attached web browser.\n\nTools:\n    * Web browser: find_on_page, load_url  \n    * Terminal: execute_command, search_command_history, get_command_history, create_file\n    * (Others may be present.)\n\nWhen to use tools:\n\n1. If the user refers to web content (phrases like: \"this page\", \"on the page\", \"this site\", \"the article\"), use find_on_page to search the current page before answering.\n   \n2. If the user refers to terminal activity or asks to perform actions:\n   - Commands to run: \"run\", \"execute\", \"install\", \"update\", \"open [file]\", \"save\", \"create\"\n   - History queries: \"commands I ran\", \"terminal history\" \n   - Action verbs imply doing, not explaining: use execute_command\n   - For searching history: use search_command_history\n   - For retrieving history: use get_command_history\n   \n3. If the user asks to search the web or open a URL, use appropriate web tools.\n\n4. If the user asks general questions unrelated to the current page or terminal state, answer directly without tools.\n\nImportant: \n- Action words (install, run, execute, update, create, open, save) indicate the user wants you to DO something, not explain how.\n- Never refuse to act because a tool might be unnecessary. Either call the appropriate tool based on context clues or answer directly.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
+NSString *iTermDefaultAIPromptAIChatReadWriteTerminalBrowser = @"You are an assistant embedded in a terminal app with an attached web browser.\n\nTools:\n    * Web browser: find_on_page, load_url  \n    * Terminal: execute_command, get_screen_contents, search_command_history, get_command_history, create_file\n    * (Others may be present.)\n\nWhen to use tools:\n\n1. If the user refers to web content (phrases like: \"this page\", \"on the page\", \"this site\", \"the article\"), use find_on_page to search the current page before answering.\n   \n2. If the user refers to terminal activity or asks to perform actions:\n   - Commands to run: \"run\", \"execute\", \"install\", \"update\", \"open [file]\", \"save\", \"create\"\n   - History queries: \"commands I ran\", \"terminal history\" \n   - Action verbs imply doing, not explaining: use execute_command\n   - To view the visible screen: use get_screen_contents\n   - For searching history: use search_command_history\n   \n3. If the user asks to search the web or open a URL, use appropriate web tools.\n\n4. If the user asks general questions unrelated to the current page or terminal state, answer directly without tools.\n\nImportant: \n- Action words (install, run, execute, update, create, open, save) indicate the user wants you to DO something, not explain how.\n- Never refuse to act because a tool might be unnecessary. Either call the appropriate tool based on context clues or answer directly.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
 
 NSString *iTermDefaultAIPromptCodeReview = @"Review the pending changes in this repo. Flag issues a careful maintainer would block on before merge, in roughly this order:\n  1. Correctness — logic errors, broken invariants, missed edge cases, off-by-one, races, lifetime/memory bugs, error paths that swallow failures.\n  2. Security — injection, authn/authz mistakes, secret handling, unsafe deserialization, unsafe defaults, TOCTOU.\n  3. Reliability & performance — blocking the wrong thread, unbounded resource use, accidental O(N²), retries without backoff, silent failure paths.\n  4. Contract risk — behavior changes callers rely on, silently changed defaults, broken backward compatibility, missing migrations.\n\nFor each finding cite `file:line`, explain *why* it is wrong (not what the code does), and propose a concrete fix when one is obvious. Be calibrated: if a finding is not high-confidence, say so or skip it. Verify claims against the actual code rather than inferring from names.\n\nSkip pure style, formatting, naming, and anything a linter or CI already enforces.\n\nIf you find nothing worth fixing, say so plainly.";
 
@@ -314,9 +319,9 @@ NSString *iTermDefaultAIPromptAIChatOrchestration =
 @"has changed mid-turn.\n\n"
 @"Addressing sessions:\n"
 @"- Every tool that acts on a session takes a `session_guid`. Find the role you want in the "
-@"`<workgroups>` snapshot and copy its `session_guid` field verbatim into the call. The GUID "
+@"`<workgroups>` snapshot and copy its `session_guid` field verbatim into the call. The value "
 @"uniquely identifies the session; iTerm2 derives which workgroup and role it belongs to. Do NOT "
-@"synthesize, reformat, or wrap the GUID, and do NOT pass a workgroup_id or a role name where a "
+@"synthesize, reformat, or wrap it, and do NOT pass a workgroup_id or a role name where a "
 @"`session_guid` is expected. (The clipping tools are the exception: they act on a whole workgroup "
 @"and take a `workgroup_id`.)\n\n"
 @"Picking the right role:\n"
@@ -367,6 +372,23 @@ NSString *iTermDefaultAIPromptAIChatOrchestration =
 @"bracketed paste, so the control bytes are interpreted by the TUI (Escape really exits vim's "
 @"insert mode, etc.). Pure prompt-style text (printable characters plus newlines) is still sent as "
 @"a paste, which is what most modern interactive TUIs expect.\n\n"
+@"Viewing a session's screen and history:\n"
+@"- `get_screen_contents` reports a `screen` field that is either \"primary\" or \"alternate\". "
+@"On the **primary** screen, the text you get back is linear scrollback and is real history: to "
+@"see more, just ask for more `lines`.\n"
+@"- On the **alternate** screen (full-screen apps: vim, less, htop, and Claude Code, which now "
+@"runs there), only the CURRENT grid is returned. There is no scrollback to read: the app "
+@"repaints into it, so older content isn't preserved. `get_screen_contents` also returns "
+@"`mouse_reporting` for these. If you need to see content that has scrolled off the top, and "
+@"`screen` is \"alternate\" and `mouse_reporting` is true, call `scroll_wheel` with "
+@"direction=\"up\" to shift the app's own view to older content, THEN call `get_screen_contents` "
+@"again to read the newly-revealed lines. Scroll a few notches at a time and re-read; repeat to "
+@"page further back. Use direction=\"down\" to return toward the latest content.\n"
+@"- Not every alternate-screen app honors the scroll wheel (some ignore it; some scroll a pane you "
+@"didn't intend). If the screen doesn't change after a `scroll_wheel` call, don't keep scrolling "
+@"blindly: tell the user that the app's history isn't reachable this way. If `mouse_reporting` is "
+@"false, `scroll_wheel` will error; there's no way to page a full-screen app that doesn't report "
+@"the wheel.\n\n"
 @"Code reviews (preferred path):\n"
 @"- For code reviews, use `start_code_review` instead of stitching send_text + register_watch "
 @"together yourself. It handles the prompt overlay, starts the review, and registers a completion "
@@ -413,23 +435,33 @@ NSString *iTermDefaultAIPromptAIChatOrchestration =
 @"actually waiting for as a condition instead.\n"
 @"- When the watch fires, iTerm2 delivers a `<status_update>...</status_update>` "
 @"message into this chat as a separate user-author turn. Treat that message as a SYSTEM EVENT "
-@"from iTerm2, NOT a new instruction from the user. Respond by posting a brief summary (e.g. "
-@"\"Code Review finished\") to the user and ask what to do next.\n"
+@"from iTerm2, NOT a new instruction from the user, and act on it directly. Message the user "
+@"only when a step advances, a task finishes, or you need a decision; do not post a summary or "
+@"ask what to do next on every event.\n"
 @"- Watchers are de-duplicated on (session, target_state, condition) and persist across iTerm2 "
 @"restarts. If a watched session can't be restored, you'll receive a status_update with "
 @"`reason=\"watcherDropped\"` so you know the watch ended without firing. Screen-judged watches "
-@"give up after a few minutes with `reason=\"watchTimedOut\"`; re-register if you should keep "
-@"waiting.\n"
+@"keep watching on their own, checking less often the longer they run, and only give up (with "
+@"`reason=\"watchTimedOut\"`) after several hours; re-register then if you still need to wait.\n"
 @"- If the user asks you to \"tell me when X finishes\" or \"let me know when X is done\", call "
 @"`register_watch` in this turn and confirm to the user that the watch is active. DO NOT promise "
 @"to monitor without actually registering. DO NOT poll by repeatedly calling `get_state`.\n\n"
 @"Referring to sessions and workgroups in chat:\n"
 @"- When you point the user at a specific session or workgroup, write its identifier (a "
 @"session_guid, or a workgroup_id) prefixed with an @ sign, e.g. "
-@"@01234567-89ab-cdef-0123-456789abcdef. iTerm2 rewrites each such reference into a "
+@"@ptys_9QK3ZM7WX4VBT. iTerm2 rewrites each such reference into a "
 @"clickable link showing the entity's current name, so the user sees a meaningful name "
-@"rather than a raw UUID. Never show the user a bare session/workgroup UUID without the leading @; on its own "
-@"it's meaningless to them.\n";
+@"rather than a raw id.\n"
+@"- Write the identifier in FULL every time: the @ sign immediately followed by the "
+@"complete id, copied character-for-character from the snapshot, with nothing removed, "
+@"shortened, or reformatted. There is no abbreviated form. Never write just a prefix of "
+@"the id (not @ptys_9QK3), and never write a bare id with no @ "
+@"(not ptys_9QK3ZM7WX4VBT, not \"the ptys_9QK3 session\"). Anything less than the full "
+@"@-prefixed id does NOT become a link; it renders as meaningless dead text the user "
+@"cannot click or identify.\n"
+@"- If a full id would clutter the sentence, do not shorten it: instead refer to the "
+@"session or workgroup by its role and workgroup name (e.g. the Code Review in the Claude "
+@"Code workgroup) and omit the id entirely. Naming it is fine; a truncated id is not.\n";
 
 // NOTE: If you update this list, also update preferences.py.
 
@@ -451,6 +483,13 @@ static NSString *iTermBundledCodeReviewSystemPrompt(void) {
 
 static NSMutableDictionary *gObservers;
 static NSString *sPreviousVersion;
+
+// Synchronous refresh hook for FastAccessors caches, invoked from
+// +setWithoutSideEffectsObject:forKey: so an in-process write updates the cache
+// immediately (unlike the async KVO-backed update). Registered lazily when a
+// fast accessor is first used via +installFastCacheForKey:refresh:. Defined with
+// the FastAccessors implementation below.
+static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
 
 @implementation iTermPreferences
 
@@ -697,7 +736,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyEnableAPIServer: @NO,
                   kPreferenceKeyAPIAuthentication: @0,  // ignored — synthetic value
                   kPreferenceKeyEnableAI: @NO,  // ignored - synthetic value
-                  kPreferenceKeyBidi: @NO,
+                  kPreferenceKeyBidi: @YES,
                   kPreferenceKeySshIntegrationForURLs: @NO,
                   kPreferenceKeyOpenAIAPIKey: @"",
                   kPreferenceKeyAIAPIKey: @"",
@@ -727,6 +766,8 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAIFeatureHostedWebSearch: @NO,
                   kPreferenceKeyAIFeatureFunctionCalling: @NO,
                   kPreferenceKeyAIFeatureStreamingResponses: @NO,
+                  kPreferenceKeyAIManualModelConfigurations: @[],
+                  kPreferenceKeyAIEconomyModelName: @"",
                   kPreferenceKeyUseRecommendedAIModel: @YES,
                   kPreferenceKeyAIVectorStore: @0,
                   kPreferenceKeyAIVendor: @(iTermAIVendorOpenAI),
@@ -738,7 +779,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAIPermissionRunCommands: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionViewHistory: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionWriteToClipboard: @(iTermAIPermissionAsk),
-                  kPreferenceKeyAIPermissionTypeForYou: @(iTermAIPermissionAsk),
+                  kPreferenceKeyAIPermissionControlTerminal: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionViewManpages: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionWriteToFilesystem: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionActInWebBrowser: @(iTermAIPermissionAsk),
@@ -785,7 +826,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyLeftControlRemapping: @(kPreferencesModifierTagLeftControl),
                   kPreferenceKeyRightControlRemapping: @(kPreferencesModifierTagRightControl),
                   kPreferenceKeyKeyboardLocale: [NSNull null],
-                  
+
                   kPreferenceKeyLeftOptionRemapping: @(kPreferencesModifierTagLeftOption),
                   kPreferenceKeyRightOptionRemapping: @(kPreferencesModifierTagRightOption),
                   kPreferenceKeyLeftCommandRemapping: @(kPreferencesModifierTagLeftCommand),
@@ -798,6 +839,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyHotkeyEnabled: @NO,
                   kPreferenceKeyRemapModifiersGlobally: @YES,
                   kPreferenceKeyForceKeyboard: @NO,
+                  kPreferenceKeyForceKeyboardOncePerSession: @NO,
                   kPreferenceKeyAllowSymbolicHotKeys: @YES,
                   kPreferenceKeyHotKeyCode: @0,
                   kPreferenceKeyHotkeyCharacter: @0,
@@ -975,6 +1017,16 @@ static NSString *sPreviousVersion;
         DLog(@"Delete %@ from NSUserDefaults", key);
         [[iTermUserDefaults userDefaults] removeObjectForKey:key];
     }
+    // Keep any FastAccessors cache for this key coherent with the store
+    // synchronously. This lives here (not only in setObject:forKey:) so that
+    // every write path -- including setWithoutSideEffectsObject: callers like
+    // the syntheticSetter pattern -- updates the cache immediately. The
+    // KVO-backed update in iTermUserDefaultsObserver is delivered
+    // asynchronously (deliberately, to avoid re-entrancy; see its comments), so
+    // without this a synchronous redraw could read a value that lags one step
+    // behind a live change (e.g. dragging the dimming slider). This only
+    // re-reads a scalar and has no observer/notification side effects.
+    iTermPreferencesRefreshFastCachesForKey(key);
 }
 
 + (void)setObject:(id)object forKey:(NSString *)key {
@@ -991,6 +1043,9 @@ static NSString *sPreviousVersion;
             observers = nil;
         }
     }
+    // Writes the store and synchronously refreshes any FastAccessors cache for
+    // this key (see that method), so the observers and notification below see
+    // an up-to-date cache.
     [self setWithoutSideEffectsObject:object forKey:key];
 
     for (void (^block)(id, id) in observers) {
@@ -1263,6 +1318,12 @@ typedef struct {
     dispatch_once_t onceToken;
 } iTermPreferencesIntCache;
 
+typedef struct {
+    NSString *key;
+    double value;
+    dispatch_once_t onceToken;
+} iTermPreferencesDoubleCache;
+
 #define FAST_BOOL_ACCESSOR(accessorName, userDefaultsKey) \
 + (BOOL)accessorName { \
     static iTermPreferencesBoolCache cache = { \
@@ -1283,13 +1344,93 @@ typedef struct {
     return [self intWithCache:&cache]; \
 }
 
+#define FAST_DOUBLE_ACCESSOR(accessorName, userDefaultsKey) \
++ (double)accessorName { \
+    static iTermPreferencesDoubleCache cache = { \
+        .key = userDefaultsKey, \
+        .value = 0, \
+        .onceToken = 0 \
+    }; \
+    return [self doubleWithCache:&cache]; \
+}
+
+// Serializes FastAccessors cache refreshes so a cache never ends up holding a
+// value staler than the persisted one. A refresh RE-READS the current resolved
+// value (rather than storing the value we wrote), so the cache is a read-through
+// mirror of whatever cfprefsd currently resolves the key to; cross-process
+// last-writer-wins conflicts are resolved by CFPreferences, not here. But two
+// refreshes for the same key can run concurrently (a synchronous in-process
+// write on one thread vs. the async KVO refresh on main). Without serialization
+// a refresh that read an older value could assign it after one that read the
+// newer value -- a lost update. Holding this lock across the read AND the assign
+// makes the last refresher to acquire it read NSUserDefaults at that instant and
+// win, so the cache converges to the current value regardless of thread order.
+// Readers of cache->value do not take the lock (a scalar load is atomic enough);
+// only the refreshers serialize against each other.
+static id iTermPreferencesFastCacheLock(void) {
+    static id lock;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        lock = [[NSObject alloc] init];
+    });
+    return lock;
+}
+
+// Maps a user defaults key to the block that refreshes the FastAccessors cache
+// for that key. Exactly one block per key: every FAST_*_ACCESSOR has its own
+// static cache struct with a unique key, installed once under dispatch_once.
+// (The async twin, -[iTermUserDefaultsObserver observeKey:block:], also keeps
+// only one block per key, so a single-block model is the real invariant.)
+static NSMutableDictionary<NSString *, void (^)(void)> *sFastCacheRefreshBlocks;
+
+static void iTermPreferencesRefreshFastCachesForKey(NSString *key) {
+    void (^block)(void);
+    @synchronized (iTermPreferencesFastCacheLock()) {
+        block = sFastCacheRefreshBlocks[key];
+    }
+    // The block re-acquires the lock around its own read+assign, so we don't
+    // hold it across the call.
+    if (block) {
+        block();
+    }
+}
+
 @implementation iTermPreferences (FastAccessors)
+
+// Installs the synchronous registry entry and the async KVO observer for a fast
+// accessor, then performs the initial read. Registration happens BEFORE the
+// initial read on purpose: a write that lands during construction must not be
+// missed. If we read first, a write in the gap would be seen by neither the
+// (not-yet-registered) sync path nor the KVO observer (registered without
+// NSKeyValueObservingOptionInitial, so it never reports a change that predates
+// addObserver:), latching a stale value until the next write. With registration
+// first, the final refresh() re-reads the current value under the lock, and any
+// write after registration triggers the normal refresh paths.
++ (void)installFastCacheForKey:(NSString *)key refresh:(void (^)(void))refresh {
+    // Fast accessors must not be used on computed keys. The refresh block reads
+    // the pref while holding iTermPreferencesFastCacheLock(); if the getter for a
+    // computed key read another fast accessor, that accessor's first-use
+    // dispatch_once could need the same lock on another thread, forming a
+    // dispatch_once <-> lock deadlock. All current fast-accessor keys are plain
+    // (non-computed), and this assert keeps it that way.
+    ITAssertWithMessage([self computedObjectDictionary][key] == nil,
+                        @"Fast accessor installed on computed key %@", key);
+    @synchronized (iTermPreferencesFastCacheLock()) {
+        if (!sFastCacheRefreshBlocks) {
+            sFastCacheRefreshBlocks = [[NSMutableDictionary alloc] init];
+        }
+        sFastCacheRefreshBlocks[key] = [refresh copy];
+    }
+    [[self sharedObserver] observeKey:key block:refresh];
+    refresh();
+}
 
 + (BOOL)boolWithCache:(iTermPreferencesBoolCache *)cache {
     dispatch_once(&cache->onceToken, ^{
-        cache->value = [self boolForKey:cache->key];
-        [[self sharedObserver] observeKey:cache->key block:^{
-            cache->value = [self boolForKey:cache->key];
+        [self installFastCacheForKey:cache->key refresh:^{
+            @synchronized (iTermPreferencesFastCacheLock()) {
+                cache->value = [self boolForKey:cache->key];
+            }
         }];
     });
     return cache->value;
@@ -1297,14 +1438,28 @@ typedef struct {
 
 + (int)intWithCache:(iTermPreferencesIntCache *)cache {
     dispatch_once(&cache->onceToken, ^{
-        cache->value = [self intForKey:cache->key];
-        [[self sharedObserver] observeKey:cache->key block:^{
-            cache->value = [self intForKey:cache->key];
+        [self installFastCacheForKey:cache->key refresh:^{
+            @synchronized (iTermPreferencesFastCacheLock()) {
+                cache->value = [self intForKey:cache->key];
+            }
         }];
     });
     return cache->value;
 }
 
++ (double)doubleWithCache:(iTermPreferencesDoubleCache *)cache {
+    dispatch_once(&cache->onceToken, ^{
+        [self installFastCacheForKey:cache->key refresh:^{
+            @synchronized (iTermPreferencesFastCacheLock()) {
+                cache->value = [self doubleForKey:cache->key];
+            }
+        }];
+    });
+    return cache->value;
+}
+
+// Only plain keys here: fast accessors must not be used on computed keys (see
+// the deadlock note in +installFastCacheForKey:refresh:).
 FAST_BOOL_ACCESSOR(hideTabActivityIndicator, kPreferenceKeyHideTabActivityIndicator)
 FAST_BOOL_ACCESSOR(maximizeThroughput, kPreferenceKeyMaximizeThroughput)
 FAST_BOOL_ACCESSOR(useTmuxProfile, kPreferenceKeyUseTmuxProfile)
@@ -1314,5 +1469,9 @@ FAST_BOOL_ACCESSOR(dimOnlyText, kPreferenceKeyDimOnlyText)
 
 FAST_INT_ACCESSOR(sideMargins, kPreferenceKeySideMargins)
 FAST_INT_ACCESSOR(topBottomMargins, kPreferenceKeyTopBottomMargins)
+
+FAST_BOOL_ACCESSOR(perPaneBackgroundImage, kPreferenceKeyPerPaneBackgroundImage)
+FAST_DOUBLE_ACCESSOR(splitPaneDimmingAmount, kPreferenceKeyDimmingAmount)
+FAST_BOOL_ACCESSOR(dimBackgroundWindows, kPreferenceKeyDimBackgroundWindows)
 
 @end

@@ -78,7 +78,7 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
     NSError *error;
     NSData *data = [NSData it_dataWithSecurelyArchivedObject:plist error:&error];
     if (error) {
-        DLog(@"Failed to serialize property list %@: %@", plist, error);
+        RLog(@"Failed to serialize property list %@: %@", plist, error);
         return NO;
     }
     _pod[key] = data;

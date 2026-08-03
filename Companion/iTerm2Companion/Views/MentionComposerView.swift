@@ -20,11 +20,11 @@ final class MentionTextAttachment: NSTextAttachment {
     let guid: String
     let displayName: String
 
-    init(guid: String, displayName: String, font: UIFont, color: UIColor) {
+    init(guid: String, displayName: String, font: UIFont, color: UIColor, maxWidth: CGFloat) {
         self.guid = guid
         self.displayName = displayName
         super.init(data: nil, ofType: nil)
-        let rendered = Self.render(name: displayName, font: font, color: color)
+        let rendered = Self.render(name: displayName, font: font, color: color, maxWidth: maxWidth)
         image = rendered
         bounds = CGRect(x: 0,
                         y: font.descender,
@@ -37,20 +37,26 @@ final class MentionTextAttachment: NSTextAttachment {
     }
 
     /// Terminal glyph, thin space, underlined name: the same shape mention
-    /// links have in message bubbles.
-    private static func render(name: String, font: UIFont, color: UIColor) -> UIImage {
+    /// links have in message bubbles. A very long name is tail-truncated with
+    /// an ellipsis so the token never grows past maxWidth (the field can't show
+    /// more than that anyway, and an over-wide token spills into the margin).
+    private static func render(name: String, font: UIFont, color: UIColor, maxWidth: CGFloat) -> UIImage {
         let icon = UIImage(systemName: "terminal",
                            withConfiguration: UIImage.SymbolConfiguration(font: font))?
             .withTintColor(color, renderingMode: .alwaysOriginal)
-        let text = NSAttributedString(string: name, attributes: [
+        let iconSize = icon?.size ?? .zero
+        let spacing: CGFloat = icon == nil ? 0 : 3
+        let attributes: [NSAttributedString.Key: Any] = [
             .font: font,
             .foregroundColor: color,
             .underlineStyle: NSUnderlineStyle.single.rawValue,
             .underlineColor: color,
-        ])
+        ]
+        let displayed = truncate(name,
+                                 attributes: attributes,
+                                 maxWidth: maxWidth - iconSize.width - spacing)
+        let text = NSAttributedString(string: displayed, attributes: attributes)
         let textSize = text.size()
-        let iconSize = icon?.size ?? .zero
-        let spacing: CGFloat = icon == nil ? 0 : 3
         let size = CGSize(width: ceil(iconSize.width + spacing + textSize.width),
                           height: ceil(max(textSize.height, iconSize.height)))
         return UIGraphicsImageRenderer(size: size).image { _ in
@@ -58,6 +64,31 @@ final class MentionTextAttachment: NSTextAttachment {
             text.draw(at: CGPoint(x: iconSize.width + spacing,
                                   y: (size.height - textSize.height) / 2))
         }
+    }
+
+    /// The longest tail-truncated ("Code Review: lo…") prefix of name whose
+    /// rendered width fits maxWidth: the whole name when it already fits (or the
+    /// constraint is unbounded), an ellipsis when only that fits, or an empty
+    /// string when not even the ellipsis fits (the caller then draws the icon
+    /// alone). Never returns a string wider than maxWidth.
+    private static func truncate(_ name: String,
+                                 attributes: [NSAttributedString.Key: Any],
+                                 maxWidth: CGFloat) -> String {
+        let width = { (string: String) in (string as NSString).size(withAttributes: attributes).width }
+        guard maxWidth.isFinite else { return name }   // unconstrained
+        guard maxWidth > 0 else { return "" }           // no room for any text
+        if width(name) <= maxWidth { return name }
+        let ellipsis = "…"
+        var truncated = name
+        while !truncated.isEmpty {
+            truncated.removeLast()
+            if width(truncated + ellipsis) <= maxWidth {
+                return truncated + ellipsis
+            }
+        }
+        // Even one character plus the ellipsis overflowed; keep the ellipsis
+        // only if it fits on its own, otherwise leave just the icon.
+        return width(ellipsis) <= maxWidth ? ellipsis : ""
     }
 }
 
@@ -95,10 +126,16 @@ final class MentionComposerController {
     /// Insert a mention token (plus a trailing space) at the cursor.
     func insertMention(guid: String, displayName: String) {
         guard let textView else { return }
+        // Cap the token at 90% of the field width so a long name can't spill
+        // into the margin. Before the field is laid out (width 0) leave it
+        // unconstrained; a re-insert after layout would re-bake it anyway.
+        let fieldWidth = textView.bounds.width
+        let maxWidth = fieldWidth > 0 ? fieldWidth * 0.9 : .greatestFiniteMagnitude
         let attachment = MentionTextAttachment(guid: guid,
                                                displayName: displayName,
                                                font: Self.bodyFont,
-                                               color: textView.tintColor ?? .systemBlue)
+                                               color: textView.tintColor ?? .systemBlue,
+                                               maxWidth: maxWidth)
         let token = NSMutableAttributedString(attachment: attachment)
         token.addAttribute(.font, value: Self.bodyFont,
                            range: NSRange(location: 0, length: token.length))
@@ -116,6 +153,18 @@ final class MentionComposerController {
     func clear() {
         guard let textView else { return }
         textView.attributedText = NSAttributedString(string: "", attributes: Self.typingAttributes)
+        textView.typingAttributes = Self.typingAttributes
+        textView.delegate?.textViewDidChange?(textView)
+        liveRange = nil
+        liveNeedsLeadingSpace = false
+    }
+
+    /// Replace the field with plain text (no mention tokens), e.g. to restore a
+    /// draft whose send failed. Placed at the end so the caret follows.
+    func setPlainText(_ text: String) {
+        guard let textView else { return }
+        textView.attributedText = NSAttributedString(string: text, attributes: Self.typingAttributes)
+        textView.selectedRange = NSRange(location: (text as NSString).length, length: 0)
         textView.typingAttributes = Self.typingAttributes
         textView.delegate?.textViewDidChange?(textView)
         liveRange = nil
@@ -208,6 +257,16 @@ struct MentionComposerView: UIViewRepresentable {
     let isDictating: Bool
     /// Fired on every edit so the caller can refresh its send-button state.
     let onChange: () -> Void
+    /// Text to (re)seed the field with, e.g. to restore a draft whose send
+    /// failed. Applied whenever `seedGeneration` changes, in makeUIView OR
+    /// updateUIView, so a restore doesn't depend on the UIView being recreated
+    /// (churning view identity via `.id()` is timing-dependent and destroys
+    /// first-responder/scroll state).
+    var initialText: String = ""
+    /// Bumped by the caller to request a (re)seed of `initialText`. Edge-
+    /// triggered (not value-triggered) so re-seeding the SAME text still applies,
+    /// and so ordinary typing (which doesn't change this) never re-seeds.
+    var seedGeneration: Int = 0
 
     func makeUIView(context: Context) -> SelfSizingTextView {
         let textView = SelfSizingTextView()
@@ -230,11 +289,40 @@ struct MentionComposerView: UIViewRepresentable {
         textView.placeholderLabel = placeholderLabel
 
         controller.textView = textView
+        seedIfRequested(context.coordinator)
         return textView
+    }
+
+    /// Apply `initialText` if a new `seedGeneration` was requested. Runs from both
+    /// makeUIView and updateUIView so a restore lands whether SwiftUI recreated
+    /// the view or reused it.
+    private func seedIfRequested(_ coordinator: Coordinator) {
+        guard seedGeneration != coordinator.lastSeededGeneration else { return }
+        coordinator.lastSeededGeneration = seedGeneration
+        guard !initialText.isEmpty else { return }
+        // Defer the ENTIRE seed off the current pass, not just the onChange:
+        // seedIfRequested runs during SwiftUI's update (make/updateUIView), and
+        // setPlainText itself fires the text view's delegate -> Coordinator ->
+        // parent.onChange, which writes the parent's @State. Doing that synchronously
+        // is the "Modifying state during view update" hazard (and the write can be
+        // dropped, leaving composeIsEmpty / the send button stale). Running the whole
+        // seed a tick later moves both the delegate fire and the explicit onChange
+        // safely off the update pass.
+        let text = initialText
+        let composer = controller
+        let notify = onChange
+        DispatchQueue.main.async {
+            // Restore only into an EMPTY field: if the user reopened the composer
+            // and typed a new draft before this restore landed, don't clobber it.
+            guard composer.isEmpty else { return }
+            composer.setPlainText(text)
+            notify()
+        }
     }
 
     func updateUIView(_ textView: SelfSizingTextView, context: Context) {
         context.coordinator.parent = self
+        seedIfRequested(context.coordinator)
         // Honor SwiftUI's .disabled, which doesn't reach UIKit views on its
         // own through a representable.
         let enabled = context.environment.isEnabled
@@ -266,6 +354,9 @@ struct MentionComposerView: UIViewRepresentable {
     @MainActor
     final class Coordinator: NSObject, UITextViewDelegate {
         var parent: MentionComposerView
+        /// The last seedGeneration applied, so a seed request fires exactly once.
+        /// Starts below any real generation so an initial non-empty seed applies.
+        var lastSeededGeneration = Int.min
 
         init(parent: MentionComposerView) {
             self.parent = parent

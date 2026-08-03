@@ -52,6 +52,12 @@ static inline BOOL iTermCharacterSupportsFastPath(unichar code, BOOL asciiLigatu
 @property(nonatomic) NSInteger startColumn;
 @property(nonatomic) BOOL hasBidi;
 
+// Both settings are snapshotted here rather than read live from
+// iTermAdvancedSettingsModel during the build.
+- (instancetype)initWithPreferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
+                                     lowFiCombiningMarks:(BOOL)lowFiCombiningMarks NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
+
 - (void)appendString:(NSString *)string rtl:(BOOL)rtl sourceCell:(int)sourceCell drawInCell:(int)drawInCell;
 - (void)appendCharacter:(unichar)code rtl:(BOOL)rtl sourceCell:(int)sourceCell drawInCell:(int)drawInCell;
 - (void)disableFastPath;

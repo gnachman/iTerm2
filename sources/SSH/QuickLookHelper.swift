@@ -119,13 +119,13 @@ class QuickLookHelper: NSResponder, QLPreviewPanelDataSource, QLPreviewPanelDele
             let tempFileUrl = tempDirectory.appendingPathComponent(finalFilename)
             
             try data.write(to: tempFileUrl)
-            DLog("Downloaded \(url) to \(tempFileUrl)")
+            RLog("Downloaded \(url) to \(tempFileUrl)")
             return tempFileUrl
         } catch is CancellationError {
-            DLog("Download cancelled for \(url)")
+            RLog("Download cancelled for \(url)")
             return nil
         } catch {
-            DLog("Failed to download \(url): \(error)")
+            RLog("Failed to download \(url): \(error)")
             return nil
         }
     }

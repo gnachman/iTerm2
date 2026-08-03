@@ -132,12 +132,12 @@ extension Conductor: ConductorFileTransferDelegate {
                          progress: Progress?,
                          cancellation: Cancellation?,
                          destination: URL) async throws -> DownloadType {
-        DLog("Download of \(remoteFile.absolutePath) requested")
+        RLog("Download of \(remoteFile.absolutePath) requested")
         await Conductor.downloadSemaphore.wait()
-        DLog("Download of \(remoteFile.absolutePath) beginning")
+        RLog("Download of \(remoteFile.absolutePath) beginning")
         defer {
             Task {
-                DLog("Download of \(remoteFile.absolutePath) completely finished")
+                RLog("Download of \(remoteFile.absolutePath) completely finished")
                 await Conductor.downloadSemaphore.signal()
             }
         }
@@ -200,10 +200,10 @@ extension Conductor: ConductorFileTransferDelegate {
             try await state.addTask(conductor: self)
         }
         if let cancellation, cancellation.canceled {
-            DLog("Download of \(remoteFile.absolutePath) throwing")
+            RLog("Download of \(remoteFile.absolutePath) throwing")
             throw SSHEndpointException.transferCanceled
         }
-        DLog("Download of \(remoteFile.absolutePath) finished normally")
+        RLog("Download of \(remoteFile.absolutePath) finished normally")
         try state.content.write(to: destination)
         return .file
     }

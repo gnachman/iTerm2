@@ -247,7 +247,7 @@ extension NSEvent {
             return dict
         }
 
-        DLog("Build production to keystroke map for input source \(sourceID)")
+        RLog("Build production to keystroke map for input source \(sourceID)")
         let modifierCombinations: [UInt32] = [0, UInt32(shiftKey), UInt32(optionKey), UInt32(shiftKey | optionKey)]
         var dict = [String: CarbonKeystroke]()
         for modifier in modifierCombinations {

@@ -50,12 +50,25 @@ class iTermWindowBorderView: NSView {
         shapeLayer.fillColor = nil
         shapeLayer.strokeColor = borderColor.cgColor
         shapeLayer.lineWidth = borderWidth
+        updateContentsScale()
     }
 
     override func layout() {
         super.layout()
         shapeLayer.frame = bounds
         updatePath()
+    }
+
+    // A manually added sublayer does not inherit the backing scale, so a 1pt
+    // stroke would rasterize at 1x and upscale into soft, semi-transparent
+    // pixels on Retina. Keep it pinned to the window's backing scale.
+    override func viewDidChangeBackingProperties() {
+        super.viewDidChangeBackingProperties()
+        updateContentsScale()
+    }
+
+    private func updateContentsScale() {
+        shapeLayer.contentsScale = window?.backingScaleFactor ?? layer?.contentsScale ?? 2
     }
 
     // Stroke is the only visible content; pass clicks through to the layer underneath.

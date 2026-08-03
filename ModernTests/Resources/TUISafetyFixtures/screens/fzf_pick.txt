@@ -1,0 +1,26 @@
+  ./.git/hooks/pre-rebase.sample
+  ./.git/hooks/commit-msg.sample
+  ./.git/description
+  ./.git/logs/refs/heads/main
+  ./.git/logs/HEAD
+  ./.git/info/exclude
+  ./.git/HEAD
+  ./.git/objects/13/4c5703b433708a03520240b1529fcdb9cb4b2f
+  ./.git/objects/8c/5d7adcdef44b45c7fa25a15d34b4850dc15603
+  ./.git/objects/f8/28770f185002f8491e7534a5be93c26cf58571
+  ./.git/objects/ea/f941799da5b63f7e8c4b05ca6aaa802787e4de
+  ./.git/objects/b7/4cae3640b2a3625a3e9e59f31bf4b6e4099fb4
+  ./.git/objects/d5/74d54db6b60cb2421b7e01433df07a3303ca35
+  ./.git/objects/01/98edf3d6abac18e4fa72c9c3a2f755f7fc1bb4
+  ./.git/objects/3f/35d35c353268bb3c00057fa0eff1c97dacfe8f
+  ./.git/objects/09/b6185dc5d2ec7add7bf38a1c092ee9a6fd6df8
+  ./.git/objects/5c/f71512d187a541451675125856d8ff593994a4
+  ./.git/objects/e3/eea756a18c6c2f509a26812de7f6820a7efe19
+  ./.git/objects/e3/5c958afd888c00ca7dff2b8ef10756373fc1e6
+  ./.git/objects/5f/5b6db7035649805084b45d68190780c654cc4c
+  ./.git/objects/9e/ea4584127675c01cf1e5da49cac46ac0002e72
+  ./.git/config
+  ./README.notes
+> ./parser.py
+  48/48
+>

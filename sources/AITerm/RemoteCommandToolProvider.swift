@@ -55,6 +55,8 @@ final class RemoteCommandToolProvider: ToolProvider {
                 define(in: &conversation, content: content, prototype: prototype)
             case .getCommandOutput(let prototype):
                 define(in: &conversation, content: content, prototype: prototype)
+            case .getScreenContents(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
             case .getTerminalSize(let prototype):
                 define(in: &conversation, content: content, prototype: prototype)
             case .getShellType(let prototype):
@@ -86,6 +88,8 @@ final class RemoteCommandToolProvider: ToolProvider {
             case .getURL(let prototype):
                 define(in: &conversation, content: content, prototype: prototype)
             case .readWebPage(let prototype):
+                define(in: &conversation, content: content, prototype: prototype)
+            case .restartSession(let prototype):
                 define(in: &conversation, content: content, prototype: prototype)
             }
         }

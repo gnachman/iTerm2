@@ -8,6 +8,8 @@
 
 #import "TransferrableFile.h"
 
+@class NSWindow;
+
 // Posted when the transfer wants to stop.
 extern NSString *const kTerminalFileShouldStopNotification;
 
@@ -21,6 +23,10 @@ extern NSString *const kTerminalFileShouldStopNotification;
 // A nil name opens a save panel.
 // A size of -1 means the size is unknown.
 - (instancetype)initWithName:(NSString *)name size:(NSInteger)size;
+
+// As above, but `window` is the window to attach the save-location question to so it
+// appears on the right window. Pass nil to make it app-modal.
+- (instancetype)initWithName:(NSString *)name size:(NSInteger)size window:(NSWindow *)window;
 
 // Appends data to a file in transferring status. Enters transferring status.
 // Returns NO if the transfer should be aborted.

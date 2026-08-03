@@ -8,6 +8,7 @@
 #import "iTermArrangementKeys.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
+#import "iTermExpressionEvaluator.h"
 #import "iTermFlexibleView.h"
 #import "iTermMoveTabToWindowBuiltInFunction.h"
 #import "iTermNotificationController.h"
@@ -556,7 +557,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 #pragma mark - NSCopying
 
 - (id)copyWithZone:(NSZone *)zone {
-    DLog(@"Making a copy of tab %@", self);
+    RLog(@"Making a copy of tab %@", self);
     NSDictionary *arrangement = [self arrangementForDuplication];
     PTYTab *theCopy = [PTYTab tabWithArrangement:arrangement
                                            named:nil
@@ -844,14 +845,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 - (void)willDeselectTab {
-    DLog(@"willDeselectTab %@", self);
+    RLog(@"willDeselectTab %@", self);
     for (PTYSession *session in self.sessions) {
         [session enclosingTabWillBeDeselected];
     }
 }
 
 - (void)didSelectTab {
-    DLog(@"didSelectTab %@", self);
+    RLog(@"didSelectTab %@", self);
     if (_tabStatusWaitingProminent) {
         _tabStatusWaitingProminent = NO;
         [self updateIcon];
@@ -875,7 +876,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)addSession:(PTYSession *)session toRestorableSession:(iTermRestorableSession *)restorableSession {
-    DLog(@"Add %@ to restorable session", session);
+    RLog(@"Add %@ to restorable session", session);
     NSArray *sessions = restorableSession.sessions ?: @[];
     restorableSession.sessions = [sessions arrayByAddingObject:session];
     restorableSession.terminalGuid = self.realParentWindow.terminalGuid;
@@ -975,6 +976,19 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermCurrentSessionDidChange
                                                         object:activeSession_
                                                       userInfo:nil];
+}
+
+- (void)restoreActiveSessionFirstResponder {
+    if (!activeSession_) {
+        return;
+    }
+    if ([realParentWindow_ currentTab] != self) {
+        // Don't make a non-current tab's textview the first responder.
+        // See setActiveSession:updateActivityCounter: for the crash this
+        // avoids.
+        return;
+    }
+    [[realParentWindow_ window] makeFirstResponder:[activeSession_ mainResponder]];
 }
 
 - (void)sessionActivate:(PTYSession *)session {
@@ -1103,7 +1117,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         // Should not happen: the active session is always a registered pane, and
         // -orderedSessions re-derives sessions from the live SessionViews. Log
         // loudly if the maximized snapshot ever drifts out of sync again.
-        DLog(@"sessionInDirection: activeSession %@ (guid=%@) not found in orderedSessions. "
+        RLog(@"sessionInDirection: activeSession %@ (guid=%@) not found in orderedSessions. "
              @"isMaximized=%@ activeIsTrackedPane=%@ activeKeyInSnapshot=%@ "
              @"orderedSessions=%@ sessions=%@ orderedSessionIDs=%@",
              self.activeSession, self.activeSession.guid, @(isMaximized_),
@@ -1279,6 +1293,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)setObjectCount:(int)value {
+    if (objectCount_ == value) {
+        return;
+    }
     objectCount_ = value;
     [_delegate tab:self didChangeObjectCount:self.objectCount];
 }
@@ -1690,7 +1707,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         }
         PTYSession *syntheticSession = [self.realParentWindow syntheticSessionForSession:oldSession];
         if (!syntheticSession) {
-            DLog(@"syntheticSessionForSession:%@ returned nl", oldSession);
+            RLog(@"syntheticSessionForSession:%@ returned nl", oldSession);
             return;
         }
         [syntheticSession divorceAddressBookEntryFromPreferences];
@@ -1720,11 +1737,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // NOTE: We set newView.frame to oldView.frame above. If they are equal in
     // size then -resizeSubviewsWithOldSize: does not fire, so the synthetic
-    // session's scrollview frame is NOT re-fit to the new view here. Watch for a
-    // mismatch between the grid (rows) and the scrollview height: if they
-    // disagree, click hit-testing (coordForPoint:) and the userScroll=NO/YES
-    // drawing paths will be off by (rows - scrollviewHeight/lineHeight) lines.
-    DLog(@"IR enter swap: synthetic=%p grid=%dx%d view.frame=%@ scrollview.frame=%@ | live=%p grid=%dx%d",
+    // session's scrollview frame is NOT re-fit to the new view here. That leaves a
+    // mismatch between the grid (rows) and the scrollview height: click hit-testing
+    // (coordForPoint:) and the userScroll=NO/YES drawing paths would be off by
+    // (rows - scrollviewHeight/lineHeight) lines, and the uncovered strip renders
+    // black. This is corrected at the end of the method by fitting the session to
+    // its view (session conforms to view; the window is left unchanged).
+    RLog(@"IR enter swap: synthetic=%p grid=%dx%d view.frame=%@ scrollview.frame=%@ | live=%p grid=%dx%d",
          newSession, newSession.columns, newSession.rows,
          NSStringFromRect(newView.frame), NSStringFromRect(newView.scrollview.frame),
          oldSession, oldSession.columns, oldSession.rows);
@@ -1747,6 +1766,21 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // Keep the live session in self.viewToSessionMap so it doesn't get released.
     [self.viewToSessionMap setObject:newSession forKey:newSession.view];
+
+    // The swap above set newView.frame = oldView.frame, so -resizeSubviewsWithOldSize:
+    // did not fire and newSession's grid (copied from the live session, sized for
+    // oldView's content area) was never re-fit to newView. When newView has different
+    // chrome than oldView -- e.g. the live session shows a workgroup peer-mode toolbar
+    // that the synthetic session lacks -- newView's scrollview is taller than the grid,
+    // so the uncovered strip renders black and click hit-testing is off by the row
+    // difference. Fit the session to newView (session conforms to view) so they agree.
+    // This does not resize the window; callers that want the window to conform to the
+    // session instead (e.g. instant replay) do that separately. Every synthetic-swap
+    // caller needs this, so it lives here. -fitSessionToCurrentViewSize: no-ops for tmux.
+    if (!self.isTmuxTab) {
+        [self fitSessionToCurrentViewSize:newSession];
+    }
+    [newView layoutContentsForNewlyActiveSession];
 }
 
 - (int)tabNumberForItermSessionId {
@@ -1773,20 +1807,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     PTYSession *oldSession = activeSession_;
     [self replaceActiveSessionWithSyntheticSession:newSession];
 
-    // The synthetic session was created at a default size and swapped in with
-    // newView.frame = oldView.frame, which usually does not fire
-    // -resizeSubviewsWithOldSize:. Its SessionView can have different chrome than
-    // the live session's (e.g. no per-pane status bar), so its grid (copied from
-    // the live session) may not fill its view: the scrollview ends up a few rows
-    // taller than the grid. During instant replay that makes click hit-testing
-    // (-coordForPoint:) select the wrong line. Fit the grid to the view here so
-    // they agree; -setDvr: below then resizes to the recorded frame size (which
-    // adjusts the window so the replayed content fills the view).
-    if (!self.isTmuxTab) {
-        [self fitSessionToCurrentViewSize:newSession];
-    }
-    [newSession.view layoutContentsForNewlyActiveSession];
-
+    // -replaceActiveSessionWithSyntheticSession: has already fit newSession's grid to
+    // its view. -setDvr: below then resizes to the recorded frame size (which adjusts
+    // the window so the replayed content fills the view).
     [newSession setDvr:[[oldSession screen] dvr] liveSession:oldSession];
 }
 
@@ -1797,7 +1820,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     SessionView* oldView = [replaySession view];
     SessionView* newView = [liveSession view];
     NSSplitView* parentSplit = (NSSplitView*)[oldView superview];
-    DLog(@"IR exit swap (before): live=%p grid=%dx%d view.frame=%@ scrollview.frame=%@ | synthetic=%p view.frame=%@",
+    RLog(@"IR exit swap (before): live=%p grid=%dx%d view.frame=%@ scrollview.frame=%@ | synthetic=%p view.frame=%@",
          liveSession, liveSession.columns, liveSession.rows,
          NSStringFromRect(newView.frame), NSStringFromRect(newView.scrollview.frame),
          replaySession, NSStringFromRect(oldView.frame));
@@ -1813,7 +1836,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // -fitSessionToCurrentViewSize: or -layoutContentsForNewlyActiveSession, so a
     // stale scrollview height (off by a few lines from rows*lineHeight) survives
     // the exit from instant replay. Log it so the mismatch is visible.
-    DLog(@"IR exit swap (after): live=%p grid=%dx%d view.frame=%@ scrollview.frame=%@",
+    RLog(@"IR exit swap (after): live=%p grid=%dx%d view.frame=%@ scrollview.frame=%@",
          liveSession, liveSession.columns, liveSession.rows,
          NSStringFromRect(newView.frame), NSStringFromRect(newView.scrollview.frame));
 
@@ -1847,7 +1870,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self fitSessionToCurrentViewSize:liveSession];
     }
     [liveSession.view layoutContentsForNewlyActiveSession];
-    DLog(@"IR exit swap (refit): live=%p grid=%dx%d view.frame=%@ scrollview.frame=%@",
+    RLog(@"IR exit swap (refit): live=%p grid=%dx%d view.frame=%@ scrollview.frame=%@",
          liveSession, liveSession.columns, liveSession.rows,
          NSStringFromRect(newView.frame), NSStringFromRect(newView.scrollview.frame));
 }
@@ -1862,7 +1885,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // Create synthetic session
     PTYSession *syntheticSession = [self.realParentWindow syntheticSessionForSession:liveSession];
     if (!syntheticSession) {
-        DLog(@"syntheticSessionForSession:%@ returned nil", liveSession);
+        RLog(@"syntheticSessionForSession:%@ returned nil", liveSession);
         return nil;
     }
 
@@ -1901,7 +1924,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     PTYSession *liveSession = syntheticSession.liveSession;
     if (!liveSession) {
-        DLog(@"exitScreenshotModeForSession: no live session found for %@", syntheticSession);
+        RLog(@"exitScreenshotModeForSession: no live session found for %@", syntheticSession);
         return;
     }
 
@@ -2145,7 +2168,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // If the window isn't able to adjust, or adjust enough, make the session
     // work with whatever size we ended up having.
     if ([session isTmuxClient]) {
-        DLog(@"font size change triggering windowDidResize:");
+        RLog(@"font size change triggering windowDidResize:");
         [session.tmuxController windowDidResize:[self realParentWindow]];
     } else {
         [self fitSessionToCurrentViewSize:session];
@@ -2183,6 +2206,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
     [self.viewToSessionMap setObject:session forKey:session.view];
     session.delegate = self;
+}
+
+- (void)restoreFirstResponderAfterViewHierarchyRebuild {
+    if (!activeSession_) {
+        return;
+    }
+    if ([realParentWindow_ currentTab] != self) {
+        return;
+    }
+    [[realParentWindow_ window] makeFirstResponder:[activeSession_ mainResponder]];
 }
 
 - (void)removeSession:(PTYSession*)aSession {
@@ -2441,8 +2474,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     NSSize size;
     DLog(@"    calculating session size based on %dx%d cells", columns, rows);
     DLog(@"    cell size is %@", NSStringFromSize(NSMakeSize(charWidth, lineHeight)));
-    size.width = columns * charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2;
-    size.height = rows * lineHeight + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;
+    size.width = columns * charWidth + [iTermPreferences sideMargins] * 2;
+    size.height = rows * lineHeight + [iTermPreferences topBottomMargins] * 2;
     DLog(@"    size for content is %@", NSStringFromSize(size));
     BOOL hasScrollbar = [term scrollbarShouldBeVisible];
     DLog(@"    term=%@, hasScrollbar=%@, scrollerStyle=%@, NSScroller.preferredScrollerStyle=%@", term, @(hasScrollbar), @([term scrollerStyle]), @([NSScroller preferredScrollerStyle]));
@@ -2481,8 +2514,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (session.isBrowserSession) {
         return NSMakeSize(395, 150);
     }
-    size.width = kVT100ScreenMinColumns * [[session textview] charWidth] + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2;
-    size.height = kVT100ScreenMinRows * [[session textview] lineHeight] + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;
+    size.width = kVT100ScreenMinColumns * [[session textview] charWidth] + [iTermPreferences sideMargins] * 2;
+    size.height = kVT100ScreenMinRows * [[session textview] lineHeight] + [iTermPreferences topBottomMargins] * 2;
 
     BOOL hasScrollbar = [parentWindow_ scrollbarShouldBeVisible];
     NSSize scrollViewSize =
@@ -2861,8 +2894,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     DLog(@"Max size is %@", [NSValue valueWithSize:size]);
     const NSSize cellSize = NSMakeSize(MAX(1.0, [[aSession textview] charWidth]),
                                        MAX(1.0, [[aSession textview] lineHeight]));
-    int width = (size.width - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2) / cellSize.width;
-    int height = (size.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / cellSize.height;
+    int width = (size.width - [iTermPreferences sideMargins] * 2) / cellSize.width;
+    int height = (size.height - [iTermPreferences topBottomMargins] * 2) / cellSize.height;
     PtyLog(@"fitSessionToCurrentViewSize %@ gives %d rows", [NSValue valueWithSize:size], height);
     if (width <= 0) {
         XLog(@"WARNING: Session has %d width", width);
@@ -4245,7 +4278,8 @@ typedef struct {
                     visibleLayout:(NSMutableDictionary *)visibleParseTree
                        inTerminal:(NSWindowController<iTermWindowController> *)term
                        tmuxWindow:(int)tmuxWindow
-                   tmuxController:(TmuxController *)tmuxController {
+                   tmuxController:(TmuxController *)tmuxController
+                 openInBackground:(BOOL)openInBackground {
     Profile *profile = [tmuxController profileForWindow:tmuxWindow];
     [PTYTab setSizesInTmuxParseTree:parseTree
                          inTerminal:term
@@ -4257,7 +4291,7 @@ typedef struct {
     NSSize rootSize = NSMakeSize([[parseTree objectForKey:kLayoutDictPixelWidthKey] intValue],
                                  [[parseTree objectForKey:kLayoutDictPixelHeightKey] intValue]);
 
-    DLog(@"openTabWithTmuxLayout: rootSize=%@ window frame before=%@",
+    RLog(@"openTabWithTmuxLayout: rootSize=%@ window frame before=%@",
          NSStringFromSize(rootSize), NSStringFromRect([[term window] frame]));
     [term lazyFitWindowToTabSize:rootSize cellSize:[self cellSizeForBookmark:profile]];
     DLog(@"openTabWithTmuxLayout: window frame after=%@", NSStringFromRect([[term window] frame]));
@@ -4302,12 +4336,15 @@ typedef struct {
 
     if (parseTree[kLayoutDictTabIndex]) {
         // Add tab at a specified index.
-        [term insertTab:theTab atIndex:[parseTree[kLayoutDictTabIndex] intValue]];
+        [term insertTab:theTab
+                atIndex:[parseTree[kLayoutDictTabIndex] intValue]
+       openInBackground:openInBackground];
     } else if ([parseTree[kLayoutDictTabOpenedManually] boolValue] ||
                [parseTree[kLayoutDictAllInitialWindowsAdded] boolValue]) {
-        [term addTabAtAutomaticallyDeterminedLocation:theTab];
+        [term addTabAtAutomaticallyDeterminedLocation:theTab
+                                     openInBackground:openInBackground];
     } else {
-        [term appendTab:theTab];
+        [term appendTab:theTab openInBackground:openInBackground];
     }
     [theTab didAddToTerminal:term withArrangement:arrangement];
     [theTab updateTmuxTitleMonitor];
@@ -4364,8 +4401,8 @@ typedef struct {
                                                           scrollerStyle:session.view.scrollview.scrollerStyle
                                                              rightExtra:session.desiredRightExtra];
 
-            int chars = forHeight ? (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / cellSize.height :
-                                    (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2) / cellSize.width;
+            int chars = forHeight ? (contentSize.height - [iTermPreferences topBottomMargins] * 2) / cellSize.height :
+                                    (contentSize.width - [iTermPreferences sideMargins] * 2) / cellSize.width;
             [intervalMap incrementNumbersBy:chars
                                     inRange:[IntRange rangeWithMin:minPos size:size]];
         }
@@ -4421,11 +4458,29 @@ typedef struct {
 
 
 - (NSSize)tmuxSize {
+    NSSize size;
     if (self.tmuxController.variableWindowSize) {
-        return [self variableTmuxSize];
+        size = [self variableTmuxSize];
     } else {
-        return [self fixedTmuxSize];
+        size = [self fixedTmuxSize];
     }
+    // pane-border-status makes tmux carve one row out of the window for the
+    // border, which it does not reflect in the layout it sends control clients.
+    // Report the window one row taller than the content fits so that after tmux
+    // takes its row the pane still matches our sessions. Without this the window
+    // would lose a row on every resize (issue 12925).
+    //
+    // Limitation: pane-border-status is per window, but in non-variable-window
+    // sessions -[PseudoTerminal tmuxCompatibleSize] takes the MIN of every tab's
+    // tmuxSize and sends one shared client size. A bordered window sharing a
+    // session with a shorter unbordered one can still be shrunk below its needed
+    // height. That is inherent to one client size across windows; variable window
+    // size (the default for modern tmux) does not have the problem.
+    if (size.height > 0 &&
+        [self.tmuxController paneBorderStatusForWindow:self.tmuxWindow] != iTermTmuxPaneBorderStatusOff) {
+        size.height += 1;
+    }
+    return size;
 }
 
 // Returns the size in characters of the window size that fits this tab's contents.
@@ -4496,8 +4551,8 @@ typedef struct {
     NSSize cellSize = [PTYTab cellSizeForBookmark:[self.tmuxController profileForWindow:self.tmuxWindow]];
     NSArray<SessionView *> *allSessionViews = self.isMaximized ? @[ self.activeSession.view ] : [self sessionViews];
 
-    const CGSize margins = NSMakeSize([iTermPreferences intForKey:kPreferenceKeySideMargins] * 2,
-                                      [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2);
+    const CGSize margins = NSMakeSize([iTermPreferences sideMargins] * 2,
+                                      [iTermPreferences topBottomMargins] * 2);
     const CGFloat dividerThickness = root_.dividerThickness;
     DLog(@"Margins are %@, divider thickness is %@, cell size is %@", NSStringFromSize(margins), @(dividerThickness), NSStringFromSize(cellSize));
 
@@ -4877,6 +4932,9 @@ typedef struct {
 - (void)setTmuxSizesFromSplitTreeNode:(ITMSplitTreeNode *)node {
     iTermTmuxLayoutBuilderNode *root = [self layoutBuilderNodeForSplitTreeNode:node];
     iTermTmuxLayoutBuilder *builder = [[iTermTmuxLayoutBuilder alloc] initWithRootNode:root];
+    // Add back the row(s) tmux reserves for pane-border-status so the size and
+    // layout we report keep the window at its true height (issue 12925).
+    [builder adjustForPaneBorderStatus:[self.tmuxController paneBorderStatusForWindow:self.tmuxWindow]];
     if (!self.realParentWindow.anyFullScreen) {
         VT100GridSize clientSize = builder.clientSize;
         [self.tmuxController setSize:NSMakeSize(clientSize.width, clientSize.height)
@@ -5254,13 +5312,19 @@ typedef struct {
         kLayoutDictXOffsetKey: @0,
         kLayoutDictYOffsetKey: @0,
     } mutableCopy];
-    return [@{ kLayoutDictChildrenKey: @[ child ],
+    NSMutableDictionary *tree = [@{ kLayoutDictChildrenKey: @[ child ],
                kLayoutDictWidthKey: parseTree[kLayoutDictWidthKey],
                kLayoutDictHeightKey: parseTree[kLayoutDictHeightKey],
                kLayoutDictNodeType: @(kVSplitLayoutNode),
                kLayoutDictXOffsetKey: @0,
                kLayoutDictYOffsetKey: @0,
             } mutableCopy];
+    // This synthetic tree is built from the uncorrected root (window) height, so
+    // apply the same pane-border-status correction the normal leaf path gets;
+    // otherwise a zoomed pane is a row too tall (issue 12925).
+    return [[TmuxLayoutParser sharedInstance]
+        parseTree:tree
+        adjustedForPaneBorderStatus:[self.tmuxController paneBorderStatusForWindow:self.tmuxWindow]];
 }
 
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
@@ -5422,7 +5486,7 @@ typedef struct {
 }
 
 - (void)maximize {
-    DLog(@"maximize %@", self);
+    RLog(@"maximize %@", self);
     for (PTYSession *session in [self sessions]) {
         session.savedRootRelativeOrigin = [self rootRelativeOriginOfSession:session];
     }
@@ -5472,6 +5536,12 @@ typedef struct {
         } else {
             gridSize = VT100GridSizeMake([parseTree_[kLayoutDictWidthKey] intValue],
                                          [parseTree_[kLayoutDictHeightKey] intValue]);
+        }
+        // These are the root (window) height, but a zoomed pane fills the window
+        // and so loses the pane-border-status row like any edge pane (issue 12925).
+        if (gridSize.height > 1 &&
+            [self.tmuxController paneBorderStatusForWindow:self.tmuxWindow] != iTermTmuxPaneBorderStatusOff) {
+            gridSize.height -= 1;
         }
         [self resizeSession:self.activeSession toSize:gridSize];
 
@@ -5687,7 +5757,7 @@ typedef struct {
 }
 
 - (void)swapSession:(PTYSession *)existing withBuriedSession:(PTYSession *)buried {
-    DLog(@"swapSession:%@ withBuriedSession:%@", existing, buried);
+    RLog(@"swapSession:%@ withBuriedSession:%@", existing, buried);
     if (((PTYTab *)existing.delegate)->lockedSession_) {
         DLog(@"Existing or both is locked");
         return;
@@ -5760,7 +5830,7 @@ typedef struct {
 }
 
 - (void)swapSession:(PTYSession *)session1 withSession:(PTYSession *)session2 {
-    DLog(@"swapSession:%@ withSession:%@", session1, session2);
+    RLog(@"swapSession:%@ withSession:%@", session1, session2);
     assert(session1.delegate == self);
     if (isMaximized_) {
         [self unmaximize];
@@ -5787,7 +5857,7 @@ typedef struct {
         return;
     }
 
-    DLog(@"Before swap, %@ has superview %@ and %@ has superview %@",
+    RLog(@"Before swap, %@ has superview %@ and %@ has superview %@",
          session1.view, session1.view.superview,
          session2.view, session2.view.superview);
 
@@ -5968,6 +6038,30 @@ typedef struct {
     }
 }
 
+- (void)applyProfileCustomTabTitleForNewTmuxWindow:(NSString *)template {
+    if (template.length == 0) {
+        return;
+    }
+    // The profile’s custom tab title is an interpolated-string template. Evaluate
+    // it up front against this tab’s scope so that -setTitleOverride:, which for a
+    // tmux tab renames the tmux window (a change shared with every attached
+    // client), gets a concrete value like the session name rather than the literal
+    // template text (e.g. “\(session.name)”). A zero timeout completes
+    // synchronously and makes no RPCs. Ignore an empty result so we never rename
+    // the tmux window to a blank name.
+    iTermExpressionEvaluator *evaluator =
+        [[iTermExpressionEvaluator alloc] initWithInterpolatedString:template
+                                                              scope:self.variablesScope];
+    [evaluator evaluateWithTimeout:0
+                sideEffectsAllowed:NO
+                        completion:^(iTermExpressionEvaluator *evaluator) {
+        NSString *evaluated = [NSString castFrom:evaluator.value];
+        if (evaluated.length > 0) {
+            [self setTitleOverride:evaluated];
+        }
+    }];
+}
+
 - (void)updateTitleOverrideFromFormatVariable {
     [self updateTabTitle];
     for (PTYSession *session in self.sessions) {
@@ -5995,7 +6089,7 @@ typedef struct {
 }
 
 - (void)splitView:(PTYSplitView *)splitView draggingWillBeginOfSplit:(int)splitterIndex {
-    DLog(@"%@: draggingWillBeginOfSplit:%@", self, @(splitterIndex));
+    RLog(@"%@: draggingWillBeginOfSplit:%@", self, @(splitterIndex));
     _numberOfSplitViewDragsInProgress++;
     DLog(@"%@ split drags in progress", @(_numberOfSplitViewDragsInProgress));
     if (![self isTmuxTab]) {
@@ -6039,7 +6133,7 @@ typedef struct {
 - (void)splitView:(PTYSplitView *)splitView
   draggingDidEndOfSplit:(int)splitterIndex
            pixels:(NSSize)pxMoved {
-    DLog(@"%@: draggingDidEndOfSplit:%@", self, @(splitterIndex));
+    RLog(@"%@: draggingDidEndOfSplit:%@", self, @(splitterIndex));
     _numberOfSplitViewDragsInProgress--;
     DLog(@"%@ split drags in progress", @(_numberOfSplitViewDragsInProgress));
     for (PTYSession *session in [self sessionsAdjacentToSplitter:splitterIndex of:splitView]) {
@@ -6690,7 +6784,104 @@ typedef struct {
     if (proposedPosition < originalPosition) {
         allowedDiff *= -1;
     }
-    return originalPosition + allowedDiff;
+    const CGFloat quantizedPosition = originalPosition + allowedDiff;
+
+    // Whole-cell quantization moves the divider in integer character-cell steps
+    // relative to its current position. When two independent split views (e.g. the
+    // top and bottom rows of a 2x2 grid) have dividers that are misaligned by less
+    // than one cell, that sub-cell offset can never be reached by dragging, so the
+    // rows cannot be lined up. Allow the divider to snap to an aligned divider
+    // elsewhere in the tab so the user can correct the misalignment by hand. See
+    // issue 12932.
+    return [self positionForDivider:dividerIndex
+                        inSplitView:splitView
+                  quantizedPosition:quantizedPosition
+                   proposedPosition:proposedPosition
+                               step:step];
+}
+
+// Window-base coordinate of a with-grain axis position measured within a view's
+// own coordinate system. Using window coordinates makes positions comparable
+// across split views regardless of each view's flippedness.
+- (CGFloat)windowAxisPositionForLocalPosition:(CGFloat)local
+                                   isVertical:(BOOL)isVertical
+                                       inView:(NSView *)view {
+    const NSPoint p = isVertical ? NSMakePoint(local, 0) : NSMakePoint(0, local);
+    const NSPoint w = [view convertPoint:p toView:nil];
+    return isVertical ? w.x : w.y;
+}
+
+// Collect every split view in this tab whose orientation matches isVertical,
+// walking only the split tree (stopping at SessionViews).
+- (void)collectParallelSplitViewsUnder:(NSSplitView *)splitView
+                            isVertical:(BOOL)isVertical
+                                  into:(NSMutableArray<NSSplitView *> *)result {
+    if (splitView.isVertical == isVertical) {
+        [result addObject:splitView];
+    }
+    for (NSView *subview in splitView.subviews) {
+        if ([subview isKindOfClass:[NSSplitView class]]) {
+            [self collectParallelSplitViewsUnder:(NSSplitView *)subview
+                                      isVertical:isVertical
+                                            into:result];
+        }
+    }
+}
+
+// Given the cell-quantized position for a divider being dragged, return a snapped
+// position if the raw (continuous) drag brings it within half a cell of a divider
+// in some other split view of the tab. Otherwise return the quantized position.
+- (CGFloat)positionForDivider:(NSInteger)dividerIndex
+                  inSplitView:(NSSplitView *)splitView
+            quantizedPosition:(CGFloat)quantizedPosition
+             proposedPosition:(CGFloat)proposedPosition
+                         step:(CGFloat)step {
+    const BOOL isVertical = splitView.isVertical;
+    const CGFloat rawWindow = [self windowAxisPositionForLocalPosition:proposedPosition
+                                                            isVertical:isVertical
+                                                                inView:splitView];
+    CGFloat bestDelta = step / 2.0;
+    CGFloat bestWindow = 0;
+    BOOL found = NO;
+
+    NSMutableArray<NSSplitView *> *splitViews = [NSMutableArray array];
+    [self collectParallelSplitViewsUnder:root_ isVertical:isVertical into:splitViews];
+    for (NSSplitView *other in splitViews) {
+        if (other == splitView) {
+            // Snapping a divider to another divider in its own split view is
+            // meaningless; only line up with dividers in other split views.
+            continue;
+        }
+        const NSInteger count = other.subviews.count;
+        for (NSInteger i = 0; i + 1 < count; i++) {
+            const CGFloat otherLocal = [self _positionOfDivider:(int)i inSplitView:other];
+            const CGFloat otherWindow = [self windowAxisPositionForLocalPosition:otherLocal
+                                                                     isVertical:isVertical
+                                                                         inView:other];
+            const CGFloat delta = fabs(otherWindow - rawWindow);
+            if (delta < bestDelta) {
+                bestDelta = delta;
+                bestWindow = otherWindow;
+                found = YES;
+            }
+        }
+    }
+    if (!found) {
+        return quantizedPosition;
+    }
+
+    // Convert the sibling's window position back into this split view's coordinates.
+    const NSPoint w = isVertical ? NSMakePoint(bestWindow, 0) : NSMakePoint(0, bestWindow);
+    const NSPoint local = [splitView convertPoint:w fromView:nil];
+    const CGFloat snappedPosition = isVertical ? local.x : local.y;
+
+    // Don't let the snap push a session below its minimum size.
+    const CGFloat minCoord = [self splitView:splitView constrainMinCoordinate:0 ofSubviewAt:dividerIndex];
+    const CGFloat maxCoord = [self splitView:splitView constrainMaxCoordinate:CGFLOAT_MAX ofSubviewAt:dividerIndex];
+    if (snappedPosition < minCoord || snappedPosition > maxCoord) {
+        return quantizedPosition;
+    }
+    return snappedPosition;
 }
 
 - (BOOL)sessionIsActiveInTab:(PTYSession *)session {
@@ -6876,10 +7067,10 @@ typedef struct {
 
     iTermMetalUnavailableReason reason = iTermMetalUnavailableReasonNone;
     BOOL allowed = NO;
-    // Note: we turn off metal when dragging a split in a tmux tab because it's hard to keep the
-    // frame of the iTermMTKView correct without resizing it.
-    if ([self.delegate tabAnyDragInProgress:self] || _isDraggingSplitInTmuxTab) {
-        _metalUnavailableReason = iTermMetalUnavailableReasonTabDragInProgress;
+    // Split drags in tmux still need legacy drawing because keeping the Metal view sized correctly
+    // is hard there. Plain tab drags can stay on Metal.
+    if (_isDraggingSplitInTmuxTab) {
+        _metalUnavailableReason = iTermMetalUnavailableReasonSplitPaneBeingDragged;
     } else if (resizing) {
         _metalUnavailableReason = iTermMetalUnavailableReasonWindowResizing;
     } else if (!powerOK) {
@@ -6896,8 +7087,6 @@ typedef struct {
         _metalUnavailableReason = iTermMetalUnavailableReasonScreensChanging;
     } else if ([self.delegate tabIsSwiping]) {
         _metalUnavailableReason = iTermMetalUnavailableReasonSwipingBetweenTabs;
-    } else if (_isDraggingSplitInTmuxTab) {
-        _metalUnavailableReason = iTermMetalUnavailableReasonSplitPaneBeingDragged;
     } else {
         _metalUnavailableReason = iTermMetalUnavailableReasonNone;
         allowed = YES;
@@ -6994,6 +7183,23 @@ typedef struct {
 #pragma mark - PTYSessionDelegate
 // TODO: Move the rest of the delegate methods here.
 
+- (BOOL)sessionTabHasMultipleDistinctTabColors {
+    NSString *firstColor = nil;
+    for (PTYSession *session in [self sessions]) {
+        NSColor *tabColor = session.tabColor;
+        if (!tabColor) {
+            continue;
+        }
+        NSString *hex = tabColor.srgbHexString;
+        if (!firstColor) {
+            firstColor = hex;
+        } else if (![firstColor isEqualToString:hex]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (BOOL)session:(PTYSession *)session shouldAllowDrag:(id<NSDraggingInfo>)sender {
     if ([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound) {
         // Dragging a tab handle. Source is a PSMTabBarControl.
@@ -7012,7 +7218,7 @@ typedef struct {
 }
 
 - (BOOL)session:(PTYSession *)session performDragOperation:(id<NSDraggingInfo>)sender {
-    DLog(@"session:%@ performDragOperation:%@", session, sender);
+    RLog(@"session:%@ performDragOperation:%@", session, sender);
 
     if (self.realParentWindow.layoutLocked) {
         DLog(@"Layout is locked, refusing drag operation");
@@ -7156,8 +7362,8 @@ typedef struct {
                                                       scrollerStyle:anySession.view.scrollview.scrollerStyle
                                                          rightExtra:[PTYSession desiredRightExtraForProfile:profile session:anySession]];
         NSSize cellSize = [PTYTab cellSizeForBookmark:profile];
-        return VT100GridSizeMake((contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2) / cellSize.width,
-                                 (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / cellSize.height);
+        return VT100GridSizeMake((contentSize.width - [iTermPreferences sideMargins] * 2) / cellSize.width,
+                                 (contentSize.height - [iTermPreferences topBottomMargins] * 2) / cellSize.height);
     }
 }
 
@@ -7184,7 +7390,7 @@ typedef struct {
 
 - (void)sessionDuplicateTab {
     if ([self isTmuxTab]) {
-        DLog(@"Declining to dup tmux tab");
+        RLog(@"Declining to dup tmux tab");
         return;
     }
     [parentWindow_ createDuplicateOfTab:self];
@@ -7382,22 +7588,29 @@ backgroundColor:(NSColor *)backgroundColor {
     // Lower priority value = higher priority. NSIntegerMax = no status.
     NSInteger winnerPriority = NSIntegerMax;
 
-    for (PTYSession *session in [self sessions]) {
-        if (!session.tabStatus.hasActiveStatus) {
-            continue;
+    // The focused (visible) pane takes precedence: whenever it has a status it
+    // drives the tab subtitle, even if a sibling split pane holds a
+    // higher-priority status. This keeps the subtitle in sync with the pane the
+    // user is looking at instead of letting a background idle/waiting pane
+    // override it on rank. Only when the focused pane has no status do we fall
+    // back to the highest-priority status among the other panes so the subtitle
+    // isn't empty. Peers that time-share a pane are not in -sessions (only the
+    // swapped-in peer is), so a buried peer never competes here regardless.
+    PTYSession *active = self.activeSession;
+    if (active.tabStatus.hasActiveStatus) {
+        winner = active;
+        winnerPriority = [settings priorityFor:active.tabStatus.statusText];
+    } else {
+        for (PTYSession *session in [self sessions]) {
+            if (!session.tabStatus.hasActiveStatus) {
+                continue;
+            }
+            NSInteger priority = [settings priorityFor:session.tabStatus.statusText];
+            if (priority < winnerPriority) {
+                winner = session;
+                winnerPriority = priority;
+            }
         }
-        NSInteger priority = [settings priorityFor:session.tabStatus.statusText];
-        if (priority < winnerPriority ||
-            (priority == winnerPriority && session == self.activeSession)) {
-            winner = session;
-            winnerPriority = priority;
-        }
-    }
-
-    // If all sessions have unmatched priority, prefer the active session.
-    if (winnerPriority >= settings.unmatchedPriority &&
-        self.activeSession.tabStatus.hasActiveStatus) {
-        winner = self.activeSession;
     }
 
     NSInteger oldPriority = NSIntegerMax;
@@ -7473,7 +7686,7 @@ backgroundColor:(NSColor *)backgroundColor {
 - (void)sessionActivateSession:(PTYSession *)sessionToActivate
                     amongPeers:(PTYSessionPeerPort *)peerPort
                    moveToolbar:(BOOL)moveToolbar {
-    DLog(@"sessionActivateSession: activate=%p moveToolbar=%d", sessionToActivate, moveToolbar);
+    RLog(@"sessionActivateSession: activate=%p moveToolbar=%d", sessionToActivate, moveToolbar);
     for (PTYSession *visiblePeer in [self sessions]) {
         if (visiblePeer != sessionToActivate && [visiblePeer sessionBelongsToPeers:peerPort]) {
             DLog(@"found visiblePeer=%p to swap", visiblePeer);

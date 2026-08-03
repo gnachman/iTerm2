@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.anthropic.com\/v1\/messages\nanthropic-version: 2023-06-01\ncontent-type: application\/json\nx-api-key: <SECRET>\n\n{\"max_tokens\":64000,\"messages\":[{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"Reply with exactly the single word: PINEAPPLE\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"claude-sonnet-4-0\",\"temperature\":0}",
+  "key" : "b01df753d94aab306b474caf5e1e9491cfdae45c59f3dd4bfec70f2198695c90",
+  "response" : {
+    "data" : "{\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-sonnet-4-0\"},\"request_id\":\"req_011CcFbf4A35FRh2JguNDzLk\"}",
+    "error" : "HTTP request failed with status 404."
+  },
+  "streamChunks" : [
+
+  ],
+  "streaming" : false
+}

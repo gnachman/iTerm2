@@ -37,13 +37,30 @@ enum LLM {
         var choiceMessages: [Message] { get }
         var isStreamingResponse: Bool { get }
         var newlyCreatedResponseID: String? { get }
+        // The vendor's reported total INPUT (prompt) token count for this request, if
+        // any: prompt_tokens / input_tokens / promptTokenCount. nil when the vendor
+        // reported no usage. Used by blob capture to derive each round's real token
+        // weight (by subtraction) for truncation; falls back to a byte estimate when
+        // nil. This is the WHOLE prompt (system + tools + all history + this turn),
+        // not a per-round figure - the per-round split is a subtraction at capture.
+        var promptTokens: Int? { get }
     }
 }
 
 extension LLM.AnyResponse {
     // Default for vendors that don't expose a server-side response ID for chaining.
     var newlyCreatedResponseID: String? { nil }
+    // Default for vendors that don't surface usage (or a parser not yet wired to).
+    var promptTokens: Int? { nil }
 }
+
+extension LLM.AnyStreamingResponse {
+    // Default for streaming events that don't carry usage (most of them) and for
+    // vendors/parsers not yet wired to surface it. A type conforming to BOTH this and
+    // AnyResponse must declare promptTokens itself to resolve the two defaults.
+    var promptTokens: Int? { nil }
+}
+
 
 extension LLM {
 
@@ -54,9 +71,34 @@ extension LLM {
         var newlyCreatedResponseID: String? { get }
         var choiceMessages: [Message] { get }
         var isStreamingResponse: Bool { get }
+        // The vendor's reported total input (prompt) tokens, surfaced on the streaming
+        // event that carries usage (near end of stream); nil on every other event and
+        // for vendors that report none. See LLM.AnyResponse.promptTokens.
+        var promptTokens: Int? { get }
     }
 
     // This is a platform-independent representation of a message to or from an LLM.
+    /// One reasoning item from an OpenAI Responses turn: the server-minted id
+    /// plus the encrypted payload returned when the request asks for
+    /// include: ["reasoning.encrypted_content"] with store:false. Replayed
+    /// verbatim (id + encrypted_content) before the function_call items it
+    /// produced. Foundation-only and Codable so it can persist inside the
+    /// chat Message content JSON and cross the companion wire as an ignored
+    /// unknown key on older peers.
+    struct ReasoningItem: Codable, Equatable {
+        var id: String
+        var encryptedContent: String?
+        /// Human-readable summary texts (when the API produced any); kept for
+        /// fidelity, not required for replay.
+        var summary: [String]?
+
+        init(id: String, encryptedContent: String?, summary: [String]? = nil) {
+            self.id = id
+            self.encryptedContent = encryptedContent
+            self.summary = summary
+        }
+    }
+
     struct Message: Codable, Equatable {
         var responseID: String?
         var role: Role? = .user
@@ -333,11 +375,16 @@ extension LLM {
             }
         }
 
-        init(responseID: String? = nil, role: Role?, body: Body, reasoningContent: String? = nil) {
+        init(responseID: String? = nil,
+             role: Role?,
+             body: Body,
+             reasoningContent: String? = nil,
+             reasoningItems: [ReasoningItem]? = nil) {
             self.responseID = responseID
             self.role = role
             self.body = body
             self.reasoningContent = reasoningContent
+            self.reasoningItems = reasoningItems
         }
 
         // DeepSeek v4 returns a `reasoning_content` field on assistant turns when
@@ -350,10 +397,18 @@ extension LLM {
         // round-trip state, not a render input.
         var reasoningContent: String?
 
-
+        /// OpenAI Responses reasoning items (id + encrypted payload) emitted
+        /// alongside this assistant turn's function calls. The API requires
+        /// them to be replayed, in order, before their function_call items
+        /// whenever the conversation is re-sent (store:false / after a
+        /// reload); without them a reasoning model 400s on the historical
+        /// call. Persisted so a reloaded chat can keep using its tool
+        /// history. Forward+backward Codable compatible like
+        /// reasoningContent: unknown to old decoders, nil for old payloads.
+        var reasoningItems: [ReasoningItem]?
 
         enum CodingKeys: String, CodingKey {
-            case role, content, function_name, function_call_id, function_call, body, responseID, reasoningContent
+            case role, content, function_name, function_call_id, function_call, body, responseID, reasoningContent, reasoningItems
         }
 
         init(from decoder: Decoder) throws {
@@ -361,8 +416,10 @@ extension LLM {
             let responseID = try container.decodeIfPresent(String.self, forKey: .responseID)
             let role = try container.decodeIfPresent(Role.self, forKey: .role)
             let reasoning = try container.decodeIfPresent(String.self, forKey: .reasoningContent)
+            let reasoningItems = try container.decodeIfPresent([ReasoningItem].self, forKey: .reasoningItems)
             if let body = try container.decodeIfPresent(Body.self, forKey: .body) {
-                self = Message(responseID: responseID, role: role, body: body, reasoningContent: reasoning)
+                self = Message(responseID: responseID, role: role, body: body,
+                               reasoningContent: reasoning, reasoningItems: reasoningItems)
             } else {
                 // Legacy code path
                 let content = try container.decodeIfPresent(String.self, forKey: .content)
@@ -374,6 +431,7 @@ extension LLM {
                                name: functionName,
                                function_call: functionCall,
                                reasoningContent: reasoning)
+                self.reasoningItems = reasoningItems
             }
         }
 
@@ -383,6 +441,7 @@ extension LLM {
             try container.encodeIfPresent(role, forKey: .role)
             try container.encode(body, forKey: .body)
             try container.encodeIfPresent(reasoningContent, forKey: .reasoningContent)
+            try container.encodeIfPresent(reasoningItems, forKey: .reasoningItems)
         }
 
         mutating func tryAppend(_ additionalContent: Body) -> Bool {

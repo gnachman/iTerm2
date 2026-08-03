@@ -181,8 +181,8 @@ class iTermRenderingComparer: NSObject {
             for: fontTable.fontForCharacterSizeCalculations,
             horizontalSpacing: CGFloat(hSpacing),
             verticalSpacing: CGFloat(vSpacing))
-        let sideMargins = CGFloat(iTermPreferences.int(forKey: kPreferenceKeySideMargins))
-        let topBottomMargins = CGFloat(iTermPreferences.int(forKey: kPreferenceKeyTopBottomMargins))
+        let sideMargins = CGFloat(iTermPreferences.sideMargins())
+        let topBottomMargins = CGFloat(iTermPreferences.topBottomMargins())
         let frameSize = NSSize(
             width: CGFloat(columns) * charSize.width + sideMargins * 2,
             height: CGFloat(rows) * charSize.height + topBottomMargins * 2)

@@ -11,6 +11,7 @@
 
 #import "IntervalTree.h"
 #import "LineBuffer.h"
+#import "iTermRowContentIdentity.h"
 #import "PTYTriggerEvaluator.h"
 #import "VT100Grid.h"
 #import "VT100ScreenConfiguration.h"
@@ -265,6 +266,15 @@ extern NSString *const kScreenStateOpenAidStackKey;
     VT100GridDelegate,
     VT100ScreenState,
     iTermTextDataSource>
+
+// Collision-free identity of the content of displayed line |line| (grid or
+// scrollback), for keying the per-row draw cache.
+- (iTermRowContentIdentity)contentIdentityForLine:(int)line;
+
+// Returns the row and its content identity in a single pass (one block walk for a
+// scrollback line), for the per-row draw cache's row build which needs both.
+- (ScreenCharArray *)screenCharArrayForLine:(int)line
+                            contentIdentity:(out iTermRowContentIdentity *)identity;
 
 // Always returns the main-thread pool guid even on
 // VT100ScreenMutableState, where -rcGuid is overridden to return the

@@ -123,7 +123,7 @@
     if ([string containsString:@"' not ready>"]) {
         if (_leftMonitor.interval > _acceleratedInterval) {
             _accelerated = YES;
-            DLog(@"%@: Schedule accelerated upate with interval %@", self, @(_acceleratedInterval));
+            RLog(@"%@: Schedule accelerated upate with interval %@", self, @(_acceleratedInterval));
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(_acceleratedInterval * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 if (self->_accelerated) {
                     DLog(@"%@: Sending accelerated requestUpdates", self);

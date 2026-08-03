@@ -20,7 +20,19 @@ extern NSString *const iTermWebSocketConnectionLibraryVersionTooOldString;
 - (void)webSocketConnection:(iTermWebSocketConnection *)webSocketConnection didReadFrame:(iTermWebSocketFrame *)frame;
 @end
 
-@interface iTermWebSocketConnection : NSObject
+// The subset of a connection the API server needs in order to dispatch a request
+// and deliver responses/notifications back. iTermWebSocketConnection is the
+// socket-backed implementation; an in-process implementation lets embedded
+// callers (e.g. it2 over SSH integration) reuse the server's dispatch, handlers,
+// and subscription machinery without a real socket.
+@protocol iTermAPIServerConnection<NSObject>
+@property(nonatomic, readonly) id key;
+@property(nonatomic, readonly) NSString *guid;
+- (void)sendBinary:(NSData *)binaryData completion:(void (^)(void))completion;
+- (void)abortWithCompletion:(void (^)(void))completion;
+@end
+
+@interface iTermWebSocketConnection : NSObject <iTermAPIServerConnection>
 @property(nonatomic, weak) id<iTermWebSocketConnectionDelegate> delegate;
 @property(nonatomic, weak) dispatch_queue_t delegateQueue;
 @property(nonatomic, copy) NSString *displayName;

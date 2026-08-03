@@ -228,12 +228,18 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
                                     case SSH_OUTPUT:
                                         // VT100Parser cannot emit SSH_OUTPUT.
                                         assert(NO);
+                                    // Deliberate subset of VT100TokenTypeIsSSHMeta (see
+                                    // VT100Token.h): SSH_OUTPUT is handled by the assert above,
+                                    // and the synthetic SSH_SIDE_CHANNEL cannot be a %output
+                                    // child here. Keep in sync with that canonical list when a
+                                    // new meta token is added.
                                     case SSH_INIT:
                                     case SSH_LINE:
                                     case SSH_UNHOOK:
                                     case SSH_BEGIN:
                                     case SSH_END:
                                     case SSH_TERMINATE:
+                                    case SSH_IT2:
                                         // Meta-tokens, when emitted as the product of %output, belong
                                         // to the child but will not be properly marked up with ssh info.
                                         token.sshInfo = childInfo;
@@ -282,6 +288,10 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
                         isSignaling = YES;
                         break;
 
+                    // "Signaling" is a different question than "is SSH meta"
+                    // (VT100TokenTypeIsSSHMeta in VT100Token.h): it also includes DCS_SSH_HOOK
+                    // and omits SSH_UNHOOK/SSH_TERMINATE/SSH_OUTPUT, so it keeps its own list.
+                    // Add a new SSH meta token here too if it should interrupt a stdin wait.
                     case DCS_SSH_HOOK:
                     case SSH_INIT:
                     case SSH_LINE:
@@ -289,6 +299,7 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
                     case SSH_END:
                     case SSH_RECOVERY_BOUNDARY:
                     case SSH_SIDE_CHANNEL:
+                    case SSH_IT2:
                         isSignaling = YES;
                         break;
 
@@ -335,7 +346,11 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
 
     token->savingData = _saveData;
     if (token->type != VT100_WAIT && token->type != VT100CC_NULL) {
-        if (_saveData) {
+        if (_saveData && token.savedData == nil) {
+            // Don't clobber savedData that a DCS hook already populated (e.g.
+            // DCS_SIXEL). The raw stream slice would be wrong anyway (it can be
+            // empty when the hook backtracked, or a partial slice for a multi-read
+            // sixel), and overwriting it would drop the image the hook assembled.
             token.savedData = VT100ByteStreamCursorMakeData(&position, length);
         }
         if (token->type == VT100_ASCIISTRING ||

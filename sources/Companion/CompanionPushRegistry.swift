@@ -11,6 +11,7 @@
 //
 
 import Foundation
+import CompanionProtocol
 
 enum CompanionPushRegistry {
     private static let tokenKey = "NoSyncCompanionPushToken"
@@ -22,6 +23,11 @@ enum CompanionPushRegistry {
     private static let legacySecretKey = "NoSyncCompanionPushRelaySecret"
     private static let sandboxKey = "NoSyncCompanionPushTokenSandbox"
     private static let authorizationKey = "NoSyncCompanionPushAuthorization"
+    private static let peerRevisionKey = "NoSyncCompanionPeerRevision"
+    private static let alertsEverEnabledKey = "NoSyncCompanionAlertsEverEnabled"
+    private static let everPairedKey = "NoSyncCompanionEverPaired"
+    private static let pushRelayURLKey = "NoSyncCompanionPushRelayBaseURL"
+    private static let mainRelayOriginKey = "NoSyncCompanionMainRelayOrigin"
 
     // The secret authorizes push to the paired phone, so it is kept in the
     // keychain, not UserDefaults. To avoid a keychain prompt while the user is
@@ -68,7 +74,7 @@ enum CompanionPushRegistry {
               let data = CompanionMacIdentity.pairedPushSecret() else {
             return
         }
-        let hex = data.map { String(format: "%02x", $0) }.joined()
+        let hex = data.hexEncodedString()
         secretLock.lock()
         cachedSecretHex = hex
         secretLock.unlock()
@@ -116,6 +122,121 @@ enum CompanionPushRegistry {
             .string(forKey: CompanionPairingController.pairedPIDKey) != nil
     }
 
+    /// The protocol revision the paired phone last advertised in its `.hello`
+    /// (0 if never recorded: paired before this mac learned to store it, or paired
+    /// long ago and not reconnected since the phone updated). Consulted at push
+    /// time, when the phone may be offline, to choose the wakeup format and to gate
+    /// the alert UI. Self-corrects on the next handshake.
+    static var peerRevision: Int {
+        iTermUserDefaults.userDefaults().integer(forKey: peerRevisionKey)
+    }
+
+    static func setPeerRevision(_ revision: Int) {
+        iTermUserDefaults.userDefaults().set(revision, forKey: peerRevisionKey)
+    }
+
+    /// The paired phone understands the contentless wakeup + unified syncSince
+    /// (revision >= 2). When false, the mac sends the legacy per-chat collapse push
+    /// for chat and offers no terminal alerts.
+    static var supportsContentlessWakeup: Bool {
+        peerRevision >= CompanionProtocolVersion.contentlessWakeupRevision
+    }
+
+    /// Whether terminal alerts can actually be DELIVERED to the phone right now:
+    /// paired, new enough, AND able to be notified (authorized + token + secret).
+    /// The send path (CompanionAlertBridge.postTerminalAlert) gates on this.
+    static var canSendAlertsToPhone: Bool {
+        devicePaired && supportsContentlessWakeup && canNotify
+    }
+
+    /// Whether the desktop should OFFER the "send to phone" option: a revision-2
+    /// phone is paired. Deliberately does NOT require canNotify - the user opting in
+    /// is the immediate need that justifies asking iOS for notification permission,
+    /// so the control is enabled without a push token and enabling it triggers the
+    /// permission request (see CompanionPairingController.requestPushPermissionForAlerts).
+    static var canEnableAlertsToPhone: Bool {
+        devicePaired && supportsContentlessWakeup
+    }
+
+    /// Durable "the user has opted into phone alerts" flag, set the first time the
+    /// user turns the setting on. The mac advertises it in every `.hello` reply so a
+    /// connecting phone that hasn't yet been asked for notification permission knows
+    /// to ask - on connect, not on fragile timing. NOT cleared when permission is
+    /// decided (the phone gates re-asks on its own authorization) nor on unpair (the
+    /// intent is device-global, so a freshly paired phone is still asked).
+    static var alertsEverEnabled: Bool {
+        iTermUserDefaults.userDefaults().bool(forKey: alertsEverEnabledKey)
+    }
+
+    static func setAlertsEverEnabled(_ value: Bool) {
+        iTermUserDefaults.userDefaults().set(value, forKey: alertsEverEnabledKey)
+    }
+
+    /// Durable "the user has successfully paired a companion device at least once"
+    /// flag, set the first time a pairing completes. The onboarding wizard is a
+    /// first-run experience: once this is set, the menu opens today's Companion
+    /// Device Settings window instead of the wizard. Like alertsEverEnabled this is
+    /// device-global intent, so it is deliberately NOT cleared on unpair, a user who
+    /// has paired before and then unpaired is experienced and gets the plain window.
+    static var everPaired: Bool {
+        iTermUserDefaults.userDefaults().bool(forKey: everPairedKey)
+    }
+
+    static func setEverPaired(_ value: Bool) {
+        iTermUserDefaults.userDefaults().set(value, forKey: everPairedKey)
+    }
+
+    /// The push relay origin the current pairing registered its phone against,
+    /// recorded ONLY when the pairing completed: that is the one moment we know
+    /// the phone registered its APNs token against this same push relay. A
+    /// reconnect does NOT refresh it (it proves nothing about push registration,
+    /// see recordCurrentMainRelay). nil for a device paired before the mac tracked
+    /// this; relayConfigurationChanged treats nil as "unknown, not moved", NOT as
+    /// an old host.
+    static var registeredPushRelayURL: String? {
+        iTermUserDefaults.userDefaults().string(forKey: pushRelayURLKey)
+    }
+
+    /// The main (pairing/transport) relay origin this pairing was established
+    /// against, recorded when the pairing completed AND refreshed on each
+    /// successful reconnect (see recordCurrentMainRelay). nil for a device paired
+    /// before the mac tracked this and not reconnected since, or for a pairing
+    /// made with the relay disabled.
+    static var registeredMainRelayOrigin: String? {
+        iTermUserDefaults.userDefaults().string(forKey: mainRelayOriginKey)
+    }
+
+    /// Stamp both relays this pairing is reachable through. Called ONLY when a
+    /// fresh pairing completes: pairing is the one point where the phone both
+    /// registers its APNs token against the current push relay AND carries this
+    /// connection over the current main relay, so both origins are evidenced.
+    /// Recording them makes a later host move (see CompanionPushRelay and the
+    /// CompanionRelayOrigin setting) detectable. A reconnect refreshes only the
+    /// main relay (see recordCurrentMainRelay); it must not touch the push relay,
+    /// which a reconnect does not evidence.
+    static func recordCurrentRelays(pushRelayURL: String, mainRelayOrigin: String?) {
+        iTermUserDefaults.userDefaults().set(pushRelayURL, forKey: pushRelayURLKey)
+        recordCurrentMainRelay(mainRelayOrigin)
+    }
+
+    /// Refresh ONLY the recorded main relay origin, leaving the push relay alone.
+    /// Called on each successful reconnect: the connection is carried over the main
+    /// relay, so it proves the phone still reaches us there and backfills a pairing
+    /// older than this tracking (nil) so a later main-relay move is detectable. It
+    /// does NOT prove which push relay the phone's APNs token is registered against
+    /// (the phone registers against its own build's push-relay URL, which after a
+    /// mac-only upgrade differs from ours until the phone app is updated), so
+    /// stamping the push URL on a reconnect would falsely satisfy
+    /// relayConfigurationChanged and suppress a legitimate re-pair prompt.
+    static func recordCurrentMainRelay(_ mainRelayOrigin: String?) {
+        let defaults = iTermUserDefaults.userDefaults()
+        if let mainRelayOrigin {
+            defaults.set(mainRelayOrigin, forKey: mainRelayOriginKey)
+        } else {
+            defaults.removeObject(forKey: mainRelayOriginKey)
+        }
+    }
+
     /// True when asking for permission could possibly succeed: iOS only ever
     /// shows the prompt while the state is notDetermined; after a decline,
     /// only the Settings app can change it. Gating the request tool on this
@@ -142,6 +263,25 @@ enum CompanionPushRegistry {
         connectionFlag = connected
     }
 
+    /// Whether the connected phone is an INTERACTIVE connection (a foreground app
+    /// session), as opposed to the mac's own solicited NSE fetch (which also holds
+    /// a live bridge). Used to gate turn-complete pushes: suppress for interactive
+    /// (the user is looking), but NOT for a background NSE fetch. Mirrors the
+    /// pairing controller's connectionPresence == .interactive.
+    private static var interactiveFlag = false
+
+    static var interactivePhoneConnected: Bool {
+        connectionLock.lock()
+        defer { connectionLock.unlock() }
+        return interactiveFlag
+    }
+
+    static func setInteractivePhoneConnected(_ interactive: Bool) {
+        connectionLock.lock()
+        defer { connectionLock.unlock() }
+        interactiveFlag = interactive
+    }
+
     /// Apply a pushStatus report from the phone.
     static func update(authorization: CompanionPushAuthorization,
                        token: Data?,
@@ -151,21 +291,21 @@ enum CompanionPushRegistry {
         defaults.set(authorization.rawValue, forKey: authorizationKey)
         defaults.set(sandbox, forKey: sandboxKey)
         if let token {
-            defaults.set(token.map { String(format: "%02x", $0) }.joined(), forKey: tokenKey)
+            defaults.set(token.hexEncodedString(), forKey: tokenKey)
         }
         if let relaySecret {
             do {
                 try CompanionMacIdentity.storePairedPushSecret(relaySecret)
                 defaults.set(true, forKey: hasSecretKey)
-                let hex = relaySecret.map { String(format: "%02x", $0) }.joined()
+                let hex = relaySecret.hexEncodedString()
                 secretLock.lock()
                 cachedSecretHex = hex
                 secretLock.unlock()
             } catch {
-                DLog("Companion push: failed to store relay secret in keychain: \(error)")
+                RLog("Companion push: failed to store relay secret in keychain: \(error)")
             }
         }
-        DLog("Companion push: status \(authorization.rawValue), token \(token != nil ? "present" : "absent"), secret \(relaySecret != nil ? "present" : "absent"), sandbox \(sandbox); canNotify=\(canNotify)")
+        RLog("Companion push: status \(authorization.rawValue), token \(token != nil ? "present" : "absent"), secret \(relaySecret != nil ? "present" : "absent"), sandbox \(sandbox); canNotify=\(canNotify)")
     }
 
     static func clear() {
@@ -175,10 +315,15 @@ enum CompanionPushRegistry {
         defaults.removeObject(forKey: legacySecretKey)
         defaults.removeObject(forKey: sandboxKey)
         defaults.removeObject(forKey: authorizationKey)
+        defaults.removeObject(forKey: peerRevisionKey)
+        defaults.removeObject(forKey: pushRelayURLKey)
+        defaults.removeObject(forKey: mainRelayOriginKey)
+        // alertsEverEnabled is intentionally NOT cleared: it is device-global user
+        // intent, so a freshly paired phone is still asked for permission.
         CompanionMacIdentity.deletePairedPushSecret()
         secretLock.lock()
         cachedSecretHex = nil
         secretLock.unlock()
-        DLog("Companion push: cleared device registration")
+        RLog("Companion push: cleared device registration")
     }
 }

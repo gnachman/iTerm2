@@ -1,403 +1,554 @@
 import Foundation
 
-/// Hard rules for an agent that types shell commands into a terminal.
-/// Deterministic, no LLM involvement. Wire up by assigning the method
-/// reference to the classifier's hook:
+/// Deterministic pre-classifier for an agent that types shell commands into a
+/// terminal. Wire up by assigning the method reference to the classifier's hook:
 ///
 ///     let rules = TerminalHardRules()
 ///     classifier.hardRules = rules.evaluate
 ///
-/// `evaluate` consumes one submitted shell line (the bytes buffered between
-/// an Enter keystroke and the prior one). It returns:
+/// This is a BLOCKLIST, not an allowlist. It never permits a command, and
+/// (matching Claude Code) it never hard-denies one either -- a categorical deny
+/// has no approval path, which dead-ends a legitimate request and invites bypass
+/// attempts. It only surfaces a command for one-tap human approval, or defers.
+/// `evaluate` returns:
 ///
-///   - `.allow` only for a line that is provably a simple, read-only
-///     command: no command/process substitution, no parameter or arithmetic
-///     expansion, no redirection, and every operator-separated segment is
-///     itself read-only-allowable.
-///   - `.block` for categorically destructive patterns.
-///   - `.needsManualApproval` for medium-risk commands.
-///   - `nil` to fall through to the LLM classifier for anything that cannot
-///     be proven simple-read-only but is not categorically dangerous.
+///   - `.needsManualApproval` for a DELIBERATELY NARROW set: cases that could
+///     deceive the classifier about what actually runs, hide the payload from it
+///     entirely, or are catastrophic. Specifically: terminal escape sequences;
+///     carriage returns (a parser differential -- but NOT plain LF newlines, so
+///     heredocs and multi-line commands defer); unbalanced quotes; pipe-to-shell
+///     (`curl x | sh`, whose fetched bytes are invisible); obscure zsh dangerous
+///     builtins; and a catastrophic tripwire -- root/home wipes (`rm -r /`),
+///     `chmod`/`chown -R` of root, `find <root> -delete`, writing to a raw
+///     device (`dd of=/dev/sda`, `> /dev/sda`), and `mkfs`.
+///   - `nil` (defer to the LLM classifier) for EVERYTHING else -- redirection,
+///     command/process substitution, zsh `=cmd`, `$IFS`, `/proc/*/environ`,
+///     `sudo`, `rm` of a subpath, `git`, and every ordinary command. The
+///     classifier reads these in full and judges them against what the user
+///     asked for.
 ///
-/// A small quote-aware scanner (see `scan`) tracks single-quote,
-/// double-quote, and backslash state so operators and metacharacters are
-/// only honored when unquoted. This is the shell tokenizer internalized: it
-/// does not need to be a full parser, only conservative enough that anything
-/// it cannot prove simple-read-only is never auto-allowed. When the line is
-/// ambiguous (for example unbalanced quotes) it returns `nil`. The previous
-/// version classified from the first token alone, so `ls && rm x` and
-/// `cat secret > ~/.ssh/authorized_keys` auto-allowed; this closes that hole.
+/// The catastrophic tripwire and pipe-to-shell are computed by TOKENIZING each
+/// operator-separated segment into its argv (quotes stripped, env-prefix and
+/// modifiers skipped) and checking the actual command + flags + target -- NOT by
+/// substring match. That is what makes `echo "rm -rf /"` (argv[0] == echo) and
+/// `# rm -rf /` (a comment) and `| sha256sum` (not a shell) defer, while
+/// `rm -fr /`, `dd if=/dev/zero of=/dev/sda`, and `curl x|sh` are caught
+/// regardless of flag order or spacing. A substring matcher got both wrong.
+///
+/// The narrow keep-set mirrors Claude Code's AUTO mode: there, an auto-mode
+/// classifier makes every permission decision and the interactive structural
+/// `ask` checks (redirection, substitution, `$IFS`, ...) are skipped -- only the
+/// parser-differential "misparsing" floor survives. This orchestrator is that
+/// auto mode; the LLM (fail-closed, prompt-injection-hardened) is the only layer
+/// that says yes or no to an ordinary command.
+///
+/// There is deliberately no allowlist of "safe" verbs. Auto-allowing read-only
+/// commands (cat/grep/git status/...) conflated "read-only" with "safe": for an
+/// autonomous agent a read is the exfiltration primitive, and some read-only
+/// commands even execute code (a poisoned `core.pager` runs on `git log`).
 ///
 /// The public sets are `var` so callers can extend them at runtime.
 final class TerminalHardRules {
 
-    /// Commands whose every invocation is considered safe regardless of flags.
-    /// Read-only by design — these don't modify filesystem, processes, or network.
-    var hardAllowCommands: Set<String> = [
-        "ls", "pwd", "cd", "echo", "printf",
-        "cat", "head", "tail", "wc", "nl", "tac", "rev",
-        "stat", "file", "type", "which", "command",
-        "whoami", "id", "groups", "hostname", "uname", "date",
-        "df", "du", "free", "uptime", "nproc",
-        "basename", "dirname", "realpath", "readlink",
-        "cut", "tr", "sort", "uniq", "comm", "diff", "cmp",
-        "grep", "egrep", "fgrep", "rg", "ag",
-        "true", "false", "test", "expr",
+    // See the type doc above: no allowlist, no hard block. The deterministic
+    // layer only surfaces for approval or defers (nil) to the LLM classifier.
+
+    /// zsh module builtins that bypass ordinary command checks: fine-grained fd
+    /// access (sysopen/syswrite), pty command execution (zpty), network
+    /// exfiltration (ztcp/zsocket), and the zsh/files builtin rm/mv/chmod (zf_*).
+    /// `zmodload` is the gateway. Ported from Claude Code's ZSH_DANGEROUS_COMMANDS
+    /// but WITHOUT `mapfile`/`emulate` -- those have common benign uses (`mapfile`
+    /// is a standard bash builtin, `readarray`). Matched on a segment's base
+    /// command (after env-prefix/modifier stripping), surfaced for approval.
+    var zshDangerousCommands: Set<String> = [
+        "zmodload",
+        "sysopen", "sysread", "syswrite", "sysseek",
+        "zpty", "ztcp", "zsocket",
+        "zf_rm", "zf_mv", "zf_ln", "zf_chmod", "zf_chown",
+        "zf_mkdir", "zf_rmdir", "zf_chgrp",
     ]
 
-    /// First-token privilege-escalation commands. Categorical deny.
-    var privilegeEscalation: Set<String> = [
-        "sudo", "su", "doas", "pkexec",
+    /// Shell interpreters that, downstream of a pipe (`curl x | sh`), execute the
+    /// piped bytes -- which the classifier cannot see. Matched on a segment's
+    /// base command, so spacing and flags don't matter and `| sha256sum` (starts
+    /// with "sh" but isn't a shell) is not a false positive.
+    var shellInterpreters: Set<String> = [
+        "sh", "bash", "zsh", "dash", "ksh", "mksh", "pdksh",
+        "ash", "fish", "tcsh", "csh", "busybox",
     ]
 
-    /// First-token commands whose flags determine whether they're destructive.
-    /// Defaulted to manual approval so a human sees the full invocation.
-    var manualApprovalCommands: Set<String> = [
-        "rm", "mv", "cp", "chmod", "chown", "chgrp",
-        "ln", "mkdir", "rmdir", "touch",
-        "make", "cmake", "ninja",
-        "pip", "pip3", "npm", "yarn", "pnpm", "bun", "cargo", "go",
-        "brew", "apt", "dnf", "yum", "pacman",
-        "docker", "podman", "kubectl",
-        "ssh", "scp", "rsync",
-        "curl", "wget",
-        "kill", "killall", "pkill",
+    /// Command modifiers skipped when finding a segment's effective command, so
+    /// `sudo rm -rf /` and `env FOO=1 rm -rf /` still surface `rm` as the command.
+    /// Best-effort: a modifier that carries its OWN option with a value
+    /// (`sudo -u root rm ...`, `nice -n 10 rm ...`) is not unwound, so those
+    /// forms defer to the LLM rather than hitting the tripwire.
+    private static let commandModifiers: Set<String> = [
+        "sudo", "doas", "command", "builtin", "exec", "eval", "!",
+        "env", "nohup", "nice", "time", "then", "do", "noglob", "nocorrect",
     ]
 
-    /// Substrings that categorically block the line. Conservative — only
-    /// patterns with no plausible safe use. Checked before first-token
-    /// rules so `rm -rf /` doesn't get demoted by the `rm` token rule.
-    var hardDenySubstrings: [String] = [
-        "rm -rf /",
-        "rm -rf /*",
-        "rm -rf ~",
-        "rm -rf $HOME",
-        "rm -rf \"$HOME\"",
-        ":(){:|:&};:",
-        "mkfs.",
-        "dd of=/dev/",
-        "chmod -R 777 /",
-        "> /dev/sd",
-        "> /dev/nvme",
+    // `-exec`-family commands whose executed command makes `find <root> -exec ...`
+    // catastrophic. `find ~ -exec grep {} \;` (a read-only exec) is NOT here, so
+    // it defers.
+    private static let destructiveExecCommands: Set<String> = [
+        "rm", "unlink", "rmdir", "mv", "dd", "shred", "chmod", "chown",
+        "chgrp", "truncate", "mkfs",
     ]
 
-    /// Substrings that send the line to manual approval regardless of the
-    /// first token. Pipe-to-shell and device redirects are the canonical
-    /// examples — the destructive part is the structure, not the command.
-    var manualApprovalSubstrings: [String] = [
-        "| sh", "|sh ", "|sh\n",
-        "| bash", "|bash ", "|bash\n",
-        "| zsh", "|zsh ",
-        "> /dev/",
-        " | sudo",
+    // /dev nodes that are safe to write to; a `dd of=` or redirect to any OTHER
+    // /dev/* (a raw block device) is the catastrophic case.
+    private static let safeDevTargets: Set<String> = [
+        "null", "zero", "stdout", "stderr", "tty", "random", "urandom", "full",
     ]
 
-    /// Git subcommands that are read-only regardless of their arguments. `git`
-    /// is gated per-subcommand rather than via blanket manualApprovalCommands
-    /// because most agent-issued git commands are status/log/diff and should
-    /// not pay an LLM round-trip.
-    ///
-    /// Deliberately excludes subcommands that only look read-only: `config`
-    /// can write `.git/config` and arrange later arbitrary command execution
-    /// (`git config core.pager '<cmd>'`, `alias.x '!<cmd>'`), and
-    /// `branch`/`tag`/`remote` mutate repository state with the right flags.
-    /// Those fall through to manual approval.
-    var gitReadOnlySubcommands: Set<String> = [
-        "status", "log", "diff", "show", "blame",
-        "ls-files", "ls-tree", "rev-parse", "describe",
-    ]
+    // Shared reason for every history-expansion / quick-substitution surface.
+    private static let historyExpansionReason =
+        "the command uses shell history expansion (`!`/`^`), which resurrects a previous command that can't be safety-checked"
+
+    // True if `segment` contains an unquoted, unescaped `!` that triggers history
+    // expansion: a `!` NOT immediately followed by whitespace, `=`, `(`, a
+    // newline, or end-of-string (those are a literal `!` in bash/zsh). Quote-
+    // aware, tracking single AND double quote state like the sibling scanners
+    // (`scan`, `tokenizeWords`): single quotes and a preceding backslash disable
+    // expansion; DOUBLE quotes do NOT (bash runs histexpand before quote removal,
+    // so `!` expands inside them), but a `'` inside double quotes is a LITERAL
+    // apostrophe and must not open a phantom single-quote region that swallows a
+    // following `!`. Used per operator-separated segment so mid-line resurrection
+    // (`sudo !!`, `echo "don't stop!!"`) is caught, not just a leading `!`.
+    private static func hasHistoryExpansion(_ segment: String) -> Bool {
+        let chars = Array(segment)
+        var inSingle = false
+        var inDouble = false
+        var escaped = false
+        for (i, c) in chars.enumerated() {
+            if inSingle {
+                if c == "'" { inSingle = false }
+                continue                              // single quotes: fully literal
+            }
+            if escaped { escaped = false; continue }  // char after a backslash
+            if c == "\\" { escaped = true; continue } // escapes next (incl. `\!` in "")
+            if c == "\"" { inDouble.toggle(); continue }
+            if c == "'" && !inDouble { inSingle = true; continue }
+            guard c == "!" else { continue }          // `!` expands even inside ""
+            // `$!` (last-background-PID special parameter) and `${!ref}` (indirect
+            // expansion) are parameter expansions, NOT history expansion -- bash/
+            // zsh do not resurrect a command there. Skip a `!` that directly
+            // follows `$`, or one inside `${...}` (a `{` that itself follows `$`).
+            // A bare `{!` (brace with no `$`) still flags, so this is precise, not
+            // a blanket exemption.
+            let prev: Character? = i > 0 ? chars[i - 1] : nil
+            if prev == "$" { continue }
+            if prev == "{", i >= 2, chars[i - 2] == "$" { continue }
+            let next: Character? = i + 1 < chars.count ? chars[i + 1] : nil
+            switch next {
+            case nil, " ", "\t", "=", "(", "\n":
+                continue                              // literal `!`
+            default:
+                return true                           // history expansion
+            }
+        }
+        return false
+    }
 
     func evaluate(_ action: TranscriptEntry) -> ClassifierDecision? {
         guard case .toolCall(_, let raw) = action else { return nil }
         let line = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        if line.isEmpty { return .allow }
+        if line.isEmpty { return nil }
 
-        // Terminal escape sequences in agent-typed input could rewrite
-        // already-displayed output, toggle alt-screen, or write to the
-        // clipboard via OSC 52. No legitimate use in a shell line.
+        // The deterministic layer only surfaces a command for one-tap human
+        // approval (.needsManualApproval) or defers (nil) to the LLM classifier,
+        // which is the only layer that says yes/no to an ordinary command. No
+        // allowlist, no hard block. It keeps a NARROW set: a parser-differential
+        // / spoofing floor, and a catastrophic tripwire.
+
+        // Character-presence floor (applies even to multi-line input):
+        //  - ESC could rewrite the screen or drive OSC 52 (clipboard).
+        //  - CR is the submit gesture and tokenizes differently for the shell
+        //    than for our line reconstruction (a genuine misparsing vector).
         if line.unicodeScalars.contains(where: { $0.value == 0x1B }) {
-            return .block(reason: "input contains a terminal escape sequence")
+            return .needsManualApproval(reason: "the command contains a terminal escape sequence")
+        }
+        if line.unicodeScalars.contains(where: { $0.value == 0x0D }) {
+            return .needsManualApproval(
+                reason: "the command contains a carriage return, which the shell and the safety check tokenize differently")
         }
 
-        // Categorical hard-deny wins over everything. These patterns have no
-        // plausible safe use, so they are matched against the whole line.
-        for pattern in hardDenySubstrings {
-            if line.contains(pattern) {
-                return .block(reason: "matches hard-deny pattern: `\(pattern)`")
-            }
+        // History expansion / quick substitution at LINE START (`!!`, `!rm`,
+        // `!-2`, `!string`, `^old^new`) resurrects a previous command we cannot
+        // inspect statically -- the shell rebuilds it from history, handing the
+        // classifier an opaque token, not the command it runs. Same invisible-
+        // payload rationale as pipe-to-shell. Checked BEFORE the multi-line defer
+        // so it is caught even as the first physical line of a heredoc/for-loop:
+        // deferring an opaque `!!` to the LLM would not help, since the LLM can't
+        // inspect the resurrected command either. BANG_HIST (zsh) / histexpand
+        // (bash) are on by default interactively. A `!` followed by whitespace
+        // (`! cmd`, logical negation -- a commandModifier), `=`, `(` (a glob /
+        // subshell under zsh or extglob), or a newline (`!\n`, a literal `!`) is
+        // NOT expansion. Mid-line `!` (`sudo !!`, `echo x; !rm`) is caught by the
+        // per-segment scan further down (single-line only).
+        if line.hasPrefix("^") {
+            return .needsManualApproval(reason: Self.historyExpansionReason)
+        }
+        if line.hasPrefix("!"), let second = line.dropFirst().first,
+           second != " ", second != "\t", second != "=", second != "(",
+           second != "\n" {
+            return .needsManualApproval(reason: Self.historyExpansionReason)
+        }
+
+        // A plain (LF) multi-line command -- a heredoc, a for-loop, a multi-line
+        // paste -- is read in full by the classifier. Skip all the single-line
+        // parse-based checks below: scanning a heredoc BODY for quotes or
+        // commands is what produced false positives (an apostrophe in the body,
+        // or a documented `rm -rf /`). LF defers; the classifier judges it. This
+        // matches Claude Code, whose LF-newline check is nonMisparsing (skipped
+        // in auto mode) and which extracts heredoc bodies before analysis.
+        if line.unicodeScalars.contains(where: { $0.value == 0x0A }) {
+            return nil
         }
 
         let scanned = scan(line)
 
-        // Unbalanced quotes or a dangling escape mean we cannot reason about
-        // the line. Never auto-allow it; defer to the LLM classifier.
-        guard scanned.balanced else { return nil }
+        // Unbalanced quotes / dangling escape: ambiguous parse, so the shell and
+        // the classifier could read it differently. Surface for review.
+        guard scanned.balanced else {
+            return .needsManualApproval(
+                reason: "the command has unbalanced quotes and cannot be parsed for safety")
+        }
 
-        // Classify every operator-separated segment and fold with precedence
-        // block > needsManualApproval > defer(nil) > allow.
-        var blockReason: String?
-        var manualReason: String?
-        var sawDefer = false
+        // Catastrophic tripwire + pipe-to-shell, computed by TOKENIZING each
+        // operator-separated segment into its argv (quotes stripped, env-prefix /
+        // modifiers skipped) and checking the actual command + flags + target.
+        // This is why `echo "rm -rf /"` (argv[0] == echo), `# rm -rf /` (a
+        // comment), `echo ":(){:|:&};:"` (a quoted string), and `| sha256sum`
+        // (not a shell) all DEFER, while `rm -fr /`, `dd if=/dev/zero of=/dev/sda`,
+        // and `curl x|sh` are caught regardless of flag order or spacing.
+        // Everything not caught -- redirection to a normal file, substitution,
+        // `$IFS`, /proc/environ, sudo, `rm` of a subpath, git, plain reads, and
+        // the fork bomb (rare, and the classifier recognizes it) -- defers.
         for segment in scanned.segments {
-            switch classifySegment(segment) {
-            case .block(let reason):
-                if blockReason == nil { blockReason = reason }
-            case .needsManualApproval(let reason):
-                if manualReason == nil { manualReason = reason }
-            case .allow:
-                break
-            case .unparseable, .none:
-                sawDefer = true
+            // History expansion is not confined to line start: bash/zsh expand an
+            // unquoted `!`-designator ANYWHERE (`sudo !!`, `echo x; !rm`,
+            // `x | !ls`). Scan every operator-separated segment, exactly as the
+            // pipe-to-shell / catastrophic checks do, rather than testing only the
+            // prefix.
+            //
+            // This runs AFTER the LF multi-line defer, so it only sees single-line
+            // commands. That asymmetry with the line-START `!`/`^` check (which
+            // runs BEFORE the defer, so it catches a line that STARTS with history
+            // expansion even in multi-line input) is deliberate: a MID-line `!` on
+            // a later physical line is usually a heredoc/here-doc body byte, and
+            // scanning multi-line bodies for `!` reintroduces exactly the heredoc
+            // false positives the LF defer exists to avoid. A line that STARTS
+            // with `!!`/`^` is unambiguously history; a `!` buried in a later body
+            // line is not, so it defers to the LLM like the rest of the body.
+            if Self.hasHistoryExpansion(segment.text) {
+                return .needsManualApproval(reason: Self.historyExpansionReason)
+            }
+            let words = Self.tokenizeWords(segment.text)
+            // Redirect (`>`/`>>`) to a raw block device, on any command. Scans the
+            // raw segment text (quote-aware) so a `>` inside a quoted string is
+            // not mistaken for a real redirect operator.
+            if Self.redirectsToBlockDevice(segment.text) {
+                return .needsManualApproval(reason: "the command writes directly to a device")
+            }
+            guard let (cmd, args) = Self.effectiveCommand(words) else { continue }
+            if let decision = catastrophicVerdict(cmd: cmd, args: args,
+                                                  afterPipe: segment.afterPipe) {
+                return decision
             }
         }
-
-        // History expansion at line start runs a previous command we have no
-        // way to inspect statically.
-        if manualReason == nil && line.hasPrefix("!") {
-            manualReason = "history expansion (`!`) at line start runs a previous command that cannot be inspected statically"
-        }
-
-        // Existing line-level manual-approval triggers (pipe-to-shell and the
-        // like). Matched against the unquoted projection only, so the same
-        // metacharacters appearing inside quotes do not false-positive.
-        if manualReason == nil {
-            for pattern in manualApprovalSubstrings {
-                if scanned.unquotedProjection.contains(pattern) {
-                    let trimmed = pattern.trimmingCharacters(in: .whitespacesAndNewlines)
-                    manualReason = "line contains `\(trimmed)` and needs review before it runs"
-                    break
-                }
-            }
-        }
-
-        if let blockReason {
-            return .block(reason: blockReason)
-        }
-        if let manualReason {
-            return .needsManualApproval(reason: manualReason)
-        }
-        if sawDefer {
-            return nil
-        }
-
-        // Every segment is read-only. Only auto-allow when the structure is
-        // also provably simple: no command/process substitution, no parameter
-        // or arithmetic expansion, and no redirection. Anything else defers
-        // to the LLM rather than auto-allowing.
-        if scanned.hasSubstitution || scanned.hasExpansion || scanned.hasRedirection {
-            return nil
-        }
-        return .allow
+        return nil
     }
 
-    /// Decide a single operator-separated segment in isolation. Mirrors the
-    /// first-token rules: privilege escalation blocks, git and find have their
-    /// own read-only checks, hard-allow commands allow, manual-approval
-    /// commands need review, and anything unknown returns nil to defer to the
-    /// LLM. An empty segment (for example the gap in `a && b`) is allowable.
-    private func classifySegment(_ rawSegment: String) -> ClassifierDecision? {
-        let segment = rawSegment.trimmingCharacters(in: .whitespacesAndNewlines)
-        if segment.isEmpty {
-            return .allow
-        }
-        let tokens = segment.split(whereSeparator: { $0 == " " || $0 == "\t" })
-        guard let first = tokens.first else { return .allow }
-        // A leading backslash defeats shell aliases (`\rm`); strip it so the
-        // token-level rule still applies.
-        let cmd = first.hasPrefix("\\") ? String(first.dropFirst()) : String(first)
-
-        if privilegeEscalation.contains(cmd) {
-            return .block(reason: "privilege escalation: `\(cmd)`")
-        }
-
-        if cmd == "git" {
-            let sub = tokens.dropFirst().first.map(String.init) ?? ""
-            if gitReadOnlySubcommands.contains(sub) {
-                return .allow
-            }
+    /// The catastrophic verdict for one segment's tokenized (command, args).
+    /// Instance method because it consults the extensible `shellInterpreters` /
+    /// `zshDangerousCommands` sets.
+    private func catastrophicVerdict(cmd: String, args: [String],
+                                     afterPipe: Bool) -> ClassifierDecision? {
+        // Pipe-to-shell: a shell interpreter reading bytes piped into it (`curl
+        // x | sh`) runs content the classifier cannot see. ONLY an actual pipe
+        // `|` counts -- `x && bash deploy.sh` / `x; sh` run a named script or an
+        // interactive shell, which the classifier CAN judge, so they defer.
+        if afterPipe, shellInterpreters.contains(cmd) {
             return .needsManualApproval(
-                reason: sub.isEmpty
-                    ? "`git` with no subcommand"
-                    : "`git \(sub)` may modify repository state"
-            )
+                reason: "the command pipes into a shell (`\(cmd)`), whose input can't be safety-checked")
         }
-
-        if cmd == "find" {
-            // `find` is read-only unless asked to mutate. The flags below are
-            // the destructive ones: -exec/-ok families run commands, and the
-            // -fprint/-fprintf/-fls primaries create or truncate a named file
-            // without any redirection operator.
-            let destructive = [" -delete", " -exec ", " -execdir ", " -ok ", " -okdir ",
-                               " -fprint ", " -fprintf ", " -fls "]
-            if destructive.contains(where: segment.contains) {
-                return .needsManualApproval(
-                    reason: "`find` invoked with -delete/-exec/-ok can mutate the filesystem"
-                )
-            }
-            return .allow
-        }
-
-        if hardAllowCommands.contains(cmd) {
-            return .allow
-        }
-
-        if manualApprovalCommands.contains(cmd) {
+        // Obscure zsh dangerous builtins.
+        if zshDangerousCommands.contains(cmd) {
             return .needsManualApproval(
-                reason: "`\(cmd)` can have destructive effects depending on its arguments"
-            )
+                reason: "zsh builtin `\(cmd)` can bypass ordinary command checks")
         }
-
+        // rm -r of the whole root or home directory (force not required -- a
+        // recursive delete of root is worth a prompt with or without -f).
+        if cmd == "rm",
+           Self.hasFlag(args, short: ["r", "R"], long: "recursive"),
+           args.contains(where: Self.isCatastrophicTarget) {
+            return .needsManualApproval(
+                reason: "the command recursively deletes the filesystem root or home directory")
+        }
+        // chmod/chown/chgrp -R on the whole root or home directory.
+        if cmd == "chmod" || cmd == "chown" || cmd == "chgrp",
+           Self.hasFlag(args, short: ["R"], long: "recursive"),
+           args.contains(where: Self.isCatastrophicTarget) {
+            return .needsManualApproval(
+                reason: "the command recursively changes ownership/permissions on the filesystem root or home directory")
+        }
+        // dd writing directly to a raw block device (of=/dev/sda, not /dev/null).
+        if cmd == "dd", args.contains(where: Self.isDeviceWriteArg) {
+            return .needsManualApproval(reason: "the command writes directly to a device with dd")
+        }
+        // mkfs formats (destroys) a filesystem.
+        if cmd == "mkfs" || cmd.hasPrefix("mkfs.") {
+            return .needsManualApproval(reason: "the command formats a filesystem (mkfs)")
+        }
+        // find rooted at / or home that deletes, or -execs a destructive command
+        // (`find ~ -exec grep {} \;`, a read-only exec, defers).
+        if cmd == "find",
+           args.contains(where: Self.isCatastrophicTarget),
+           Self.findIsDestructive(args, shellInterpreters: shellInterpreters) {
+            return .needsManualApproval(
+                reason: "the command deletes or runs a destructive command across the filesystem root or home directory with find")
+        }
         return nil
+    }
+
+    // A tokenized segment's effective command and arguments: leading `VAR=val`
+    // env assignments and command modifiers (sudo/env/eval/`!`/...) skipped, so
+    // `sudo rm -rf /`, `FOO=1 rm -rf /`, and `! rm -rf /` all surface `rm`.
+    // Option flags belonging to a modifier are skipped too, so `sudo -i rm -rf /`
+    // and `env -i rm -rf /` still surface `rm` rather than the flag `-i`. A
+    // VALUE-carrying option (`sudo -u root rm ...`) is NOT unwound: its value
+    // becomes the command, which isn't a catastrophic verb, so it defers to the
+    // LLM -- matching the best-effort note on `commandModifiers`.
+    // Returns nil for an empty segment or a bare env-assignment (`FOO=bar`).
+    static func effectiveCommand(_ words: [String]) -> (cmd: String, args: [String])? {
+        var i = 0
+        var sawModifier = false
+        while i < words.count {
+            let w = words[i]
+            if isEnvAssignment(w) { i += 1; continue }
+            let base = baseCommandName(w.hasPrefix("\\") ? String(w.dropFirst()) : w)
+            if commandModifiers.contains(base) { sawModifier = true; i += 1; continue }
+            // After a modifier, an option flag (`-i`, `-H`, `--login`, `--`) is the
+            // modifier's, not the command; skip it so the real command after the
+            // flags is found. Only after a modifier: a leading `-flag` with no
+            // modifier is a malformed line we leave alone.
+            if sawModifier && w.hasPrefix("-") && w.count > 1 { i += 1; continue }
+            return (base, Array(words[(i + 1)...]))
+        }
+        return nil
+    }
+
+    // True if the segment writes to a raw block device via an UNQUOTED redirect
+    // (`> /dev/sda`, `>/dev/sda`, `2>/dev/sda`, `&>/dev/sda`, `>>/dev/sda`, or
+    // the space-free `cat x>/dev/sda`), on any command. Complements the dd `of=`
+    // check.
+    //
+    // Scans the RAW segment text tracking quote state rather than the
+    // quote-stripped words: tokenizeWords discards quoting, so a literal `>`
+    // inside a string (`echo "run cat foo >/dev/sda"`, `git commit -m "note >…"`)
+    // is indistinguishable from a real redirect operator once the words are
+    // built, producing a spurious approval prompt. A `>` inside single OR double
+    // quotes is a literal here and is skipped; only an unquoted operator counts.
+    private static func redirectsToBlockDevice(_ text: String) -> Bool {
+        let chars = Array(text)
+        var inSingle = false, inDouble = false, escaped = false
+        var i = 0
+        while i < chars.count {
+            let c = chars[i]
+            if inSingle { if c == "'" { inSingle = false }; i += 1; continue }
+            if escaped { escaped = false; i += 1; continue }
+            if c == "\\" { escaped = true; i += 1; continue }
+            if c == "\"" { inDouble.toggle(); i += 1; continue }
+            if inDouble { i += 1; continue }        // a `>` inside "" is literal
+            if c == "'" { inSingle = true; i += 1; continue }
+            guard c == ">" else { i += 1; continue }
+            // Unquoted redirect operator (any leading fd number or `&` was already
+            // passed over and is irrelevant). Consume the second `>` of `>>`, skip
+            // spaces, then read the target up to the next unquoted whitespace or
+            // operator, dropping quote characters around a quoted target.
+            var j = i + 1
+            if j < chars.count, chars[j] == ">" { j += 1 }
+            while j < chars.count, chars[j] == " " || chars[j] == "\t" { j += 1 }
+            var target = ""
+            reading: while j < chars.count {
+                switch chars[j] {
+                case " ", "\t", ">", "<", "|", ";", "&", "\n": break reading
+                case "\"", "'": j += 1                 // quoted target: drop quote
+                default: target.append(chars[j]); j += 1
+                }
+            }
+            if isBlockDevicePath(target) { return true }
+            i = j
+        }
+        return false
+    }
+
+    // `of=/dev/sda` (a raw block device), but not `of=/dev/null` etc.
+    private static func isDeviceWriteArg(_ arg: String) -> Bool {
+        guard arg.hasPrefix("of=") else { return false }
+        return isBlockDevicePath(String(arg.dropFirst("of=".count)))
+    }
+
+    // A `/dev/*` path that is a raw device, not a safe node (null/zero/tty/...).
+    private static func isBlockDevicePath(_ p: String) -> Bool {
+        guard p.hasPrefix("/dev/") else { return false }
+        let dev = String(p.dropFirst("/dev/".count))
+        return !dev.isEmpty && !safeDevTargets.contains(dev) && !dev.hasPrefix("fd/")
+    }
+
+    // A `find` invocation is destructive if it deletes, or -execs a destructive
+    // command (rm/dd/...) OR a shell interpreter (`find / -exec sh -c '...'` is
+    // the most common way to run arbitrary destructive work under find, and the
+    // shell's `-c` string is invisible to the classifier -- the same reason
+    // pipe-to-shell is caught). `-exec grep`/`-exec cat` (read-only) is not.
+    // `shellInterpreters` is passed in because it is the extensible instance set.
+    private static func findIsDestructive(_ args: [String],
+                                          shellInterpreters: Set<String>) -> Bool {
+        if args.contains("-delete") { return true }
+        for (i, a) in args.enumerated()
+        where ["-exec", "-execdir", "-ok", "-okdir"].contains(a) {
+            guard i + 1 < args.count else { continue }
+            let target = baseCommandName(args[i + 1])
+            if destructiveExecCommands.contains(target) || shellInterpreters.contains(target) {
+                return true
+            }
+        }
+        return false
+    }
+
+    // Quote-aware word split: honors single/double quotes and backslash escapes,
+    // strips the quote characters, and splits on unquoted whitespace. So
+    // `rm -rf "/"` -> ["rm","-rf","/"] and `echo "rm -rf /"` -> ["echo","rm -rf /"].
+    static func tokenizeWords(_ s: String) -> [String] {
+        var words: [String] = []
+        var cur = ""
+        var started = false
+        var inSingle = false, inDouble = false, escaped = false
+        for ch in s {
+            if escaped { cur.append(ch); escaped = false; started = true; continue }
+            if ch == "\\" && !inSingle { escaped = true; started = true; continue }
+            if inSingle { started = true; if ch == "'" { inSingle = false } else { cur.append(ch) }; continue }
+            if inDouble { started = true; if ch == "\"" { inDouble = false } else { cur.append(ch) }; continue }
+            if ch == "'" { inSingle = true; started = true; continue }
+            if ch == "\"" { inDouble = true; started = true; continue }
+            if ch == " " || ch == "\t" {
+                if started { words.append(cur); cur = ""; started = false }
+                continue
+            }
+            cur.append(ch); started = true
+        }
+        if started { words.append(cur) }
+        return words
+    }
+
+    // True for a `NAME=value` env-assignment word (a valid shell identifier
+    // before the `=`). Used only to skip LEADING assignments while finding a
+    // segment's command; `of=/dev/sda` never reaches here as a leading token
+    // because `dd` precedes it.
+    private static func isEnvAssignment(_ w: String) -> Bool {
+        guard let eq = w.firstIndex(of: "="), eq != w.startIndex else { return false }
+        let name = w[w.startIndex..<eq]
+        guard let f = name.first, f.isLetter || f == "_" else { return false }
+        return name.allSatisfy { $0.isLetter || $0.isNumber || $0 == "_" }
+    }
+
+    // True if `args` contains the flag, in short (`-rf`, `-r`), long
+    // (`--recursive`), or combined form, in any position/order.
+    private static func hasFlag(_ args: [String], short: Set<Character>, long: String) -> Bool {
+        for a in args {
+            if a.hasPrefix("--") {
+                if a.dropFirst(2) == long { return true }
+            } else if a.hasPrefix("-") && a.count > 1 {
+                if a.dropFirst().contains(where: { short.contains($0) }) { return true }
+            }
+        }
+        return false
+    }
+
+    // True if `token` names the whole filesystem root or home directory (in any
+    // of its spellings), not a subpath: `/`, `//`, `/*`, `/.`, `/..`, `~`, `~/`,
+    // `~/*`, `$HOME`, `${HOME}`, `$HOME/*`. `/tmp/git` and `~/Downloads` are NOT.
+    private static func isCatastrophicTarget(_ token: String) -> Bool {
+        var s = token
+        if s.hasSuffix("*") { s = String(s.dropLast()) }              // /*  -> /   ; ~/* -> ~/
+        if s.count > 1 && s.hasSuffix("/") { s = String(s.dropLast()) } // ~/ -> ~ ; //  -> /
+        if s.isEmpty { return false }
+        if s == "/." || s == "/.." { s = "/" }                         // /. , /.. are root
+        if s.allSatisfy({ $0 == "/" }) { s = "/" }                     // //, /// -> /
+        return ["/", "~", "$HOME", "${HOME}"].contains(s)
+    }
+
+    // Lowercased basename of a command token: `/usr/bin/SUDO` -> `sudo`.
+    private static func baseCommandName(_ token: String) -> String {
+        let lower = token.lowercased()
+        if let slash = lower.lastIndex(of: "/") {
+            return String(lower[lower.index(after: slash)...])
+        }
+        return lower
     }
 
     /// Result of the quote-aware scan of a single line.
     private struct ScanResult {
-        /// The line split on unquoted shell operators (`|`, `&`, `;`, and
-        /// newline). Empty and whitespace-only segments are kept; the caller
-        /// trims them.
-        var segments: [String]
-        /// An unquoted command/process substitution or parameter/arithmetic
-        /// expansion appears somewhere: `$(`, `${`, `$[`, a backtick, `<(`,
-        /// or `>(`.
-        var hasSubstitution: Bool
-        /// A word-initial zsh `=cmd` expansion appears unquoted.
-        var hasExpansion: Bool
-        /// A redirection (`>`, `>>`, `<`, `2>`, `&>`, and so on) appears
-        /// unquoted.
-        var hasRedirection: Bool
-        /// The line with quoted regions removed but unquoted operators kept.
-        /// Used for the manual-approval substring backstop so it does not
-        /// false-positive on quoted metacharacters.
-        var unquotedProjection: String
+        /// The line split on unquoted `|`, `&`, `;`. Each segment records whether
+        /// it was started by a pipe (`|`), so pipe-to-shell fires only on an
+        /// actual pipe, not on `&&`/`;`. Empty segments are kept; callers trim.
+        var segments: [(text: String, afterPipe: Bool)]
         /// False if the line ended inside a quote or on a dangling backslash.
         var balanced: Bool
     }
 
-    /// Walk the line tracking single-quote, double-quote, and backslash state
-    /// so operators and metacharacters are only honored when unquoted. This is
-    /// the internalized tokenizer described in the type comment. It is
-    /// deliberately conservative: it does not parse the full grammar, only
-    /// enough that anything it cannot prove simple-read-only is not allowed.
-    /// Splitting more than necessary is safe (it only defers); failing to
-    /// split would be unsafe, so unknown operators always break a segment.
+    /// Split a line into operator-separated segments, honoring single-quote,
+    /// double-quote, and backslash state so an operator inside quotes does not
+    /// split, and recording which segments follow a `|`. Only `segments` and
+    /// `balanced` are needed by `evaluate` (the per-segment argv work is done by
+    /// `effectiveCommand`); this is intentionally NOT a full shell parser. (LF is
+    /// not handled here: multi-line input returns nil in `evaluate` before scan.)
     private func scan(_ line: String) -> ScanResult {
-        var segments: [String] = []
+        var segments: [(String, Bool)] = []
         var current = ""
-        var projection = ""
-        var hasSubstitution = false
-        var hasExpansion = false
-        var hasRedirection = false
+        var currentAfterPipe = false
         var inSingle = false
         var inDouble = false
         var escaped = false
-        var atWordStart = true
 
         let chars = Array(line)
         var i = 0
+        func split(afterPipe: Bool) { segments.append((current, currentAfterPipe)); current = ""; currentAfterPipe = afterPipe }
         while i < chars.count {
             let c = chars[i]
             let next: Character? = i + 1 < chars.count ? chars[i + 1] : nil
-
             if escaped {
-                current.append(c)
-                if !inSingle && !inDouble { projection.append(c) }
-                escaped = false
-                atWordStart = false
-                i += 1
-                continue
+                current.append(c); escaped = false; i += 1; continue
             }
             if c == "\\" && !inSingle {
-                // Backslash escapes the next character outside single quotes.
-                current.append(c)
-                if !inDouble { projection.append(c) }
-                escaped = true
-                atWordStart = false
-                i += 1
-                continue
+                current.append(c); escaped = true; i += 1; continue
             }
             if inSingle {
-                current.append(c)
-                if c == "'" { inSingle = false }
-                i += 1
-                continue
+                current.append(c); if c == "'" { inSingle = false }; i += 1; continue
             }
             if inDouble {
-                // Command substitution stays active inside double quotes.
-                if c == "`" {
-                    hasSubstitution = true
-                } else if c == "$", let n = next, n == "(" || n == "{" || n == "[" {
-                    hasSubstitution = true
-                }
-                current.append(c)
-                if c == "\"" { inDouble = false }
-                i += 1
-                continue
+                current.append(c); if c == "\"" { inDouble = false }; i += 1; continue
             }
-
             switch c {
-            case "'":
-                inSingle = true
-                current.append(c)
-                atWordStart = false
-            case "\"":
-                inDouble = true
-                current.append(c)
-                atWordStart = false
-            case "`":
-                hasSubstitution = true
-                current.append(c)
-                projection.append(c)
-                atWordStart = false
-            case "$":
-                if let n = next, n == "(" || n == "{" || n == "[" {
-                    hasSubstitution = true
-                }
-                current.append(c)
-                projection.append(c)
-                atWordStart = false
-            case "<", ">":
-                if let n = next, n == "(" {
-                    // Process substitution: <( ... ) or >( ... ).
-                    hasSubstitution = true
-                } else {
-                    hasRedirection = true
-                }
-                current.append(c)
-                projection.append(c)
-                atWordStart = false
-            case "=":
-                // zsh word-initial `=cmd` expands to the path of cmd. Require a
-                // following command character so `test x = y` is not flagged.
-                if atWordStart, let n = next, n != "=", n != " ", n != "\t" {
-                    hasExpansion = true
-                }
-                current.append(c)
-                projection.append(c)
-                atWordStart = false
-            case "|", "&", ";", "\n":
-                segments.append(current)
-                current = ""
-                projection.append(c)
-                atWordStart = true
-            case " ", "\t":
-                current.append(c)
-                projection.append(c)
-                atWordStart = true
+            case "'": inSingle = true; current.append(c)
+            case "\"": inDouble = true; current.append(c)
+            case "|":
+                if next == "|" { split(afterPipe: false); i += 1 }        // `||` logical-or
+                else if next == "&" { split(afterPipe: true); i += 1 }    // `|&` pipe both
+                else { split(afterPipe: true) }                          // `|` pipe
+            case "&":
+                if next == ">" { current.append(c) }                      // `&>` redirect: not a split
+                else { split(afterPipe: false); if next == "&" { i += 1 } } // `&&` / background `&`
+            case ";":
+                split(afterPipe: false)
             default:
                 current.append(c)
-                projection.append(c)
-                atWordStart = false
             }
             i += 1
         }
-        segments.append(current)
-
-        let balanced = !inSingle && !inDouble && !escaped
+        segments.append((current, currentAfterPipe))
         return ScanResult(segments: segments,
-                          hasSubstitution: hasSubstitution,
-                          hasExpansion: hasExpansion,
-                          hasRedirection: hasRedirection,
-                          unquotedProjection: projection,
-                          balanced: balanced)
+                          balanced: !inSingle && !inDouble && !escaped)
     }
 }

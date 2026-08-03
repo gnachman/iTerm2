@@ -233,12 +233,12 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate, iTermFilt
     @IBAction func changeFilterMode(_ sender: Any?) {
         guard let menuItem = sender as? NSMenuItem,
               let driver = delegate?.filterViewControllerFindDriver() else {
-            DLog("changeFilterMode: failed to get menuItem or driver")
+            RLog("changeFilterMode: failed to get menuItem or driver")
             return
         }
         let oldMode = driver.filterMode
         let newMode = iTermFindMode(rawValue: UInt(menuItem.tag)) ?? .smartCaseSensitivity
-        DLog("changeFilterMode: changing from mode \(oldMode.rawValue) to \(newMode.rawValue) (tag=\(menuItem.tag))")
+        RLog("changeFilterMode: changing from mode \(oldMode.rawValue) to \(newMode.rawValue) (tag=\(menuItem.tag))")
         driver.filterMode = newMode
         DLog("changeFilterMode: driver.filterMode is now \(driver.filterMode.rawValue)")
         delegate?.searchQueryDidChange(searchField.stringValue, editor: nil)

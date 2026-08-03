@@ -63,6 +63,18 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 
 @interface PTYTextView (ARCPrivate)<iTermShellIntegrationWindowControllerDelegate,
 iTermCommandInfoViewControllerDelegate>
+
+// Shared implementation behind renderLinesToImage: and the renderImageWithLines:
+// family. Rasterizes lineRange into an offscreen bitmap through the normal text
+// drawing helper. excludeRightGutter uses the content width (no accessory
+// gutter); the remaining flags mirror the public renderImageWithLines: options.
+- (NSImage * _Nullable)renderOffscreenImageForLines:(NSRange)lineRange
+                                 excludeRightGutter:(BOOL)excludeRightGutter
+                                     includeMargins:(BOOL)includeMargins
+                                    backgroundColor:(NSColor * _Nullable)backgroundColor
+                                         showCursor:(BOOL)showCursor
+                                   includeSelection:(BOOL)includeSelection
+                                      cursorFocused:(BOOL)cursorFocused;
 @end
 
 #pragma mark - Batched Render Token
@@ -149,6 +161,11 @@ iTermCommandInfoViewControllerDelegate>
             item.title = @"Disconnect";
         }
     }
+    if (item.action == @selector(toggleRemoteHostCanControlIterm2:)) {
+        BOOL available = NO;
+        item.state = [self.delegate textViewRemoteHostCanControlIterm2:&available] ? NSControlStateValueOn : NSControlStateValueOff;
+        return available;
+    }
     if (item.action == @selector(performNaturalLanguageQuery:)) {
         return [iTermAdvancedSettingsModel generativeAIAllowed];
     }
@@ -224,6 +241,10 @@ iTermCommandInfoViewControllerDelegate>
     [self.delegate textViewDisconnectSSH];
 }
 
+- (IBAction)toggleRemoteHostCanControlIterm2:(id)sender {
+    [self.delegate textViewToggleRemoteHostCanControlIterm2];
+}
+
 - (IBAction)performNaturalLanguageQuery:(id)sender {
     [self.delegate textViewPerformNaturalLanguageQuery];
 }
@@ -292,7 +313,7 @@ iTermCommandInfoViewControllerDelegate>
     int x, y;
     int width = [self.dataSource width];
 
-    x = (locationInTextView.x - [iTermPreferences intForKey:kPreferenceKeySideMargins] + self.charWidth * [iTermAdvancedSettingsModel fractionOfCharacterSelectingNextNeighbor]) / self.charWidth;
+    x = (locationInTextView.x - [iTermPreferences sideMargins] + self.charWidth * [iTermAdvancedSettingsModel fractionOfCharacterSelectingNextNeighbor]) / self.charWidth;
     if (x < 0) {
         x = 0;
     }
@@ -359,7 +380,7 @@ iTermCommandInfoViewControllerDelegate>
 }
 
 - (NSPoint)pointForCoord:(VT100GridCoord)coord {
-    return NSMakePoint([iTermPreferences intForKey:kPreferenceKeySideMargins] + coord.x * self.charWidth,
+    return NSMakePoint([iTermPreferences sideMargins] + coord.x * self.charWidth,
                        coord.y * self.lineHeight);
 }
 
@@ -410,7 +431,7 @@ iTermCommandInfoViewControllerDelegate>
     }
     NSString *path = action.fullPath;
     if (path == nil) {
-        DLog(@"path is nil");
+        RLog(@"path is nil");
         return;
     }
 
@@ -435,7 +456,7 @@ iTermCommandInfoViewControllerDelegate>
     draggingSession.animatesToStartingPositionsOnCancelOrFail = YES;
     draggingSession.draggingFormation = NSDraggingFormationNone;
     [_mouseHandler didDragSemanticHistory];
-    DLog(@"did semantic history drag");
+    RLog(@"did semantic history drag");
 }
 
 #pragma mark - Underlined Actions
@@ -731,7 +752,13 @@ iTermCommandInfoViewControllerDelegate>
         changed = [self setCursor:[NSCursor arrowCursor]];
     } else if ([_mouseHandler mouseReportingAllowedForEvent:event] &&
                [_mouseHandler terminalWantsMouseReports]) {
-        changed = [self setCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeamWithCircle]];
+        // If the app explicitly requested a pointer shape via OSC 22, honor it
+        // even while mouse reporting is enabled: an app that sets pointer
+        // shapes is mouse-aware, and hover-driven shapes (e.g. Turbo Vision,
+        // vim mouse support) inherently require any-motion reporting. The
+        // IBeamWithCircle affordance remains the fallback when no shape was
+        // requested.
+        changed = [self setCursor:self.delegate.textViewDefaultPointer ?: [iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeamWithCircle]];
     } else if ([self contextMenu:_contextMenuHelper offscreenCommandLineForClickAt:event.locationInWindow]) {
         changed = [self setCursor:[NSCursor arrowCursor]];
     } else if ([self mouseIsOverButtonInEvent:event]) {
@@ -1492,7 +1519,7 @@ iTermCommandInfoViewControllerDelegate>
 }
 
 - (NSPoint)urlActionHelper:(iTermURLActionHelper *)helper pointForCoord:(VT100GridCoord)coord {
-    NSRect windowRect = [self convertRect:NSMakeRect(coord.x * self.charWidth + [iTermPreferences intForKey:kPreferenceKeySideMargins],
+    NSRect windowRect = [self convertRect:NSMakeRect(coord.x * self.charWidth + [iTermPreferences sideMargins],
                                                      coord.y * self.lineHeight,
                                                      0,
                                                      0)
@@ -1825,6 +1852,10 @@ hasOpenAnnotationInRange:(VT100GridCoordRange)coordRange {
 
 - (BOOL)contextMenuIsLocked:(iTermTextViewContextMenuHelper *)contextMenu {
     return [self.delegate textViewIsLocked];
+}
+
+- (BOOL)contextMenuWindowIsLayoutLocked:(iTermTextViewContextMenuHelper *)contextMenu {
+    return [self.delegate textViewWindowIsLayoutLocked];
 }
 
 - (void)contextMenuLockAllInTab:(iTermTextViewContextMenuHelper *)contextMenu {
@@ -2175,7 +2206,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     NSMutableArray<NSValue *> *selectionRects = [NSMutableArray array];
     const long long overflow = [self.dataSource totalScrollbackOverflow];
     const NSRect visibleRect = [self visibleRect];
-    const double sideMargins = [iTermPreferences doubleForKey:kPreferenceKeySideMargins];
+    const double sideMargins = [iTermPreferences sideMargins];
 
     for (iTermSubSelection *sub in self.selection.allSubSelections) {
         VT100GridAbsCoordRange absRange = sub.absRange.coordRange;
@@ -2336,13 +2367,29 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
 
 
 - (NSImage *)renderLinesToImage:(NSRange)lineRange {
+    // Snapshot/minimap render: full view width (including the accessory gutter),
+    // no margins, no background fill, no cursor or selection.
+    return [self renderOffscreenImageForLines:lineRange
+                           excludeRightGutter:NO
+                               includeMargins:NO
+                              backgroundColor:nil
+                                   showCursor:NO
+                             includeSelection:NO
+                                cursorFocused:NO];
+}
+
+- (NSImage *)renderOffscreenImageForLines:(NSRange)lineRange
+                       excludeRightGutter:(BOOL)excludeRightGutter
+                           includeMargins:(BOOL)includeMargins
+                          backgroundColor:(NSColor *)backgroundColor
+                               showCursor:(BOOL)showCursor
+                         includeSelection:(BOOL)includeSelection
+                            cursorFocused:(BOOL)cursorFocused {
     id<iTermTextDataSource> dataSource = self.dataSource;
     if (!dataSource) {
         return nil;
     }
     const int numberOfLines = [dataSource numberOfLines];
-
-    // Validate range
     if (lineRange.location >= numberOfLines) {
         return nil;
     }
@@ -2352,21 +2399,24 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
         return nil;
     }
 
-    // Calculate image size
+    // Calculate image size. excludeRightGutter renders only the content area
+    // (used by streamed/companion frames); otherwise the full view width.
     const CGFloat lineHeight = self.lineHeight;
-    const CGFloat imageWidth = self.frame.size.width;
-    const CGFloat imageHeight = actualLength * lineHeight;
+    const CGFloat imageWidth = excludeRightGutter ? [self widthExcludingRightGutter] : self.frame.size.width;
+    const CGFloat vmargin = includeMargins ? [iTermPreferences topBottomMargins] : 0;
+    const CGFloat imageHeight = actualLength * lineHeight + vmargin * 2;
 
     if (imageWidth <= 0 || imageHeight <= 0) {
         return nil;
     }
 
-    // Use Retina scale factor for high-quality rendering
+    // Use the window's backing scale for a Retina-quality bitmap, falling back to
+    // 2x when the session's view has no window (e.g. a background tab).
     const CGFloat scale = self.window.backingScaleFactor ?: 2.0;
     const NSInteger pixelWidth = (NSInteger)(imageWidth * scale);
     const NSInteger pixelHeight = (NSInteger)(imageHeight * scale);
 
-    // Create a bitmap for offscreen rendering
+    // Create a bitmap for offscreen rendering.
     NSBitmapImageRep *bitmapRep = [[NSBitmapImageRep alloc]
                                    initWithBitmapDataPlanes:NULL
                                    pixelsWide:pixelWidth
@@ -2380,7 +2430,6 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
                                    bitsPerPixel:0];
     bitmapRep.size = NSMakeSize(imageWidth, imageHeight);
 
-    // Create graphics context for the bitmap
     NSGraphicsContext *context = [NSGraphicsContext graphicsContextWithBitmapImageRep:bitmapRep];
     if (!context) {
         return nil;
@@ -2397,107 +2446,48 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     [transform concat];
 
     // The drawing helper draws in content coordinates where y = lineNumber * lineHeight.
-    // We want to draw lines from lineRange.location to endLine.
-    // The virtualOffset translates from content coordinates to our bitmap coordinates.
-    // virtualOffset = lineRange.location * lineHeight makes line lineRange.location draw at y=0.
-    const CGFloat virtualOffset = lineRange.location * lineHeight;
-
-    // Define the rect in content coordinates that we're rendering
-    const NSRect contentRect = NSMakeRect(0, lineRange.location * lineHeight, imageWidth, imageHeight);
-
-    // Create a dedicated drawing helper for offscreen rendering.
-    iTermTextDrawingHelper *helper = [self newDrawingHelperForOffscreenRendering];
-
-    // Configure metrics for offscreen rendering
-    [helper configureForOffscreenRenderingWithFrame:NSMakeRect(0, 0, imageWidth, imageHeight)
-                                        visibleRect:contentRect];
-
-    // Draw the content
-    [helper drawTextViewContentInRect:contentRect
-                             rectsPtr:&contentRect
-                            rectCount:1
-                        virtualOffset:virtualOffset];
-
-    [NSGraphicsContext restoreGraphicsState];
-
-    // Create the final image from the bitmap
-    NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(imageWidth, imageHeight)];
-    [image addRepresentation:bitmapRep];
-
-    return image;
-}
-
-- (NSImage *)renderImageWithLines:(NSRange)lineRange
-                   includeMargins:(BOOL)includeMargins
-                  backgroundColor:(NSColor *)backgroundColor
-                       showCursor:(BOOL)showCursor {
-    id<iTermTextDataSource> dataSource = self.dataSource;
-    if (!dataSource) {
-        return nil;
-    }
-    const int numberOfLines = [dataSource numberOfLines];
-    if (lineRange.location >= numberOfLines) {
-        return nil;
-    }
-    const NSUInteger endLine = MIN(lineRange.location + lineRange.length, numberOfLines);
-    const NSUInteger actualLength = endLine - lineRange.location;
-    if (actualLength == 0) {
-        return nil;
-    }
-
-    const CGFloat lineHeight = self.lineHeight;
-    const CGFloat imageWidth = self.frame.size.width;
-    const CGFloat vmargin = includeMargins ? [iTermPreferences topBottomMargins] : 0;
-    const CGFloat imageHeight = actualLength * lineHeight + vmargin * 2;
-
-    if (imageWidth <= 0 || imageHeight <= 0) {
-        return nil;
-    }
-
-    const CGFloat scale = self.window.backingScaleFactor ?: 2.0;
-    const NSInteger pixelWidth = (NSInteger)(imageWidth * scale);
-    const NSInteger pixelHeight = (NSInteger)(imageHeight * scale);
-
-    NSBitmapImageRep *bitmapRep = [[NSBitmapImageRep alloc]
-                                   initWithBitmapDataPlanes:NULL
-                                   pixelsWide:pixelWidth
-                                   pixelsHigh:pixelHeight
-                                   bitsPerSample:8
-                                   samplesPerPixel:4
-                                   hasAlpha:YES
-                                   isPlanar:NO
-                                   colorSpaceName:NSCalibratedRGBColorSpace
-                                   bytesPerRow:0
-                                   bitsPerPixel:0];
-    bitmapRep.size = NSMakeSize(imageWidth, imageHeight);
-
-    NSGraphicsContext *context = [NSGraphicsContext graphicsContextWithBitmapImageRep:bitmapRep];
-    if (!context) {
-        return nil;
-    }
-
-    [NSGraphicsContext saveGraphicsState];
-    [NSGraphicsContext setCurrentContext:context];
-
-    NSAffineTransform *transform = [NSAffineTransform transform];
-    [transform translateXBy:0 yBy:imageHeight];
-    [transform scaleXBy:1.0 yBy:-1.0];
-    [transform concat];
-
+    // virtualOffset shifts content coordinates into the bitmap so the first
+    // rendered line (minus any top margin) lands at y=0.
     const CGFloat virtualOffset = lineRange.location * lineHeight - vmargin;
-
-    const NSRect contentRect = NSMakeRect(0,
-                                          lineRange.location * lineHeight - vmargin,
-                                          imageWidth,
-                                          imageHeight);
+    const NSRect contentRect = NSMakeRect(0, virtualOffset, imageWidth, imageHeight);
 
     iTermTextDrawingHelper *helper = [self newDrawingHelperForOffscreenRendering];
+
+    // The offscreen bitmap is always rasterized at `scale` (the retina 2.0
+    // fallback when there is no window), but configureDrawingHelper derived
+    // isRetina from self.window.backingScaleFactor, which is 0 for a session in a
+    // background tab (its view has no window). That would make isRetina=NO, so
+    // with thin-strokes set to RetinaOnly the glyphs would draw with font
+    // smoothing (heavier strokes) whenever the session is not frontmost, and the
+    // half-pixel antialias shift would be dropped. Pin isRetina (and the matching
+    // antialias shift) to the scale we actually render at so stroke weight does
+    // not depend on window state.
+    helper.isRetina = (scale > 1.0);
+    helper.antiAliasedShift = (scale > 1.0) ? 0.5 : 0;
+
     if (showCursor) {
         helper.isCursorVisible = YES;
         helper.cursorType = self.drawingHelper.cursorType;
         helper.cursorCoord = VT100GridCoordMake(self.dataSource.cursorX - 1,
                                                  self.dataSource.cursorY - 1);
+        // The offscreen helper leaves the focus flags off, so the cursor would draw
+        // as a hollow outline. When the caller (e.g. a companion live stream the
+        // phone is typing into) wants a focused cursor, force the filled form.
+        helper.shouldDrawFilledInCursor = cursorFocused;
     }
+    if (includeSelection) {
+        // newDrawingHelperForOffscreenRendering clears the selection (snapshots
+        // omit it); restore it and the selected-text color so a streamed frame
+        // shows the selection the user made. selectionColorForCurrentFocus
+        // returns the real (focused) selection color only when isFrontTextView is
+        // set; otherwise it uses unfocusedSelectionColor, which the offscreen
+        // helper never sets (nil), making the selection invisible. isFrontTextView
+        // feeds nothing else in the drawing helper.
+        helper.selection = self.selection;
+        helper.useSelectedTextColor = self.delegate.textViewShouldUseSelectedTextColor;
+        helper.isFrontTextView = YES;
+    }
+
     [helper configureForOffscreenRenderingWithFrame:NSMakeRect(0, 0, imageWidth, imageHeight)
                                         visibleRect:contentRect];
 
@@ -2506,9 +2496,9 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
                             rectCount:1
                         virtualOffset:virtualOffset];
 
-    // Fill background behind all existing content. The drawing helper clears
-    // to transparent before drawing cell backgrounds, so margins and any
-    // uncovered areas need to be filled with the background color.
+    // Fill background behind all existing content. The drawing helper clears to
+    // transparent before drawing cell backgrounds, so margins and any uncovered
+    // areas need to be filled with the background color.
     if (backgroundColor) {
         [backgroundColor set];
         NSRectFillUsingOperation(NSMakeRect(0, 0, imageWidth, imageHeight),
@@ -2520,6 +2510,55 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(imageWidth, imageHeight)];
     [image addRepresentation:bitmapRep];
     return image;
+}
+
+- (CGFloat)widthExcludingRightGutter {
+    // The right gutter (panel reservation plus the timestamp slot) is part of
+    // the view's width but holds only accessory views (chat, clippings,
+    // timestamps) that an offscreen content render never draws. Excluding it
+    // keeps streamed and snapshot images free of empty right-hand space.
+    const CGFloat gutter = MAX(0, self.delegate.textViewRightExtra);
+    return MAX(1, self.frame.size.width - gutter);
+}
+
+- (NSImage *)renderImageWithLines:(NSRange)lineRange
+                   includeMargins:(BOOL)includeMargins
+                  backgroundColor:(NSColor *)backgroundColor
+                       showCursor:(BOOL)showCursor {
+    return [self renderImageWithLines:lineRange
+                       includeMargins:includeMargins
+                      backgroundColor:backgroundColor
+                           showCursor:showCursor
+                     includeSelection:NO];
+}
+
+- (NSImage *)renderImageWithLines:(NSRange)lineRange
+                   includeMargins:(BOOL)includeMargins
+                  backgroundColor:(NSColor *)backgroundColor
+                       showCursor:(BOOL)showCursor
+                 includeSelection:(BOOL)includeSelection {
+    return [self renderImageWithLines:lineRange
+                       includeMargins:includeMargins
+                      backgroundColor:backgroundColor
+                           showCursor:showCursor
+                     includeSelection:includeSelection
+                        cursorFocused:NO];
+}
+
+- (NSImage *)renderImageWithLines:(NSRange)lineRange
+                   includeMargins:(BOOL)includeMargins
+                  backgroundColor:(NSColor *)backgroundColor
+                       showCursor:(BOOL)showCursor
+                 includeSelection:(BOOL)includeSelection
+                    cursorFocused:(BOOL)cursorFocused {
+    // Streamed/companion frame: content width only (no accessory gutter).
+    return [self renderOffscreenImageForLines:lineRange
+                           excludeRightGutter:YES
+                               includeMargins:includeMargins
+                              backgroundColor:backgroundColor
+                                   showCursor:showCursor
+                             includeSelection:includeSelection
+                                cursorFocused:cursorFocused];
 }
 
 #pragma mark - Batched Line Rendering
@@ -2686,7 +2725,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
         return NO;
     }
     *baselinePtr = self.timestampBaseline;
-    const CGFloat hmargin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
+    const CGFloat hmargin = [iTermPreferences sideMargins];
     const CGFloat timestampsWidth = tdh.maximumWidth + hmargin;
     const CGPoint point = [self convertPoint:locationInWindow
                                     fromView:nil];

@@ -36,7 +36,7 @@ final class iTermBrowserAutofillWriter {
             let result = try await webView.safelyEvaluateJavaScript(js, contentWorld: .page)
             return (result as? Bool) ?? false
         } catch {
-            DLog("Failed to fill field (id: \(fieldId), name: \(fieldName)): \(error)")
+            RLog("Failed to fill field (id: \(fieldId), name: \(fieldName)): \(error)")
             return false
         }
     }

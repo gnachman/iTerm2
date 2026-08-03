@@ -713,6 +713,20 @@ typedef struct {
         iTermMetadata metadata = lineInfo.metadata;
         metadata.lineAttribute = attr;
         lineInfo.metadata = metadata;
+        if (oldAttr != attr) {
+            // The screen_char_t contents are unchanged, but the row build bakes
+            // lineAttribute into the glyph keys (top-half vs bottom-half glyph
+            // selection for double-height lines), so a DHL-top → DHL-bottom (or
+            // DWL → DHL) transition changes what is drawn. Mark the line dirty over
+            // its full width, matching the sibling width-changing branch below.
+            // This advances the content generation AND makes copyDirtyFromGrid:
+            // actually copy the changed metadata into the immutable grid the
+            // renderer reads; advancing the generation alone would leave that grid
+            // reporting a fresh identity with the stale lineAttribute.
+            [lineInfo setDirty:YES
+                       inRange:VT100GridRangeMake(0, width)
+             updateTimestampTo:metadata.timestamp];
+        }
         return;
     }
 
@@ -1562,7 +1576,7 @@ typedef struct {
 }
 
 - (void)terminalStartTmuxModeWithDCSIdentifier:(NSString *)dcsID {
-    DLog(@"begin %@", dcsID);
+    RLog(@"begin %@", dcsID);
     if (!_tmuxGroup) {
         DLog(@"create tmux group");
         _tmuxGroup = dispatch_group_create();
@@ -1657,7 +1671,7 @@ typedef struct {
 }
 
 - (void)terminalDidTransitionOutOfTmuxMode {
-    DLog(@"begin");
+    RLog(@"begin");
     // Let's try this token again next time.
     [self.tokenExecutor rollBackCurrentToken];
 
@@ -2237,10 +2251,10 @@ typedef struct {
 // cascade-closed marks get endDate only (no exit-code claim). Removes
 // all closed aids from the registry and the open-aid stack.
 - (void)setReturnCodeForAidMark:(NSString *)aid code:(NSNumber * _Nullable)code {
-    DLog(@"setReturnCodeForAidMark:%@ code=%@", aid, code);
+    RLog(@"setReturnCodeForAidMark:%@ code=%@", aid, code);
     VT100ScreenMark *target = self.marksByAid[aid];
     if (target == nil) {
-        DLog(@"setReturnCodeForAidMark: no mark for aid=%@; returning early", aid);
+        RLog(@"setReturnCodeForAidMark: no mark for aid=%@; returning early", aid);
         return;
     }
     NSSet<NSString *> *closing = [self aidClosureForCloseOfAid:aid];
@@ -2265,7 +2279,7 @@ typedef struct {
         [self.marksByAid removeObjectForKey:closedAid];
         [self.openAidStack removeObject:closedAid];
     }
-    DLog(@"setReturnCodeForAidMark end: marksByAid.count=%@ openAidStack=%@",
+    RLog(@"setReturnCodeForAidMark end: marksByAid.count=%@ openAidStack=%@",
          @(self.marksByAid.count), self.openAidStack);
 }
 
@@ -2274,10 +2288,10 @@ typedef struct {
 // from the interval tree (matching commandWasAborted's shape) and
 // cascade-closes descendants the same way as the code-bearing path.
 - (void)closeAidMarkAsAbort:(NSString *)aid {
-    DLog(@"closeAidMarkAsAbort:%@", aid);
+    RLog(@"closeAidMarkAsAbort:%@", aid);
     VT100ScreenMark *target = self.marksByAid[aid];
     if (target == nil) {
-        DLog(@"closeAidMarkAsAbort: no mark for aid=%@; returning early", aid);
+        RLog(@"closeAidMarkAsAbort: no mark for aid=%@; returning early", aid);
         return;
     }
     NSSet<NSString *> *closing = [self aidClosureForCloseOfAid:aid];
@@ -2304,7 +2318,7 @@ typedef struct {
     // close the command's interval so downstream state (Cmd-K's
     // commandStartCoord.x check, prompt-state-machine, etc.) tracks
     // the post-abort world the same way as the aid-less path.
-    DLog(@"closeAidMarkAsAbort: aborting target aid=%@ mark=%@", aid, target);
+    RLog(@"closeAidMarkAsAbort: aborting target aid=%@ mark=%@", aid, RLogRedact(target, target.redactedDescription));
     [self abortSpecificAidMark:target];
     [self invalidateCommandStartCoordWithoutSideEffects];
     [self didUpdatePromptLocation];
@@ -2366,8 +2380,8 @@ typedef struct {
                 code:(NSNumber * _Nullable)code
              endDate:(NSDate *)endDate
             isTarget:(BOOL)isTarget {
-    DLog(@"closeAidMark: mark=%@ aid=%@ code=%@ isTarget=%@",
-         mark, mark.aid, code, @(isTarget));
+    RLog(@"closeAidMark: mark=%@ aid=%@ code=%@ isTarget=%@",
+         RLogRedact(mark, mark.redactedDescription), mark.aid, code, @(isTarget));
     id<VT100ScreenMarkReading> doppelganger = mark.doppelganger;
     const NSInteger line = [self coordRangeForInterval:mark.entry.interval].start.y + self.cumulativeScrollbackOverflow;
     const iTermIntervalTreeObjectType originalType = iTermIntervalTreeObjectTypeForObject(mark);
@@ -2396,7 +2410,7 @@ typedef struct {
     // (setReturnCodeOfLastCommand:) implicitly stays consistent because
     // it operates on self.lastCommandMark; the aid path may target an
     // arbitrary mark, so we update explicitly.
-    DLog(@"closeAidMark: updating lastCommandMark to %@", mark);
+    RLog(@"closeAidMark: updating lastCommandMark to %@", RLogRedact(mark, mark.redactedDescription));
     self.lastCommandMark = mark;
     const iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(mark);
     [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver> observer) {
@@ -2421,7 +2435,7 @@ typedef struct {
                           kind:(VT100PromptKind)kind
                      freshLine:(BOOL)freshLine
                            aid:(NSString * _Nullable)aid {
-    DLog(@"begin kind=%@ freshLine=%@ aid=%@", @(kind), @(freshLine), aid);
+    RLog(@"begin kind=%@ freshLine=%@ aid=%@", @(kind), @(freshLine), aid);
     self.currentPromptKind = kind;
     // .unknown means the parser saw a k= value it doesn't recognize (typo,
     // future kind a newer shell-integration emits, etc.). Per the design,
@@ -2475,7 +2489,7 @@ typedef struct {
 
 // FTCS B
 - (void)terminalCommandDidStart {
-    DLog(@"begin currentPromptKind=%@", @(self.currentPromptKind));
+    RLog(@"begin currentPromptKind=%@", @(self.currentPromptKind));
     const VT100PromptKind kind = self.currentPromptKind;
     self.currentPromptKind = VT100PromptKindInitial;
     // .unknown rides the initial path here too: the A handler above already
@@ -2502,7 +2516,7 @@ typedef struct {
     self.pendingNonInitialPromptStart = nil;
     if (!pending) {
         // Defensive: a non-initial B with no preceding non-initial A. Tolerate.
-        DLog(@"non-initial B with no pending start; ignoring");
+        RLog(@"non-initial B with no pending start; ignoring");
         return;
     }
     // The pending RC may have been invalidated between A and B by a
@@ -2512,7 +2526,7 @@ typedef struct {
     // for any status != .valid; writing a (-1, -1)-anchored subrange onto
     // a real prompt mark would be worse than dropping the event.
     if (pending.status != StatusValid) {
-        DLog(@"pending non-initial start RC no longer valid (status=%@); dropping",
+        RLog(@"pending non-initial start RC no longer valid (status=%@); dropping",
              @(pending.status));
         return;
     }
@@ -2532,18 +2546,18 @@ typedef struct {
     // would then do an out-of-range markCache lookup.
     const long long absLine = self.lastPromptLine;
     if (absLine < 0) {
-        DLog(@"no active prompt mark; dropping excluded subrange");
+        RLog(@"no active prompt mark; dropping excluded subrange");
         return;
     }
     const long long relativeLine = absLine - self.cumulativeScrollbackOverflow;
     if (relativeLine < 0 || relativeLine > INT_MAX) {
-        DLog(@"prompt mark scrolled off (absLine=%@, overflow=%@); dropping excluded subrange",
+        RLog(@"prompt mark scrolled off (absLine=%@, overflow=%@); dropping excluded subrange",
              @(absLine), @(self.cumulativeScrollbackOverflow));
         return;
     }
     id<VT100ScreenMarkReading> mark = [self screenMarkOnLine:(int)relativeLine];
     if (!mark) {
-        DLog(@"no mark on lastPromptLine %@; dropping excluded subrange", @(absLine));
+        RLog(@"no mark on lastPromptLine %@; dropping excluded subrange", @(absLine));
         return;
     }
     // lastPromptLine is not reset by FTCS C/D, so it can still point at a
@@ -2552,7 +2566,7 @@ typedef struct {
     // to a mark that's still in its "being built" state — same predicate
     // setPromptStartLine: uses to decide whether to reuse a mark.
     if (mark.firstLineOfCommand != nil) {
-        DLog(@"prompt mark on line %@ already has a command; dropping stray excluded subrange",
+        RLog(@"prompt mark on line %@ already has a command; dropping stray excluded subrange",
              @(absLine));
         return;
     }
@@ -2599,7 +2613,7 @@ typedef struct {
 }
 
 - (void)terminalAbortCommandWithAid:(NSString * _Nullable)aid {
-    DLog(@"FinalTerm: terminalAbortCommand aid=%@", aid);
+    RLog(@"FinalTerm: terminalAbortCommand aid=%@", aid);
     [self invalidatePendingPromptState];
     // If aid targets a known open mark, abort that mark specifically + its
     // descendants. Otherwise (common case for malformed sequences without
@@ -2607,11 +2621,11 @@ typedef struct {
     // cleanup for aid'd marks happens automatically via
     // -didRemoveObjectFromIntervalTree: as their marks leave the tree.
     if (aid != nil && self.marksByAid[aid] != nil) {
-        DLog(@"terminalAbortCommandWithAid: routing to close-by-aid abort path");
+        RLog(@"terminalAbortCommandWithAid: routing to close-by-aid abort path");
         [self closeAidMarkAsAbort:aid];
         return;
     }
-    DLog(@"terminalAbortCommandWithAid: aid=%@ not in registry; falling through "
+    RLog(@"terminalAbortCommandWithAid: aid=%@ not in registry; falling through "
          @"to legacy commandWasAborted", aid);
     [self commandWasAborted];
 }
@@ -2638,10 +2652,10 @@ typedef struct {
 
 - (void)terminalReturnCodeOfLastCommandWas:(NSNumber * _Nullable)returnCode
                                        aid:(NSString * _Nullable)aid {
-    DLog(@"begin returnCode=%@ aid=%@", returnCode, aid);
+    RLog(@"begin returnCode=%@ aid=%@", returnCode, aid);
     [self invalidatePendingPromptState];
     if (aid != nil && self.marksByAid[aid] != nil) {
-        DLog(@"terminalReturnCodeOfLastCommandWas: routing to close-by-aid path "
+        RLog(@"terminalReturnCodeOfLastCommandWas: routing to close-by-aid path "
              @"for aid=%@", aid);
         [self setReturnCodeForAidMark:aid code:returnCode];
         return;
@@ -2651,12 +2665,12 @@ typedef struct {
     // is non-nil. (If both returnCode and aid are nil the parser declined
     // to dispatch.)
     if (returnCode != nil) {
-        DLog(@"terminalReturnCodeOfLastCommandWas: aid=%@ not in registry; "
+        RLog(@"terminalReturnCodeOfLastCommandWas: aid=%@ not in registry; "
              @"falling through to legacy setReturnCodeOfLastCommand:%@",
              aid, returnCode);
         [self setReturnCodeOfLastCommand:returnCode.intValue];
     } else {
-        DLog(@"terminalReturnCodeOfLastCommandWas: returnCode nil and no aid "
+        RLog(@"terminalReturnCodeOfLastCommandWas: returnCode nil and no aid "
              @"match; dropping (shouldn't happen — parser declined to dispatch)");
     }
 }
@@ -2689,7 +2703,7 @@ typedef struct {
 // Older scripts may have only a version number and no key-value pairs.
 // The only defined key is "shell", and the value will be tcsh, bash, zsh, or fish.
 - (void)terminalSetShellIntegrationVersion:(NSString *)version {
-    DLog(@"begin %@", version);
+    RLog(@"begin %@", version);
     NSArray *parts = [version componentsSeparatedByString:@";"];
     NSString *shell = nil;
     NSInteger versionNumber = [parts[0] integerValue];
@@ -2811,7 +2825,7 @@ typedef struct {
 - (void)terminalWillReceiveFileNamed:(NSString *)name
                               ofSize:(NSInteger)size
                           completion:(void (^)(BOOL ok))completion {
-    DLog(@"begin name=%@ size=%@", name, @(size));
+    RLog(@"begin name=%@ size=%@", name, @(size));
     dispatch_queue_t queue = _queue;
     __weak __typeof(self) weakSelf = self;
     [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
@@ -2851,7 +2865,7 @@ typedef struct {
                                       type:(NSString *)type
                                  forceWide:(BOOL)forceWide
                                 completion:(void (^)(BOOL ok))completion {
-    DLog(@"begin name=%@ size=%@ width=%@ widthUnits=%@ height=%@ heightUnits=%@ preserveAR=%@ inset=%f,%f,%f,%f type=%@",
+    RLog(@"begin name=%@ size=%@ width=%@ widthUnits=%@ height=%@ heightUnits=%@ preserveAR=%@ inset=%f,%f,%f,%f type=%@",
          name, @(size), @(width), @(widthUnits), @(height), @(heightUnits), @(preserveAspectRatio), inset.top, inset.bottom, inset.left, inset.right, type);
     __weak __typeof(self) weakSelf = self;
     dispatch_queue_t queue = _queue;
@@ -2933,7 +2947,7 @@ typedef struct {
 }
 
 - (void)terminalFileReceiptEndedUnexpectedly {
-    DLog(@"begin");
+    RLog(@"begin");
     [self fileReceiptEndedUnexpectedly];
 }
 
@@ -3551,10 +3565,11 @@ typedef struct {
 }
 
 - (NSArray<NSString *> *)parseHookSSHConductorParameter:(NSString *)param {
-    DLog(@"%@", param);
+    // param carries base64 sshargs (ssh target, user, options); keep it out of the ring.
+    RLog(@"%@", RLogRedact(param, @(param.length)));
     NSArray<NSString *> *parts = [param componentsSeparatedByString:@" "];
     if (parts.count < 5) {
-        DLog(@"Bad param %@", param);
+        RLog(@"Bad param %@", param);
         return nil;
     }
     NSInteger i = 0;
@@ -3567,12 +3582,12 @@ typedef struct {
         i += 1;
     }
     if (i == parts.count) {
-        DLog(@"Didn't find separator");
+        RLog(@"Didn't find separator");
         return nil;
     }
     i += 1;
     if (i >= parts.count) {
-        DLog(@"No sshargs");
+        RLog(@"No sshargs");
         return nil;
     }
     NSString *dcsid = [parts lastObject];
@@ -3584,7 +3599,8 @@ typedef struct {
 
 - (void)terminalDidHookSSHConductorWithParams:(NSString *)params {
     NSArray<NSString *> *values = [self parseHookSSHConductorParameter:params];
-    DLog(@"%@", values);
+    // values are the decoded conductor params (ssh target/args); log the count in the ring.
+    RLog(@"%@", RLogRedact(values, @(values.count)));
     if (!values) {
         return;
     }
@@ -3592,12 +3608,12 @@ typedef struct {
     NSString *uniqueID = values[1];
     NSString *boolArgs = [values[2] stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
     if (!boolArgs) {
-        DLog(@"Failed to base64 decode %@", values[2]);
+        RLog(@"Failed to base64 decode %@", values[2]);
         return;
     }
     NSString *sshargs = [values[3] stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
     if (!sshargs) {
-        DLog(@"Failed to base64 decode %@", values[3]);
+        RLog(@"Failed to base64 decode %@", values[3]);
         return;
     }
     NSString *dcsID = values[4];
@@ -3679,13 +3695,23 @@ typedef struct {
     } name:@"terminate pid"];
 }
 
+- (void)terminalHandleIT2:(NSString *)string depth:(int)depth {
+    if (!string) {
+        return;
+    }
+    DLog(@"terminalHandleIT2:%@ depth:%@", string, @(depth));
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenHandleIT2:string depth:depth];
+    } name:@"handle it2"];
+}
+
 - (void)terminalBeginSSHIntegeration:(NSString *)args {
-    DLog(@"begin %@", args);
+    RLog(@"begin %@", args);
     if (args) {
         // Save args
         NSArray<NSString *> *parts = [args componentsSeparatedByString:@" "];
         if (parts.count < 4) {
-            DLog(@"Not enough parts");
+            RLog(@"Not enough parts");
             return;
         }
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
@@ -3697,7 +3723,7 @@ typedef struct {
 }
 
 - (void)terminalSendConductor:(NSString *)args {
-    DLog(@"begin %@", args);
+    RLog(@"begin %@", args);
     if (!_sshIntegrationFlags) {
         return;
     }

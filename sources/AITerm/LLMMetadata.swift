@@ -7,6 +7,23 @@
 
 @objc(iTermLLMMetadata)
 class LLMMetadata: NSObject {
+    private enum ManualModelKey {
+        static let identifier = "id"
+        static let name = "name"
+        static let url = "url"
+        static let api = "api"
+        static let contextWindowTokens = "contextWindowTokens"
+        static let maxResponseTokens = "maxResponseTokens"
+        static let hostedCodeInterpreter = "hostedCodeInterpreter"
+        static let hostedFileSearch = "hostedFileSearch"
+        static let hostedWebSearch = "hostedWebSearch"
+        static let functionCalling = "functionCalling"
+        static let streaming = "streaming"
+        static let vectorStore = "vectorStore"
+        static let supportsTemperature = "supportsTemperature"
+        static let configurableThinking = "configurableThinking"
+    }
+
     @objc(openAIModelIsLegacy:)
     static func openAIModelIsLegacy(model: String) -> Bool {
         // Check if any modern model identifier appears anywhere in the model name.
@@ -64,9 +81,16 @@ class LLMMetadata: NSObject {
 
     static var alternateModels: [AIMetadata.Model] {
         guard iTermPreferences.bool(forKey: kPreferenceKeyUseRecommendedAIModel) else {
+            return manualModels()
+        }
+        guard let currentVendor else {
             return []
         }
-        switch currentVendor {
+        return alternateModels(for: currentVendor)
+    }
+
+    static func alternateModels(for vendor: iTermAIVendor) -> [AIMetadata.Model] {
+        switch vendor {
         case .openAI:
             return AIMetadata.alternateOpenAIModels
         case .deepSeek:
@@ -79,33 +103,68 @@ class LLMMetadata: NSObject {
             return AIMetadata.alternateAnthropicModels
         case .apple:
             return AIMetadata.alternateAppleModels
-        case .none:
-            return []
         @unknown default:
             return []
         }
     }
 
+    static func recommendedModel(for vendor: iTermAIVendor) -> AIMetadata.Model? {
+        switch vendor {
+        case .openAI:
+            return AIMetadata.recommendedOpenAIModel
+        case .deepSeek:
+            return AIMetadata.recommendedDeepSeekModel
+        case .gemini:
+            return AIMetadata.recommendedGeminiModel
+        case .llama:
+            return AIMetadata.recommendedLlamaModel
+        case .anthropic:
+            return AIMetadata.recommendedAnthropicModel
+        case .apple:
+            return AIMetadata.recommendedAppleModel
+        @unknown default:
+            return nil
+        }
+    }
+
+    static func manualModels() -> [AIMetadata.Model] {
+        let configuredModels = manualConfiguredModels()
+        if !configuredModels.isEmpty {
+            return configuredModels
+        }
+        if iTermPreferences.bool(forKey: kPreferenceKeyUseRecommendedAIModel) {
+            return []
+        }
+        if let model = legacyManualModel() {
+            return [model]
+        }
+        return []
+    }
+
     static func model() -> AIMetadata.Model? {
         if iTermPreferences.bool(forKey: kPreferenceKeyUseRecommendedAIModel),
            let vendor = iTermAIVendor(rawValue: iTermPreferences.unsignedInteger(forKey: kPreferenceKeyAIVendor)) {
-            switch vendor {
-            case .openAI:
-                return AIMetadata.recommendedOpenAIModel
-            case .deepSeek:
-                return AIMetadata.recommendedDeepSeekModel
-            case .gemini:
-                return AIMetadata.recommendedGeminiModel
-            case .llama:
-                return AIMetadata.recommendedLlamaModel
-            case .anthropic:
-                return AIMetadata.recommendedAnthropicModel
-            case .apple:
-                return AIMetadata.recommendedAppleModel
-            @unknown default:
-                return nil
-            }
+            return recommendedModel(for: vendor)
         }
+        let manualModels = manualModels()
+        if let name = iTermPreferences.string(forKey: kPreferenceKeyAIModel),
+           let model = manualModels.first(where: { $0.name == name }) {
+            return model
+        }
+        if let model = manualModels.first {
+            return model
+        }
+        return nil
+    }
+
+    private static func manualConfiguredModels() -> [AIMetadata.Model] {
+        guard let raw = iTermPreferences.object(forKey: kPreferenceKeyAIManualModelConfigurations) as? [[String: Any]] else {
+            return []
+        }
+        return raw.compactMap { manualModel(configuration: $0) }
+    }
+
+    private static func legacyManualModel() -> AIMetadata.Model? {
         var features = Set<AIMetadata.Model.Feature>()
         if iTermPreferences.bool(forKey: kPreferenceKeyAIFeatureFunctionCalling) {
             features.insert(.functionCalling)
@@ -126,17 +185,192 @@ class LLMMetadata: NSObject {
         guard let url, !url.isEmpty else {
             return nil
         }
+        let name = iTermPreferences.string(forKey: kPreferenceKeyAIModel) ?? "gpt-4o-mini"
+        let api = iTermAIAPI(rawValue: iTermPreferences.unsignedInteger(
+            forKey: kPreferenceKeyAITermAPI)) ?? .chatCompletions
 
         return AIMetadata.Model(
-            name: iTermPreferences.string(forKey: kPreferenceKeyAIModel) ?? "gpt-4o-mini",
+            name: name,
             contextWindowTokens: iTermPreferences.integer(
                 forKey: kPreferenceKeyAITokenLimit),
             maxResponseTokens: iTermPreferences.integer(
                 forKey: kPreferenceKeyAIResponseTokenLimit),
             url: url,
-            api: iTermAIAPI(rawValue: iTermPreferences.unsignedInteger(
-                forKey: kPreferenceKeyAITermAPI)) ?? .chatCompletions,
+            api: api,
             features: features,
-            vectorStoreConfig: .init(rawValue: iTermPreferences.integer(forKey: kPreferenceKeyAIVectorStore)) ?? .disabled)
+            vectorStoreConfig: .init(rawValue: iTermPreferences.integer(forKey: kPreferenceKeyAIVectorStore)) ?? .disabled,
+            vendor: manualVendor(api: api, url: url, modelName: name))
+    }
+
+    private static func manualModel(configuration: [String: Any]) -> AIMetadata.Model? {
+        guard let name = configuration[ManualModelKey.name] as? String,
+              !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let url = configuration[ManualModelKey.url] as? String,
+              !url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return nil
+        }
+        let api = iTermAIAPI(rawValue: unsignedInteger(configuration,
+                                                       key: ManualModelKey.api,
+                                                       fallback: UInt(iTermAIAPI.chatCompletions.rawValue))) ?? .chatCompletions
+        var features = Set<AIMetadata.Model.Feature>()
+        if bool(configuration, key: ManualModelKey.functionCalling) {
+            features.insert(.functionCalling)
+        }
+        if bool(configuration, key: ManualModelKey.hostedWebSearch) {
+            features.insert(.hostedWebSearch)
+        }
+        if bool(configuration, key: ManualModelKey.hostedFileSearch) {
+            features.insert(.hostedFileSearch)
+        }
+        if bool(configuration, key: ManualModelKey.streaming) {
+            features.insert(.streaming)
+        }
+        if bool(configuration, key: ManualModelKey.hostedCodeInterpreter) {
+            features.insert(.hostedCodeInterpreter)
+        }
+        var model = AIMetadata.Model(
+            name: name,
+            contextWindowTokens: integer(configuration,
+                                         key: ManualModelKey.contextWindowTokens,
+                                         fallback: 8_192),
+            maxResponseTokens: integer(configuration,
+                                       key: ManualModelKey.maxResponseTokens,
+                                       fallback: 8_192),
+            url: url,
+            api: api,
+            features: features,
+            vectorStoreConfig: .init(rawValue: integer(configuration,
+                                                       key: ManualModelKey.vectorStore,
+                                                       fallback: AIMetadata.Model.VectorStoreConfig.disabled.rawValue)) ?? .disabled,
+            vendor: manualVendor(api: api, url: url, modelName: name))
+        // A manual model that shares a built-in's name is almost always that
+        // built-in behind a custom endpoint (proxy/gateway). Inherit the
+        // catalog fields the manual config cannot express so a preset clone
+        // keeps the built-in's behavior instead of silently reverting to
+        // defaults:
+        //   - supportsTemperature: an explicitly stored value wins; else the
+        //     twin's value (heals an Opus 4.7+ clone that predates the field, so
+        //     it stops sending a temperature the API 400s on), else true.
+        //   - configurableThinking: driven by its own checkbox; when the config
+        //     omits it (older entries) fall back to the twin so an existing
+        //     clone of a reasoning model keeps its thinking toggle.
+        //   - reasoning effort / service tier options: these have no UI in the
+        //     manual editor, so without this a clone of a reasoning model
+        //     (gpt-5.x, o-series, DeepSeek v4) loses its effort/tier pickers.
+        let catalogTwin = AIMetadata.instance.models.first { $0.name == name }
+        model.supportsTemperature = bool(configuration,
+                                         key: ManualModelKey.supportsTemperature,
+                                         fallback: catalogTwin?.supportsTemperature ?? true)
+        let thinkingFallback = catalogTwin?.features.contains(.configurableThinking) ?? false
+        if bool(configuration, key: ManualModelKey.configurableThinking, fallback: thinkingFallback) {
+            model.features.insert(.configurableThinking)
+        }
+        if let catalogTwin {
+            model.reasoningEfforts = catalogTwin.reasoningEfforts
+            model.serviceTiers = catalogTwin.serviceTiers
+            model.thinkingOffEffort = catalogTwin.thinkingOffEffort
+            model.thinkingOnEffort = catalogTwin.thinkingOnEffort
+        }
+        return model
+    }
+
+    private static func bool(_ dictionary: [String: Any], key: String) -> Bool {
+        return bool(dictionary, key: key, fallback: false)
+    }
+
+    private static func bool(_ dictionary: [String: Any], key: String, fallback: Bool) -> Bool {
+        if let value = dictionary[key] as? Bool {
+            return value
+        }
+        if let value = dictionary[key] as? NSNumber {
+            return value.boolValue
+        }
+        return fallback
+    }
+
+    private static func integer(_ dictionary: [String: Any], key: String, fallback: Int) -> Int {
+        if let value = dictionary[key] as? Int {
+            return value
+        }
+        if let value = dictionary[key] as? NSNumber {
+            return value.intValue
+        }
+        return fallback
+    }
+
+    private static func unsignedInteger(_ dictionary: [String: Any], key: String, fallback: UInt) -> UInt {
+        if let value = dictionary[key] as? UInt {
+            return value
+        }
+        if let value = dictionary[key] as? NSNumber {
+            return value.uintValue
+        }
+        return fallback
+    }
+
+    // Single source of truth for classifying a manually-configured model's
+    // vendor. The Settings UI (Objective-C) calls this so its label always
+    // matches how the model is actually routed at request time.
+    @objc(vendorForManualModelWithAPI:url:modelName:)
+    static func objcManualVendor(api: iTermAIAPI, url: String, modelName: String) -> iTermAIVendor {
+        return manualVendor(api: api, url: url, modelName: modelName) ?? .openAI
+    }
+
+    // Best-effort vendor from a model name alone (used both by manual-model
+    // classification and to keep a chat on its original provider when the
+    // pinned model has been retired from AIMetadata).
+    static func vendor(forModelName modelName: String) -> iTermAIVendor? {
+        let lowercased = modelName.lowercased()
+        if lowercased.contains("claude") {
+            return .anthropic
+        }
+        if lowercased.contains("gemini") {
+            return .gemini
+        }
+        if lowercased.contains("deepseek") {
+            return .deepSeek
+        }
+        if lowercased.contains("llama") {
+            return .llama
+        }
+        return nil
+    }
+
+    private static func manualVendor(api: iTermAIAPI, url: String, modelName: String) -> iTermAIVendor? {
+        switch api {
+        case .anthropic:
+            return .anthropic
+        case .deepSeek:
+            return .deepSeek
+        case .gemini:
+            return .gemini
+        case .llama:
+            return .llama
+        case .appleIntelligence:
+            return .apple
+        case .chatCompletions, .completions, .responses, .earlyO1:
+            break
+        @unknown default:
+            break
+        }
+
+        if let byName = vendor(forModelName: modelName) {
+            return byName
+        }
+
+        let parsedURL = URL(string: url)
+        if hostIsAnthropicAIAPI(url: parsedURL) {
+            return .anthropic
+        }
+        if hostIsGoogleAIAPI(url: parsedURL) {
+            return .gemini
+        }
+        if hostIsDeepSeekAIAPI(url: parsedURL) {
+            return .deepSeek
+        }
+        if hostIsOpenAIAPI(url: parsedURL) || hostIsAzureAIAPI(url: parsedURL) {
+            return .openAI
+        }
+        return .openAI
     }
 }

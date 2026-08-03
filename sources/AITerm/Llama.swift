@@ -12,7 +12,8 @@ struct LlamaResponseParser: LLMResponseParser {
         let decoder = JSONDecoder()
         let response = try decoder.decode(LlamaResponse<LlamaNonStreamingValue>.self,
                                           from: data)
-        DLog("RESPONSE:\n\(response)")
+        // Model reply (chat content): keep out of the always-on ring.
+        RLog("RESPONSE:\n\(redacted: response)")
         parsedResponse = response
         return response
     }
@@ -94,6 +95,10 @@ extension LlamaResponse: LLM.AnyResponse {
     var isStreamingResponse: Bool {
         Streaming.streaming
     }
+    // Explicit (not the protocol default) because LlamaResponse conforms to both
+    // AnyResponse and AnyStreamingResponse, whose defaults would otherwise be
+    // ambiguous. Llama's response carries no usage, so there is no token count.
+    var promptTokens: Int? { nil }
 }
 
 extension LlamaResponse: LLM.AnyStreamingResponse {
@@ -127,6 +132,7 @@ struct LlamaBodyRequestBuilder {
     var provider: LLMProvider
     var functions = [LLM.AnyFunction]()
     var stream: Bool
+    var frozenHistoryElements: Data? = nil  // blob-native replay; see LLMRequestBuilder
 
     private struct Body: Codable {
         var model: String?
@@ -138,8 +144,11 @@ struct LlamaBodyRequestBuilder {
     }
 
     // Llama doesn't like multiple text parts.
-    
-    private func joinText(_ message: CompletionsMessage) -> CompletionsMessage {
+    //
+    // Static so the blob wire-encoder can reuse the EXACT same per-message pass:
+    // llama's frozen round bytes must match what this builder actually sends, or a
+    // replayed blob could emit the multiple text parts llama rejects.
+    static func joinText(_ message: CompletionsMessage) -> CompletionsMessage {
         switch message.content {
         case .string, .none:
             return message
@@ -176,7 +185,7 @@ struct LlamaBodyRequestBuilder {
         let llamaMessages = messages.compactMap {
             CompletionsMessage($0)
         }.map {
-            joinText($0)
+            Self.joinText($0)
         }
         // See the note about streaming function calling in Llama in AIMetadata.swift
         // #llama-streaming-functions
@@ -187,13 +196,16 @@ struct LlamaBodyRequestBuilder {
             tools: stream ? nil : maybeDecls,
             function_call: functions.isEmpty ? nil : "auto",
             stream: stream)
-        DLog("REQUEST:\n\(body)")
+        // Request body carries the user's prompts/messages; keep it out of the ring.
+        RLog("REQUEST:\n\(redacted: body)")
         if body.max_tokens < 2 {
             throw AIError.requestTooLarge
         }
         let bodyEncoder = JSONEncoder()
         let bodyData = try! bodyEncoder.encode(body)
-        return bodyData
+        return try ChatBlobAssembler.spliceFrozenHistory(
+            frozenHistoryElements, into: bodyData, arrayKey: "messages",
+            afterCount: messages.filter { $0.role == .system }.count)
 
     }
 }

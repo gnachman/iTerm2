@@ -21,8 +21,10 @@
 #import "iTermData.h"
 #import "iTermImageInfo.h"
 #import "iTermLRUDictionary.h"
+#import "iTermRowOutputCache.h"
 #import "iTermMarkRenderer.h"
 #import "iTermMetalPerFrameStateConfiguration.h"
+#import "iTermRowRenderInputs.h"
 #import "iTermMetalPerFrameStateRow.h"
 #import "iTermMutableAttributedStringBuilder.h"
 #import "iTermPreferences.h"
@@ -157,6 +159,12 @@ typedef struct {
 @implementation iTermMetalPerFrameState {
     CGContextRef _metalContext;
     CGContextRef _metalContextDoubleWidth;
+    // Nil unless the row-output cache is enabled. Persists across frames (owned by
+    // the glue), so on a hit we can skip rebuilding an unchanged row.
+    iTermRowOutputCache *_rowOutputCache;
+    // Per-frame cache hit/miss tallies, logged in dealloc when debug logging is on.
+    NSUInteger _rowCacheHits;
+    NSUInteger _rowCacheMisses;
 }
 
 @dynamic timestampBaseline;
@@ -166,10 +174,14 @@ typedef struct {
                             glue:(id<iTermMetalPerFrameStateDelegate>)glue
                          context:(CGContextRef)context
               doubleWidthContext:(CGContextRef)doubleWidthContext
-         attributedStringBuilder:(iTermAttributedStringBuilder *)attributedStringBuilder {
+         attributedStringBuilder:(iTermAttributedStringBuilder *)attributedStringBuilder
+                  rowOutputCache:(nullable iTermRowOutputCache *)rowOutputCache {
     assert([NSThread isMainThread]);
     self = [super init];
     if (self) {
+        if ([iTermAdvancedSettingsModel metalRowOutputCacheEnabled]) {
+            _rowOutputCache = rowOutputCache;
+        }
         _configuration = [[iTermMetalPerFrameStateConfiguration alloc] init];
         _rows = [NSMutableArray array];
         _startTime = [NSDate timeIntervalSinceReferenceDate];
@@ -191,6 +203,11 @@ typedef struct {
     }
     if (_metalContextDoubleWidth) {
         CGContextRelease(_metalContextDoubleWidth);
+    }
+    if (_rowCacheHits + _rowCacheMisses > 0) {
+        DLog(@"Row output cache: %@ hits, %@ misses (%d%% hit rate)",
+             @(_rowCacheHits), @(_rowCacheMisses),
+             (int)(100 * _rowCacheHits / (_rowCacheHits + _rowCacheMisses)));
     }
 }
 
@@ -335,6 +352,7 @@ typedef struct {
     _cursorVisible = drawingHelper.isCursorVisible;
     const int offset = _visibleRange.start.y - _numberOfScrollbackLines;
     _cursorInfo = [[iTermMetalCursorInfo alloc] init];
+    _cursorInfo.fadeAlpha = 1.0;
     _cursorInfo.password = drawingHelper.passwordInput;
     _cursorInfo.copyMode = drawingHelper.copyMode;
     _cursorInfo.copyModeCursorCoord = VT100GridCoordMake(drawingHelper.copyModeCursorCoord.x,
@@ -355,13 +373,39 @@ typedef struct {
     const CGPoint pointOffset = [textView metalCursorAnimationPixelOffset];
     _cursorInfo.pixelOffset = CGPointMake(pointOffset.x * _configuration->_scale,
                                           pointOffset.y * _configuration->_scale);
-    if ([self shouldDrawCursor] &&
+
+    // For smooth blink the cursor is considered visible whenever it would be
+    // drawn ignoring the blinked-out phase, and the blink is conveyed by
+    // fadeAlpha. Once it has fully faded out we stop drawing it.
+    const BOOL smoothBlink = drawingHelper.cursorSmoothBlink;
+    CGFloat fadeAlpha = 1.0;
+    BOOL cursorPassesBlinkGate;
+    if (smoothBlink) {
+        fadeAlpha = [drawingHelper cursorBlinkFadeAlphaForBlinking:[self cursorBlinkConditionActive]];
+        cursorPassesBlinkGate = (fadeAlpha > 0.001) && [self shouldDrawCursorIgnoringBlink];
+        if (drawingHelper.cursorBlinkFadeWantsRedraw) {
+            // Keep the smooth-blink cycle going. Like the cursor slide animator
+            // this runs independently of the update cadence. The delay is 0
+            // mid-fade and the remaining dwell time while holding at an extreme.
+            const NSTimeInterval delay = MAX(0, drawingHelper.cursorBlinkFadeTimeUntilNextFrame);
+            __weak __typeof(textView) weakTextView = textView;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
+                           dispatch_get_main_queue(), ^{
+                weakTextView.drawingHelper.animated = YES;
+                [weakTextView requestDelegateRedraw];
+            });
+        }
+    } else {
+        cursorPassesBlinkGate = [self shouldDrawCursor];
+    }
+    if (cursorPassesBlinkGate &&
         (!drawingHelper.hideCursorWhenUnfocused || focused) &&
         _cursorVisible &&
         _visibleRange.start.y <= lineWithCursor &&
         lineWithCursor < _visibleRange.end.y) {
 
         _cursorInfo.cursorVisible = YES;
+        _cursorInfo.fadeAlpha = fadeAlpha;
         _cursorInfo.type = drawingHelper.cursorType;
         _cursorInfo.cursorColor = [self backgroundColorForCursor];
         {
@@ -413,7 +457,7 @@ typedef struct {
                                                              components[2],
                                                              components[3]);
                 } else {
-                    if (_configuration->_reverseVideo) {
+                    if (_configuration->_renderInputs.reverseVideo) {
                         _cursorInfo.textColor = [_configuration->_colorMap fastColorForKey:kColorMapForeground];
                     } else {
                         _cursorInfo.textColor = [self colorForCode:ALTSEM_CURSOR
@@ -471,13 +515,13 @@ typedef struct {
                                                                             scale:_configuration->_scale
                                                                       useBoldFont:_configuration->_useBoldFont
                                                                     useItalicFont:_configuration->_useItalicFont
-                                                                 usesNonAsciiFont:_configuration->_useNonAsciiFont
+                                                                 usesNonAsciiFont:_configuration->_renderInputs.useNonAsciiFont
                                                                  asciiAntiAliased:_configuration->_asciiAntialias
                                                               nonAsciiAntiAliased:_configuration->_nonasciiAntialias];
 }
 
 - (CGFloat)transparencyAlpha {
-    return _configuration->_transparencyAlpha;
+    return _configuration->_renderInputs.transparencyAlpha;
 }
 
 - (CGFloat)blend {
@@ -552,6 +596,10 @@ typedef struct {
                    drawingHelper:(iTermTextDrawingHelper *)drawingHelper {
     _haveOffscreenCommandLine = drawingHelper.offscreenCommandLine != nil;
     if (_haveOffscreenCommandLine) {
+        // The offscreen command line replaces row 0's content but not its content
+        // identity, so that identity no longer describes what will be drawn. Mark
+        // the row uncacheable so the per-row cache never serves or stores it.
+        _rows[0]->_contentIdentity.generation = iTermRowContentGenerationUncacheable;
         _rows[0]->_screenCharLine = drawingHelper.offscreenCommandLine.characters;
         _rows[0]->_selectedIndexSet = [[NSIndexSet alloc] init];
         _rows[0]->_matches = nil;
@@ -678,6 +726,13 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                 const screen_char_t styled = [self screenCharStyledForMarkedText:buf[i]];
                 _rows[coord.y]->_screenCharLine = [sca screenCharArrayBySettingCharacterAtIndex:coord.x
                                                                                              to:styled];
+                // Marked text is not committed to the grid, so the underlying
+                // line's generation is frozen during composition while the row's
+                // content changes each keystroke. Mark the row uncacheable (as the
+                // offscreen-command-line path does) so the cache can't serve a
+                // stale pre-composition or earlier-composition blob under the same
+                // content identity.
+                _rows[coord.y]->_contentIdentity.generation = iTermRowContentGenerationUncacheable;
             }
         }
         justWrapped = NO;
@@ -797,10 +852,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     float alpha;
     if (iTermTextIsMonochrome()) {
         if (_backgroundImage) {
-            alpha = iTermAlphaValueForTopView(1 - _configuration->_transparencyAlpha,
+            alpha = iTermAlphaValueForTopView(1 - _configuration->_renderInputs.transparencyAlpha,
                                               _configuration->_backgroundImageBlend);
         } else {
-            alpha = iTermAlphaValueForTopView(1 - _configuration->_transparencyAlpha, 0);
+            alpha = iTermAlphaValueForTopView(1 - _configuration->_renderInputs.transparencyAlpha, 0);
         }
     } else {
         // Can assume transparencyAlpha is 1
@@ -836,7 +891,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 }
 
 - (BOOL)shouldDrawCursorGuideBelowText {
-    return !_configuration->_useNativePowerlineGlyphs || _configuration->_cursorGuideColor.alphaComponent > iTermCursorGuideAlphaThreshold;
+    return !_configuration->_renderInputs.useNativePowerlineGlyphs || _configuration->_cursorGuideColor.alphaComponent > iTermCursorGuideAlphaThreshold;
 }
 
 - (BOOL)softAlternateScreenMode {
@@ -945,6 +1000,7 @@ NS_INLINE int iTermGlyphKeyEmitRegular(iTermCachedGlyphKeysBuffer *buf,
                                        const screen_char_t *line,
                                        BOOL isBoxDrawingCharacter,
                                        BOOL thinStrokes,
+                                       unichar regionalIndicatorSuccessor,
                                        const int *bidiLUT,
                                        int bidiLUTLength,
                                        iTermLineAttribute lineAttribute) {
@@ -969,6 +1025,11 @@ NS_INLINE int iTermGlyphKeyEmitRegular(iTermCachedGlyphKeysBuffer *buf,
         ComplexCharCodeIsSpacingCombiningMark(line[logicalIndex + 1].code)) {
         // Next character is a combining spacing mark that will join with this non-ascii character.
         glyphKeys[i].payload.regular.combiningSuccessor = line[logicalIndex + 1].code;
+    } else if (regionalIndicatorSuccessor) {
+        // This is the opening regional indicator of a flag; join it with the closing
+        // indicator (which may be separated by a double-width spacer) so CoreText can shape
+        // the flag glyph. The closing cell is separately suppressed (drawable=NO) by the caller.
+        glyphKeys[i].payload.regular.combiningSuccessor = regionalIndicatorSuccessor;
     } else {
         glyphKeys[i].payload.regular.combiningSuccessor = 0;
     }
@@ -1533,17 +1594,29 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                            iTermCachedGlyphKeysBuffer *buf,
                                            iTermMetalGlyphAttributes *attributes,
                                            int *drawableGlyphsPtr,
-                                           BOOL *hasUnderlineOrStrikethroughPtr) {
+                                           BOOL *hasUnderlineOrStrikethroughPtr,
+                                           // Set when the row contains a cell whose drawn output can change
+                                           // while its content identity does NOT: a blink-phase cell (its
+                                           // drawability tracks _blinkingItemsVisible, deliberately excluded
+                                           // from both cache keys) or a kitty virtual placeholder (whose draw
+                                           // is looked up in _kittyImageDraws, state not captured by the
+                                           // content identity). The caller must not store such a row.
+                                           BOOL *rowContentIsVolatilePtr) {
+    const BOOL blinkAllowed = self->_configuration->_renderInputs.blinkAllowed;
+    // The volatile-row scan only feeds the store path, so skip it entirely when the
+    // cache is disabled (the default) to keep it out of the innermost glyph loop.
+    const BOOL trackVolatile = (self->_rowOutputCache != nil);
+    *rowContentIsVolatilePtr = NO;
     const int *bidiLUT = [bidiInfo lut];
     const int bidiLUTLength = bidiInfo.numberOfCells;
     int asIndex = -1;
     int previousVisualX = -1;
     BOOL lastSelected = NO;
-    NSCharacterSet *boxCharacterSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:_configuration->_useNativePowerlineGlyphs];
+    NSCharacterSet *boxCharacterSet = [iTermBoxDrawingBezierCurveFactory boxDrawingCharactersWithBezierPathsIncludingPowerline:self->_configuration->_renderInputs.useNativePowerlineGlyphs];
     iTermTextColorKey keys[2];
     iTermTextColorKey *currentColorKey = &keys[0];
     iTermTextColorKey *previousColorKey = &keys[1];
-    const BOOL underlineHyperlinks = [iTermAdvancedSettingsModel underlineHyperlinks];
+    const BOOL underlineHyperlinks = self->_configuration->_renderInputs.underlineHyperlinks;
     const BOOL darkMode = _configuration->_colorMap.backgroundIsDark;
     int nextAttributedStringLogicalStartIndex = attributedStrings.count > 0 ? [attributedStrings.firstObject sourceColumnRange].location : -1;
     id<iTermAttributedString> attributedString = nil;
@@ -1553,6 +1626,10 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     int previousImageCode = -1;
     VT100GridCoord previousImageCoord;
     int lastDrawableGlyph = -1;
+    // Set after an opening regional indicator so the next indicator cell is treated as
+    // the closing half of a flag pair. Reset by any non-indicator cell (and naturally at
+    // the start of each row), which greedily pairs indicators left to right within a row.
+    BOOL pendingOpenRegionalIndicator = NO;
 
     iTermKittyUnicodePlaceholderState kittyPlaceholderState;
     iTermKittyUnicodePlaceholderStateInit(&kittyPlaceholderState);
@@ -1561,6 +1638,11 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     memset(&caches, 0, sizeof(caches));
 
     for (int logicalIndex = 0; logicalIndex < width; logicalIndex++) {
+        if (trackVolatile &&
+            ((blinkAllowed && line[logicalIndex].blink) ||
+             (line[logicalIndex].image && line[logicalIndex].virtualPlaceholder))) {
+            *rowContentIsVolatilePtr = YES;
+        }
         if (attributedStrings && logicalIndex == nextAttributedStringLogicalStartIndex) {
             // Check for an attributed string.
             if (asIndex + 1 < attributedStrings.count) {
@@ -1615,13 +1697,23 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         iTermExternalAttribute *ea = eaIndex[logicalIndex];
         iTermURL *url = ea.url;
         NSString *complexString = line[logicalIndex].complexChar ? ScreenCharToStr(&line[logicalIndex]) : nil;
-        const BOOL characterIsDrawable = iTermTextDrawingHelperIsCharacterDrawable(&line[logicalIndex],
+        // Regional-indicator (flag) pairing. A flag is two adjacent regional-indicator
+        // cells (stored one per cell for wcwidth compatibility). Pair them greedily left
+        // to right, matching what CoreText does when the legacy renderer shapes the line
+        // as a single run: the opening cell shapes the flag and absorbs the closing cell,
+        // and the closing cell is suppressed. A trailing unpaired indicator (lone or odd
+        // run) stays drawable and renders its fallback glyph, exactly as in legacy.
+        const iTermRegionalIndicatorPairing regionalIndicator =
+            iTermRegionalIndicatorPairingForCell(line, logicalIndex, width, &pendingOpenRegionalIndicator);
+        const unichar regionalIndicatorSuccessor = regionalIndicator.joinWithNext ? regionalIndicator.successorCode : 0;
+        const BOOL characterIsDrawable = (!regionalIndicator.suppress &&
+                                          iTermTextDrawingHelperIsCharacterDrawable(&line[logicalIndex],
                                                                                    logicalIndex > 0 ? &line[logicalIndex - 1] : NULL,
                                                                                    line[logicalIndex].complexChar && (complexString != nil),
                                                                                    _configuration->_blinkingItemsVisible,
-                                                                                   _configuration->_blinkAllowed,
+                                                                                   blinkAllowed,
                                                                                    NO /* preferSpeedToFullLigatureSupport */,
-                                                                                   url != nil);
+                                                                                   url != nil));
         const BOOL isBoxDrawingCharacter = (characterIsDrawable &&
                                             ((!line[logicalIndex].complexChar &&
                                               line[logicalIndex].code > 127 &&
@@ -1714,6 +1806,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                           line,
                                           isBoxDrawingCharacter,
                                           [self useThinStrokesWithAttributes:&attributes[visualX]],
+                                          regionalIndicatorSuccessor,
                                           bidiLUT,
                                           bidiLUTLength,
                                           lineAttribute);
@@ -1758,7 +1851,8 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     NSIndexSet *selectedIndexes = _rows[row]->_selectedIndexSet;
     NSRange underlinedRange = _rows[row]->_underlinedRange;
     NSIndexSet *annotatedIndexes = _rowToAnnotationRanges[@(row)];
-    if (VT100GridRangeContains(_linesToSuppressDrawing, row)) {
+    const BOOL suppressed = VT100GridRangeContains(_linesToSuppressDrawing, row);
+    if (suppressed) {
         lineData = [ScreenCharArray emptyLineOfLength:width];
         findMatches = nil;
         selectedIndexes = nil;
@@ -1773,6 +1867,52 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     *markStylePtr = [_rows[row]->_markStyle intValue];
     *lineStyleMarkPtr = _rows[row]->_lineStyleMark;
     *lineStyleMarkRightInsetPtr = _rows[row]->_lineStyleMarkRightInset;
+
+    // Per-row output cache. A row is cacheable only when nothing outside its
+    // content identity + config generation can affect the built blobs: no
+    // per-row overlay (selection, find match, semantic-history underline, or
+    // annotation), not suppressed, and a real (non-sentinel) content identity.
+    // The box-cursor text-color tweak below is a per-frame effect applied on top
+    // of the cached attributes, so it does not make a row uncacheable.
+    // The "no underline" sentinel is a zero LENGTH, not a NSNotFound location:
+    // underlinedRangeOnLine: returns NSMakeRange(0, 0) for an un-underlined row,
+    // and the build decides to underline via NSLocationInRange (length-based).
+    const BOOL hasOverlay = (selectedIndexes.count > 0 ||
+                             findMatches != nil ||
+                             underlinedRange.length > 0 ||
+                             annotatedIndexes.count > 0);
+    const BOOL cacheable = (_rowOutputCache != nil &&
+                            !suppressed &&
+                            !hasOverlay &&
+                            _rows[row]->_contentIdentity.generation != iTermRowContentGenerationUncacheable);
+    iTermRowCacheKey cacheKey;
+    if (cacheable) {
+        memset(&cacheKey, 0, sizeof(cacheKey));
+        cacheKey.configGeneration = _configuration->_configGeneration;
+        cacheKey.contentIdentity = _rows[row]->_contentIdentity;
+        NSUInteger hitGlyphKeyCount = 0;
+        int hitRles = 0;
+        int hitDrawableGlyphs = 0;
+        BOOL hitUnderline = NO;
+        if ([_rowOutputCache lookup:&cacheKey
+                          glyphKeys:glyphKeysData
+                         attributes:attributes
+                         background:backgroundRLE
+                      glyphKeyCount:&hitGlyphKeyCount
+                           rleCount:&hitRles
+                     drawableGlyphs:&hitDrawableGlyphs
+        hasUnderlineOrStrikethrough:&hitUnderline]) {
+            _rowCacheHits++;
+            *glyphKeyCountPtr = hitGlyphKeyCount;
+            *rleCount = hitRles;
+            *drawableGlyphsPtr = hitDrawableGlyphs;
+            *hasUnderlineOrStrikethroughPtr = hitUnderline;
+            [self applyBoxCursorTextColorTweakForRow:row width:width attributes:attributes];
+            return;
+        }
+        _rowCacheMisses++;
+    }
+
     vector_float4 unprocessedBackgroundColors[width];
 
     int rles = iTermGetMetalBackgroundColors(self,
@@ -1794,7 +1934,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
 
     NSMutableArray<id<iTermAttributedString>> *allAttributedStrings = nil;
 
-    if (bidiInfo || _configuration->_ligaturesEnabled) {
+    if (bidiInfo || _configuration->_renderInputs.ligaturesEnabled) {
         allAttributedStrings = [NSMutableArray array];
 
         for (int i = 0; i < rles; i++) {
@@ -1834,6 +1974,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     }
 
     *hasUnderlineOrStrikethroughPtr = NO;
+    BOOL rowContentIsVolatile = NO;
     *glyphKeyCountPtr = iTermEmitGlyphsAndSetAttributes(self,
                                                         line,
                                                         row,
@@ -1854,38 +1995,81 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                         &buf,
                                                         attributes,
                                                         drawableGlyphsPtr,
-                                                        hasUnderlineOrStrikethroughPtr);
+                                                        hasUnderlineOrStrikethroughPtr,
+                                                        &rowContentIsVolatile);
 
-    // Tweak the text color for the cell that has a box cursor.
-    if (row == _cursorInfo.coord.y &&
-        _cursorInfo.type == CURSOR_BOX &&
-        _cursorInfo.cursorVisible &&
-        !_cursorInfo.frameOnly) {
-        vector_float4 cursorTextColor;
-        if (_cursorInfo.shouldDrawText) {
-            cursorTextColor = _cursorInfo.textColor;
-        } else if (_configuration->_reverseVideo) {
-            cursorTextColor = VectorForColor([_configuration->_colorMap colorForKey:kColorMapBackground],
-                                             _configuration->_colorSpace);
-        } else {
-            cursorTextColor = [self vectorColorForCode:ALTSEM_CURSOR
-                                                 green:0
-                                                  blue:0
-                                             colorMode:ColorModeAlternate
-                                                  bold:NO
-                                                 faint:NO
-                                          isBackground:NO];
-        }
-        if (_cursorInfo.coord.x < width) {
-            attributes[_cursorInfo.coord.x].foregroundColor = cursorTextColor;
-            attributes[_cursorInfo.coord.x].foregroundColor.w = 1;
-        }
+    // Store the freshly built blobs BEFORE the box-cursor tweak, which is a
+    // per-frame overlay that must not be baked into the cached attributes. Rows
+    // that produced image runs are skipped: the blobs alone don't reproduce the
+    // image draws, so such a row must always rebuild. Rows with volatile content
+    // (a blink-phase cell or a kitty virtual placeholder) are likewise skipped so
+    // the cache never freezes blinking text or hides a late-arriving image.
+    if (cacheable &&
+        imageRuns.count == 0 &&
+        kittyImageRuns.count == 0 &&
+        !rowContentIsVolatile) {
+        [_rowOutputCache store:&cacheKey
+                     glyphKeys:glyphKeysData.mutableBytes
+               glyphKeysLength:*glyphKeyCountPtr * sizeof(iTermMetalGlyphKey)
+                    attributes:attributes
+              attributesLength:(size_t)width * sizeof(iTermMetalGlyphAttributes)
+                    background:backgroundRLE
+              backgroundLength:(size_t)*rleCount * sizeof(iTermMetalBackgroundColorRLE)
+                 glyphKeyCount:*glyphKeyCountPtr
+                      rleCount:*rleCount
+                drawableGlyphs:*drawableGlyphsPtr
+   hasUnderlineOrStrikethrough:*hasUnderlineOrStrikethroughPtr];
     }
+
+    [self applyBoxCursorTextColorTweakForRow:row width:width attributes:attributes];
     CTVectorDestroy(&positions);
 }
 
+// Tweaks the text color for the cell that has a box cursor. This is a per-frame
+// effect (it depends on the cursor position and fade animation, not the row's
+// content), so it is applied after both a cache hit and a fresh build.
+- (void)applyBoxCursorTextColorTweakForRow:(int)row
+                                     width:(int)width
+                                attributes:(iTermMetalGlyphAttributes *)attributes {
+    if (!(row == _cursorInfo.coord.y &&
+          _cursorInfo.type == CURSOR_BOX &&
+          _cursorInfo.cursorVisible &&
+          !_cursorInfo.frameOnly)) {
+        return;
+    }
+    vector_float4 cursorTextColor;
+    if (_cursorInfo.shouldDrawText) {
+        cursorTextColor = _cursorInfo.textColor;
+    } else if (_configuration->_renderInputs.reverseVideo) {
+        cursorTextColor = VectorForColor([_configuration->_colorMap colorForKey:kColorMapBackground],
+                                         _configuration->_colorSpace);
+    } else {
+        cursorTextColor = [self vectorColorForCode:ALTSEM_CURSOR
+                                             green:0
+                                              blue:0
+                                         colorMode:ColorModeAlternate
+                                              bold:NO
+                                             faint:NO
+                                      isBackground:NO];
+    }
+    if (_cursorInfo.coord.x < width) {
+        cursorTextColor.w = 1;
+        const CGFloat fade = _cursorInfo.fadeAlpha;
+        if (fade >= 1.0) {
+            attributes[_cursorInfo.coord.x].foregroundColor = cursorTextColor;
+        } else {
+            // Smooth blink: crossfade the glyph from its normal color toward
+            // the cursor text color as the cursor fades in, so it matches the
+            // box fill being composited at the same alpha underneath.
+            vector_float4 normal = attributes[_cursorInfo.coord.x].foregroundColor;
+            normal.w = 1;
+            attributes[_cursorInfo.coord.x].foregroundColor = simd_mix(normal, cursorTextColor, simd_make_float4(fade, fade, fade, fade));
+        }
+    }
+}
+
 - (BOOL)useThinStrokesWithAttributes:(iTermMetalGlyphAttributes *)attributes {
-    switch (_configuration->_thinStrokes) {
+    switch (_configuration->_renderInputs.thinStrokes) {
         case iTermThinStrokesSettingAlways:
             return YES;
 
@@ -1896,13 +2080,13 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
             return NO;
 
         case iTermThinStrokesSettingRetinaDarkBackgroundsOnly:
-            if (!_configuration->_isRetina) {
+            if (!_configuration->_renderInputs.isRetina) {
                 return NO;
             }
             break;
 
         case iTermThinStrokesSettingRetinaOnly:
-            return _configuration->_isRetina;
+            return _configuration->_renderInputs.isRetina;
     }
 
     const float backgroundBrightness = SIMDPerceivedBrightness(attributes->backgroundColor);
@@ -1911,22 +2095,22 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
 }
 
 - (vector_float4)selectionColorForCurrentFocus {
-    if (_configuration->_isFrontTextView) {
+    if (_configuration->_renderInputs.isFrontTextView) {
         return VectorForColor([_configuration->_colorMap processedBackgroundColorForBackgroundColor:[_configuration->_colorMap colorForKey:kColorMapSelection]],
                               _configuration->_colorSpace);
     } else {
-        return _configuration->_unfocusedSelectionColor;
+        return _configuration->_renderInputs.unfocusedSelectionColor;
     }
 }
 
 - (vector_float4)unprocessedColorForBackgroundColorKey:(iTermBackgroundColorKey *)colorKey
                                              isDefault:(BOOL *)isDefault {
     vector_float4 color = { 0, 0, 0, 0 };
-    CGFloat alpha = _configuration->_transparencyAlpha;
+    CGFloat alpha = _configuration->_renderInputs.transparencyAlpha;
     *isDefault = NO;
     if (colorKey->selected) {
         color = [self selectionColorForCurrentFocus];
-        if (_configuration->_transparencyAffectsOnlyDefaultBackgroundColor) {
+        if (_configuration->_renderInputs.transparencyAffectsOnlyDefaultBackgroundColor) {
             alpha = 1;
         }
     } else if (colorKey->image) {
@@ -1950,10 +2134,10 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         // When set in preferences, applies alpha only to the defaultBackground
         // color, useful for keeping Powerline segments opacity(background)
         // consistent with their seperator glyphs opacity(foreground).
-        if (_configuration->_transparencyAffectsOnlyDefaultBackgroundColor && !defaultBackground) {
+        if (_configuration->_renderInputs.transparencyAffectsOnlyDefaultBackgroundColor && !defaultBackground) {
             alpha = 1;
         }
-        if (_configuration->_reverseVideo && defaultBackground) {
+        if (_configuration->_renderInputs.reverseVideo && defaultBackground) {
             // Reverse video is only applied to default background-
             // color chars.
             color = [self vectorColorForCode:ALTSEM_DEFAULT
@@ -2038,7 +2222,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                     if (isBackgroundForDefault) {
                         return kColorMapBackground;
                     } else {
-                        if (isBold && _configuration->_useCustomBoldColor) {
+                        if (isBold && _configuration->_renderInputs.useCustomBoldColor) {
                             return kColorMapBold;
                         } else {
                             return kColorMapForeground;
@@ -2057,7 +2241,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
             // display setting (esc[1m) as "bold or bright". We make it a
             // preference.
             if (isBold &&
-                _configuration->_brightenBold &&
+                _configuration->_renderInputs.brightenBold &&
                 (theIndex < 8) &&
                 !isBackground) { // Only colors 0-7 can be made "bright".
                 theIndex |= 8;  // set "bright" bit.
@@ -2115,7 +2299,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                                      scale:scale
                                                                useBoldFont:_configuration->_useBoldFont
                                                              useItalicFont:_configuration->_useItalicFont
-                                                          usesNonAsciiFont:_configuration->_useNonAsciiFont
+                                                          usesNonAsciiFont:_configuration->_renderInputs.useNonAsciiFont
                                                           asciiAntiAliased:_configuration->_asciiAntialias
                                                        nonAsciiAntiAliased:_configuration->_nonasciiAntialias];
     iTermCharacterSourceAttributes *attributes =
@@ -2171,7 +2355,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                                      scale:scale
                                                                useBoldFont:_configuration->_useBoldFont
                                                              useItalicFont:_configuration->_useItalicFont
-                                                          usesNonAsciiFont:_configuration->_useNonAsciiFont
+                                                          usesNonAsciiFont:_configuration->_renderInputs.useNonAsciiFont
                                                           asciiAntiAliased:_configuration->_asciiAntialias
                                                        nonAsciiAntiAliased:_configuration->_nonasciiAntialias];
     iTermCharacterSourceAttributes *attributes =
@@ -2180,10 +2364,14 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                                                       italic:italic];
     NSString *string = CharToStr(glyphKey->payload.regular.code, glyphKey->payload.regular.isComplex);
     if (glyphKey->payload.regular.combiningSuccessor) {
-        if (ComplexCharCodeIsSpacingCombiningMark(glyphKey->payload.regular.combiningSuccessor) &&
-            !(glyphKey->payload.regular.isComplex && ComplexCharCodeIsSpacingCombiningMark(glyphKey->payload.regular.code))) {
-            // Append the successor cell's spacing combining mark, provided it has a predecessor.
-            NSString *successorString = CharToStr(glyphKey->payload.regular.combiningSuccessor, YES);
+        const unichar successor = glyphKey->payload.regular.combiningSuccessor;
+        const BOOL currentIsSpacingMark = (glyphKey->payload.regular.isComplex &&
+                                           ComplexCharCodeIsSpacingCombiningMark(glyphKey->payload.regular.code));
+        if ((ComplexCharCodeIsSpacingCombiningMark(successor) && !currentIsSpacingMark) ||
+            ComplexCharCodeIsRegionalIndicator(successor)) {
+            // Append the successor cell's glyph so CoreText shapes them together: a spacing
+            // combining mark over its base, or the closing regional indicator of a flag.
+            NSString *successorString = CharToStr(successor, YES);
             string = [string stringByAppendingString:successorString];
         }
     }
@@ -2197,7 +2385,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                          attributes:attributes
                                          boxDrawing:glyphKey->payload.regular.boxDrawing
                                              radius:radius
-                           useNativePowerlineGlyphs:_configuration->_useNativePowerlineGlyphs
+                           useNativePowerlineGlyphs:_configuration->_renderInputs.useNativePowerlineGlyphs
                                       lineAttribute:glyphKey->lineAttribute
                                             context:ctx];
     if (characterSource == nil) {
@@ -2266,6 +2454,12 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     _rows[0]->_screenCharLine = [[ScreenCharArray alloc] initWithData:mutableData
                                                              metadata:_rows[0]->_screenCharLine.metadata
                                                          continuation:_rows[0]->_screenCharLine.continuation];
+    // The FPS meter text replaces row 0's content but not its content identity, and
+    // it changes every frame, so mark the row uncacheable (like the offscreen
+    // command line and IME marked text). Otherwise the per-row cache serves the
+    // stale underlying row and the meter is hidden -- reliably so when row 0 is a
+    // stable scrollback line that is already cached.
+    _rows[0]->_contentIdentity.generation = iTermRowContentGenerationUncacheable;
 }
 
 - (id)screenCharArrayForRow:(int)y {
@@ -2300,17 +2494,17 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
 }
 
 - (BOOL)thinStrokesForTimestamps {
-    switch (_configuration->_thinStrokes) {
+    switch (_configuration->_renderInputs.thinStrokes) {
         case iTermThinStrokesSettingNever:
             return NO;
         case iTermThinStrokesSettingAlways:
             return YES;
         case iTermThinStrokesSettingRetinaOnly:
-            return _configuration->_isRetina;
+            return _configuration->_renderInputs.isRetina;
         case iTermThinStrokesSettingDarkBackgroundsOnly:
             return self.timestampsBackgroundColor.isDark;
         case iTermThinStrokesSettingRetinaDarkBackgroundsOnly:
-            return _configuration->_isRetina && self.timestampsBackgroundColor.isDark;
+            return _configuration->_renderInputs.isRetina && self.timestampsBackgroundColor.isDark;
     }
 }
 
@@ -2356,12 +2550,12 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         rawColor = VectorForColor([_configuration->_colorMap colorForKey:kColorMapLink],
                                   _configuration->_colorSpace);
         caches->havePreviousCharacterAttributes = NO;
-    } else if (selected && _configuration->_useSelectedTextColor) {
+    } else if (selected && _configuration->_renderInputs.useSelectedTextColor) {
         // Selected text.
         rawColor = VectorForColor([colorMap colorForKey:kColorMapSelectedText],
                                   _configuration->_colorSpace);
         caches->havePreviousCharacterAttributes = NO;
-    } else if (_configuration->_reverseVideo &&
+    } else if (_configuration->_renderInputs.reverseVideo &&
                ((c->foregroundColor == ALTSEM_DEFAULT && c->foregroundColorMode == ColorModeAlternate) ||
                 (c->foregroundColor == ALTSEM_CURSOR && c->foregroundColorMode == ColorModeAlternate))) {
            // Reverse video is on. Either is cursor or has default foreground color. Use
@@ -2420,7 +2614,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
 
 - (NSColor *)backgroundColorForCursor {
     NSColor *color;
-    if (_configuration->_reverseVideo) {
+    if (_configuration->_renderInputs.reverseVideo) {
         color = [[_configuration->_colorMap colorForKey:kColorMapCursorText] colorWithAlphaComponent:1.0];
     } else {
         color = [[_configuration->_colorMap colorForKey:kColorMapCursor] colorWithAlphaComponent:1.0];
@@ -2448,7 +2642,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                        muted:(BOOL)muted {
     BOOL isBackground = [iTermTextDrawingHelper cursorUsesBackgroundColorForScreenChar:screenChar
                                                                         wantBackground:wantBackgroundColor
-                                                                          reverseVideo:_configuration->_reverseVideo];
+                                                                          reverseVideo:_configuration->_renderInputs.reverseVideo];
 
     vector_float4 color;
     if (wantBackgroundColor) {
@@ -2517,14 +2711,26 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     return result;
 }
 
+// Like -shouldDrawCursor but ignores the blinked-out phase. Smooth blink uses
+// this and conveys the blink via fadeAlpha instead.
+- (BOOL)shouldDrawCursorIgnoringBlink {
+    return (![self hasMarkedText] && _cursorVisible);
+}
+
+// The condition under which the cursor blinks. Smooth blink drives its own
+// cycle from this.
+- (BOOL)cursorBlinkConditionActive {
+    return (_cursorBlinking &&
+            _configuration->_isInKeyWindow &&
+            _configuration->_textViewIsActiveSession &&
+            _configuration->_textViewIsFirstResponder &&
+            _timeSinceCursorMoved > 0.5);
+}
+
 - (BOOL)hideCursorBecauseBlinking {
-    if (_cursorBlinking &&
-        _configuration->_isInKeyWindow &&
-        _configuration->_textViewIsActiveSession &&
-        _configuration->_textViewIsFirstResponder &&
-        _timeSinceCursorMoved > 0.5) {
-        // Allow the cursor to blink if it is configured, the window is key, this session is active
-        // in the tab, and the cursor has not moved for half a second.
+    // Allow the cursor to blink if it is configured, the window is key, this session is active
+    // in the tab, and the cursor has not moved for half a second.
+    if ([self cursorBlinkConditionActive]) {
         return !_configuration->_blinkingItemsVisible;
     } else {
         return NO;
@@ -2542,7 +2748,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
 #pragma mark - iTermAttributedStringBuilderDelegate
 
 - (BOOL)useSelectedTextColor {
-    return _configuration->_useSelectedTextColor;
+    return _configuration->_renderInputs.useSelectedTextColor;
 }
 
 // I believe this is never called because we always set the background color in the text context.

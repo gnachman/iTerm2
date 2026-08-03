@@ -11,7 +11,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermModifyOtherKeysMapper1 : NSObject<iTermKeyMapper>
+@interface iTermModifyOtherKeysMapper1 : NSObject<iTermKeyMapper, iTermTmuxControlModeKeyNaming>
 @property (nonatomic, weak) id<iTermStandardKeyMapperDelegate, iTermModifyOtherKeysMapperDelegate> delegate;
 @end
 

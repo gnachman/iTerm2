@@ -52,6 +52,9 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return WINDOW_TYPE_MAXIMIZED;
 
+        case WINDOW_TYPE_COMPACT_CENTERED:
+            return WINDOW_TYPE_CENTERED;
+
         case WINDOW_TYPE_LION_FULL_SCREEN:
             return WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
     }
@@ -68,7 +71,6 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
-        case WINDOW_TYPE_CENTERED:
             return YES;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -76,9 +78,11 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             return YES;
 
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_NORMAL:
@@ -97,11 +101,11 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
-        case WINDOW_TYPE_CENTERED:
             return YES;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_ACCESSORY:
             return NO;
@@ -109,6 +113,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             return YES;
             break;
 
@@ -223,6 +228,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -241,6 +247,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
@@ -263,6 +270,8 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return YES;
 
@@ -270,7 +279,6 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
-        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
@@ -283,7 +291,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 }
 
 - (BOOL)changeToWindowType:(iTermWindowType)newWindowType {
-    DLog(@"%@ %@", self, @(newWindowType));
+    RLog(@"%@ %@", self, @(newWindowType));
     if (newWindowType == self.windowType) {
         DLog(@"Already that type");
         return NO;
@@ -346,6 +354,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
             return YES;
 
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_MAXIMIZED:
@@ -453,11 +462,15 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     assert(_windowType == WINDOW_TYPE_NORMAL ||
            _windowType == WINDOW_TYPE_COMPACT ||
            _windowType == WINDOW_TYPE_MAXIMIZED ||
-           _windowType == WINDOW_TYPE_COMPACT_MAXIMIZED);
+           _windowType == WINDOW_TYPE_COMPACT_MAXIMIZED ||
+           _windowType == WINDOW_TYPE_CENTERED ||
+           _windowType == WINDOW_TYPE_COMPACT_CENTERED);
     assert(self.windowType == WINDOW_TYPE_NORMAL ||
            self.windowType == WINDOW_TYPE_COMPACT ||
            self.windowType == WINDOW_TYPE_MAXIMIZED ||
-           self.windowType == WINDOW_TYPE_COMPACT_MAXIMIZED);
+           self.windowType == WINDOW_TYPE_COMPACT_MAXIMIZED ||
+           self.windowType == WINDOW_TYPE_CENTERED ||
+           self.windowType == WINDOW_TYPE_COMPACT_CENTERED);
 
     _updatingWindowType = YES;
     [self updateWindowForWindowType:self.windowType];
@@ -494,7 +507,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     DLog(@"willEnterTraditionalFullScreenMode");
     oldFrame_ = self.window.frame;
     oldFrameSizeIsBogus_ = NO;
-    DLog(@"Set saved window type to %@", @(self.windowType));
+    RLog(@"Set saved window type to %@", @(self.windowType));
     _savedWindowType = self.windowType;
     if (self.contentView.tabBarControlOnLoan) {
         DLog(@"returnTabBarToContentView");
@@ -597,7 +610,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     [self didToggleTraditionalFullScreenModeWithSavedToolbeltWidth:savedToolbeltWidth];
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad didToggleTraditionalFullScreenMode];
-    DLog(@"done toggling trad fullscreen. fullscreen=%@", @(_fullScreen));
+    RLog(@"done toggling trad fullscreen. fullscreen=%@", @(_fullScreen));
 }
 
 - (void)didExitTraditionalFullScreenMode {
@@ -755,7 +768,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 
 - (void)toggleFullScreenModeImpl:(id)sender
                       completion:(void (^)(BOOL))completion {
-    DLog(@"toggleFullScreenMode:. window type is %d", self.windowType);
+    RLog(@"toggleFullScreenMode:. window type is %d", self.windowType);
     if (self.toggleFullScreenShouldUseLionFullScreen) {
         [[self ptyWindow] toggleFullScreen:self];
         if (completion) {
@@ -803,7 +816,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 #pragma mark - Lion Full screen
 
 - (void)windowWillEnterFullScreenImpl:(NSNotification *)notification {
-    DLog(@"Window will enter lion fullscreen %@", self);
+    RLog(@"Window will enter lion fullscreen %@", self);
     if (self.swipeIdentifier) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
                                                             object:self.swipeIdentifier];
@@ -816,14 +829,14 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     [self.contentView didChangeCompactness];
     [self updateTabBarControlIsTitlebarAccessory];
     if (self.windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
-        DLog(@"Set saved window type to %@", @(self.windowType));
+        RLog(@"Set saved window type to %@", @(self.windowType));
         _savedWindowType = self.windowType;
         _windowType = WINDOW_TYPE_LION_FULL_SCREEN;
     }
 }
 
 - (void)windowDidEnterFullScreenImpl:(NSNotification *)notification {
-    DLog(@"Window did enter lion fullscreen %@", self);
+    RLog(@"Window did enter lion fullscreen %@", self);
 
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
@@ -866,7 +879,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 }
 
 - (void)didFinishFullScreenTransitionSuccessfully:(BOOL)success {
-    DLog(@"didFinishFullScreenTransitionSuccessfully:%@", @(success));
+    RLog(@"didFinishFullScreenTransitionSuccessfully:%@", @(success));
     NSArray<void (^)(BOOL)> *blocks = [_toggleFullScreenModeCompletionBlocks copy];
     [_toggleFullScreenModeCompletionBlocks removeAllObjects];
     for (void (^block)(BOOL) in blocks) {
@@ -875,7 +888,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 }
 
 - (void)windowDidFailToEnterFullScreenImpl:(NSWindow *)window {
-    DLog(@"windowDidFailToEnterFullScreen %@", self);
+    RLog(@"windowDidFailToEnterFullScreen %@", self);
     [self didFinishFullScreenTransitionSuccessfully:NO];
     if (!togglingLionFullScreen_) {
         DLog(@"It's ok though because togglingLionFullScreen is off");
@@ -883,13 +896,13 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     }
     if (_fullScreenRetryCount < 3) {
         _fullScreenRetryCount++;
-        DLog(@"Increment retry count to %@ and schedule an attempt after a delay %@", @(_fullScreenRetryCount), self);
+        RLog(@"Increment retry count to %@ and schedule an attempt after a delay %@", @(_fullScreenRetryCount), self);
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            DLog(@"About to retry entering full screen with count %@: %@", @(self->_fullScreenRetryCount), self);
+            RLog(@"About to retry entering full screen with count %@: %@", @(self->_fullScreenRetryCount), self);
             [self.window toggleFullScreen:self];
         });
     } else {
-        DLog(@"Giving up after three retries: %@", self);
+        RLog(@"Giving up after three retries: %@", self);
         togglingLionFullScreen_ = NO;
         _fullScreenRetryCount = 0;
         [self.contentView didChangeCompactness];
@@ -900,7 +913,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 }
 
 - (void)windowWillExitFullScreenImpl:(NSNotification *)notification {
-    DLog(@"Window will exit lion fullscreen %@", self);
+    RLog(@"Window will exit lion fullscreen %@", self);
     if (self.swipeIdentifier) {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermSwipeHandlerCancelSwipe
                                                             object:self.swipeIdentifier];
@@ -923,12 +936,12 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 }
 
 - (void)windowDidExitFullScreenImpl:(NSNotification *)notification {
-    DLog(@"Window did exit lion fullscreen %@", self);
+    RLog(@"Window did exit lion fullscreen %@", self);
     exitingLionFullscreen_ = NO;
     zooming_ = NO;
     lionFullScreen_ = NO;
 
-    DLog(@"Window did exit fullscreen. Set window type to %d", self.savedWindowType);
+    RLog(@"Window did exit fullscreen. Set window type to %d", self.savedWindowType);
     [self safelySetStyleMask:[PseudoTerminal styleMaskForWindowType:self.savedWindowType
                                                     savedWindowType:self.savedWindowType
                                                    hotkeyWindowType:self.hotkeyWindowType]];
@@ -991,7 +1004,9 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 #pragma mark - Compact Style
 
 BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
-    return windowType == WINDOW_TYPE_COMPACT || windowType == WINDOW_TYPE_COMPACT_MAXIMIZED;
+    return (windowType == WINDOW_TYPE_COMPACT ||
+            windowType == WINDOW_TYPE_COMPACT_MAXIMIZED ||
+            windowType == WINDOW_TYPE_COMPACT_CENTERED);
 }
 
 - (void)didChangeCompactness {
@@ -1010,19 +1025,20 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
             case WINDOW_TYPE_ACCESSORY:
             case WINDOW_TYPE_NORMAL:
             case WINDOW_TYPE_MAXIMIZED:
+            case WINDOW_TYPE_CENTERED:
                 return NO;
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_TOP_PERCENTAGE:
             case WINDOW_TYPE_BOTTOM_PERCENTAGE:
             case WINDOW_TYPE_LEFT_PERCENTAGE:
             case WINDOW_TYPE_RIGHT_PERCENTAGE:
-            case WINDOW_TYPE_CENTERED:
             case WINDOW_TYPE_TOP_CELLS:
             case WINDOW_TYPE_BOTTOM_CELLS:
             case WINDOW_TYPE_LEFT_CELLS:
             case WINDOW_TYPE_RIGHT_CELLS:
             case WINDOW_TYPE_COMPACT:
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            case WINDOW_TYPE_COMPACT_CENTERED:
                 return YES;
         }
     }
@@ -1044,7 +1060,6 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
-        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
@@ -1069,6 +1084,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
                     resizable);
 
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             return (mask |
                     NSWindowStyleMaskTitled |
                     NSWindowStyleMaskFullSizeContentView |
@@ -1077,6 +1093,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
                     resizable);
 
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
             return (mask |
                     NSWindowStyleMaskTitled |
                     NSWindowStyleMaskClosable |

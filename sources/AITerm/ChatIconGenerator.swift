@@ -120,7 +120,7 @@ class ChatIconGenerator {
                     }
                 }
             case .failure(let error):
-                DLog("Chat icon generation for \u{201C}\(subject)\u{201D} failed: \(error)")
+                RLog("Chat icon generation for \u{201C}\(subject)\u{201D} failed: \(error)")
                 DispatchQueue.main.async {
                     self?.finish(chatID: chatID, data: nil, completion: completion)
                 }

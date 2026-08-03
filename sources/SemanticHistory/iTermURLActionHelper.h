@@ -82,6 +82,14 @@ launchProfileInCurrentTerminal:(Profile *)profile
 - (id<iTermCancelable>)urlActionForClickAtCoord:(VT100GridCoord)coord
                                      completion:(void (^)(URLAction * _Nullable))completion;
 
+// Synchronously returns the URL under `coord` (with hard newlines stitched out of
+// wrapped URLs, per the ignore-hard-newlines behavior) suitable for copying to the
+// pasteboard, or nil if there is no unambiguous URL there. Unlike the ⌘-click
+// detection above, this does not probe the filesystem, so it only recognizes text
+// that explicitly carries a URL scheme (e.g. https://…). Safe to call while building
+// a context menu.
+- (NSURL * _Nullable)urlForCopyAtCoord:(VT100GridCoord)coord;
+
 - (id<iTermCancelable> _Nullable)urlActionForClickAtCoord:(VT100GridCoord)coord
                                    respectingHardNewlines:(BOOL)respectHardNewlines
                                                 alternate:(BOOL)alternate

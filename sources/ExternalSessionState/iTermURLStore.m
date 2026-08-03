@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "NSObject+iTerm.h"
+#import "NSURL+iTerm.h"
 #import "iTermChangeTrackingDictionary.h"
 #import "iTermGraphEncoder.h"
 #import "iTermTuple.h"
@@ -97,7 +98,7 @@
 - (unsigned int)codeForURL:(NSURL *)url withParams:(NSString *)params {
     @synchronized (self) {
         if (!url.absoluteString || !params) {
-            DLog(@"codeForURL:%@ withParams:%@ returning 0 because of nil value", url.absoluteString, params);
+            RLog(@"codeForURL:%@ withParams:%@ returning 0 because of nil value", RLogRedact(url.absoluteString, url.it_redactedDescription), params);
             return 0;
         }
         iTermTuple<NSString *, NSString *> *key = [iTermTuple tupleWithObject:url.absoluteString andObject:params];
@@ -106,7 +107,7 @@
             return number.unsignedIntValue;
         }
         if (_reverseStore.count == USHRT_MAX - 1) {
-            DLog(@"Ran out of URL storage. Refusing to allocate a code.");
+            RLog(@"Ran out of URL storage. Refusing to allocate a code.");
             return 0;
         }
         // Advance _nextCode to the next unused code. This will not normally happen - only on wraparound.
@@ -222,7 +223,7 @@ static NSString *iTermURLStoreGetParamForKey(NSString *params, NSString *key) {
         NSArray<NSNumber *> *refcounts3 = dictionary[@"refcounts3"];
 
         if (!store || (!refcounts && !refcounts2 && !refcounts3)) {
-            DLog(@"URLStore restoration dictionary missing value");
+            RLog(@"URLStore restoration dictionary missing value");
             DLog(@"store=%@", store);
             DLog(@"refcounts=%@", refcounts);
             DLog(@"refcounts2=%@", refcounts2);

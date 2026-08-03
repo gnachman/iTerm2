@@ -54,7 +54,7 @@ NSString *const iTermSwipeHandlerCancelSwipe = @"iTermSwipeHandlerCancelSwipe";
         return NO;
     }
 
-    DLog(@"Start tracking loop");
+    RLog(@"Start tracking loop");
     // A bit of hard-won wisdom: if you don't start tracking right away, the behavior of the
     // event reporting changes and you miss a lot of drags. For that reason, -internalHandleEvent
     // uses a very rough test (is it more horizontal than vertical?) to avoid tracking on
@@ -106,7 +106,7 @@ NSString *const iTermSwipeHandlerCancelSwipe = @"iTermSwipeHandlerCancelSwipe";
             DLog(@"Got event %@", event);
         }
     }
-    DLog(@"Exit tracking loop");
+    RLog(@"Exit tracking loop");
     return YES;
 }
 
@@ -147,7 +147,7 @@ NSString *const iTermSwipeHandlerCancelSwipe = @"iTermSwipeHandlerCancelSwipe";
             return NO;
         }
         if (![self.delegate swipeTrackerShouldBeginNewSwipe:self]) {
-            DLog(@"Delegate declined to begin new swipe");
+            RLog(@"Delegate declined to begin new swipe");
             return NO;
         }
         return [self createStateForEventIfNeeded:event transition:transition];
@@ -171,7 +171,7 @@ NSString *const iTermSwipeHandlerCancelSwipe = @"iTermSwipeHandlerCancelSwipe";
              @(transition.after));
         return NO;
     }
-    DLog(@"Create new live state");
+    RLog(@"Create new live state");
     _liveState = [self.delegate swipeTrackerWillBeginNewSwipe:self];
     [_liveState handleEvent:event transition:transition];
     [self updateTimer];

@@ -13,6 +13,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL backgroundIsDark;
 // Pixel offset for smooth cursor animation
 @property (nonatomic) CGPoint pixelOffset;
+// Opacity in [0, 1] for smooth blink fading. Defaults to 1.
+@property (nonatomic) CGFloat fadeAlpha;
 @end
 
 @interface iTermCursorRenderer : NSObject<iTermMetalCellRenderer>

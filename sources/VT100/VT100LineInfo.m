@@ -8,9 +8,53 @@
 
 #import "VT100LineInfo.h"
 
+#import <stdatomic.h>
+
+// Globally-unique, monotonically increasing generation for grid lines. Global
+// (not per-line) so a generation value identifies a line's content uniquely
+// across all lines, which the per-row draw cache relies on to avoid collisions.
+//
+// This is deliberately separate from LineBlock's iTermAllocateGeneration counter,
+// not a duplicate to consolidate: the two have different policies. This grid
+// counter is gated (below) because its only consumer is the default-off per-row
+// cache, whereas the LineBlock counter must always advance because the bidi
+// reload watermark depends on it. They also need not share a sequence: the cache
+// key's `source` field (grid vs history) discriminates the two, so equal values
+// across them never collide.
+static _Atomic int64_t gVT100LineInfoNextGeneration = 1;
+
+// The grid generation is consumed ONLY by the per-row draw cache (via
+// contentIdentityForLine:), which is off by default. To avoid bumping the shared
+// counter on the hot dirty path (once per markCharsDirty: line, per session) when
+// nothing reads it, the bump is gated on this flag. The metal glue turns it on the
+// first time it renders with the cache enabled. It is sticky (never turned off):
+// that costs nothing extra, and it means a line's generation keeps advancing on
+// every change for the rest of the process, so the cache can never be re-enabled
+// into a state where a stale generation aliases changed content.
+static _Atomic bool gVT100LineInfoTrackGenerations = false;
+
+void VT100LineInfoEnableGenerationTracking(void) {
+    atomic_store_explicit(&gVT100LineInfoTrackGenerations, true, memory_order_relaxed);
+}
+
+static int64_t VT100LineInfoAllocateGeneration(void) {
+    return atomic_fetch_add_explicit(&gVT100LineInfoNextGeneration, 1, memory_order_relaxed);
+}
+
+// Reserves a contiguous block of `count` generations from the same global
+// sequence and returns its base, so a caller can hand out `count` distinct,
+// never-reused identities in O(1) (one atomic) instead of bumping each line.
+int64_t VT100LineInfoAllocateGenerationBlock(int64_t count) {
+    if (count < 1) {
+        count = 1;
+    }
+    return atomic_fetch_add_explicit(&gVT100LineInfoNextGeneration, count, memory_order_relaxed);
+}
+
 @implementation VT100LineInfo {
     int width_;
     BOOL _dirty;
+    int64_t _generation;
     NSData *_cachedEncodedMetadata;
 }
 
@@ -38,7 +82,24 @@
     if (dirty && now) {
         [self updateTimestamp:now];
     }
+    if (dirty && atomic_load_explicit(&gVT100LineInfoTrackGenerations, memory_order_relaxed)) {
+        // Content changed: advance the generation so caches keyed on it miss. Gated
+        // because the only consumer (the per-row draw cache) is off by default.
+        _generation = VT100LineInfoAllocateGeneration();
+    }
     _dirty = dirty;
+}
+
+- (int64_t)generation {
+    return _generation;
+}
+
+- (void)setGeneration:(int64_t)generation {
+    _generation = generation;
+}
+
+- (void)advanceGeneration {
+    _generation = VT100LineInfoAllocateGeneration();
 }
 
 - (iTermImmutableMetadata)immutableMetadata {
@@ -87,6 +148,11 @@
 - (id)copyWithZone:(NSZone *)zone {
     VT100LineInfo *theCopy = [[VT100LineInfo alloc] initWithWidth:width_];
     theCopy->_dirty = _dirty;
+    // The generation identifies the line's content and must survive copying: the
+    // grid copy that feeds the renderer would otherwise reset every line to
+    // generation 0, defeating the per-row cache (and violating the -generation
+    // contract that equal generations imply equal content).
+    theCopy->_generation = _generation;
     iTermMetadataRelease(theCopy->_metadata);
     theCopy->_metadata = iTermMetadataCopy(_metadata);
 

@@ -1,0 +1,113 @@
+Version 3.7.0beta6 was built on July 3, 2026.
+
+Note: if you are beta testing the iPhone companion
+app iTerm2 Buddy, you'll need to update it after
+upgrading iTerm2 to this version.
+
+Changes since 3.7.0beta5:
+
+New Features:
+- The iPhone companion app, iTerm2 Buddy, can now
+  stream to your phone as video, so you can watch
+  output live, scroll back through history, zoom,
+  and select, copy, and paste text, without
+  re-implementing the terminal on the phone.
+- Push notifications to iTerm2 Buddy now use
+  end-to-end encryption so Apple can't see
+  anything about them.
+- Companion app setup was made hopefully simpler.
+- The Make Screenshot window has a new “Save As…”
+  button to choose where the image is saved,
+  alongside the existing Save button that writes
+  to your configured location.
+
+Improvements:
+- The iTerm2 Buddy iPhone app now supports
+  landscape orientation.
+- Settings > Keys > “Force keyboard” can now
+  force the keyboard layout only once per
+  session, the first time a newly created
+  terminal receives keyboard focus, instead of
+  continuously. This lets you switch layouts
+  within a session without iTerm2 snapping it
+  back. Restored sessions are not affected.
+- A new iTerm2 > Save Retrospective Debug Logs
+  menu item writes recently captured low-
+  frequency diagnostics to a file you choose,
+  even when debug logging was never turned on.
+- Launching processes no longer briefly blocks
+  the main thread, since child processes are now
+  forked on a background thread.
+- Newly downloaded Python runtimes are now
+  ARM-only on macOS 27 beta and later.
+
+Bug Fixes:
+- Updated the bundled libsixel to fix a security
+  vulnerability in SIXEL image decoding
+  (CVE-2026-44637).
+- tmux integration now parses pane state
+  correctly on macOS 26 and later. A new system
+  NSString method had shadowed one of ours and
+  caused numeric fields to be dropped, which
+  could also crash.
+- Fixed a crash in Replace Selection (for
+  example Replace with Pretty-Printed JSON) when
+  the replacement had more lines than the
+  selection. Saved locations inside the replaced
+  region are now invalidated instead of drifting
+  onto unrelated lines.
+- SSH integration now runs the ssh command
+  through your login shell, so a custom
+  SSH_AUTH_SOCK (pointing at an agent that holds
+  your keys) is honored. This fixes “Permission
+  denied (publickey)” failures that only happened
+  with the SSH command type. Issue 12909.
+- Fixed dead-key composition (such as US
+  International apostrophe then e) losing its
+  accent under the Kitty keyboard protocol when
+  both “report all keys as escape codes” and
+  “report associated text” are enabled.
+  Issue 12906.
+- Fixed OSC 8 file:// hyperlinks whose path mixes
+  percent-encoding with raw non-ASCII characters
+  (such as ripgrep’s --hyperlink-format=file
+  output) opening the wrong file. Issue 12914.
+- Fixed a dashed underline on screen, with
+  ligatures enabled, making box-drawing lines
+  (such as a TUI input box) render dashed instead
+  of solid. Issue 12907.
+- On macOS Tahoe the tab activity/progress
+  indicator now draws as a ring around the
+  pill-shaped tab instead of a bar that crowded
+  the tab title and status text.
+- OSC 9;4 progress bars now draw over the
+  profile’s background color instead of a fixed
+  black or white background, so they blend with
+  your theme. Issue 12916.
+- In the Minimal theme, when panes in a tab have
+  two or more different tab colors, each pane’s
+  title bar is now tinted with its own tab color
+  so you can tell them apart. Issue 12903.
+- Saved and copied screenshots now fill margins
+  and other uncovered areas with the session’s
+  background (including a background image)
+  instead of leaving them transparent.
+- Fixed dead space in tabs when tab numbers are
+  hidden.
+- Lock Layout is now enforced more thoroughly.
+  Opening a URL or file that would split or add a
+  tab to a locked window now opens a new window
+  instead, and menu items for blocked operations
+  (split, close, move, swap, and duplicate) are
+  disabled.
+- AI orchestration chats now handle full-screen
+  apps that use the alternate screen (such as
+  Claude Code): they read the current screen and
+  can use a new scroll-wheel tool to page back
+  through the app’s own history.
+- Fixed oversized gaps between messages when the
+  inline chat panel first reveals an existing
+  chat.
+- Reinstalling the Claude Code integration now
+  corrects a stale cc-status hook path left
+  behind by a named instance.

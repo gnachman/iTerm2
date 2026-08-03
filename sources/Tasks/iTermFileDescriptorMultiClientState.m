@@ -89,7 +89,7 @@
     }
     _readSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, _readFD, 0, self.queue);
     if (!_readSource) {
-        DLog(@"Failed to create dispatch source for read!");
+        RLog(@"Failed to create dispatch source for read!");
         close(_readFD);
         _readFD = -1;
         return;
@@ -133,7 +133,7 @@
     }
     _writeSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_WRITE, _writeFD, 0, self.queue);
     if (!_writeSource) {
-        DLog(@"Failed to create dispatch source for write!");
+        RLog(@"Failed to create dispatch source for write!");
         close(_writeFD);
         _writeFD = -1;
         return;

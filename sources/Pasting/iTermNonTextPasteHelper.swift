@@ -37,14 +37,14 @@ class iTermNonTextPasteHelper: NSObject {
         let pb = NSPasteboard.general
         if pb.hasFileURLs() {
             guard let paths = pb.filePaths(), !paths.isEmpty else {
-                DLog("hasFileURLs but no paths found")
+                RLog("hasFileURLs but no paths found")
                 return false
             }
-            DLog("Handling file paste with \(paths.count) paths")
+            RLog("Handling file paste with \(paths.count) paths")
             return handleFilePaste(paths)
         } else if pb.hasRawImageData() {
             guard let imageData = pb.rawImageData() else {
-                DLog("hasRawImageData but rawImageData() returned nil")
+                RLog("hasRawImageData but rawImageData() returned nil")
                 return false
             }
             // Try to determine the file extension, but proceed even if we can't
@@ -53,7 +53,7 @@ class iTermNonTextPasteHelper: NSObject {
                let type = UTType(utType) {
                 fileExtension = type.preferredFilenameExtension
             }
-            DLog("Handling image data paste: \(imageData.count) bytes, extension=\(fileExtension ?? "unknown")")
+            RLog("Handling image data paste: \(imageData.count) bytes, extension=\(fileExtension ?? "unknown")")
             return handleImageDataPaste(imageData: imageData, fileExtension: fileExtension)
         }
         DLog("No non-text content found on pasteboard")
@@ -96,7 +96,7 @@ class iTermNonTextPasteHelper: NSObject {
         let isDirectory = singleFile && isDirectoryPath(existingPaths.first!)
         let canPasteAsText = singleFile && !isDirectory && firstFileIsValidUTF8(existingPaths)
 
-        DLog("handleFilePaste: singleFile=\(singleFile) canUpload=\(canUpload) isDirectory=\(isDirectory) canPasteAsText=\(canPasteAsText)")
+        RLog("handleFilePaste: singleFile=\(singleFile) canUpload=\(canUpload) isDirectory=\(isDirectory) canPasteAsText=\(canPasteAsText)")
 
         // Build actions list and track what each index means
         var actions = [FilePasteAction]()
@@ -153,9 +153,9 @@ class iTermNonTextPasteHelper: NSObject {
                 return
             }
             let index = self.selectionToIndex(selection)
-            DLog("handleFilePaste: user selected index \(index)")
+            RLog("handleFilePaste: user selected index \(index)")
             guard index >= 0 && index < actions.count else {
-                DLog("handleFilePaste: invalid selection index")
+                RLog("handleFilePaste: invalid selection index")
                 return
             }
 
@@ -281,9 +281,9 @@ class iTermNonTextPasteHelper: NSObject {
                 return
             }
             let index = self.selectionToIndex(selection)
-            DLog("handleImageDataPaste: user selected index \(index)")
+            RLog("handleImageDataPaste: user selected index \(index)")
             guard index >= 0 && index < actions.count else {
-                DLog("handleImageDataPaste: invalid selection index")
+                RLog("handleImageDataPaste: invalid selection index")
                 return
             }
 
@@ -312,7 +312,7 @@ class iTermNonTextPasteHelper: NSObject {
     private func uploadImageData(_ imageData: Data, fileExtension: String, pastePath: Bool) {
         DLog("uploadImageData: \(imageData.count) bytes, extension=\(fileExtension), pastePath=\(pastePath)")
         guard let tempPath = saveImageToTempFile(imageData: imageData, fileExtension: fileExtension) else {
-            DLog("uploadImageData: failed to save temp file")
+            RLog("uploadImageData: failed to save temp file")
             return
         }
         if pastePath {
@@ -327,7 +327,7 @@ class iTermNonTextPasteHelper: NSObject {
     private func saveImageToTempFile(imageData: Data, fileExtension: String) -> String? {
         DLog("saveImageToTempFile: \(imageData.count) bytes, extension=\(fileExtension)")
         guard let tempDir = FileManager.default.it_temporaryDirectory() else {
-            DLog("saveImageToTempFile: failed to get temporary directory")
+            RLog("saveImageToTempFile: failed to get temporary directory")
             showError("Could not create temporary directory.")
             return nil
         }
@@ -341,7 +341,7 @@ class iTermNonTextPasteHelper: NSObject {
             DLog("saveImageToTempFile: saved to \(tempPath)")
             return tempPath
         } catch {
-            DLog("saveImageToTempFile: failed to write: \(error)")
+            RLog("saveImageToTempFile: failed to write: \(error)")
             showError("Could not save image to temporary file: \(error.localizedDescription)")
             return nil
         }
@@ -371,7 +371,7 @@ class iTermNonTextPasteHelper: NSObject {
     private func pasteBase64EncodedContents(of path: String) {
         DLog("pasteBase64EncodedContents: \(path)")
         guard let data = FileManager.default.contents(atPath: path) else {
-            DLog("pasteBase64EncodedContents: failed to read file")
+            RLog("pasteBase64EncodedContents: failed to read file")
             let filename = (path as NSString).lastPathComponent
             showError("Could not read file \u{201C}\(filename)\u{201D}.")
             return
@@ -395,7 +395,7 @@ class iTermNonTextPasteHelper: NSObject {
             let base64 = data.stringWithBase64Encoding(withLineBreak: "\r")
             pasteBase64WithConfirmationIfNeeded(base64)
         } catch {
-            DLog("pasteBase64EncodedArchive: failed to create archive: \(error)")
+            RLog("pasteBase64EncodedArchive: failed to create archive: \(error)")
             showError("Could not create archive of \u{201C}\(folderName)\u{201D}: \(error.localizedDescription)")
         }
     }

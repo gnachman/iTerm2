@@ -202,7 +202,7 @@ struct CompletionsMessage: Codable, Equatable {
                     // Not expected from any current parser. Log so future regressions
                     // (e.g. nested multipart bodies, or function output siblings) are
                     // visible instead of silently dropped.
-                    DLog("CompletionsMessage: ignoring unsupported subpart in multipart body: \(subpart)")
+                    RLog("CompletionsMessage: ignoring unsupported subpart in multipart body: \(redacted: subpart, or: "<subpart kind redacted>")")
                 case .attachment(let attachment):
                     switch attachment.type {
                     case .code(let string):
@@ -409,6 +409,8 @@ struct LLMModernResponseParser: LLMResponseParser {
             guard let first = choices.first else { return [] }
             return [first.message.llmMessage]
         }
+
+        var promptTokens: Int? { usage?.prompt_tokens }
     }
 
     var parsedResponse: ModernResponse?

@@ -28,10 +28,22 @@ final class CompanionPluginClient: NSObject, @unchecked Sendable {
     // Native WebSocket state. Mutated only on `q` (host primitives run on `q`,
     // and URLSession callbacks hop to `q`).
     private var sockets: [String: URLSessionWebSocketTask] = [:]
+    // Sockets whose WS upgrade completed (didOpenWithProtocol fired). A receive
+    // failure on a socket NOT in this set is a connect failure (DNS, TLS, a
+    // non-upgrade HTTP response); its description is kept so wsOpen can attach
+    // it, because the plugin's open rejection carries only "closed <code>".
+    private var openedSockets: Set<String> = []
+    private var lastConnectFailure: String?
     // All plugin egress (the WebSocket AND the one-shot HTTP requests) rides this
     // delegated session, so the redirect-refusal in the delegate below applies to
     // both. No companion endpoint legitimately returns a 3xx.
     private lazy var egressSession = URLSession(configuration: .default, delegate: self, delegateQueue: OperationQueue())
+
+    /// Per-request timeout for plugin HTTP (not the WebSocket). Bounds a stalled
+    /// endpoint well under the ~60s session default; the shard-map GET on the mac
+    /// park path relies on this, since it cannot set a per-request timeout through
+    /// the signed JS bridge.
+    private static let httpRequestTimeout: TimeInterval = 30
 
     init(code: String) {
         self.code = code
@@ -53,9 +65,25 @@ final class CompanionPluginClient: NSObject, @unchecked Sendable {
     /// Open a WebSocket to `url`; returns the connection id once it is open.
     func wsOpen(url: String, headers: [String: String]) async throws -> String {
         let headersJSON = String(decoding: try JSONSerialization.data(withJSONObject: headers), as: UTF8.self)
-        let result = try await callPromise("wsOpen", [url, headersJSON])
-        struct Opened: Codable { var id: String }
-        return try decode(result, as: Opened.self).id
+        do {
+            let result = try await callPromise("wsOpen", [url, headersJSON])
+            struct Opened: Codable { var id: String }
+            return try decode(result, as: Opened.self).id
+        } catch let error as PluginError {
+            // The plugin's open rejection says only "closed <code>"; the host
+            // saw the underlying transport error (recorded on `q` before the
+            // rejection was delivered, so it is visible here). Attach it, or
+            // the user-facing failure is undiagnosable.
+            guard let detail = await onQ({ self.lastConnectFailure }) else { throw error }
+            throw PluginError(reason: "\(error.reason): \(detail)")
+        }
+    }
+
+    /// Read state that is confined to `q` from an async context.
+    private func onQ<T: Sendable>(_ body: @escaping @Sendable () -> T) async -> T {
+        await withCheckedContinuation { cont in
+            q.async { cont.resume(returning: body()) }
+        }
     }
 
     enum Incoming { case text(String); case data(Data); case closed(code: Int, reason: String) }
@@ -109,7 +137,7 @@ final class CompanionPluginClient: NSObject, @unchecked Sendable {
         if let c = _context { return c }
         let c = JSContext()!
         c.exceptionHandler = { _, exception in
-            DLog("Companion plugin JS exception: \(exception?.toString() ?? "(nil)")")
+            RLog("Companion plugin JS exception: \(exception?.toString() ?? "(nil)")")
         }
         registerHostFunctions(c)
         c.evaluateScript(code)
@@ -201,6 +229,8 @@ final class CompanionPluginClient: NSObject, @unchecked Sendable {
     // MARK: Native WebSocket host (runs on `q`; URLSession callbacks hop to `q`)
 
     private func hostWsOpen(id: String, url: String, headersJSON: String) {
+        // A new open should not inherit a previous attempt's failure detail.
+        lastConnectFailure = nil
         guard let u = URL(string: url) else { callJS("_onClosed", [id, 1006, "bad url"]); return }
         var request = URLRequest(url: u)
         if let d = headersJSON.data(using: .utf8),
@@ -227,7 +257,17 @@ final class CompanionPluginClient: NSObject, @unchecked Sendable {
                 }
                 self.receiveLoop(id: id, task: task)
             case .failure(let error):
-                self.callJS("_onClosed", [id, 1006, error.localizedDescription])
+                let reason = error.localizedDescription
+                // Record connect failures (the socket never finished opening)
+                // BEFORE _onClosed reaches JS, so the wsOpen rejection that
+                // follows on `q` can attach this description.
+                self.q.async { [weak self] in
+                    guard let self else { return }
+                    if !self.openedSockets.contains(id) {
+                        self.lastConnectFailure = reason
+                    }
+                }
+                self.callJS("_onClosed", [id, 1006, reason])
             }
         }
     }
@@ -244,6 +284,7 @@ final class CompanionPluginClient: NSObject, @unchecked Sendable {
     private func hostWsClose(id: String) {
         sockets[id]?.cancel(with: .goingAway, reason: nil)
         sockets[id] = nil
+        openedSockets.remove(id)
     }
 
     private func hostWsPing(id: String, cb: JSValue) {
@@ -263,7 +304,12 @@ final class CompanionPluginClient: NSObject, @unchecked Sendable {
 
 extension CompanionPluginClient: URLSessionWebSocketDelegate {
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
-        if let id = webSocketTask.taskDescription { callJS("_onOpen", [id]) }
+        if let id = webSocketTask.taskDescription {
+            // Mark opened (on `q`, which owns the state) so a later receive
+            // failure on this socket is not mistaken for a connect failure.
+            q.async { [weak self] in self?.openedSockets.insert(id) }
+            callJS("_onOpen", [id])
+        }
     }
     // Refuse redirects on all plugin egress (HTTP and the WS upgrade): no relay
     // endpoint legitimately returns a 3xx, and following one would re-send the
@@ -286,7 +332,12 @@ extension CompanionPluginClient: URLSessionWebSocketDelegate {
     private func performHTTP(method: String, url: String, headers: [String: String], body: Data,
                              completion: @escaping (String?, String?) -> Void) {
         guard let u = URL(string: url) else { completion(nil, "invalid url"); return }
-        var request = URLRequest(url: u)
+        // Bound every plugin HTTP request so a stalled endpoint cannot hang a
+        // caller up to the session default (~60s): the relay REST calls
+        // (attest/register/delete) and the resolved-mode shard-map GET are all
+        // small, quick exchanges. Applies only to HTTP data tasks here, not the
+        // long-lived parked WebSocket (wsOpen builds its own request).
+        var request = URLRequest(url: u, timeoutInterval: Self.httpRequestTimeout)
         request.httpMethod = method
         for (k, v) in headers { request.setValue(v, forHTTPHeaderField: k) }
         request.setValue(CompanionUserAgent.value, forHTTPHeaderField: "User-Agent")

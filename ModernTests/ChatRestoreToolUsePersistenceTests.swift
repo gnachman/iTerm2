@@ -255,6 +255,32 @@ final class ChatRestoreToolUsePersistenceTests: XCTestCase {
 
     /// A persisted request whose response is present is "resolved" and must be
     /// hidden from the chat UI (no stray Allow/Deny prompt).
+    /// Reasoning items persisted with the request's llmMessage must ride the
+    /// restore round-trip onto the rebuilt prompt's functionCall message, so
+    /// the request builder can replay them before the call.
+    func testRestore_persistedReasoningItems_rideRebuiltFunctionCall() throws {
+        let requestUUID = UUID()
+        var request = requestMessage(callID: "call_r", requestUUID: requestUUID)
+        guard case .remoteCommandRequest(.classic(var rc), let safe) = request.content else {
+            XCTFail("fixture changed shape")
+            return
+        }
+        rc.llmMessage.reasoningItems = [LLM.ReasoningItem(id: "rs_9",
+                                                          encryptedContent: "blob-9")]
+        request.content = .remoteCommandRequest(.classic(rc), safe: safe)
+        let rebuilt = try restoreAndReconstruct([
+            userText("run it"),
+            request,
+            responseMessage(callID: "call_r", requestUUID: requestUUID),
+        ])
+        guard let callMessage = rebuilt.first(where: { toolUseID($0) == "call_r" }) else {
+            XCTFail("rebuilt prompt lost the tool call")
+            return
+        }
+        XCTAssertEqual(callMessage.reasoningItems?.map(\.id), ["rs_9"])
+        XCTAssertEqual(callMessage.reasoningItems?.first?.encryptedContent, "blob-9")
+    }
+
     func testViewModel_resolvedRequest_isHidden() {
         let req = UUID()
         let messages = [
@@ -276,5 +302,184 @@ final class ChatRestoreToolUsePersistenceTests: XCTestCase {
         ]
         XCTAssertFalse(ChatViewControllerModel.resolvedRequestIDs(in: messages).contains(req),
                        "a pending request with no response must remain visible")
+    }
+
+    // MARK: - reconstructedRoundCount pin (blob-native fast path)
+
+    /// The blob-native fast path in load() decides "do the chat's blobs cover its
+    /// whole history?" by comparing the stored blob count to
+    /// ChatAgent.reconstructedRoundCount(displayMessages) -- a cheap counter that
+    /// builds NO message body. If it ever UNDERCOUNTS the real round count, the fast
+    /// path would skip translating (and so drop) un-frozen history. This pins it to
+    /// the production round count: rounds(from: translate(messages)).count, across a
+    /// spread of transcripts (plain turns, tool pairs, orphan request, orphan
+    /// response, leading agent turn, filtered-out content).
+    private func assertRoundCountMatchesTranslate(_ messages: [Message],
+                                                  _ label: String,
+                                                  file: StaticString = #file,
+                                                  line: UInt = #line) {
+        let viaTranslate = ChatBlobCapture.rounds(
+            from: ChatAgent.translateForTesting(messages, resolve: { _ in nil })).count
+        let cheap = ChatAgent.reconstructedRoundCount(messages)
+        XCTAssertEqual(cheap, viaTranslate,
+                       "reconstructedRoundCount drifted from translate+rounds for: \(label)",
+                       file: file, line: line)
+    }
+
+    func testReconstructedRoundCount_matchesTranslateAcrossTranscripts() {
+        let r1 = UUID(), r2 = UUID(), r3 = UUID()
+        assertRoundCountMatchesTranslate([], "empty")
+        assertRoundCountMatchesTranslate([userText("hi")], "single user")
+        assertRoundCountMatchesTranslate(
+            [userText("hi"), agentText("hello")], "one full round")
+        assertRoundCountMatchesTranslate(
+            [userText("a"), agentText("b"), userText("c"), agentText("d")],
+            "two plain rounds")
+        assertRoundCountMatchesTranslate(
+            [userText("run"),
+             requestMessage(callID: "c1", requestUUID: r1),
+             responseMessage(callID: "c1", requestUUID: r1),
+             agentText("done"),
+             userText("again"),
+             requestMessage(callID: "c2", requestUUID: r2),
+             responseMessage(callID: "c2", requestUUID: r2),
+             agentText("done2")],
+            "two rounds each with a tool pair")
+        // A tool RESPONSE is user-authored but role .function -- it must NOT open a
+        // round. If the counter treated it as a user turn it would overcount here.
+        assertRoundCountMatchesTranslate(
+            [userText("run"),
+             agentText("ok"),
+             responseMessage(callID: "orphan", requestUUID: r3),
+             agentText("recovered")],
+            "orphan tool response (user-authored, not a round start)")
+        // A request with no matching response (orphan request): still one round.
+        assertRoundCountMatchesTranslate(
+            [userText("go"), requestMessage(callID: "cx", requestUUID: UUID())],
+            "orphan tool request")
+        // History that opens with an agent turn: the first message still opens a round.
+        assertRoundCountMatchesTranslate(
+            [agentText("greeting"), userText("hi"), agentText("bye")],
+            "leading agent turn")
+    }
+
+    // MARK: - displayTailForNewRounds pin (capture-side translate-only-tail)
+
+    /// The capture fast path translates ONLY displayTailForNewRounds(display, existing)
+    /// and freezes its rounds. For that to persist the SAME bytes as the original path
+    /// (translate the whole history, then slice rounds[existing...]), the translated
+    /// tail must equal the tail of the full translate for every prefix length. This
+    /// pins that equality (and that the tail begins with a user turn); a drift would
+    /// freeze wrong or duplicated bytes on the write path.
+    func testDisplayTailForNewRounds_translatesToFullHistoryTail() throws {
+        let req = UUID()
+        let display = [
+            userText("first"), agentText("reply one"),                    // round 0
+            userText("run a tool"),
+            { var m = requestMessage(callID: "c1", requestUUID: req); m.responseID = "r1"; return m }(),
+            responseMessage(callID: "c1", requestUUID: req),
+            agentText("tool done"),                                       // round 1
+            userText("third"), agentText("reply three"),                 // round 2
+        ]
+        let full = ChatAgent.translateForTesting(display, resolve: { _ in nil })
+        let fullRounds = ChatBlobCapture.rounds(from: full)
+        XCTAssertEqual(fullRounds.count, 3)
+
+        for existing in 0...(fullRounds.count + 1) {
+            let tail = ChatAgent.displayTailForNewRounds(display, existing: existing)
+            if existing >= fullRounds.count {
+                XCTAssertNil(tail, "no rounds beyond \(existing); tail must be nil")
+                continue
+            }
+            let tailMessages = ChatAgent.translateForTesting(try XCTUnwrap(tail), resolve: { _ in nil })
+            let expected = Array(fullRounds[existing...]).flatMap { $0 }
+            XCTAssertEqual(tailMessages, expected,
+                           "translated tail (existing=\(existing)) must equal the full translate's tail")
+            XCTAssertEqual(tailMessages.first?.role, .user,
+                           "the tail must begin at a round boundary (a user turn)")
+        }
+    }
+
+    // MARK: - carriedPreviousResponseID (blob-native pre-reduce delta mode)
+
+    private func agentTextWithID(_ s: String, _ responseID: String?) -> Message {
+        var m = agentText(s)
+        m.responseID = responseID
+        return m
+    }
+
+    /// A persisted assistant request whose llmMessage has NO function_call (a
+    /// squelched/auto-approved shape). aiMessagesForStructuredReplay skips it, so it is
+    /// never the terminal assistant, even though role(from:) calls it .assistant.
+    private func requestMessageNoFunctionCall(_ responseID: String?) -> Message {
+        let llm = LLM.Message(role: .assistant, content: "no call here")
+        let rc = RemoteCommand(llmMessage: llm, content: .executeCommand(.init(command: "x")))
+        var m = Message(chatID: chatID, author: .agent,
+                        content: .remoteCommandRequest(.classic(rc), safe: nil),
+                        sentDate: Date(timeIntervalSince1970: 1_000), uniqueID: UUID())
+        m.responseID = responseID
+        return m
+    }
+
+    /// carriedPreviousResponseID is CONSERVATIVE: it returns EITHER the id translate
+    /// would pick (translate(messages).last { .assistant }?.responseID) OR nil, never a
+    /// DIFFERENT non-nil id. A wrong non-nil id is the only unsafe outcome (a stale
+    /// delta anchor that silently drops the tail from the server); nil just forces a
+    /// safe full resend.
+    private func assertCarriedIsSafe(_ messages: [Message], _ label: String,
+                                     file: StaticString = #file, line: UInt = #line) {
+        let viaTranslate = ChatAgent.translateForTesting(messages, resolve: { _ in nil })
+            .last { $0.role == .assistant }?.responseID
+        let carried = ChatAgent.carriedPreviousResponseID(messages)
+        XCTAssertTrue(carried == viaTranslate || carried == nil,
+                      "unsafe carry: carried=\(carried ?? "nil") translate=\(viaTranslate ?? "nil") for: \(label)",
+                      file: file, line: line)
+    }
+
+    func testCarriedPreviousResponseID_conservativeAndSafe() {
+        // Normal Responses chat: carries the last assistant id exactly.
+        let normal = [userText("a"), agentTextWithID("b", "resp_1"),
+                      userText("c"), agentTextWithID("d", "resp_2")]
+        assertCarriedIsSafe(normal, "normal")
+        XCTAssertEqual(ChatAgent.carriedPreviousResponseID(normal), "resp_2")
+
+        // Terminal assistant with NO id but an earlier one has one: nil (full resend),
+        // never the stale earlier id.
+        let staleTrap = [userText("a"), agentTextWithID("b", "resp_1"),
+                         userText("c"), agentTextWithID("d", nil)]
+        assertCarriedIsSafe(staleTrap, "nil terminal id")
+        XCTAssertNil(ChatAgent.carriedPreviousResponseID(staleTrap))
+
+        // Reviewer 3.1: terminal is a squelched function_call==nil request carrying an
+        // id. translate SKIPS it -> the id is the earlier real assistant's. carried must
+        // skip it too, not return the request's id.
+        let skippedReq = [userText("a"), agentTextWithID("real", "resp_real"),
+                          requestMessageNoFunctionCall("resp_stale")]
+        assertCarriedIsSafe(skippedReq, "skipped nil-fn request terminal")
+        XCTAssertEqual(ChatAgent.carriedPreviousResponseID(skippedReq), "resp_real",
+                       "a function_call==nil request must not be taken as the terminal assistant")
+
+        // Reviewer 3.2: terminal is an ORPHAN tool_result. translate+repair heals it
+        // into a nil-id tool_use, so its terminal id is nil; carried must be nil, not
+        // the earlier real assistant's id.
+        let orphan = [userText("a"), agentTextWithID("real", "resp_real"),
+                      responseMessage(callID: "orphan", requestUUID: UUID())]
+        assertCarriedIsSafe(orphan, "orphan tool_result terminal")
+        XCTAssertNil(ChatAgent.carriedPreviousResponseID(orphan),
+                     "an orphan tool_result terminal (repaired to a nil-id tool_use) carries nil")
+
+        // Safe-but-not-exact: a history ending with a COMPLETE tool pair and no final
+        // reply is unreachable for a pre-reduced chat (a completed round ends with an
+        // agent reply); carried is the safe nil rather than translate's tool_use id.
+        let req = UUID()
+        let midLoop = [userText("run"),
+                       { var m = requestMessage(callID: "c1", requestUUID: req); m.responseID = "resp_9"; return m }(),
+                       responseMessage(callID: "c1", requestUUID: req)]
+        assertCarriedIsSafe(midLoop, "complete pair terminal (unreachable for pre-reduce)")
+        XCTAssertNil(ChatAgent.carriedPreviousResponseID(midLoop))
+
+        // No assistant at all: nil.
+        assertCarriedIsSafe([userText("hi")], "no assistant")
+        XCTAssertNil(ChatAgent.carriedPreviousResponseID([userText("hi")]))
     }
 }

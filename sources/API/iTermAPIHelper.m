@@ -652,8 +652,11 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
                     return nil;
                 }
             }
-            _apiServer = [[iTermAPIServer alloc] init];
-            _apiServer.delegate = self;
+            iTermAPIServer *server = [[iTermAPIServer alloc] init];
+            server.delegate = self;
+            @synchronized (self) {
+                _apiServer = server;  // paired with the locked reads in the in-process path
+            }
         }
 
         _serverOriginatedRPCCompletionBlocks = [NSMutableDictionary dictionary];
@@ -797,9 +800,16 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 }
 
 - (void)stop {
-    [_apiServer stop];
-    _apiServer.delegate = nil;
-    _apiServer = nil;
+    // _apiServer is read on the it2 background (QOS_UTILITY) queue in the in-process
+    // register/dispatch/unregister methods; capture-and-nil under a lock so that path
+    // never observes a half-freed server, and holds its own strong ref while using it.
+    iTermAPIServer *server;
+    @synchronized (self) {
+        server = _apiServer;
+        _apiServer = nil;
+    }
+    [server stop];
+    server.delegate = nil;
     [_newSessionSubscriptions removeAllObjects];
     [_terminateSessionSubscriptions removeAllObjects];
     [_layoutChangeSubscriptions removeAllObjects];
@@ -826,6 +836,47 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey {
     [_apiServer postAPINotification:notification toConnectionKey:connectionKey];
+}
+
+- (BOOL)registerInProcessAPIConnection:(id<iTermAPIServerConnection>)connection
+                           displayName:(NSString *)displayName {
+    // Runs on the it2 background queue; snapshot _apiServer under the lock into a strong
+    // local so a concurrent -stop (which nils it on the main thread) cannot free it out
+    // from under us or make the guard and the use observe different values.
+    iTermAPIServer *server;
+    @synchronized (self) {
+        server = _apiServer;
+    }
+    if (!server) {
+        // The API was disabled (stop niled _apiServer) before we got here. Report failure
+        // so the caller fails fast instead of blocking forever on a receive nothing will
+        // ever signal. (If stop races AFTER this point, the server's own stop-flag aborts
+        // the connection so the receiver still unblocks -- see registerInProcessConnection.)
+        DLog(@"registerInProcessAPIConnection: API server is nil; refusing %@", connection);
+        return NO;
+    }
+    DLog(@"registerInProcessAPIConnection: %@ displayName=%@", connection, displayName);
+    [server registerInProcessConnection:connection displayName:displayName];
+    return YES;
+}
+
+- (void)dispatchInProcessAPIRequest:(ITMClientOriginatedMessage *)request
+                         connection:(id<iTermAPIServerConnection>)connection {
+    iTermAPIServer *server;
+    @synchronized (self) {
+        server = _apiServer;
+    }
+    DLog(@"dispatchInProcessAPIRequest on %@ (server=%@)", connection, server);
+    [server dispatchInProcessRequest:request connection:connection];
+}
+
+- (void)unregisterInProcessAPIConnection:(id<iTermAPIServerConnection>)connection {
+    iTermAPIServer *server;
+    @synchronized (self) {
+        server = _apiServer;
+    }
+    DLog(@"unregisterInProcessAPIConnection: %@ (server=%@)", connection, server);
+    [server unregisterInProcessConnection:connection];
 }
 
 - (void)didCreateTerminalWindow:(NSNotification *)notification {
@@ -1593,6 +1644,26 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     } else {
         handler([session handleGetBufferRequest:request]);
     }
+}
+
+- (void)apiServerScreenshot:(ITMScreenshotRequest *)request
+                    handler:(void (^)(ITMScreenshotResponse *))handler {
+    ITMScreenshotResponse *response = [[ITMScreenshotResponse alloc] init];
+    PTYSession *session = [self sessionForAPIIdentifier:request.session includeBuriedSessions:YES];
+    if (!session) {
+        response.status = ITMScreenshotResponse_Status_SessionNotFound;
+        handler(response);
+        return;
+    }
+    NSData *png = [session screenshotPNGData];
+    if (!png) {
+        response.status = ITMScreenshotResponse_Status_InternalError;
+        handler(response);
+        return;
+    }
+    response.status = ITMScreenshotResponse_Status_Ok;
+    response.png = png;
+    handler(response);
 }
 
 - (void)apiServerGetPrompt:(ITMGetPromptRequest *)request
@@ -3202,9 +3273,19 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     [response.notificationsArray addObject:focusChange];
 
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        PTYTab *currentTab = term.currentTab;
+        if (!currentTab) {
+            // A window with no current tab (for example one left empty by a
+            // failed restore) has no selected tab to report. Emitting a
+            // selected_tab of “0” here (the value produced by messaging a nil
+            // tab) would reference a tab that appears in no window, which sends
+            // API clients such as the iterm2 Python library into an infinite
+            // refresh loop. Skip it, mirroring how list_sessions represents
+            // such a window as simply having no tabs.
+            continue;
+        }
         focusChange = [[ITMFocusChangedNotification alloc] init];
-        PTYTab *tab = term.currentTab;
-        focusChange.selectedTab = [@(tab.uniqueId) stringValue];
+        focusChange.selectedTab = [@(currentTab.uniqueId) stringValue];
         [response.notificationsArray addObject:focusChange];
 
         for (PTYTab *tab in term.tabs) {
@@ -3265,14 +3346,14 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
                           connectionKey:(NSString *)connectionKey {
     NSString *key = result.requestId;
     if (!key) {
-        DLog(@"Bogus key %@", key);
+        RLog(@"Bogus key %@", key);
         return;
     }
 
     iTermServerOriginatedRPCCompletionBlock block = _serverOriginatedRPCCompletionBlocks[key];
     if (!block) {
         // Could be a timeout already occurred.
-        DLog(@"Key %@ doesn't match a pending RPC", key);
+        RLog(@"Key %@ doesn't match a pending RPC", key);
         return;
     }
     [_serverOriginatedRPCCompletionBlocks removeObjectForKey:key];
@@ -4048,7 +4129,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         }
         PseudoTerminal *term = [PseudoTerminal castFrom:tab.realParentWindow];
         if (!term) {
-            DLog(@"Strange, the tab's window is not a PseudoTerminal");
+            RLog(@"Strange, the tab's window is not a PseudoTerminal");
             [response.statusesArray addValue:ITMCloseResponse_Status_NotFound];
             continue;
         }

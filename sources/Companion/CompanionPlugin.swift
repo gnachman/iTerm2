@@ -12,6 +12,7 @@
 
 import CryptoKit
 import JavaScriptCore
+import CompanionProtocol
 import CompanionTransport
 
 struct CompanionPlugin {
@@ -46,7 +47,7 @@ struct CompanionPlugin {
         do {
             return .success(try CompanionPlugin())
         } catch let error as PluginError {
-            DLog("\(error.reason)")
+            RLog("\(error.reason)")
             return .failure(error)
         } catch {
             return .failure(PluginError(reason: error.localizedDescription))
@@ -80,7 +81,7 @@ struct CompanionPlugin {
               publicKey.isValidSignature(signature, for: message) else {
             throw PluginError(reason: "The companion plugin's signature is invalid. Reinstall the plugin or upgrade iTerm2.")
         }
-        DLog("Companion plugin signature is good")
+        RLog("Companion plugin signature is good")
     }
 
     /// A relay socket factory that routes all egress through this plugin.
@@ -92,6 +93,12 @@ struct CompanionPlugin {
     /// that routes through this plugin, the feature's only outbound path.
     func httpClient(origin: String) -> RelayHTTPClient {
         PluginRelayHTTPClient(client: client, origin: origin)
+    }
+
+    /// A shard-map fetcher (resolved mode) that routes the CDN GET through this
+    /// plugin, the feature's only outbound path.
+    func shardMapFetcher() -> ShardMapFetching {
+        PluginShardMapFetcher(client: client)
     }
 
     func version() async throws -> Decimal {

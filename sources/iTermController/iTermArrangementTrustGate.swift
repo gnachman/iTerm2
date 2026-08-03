@@ -68,7 +68,7 @@ final class iTermArrangementTrustGate: NSObject {
         do {
             try url.setResourceValue(nil, forKey: .quarantinePropertiesKey)
         } catch {
-            DLog("Failed to clear quarantine on \(path): \(error)")
+            RLog("Failed to clear quarantine on \(path): \(error)")
         }
     }
 }

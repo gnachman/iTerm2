@@ -511,6 +511,31 @@ static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s
 NSString* ComplexCharToStr(int key);
 BOOL ComplexCharCodeIsSpacingCombiningMark(unichar code);
 
+// YES if the complex char is a lone regional indicator symbol (U+1F1E6..U+1F1FF).
+// A flag emoji is stored as two adjacent regional-indicator cells (one per cell
+// for wcwidth compatibility), so this is used to pair them at draw time.
+BOOL ComplexCharCodeIsRegionalIndicator(unichar code);
+
+// The role of a cell in regional-indicator (flag) pairing.
+typedef struct {
+    BOOL suppress;         // This cell is the closing indicator of a pair; do not draw it.
+    BOOL joinWithNext;     // This cell is an opening indicator paired with a following cell.
+    unichar successorCode; // The paired closing indicator's complex code (valid iff joinWithNext).
+} iTermRegionalIndicatorPairing;
+
+// Greedily pairs regional indicators left to right, matching how CoreText shapes a run:
+// within a maximal run of indicators, cells pair up (first+second, ...) and a trailing odd
+// indicator stands alone. DWC_RIGHT and DWL_SPACER cells are transparent to pairing, so a
+// flag whose indicators are double-width (the fullWidthFlags default, which inserts a
+// DWC_RIGHT after each indicator) pairs across the spacers exactly as the legacy renderer
+// does. `pendingOpen` holds the running parity; initialize it to NO at the start of each
+// line (indicators never pair across a line/wrap boundary) and thread it across successive
+// calls for i = 0..width-1.
+iTermRegionalIndicatorPairing iTermRegionalIndicatorPairingForCell(const screen_char_t *line,
+                                                                   int i,
+                                                                   int width,
+                                                                   BOOL *pendingOpen);
+
 // Return a string with the contents of a screen char, which may or may not
 // be complex.
 NSString* ScreenCharToStr(const screen_char_t *const sct);

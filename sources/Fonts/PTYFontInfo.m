@@ -264,7 +264,7 @@
             return nil;
         }
         if ([fonts containsObject:heavierFont]) {
-            DLog(@"  * cycle detected among fonts *\n%@", [fonts arrayByAddingObject:heavierFont]);
+            RLog(@"  * cycle detected among fonts *\n%@", [fonts arrayByAddingObject:heavierFont]);
             return nil;
         }
         [fonts addObject:heavierFont];
@@ -278,7 +278,7 @@
         }
         lastFont = heavierFont;
     }
-    DLog(@"Failed to find a bold version that's bold enough");
+    RLog(@"Failed to find a bold version that's bold enough");
     return nil;
 }
 

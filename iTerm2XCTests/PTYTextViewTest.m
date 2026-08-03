@@ -211,6 +211,10 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return NO;
 }
 
+- (BOOL)textViewSendTmuxControlModeKeyEvent:(NSEvent *)event {
+    return NO;
+}
+
 - (screen_char_t *)getLineAtScreenIndex:(int)theIndex {
     return nil;
 }

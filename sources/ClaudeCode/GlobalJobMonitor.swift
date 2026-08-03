@@ -94,20 +94,20 @@ class GlobalJobMonitor: NSObject {
 
     @objc private func sessionCreated(_ notification: Notification) {
         guard let session = notification.object as? PTYSession else { return }
-        DLog("GlobalJobMonitor sessionCreated: \(session.guid)")
+        RLog("GlobalJobMonitor sessionCreated: \(session.guid)")
         startObserving(session)
     }
 
     @objc private func sessionRevived(_ notification: Notification) {
         guard let session = notification.object as? PTYSession else { return }
-        DLog("GlobalJobMonitor sessionRevived: \(session.guid)")
+        RLog("GlobalJobMonitor sessionRevived: \(session.guid)")
         startObserving(session)
     }
 
     @objc private func sessionWillTerminate(_ notification: Notification) {
         guard let session = notification.object as? PTYSession else { return }
         let guid = session.guid
-        DLog("GlobalJobMonitor sessionWillTerminate: \(guid)")
+        RLog("GlobalJobMonitor sessionWillTerminate: \(guid)")
         stopObserving(guid)
     }
 
@@ -176,7 +176,7 @@ class GlobalJobMonitor: NSObject {
         let removed = oldJobs.subtracting(newJobs)
         let added = newJobs.subtracting(oldJobs)
 
-        DLog("GlobalJobMonitor ancestorsChanged for \(guid): \(oldAncestors) -> \(newAncestors) (added=\(added), removed=\(removed))")
+        RLog("GlobalJobMonitor ancestorsChanged for \(guid): \(oldAncestors) -> \(newAncestors) (added=\(added), removed=\(removed))")
 
         for job in removed {
             removeGUID(guid, fromJob: job)
@@ -201,13 +201,13 @@ class GlobalJobMonitor: NSObject {
         guidsByJob[jobKey]?.remove(guid)
         if guidsByJob[jobKey]?.isEmpty == true {
             guidsByJob.removeValue(forKey: jobKey)
-            DLog("GlobalJobMonitor: no more sessions running \(jobKey)")
+            RLog("GlobalJobMonitor: no more sessions running \(jobKey)")
         }
     }
 
     private func postNotification(jobName: String) {
         let guids = guidsByJob[jobName] ?? []
-        DLog("GlobalJobMonitor posting notification for \(jobName): \(guids.count) session(s)")
+        RLog("GlobalJobMonitor posting notification for \(jobName): \(guids.count) session(s)")
         NotificationCenter.default.post(
             name: GlobalJobMonitor.didChangeNotification,
             object: self,

@@ -44,19 +44,42 @@ final class AILiveHarness: XCTestCase {
         var deepSeek: String?
     }
 
-    private static let configFileName = "iterm2-ai-live.json"
+    nonisolated static let configFileName = ".iterm2-ai-live.json"
 
-    private static func configPath() -> String {
-        // /tmp is stable; macOS's per-user $TMPDIR under
-        // /var/folders/.../T/ has a periodic cleanup that deletes files
-        // mid-run for long sweeps. run_ai_live.sh writes the config to
-        // /tmp explicitly for the same reason.
-        return "/tmp/\(configFileName)"
+    /// The per-worktree config path: `<repo root>/.iterm2-ai-live.json`.
+    ///
+    /// Derived from the compiled source location (`#filePath`) so each git
+    /// worktree reads its OWN config - a leftover config in one checkout can no
+    /// longer silently drive the live harness in another (the failure mode the
+    /// old hardcoded `/tmp` path had). run_tests.expect, running from the repo,
+    /// can delete this exact file defensively. The file is gitignored so live API
+    /// keys can never be committed; `git status --ignored` still surfaces a
+    /// leftover, and setUpWithError logs loudly whenever it's active.
+    ///
+    /// The repo dir is not subject to the periodic `$TMPDIR` reaping that drove
+    /// the original `/tmp` choice. A worktree's `.git` is a file (not a dir), so
+    /// test for existence, not directory-ness.
+    nonisolated static func configFilePath() -> String {
+        let fm = FileManager.default
+        var dir = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+        while dir.path != "/" {
+            if fm.fileExists(atPath: dir.appendingPathComponent(".git").path) {
+                return dir.appendingPathComponent(configFileName).path
+            }
+            dir = dir.deletingLastPathComponent()
+        }
+        // Fallback (not inside a repo): beside the harness's parent directory.
+        return URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent(configFileName).path
     }
 
     override func setUpWithError() throws {
         try XCTSkipUnless(Self.loadConfig() != nil,
                           "Live AI harness is opt-in. Run tools/run_ai_live.sh.")
+        // Loud: this hits real vendor APIs and spends money. If you see this in a
+        // plain test run, a stale config leaked in - delete configFilePath().
+        print("⚠️ Live AI harness ACTIVE (real vendor APIs). Config: \(Self.configFilePath())")
         // Install the cassette interceptor + recorder for the whole test,
         // covering both AILiveDriver-based tests and the chat-queue tests
         // that drive ChatBroker/ChatAgent directly. No-op when no cassette
@@ -79,7 +102,7 @@ final class AILiveHarness: XCTestCase {
     private static var cachedConfig: [String: String]?
 
     private static func loadConfig() -> [String: String]? {
-        if let data = try? Data(contentsOf: URL(fileURLWithPath: configPath())),
+        if let data = try? Data(contentsOf: URL(fileURLWithPath: configFilePath())),
            let any = try? JSONSerialization.jsonObject(with: data),
            let json = any as? [String: String] {
             cachedConfig = json
@@ -103,7 +126,8 @@ final class AILiveHarness: XCTestCase {
     // call, so exercising them on a default sweep is pure noise. An
     // explicit ITERM2_AI_LIVE_<VENDOR>_MODELS override still lets you
     // target them deliberately if a grandfathered key works.
-    // Keep in sync with AIMetadataFixtureCoverageTest.deprecatedToNewKeys.
+    // Models in this set must be marked fixtureExempt in ai-models.json;
+    // AIMetadataFixtureCoverageTest asserts they agree.
     static let unreachableForNewKeys: Set<String> = [
         "gemini-2.0-flash",
         "gemini-2.0-flash-lite",
@@ -663,15 +687,23 @@ final class AILiveHarness: XCTestCase {
     /// Verify Anthropic prompt caching engages end-to-end against the
     /// real server. Issue two back-to-back requests with the same
     /// system prompt (large enough to exceed Anthropic's minimum
-    /// cacheable size: Haiku is ≥1024 tokens), assert the first
+    /// cacheable size: Haiku is ≥2048 tokens), assert the first
     /// response shows cache_creation_input_tokens > 0, and the second
-    /// shows cache_read_input_tokens > 0 with cache_creation back to 0.
+    /// reads the shared prefix back from cache.
+    ///
+    /// We attach two kinds of marker offline: a stable one on the system
+    /// block (and last tool), and a ROLLING one on the last message of
+    /// every request. The second call here changes only its last user
+    /// message, so the shared system prefix is a cache_read while the
+    /// new last message is a small fresh cache_creation (the rolling
+    /// breakpoint, which the *next* turn would read). So we do NOT
+    /// expect cache_creation back to zero on call 2; we expect the
+    /// prefix read to dominate the small tail write.
     ///
     /// This is the only place where we can actually confirm the cache
-    /// markers we attach offline (system + last-tool cache_control)
-    /// are accepted by the server and counted toward the cached
-    /// segment. Offline unit tests pin the wire shape and byte
-    /// determinism; this pins the contract with the server.
+    /// markers we attach offline are accepted by the server and counted
+    /// toward the cached segment. Offline unit tests pin the wire shape
+    /// and byte determinism; this pins the contract with the server.
     func test_anthropic_promptCaching_cacheReadAfterCacheCreation() throws {
         let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
         let model = "claude-haiku-4-5"
@@ -750,9 +782,14 @@ final class AILiveHarness: XCTestCase {
                              "[anthropic/promptCache] second call did not read from "
                              + "cache; markers did not actually cache the prefix. "
                              + "usage=\(secondUsage)")
-        XCTAssertEqual(secondUsage.cacheCreation, 0,
-                       "[anthropic/promptCache] second call should not have re-created "
-                       + "cache (same system+nonce as call 1). usage=\(secondUsage)")
+        // The shared system prefix is read from cache; only the changed
+        // last user message (the rolling breakpoint) is re-created, and
+        // that tail is tiny next to the cached prefix. If the prefix
+        // cache regressed we'd instead see a large cache_creation and a
+        // small/zero cache_read, so require the read to dominate.
+        XCTAssertGreaterThan(secondUsage.cacheRead, secondUsage.cacheCreation,
+                             "[anthropic/promptCache] second call re-created more than it "
+                             + "read; the shared prefix was not reused. usage=\(secondUsage)")
     }
 
     private struct AnthropicUsageSummary: CustomStringConvertible {
@@ -897,6 +934,179 @@ final class AILiveHarness: XCTestCase {
         } catch {
             XCTFail("[anthropic/userMessageBetweenToolUseAndToolResult] \(error) — AIConversation must guarantee tool_use is immediately followed by its matching tool_result on the wire, regardless of caller-supplied ordering. Fix at the conversation layer (AIConversation or AnthropicRequestBuilder.convertMessages), NOT at the caller.")
         }
+    }
+
+    // The orchestration <workgroups> snapshot (and the session-bound
+    // terminal/screen block) rides as trailingVolatileText: the Anthropic
+    // builder appends it as an UNMARKED user message AFTER the rolling cache
+    // breakpoint, so it never invalidates the cached history prefix (the fix
+    // for the cache-churn bug; see AIChatTrailingVolatileTests). That append
+    // produces a shape the offline tests can't fully vet: a second consecutive
+    // user message, and in the tool-loop case one landing right after a
+    // tool_result. This asserts Anthropic actually accepts both — no 400.
+    func test_anthropic_trailingVolatileContext_doesNotProduce400() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        let snapshot = """
+        <workgroups>
+        [ { "role" : "Chat", "session_guid" : "ptys_TESTVOLATILE01" } ]
+        </workgroups>
+        """
+
+        // Case 1: plain user turn + trailing volatile => two consecutive user
+        // messages at the end of the request.
+        do {
+            let messages: [LLM.Message] = [
+                LLM.Message(role: .user,
+                            content: "Reply in one short sentence naming the role shown in the workgroups snapshot."),
+            ]
+            let result = try AILiveDriver.run(
+                modelName: "claude-haiku-4-5",
+                apiKey: key,
+                messages: messages,
+                streaming: false,
+                trailingVolatileTextProvider: { snapshot },
+                scenarioTag: "trailingVolatile/plain",
+                test: self)
+            XCTAssertFalse(result.finalText.isEmpty,
+                           "Anthropic returned empty for a plain turn + trailing volatile user message")
+        }
+
+        // Case 2 (mid-tool-loop shape): the trailing volatile lands as a SECOND
+        // consecutive user message right after a tool_result.
+        do {
+            let toolName = "get_state"
+            let toolID = "toolu_test_trailing_volatile"
+            let decl = ChatGPTFunctionDeclaration(
+                name: toolName,
+                description: "Get the current state of a session. Returns immediately.",
+                parameters: JSONSchema(for: EmptyArgs(), descriptions: [:]))
+            let spec = AILiveFunctionSpec<EmptyArgs>(
+                decl: decl,
+                implementation: { _, _, completion in
+                    try completion(.success("{\"state\":\"idle\"}"))
+                })
+
+            let messages: [LLM.Message] = [
+                LLM.Message(role: .user,
+                            content: "Check the session state, then reply in one short sentence."),
+                LLM.Message(responseID: nil,
+                            role: .assistant,
+                            body: .functionCall(
+                                LLM.FunctionCall(name: toolName, arguments: "{}", id: toolID),
+                                id: .init(callID: toolID, itemID: toolID))),
+                LLM.Message(responseID: nil,
+                            role: .function,
+                            body: .functionOutput(
+                                name: toolName,
+                                output: "{\"state\":\"idle\"}",
+                                id: .init(callID: toolID, itemID: toolID))),
+            ]
+            let result = try AILiveDriver.run(
+                modelName: "claude-haiku-4-5",
+                apiKey: key,
+                messages: messages,
+                streaming: false,
+                function: spec,
+                trailingVolatileTextProvider: { snapshot },
+                scenarioTag: "trailingVolatile/afterToolResult",
+                test: self)
+            XCTAssertFalse(result.finalText.isEmpty,
+                           "Anthropic returned empty for a trailing volatile user message after a tool_result (two consecutive user messages)")
+        }
+    }
+
+    // Regression guard for the code-review retry loop: the volatile snapshot
+    // must be regenerated FRESH for every request, not frozen once per turn.
+    // A frozen turn-start snapshot goes stale mid-turn (start_code_review
+    // reloads its target session and swaps the session_guid) and the model
+    // keeps chasing the dead guid. This drives a real tool loop (two requests)
+    // with a provider that yields a distinct marker each time it is evaluated,
+    // and asserts the captured request bodies carry DIFFERENT markers.
+    func test_anthropic_trailingVolatileContext_regeneratedPerRequest() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+
+        final class Counter { var n = 0 }
+        let counter = Counter()
+        let provider: () -> String? = {
+            counter.n += 1
+            return "<workgroups>VOLATILE_TICK_\(counter.n)</workgroups>"
+        }
+
+        // A tool call forces at least two requests (invoke the tool, then
+        // reply), so the provider is evaluated more than once.
+        let toolName = "get_state"
+        let toolID = "toolu_test_volatile_fresh"
+        let decl = ChatGPTFunctionDeclaration(
+            name: toolName,
+            description: "Get the current state of a session. Returns immediately.",
+            parameters: JSONSchema(for: EmptyArgs(), descriptions: [:]))
+        let spec = AILiveFunctionSpec<EmptyArgs>(
+            decl: decl,
+            implementation: { _, _, completion in
+                try completion(.success("{\"state\":\"idle\"}"))
+            })
+        _ = toolID
+
+        let messages: [LLM.Message] = [
+            LLM.Message(role: .user,
+                        content: "Call get_state once, then reply in one short sentence."),
+        ]
+        let result = try AILiveDriver.run(
+            modelName: "claude-haiku-4-5",
+            apiKey: key,
+            messages: messages,
+            streaming: false,
+            function: spec,
+            trailingVolatileTextProvider: provider,
+            scenarioTag: "trailingVolatile/fresh",
+            test: self)
+
+        let ticks: [Int] = result.capturedRequestBodies.compactMap { body in
+            guard let r = body.range(of: "VOLATILE_TICK_") else { return nil }
+            let digits = body[r.upperBound...].prefix(while: { $0.isNumber })
+            return Int(digits)
+        }
+        XCTAssertGreaterThanOrEqual(result.capturedRequestBodies.count, 2,
+                                    "expected a tool loop of at least two requests")
+        XCTAssertGreaterThanOrEqual(Set(ticks).count, 2,
+                                    "volatile snapshot must be regenerated per request; got markers \(ticks)")
+    }
+
+    // The volatile per-turn context is routed through trailingVolatileText, which
+    // for non-Anthropic vendors is folded in as a trailing user message. This
+    // verifies each such vendor actually ACCEPTS that (no 400, non-empty reply) --
+    // the concern being consecutive user messages and, for Gemini, strict role
+    // alternation. Offline coverage (LLMRequestBuilderVolatileContextTests) proves
+    // the content reaches the body; this proves the wire shape is valid.
+    func test_nonAnthropic_trailingVolatileContext_accepted() throws {
+        let keys = Self.loadKeys()
+        let vendors: [(String, String?)] = [
+            ("openai", keys.openAI),
+            ("gemini", keys.gemini),
+            ("deepseek", keys.deepSeek),
+        ]
+        let snapshot = "<workgroups>\n[ { \"role\" : \"Chat\", \"marker\" : \"VOLATILE_LIVE_OK\" } ]\n</workgroups>"
+        var ranAny = false
+        for (vendor, key) in vendors {
+            guard let key, !key.isEmpty else { continue }
+            guard let model = Self.models(forVendor: vendor).first else { continue }
+            throttle(forVendor: vendor)
+            ranAny = true
+            let messages = [LLM.Message(
+                role: .user,
+                content: "In one short sentence, name the role shown in the workgroups snapshot.")]
+            let result = try AILiveDriver.run(
+                modelName: model,
+                apiKey: key,
+                messages: messages,
+                streaming: false,
+                trailingVolatileTextProvider: { snapshot },
+                scenarioTag: "trailingVolatile/\(vendor)",
+                test: self)
+            XCTAssertFalse(result.finalText.isEmpty,
+                           "[\(vendor)/\(model)] rejected or returned empty for a trailing volatile user message")
+        }
+        try XCTSkipIf(!ranAny, "no non-Anthropic keys available")
     }
 
     // MARK: - Gemini
@@ -1652,6 +1862,14 @@ final class AILiveHarness: XCTestCase {
     private enum ChatReloadScenario: String {
         case paired
         case orphan
+        // Like `paired`, but the persisted transcript also has a final assistant
+        // text reply after the tool round-trip. On reload the tool round-trip
+        // folds into a single assistant transcript message, so the rebuilt
+        // prompt contains two consecutive assistant turns (folded transcript +
+        // reply). Vendors that require strictly alternating roles (Gemini 400s;
+        // Anthropic is stricter than chat-completions) exercise the coalescing
+        // pass in Gemini.swift / CompletionsAnthropic.swift.
+        case pairedWithReply
     }
 
     private enum ChatReloadIDStyle {
@@ -1725,6 +1943,13 @@ final class AILiveHarness: XCTestCase {
             sentDate: Date(),
             uniqueID: UUID())
 
+        let assistantReply = Message(
+            chatID: chatID,
+            author: .agent,
+            content: .markdown("The diagnostic reports Darwin on arm64."),
+            sentDate: Date(),
+            uniqueID: UUID())
+
         switch scenario {
         case .paired:
             return [userQuestion, request, response]
@@ -1732,6 +1957,11 @@ final class AILiveHarness: XCTestCase {
             // Auto-approved shape: the request was squelched (ChatClient.swift
             // .always branch historically), so only the response survives.
             return [userQuestion, response]
+        case .pairedWithReply:
+            // The tool round-trip folds into one assistant transcript message,
+            // and the trailing assistant reply is a second assistant turn, so
+            // the rebuilt prompt has two consecutive assistant turns.
+            return [userQuestion, request, response, assistantReply]
         }
     }
 
@@ -2028,6 +2258,38 @@ final class AILiveHarness: XCTestCase {
                       scenario: .orphan, idStyle: .nilID)
     }
 
+    // MARK: chat-reload — consecutive assistant turns (coalescing)
+    //
+    // A reloaded chat whose tool round-trip is followed by an assistant text
+    // reply folds into two consecutive assistant turns. Gemini 400s on
+    // non-alternating `model` turns and Anthropic is strict too, so these pin
+    // the coalescing pass end to end against the real APIs.
+
+    func test_anthropic_chatReload_pairedWithReply_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        runChatReload(vendor: "anthropic", apiKey: key, streaming: false,
+                      scenario: .pairedWithReply,
+                      idStyle: .real(callID: "toolu_test_chat_reload_reply",
+                                     itemID: "toolu_test_chat_reload_reply"))
+    }
+    func test_anthropic_chatReload_pairedWithReply_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        runChatReload(vendor: "anthropic", apiKey: key, streaming: true,
+                      scenario: .pairedWithReply,
+                      idStyle: .real(callID: "toolu_test_chat_reload_reply",
+                                     itemID: "toolu_test_chat_reload_reply"))
+    }
+    func test_gemini_chatReload_pairedWithReply_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runChatReload(vendor: "gemini", apiKey: key, streaming: false,
+                      scenario: .pairedWithReply, idStyle: .nilID)
+    }
+    func test_gemini_chatReload_pairedWithReply_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runChatReload(vendor: "gemini", apiKey: key, streaming: true,
+                      scenario: .pairedWithReply, idStyle: .nilID)
+    }
+
     // MARK: chat-reload — OpenAI Responses
 
     func test_openai_chatReload_paired_nonStreaming() throws {
@@ -2123,5 +2385,242 @@ final class AILiveHarness: XCTestCase {
                       scenario: .orphan,
                       idStyle: .real(callID: "call_test_chat_reload_orphan",
                                      itemID: "call_test_chat_reload_orphan"))
+    }
+
+    // MARK: encrypted-reasoning probe
+    //
+    // Design probe for the reasoning-persistence project: does the Responses
+    // API return reasoning.encrypted_content when store:true? If yes, a
+    // hybrid is possible (previous_response_id for live turns, locally
+    // persisted blobs as the reload/expiry fallback). If no, store:false is
+    // the only way to obtain the blobs and requests must run stateless.
+    // The store:false leg doubles as the control: if IT returns no blob the
+    // probe itself is broken and the test fails instead of reporting a
+    // false "no".
+
+    /// One raw Responses call (bypasses the builder, which doesn't emit
+    /// store/include yet). Returns (reasoning items seen, of which with
+    /// non-empty encrypted_content), or throws with the HTTP error body.
+    private func probeEncryptedReasoning(apiKey: String,
+                                         model: String,
+                                         store: Bool) async throws -> (reasoningItems: Int, encrypted: Int) {
+        var request = URLRequest(url: URL(string: "https://api.openai.com/v1/responses")!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        let body: [String: Any] = [
+            "model": model,
+            "input": [["role": "user",
+                       "content": [["type": "input_text",
+                                    "text": "What is 17*23? Reply with just the number."]]]],
+            "reasoning": ["effort": "low"],
+            "include": ["reasoning.encrypted_content"],
+            "store": store,
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? -1
+        guard (200..<300).contains(status) else {
+            throw NSError(domain: "probe", code: status, userInfo: [
+                NSLocalizedDescriptionKey: "HTTP \(status): \(String(data: data, encoding: .utf8) ?? "<binary>")"])
+        }
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let output = json["output"] as? [[String: Any]] else {
+            throw NSError(domain: "probe", code: 0, userInfo: [
+                NSLocalizedDescriptionKey: "unparseable body: \(String(data: data, encoding: .utf8) ?? "<binary>")"])
+        }
+        let reasoning = output.filter { ($0["type"] as? String) == "reasoning" }
+        let encrypted = reasoning.filter {
+            if let content = $0["encrypted_content"] as? String { return !content.isEmpty }
+            return false
+        }
+        return (reasoning.count, encrypted.count)
+    }
+
+    func test_openai_probe_encryptedReasoning_storeTrueVsFalse() async throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        let model = "gpt-5-mini"
+
+        // Control: store:false must yield encrypted content, else the probe
+        // itself is wrong (bad model choice, API drift) and no verdict can
+        // be trusted.
+        let control = try await probeEncryptedReasoning(apiKey: key, model: model, store: false)
+        print("[probe] store:false -> reasoning items: \(control.reasoningItems), with encrypted_content: \(control.encrypted)")
+        XCTAssertGreaterThan(control.reasoningItems, 0, "[probe] control returned no reasoning items at all; pick a reasoning model")
+        XCTAssertGreaterThan(control.encrypted, 0, "[probe] store:false returned no encrypted_content; probe is invalid")
+
+        // The question: does store:true also return the blobs?
+        do {
+            let hybrid = try await probeEncryptedReasoning(apiKey: key, model: model, store: true)
+            print("[probe] store:true  -> reasoning items: \(hybrid.reasoningItems), with encrypted_content: \(hybrid.encrypted)")
+            print("[probe] VERDICT: hybrid (store:true + encrypted_content) is \(hybrid.encrypted > 0 ? "POSSIBLE" : "NOT possible (no blob returned)")")
+        } catch {
+            print("[probe] store:true request REJECTED: \(error.localizedDescription)")
+            print("[probe] VERDICT: hybrid is NOT possible (request rejected)")
+        }
+    }
+
+    // MARK: reasoning replay after reload (API contract)
+    //
+    // Pins the API contract the reasoning-persistence design rests on, with
+    // REAL blobs (a fabricated encrypted_content would be rejected outright):
+    //   1. A live turn produces a reasoning item + function_call.
+    //   2. Replaying [reasoning, function_call(id), output] statelessly (no
+    //      previous_response_id) is accepted - the reload path for chats
+    //      with persisted reasoning.
+    //   3. Replaying the call with NO reasoning and NO item id is accepted -
+    //      the best-effort path for pre-persistence chats.
+    //   4. (Reported, not asserted) the call WITH its item id but WITHOUT
+    //      its reasoning item - the shape that motivated the id strip.
+
+    private func rawResponses(apiKey: String, body: [String: Any]) async throws -> [String: Any] {
+        var request = URLRequest(url: URL(string: "https://api.openai.com/v1/responses")!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? -1
+        guard (200..<300).contains(status) else {
+            throw NSError(domain: "probe", code: status, userInfo: [
+                NSLocalizedDescriptionKey: "HTTP \(status): \(String(data: data, encoding: .utf8) ?? "<binary>")"])
+        }
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NSError(domain: "probe", code: 0, userInfo: [
+                NSLocalizedDescriptionKey: "unparseable body"])
+        }
+        return json
+    }
+
+    func test_openai_reasoningReplay_afterReload() async throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        let model = "gpt-5-mini"
+        let toolDef: [String: Any] = [
+            "type": "function", "name": "lookup",
+            "description": "Look up a fact by key.",
+            "parameters": ["type": "object",
+                           "properties": ["key": ["type": "string"]],
+                           "required": ["key"],
+                           "additionalProperties": false],
+            "strict": true,
+        ]
+        let userTurn: [String: Any] = [
+            "role": "user",
+            "content": [["type": "input_text",
+                         "text": "Use the lookup tool to fetch the value for key answer, then tell me what it is."]]]
+
+        // 1. Live turn: capture a real reasoning item and function_call.
+        let first = try await rawResponses(apiKey: key, body: [
+            "model": model, "input": [userTurn], "tools": [toolDef],
+            "tool_choice": "required", "reasoning": ["effort": "low"],
+            "include": ["reasoning.encrypted_content"], "store": true,
+        ])
+        let output = try XCTUnwrap(first["output"] as? [[String: Any]])
+        let reasoning = try XCTUnwrap(output.first { ($0["type"] as? String) == "reasoning" },
+                                      "setup turn produced no reasoning item")
+        let call = try XCTUnwrap(output.first { ($0["type"] as? String) == "function_call" },
+                                 "setup turn produced no function_call")
+        let encrypted = try XCTUnwrap(reasoning["encrypted_content"] as? String,
+                                      "setup turn returned no encrypted_content")
+        let callID = try XCTUnwrap(call["call_id"] as? String)
+        let itemID = try XCTUnwrap(call["id"] as? String)
+        let callArguments = call["arguments"] as? String ?? "{}"
+        let outputItem: [String: Any] = ["type": "function_call_output",
+                                         "call_id": callID, "output": "{\"value\": \"42\"}"]
+        let followUp: [String: Any] = [
+            "role": "user",
+            "content": [["type": "input_text",
+                         "text": "In one short sentence, what did the tool return?"]]]
+
+        func replay(includeReasoning: Bool, includeItemID: Bool) async throws -> [String: Any] {
+            var fc: [String: Any] = ["type": "function_call", "call_id": callID,
+                                     "name": "lookup", "arguments": callArguments]
+            if includeItemID { fc["id"] = itemID }
+            var input: [[String: Any]] = [userTurn]
+            if includeReasoning {
+                input.append(["type": "reasoning", "id": reasoning["id"] as? String ?? "",
+                              "summary": [],
+                              "encrypted_content": encrypted])
+            }
+            input.append(contentsOf: [fc, outputItem, followUp])
+            return try await rawResponses(apiKey: key, body: [
+                "model": model, "input": input, "tools": [toolDef],
+                "reasoning": ["effort": "low"],
+            ])
+        }
+
+        // 2. Full-fidelity replay (persisted reasoning): must be accepted.
+        let full = try await replay(includeReasoning: true, includeItemID: true)
+        XCTAssertEqual(full["status"] as? String, "completed",
+                       "reasoning+id replay was not accepted")
+        print("[reasoningReplay] full-fidelity replay accepted")
+
+        // 3. Legacy replay (no reasoning persisted, item id stripped): must
+        //    be accepted - this is the pre-persistence chat's path.
+        let legacy = try await replay(includeReasoning: false, includeItemID: false)
+        XCTAssertEqual(legacy["status"] as? String, "completed",
+                       "legacy id-stripped replay was not accepted")
+        print("[reasoningReplay] legacy id-stripped replay accepted")
+
+        // 3b. Interleaved replay: a turn whose REAL output was
+        //     [reasoning, message, function_call] must replay in that same
+        //     order and be accepted. The encrypted payload binds the turn's
+        //     structure: fabricating a text item inside a turn that had none
+        //     is rejected ("function_call provided without its required
+        //     reasoning item"), so this leg makes its own setup call that
+        //     asks for a preamble and replays the REAL items verbatim -
+        //     exactly what the production builder does with a multipart
+        //     text+call turn.
+        let preamblePrompt: [String: Any] = [
+            "role": "user",
+            "content": [["type": "input_text",
+                         "text": "Briefly say you will look it up, then use the lookup tool to fetch the value for key answer."]]]
+        let second = try await rawResponses(apiKey: key, body: [
+            "model": model, "input": [preamblePrompt],
+            "tools": [toolDef], "tool_choice": "auto",
+            "reasoning": ["effort": "low"],
+            "include": ["reasoning.encrypted_content"], "store": true,
+        ])
+        let output2 = try XCTUnwrap(second["output"] as? [[String: Any]])
+        if let reasoning2 = output2.first(where: { ($0["type"] as? String) == "reasoning" }),
+           let message2 = output2.first(where: { ($0["type"] as? String) == "message" }),
+           let call2 = output2.first(where: { ($0["type"] as? String) == "function_call" }),
+           let encrypted2 = reasoning2["encrypted_content"] as? String,
+           let callID2 = call2["call_id"] as? String {
+            let text2 = ((message2["content"] as? [[String: Any]])?.first?["text"] as? String) ?? ""
+            let interleaved = try await rawResponses(apiKey: key, body: [
+                "model": model,
+                "input": [
+                    preamblePrompt,
+                    ["type": "reasoning", "id": reasoning2["id"] as? String ?? "",
+                     "summary": [], "encrypted_content": encrypted2],
+                    ["role": "assistant",
+                     "content": [["type": "output_text", "text": text2]]],
+                    ["type": "function_call", "id": call2["id"] as? String ?? "",
+                     "call_id": callID2, "name": "lookup",
+                     "arguments": call2["arguments"] as? String ?? "{}"],
+                    ["type": "function_call_output", "call_id": callID2,
+                     "output": "{\"value\": \"42\"}"],
+                    followUp,
+                ],
+                "tools": [toolDef], "reasoning": ["effort": "low"],
+            ])
+            XCTAssertEqual(interleaved["status"] as? String, "completed",
+                           "reasoning/text/function_call replay of a REAL mixed turn was not accepted")
+            print("[reasoningReplay] interleaved text replay (real mixed turn) accepted")
+        } else {
+            // The model chose not to emit a preamble this run; the leg proves
+            // nothing without a real mixed turn, so report and move on rather
+            // than fabricate one (which the API rejects by design).
+            print("[reasoningReplay] interleaved leg skipped: setup turn produced no text+call mix")
+        }
+
+        // 4. Negative control, reported only: the id WITHOUT its reasoning.
+        do {
+            _ = try await replay(includeReasoning: false, includeItemID: true)
+            print("[reasoningReplay] NOTE: id-without-reasoning was ACCEPTED; the id strip is precautionary")
+        } catch {
+            print("[reasoningReplay] id-without-reasoning rejected as expected: \(error.localizedDescription)")
+        }
     }
 }

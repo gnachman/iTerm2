@@ -18,7 +18,7 @@
 extern char **environ;
 
 pid_t iTermStartProcess(NSURL *url, NSArray<NSString *> *args, int fd_in, int fd_out) {
-    DLog(@"%@ %@", url.path, [args componentsJoinedByString:@" "]);
+    RLog(@"%@ %@", url.path, [args componentsJoinedByString:@" "]);
     posix_spawn_file_actions_t actions;
 
     // Initialize the file actions object
@@ -42,12 +42,12 @@ pid_t iTermStartProcess(NSURL *url, NSArray<NSString *> *args, int fd_in, int fd
 
         int rc = posix_spawnattr_init(&attrs);
         if (rc != 0) {
-            DLog(@"posix_spawnattr_init");
+            RLog(@"posix_spawnattr_init");
             return -1;
         }
         rc = posix_spawnattr_setflags(&attrs, flags);
         if (rc != 0) {
-            DLog(@"posix_spawnattr_setflags");
+            RLog(@"posix_spawnattr_setflags");
             return -1;
         }
 
@@ -68,7 +68,7 @@ pid_t iTermStartProcess(NSURL *url, NSArray<NSString *> *args, int fd_in, int fd
     // Redirect standard input
     status = posix_spawn_file_actions_adddup2(&actions, fd_in, STDIN_FILENO);
     if (status != 0) {
-        DLog(@"posix_spawn_file_actions_adddup2 for stdin");
+        RLog(@"posix_spawn_file_actions_adddup2 for stdin");
         posix_spawn_file_actions_destroy(&actions);
         return -1;
     }
@@ -76,7 +76,7 @@ pid_t iTermStartProcess(NSURL *url, NSArray<NSString *> *args, int fd_in, int fd
     // Redirect standard output
     status = posix_spawn_file_actions_adddup2(&actions, fd_out, STDOUT_FILENO);
     if (status != 0) {
-        DLog(@"posix_spawn_file_actions_adddup2 for stdout");
+        RLog(@"posix_spawn_file_actions_adddup2 for stdout");
         posix_spawn_file_actions_destroy(&actions);
         return -1;
     }
@@ -84,7 +84,7 @@ pid_t iTermStartProcess(NSURL *url, NSArray<NSString *> *args, int fd_in, int fd
     // Redirect standard error
     status = posix_spawn_file_actions_adddup2(&actions, fd_out, STDERR_FILENO);
     if (status != 0) {
-        DLog(@"posix_spawn_file_actions_adddup2 for stderr");
+        RLog(@"posix_spawn_file_actions_adddup2 for stderr");
         posix_spawn_file_actions_destroy(&actions);
         return -1;
     }
@@ -101,9 +101,9 @@ pid_t iTermStartProcess(NSURL *url, NSArray<NSString *> *args, int fd_in, int fd
     iTermFreeeNullTerminatedCStringArray(environment);
 
     if (status == 0) {
-        DLog(@"Process spawned successfully, PID: %d\n", pid);
+        RLog(@"Process spawned successfully, PID: %d\n", pid);
     } else {
-        DLog(@"posix_spawn");
+        RLog(@"posix_spawn");
         pid = -1;
     }
 

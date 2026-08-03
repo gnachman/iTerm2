@@ -17,8 +17,21 @@ import CompanionProtocol
 final class CompanionFileLog: @unchecked Sendable {
     static let shared = CompanionFileLog()
 
-    private static let enabledKey = "CompanionFileLoggingEnabled"
+    private static let enabledKey = CompanionFileLogWriter.enabledKey
     private static let retentionDays = 14
+
+    /// The toggle lives in the App Group suite so the NSE honors the same flag.
+    private static var settingsDefaults: UserDefaults {
+        UserDefaults(suiteName: CompanionSharedIdentifiers.appGroup) ?? .standard
+    }
+
+    /// The shared App Group Logs directory the NSE writes into (nil if the
+    /// container is unavailable).
+    private static var appGroupLogsDirectory: URL? {
+        FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: CompanionSharedIdentifiers.appGroup)?
+            .appendingPathComponent("Logs", isDirectory: true)
+    }
 
     private let queue = DispatchQueue(label: "com.googlecode.iterm2.companion.filelog", qos: .utility)
     private var handle: FileHandle?
@@ -32,11 +45,10 @@ final class CompanionFileLog: @unchecked Sendable {
     /// opting in first. Toggling rotates the writer immediately.
     var isEnabled: Bool {
         get {
-            let defaults = UserDefaults.standard
-            return defaults.object(forKey: Self.enabledKey) as? Bool ?? true
+            return Self.settingsDefaults.object(forKey: Self.enabledKey) as? Bool ?? true
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: Self.enabledKey)
+            Self.settingsDefaults.set(newValue, forKey: Self.enabledKey)
             queue.async {
                 if newValue {
                     self.openIfNeeded()
@@ -70,13 +82,78 @@ final class CompanionFileLog: @unchecked Sendable {
         queue.sync { self.flush() }
     }
 
-    /// The on-disk log files, oldest first (names sort chronologically).
+    /// The on-disk log files, oldest first: the app's own plus the NSE's (in the
+    /// shared App Group directory), so emailing includes both. Both directories
+    /// use LogFileNaming, so file names sort chronologically across them.
     func logFileURLs() -> [URL] {
-        let dir = Self.logsDirectory
-        let names = (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []
-        return names.filter { LogFileNaming.date(from: $0) != nil }
-            .sorted()
-            .map { dir.appendingPathComponent($0) }
+        var urls = CompanionFileLogWriter.logFileURLs(in: Self.logsDirectory)
+        if let nse = Self.appGroupLogsDirectory {
+            urls += CompanionFileLogWriter.logFileURLs(in: nse)
+        }
+        return urls.sorted { $0.lastPathComponent < $1.lastPathComponent }
+    }
+
+    /// The outcome of building the emailable log archive.
+    enum LogArchiveResult: Sendable {
+        /// A ready-to-attach .zip at this URL.
+        case archive(URL)
+        /// There were no log files to archive (nothing to email).
+        case empty
+        /// Building the archive failed; the underlying error was logged.
+        case failed
+    }
+
+    /// Flush pending lines and bundle every log file into a single .zip in a
+    /// temp directory. One compressed archive gets through the mail composer
+    /// where a handful of multi-megabyte text attachments do not. Safe to call
+    /// off the main thread (the zip can be slow for a large history) and
+    /// distinguishes "no logs" from a real failure so the caller can tell the
+    /// user which happened; a real failure is logged before returning.
+    func makeLogArchive() -> LogArchiveResult {
+        let destination = FileManager.default.temporaryDirectory
+            .appendingPathComponent("iTerm2-Buddy-logs.zip")
+        // Clear any prior archive regardless of outcome, so an "empty"/"failed"
+        // build can never leave a stale zip that a later tap would attach.
+        try? FileManager.default.removeItem(at: destination)
+
+        // Snapshot the files on the log queue, serialized against a concurrent
+        // delete-all (toggling logging off does close()+deleteAll() on this same
+        // queue). Flushing and hard-link staging both happen here, so a delete
+        // either runs fully before the snapshot (nothing to archive) or fully
+        // after (the hard links keep the data alive) - never interleaved with a
+        // half-copied set. The slow zip then runs off-queue below.
+        let staged: URL
+        do {
+            staged = try queue.sync {
+                self.flush()
+                return try CompanionLogArchive.stage(files: self.logFileURLs(),
+                                                     folderName: "iTerm2-Buddy-logs")
+            }
+        } catch CompanionLogArchive.ArchiveError.nothingToArchive {
+            return .empty
+        } catch {
+            companionLog("Email Logs: could not stage the log files: \(error)")
+            return .failed
+        }
+
+        do {
+            try CompanionLogArchive.zip(stagedDirectory: staged, to: destination)
+        } catch {
+            companionLog("Email Logs: could not build the log archive: \(error)")
+            return .failed
+        }
+
+        // The mail composer reads the file with Data(contentsOf:); confirm it is
+        // actually readable and non-empty before handing it over, so we never
+        // present a composer with "Diagnostic logs attached" and nothing on it.
+        let fm = FileManager.default
+        let attributes = try? fm.attributesOfItem(atPath: destination.path)
+        let size = (attributes?[.size] as? Int) ?? 0
+        guard fm.isReadableFile(atPath: destination.path), size > 0 else {
+            companionLog("Email Logs: archive is unreadable or empty after build")
+            return .failed
+        }
+        return .archive(destination)
     }
 
     // MARK: - queue-only
@@ -96,7 +173,7 @@ final class CompanionFileLog: @unchecked Sendable {
         values.isExcludedFromBackup = true
         try? dir.setResourceValues(values)
         prune()
-        let url = dir.appendingPathComponent(LogFileNaming.fileName(for: Date()))
+        let url = dir.appendingPathComponent(LogFileNaming.fileName(for: Date(), label: "app"))
         fm.createFile(atPath: url.path, contents: nil)
         handle = try? FileHandle(forWritingTo: url)
         let timer = DispatchSource.makeTimerSource(queue: queue)
@@ -133,12 +210,15 @@ final class CompanionFileLog: @unchecked Sendable {
     }
 
     private func deleteAll() {
-        let dir = Self.logsDirectory
         let fm = FileManager.default
-        let names = (try? fm.contentsOfDirectory(atPath: dir.path)) ?? []
-        // Only our own log files, never anything else that may share the folder.
-        for name in names where LogFileNaming.date(from: name) != nil {
-            try? fm.removeItem(at: dir.appendingPathComponent(name))
+        // Both the app's own directory and the shared NSE directory, so turning
+        // logging off clears all history. Only our own log files, never anything
+        // else that may share the folder.
+        for dir in [Self.logsDirectory, Self.appGroupLogsDirectory].compactMap({ $0 }) {
+            let names = (try? fm.contentsOfDirectory(atPath: dir.path)) ?? []
+            for name in names where LogFileNaming.date(from: name) != nil {
+                try? fm.removeItem(at: dir.appendingPathComponent(name))
+            }
         }
     }
 

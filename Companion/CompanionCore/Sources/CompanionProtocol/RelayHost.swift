@@ -17,9 +17,12 @@ public enum RelayHost {
     /// disclosing (the known default, or no usable host). A non-default host is
     /// returned in punycode so a confusable Unicode lookalike of the default
     /// cannot read as legitimate.
-    public static func hostToDisclose(relayOrigin: String?, default defaultHost: String) -> String? {
-        guard let relayOrigin,
-              let host = URLComponents(string: relayOrigin)?.host,
+    /// - originURL: the server URL a pairing points at, e.g. the relay origin in
+    ///   direct mode or the resolver URL in resolved mode; the host is extracted
+    ///   from it and compared against `defaultHost`.
+    public static func hostToDisclose(originURL: String?, default defaultHost: String) -> String? {
+        guard let originURL,
+              let host = URLComponents(string: originURL)?.host,
               !host.isEmpty,
               host != defaultHost else {
             return nil

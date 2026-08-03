@@ -92,7 +92,7 @@ class iTermBrowserReaderModeManager: NSObject {
                 updateReaderModeState(true)
             }
         } catch {
-            DLog("Error entering reader mode: \(error)")
+            RLog("Error entering reader mode: \(error)")
         }
     }
     
@@ -104,7 +104,7 @@ class iTermBrowserReaderModeManager: NSObject {
             _ = try await webView.safelyEvaluateJavaScript(script, contentWorld: .defaultClient)
             updateReaderModeState(false)
         } catch {
-            DLog("Error exiting reader mode: \(error)")
+            RLog("Error exiting reader mode: \(error)")
         }
     }
 
@@ -151,7 +151,7 @@ class iTermBrowserReaderModeManager: NSObject {
                 updateDistractionRemovalState(true)
             }
         } catch {
-            DLog("Error entering distraction removal mode: \(error)")
+            RLog("Error entering distraction removal mode: \(error)")
         }
     }
     
@@ -163,7 +163,7 @@ class iTermBrowserReaderModeManager: NSObject {
             _ = try await webView.safelyEvaluateJavaScript(script, contentWorld: .defaultClient)
             updateDistractionRemovalState(false)
         } catch {
-            DLog("Error exiting distraction removal mode: \(error)")
+            RLog("Error exiting distraction removal mode: \(error)")
         }
     }
 
@@ -199,7 +199,7 @@ class iTermBrowserReaderModeManager: NSObject {
             scriptsInjected = true
             return true
         } catch {
-            DLog("Error injecting reader mode scripts: \(error)")
+            RLog("Error injecting reader mode scripts: \(error)")
             return false
         }
     }

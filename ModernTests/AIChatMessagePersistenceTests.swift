@@ -59,6 +59,100 @@ final class AIChatMessagePersistenceTests: XCTestCase {
         XCTAssertEqual(decoded.author, .agent)
     }
 
+    // MARK: - Forward compatibility (unknown content types)
+
+    /// A message whose content discriminator this build doesn't know (a
+    /// newer iTerm2 added a Content or ClientLocal.Action case) must
+    /// decode to .unsupported rather than throwing. Otherwise the
+    /// Companion's whole-frame decode drops the message, and a history
+    /// batch containing it loses every sibling too. Hand-rolled JSON in
+    /// the exact synthesized enum shape ({"caseName": {...}}) with a case
+    /// name no build emits.
+    func testMessage_unknownContentType_decodesAsUnsupported() throws {
+        let json = """
+        {
+            "chatID": "chat-fc",
+            "author": "agent",
+            "content": {"someFutureMessageType": {"_0": "payload this build can't read"}},
+            "sentDate": 1700000000,
+            "uniqueID": "550E8400-E29B-41D4-A716-446655440000"
+        }
+        """.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(Message.self, from: json)
+        guard case .unsupported = decoded.content else {
+            return XCTFail("expected .unsupported, got \(decoded.content)")
+        }
+        // The surrounding fields must still be intact so the placeholder
+        // renders in the right place in the transcript.
+        XCTAssertEqual(decoded.chatID, "chat-fc")
+        XCTAssertEqual(decoded.author, .agent)
+    }
+
+    /// The history transport ships [Message]; decoding the array calls
+    /// Message.init(from:) per element, so one unknown element must
+    /// degrade to .unsupported while its siblings decode normally. This
+    /// is the case that, without per-message tolerance, would blank out
+    /// an entire chat's history on an older client.
+    func testMessage_unknownContentInArray_preservesSiblings() throws {
+        let json = """
+        [
+            {
+                "chatID": "c",
+                "author": "user",
+                "content": {"plainText": {"_0": "before", "context": null}},
+                "sentDate": 1700000000,
+                "uniqueID": "11111111-1111-1111-1111-111111111111"
+            },
+            {
+                "chatID": "c",
+                "author": "agent",
+                "content": {"someFutureMessageType": {}},
+                "sentDate": 1700000001,
+                "uniqueID": "22222222-2222-2222-2222-222222222222"
+            },
+            {
+                "chatID": "c",
+                "author": "agent",
+                "content": {"markdown": {"_0": "after"}},
+                "sentDate": 1700000002,
+                "uniqueID": "33333333-3333-3333-3333-333333333333"
+            }
+        ]
+        """.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode([Message].self, from: json)
+        XCTAssertEqual(decoded.count, 3)
+        guard case .plainText(let before, _) = decoded[0].content else {
+            return XCTFail("expected .plainText, got \(decoded[0].content)")
+        }
+        XCTAssertEqual(before, "before")
+        guard case .unsupported = decoded[1].content else {
+            return XCTFail("expected .unsupported, got \(decoded[1].content)")
+        }
+        guard case .markdown(let after) = decoded[2].content else {
+            return XCTFail("expected .markdown, got \(decoded[2].content)")
+        }
+        XCTAssertEqual(after, "after")
+    }
+
+    /// The tolerant decoder must not weaken decoding of known content: a
+    /// genuinely well-formed message still round-trips to its real case,
+    /// not to .unsupported.
+    func testMessage_knownContent_doesNotBecomeUnsupported() throws {
+        let original = Message(
+            chatID: "chat-known",
+            author: .user,
+            content: .plainText("hello", context: "ctx"),
+            sentDate: Date(timeIntervalSince1970: 1_700_000_000),
+            uniqueID: UUID())
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(Message.self, from: data)
+        guard case .plainText(let text, let context) = decoded.content else {
+            return XCTFail("expected .plainText, got \(decoded.content)")
+        }
+        XCTAssertEqual(text, "hello")
+        XCTAssertEqual(context, "ctx")
+    }
+
     // MARK: - Streaming harvest at removeReasoningStatusSubparts
 
     /// During streaming, reasoning arrives as one or more statusUpdate

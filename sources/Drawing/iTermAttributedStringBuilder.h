@@ -79,6 +79,7 @@ extern NSString *const iTermKittyImagePlacementIDAttribute;
 @property (nonatomic, readonly) BOOL asciiLigatures;
 @property (nonatomic, readonly) iTermAttributedStringBuilderStatsPointers stats;
 @property (nonatomic, readonly) BOOL preferSpeedToFullLigatureSupport;
+@property (nonatomic, readonly) BOOL lowFiCombiningMarks;
 @property (nonatomic, readonly) NSSize cellSize;
 @property (nonatomic, readonly) BOOL blinkingItemsVisible;
 @property (nonatomic, readonly) BOOL blinkAllowed;
@@ -104,6 +105,7 @@ extern NSString *const iTermKittyImagePlacementIDAttribute;
 asciiLigaturesAvailable:(BOOL)asciiLigaturesAvailable
      asciiLigatures:(BOOL)asciiLigatures
 preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
+ lowFiCombiningMarks:(BOOL)lowFiCombiningMarks
            cellSize:(NSSize)cellSize
 blinkingItemsVisible:(BOOL)blinkingItemsVisible
        blinkAllowed:(BOOL)blinkAllowed

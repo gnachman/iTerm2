@@ -280,17 +280,20 @@ enum WGFix {
     static func makePeer(parentID: String,
                          items: [iTermWorkgroupToolbarItem] = [],
                          displayName: String = "Peer",
-                         perFileCommand: String = "") -> iTermWorkgroupSessionConfig {
+                         perFileCommand: String = "",
+                         command: String = "",
+                         mode: iTermWorkgroupSessionMode = .regular) -> iTermWorkgroupSessionConfig {
         return iTermWorkgroupSessionConfig(
             uniqueIdentifier: newID(),
             parentID: parentID,
             kind: .peer,
             profileGUID: nil,
-            command: "",
+            command: command,
             urlString: "",
             toolbarItems: items,
             displayName: displayName,
-            perFileCommand: perFileCommand)
+            perFileCommand: perFileCommand,
+            mode: mode)
     }
 
     static func makeSplit(parentID: String,

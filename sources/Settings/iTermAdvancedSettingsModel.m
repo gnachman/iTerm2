@@ -26,6 +26,7 @@ NSString *const kAdvancedSettingDefaultValue = @"kAdvancedSettingDefaultValue";
 NSString *const kAdvancedSettingDescription = @"kAdvancedSettingDescription";
 NSString *const kAdvancedSettingSetter = @"kAdvancedSettingSetter";
 NSString *const kAdvancedSettingGetter = @"kAdvancedSettingGetter";
+NSString *const kAdvancedSettingOptions = @"kAdvancedSettingOptions";
 
 NSString *const iTermAdvancedSettingsDidChange = @"iTermAdvancedSettingsDidChange";
 
@@ -206,6 +207,32 @@ DEFINE_BOILERPLATE(name, int, kiTermAdvancedSettingTypeInteger, theDefault, theD
 #define DEFINE_OPTIONAL_INT(name, theDefault, theDescription) \
 DEFINE_BOILERPLATE(name, int *, kiTermAdvancedSettingTypeOptionalInteger, theDefault, theDescription, iTermAdvancedSettingsModelTransformOptionalInt, iTermAdvancedSettingsModelInverseTransformOptionalInt)
 
+// An integer setting presented as a popup button. theDefault is the default
+// integer value. theOptions is an NSArray<NSString *> * of option titles; the
+// stored value is the index of the selected title. Because the value is just an
+// int, a setting that used to be DEFINE_BOOL migrates transparently (NO=0, YES=1).
+#define DEFINE_INT_ENUM(name, theDefault, theOptions, theDescription) \
+static id sAdvancedSetting_##name; \
++ (NSDictionary *)advancedSettingsModelDictionary_##name { \
+    return @{ kAdvancedSettingIdentifier: [@#name stringByCapitalizingFirstLetter], \
+              kAdvancedSettingType: @(kiTermAdvancedSettingTypeIntEnum), \
+              kAdvancedSettingDefaultValue: @(theDefault), \
+              kAdvancedSettingDescription: theDescription, \
+              kAdvancedSettingOptions: theOptions }; \
+} \
++ (NSString *)name##UserDefaultsKey { \
+    return [@#name stringByCapitalizingFirstLetter]; \
+} \
++ (NSString *)load_##name { \
+    NSString *key = [self name##UserDefaultsKey]; \
+    id valueFromUserDefaults = [[iTermUserDefaults userDefaults] objectForKey:key]; \
+    sAdvancedSetting_##name = valueFromUserDefaults ?: @(theDefault); \
+    return key; \
+} \
++ (int)name { \
+    return [sAdvancedSetting_##name intValue]; \
+}
+
 #define DEFINE_FLOAT(name, theDefault, theDescription) \
 DEFINE_BOILERPLATE(name, double, kiTermAdvancedSettingTypeFloat, theDefault, theDescription, iTermAdvancedSettingsModelTransformFloat, iTermAdvancedSettingsModelInverseTransformFloat)
 
@@ -314,6 +341,7 @@ DEFINE_BOOL(selectsTabsOnMouseDown, YES, SECTION_TABS @"Select tabs on mouse-dow
 DEFINE_FLOAT(minimalDeslectedColoredTabAlpha, 0.5, SECTION_TABS @"Alpha value for tab color for non-selected colored tabs in the Minimal theme.\nMust be between 0 and 1.");
 DEFINE_STRING(tabColorMenuOptions, @"#fb6b62 #f6ac47 #f0dc4f #b5d749 #5fa3f8 #c18ed9 #787878", SECTION_TABS @"Colors for tab color menu item.\nSpace delimited strings like #rrggbb or #rgb in sRGB color space. If the P3 color space is available, you can use strings like: color(p3 1 0.5 0.25)");
 DEFINE_BOOL(removeAddTabButton, NO, SECTION_TABS @"Remove the “new tab” button from horizontal tab bars?");
+DEFINE_BOOL(addTabButtonUsesCurrentProfile, NO, SECTION_TABS @"Should the “new tab” button in the tab bar use the current session’s profile?\nWhen enabled, clicking the “+” button opens a new tab with the current session’s profile instead of the default profile.");
 DEFINE_FLOAT(lightModeInactiveTabDarkness, 0.07, SECTION_TABS @"Darkness (in [0…1]) for non-selected tabs in non-Minimal theme in light mode.");
 DEFINE_FLOAT(darkModeInactiveTabDarkness, 0.5, SECTION_TABS @"Darkness (in [0…1]) for non-selected tabs in non-Minimal theme in dark mode.");
 DEFINE_BOOL(saveProfilesToRecentDocuments, NO, SECTION_TABS @"Add items to Recents (in the dock icon's menu) to reopen recently used profiles as tabs?")
@@ -368,7 +396,6 @@ DEFINE_BOOL(naturalScrollingAffectsHorizontalMouseReporting, NO, SECTION_MOUSE @
 DEFINE_FLOAT(horizontalScrollingSensitivity, 0.1, SECTION_MOUSE @"Sensitivity of mouse wheel for horizontal scrolling.\nUse 0 to disable. Value should be between 0 and 1. Changes to this setting only affect new sessions.");
 DEFINE_BOOL(useDoubleClickDelayForCommandSelection, NO, SECTION_MOUSE @"Wait to be sure it's not a double click before selecting a command");
 DEFINE_BOOL(requireOptionToDragSplitPaneTitleBar, NO, SECTION_MOUSE @"Require Option to be pressed to drag a split pane by its title bar?\nThis helps prevent accidental drags.");
-DEFINE_BOOL(threeFingerDragSendsMouseReports, NO, SECTION_MOUSE @"Three-finger drag sends mouse reports when mouse reporting is enabled.\nWhen enabled, three-finger drags will send mouse events to terminal applications like vim, tmux, or zellij instead of performing iTerm2 text selection.");
 
 #pragma mark Terminal
 
@@ -500,6 +527,7 @@ DEFINE_FLOAT(dynamicProfilesNotificationLatency, 0.1, SECTION_GENERAL @"Delay be
 DEFINE_BOOL(addDynamicTagToDynamicProfiles, NO, SECTION_GENERAL @"Add a 'Dynamic' tag to dynamic profiles.\nWhen enabled, dynamic profiles will have a 'Dynamic' tag added to them, which can be used to filter or identify them.");
 DEFINE_STRING(gitSearchPath, @"", SECTION_GENERAL @"$PATH used when running git for the status bar component.\nChange this to use a custom install of git. You must restart iTerm2 for a change here to take effect.");
 DEFINE_INT(screenshotMaxPixelHeight, 30000, SECTION_GENERAL @"Maximum pixel height for a single screenshot file.\nScreenshots taller than this will be split into multiple files. Also affects the maximum total pixels (this value squared / 5).");
+DEFINE_STRING(screenshotSaveLocation, @"", SECTION_GENERAL @"Folder where the “Save” button in the screenshot window writes files.\nLeave empty to save to the Desktop. The “Save As…” button ignores this and always prompts for a location.");
 DEFINE_SETTABLE_FLOAT(gitTimeout, GitTimeout, 4, SECTION_GENERAL @"Timeout in seconds when running git for the status bar component.");
 DEFINE_STRING(preferredBaseDir, @"", SECTION_GENERAL @"Folder for config files. There must not be a space in the path.\nIf empty, then ~/.config/iterm2 will be the default location.");
 DEFINE_INT(maximumNumberOfTriggerCommands, 16, SECTION_GENERAL @"Maximum number of trigger-launched commands that can run at once.\nIf too many “Run Command…” triggers fire their commands will be queued. You must restart iTerm2 for changes to this setting to take effect.");
@@ -604,10 +632,11 @@ DEFINE_BOOL(disableSmartSelectionActionsOnClick, NO, SECTION_SEMANTIC_HISTORY @"
 DEFINE_BOOL(startDebugLoggingAutomatically, NO, SECTION_DEBUGGING @"Start debug logging automatically when iTerm2 is launched.");
 DEFINE_BOOL(appendToExistingDebugLog, NO, SECTION_DEBUGGING @"Append to existing debug log rather than replacing it.");
 DEFINE_BOOL(logDrawingPerformance, NO, SECTION_DEBUGGING @"Log stats about text drawing performance to console.\nUsed for performance testing.");
-DEFINE_BOOL(showDirtyRectsInLegacyRenderer, NO, SECTION_DEBUGGING @"Outline dirty rects in the legacy renderer with random colors.\nUseful for visually verifying which regions of the text view are being repainted each frame. Only affects the legacy (non-Metal) renderer.");
+DEFINE_BOOL(showDirtyRectsInLegacyRenderer, NO, SECTION_DEBUGGING @"Outline dirty rects in the legacy renderer with random colors.\nUseful for visually verifying which regions of the text view are being repainted each frame. This affects only the legacy (non-GPU) renderer and does nothing when the GPU (Metal) renderer is active, so it is not a way to tell whether the GPU renderer is engaged. To use it, first turn off the GPU renderer in Settings → General → Magic.");
 DEFINE_BOOL(logRestorableStateSize, NO, SECTION_DEBUGGING @"Log restorable state size info to /tmp/statesize.*.txt.");
 DEFINE_BOOL(showBlockBoundaries, NO, SECTION_DEBUGGING @"Show line buffer block boundaries (issue 6207)");
 DEFINE_BOOL(logToSyslog, NO, SECTION_DEBUGGING @"Debug logs also write to the system log.");
+DEFINE_BOOL(logForegroundJobAncestryDiagnostics, NO, SECTION_DEBUGGING @"Log a detailed trace when a session’s foreground-job ancestor list unexpectedly shrinks.\nWhen an intermediate ancestor (such as the claude CLI) drops out of a tracked session’s foreground-job ancestry for a single process-cache update, log via RLog which pid held the vanished ancestor, whether it is still in the process table, and the full upward walk from the deepest foreground job. Used to diagnose spurious job-ended events that can tear down a Claude Code workgroup. Off by default; turn on only while reproducing an issue.");
 DEFINE_STRING(fakeFullyQualifiedDomainName, @"", SECTION_DEBUGGING @"Override the local hostname used for localhost detection.\nWhen non-empty, the app behaves as though [NSHost fullyQualifiedDomainName] returns this value. Lets you test how localhost detection reacts to a hostname change without actually renaming your computer. Affects hosts reported after you change it; leave empty to use the real hostname.");
 DEFINE_BOOL(aiChatVerboseConsoleLogging, NO, SECTION_DEBUGGING @"Log AI chat traffic to the system console.\nEmits per-turn user / agent / tool entries via NSFuckingLog so you can trace exactly what the agent received and produced. Useful for debugging tool dispatch and history translation. Off by default; turn on only while reproducing an issue.");
 DEFINE_BOOL(aiChatRawWireLogging, NO, SECTION_DEBUGGING @"Log raw AI API requests and responses to disk.\nWrites every byte sent to and received from the AI vendor (full request headers, body, streaming chunks, final response, errors, and timing) to ~/Library/Application Support/iTerm2/AIChatWire/. One log file per app launch; rotate or delete it yourself when done. WARNING: the log captures Authorization / API-key headers and full prompt + response content verbatim. Off by default; turn on only while reproducing an issue and delete the files when finished.");
@@ -664,12 +693,13 @@ DEFINE_BOOL(disableWindowShadowWhenTransparencyOnMojave, YES, SECTION_WINDOWS @"
 DEFINE_BOOL(disableWindowShadowWhenTransparencyPreMojave, YES, SECTION_WINDOWS @"Disable the window shadow on High Sierra and earlier when the window has a transparent session to prevent text shadows.");
 DEFINE_BOOL(restoreWindowsWithinScreens, YES, SECTION_WINDOWS @"When restoring a window arrangement, ensure windows are entirely within the bounds of the current displays.")
 DEFINE_FLOAT(extraSpaceBeforeCompactTopTabBar, 0, SECTION_WINDOWS @"Amount of extra space (in points) between stoplight buttons and inline tab bar.\nThis only takes effect for the Compact and Minimal themes when the tab bar is visible and located at the top of the window.");
+DEFINE_FLOAT(compactTabBarStoplightButtonsWidth, 75, SECTION_WINDOWS @"Width (in points) reserved for the window buttons (close/minimize/zoom) before the inline tab bar.\nThe default is 75. Reduce it to move tab content closer to the buttons, or increase it for more breathing room. This only takes effect for the Compact and Minimal themes when the tab bar is visible and located at the top of the window. Setting it smaller than the buttons themselves will let tabs overlap them.");
 DEFINE_BOOL(workAroundMultiDisplayOSBug, YES, SECTION_WINDOWS @"Work around a macOS bug where the OS moves windows to the first display for no good reason.");
 DEFINE_BOOL(disableDocumentedEditedIndicator, NO, SECTION_WINDOWS @"Disable documented edited indicator (black dot in close button)");
 DEFINE_BOOL(showWindowTitleWhenTabBarInvisible, YES, SECTION_WINDOWS @"Show window title when the tab bar is not visible?\nWhen disabled, the tab's title will be shown where the window title would normally go.");
 DEFINE_BOOL(squareWindowCorners, NO, SECTION_WINDOWS @"Windows have square corners.\nThis is only for users who have already hacked macOS to remove rounded corners. You must restart iTerm2 after changing this setting for it to take effect.");
-DEFINE_STRING(windowBorderColor, @"", SECTION_WINDOWS @"Border color for focused windows.\nShould be a web-style color, #rrggbb. You can also use p3#rrggbb for p3 color space. Requires “Show border around windows” with no title bar. Leave empty for the default color.");
-DEFINE_STRING(windowBorderColorUnfocused, @"", SECTION_WINDOWS @"Border color for unfocused windows.\nShould be a web-style color, #rrggbb. You can also use p3#rrggbb for p3 color space. Leave empty to match the focused color.");
+DEFINE_STRING(windowBorderColor, @"", SECTION_WINDOWS @"Border color for focused windows.\nShould be a web-style color, #rrggbb, or #rrggbbaa to also set opacity. You can also use p3#rrggbb or p3#rrggbbaa for p3 color space. Without an alpha component the border is drawn at 75% opacity. Requires “Show border around windows” with no title bar. Leave empty for the default color.");
+DEFINE_STRING(windowBorderColorUnfocused, @"", SECTION_WINDOWS @"Border color for unfocused windows.\nShould be a web-style color, #rrggbb, or #rrggbbaa to also set opacity. You can also use p3#rrggbb or p3#rrggbbaa for p3 color space. Without an alpha component the border is drawn at 75% opacity. Leave empty to match the focused color.");
 DEFINE_BOOL(useShortcutAccessoryViewController, YES, SECTION_WINDOWS @"Show window number in titlebar accessory?");
 DEFINE_BOOL(includeShortcutInWindowsMenu, YES, SECTION_WINDOWS @"Include keyboard shortcut for windows in Window menu?");
 DEFINE_FLOAT(toolbeltFontSize, 0, SECTION_WINDOWS @"Toolbelt font size in points.\nSet to 0 to use the system default. Changing this setting does not affect existing windows.");
@@ -696,11 +726,12 @@ DEFINE_BOOL(useBlackFillerColorForTmuxInFullScreen, NO, SECTION_TMUX @"Use black
 DEFINE_SETTABLE_OPTIONAL_BOOL(tmuxWindowsShouldCloseAfterDetach, TmuxWindowsShouldCloseAfterDetach, nil, SECTION_TMUX @"Close tmux windows after detaching?\nThis only takes effect when “Settings > Profiles > Session > After a session ends” is set to “No Action”.");
 DEFINE_BOOL(disableTmuxWindowPositionRestoration, NO, SECTION_TMUX @"Disable window position restoration in tmux integration.");
 DEFINE_BOOL(disableTmuxWindowResizing, YES, SECTION_TMUX @"Don't automatically resize tmux windows");
-DEFINE_BOOL(anonymousTmuxWindowsOpenInCurrentWindow, YES, SECTION_TMUX @"Should new tmux windows not created by iTerm2 open in the current window?\nIf set to No, they will open in new windows.");
+DEFINE_INT_ENUM(anonymousTmuxWindowsOpenInCurrentWindow, iTermOpenAnonymousTmuxWindowLocationFocusedWindow, (@[ @"New window", @"Focused window", @"Topmost session window" ]), SECTION_TMUX @"Where should new tmux windows not created by iTerm2 open?\n“Focused window” (the default) attaches the window as a tab of whichever iTerm2 window currently has keyboard focus. “Topmost session window” attaches it to the frontmost iTerm2 window that already shows a tab from this tmux session, regardless of focus.");
 DEFINE_BOOL(pollForTmuxForegroundJob, NO, SECTION_TMUX @"Poll for foreground job name in tmux integration with tmux < 3.2?\nThis enables tab icons but can cause a lot of background traffic. This has no effect in tmux 3.2 and later, where polling is unnecessary.");
 DEFINE_STRING(tmuxTitlePrefix, @"↣ ", SECTION_TMUX @"Insert this string at the start of tab and window titles to indicate tmux integration.");
 DEFINE_BOOL(tmuxIncludeClientNameInWindowTitle, YES, SECTION_TMUX @"When using tmux integration, should the tmux client name (typically the name of the attaching session or the host name) appear in brackets in the window title?");
 DEFINE_BOOL(rememberTmuxWindowSizes, YES, SECTION_TMUX @"Remember window sizes in tmux integration?\nRequires tmux 2.9 or later. The “variable window size” advanced setting must be enabled.");
+DEFINE_BOOL(tmuxWindowsOpenInBackground, NO, SECTION_TMUX @"Open tmux windows and tabs in the background?\nWhen enabled, attaching with tmux -CC (or when tmux creates a new window) will reveal the window or tab without moving keyboard focus to it. Focus stays on the attaching session.");
 
 #define SECTION_SSH @"SSH Integration: "
 
@@ -768,6 +799,9 @@ DEFINE_INT(pasteHistoryMaxOptions, 20, SECTION_PASTEBOARD @"Number of entries to
 DEFINE_STRING(clippingSeparator, @"\\n--\\n",
               SECTION_PASTEBOARD @"Separator inserted between multiple clippings when sending or copying them.\n"
               @"The value should use Vim syntax, such as \\n for newline and \\e for escape.");
+DEFINE_FLOAT(workgroupAutoSendSubmitDelay, 0.501,
+             SECTION_PASTEBOARD @"Delay in seconds before the Return that submits an auto-sent code review.\n"
+             @"When the code-review workgroup toolbar auto-sends review results to the main session, it pastes the results and then sends a Return to submit them. This is how long it waits, after the pasted results finish, before sending that Return. A paste-debouncing TUI (such as Claude Code) processes a paste and a Return that arrive together as one batch, so the Return can be swallowed and the review never submits; the delay makes the Return land in a later read so it submits. The default matches Claude Code’s 500 ms paste-settling window. Set to 0 to send it immediately.");
 DEFINE_BOOL(disallowCopyEmptyString, NO, SECTION_PASTEBOARD @"Disallow copying empty string to pasteboard.\nIf enabled, selecting an empty string (or all whitespace if trimming is enabled) will not erase the contents of the pasteboard.");
 DEFINE_BOOL(typingClearsSelection, YES, SECTION_PASTEBOARD @"Pressing a key will remove the selection.");
 DEFINE_BOOL(pastingClearsSelection, YES, SECTION_PASTEBOARD @"Pasting text will remove the selection.");
@@ -840,6 +874,7 @@ DEFINE_BOOL(resetSGROnPrompt, YES, SECTION_EXPERIMENTAL @"Reset colors at shell 
 DEFINE_BOOL(retinaInlineImages, YES, SECTION_EXPERIMENTAL @"Show inline images at Retina resolution.");
 DEFINE_BOOL(throttleMetalConcurrentFrames, YES, SECTION_EXPERIMENTAL @"Reduce number of frames in flight when GPU can't produce drawables quickly.");
 DEFINE_BOOL(metalSynchronizedDrawing, NO, SECTION_EXPERIMENTAL @"Use synchronized Metal drawable presentation?\nDefers drawable acquisition until rendering completes, presents synchronously with Core Animation, and acquires drawables on the private render queue. May improve frame rates.");
+DEFINE_BOOL(metalRowOutputCacheEnabled, NO, SECTION_EXPERIMENTAL @"Cache per-row GPU build output?\nSkips rebuilding the glyph and color data for rows whose content and configuration have not changed since the last frame. Experimental.");
 DEFINE_BOOL(sshURLsSupportPath, YES, SECTION_EXPERIMENTAL @"SSH URLs respect the path.\nThey run the command: ssh -t \"cd $$PATH$$; exec \\$SHELL -l\"");
 DEFINE_BOOL(useDivorcedProfileToSplit, YES, SECTION_EXPERIMENTAL @"When splitting a pane, use the profile with local modifications, not the backing profile.");
 DEFINE_BOOL(synergyModifierRemappingEnabled, YES, SECTION_EXPERIMENTAL @"Support modifier remapping for keystrokes originated by Synergy.");
@@ -883,18 +918,34 @@ DEFINE_INT(codeciergeCommandWarningCount, 10, SECTION_EXPERIMENTAL @"After this 
 DEFINE_STRING(codeciergeRegularPrompt, @"You help a me in a terminal emulator. My goal is $GOAL. $CONTEXT. Start by suggesting a command. Don't overwhelm me with too much information: just go one step at a time. When I've reached my goal, remind me to click the End Task button.", SECTION_EXPERIMENTAL @"Prompt to send to LLM for Codecierge when it is NOT able to execute commands automatically.\n$GOAL and $CONTEXT are replaced with the user-specified goal and info about the running environment, respectively." );
 DEFINE_BOOL(generativeAIAllowed, YES, SECTION_GENERAL @"Allow the use of large language model APIs?\nThe purpose of this setting is to make it easy for managed environments to disable the use of LLMs. The user defaults key is `GenerativeAIAllowed`.");
 DEFINE_BOOL(companionPairingAllowed, YES, SECTION_GENERAL @"Allow pairing a companion iOS device?\nOff by default while this feature is in development. When off, the Companion Device Settings menu item is hidden. Managed environments can also use this to disable the feature. The user defaults key is `CompanionPairingAllowed`.");
+DEFINE_STRING(companionRelayOrigin, @"https://relay.iterm2.com", SECTION_GENERAL @"Relay origin for companion iOS device pairing.\nMust be a bare https origin (scheme and host, no path), such as https://companion-relay.iterm2.com. The relay is the only transport, so this must be set for pairing to work; forks can point it at their own Worker. Leave empty to disable the relay entirely. The user defaults key is `CompanionRelayOrigin`.");
+DEFINE_STRING(companionResolverURL, @"https://resolver.iterm2.com/shardmap.json", SECTION_GENERAL @"Shard-map URL for companion iOS device pairing.\nAn https URL pointing directly at the static shard-map JSON, used to find the relay shard that serves the phone-to-mac connection. It is fetched verbatim (nothing is appended). Leave empty to use direct connections (such as if you run your own relay).");
 DEFINE_STRING(llmPlatform, @"OpenAI", SECTION_GENERAL @"LLM Platform.\nLegal values are: OpenAI, Azure, Gemini. This determines the format of requests and responses.");
+DEFINE_STRING(aiModelCatalogURL, @"https://iterm2.com/downloads/ai/manifest.json", SECTION_GENERAL @"URL to check for updates to the AI model catalog.\nThe catalog defines the built-in AI models (context window, capabilities, and the recommended model per vendor). iTerm2 periodically downloads a signed newer copy so new models become available without an app update. This happens only when AI features are enabled and you have granted permission; a non-empty URL by itself does not enable checking. Clearing this URL disables checking entirely.");
 DEFINE_BOOL(alternateScreenBidi, YES, SECTION_EXPERIMENTAL @"When right-to-left text support is enabled, also support it in alternate screen mode?");
 DEFINE_BOOL(aquaSKKBugfixEnabled, NO, SECTION_EXPERIMENTAL @"Enable AquaSKK bugfix?")
 DEFINE_BOOL(channelsEnabled, NO, SECTION_EXPERIMENTAL @"Enable Channels feature?")
 DEFINE_BOOL(rightJustifyRTLLines, YES, SECTION_EXPERIMENTAL @"Right-justify lines in paragraphs with base writing direction of right-to-left?\nRequires BOTH “right-to-left text support” and “auto-detect paragraph writing detection” to be enabled.");
 DEFINE_BOOL(detectParagraphDirection, NO, SECTION_EXPERIMENTAL @"Auto-detect paragraph writing direction based on the first strong directional character?\nRequires right-to-left text support to be enabled.");
 DEFINE_BOOL(browserProfiles, YES, SECTION_EXPERIMENTAL @"Enable browser-style profiles?\nYou must restart iTerm2 for this to take effect.");
+DEFINE_BOOL(companionStreamFrameNumbers, NO, SECTION_EXPERIMENTAL @"Stamp frame numbers into the iTerm2 Buddy live stream?\nDraws a monotonic counter onto each streamed video frame, for debugging the phone’s live session view.");
+DEFINE_INT(companionStreamMaxLeadMilliseconds, 500, SECTION_EXPERIMENTAL @"iTerm2 Buddy live stream: maximum capture-time lead, in milliseconds.\nThe host stops sending new frames once it is more than this far ahead of the last frame the phone acknowledged, then resumes when the phone catches up. Larger values tolerate more link latency at the cost of a live view that can lag further behind. Only the frame rate is affected; per-frame quality is unchanged.");
+DEFINE_INT(companionStreamMaxQueueDepth, 4, SECTION_EXPERIMENTAL @"iTerm2 Buddy live stream: maximum phone decode-queue depth.\nThe host stops sending new frames once the phone reports more than this many frames queued for decode/display, then resumes as the queue drains. Larger values let more frames pile up on the phone before backing off. Only the frame rate is affected; per-frame quality is unchanged.");
+DEFINE_FLOAT(companionStreamBitrateMultiplier, 1.0, SECTION_EXPERIMENTAL @"iTerm2 Buddy live stream: video bitrate multiplier.\nScales the resolution-derived encoder bitrate. Values above 1 make streamed text sharper at the cost of bandwidth; values below 1 save bandwidth at the cost of sharpness. The result is still clamped to the stream’s minimum and ceiling bitrates.");
+DEFINE_FLOAT(companionWakeupCoalesceInterval, 5.0, SECTION_EXPERIMENTAL @"iTerm2 Buddy push notifications: minimum seconds between wakeup pushes.\nA wakeup push tells the paired phone to fetch every new message and alert at once, so several in quick succession are wasteful and can leave a later one with nothing to show (the generic “Your agent has an update.” placeholder). The host sends the first wakeup immediately, then coalesces any that follow within this interval into a single trailing wakeup. Lower values notify sooner but coalesce less; higher values coalesce bursts more aggressively.");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "
 
-DEFINE_STRING(pythonRuntimeDownloadURL, @"https://iterm2.com/downloads/pyenv/manifest.json", SECTION_SCRIPTING @"URL to check for new versions of the Python scripting runtime.");
+// The runtimes listed in manifest-new.json require macOS 27 or later.
+static NSString *iTermDefaultPythonRuntimeDownloadURL(void) {
+    if (@available(macOS 27, *)) {
+        return @"https://iterm2.com/downloads/pyenv/manifest-new.json";
+    }
+    return @"https://iterm2.com/downloads/pyenv/manifest.json";
+}
+
+DEFINE_STRING(pythonRuntimeDownloadURL, iTermDefaultPythonRuntimeDownloadURL(), SECTION_SCRIPTING @"URL to check for new versions of the Python scripting runtime.");
 DEFINE_STRING(pythonRuntimeBetaDownloadURL, @"https://iterm2.com/downloads/pyenv/betamanifest.json", SECTION_SCRIPTING @"URL to check for new Beta versions of the Python scripting runtime.");
 DEFINE_BOOL(laxNilPolicyInInterpolatedStrings, YES, SECTION_SCRIPTING @"Should references to undefined variables in interpolated strings be converted to empty string?\nWhen enabled, an expression in an interpolated string that references an undefined variable will be treated as an empty string. For example, “\\(bogus)”. References to undefined variables as arguments to function calls, such as “\\(f(bogus))”, are still errors.");
 DEFINE_SETTABLE_BOOL(setCookie, SetCookie, NO, SECTION_SCRIPTING @"Set ITERM2_COOKIE environment variable, allowing Python scripts to be launched without confirmation?\nThis will only affect sessions created after changing this setting.");

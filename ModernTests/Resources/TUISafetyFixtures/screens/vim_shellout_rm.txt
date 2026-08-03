@@ -1,0 +1,26 @@
+def tokenize(source):
+    tokens = []
+    for line in source.splitlines():
+        tokens.extend(line.split())
+    return tokens
+
+
+def main():
+    print(tokenize("a b c\nd e f"))
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+1 parser.py                   1/9 (11%), 1                                           (-1 )
+:!rm -rf build
+

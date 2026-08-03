@@ -342,7 +342,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)moveToolbarTo:(SessionView *)other {
-    DLog(@"moveToolbarTo: from %p (frame=%@) to %p (frame=%@)",
+    RLog(@"moveToolbarTo: from %p (frame=%@) to %p (frame=%@)",
          self, NSStringFromRect(self.frame),
          other, NSStringFromRect(other.frame));
     [other->_toolbarView removeFromSuperview];
@@ -362,7 +362,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // setToolbarItems: path returns changedToolbar==NO (the toolbar was moved,
     // not added or removed). Force a layout so browser / scrollview frames
     // reflect this view's current toolbar state.
-    DLog(@"layoutContentsForNewlyActiveSession on %p frame=%@ toolbar=%p scrollview.frame=%@",
+    RLog(@"layoutContentsForNewlyActiveSession on %p frame=%@ toolbar=%p scrollview.frame=%@",
          self, NSStringFromRect(self.frame), _toolbarView,
          NSStringFromRect([self scrollview].frame));
     [self updateLayout];
@@ -530,6 +530,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [CATransaction commit];
     [self updateMinimapAlpha];
     _progressBar.darkMode = color.isDark;
+    _progressBar.profileBackgroundColor = color;
 }
 
 - (void)setTransparencyAlpha:(CGFloat)transparencyAlpha
@@ -538,7 +539,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [CATransaction setDisableActions:YES];
     _backgroundColorView.transparency = 1 - transparencyAlpha;
     _backgroundColorView.blend = blend;
-    if (![iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
+    if (![iTermPreferences perPaneBackgroundImage]) {
         // This is unfortunate but because I can't use an imageview behind everything when
         // subpixel AA is enabled, I have to draw *something* behind the legacy scrollers.
         // NSImageView is not equipped to do the job.
@@ -613,7 +614,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)takeFindDriverFrom:(SessionView *)donorView delegate:(id<iTermFindDriverDelegate>)delegate {
-    DLog(@"Take find driver from %@, give it to %@ with delegate %@", donorView, self, delegate);
+    RLog(@"Take find driver from %@, give it to %@ with delegate %@", donorView, self, delegate);
     if (_dropDownFindDriver.viewController.isViewLoaded) {
         [_dropDownFindDriver.viewController.view removeFromSuperview];
     }
@@ -779,7 +780,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             }
             iTermStatusBarViewController *statusBarViewController = [self.delegate sessionViewStatusBarViewController];
             if (!statusBarViewController) {
-                DLog(@"No status bar VC from %@", self.delegate);
+                RLog(@"No status bar VC from %@", self.delegate);
                 return;
             }
             _permanentStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:statusBarViewController.searchViewController
@@ -793,7 +794,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             }
             iTermStatusBarViewController *statusBarViewController = [self.delegate sessionViewStatusBarViewController];
             if (!statusBarViewController) {
-                DLog(@"No status bar VC from %@", self.delegate);
+                RLog(@"No status bar VC from %@", self.delegate);
                 return;
             }
             _temporaryStatusBarFindDriver = [[iTermFindDriver alloc] initWithViewController:statusBarViewController.temporaryLeftComponent.statusBarComponentSearchViewController
@@ -840,7 +841,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 - (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
     if (useMetal != _useMetal) {
         _useMetal = useMetal;
-        DLog(@"setUseMetal:%@ dataSource:%@", @(useMetal), dataSource);
+        RLog(@"setUseMetal:%@ dataSource:%@", @(useMetal), dataSource);
         if (useMetal) {
             [self installMetalViewWithDataSource:dataSource];
         } else {
@@ -935,6 +936,27 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 #endif
     }
 }
+
+// Keep the active-pane border directly behind the progress bar so the border's
+// top stroke does not paint over the bar. The two coincide: both hug the top
+// edge and are ~2pt tall, so a border drawn on top hides the bar entirely
+// (issue 12960). Both views are created lazily exactly once and neither is ever
+// removed, so whichever is created second calls this to establish the order for
+// good. Safe to call whenever either is (re)added: a no-op unless both exist
+// and the border is currently in front of the bar.
+- (void)keepActivePaneBorderBelowProgressBar {
+    if (!_progressBar || !_activePaneBorderView) {
+        return;
+    }
+    const NSUInteger progressIndex = [self.subviews indexOfObjectIdenticalTo:_progressBar];
+    const NSUInteger borderIndex = [self.subviews indexOfObjectIdenticalTo:_activePaneBorderView];
+    if (progressIndex == NSNotFound || borderIndex == NSNotFound) {
+        return;
+    }
+    if (borderIndex > progressIndex) {
+        [self addSubview:_activePaneBorderView positioned:NSWindowBelow relativeTo:_progressBar];
+    }
+}
 - (void)installMetalViewWithDataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
     if (_metalView) {
         [self removeMetalView];
@@ -991,6 +1013,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)requestRedraw {
+    _lastRedrawRequestedAt = [NSDate it_timeSinceBoot];
     if (_useMetal) {
         // TODO: Would be nice to draw only the rect, but I don't see a way to do that with iTermMTKView
         // that doesn't involve doing something nutty like saving a copy of the drawable.
@@ -1004,6 +1027,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)requestRedrawInRect:(NSRect)rect {
+    _lastRedrawRequestedAt = [NSDate it_timeSinceBoot];
     if (_useMetal) {
         [_metalView setNeedsDisplay:YES];
         [_scrollview setNeedsDisplay:YES];
@@ -1050,7 +1074,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return nil;
 }
 - (void)tabColorDidChange {
+    // A sibling pane's tab color may have changed, which can flip whether this
+    // tab has multiple distinct tab colors and therefore whether the title bar
+    // should be tinted. Refresh both the background and text color and redraw.
     [_title updateBackgroundColor];
+    [_title updateTextColor];
+    [_title setNeedsDisplay:YES];
 }
 
 - (void)setNeedsDisplay:(BOOL)needsDisplay {
@@ -1384,7 +1413,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (double)dimmedDimmingAmount {
-    return [iTermPreferences floatForKey:kPreferenceKeyDimmingAmount];
+    return [iTermPreferences splitPaneDimmingAmount];
 }
 
 - (double)adjustedDimmingAmount {
@@ -1439,7 +1468,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)setBackgroundDimmed:(BOOL)backgroundDimmed {
     BOOL orig = _backgroundDimmed;
-    if ([iTermPreferences boolForKey:kPreferenceKeyDimBackgroundWindows]) {
+    if ([iTermPreferences dimBackgroundWindows]) {
         _backgroundDimmed = backgroundDimmed;
     } else {
         _backgroundDimmed = NO;
@@ -1480,7 +1509,7 @@ typedef struct {
         },
         // This one is because command marks and fold buttons are in the left margin.
         {
-            .rect = NSMakeRect(0, 0, [iTermPreferences floatForKey:kPreferenceKeySideMargins], self.bounds.size.height),
+            .rect = NSMakeRect(0, 0, [iTermPreferences sideMargins], self.bounds.size.height),
             .options = NSTrackingActiveInActiveApp | NSTrackingMouseMoved
         }
     };
@@ -1811,7 +1840,8 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
                                                                                  isFirstResponder:[_delegate sessionViewTerminalIsFirstResponder]
                                                                                       dimOnlyText:[_delegate sessionViewShouldDimOnlyText]
                                                                             adjustedDimmingAmount:[self adjustedDimmingAmount]
-                                                                                transparencyAlpha:[self.delegate sessionViewTransparencyAlpha]];
+                                                                                transparencyAlpha:[self.delegate sessionViewTransparencyAlpha]
+                                                                  tabHasMultipleDistinctTabColors:[_delegate sessionViewTabHasMultipleDistinctTabColors]];
 }
 
 - (NSEdgeInsets)extraMargins {
@@ -1971,14 +2001,18 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
     if ([_delegate sessionViewShouldSplitSelectionAfterDragUpdate:sender]) {
-        NSPoint point = [self convertPoint:[sender draggingLocation] fromView:nil];
-        [_splitSelectionView updateAtPoint:point];
+        // draggingUpdated:'s draggingLocation can be stale during tab drags (see PSMTabDragAssistant).
+        const NSPoint mouseLocationInWindow = [self.window convertPointFromScreen:[NSEvent mouseLocation]];
+        const NSPoint point = [self convertPoint:mouseLocationInWindow fromView:nil];
+        const NSRect bounds = self.bounds;
+        [_splitSelectionView updateAtPoint:NSMakePoint(MIN(MAX(point.x, NSMinX(bounds)), NSMaxX(bounds)),
+                                                       MIN(MAX(point.y, NSMinY(bounds)), NSMaxY(bounds)))];
     }
     return NSDragOperationMove;
 }
 
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
-    DLog(@"performDragOperation: %@", sender);
+    RLog(@"performDragOperation: %@", sender);
     BOOL result = [_delegate sessionViewPerformDragOperation:sender];
     [_delegate sessionViewDraggingExited:sender];
     return result;
@@ -2004,7 +2038,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     PTYScrollView *scrollView = [self scrollview];
     NSRect frame = [scrollView frame];
     if (_showTitle) {
-        DLog(@"Adjust frame to make make room for title bar");
+        RLog(@"Adjust frame to make make room for title bar");
         frame.size.height -= iTermGetSessionViewTitleHeight();
         _title = [[SessionTitleView alloc] initWithFrame:NSMakeRect(0,
                                                                     self.frame.size.height - iTermGetSessionViewTitleHeight(),
@@ -2020,7 +2054,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
         [_title updateLockButton];
         [self addSubviewBelowFindView:_title];
     } else {
-        DLog(@"Adjust frame to eliminate title bar");
+        RLog(@"Adjust frame to eliminate title bar");
         frame.size.height += iTermGetSessionViewTitleHeight();
         [_title removeFromSuperview];
         _title = nil;
@@ -2054,9 +2088,11 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     if (!_progressBar) {
         _progressBar = [[iTermProgressBarView alloc] init];
         _progressBar.darkMode = _terminalBackgroundColor.isDark;
+        _progressBar.profileBackgroundColor = _terminalBackgroundColor;
         _progressBar.heightValue = _progressBarHeight;
         _progressBar.colorScheme = _progressBarColorScheme;
         [self addSubviewBelowFindView:_progressBar];
+        [self keepActivePaneBorderBelowProgressBar];
         [self updateLayout];
     }
     _progressBar.heightValue = _progressBarHeight;
@@ -2151,7 +2187,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     PTYScrollView *scrollView = [self scrollview];
     NSRect frame = [scrollView frame];
     if (_showBottomStatusBar) {
-        DLog(@"Adjust frame to make room for status bar");
+        RLog(@"Adjust frame to make room for status bar");
         iTermStatusBarViewController *statusBar = self.delegate.sessionViewStatusBarViewController;
         _title.statusBarViewController = nil;
         frame.size.height -= iTermGetStatusBarHeight();
@@ -2167,7 +2203,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
         }
         [self addSubviewBelowFindView:_genericStatusBarContainer];
     } else {
-        DLog(@"Adjust frame to eliminate status bar");
+        RLog(@"Adjust frame to eliminate status bar");
         [_genericStatusBarContainer removeFromSuperview];
         _genericStatusBarContainer = nil;
         frame.size.height += iTermGetStatusBarHeight();
@@ -2262,8 +2298,8 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
          VT100GridSizeDescription(gridSize), NSStringFromSize(cellSize));
 
     NSSize dim = NSMakeSize(gridSize.width, gridSize.height);
-    NSSize innerSize = NSMakeSize(cellSize.width * dim.width + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2,
-                                  cellSize.height * dim.height + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2);
+    NSSize innerSize = NSMakeSize(cellSize.width * dim.width + [iTermPreferences sideMargins] * 2,
+                                  cellSize.height * dim.height + [iTermPreferences topBottomMargins] * 2);
     const BOOL hasScrollbar = [[self scrollview] hasVerticalScroller];
     NSSize size =
         [PTYScrollView frameSizeForContentSize:innerSize
@@ -2500,6 +2536,7 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
     if (!_activePaneBorderView) {
         _activePaneBorderView = [[iTermActivePaneBorderView alloc] initWithFrame:self.bounds];
         [self addSubview:_activePaneBorderView positioned:NSWindowAbove relativeTo:nil];
+        [self keepActivePaneBorderBelowProgressBar];
     }
 
     NSColor *borderColor = [_delegate sessionViewActivePaneBorderColor];
@@ -2632,7 +2669,7 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
 }
 
 - (void)addAnnouncement:(iTermAnnouncementViewController *)announcement {
-    DLog(@"Add announcement %@ to %@", announcement.title, self.delegate);
+    RLog(@"Add announcement %@ to %@", announcement.title, self.delegate);
     [_announcements addObject:announcement];
     announcement.delegate = self;
     if (!_currentAnnouncement) {

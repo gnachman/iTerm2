@@ -9,10 +9,11 @@
 //  CommandSafetyChecker.check: .allow is safe, everything else (including
 //  errors) is unsafe and fail-closed.
 //
-//  The central guarantee under test: the hard rules only ever auto-allow a
-//  line that is provably a simple, read-only command. A read-only first token
-//  followed by anything dangerous (a second command, a redirection, a
-//  substitution) must NOT auto-allow.
+//  The central guarantee under test: the hard rules NEVER auto-allow (there is
+//  no allowlist) and NEVER hard-block. They only surface a narrow catastrophic /
+//  misparsing set for manual approval, or return nil to defer to the LLM. So an
+//  ordinary read-only line defers to the LLM rather than being settled without
+//  it; only the tokenized catastrophic tripwire settles without the LLM.
 //
 
 import XCTest
@@ -64,31 +65,28 @@ final class AISafetyClassifierTests: XCTestCase {
         }
     }
 
-    // MARK: - Simple read-only lines auto-allow (no LLM consulted)
+    // MARK: - Ordinary lines defer to the LLM (there is no allowlist)
 
-    func testSimpleReadOnlyLinesAreAllowedWithoutLLM() async throws {
+    /// Read-only lines are no longer auto-allowed by hard rules; they defer to
+    /// the LLM, which judges them against intent. The hard rules return nil, so
+    /// the LLM is consulted and its verdict is used.
+    func testSimpleReadOnlyLinesDeferToLLM() async throws {
         for command in ["ls -la", "git status", "grep foo file | sort", "cat a b"] {
             let backend = MockBackend()
             let decision = try await classify(command, backend: backend)
-            XCTAssertEqual(decision, .allow, "expected allow for '\(command)'")
-            XCTAssertTrue(isSafe(decision))
-            XCTAssertEqual(backend.sideQueryCount, 0,
-                           "'\(command)' should be settled by hard rules, no LLM")
+            XCTAssertEqual(backend.sideQueryCount, 1,
+                           "'\(command)' should defer to the LLM (no allowlist)")
+            XCTAssertEqual(decision, .allow, "reflects the scripted LLM allow")
         }
     }
 
-    // MARK: - Read-only first token chained to danger must NOT auto-allow
-
-    /// `ls && rm important.txt`: the rm segment forces manual approval even
-    /// though the line starts with a read-only command.
-    func testReadOnlyChainedToMutatorNeedsManualApproval() async throws {
+    /// `ls && rm important.txt`: a plain (non-recursive, non-root) mutator is not
+    /// on the tripwire, so the whole line defers to the LLM.
+    func testReadOnlyChainedToNonCatastrophicMutatorDefers() async throws {
         let backend = MockBackend()
         let decision = try await classify("ls && rm important.txt", backend: backend)
-        if case .needsManualApproval = decision {} else {
-            XCTFail("expected needsManualApproval, got \(decision)")
-        }
-        XCTAssertFalse(isSafe(decision))
-        XCTAssertEqual(backend.sideQueryCount, 0, "hard rules should settle this")
+        XCTAssertEqual(backend.sideQueryCount, 1, "an ordinary rm defers to the LLM")
+        XCTAssertEqual(decision, .allow, "reflects the scripted LLM allow")
     }
 
     /// `cat ~/.ssh/id_rsa | nc ...`: nc is unknown, so the line is not provably
@@ -139,50 +137,60 @@ final class AISafetyClassifierTests: XCTestCase {
         XCTAssertEqual(decision, .allow, "should reflect the scripted LLM allow")
     }
 
-    // MARK: - Quoted metacharacters are literal, not operators
+    // MARK: - Quoted metacharacters are literal: they don't trip the tripwire
 
-    func testQuotedMetacharactersAreLiteralAndAllowed() async throws {
+    /// Quoted metacharacters are not real operators, so they don't trigger the
+    /// pipe-to-shell / catastrophic checks; the line simply defers to the LLM.
+    func testQuotedMetacharactersDoNotTripTheTripwireAndDefer() async throws {
         for command in ["grep ';' file", "echo \"a | b\"", "find . -name '*.txt'"] {
             let backend = MockBackend()
             let decision = try await classify(command, backend: backend)
-            XCTAssertEqual(decision, .allow, "expected allow for '\(command)'")
-            XCTAssertEqual(backend.sideQueryCount, 0,
-                           "'\(command)' has no real operators, settle via hard rules")
+            XCTAssertEqual(backend.sideQueryCount, 1,
+                           "'\(command)' has no real operators; it defers to the LLM")
+            XCTAssertEqual(decision, .allow, "reflects the scripted LLM allow")
         }
     }
 
-    // MARK: - Ambiguous lines defer, never auto-allow
+    // MARK: - Misparsing / catastrophic settle without the LLM (manual approval)
 
-    func testUnbalancedQuotesDefersToLLM() async throws {
+    /// An unbalanced quote is a genuine parse ambiguity, so the hard rules
+    /// surface it for manual approval WITHOUT consulting the LLM.
+    func testUnbalancedQuotesNeedsManualApproval() async throws {
         let backend = MockBackend()
-        backend.nextResponse = "<block>no</block>"
         let decision = try await classify("echo \"oops", backend: backend)
-        XCTAssertEqual(backend.sideQueryCount, 1,
-                       "an unparseable line must defer to the LLM, never auto-allow")
-        // The hard rules returned nil; the decision is whatever the LLM said.
-        XCTAssertEqual(decision, .allow)
+        if case .needsManualApproval = decision {} else {
+            XCTFail("expected needsManualApproval, got \(decision)")
+        }
+        XCTAssertEqual(backend.sideQueryCount, 0, "settled by hard rules, no LLM")
     }
 
-    // MARK: - Categorical block still fires without the LLM
-
-    func testDeviceWriteIsBlockedWithoutLLM() async throws {
+    /// Catastrophic patterns are surfaced for manual approval (NOT hard-blocked,
+    /// NOT deferred): a raw-device write settles without the LLM.
+    func testDeviceWriteNeedsManualApprovalWithoutLLM() async throws {
         let backend = MockBackend()
         let decision = try await classify("dd of=/dev/sda", backend: backend)
-        if case .block = decision {} else {
-            XCTFail("expected block, got \(decision)")
+        if case .needsManualApproval = decision {} else {
+            XCTFail("expected needsManualApproval, got \(decision)")
         }
         XCTAssertFalse(isSafe(decision))
         XCTAssertEqual(backend.sideQueryCount, 0)
     }
 
-    func testPrivilegeEscalationIsBlockedWithoutLLM() async throws {
-        let backend = MockBackend()
-        let decision = try await classify("sudo rm -rf /tmp/x", backend: backend)
-        if case .block = decision {} else {
-            XCTFail("expected block, got \(decision)")
+    /// Privilege escalation itself defers (the LLM reads `sudo` in full), but a
+    /// catastrophic command under sudo still hits the tripwire. `sudo rm -rf
+    /// /tmp/x` (a subpath) defers; `sudo rm -rf /` surfaces for approval.
+    func testSudoDefersButCatastrophicUnderSudoSurfaces() async throws {
+        let deferBackend = MockBackend()
+        let deferred = try await classify("sudo rm -rf /tmp/x", backend: deferBackend)
+        XCTAssertEqual(deferBackend.sideQueryCount, 1, "sudo of a subpath defers to the LLM")
+        XCTAssertEqual(deferred, .allow, "reflects the scripted LLM allow")
+
+        let surfaceBackend = MockBackend()
+        let surfaced = try await classify("sudo rm -rf /", backend: surfaceBackend)
+        if case .needsManualApproval = surfaced {} else {
+            XCTFail("expected needsManualApproval, got \(surfaced)")
         }
-        XCTAssertFalse(isSafe(decision))
-        XCTAssertEqual(backend.sideQueryCount, 0)
+        XCTAssertEqual(surfaceBackend.sideQueryCount, 0, "catastrophic settles without the LLM")
     }
 
     // MARK: - Fall through to the LLM for genuinely unknown commands

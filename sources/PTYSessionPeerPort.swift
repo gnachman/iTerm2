@@ -189,7 +189,7 @@ class PTYSessionPeerPort: NSObject {
         // rejects AFTER commit is the asynchronous case the catchError
         // below handles, in the correct order.)
         guard promise.maybeError == nil else {
-            DLog("PTYSessionPeerPort.activate: refusing \(identifier); its spawn already failed (\(promise.maybeError!.localizedDescription))")
+            RLog("PTYSessionPeerPort.activate: refusing \(identifier); its spawn already failed (\(promise.maybeError!.localizedDescription))")
             return false
         }
         // Rescue first so every caller benefits (reveal, peer-switch
@@ -205,7 +205,7 @@ class PTYSessionPeerPort: NSObject {
         // is what iTermBuriedSessions would restore, and the next
         // activation attempt would no-op on the already-active check.
         guard hasActivationAnchor() else {
-            DLog("PTYSessionPeerPort.activate: no member of \(debugDescription) has a live delegate; refusing to activate \(identifier)")
+            RLog("PTYSessionPeerPort.activate: no member of \(debugDescription) has a live delegate; refusing to activate \(identifier)")
             return false
         }
         activeSessionIdentifier = identifier
@@ -227,12 +227,15 @@ class PTYSessionPeerPort: NSObject {
             // after.
             disinterAnchorIfNeeded()
             guard let delegate = sessionDelegate else {
-                DLog("PTYSessionPeerPort.activate: delegate vanished before \(identifier) fulfilled and no anchor could be restored")
+                RLog("PTYSessionPeerPort.activate: delegate vanished before \(identifier) fulfilled and no anchor could be restored")
                 rollBackActivation()
                 return
             }
             delegate.sessionActivate(replacement, amongPeers: self, moveToolbar: true)
             recordSwapOutcome(identifier: identifier, replacement: replacement)
+            // The peer's view is now swapped into the tab (visible only if
+            // that tab is the foreground one; the hook self-checks).
+            didSwapInPeer(replacement)
         }.catchError { [weak self] error in
             // A deferred peer's spawn can REJECT (makeWorkgroupPeer:
             // session terminated mid-spawn, missing profile or view).
@@ -246,7 +249,7 @@ class PTYSessionPeerPort: NSObject {
             if activeSessionIdentifier != identifier {
                 return
             }
-            DLog("PTYSessionPeerPort.activate: spawn of \(identifier) failed (\(error.localizedDescription))")
+            RLog("PTYSessionPeerPort.activate: spawn of \(identifier) failed (\(error.localizedDescription))")
             rollBackActivation()
         }
         return true
@@ -315,11 +318,18 @@ class PTYSessionPeerPort: NSObject {
     // itself needs a real PTYTab.
     func recordSwapOutcome(identifier: String, replacement: PTYSession) {
         guard replacement.delegate != nil else {
-            DLog("PTYSessionPeerPort: swap to \(identifier) did not take effect; not recording it as swapped")
+            RLog("PTYSessionPeerPort: swap to \(identifier) did not take effect; not recording it as swapped")
             return
         }
         lastSwappedActiveIdentifier = identifier
     }
+
+    // Invoked immediately after a peer's view is swapped into the tab
+    // (visible iff that tab is the foreground one). Base does nothing;
+    // iTermWorkgroupPeerPort overrides it to give a .diff peer's deferred
+    // launch a chance to fire, which it does only once the peer is
+    // actually shown.
+    func didSwapInPeer(_ session: PTYSession) {}
 
     // Restores the last identifier whose view actually occupied the
     // tab after a committed activation that can never complete (spawn
@@ -328,7 +338,7 @@ class PTYSessionPeerPort: NSObject {
     // it could itself be aspirational (a superseded activation that
     // never swapped in).
     private func rollBackActivation() {
-        DLog("PTYSessionPeerPort: rolling back activation to \(lastSwappedActiveIdentifier)")
+        RLog("PTYSessionPeerPort: rolling back activation to \(lastSwappedActiveIdentifier)")
         activeSessionIdentifier = lastSwappedActiveIdentifier
         activationDidRollBack(to: lastSwappedActiveIdentifier)
     }
@@ -353,10 +363,10 @@ class PTYSessionPeerPort: NSObject {
             return
         }
         guard let anchor = realizedPeerSessions.first(where: { isBuried($0) }) else {
-            DLog("PTYSessionPeerPort.disinterAnchorIfNeeded: no member of \(debugDescription) has a delegate and none is in iTermBuriedSessions; cannot restore an anchor")
+            RLog("PTYSessionPeerPort.disinterAnchorIfNeeded: no member of \(debugDescription) has a delegate and none is in iTermBuriedSessions; cannot restore an anchor")
             return
         }
-        DLog("PTYSessionPeerPort.disinterAnchorIfNeeded: restoring buried member \(anchor.guid) so the peer group has an in-tab anchor")
+        RLog("PTYSessionPeerPort.disinterAnchorIfNeeded: restoring buried member \(anchor.guid) so the peer group has an in-tab anchor")
         iTermBuriedSessions.sharedInstance().restore(anchor)
     }
     
@@ -371,11 +381,11 @@ class PTYSessionPeerPort: NSObject {
 
     // Terminate inactive session and release references.
     func invalidate() {
-        DLog("PTYSessionPeerPort.invalidate: port=\(debugDescription) peerIDs=\(peers.keys.sorted())")
+        RLog("PTYSessionPeerPort.invalidate: port=\(debugDescription) peerIDs=\(peers.keys.sorted())")
         invalidated = true
         for identifier in peers.keys where identifier != leader {
             peers[identifier]?.then {
-                DLog("PTYSessionPeerPort.invalidate: terminating peer \(identifier) guid=\($0.guid) exited=\($0.exited)")
+                RLog("PTYSessionPeerPort.invalidate: terminating peer \(identifier) guid=\($0.guid) exited=\($0.exited)")
                 $0.terminate()
             }
         }

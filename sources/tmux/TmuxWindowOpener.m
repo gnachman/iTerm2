@@ -78,13 +78,27 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     return self;
 }
 
+// Parses a layout string and corrects the pane geometry for this window's
+// pane-border-status option, which tmux omits from the layout it sends control
+// clients (issue 12925).
+- (NSMutableDictionary *)parsedAdjustedLayoutFromString:(NSString *)layout {
+    TmuxLayoutParser *parser = [TmuxLayoutParser sharedInstance];
+    NSMutableDictionary *parseTree = [parser parsedLayoutFromString:layout];
+    if (!parseTree) {
+        return nil;
+    }
+    const iTermTmuxPaneBorderStatus status =
+        [self.controller paneBorderStatusForWindow:self.windowIndex];
+    return [parser parseTree:parseTree adjustedForPaneBorderStatus:status];
+}
+
 - (BOOL)openWindows:(BOOL)initial {
-    DLog(@"openWindows initial=%d", (int)initial);
+    RLog(@"openWindows initial=%d", (int)initial);
     if (!self.layout) {
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Can't open window: missing layout"]];
         return NO;
     }
-    self.parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
+    self.parseTree = [self parsedAdjustedLayoutFromString:self.layout];
     if (!self.parseTree) {
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Error parsing layout %@", self.layout]];
         return NO;
@@ -123,34 +137,33 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
 - (BOOL)updateLayoutInTab:(PTYTab *)tab {
     DLog(@"updateLayoutInTab:%@ layout=%@", tab, self.layout);
     if (!self.layout) {
-        DLog(@"Bad layout");
+        RLog(@"Bad layout");
         return NO;
     }
     if (!self.controller) {
-        DLog(@"No controller");
+        RLog(@"No controller");
         return NO;
     }
     if (!self.gateway) {
-        DLog(@"No gateway");
+        RLog(@"No gateway");
         return NO;
     }
 
-    TmuxLayoutParser *parser = [TmuxLayoutParser sharedInstance];
-    self.parseTree = [parser parsedLayoutFromString:self.layout];
+    self.parseTree = [self parsedAdjustedLayoutFromString:self.layout];
     if (!self.parseTree) {
-        DLog(@"Failed to create parse tree for %@", self.layout);
+        RLog(@"Failed to create parse tree for %@", self.layout);
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Error parsing layout %@", self.layout]];
         return NO;
     }
     if (self.visibleLayout.length > 0) {
-        self.visibleParseTree = [parser parsedLayoutFromString:self.visibleLayout];
+        self.visibleParseTree = [self parsedAdjustedLayoutFromString:self.visibleLayout];
         if (!self.visibleParseTree) {
-            DLog(@"Failed to parse visible layout %@, soldiering on anyway", self.visibleLayout);
+            RLog(@"Failed to parse visible layout %@, soldiering on anyway", self.visibleLayout);
         }
     }
     NSSet *oldPanes = [NSSet setWithArray:[tab windowPanes]];
     NSMutableArray *cmdList = [NSMutableArray array];
-    for (NSNumber *addedPane in [parser windowPanesInParseTree:self.parseTree]) {
+    for (NSNumber *addedPane in [[TmuxLayoutParser sharedInstance] windowPanesInParseTree:self.parseTree]) {
         if (![oldPanes containsObject:addedPane]) {
             [self appendRequestsForWindowPane:addedPane
                                       toArray:cmdList];
@@ -418,6 +431,22 @@ static int OctalValue(const char *bytes) {
     [self requestDidComplete];
 }
 
+// Returns the frontmost iTerm2 window that already shows a tab belonging to the
+// given tmux controller, or nil if none does. Window order is front-to-back, so
+// the first match is the topmost.
+- (PseudoTerminal *)topmostTerminalHostingController:(TmuxController *)controller {
+    for (NSWindow *window in [NSApp orderedWindows]) {
+        if (!window.isVisible) {
+            continue;
+        }
+        PseudoTerminal *term = [[iTermController sharedInstance] terminalForWindow:window];
+        if (term && [[term uniqueTmuxControllers] containsObject:controller]) {
+            return term;
+        }
+    }
+    return nil;
+}
+
 - (void)requestDidComplete {
     --pendingRequests_;
     if (_errorCount) {
@@ -438,14 +467,14 @@ static int OctalValue(const char *bytes) {
     NSWindowController<iTermWindowController> *term = nil;
     BOOL isNewWindow = NO;
     if (!tabToUpdate_) {
-        DLog(@"Have no tab to update.");
+        RLog(@"Have no tab to update.");
         if (![self.profile[KEY_PREVENT_TAB] boolValue]) {
             term = [self.controller windowWithAffinityForWindowId:self.windowIndex];
-            DLog(@"Term with affinity is %@", term);
+            RLog(@"Term with affinity is %@", term);
         }
     } else {
         term = [tabToUpdate_ realParentWindow];
-        DLog(@"Using window of tabToUpdate: %@", term);
+        RLog(@"Using window of tabToUpdate: %@", term);
     }
     const BOOL useOriginalWindow = [iTermPreferences intForKey:kPreferenceKeyOpenTmuxWindowsIn] == kOpenTmuxWindowsAsNativeTabsInExistingWindow;
     NSInteger initialTabs = term.tabs.count;
@@ -453,22 +482,42 @@ static int OctalValue(const char *bytes) {
         if (self.initial && useOriginalWindow) {
             term = [gateway_ window];
             initialTabs = term.tabs.count;
-            DLog(@"Use original window %@", term);
+            RLog(@"Use original window %@", term);
         }
         if (!term &&
             !self.initial &&
-            self.anonymous &&
-            [iTermAdvancedSettingsModel anonymousTmuxWindowsOpenInCurrentWindow]) {
-            PseudoTerminal *candidate = [[iTermController sharedInstance] currentTerminal];
-            if ([[candidate uniqueTmuxControllers] count] == 0 ||
-                [[candidate uniqueTmuxControllers] containsObject:controller_]) {
-                term = candidate;
-                initialTabs = term.tabs.count;
-                DLog(@"Use current window %@", term);
+            self.anonymous) {
+            const iTermOpenAnonymousTmuxWindowLocation location =
+                [iTermAdvancedSettingsModel anonymousTmuxWindowsOpenInCurrentWindow];
+            switch (location) {
+                case iTermOpenAnonymousTmuxWindowLocationNewWindow:
+                    // Leave term nil so a new window is created below.
+                    break;
+
+                case iTermOpenAnonymousTmuxWindowLocationFocusedWindow: {
+                    PseudoTerminal *candidate = [[iTermController sharedInstance] currentTerminal];
+                    if ([[candidate uniqueTmuxControllers] count] == 0 ||
+                        [[candidate uniqueTmuxControllers] containsObject:controller_]) {
+                        term = candidate;
+                        initialTabs = term.tabs.count;
+                        RLog(@"Use current window %@", term);
+                    }
+                    break;
+                }
+
+                case iTermOpenAnonymousTmuxWindowLocationTopmostSessionWindow: {
+                    PseudoTerminal *candidate = [self topmostTerminalHostingController:controller_];
+                    if (candidate) {
+                        term = candidate;
+                        initialTabs = term.tabs.count;
+                        RLog(@"Use topmost window hosting this tmux session %@", term);
+                    }
+                    break;
+                }
             }
         }
         if (!term) {
-            DLog(@"Creating a new term with guid %@", self.windowGUID);
+            RLog(@"Creating a new term with guid %@", self.windowGUID);
             term = [[iTermController sharedInstance] openTmuxIntegrationWindowUsingProfile:self.profile
                                                                           perWindowSetting:self.perWindowSettings[self.windowGUID]
                                                                             tmuxController:self.controller];
@@ -476,21 +525,21 @@ static int OctalValue(const char *bytes) {
                 self.newWindowBlock(term.terminalGuid);
             }
             isNewWindow = YES;
-            DLog(@"Opened a new window %@", term);
+            RLog(@"Opened a new window %@", term);
         }
     }
-    NSMutableDictionary *parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
+    NSMutableDictionary *parseTree = [self parsedAdjustedLayoutFromString:self.layout];
     if (!parseTree) {
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Error parsing layout %@", self.layout]];
         return;
     }
     NSMutableDictionary *visibleParseTree = nil;
     if (self.visibleLayout.length > 0) {
-        visibleParseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.visibleLayout];
+        visibleParseTree = [self parsedAdjustedLayoutFromString:self.visibleLayout];
         if (visibleParseTree) {
             [self decorateParseTree:visibleParseTree];
         } else {
-            DLog(@"Failed to parse visible layout %@. Soldiering on anyway.", self.visibleLayout);
+            RLog(@"Failed to parse visible layout %@. Soldiering on anyway.", self.visibleLayout);
         }
     }
     DLog(@"Parse tree: %@", parseTree);
@@ -506,7 +555,7 @@ static int OctalValue(const char *bytes) {
                              zoomed:@NO];
         [tabToUpdate_ setPerTabSettings:_perTabSettings[widStr]];
         if ([tabToUpdate_ updatedTmuxLayoutRequiresAdjustment]) {
-            DLog(@"layout requires adjustment! fit the layout to windows");
+            RLog(@"layout requires adjustment! fit the layout to windows");
             [controller_ fitLayoutToWindows];
         }
     } else {
@@ -537,7 +586,7 @@ static int OctalValue(const char *bytes) {
             BOOL isFullScreen = [term anyFullScreen];
             if (wantFullScreen && !isFullScreen) {
                 if (windowPos) {
-                    DLog(@"Set initial frame of tmux window %@ to %@", term, windowPos);
+                    RLog(@"Set initial frame of tmux window %@ to %@", term, windowPos);
                     [[term window] setFrameOrigin:[windowPos pointValue]];
                     windowPos = nil;
                 }
@@ -548,7 +597,7 @@ static int OctalValue(const char *bytes) {
                 }
             }
         } else {
-            DLog(@"Not calling loadTmuxLayout");
+            RLog(@"Not calling loadTmuxLayout");
         }
         [[self.controller window:windowIndex_] setPerTabSettings:_perTabSettings[widStr]];
     }
@@ -556,13 +605,13 @@ static int OctalValue(const char *bytes) {
         [self.target it_performNonObjectReturningSelector:self.selector
                                                withObject:self];
     }
-    DLog(@"useOriginalWindow=%@ initialTabs=%@ initial=%@ windowPos=%@",
+    RLog(@"useOriginalWindow=%@ initialTabs=%@ initial=%@ windowPos=%@",
          @(useOriginalWindow), @(initialTabs), @(self.initial), windowPos);
     if (windowPos) {
         if (!useOriginalWindow || initialTabs < 2 || !self.initial) {
             // Do this after calling the completion selector because it may affect the window's
             // frame (e.g., when burying a session and that causes the number of tabs to change).
-            DLog(@"Set initial frame of tmux window %@ to %@", term, windowPos);
+            RLog(@"Set initial frame of tmux window %@ to %@", term, windowPos);
             [[term window] setFrameOrigin:[windowPos pointValue]];
         }
     }
@@ -620,7 +669,6 @@ static int OctalValue(const char *bytes) {
     if (self.tabColors[n]) {
         parseTree[kLayoutDictTabColorKey] = self.tabColors[n];
     }
-    parseTree[kLayoutDictFocusReportingKey] = @(self.focusReporting);
     return nil;
 }
 

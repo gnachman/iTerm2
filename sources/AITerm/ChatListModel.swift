@@ -63,6 +63,21 @@ class ChatListModel: ChatListDataSource {
         return result
     }
 
+    /// Side-effect-free title lookup. Unlike chat(id:), this does NOT load the
+    /// chat's permissions into the process-global RemoteCommandExecutor, so it is
+    /// safe to call from a background, non-interactive path (e.g. the companion
+    /// push fetch) that must not reconfigure the live tool-call permission policy
+    /// an unrelated foreground session is relying on.
+    func title(forChatID chatID: String) -> String? {
+        chatStorage.first { $0.id == chatID }?.title
+    }
+
+    /// Side-effect-free model lookup (see title(forChatID:)): the chat's
+    /// pinned model, which also binds the chat's provider (ChatProviderBinding).
+    func modelName(forChatID chatID: String) -> String? {
+        chatStorage.first { $0.id == chatID }?.modelName
+    }
+
     func index(of chatID: String) -> Int? {
         return chatStorage.firstIndex {
             $0.id == chatID
@@ -91,7 +106,7 @@ class ChatListModel: ChatListDataSource {
             do {
                 try messages.removeAll(where: { _ in true })
             } catch {
-                DLog("Failed to delete messages for chat \(chatID): \(error)")
+                RLog("Failed to delete messages for chat \(chatID): \(error)")
             }
         }
         try chatStorage.remove(at: i)
@@ -119,7 +134,7 @@ class ChatListModel: ChatListDataSource {
             // Defense in depth: ChatAgent sanitizes model-supplied titles
             // before publishing, but nothing stops a future producer from
             // publishing a blank .renameChat. Never blank the title.
-            DLog("Ignoring rename of \(chatID) to a blank title")
+            RLog("Ignoring rename of \(chatID) to a blank title")
             return
         }
         if chatStorage[i].title == trimmedNewName {
@@ -194,6 +209,21 @@ class ChatListModel: ChatListDataSource {
                         createIfNeeded: false)?.firstIndex { $0.uniqueID == messageID }
     }
 
+    /// Link a display message to the blob for the round it begins (fork slicing uses
+    /// this). Set at capture on the round's first user message. Persists via the
+    /// message's updateQuery.
+    func setFirstBlobRef(_ blobID: String, forMessageID messageID: UUID, inChat chatID: String) {
+        guard let array = messages(forChat: chatID, createIfNeeded: false),
+              let index = array.firstIndex(where: { $0.uniqueID == messageID }) else {
+            return
+        }
+        do {
+            try array.modify(at: index) { $0.firstBlobRef = blobID }
+        } catch {
+            RLog("setFirstBlobRef failed for \(messageID) in \(chatID): \(error)")
+        }
+    }
+
     // The no-maxLength form is the ChatListDataSource witness (a defaulted
     // parameter can't satisfy a protocol requirement).
     func snippet(forChatID chatID: String) -> String? {
@@ -218,8 +248,17 @@ class ChatListModel: ChatListDataSource {
         }
         do {
             try messages.removeAll(where: { messageIDs.contains($0.uniqueID) })
+            // A deletion (edit/retry truncates the display log from a chosen
+            // message onward) breaks the append-only assumption wire-fragment blob
+            // capture relies on: it decides what is "new" by comparing the stored
+            // blob count to the reconstructed round count, which is only valid if
+            // rounds are never removed. Invalidate the chat's blobs so the next
+            // completed turn re-freezes the edited history from scratch, instead of
+            // leaving a stored sequence that describes a conversation that no longer
+            // exists (or, worse, splicing new rounds onto stale ones).
+            database.replaceBlobs(inChat: chatID, with: [])
         } catch {
-            DLog("Failed to delete messages from chat \(chatID): \(error)")
+            RLog("Failed to delete messages from chat \(chatID): \(error)")
         }
     }
 
@@ -314,7 +353,7 @@ class ChatListModel: ChatListDataSource {
         case .plainText, .markdown, .explanationRequest, .remoteCommandRequest,
                 .remoteCommandResponse, .selectSessionRequest, .clientLocal, .renameChat,
                 .setPermissions, .terminalCommand, .multipart, .vectorStoreCreated,
-                .userCommand, .watcherEvent:
+                .userCommand, .watcherEvent, .unsupported:
             return false
         }
     }
@@ -343,8 +382,9 @@ class ChatListModel: ChatListDataSource {
     // MARK: - Session-binding helpers (session-bound chats)
 
     func firstIndex(forGuid guid: String) -> Int? {
+        let keys = iTermSessionReferenceKeys(forGuid: guid)
         return chatStorage.firstIndex { chat in
-            chat.terminalSessionGuid == guid || chat.browserSessionGuid == guid
+            chat.isLinked(toReferenceIn: keys)
         }
     }
 
@@ -373,8 +413,9 @@ class ChatListModel: ChatListDataSource {
     }
 
     func lastChat(guid: String) -> Chat? {
+        let keys = iTermSessionReferenceKeys(forGuid: guid)
         return chatStorage.last { chat in
-            chat.terminalSessionGuid == guid || chat.browserSessionGuid == guid
+            chat.isLinked(toReferenceIn: keys)
         }
     }
 
@@ -382,8 +423,9 @@ class ChatListModel: ChatListDataSource {
     // bump/rename re-prepends), so the first match is the chat with the
     // most recent activity for the given session guid.
     func mostRecentChat(forGuid guid: String) -> Chat? {
+        let keys = iTermSessionReferenceKeys(forGuid: guid)
         return chatStorage.first { chat in
-            chat.terminalSessionGuid == guid || chat.browserSessionGuid == guid
+            chat.isLinked(toReferenceIn: keys)
         }
     }
 
@@ -412,6 +454,35 @@ class ChatListModel: ChatListDataSource {
             postMetadataChange()
         }
     }
+
+    func setModel(chatID: String, modelName: String?) throws {
+        guard let i = index(of: chatID) else {
+            return
+        }
+        var temp = chatStorage[i]
+        temp.modelName = modelName
+        try chatStorage.set(at: i, temp)
+        postMetadataChange()
+    }
+
+    /// Stamp the protocol a chat's wire-fragment blobs are frozen to (the iTermAIAPI
+    /// raw value), set on the first blob capture. Unlike the other setters this does
+    /// NOT postMetadataChange(): blobProtocol is an internal reconstruction detail,
+    /// not display metadata, so the chat list and model pickers needn't refresh.
+    func setBlobProtocol(_ blobProtocol: Int?, forChatID chatID: String) throws {
+        guard let i = index(of: chatID) else {
+            return
+        }
+        var temp = chatStorage[i]
+        temp.blobProtocol = blobProtocol
+        try chatStorage.set(at: i, temp)
+    }
+
+    /// Read access to the backing store for wire-fragment blob operations, so
+    /// callers reach the SAME database this list model uses (the real singleton in
+    /// production, a temp DB under test) rather than the ChatDatabase.instance
+    /// singleton directly.
+    var chatDatabase: ChatDatabase { database }
 
     // MARK: - Orchestrator-mode accessors
 
@@ -478,6 +549,7 @@ struct PersonChat: Hashable {
     var chatID: String
 }
 
+@MainActor
 class TypingStatusModel {
     static let instance = TypingStatusModel()
 
@@ -495,5 +567,33 @@ class TypingStatusModel {
     func isTyping(participant: Participant, chatID: String) -> Bool {
         let pc = PersonChat(participant: participant, chatID: chatID)
         return typing.contains(pc)
+    }
+}
+
+/// Per-chat "is an agent turn in flight" state. Set at turn start / cleared at
+/// turn end, so (unlike TypingStatusModel, which goes false during a mid-turn
+/// park) it stays true across parks: the accurate source for seeding a phone's
+/// turn-lifecycle state when it (re)subscribes mid-turn. Main-actor isolated to
+/// codify that all callers already run on the main actor.
+///
+/// Set by ChatService at turn start/end (via ChatBroker.publish(turnEvent:)). The
+/// consuming read - the subscribe snapshot that seeds a reconnecting phone's turn
+/// state from this - lands in a later step.
+@MainActor
+class TurnStatusModel {
+    static let instance = TurnStatusModel()
+
+    private var inFlight = Set<String>()
+
+    func set(inProgress: Bool, chatID: String) {
+        if inProgress {
+            inFlight.insert(chatID)
+        } else {
+            inFlight.remove(chatID)
+        }
+    }
+
+    func inProgress(chatID: String) -> Bool {
+        return inFlight.contains(chatID)
     }
 }

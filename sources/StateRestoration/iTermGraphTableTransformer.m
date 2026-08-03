@@ -92,7 +92,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
     NSMutableDictionary<NSNumber *, NSMutableDictionary *> *nodes = [NSMutableDictionary dictionary];
     for (NSArray *row in _nodeRows) {
         if (row.count != 7) {
-            DLog(@"Wrong number of items in row: %@", row);
+            RLog(@"Wrong number of items in row: %@", row);
             _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
                                              code:1
                                          userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Wrong number of items in row: %@", row] }];
@@ -107,7 +107,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
         NSNumber *hasLargeData = [NSNumber castFrom:row[6]] ?: @NO;
 
         if (!row || !key || !identifier || !parent) {
-            DLog(@"Bad row: %@", row);
+            RLog(@"Bad row: %@", row);
             _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
                                              code:1
                                          userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Bad row: %@", row] }];
@@ -120,7 +120,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
 
         if (parent.integerValue == 0 && key.length == 0) {
             if (*rootNodeIDOut) {
-                DLog(@"Two roots found");
+                RLog(@"Two roots found");
                 _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
                                                  code:1
                                              userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Two roots found"] }];
@@ -153,7 +153,7 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
         NSMutableDictionary<NSString *, id> *parentDict = nodes[nodeDict[@"parent"]];
         if (!parentDict) {
             ok = NO;
-            DLog(@"Dangling parent pointer %@ from %@", nodeDict[@"parent"], nodeid);
+            RLog(@"Dangling parent pointer %@ from %@", nodeDict[@"parent"], nodeid);
             _lastError = [NSError errorWithDomain:@"com.iterm2.graph-transformer"
                                              code:1
                                          userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Dangling parent pointer %@ from %@", nodeDict[@"parent"], nodeid] }];
@@ -169,15 +169,15 @@ static iTermEncoderGraphRecord *iTermGraphDeltaEncoderMakeGraphRecord(NSNumber *
     NSNumber *rootNodeID = nil;
     NSDictionary<NSNumber *, NSMutableDictionary *> *nodes = [self nodes:&rootNodeID];
     if (!nodes) {
-        DLog(@"nodes: returned nil");
+        RLog(@"nodes: returned nil");
         return nil;
     }
     if (!rootNodeID) {
-        DLog(@"No root found");
+        RLog(@"No root found");
         return nil;
     }
     if (![self attachChildrenToParents:nodes ignoringRootRowID:rootNodeID]) {
-        DLog(@"Failed to attach children to parents");
+        RLog(@"Failed to attach children to parents");
         return nil;
     }
 

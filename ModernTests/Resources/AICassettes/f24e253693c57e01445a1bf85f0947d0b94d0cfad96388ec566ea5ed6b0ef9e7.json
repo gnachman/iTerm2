@@ -1,0 +1,12 @@
+{
+  "canonicalRequest" : "POST\nhttps:\/\/api.anthropic.com\/v1\/messages\nanthropic-version: 2023-06-01\ncontent-type: application\/json\nx-api-key: <SECRET>\n\n{\"max_tokens\":64000,\"messages\":[{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"My favorite color is chartreuse. Reply OK.\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"claude-sonnet-4-0\",\"stream\":true,\"temperature\":0}",
+  "key" : "f24e253693c57e01445a1bf85f0947d0b94d0cfad96388ec566ea5ed6b0ef9e7",
+  "response" : {
+    "data" : "{\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-sonnet-4-0\"},\"request_id\":\"req_011CcFbYwEQMGVxzpzKp4c1Z\"}",
+    "error" : "HTTP request failed with status 404."
+  },
+  "streamChunks" : [
+    "{\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-sonnet-4-0\"},\"request_id\":\"req_011CcFbYwEQMGVxzpzKp4c1Z\"}"
+  ],
+  "streaming" : true
+}

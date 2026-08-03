@@ -52,7 +52,7 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 
 - (void)startWithSession:(PTYSession *)session move:(BOOL)move {
     if (session_) {
-        DLog(@"Decline because we already have a session %@", session_);
+        RLog(@"Decline because we already have a session %@", session_);
         return;
     }
     DLog(@"startWithSession:%@ move:%@\n%@", session, @(move), [NSThread callStackSymbols]);
@@ -112,6 +112,10 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 
 - (void)moveSessionToTab:(PTYSession *)movingSession {
     DLog(@"moveSessionToTab:%@", movingSession);
+    if (movingSession.delegate.realParentWindow.layoutLocked) {
+        DLog(@"Layout is locked, refusing to move session to a new tab");
+        return;
+    }
     PseudoTerminal *term = [PseudoTerminal castFrom:[movingSession.delegate realParentWindow]];
     if (!term) {
         return;
@@ -121,6 +125,10 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 
 - (void)moveSessionToNewWindow:(PTYSession *)movingSession atPoint:(NSPoint)point {
     DLog(@"moveSessionToNewWindow:%@ atPoint:%@", movingSession, NSStringFromPoint(point));
+    if (movingSession.delegate.realParentWindow.layoutLocked) {
+        DLog(@"Layout is locked, refusing to move session to a new window");
+        return;
+    }
     if (movingSession.locked) {
         DLog(@"Locked");
         return;
@@ -214,7 +222,7 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 - (BOOL)reallyDropInSession:(PTYSession *)dest
                        half:(SplitSessionHalf)half
                     atPoint:(NSPoint)point {
-    DLog(@"reallyDropInSession:%@ half:%@ atPoint:%@", dest, @(half), NSStringFromPoint(point));
+    RLog(@"reallyDropInSession:%@ half:%@ atPoint:%@", dest, @(half), NSStringFromPoint(point));
     if ((dest && ![session_ isCompatibleWith:dest]) ||  // Would create hetero-tmuxual splits in tab
         dest == session_ ||  // move to self
         !session_) {         // no source (?)

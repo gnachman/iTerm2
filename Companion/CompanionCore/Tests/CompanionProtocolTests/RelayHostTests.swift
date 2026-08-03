@@ -17,31 +17,31 @@ final class RelayHostTests: XCTestCase {
 
     func test_defaultRelayDisclosesNothing() {
         XCTAssertNil(RelayHost.hostToDisclose(
-            relayOrigin: "https://\(defaultHost)", default: defaultHost))
+            originURL: "https://\(defaultHost)", default: defaultHost))
     }
 
     func test_missingOrMalformedOriginDisclosesNothing() {
-        XCTAssertNil(RelayHost.hostToDisclose(relayOrigin: nil, default: defaultHost))
-        XCTAssertNil(RelayHost.hostToDisclose(relayOrigin: "", default: defaultHost))
-        XCTAssertNil(RelayHost.hostToDisclose(relayOrigin: "not a url", default: defaultHost))
+        XCTAssertNil(RelayHost.hostToDisclose(originURL: nil, default: defaultHost))
+        XCTAssertNil(RelayHost.hostToDisclose(originURL: "", default: defaultHost))
+        XCTAssertNil(RelayHost.hostToDisclose(originURL: "not a url", default: defaultHost))
     }
 
     func test_nonDefaultAsciiHostIsDisclosedVerbatim() {
         XCTAssertEqual(
-            RelayHost.hostToDisclose(relayOrigin: "https://relay.example.com", default: defaultHost),
+            RelayHost.hostToDisclose(originURL: "https://relay.example.com", default: defaultHost),
             "relay.example.com")
     }
 
     func test_nonDefaultUnicodeHostIsDisclosedInPunycode() {
         // A confusable lookalike must show as its punycode, not the Unicode form.
         XCTAssertEqual(
-            RelayHost.hostToDisclose(relayOrigin: "https://münchen.example", default: defaultHost),
+            RelayHost.hostToDisclose(originURL: "https://münchen.example", default: defaultHost),
             "xn--mnchen-3ya.example")
     }
 
     func test_disclosureIgnoresPortAndPath() {
         XCTAssertEqual(
-            RelayHost.hostToDisclose(relayOrigin: "https://relay.example:8443/x", default: defaultHost),
+            RelayHost.hostToDisclose(originURL: "https://relay.example:8443/x", default: defaultHost),
             "relay.example")
     }
 }

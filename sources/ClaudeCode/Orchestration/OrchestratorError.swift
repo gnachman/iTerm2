@@ -20,6 +20,7 @@ enum OrchestratorError: Error {
     case timeout
     case unsupported(reason: String)
     case notImplemented(String)
+    case safetyBlocked(reason: String)
 
     var code: String {
         switch self {
@@ -33,6 +34,7 @@ enum OrchestratorError: Error {
         case .timeout: return "timeout"
         case .unsupported: return "unsupported"
         case .notImplemented: return "not_implemented"
+        case .safetyBlocked: return "safety_blocked"
         }
     }
 
@@ -58,6 +60,8 @@ enum OrchestratorError: Error {
             return "Unsupported: \(reason)"
         case .notImplemented(let detail):
             return "Not implemented yet: \(detail)"
+        case .safetyBlocked(let reason):
+            return "This command was not run automatically: \(reason)"
         }
     }
 

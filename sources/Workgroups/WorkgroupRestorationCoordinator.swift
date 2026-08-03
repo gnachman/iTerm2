@@ -191,7 +191,7 @@ final class WorkgroupRestorationCoordinator: NSObject {
                 // this each pass is harmless.
                 if NSDate.it_timeSinceBoot() - p.registeredAt >= pendingReconstructionTimeout,
                    !p.restoringGuidsReleased {
-                    DLog("WorkgroupRestoration: anchor \(anchor.guid) not ready within \(pendingReconstructionTimeout)s; releasing \(p.guids.count) restoring GUIDs but still awaiting its window")
+                    RLog("WorkgroupRestoration: anchor \(anchor.guid) not ready within \(pendingReconstructionTimeout)s; releasing \(p.guids.count) restoring GUIDs but still awaiting its window")
                     releaseRestoringGUIDs(p)
                 }
                 continue
@@ -232,7 +232,7 @@ final class WorkgroupRestorationCoordinator: NSObject {
         // We bail BEFORE deserializing the members so we don't create and
         // immediately abandon their sessions.
         guard let workgroup = iTermWorkgroupModel.instance.workgroup(uniqueIdentifier: workgroupID) else {
-            DLog("WorkgroupRestoration: config \(workgroupID) is gone; peers not restored, anchor left standalone")
+            RLog("WorkgroupRestoration: config \(workgroupID) is gone; peers not restored, anchor left standalone")
             return
         }
 
@@ -257,6 +257,16 @@ final class WorkgroupRestorationCoordinator: NSObject {
                 }
                 let frame = NSRectFromString((m[K.frame] as? String) ?? "")
                 let view = SessionView(frame: frame)
+                // A non-pending code-review/diff peer had a live program at
+                // save time. If its program is gone we must not launch a
+                // replacement (that would be a stray shell); leave its
+                // restored last output on screen instead. Regular peers keep
+                // the normal relaunch behavior.
+                var options: [AnyHashable: Any]? = nil
+                if let cfg = workgroup.session(withUniqueIdentifier: configID),
+                   iTermWorkgroupRestoration.modeInhibitsRelaunch(cfg.mode) {
+                    options = [PTYSessionArrangementOptionsInhibitRelaunch: true]
+                }
                 guard let session = PTYSession(
                     fromArrangement: arrangement,
                     named: nil,
@@ -264,7 +274,7 @@ final class WorkgroupRestorationCoordinator: NSObject {
                     with: nil,
                     for: .paneObject,
                     partialAttachments: nil,
-                    options: nil) else {
+                    options: options) else {
                     continue
                 }
                 // Put it in buried state (textview disconnected, no
@@ -282,7 +292,7 @@ final class WorkgroupRestorationCoordinator: NSObject {
             // members. We did build the other members above; terminate
             // them rather than leaking abandoned sessions, and degrade
             // gracefully to just the still-on-screen anchor.
-            DLog("WorkgroupRestoration: leader \(leaderID) missing from restored members; degrading to anchor only")
+            RLog("WorkgroupRestoration: leader \(leaderID) missing from restored members; degrading to anchor only")
             for (id, s) in sessionsByConfigID where id != anchorID {
                 s.terminate()
             }
@@ -329,24 +339,34 @@ final class WorkgroupRestorationCoordinator: NSObject {
 
         // The anchor is the one peer that window restoration already
         // brought back as a live session, so it can't be "spawned fresh"
-        // like the buried members. If it was a deferred peer still on its
-        // pre-launch overlay at save time, normal restoration relaunched
-        // its shell and dropped the overlay; re-present it here. The
-        // reload variants restart the (now-running) shell on Start, which
-        // is the right primitive for an already-live session.
-        if (descriptor[K.anchorPending] as? Bool) ?? false,
-           let cfg = workgroup.sessions.first(where: {
-               $0.uniqueIdentifier == anchorID
-           }) {
+        // like the buried members.
+        if let cfg = workgroup.session(withUniqueIdentifier: anchorID) {
+            // Always restore the anchor's mode tag (and the code-review
+            // raw command) so the reload / restart / toolbar affordance
+            // matches a live workgroup. adopt() does this for restored
+            // PEER members but not for the leader, and the anchor may be
+            // the leader. Neither is persisted on the session arrangement.
             anchor.workgroupSessionMode = cfg.mode
-            switch cfg.mode {
-            case .codeReview:
+            if cfg.mode == .codeReview {
                 anchor.codeReviewRawCommand = cfg.command
-                anchor.reloadCodeReviewPromptOverlay()
-            case .diff:
-                anchor.reloadDiffWithDeferralIfNeeded()
-            case .regular:
-                break
+            }
+            // Only re-present the pre-launch overlay if it was showing at
+            // save time. If it was, normal restoration relaunched the
+            // anchor's shell and dropped the overlay; the reload variants
+            // restart that now-running shell on Start. If it was NOT
+            // showing, the anchor had a live program: we leave the restored
+            // last output on screen, and if the program is gone
+            // sessionFromArrangement already put the session in a
+            // restartable exited state so the toolbar reload still works.
+            if (descriptor[K.anchorPending] as? Bool) ?? false {
+                switch cfg.mode {
+                case .codeReview:
+                    anchor.reloadCodeReviewPromptOverlay()
+                case .diff:
+                    anchor.reloadDiffWithDeferralIfNeeded()
+                case .regular:
+                    break
+                }
             }
         }
 

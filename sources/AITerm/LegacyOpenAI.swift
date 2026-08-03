@@ -68,6 +68,8 @@ struct LLMLegacyResponseParser: LLMResponseParser {
             var total_tokens: Int
         }
 
+        var promptTokens: Int? { usage?.prompt_tokens }
+
         var choiceMessages: [LLM.Message] {
             // The legacy `choices` array is n-sampling alternatives.
             // iTerm2 never requests n > 1, so surface only the first.

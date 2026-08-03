@@ -7,6 +7,7 @@
 //
 
 #import "SplitPanel.h"
+#import "iTermModalSheetRunner.h"
 #import "ProfileListView.h"
 
 @interface SplitPanel ()<ProfileListViewDelegate>
@@ -31,11 +32,16 @@
             [splitPanel.label setStringValue:@"Split current pane horizontally with profile:"];
         }
         [parent.window beginSheet:splitPanel.window completionHandler:^(NSModalResponse returnCode) {
-            [NSApp stopModal];
+            // Fires a run-loop turn later, after iTermRunModalForWindowAbortingIfParentCloses
+            // may have aborted our session (parent closed). Only stop if we're still the
+            // current modal, so we don't stop an unrelated modal that is live by then.
+            if (NSApp.modalWindow == splitPanel.window) {
+                [NSApp stopModal];
+            }
         }];
 
         NSWindow *panel = [splitPanel window];
-        [NSApp runModalForWindow:panel];
+        iTermRunModalForWindowAbortingIfParentCloses(panel, parent.window);
         [parent.window endSheet:splitPanel.window];
         [panel orderOut:nil];
         [splitPanel close];

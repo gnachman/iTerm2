@@ -267,8 +267,7 @@ enum AILiveAttachmentFixtures {
     }
 
     private static func projectRoot() -> String? {
-        // See AILiveHarness.configPath() for why /tmp.
-        let configPath = "/tmp/iterm2-ai-live.json"
+        let configPath = AILiveHarness.configFilePath()
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: String]
         else {

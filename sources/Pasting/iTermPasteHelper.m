@@ -378,23 +378,39 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     [self tryToPasteEvent:event];
 }
 
+- (void)pasteLiteralString:(NSString *)string afterDelay:(NSTimeInterval)delay {
+    PasteEvent *event = [self pasteEventWithString:string
+                                            slowly:NO
+                                  escapeShellChars:NO
+                                          isUpload:NO
+                                   allowBracketing:NO
+                                      tabTransform:kTabTransformNone
+                                      spacesPerTab:0
+                                          progress:nil];
+    // Never interrupt an unattended submit key with a multi-line paste warning.
+    event.flags |= kPasteFlagsDisableWarnings;
+    event.initialDelay = delay;
+    RLog(@"pasteLiteralString length=%@ afterDelay=%@", @(string.length), @(delay));
+    [self tryToPasteEvent:event];
+}
+
 // this needs to take the delay, chunk size, key names, and the exact flags it wants
 - (void)tryToPasteEvent:(PasteEvent *)pasteEvent {
     DLog(@"-[iTermPasteHelper pasteString:flags:");
     DLog(@"length=%@, flags=%@", @(pasteEvent.string.length), @(pasteEvent.flags));
     if ([pasteEvent.string length] == 0) {
-        DLog(@"Beep: Tried to paste 0-byte string. Beep.");
+        RLog(@"Beep: Tried to paste 0-byte string. Beep.");
         NSBeep();
         return;
     }
     if (!(pasteEvent.flags & (kPasteFlagsCommands | kPasteFlagsDisableWarnings))) {
         if (![self maybeWarnAboutMultiLinePaste:pasteEvent]) {
-            DLog(@"Multiline paste declined.");
+            RLog(@"Multiline paste declined.");
             return;
         }
     }
     if ([self isPasting]) {
-        DLog(@"Already pasting. Enqueue event.");
+        RLog(@"Already pasting. Enqueue event.");
         [self enqueueEvent:pasteEvent];
         return;
     }
@@ -425,7 +441,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 
     DLog(@"String to paste now has length %@", @(pasteEvent.string.length));
     if ([pasteEvent.string length] == 0) {
-        DLog(@"Beep: Tried to paste 0-byte string (became 0 length after removing controls). Beep.");
+        RLog(@"Beep: Tried to paste 0-byte string (became 0 length after removing controls). Beep.");
         NSBeep();
         return;
     }
@@ -567,7 +583,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
             _timer = nil;
         }
     } else {
-        DLog(@"Done pasting");
+        RLog(@"Done pasting");
         _timer = nil;
         [self hidePasteIndicator];
         _pasteContext = nil;
@@ -617,8 +633,24 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     }
 
     if (_pasteContext.blockAtNewline && [_delegate pasteHelperShouldWaitForPrompt]) {
-        DLog(@"Not at shell prompt at start of paste.");
+        RLog(@"Not at shell prompt at start of paste.");
         _pasteContext.isBlocked = YES;
+        return;
+    }
+
+    if (pasteEvent.initialDelay > 0) {
+        // Wait initialDelay before writing the first byte. Keep _timer set so
+        // isPasting stays true during the wait: nothing else can jump the queue,
+        // and the delay is honored whether this event ran immediately or was
+        // dequeued after a prior paste drained.
+        RLog(@"Paste has initial delay of %@ before writing %@ byte(s)",
+             @(pasteEvent.initialDelay), @(_buffer.length));
+        [_timer invalidate];
+        _timer = [self scheduledTimerWithTimeInterval:pasteEvent.initialDelay
+                                               target:self
+                                             selector:@selector(pasteNextChunkAndScheduleTimer)
+                                             userInfo:nil
+                                              repeats:NO];
         return;
     }
 
@@ -650,7 +682,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
                 case kiTermWarningSelection0:
                     break;
                 case kiTermWarningSelection1:
-                    DLog(@"canceled 'ok to paste N characters': return NO");
+                    RLog(@"canceled 'ok to paste N characters': return NO");
                     return NO;
                 case kiTermWarningSelection2:
                     DLog(@"chose Advanced for 'ok to paste N characters': return NO");
@@ -701,7 +733,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         [iTermWarningAction warningActionWithLabel:@"Paste Without Newline"
                                              block:^(iTermWarningSelection selection) {
             [pasteEvent trimNewlines];
-            DLog(@"paste without newline selected: set result to YES");
+            RLog(@"paste without newline selected: set result to YES");
             result = YES;
         }];
 
@@ -743,7 +775,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
             flags |= kPTYSessionPasteSlowly;
             // The other two flags do not appear to be used
         }
-        DLog(@"Advanced chosen: set result to NO");
+        RLog(@"Advanced chosen: set result to NO");
         [self showAdvancedPasteWithFlags:flags];
         result = NO;
     }]];

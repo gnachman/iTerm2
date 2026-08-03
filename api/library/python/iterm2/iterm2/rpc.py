@@ -112,6 +112,20 @@ async def async_send_text(connection, session, text, suppress_broadcast):
     return await _async_call(connection, request)
 
 
+async def async_screenshot(connection, session):
+    """
+    Captures a PNG screenshot of a session's visible screen contents.
+
+    connection: A connected iterm2.Connection.
+    session: A session ID.
+
+    Returns: iterm2.api_pb2.ServerOriginatedMessage
+    """
+    request = _alloc_request()
+    request.screenshot_request.session = session
+    return await _async_call(connection, request)
+
+
 async def async_split_pane(
         connection,
         session,

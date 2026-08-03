@@ -40,6 +40,16 @@
     }
 }
 
+- (BOOL)anyLineNeedsBidiReload {
+    for (int i = _firstEntry; i < cll_entries; i++) {
+        const LineBlockMetadata *md = [_metadataArray metadataAtIndex:i];
+        if (md->lineMetadata.rtlFound || md->bidi_display_info != nil) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (MutableScreenCharArray *)mutableScreenCharArrayForRawLine:(int)i {
     const LineBlockMetadata *md = [_metadataArray metadataAtIndex:i];
     return [[MutableScreenCharArray alloc] initWithLine:_characterBuffer.pointer + [self _lineRawOffset:i]

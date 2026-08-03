@@ -29,8 +29,17 @@ class ToolStatus: NSView {
         }
         var sessionID: String
         var lastChanged = NSDate.it_timeSinceBoot()
+        // Snoozed rows sink to the bottom of the list and render dimmed.
+        // This is transient per-tool UI state, not part of the session's
+        // tab status, so it lives here rather than in iTermSessionTabStatus.
+        var snoozed = false
 
         static func < (lhs: ToolStatus.Status, rhs: ToolStatus.Status) -> Bool {
+            if lhs.snoozed != rhs.snoozed {
+                // Snoozed entries always sort after un-snoozed ones,
+                // regardless of priority or recency.
+                return !lhs.snoozed
+            }
             if lhs.tabStatus.priority != rhs.tabStatus.priority {
                 return lhs.tabStatus.priority < rhs.tabStatus.priority
             }
@@ -56,6 +65,10 @@ class ToolStatus: NSView {
     private static let debounceInterval: TimeInterval = 0.05
     private var pendingKeys = Set<String>()
     private var pendingFlush: DispatchWorkItem?
+    // Session GUIDs the user has snoozed via the row context menu. Transient
+    // per-tool UI state (not persisted): snoozed rows sink to the bottom and
+    // render dimmed, and auto-un-snooze when their status next changes.
+    private var snoozedSessionIDs = Set<String>()
     // Holds the memoized lookup result weakly, so a key present with a
     // now-nil session means "was resolved, but that session has since
     // died" — which resolveSessionForReload reports the same as a miss
@@ -132,6 +145,11 @@ class ToolStatus: NSView {
         _tableView!.allowsMultipleSelection = false
         _tableView!.reloadData()
         _tableView!.backgroundColor = .clear
+        // Right-click menu for snoozing rows. Populated per right-click in
+        // menuNeedsUpdate from the table's clickedRow.
+        let rowMenu = NSMenu()
+        rowMenu.delegate = self
+        _tableView!.menu = rowMenu
         relayout()
         token = SessionStatusController.instance.addObserver { [weak self] key, value, change in
             self?.didChange(key: key, value: value, change: change)
@@ -238,7 +256,7 @@ extension ToolStatus {
 
     override func viewDidMoveToWindow() {
         let delegate = toolWrapper()?.delegate?.delegate
-        DLog("ToolStatus viewDidMoveToWindow: window=\(window.d), delegate=\(delegate.d), statuses in controller=\(SessionStatusController.instance.statuses.keys.map { $0 })")
+        RLog("ToolStatus viewDidMoveToWindow: window=\(window.d), delegate=\(delegate.d), statuses in controller=\(SessionStatusController.instance.statuses.keys.map { $0 })")
         // The fresh reload below is authoritative — drop any in-flight debounced work.
         resolvedSessionsForReload.removeAll()
         pendingFlush?.cancel()
@@ -248,7 +266,7 @@ extension ToolStatus {
             let contains = windowContains(sessionGUID: status.sessionID)
             DLog("ToolStatus viewDidMoveToWindow: sessionID=\(status.sessionID) contains=\(contains) hasActive=\(status.hasActiveStatus)")
             if contains {
-                return Status(tabStatus: status, sessionID: status.sessionID)
+                return makeStatus(tabStatus: status, sessionID: status.sessionID)
             } else {
                 return nil
             }
@@ -311,6 +329,11 @@ extension ToolStatus {
 
     Sessions are sorted by priority. Click the ⚙ button to configure which status \
     keywords have the highest priority. The default order is: waiting, working, idle.
+
+    ### Snoozing
+
+    Right-click a row and choose **Snooze** to move it to the bottom of the list and \
+    dim it. A snoozed entry automatically un-snoozes the next time its status changes.
     """
 }
 
@@ -534,7 +557,24 @@ private extension ToolStatus {
             animateRowMutation(mutation)
         }
         _tableView?.endUpdates()
+        // A status change can auto-un-snooze a row, shifting the snoozed/active
+        // boundary onto a row the per-row animation above didn't reload. Refresh
+        // the separator on every row so the divider lands in the right place.
+        refreshSeparators()
         updateSelectionWithoutChangingFirstResponder()
+    }
+
+    /// Re-renders every row so each cell's snoozed-group divider reflects the
+    /// current ordering. Cheap (the toolbelt is small) and preserves selection
+    /// and scroll, unlike a full reloadData(). No-op when nothing is snoozed.
+    private func refreshSeparators() {
+        guard !snoozedSessionIDs.isEmpty,
+              let tableView = _tableView,
+              !displayedStatuses.isEmpty else {
+            return
+        }
+        tableView.reloadData(forRowIndexes: IndexSet(integersIn: 0..<displayedStatuses.count),
+                             columnIndexes: IndexSet(integer: 0))
     }
 
     /// Describes how a single key's change moved the corresponding row within
@@ -577,7 +617,7 @@ private extension ToolStatus {
                 return .none
             }
             var updated = statuses
-            updated.append(Status(tabStatus: value!, sessionID: key))
+            updated.append(makeStatus(tabStatus: value!, sessionID: key))
             updated.sort()
             guard let j = updated.firstIndex(where: { $0.sessionID == key }) else {
                 return .none
@@ -585,6 +625,10 @@ private extension ToolStatus {
             statuses = updated
             return .inserted(at: j)
         case .removed:
+            // Drop any snooze so a session whose status later reappears
+            // comes back un-snoozed, and so the set doesn't accumulate
+            // GUIDs of gone sessions.
+            snoozedSessionIDs.remove(key)
             guard let i = statuses.firstIndex(where: { $0.sessionID == key }) else {
                 return .none
             }
@@ -598,8 +642,11 @@ private extension ToolStatus {
                 it_assert(false, "mutateModel(.updated) for \(key) but session is not in statuses; applyModelChange should only route here when inLocal is true")
                 return .none
             }
+            // A status change auto-un-snoozes the row. makeStatus reads the
+            // snooze set, so clear it first to get snoozed == false.
+            snoozedSessionIDs.remove(key)
             var updated = statuses
-            updated[i] = Status(tabStatus: value!, sessionID: key)
+            updated[i] = makeStatus(tabStatus: value!, sessionID: key)
             updated.sort()
             guard let j = updated.firstIndex(where: { $0.sessionID == key }) else {
                 return .none
@@ -649,14 +696,19 @@ private extension ToolStatus {
     }
 
     /// Groups sessions by workgroup, keeping one representative per group, then
-    /// sorts the representatives by the standard table order. Solo sessions (no
-    /// workgroup peer port) each remain their own entry.
+    /// sorts the representatives by the standard table order. Solo sessions (not
+    /// in any workgroup) each remain their own entry.
     private static func mergeByWorkgroup(_ all: [Status]) -> [Status] {
+        // The currently visible peer of a multi-peer switcher represents its
+        // group outright (see mergeRepresentativePrefers). Resolve that set once
+        // up front rather than re-walking each candidate's peer port inside the
+        // pairwise reduce below.
+        let visibleSessionIDs = visiblePeerSessionIDs(among: all)
         var representatives = [GroupKey: Status]()
         for status in all {
             let key = groupKey(forSessionID: status.sessionID)
             if let existing = representatives[key] {
-                if mergePrefers(status, over: existing) {
+                if mergePrefers(status, over: existing, visibleSessionIDs: visibleSessionIDs) {
                     representatives[key] = status
                 }
             } else {
@@ -666,41 +718,79 @@ private extension ToolStatus {
         return representatives.values.sorted()
     }
 
-    private enum GroupKey: Hashable {
-        // All peers in a workgroup share the same peer-port object.
-        case workgroup(ObjectIdentifier)
-        // Solo sessions have no peer port; key by session so each is its own row.
-        case solo(String)
+    /// The GUIDs that are the currently visible (active) peer of a peer switcher
+    /// holding *more than one* realized peer. Such a session represents its
+    /// merged workgroup row: it's the pane the user is actually looking at, so
+    /// the row should mirror what they see rather than a buried sibling's stale
+    /// status. A single-peer port is not a switcher and is left to the existing
+    /// recency/priority rules.
+    private static func visiblePeerSessionIDs(among all: [Status]) -> Set<String> {
+        guard let controller = iTermController.sharedInstance() else {
+            return []
+        }
+        var result = Set<String>()
+        for status in all {
+            guard let session = controller.anySession(withGUID: status.sessionID),
+                  let port = session.peerPort,
+                  port.realizedPeerSessions.count > 1,
+                  let active = port.activeSession,
+                  active.guid == status.sessionID else {
+                continue
+            }
+            result.insert(status.sessionID)
+        }
+        return result
     }
 
     private static func groupKey(forSessionID sessionID: String) -> GroupKey {
-        if let session = iTermController.sharedInstance()?.anySession(withGUID: sessionID),
-           let port = session.peerPort {
-            return .workgroup(ObjectIdentifier(port))
+        guard let session = iTermController.sharedInstance()?.anySession(withGUID: sessionID) else {
+            return .solo(sessionID)
         }
-        return .solo(sessionID)
+        let workgroupInstanceID = iTermWorkgroupController.instance
+            .workgroupInstance(on: session)?.instanceUniqueIdentifier
+        let peerPortIdentity = session.peerPort.map { ObjectIdentifier($0) }
+        return groupKey(sessionID: sessionID,
+                        workgroupInstanceID: workgroupInstanceID,
+                        peerPortIdentity: peerPortIdentity)
     }
 
-    /// Within a workgroup, the representative is the peer whose status changed
-    /// most recently. Recency, not priority, is the right signal here: inside a
-    /// workgroup an idle peer is often idle *because* a sibling is busy (e.g. a
-    /// chat session waiting for its code-review peer to finish), so the
-    /// freshest transition tracks where the action is. `lastChanged` is a
-    /// reliable proxy for "last genuine transition" because the status pipeline
-    /// only notifies on real changes (screenSetTabStatus bails when
-    /// iTermSessionTabStatus.apply reports no change), so repaint spam never
-    /// bumps it. Ties (e.g. right after a rebuild reset every timestamp to the
-    /// same instant) fall back to priority, then sessionID. Note this is
-    /// independent of the table's overall row ordering, which still sorts the
-    /// chosen representatives by priority.
-    private static func mergePrefers(_ candidate: Status, over current: Status) -> Bool {
-        if candidate.lastChanged != current.lastChanged {
-            return candidate.lastChanged > current.lastChanged
-        }
-        if candidate.tabStatus.priority != current.tabStatus.priority {
-            return candidate.tabStatus.priority < current.tabStatus.priority
-        }
-        return candidate.sessionID < current.sessionID
+    /// Within a workgroup, the representative is chosen in this order:
+    ///
+    /// 1. A non-snoozed member beats a snoozed one, so a snoozed member *loses*
+    ///    representation and the merged row surfaces a live sibling rather than
+    ///    one snoozed peer's stale status. A workgroup renders as snoozed
+    ///    (dimmed, at the bottom) only when *every* member is snoozed.
+    /// 2. Among equally-snoozed members, the currently visible peer of a
+    ///    peer switcher wins: it's the pane the user is looking at, so the row
+    ///    mirrors what they see. This is the reliable signal, unlike recency:
+    ///    a busy code-review peer that's holding a stable status string stops
+    ///    bumping `lastChanged`, so recency would wrongly promote a sibling
+    ///    chat peer the moment it flips to idle even while the review keeps
+    ///    working. (Sitting below snooze keeps a snoozed visible peer from
+    ///    hiding a freshly-active buried sibling.)
+    /// 3. Otherwise (no visible switcher peer, e.g. every member is buried, or
+    ///    the group isn't a multi-peer switcher) fall back to recency, then
+    ///    priority, then sessionID. `lastChanged` is a proxy for "last genuine
+    ///    transition" because the status pipeline only notifies on real changes
+    ///    (screenSetTabStatus bails when iTermSessionTabStatus.apply reports no
+    ///    change), so repaint spam never bumps it.
+    ///
+    /// Note the representative choice is independent of the table's overall row
+    /// ordering, which still sorts the chosen representatives by priority.
+    private static func mergePrefers(_ candidate: Status,
+                                     over current: Status,
+                                     visibleSessionIDs: Set<String>) -> Bool {
+        return mergeRepresentativePrefers(
+            candidateVisible: visibleSessionIDs.contains(candidate.sessionID),
+            candidateSnoozed: candidate.snoozed,
+            candidateLastChanged: candidate.lastChanged,
+            candidatePriority: candidate.tabStatus.priority,
+            candidateSessionID: candidate.sessionID,
+            currentVisible: visibleSessionIDs.contains(current.sessionID),
+            currentSnoozed: current.snoozed,
+            currentLastChanged: current.lastChanged,
+            currentPriority: current.tabStatus.priority,
+            currentSessionID: current.sessionID)
     }
 
     func contentSize() -> NSSize {
@@ -840,6 +930,25 @@ private extension ToolStatus {
             .toolbeltWindowContainsSession(withGUID: guid) == true
     }
 
+    // True for the topmost snoozed row, which draws the divider separating
+    // the snoozed group from the active rows above it. Snoozed rows always
+    // sort to the end, so this is the first snoozed entry whose predecessor
+    // is not snoozed. A snoozed row at index 0 has no active rows above it
+    // (everything is snoozed), so it draws no divider.
+    private func isFirstSnoozedRow(_ row: Int) -> Bool {
+        guard row > 0, row < displayedStatuses.count, displayedStatuses[row].snoozed else {
+            return false
+        }
+        return !displayedStatuses[row - 1].snoozed
+    }
+
+    // Builds a Status carrying the session's current snooze state.
+    private func makeStatus(tabStatus: iTermSessionTabStatus, sessionID: String) -> Status {
+        return Status(tabStatus: tabStatus,
+                      sessionID: sessionID,
+                      snoozed: snoozedSessionIDs.contains(sessionID))
+    }
+
     func configureCell(_ cell: ToolStatusCellView, for row: Int) {
         let status = displayedStatuses[row]
         guard let session = resolveSessionForReload(guid: status.sessionID) else {
@@ -882,7 +991,9 @@ private extension ToolStatus {
                        statusText: tabStatus.statusText,
                        statusColor: statusColor,
                        detail: tabStatus.detailText,
-                       armed: NotifyOnStatusChangeController.instance.isSessionArmed(forGuid: status.sessionID))
+                       armed: NotifyOnStatusChangeController.instance.isSessionArmed(forGuid: status.sessionID),
+                       dimmed: status.snoozed,
+                       showSeparator: isFirstSnoozedRow(row))
     }
 }
 
@@ -939,10 +1050,154 @@ extension ToolStatus: NSTableViewDelegate {
             // one-shot may have fired before logging was enabled, and
             // an unreachable session generates no reload that would
             // re-trigger it).
-            DLog("No session with ID \(guid)\n\(Self.diagnosis(unresolvableGUID: guid))")
+            RLog("No session with ID \(guid)\n\(Self.diagnosis(unresolvableGUID: guid))")
             return
         }
         session.reveal()
         window?.makeFirstResponder(_tableView)
+    }
+}
+
+// MARK: - Snooze context menu
+extension ToolStatus: NSMenuDelegate {
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        menu.removeAllItems()
+        guard let tableView = _tableView else {
+            return
+        }
+        let row = tableView.clickedRow
+        guard row >= 0, row < displayedStatuses.count else {
+            return
+        }
+        let sessionID = displayedStatuses[row].sessionID
+        // A merged row stands for a whole workgroup, so its checkmark reflects
+        // (and its toggle affects) every member, not just the representative.
+        let members = groupMemberSessionIDs(forRepresentative: sessionID)
+        let item = NSMenuItem(title: "Snooze",
+                              action: #selector(toggleSnooze(_:)),
+                              keyEquivalent: "")
+        item.target = self
+        item.state = allSnoozed(members) ? .on : .off
+        item.representedObject = sessionID
+        menu.addItem(item)
+    }
+
+    @objc func toggleSnooze(_ sender: NSMenuItem) {
+        guard let sessionID = sender.representedObject as? String else {
+            return
+        }
+        let members = groupMemberSessionIDs(forRepresentative: sessionID)
+        // Toggle the group as a unit: if every member is already snoozed,
+        // un-snooze them all; otherwise snooze them all so the merged row
+        // reads as snoozed (a snoozed member only represents when all are).
+        setSnoozed(!allSnoozed(members), forSessionIDs: members)
+    }
+
+    // The session IDs in `statuses` that share the clicked representative's
+    // merge group. With merging off each row is its own session, so this is
+    // just that one session.
+    private func groupMemberSessionIDs(forRepresentative sessionID: String) -> [String] {
+        guard mergeWorkgroups else {
+            return [sessionID]
+        }
+        let targetKey = Self.groupKey(forSessionID: sessionID)
+        return statuses
+            .map { $0.sessionID }
+            .filter { Self.groupKey(forSessionID: $0) == targetKey }
+    }
+
+    private func allSnoozed(_ sessionIDs: [String]) -> Bool {
+        return !sessionIDs.isEmpty && sessionIDs.allSatisfy { snoozedSessionIDs.contains($0) }
+    }
+
+    private func setSnoozed(_ snoozed: Bool, forSessionIDs sessionIDs: [String]) {
+        let ids = Set(sessionIDs)
+        guard !ids.isEmpty else {
+            return
+        }
+        if snoozed {
+            snoozedSessionIDs.formUnion(ids)
+        } else {
+            snoozedSessionIDs.subtract(ids)
+        }
+        // Reflect the new flags on the model, re-sort so snoozed rows sink to
+        // the bottom, and reload. A snooze toggle can move rows across the
+        // whole list, so a full reload is simpler than animating each move.
+        for i in statuses.indices where ids.contains(statuses[i].sessionID) {
+            statuses[i].snoozed = snoozed
+        }
+        statuses.sort()
+        rebuildDisplayed()
+        _tableView?.reloadData()
+        updateSelectionWithoutChangingFirstResponder()
+    }
+}
+
+// MARK: - Workgroup merge grouping (internal for testing)
+extension ToolStatus {
+    enum GroupKey: Hashable {
+        // Every member of a workgroup shares its instance's stable id, so all
+        // of a workgroup's sessions collapse to one row even when they span
+        // several peer ports (the main port plus nested ports for split hosts)
+        // or are port-less split/tab children.
+        case workgroup(String)
+        // A workgroup peer port that couldn't be resolved to a registered
+        // instance (e.g. a stale back-pointer). Falls back to port identity so
+        // such peers still merge, matching the previous behavior.
+        case peerPort(ObjectIdentifier)
+        // Sessions in no workgroup; key by session so each is its own row.
+        case solo(String)
+    }
+
+    /// Pure grouping rule, separated from the live session/workgroup lookups so
+    /// it can be unit-tested: a session's workgroup instance is the strongest
+    /// signal (it spans every peer port of the workgroup), then peer-port
+    /// identity as a fallback, then solo.
+    static func groupKey(sessionID: String,
+                         workgroupInstanceID: String?,
+                         peerPortIdentity: ObjectIdentifier?) -> GroupKey {
+        if let workgroupInstanceID {
+            return .workgroup(workgroupInstanceID)
+        }
+        if let peerPortIdentity {
+            return .peerPort(peerPortIdentity)
+        }
+        return .solo(sessionID)
+    }
+
+    /// Pure representative-preference rule (see `mergePrefers`), separated from
+    /// `Status` so it can be unit-tested. Non-snoozed beats snoozed, then the
+    /// visible switcher peer beats a buried sibling, then recency beats priority
+    /// beats sessionID.
+    static func mergeRepresentativePrefers(candidateVisible: Bool,
+                                           candidateSnoozed: Bool,
+                                           candidateLastChanged: TimeInterval,
+                                           candidatePriority: Int,
+                                           candidateSessionID: String,
+                                           currentVisible: Bool,
+                                           currentSnoozed: Bool,
+                                           currentLastChanged: TimeInterval,
+                                           currentPriority: Int,
+                                           currentSessionID: String) -> Bool {
+        if candidateSnoozed != currentSnoozed {
+            // A snoozed member loses representation, so the merged row shows
+            // the liveliest non-snoozed peer; the group only reads as snoozed
+            // when every member is.
+            return !candidateSnoozed
+        }
+        if candidateVisible != currentVisible {
+            // The pane the user is looking at represents its group. Sits below
+            // snooze (a snoozed visible peer still yields to a non-snoozed
+            // buried sibling) and above recency (a stable-status busy peer must
+            // not lose the row to a sibling that merely changed more recently).
+            return candidateVisible
+        }
+        if candidateLastChanged != currentLastChanged {
+            return candidateLastChanged > currentLastChanged
+        }
+        if candidatePriority != currentPriority {
+            return candidatePriority < currentPriority
+        }
+        return candidateSessionID < currentSessionID
     }
 }

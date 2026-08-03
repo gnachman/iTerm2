@@ -17,15 +17,24 @@ extension PseudoTerminal {
     func setup(session: PTYSession,
                screenSize: NSSize,
                size: UnsafePointer<NSSize>?) {
+        let existingViewSize = currentSession()?.view?.scrollview.documentVisibleRect.size
         let sessionSize = windowSizeHelper.sessionSize(
             profile: session.justProfile,
-            existingViewSize: currentSession()?.view?.scrollview.documentVisibleRect.size,
+            existingViewSize: existingViewSize,
             desiredPointSize: size?.pointee,
             hasScrollbar: scrollbarShouldBeVisible(),
             scrollerStyle: scrollerStyle(),
             rightExtra: currentSession()?.desiredRightExtra() ?? 0.0,
             screenSize: screenSize)
-        windowSizeHelper.updateDesiredSize(sessionSize.desiredSize)
+        // Only seed the window’s desired size from a session’s profile when this is the
+        // first session of a brand-new window (no existing tab to measure). Adding a tab
+        // to an existing window must not re-seed desiredColumns/desiredRows from the new
+        // tab’s profile: a later canonicalizeWindowFrame (e.g. triggered by a screen or
+        // display-configuration change) reads those values and would resize the window to
+        // the tab’s profile width instead of preserving the window’s own width. Issue 12917.
+        if existingViewSize == nil {
+            windowSizeHelper.updateDesiredSize(sessionSize.desiredSize)
+        }
         if session.setScreenSize(sessionSize.pointSize,
                                  parent: self) {
             DLog("setupSession - call safelySetSessionSize")

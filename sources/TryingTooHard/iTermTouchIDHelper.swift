@@ -19,7 +19,7 @@ class iTermTouchIDHelper: NSObject {
         var error: NSError? = nil
         let canEvaluate = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
         if !canEvaluate {
-            DLog("Biometric authentication not available: \(error?.localizedDescription ?? "unknown")")
+            RLog("Biometric authentication not available: \(error?.localizedDescription ?? "unknown")")
         }
         return canEvaluate
     }
@@ -50,7 +50,7 @@ class iTermTouchIDHelper: NSObject {
     /// sudo. Returns nil if the bundled script is missing.
     @objc static var installCommand: String? {
         guard let path = scriptPath else {
-            DLog("install-touchid-sudo.sh not found in app bundle")
+            RLog("install-touchid-sudo.sh not found in app bundle")
             return nil
         }
         let escaped = path.replacingOccurrences(of: "\\", with: "\\\\")

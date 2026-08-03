@@ -528,7 +528,7 @@ static NSUInteger iTermLineBlockArrayNextUniqueID;
                            blockOffset:(int *)blockOffsetPtr
                                  index:(int *)indexPtr {
     if (position < 0) {
-        DLog(@"Block with negative position %@ requested, returning nil", @(position));
+        RLog(@"Block with negative position %@ requested, returning nil", @(position));
         return nil;
     }
     if (width > 0) {

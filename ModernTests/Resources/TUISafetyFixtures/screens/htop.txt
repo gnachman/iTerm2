@@ -1,0 +1,26 @@
+
+  1  [||||||||87.8%]    5  [||||||||97.3%]   9  [||||||||97.4%]    13 [||||||||97.4%]
+  2  [||||||||85.8%]    6  [||||||||97.4%]   10 [||||||||97.3%]    14 [||||||||97.3%]
+  3  [||||||||83.2%]    7  [||||||||97.4%]   11 [||||||||96.7%]    15 [||||||||97.3%]
+  4  [||||||||80.0%]    8  [||||||||97.4%]   12 [||||||||96.6%]    16 [||||||||97.3%]
+  Mem[|||||||||               7.60G/64.0G]   Tasks: 1475, 6389 thr; 16 running
+  Swp[||||||||||||||||||||||||10.8G/12.0G]   Load average: 15.79 16.61 16.16
+                                             Uptime: 8 days, 01:45:02
+
+  PID USER      PRI  NI  VIRT   RES S CPU% MEM%   TIME+  Command
+86750 gnachman   17   0  416G  610M ? 14.8  0.9  0:00.52 /Applications/Xcode.app/Contents/
+  708 gnachman   17   0  415G 26784 ?  2.8  0.0 17:02.60 /System/Library/CoreServices/Syst
+18780 gnachman   17   0  415G  214M ?  0.6  0.3  1h03:54 /Applications/MacSecurityCamera.a
+72487 gnachman   17   0  417G 1519M ?  0.6  2.3  0:43.50 /Applications/Xcode.app/Contents/
+  782 gnachman   17   0  416G  249M ?  0.5  0.4  1h30:57 /System/Library/PrivateFrameworks
+15782 gnachman   24   0  423G  916M ?  0.5  1.4  8:58.32 /Users/gnachman/Applications/iTer
+51458 gnachman   16   0  415G 11696 ?  0.4  0.0 15:54.91 /Applications/Xcode.app/Contents/
+72449 gnachman   17   0  424G  844M ?  0.3  1.3  3:23.07 /Applications/Xcode.app/Contents/
+  679 gnachman   17   0  415G  165M ?  0.3  0.3 20:58.82 /System/Applications/Utilities/Ac
+  709 gnachman   17   0  416G  231M ?  0.3  0.4  2:25.21 /System/Library/CoreServices/Find
+82844 gnachman    8   0  485G  563M ?  0.2  0.9  0:00.60 claude Review the pending changes
+93457 gnachman   17   0  415G 54496 ?  0.2  0.1  0:58.25 /System/Library/Frameworks/AppKit
+43634 gnachman   17   0  415G 25152 ?  0.2  0.0  0:15.85 /System/Library/ExtensionKit/Exte
+83028 gnachman    8   0  484G  432M ?  0.2  0.7  0:00.47 claude Review the pending changes
+35830 gnachman   24   0  403G  571M ?  0.1  0.9  6:27.50 /Applications/Adobe Photoshop 202
+F1Help  F2Setup F3SearchF4FilterF5Tree  F6SortByF7Nice -F8Nice +F9Kill  F10Quit

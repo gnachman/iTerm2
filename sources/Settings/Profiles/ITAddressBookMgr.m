@@ -93,6 +93,10 @@ iTermWindowType iTermUnthemedWindowType(iTermWindowType windowType) {
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return WINDOW_TYPE_MAXIMIZED;
 
+        case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
+            return WINDOW_TYPE_CENTERED;
+
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
             return WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
@@ -101,7 +105,6 @@ iTermWindowType iTermUnthemedWindowType(iTermWindowType windowType) {
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
-        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
@@ -149,6 +152,23 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
             assert(false);
             return windowType;
 
+        case WINDOW_TYPE_COMPACT_CENTERED:
+        case WINDOW_TYPE_CENTERED:
+            switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+                case TAB_STYLE_COMPACT:
+                case TAB_STYLE_MINIMAL:
+                    return WINDOW_TYPE_COMPACT_CENTERED;
+
+                case TAB_STYLE_AUTOMATIC:
+                case TAB_STYLE_LIGHT:
+                case TAB_STYLE_DARK:
+                case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+                case TAB_STYLE_DARK_HIGH_CONTRAST:
+                    return WINDOW_TYPE_CENTERED;
+            }
+            assert(false);
+            return windowType;
+
         case WINDOW_TYPE_TOP_PERCENTAGE:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
@@ -156,7 +176,6 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
-        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_BOTTOM_CELLS:
@@ -199,6 +218,7 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
             case WINDOW_TYPE_MAXIMIZED:
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
             case WINDOW_TYPE_CENTERED:
+            case WINDOW_TYPE_COMPACT_CENTERED:
                 width = -1;
                 break;
         }
@@ -230,6 +250,7 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
             case WINDOW_TYPE_MAXIMIZED:
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
             case WINDOW_TYPE_CENTERED:
+            case WINDOW_TYPE_COMPACT_CENTERED:
                 height = -1;
                 break;
         }
@@ -842,7 +863,7 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
     const BOOL custom = [profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue];
     NSString *swifty = [self bookmarkCommandSwiftyString:profile forObjectType:objectType];
     if (!custom && !ssh) {
-        DLog(@"Don't have a custom command. Computed command is %@", swifty);
+        RLog(@"Don't have a custom command. Computed command is %@", swifty);
         completion(swifty, ssh);
         return;
     }
@@ -859,7 +880,7 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
             string = [ITAddressBookMgr loginShellCommandForBookmark:profile
                                                       forObjectType:objectType];
         }
-        DLog(@"Finish with %@", string);
+        RLog(@"Finish with %@", string);
         completion(string, ssh);
     }];
 }
@@ -884,11 +905,21 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
                 NSString *wrappedCommand = [NSString stringWithFormat:@"'%@' %@",
                                             iTermPathToSSH(),
                                             command];
-                command = [NSString stringWithFormat:@"/usr/bin/login -fpq %@ %@ -c %@",
+                // Run it2ssh through the user's login shell so dotfiles
+                // (.zshrc/.bashrc/etc.) run first and ssh sees the user's exported
+                // environment, e.g. a custom SSH_AUTH_SOCK pointing at an agent that
+                // holds their keys. ShellLauncher exec's the shell with
+                // argv[0] = "-<basename>" so login behavior is triggered uniformly
+                // across bash, zsh, fish, tcsh, and xonsh — tcsh in particular rejects
+                // -l combined with -c on the command line. it2ssh and the ssh binary
+                // it invokes are both referenced by absolute path, so a dotfile that
+                // rewrites $PATH can't stop them from launching.
+                NSString *shellLauncher = [[NSBundle bundleForClass:self.class] pathForAuxiliaryExecutable:@"ShellLauncher"];
+                command = [NSString stringWithFormat:@"/usr/bin/login -fqpl %@ %@ --launch_shell - -i -c %@",
                            [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
-                           [iTermOpenDirectory userShell] ?: @"/bin/zsh",
+                           [shellLauncher stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
                            [wrappedCommand stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
-                DLog(@"wrappedCommand=%@, command=%@", wrappedCommand, command);
+                RLog(@"ssh login-shell wrapped command=%@, wrappedCommand=%@", RLogRedact(command, @(command.length)), RLogRedact(wrappedCommand, @(wrappedCommand.length)));
             } else if (custom && [bookmark[KEY_RUN_COMMAND_IN_LOGIN_SHELL] boolValue]) {
                 // Wrap the user's command in their login shell so dotfiles (.zshrc/.bashrc/etc.)
                 // run first and the command sees the user's $PATH and exported environment.
@@ -901,7 +932,7 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
                            [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
                            [shellLauncher stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
                            [command stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
-                DLog(@"login-shell wrapped command=%@", command);
+                RLog(@"login-shell wrapped command=%@", RLogRedact(command, @(command.length)));
             }
             return command;
         }
@@ -958,7 +989,7 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
 
 + (BOOL)removeProfile:(NSDictionary *)profile fromModel:(ProfileModel *)model {
     NSString *guid = profile[KEY_GUID];
-    DLog(@"Remove profile with guid %@...", guid);
+    RLog(@"Remove profile with guid %@...", guid);
     if ([model numberOfBookmarks] == 1) {
         DLog(@"Refusing to remove only profile");
         return NO;

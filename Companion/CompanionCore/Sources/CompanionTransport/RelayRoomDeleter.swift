@@ -60,6 +60,7 @@ public struct RelayRoomDeleter: Sendable {
             // room is gone, which is exactly the goal.
             return true
         default:
+            try throwIfStaleMapRejection(status)
             throw RelayAttestationError.http(status, errorMessage(body) ?? "")
         }
     }
@@ -69,6 +70,7 @@ public struct RelayRoomDeleter: Sendable {
     private func fetchChallenge(roomName: String) async throws -> String {
         let (status, body) = try await http.post(path: "/attest/challenge", roomName: roomName, json: nil)
         guard status == 200 else {
+            try throwIfStaleMapRejection(status)
             throw RelayAttestationError.http(status, errorMessage(body) ?? "")
         }
         guard let challenge = decode(body)?.challenge else {

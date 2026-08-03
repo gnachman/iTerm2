@@ -286,10 +286,44 @@ typedef enum {
     SSH_TERMINATE,  // %terminate
     SSH_RECOVERY_BOUNDARY,
     SSH_SIDE_CHANNEL,  // Synthetic - produced internally in VT100Terminal
+    SSH_IT2,  // %it2 - remote it2 CLI RPC frame, delivered whole (no re-parse)
 
     VT100_LITERAL,
     VT100_GANG
 } VT100TerminalTokenType;
+
+// The SSH conductor "meta" token types: framing and multiplexed-stream tokens that carry the
+// ssh-integration protocol itself, not inline terminal data. Enumerated ONCE here so a new
+// meta token is added in a single place, rather than being hand-added to every switch that
+// must treat these specially (e.g. token discard while muting a coprocess). NOTE: not every
+// SSH-aware switch wants this exact set -- some ask a narrower question (see
+// VT100TokenTypeIsSSHAsyncStream) or fold in non-SSH tokens (e.g. signaling) -- so callers
+// use whichever predicate matches their question rather than one universal test.
+static inline BOOL VT100TokenTypeIsSSHMeta(VT100TerminalTokenType type) {
+    switch (type) {
+        case SSH_INIT:
+        case SSH_LINE:
+        case SSH_UNHOOK:
+        case SSH_BEGIN:
+        case SSH_END:
+        case SSH_OUTPUT:
+        case SSH_TERMINATE:
+        case SSH_RECOVERY_BOUNDARY:
+        case SSH_SIDE_CHANNEL:
+        case SSH_IT2:
+            return YES;
+        default:
+            return NO;
+    }
+}
+
+// The SSH async multiplexed streams: %output and %it2 frames arrive interleaved with terminal
+// tokens on independent async channels, so they must never abort an in-progress inline
+// operation (file receipt, copy mode) the way an unexpected terminal token would. A new such
+// async stream token is added here once instead of at every abort site.
+static inline BOOL VT100TokenTypeIsSSHAsyncStream(VT100TerminalTokenType type) {
+    return type == SSH_OUTPUT || type == SSH_IT2;
+}
 
 // A preinitialized array of screen_char_t for ASCII data.
 // fg/bg colors are pre-baked into the buffer

@@ -48,7 +48,7 @@ class iTermBrowserCopyModeState: NSObject {
                     c?.resume(with: .success(true))
                 }
             case .failure(let error):
-                DLog("\(error) from \(script)")
+                RLog("\(error) from \(script)")
                 c?.resume(with: .success(false))
             }
         }
