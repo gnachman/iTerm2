@@ -75,11 +75,18 @@ class iTermUvProvisioner: NSObject {
     static func selectedEntry(fromManifestData data: Data,
                               runningMacOSVersion: String) -> Result<iTermUvManifestEntry, Error> {
         guard let entries = iTermUvManifest.parse(data) else {
-            return .failure(error("The uv manifest could not be parsed."))
+            // parse() returns nil only when the top level is not a JSON array at all.
+            return .failure(error("The uv manifest is not valid JSON (a hosting problem, not a macOS-version problem)."))
+        }
+        guard !entries.isEmpty else {
+            // Parsed fine but every entry was filtered out (empty manifest, or all entries
+            // had a shape this build could not decode). That is a manifest/hosting problem,
+            // NOT "unavailable for this macOS", so do not misdiagnose it as such.
+            return .failure(error("The uv manifest lists no usable entries (a hosting or manifest problem)."))
         }
         guard let entry = iTermUvManifest.select(entries: entries,
                                                  runningMacOSVersion: runningMacOSVersion) else {
-            return .failure(error("uv is not available for this version of macOS."))
+            return .failure(error("uv is not available for macOS \(runningMacOSVersion)."))
         }
         // The manifest itself is not signed (only the tarball is), so a compromised
         // host could offer an older, still-validly-signed uv (a rollback). Refuse any
@@ -460,7 +467,19 @@ class iTermUvProvisioner: NSObject {
 
     private static func mergedEnvironment(pythonInstallDir: String, cacheDir: String) -> [String: String] {
         var environment = ProcessInfo.processInfo.environment
-        for (key, value) in iTermUvCommand.provisionEnvironment(pythonInstallDir: pythonInstallDir, cacheDir: cacheDir) {
+        let overrides = iTermUvCommand.provisionEnvironment(pythonInstallDir: pythonInstallDir, cacheDir: cacheDir)
+        // We override only the known UV_* keys (install dir, cache dir, UV_NO_CONFIG, etc.),
+        // but the inherited process environment can carry OTHER UV_* variables (UV_OFFLINE,
+        // UV_INDEX_URL, UV_HTTP_TIMEOUT, UV_PYTHON, ...) that a user exported via launchctl
+        // setenv or by launching iTerm2 from a shell. UV_NO_CONFIG neutralizes config files,
+        // not env vars, so those still silently alter provisioning. Log any we did not set
+        // ourselves so field debugging can see them (we keep them: a user who exported an
+        // internal index URL likely needs it).
+        let inheritedUvKeys = environment.keys.filter { $0.hasPrefix("UV_") && overrides[$0] == nil }.sorted()
+        if !inheritedUvKeys.isEmpty {
+            RLog("uv: inherited UV_* environment variables affect provisioning: \(inheritedUvKeys.joined(separator: ", "))")
+        }
+        for (key, value) in overrides {
             environment[key] = value
         }
         return environment
@@ -672,18 +691,14 @@ class iTermUvProvisioner: NSObject {
                 + "so it now uses Python \(to). " + caveat
         }
         RLog("uv: \(text)")
+        // Console-only, per the design: the ONE user-facing modal is the consolidated
+        // predictive warning shown at startup (iTermScriptsMenuController). Showing a
+        // per-script modal here too meant a user with N affected scripts saw N+1 modals,
+        // and (because a uv upgrade invalidates remap records and forces re-resolution) the
+        // same modal recurred every upgrade cycle. A Script Console line each migration is
+        // the intended per-script record.
         DispatchQueue.main.async {
             iTermScriptHistoryEntry.global().addOutput(text + "\n", completion: {})
-            // PermanentlySilenceable so the modal actually shows a suppression checkbox
-            // (Persistent does not). Shares the identifier with the predictive startup
-            // warning so silencing version-bump warnings once silences both.
-            iTermWarning.show(withTitle: text,
-                              actions: ["OK"],
-                              accessory: nil,
-                              identifier: "NoSyncUvVersionBumpWarning",
-                              silenceable: .kiTermWarningTypePermanentlySilenceable,
-                              heading: "Python Version Changed",
-                              window: nil)
         }
     }
 
@@ -935,7 +950,18 @@ class iTermUvProvisioner: NSObject {
                 // later online launch re-resolves and builds the now-available minor.
                 func completeWithBuildFailure(_ error: NSError) {
                     if let fallback = Self.provisionedStaleRemapInterpreter(forRequestedVersion: requestedPythonVersion) {
-                        DispatchQueue.main.async { completion(nil, fallback) }
+                        // The fallback engages for ANY build failure (offline, disk full,
+                        // a yanked wheel, a broken uv), not only offline, and it silently
+                        // runs an older Python. Log it and surface a Script Console line so a
+                        // genuinely broken environment is diagnosable rather than presenting
+                        // as a script mysteriously on the wrong version with nothing said.
+                        RLog("uv: could not build \(resolved.version) for requested \(requestedPythonVersion) (\(error.localizedDescription)); falling back to \(fallback)")
+                        DispatchQueue.main.async {
+                            iTermScriptHistoryEntry.global().addOutput(
+                                "Could not build the Python \(resolved.version) environment (\(error.localizedDescription)). Using a previously provisioned environment instead.\n",
+                                completion: {})
+                            completion(nil, fallback)
+                        }
                         return
                     }
                     DispatchQueue.main.async { completion(error, nil) }
@@ -1064,8 +1090,16 @@ class iTermUvProvisioner: NSObject {
     // both the main thread and provisionQueue (it does the swap via provisionQueue.sync,
     // which would deadlock if already on that queue).
     private static func upgradeUvBinaryIfNewerAvailable() -> UvBinaryUpgradeOutcome {
-        guard case .success(let entry) = fetchSelectedEntry() else {
-            return .failed(message: "Could not check for a uv update (offline, or the manifest could not be read).")
+        let selected = fetchSelectedEntry()
+        guard case .success(let entry) = selected else {
+            // Surface the specific reason (bad JSON / empty manifest / floor or size
+            // rejection / download failure) rather than always blaming "offline", so a
+            // hosting problem is not misreported as a network problem.
+            var reason = "unknown error"
+            if case .failure(let err) = selected {
+                reason = err.localizedDescription
+            }
+            return .failed(message: "Could not check for a uv update: \(reason)")
         }
         let installed = installedUvVersion(uvPath: uvBinaryPath)
         guard shouldUpgradeUv(installedVersion: installed, manifestVersion: entry.uvVersion) else {
