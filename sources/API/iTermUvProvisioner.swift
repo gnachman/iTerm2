@@ -1109,8 +1109,13 @@ class iTermUvProvisioner: NSObject {
                 RLog("uv: could not stale remap record \(entry): \(error.localizedDescription)")
             }
         }
-        // The fresh dir is now empty; drop it so the live fast path stops consulting it.
-        try? fm.removeItem(atPath: remapsDir)
+        // Drop the fresh dir so the live fast path stops consulting it, but ONLY if every
+        // record moved: a record that failed to move is still here, and removing the dir
+        // outright would delete it from both caches. Leaving it live is harmless (it keeps
+        // its old pin until the next upgrade retries the merge).
+        if let remaining = try? fm.contentsOfDirectory(atPath: remapsDir), remaining.isEmpty {
+            try? fm.removeItem(atPath: remapsDir)
+        }
         RLog("uv: merged \(entries.count) remap record(s) into the stale cache after a uv upgrade")
     }
 
