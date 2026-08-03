@@ -371,13 +371,37 @@ class iTermUvProvisioner: NSObject {
             }
             if swapped != 0 {
                 let code = errno
+                // RENAME_SWAP is APFS/HFS+ only. A custom scripts folder on SMB/NFS/exFAT
+                // returns ENOTSUP (45) / EINVAL (22); fall back to a non-atomic
+                // move-old-aside, rename-new-into-place, delete-old. The brief window where
+                // .venv is a fresh build name is acceptable on such volumes (a concurrent
+                // pip show is the only reader and it re-runs), and beats failing every
+                // rebuild forever with an unactionable errno.
+                if code == ENOTSUP || code == EINVAL {
+                    let oldAside = venvPath + ".old"
+                    try? fileManager.removeItem(atPath: oldAside)
+                    do {
+                        try fileManager.moveItem(atPath: venvPath, toPath: oldAside)
+                        try fileManager.moveItem(atPath: buildPath, toPath: venvPath)
+                        try? fileManager.removeItem(atPath: oldAside)
+                    } catch {
+                        // Best effort to restore the old venv if the new one didn't land.
+                        if !fileManager.fileExists(atPath: venvPath) {
+                            try? fileManager.moveItem(atPath: oldAside, toPath: venvPath)
+                        }
+                        try? fileManager.removeItem(atPath: buildPath)
+                        return .failure(error as NSError)
+                    }
+                } else {
+                    try? fileManager.removeItem(atPath: buildPath)
+                    return .failure(NSError(domain: NSPOSIXErrorDomain,
+                                            code: Int(code),
+                                            userInfo: [NSLocalizedDescriptionKey:
+                                                        "Could not install the rebuilt Python environment at \(venvPath) (errno \(code))."]))
+                }
+            } else {
                 try? fileManager.removeItem(atPath: buildPath)
-                return .failure(NSError(domain: NSPOSIXErrorDomain,
-                                        code: Int(code),
-                                        userInfo: [NSLocalizedDescriptionKey:
-                                                    "Could not install the rebuilt Python environment (errno \(code))."]))
             }
-            try? fileManager.removeItem(atPath: buildPath)
         } else {
             do {
                 try fileManager.moveItem(atPath: buildPath, toPath: venvPath)
