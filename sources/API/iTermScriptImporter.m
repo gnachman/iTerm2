@@ -96,7 +96,11 @@ static BOOL sInstallingScript;
         // provisioning actually begins (after the download/consent), matching the
         // create/Dependency-Editor progress sequencing. Unzip is effectively instant, and
         // basic/legacy installs have their own UI or none.
-        iTermBuildingScriptWindowController *pleaseWait = reveal ? nil : [iTermBuildingScriptWindowController newPleaseWaitWindowController];
+        // Create it hidden: newPleaseWaitWindowController would order the window front
+        // immediately, floating it over the intervening "Script Already Exists" and uv
+        // "Download Python Support?" prompts. Order it front for the first time only in
+        // provisioningDidBegin, after those prompts, when provisioning actually starts.
+        iTermBuildingScriptWindowController *pleaseWait = reveal ? nil : [iTermBuildingScriptWindowController newPleaseWaitWindowControllerOrderingFront:NO];
         void (^provisioningDidBegin)(void) = ^{
             DLog(@"Open please wait window");
             [pleaseWait.window makeKeyAndOrderFront:nil];
@@ -267,6 +271,29 @@ static BOOL sInstallingScript;
                        avoidUI:(BOOL)avoidUI
           provisioningDidBegin:(void (^)(void))provisioningDidBegin
                 withCompletion:(void (^)(NSString *errorMessage, BOOL, NSURL *location))completion {
+    [self didUnzipSuccessfullyTo:tempDir
+                         trusted:trusted
+                 offerAutoLaunch:offerAutoLaunch
+                          reveal:reveal
+                         avoidUI:avoidUI
+            provisioningDidBegin:provisioningDidBegin
+           replacedScriptBackup:nil
+                  withCompletion:completion];
+}
+
+// replacedScriptBackup, when non-nil, is a path the caller moved a same-named existing
+// script to before this (re)install. On success it is deleted; on failure or user
+// cancellation it is restored over the destination and the outcome is surfaced (never a
+// quiet "success"), so a replace whose install is canceled does not leave the user with
+// no script.
++ (void)didUnzipSuccessfullyTo:(NSString *)tempDir
+                       trusted:(BOOL)trusted
+               offerAutoLaunch:(BOOL)offerAutoLaunch
+                        reveal:(BOOL)reveal
+                       avoidUI:(BOOL)avoidUI
+          provisioningDidBegin:(void (^)(void))provisioningDidBegin
+          replacedScriptBackup:(NSString *)replacedScriptBackup
+                withCompletion:(void (^)(NSString *errorMessage, BOOL, NSURL *location))completion {
     DLog(@"didUnzipSuccessfullyTo:%@, trusted:%@, offerAutoLaunch:%@, reveal:%@, avoidUI:%@",
          tempDir,
          @(trusted),
@@ -312,14 +339,22 @@ static BOOL sInstallingScript;
                                                     window:nil];
         }
         if (selection == kiTermWarningSelection0) {
-            DLog(@"Remove and retry");
-            [self removeScriptNamed:archive.name];
+            DLog(@"Move aside and retry");
+            // Move the existing script aside rather than deleting it, so a failed or
+            // canceled (re)install can restore it. Deleting up front meant a canceled uv
+            // download left the user with no script and a quiet "success". If the move
+            // fails we fall back to the old delete so the install can still proceed.
+            NSString *backup = [self moveAsideScriptNamed:archive.name];
+            if (backup == nil) {
+                [self removeScriptNamed:archive.name];
+            }
             [self didUnzipSuccessfullyTo:tempDir
                                  trusted:trusted
                          offerAutoLaunch:offerAutoLaunch
                                   reveal:reveal
                                  avoidUI:avoidUI
                     provisioningDidBegin:provisioningDidBegin
+                    replacedScriptBackup:backup
                           withCompletion:completion];
             return;
         }
@@ -334,12 +369,33 @@ static BOOL sInstallingScript;
        provisioningDidBegin:provisioningDidBegin
              withCompletion:^(NSError *error, NSURL *location) {
         RLog(@"Install finished with %@", error);
-        if (error != nil && [iTermUvProvisioner isCancelationError:error]) {
-            // The user declined the uv download; finish quietly with no error dialog.
-            completion(nil, YES, nil);
+        const BOOL canceled = (error != nil && [iTermUvProvisioner isCancelationError:error]);
+        if (error != nil) {
+            // Failure or cancellation: if we replaced an existing script, put it back so
+            // the user is not left with nothing, and surface the outcome rather than
+            // reporting a quiet success (which would hide that the replacement never
+            // happened and the original was gone).
+            if (replacedScriptBackup != nil) {
+                [self restoreReplacedScriptNamed:archive.name fromBackup:replacedScriptBackup];
+                NSString *message = canceled
+                    ? [NSString stringWithFormat:@"Replacing “%@” was canceled. The existing script was kept.", archive.name]
+                    : (error.localizedDescription ?: @"The script could not be installed.");
+                completion(message, NO, nil);
+                return;
+            }
+            if (canceled) {
+                // Fresh install the user declined: finish quietly with no error dialog.
+                completion(nil, YES, nil);
+                return;
+            }
+            completion(error.localizedDescription, NO, location);
             return;
         }
-        completion(error.localizedDescription, NO, location);
+        // Success: the replacement is in place, so discard the backup of the old script.
+        if (replacedScriptBackup != nil) {
+            [[NSFileManager defaultManager] removeItemAtPath:replacedScriptBackup error:nil];
+        }
+        completion(nil, NO, location);
     }];
 }
 
@@ -361,6 +417,40 @@ static BOOL sInstallingScript;
         [entry kill];
     }
     [fileManager removeItemAtPath:path error:nil];
+}
+
+// Kill a running instance and move the existing script aside (not delete), returning the
+// backup path, or nil if the move failed. The backup is a hidden sibling in the scripts
+// folder so the move stays on one volume (script environments can be multi-GB); the dot
+// prefix keeps the menu's tree walk from descending into it.
++ (NSString *)moveAsideScriptNamed:(NSString *)name {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *scriptsPath = [fileManager scriptsPath];
+    NSString *path = [scriptsPath stringByAppendingPathComponent:name];
+    iTermScriptHistoryEntry *entry = [[iTermScriptHistory sharedInstance] runningEntryWithFullPath:path];
+    if (entry) {
+        [entry kill];
+    }
+    NSString *backupName = [NSString stringWithFormat:@".replacing-%@-%@", name, [[NSUUID UUID] UUIDString]];
+    NSString *backupPath = [scriptsPath stringByAppendingPathComponent:backupName];
+    NSError *error = nil;
+    if (![fileManager moveItemAtPath:path toPath:backupPath error:&error]) {
+        RLog(@"Could not move aside %@ to %@: %@", path, backupPath, error);
+        return nil;
+    }
+    return backupPath;
+}
+
+// Restore a script previously moved aside by moveAsideScriptNamed:, discarding whatever
+// partial install now sits at its destination.
++ (void)restoreReplacedScriptNamed:(NSString *)name fromBackup:(NSString *)backupPath {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *path = [[fileManager scriptsPath] stringByAppendingPathComponent:name];
+    [fileManager removeItemAtPath:path error:nil];
+    NSError *error = nil;
+    if (![fileManager moveItemAtPath:backupPath toPath:path error:&error]) {
+        RLog(@"Could not restore %@ from %@: %@", path, backupPath, error);
+    }
 }
 
 @end
