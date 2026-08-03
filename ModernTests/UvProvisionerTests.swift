@@ -290,22 +290,11 @@ final class UvProvisionerTests: XCTestCase {
 
     // MARK: - installDownloadedTarball / extractAndInstall
 
-    func testRejectsInvalidSignature() throws {
-        // An RSA signature that does not validate (against the bundled public key)
-        // must fail and install nothing. This is the central trust invariant.
-        let dest = (try makeTempDir() as NSString).appendingPathComponent("uv/bin/uv")
-        let error = iTermUvProvisioner.installDownloadedTarball(
-            data: Data("some bytes".utf8),
-            encodedSignature: "bm90LWEtdmFsaWQtc2lnbmF0dXJl",  // base64 of "not-a-valid-signature"
-            destinationBinaryPath: dest)
-        XCTAssertNotNil(error, "an invalid signature must fail")
-        XCTAssertFalse(FileManager.default.fileExists(atPath: dest), "nothing may be installed on failure")
-    }
-
-    func testExtractAndInstallExtractsRealTarball() throws {
-        // Build a real gzipped tar containing uv-x/uv, hermetically (no network).
+    // A real gzipped tar containing uv-x/uv, built hermetically (no network), so signature
+    // and extraction tests exercise the true install path rather than garbage bytes.
+    private func makeRealUvTarball(script: String = "#!/bin/sh\necho hi\n") throws -> Data {
         let pkg = try makeTempDir()
-        try writeFile((pkg as NSString).appendingPathComponent("uv-x/uv"), "#!/bin/sh\necho hi\n")
+        try writeFile((pkg as NSString).appendingPathComponent("uv-x/uv"), script)
         let tgz = (try makeTempDir() as NSString).appendingPathComponent("uv.tar.gz")
         let tar = Process()
         tar.executableURL = URL(fileURLWithPath: "/usr/bin/tar")
@@ -313,8 +302,26 @@ final class UvProvisionerTests: XCTestCase {
         try tar.run()
         tar.waitUntilExit()
         XCTAssertEqual(tar.terminationStatus, 0)
+        return try Data(contentsOf: URL(fileURLWithPath: tgz))
+    }
 
-        let data = try Data(contentsOf: URL(fileURLWithPath: tgz))
+    func testRejectsInvalidSignature() throws {
+        // An RSA signature that does not validate (against the bundled public key) must
+        // fail and install nothing. Use a REAL, extractable tarball with a bogus signature:
+        // if signature verification were deleted, installDownloadedTarball would extract and
+        // install it and this test would fail, actually pinning the trust invariant (a
+        // non-tar payload would fail at tar regardless and make the test vacuous).
+        let dest = (try makeTempDir() as NSString).appendingPathComponent("uv/bin/uv")
+        let error = iTermUvProvisioner.installDownloadedTarball(
+            data: try makeRealUvTarball(),
+            encodedSignature: "bm90LWEtdmFsaWQtc2lnbmF0dXJl",  // base64 of "not-a-valid-signature"
+            destinationBinaryPath: dest)
+        XCTAssertNotNil(error, "an invalid signature must fail")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: dest), "nothing may be installed on failure")
+    }
+
+    func testExtractAndInstallExtractsRealTarball() throws {
+        let data = try makeRealUvTarball()
         let dest = (try makeTempDir() as NSString).appendingPathComponent("uv/bin/uv")
 
         XCTAssertNil(iTermUvProvisioner.extractAndInstall(data: data, destinationBinaryPath: dest))

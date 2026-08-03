@@ -291,19 +291,32 @@ NS_ASSUME_NONNULL_BEGIN
     NSFileManager *fm = [NSFileManager defaultManager];
     NSString *setupCfg = [root stringByAppendingPathComponent:@"setup.cfg"];
     if ([fm fileExistsAtPath:setupCfg]) {
-        if ([iTermScriptRuntime backendForScriptContainer:root] == iTermScriptRuntimeBackendLegacy) {
-            iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:setupCfg];
-            // Fall back to the version the env was actually built on when setup.cfg has no
-            // parseable pin (absent, or a range like ">=3.7"), so a 3.7-era script whose
-            // migration will be bumped is not omitted from the up-front warning.
-            NSString *version = parser.pythonVersion ?: [iTermScriptRuntime legacyEnvironmentPythonVersionForContainer:root];
-            if (version) {
-                NSString *relative = [root substringFromIndex:scriptsRoot.length];
-                relative = [relative stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
-                requested[relative.length ? relative : root.lastPathComponent] = version;
+        // A real script container has setup.cfg AND an environment: iterm2env (legacy),
+        // .venv+marker (uv), or saved-iterm2env (a migration killed midway, which the next
+        // launch restores and migrates). A bare setup.cfg with no env is NOT a container
+        // (e.g. one dropped in the Scripts root, or a package's own setup.cfg); treating it
+        // as one used to stop the walk and silently suppress every version-bump warning.
+        const iTermScriptRuntimeBackend backend = [iTermScriptRuntime backendForScriptContainer:root];
+        const BOOL savedOnly = [fm fileExistsAtPath:[root stringByAppendingPathComponent:@"saved-iterm2env"]];
+        const BOOL isContainer = (backend != iTermScriptRuntimeBackendNone) || savedOnly;
+        if (isContainer) {
+            // Legacy, or saved-only (which restores to legacy and then migrates): both will
+            // migrate and possibly force-bump, so both belong in the predictive warning.
+            if (backend == iTermScriptRuntimeBackendLegacy || savedOnly) {
+                iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:setupCfg];
+                // Fall back to the version the env was actually built on when setup.cfg has
+                // no parseable pin (absent, or a range like ">=3.7"). legacyEnvironment...
+                // reads saved-iterm2env too, so a saved-only container still resolves.
+                NSString *version = parser.pythonVersion ?: [iTermScriptRuntime legacyEnvironmentPythonVersionForContainer:root];
+                if (version) {
+                    NSString *relative = [root substringFromIndex:scriptsRoot.length];
+                    relative = [relative stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
+                    requested[relative.length ? relative : root.lastPathComponent] = version;
+                }
             }
+            return;
         }
-        return;
+        // Stray setup.cfg with no environment: fall through and keep recursing.
     }
     // Bound the recursion. Script containers live at most a couple of levels below the
     // Scripts folder; a deeper tree is not ours and not worth walking on the main thread.

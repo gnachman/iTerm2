@@ -174,7 +174,13 @@
     // latestPythonVersion is nil on a uv-only machine (no legacy runtime installed).
     // writeSetupCfgToFile asserts on a nil pythonVersion (asserts are on in release),
     // so fall back to the shared default. The value is only a hint recorded in the
-    // exported setup.cfg; uv re-resolves it on import.
+    // exported setup.cfg; a uv-based import re-resolves it, so any current build imports
+    // this fine. LIMITATION: a LEGACY (pre-uv) build importing this archive asks its
+    // legacy runtime downloader for exactly this minor, and if it is newer than any the
+    // legacy manifest offers (e.g. 3.12 exported from a uv-only machine), that import
+    // fails with RequestedVersionNotFound. We keep the default rather than silently
+    // lowering it (there is no reliable way to know the legacy manifest's set from a
+    // uv-only machine, and lowering it would change the default for the common case).
     NSString *pythonVersion = [iTermPythonRuntimeDownloader latestPythonVersion] ?: [iTermScriptRuntime defaultPythonVersion];
     [iTermSetupCfgParser writeSetupCfgToFile:[destination stringByAppendingPathComponent:[NSString stringWithFormat:@"setup.cfg"]]
                                         name:name
