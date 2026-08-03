@@ -858,14 +858,15 @@ class iTermUvProvisioner: NSObject {
                 let resolved = iTermUvPythonVersion.resolve(requested: requestedPythonVersion, available: available)
                 let interpreter = Self.sharedVenvPython(forMinor: resolved.version)
 
-                // Record and report a forced version remap BEFORE any early return. If the
-                // resolved venv already exists (e.g. venvs/3.9 was built for another
-                // script), the offline fast path missed only because THIS script's
-                // requested->resolved record was never written; writing it now lets that
-                // fast path match next launch, and tells the user once that the version was
-                // bumped. Doing this only on the build path below would leave both
-                // permanently unreachable once the resolved venv is provisioned.
-                if let from = resolved.remappedFrom {
+                // Record the requested->resolved remap and tell the user once. Only valid
+                // once the resolved venv actually exists, so it is invoked either in the
+                // already-provisioned branch or after a successful build, never before the
+                // build: a failed build must not tell the user the version changed nor leave
+                // a record pointing at a venv that does not exist.
+                func recordAndReportRemapIfNeeded() {
+                    guard let from = resolved.remappedFrom else {
+                        return
+                    }
                     if let requestedMinor = Self.normalizedMinor(requestedPythonVersion) {
                         Self.recordSharedVenvRemap(fromRequestedMinor: requestedMinor, toResolvedMinor: resolved.version)
                     }
@@ -874,7 +875,11 @@ class iTermUvProvisioner: NSObject {
 
                 // Re-check with the marker (not just the interpreter) in case a
                 // concurrent launch finished, or a prior attempt left a half-built venv.
+                // The resolved venv already exists (a direct match, or one built for
+                // another script): record+report here so a remap is not lost by skipping the
+                // build. This is the case the F9 fix targets.
                 if Self.sharedVenvIsProvisioned(forMinor: resolved.version) {
+                    recordAndReportRemapIfNeeded()
                     DispatchQueue.main.async { completion(nil, interpreter) }
                     return
                 }
@@ -886,6 +891,16 @@ class iTermUvProvisioner: NSObject {
                                         iTermUvCommand.venvArgs(pythonVersion: resolved.version, venvPath: venvDirectory),
                                         environment) {
                     try? FileManager.default.removeItem(atPath: venvDirectory)
+                    // Building the resolved minor failed (commonly: offline, and this
+                    // minor's CPython is not downloaded). If a uv upgrade invalidated an
+                    // earlier resolution for this request but that resolution's venv is
+                    // still provisioned, fall back to it so an offline launch of a
+                    // previously-working remapped script keeps working. A later online
+                    // launch will re-resolve and build the now-available minor.
+                    if let fallback = Self.provisionedStaleRemapInterpreter(forRequestedVersion: requestedPythonVersion) {
+                        DispatchQueue.main.async { completion(nil, fallback) }
+                        return
+                    }
                     DispatchQueue.main.async { completion(error, nil) }
                     return
                 }
@@ -899,8 +914,8 @@ class iTermUvProvisioner: NSObject {
                     return
                 }
                 Self.markSharedVenvProvisioned(forMinor: resolved.version)
-                // The requested->resolved remap (if any) was already recorded and reported
-                // above, before the already-provisioned early return.
+                // The venv is really built now, so it is safe to record/report the remap.
+                recordAndReportRemapIfNeeded()
                 DispatchQueue.main.async { completion(nil, interpreter) }
             }
         }
@@ -1048,20 +1063,61 @@ class iTermUvProvisioner: NSObject {
         return outcome
     }
 
-    // Remove all recorded requested->resolved shared-venv remaps. Called after a uv
-    // binary upgrade so stale resolutions do not pin scripts to a bumped Python minor
-    // that the newer uv may now provide directly. Missing directory is not an error.
+    // Records invalidated by a uv upgrade are moved here rather than deleted, so an
+    // OFFLINE launch whose re-resolution cannot build the newly-available minor can still
+    // fall back to the venv the request previously resolved to. Consulted only on a build
+    // failure (see provisionedStaleRemapInterpreter); the live fast path reads .remaps.
+    private static let sharedVenvStaleRemapsDirectoryName = ".remaps-stale"
+
+    // Invalidate recorded requested->resolved shared-venv remaps after a uv binary upgrade,
+    // so stale resolutions do not pin scripts to a bumped Python minor the newer uv may now
+    // provide directly. Move (not delete) them aside to .remaps-stale so an offline launch
+    // that cannot build the now-available minor can still fall back. Missing dir is a no-op.
     private static func invalidateSharedVenvRemaps() {
-        let venvsRoot = (uvDirectory as NSString).appendingPathComponent("venvs")
-        let remapsDir = (venvsRoot as NSString).appendingPathComponent(sharedVenvRemapsDirectoryName)
-        do {
-            try FileManager.default.removeItem(atPath: remapsDir)
-            RLog("uv: cleared shared-venv remap cache after a uv upgrade")
-        } catch CocoaError.fileNoSuchFile {
-            // Nothing recorded yet; nothing to invalidate.
-        } catch {
-            RLog("uv: could not clear the shared-venv remap cache: \(error.localizedDescription)")
+        let fm = FileManager.default
+        let remapsDir = (sharedVenvsRoot as NSString).appendingPathComponent(sharedVenvRemapsDirectoryName)
+        guard fm.fileExists(atPath: remapsDir) else {
+            return
         }
+        let staleDir = (sharedVenvsRoot as NSString).appendingPathComponent(sharedVenvStaleRemapsDirectoryName)
+        try? fm.removeItem(atPath: staleDir)
+        do {
+            try fm.moveItem(atPath: remapsDir, toPath: staleDir)
+            RLog("uv: marked shared-venv remap cache stale after a uv upgrade")
+        } catch {
+            RLog("uv: could not mark the shared-venv remap cache stale: \(error.localizedDescription)")
+        }
+    }
+
+    // A provisioned venv that a now-invalidated (stale) remap resolved this request to, or
+    // nil. Consulted only when a fresh build fails (e.g. offline) so a previously-working
+    // remapped script still launches; the resolved venv must still be fully provisioned.
+    // venvsRoot is injected so this is hermetically testable, mirroring
+    // provisionedSharedVenvInterpreter.
+    static func provisionedStaleRemapInterpreter(forRequestedVersion requestedVersion: String,
+                                                 venvsRoot: String) -> String? {
+        guard let requestedMinor = normalizedMinor(requestedVersion) else {
+            return nil
+        }
+        let fm = FileManager.default
+        let stalePath = ((venvsRoot as NSString).appendingPathComponent(sharedVenvStaleRemapsDirectoryName) as NSString)
+            .appendingPathComponent(requestedMinor)
+        guard let data = fm.contents(atPath: stalePath),
+              let resolvedMinor = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !resolvedMinor.isEmpty else {
+            return nil
+        }
+        let resolvedDir = (venvsRoot as NSString).appendingPathComponent(resolvedMinor)
+        let interpreter = (resolvedDir as NSString).appendingPathComponent("bin/python")
+        let marker = (resolvedDir as NSString).appendingPathComponent(sharedVenvMarkerName)
+        if fm.isExecutableFile(atPath: interpreter) && fm.fileExists(atPath: marker) {
+            return interpreter
+        }
+        return nil
+    }
+
+    static func provisionedStaleRemapInterpreter(forRequestedVersion requestedVersion: String) -> String? {
+        return provisionedStaleRemapInterpreter(forRequestedVersion: requestedVersion, venvsRoot: sharedVenvsRoot)
     }
 
     // Upgrade the always-installed packages to the latest in every provisioned shared
@@ -1105,18 +1161,26 @@ class iTermUvProvisioner: NSObject {
         }
     }
 
-    // Background daily refresh: enqueue EACH venv's upgrade as its own provisionQueue
-    // item, not one block that does all N sequentially. Each `uv pip install --upgrade`
-    // is a network-bound PyPI round trip, and provisionQueue also serves user-visible
-    // work (script launches, full-env provisioning, the Dependency Editor's pip calls).
-    // Per-venv items let a user request arriving mid-refresh be serviced between venvs
-    // instead of waiting minutes for the whole refresh on a slow link.
+    // Background daily refresh: upgrade one venv per provisionQueue item, and enqueue the
+    // NEXT venv only after the current one finishes (self-scheduling), NOT all N up front.
+    // provisionQueue is a serial FIFO queue that also serves user-visible work (script
+    // launches, full-env provisioning, the Dependency Editor's pip calls). Bulk-enqueueing
+    // would place a user request that arrives mid-refresh behind every remaining
+    // network-bound `uv pip install --upgrade`. Chaining means such a request, submitted
+    // while one venv is upgrading, is already ahead of the successor in FIFO order and runs
+    // between venvs instead of after the whole refresh.
     private static func enqueuePeriodicSharedVenvModuleUpgrades() {
         let environment = mergedEnvironment(pythonInstallDir: pythonInstallDirectory, cacheDir: cacheDirectory)
-        for minor in provisionedSharedVenvMinors() {
-            provisionQueue.async {
-                upgradeModulesInSharedVenv(minor: minor, environment: environment)
-            }
+        scheduleSharedVenvModuleUpgrade(minors: provisionedSharedVenvMinors(), index: 0, environment: environment)
+    }
+
+    private static func scheduleSharedVenvModuleUpgrade(minors: [String], index: Int, environment: [String: String]) {
+        guard index < minors.count else {
+            return
+        }
+        provisionQueue.async {
+            upgradeModulesInSharedVenv(minor: minors[index], environment: environment)
+            scheduleSharedVenvModuleUpgrade(minors: minors, index: index + 1, environment: environment)
         }
     }
 

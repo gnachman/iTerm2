@@ -241,6 +241,24 @@ final class UvProvisionerTests: XCTestCase {
         XCTAssertNil(iTermUvProvisioner.provisionedSharedVenvInterpreter(forRequestedVersion: "3.12", venvsRoot: root))
     }
 
+    func testStaleRemapInterpreterUsedAsOfflineFallback() throws {
+        let root = try makeTempDir()
+        let py39 = try provisionVenv("3.9", inRoot: root)
+        // A uv upgrade moved the invalidated 3.13->3.9 record into .remaps-stale. When an
+        // offline rebuild of 3.13 fails, the still-provisioned 3.9 venv is the fallback.
+        try writeFile(((root as NSString).appendingPathComponent(".remaps-stale") as NSString).appendingPathComponent("3.13"), "3.9")
+        XCTAssertEqual(iTermUvProvisioner.provisionedStaleRemapInterpreter(forRequestedVersion: "3.13", venvsRoot: root), py39)
+        // Only consulted for the recorded request; an unrelated version has no fallback.
+        XCTAssertNil(iTermUvProvisioner.provisionedStaleRemapInterpreter(forRequestedVersion: "3.11", venvsRoot: root))
+    }
+
+    func testStaleRemapInterpreterIgnoresUnprovisionedTarget() throws {
+        let root = try makeTempDir()
+        // Stale record points at 3.9, but 3.9 is not provisioned: no usable fallback.
+        try writeFile(((root as NSString).appendingPathComponent(".remaps-stale") as NSString).appendingPathComponent("3.13"), "3.9")
+        XCTAssertNil(iTermUvProvisioner.provisionedStaleRemapInterpreter(forRequestedVersion: "3.13", venvsRoot: root))
+    }
+
     // MARK: - Runtime menu decision (item 1)
 
     func testRuntimeMenuActionUnderGate() {
