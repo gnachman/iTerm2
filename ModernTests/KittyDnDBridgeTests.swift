@@ -16,8 +16,15 @@ import XCTest
 
 @MainActor
 final class KittyDnDBridgeTests: XCTestCase {
+    // A localhost session (no conductor).
+    private final class FakeDataSource: NSObject, KittyDnDBridgeDataSource {
+        var kittyDnDConductor: Conductor? { nil }
+    }
+
+    private let dataSource = FakeDataSource()
+
     private func makeBridge(_ reports: @escaping (String) -> Void) -> KittyDnDBridge {
-        return KittyDnDBridge(report: { data in
+        return KittyDnDBridge(dataSource: dataSource, report: { data in
             reports(String(data: data, encoding: .utf8) ?? "")
         })
     }

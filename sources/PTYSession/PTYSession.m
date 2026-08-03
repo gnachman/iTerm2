@@ -404,6 +404,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 @interface PTYSession(AppSwitching)<iTermAppSwitchingPreventionDetectorDelegate>
 @end
 
+@interface PTYSession () <iTermKittyDnDBridgeDataSource>
+@end
+
 // Background-drawing delegate used when rendering a screenshot. It forwards to the
 // session but forces transparency off, so the saved/preview background image is opaque
 // (a screenshot has nothing behind it). This matches the tile branch, which also draws
@@ -17736,11 +17739,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (void)screenDidReceiveKittyDragAndDrop:(NSString *)content {
     if (!_kittyDnDBridge) {
         __weak __typeof(self) weakSelf = self;
-        _kittyDnDBridge = [[iTermKittyDnDBridge alloc] initWithReport:^(NSData *data) {
+        _kittyDnDBridge = [[iTermKittyDnDBridge alloc] initWithDataSource:self
+                                                                  report:^(NSData *data) {
             [weakSelf screenSendReportData:data];
         }];
     }
     [_kittyDnDBridge handleInboundSequence:content];
+}
+
+- (iTermConductor *)kittyDnDConductor {
+    return _conductor;
 }
 
 - (void)screenSetPointerShape:(NSString *)pointerShape {

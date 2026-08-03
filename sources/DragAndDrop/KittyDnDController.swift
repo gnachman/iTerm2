@@ -240,6 +240,9 @@ final class KittyDnDController {
             }
         case 2:
             isOfferingDrags = false
+            // Disabling offers ends any in-progress drag negotiation, so drain
+            // outstanding data-request completions rather than leaking them.
+            resetOfferInProgress()
         default:
             // A t=o with neither x nor o is not a declaration; ignore it rather
             // than destroying an in-progress offer (unknown variants are no-ops).
