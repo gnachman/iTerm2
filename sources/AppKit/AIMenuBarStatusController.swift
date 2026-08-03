@@ -6,6 +6,8 @@ class AIMenuBarStatusController: NSObject {
     @objc(sharedInstance) static let instance = AIMenuBarStatusController()
 
     private var statusItem: NSStatusItem?
+    // Count currently drawn into the button, or nil when there is no item.
+    private var renderedCount: Int?
     private let baseImage: NSImage?
     private var sessionStatusObserverToken: NotifyingDictionaryObserverToken?
     private var brokerSubscription: ChatBroker.Subscription?
@@ -90,6 +92,7 @@ class AIMenuBarStatusController: NSObject {
             item.menu = delegate.statusBarMenu()
         }
         statusItem = item
+        renderedCount = nil
     }
 
     private func removeStatusItem() {
@@ -97,22 +100,35 @@ class AIMenuBarStatusController: NSObject {
             NSStatusBar.system.removeStatusItem(item)
         }
         statusItem = nil
+        renderedCount = nil
     }
 
     private func busyCount() -> Int {
-        let tabIndicatorSessionIDs = SessionStatusController.instance.statuses.values
-            .filter { $0.hasIndicator }
+        // hasIndicator is set independently of the status text, and agents such as
+        // Claude Code keep the dot set while idle. Only the text says “working”.
+        let workingSessionIDs = SessionStatusController.instance.statuses.values
+            .filter { Self.isWorkingStatus($0.statusText) }
             .map { $0.sessionID }
         let busyChatIDs = TypingStatusModel.instance.chatIDs(forParticipant: .agent)
         var unique = Set<String>()
-        for id in tabIndicatorSessionIDs { unique.insert("session:\(id)") }
+        for id in workingSessionIDs { unique.insert("session:\(id)") }
         for id in busyChatIDs { unique.insert("chat:\(id)") }
         return unique.count
+    }
+
+    // Prefix, not equality: emitters append progress, e.g. “Working… 24s”.
+    private static func isWorkingStatus(_ text: String?) -> Bool {
+        guard let text = text?.trimmingCharacters(in: .whitespaces) else {
+            return false
+        }
+        return text.lowercased().hasPrefix("working")
     }
 
     private func updateImage() {
         guard let button = statusItem?.button else { return }
         let count = busyCount()
+        guard count != renderedCount else { return }
+        renderedCount = count
         if count == 0 {
             button.image = baseImage
             button.image?.isTemplate = true

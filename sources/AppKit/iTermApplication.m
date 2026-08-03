@@ -72,10 +72,6 @@ NSString *const iTermApplicationDidCloseModalWindow = @"iTermApplicationDidClose
 
 NSNotificationName const iTermApplicationCharacterAccentMenuVisibilityDidChange = @"iTermApplicationCharacterAccentMenuVisibilityDidChange";
 
-@interface iTermApplication()
-@property(nonatomic, strong) NSStatusItem *statusBarItem;
-@end
-
 static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 static BOOL sHandlingException = NO;
 
