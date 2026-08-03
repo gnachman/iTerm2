@@ -128,7 +128,13 @@ final class KittyDnDController {
             .split(separator: " ")
             .map(String.init)
         if let machineID = tokens.first(where: Self.isMachineIDToken) {
-            peerMachineID = machineID
+            // The machine id is a stable property of the peer's connection: it
+            // cannot change without the program itself changing machines, which
+            // does not happen mid-session. So we keep whatever we last learned
+            // and only update it when a new id is actually supplied (a program
+            // may include it once and omit it on later re-registrations). We
+            // normalize to lower case to match our own lower-case hex.
+            peerMachineID = machineID.lowercased()
         }
         acceptedMimeTypes = tokens.filter { !Self.isMachineIDToken($0) }
     }
@@ -138,6 +144,9 @@ final class KittyDnDController {
     func dragEntered(cellX: Int, cellY: Int, pixelX: Int, pixelY: Int,
                      operations: Int, mimeTypes: [String]) {
         guard isAcceptingDrops else { return }
+        // A new drag cycle: forget any drop from the previous cycle so a stray
+        // t=r cannot read stale data.
+        currentDrop = nil
         sendMoveOrDrop(type: "m", cellX: cellX, cellY: cellY, pixelX: pixelX,
                        pixelY: pixelY, operations: operations, mimeTypes: mimeTypes)
     }
@@ -165,10 +174,11 @@ final class KittyDnDController {
     // MARK: - Data request handling
 
     private func handleDataRequest(_ message: KittyDnDMessage) {
-        guard let index = message.intValue("x"),
+        let requestedIndex = message.intValue("x")
+        guard let index = requestedIndex,
               let drop = currentDrop,
               index >= 1, index <= drop.mimeTypes.count else {
-            sendDataError(index: message.intValue("x"), code: "EINVAL")
+            sendDataError(index: requestedIndex, code: "EINVAL")
             return
         }
         let mime = drop.mimeTypes[index - 1]
@@ -185,11 +195,16 @@ final class KittyDnDController {
         if peerIsRemote && endpoint.canMaterializeFiles {
             // Tier 2: materialize each file on the program's host so the URIs it
             // receives are real local paths there. No cross-machine flag.
+            //
+            // On partial failure (a later file fails after earlier ones were
+            // written) we report EIO and leave any already-written files in the
+            // endpoint's temp area; they are harmless and best-effort cleanup is
+            // not worth a round trip here.
             Task { @MainActor in
                 do {
                     var uris: [String] = []
                     for url in drop.fileURLs {
-                        let contents = try Data(contentsOf: url)
+                        let contents = try await Self.readFileOffMainThread(url)
                         let remotePath = try await endpoint.materializeFile(
                             named: url.lastPathComponent, contents: contents)
                         uris.append("file://\(remotePath)")
@@ -221,7 +236,7 @@ final class KittyDnDController {
             isOfferingDrags = true
             let tokens = (message.textPayload ?? "").split(separator: " ").map(String.init)
             if let machineID = tokens.first(where: Self.isMachineIDToken) {
-                peerMachineID = machineID
+                peerMachineID = machineID.lowercased()
             }
         case 2:
             isOfferingDrags = false
@@ -386,6 +401,16 @@ final class KittyDnDController {
 
     private func send(_ message: KittyDnDMessage) {
         report(message.serialized())
+    }
+
+    // MARK: - File IO
+
+    /// Read a local file off the main thread so a large dropped file does not
+    /// block the UI while it is read into memory.
+    private static func readFileOffMainThread(_ url: URL) async throws -> Data {
+        return try await Task.detached(priority: .utility) {
+            try Data(contentsOf: url)
+        }.value
     }
 
     // MARK: - Machine id

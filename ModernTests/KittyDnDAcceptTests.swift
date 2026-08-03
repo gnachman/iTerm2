@@ -76,6 +76,25 @@ final class KittyDnDAcceptTests: XCTestCase {
         }
     }
 
+    /// Feed all emitted t=r messages through a reassembler and return the
+    /// completed data response (metadata comes from the first chunk, so the X=1
+    /// flag and index are visible here).
+    private func reassembledDataResponse(_ recorder: Recorder) -> KittyDnDMessage? {
+        let reassembler = KittyDnDChunkReassembler()
+        var result: KittyDnDMessage?
+        for message in recorder.messages where message.type == "r" {
+            if let done = reassembler.accept(message.serializedContent()) {
+                result = done
+            }
+        }
+        return result
+    }
+
+    /// All emitted t=r messages (data chunks plus the empty terminator).
+    private func dataResponseChunks(_ recorder: Recorder) -> [KittyDnDMessage] {
+        return recorder.messages.filter { $0.type == "r" }
+    }
+
     // MARK: - Announce / query
 
     func testAnnounceEnablesAccepting() {
@@ -90,6 +109,14 @@ final class KittyDnDAcceptTests: XCTestCase {
         let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
         c.handleInboundSequence("t=a;text/plain")
         c.handleInboundSequence("t=A")
+        XCTAssertFalse(c.isAcceptingDrops)
+    }
+
+    func testUnregisterViaXEquals2DisablesAccepting() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.handleInboundSequence("t=a:x=2")
         XCTAssertFalse(c.isAcceptingDrops)
     }
 
@@ -173,7 +200,7 @@ final class KittyDnDAcceptTests: XCTestCase {
                       drop: FakeDropData(mimeTypes: ["text/plain"],
                                          dataByIndex: [1: Data("hello".utf8)]))
         c.handleInboundSequence("t=r:x=1")
-        let r = recorder.messages.last { $0.type == "r" }
+        let r = reassembledDataResponse(recorder)
         XCTAssertEqual(r?.intValue("x"), 1)
         XCTAssertEqual(r?.dataPayload, Data("hello".utf8))
     }
@@ -231,10 +258,24 @@ final class KittyDnDAcceptTests: XCTestCase {
         c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
                       drop: FakeDropData(mimeTypes: ["text/uri-list"], fileURLs: [url]))
         c.handleInboundSequence("t=r:x=1")
-        let r = recorder.messages.last { $0.type == "r" }
+        let r = reassembledDataResponse(recorder)
         XCTAssertNil(r?.metadata["X"], "local drop must not set the cross-machine flag")
         let uriList = String(data: r?.dataPayload ?? Data(), encoding: .utf8)
         XCTAssertEqual(uriList, url.absoluteString)
+    }
+
+    func testURIListJoinsMultipleFilesWithCRLF() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/uri-list")
+        let a = URL(fileURLWithPath: "/tmp/a.txt")
+        let b = URL(fileURLWithPath: "/tmp/b.txt")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/uri-list"], fileURLs: [a, b]))
+        c.handleInboundSequence("t=r:x=1")
+        let uriList = String(data: reassembledDataResponse(recorder)?.dataPayload ?? Data(),
+                             encoding: .utf8)
+        XCTAssertEqual(uriList, "\(a.absoluteString)\r\n\(b.absoluteString)")
     }
 
     func testURIListTier3RemoteNoConductorSetsCrossMachineFlag() {
@@ -246,10 +287,15 @@ final class KittyDnDAcceptTests: XCTestCase {
         c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
                       drop: FakeDropData(mimeTypes: ["text/uri-list"], fileURLs: [url]))
         c.handleInboundSequence("t=r:x=1")
-        let r = recorder.messages.last { $0.type == "r" }
+        let r = reassembledDataResponse(recorder)
         XCTAssertEqual(r?.metadata["X"], "1", "remote foreign uri-list must set X=1")
         let uriList = String(data: r?.dataPayload ?? Data(), encoding: .utf8)
         XCTAssertEqual(uriList, url.absoluteString)
+        // The cross-machine flag must be on every emitted chunk, including the
+        // terminator, so the client sees it regardless of which it reads.
+        for chunk in dataResponseChunks(recorder) {
+            XCTAssertEqual(chunk.metadata["X"], "1")
+        }
     }
 
     func testURIListTier2RemoteWithConductorMaterializesAndOmitsFlag() async throws {
@@ -268,15 +314,61 @@ final class KittyDnDAcceptTests: XCTestCase {
                       drop: FakeDropData(mimeTypes: ["text/uri-list"], fileURLs: [tmp]))
 
         let exp = expectation(description: "uri-list response after materialization")
+        // Two t=r messages arrive (the data chunk and the empty terminator);
+        // either one satisfies the wait.
+        exp.assertForOverFulfill = false
         recorder.onReport = { if $0.type == "r" { exp.fulfill() } }
         c.handleInboundSequence("t=r:x=1")
         await fulfillment(of: [exp], timeout: 5)
 
         XCTAssertEqual(endpoint.materialized.count, 1)
         XCTAssertEqual(endpoint.materialized.first?.contents, Data("payload".utf8))
-        let r = recorder.messages.last { $0.type == "r" }
+        let r = reassembledDataResponse(recorder)
         XCTAssertNil(r?.metadata["X"], "materialized files are local to the program; no X=1")
         let uriList = String(data: r?.dataPayload ?? Data(), encoding: .utf8)
         XCTAssertEqual(uriList, "file:///remote/tmp/\(tmp.lastPathComponent)")
+    }
+
+    func testTier2MaterializeFailureSendsError() async {
+        let recorder = Recorder()
+        let endpoint = FakeEndpoint(canMaterializeFiles: true)
+        endpoint.shouldThrow = true
+        let c = makeController(endpoint: endpoint, recorder: recorder)
+
+        let tmp = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("kittydnd-\(UUID().uuidString).txt")
+        try? Data("payload".utf8).write(to: tmp)
+        defer { try? FileManager.default.removeItem(at: tmp) }
+
+        c.handleInboundSequence("t=a;text/uri-list \(peerID)")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/uri-list"], fileURLs: [tmp]))
+
+        let exp = expectation(description: "error response")
+        recorder.onReport = { if $0.type == "R" { exp.fulfill() } }
+        c.handleInboundSequence("t=r:x=1")
+        await fulfillment(of: [exp], timeout: 5)
+        XCTAssertEqual(recorder.last?.type, "R")
+    }
+
+    // MARK: - Data-request error paths
+
+    func testDataRequestBeforeDropSendsError() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        // No drop yet.
+        c.handleInboundSequence("t=r:x=1")
+        XCTAssertEqual(recorder.last?.type, "R")
+    }
+
+    func testDataRequestWithMissingIndexSendsError() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/plain"]))
+        c.handleInboundSequence("t=r")  // no x=
+        XCTAssertEqual(recorder.last?.type, "R")
     }
 }

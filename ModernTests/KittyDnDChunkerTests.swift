@@ -13,14 +13,24 @@ import XCTest
 final class KittyDnDChunkerTests: XCTestCase {
     // MARK: - Outbound splitting
 
-    func testSmallPayloadIsSingleFinalChunk() {
+    func testSmallPayloadHasDataChunkThenEmptyTerminator() {
         let payload = Data("hello".utf8)
         let msgs = KittyDnDChunker.messages(baseMetadata: ["t": "r", "x": "1"],
                                             data: payload)
-        XCTAssertEqual(msgs.count, 1)
-        // A single chunk is final.
-        XCTAssertNotEqual(msgs[0].metadata["m"], "1")
+        // One data-bearing m=1 chunk, then the empty m=0 terminator.
+        XCTAssertEqual(msgs.count, 2)
+        XCTAssertEqual(msgs[0].metadata["m"], "1")
         XCTAssertEqual(msgs[0].dataPayload, payload)
+        XCTAssertEqual(msgs[1].metadata["m"], "0")
+        XCTAssertEqual(msgs[1].rawPayload, "")
+    }
+
+    func testEmptyPayloadIsJustTerminator() {
+        let msgs = KittyDnDChunker.messages(baseMetadata: ["t": "r", "x": "1"],
+                                            data: Data())
+        XCTAssertEqual(msgs.count, 1)
+        XCTAssertEqual(msgs[0].metadata["m"], "0")
+        XCTAssertEqual(msgs[0].rawPayload, "")
     }
 
     func testLargePayloadIsSplitWithMoreFlags() {
@@ -28,27 +38,26 @@ final class KittyDnDChunkerTests: XCTestCase {
         let payload = Data((0..<10_000).map { UInt8($0 & 0xff) })
         let msgs = KittyDnDChunker.messages(baseMetadata: ["t": "r", "x": "1"],
                                             data: payload)
-        XCTAssertGreaterThan(msgs.count, 1)
+        XCTAssertGreaterThan(msgs.count, 2)
 
-        // Every chunk's base64 payload must fit the 4096 limit.
-        for msg in msgs {
+        // Every data chunk carries m=1 and fits the 4096 limit; the terminator
+        // is an empty m=0 message.
+        let dataChunks = msgs.dropLast()
+        for msg in dataChunks {
+            XCTAssertEqual(msg.metadata["m"], "1")
             XCTAssertLessThanOrEqual(msg.rawPayload!.utf8.count, KittyDnDChunker.maxEncodedChunkSize)
         }
+        XCTAssertEqual(msgs.last?.metadata["m"], "0")
+        XCTAssertEqual(msgs.last?.rawPayload, "")
 
-        // All but the last are m=1; the last is not.
-        for msg in msgs.dropLast() {
-            XCTAssertEqual(msg.metadata["m"], "1")
-        }
-        XCTAssertNotEqual(msgs.last?.metadata["m"], "1")
-
-        // Base metadata is preserved on every chunk.
+        // Base metadata is preserved on every message.
         for msg in msgs {
             XCTAssertEqual(msg.type, "r")
             XCTAssertEqual(msg.intValue("x"), 1)
         }
 
-        // Concatenating the chunk payloads reconstructs the original.
-        let joined = msgs.reduce(Data()) { $0 + ($1.dataPayload ?? Data()) }
+        // Concatenating the data-chunk payloads reconstructs the original.
+        let joined = dataChunks.reduce(Data()) { $0 + ($1.dataPayload ?? Data()) }
         XCTAssertEqual(joined, payload)
     }
 
@@ -87,13 +96,14 @@ final class KittyDnDChunkerTests: XCTestCase {
     // Exact chunk-count boundaries: maxRawChunkSize bytes fit in one chunk;
     // one more byte forces a second.
     func testChunkCountBoundary() {
+        // Counts include the trailing empty m=0 terminator.
         let boundary = KittyDnDChunker.maxRawChunkSize
         let atLimit = Data(repeating: 0xab, count: boundary)
         XCTAssertEqual(
-            KittyDnDChunker.messages(baseMetadata: ["t": "r"], data: atLimit).count, 1)
+            KittyDnDChunker.messages(baseMetadata: ["t": "r"], data: atLimit).count, 2)
         let overLimit = Data(repeating: 0xab, count: boundary + 1)
         XCTAssertEqual(
-            KittyDnDChunker.messages(baseMetadata: ["t": "r"], data: overLimit).count, 2)
+            KittyDnDChunker.messages(baseMetadata: ["t": "r"], data: overLimit).count, 3)
     }
 
     // The reassembler preserves the nil-vs-empty-payload distinction, matching

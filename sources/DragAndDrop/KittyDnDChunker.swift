@@ -44,17 +44,26 @@ enum KittyDnDChunker {
     }
 
     /// Build the sequence of OSC 72 messages for a binary `payload`, carrying
-    /// `baseMetadata` on every chunk plus the `m` more-flag. A single chunk is
-    /// emitted with m=0 (final).
+    /// `baseMetadata` on every message.
+    ///
+    /// The protocol frames end-of-data as a final message with an EMPTY payload
+    /// and m=0; every data-bearing message carries m=1. So this emits one m=1
+    /// message per base64 chunk followed by a single empty m=0 terminator (for an
+    /// empty payload, just the terminator).
     static func messages(baseMetadata: [String: String],
                          data payload: Data) -> [KittyDnDMessage] {
-        let chunks = encodedChunks(for: payload)
-        return chunks.enumerated().map { index, encoded in
-            var metadata = baseMetadata
-            let isLast = (index == chunks.count - 1)
-            metadata["m"] = isLast ? "0" : "1"
-            return KittyDnDMessage(metadata: metadata, rawPayload: encoded)
+        var messages: [KittyDnDMessage] = []
+        if !payload.isEmpty {
+            for chunk in encodedChunks(for: payload) {
+                var metadata = baseMetadata
+                metadata["m"] = "1"
+                messages.append(KittyDnDMessage(metadata: metadata, rawPayload: chunk))
+            }
         }
+        var terminator = baseMetadata
+        terminator["m"] = "0"
+        messages.append(KittyDnDMessage(metadata: terminator, rawPayload: ""))
+        return messages
     }
 }
 
