@@ -33,6 +33,7 @@ protocol KittyDnDDropData: AnyObject {
 final class KittyDnDController {
     private let ourMachineID: String
     private let endpoint: KittyDnDEndpoint
+    private weak var dragHost: KittyDnDDragHost?
     private let report: (String) -> Void
     private let reassembler = KittyDnDChunkReassembler()
 
@@ -42,11 +43,23 @@ final class KittyDnDController {
     private var peerMachineID: String?
     private var currentDrop: KittyDnDDropData?
 
+    // Offer / drag-out state.
+    private(set) var isOfferingDrags = false
+    private var offerMimeTypes: [String] = []
+    private var offerOperations = 0
+    private var offerData: [Int: Data] = [:]
+    private var offerImage: KittyDnDDragImage?
+    // Completion handlers for outstanding lazy data requests, keyed by 0-based
+    // MIME index (the program answers a t=e:x=5 request with t=e:y=idx;data).
+    private var pendingDataRequests: [Int: (Data?) -> Void] = [:]
+
     init(ourMachineID: String,
          endpoint: KittyDnDEndpoint,
+         dragHost: KittyDnDDragHost? = nil,
          report: @escaping (String) -> Void) {
         self.ourMachineID = ourMachineID
         self.endpoint = endpoint
+        self.dragHost = dragHost
         self.report = report
     }
 
@@ -78,8 +91,18 @@ final class KittyDnDController {
             // the accept-drop path (the AppKit adapter reads the chosen operation
             // in a later phase).
             break
+        case "o":
+            handleOffer(message)
+        case "p":
+            handlePreSend(message)
+        case "P":
+            handleStartDrag(message)
+        case "e":
+            handleDragDataReply(message)
+        case "E":
+            handleDragStatus(message)
         default:
-            // Offer-direction and unknown messages are handled elsewhere / ignored.
+            // Unknown messages are ignored (forward compatibility).
             break
         }
     }
@@ -188,6 +211,138 @@ final class KittyDnDController {
         sendData(index: index,
                  data: Data(uris.joined(separator: "\r\n").utf8),
                  extraMetadata: extra)
+    }
+
+    // MARK: - Offer / drag-out (inbound)
+
+    private func handleOffer(_ message: KittyDnDMessage) {
+        switch message.intValue("x") {
+        case 1:
+            isOfferingDrags = true
+            let tokens = (message.textPayload ?? "").split(separator: " ").map(String.init)
+            if let machineID = tokens.first(where: Self.isMachineIDToken) {
+                peerMachineID = machineID
+            }
+        case 2:
+            isOfferingDrags = false
+        default:
+            // The program's offer declaration for a started gesture: operations
+            // plus the offered MIME list. Resets any prior half-built offer.
+            offerOperations = message.intValue("o") ?? 0
+            offerMimeTypes = (message.textPayload ?? "")
+                .split(separator: " ")
+                .map(String.init)
+                .filter { !Self.isMachineIDToken($0) }
+            offerData = [:]
+            offerImage = nil
+        }
+    }
+
+    private func handlePreSend(_ message: KittyDnDMessage) {
+        guard let index = message.intValue("x") else {
+            return
+        }
+        let data = message.dataPayload ?? Data()
+        if index < 0 {
+            // Negative index: a drag thumbnail image.
+            offerImage = KittyDnDDragImage(format: message.intValue("y") ?? 0,
+                                           width: message.intValue("X") ?? 0,
+                                           height: message.intValue("Y") ?? 0,
+                                           data: data)
+        } else {
+            offerData[index] = data
+        }
+    }
+
+    private func handleStartDrag(_ message: KittyDnDMessage) {
+        // t=P:x=-1 starts the drag; other x values change the drag image, which
+        // we do not support yet.
+        guard message.intValue("x") == -1 else {
+            return
+        }
+        let offer = KittyDnDDragOffer(mimeTypes: offerMimeTypes,
+                                      data: offerData,
+                                      operations: offerOperations,
+                                      image: offerImage)
+        guard let dragHost, dragHost.beginDrag(offer) else {
+            send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "EIO:could not start drag"))
+            return
+        }
+        send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "OK"))
+    }
+
+    private func handleDragDataReply(_ message: KittyDnDMessage) {
+        // The program's reply to a t=e:x=5 lazy data request: t=e:y=idx;data.
+        guard let index = message.intValue("y"),
+              let completion = pendingDataRequests.removeValue(forKey: index) else {
+            return
+        }
+        completion(message.dataPayload)
+    }
+
+    private func handleDragStatus(_ message: KittyDnDMessage) {
+        // t=E from the program. y=-1 cancels the whole drag; otherwise it is an
+        // error reply to a lazy data request for that MIME index.
+        guard let y = message.intValue("y") else {
+            return
+        }
+        if y == -1 {
+            dragHost?.cancelDrag()
+            resetOfferInProgress()
+        } else if let completion = pendingDataRequests.removeValue(forKey: y) {
+            completion(nil)
+        }
+    }
+
+    // MARK: - Offer / drag-out (from AppKit / drag host)
+
+    /// The AppKit adapter detected a drag gesture starting over the terminal.
+    func dragGestureDetected(cellX: Int, cellY: Int, pixelX: Int, pixelY: Int) {
+        guard isOfferingDrags else { return }
+        send(KittyDnDMessage(metadata: [
+            "t": "o",
+            "x": String(cellX),
+            "y": String(cellY),
+            "X": String(pixelX),
+            "Y": String(pixelY),
+        ]))
+    }
+
+    /// The native drag was accepted by a destination that prefers the MIME type
+    /// at `preferredMimeIndex`.
+    func dragAccepted(preferredMimeIndex: Int) {
+        send(KittyDnDMessage(metadata: ["t": "e", "x": "1", "y": String(preferredMimeIndex)]))
+    }
+
+    func dragActionChanged(operation: Int) {
+        send(KittyDnDMessage(metadata: ["t": "e", "x": "2", "o": String(operation)]))
+    }
+
+    func dragDropped() {
+        send(KittyDnDMessage(metadata: ["t": "e", "x": "3"]))
+    }
+
+    func dragFinished(canceled: Bool) {
+        send(KittyDnDMessage(metadata: ["t": "e", "x": "4", "y": canceled ? "1" : "0"]))
+        resetOfferInProgress()
+    }
+
+    /// Ask the program for the data at `mimeIndex` (the lazy path, used when it
+    /// was not pre-sent). `completion` is called with the bytes, or nil on error.
+    func requestDragData(mimeIndex: Int, completion: @escaping (Data?) -> Void) {
+        pendingDataRequests[mimeIndex] = completion
+        send(KittyDnDMessage(metadata: ["t": "e", "x": "5", "y": String(mimeIndex)]))
+    }
+
+    private func resetOfferInProgress() {
+        offerMimeTypes = []
+        offerOperations = 0
+        offerData = [:]
+        offerImage = nil
+        for (_, completion) in pendingDataRequests {
+            completion(nil)
+        }
+        pendingDataRequests = [:]
     }
 
     // MARK: - Outbound helpers
