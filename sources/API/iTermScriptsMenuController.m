@@ -789,6 +789,17 @@ NS_ASSUME_NONNULL_BEGIN
         return;
     }
 
+    // A uv script whose interpreter is gone (the shared uv runtime was deleted to reclaim
+    // disk, or the home dir was renamed): the marker + setup.cfg are intact but
+    // .venv/bin/python no longer resolves, so environmentForScript returned nil. Rather than
+    // call the script malformed with no way out, offer to re-provision the venv, which is
+    // cheap (setup.cfg is authoritative). The legacy iterm2env was a self-contained clone,
+    // so this state is a uv-specific regression.
+    if (explicitUserAction && [self uvScriptContainerNeedsReprovision:fullPath]) {
+        [self offerToReprovisionUvScript:fullPath arguments:arguments explicitUserAction:explicitUserAction];
+        return;
+    }
+
     if ([[fullPath pathExtension] isEqualToString:@"py"]) {
         if (!explicitUserAction && ![iTermAPIHelper isEnabled]) {
             RLog(@"Not launching %@ because the API is not enabled", fullPath);
@@ -841,6 +852,72 @@ NS_ASSUME_NONNULL_BEGIN
     [[NSWorkspace sharedWorkspace] openApplicationAtURL:[NSURL fileURLWithPath:fullPath]
                                           configuration:[NSWorkspaceOpenConfiguration configuration]
                                       completionHandler:nil];
+}
+
+// A uv full-environment script that has lost its interpreter: the python-runtime.json
+// marker and setup.cfg are present, but .venv/bin/python (a symlink into the shared uv
+// python dir) no longer resolves. This happens if the shared uv directory was deleted, the
+// home dir was renamed, or the Scripts folder was restored onto another machine.
+- (BOOL)uvScriptContainerNeedsReprovision:(NSString *)container {
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *marker = [container stringByAppendingPathComponent:[iTermScriptRuntime markerFileName]];
+    NSString *setupCfg = [container stringByAppendingPathComponent:@"setup.cfg"];
+    NSString *interpreter = [[container stringByAppendingPathComponent:[iTermScriptRuntime venvDirectoryName]]
+                             stringByAppendingPathComponent:@"bin/python"];
+    return [fm fileExistsAtPath:marker] &&
+           [fm fileExistsAtPath:setupCfg] &&
+           ![fm fileExistsAtPath:interpreter];  // follows the symlink: false if it dangles
+}
+
+- (void)offerToReprovisionUvScript:(NSString *)container
+                         arguments:(NSArray<NSString *> *)arguments
+                explicitUserAction:(BOOL)explicitUserAction {
+    NSString *name = container.lastPathComponent;
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The Python environment for “%@” is missing (the shared runtime may have been deleted). Rebuild it from its saved requirements now?", name]
+                               actions:@[ @"Rebuild", @"Cancel" ]
+                             accessory:nil
+                            identifier:@"NoSyncRebuildMissingUvEnv"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Rebuild Python Environment?"
+                                window:nil];
+    if (selection != kiTermWarningSelection0) {
+        return;
+    }
+    NSString *setupCfgPath = [container stringByAppendingPathComponent:@"setup.cfg"];
+    iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:setupCfgPath];
+    NSArray<NSString *> *dependencies = parser.dependencies ?: @[];
+    // Prefer the version the marker recorded (what it actually ran), then the setup.cfg pin,
+    // then the default. createSetupCfg:NO so the existing setup.cfg is preserved.
+    NSString *version = [iTermScriptRuntime pythonVersionForScriptContainer:container]
+        ?: parser.pythonVersion
+        ?: [iTermScriptRuntime defaultPythonVersion];
+    __block iTermProvisioningProgressWindowController *progress = [[iTermProvisioningProgressWindowController alloc] init];
+    __weak __typeof(self) weakSelf = self;
+    [[iTermUvProvisioner shared] downloadAndProvisionFullEnvironmentWithContainer:container
+                                                          requestedPythonVersion:version
+                                                                    dependencies:dependencies
+                                                                  createSetupCfg:NO
+                                                            provisioningDidBegin:^{
+        [progress showWithMessage:@"Rebuilding the Python environment…"];
+    }
+                                                                      completion:^(NSError *error) {
+        [progress dismiss];
+        progress = nil;
+        if (error != nil) {
+            if (![iTermUvProvisioner isCancelationError:error]) {
+                NSAlert *alert = [[NSAlert alloc] init];
+                alert.messageText = @"Could Not Rebuild Environment";
+                alert.informativeText = error.localizedDescription ?: @"Unknown error";
+                [alert runModal];
+            }
+            return;
+        }
+        // Rebuilt: launch it now.
+        [weakSelf launchScriptWithAbsolutePath:container
+                                     arguments:arguments
+                            explicitUserAction:explicitUserAction];
+    }];
 }
 
 // NOTE: This logic needs to be kept in sync with -launchScriptWithAbsolutePath
