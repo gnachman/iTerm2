@@ -2481,3 +2481,10 @@ Bug Fixes:
   tab color”, and Color Presets) could not
   be found with the preferences search box
   while editing a profile.
+- Parentheses, brackets, and other mirrored
+  punctuation now draw correctly in right-to-
+  left text when right-to-left support is on.
+  The direction follows CoreText's own bidi
+  resolution, so a bracket around an English
+  phrase inside Persian is handled the same
+  way other Mac apps handle it.

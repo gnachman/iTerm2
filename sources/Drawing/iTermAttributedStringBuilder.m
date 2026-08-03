@@ -12,6 +12,7 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermBackgroundColorRun.h"
 #import "iTermBoxDrawingBezierCurveFactory.h"
+#import "iTermCharacterSets.h"
 #import "iTermExternalAttributeIndex.h"
 #import "iTermColorMap.h"
 #import "iTermMutableAttributedStringBuilder.h"
@@ -436,6 +437,15 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         }
         unichar code = c.code;
         BOOL isComplex = c.complexChar;
+
+        // UBA rule L4: draw a bidi-mirrorable character as its counterpart when
+        // CoreText resolved it to right-to-left. Driven by the per-cell set
+        // BidiDisplayInfo computed from CoreText's real resolution, so brackets
+        // around an embedded LTR run (e.g. Persian «(English)») are correctly
+        // left un-mirrored. Only simple (non-complex) cells can mirror.
+        if (!isComplex && [bidiInfo mirrorsSourceCell:i]) {
+            code = iTermBidiMirroredCounterpart(code);
+        }
 
         NSString *charAsString;
 

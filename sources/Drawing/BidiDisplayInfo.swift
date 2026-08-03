@@ -44,6 +44,22 @@ extension CTRun {
         CTRunGetPositions(self, wholeRange, &values)
         return values
     }
+    var glyphs: [CGGlyph] {
+        let count = glyphCount
+        var values = Array<CGGlyph>(repeating: 0, count: count)
+        CTRunGetGlyphs(self, wholeRange, &values)
+        return values
+    }
+    // The font CoreText actually used for this run (post-substitution). Needed
+    // to ask the font for a character's default (un-mirrored) glyph so we can
+    // detect whether CoreText applied bidi mirroring (rule L4) to a glyph.
+    var font: CTFont? {
+        guard let attributes = CTRunGetAttributes(self) as? [String: Any],
+              let font = attributes[kCTFontAttributeName as String] else {
+            return nil
+        }
+        return (font as! CTFont)
+    }
     var status: CTRunStatus {
         CTRunGetStatus(self)
     }
@@ -124,10 +140,17 @@ struct ResolvedCellPosition: Comparable {
 
 fileprivate struct IntermediateLookupTable {
     var rtlIndexes = IndexSet()
+    // Source cells whose character CoreText actually drew as its bidi-mirrored
+    // counterpart (UBA rule L4). This is distinct from rtlIndexes: a bracket
+    // that brackets an embedded left-to-right run is in an RTL run for
+    // positioning yet must NOT be mirrored, and CoreText resolves that
+    // correctly here. Driving mirroring off run direction instead reverses
+    // brackets around English words inside Persian text.
+    var mirroredIndexes = IndexSet()
     var sourceCellToPositionRange: Array<ClosedRange<CGFloat>?>
     var count: Int
 
-    init(line: CTLine, deltas: UnsafePointer<Int32>, count: Int) {
+    init(line: CTLine, string: NSString, deltas: UnsafePointer<Int32>, count: Int) {
         self.count = count
         let runs = CTLineGetGlyphRuns(line) as! [CTRun]
 
@@ -145,8 +168,10 @@ fileprivate struct IntermediateLookupTable {
                 }
             }
 
-            // Update sourceCellToPositionRange
+            // Update sourceCellToPositionRange, and detect L4 mirroring.
             let positions = run.positions
+            let glyphs = run.glyphs
+            let font = run.font
             for i in 0..<run.glyphCount {
                 let stringIndex = stringIndices[i]
                 let sourceCell = Int(CellOffsetFromUTF16Offset(Int32(stringIndex), deltas))
@@ -155,6 +180,24 @@ fileprivate struct IntermediateLookupTable {
                     sourceCellToPositionRange[sourceCell] = existing
                 } else {
                     sourceCellToPositionRange[sourceCell] = positions[i].x...positions[i].x
+                }
+
+                // A character is mirrored iff it is bidi-mirrorable AND the
+                // glyph CoreText chose differs from the font's default glyph
+                // for that character. Comparing against the run's own font
+                // (post-substitution) keeps the comparison valid.
+                if let font,
+                   stringIndex >= 0,
+                   stringIndex < string.length {
+                    let ch = string.character(at: stringIndex)
+                    if iTermBidiMirroredCounterpart(ch) != ch {
+                        var chars: [unichar] = [ch]
+                        var defaultGlyphs = [CGGlyph](repeating: 0, count: 1)
+                        CTFontGetGlyphsForCharacters(font, &chars, &defaultGlyphs, 1)
+                        if glyphs[i] != defaultGlyphs[0] {
+                            mirroredIndexes.insert(sourceCell)
+                        }
+                    }
                 }
             }
         }
@@ -199,10 +242,13 @@ fileprivate struct IntermediateLookupTable {
 // Make a lookup table that maps source cell to display cell.
 fileprivate func makeLookupTable(_ attributedString: NSAttributedString,
                                      deltas: UnsafePointer<Int32>,
-                                 count: Int) -> ([Int32], IndexSet, Bool) {
+                                 count: Int) -> ([Int32], IndexSet, IndexSet, Bool) {
     // Create a CTLine from the attributed string
     let line = CTLineCreateWithAttributedString(attributedString)
-    let intermediate = IntermediateLookupTable(line: line, deltas: deltas, count: count)
+    let intermediate = IntermediateLookupTable(line: line,
+                                               string: attributedString.string as NSString,
+                                               deltas: deltas,
+                                               count: count)
 
     let firstStrongLTR = attributedString.string.rangeOfCharacter(from: NSCharacterSet.strongLTRCodePoints())
     let firstStrongRTL = attributedString.string.rangeOfCharacter(from: NSCharacterSet.strongRTLCodePoints())
@@ -219,7 +265,7 @@ fileprivate func makeLookupTable(_ attributedString: NSAttributedString,
         } else {
             false
         }
-    return (intermediate.lut, intermediate.rtlIndexes, paragraphIsRTL)
+    return (intermediate.lut, intermediate.rtlIndexes, intermediate.mirroredIndexes, paragraphIsRTL)
 }
 
 extension IndexSet {
@@ -284,9 +330,16 @@ class BidiDisplayInfoObjc: NSObject {
 
     @objc var paragraphIsRTL: Bool { guts.paragraphIsRTL }
 
+    // Whether the given source cell's glyph must be drawn bidi-mirrored (L4).
+    @objc(mirrorsSourceCell:)
+    func mirrorsSourceCell(_ cell: Int32) -> Bool {
+        return guts.mirroredIndexes.contains(Int(cell))
+    }
+
     private enum Keys: String {
         case lut = "lut"
         case rtlIndexes = "rtlIndexes"
+        case mirroredIndexes = "mirroredIndexes"
         case paragraphIsRTL = "paragraphIsRTL"
     }
 
@@ -294,6 +347,7 @@ class BidiDisplayInfoObjc: NSObject {
     var dictionaryValue: [String: Any] {
         return [Keys.lut.rawValue: guts.lut.efficientlyEncodedForPlist(),
                 Keys.rtlIndexes.rawValue: rtlIndexes.rangeView.map { NSValue(range: NSRange($0)) },
+                Keys.mirroredIndexes.rawValue: guts.mirroredIndexes.rangeView.map { NSValue(range: NSRange($0)) },
                 Keys.paragraphIsRTL.rawValue: guts.paragraphIsRTL ]
     }
 
@@ -320,6 +374,12 @@ class BidiDisplayInfoObjc: NSObject {
             return nil
         }
         let indexes = IndexSet(ranges: indexesArray.compactMap { Range($0.rangeValue) })
+        let mirroredIndexes: IndexSet =
+            if let obj = dictionary[Keys.mirroredIndexes.rawValue], let arr = obj as? Array<NSValue> {
+                IndexSet(ranges: arr.compactMap { Range($0.rangeValue) })
+            } else {
+                IndexSet()
+            }
         let paragraphIsRTL: Bool =
             if let obj = dictionary[Keys.paragraphIsRTL.rawValue],
                let convertedParagraphIsRTL = obj as? Bool {
@@ -329,6 +389,7 @@ class BidiDisplayInfoObjc: NSObject {
             }
         guts = BidiDisplayInfo(lut: lut,
                                rtlIndexes: indexes,
+                               mirroredIndexes: mirroredIndexes,
                                paragraphIsRTL: paragraphIsRTL)
     }
 
@@ -619,6 +680,11 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
     // direction. Adjacent RTL indexes will be drawn right-to-left.
     fileprivate let rtlIndexes: IndexSet
 
+    // Source cells whose glyph must be drawn bidi-mirrored (UBA rule L4).
+    // Computed from CoreText's actual per-character resolution, not from run
+    // direction, so brackets around embedded LTR runs are correctly excluded.
+    fileprivate let mirroredIndexes: IndexSet
+
     // Base writing direction. Determines how the paragraph should be justified.
     fileprivate let paragraphIsRTL: Bool
 
@@ -691,9 +757,11 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
 
     fileprivate init(lut: [Int32],
                      rtlIndexes: IndexSet,
+                     mirroredIndexes: IndexSet = IndexSet(),
                      paragraphIsRTL: Bool) {
         self.lut = lut
         self.rtlIndexes = rtlIndexes
+        self.mirroredIndexes = mirroredIndexes
         self.paragraphIsRTL = paragraphIsRTL
     }
 
@@ -721,9 +789,9 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
 
         let attributedString = NSAttributedString(string: string,
                                                   attributes: [.paragraphStyle: Self.paragraphStyle])
-        (lut, rtlIndexes, paragraphIsRTL) = makeLookupTable(attributedString,
-                                                            deltas: deltas!,
-                                                            count: Int(nonEmptyCount))
+        (lut, rtlIndexes, mirroredIndexes, paragraphIsRTL) = makeLookupTable(attributedString,
+                                                                            deltas: deltas!,
+                                                                            count: Int(nonEmptyCount))
         if rtlIndexes.isEmpty {
             return nil
         }
@@ -732,9 +800,9 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
     init?(deltaString: DeltaString, usedCount: Int) {
         let attributedString = NSAttributedString(string: deltaString.unsafeString as String,
                                                   attributes: [.paragraphStyle: Self.paragraphStyle])
-        (lut, rtlIndexes, paragraphIsRTL) = makeLookupTable(attributedString,
-                                                            deltas: deltaString.deltas,
-                                                            count: usedCount)
+        (lut, rtlIndexes, mirroredIndexes, paragraphIsRTL) = makeLookupTable(attributedString,
+                                                                            deltas: deltaString.deltas,
+                                                                            count: usedCount)
         if rtlIndexes.isEmpty {
             return nil
         }
@@ -756,6 +824,9 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
         }
         let growth = width - Int32(temp.lut.count)
         self.paragraphIsRTL = temp.paragraphIsRTL
+        // Padding only appends cells at the edge; existing source-cell indices
+        // (which mirroredIndexes keys on) are unchanged, so carry it verbatim.
+        self.mirroredIndexes = temp.mirroredIndexes
         if growth == 0 || !iTermAdvancedSettingsModel.rightJustifyRTLLines() {
             self.lut = temp.lut
             self.rtlIndexes = temp.rtlIndexes
@@ -769,6 +840,7 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
     init(basedOn base: BidiDisplayInfo, paddedTo width: Int32) {
         lut = iTermAdvancedSettingsModel.rightJustifyRTLLines() ? Self.pad(lut: base.lut, width: width, paragraphIsRTL: base.paragraphIsRTL) : base.lut
         rtlIndexes = base.rtlIndexes
+        mirroredIndexes = base.mirroredIndexes
         paragraphIsRTL = base.paragraphIsRTL
     }
 
@@ -787,6 +859,11 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
             return nil
         }
 
+        var subMirrored = IndexSet()
+        for mirroredRange in mirroredIndexes.rangeView(of: range) {
+            subMirrored.insert(integersIn: mirroredRange.shifted(by: -nsrange.location))
+        }
+
         let sublut = lut[range]
         let sorted = sublut.sorted()
 
@@ -797,7 +874,7 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
         let fixed = sublut.map {
             compression[$0]!
         }
-        return BidiDisplayInfo(lut: fixed, rtlIndexes: subIndexes, paragraphIsRTL: paragraphIsRTL)
+        return BidiDisplayInfo(lut: fixed, rtlIndexes: subIndexes, mirroredIndexes: subMirrored, paragraphIsRTL: paragraphIsRTL)
     }
 
     func subInfo(range nsrange: NSRange, width: Int32) -> BidiDisplayInfo? {

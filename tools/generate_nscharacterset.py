@@ -34,6 +34,7 @@ DERIVED_CORE_PROPS_URL = "https://unicode.org/Public/UCD/latest/ucd/DerivedCoreP
 EMOJI_DATA_URL = "https://unicode.org/Public/UCD/latest/ucd/emoji/emoji-data.txt"
 EMOJI_SEQUENCES_URL = "https://unicode.org/Public/emoji/latest/emoji-sequences.txt"
 IDN_CHARS_URL = "https://unicode.org/reports/tr36/idn-chars.txt"
+BIDI_MIRRORING_URL = "https://unicode.org/Public/UCD/latest/ucd/BidiMirroring.txt"
 
 # Cache directory for downloaded files
 CACHE_DIR = Path(__file__).parent / ".unicode_cache"
@@ -145,6 +146,29 @@ def format_c_supp_ranges(nums, indent="    "):
     for start, end in get_ranges(nums):
         lines.append(f"{indent}{{{hex(start)}, {hex(end)}}},")
     return lines
+
+
+def parse_bidi_mirroring(content: str):
+    """Parse BidiMirroring.txt into a sorted list of (code, mirror) pairs."""
+    pairs = []
+    for line in content.splitlines():
+        line = line.split("#", 1)[0].strip()
+        if not line:
+            continue
+        left, right = (field.strip() for field in line.split(";"))
+        code = int(left, 16)
+        mirror = int(right, 16)
+        if code > 0xFFFF or mirror > 0xFFFF:
+            # iTermBidiMirroredCounterpart stores pairs as uint16_t. No pair has
+            # ever been outside the BMP; fail loudly if that changes.
+            raise ValueError(f"Non-BMP bidi mirroring pair {left};{right}")
+        pairs.append((code, mirror))
+    return sorted(pairs)
+
+
+def format_bidi_mirroring_pairs(pairs, indent="    "):
+    """Format (code, mirror) pairs as C uint16_t array entries."""
+    return [f"{indent}{{0x{code:04X}, 0x{mirror:04X}}}," for code, mirror in pairs]
 
 
 # ============================================================================
@@ -357,6 +381,7 @@ def main():
     emoji_data_content = get_cached_or_fetch(EMOJI_DATA_URL, "emoji-data.txt")
     emoji_sequences_content = get_cached_or_fetch(EMOJI_SEQUENCES_URL, "emoji-sequences.txt")
     idn_content = get_cached_or_fetch(IDN_CHARS_URL, "idn-chars.txt")
+    bidi_mirroring_content = get_cached_or_fetch(BIDI_MIRRORING_URL, "BidiMirroring.txt")
 
     print("Parsing Unicode data...")
     unicode_data = parse_unicode_data(unicode_data_content)
@@ -431,6 +456,8 @@ def main():
     rtl_bmp, rtl_supp = split_bmp_supp(rtl_codes)
     own_cell_bmp, own_cell_supp = split_bmp_supp(own_cell_codes)
 
+    bidi_mirroring_pairs = parse_bidi_mirroring(bidi_mirroring_content)
+
     print("Reading C template...")
     c_template = c_template_path.read_text(encoding="utf-8")
 
@@ -446,6 +473,8 @@ def main():
         "{{EMOJI_VS16_BMP_INIT}}": "\n".join(format_c_bmp_init(vs16_bmp, "sEmojiAcceptingVS16BMP")),
         "{{RTL_BMP_INIT}}": "\n".join(format_c_bmp_init(rtl_bmp, "sRTLBMP")),
         "{{CODE_POINTS_WITH_OWN_CELL_BMP_INIT}}": "\n".join(format_c_bmp_init(own_cell_bmp, "sCodePointsWithOwnCellBMP")),
+        "{{BIDI_MIRRORING_PAIRS}}": "\n".join(format_bidi_mirroring_pairs(bidi_mirroring_pairs)),
+        "{{BIDI_MIRRORING_PAIR_COUNT}}": str(len(bidi_mirroring_pairs)),
     }
 
     c_output = c_template
