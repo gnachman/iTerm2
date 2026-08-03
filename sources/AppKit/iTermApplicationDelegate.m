@@ -1534,6 +1534,8 @@ void TurnOnDebugLoggingAutomatically(void) {
     // Skipped under unit tests to avoid network access.
     if (![NSApp isRunningUnitTests]) {
         [[iTermUvProvisioner shared] performPeriodicUpgradeCheck];
+        // Reclaim orphaned ~90 MB uv install temps left by a crash mid-install.
+        [[iTermUvProvisioner shared] sweepOrphanedInstallTemps];
     }
     // Skip the Companion launch hooks under unit tests. They read
     // keychain-backed pairing material at launch, and a locked login keychain

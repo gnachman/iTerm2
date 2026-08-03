@@ -162,4 +162,23 @@ class iTermUvMigration: NSObject {
             completion?()
         }
     }
+
+    // The container is authoritatively uv-backed (.venv + python-runtime.json), so any
+    // legacy artifact beside it is a leftover no other path would remove: the
+    // saved-iterm2env backup of a completed migration; a stray iterm2env restored by an
+    // old-build downgrade round-trip (potentially multi-GB); and a .venv.building temp
+    // orphaned by a crash mid-swap. Only call when the uv backend is confirmed. Runs off
+    // the main thread (these can be large).
+    @objc static func reclaimOrphanedArtifacts(container: String, completion: (() -> Void)? = nil) {
+        DispatchQueue.global(qos: .utility).async {
+            let fm = FileManager.default
+            let names = ["saved-iterm2env",
+                         iTermScriptRuntime.legacyDirectoryName,   // "iterm2env"
+                         iTermScriptRuntime.venvDirectoryName + ".building"]
+            for name in names {
+                try? fm.removeItem(atPath: (container as NSString).appendingPathComponent(name))
+            }
+            completion?()
+        }
+    }
 }

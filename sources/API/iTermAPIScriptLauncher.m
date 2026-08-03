@@ -207,10 +207,12 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     // A uv-provisioned script has no legacy iterm2env version to check; the legacy
     // runtime-upgrade path does not apply to it, so launch it directly.
     if ([iTermScriptRuntime backendForScriptContainer:fullPath] == iTermScriptRuntimeBackendUv) {
-        // If a prior migration completed (the .venv and marker are present) but the app
-        // died before dropping the backup, a saved-iterm2env (potentially multi-GB) is
-        // orphaned here and no later code path would ever remove it. Reclaim it now.
-        [iTermUvMigration discardLegacyBackupWithContainer:fullPath completion:nil];
+        // This container is authoritatively uv-backed (.venv + marker), so any legacy
+        // artifact beside it is a leftover no other code path would remove: a
+        // saved-iterm2env backup of a completed migration whose cleanup was interrupted, a
+        // stray iterm2env restored by an old-build downgrade round-trip (both potentially
+        // multi-GB), or a .venv.building temp orphaned by a crash mid-swap. Reclaim them.
+        [iTermUvMigration reclaimOrphanedArtifactsWithContainer:fullPath completion:nil];
         completion(originalVirtualenv);
         return;
     }

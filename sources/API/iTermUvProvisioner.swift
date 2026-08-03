@@ -191,6 +191,25 @@ class iTermUvProvisioner: NSObject {
         return nil
     }
 
+    // Remove orphaned uv-binary install temps (.uv-install-<uuid>, each ~90 MB) left in
+    // uv/bin/ by a crash between the copy and the rename. install() uses a fresh UUID each
+    // time and never cleans old ones, so without this they accumulate. Safe to call at
+    // launch; a no-op if none exist. Runs off the main thread.
+    @objc func sweepOrphanedInstallTemps() {
+        DispatchQueue.global(qos: .utility).async {
+            let fm = FileManager.default
+            let binDir = (Self.uvBinaryPath as NSString).deletingLastPathComponent
+            guard let entries = try? fm.contentsOfDirectory(atPath: binDir) else {
+                return
+            }
+            for entry in entries where entry.hasPrefix(".uv-install-") {
+                let path = (binDir as NSString).appendingPathComponent(entry)
+                try? fm.removeItem(atPath: path)
+                RLog("uv: removed orphaned install temp \(path)")
+            }
+        }
+    }
+
     // Copy the located uv binary to destinationBinaryPath, creating the containing
     // directory and marking it executable. Throws if no binary is found.
     static func install(fromExtractedDirectory directory: String,
@@ -249,9 +268,11 @@ class iTermUvProvisioner: NSObject {
         }
         let tempFile = (NSTemporaryDirectory() as NSString)
             .appendingPathComponent("uv-verify-" + UUID().uuidString)
+        // Register cleanup BEFORE the write, so a failure mid-write (which can leave a
+        // partial ~37 MB file) is still cleaned up rather than leaked.
+        defer { try? FileManager.default.removeItem(atPath: tempFile) }
         do {
             try data.write(to: URL(fileURLWithPath: tempFile))
-            defer { try? FileManager.default.removeItem(atPath: tempFile) }
             if let verifyError = iTermSignatureVerifier.validateFileURL(URL(fileURLWithPath: tempFile),
                                                                         withEncodedSignature: encodedSignature,
                                                                         publicKey: publicKey) {
