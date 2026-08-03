@@ -3968,6 +3968,20 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 // Returns YES if the selection changed.
+// The mouse reports the column it physically points at (visual). On a
+// bidi-reordered line that differs from the logical cell the selection model
+// stores, which is why a right-to-left selection used to highlight the wrong
+// cells. Returns the input unchanged when bidi is off or the line has no
+// reordering, so left-to-right text is untouched.
+- (VT100GridCoord)logicalCoordForVisualCoord:(VT100GridCoord)visualCoord {
+    if (![iTermPreferences bidiEnabled]) {
+        return visualCoord;
+    }
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+    extractor.supportBidi = YES;
+    return [extractor logicalCoordForVisualCoord:visualCoord];
+}
+
 - (BOOL)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView {
     if (!_selection.live) {
         return NO;
@@ -3983,8 +3997,18 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         x = width;
         y--;
     }
-    if (y >= [_dataSource numberOfLines]) {
-        y = [_dataSource numberOfLines] - 1;
+    const int numberOfLines = [_dataSource numberOfLines];
+    if (y >= numberOfLines) {
+        y = numberOfLines - 1;
+    }
+    // The x above is a visual column. On a bidi-reordered line convert it to the
+    // logical cell the selection stores; a no-op on left-to-right lines and for
+    // the past-the-end boundary values set just above. Only convert for an
+    // on-screen line: selection auto-scroll can pass a y below the top (negative)
+    // or an empty buffer can leave y = -1, and fetching that line to read its
+    // bidi info would assert.
+    if (x >= 0 && x < width && y >= 0 && y < numberOfLines) {
+        x = [self logicalCoordForVisualCoord:VT100GridCoordMake(x, y)].x;
     }
     const BOOL hasColumnWindow = (_selection.liveRange.columnWindow.location > 0 ||
                                   _selection.liveRange.columnWindow.length < width);
@@ -8008,6 +8032,11 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
     return [self moveSelectionEndpointToX:coord.x
                                         Y:coord.y
                        locationInTextView:locationInTextView];
+}
+
+- (VT100GridCoord)mouseHandler:(PTYMouseHandler *)handler
+    logicalCoordForVisualCoord:(VT100GridCoord)visualCoord {
+    return [self logicalCoordForVisualCoord:visualCoord];
 }
 
 - (NSString *)mouseHandler:(PTYMouseHandler *)mouseHandler

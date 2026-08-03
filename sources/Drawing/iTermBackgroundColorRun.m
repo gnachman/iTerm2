@@ -12,7 +12,6 @@
 static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
                                         const screen_char_t *theLine,
                                         VT100GridCoord coord,
-                                        int visualColumn,
                                         NSIndexSet *selectedIndexes,
                                         NSData *matches,
                                         int width,
@@ -21,7 +20,13 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
     if (ScreenCharIsDWC_SKIP(theLine[coord.x])) {
         run->selected = NO;
     } else {
-        run->selected = [selectedIndexes containsIndex:visualColumn];
+        // selectedIndexes is in LOGICAL (source-cell) coordinates, so test the
+        // cell's logical index. On a bidi-reordered line the visual column is a
+        // different cell, and testing it would highlight the mirror-image cells
+        // (and empty padding). The run is still positioned at its visual column
+        // via the LUT, so a contiguous logical selection paints the correct
+        // visual cells even when they are not contiguous on screen.
+        run->selected = [selectedIndexes containsIndex:coord.x];
     }
     if (matches) {
         // Test if this char is a highlighted match from a Find.
@@ -110,7 +115,6 @@ static NSRange NSMakeRangeFromEndpointsInclusive(NSUInteger start, NSUInteger in
     const int32_t bidiLUTLength = bidi.numberOfCells;
 
     int lastVisualColumn = -1;
-    int visualColumnForSelection = -1;  // visual column, but for DWC_RIGHT is the preceding cell. Used to make selection extend into DWC_RIGHT.
     int visualColumn = -1;
     for (j = charRange.location; j < charRange.location + charRange.length; j++) {
         lastVisualColumn = visualColumn;
@@ -126,11 +130,6 @@ static NSRange NSMakeRangeFromEndpointsInclusive(NSUInteger start, NSUInteger in
                 continue;
             }
         }
-        if (x < bidiLUTLength) {
-            visualColumnForSelection = bidiLUT[x];
-        } else {
-            visualColumnForSelection = x;
-        }
         if (j < bidiLUTLength) {
             visualColumn = bidiLUT[j];
         } else {
@@ -139,7 +138,6 @@ static NSRange NSMakeRangeFromEndpointsInclusive(NSUInteger start, NSUInteger in
         iTermMakeBackgroundColorRun(&current,
                                     theLine,
                                     VT100GridCoordMake(x, displayLineNumber),
-                                    visualColumnForSelection,
                                     selectedIndexes,
                                     matches,
                                     width,
@@ -207,7 +205,6 @@ static NSRange NSMakeRangeFromEndpointsInclusive(NSUInteger start, NSUInteger in
     iTermMakeBackgroundColorRun(&run,
                                 &defaultCharacter,
                                 VT100GridCoordMake(0, 0),
-                                0,
                                 nil,
                                 nil,
                                 width,
