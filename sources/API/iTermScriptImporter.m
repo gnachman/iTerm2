@@ -474,12 +474,29 @@ static const NSUInteger iTermReplaceBackupUUIDSuffixLength = 1 + 36;  // "-" + U
         }
         NSString *afterPrefix = [entry substringFromIndex:iTermReplaceBackupPrefix.length];
         if (afterPrefix.length <= iTermReplaceBackupUUIDSuffixLength) {
-            continue;  // Malformed; leave it alone.
+            continue;  // Too short to carry a name plus a UUID; not ours.
+        }
+        // Validate the fixed-length tail really is "-<UUID>" before treating this as our
+        // backup, so a user file coincidentally named ".replacing-…" is never renamed to a
+        // truncated garbage name.
+        NSString *tail = [afterPrefix substringFromIndex:afterPrefix.length - iTermReplaceBackupUUIDSuffixLength];
+        if (![tail hasPrefix:@"-"] ||
+            [[NSUUID alloc] initWithUUIDString:[tail substringFromIndex:1]] == nil) {
+            continue;
         }
         NSString *name = [afterPrefix substringToIndex:afterPrefix.length - iTermReplaceBackupUUIDSuffixLength];
         NSString *backupPath = [scriptsPath stringByAppendingPathComponent:entry];
         NSString *targetPath = [scriptsPath stringByAppendingPathComponent:name];
-        if ([fileManager fileExistsAtPath:targetPath]) {
+        // Use lstat (attributesOfItemAtPath does NOT follow symlinks). During a
+        // full-environment replace the target is a symlink into a temp extraction dir that
+        // survives an app crash, and a plain fileExistsAtPath would follow it, conclude the
+        // replace succeeded, and delete the user's only backup. The replacement is complete
+        // only when the target is a REAL item; a symlink (or nothing) means it did not
+        // finish, so restore the original (restore removes the leftover link first).
+        NSDictionary *attributes = [fileManager attributesOfItemAtPath:targetPath error:nil];
+        const BOOL targetIsRealItem = (attributes != nil &&
+                                       ![attributes.fileType isEqualToString:NSFileTypeSymbolicLink]);
+        if (targetIsRealItem) {
             RLog(@"Removing leaked replace-backup %@ (target %@ present)", backupPath, name);
             [fileManager removeItemAtPath:backupPath error:nil];
         } else {
