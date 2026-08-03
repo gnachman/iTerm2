@@ -70,6 +70,13 @@ Major New Features:
   can also push you a notification when the watch
   fires.
 
+- The manual AI model editor now offers presets
+  for OpenAI-compatible providers (Ollama,
+  OpenRouter, z.ai, Qwen, MiniMax) that fill in
+  the endpoint for you, plus a Test Connection
+  button that verifies your settings and API key
+  before you save.
+
 - Claude Code integration was added. It enables
   the new Session Status feature for claude code
   sessions so you can see at a glance which
