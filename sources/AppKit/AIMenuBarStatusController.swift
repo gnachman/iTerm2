@@ -38,20 +38,23 @@ class AIMenuBarStatusController: NSObject {
     }
 
     private func subscribeToBrokerIfPossible() {
-        guard brokerSubscription == nil else { return }
-        guard let broker = ChatBroker.instance else {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-                self?.subscribeToBrokerIfPossible()
+        // Called from init on the main thread, and the retry below re-enters on main.
+        MainActor.assumeIsolated {
+            guard brokerSubscription == nil else { return }
+            guard let broker = ChatBroker.instance else {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                    self?.subscribeToBrokerIfPossible()
+                }
+                return
             }
-            return
-        }
-        brokerSubscription = broker.subscribe(chatID: nil, registrationProvider: nil) { [weak self] update in
-            switch update {
-            case .typingStatus(_, let participant):
-                guard participant == .agent else { return }
-                self?.refresh()
-            case .delivery:
-                break
+            brokerSubscription = broker.subscribe(chatID: nil, registrationProvider: nil) { [weak self] update in
+                switch update {
+                case .typingStatus(_, let participant):
+                    guard participant == .agent else { return }
+                    self?.refresh()
+                case .delivery, .turnLifecycle:
+                    break
+                }
             }
         }
     }
@@ -109,7 +112,10 @@ class AIMenuBarStatusController: NSObject {
         let workingSessionIDs = SessionStatusController.instance.statuses.values
             .filter { Self.isWorkingStatus($0.statusText) }
             .map { $0.sessionID }
-        let busyChatIDs = TypingStatusModel.instance.chatIDs(forParticipant: .agent)
+        // TypingStatusModel is @MainActor; this only runs from refreshOnMain().
+        let busyChatIDs = MainActor.assumeIsolated {
+            TypingStatusModel.instance.chatIDs(forParticipant: .agent)
+        }
         var unique = Set<String>()
         for id in workingSessionIDs { unique.insert("session:\(id)") }
         for id in busyChatIDs { unique.insert("chat:\(id)") }
