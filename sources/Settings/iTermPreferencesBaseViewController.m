@@ -504,7 +504,12 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
 
 - (ProfileType)profileTypesForView:(NSView *)view {
     if ([self isKindOfClass:[iTermProfilePreferencesBaseViewController class]]) {
-        return view.enclosingModalEnclosure.visibleForProfileTypes;
+        // A control outside any modal enclosure is never conditionally hidden,
+        // so it applies to every profile type. Messaging a nil enclosure would
+        // yield ProfileTypeNone (0), which wrongly excludes such controls from
+        // preferences search whenever a concrete profile is being edited.
+        iTermModalEnclosure *enclosure = view.enclosingModalEnclosure;
+        return enclosure ? enclosure.visibleForProfileTypes : ProfileTypeAll;
     }
     return ProfileTypeAll;
 }

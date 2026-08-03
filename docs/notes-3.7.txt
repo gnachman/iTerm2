@@ -2450,3 +2450,9 @@ Bug Fixes:
   bar was hidden by the border around the
   active pane. The bar now draws on top of
   the border's top edge. Issue 12960.
+- Fixed a bug where some profile settings
+  that apply to all profile types (such as
+  “Border around active pane”, “Use custom
+  tab color”, and Color Presets) could not
+  be found with the preferences search box
+  while editing a profile.
