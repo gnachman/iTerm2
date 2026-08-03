@@ -1186,14 +1186,19 @@ class iTermUvProvisioner: NSObject {
     // records left by the first for scripts that were never relaunched in between (a rarely
     // used script plausibly skips a whole upgrade cycle). Missing dir is a no-op.
     private static func invalidateSharedVenvRemaps() {
+        invalidateSharedVenvRemaps(venvsRoot: sharedVenvsRoot)
+    }
+
+    // venvsRoot is injected so the merge (which regressed twice) is hermetically testable.
+    static func invalidateSharedVenvRemaps(venvsRoot: String) {
         let fm = FileManager.default
-        let remapsDir = (sharedVenvsRoot as NSString).appendingPathComponent(sharedVenvRemapsDirectoryName)
+        let remapsDir = (venvsRoot as NSString).appendingPathComponent(sharedVenvRemapsDirectoryName)
         guard let entries = try? fm.contentsOfDirectory(atPath: remapsDir), !entries.isEmpty else {
             // Missing or empty: nothing fresh to invalidate. Drop an empty dir if present.
             try? fm.removeItem(atPath: remapsDir)
             return
         }
-        let staleDir = (sharedVenvsRoot as NSString).appendingPathComponent(sharedVenvStaleRemapsDirectoryName)
+        let staleDir = (venvsRoot as NSString).appendingPathComponent(sharedVenvStaleRemapsDirectoryName)
         try? fm.createDirectory(atPath: staleDir, withIntermediateDirectories: true)
         for entry in entries {
             let source = (remapsDir as NSString).appendingPathComponent(entry)

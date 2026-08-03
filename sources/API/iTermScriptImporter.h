@@ -27,6 +27,10 @@ NS_ASSUME_NONNULL_BEGIN
 // backup if the replacement completed. Call once at launch.
 + (void)recoverStaleReplaceBackups;
 
+// Testing seam: run the recovery against a specific directory instead of the real
+// scripts folder.
++ (void)recoverStaleReplaceBackupsInDirectory:(NSString *)scriptsPath;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -391,7 +391,8 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
             // reporting a quiet success (which would hide that the replacement never
             // happened and the original was gone).
             if (replacedScriptBackup != nil) {
-                [self restoreReplacedScriptNamed:archive.name fromBackup:replacedScriptBackup];
+                [self restoreReplacedScriptToPath:[[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:archive.name]
+                                       fromBackup:replacedScriptBackup];
                 NSString *message = canceled
                     ? [NSString stringWithFormat:@"Replacing “%@” was canceled. The existing script was kept.", archive.name]
                     : (error.localizedDescription ?: @"The script could not be installed.");
@@ -457,14 +458,13 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
 }
 
 // Restore a script previously moved aside by moveAsideScriptNamed:, discarding whatever
-// partial install now sits at its destination.
-+ (void)restoreReplacedScriptNamed:(NSString *)name fromBackup:(NSString *)backupPath {
+// partial install (or leftover symlink) now sits at targetPath.
++ (void)restoreReplacedScriptToPath:(NSString *)targetPath fromBackup:(NSString *)backupPath {
     NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSString *path = [[fileManager scriptsPath] stringByAppendingPathComponent:name];
-    [fileManager removeItemAtPath:path error:nil];
+    [fileManager removeItemAtPath:targetPath error:nil];
     NSError *error = nil;
-    if (![fileManager moveItemAtPath:backupPath toPath:path error:&error]) {
-        RLog(@"Could not restore %@ from %@: %@", path, backupPath, error);
+    if (![fileManager moveItemAtPath:backupPath toPath:targetPath error:&error]) {
+        RLog(@"Could not restore %@ from %@: %@", targetPath, backupPath, error);
     }
 }
 
@@ -474,8 +474,11 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
 // backup leaked, so delete it; otherwise the replace never finished, so restore the
 // user's original script rather than leave it as a hidden orphan.
 + (void)recoverStaleReplaceBackups {
+    [self recoverStaleReplaceBackupsInDirectory:[[NSFileManager defaultManager] scriptsPath]];
+}
+
++ (void)recoverStaleReplaceBackupsInDirectory:(NSString *)scriptsPath {
     NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSString *scriptsPath = [fileManager scriptsPath];
     for (NSString *entry in [fileManager contentsOfDirectoryAtPath:scriptsPath error:nil]) {
         if ([entry hasPrefix:iTermInstallStagingPrefix]) {
             // An orphaned atomic-install staging dir; a completed install renames it away.
@@ -516,7 +519,7 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
             [fileManager removeItemAtPath:backupPath error:nil];
         } else {
             RLog(@"Restoring replace-backup %@ to %@ after interrupted import", backupPath, name);
-            [self restoreReplacedScriptNamed:name fromBackup:backupPath];
+            [self restoreReplacedScriptToPath:targetPath fromBackup:backupPath];
         }
     }
 }

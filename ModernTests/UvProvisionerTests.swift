@@ -259,6 +259,38 @@ final class UvProvisionerTests: XCTestCase {
         XCTAssertNil(iTermUvProvisioner.provisionedStaleRemapInterpreter(forRequestedVersion: "3.13", venvsRoot: root))
     }
 
+    private func staleRemap(_ minor: String, inRoot root: String) -> String? {
+        let p = ((root as NSString).appendingPathComponent(".remaps-stale") as NSString).appendingPathComponent(minor)
+        return (try? String(contentsOfFile: p, encoding: .utf8))?.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    func testInvalidateRemapsMergesPreservingPriorRecords() throws {
+        let root = try makeTempDir()
+        // A record left stale by a PRIOR upgrade (script never relaunched since).
+        try writeFile(((root as NSString).appendingPathComponent(".remaps-stale") as NSString).appendingPathComponent("3.11"), "3.10")
+        // A fresh record from the current cycle.
+        try writeFile(((root as NSString).appendingPathComponent(".remaps") as NSString).appendingPathComponent("3.13"), "3.12")
+
+        iTermUvProvisioner.invalidateSharedVenvRemaps(venvsRoot: root)
+
+        // Both survive: the second upgrade must not discard the first's record.
+        XCTAssertEqual(staleRemap("3.11", inRoot: root), "3.10")
+        XCTAssertEqual(staleRemap("3.13", inRoot: root), "3.12")
+        // The live cache is consumed.
+        XCTAssertFalse(FileManager.default.fileExists(
+            atPath: (root as NSString).appendingPathComponent(".remaps")))
+    }
+
+    func testInvalidateRemapsNewerResolutionWinsForSameMinor() throws {
+        let root = try makeTempDir()
+        try writeFile(((root as NSString).appendingPathComponent(".remaps-stale") as NSString).appendingPathComponent("3.13"), "3.9")
+        try writeFile(((root as NSString).appendingPathComponent(".remaps") as NSString).appendingPathComponent("3.13"), "3.12")
+
+        iTermUvProvisioner.invalidateSharedVenvRemaps(venvsRoot: root)
+
+        XCTAssertEqual(staleRemap("3.13", inRoot: root), "3.12")
+    }
+
     // MARK: - Runtime menu decision (item 1)
 
     func testRuntimeMenuActionUnderGate() {
