@@ -651,13 +651,21 @@ class iTermUvProvisioner: NSObject {
                     // The create path has no setup.cfg yet; the import path already
                     // ships one and must not have it overwritten.
                     if createSetupCfg {
+                        let setupCfgPath = (container as NSString).appendingPathComponent("setup.cfg")
+                        // Preserve existing metadata when rewriting an existing setup.cfg
+                        // (e.g. the Dependency Editor changing the Python version): a script
+                        // whose [metadata] name differs from its folder, or that pins a
+                        // specific environment version, must not be silently renamed or
+                        // reset. Only fall back to defaults for a brand-new setup.cfg (the
+                        // create path, where none exists yet).
+                        let existing = iTermSetupCfgParser(path: setupCfgPath)
                         iTermSetupCfgParser.writeSetupCfg(
-                            toFile: (container as NSString).appendingPathComponent("setup.cfg"),
-                            name: (container as NSString).lastPathComponent,
+                            toFile: setupCfgPath,
+                            name: existing?.name ?? (container as NSString).lastPathComponent,
                             dependencies: dependencies,
                             ensureiTerm2Present: true,
                             pythonVersion: marker.python,
-                            environmentVersion: Int(iTermMinimumPythonEnvironmentVersion))
+                            environmentVersion: existing?.minimumEnvironmentVersion ?? Int(iTermMinimumPythonEnvironmentVersion))
                     }
                     // If uv could not provide the script's pinned Python version and had
                     // to bump it, tell the user (once, suppressibly). Every provisioning

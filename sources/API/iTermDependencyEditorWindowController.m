@@ -41,6 +41,21 @@
     NSArray<iTermTuple<NSString *, NSString *> *> *_packageTuples;
     iTermScriptItem *_selectedScriptItem;
     NSString *_pythonVersion;
+    // Set while a uv .venv rebuild (Python version change) is in flight. The rebuild can
+    // take minutes and its dependency list is a snapshot taken at click time, so any edit
+    // made meanwhile would be installed into the soon-discarded venv and then erased when
+    // setup.cfg is rewritten from the snapshot. Guard the mutating actions on it.
+    BOOL _rebuildInProgress;
+}
+
+// Enable/disable the editing controls during a rebuild. The Add button has no outlet, so
+// the mutating actions also early-return on _rebuildInProgress as the real guard.
+- (void)setEditingControlsEnabled:(BOOL)enabled {
+    _scriptsButton.enabled = enabled;
+    _pythonVersionButton.enabled = enabled;
+    _tableView.enabled = enabled;
+    _remove.enabled = enabled;
+    _checkForUpdate.enabled = enabled;
 }
 
 + (instancetype)sharedInstance {
@@ -456,6 +471,9 @@
 #pragma mark - Actions
 
 - (IBAction)upgrade:(id)sender {
+    if (_rebuildInProgress) {
+        return;
+    }
     if (!_selectedScriptItem) {
         return;
     }
@@ -576,6 +594,9 @@
 }
 
 - (IBAction)add:(id)sender {
+    if (_rebuildInProgress) {
+        return;
+    }
     iTermScriptItem *selectedScriptItem = _selectedScriptItem;
     if (!selectedScriptItem) {
         return;
@@ -600,6 +621,9 @@
 }
 
 - (IBAction)remove:(id)sender {
+    if (_rebuildInProgress) {
+        return;
+    }
     const NSInteger index = _tableView.selectedRow;
     if (index < 0) {
         return;
@@ -626,6 +650,9 @@
 }
 
 - (IBAction)pythonVersionChanged:(id)sender {
+    if (_rebuildInProgress) {
+        return;
+    }
     NSString *selectedVersion = [[_pythonVersionButton selectedItem] title];
     if ([selectedVersion isEqualToString:_pythonVersion]) {
         return;
@@ -671,6 +698,11 @@
         // rebuilds the venv, reinstalls the dependencies (and iterm2), and rewrites
         // setup.cfg with the new version.
         NSString *container = _selectedScriptItem.path;
+        // Lock out edits while the rebuild runs: its `dependencies` is a click-time snapshot
+        // and the venv is swapped atomically at the end, so a package added meanwhile would
+        // install into the discarded venv and then be erased when setup.cfg is rewritten.
+        _rebuildInProgress = YES;
+        [self setEditingControlsEnabled:NO];
         __block iTermProvisioningProgressWindowController *progress = [[iTermProvisioningProgressWindowController alloc] init];
         __weak __typeof(self) weakSelf = self;
         [[iTermUvProvisioner shared] downloadAndProvisionFullEnvironmentWithContainer:container
@@ -687,6 +719,8 @@
             if (!strongSelf) {
                 return;
             }
+            strongSelf->_rebuildInProgress = NO;
+            [strongSelf setEditingControlsEnabled:YES];
             if (error != nil && ![iTermUvProvisioner isCancelationError:error]) {
                 NSAlert *alert = [[NSAlert alloc] init];
                 alert.messageText = @"Could Not Change Python Version";
