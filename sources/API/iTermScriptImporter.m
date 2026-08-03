@@ -21,6 +21,13 @@
 
 static BOOL sInstallingScript;
 
+// The ".replacing-<name>-<UUID>" naming used to move a script aside during a replace and to
+// recover a leaked backup at launch. The UUID string is always 36 characters, so the
+// original name is everything between the prefix and that fixed-length suffix (names may
+// themselves contain hyphens).
+static NSString *const iTermReplaceBackupPrefix = @".replacing-";
+static const NSUInteger iTermReplaceBackupUUIDSuffixLength = 1 + 36;  // "-" + UUID
+
 @implementation iTermScriptImporter
 
 + (void)importScriptFromURL:(NSURL *)downloadedURL
@@ -431,7 +438,7 @@ static BOOL sInstallingScript;
     if (entry) {
         [entry kill];
     }
-    NSString *backupName = [NSString stringWithFormat:@".replacing-%@-%@", name, [[NSUUID UUID] UUIDString]];
+    NSString *backupName = [NSString stringWithFormat:@"%@%@-%@", iTermReplaceBackupPrefix, name, [[NSUUID UUID] UUIDString]];
     NSString *backupPath = [scriptsPath stringByAppendingPathComponent:backupName];
     NSError *error = nil;
     if (![fileManager moveItemAtPath:path toPath:backupPath error:&error]) {
@@ -450,6 +457,35 @@ static BOOL sInstallingScript;
     NSError *error = nil;
     if (![fileManager moveItemAtPath:backupPath toPath:path error:&error]) {
         RLog(@"Could not restore %@ from %@: %@", path, backupPath, error);
+    }
+}
+
+// Recover backups left by an import that died between move-aside and restore/cleanup
+// (see moveAsideScriptNamed:). Called once at launch, mirroring the saved-iterm2env
+// reclamation. If the target script is present again the replacement completed and the
+// backup leaked, so delete it; otherwise the replace never finished, so restore the
+// user's original script rather than leave it as a hidden orphan.
++ (void)recoverStaleReplaceBackups {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *scriptsPath = [fileManager scriptsPath];
+    for (NSString *entry in [fileManager contentsOfDirectoryAtPath:scriptsPath error:nil]) {
+        if (![entry hasPrefix:iTermReplaceBackupPrefix]) {
+            continue;
+        }
+        NSString *afterPrefix = [entry substringFromIndex:iTermReplaceBackupPrefix.length];
+        if (afterPrefix.length <= iTermReplaceBackupUUIDSuffixLength) {
+            continue;  // Malformed; leave it alone.
+        }
+        NSString *name = [afterPrefix substringToIndex:afterPrefix.length - iTermReplaceBackupUUIDSuffixLength];
+        NSString *backupPath = [scriptsPath stringByAppendingPathComponent:entry];
+        NSString *targetPath = [scriptsPath stringByAppendingPathComponent:name];
+        if ([fileManager fileExistsAtPath:targetPath]) {
+            RLog(@"Removing leaked replace-backup %@ (target %@ present)", backupPath, name);
+            [fileManager removeItemAtPath:backupPath error:nil];
+        } else {
+            RLog(@"Restoring replace-backup %@ to %@ after interrupted import", backupPath, name);
+            [self restoreReplacedScriptNamed:name fromBackup:backupPath];
+        }
     }
 }
 

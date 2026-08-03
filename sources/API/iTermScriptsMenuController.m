@@ -131,6 +131,9 @@ NS_ASSUME_NONNULL_BEGIN
                                                    object:nil];
         NSString *path = [[NSFileManager defaultManager] scriptsPath];
         [[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:nil];
+        // Reclaim/restore any backup left by an import interrupted mid-replace (crash
+        // between move-aside and cleanup), before enumerating the folder for the menu.
+        [iTermScriptImporter recoverStaleReplaceBackups];
         [_events startWatchingPaths:@[ path ]];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(didInstallPythonRuntime:)
@@ -382,7 +385,11 @@ NS_ASSUME_NONNULL_BEGIN
                 clockWatcher.maxTime = clockWatcher.elapsedTime + 5.0;
             }
         }
-        if ([file caseInsensitiveCompare:@".DS_Store"] == NSOrderedSame) {
+        if ([file.lastPathComponent hasPrefix:@"."]) {
+            // Skip hidden entries (.DS_Store, and the transient .replacing-* backups the
+            // importer creates while replacing a script) so they never appear as broken
+            // menu items, and do not descend into hidden directories.
+            [directoryEnumerator skipDescendants];
             continue;
         }
 
