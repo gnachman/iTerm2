@@ -105,4 +105,29 @@ final class ScriptRuntimeBackendTests: XCTestCase {
         XCTAssertNil(decoded.remappedFrom)
         XCTAssertEqual(decoded.backend, "uv")
     }
+
+    // MARK: - legacy env python version (for nil-pin migration warnings)
+
+    func testLegacyEnvironmentPythonVersionReadsVersionsTree() throws {
+        let c = try makeContainer()
+        try FileManager.default.createDirectory(
+            atPath: (c as NSString).appendingPathComponent("iterm2env/versions/3.7.9/bin"),
+            withIntermediateDirectories: true)
+        XCTAssertEqual(iTermScriptRuntime.legacyEnvironmentPythonVersion(container: c), "3.7.9")
+    }
+
+    func testLegacyEnvironmentPythonVersionIgnoresNonVersionEntries() throws {
+        let c = try makeContainer()
+        let versions = (c as NSString).appendingPathComponent("iterm2env/versions")
+        try FileManager.default.createDirectory(atPath: (versions as NSString).appendingPathComponent("cache"),
+                                                withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(atPath: (versions as NSString).appendingPathComponent("3.10.4"),
+                                                withIntermediateDirectories: true)
+        XCTAssertEqual(iTermScriptRuntime.legacyEnvironmentPythonVersion(container: c), "3.10.4")
+    }
+
+    func testLegacyEnvironmentPythonVersionNilWhenAbsent() throws {
+        let c = try makeContainer()
+        XCTAssertNil(iTermScriptRuntime.legacyEnvironmentPythonVersion(container: c))
+    }
 }

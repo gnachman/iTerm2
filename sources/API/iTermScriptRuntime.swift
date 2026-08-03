@@ -128,4 +128,23 @@ class iTermScriptRuntime: NSObject {
         }
         return iTermPythonRuntimeMarker.from(jsonData: data)?.python
     }
+
+    // The Python version a LEGACY full-environment script was actually built on, read from
+    // its iterm2env/versions/<X.Y.Z> directory, or nil if none is present. setup.cfg's
+    // python_requires is often absent or a range (e.g. ">=3.7") that the pinned-version
+    // parser returns nil for; without this a 3.7-era script would migrate to the current
+    // default with no forced-remap warning. The on-disk version is authoritative.
+    @objc(legacyEnvironmentPythonVersionForContainer:)
+    static func legacyEnvironmentPythonVersion(container: String) -> String? {
+        let versionsDir = ((container as NSString).appendingPathComponent(legacyDirectoryName) as NSString)
+            .appendingPathComponent("versions")
+        guard let entries = try? FileManager.default.contentsOfDirectory(atPath: versionsDir) else {
+            return nil
+        }
+        // A version directory like "3.7.9": at least two dot-separated, all-numeric parts.
+        return entries.sorted().first { entry in
+            let parts = entry.split(separator: ".")
+            return parts.count >= 2 && parts.allSatisfy { !$0.isEmpty && $0.allSatisfy(\.isNumber) }
+        }
+    }
 }

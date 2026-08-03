@@ -128,6 +128,25 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 + (void)reallyUpgradeFullEnvironmentScriptAt:(NSString *)fullPath
                                 configParser:(iTermSetupCfgParser *)configParser
                                   completion:(void (^)(NSString *))completion {
+    // A rebuild hard-links the shared standard runtime into the script's iterm2env. On a
+    // Rosetta-less macOS (27+) that shared runtime may itself be Intel-only yet
+    // version-current, so no download was triggered; linking it would yield an Intel-only
+    // env whose pip cannot exec. Ensure the shared runtime is arm64 first (refetching it
+    // if needed), then rebuild. On macOS <=26, or when it is already native, this is an
+    // immediate no-op.
+    [self ensureArm64StandardRuntimeForPythonVersion:configParser.pythonVersion completion:^(BOOL ok) {
+        if (!ok) {
+            [self showIntelOnlyUnrunnableErrorForScript:fullPath
+                                               recovery:@"The Apple Silicon runtime could not be downloaded. Check your network connection and try again."];
+            return;
+        }
+        [self hardLinkRebuildFullEnvironmentScriptAt:fullPath configParser:configParser completion:completion];
+    }];
+}
+
++ (void)hardLinkRebuildFullEnvironmentScriptAt:(NSString *)fullPath
+                                  configParser:(iTermSetupCfgParser *)configParser
+                                    completion:(void (^)(NSString *))completion {
     NSURL *url = [NSURL fileURLWithPath:fullPath];
     NSURL *existingEnv = [url URLByAppendingPathComponent:@"iterm2env"];
     NSURL *savedEnv = [url URLByAppendingPathComponent:@"saved-iterm2env"];
@@ -201,12 +220,28 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
             // legacy environment and log loudly instead.
             NSString *reason = configParser == nil ? @"setup.cfg is missing" : configParser.dependenciesError.localizedDescription ?: @"setup.cfg could not be parsed";
             RLog(@"Not migrating %@ to uv: %@. Launching on the legacy environment.", fullPath, reason);
+            // Without a parseable setup.cfg we can neither migrate nor rebuild the env, so
+            // nothing downstream guards this early exit. On a Rosetta-less macOS an
+            // Intel-only legacy env must be reported as unrunnable rather than left to
+            // exec-fail with a cryptic bad-CPU-type error.
+            if ([self handleIntelOnlyUnrunnableLegacyInterpreter:originalVirtualenv
+                                                       forScript:fullPath
+                                                        recovery:@"Its setup.cfg could not be read, so it cannot be rebuilt automatically."]) {
+                return;
+            }
             completion(originalVirtualenv);
             return;
         }
+        // When setup.cfg has no parseable pin (absent, or a range like ">=3.7"), fall back
+        // to the version the legacy env was actually built on, read from its
+        // iterm2env/versions tree, before the current default. Otherwise a 3.7-era script
+        // would migrate straight to the default with no forced-remap warning.
+        NSString *requestedVersion = configParser.pythonVersion
+            ?: [iTermScriptRuntime legacyEnvironmentPythonVersionForContainer:fullPath]
+            ?: [iTermScriptRuntime defaultPythonVersion];
         __block iTermProvisioningProgressWindowController *progress = [[iTermProvisioningProgressWindowController alloc] init];
         [[iTermUvProvisioner shared] migrateLegacyScriptToUvWithContainer:fullPath
-                                                  requestedPythonVersion:configParser.pythonVersion ?: [iTermScriptRuntime defaultPythonVersion]
+                                                  requestedPythonVersion:requestedVersion
                                                             dependencies:configParser.dependencies ?: @[]
                                                     provisioningDidBegin:^{
             // Show progress only once the download phase is done and the venv build
@@ -227,19 +262,20 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                       name, migrationError.localizedDescription];
                     [[iTermScriptHistoryEntry globalEntry] addOutput:line completion:^{}];
                 }
-                // The rollback restored the legacy env, but on a Rosetta-less macOS that
-                // env may be Intel-only and unrunnable. Show a clear error rather than
-                // exec-failing cryptically. (gate on -> .unrunnable per the disposition;
-                // gate off would rebuild, but that path is handled below, not here.)
-                if (![iTermRosettaSupport canInstallRosetta] && originalVirtualenv != nil &&
-                    [iTermRosettaSupport legacyLaunchDispositionWithInterpreterHasNativeSlice:[iTermRosettaSupport binaryHasArm64SliceAtPath:originalVirtualenv]
-                                                                          canInstallRosetta:NO
-                                                                                     gateOn:YES] == iTermLegacyLaunchDispositionUnrunnable) {
-                    [self showIntelOnlyUnrunnableErrorForScript:fullPath
-                                                       recovery:@"Its environment is intact; turn off the uv advanced setting to rebuild it for Apple Silicon."];
+                // Re-resolve after the rollback: restoreLegacyEnvironment relocated
+                // saved-iterm2env back to iterm2env, so originalVirtualenv (which points
+                // into saved-iterm2env when the container started in the saved-only state,
+                // e.g. the app was killed mid-migration) now dangles and would exec a
+                // nonexistent interpreter. Read the interpreter the restored env provides.
+                NSString *restored = [self environmentForScript:fullPath checkForMain:YES checkForSaved:NO] ?: originalVirtualenv;
+                // The restored env may be Intel-only and unrunnable on a Rosetta-less
+                // macOS. Show a clear error rather than exec-failing cryptically.
+                if ([self handleIntelOnlyUnrunnableLegacyInterpreter:restored
+                                                           forScript:fullPath
+                                                            recovery:@"Its environment is intact; turn off the uv advanced setting to rebuild it for Apple Silicon."]) {
                     return;
                 }
-                completion(originalVirtualenv);
+                completion(restored);
                 return;
             }
             completion([iTermScriptRuntime uvInterpreterPathForScriptContainer:fullPath]);
@@ -475,6 +511,64 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     });
 }
 
+// On a Rosetta-less macOS, if the given legacy interpreter is Intel-only (so it cannot
+// run and, gate on, cannot be migrated), show the clear unrunnable error and return YES so
+// the caller does NOT exec it. Returns NO when it is safe to continue (macOS <=26, no
+// interpreter to check, or a native slice is present).
++ (BOOL)handleIntelOnlyUnrunnableLegacyInterpreter:(NSString *)interpreter
+                                         forScript:(NSString *)fullPath
+                                          recovery:(NSString *)recovery {
+    if ([iTermRosettaSupport canInstallRosetta] || interpreter == nil) {
+        return NO;
+    }
+    const BOOL native = [iTermRosettaSupport binaryHasArm64SliceAtPath:interpreter];
+    if ([iTermRosettaSupport legacyLaunchDispositionWithInterpreterHasNativeSlice:native
+                                                                canInstallRosetta:NO
+                                                                           gateOn:YES] == iTermLegacyLaunchDispositionUnrunnable) {
+        [self showIntelOnlyUnrunnableErrorForScript:fullPath recovery:recovery];
+        return YES;
+    }
+    return NO;
+}
+
+// Ensure the shared standard runtime for pythonVersion has an arm64 slice, so a caller
+// about to hard-link it into a script env does not produce an Intel-only, unrunnable env
+// on a Rosetta-less macOS. On macOS <=26, when there is no runtime yet (a later download
+// fetches the arm64 build), or when it is already native, completes YES immediately with
+// no UI. Otherwise it removes the Intel-only runtime and refetches the arm64 build the
+// manifest now serves, completing with whether the result is native. completion runs on
+// the main queue.
++ (void)ensureArm64StandardRuntimeForPythonVersion:(NSString *)pythonVersion
+                                        completion:(void (^)(BOOL ok))completion {
+    iTermPythonRuntimeDownloader *downloader = [iTermPythonRuntimeDownloader sharedInstance];
+    NSString *stdPython = [downloader pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
+    if ([iTermRosettaSupport canInstallRosetta] || stdPython == nil ||
+        [iTermRosettaSupport binaryHasArm64SliceAtPath:stdPython]) {
+        completion(YES);
+        return;
+    }
+    NSString *pyenvDir = [downloader pathToStandardPyenvWithVersion:pythonVersion creatingSymlinkIfNeeded:NO];
+    if (pyenvDir.length > 0) {
+        NSError *error = nil;
+        [[NSFileManager defaultManager] removeItemAtPath:pyenvDir error:&error];
+        RLog(@"Removed Intel-only standard runtime at %@: %@", pyenvDir, error);
+    }
+    [[iTermScriptHistoryEntry globalEntry] addOutput:@"The shared Python runtime is Intel-only and cannot run on this version of macOS. Downloading the Apple Silicon runtime…\n"
+                                          completion:^{}];
+    [downloader downloadOptionalComponentsIfNeededWithConfirmation:YES
+                                                    pythonVersion:pythonVersion
+                                        minimumEnvironmentVersion:0
+                                               requiredToContinue:YES
+                                                   withCompletion:^(iTermPythonRuntimeDownloaderStatus status) {
+        if (status == iTermPythonRuntimeDownloaderStatusCanceledByUser) {
+            completion(NO);
+            return;
+        }
+        NSString *refreshed = [downloader pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
+        completion(refreshed != nil && [iTermRosettaSupport binaryHasArm64SliceAtPath:refreshed]);
+    }];
+}
+
 // A pre-existing Intel-only shared runtime is current by version but unrunnable on a
 // Rosetta-less macOS. Remove it so the (version-based) download refetches the arm64 build
 // the manifest now serves, then launch. If it still is not native, show a clear error.
@@ -497,6 +591,11 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                         minimumEnvironmentVersion:0
                                                requiredToContinue:YES
                                                    withCompletion:^(iTermPythonRuntimeDownloaderStatus status) {
+        if (status == iTermPythonRuntimeDownloaderStatusCanceledByUser) {
+            // The user deliberately declined the download; stay silent rather than
+            // blaming the network for a missing runtime (it was just removed above).
+            return;
+        }
         NSString *stdPython = [downloader pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
         if (stdPython == nil || ![iTermRosettaSupport binaryHasArm64SliceAtPath:stdPython]) {
             [self showIntelOnlyUnrunnableErrorForScript:fullPath

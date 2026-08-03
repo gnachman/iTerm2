@@ -2527,3 +2527,13 @@ Bug Fixes:
   wheel) no longer destroys a uv script’s
   working environment; the new one is built
   aside and swapped in only if it succeeds.
+- Replacing an installed script during import
+  no longer deletes the existing script if you
+  cancel the Python download; the original is
+  kept and the cancellation is reported.
+- uv runtime updates no longer fail on slow
+  connections (the download is no longer capped
+  at a fixed total time).
+- Legacy scripts whose setup.cfg has no exact
+  Python pin now get the same version-change
+  warning as pinned ones when migrating to uv.

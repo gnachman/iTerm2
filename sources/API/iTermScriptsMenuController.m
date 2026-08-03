@@ -290,10 +290,14 @@ NS_ASSUME_NONNULL_BEGIN
     if ([fm fileExistsAtPath:setupCfg]) {
         if ([iTermScriptRuntime backendForScriptContainer:root] == iTermScriptRuntimeBackendLegacy) {
             iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:setupCfg];
-            if (parser.pythonVersion) {
+            // Fall back to the version the env was actually built on when setup.cfg has no
+            // parseable pin (absent, or a range like ">=3.7"), so a 3.7-era script whose
+            // migration will be bumped is not omitted from the up-front warning.
+            NSString *version = parser.pythonVersion ?: [iTermScriptRuntime legacyEnvironmentPythonVersionForContainer:root];
+            if (version) {
                 NSString *relative = [root substringFromIndex:scriptsRoot.length];
                 relative = [relative stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
-                requested[relative.length ? relative : root.lastPathComponent] = parser.pythonVersion;
+                requested[relative.length ? relative : root.lastPathComponent] = version;
             }
         }
         return;
