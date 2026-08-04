@@ -34,8 +34,7 @@ final class KittyDnDOfferTests: XCTestCase {
     }
 
     private final class FakeEndpoint: KittyDnDEndpoint {
-        var canMaterializeFiles = false
-        func materializeFile(named name: String, contents: Data) async throws -> String { "" }
+        var isRemoteHost = false
     }
 
     private let ourID = KittyDnDMachineID.hashed("us")

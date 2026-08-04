@@ -69,10 +69,14 @@ final class KittyDnDController {
         self.report = report
     }
 
-    /// Whether the peer is on a different machine than us, per the machine-id
-    /// handshake. Determines the cross-machine (X=1) behavior.
-    private var peerIsRemote: Bool {
+    /// Whether the program is on a different machine than us, and so a dropped
+    /// file must be transferred in-band (X=1) rather than handed over as a local
+    /// path. True if either the machine-id handshake says so, or the session has
+    /// a remote endpoint (an SSH-integration conductor), which is ground truth
+    /// even when the program sent no machine id.
+    private var isRemoteDrop: Bool {
         return KittyDnDMachineID.isRemote(theirID: peerMachineID, ourID: ourMachineID)
+            || endpoint.isRemoteHost
     }
 
     // MARK: - Inbound OSC 72
@@ -278,39 +282,12 @@ final class KittyDnDController {
     }
 
     private func answerURIList(index: Int, drop: KittyDnDDropData) {
-        if endpoint.canMaterializeFiles {
-            // Tier 2: a conductor is present, so the program is on the remote
-            // host (ground truth, independent of whether it sent a machine id).
-            // Materialize each file on the program's host so the URIs it receives
-            // are real local paths there. No cross-machine flag.
-            //
-            // On partial failure (a later file fails after earlier ones were
-            // written) we report EIO and leave any already-written files in the
-            // endpoint's temp area; they are harmless and best-effort cleanup is
-            // not worth a round trip here.
-            Task { @MainActor in
-                do {
-                    var uris: [String] = []
-                    for url in drop.fileURLs {
-                        let contents = try await Self.readFileOffMainThread(url)
-                        let remotePath = try await endpoint.materializeFile(
-                            named: url.lastPathComponent, contents: contents)
-                        uris.append("file://\(remotePath)")
-                    }
-                    sendData(index: index,
-                             data: Data(uris.joined(separator: "\r\n").utf8),
-                             extraMetadata: [:])
-                } catch {
-                    sendDataError(index: index, code: "EIO")
-                }
-            }
-            return
-        }
-
-        // Tier 1 (local) or Tier 3 (remote with no conductor): return the local
-        // file URIs. For Tier 3 they are foreign to the program, flagged X=1.
+        // Return the local file URIs. For a remote drop they are foreign to the
+        // program, so flag X=1; the program then pulls each file's bytes in-band
+        // by sub-index (t=r:x=idx:y=entry). For a local drop the paths are
+        // directly usable and no flag is set.
         let uris = drop.fileURLs.map { $0.absoluteString }
-        let extra = peerIsRemote ? ["X": "1"] : [:]
+        let extra = isRemoteDrop ? ["X": "1"] : [:]
         sendData(index: index,
                  data: Data(uris.joined(separator: "\r\n").utf8),
                  extraMetadata: extra)
@@ -513,14 +490,6 @@ final class KittyDnDController {
     }
 
     // MARK: - File IO
-
-    /// Read a local file off the main thread so a large dropped file does not
-    /// block the UI while it is read into memory.
-    private static func readFileOffMainThread(_ url: URL) async throws -> Data {
-        return try await Task.detached(priority: .utility) {
-            try Data(contentsOf: url)
-        }.value
-    }
 
     /// One filesystem entry as needed by the cross-machine transfer.
     private enum FilesystemEntry {

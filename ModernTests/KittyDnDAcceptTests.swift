@@ -30,17 +30,8 @@ final class KittyDnDAcceptTests: XCTestCase {
     }
 
     private final class FakeEndpoint: KittyDnDEndpoint {
-        var canMaterializeFiles: Bool
-        var materialized: [(name: String, contents: Data)] = []
-        var shouldThrow = false
-        init(canMaterializeFiles: Bool) { self.canMaterializeFiles = canMaterializeFiles }
-        func materializeFile(named name: String, contents: Data) async throws -> String {
-            if shouldThrow {
-                throw NSError(domain: "test", code: 1)
-            }
-            materialized.append((name, contents))
-            return "/remote/tmp/\(name)"
-        }
+        var isRemoteHost: Bool
+        init(isRemoteHost: Bool) { self.isRemoteHost = isRemoteHost }
     }
 
     private final class FakeDropData: KittyDnDDropData {
@@ -99,14 +90,14 @@ final class KittyDnDAcceptTests: XCTestCase {
 
     func testAnnounceEnablesAccepting() {
         let recorder = Recorder()
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         c.handleInboundSequence("t=a;text/plain text/uri-list")
         XCTAssertTrue(c.isAcceptingDrops)
     }
 
     func testUnregisterDisablesAccepting() {
         let recorder = Recorder()
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         c.handleInboundSequence("t=a;text/plain")
         c.handleInboundSequence("t=A")
         XCTAssertFalse(c.isAcceptingDrops)
@@ -114,7 +105,7 @@ final class KittyDnDAcceptTests: XCTestCase {
 
     func testUnregisterViaXEquals2DisablesAccepting() {
         let recorder = Recorder()
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         c.handleInboundSequence("t=a;text/plain")
         c.handleInboundSequence("t=a:x=2")
         XCTAssertFalse(c.isAcceptingDrops)
@@ -122,7 +113,7 @@ final class KittyDnDAcceptTests: XCTestCase {
 
     func testQueryIsAnswered() {
         let recorder = Recorder()
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         c.handleInboundSequence("t=q:i=7")
         XCTAssertEqual(recorder.last?.type, "q")
         XCTAssertEqual(recorder.last?.metadata["i"], "7")
@@ -132,7 +123,7 @@ final class KittyDnDAcceptTests: XCTestCase {
 
     func testDragEnteredSendsMoveWithMimes() {
         let recorder = Recorder()
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         c.handleInboundSequence("t=a;text/uri-list")
         c.dragEntered(cellX: 3, cellY: 4, pixelX: 5, pixelY: 6,
                       operations: 3, mimeTypes: ["text/uri-list"])
@@ -148,7 +139,7 @@ final class KittyDnDAcceptTests: XCTestCase {
 
     func testDragMovedOmitsMimes() {
         let recorder = Recorder()
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         c.handleInboundSequence("t=a;text/uri-list")
         c.dragEntered(cellX: 1, cellY: 1, pixelX: 0, pixelY: 0,
                       operations: 3, mimeTypes: ["text/uri-list"])
@@ -161,7 +152,7 @@ final class KittyDnDAcceptTests: XCTestCase {
 
     func testInertWhenNotAccepting() {
         let recorder = Recorder()
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         c.dragEntered(cellX: 1, cellY: 1, pixelX: 0, pixelY: 0,
                       operations: 3, mimeTypes: ["text/uri-list"])
         XCTAssertTrue(recorder.reports.isEmpty)
@@ -169,7 +160,7 @@ final class KittyDnDAcceptTests: XCTestCase {
 
     func testDragExitedSendsLeave() {
         let recorder = Recorder()
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         c.handleInboundSequence("t=a;text/uri-list")
         c.dragExited()
         let m = recorder.last
@@ -180,7 +171,7 @@ final class KittyDnDAcceptTests: XCTestCase {
 
     func testDropSendsDropMessageWithMimes() {
         let recorder = Recorder()
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         c.handleInboundSequence("t=a;text/plain")
         c.performDrop(cellX: 2, cellY: 3, pixelX: 4, pixelY: 5, operations: 1,
                       drop: FakeDropData(mimeTypes: ["text/plain"]))
@@ -194,7 +185,7 @@ final class KittyDnDAcceptTests: XCTestCase {
 
     func testContentDataRequestReturnsBytes() {
         let recorder = Recorder()
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         c.handleInboundSequence("t=a;text/plain")
         c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
                       drop: FakeDropData(mimeTypes: ["text/plain"],
@@ -207,7 +198,7 @@ final class KittyDnDAcceptTests: XCTestCase {
 
     func testLargeContentIsChunked() {
         let recorder = Recorder()
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         let big = Data((0..<10_000).map { UInt8($0 & 0xff) })
         c.handleInboundSequence("t=a;application/octet-stream")
         c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
@@ -229,7 +220,7 @@ final class KittyDnDAcceptTests: XCTestCase {
 
     func testUnknownMimeIndexSendsError() {
         let recorder = Recorder()
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         c.handleInboundSequence("t=a;text/plain")
         c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
                       drop: FakeDropData(mimeTypes: ["text/plain"]))
@@ -239,7 +230,7 @@ final class KittyDnDAcceptTests: XCTestCase {
 
     func testMissingContentDataSendsError() {
         let recorder = Recorder()
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         c.handleInboundSequence("t=a;image/png")
         c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
                       drop: FakeDropData(mimeTypes: ["image/png"]))
@@ -251,7 +242,7 @@ final class KittyDnDAcceptTests: XCTestCase {
 
     func testURIListTier1LocalReturnsLocalURIsNoCrossMachineFlag() {
         let recorder = Recorder()
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         // No peer machine id -> local.
         c.handleInboundSequence("t=a;text/uri-list")
         let url = URL(fileURLWithPath: "/tmp/a.txt")
@@ -266,7 +257,7 @@ final class KittyDnDAcceptTests: XCTestCase {
 
     func testURIListJoinsMultipleFilesWithCRLF() {
         let recorder = Recorder()
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         c.handleInboundSequence("t=a;text/uri-list")
         let a = URL(fileURLWithPath: "/tmp/a.txt")
         let b = URL(fileURLWithPath: "/tmp/b.txt")
@@ -278,10 +269,10 @@ final class KittyDnDAcceptTests: XCTestCase {
         XCTAssertEqual(uriList, "\(a.absoluteString)\r\n\(b.absoluteString)")
     }
 
-    func testURIListTier3RemoteNoConductorSetsCrossMachineFlag() {
+    func testURIListRemoteByMachineIdSetsCrossMachineFlag() {
         let recorder = Recorder()
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
-        // Peer machine id differs and endpoint cannot materialize -> Tier 3.
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        // Peer machine id differs (plain ssh, no conductor) -> remote, in-band.
         c.handleInboundSequence("t=a;text/uri-list \(peerID)")
         let url = URL(fileURLWithPath: "/tmp/a.txt")
         c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
@@ -298,66 +289,28 @@ final class KittyDnDAcceptTests: XCTestCase {
         }
     }
 
-    func testURIListTier2RemoteWithConductorMaterializesAndOmitsFlag() async throws {
+    // A conductor (remote host) makes the drop cross-machine even when the
+    // program sent no machine id: the uri-list is flagged X=1 for in-band
+    // transfer, and the URIs are the local file paths (no materialization).
+    func testURIListRemoteByConductorSetsCrossMachineFlag() {
         let recorder = Recorder()
-        let endpoint = FakeEndpoint(canMaterializeFiles: true)
-        let c = makeController(endpoint: endpoint, recorder: recorder)
-
-        // A real local file whose bytes get materialized on the endpoint.
-        let tmp = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("kittydnd-\(UUID().uuidString).txt")
-        try Data("payload".utf8).write(to: tmp)
-        defer { try? FileManager.default.removeItem(at: tmp) }
-
-        // No machine id sent: a conductor being present is enough to materialize
-        // (regression test for the bug where Tier 2 required the machine id too).
-        c.handleInboundSequence("t=a;text/uri-list")
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: true), recorder: recorder)
+        c.handleInboundSequence("t=a;text/uri-list")  // no machine id
+        let url = URL(fileURLWithPath: "/tmp/a.txt")
         c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
-                      drop: FakeDropData(mimeTypes: ["text/uri-list"], fileURLs: [tmp]))
-
-        let exp = expectation(description: "uri-list response after materialization")
-        // Two t=r messages arrive (the data chunk and the empty terminator);
-        // either one satisfies the wait.
-        exp.assertForOverFulfill = false
-        recorder.onReport = { if $0.type == "r" { exp.fulfill() } }
+                      drop: FakeDropData(mimeTypes: ["text/uri-list"], fileURLs: [url]))
         c.handleInboundSequence("t=r:x=1")
-        await fulfillment(of: [exp], timeout: 5)
-
-        XCTAssertEqual(endpoint.materialized.count, 1)
-        XCTAssertEqual(endpoint.materialized.first?.contents, Data("payload".utf8))
         let r = reassembledDataResponse(recorder)
-        XCTAssertNil(r?.metadata["X"], "materialized files are local to the program; no X=1")
+        XCTAssertEqual(r?.metadata["X"], "1")
         let uriList = String(data: r?.dataPayload ?? Data(), encoding: .utf8)
-        XCTAssertEqual(uriList, "file:///remote/tmp/\(tmp.lastPathComponent)")
-    }
-
-    func testTier2MaterializeFailureSendsError() async {
-        let recorder = Recorder()
-        let endpoint = FakeEndpoint(canMaterializeFiles: true)
-        endpoint.shouldThrow = true
-        let c = makeController(endpoint: endpoint, recorder: recorder)
-
-        let tmp = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("kittydnd-\(UUID().uuidString).txt")
-        try? Data("payload".utf8).write(to: tmp)
-        defer { try? FileManager.default.removeItem(at: tmp) }
-
-        c.handleInboundSequence("t=a;text/uri-list \(peerID)")
-        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
-                      drop: FakeDropData(mimeTypes: ["text/uri-list"], fileURLs: [tmp]))
-
-        let exp = expectation(description: "error response")
-        recorder.onReport = { if $0.type == "R" { exp.fulfill() } }
-        c.handleInboundSequence("t=r:x=1")
-        await fulfillment(of: [exp], timeout: 5)
-        XCTAssertEqual(recorder.last?.type, "R")
+        XCTAssertEqual(uriList, url.absoluteString)
     }
 
     // MARK: - Data-request error paths
 
     func testDataRequestBeforeDropSendsError() {
         let recorder = Recorder()
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         c.handleInboundSequence("t=a;text/plain")
         // No drop yet.
         c.handleInboundSequence("t=r:x=1")
@@ -366,7 +319,7 @@ final class KittyDnDAcceptTests: XCTestCase {
 
     func testDataRequestWithMissingIndexSendsError() {
         let recorder = Recorder()
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         c.handleInboundSequence("t=a;text/plain")
         c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
                       drop: FakeDropData(mimeTypes: ["text/plain"]))
@@ -414,7 +367,7 @@ final class KittyDnDAcceptTests: XCTestCase {
 
     private func remoteDropController(fileURLs: [URL],
                                      recorder: Recorder) -> KittyDnDController {
-        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         // Peer machine id present and no conductor -> Tier 3 (in-band transfer).
         c.handleInboundSequence("t=a;text/uri-list \(peerID)")
         c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,

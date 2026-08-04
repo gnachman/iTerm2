@@ -4,10 +4,9 @@
 //
 //  Kitty drag-and-drop protocol (OSC 72). See docs/kitty-dnd-design.md.
 //
-//  Adapts the session's SSHEndpoint (a conductor for an SSH-integration session,
-//  or LocalhostEndpoint otherwise) to the controller's KittyDnDEndpoint. The
-//  endpoint is resolved lazily on each use because a session's conductor can come
-//  and go over its lifetime.
+//  Reports whether the session's SSHEndpoint is a remote host (an SSH-integration
+//  conductor) or localhost. Resolved lazily on each use because a session's
+//  conductor can come and go.
 //
 
 import Foundation
@@ -21,20 +20,8 @@ final class KittyDnDSSHEndpointAdapter: KittyDnDEndpoint {
         self.endpointProvider = endpointProvider
     }
 
-    var canMaterializeFiles: Bool {
-        // Localhost drops are handled with local file URIs (Tier 1); only a real
-        // remote endpoint (a conductor) materializes files on the far host.
+    var isRemoteHost: Bool {
+        // LocalhostEndpoint is the only local endpoint; a conductor is remote.
         return !(endpointProvider() is LocalhostEndpoint)
-    }
-
-    func materializeFile(named name: String, contents: Data) async throws -> String {
-        let endpoint = endpointProvider()
-        let directory = "\(endpoint.homeDirectory ?? "/tmp")/.iterm2-dnd"
-        // Best effort: the directory may already exist.
-        try? await endpoint.mkdir(directory)
-        let safeName = name.replacingOccurrences(of: "/", with: "_")
-        let path = "\(directory)/\(UUID().uuidString)-\(safeName)"
-        try await endpoint.create(path, content: contents)
-        return path
     }
 }
