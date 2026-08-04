@@ -29,6 +29,12 @@ from kittydnd import build, OSC72Reader, machine_id  # noqa: E402
 
 TEXT = b"Dragged out of iTerm2 via OSC 72\n"
 
+# Enable button-event (drag) mouse reporting so the terminal treats a drag as
+# reportable, which is what gates the drag-out gesture. SGR (1006) is included
+# for completeness; this program ignores the mouse reports themselves.
+MOUSE_REPORTING_ON = "\x1b[?1002h\x1b[?1006h"
+MOUSE_REPORTING_OFF = "\x1b[?1002l\x1b[?1006l"
+
 
 def log(msg):
     sys.stderr.write(msg + "\r\n")
@@ -54,12 +60,12 @@ class DragSource:
         return path
 
     def start(self):
+        os.write(1, MOUSE_REPORTING_ON.encode())
         payload = None
         if self.args.machine_id:
             payload = machine_id()
         os.write(1, build({"t": "o", "x": "1"}, text_payload=payload).encode())
-        log("[drag_source] offering enabled. Start a drag over the window.")
-        log("[drag_source] (requires mouse-reporting mode per the iTerm2 design.)")
+        log("[drag_source] offering enabled, mouse reporting on. Drag over the window.")
         log("[drag_source] temp file: %s" % self.tmp_path)
         log("[drag_source] Ctrl-C to quit.")
 
@@ -123,6 +129,7 @@ def main():
         source.start()
         source.run()
     finally:
+        os.write(1, MOUSE_REPORTING_OFF.encode())
         termios.tcsetattr(fd, termios.TCSADRAIN, saved)
         try:
             os.remove(source.tmp_path)
