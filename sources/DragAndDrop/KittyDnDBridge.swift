@@ -25,6 +25,9 @@ protocol KittyDnDBridgeDataSource: AnyObject {
     /// is on localhost. Resolved on each use because it can come and go. Only
     /// read on the main thread.
     var kittyDnDConductor: Conductor? { get }
+
+    /// The terminal view a drag-out originates from.
+    var kittyDnDView: NSView? { get }
 }
 
 @available(macOS 11.0, *)
@@ -32,14 +35,17 @@ protocol KittyDnDBridgeDataSource: AnyObject {
 @MainActor
 class KittyDnDBridge: NSObject {
     private let controller: KittyDnDController
+    private let dragHost: KittyDnDViewDragHost
     private weak var dataSource: KittyDnDBridgeDataSource?
 
     /// - Parameters:
-    ///   - dataSource: supplies the session's current endpoint.
+    ///   - dataSource: supplies the session's current endpoint and view.
     ///   - report: writes the given bytes back to the pty (i.e. to the program
     ///     running in the terminal), like a terminal report.
     @objc init(dataSource: KittyDnDBridgeDataSource,
                report: @escaping (Data) -> Void) {
+        let host = KittyDnDViewDragHost(dataSource: dataSource)
+        dragHost = host
         let endpoint = KittyDnDSSHEndpointAdapter(endpointProvider: { [weak dataSource] () -> SSHEndpoint in
             if let conductor = dataSource?.kittyDnDConductor {
                 return conductor
@@ -49,15 +55,33 @@ class KittyDnDBridge: NSObject {
         controller = KittyDnDController(
             ourMachineID: KittyDnDMachineID.localHashed(),
             endpoint: endpoint,
-            dragHost: nil,
+            dragHost: host,
             report: { osc72 in report(Data(osc72.utf8)) })
         super.init()
         self.dataSource = dataSource
+        host.controller = controller
     }
 
     /// Feed one OSC 72 sequence's raw content (everything after "72;").
     @objc func handleInboundSequence(_ content: String) {
         controller.handleInboundSequence(content)
+    }
+
+    // MARK: - Offer / drag-out (from PTYMouseHandler)
+
+    /// Whether the program has enabled drag offers. PTYMouseHandler checks this
+    /// to decide whether a drag gesture should be handed to the program.
+    @objc var isOfferingDrags: Bool {
+        return controller.isOfferingDrags
+    }
+
+    /// Tell the program a drag gesture started, and remember the event so the
+    /// native drag can begin from it once the program says go (t=P).
+    @objc(noteDragGestureAtCellX:cellY:pixelX:pixelY:event:)
+    func noteDragGesture(cellX: Int, cellY: Int, pixelX: Int, pixelY: Int, event: NSEvent) {
+        dragHost.pendingEvent = event
+        controller.dragGestureDetected(cellX: cellX, cellY: cellY,
+                                       pixelX: pixelX, pixelY: pixelY)
     }
 
     // MARK: - Accept-drop (from PTYTextView)

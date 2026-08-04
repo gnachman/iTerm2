@@ -76,6 +76,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Works around an apparent OS bug where we get drag events without a mousedown.
     BOOL dragOk_;
 
+    // Set once per mouse-down after we have offered the drag gesture to a program
+    // that accepts Kitty drag-and-drop offers, so we only offer it once per drag.
+    BOOL _kittyDragOfferStarted;
+
     BOOL _committedToDrag;
 
     // Detects when the user is trying to scroll in alt screen with the scroll wheel.
@@ -258,6 +262,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     dragOk_ = YES;
     _committedToDrag = NO;
+    _kittyDragOfferStarted = NO;
     if (cmdPressed) {
         if (![self.mouseDelegate mouseHandlerViewHasFocus:self]) {
             if (![self.mouseDelegate mouseHandlerIsInKeyWindow:self]) {
@@ -745,6 +750,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // results, and letting only some events report produced a drag split between the app's selection
     // and a local one. Hold Option to force a local selection while mouse reporting is on. Issues
     // 12953 and 12950.
+    // If a program has enabled Kitty drag-and-drop offers, hand it this gesture
+    // so it can turn the drag into a drag-out. Only in mouse-reporting mode (the
+    // gesture is otherwise a text selection), not for a three-finger drag, not
+    // with Option held, and only once per mouse-down. Done before the report
+    // below so the program learns of the drag as it starts.
+    if (dragThresholdMet &&
+        !_makingThreeFingerSelection &&
+        !_kittyDragOfferStarted &&
+        !([event modifierFlags] & NSEventModifierFlagOption) &&
+        [self mouseEventIsReportable:event]) {
+        if ([self.mouseDelegate mouseHandler:self reportKittyDragGestureWithEvent:event]) {
+            _kittyDragOfferStarted = YES;
+        }
+    }
+
     BOOL dragWasReportable = NO;
     if ([self handleMouseEvent:event testOnly:NO deltaOut:NULL reportableOut:&dragWasReportable]) {
         DLog(@"Reported drag");

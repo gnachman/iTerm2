@@ -4807,11 +4807,11 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 // operation flags (1 copy, 2 move, 3 either) for a drag. The cell is
 // screen-relative (0..height-1), matching iTerm2's own mouse reporting, not the
 // whole-buffer coordinate coordForPoint: returns.
-- (void)kittyDnDParamsForSender:(id<NSDraggingInfo>)sender
-                          coord:(VT100GridCoord *)coordOut
-                          pixel:(NSPoint *)pixelOut
-                      operation:(int *)operationOut {
-    const NSPoint locationInView = [self convertPoint:sender.draggingLocation fromView:nil];
+// Screen-relative cell and pixel offset within the cell for a point in view
+// coordinates, matching iTerm2's mouse reporting.
+- (void)kittyDnDCoord:(VT100GridCoord *)coordOut
+                pixel:(NSPoint *)pixelOut
+    forLocationInView:(NSPoint)locationInView {
     const NSRect liveRect = [self liveRect];
     const CGFloat relativeX = locationInView.x - liveRect.origin.x;
     const CGFloat relativeY = locationInView.y - liveRect.origin.y;
@@ -4822,6 +4822,15 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     *coordOut = coord;
     *pixelOut = NSMakePoint(relativeX - coord.x * _charWidth,
                             relativeY - coord.y * _lineHeight);
+}
+
+- (void)kittyDnDParamsForSender:(id<NSDraggingInfo>)sender
+                          coord:(VT100GridCoord *)coordOut
+                          pixel:(NSPoint *)pixelOut
+                      operation:(int *)operationOut {
+    [self kittyDnDCoord:coordOut
+                  pixel:pixelOut
+      forLocationInView:[self convertPoint:sender.draggingLocation fromView:nil]];
     const NSDragOperation mask = [sender draggingSourceOperationMask];
     int operation = 0;
     if (mask & NSDragOperationCopy) {
@@ -7958,6 +7967,24 @@ static NSString *iTermStringFromRange(NSRange range) {
     const NSRect liveRect = [self liveRect];
     DLog(@"Point in view is %@, live rect is %@", NSStringFromPoint(point), NSStringFromRect(liveRect));
     return NSPointInRect(point, liveRect);
+}
+
+- (BOOL)mouseHandler:(PTYMouseHandler *)handler
+    reportKittyDragGestureWithEvent:(NSEvent *)event {
+    iTermKittyDnDBridge *bridge = [self.delegate textViewKittyDnDBridge];
+    if (!bridge.isOfferingDrags) {
+        return NO;
+    }
+    const NSPoint locationInView = [self convertPoint:event.locationInWindow fromView:nil];
+    VT100GridCoord coord;
+    NSPoint pixel;
+    [self kittyDnDCoord:&coord pixel:&pixel forLocationInView:locationInView];
+    [bridge noteDragGestureAtCellX:coord.x
+                            cellY:coord.y
+                           pixelX:(int)round(pixel.x)
+                           pixelY:(int)round(pixel.y)
+                            event:event];
+    return YES;
 }
 
 - (void)mouseHandlerMoveCursorToCoord:(VT100GridCoord)coord

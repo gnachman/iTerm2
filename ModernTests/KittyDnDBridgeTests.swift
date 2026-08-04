@@ -12,13 +12,15 @@
 //
 
 import XCTest
+import AppKit
 @testable import iTerm2SharedARC
 
 @MainActor
 final class KittyDnDBridgeTests: XCTestCase {
-    // A localhost session (no conductor).
+    // A localhost session (no conductor), with no view (drag-out not exercised).
     private final class FakeDataSource: NSObject, KittyDnDBridgeDataSource {
         var kittyDnDConductor: Conductor? { nil }
+        var kittyDnDView: NSView? { nil }
     }
 
     private let dataSource = FakeDataSource()

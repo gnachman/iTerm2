@@ -17751,6 +17751,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return _conductor;
 }
 
+- (NSView *)kittyDnDView {
+    return _textview;
+}
+
 - (iTermKittyDnDBridge *)textViewKittyDnDBridge {
     return _kittyDnDBridge;
 }

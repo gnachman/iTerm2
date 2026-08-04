@@ -81,6 +81,11 @@ NS_ASSUME_NONNULL_BEGIN
 allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
             testOnly:(BOOL)testOnly;
 - (BOOL)mouseHandler:(PTYMouseHandler *)handler viewCoordIsReportable:(NSPoint)coord;
+// If a program has enabled Kitty drag-and-drop offers, tell it a drag gesture
+// started (so it can turn the drag into a drag-out) and return YES. Otherwise
+// return NO.
+- (BOOL)mouseHandler:(PTYMouseHandler *)handler
+    reportKittyDragGestureWithEvent:(NSEvent *)event;
 - (BOOL)mouseHandlerCanWriteToTTY:(PTYMouseHandler *)handler;
 - (BOOL)mouseHandlerViewIsFirstResponder:(PTYMouseHandler *)mouseHandler;
 - (BOOL)mouseHandlerShouldReportClicksAndDrags:(PTYMouseHandler *)mouseHandler;
