@@ -2044,17 +2044,20 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         iTermBidiDisplayInfo *bidi = _supportBidi ? sca.bidiInfo : nil;
         if (charBlock) {
             if (supportBidi && bidi) {
-                const NSRange visualRange = NSMakeRangeFromHalfOpenInterval(MIN(width - 1, MAX(range.columnWindow.location, startx)),
-                                                                            endx);
-                [bidi enumerateLogicalRangesIn:visualRange closure:^(NSRange logicalRange, int visualStart, BOOL *stop) {
-                    for (int i = 0; i < logicalRange.length; i++) {
-                        int x = logicalRange.location + i;
-                        if (charBlock(theLine, theLine[x], eaIndex[x], VT100GridCoordMake(x, y), VT100GridCoordMake(visualStart + i, y), &lineMetadata)) {
-                            *stop = YES;
-                            return;
-                        }
+                // The selection is stored in LOGICAL coordinates (the highlight uses
+                // them too), so emit the logical range in reading order rather than
+                // gathering the cells that happen to fall under a visual span. That
+                // keeps a partial selection on a mixed line a contiguous string — an
+                // English word embedded in right-to-left text (e.g. «Berlin») is
+                // copied whole instead of split into visually-adjacent pieces — while
+                // the bytes stay in the logical order that editors re-render correctly.
+                // Report each cell's visual column via the LUT for callers that use it.
+                const int lo = MIN(width - 1, MAX(range.columnWindow.location, startx));
+                for (int x = lo; x < endx; x++) {
+                    if (charBlock(theLine, theLine[x], eaIndex[x], VT100GridCoordMake(x, y), VT100GridCoordMake([bidi visualForLogical:x], y), &lineMetadata)) {
+                        return;
                     }
-                }];
+                }
             } else {
                 // Iterate over characters up to terminal nulls.
                 for (int x = MIN(width - 1, MAX(range.columnWindow.location, startx)); x < endx - numNulls; x++) {
@@ -2083,11 +2086,6 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         }
         startx = left;
     }
-}
-
-static NSRange NSMakeRangeFromHalfOpenInterval(NSUInteger lowerBound, NSUInteger openUpperBound) {
-    assert(lowerBound <= openUpperBound);
-    return NSMakeRange(lowerBound, openUpperBound - lowerBound);
 }
 
 // NOTE: This enumerates in logical order. RTL characters will not actually be reversed.

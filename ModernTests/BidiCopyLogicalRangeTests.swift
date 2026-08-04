@@ -99,4 +99,28 @@ class BidiCopyLogicalRangeTests: XCTestCase {
         XCTAssertTrue(text.contains("ر") || text.contains("ز"),
                       "line 1 (روز خوش دوست) dropped from multi-line copy; got >>>\(text)<<<")
     }
+
+    // A partial selection covering an English word embedded in RTL must copy the
+    // whole word contiguously — «Berlin» must not come out as «B … شهری» (the
+    // visually-adjacent-but-logically-split result the user hit).
+    func testPartialCopyKeepsEnglishWordWhole() {
+        let width = 40
+        // Persian first -> RTL paragraph; «Berlin» is an English island in the middle.
+        let content = "متن Berlin شهری بزرگ"
+        let s = content + String(repeating: " ", count: width - content.count)
+        let base = screenCharArrayWithDefaultStyle(s, eol: EOL_HARD)
+        guard let bidi = BidiDisplayInfoObjc(base) else { return XCTFail("no bidi") }
+        XCTAssertNotEqual(bidi.visualForLogical(0), 0, "mixed line not reordered; test is meaningless")
+        let sca = ScreenCharArray(copyOfLine: base.line, length: base.length,
+                                  continuation: base.continuation, bidiInfo: bidi)
+        let ds = BidiLinesDataSource([sca], width: Int32(width))
+        let extractor = iTermTextExtractor(dataSource: ds)
+        extractor.supportBidi = true
+
+        // Select logical [0, 12): «متن Berlin ش» — covers متن plus the whole Berlin island.
+        let range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 12, 0), 0, 0)
+        let text = extractor.content(in: range, excludingSubranges: nil) ?? ""
+        XCTAssertTrue(text.contains("Berlin"),
+                      "English island was split by the copy; expected whole 'Berlin', got >>>\(text)<<<")
+    }
 }
