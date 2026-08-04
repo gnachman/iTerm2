@@ -443,8 +443,10 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         // BidiDisplayInfo computed from CoreText's real resolution, so brackets
         // around an embedded LTR run (e.g. Persian «(English)») are correctly
         // left un-mirrored. Only simple (non-complex) cells can mirror.
+        BOOL manuallyMirrored = NO;
         if (!isComplex && [bidiInfo mirrorsSourceCell:i]) {
             code = iTermBidiMirroredCounterpart(code);
+            manuallyMirrored = YES;
         }
 
         NSString *charAsString;
@@ -477,7 +479,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                     lastCellDraw = i - 1;
                 }
                 [builder appendString:charAsString
-                                  rtl:c.rtlStatus == RTLStatusRTL
+                                  rtl:(manuallyMirrored ? NO : (c.rtlStatus == RTLStatusRTL))
                            sourceCell:i
                            drawInCell:lastCellDraw];
                 const CGFloat lastValue = CTVectorGet(positions, CTVectorCount(positions) - 1);
@@ -540,7 +542,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 [self updateBuilder:builder
                          withString:drawable ? charAsString : @" "
                         orCharacter:code
-                                rtl:c.rtlStatus == RTLStatusRTL
+                                rtl:(manuallyMirrored ? NO : (c.rtlStatus == RTLStatusRTL))
                           positions:positions
                              offset:xPosition
                          sourceCell:i
@@ -648,7 +650,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
             [self updateBuilder:builder
                      withString:drawable ? charAsString : @" "
                     orCharacter:code
-                            rtl:c.rtlStatus == RTLStatusRTL
+                            rtl:(manuallyMirrored ? NO : (c.rtlStatus == RTLStatusRTL))
                       positions:positions
                          offset:xPosition
                      sourceCell:i
