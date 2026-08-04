@@ -158,11 +158,12 @@ Major New Features:
 - Added support for the Kitty drag-and-drop
   protocol (OSC 72). A program running in the
   terminal can accept files, text, and images
-  dropped onto the window, and can offer its own
-  data to be dragged out to other apps. Over an
-  iTerm2 SSH-integration session, dropped files
-  are copied to the remote host automatically.
-  Hold Option while dropping to use the old
+  dropped onto the window, and (when it has mouse
+  reporting on, e.g. a full-screen TUI) can offer
+  its own data to be dragged out to other apps.
+  For a program on a remote host, dropped files
+  are transferred to it over the connection. Hold
+  Option while dropping to use the old
   paste/upload behavior instead.
 - A new tmux window opened with Command-T now
   picks up the profile’s custom tab title, if

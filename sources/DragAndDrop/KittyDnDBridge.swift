@@ -67,6 +67,11 @@ class KittyDnDBridge: NSObject {
         controller.handleInboundSequence(content)
     }
 
+    /// Discard all drag-and-drop state (e.g. when a new shell prompt appears).
+    @objc func reset() {
+        controller.reset()
+    }
+
     // MARK: - Offer / drag-out (from PTYMouseHandler)
 
     /// Whether the program has enabled drag offers. PTYMouseHandler checks this

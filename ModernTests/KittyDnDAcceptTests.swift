@@ -111,6 +111,36 @@ final class KittyDnDAcceptTests: XCTestCase {
         XCTAssertFalse(c.isAcceptingDrops)
     }
 
+    func testResetClearsAcceptAndOfferState() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.handleInboundSequence("t=o:x=1")
+        XCTAssertTrue(c.isAcceptingDrops)
+        XCTAssertTrue(c.isOfferingDrags)
+        c.reset()
+        XCTAssertFalse(c.isAcceptingDrops)
+        XCTAssertFalse(c.isOfferingDrags)
+        // A stray data request after reset finds no drop and errors.
+        c.handleInboundSequence("t=r:x=1")
+        XCTAssertEqual(recorder.last?.type, "R")
+    }
+
+    func testResetInvalidatesDirectoryHandle() async throws {
+        let dir = makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let sub = dir.appendingPathComponent("sub")
+        try FileManager.default.createDirectory(at: sub, withIntermediateDirectories: true)
+        try Data("A".utf8).write(to: sub.appendingPathComponent("a.txt"))
+        let recorder = Recorder()
+        let c = remoteDropController(fileURLs: [sub], recorder: recorder)
+        let dirResp = await awaitResponse(recorder, c, "t=r:x=1:y=1")
+        let handle = dirResp?.metadata["X"]
+        c.reset()
+        let stale = await awaitResponse(recorder, c, "t=r:Y=\(handle!):x=1")
+        XCTAssertEqual(stale?.type, "R")
+    }
+
     func testQueryIsAnswered() {
         let recorder = Recorder()
         let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)

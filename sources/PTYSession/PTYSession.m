@@ -16205,6 +16205,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         [self clearTabStatus];
     });
     [_pasteHelper unblock];
+    // A program that used the Kitty drag-and-drop protocol has exited (the shell
+    // is back at a prompt), so clear its offer/accept state rather than let it
+    // linger, the same way other modes are reset at a prompt.
+    [_kittyDnDBridge reset];
 }
 
 - (void)screenPromptOfNonInitialKindDidStart:(VT100PromptKind)kind {

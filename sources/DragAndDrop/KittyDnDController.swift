@@ -35,7 +35,7 @@ final class KittyDnDController {
     private let endpoint: KittyDnDEndpoint
     private weak var dragHost: KittyDnDDragHost?
     private let report: (String) -> Void
-    private let reassembler = KittyDnDChunkReassembler()
+    private var reassembler = KittyDnDChunkReassembler()
 
     // Accept-drop state.
     private(set) var isAcceptingDrops = false
@@ -77,6 +77,23 @@ final class KittyDnDController {
     private var isRemoteDrop: Bool {
         return KittyDnDMachineID.isRemote(theirID: peerMachineID, ourID: ourMachineID)
             || endpoint.isRemoteHost
+    }
+
+    /// Discard all drag-and-drop state. Called when a new shell prompt appears
+    /// (the program that used the protocol has exited), so accept/offer state,
+    /// open directory handles, and any partially-reassembled message do not leak
+    /// into whatever runs next, mirroring how the terminal resets other modes at
+    /// a prompt.
+    func reset() {
+        isAcceptingDrops = false
+        acceptedMimeTypes = []
+        peerMachineID = nil
+        currentDrop = nil
+        directoryHandles.removeAll()
+        nextDirectoryHandle = 2
+        isOfferingDrags = false
+        resetOfferInProgress()   // clears offer fields and drains pending requests
+        reassembler = KittyDnDChunkReassembler()
     }
 
     // MARK: - Inbound OSC 72

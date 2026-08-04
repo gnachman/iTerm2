@@ -293,6 +293,19 @@ final class KittyDnDOfferTests: XCTestCase {
         XCTAssertFalse(c.isOfferingDrags)
     }
 
+    // reset() (a new prompt) drains a pending data request with nil.
+    func testResetDrainsPendingRequestWithNil() {
+        let recorder = Recorder()
+        let c = startedController(host: FakeDragHost(), recorder: recorder)
+        var called = false
+        var result: Data? = Data("sentinel".utf8)
+        c.requestDragData(mimeIndex: 0) { called = true; result = $0 }
+        c.reset()
+        XCTAssertTrue(called)
+        XCTAssertNil(result)
+        XCTAssertFalse(c.isOfferingDrags)
+    }
+
     // A bare t=o (neither x nor o) must not destroy an in-progress offer.
     func testBareOfferIsIgnored() {
         let recorder = Recorder()
