@@ -61,6 +61,14 @@ Major New Features:
   previous_response_id and sets store=false, so
   chats no longer fail on the second message.
 
+- A new profile setting, “Use ANSI colors
+  for marks” (Settings > Profiles > Colors),
+  draws command-prompt mark indicators using
+  the color preset’s ANSI blue, red, and
+  yellow instead of the built-in colors, so
+  they harmonize with any theme. Off by
+  default.
+
 - There's a new kind of AI chat called
   "orchestration" which can view all your
   sessions and operate iTerm2 for you.

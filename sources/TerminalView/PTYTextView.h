@@ -213,6 +213,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)textViewSuppressingAllOutput;
 - (BOOL)textViewIsZoomedIn;
 - (BOOL)textViewShouldShowMarkIndicators;
+- (BOOL)textViewShouldUseThemeMarkColors;
 - (BOOL)textViewIsFiltered;
 - (BOOL)textViewInPinnedHotkeyWindow;
 - (BOOL)textViewSessionIsLinkedToAIChat;

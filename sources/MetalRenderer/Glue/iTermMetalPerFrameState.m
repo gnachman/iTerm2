@@ -931,6 +931,18 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return _configuration->_lineStyleMarkColors;
 }
 
+- (NSColor *)markSuccessColor {
+    return _configuration->_markSuccessColor;
+}
+
+- (NSColor *)markOtherColor {
+    return _configuration->_markOtherColor;
+}
+
+- (NSColor *)markFailureColor {
+    return _configuration->_markFailureColor;
+}
+
 - (BOOL)hasSelectedCommand {
     return _configuration->_selectedCommandRegion.length > 0;
 }

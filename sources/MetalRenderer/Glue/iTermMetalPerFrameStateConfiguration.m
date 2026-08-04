@@ -103,11 +103,25 @@ static vector_float4 VectorForColor(NSColor *color) {
         _buttonPillInfos = [drawingHelper buttonPillInfos];
     }
 
+    const BOOL useThemeMarkColors = drawingHelper.useThemeMarkColors;
+    NSColor *markBackgroundColor = [drawingHelper defaultBackgroundColor];
+    NSColor *successMarkColor = [iTermTextDrawingHelper colorForMarkType:iTermMarkIndicatorTypeSuccess
+                                                               colorMap:_colorMap
+                                                         useThemeColors:useThemeMarkColors];
+    NSColor *otherMarkColor = [iTermTextDrawingHelper colorForMarkType:iTermMarkIndicatorTypeOther
+                                                             colorMap:_colorMap
+                                                       useThemeColors:useThemeMarkColors];
+    NSColor *errorMarkColor = [iTermTextDrawingHelper colorForMarkType:iTermMarkIndicatorTypeError
+                                                             colorMap:_colorMap
+                                                       useThemeColors:useThemeMarkColors];
     _lineStyleMarkColors = (iTermLineStyleMarkColors) {
-        .success = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper successMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector,
-        .other = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper otherMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector,
-        .failure = [[[drawingHelper defaultBackgroundColor] blendedWithColor:[iTermTextDrawingHelper errorMarkColor] weight:0.5] colorUsingColorSpace:colorSpace].vector
+        .success = [[markBackgroundColor blendedWithColor:successMarkColor weight:0.5] colorUsingColorSpace:colorSpace].vector,
+        .other = [[markBackgroundColor blendedWithColor:otherMarkColor weight:0.5] colorUsingColorSpace:colorSpace].vector,
+        .failure = [[markBackgroundColor blendedWithColor:errorMarkColor weight:0.5] colorUsingColorSpace:colorSpace].vector
     };
+    _markSuccessColor = [successMarkColor colorUsingColorSpace:colorSpace];
+    _markOtherColor = [otherMarkColor colorUsingColorSpace:colorSpace];
+    _markFailureColor = [errorMarkColor colorUsingColorSpace:colorSpace];
 
     _renderInputs.isFrontTextView = (textView == [[iTermController sharedInstance] frontTextView]);
     _renderInputs.unfocusedSelectionColor = VectorForColor([[_colorMap colorForKey:kColorMapSelection] colorDimmedBy:2.0/3.0

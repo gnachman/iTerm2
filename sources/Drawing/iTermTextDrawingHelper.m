@@ -164,6 +164,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     BOOL _preferSpeedToFullLigatureSupport;
     BOOL _lowFiCombiningMarks;
     NSMutableDictionary<NSNumber *, NSImage *> *_cachedMarks;
+    NSInteger _cachedMarksColorMapGeneration;
 }
 
 - (instancetype)init {
@@ -1310,6 +1311,35 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     }
 }
 
++ (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type
+                     colorMap:(id<iTermColorMapReading>)colorMap
+               useThemeColors:(BOOL)useThemeColors {
+    if (!useThemeColors || colorMap == nil) {
+        return [self colorForMarkType:type];
+    }
+    int ansiKey = kColorMapAnsiBlue;
+    switch (type) {
+        case iTermMarkIndicatorTypeSuccess:
+        case iTermMarkIndicatorTypeFoldedSuccess:
+            // Success marks are blue by convention (see +successMarkColor).
+            ansiKey = kColorMapAnsiBlue;
+            break;
+        case iTermMarkIndicatorTypeOther:
+        case iTermMarkIndicatorTypeFoldedOther:
+            ansiKey = kColorMapAnsiYellow;
+            break;
+        case iTermMarkIndicatorTypeError:
+        case iTermMarkIndicatorTypeFoldedError:
+            ansiKey = kColorMapAnsiRed;
+            break;
+    }
+    NSColor *color = [colorMap colorForKey:ansiKey];
+    if (color == nil) {
+        return [self colorForMarkType:type];
+    }
+    return [color colorUsingColorSpace:[NSColorSpace it_defaultColorSpace]];
+}
+
 - (BOOL)canDrawLine:(int)line {
     return (line < _linesToSuppress.location ||
             line >= _linesToSuppress.location + _linesToSuppress.length);
@@ -1317,6 +1347,14 @@ const CGFloat commandRegionOutlineThickness = 2.0;
 
 - (void)drawMarksWithBackgroundRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
                            virtualOffset:(CGFloat)virtualOffset {
+    // The cache is keyed in part by the resolved mark color, which changes with
+    // the color theme (see drawMarkIfNeededOnLine:). Drop stale entries when the
+    // colormap changes so live color editing can't accumulate images without bound.
+    const NSInteger generation = self.colorMap.generation;
+    if (generation != _cachedMarksColorMapGeneration) {
+        _cachedMarksColorMapGeneration = generation;
+        [_cachedMarks removeAllObjects];
+    }
     for (NSInteger i = 0; i < backgroundRunArrays.count; i += 1) {
         [self drawMarkForLine:backgroundRunArrays[i].line
                             y:backgroundRunArrays[i].y
@@ -1346,7 +1384,9 @@ const CGFloat commandRegionOutlineThickness = 2.0;
             NSColor *bgColor = [self defaultBackgroundColor];
             NSColor *merged = [iTermTextDrawingHelper colorForLineStyleMark:[iTermTextDrawingHelper markIndicatorTypeForMark:mark
                                                                                                                       folded:folded]
-                                                            backgroundColor:bgColor];
+                                                            backgroundColor:bgColor
+                                                                   colorMap:self.colorMap
+                                                             useThemeColors:self.useThemeMarkColors];
             [merged set];
             NSRect rect;
             rect.origin.x = 0;
@@ -1375,20 +1415,34 @@ const CGFloat commandRegionOutlineThickness = 2.0;
                                                                     scale:1];
         const iTermMarkIndicatorType type = [iTermTextDrawingHelper markIndicatorTypeForMark:mark
                                                                                       folded:folded];
-        NSImage *image = _cachedMarks[@(type)];
+        const BOOL useThemeColors = self.useThemeMarkColors;
+        // Key by (type, useThemeColors) rather than the resolved color. Within one
+        // colormap generation the color for a given pair is fixed; an actual color
+        // change bumps colorMap.generation and clears the cache in
+        // drawMarksWithBackgroundRunArrays:. So there are at most 12 live entries and
+        // we don't have to hash an NSColor (whose -description isn't a reliable key).
+        NSNumber *cacheKey = @((NSUInteger)type * 2 + (useThemeColors ? 1 : 0));
+        NSImage *image = _cachedMarks[cacheKey];
         if (!image || !NSEqualSizes(image.size, rect.size)) {
-            NSColor *markColor = [iTermTextDrawingHelper colorForMark:mark];
+            NSColor *markColor = [iTermTextDrawingHelper colorForMarkType:type
+                                                                 colorMap:self.colorMap
+                                                           useThemeColors:useThemeColors];
             image = [iTermTextDrawingHelper newImageWithMarkOfColor:markColor
                                                                size:rect.size
                                                              folded:folded];
-            _cachedMarks[@(type)] = image;
+            _cachedMarks[cacheKey] = image;
         }
         [image it_drawInRect:rect virtualOffset:virtualOffset];
     }
 }
 
-+ (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type backgroundColor:(NSColor *)bgColor {
-    NSColor *markColor = [iTermTextDrawingHelper colorForMarkType:type];
++ (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type
+                   backgroundColor:(NSColor *)bgColor
+                          colorMap:(id<iTermColorMapReading>)colorMap
+                    useThemeColors:(BOOL)useThemeColors {
+    NSColor *markColor = [iTermTextDrawingHelper colorForMarkType:type
+                                                         colorMap:colorMap
+                                                   useThemeColors:useThemeColors];
     NSColor *merged = [bgColor blendedWithColor:markColor weight:0.5];
     return merged;
 }

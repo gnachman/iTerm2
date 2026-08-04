@@ -5877,6 +5877,17 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self.delegate sessionUpdateMetalAllowed];
     [self profileNameDidChangeTo:self.profile[KEY_NAME]];
     [_view.title updateLockButton];
+
+    // Repaint so display-only settings that don't change the color map, font, or
+    // geometry (e.g. mark indicator visibility and theme mark colors) take effect
+    // immediately instead of waiting for the next frame triggered by user activity.
+    [_textview requestDelegateRedraw];
+
+    // The auto-composer separator color is derived from the mark colors, which
+    // depend on KEY_USE_THEME_MARK_COLORS and the theme's ANSI palette. Refresh it
+    // here so toggling the setting or editing an ANSI color (which leaves the
+    // background unchanged) doesn't leave the separator showing a stale color.
+    [self updateAutoComposerSeparatorVisibility];
 }
 
 - (void)removeBindings {
@@ -13727,6 +13738,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (BOOL)textViewShouldShowMarkIndicators {
     return [iTermProfilePreferences boolForKey:KEY_SHOW_MARK_INDICATORS inProfile:_profile];
+}
+
+- (BOOL)textViewShouldUseThemeMarkColors {
+    return [iTermProfilePreferences boolForKey:KEY_USE_THEME_MARK_COLORS inProfile:_profile];
 }
 
 - (void)textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:(BOOL)isTrying {
@@ -23644,7 +23659,9 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
 - (void)updateAutoComposerSeparatorVisibility {
     _composerManager.isSeparatorVisible = [self shouldShowAutoComposerSeparator];
     _composerManager.separatorColor = [iTermTextDrawingHelper colorForLineStyleMark:iTermMarkIndicatorTypeSuccess
-                                                                    backgroundColor:[_screen.colorMap colorForKey:kColorMapBackground]];
+                                                                    backgroundColor:[_screen.colorMap colorForKey:kColorMapBackground]
+                                                                           colorMap:_screen.colorMap
+                                                                     useThemeColors:[iTermProfilePreferences boolForKey:KEY_USE_THEME_MARK_COLORS inProfile:_profile]];
 }
 
 - (BOOL)shouldShowAutoComposerSeparator {

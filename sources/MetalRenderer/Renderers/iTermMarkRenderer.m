@@ -64,6 +64,10 @@
     iTermTextureArray *_marksArrayTexture;
     NSColorSpace *_colorSpace;
     CGSize _markSize;
+    CGPoint _markOffset;
+    NSColor *_lastSuccessColor;
+    NSColor *_lastOtherColor;
+    NSColor *_lastFailureColor;
     iTermMetalMixedSizeBufferPool *_piuPool;
 }
 
@@ -100,43 +104,42 @@
     return transientState;
 }
 
-- (void)initializeTransientState:(iTermMarkRendererTransientState *)tState {
-    DLog(@"Initialize transient state");
-    const CGFloat scale = tState.configuration.scale;
-
-    DLog(@"Side margin size is %@, scale is %@, cell size is %@, cell size without spacing is %@",
-         @([iTermPreferences sideMargins]),
-         @(scale),
-         NSStringFromSize(tState.cellConfiguration.cellSize),
-         NSStringFromSize(tState.cellConfiguration.cellSizeWithoutSpacing));
+- (void)updateForCellConfiguration:(iTermCellRenderConfiguration *)cellConfiguration
+                      successColor:(NSColor *)successColor
+                        otherColor:(NSColor *)otherColor
+                      failureColor:(NSColor *)failureColor {
+    const CGFloat scale = cellConfiguration.scale;
     CGRect leftMarginRect = CGRectMake(1,
                                        0,
                                        ([iTermPreferences sideMargins] - 1) * scale,
-                                       tState.cellConfiguration.cellSize.height);
-    DLog(@"leftMarginRect=%@", NSStringFromRect(leftMarginRect));
+                                       cellConfiguration.cellSize.height);
     CGRect markRect = [iTermTextDrawingHelper frameForMarkContainedInRect:leftMarginRect
-                                                                 cellSize:tState.cellConfiguration.cellSize
-                                                   cellSizeWithoutSpacing:tState.cellConfiguration.cellSizeWithoutSpacing
+                                                                 cellSize:cellConfiguration.cellSize
+                                                   cellSizeWithoutSpacing:cellConfiguration.cellSizeWithoutSpacing
                                                                     scale:scale];
-    DLog(@"markRect=%@, _markSize=%@", NSStringFromRect(markRect), NSStringFromSize(_markSize));
+    _markOffset = markRect.origin;
+    const CGSize markSize = markRect.size;
+    NSColorSpace *colorSpace = cellConfiguration.colorSpace;
+    if (!CGSizeEqualToSize(markSize, _markSize) ||
+        ![NSObject object:colorSpace isEqualToObject:_colorSpace] ||
+        ![NSObject object:successColor isEqualToObject:_lastSuccessColor] ||
+        ![NSObject object:otherColor isEqualToObject:_lastOtherColor] ||
+        ![NSObject object:failureColor isEqualToObject:_lastFailureColor]) {
+        DLog(@"Mark size, colorspace, or colors have changed");
+        _markSize = markSize;
+        _colorSpace = colorSpace;
+        _lastSuccessColor = successColor;
+        _lastOtherColor = otherColor;
+        _lastFailureColor = failureColor;
+        if (markSize.width > 0 && markSize.height > 0 && successColor && otherColor && failureColor) {
+            DLog(@"Size is positive, make images of size %@", NSStringFromSize(markSize));
+            NSImage *regularSuccessImage = [self newImageWithMarkOfColor:successColor size:markSize folded:NO];
+            NSImage *regularFailureImage = [self newImageWithMarkOfColor:failureColor size:markSize folded:NO];
+            NSImage *regularOtherImage = [self newImageWithMarkOfColor:otherColor size:markSize folded:NO];
 
-    if (!CGSizeEqualToSize(markRect.size, _markSize) || ![NSObject object:tState.configuration.colorSpace isEqualToObject:_colorSpace]) {
-        DLog(@"Mark size or colorspace has changed");
-        _markSize = markRect.size;
-        _colorSpace = tState.configuration.colorSpace;
-        if (_markSize.width > 0 && _markSize.height > 0) {
-            DLog(@"Size is positive, make images of size %@", NSStringFromSize(_markSize));
-            NSColor *successColor = [iTermTextDrawingHelper successMarkColor];
-            NSColor *otherColor = [iTermTextDrawingHelper otherMarkColor];
-            NSColor *failureColor = [iTermTextDrawingHelper errorMarkColor];
-
-            NSImage *regularSuccessImage = [self newImageWithMarkOfColor:successColor size:_markSize folded:NO];
-            NSImage *regularFailureImage = [self newImageWithMarkOfColor:failureColor size:_markSize folded:NO];
-            NSImage *regularOtherImage = [self newImageWithMarkOfColor:otherColor size:_markSize folded:NO];
-
-            NSImage *foldedSuccessImage = [self newImageWithMarkOfColor:successColor size:_markSize folded:YES];
-            NSImage *foldedFailureImage = [self newImageWithMarkOfColor:failureColor size:_markSize folded:YES];
-            NSImage *foldedOtherImage = [self newImageWithMarkOfColor:otherColor size:_markSize folded:YES];
+            NSImage *foldedSuccessImage = [self newImageWithMarkOfColor:successColor size:markSize folded:YES];
+            NSImage *foldedFailureImage = [self newImageWithMarkOfColor:failureColor size:markSize folded:YES];
+            NSImage *foldedOtherImage = [self newImageWithMarkOfColor:otherColor size:markSize folded:YES];
             _marksArrayTexture = [[iTermTextureArray alloc] initWithImages:@[regularSuccessImage,
                                                                              regularFailureImage,
                                                                              regularOtherImage,
@@ -144,12 +147,24 @@
                                                                              foldedFailureImage,
                                                                              foldedOtherImage]
                                                                     device:_cellRenderer.device];
+        } else {
+            // Can't build an atlas for this size/colors. Clear the old texture so
+            // _markSize and _marksArrayTexture never disagree; a later frame with a
+            // valid size and non-nil colors will rebuild it. (drawWithFrameData:
+            // draws nothing when the texture is nil.)
+            _marksArrayTexture = nil;
         }
     }
+}
 
-    tState.markOffset = markRect.origin;
-    tState.marksArrayTexture = _marksArrayTexture;
+- (void)initializeTransientState:(iTermMarkRendererTransientState *)tState {
+    // The mark size, offset, and texture atlas were computed in
+    // -updateForCellConfiguration:... during the driver's per-frame update phase
+    // (before transient states are created), because the atlas depends on the
+    // per-frame mark colors. Just hand that state to the transient state here.
+    tState.markOffset = _markOffset;
     tState.markSize = _markSize;
+    tState.marksArrayTexture = _marksArrayTexture;
     tState.vertexBuffer = [_cellRenderer newQuadOfSize:_markSize poolContext:tState.poolContext];
 }
 

@@ -2087,6 +2087,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         helper.shouldDrawFilledInCursor = NO;
         helper.isFrontTextView = NO;
         helper.drawMarkIndicators = NO;
+        helper.useThemeMarkColors = [_delegate textViewShouldUseThemeMarkColors];
         helper.showSearchingCursor = NO;
         helper.copyMode = NO;
         helper.copyModeSelecting = NO;
@@ -2129,6 +2130,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         helper.shouldDrawFilledInCursor = ([self.delegate textViewShouldDrawFilledInCursor] || _focusFollowsMouse.haveStolenFocus);
         helper.isFrontTextView = (self == [[iTermController sharedInstance] frontTextView]);
         helper.drawMarkIndicators = [_delegate textViewShouldShowMarkIndicators];
+        helper.useThemeMarkColors = [_delegate textViewShouldUseThemeMarkColors];
         helper.showSearchingCursor = _showSearchingCursor;
         helper.copyMode = _delegate.textViewCopyMode;
         helper.copyModeSelecting = _delegate.textViewCopyModeSelecting;
