@@ -1392,7 +1392,13 @@ int iTermGetMetalBackgroundColors(iTermMetalPerFrameState *self,
             }
             continue;
         }
-        const BOOL selected = [selectedIndexes containsIndex:visualX];
+        // selectedIndexes is in LOGICAL coordinates (the selection is stored and
+        // reported logically), so test the logical cell index. The run is still
+        // positioned at its visual column via the LUT above; testing visualX here
+        // lit the mirror-image cells on right-to-left lines (the highlight landed
+        // on empty trailing-space columns at the left). Matches the CoreGraphics
+        // path in iTermBackgroundColorRun.m.
+        const BOOL selected = [selectedIndexes containsIndex:logicalX];
         BOOL findMatch = NO;
         if (findMatches && !selected) {
             findMatch = CheckFindMatchAtIndex(findMatches, logicalX);
