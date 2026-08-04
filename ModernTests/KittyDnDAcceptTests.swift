@@ -373,4 +373,126 @@ final class KittyDnDAcceptTests: XCTestCase {
         c.handleInboundSequence("t=r")  // no x=
         XCTAssertEqual(recorder.last?.type, "R")
     }
+
+    // MARK: - Cross-machine in-band file/dir transfer (plain ssh, no conductor)
+
+    private func makeTempDirectory() -> URL {
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("kittydnd-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }
+
+    /// Send `request`, wait for the terminal's terminal response (final chunk or
+    /// error), and return the reassembled t=r message (or the t=R error).
+    private func awaitResponse(_ recorder: Recorder,
+                              _ c: KittyDnDController,
+                              _ request: String) async -> KittyDnDMessage? {
+        recorder.reports.removeAll()
+        let exp = expectation(description: request)
+        exp.assertForOverFulfill = false
+        recorder.onReport = { msg in
+            if msg.type == "R" || (msg.type == "r" && msg.metadata["m"] != "1") {
+                exp.fulfill()
+            }
+        }
+        c.handleInboundSequence(request)
+        await fulfillment(of: [exp], timeout: 5)
+        recorder.onReport = nil
+        if let error = recorder.messages.first(where: { $0.type == "R" }) {
+            return error
+        }
+        let reassembler = KittyDnDChunkReassembler()
+        var result: KittyDnDMessage?
+        for msg in recorder.messages where msg.type == "r" {
+            if let done = reassembler.accept(msg.serializedContent()) {
+                result = done
+            }
+        }
+        return result
+    }
+
+    private func remoteDropController(fileURLs: [URL],
+                                     recorder: Recorder) -> KittyDnDController {
+        let c = makeController(endpoint: FakeEndpoint(canMaterializeFiles: false), recorder: recorder)
+        // Peer machine id present and no conductor -> Tier 3 (in-band transfer).
+        c.handleInboundSequence("t=a;text/uri-list \(peerID)")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/uri-list"], fileURLs: fileURLs))
+        return c
+    }
+
+    func testCrossMachineURIListIsFlaggedThenFileBytesStreamed() async throws {
+        let dir = makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let file = dir.appendingPathComponent("a.txt")
+        try Data("hello remote".utf8).write(to: file)
+
+        let recorder = Recorder()
+        let c = remoteDropController(fileURLs: [file], recorder: recorder)
+
+        // The uri-list is flagged cross-machine.
+        let list = await awaitResponse(recorder, c, "t=r:x=1")
+        XCTAssertEqual(list?.metadata["X"], "1")
+
+        // The program then pulls the actual bytes by sub-index.
+        let entry = await awaitResponse(recorder, c, "t=r:x=1:y=1")
+        XCTAssertNil(entry?.metadata["X"], "a regular file carries no type flag")
+        XCTAssertEqual(entry?.dataPayload, Data("hello remote".utf8))
+    }
+
+    func testCrossMachineSymlinkReturnsTarget() async throws {
+        let dir = makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let link = dir.appendingPathComponent("link")
+        try FileManager.default.createSymbolicLink(atPath: link.path, withDestinationPath: "a.txt")
+
+        let recorder = Recorder()
+        let c = remoteDropController(fileURLs: [link], recorder: recorder)
+        let entry = await awaitResponse(recorder, c, "t=r:x=1:y=1")
+        XCTAssertEqual(entry?.metadata["X"], "1", "symlink is flagged X=1")
+        XCTAssertEqual(entry?.dataPayload, Data("a.txt".utf8))
+    }
+
+    func testCrossMachineDirectoryTraversal() async throws {
+        let dir = makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let sub = dir.appendingPathComponent("sub")
+        try FileManager.default.createDirectory(at: sub, withIntermediateDirectories: true)
+        try Data("A".utf8).write(to: sub.appendingPathComponent("a.txt"))
+        try Data("B".utf8).write(to: sub.appendingPathComponent("b.txt"))
+
+        let recorder = Recorder()
+        let c = remoteDropController(fileURLs: [sub], recorder: recorder)
+
+        // The directory entry yields a handle and null-separated names.
+        let dirResp = await awaitResponse(recorder, c, "t=r:x=1:y=1")
+        let handle = dirResp?.metadata["X"]
+        XCTAssertNotNil(handle)
+        XCTAssertNotEqual(handle, "0")
+        XCTAssertNotEqual(handle, "1")
+        let names = String(data: dirResp?.dataPayload ?? Data(), encoding: .utf8)?
+            .split(separator: "\u{0}").map(String.init)
+        XCTAssertEqual(names, ["a.txt", "b.txt"])
+
+        // Traverse into the directory by handle + index.
+        let child = await awaitResponse(recorder, c, "t=r:Y=\(handle!):x=1")
+        XCTAssertEqual(child?.dataPayload, Data("A".utf8))
+
+        // Freeing the handle produces no response; a later use is an error.
+        c.handleInboundSequence("t=r:Y=\(handle!)")
+        let afterFree = await awaitResponse(recorder, c, "t=r:Y=\(handle!):x=1")
+        XCTAssertEqual(afterFree?.type, "R")
+    }
+
+    func testCrossMachineBadSubIndexIsError() async {
+        let dir = makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let file = dir.appendingPathComponent("a.txt")
+        try? Data("x".utf8).write(to: file)
+        let recorder = Recorder()
+        let c = remoteDropController(fileURLs: [file], recorder: recorder)
+        let resp = await awaitResponse(recorder, c, "t=r:x=1:y=99")
+        XCTAssertEqual(resp?.type, "R")
+    }
 }

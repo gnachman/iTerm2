@@ -43,6 +43,12 @@ final class KittyDnDController {
     private var peerMachineID: String?
     private var currentDrop: KittyDnDDropData?
 
+    // Open directory handles for the cross-machine traversal, mapping a handle to
+    // that directory's ordered child URLs. Handles start at 2 (0 and 1 are
+    // reserved by the protocol for the file/symlink type indicators).
+    private var directoryHandles: [Int: [URL]] = [:]
+    private var nextDirectoryHandle = 2
+
     // Offer / drag-out state.
     private(set) var isOfferingDrags = false
     private var offerMimeTypes: [String] = []
@@ -174,6 +180,12 @@ final class KittyDnDController {
     // MARK: - Data request handling
 
     private func handleDataRequest(_ message: KittyDnDMessage) {
+        // A directory-handle request is part of the cross-machine traversal and
+        // is not tied to the MIME index.
+        if let handle = message.intValue("Y") {
+            handleDirectoryRequest(handle: handle, message: message)
+            return
+        }
         let requestedIndex = message.intValue("x")
         guard let index = requestedIndex,
               let drop = currentDrop,
@@ -182,6 +194,22 @@ final class KittyDnDController {
             return
         }
         let mime = drop.mimeTypes[index - 1]
+
+        // A sub-index (y) request is the cross-machine path: the program asks for
+        // one file entry within the uri-list so it can pull the actual bytes.
+        if let entryIndex = message.intValue("y") {
+            guard mime == "text/uri-list",
+                  entryIndex >= 1, entryIndex <= drop.fileURLs.count else {
+                sendError(baseMetadata: ["x": String(index), "y": String(entryIndex)],
+                          code: "EINVAL")
+                return
+            }
+            answerFilesystemEntry(url: drop.fileURLs[entryIndex - 1],
+                                  responseMetadata: ["x": String(index),
+                                                     "y": String(entryIndex)])
+            return
+        }
+
         if mime == "text/uri-list" {
             answerURIList(index: index, drop: drop)
         } else if let data = drop.data(forMimeIndex: index) {
@@ -189,6 +217,61 @@ final class KittyDnDController {
         } else {
             sendDataError(index: index, code: "ENOENT")
         }
+    }
+
+    // MARK: - Cross-machine file/dir transfer (in-band)
+
+    private func handleDirectoryRequest(handle: Int, message: KittyDnDMessage) {
+        guard let children = directoryHandles[handle] else {
+            sendError(baseMetadata: ["Y": String(handle)], code: "EINVAL")
+            return
+        }
+        guard let num = message.intValue("x") else {
+            // No index: the program is done with this directory; free it.
+            directoryHandles.removeValue(forKey: handle)
+            return
+        }
+        guard num >= 1, num <= children.count else {
+            sendError(baseMetadata: ["Y": String(handle), "x": String(num)], code: "EINVAL")
+            return
+        }
+        answerFilesystemEntry(url: children[num - 1],
+                              responseMetadata: ["Y": String(handle), "x": String(num)])
+    }
+
+    /// Respond to a request for one filesystem entry: stream a regular file's
+    /// bytes, a symlink's target (X=1), or a directory's entry names plus a new
+    /// handle (X=handle). The dropped files are local to us, so this is the
+    /// terminal-reads-and-streams half of the protocol's cross-machine support.
+    private func answerFilesystemEntry(url: URL, responseMetadata: [String: String]) {
+        Task { @MainActor in
+            do {
+                let entry = try await Self.readEntryOffMainThread(url)
+                switch entry {
+                case .regularFile(let data):
+                    sendChunkedData(baseMetadata: responseMetadata, data: data)
+                case .symlink(let target):
+                    var metadata = responseMetadata
+                    metadata["X"] = "1"
+                    sendChunkedData(baseMetadata: metadata, data: Data(target.utf8))
+                case .directory(let children):
+                    let handle = allocateDirectoryHandle(children: children)
+                    var metadata = responseMetadata
+                    metadata["X"] = String(handle)
+                    let names = children.map { $0.lastPathComponent }.joined(separator: "\u{0}")
+                    sendChunkedData(baseMetadata: metadata, data: Data(names.utf8))
+                }
+            } catch {
+                sendError(baseMetadata: responseMetadata, code: "EIO")
+            }
+        }
+    }
+
+    private func allocateDirectoryHandle(children: [URL]) -> Int {
+        let handle = nextDirectoryHandle
+        nextDirectoryHandle += 1
+        directoryHandles[handle] = children
+        return handle
     }
 
     private func answerURIList(index: Int, drop: KittyDnDDropData) {
@@ -396,20 +479,29 @@ final class KittyDnDController {
     }
 
     private func sendData(index: Int, data: Data, extraMetadata: [String: String]) {
-        var metadata = ["t": "r", "x": String(index)]
-        for (key, value) in extraMetadata {
-            metadata[key] = value
-        }
+        var metadata = extraMetadata
+        metadata["x"] = String(index)
+        sendChunkedData(baseMetadata: metadata, data: data)
+    }
+
+    /// Send a t=r data response, chunked. `baseMetadata` supplies the addressing
+    /// keys (x / y / Y and any X type flag); t=r is added here.
+    private func sendChunkedData(baseMetadata: [String: String], data: Data) {
+        var metadata = baseMetadata
+        metadata["t"] = "r"
         for message in KittyDnDChunker.messages(baseMetadata: metadata, data: data) {
             send(message)
         }
     }
 
     private func sendDataError(index: Int?, code: String) {
-        var metadata = ["t": "R"]
-        if let index {
-            metadata["x"] = String(index)
-        }
+        sendError(baseMetadata: index.map { ["x": String($0)] } ?? [:], code: code)
+    }
+
+    /// Send a t=R error response echoing the request's addressing keys.
+    private func sendError(baseMetadata: [String: String], code: String) {
+        var metadata = baseMetadata
+        metadata["t"] = "R"
         send(KittyDnDMessage(metadata: metadata, textPayload: code))
     }
 
@@ -424,6 +516,32 @@ final class KittyDnDController {
     private static func readFileOffMainThread(_ url: URL) async throws -> Data {
         return try await Task.detached(priority: .utility) {
             try Data(contentsOf: url)
+        }.value
+    }
+
+    /// One filesystem entry as needed by the cross-machine transfer.
+    private enum FilesystemEntry {
+        case regularFile(Data)
+        case symlink(String)        // link target
+        case directory([URL])       // sorted child URLs
+    }
+
+    /// Classify and read `url` off the main thread. A symlink is reported as a
+    /// symlink (not followed); a directory yields its sorted children.
+    private static func readEntryOffMainThread(_ url: URL) async throws -> FilesystemEntry {
+        return try await Task.detached(priority: .utility) {
+            let values = try url.resourceValues(forKeys: [.isSymbolicLinkKey, .isDirectoryKey])
+            if values.isSymbolicLink == true {
+                let target = try FileManager.default.destinationOfSymbolicLink(atPath: url.path)
+                return .symlink(target)
+            }
+            if values.isDirectory == true {
+                let children = try FileManager.default
+                    .contentsOfDirectory(at: url, includingPropertiesForKeys: nil)
+                    .sorted { $0.lastPathComponent < $1.lastPathComponent }
+                return .directory(children)
+            }
+            return .regularFile(try Data(contentsOf: url))
         }.value
     }
 
