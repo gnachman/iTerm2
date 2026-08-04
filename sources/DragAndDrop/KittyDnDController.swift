@@ -151,8 +151,11 @@ final class KittyDnDController {
                      operations: Int, mimeTypes: [String]) {
         guard isAcceptingDrops else { return }
         // A new drag cycle: forget any drop from the previous cycle so a stray
-        // t=r cannot read stale data.
+        // t=r cannot read stale data, including open directory handles that
+        // pointed into the previous drop's files.
         currentDrop = nil
+        directoryHandles.removeAll()
+        nextDirectoryHandle = 2
         sendMoveOrDrop(type: "m", cellX: cellX, cellY: cellY, pixelX: pixelX,
                        pixelY: pixelY, operations: operations, mimeTypes: mimeTypes)
     }

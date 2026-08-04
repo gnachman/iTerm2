@@ -485,6 +485,51 @@ final class KittyDnDAcceptTests: XCTestCase {
         XCTAssertEqual(afterFree?.type, "R")
     }
 
+    func testDirectoryHandleIsInvalidatedByNewDrag() async throws {
+        let dir = makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let sub = dir.appendingPathComponent("sub")
+        try FileManager.default.createDirectory(at: sub, withIntermediateDirectories: true)
+        try Data("A".utf8).write(to: sub.appendingPathComponent("a.txt"))
+
+        let recorder = Recorder()
+        let c = remoteDropController(fileURLs: [sub], recorder: recorder)
+        let dirResp = await awaitResponse(recorder, c, "t=r:x=1:y=1")
+        let handle = dirResp?.metadata["X"]
+        XCTAssertNotNil(handle)
+
+        // A new drag cycle must invalidate the handle so a stray request errors.
+        c.dragEntered(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0,
+                      operations: 1, mimeTypes: ["text/uri-list"])
+        let stale = await awaitResponse(recorder, c, "t=r:Y=\(handle!):x=1")
+        XCTAssertEqual(stale?.type, "R")
+    }
+
+    func testCrossMachineNestedDirectoryTraversal() async throws {
+        let dir = makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let top = dir.appendingPathComponent("top")
+        let inner = top.appendingPathComponent("inner")
+        try FileManager.default.createDirectory(at: inner, withIntermediateDirectories: true)
+        try Data("deep".utf8).write(to: inner.appendingPathComponent("deep.txt"))
+
+        let recorder = Recorder()
+        let c = remoteDropController(fileURLs: [top], recorder: recorder)
+
+        // top -> handle with child "inner"
+        let topResp = await awaitResponse(recorder, c, "t=r:x=1:y=1")
+        let topHandle = topResp?.metadata["X"]
+        XCTAssertNotNil(topHandle)
+        // descend into "inner" -> a fresh handle with child "deep.txt"
+        let innerResp = await awaitResponse(recorder, c, "t=r:Y=\(topHandle!):x=1")
+        let innerHandle = innerResp?.metadata["X"]
+        XCTAssertNotNil(innerHandle)
+        XCTAssertNotEqual(innerHandle, topHandle)
+        // read the nested file
+        let deep = await awaitResponse(recorder, c, "t=r:Y=\(innerHandle!):x=1")
+        XCTAssertEqual(deep?.dataPayload, Data("deep".utf8))
+    }
+
     func testCrossMachineBadSubIndexIsError() async {
         let dir = makeTempDirectory()
         defer { try? FileManager.default.removeItem(at: dir) }

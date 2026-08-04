@@ -93,8 +93,29 @@ class DropTarget:
 
     def on_error(self, md, payload):
         log("[drop_target] ERROR %s: %s" % (dict(md), payload))
+        context = self.current
         self.current = None
+        # A failed child must still release its parent handle, or it leaks.
+        if context is not None:
+            self._release_parent(context.get("parent"))
         self.dispatch_next()
+
+    def _release_parent(self, parent):
+        if parent is None or parent not in self.handle_remaining:
+            return
+        self.handle_remaining[parent] -= 1
+        if self.handle_remaining[parent] == 0:
+            self._free_handle(parent)
+
+    def _safe_dest(self, dest):
+        # Guard against a malicious terminal returning names with .. or absolute
+        # components that would write outside --outdir.
+        root = os.path.abspath(self.outdir)
+        full = os.path.abspath(dest)
+        if full != root and not full.startswith(root + os.sep):
+            log("[drop_target] refusing unsafe path: %s" % dest)
+            return None
+        return full
 
     # MARK: - Drop handling
 
@@ -144,7 +165,10 @@ class DropTarget:
             log("[drop_target] local drop; usable paths: %s" % uris)
 
     def on_entry(self, md, data, context):
-        dest = context["dest"]
+        dest = self._safe_dest(context["dest"])
+        if dest is None:
+            self._release_parent(context.get("parent"))
+            return
         x = md.get("X")
         if x is None:
             # Regular file.
@@ -167,11 +191,7 @@ class DropTarget:
                 child = os.path.join(dest, raw.decode("utf-8", "replace"))
                 self.enqueue({"t": "r", "Y": str(handle), "x": str(num)},
                              {"handler": self.on_entry, "dest": child, "parent": handle})
-        parent = context.get("parent")
-        if parent is not None:
-            self.handle_remaining[parent] -= 1
-            if self.handle_remaining[parent] == 0:
-                self._free_handle(parent)
+        self._release_parent(context.get("parent"))
 
     def _free_handle(self, handle):
         self.handle_remaining.pop(handle, None)
