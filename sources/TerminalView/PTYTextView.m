@@ -303,10 +303,14 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
             VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0);
         _timeOfLastBlink = [NSDate timeIntervalSinceReferenceDate];
 
-        // Register for drag and drop.
+        // Register for drag and drop. Image types are included so a program
+        // that accepts Kitty drag-and-drop image drops receives pure-image drags
+        // (with no file URL or string).
         [self registerForDraggedTypes: @[
             NSPasteboardTypeFileURL,
-            NSPasteboardTypeString ]];
+            NSPasteboardTypeString,
+            NSPasteboardTypePNG,
+            NSPasteboardTypeTIFF ]];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(useBackgroundIndicatorChanged:)
@@ -4800,16 +4804,24 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 // Computes the drop location (cell + pixel offset within the cell) and the kitty
-// operation flags (1 copy, 2 move, 3 either) for a drag.
+// operation flags (1 copy, 2 move, 3 either) for a drag. The cell is
+// screen-relative (0..height-1), matching iTerm2's own mouse reporting, not the
+// whole-buffer coordinate coordForPoint: returns.
 - (void)kittyDnDParamsForSender:(id<NSDraggingInfo>)sender
                           coord:(VT100GridCoord *)coordOut
                           pixel:(NSPoint *)pixelOut
                       operation:(int *)operationOut {
     const NSPoint locationInView = [self convertPoint:sender.draggingLocation fromView:nil];
-    const VT100GridCoord coord = [self coordForPoint:locationInView allowRightMarginOverflow:NO];
-    const NSPoint cellOrigin = [self pointForCoord:coord];
+    const NSRect liveRect = [self liveRect];
+    const CGFloat relativeX = locationInView.x - liveRect.origin.x;
+    const CGFloat relativeY = locationInView.y - liveRect.origin.y;
+    VT100GridCoord coord = VT100GridCoordMake((int)(relativeX / _charWidth),
+                                              (int)(relativeY / _lineHeight));
+    coord.x = MAX(0, coord.x);
+    coord.y = MAX(0, coord.y);
     *coordOut = coord;
-    *pixelOut = NSMakePoint(locationInView.x - cellOrigin.x, locationInView.y - cellOrigin.y);
+    *pixelOut = NSMakePoint(relativeX - coord.x * _charWidth,
+                            relativeY - coord.y * _lineHeight);
     const NSDragOperation mask = [sender draggingSourceOperationMask];
     int operation = 0;
     if (mask & NSDragOperationCopy) {
@@ -4855,10 +4867,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)draggingExited:(nullable id <NSDraggingInfo>)sender {
-    iTermKittyDnDBridge *bridge = [self.delegate textViewKittyDnDBridge];
-    if (bridge.isAcceptingDrops) {
-        [bridge draggingExited];
-    }
+    // Only report the leave if we would have forwarded this drag (same gate as
+    // enter/update), so an Option-held upload drag does not send a stray leave.
+    [[self kittyDnDBridgeForDrag] draggingExited];
     _drawingHelper.showDropTargets = NO;
     [self.delegate textViewDidUpdateDropTargetVisibility];
     [self requestDelegateRedraw];
