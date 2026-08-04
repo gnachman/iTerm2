@@ -759,6 +759,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         !_makingThreeFingerSelection &&
         !_kittyDragOfferStarted &&
         !([event modifierFlags] & NSEventModifierFlagOption) &&
+        [self.mouseDelegate mouseHandlerHasKittyDragOffer:self] &&
         [self mouseEventIsReportable:event]) {
         if ([self.mouseDelegate mouseHandler:self reportKittyDragGestureWithEvent:event]) {
             _kittyDragOfferStarted = YES;

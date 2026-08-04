@@ -289,6 +289,7 @@ final class KittyDnDController {
                                       image: offerImage)
         guard let dragHost, dragHost.beginDrag(offer) else {
             send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "EIO:could not start drag"))
+            resetOfferInProgress()
             return
         }
         send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "OK"))

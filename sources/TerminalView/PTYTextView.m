@@ -4820,8 +4820,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     coord.x = MAX(0, coord.x);
     coord.y = MAX(0, coord.y);
     *coordOut = coord;
-    *pixelOut = NSMakePoint(relativeX - coord.x * _charWidth,
-                            relativeY - coord.y * _lineHeight);
+    // Clamp to non-negative so a drop in the left/top margin does not report a
+    // negative offset.
+    *pixelOut = NSMakePoint(MAX(0, relativeX - coord.x * _charWidth),
+                            MAX(0, relativeY - coord.y * _lineHeight));
 }
 
 - (void)kittyDnDParamsForSender:(id<NSDraggingInfo>)sender
@@ -7967,6 +7969,10 @@ static NSString *iTermStringFromRange(NSRange range) {
     const NSRect liveRect = [self liveRect];
     DLog(@"Point in view is %@, live rect is %@", NSStringFromPoint(point), NSStringFromRect(liveRect));
     return NSPointInRect(point, liveRect);
+}
+
+- (BOOL)mouseHandlerHasKittyDragOffer:(PTYMouseHandler *)handler {
+    return [self.delegate textViewKittyDnDBridge].isOfferingDrags;
 }
 
 - (BOOL)mouseHandler:(PTYMouseHandler *)handler

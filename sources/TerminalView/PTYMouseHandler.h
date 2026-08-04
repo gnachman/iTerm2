@@ -81,6 +81,9 @@ NS_ASSUME_NONNULL_BEGIN
 allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
             testOnly:(BOOL)testOnly;
 - (BOOL)mouseHandler:(PTYMouseHandler *)handler viewCoordIsReportable:(NSPoint)coord;
+// Whether a program has enabled Kitty drag-and-drop offers. A cheap check used
+// to gate the more expensive reportability test on the drag hot path.
+- (BOOL)mouseHandlerHasKittyDragOffer:(PTYMouseHandler *)handler;
 // If a program has enabled Kitty drag-and-drop offers, tell it a drag gesture
 // started (so it can turn the drag into a drag-out) and return YES. Otherwise
 // return NO.

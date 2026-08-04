@@ -94,9 +94,18 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
               let list = String(data: data, encoding: .utf8) else {
             return nil
         }
-        return list
-            .split(whereSeparator: { $0 == "\r" || $0 == "\n" })
-            .map(String.init)
+        return Self.parseFileURLs(uriList: list)
+    }
+
+    /// Parse a text/uri-list into file URLs: split on CR/LF, drop blank and
+    /// comment (`#`) lines, keep only file URLs.
+    nonisolated static func parseFileURLs(uriList: String) -> [URL] {
+        // Split on newlines; $0.isNewline matches CR, LF, and the CRLF grapheme
+        // (Swift treats "\r\n" as a single Character).
+        return uriList
+            .split(whereSeparator: { $0.isNewline })
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty && !$0.hasPrefix("#") }
             .compactMap { URL(string: $0) }
             .filter { $0.isFileURL }
     }
