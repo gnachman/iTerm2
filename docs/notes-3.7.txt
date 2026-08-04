@@ -155,6 +155,15 @@ Major New Features:
   The Claude Code integration uses Clippings to
   store code review comments so they can be shared
   between related sessions in a Workgroup.
+- Added support for the Kitty drag-and-drop
+  protocol (OSC 72). A program running in the
+  terminal can accept files, text, and images
+  dropped onto the window, and can offer its own
+  data to be dragged out to other apps. Over an
+  iTerm2 SSH-integration session, dropped files
+  are copied to the remote host automatically.
+  Hold Option while dropping to use the old
+  paste/upload behavior instead.
 - A new tmux window opened with Command-T now
   picks up the profile’s custom tab title, if
   one is set.
