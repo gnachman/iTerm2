@@ -27,7 +27,7 @@ class iTermMacOS13RequirementNotice: NSObject {
             return
         }
         iTermWarning.show(
-            withTitle: "Future betas will require macOS 13 (Ventura) or later. This is the last version that supports macOS 12. Sorry for the inconvenience!",
+            withTitle: "Future versions of iTerm2 will require macOS 13 (Ventura) or later. This is the last version that supports macOS 12. Sorry for the inconvenience!",
             actions: ["OK"],
             accessory: nil,
             // No identifier: this is a persistent (non-silenceable) warning, so
