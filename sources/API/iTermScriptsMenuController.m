@@ -931,6 +931,12 @@ NS_ASSUME_NONNULL_BEGIN
     if (venv) {
         return YES;
     }
+    // A uv script whose interpreter went missing has no resolvable venv, but an explicit
+    // launch (e.g. the status bar component's "Launch Script" recovery button) offers to
+    // rebuild it, so it IS launchable. Keep this in sync with launchScriptWithAbsolutePath.
+    if ([self uvScriptContainerNeedsReprovision:fullPath]) {
+        return YES;
+    }
 
     if ([[fullPath pathExtension] isEqualToString:@"py"]) {
         return YES;
