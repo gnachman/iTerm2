@@ -14,6 +14,7 @@
 #import "iTermAttributedStringBuilder.h"
 #import "iTermAttributedStringProxy.h"
 #import "iTermBoxDrawingBezierCurveFactory.h"
+#import "iTermCharacterSets.h"
 #import "iTermCharacterSource.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
@@ -1015,6 +1016,7 @@ NS_INLINE int iTermGlyphKeyEmitRegular(iTermCachedGlyphKeysBuffer *buf,
                                        unichar regionalIndicatorSuccessor,
                                        const int *bidiLUT,
                                        int bidiLUTLength,
+                                       iTermBidiDisplayInfo * _Nullable bidiInfo,
                                        iTermLineAttribute lineAttribute) {
     iTermCachedGlyphKeysBufferEnsureSize(buf, i);
     iTermMetalGlyphKey *glyphKeys = buf->buffer;
@@ -1022,6 +1024,15 @@ NS_INLINE int iTermGlyphKeyEmitRegular(iTermCachedGlyphKeysBuffer *buf,
     if (characterIsDrawable) {
         glyphKeys[i].payload.regular.code = line[logicalIndex].code;
         glyphKeys[i].payload.regular.isComplex = line[logicalIndex].complexChar;
+        // UBA rule L4: draw a bidi-mirrorable character (e.g. a bracket) as its
+        // counterpart when CoreText resolved this cell right-to-left. Only simple
+        // cells mirror. The CoreGraphics renderer does this in
+        // iTermAttributedStringBuilder.m; the Metal glyph path needs it too, or
+        // parentheses in right-to-left text render reversed («)تهران(» for
+        // «(تهران)»).
+        if (bidiInfo && !line[logicalIndex].complexChar && [bidiInfo mirrorsSourceCell:logicalIndex]) {
+            glyphKeys[i].payload.regular.code = iTermBidiMirroredCounterpart(glyphKeys[i].payload.regular.code);
+        }
     } else {
         glyphKeys[i].payload.regular.code = ' ';
         glyphKeys[i].payload.regular.isComplex = NO;
@@ -1827,6 +1838,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                           regionalIndicatorSuccessor,
                                           bidiLUT,
                                           bidiLUTLength,
+                                          bidiInfo,
                                           lineAttribute);
         } else {
             iTermGlyphKeyEmitPlaceholder(buf, gk, logicalIndex, bidiLUT, bidiLUTLength);
