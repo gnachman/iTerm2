@@ -17751,6 +17751,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return _conductor;
 }
 
+- (iTermKittyDnDBridge *)textViewKittyDnDBridge {
+    return _kittyDnDBridge;
+}
+
 - (void)screenSetPointerShape:(NSString *)pointerShape {
     NSDictionary *cursors = @{
         @"X_cursor": ^{ return [NSCursor operationNotAllowedCursor]; },

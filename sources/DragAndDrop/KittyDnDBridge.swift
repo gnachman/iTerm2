@@ -16,6 +16,7 @@
 //
 
 import Foundation
+import AppKit
 
 /// Supplies session state the bridge needs. Implemented by PTYSession.
 @objc(iTermKittyDnDBridgeDataSource)
@@ -57,5 +58,40 @@ class KittyDnDBridge: NSObject {
     /// Feed one OSC 72 sequence's raw content (everything after "72;").
     @objc func handleInboundSequence(_ content: String) {
         controller.handleInboundSequence(content)
+    }
+
+    // MARK: - Accept-drop (from PTYTextView)
+
+    /// Whether the program has announced it accepts drops. PTYTextView checks
+    /// this to decide whether to route a drag to the program.
+    @objc var isAcceptingDrops: Bool {
+        return controller.isAcceptingDrops
+    }
+
+    @objc(draggingEnteredWithCellX:cellY:pixelX:pixelY:operation:pasteboard:)
+    func draggingEntered(cellX: Int, cellY: Int, pixelX: Int, pixelY: Int,
+                         operation: Int, pasteboard: NSPasteboard) {
+        let mimeTypes = KittyDnDPasteboardDropData(pasteboard: pasteboard).mimeTypes
+        controller.dragEntered(cellX: cellX, cellY: cellY, pixelX: pixelX,
+                               pixelY: pixelY, operations: operation, mimeTypes: mimeTypes)
+    }
+
+    @objc(draggingUpdatedWithCellX:cellY:pixelX:pixelY:operation:)
+    func draggingUpdated(cellX: Int, cellY: Int, pixelX: Int, pixelY: Int,
+                         operation: Int) {
+        controller.dragMoved(cellX: cellX, cellY: cellY, pixelX: pixelX,
+                             pixelY: pixelY, operations: operation)
+    }
+
+    @objc func draggingExited() {
+        controller.dragExited()
+    }
+
+    @objc(performDropWithCellX:cellY:pixelX:pixelY:operation:pasteboard:)
+    func performDrop(cellX: Int, cellY: Int, pixelX: Int, pixelY: Int,
+                     operation: Int, pasteboard: NSPasteboard) {
+        let drop = KittyDnDPasteboardDropData(pasteboard: pasteboard)
+        controller.performDrop(cellX: cellX, cellY: cellY, pixelX: pixelX,
+                               pixelY: pixelY, operations: operation, drop: drop)
     }
 }

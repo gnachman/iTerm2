@@ -30,6 +30,7 @@
 
 @class CRunStorage;
 @class iTermAction;
+@class iTermKittyDnDBridge;
 @class iTermExpect;
 @class iTermFindCursorView;
 @class iTermFindOnPageHelper;
@@ -334,6 +335,9 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)textViewIsOnLocalhost;
 // Show the non-text paste dialog for dropped files, same as Cmd+V with files on the pasteboard.
 - (void)textViewShowPasteOptionsForDroppedFiles:(NSArray<NSString *> *)filenames;
+// The session's Kitty drag-and-drop bridge, or nil if the program has not used
+// the protocol. Used to route drags to a program that has opted in.
+- (iTermKittyDnDBridge *)textViewKittyDnDBridge;
 - (void)textViewPerformNaturalLanguageQuery;
 - (BOOL)textViewCanExplainOutputWithAI;
 - (void)textViewExplainOutputWithAI;

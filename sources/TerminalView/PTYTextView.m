@@ -4788,8 +4788,59 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 //
 // Called when our drop area is entered
 //
+// The session's Kitty drag-and-drop bridge to route this drag to, or nil to use
+// the default (paste/upload) behavior. A program must have announced it accepts
+// drops, and Option must not be held (Option forces the default behavior).
+- (iTermKittyDnDBridge *)kittyDnDBridgeForDrag {
+    if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {
+        return nil;
+    }
+    iTermKittyDnDBridge *bridge = [self.delegate textViewKittyDnDBridge];
+    return bridge.isAcceptingDrops ? bridge : nil;
+}
+
+// Computes the drop location (cell + pixel offset within the cell) and the kitty
+// operation flags (1 copy, 2 move, 3 either) for a drag.
+- (void)kittyDnDParamsForSender:(id<NSDraggingInfo>)sender
+                          coord:(VT100GridCoord *)coordOut
+                          pixel:(NSPoint *)pixelOut
+                      operation:(int *)operationOut {
+    const NSPoint locationInView = [self convertPoint:sender.draggingLocation fromView:nil];
+    const VT100GridCoord coord = [self coordForPoint:locationInView allowRightMarginOverflow:NO];
+    const NSPoint cellOrigin = [self pointForCoord:coord];
+    *coordOut = coord;
+    *pixelOut = NSMakePoint(locationInView.x - cellOrigin.x, locationInView.y - cellOrigin.y);
+    const NSDragOperation mask = [sender draggingSourceOperationMask];
+    int operation = 0;
+    if (mask & NSDragOperationCopy) {
+        operation |= 1;
+    }
+    if (mask & NSDragOperationMove) {
+        operation |= 2;
+    }
+    *operationOut = operation == 0 ? 1 : operation;
+}
+
+- (NSDragOperation)dragOperationFromKittyOperation:(int)operation {
+    return (operation == 2) ? NSDragOperationMove : NSDragOperationCopy;
+}
+
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
     // NOTE: draggingUpdated: calls this method because they need the same implementation.
+    iTermKittyDnDBridge *bridge = [self kittyDnDBridgeForDrag];
+    if (bridge) {
+        VT100GridCoord coord;
+        NSPoint pixel;
+        int operation;
+        [self kittyDnDParamsForSender:sender coord:&coord pixel:&pixel operation:&operation];
+        [bridge draggingEnteredWithCellX:coord.x
+                                   cellY:coord.y
+                                  pixelX:(int)round(pixel.x)
+                                  pixelY:(int)round(pixel.y)
+                               operation:operation
+                              pasteboard:sender.draggingPasteboard];
+        return [self dragOperationFromKittyOperation:operation];
+    }
     int numValid = -1;
     if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {  // Option-drag to copy
         _drawingHelper.showDropTargets = YES;
@@ -4804,6 +4855,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)draggingExited:(nullable id <NSDraggingInfo>)sender {
+    iTermKittyDnDBridge *bridge = [self.delegate textViewKittyDnDBridge];
+    if (bridge.isAcceptingDrops) {
+        [bridge draggingExited];
+    }
     _drawingHelper.showDropTargets = NO;
     [self.delegate textViewDidUpdateDropTargetVisibility];
     [self requestDelegateRedraw];
@@ -4813,6 +4868,19 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 // Called when the dragged object is moved within our drop area
 //
 - (NSDragOperation)draggingUpdated:(id <NSDraggingInfo>)sender {
+    iTermKittyDnDBridge *bridge = [self kittyDnDBridgeForDrag];
+    if (bridge) {
+        VT100GridCoord coord;
+        NSPoint pixel;
+        int operation;
+        [self kittyDnDParamsForSender:sender coord:&coord pixel:&pixel operation:&operation];
+        [bridge draggingUpdatedWithCellX:coord.x
+                                   cellY:coord.y
+                                  pixelX:(int)round(pixel.x)
+                                  pixelY:(int)round(pixel.y)
+                               operation:operation];
+        return [self dragOperationFromKittyOperation:operation];
+    }
     NSPoint windowDropPoint = [sender draggingLocation];
     NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
     int dropLine = dropPoint.y / _lineHeight;
@@ -4828,6 +4896,11 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 //
 - (BOOL)prepareForDragOperation:(id <NSDraggingInfo>)sender {
     BOOL result;
+
+    // A program that accepts Kitty drag-and-drop drops handles this drag.
+    if ([self kittyDnDBridgeForDrag]) {
+        return YES;
+    }
 
     // Check if parent NSTextView knows how to handle this.
     result = [super prepareForDragOperation: sender];
@@ -5084,6 +5157,24 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
     _drawingHelper.showDropTargets = NO;
     [self.delegate textViewDidUpdateDropTargetVisibility];
+
+    // Route the drop to a program that has opted into Kitty drag-and-drop.
+    iTermKittyDnDBridge *kittyBridge = [self kittyDnDBridgeForDrag];
+    if (kittyBridge) {
+        VT100GridCoord coord;
+        NSPoint pixel;
+        int operation;
+        [self kittyDnDParamsForSender:sender coord:&coord pixel:&pixel operation:&operation];
+        RLog(@"Forwarding drop to Kitty DnD program");
+        [kittyBridge performDropWithCellX:coord.x
+                                    cellY:coord.y
+                                   pixelX:(int)round(pixel.x)
+                                   pixelY:(int)round(pixel.y)
+                                operation:operation
+                               pasteboard:sender.draggingPasteboard];
+        return YES;
+    }
+
     NSPasteboard *draggingPasteboard = [sender draggingPasteboard];
     NSDragOperation dragOperation = [sender draggingSourceOperationMask];
     RLog(@"Perform drag operation");
