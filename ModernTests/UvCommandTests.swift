@@ -34,8 +34,11 @@ final class UvCommandTests: XCTestCase {
     }
 
     func testPythonListArgsRequestJSONAndAllVersions() {
+        // --only-downloads keeps `uv python list` from probing (and executing) every
+        // interpreter on the search path, which would exec an Intel Homebrew python under
+        // Rosetta on affected machines. It must remain present.
         XCTAssertEqual(iTermUvCommand.pythonListArgs(),
-                       ["python", "list", "--all-versions", "--output-format", "json"])
+                       ["python", "list", "--all-versions", "--only-downloads", "--output-format", "json"])
     }
 
     func testPipPassthroughShow() {

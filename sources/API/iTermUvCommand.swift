@@ -49,10 +49,17 @@ enum iTermUvCommand {
         return arguments + packages
     }
 
-    // List interpreters uv knows about (installed and downloadable) as JSON, used
-    // to discover which minor versions python-build-standalone offers for remap.
+    // List the python-build-standalone versions uv can DOWNLOAD as JSON, used to discover
+    // which minors are available for remap. --only-downloads is essential: without it, even
+    // under UV_PYTHON_PREFERENCE=only-managed, `uv python list` still discovers every
+    // interpreter on the search path and EXECUTES each one to read its metadata. On a
+    // machine with an Intel Homebrew python on PATH that execs an Intel binary under Rosetta
+    // during every provision/migration (macOS 26 flags it with the intel-only-binary
+    // warning, and it fails outright on a Rosetta-less macOS). The download metadata is
+    // embedded in the uv binary, so --only-downloads stays offline-safe and returns the same
+    // minors in the same JSON schema (verified against uv 0.12.0), while probing nothing.
     static func pythonListArgs() -> [String] {
-        return ["python", "list", "--all-versions", "--output-format", "json"]
+        return ["python", "list", "--all-versions", "--only-downloads", "--output-format", "json"]
     }
 
     // Run a pip subcommand (e.g. ["show", "requests"], ["install", "requests"],
