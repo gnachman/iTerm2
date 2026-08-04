@@ -309,7 +309,9 @@ final class KittyDnDAcceptTests: XCTestCase {
         try Data("payload".utf8).write(to: tmp)
         defer { try? FileManager.default.removeItem(at: tmp) }
 
-        c.handleInboundSequence("t=a;text/uri-list \(peerID)")
+        // No machine id sent: a conductor being present is enough to materialize
+        // (regression test for the bug where Tier 2 required the machine id too).
+        c.handleInboundSequence("t=a;text/uri-list")
         c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
                       drop: FakeDropData(mimeTypes: ["text/uri-list"], fileURLs: [tmp]))
 

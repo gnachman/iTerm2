@@ -192,9 +192,11 @@ final class KittyDnDController {
     }
 
     private func answerURIList(index: Int, drop: KittyDnDDropData) {
-        if peerIsRemote && endpoint.canMaterializeFiles {
-            // Tier 2: materialize each file on the program's host so the URIs it
-            // receives are real local paths there. No cross-machine flag.
+        if endpoint.canMaterializeFiles {
+            // Tier 2: a conductor is present, so the program is on the remote
+            // host (ground truth, independent of whether it sent a machine id).
+            // Materialize each file on the program's host so the URIs it receives
+            // are real local paths there. No cross-machine flag.
             //
             // On partial failure (a later file fails after earlier ones were
             // written) we report EIO and leave any already-written files in the
