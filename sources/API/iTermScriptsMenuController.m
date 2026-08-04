@@ -791,12 +791,21 @@ NS_ASSUME_NONNULL_BEGIN
 
     // A uv script whose interpreter is gone (the shared uv runtime was deleted to reclaim
     // disk, or the home dir was renamed): the marker + setup.cfg are intact but
-    // .venv/bin/python no longer resolves, so environmentForScript returned nil. Rather than
-    // call the script malformed with no way out, offer to re-provision the venv, which is
-    // cheap (setup.cfg is authoritative). The legacy iterm2env was a self-contained clone,
-    // so this state is a uv-specific regression.
-    if (explicitUserAction && [self uvScriptContainerNeedsReprovision:fullPath]) {
-        [self offerToReprovisionUvScript:fullPath arguments:arguments explicitUserAction:explicitUserAction];
+    // .venv/bin/python no longer resolves, so environmentForScript returned nil. The
+    // script is NOT malformed; its runtime went missing, and setup.cfg can rebuild it.
+    if ([self uvScriptContainerNeedsReprovision:fullPath]) {
+        if (explicitUserAction) {
+            // An explicit launch offers to rebuild, then runs it.
+            [self offerToReprovisionUvScript:fullPath arguments:arguments explicitUserAction:explicitUserAction];
+        } else {
+            // AutoLaunch / non-explicit at startup: do not pop a consent dialog + progress
+            // window (there could be several such scripts). Log the real cause and the
+            // recovery gesture to the Script Console instead of the generic malformed modal.
+            NSString *line = [NSString stringWithFormat:@"The Python environment for “%@” is missing (the shared runtime may have been deleted). Launch it from the Scripts menu to rebuild it.\n",
+                              fullPath.lastPathComponent];
+            [[iTermScriptHistoryEntry globalEntry] addOutput:line completion:^{}];
+            RLog(@"uv script %@ needs reprovision; not offering at non-explicit launch", fullPath);
+        }
         return;
     }
 
