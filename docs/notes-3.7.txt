@@ -2546,3 +2546,7 @@ Bug Fixes:
   next launch instead of being lost.
 - The Scripts menu no longer lists files or
   folders whose names begin with a dot.
+- Migrating a script to the new Python runtime
+  no longer runs Intel Python interpreters
+  found on your PATH, which could trigger a
+  macOS “Intel-only binary” warning.
