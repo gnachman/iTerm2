@@ -133,4 +133,123 @@ final class BidiWordSelectionTests: XCTestCase {
     func testClickingWordSelectsThatWord_noPad() {
         checkWordSelection("طرف میره پیش دکتر", pad: 0)
     }
+
+    // The fundamental invariant, tested on the user's ACTUAL line (with Persian
+    // commas, a colon, and guillemets — mixed neutrals that reorder): clicking a
+    // cell must select a word range that CONTAINS that cell. The reported bug is
+    // clicking the first word and getting a word from the middle/end, which
+    // violates this.
+    private func assertEveryClickLandsInItsWord(_ content: String, pad: Int,
+                                                 file: StaticString = #file, line: UInt = #line) {
+        let s = content + String(repeating: " ", count: pad)
+        let sca = screenCharArrayWithDefaultStyle(s, eol: EOL_HARD)
+        guard let bidi = BidiDisplayInfoObjc(sca) else {
+            return XCTFail("no bidi info", file: file, line: line)
+        }
+        let ds = OneLineDataSource(sca, width: Int32(sca.length))
+        let ext = iTermTextExtractor(dataSource: ds)
+        let units = Array(content.utf16)
+        for logical in 0..<units.count where units[logical] != 0x20 {
+            let visualCol = Int(bidi.visualForLogical(Int32(logical)))
+            let clicked = Int(bidi.logicalForVisual(Int32(visualCol)))
+            let range = ext.rangeForWord(at: VT100GridCoord(x: Int32(clicked), y: 0),
+                                         maximumLength: 1000)
+            let lo = Int(range.coordRange.start.x), hi = Int(range.coordRange.end.x)
+            XCTAssertTrue(clicked >= lo && clicked < hi,
+                          "click on logical \(clicked) (visual \(visualCol)) selected [\(lo),\(hi)) which does NOT contain it — wrong word",
+                          file: file, line: line)
+        }
+    }
+
+    func testUsersActualJokeLine() {
+        assertEveryClickLandsInItsWord("یارو میره دکتر، میگه: «آقای دکتر، هر وقت قهوه میخورم چشم راستم تیر میکشه»", pad: 10)
+    }
+
+    func testGuillemetSentence() {
+        assertEveryClickLandsInItsWord("دکتر می‌گه: «قاشق رو از فنجون در بیار بعد بخور.»", pad: 12)
+    }
+
+    // The user's ACTUAL config: IsolateLatinRunsInRTL = ON. Pure Persian has no
+    // Latin runs, so in principle it should behave like islands-off — but the
+    // isolate path builds a different string/LUT, so test it directly.
+    private func withIslands(_ on: Bool, _ body: () -> Void) {
+        iTermUserDefaults.userDefaults().set(on, forKey: "IsolateLatinRunsInRTL")
+        iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+        body()
+        iTermUserDefaults.userDefaults().set(false, forKey: "IsolateLatinRunsInRTL")
+        iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+    }
+
+    func testUsersActualJokeLine_islandsOn() {
+        withIslands(true) {
+            assertEveryClickLandsInItsWord("یارو میره دکتر، میگه: «آقای دکتر، هر وقت قهوه میخورم چشم راستم تیر میکشه»", pad: 20)
+        }
+    }
+
+    func testGuillemetSentence_islandsOn() {
+        withIslands(true) {
+            assertEveryClickLandsInItsWord("دکتر می‌گه: «قاشق رو از فنجون در بیار بعد بخور.»", pad: 20)
+        }
+    }
+
+    func testSimpleWords_islandsOn() {
+        withIslands(true) {
+            assertEveryClickLandsInItsWord("طرف میره پیش دکتر", pad: 20)
+        }
+    }
+
+    // THE REAL APP PATH: the line bidi is BidiDisplayInfoObjc(sca, paddedTo:
+    // width) with rightJustifyRTLLines ON (its default) — a right-justify shift
+    // (Self.pad) the mouse handler's logicalForVisual reads. All the tests above
+    // used the UNPADDED base bidi, so they missed this. Reproduce the reported
+    // bug: on a right-justified full-width line, clicking the first word selects
+    // a word from the middle/end.
+    private func assertPaddedRightJustifiedSelection(_ content: String, width: Int32,
+                                                     file: StaticString = #file, line: UInt = #line) {
+        iTermUserDefaults.userDefaults().set(true, forKey: "RightJustifyRTLLines")
+        iTermUserDefaults.userDefaults().set(true, forKey: "IsolateLatinRunsInRTL")
+        iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+        defer {
+            iTermUserDefaults.userDefaults().removeObject(forKey: "RightJustifyRTLLines")
+            iTermUserDefaults.userDefaults().set(false, forKey: "IsolateLatinRunsInRTL")
+            iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+        }
+        let contentCells = content.utf16.count
+        let padCount = max(0, Int(width) - contentCells)
+        let s = content + String(repeating: " ", count: padCount)
+        let sca = screenCharArrayWithDefaultStyle(s, eol: EOL_HARD)
+        guard let bidi = BidiDisplayInfoObjc(sca, paddedTo: width) else {
+            return XCTFail("no padded bidi", file: file, line: line)
+        }
+        // The LUT (now full width) must round-trip.
+        let n = Int(bidi.numberOfCells)
+        for logical in 0..<n {
+            let v = Int(bidi.visualForLogical(Int32(logical)))
+            let back = Int(bidi.logicalForVisual(Int32(v)))
+            XCTAssertEqual(back, logical,
+                           "padded LUT not a bijection: logical \(logical) -> visual \(v) -> \(back)",
+                           file: file, line: line)
+        }
+        // Click each content word (through the padded visual→logical the mouse uses).
+        let ds = OneLineDataSource(sca, width: Int32(sca.length))
+        let ext = iTermTextExtractor(dataSource: ds)
+        let units = Array(content.utf16)
+        for logical in 0..<contentCells where units[logical] != 0x20 {
+            let v = Int(bidi.visualForLogical(Int32(logical)))
+            let clicked = Int(bidi.logicalForVisual(Int32(v)))
+            let range = ext.rangeForWord(at: VT100GridCoord(x: Int32(clicked), y: 0), maximumLength: 1000)
+            let lo = Int(range.coordRange.start.x), hi = Int(range.coordRange.end.x)
+            XCTAssertTrue(clicked >= lo && clicked < hi,
+                          "PADDED: click logical \(logical) drew at visual \(v), mouse read it as logical \(clicked), selected [\(lo),\(hi)) — wrong word",
+                          file: file, line: line)
+        }
+    }
+
+    func testPaddedRightJustified_simple() {
+        assertPaddedRightJustifiedSelection("طرف میره پیش دکتر", width: 80)
+    }
+
+    func testPaddedRightJustified_usersLine() {
+        assertPaddedRightJustifiedSelection("یه بابایی میره دکتر آقای دکتر هر جای بدنمو دست میزنم", width: 100)
+    }
 }
