@@ -8,10 +8,9 @@ hover and drop events, requests the dropped data, and prints (or saves) it.
 
     python3 tests/kitty-dnd/drop_target.py [--machine-id] [--outdir DIR] [-v]
 
-  --machine-id  Also send our hashed machine id, so a same-machine drop is
-                treated as local and a drop from another machine (plain ssh) is
-                treated as remote (X=1) and transferred in-band. Required to test
-                the cross-machine path over plain ssh.
+  We send our hashed machine id by default (works on macOS and Linux), so a drop
+  over plain ssh is detected as cross-machine (X=1) and transferred in-band,
+  while a same-machine drop stays local. Pass --no-machine-id to suppress it.
   --outdir DIR  Directory to save received/cross-machine files into
                 (default: a temp dir).
   -v            Verbose: also log every hover (t=m) event.
@@ -59,12 +58,12 @@ class DropTarget:
 
     def start(self):
         payload = ACCEPTED
-        if self.args.machine_id:
-            mid = machine_id()
-            if mid:
-                payload = ACCEPTED + " " + mid
+        mid = None if self.args.no_machine_id else machine_id()
+        if mid:
+            payload = ACCEPTED + " " + mid
         os.write(1, build({"t": "a", "x": "1"}, text_payload=payload).encode())
         log("[drop_target] announced accept: %s" % ACCEPTED)
+        log("[drop_target] machine id: %s" % (mid or "(none)"))
         log("[drop_target] saving cross-machine files under: %s" % self.outdir)
         log("[drop_target] drag something onto the window. Ctrl-C to quit.")
 
@@ -224,7 +223,11 @@ class DropTarget:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--machine-id", action="store_true")
+    # The machine id is now sent by default so a drop over plain ssh is detected
+    # as cross-machine. --machine-id is kept as a no-op for compatibility.
+    ap.add_argument("--machine-id", action="store_true", help="(default; kept for compatibility)")
+    ap.add_argument("--no-machine-id", action="store_true",
+                    help="do not send our machine id (treat drops as local)")
     ap.add_argument("--outdir", default=None)
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args()

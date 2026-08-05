@@ -30,7 +30,11 @@ Run each inside a debug-build iTerm2 session (`make run`).
 
 ## Notes
 
-- Pass `--machine-id` to send the client's hashed machine id. Run locally it
-  matches iTerm2's, so the drop is treated as local (Tier 1). To exercise the
-  remote tiers, run the client over SSH.
+- The clients send their hashed machine id by default (derived from the
+  platform: `IOPlatformUUID` on macOS, `/etc/machine-id` on Linux). Run on the
+  same host as iTerm2 it matches, so the drop is treated as local; run over
+  plain `ssh` it differs, so the drop is cross-machine (`X=1`) and files are
+  transferred in-band into `--outdir`. Pass `--no-machine-id` to suppress it.
+  Over an it2ssh (SSH-integration) session the conductor makes the drop remote
+  automatically, no machine id needed.
 - All programs put the tty in raw mode and restore it on exit; quit with Ctrl-C.

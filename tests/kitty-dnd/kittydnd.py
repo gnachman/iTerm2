@@ -83,16 +83,38 @@ class OSC72Reader:
         return events
 
 
-def machine_id():
-    """Our hashed machine id, matching iTerm2's derivation, or None."""
+def _base_machine_id():
+    """The platform machine identity: IOPlatformUUID on macOS, /etc/machine-id on
+    Linux. The client is usually on a different host than the terminal (e.g. over
+    ssh), so this must work on whatever OS the client runs on, not just macOS."""
     try:
         out = subprocess.check_output(
-            ["ioreg", "-rd1", "-c", "IOPlatformExpertDevice"]).decode()
+            ["ioreg", "-rd1", "-c", "IOPlatformExpertDevice"],
+            stderr=subprocess.DEVNULL).decode()
+        for line in out.splitlines():
+            if "IOPlatformUUID" in line and '"' in line:
+                return line.split('"')[-2]
     except Exception:
-        return None
-    for line in out.splitlines():
-        if "IOPlatformUUID" in line and '"' in line:
-            uuid = line.split('"')[-2]
-            digest = hmac.new(_HMAC_KEY, uuid.encode(), hashlib.sha256).hexdigest()
-            return "1:" + digest
+        pass
+    for path in ("/etc/machine-id", "/var/lib/dbus/machine-id"):
+        try:
+            with open(path) as f:
+                value = f.read().strip()
+            if value:
+                return value
+        except OSError:
+            pass
     return None
+
+
+def machine_id():
+    """Our hashed machine id ("1:<hex>"), or None if it can't be determined.
+
+    The hash is HMAC-SHA256 of the platform machine id with the protocol key.
+    Two hosts hash their own (different) base ids, so the terminal sees a
+    mismatch and treats the drop as cross-machine; on the same host they match."""
+    base = _base_machine_id()
+    if base is None:
+        return None
+    digest = hmac.new(_HMAC_KEY, base.encode(), hashlib.sha256).hexdigest()
+    return "1:" + digest
