@@ -86,6 +86,30 @@ final class KittyDnDChunkerTests: XCTestCase {
         XCTAssertNil(completed?.metadata["m"])
     }
 
+    // A query (different t) interleaved into a chunked transfer is surfaced as
+    // its own message, and the transfer still completes correctly afterward. The
+    // spec permits t=q during a chunked transfer.
+    func testInterleavedQueryDuringChunkedTransfer() {
+        let payload = Data((0..<10_000).map { UInt8($0 & 0xff) })
+        let msgs = KittyDnDChunker.messages(baseMetadata: ["t": "r", "x": "1"], data: payload)
+        XCTAssertGreaterThan(msgs.count, 2)
+
+        let reassembler = KittyDnDChunkReassembler()
+        // First chunk starts the sequence.
+        XCTAssertNil(reassembler.accept(msgs[0].serializedContent()))
+        // A query arrives mid-transfer: it must be returned, not merged.
+        let query = reassembler.accept("t=q:i=5")
+        XCTAssertEqual(query?.type, "q")
+        XCTAssertEqual(query?.metadata["i"], "5")
+        // The rest of the chunks complete the original transfer intact.
+        var completed: KittyDnDMessage?
+        for msg in msgs.dropFirst() {
+            if let done = reassembler.accept(msg.serializedContent()) { completed = done }
+        }
+        XCTAssertEqual(completed?.type, "r")
+        XCTAssertEqual(completed?.dataPayload, payload)
+    }
+
     func testReassemblerPassesThroughSingleMessage() {
         let reassembler = KittyDnDChunkReassembler()
         let result = reassembler.accept("t=M:x=1:y=2;YWJj")

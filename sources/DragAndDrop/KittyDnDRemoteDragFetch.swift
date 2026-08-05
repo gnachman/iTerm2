@@ -57,6 +57,9 @@ final class KittyDnDRemoteDragFetch {
     private var entryCount = 0
     private var totalBytes = 0
     private var finished = false
+    // Bumped on each unit of progress; the idle timeout only fires if it is
+    // unchanged after `timeout` seconds.
+    private var activityToken = 0
     // Addressing keys of entries already accounted for, so a duplicate or
     // contradictory push (a second data push, or a data push plus a t=R error for
     // the same address) cannot decrement the outstanding count twice and finish
@@ -94,10 +97,18 @@ final class KittyDnDRemoteDragFetch {
                 .appendingPathComponent(name)
             send(KittyDnDMessage(metadata: ["t": "k", "x": String(idx)]))
         }
-        // A program that stalls (never pushes a declared child) must not hang the
-        // drag forever.
+        armIdleTimeout()
+    }
+
+    /// (Re)arm the idle timeout. It aborts the fetch only if `timeout` seconds
+    /// pass with NO further progress, so a steadily-progressing large transfer is
+    /// not killed by an absolute deadline while a genuinely stalled peer still is.
+    private func armIdleTimeout() {
+        activityToken += 1
+        let token = activityToken
         DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in
-            self?.finish(nil)
+            guard let self, !self.finished, token == self.activityToken else { return }
+            self.finish(nil)
         }
     }
 
@@ -125,6 +136,7 @@ final class KittyDnDRemoteDragFetch {
         }
         // Ignore a duplicate push for a slot we already accounted for.
         guard seenSlots.insert(slot).inserted else { return }
+        armIdleTimeout()   // progress: reset the stall deadline
         let topLevelIndex = topLevelIndex(of: message)
         let typeFlag = message.metadata["X"].flatMap(Int.init) ?? 0
 
@@ -184,6 +196,7 @@ final class KittyDnDRemoteDragFetch {
     func receiveError(_ message: KittyDnDMessage) {
         guard !finished, resolveDest(message) != nil, let slot = slotKey(message) else { return }
         guard seenSlots.insert(slot).inserted else { return }
+        armIdleTimeout()
         entryFailed(topLevelIndex: topLevelIndex(of: message))
     }
 

@@ -81,9 +81,20 @@ enum KittyDnDChunker {
 /// payload surfaces as a nil dataPayload at the point of use rather than being
 /// silently dropped here.
 final class KittyDnDChunkReassembler {
+    /// Cap on the reassembled size of a single logical message. Generous enough
+    /// for uri-lists, thumbnails, and realistically draggable files, but finite so
+    /// a peer that streams m=1 chunks forever (never terminating) cannot grow
+    /// memory without bound. On breach the sequence is abandoned and its remaining
+    /// chunks are drained.
+    static let maxAccumulatedBytes = 512 * 1024 * 1024
+
     private var accumulatedPayload = ""
+    private var accumulatedByteCount = 0
     private var pendingMetadata: [String: String]?
     private var sawPayloadSection = false
+    // Draining the tail of an over-large sequence (discarding chunks until it
+    // terminates), so its remainder is not misread as a new message.
+    private var draining = false
 
     /// Returns the completed message, or nil if more chunks are expected.
     func accept(_ oscContent: String) -> KittyDnDMessage? {
@@ -101,12 +112,49 @@ final class KittyDnDChunkReassembler {
         }
         let metadata = KittyDnDMetadata.parse(metadataString)
 
+        // A message that arrives mid-transfer whose `t=` DIFFERS from the pending
+        // sequence's is a separate interleaved message, not a continuation chunk
+        // (a continuation either omits `t` or repeats the sequence's own `t`). The
+        // spec permits a query (t=q|Q) during a chunked transfer. Return it as its
+        // own complete message without disturbing the pending sequence, so the
+        // query is answered and the transfer still completes.
+        if let pending = pendingMetadata, let t = metadata["t"], t != pending["t"] {
+            let payload: String? = hasPayloadSection ? payloadString : nil
+            return KittyDnDMessage(metadata: metadata, rawPayload: payload)
+        }
+
+        // Discard the remaining chunks of an over-large abandoned sequence until
+        // it terminates (pendingMetadata is kept during the drain purely so the
+        // interleave check above can still distinguish a query from a chunk).
+        if draining {
+            if metadata["m"] != "1" {
+                reset()
+            }
+            return nil
+        }
+
         // The metadata of the whole logical message comes from the first chunk.
         if pendingMetadata == nil {
             pendingMetadata = metadata
         }
         accumulatedPayload += payloadString
+        accumulatedByteCount += payloadString.utf8.count
         sawPayloadSection = sawPayloadSection || hasPayloadSection
+
+        if accumulatedByteCount > Self.maxAccumulatedBytes {
+            // Abandon this sequence and free its buffer now. Keep the sequence
+            // identity and drain the rest unless this chunk already terminated it.
+            let terminated = metadata["m"] != "1"
+            accumulatedPayload = ""
+            accumulatedByteCount = 0
+            sawPayloadSection = false
+            if terminated {
+                reset()
+            } else {
+                draining = true
+            }
+            return nil
+        }
 
         if metadata["m"] == "1" {
             // More chunks to come.
@@ -122,7 +170,9 @@ final class KittyDnDChunkReassembler {
 
     private func reset() {
         accumulatedPayload = ""
+        accumulatedByteCount = 0
         pendingMetadata = nil
         sawPayloadSection = false
+        draining = false
     }
 }

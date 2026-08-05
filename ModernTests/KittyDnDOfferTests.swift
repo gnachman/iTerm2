@@ -163,6 +163,22 @@ final class KittyDnDOfferTests: XCTestCase {
         XCTAssertEqual(image?.data, png)
     }
 
+    // A pre-send at an index outside the announced offer's MIME list is ignored,
+    // so a program cannot store data under arbitrary indices.
+    func testPreSendOutOfRangeIndexIsIgnored() {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = makeController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:o=1;text/plain")  // one MIME (index 0)
+        presend(c, index: 0, data: Data("ok".utf8))
+        presend(c, index: 5, data: Data("nope".utf8))  // out of range
+        c.handleInboundSequence("t=P:x=-1")
+        XCTAssertEqual(host.begun.first?.data[0], Data("ok".utf8))
+        XCTAssertNil(host.begun.first?.data[5])
+    }
+
     // MARK: - Image conformance (#11)
 
     private func offerImage(_ c: KittyDnDController, index: Int, format: Int,

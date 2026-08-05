@@ -93,6 +93,10 @@ final class KittyDnDController {
     /// Cap on a single drag image's byte size (raw or encoded), to bound the work
     /// of converting it for display. Beyond this the drag is refused with EFBIG.
     private static let maxImageBytes = 64 * 1024 * 1024
+    /// Bounds on pre-sent offer data, so an offering program cannot grow memory
+    /// with arbitrary indices or unbounded payloads.
+    private static let maxOfferImages = 16
+    private static let maxOfferBytes = 256 * 1024 * 1024
 
     /// The primary drag thumbnail (index -1, else the first provided).
     private var primaryOfferImage: KittyDnDDragImage? {
@@ -172,7 +176,13 @@ final class KittyDnDController {
             multiplexerID = nil
         }
         isOfferingDrags = false
-        cleanupRemoteDragTempDir()
+        // Do NOT delete the remote drag-out temp files while a native drag is
+        // still live (a prompt can appear mid-drag when the offering program
+        // exits): they back the live drag's uri-list, and dragFinished's delayed
+        // cleanup will dispose of them. Only clean up when no drag is in flight.
+        if !selfDragInProgress {
+            cleanupRemoteDragTempDir()
+        }
         resetOfferInProgress()   // clears offer fields and drains pending requests
         reassembler = KittyDnDChunkReassembler()
     }
@@ -551,13 +561,31 @@ final class KittyDnDController {
         let data = message.dataPayload ?? Data()
         if index < 0 {
             // Negative index: a drag thumbnail image (-1 first, -2 second, ...).
+            // Bound the number of thumbnails and the cumulative offer size so a
+            // program cannot store unbounded data with arbitrary indices.
+            guard index >= -Self.maxOfferImages else { return }
+            let existing = offerImages[index]?.data.count ?? 0
+            guard withinOfferBudget(replacing: existing, adding: data.count) else { return }
             offerImages[index] = KittyDnDDragImage(format: message.intValue("y") ?? 0,
                                                    width: message.intValue("X") ?? 0,
                                                    height: message.intValue("Y") ?? 0,
                                                    data: data)
         } else {
+            // Only accept indices within the announced offer's MIME list, and keep
+            // the cumulative pre-sent size under budget.
+            guard index < offerMimeTypes.count else { return }
+            let existing = offerData[index]?.count ?? 0
+            guard withinOfferBudget(replacing: existing, adding: data.count) else { return }
             offerData[index] = data
         }
+    }
+
+    /// Whether storing `adding` bytes (after removing `replacing` bytes for an
+    /// index being overwritten) keeps the total pre-sent offer data under budget.
+    private func withinOfferBudget(replacing: Int, adding: Int) -> Bool {
+        let current = offerData.values.reduce(0) { $0 + $1.count }
+            + offerImages.values.reduce(0) { $0 + $1.data.count }
+        return current - replacing + adding <= Self.maxOfferBytes
     }
 
     /// Validate the pre-sent drag images against the spec: raw RGB/RGBA data must
@@ -608,6 +636,11 @@ final class KittyDnDController {
         // copies in a temp directory, and drag those local copies. Otherwise the
         // offered URIs are local and we drag them directly.
         if isRemoteOffer, let uriListIndex = offerMimeTypes.firstIndex(of: "text/uri-list") {
+            // Mark the start in progress synchronously: handleInboundSequence runs
+            // on the main actor, so a duplicate t=P in the same read batch would
+            // otherwise pass the guard above (remoteDragFetch is only assigned
+            // inside the async task) and spawn a second concurrent fetch.
+            startingDrag = true
             Task { @MainActor in
                 await self.beginRemoteFileDrag(uriListIndex: uriListIndex)
             }
@@ -671,6 +704,9 @@ final class KittyDnDController {
     /// uri-list entries; the program pushes directory children unsolicited, which
     /// KittyDnDRemoteDragFetch assembles.
     private func beginRemoteFileDrag(uriListIndex: Int) async {
+        // The start is no longer pending once we return (we either begin the drag,
+        // which sets selfDragInProgress, or bail); clear the idempotency guard.
+        defer { startingDrag = false }
         // Discard any temp dir from a prior build, and take a generation so that a
         // reset / new offer arriving while we await can abort this build instead
         // of stomping the newer one.
