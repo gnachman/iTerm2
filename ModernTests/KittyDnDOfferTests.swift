@@ -192,6 +192,43 @@ final class KittyDnDOfferTests: XCTestCase {
         XCTAssertNotEqual(recorder.last?.textPayload, "OK")
     }
 
+    // MARK: - Lazy (deferred) data on drag start (#7)
+
+    // The program pre-sends only some MIME data and defers the rest; the terminal
+    // must pull the deferred data via t=e:x=5 before starting the drag.
+    func testDragStartPullsDeferredData() async throws {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = makeController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:o=1;text/plain application/json")
+        presend(c, index: 0, data: Data("hello".utf8))   // index 1 deferred
+
+        let started = expectation(description: "drag started")
+        started.assertForOverFulfill = false
+        recorder.onReport = { msg in
+            if msg.type == "e", msg.metadata["x"] == "5", let y = msg.metadata["y"] {
+                // The program answers the lazy data request for the deferred index.
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "e", "y": y],
+                                    dataPayload: Data("deferred".utf8)).serializedContent())
+            } else if msg.type == "E" {
+                started.fulfill()
+            }
+        }
+        c.handleInboundSequence("t=P:x=-1")
+        await fulfillment(of: [started], timeout: 5)
+
+        XCTAssertEqual(host.begun.count, 1)
+        XCTAssertEqual(host.begun.first?.data[0], Data("hello".utf8))
+        XCTAssertEqual(host.begun.first?.data[1], Data("deferred".utf8))
+        // The terminal did request the deferred index via t=e:x=5.
+        XCTAssertTrue(recorder.messages.contains {
+            $0.type == "e" && $0.metadata["x"] == "5" && $0.metadata["y"] == "1"
+        })
+    }
+
     // MARK: - Drag lifecycle events (host -> controller -> t=e)
 
     private func startedController(host: FakeDragHost, recorder: Recorder) -> KittyDnDController {

@@ -556,6 +556,36 @@ final class KittyDnDController {
             }
             return
         }
+        // The program may pre-send some MIME data (t=p) and defer the rest,
+        // expecting the terminal to pull it on demand. Pull anything not
+        // pre-sent via t=e:x=5 before starting the drag. The common case (all
+        // data pre-sent) stays synchronous.
+        let missing = offerMimeTypes.indices.filter { offerData[$0] == nil }
+        guard missing.isEmpty else {
+            Task { @MainActor in await self.beginLocalDragFetchingMissing(missing) }
+            return
+        }
+        beginDrag(with: KittyDnDDragOffer(mimeTypes: offerMimeTypes,
+                                          data: offerData,
+                                          operations: offerOperations,
+                                          image: offerImage))
+    }
+
+    /// Request each offered MIME the program did not pre-send (the lazy delivery
+    /// path), then start the drag once the data is in hand.
+    private func beginLocalDragFetchingMissing(_ missing: [Int]) async {
+        let generation = offerGeneration
+        for index in missing {
+            let data: Data? = await withCheckedContinuation { continuation in
+                requestDragData(mimeIndex: index) { continuation.resume(returning: $0) }
+            }
+            // A reset / new offer while awaiting supersedes this drag.
+            guard generation == offerGeneration else { return }
+            if let data {
+                offerData[index] = data
+            }
+        }
+        guard generation == offerGeneration else { return }
         beginDrag(with: KittyDnDDragOffer(mimeTypes: offerMimeTypes,
                                           data: offerData,
                                           operations: offerOperations,
