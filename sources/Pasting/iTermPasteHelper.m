@@ -255,14 +255,16 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
          componentsJoinedByString:@""];
     }
 
-    if ([iTermAdvancedSettingsModel stripZeroWidthFormatCharactersOnPaste]) {
+    if ([iTermPreferences bidiEnabled] &&
+        [iTermAdvancedSettingsModel stripZeroWidthFormatCharactersOnPaste]) {
         // Line editors (zsh/readline, some TUIs) render zero-width bidi/format
         // characters as a visible <200c> because macOS classifies them as
         // control characters, so pasting Persian at a prompt fills up with
         // <200c>. When enabled, strip them on paste so the command line stays
-        // clean. OFF by default: these characters are meaningful (the Persian
-        // half-space ZWNJ, the LTR/RTL marks), so removing them changes the
-        // text — it is the user's explicit choice.
+        // clean. Gated on the right-to-left support preference so it is fully
+        // inert unless bidi is on, and OFF by default even then: these
+        // characters are meaningful (the Persian half-space ZWNJ, the LTR/RTL
+        // marks), so removing them changes the text — the user's explicit choice.
         theString =
         [[theString componentsSeparatedByCharactersInSet:[iTermPasteHelper zeroWidthFormatCharacterSet]]
          componentsJoinedByString:@""];
