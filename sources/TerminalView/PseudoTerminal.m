@@ -5021,7 +5021,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 
     iTermFrameCanonicalizer *canonicalizer =
-    [[iTermFrameCanonicalizer alloc] initPreservingSize:preserveSize
+    [[[iTermFrameCanonicalizer alloc] initPreservingSize:preserveSize
                                              windowType:windowType
                                      screenVisibleFrame:screenVisibleFrame
                    screenVisibleFrameIgnoringHiddenDock:screenVisibleFrameIgnoringHiddenDock
@@ -5033,7 +5033,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                                                    decorationSize.height)
                                        windowSizeHelper:_windowSizeHelper
                                                  screen:screen
-                                                 window:self.window];
+                                                 window:self.window] autorelease];
     return [canonicalizer canonicalized];
 }
 
