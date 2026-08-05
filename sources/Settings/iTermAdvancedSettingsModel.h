@@ -598,6 +598,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)viewManPageCommand;
 + (BOOL)wrapFocus;
 + (BOOL)zeroWidthSpaceAdvancesCursor;
++ (BOOL)stripZeroWidthFormatCharactersOnPaste;
 + (BOOL)zippyTextDrawing;
 
 
