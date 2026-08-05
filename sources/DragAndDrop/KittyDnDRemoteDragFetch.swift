@@ -57,6 +57,11 @@ final class KittyDnDRemoteDragFetch {
     private var entryCount = 0
     private var totalBytes = 0
     private var finished = false
+    // Addressing keys of entries already accounted for, so a duplicate or
+    // contradictory push (a second data push, or a data push plus a t=R error for
+    // the same address) cannot decrement the outstanding count twice and finish
+    // the drag with a truncated tree.
+    private var seenSlots: Set<String> = []
 
     init(tempDir: URL,
          topLevelNames: [String],
@@ -105,13 +110,23 @@ final class KittyDnDRemoteDragFetch {
             finish(nil)
             return
         }
-        guard let dest = resolveDest(message) else {
+        // Charge every payload (directory listings included) against the byte
+        // budget so a giant listing cannot exhaust memory.
+        let payload = message.dataPayload ?? Data()
+        totalBytes += payload.count
+        if totalBytes > limits.maxBytes {
+            finish(nil)
+            return
+        }
+        guard let dest = resolveDest(message), let slot = slotKey(message) else {
             // An entry we did not expect (unknown handle / out-of-range child).
             // Ignore it without touching the outstanding count.
             return
         }
+        // Ignore a duplicate push for a slot we already accounted for.
+        guard seenSlots.insert(slot).inserted else { return }
+        let topLevelIndex = topLevelIndex(of: message)
         let typeFlag = message.metadata["X"].flatMap(Int.init) ?? 0
-        let payload = message.dataPayload ?? Data()
 
         switch typeFlag {
         case 1:
@@ -124,6 +139,12 @@ final class KittyDnDRemoteDragFetch {
             // the directory. The children arrive later via Y=handle:y=num.
             let names = payload.split(separator: 0)
                 .map { KittyDnDController.sanitizeComponent(String(decoding: $0, as: UTF8.self)) }
+            // Bound the declared child count so a program cannot inflate the
+            // outstanding set without bound.
+            if pending + names.count > limits.maxEntries {
+                finish(nil)
+                return
+            }
             handleDir[typeFlag] = dest
             handleChildNames[typeFlag] = names
             recordMaterialized(dest, for: message)
@@ -136,16 +157,11 @@ final class KittyDnDRemoteDragFetch {
                 if ok {
                     self.completeOne()   // the directory itself is now materialized
                 } else {
-                    self.finish(nil)
+                    self.entryFailed(topLevelIndex: topLevelIndex)
                 }
             }
         default:
             // Regular file.
-            totalBytes += payload.count
-            if totalBytes > limits.maxBytes {
-                finish(nil)
-                return
-            }
             recordMaterialized(dest, for: message)
             Task { @MainActor in
                 let ok = await KittyDnDController.writeOffMainThread {
@@ -157,7 +173,7 @@ final class KittyDnDRemoteDragFetch {
                 if ok {
                     self.completeOne()
                 } else {
-                    self.finish(nil)
+                    self.entryFailed(topLevelIndex: topLevelIndex)
                 }
             }
         }
@@ -166,8 +182,9 @@ final class KittyDnDRemoteDragFetch {
     /// A t=R error for an outstanding entry: skip it (materialize nothing) and
     /// count it done, rather than failing the whole drag.
     func receiveError(_ message: KittyDnDMessage) {
-        guard !finished, resolveDest(message) != nil else { return }
-        completeOne()
+        guard !finished, resolveDest(message) != nil, let slot = slotKey(message) else { return }
+        guard seenSlots.insert(slot).inserted else { return }
+        entryFailed(topLevelIndex: topLevelIndex(of: message))
     }
 
     /// Abandon the fetch (a reset or a superseding offer). Resumes the caller with
@@ -192,12 +209,38 @@ final class KittyDnDRemoteDragFetch {
         return nil
     }
 
+    /// A stable key identifying the entry a message addresses, for dedup.
+    private func slotKey(_ message: KittyDnDMessage) -> String? {
+        if let parent = message.metadata["Y"], let num = message.metadata["y"] {
+            return "Y=\(parent):y=\(num)"
+        }
+        if let idx = message.metadata["x"] {
+            return "x=\(idx)"
+        }
+        return nil
+    }
+
+    /// The 1-based top-level index a message addresses, or nil for a child.
+    private func topLevelIndex(of message: KittyDnDMessage) -> Int? {
+        return message.metadata["Y"] == nil ? message.intValue("x") : nil
+    }
+
     /// Record the local URL for a TOP-LEVEL entry (the drag offers top-level
     /// items; a directory's children live inside it and are not listed directly).
     private func recordMaterialized(_ url: URL, for message: KittyDnDMessage) {
         if message.metadata["Y"] == nil, let idx = message.intValue("x") {
             topLevelURL[idx] = url
         }
+    }
+
+    /// An entry's I/O failed: drop it from the drag (so we do not offer a path
+    /// that was never written) and count it done, rather than aborting the whole
+    /// transfer over one bad entry.
+    private func entryFailed(topLevelIndex idx: Int?) {
+        if let idx {
+            topLevelURL.removeValue(forKey: idx)
+        }
+        completeOne()
     }
 
     private func completeOne() {

@@ -449,6 +449,59 @@ final class KittyDnDOfferTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: dirURL.appendingPathComponent("b.txt")), Data("B".utf8))
     }
 
+    // A duplicate push for an already-seen entry must be ignored, so it cannot
+    // over-count and finish the drag with a truncated tree.
+    func testRemoteDuplicateChildPushIsIgnored() async throws {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = remoteOfferController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:o=1;text/uri-list")
+        presend(c, index: 0, data: Data("file:///remote/dir".utf8))
+
+        let started = expectation(description: "drag started")
+        started.assertForOverFulfill = false
+        recorder.onReport = { msg in
+            if msg.type == "k", let x = msg.metadata["x"], msg.metadata["Y"] == nil {
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "k", "x": x, "X": "7"],
+                                    dataPayload: Data("a.txt\u{0}b.txt".utf8)).serializedContent())
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "k", "Y": "7", "y": "1"],
+                                    dataPayload: Data("A".utf8)).serializedContent())
+                // Duplicate push for child 1 (must be ignored).
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "k", "Y": "7", "y": "1"],
+                                    dataPayload: Data("DUP".utf8)).serializedContent())
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "k", "Y": "7", "y": "2"],
+                                    dataPayload: Data("B".utf8)).serializedContent())
+            } else if msg.type == "E" {
+                started.fulfill()
+            }
+        }
+        c.handleInboundSequence("t=P:x=-1")
+        await fulfillment(of: [started], timeout: 5)
+
+        let uriData = try XCTUnwrap(host.begun.first?.data[0])
+        let dirURL = try XCTUnwrap(URL(string: String(decoding: uriData, as: UTF8.self)))
+        defer { try? FileManager.default.removeItem(at: dirURL.deletingLastPathComponent()) }
+        // Both children present; the first push for child 1 won.
+        XCTAssertEqual(try Data(contentsOf: dirURL.appendingPathComponent("a.txt")), Data("A".utf8))
+        XCTAssertEqual(try Data(contentsOf: dirURL.appendingPathComponent("b.txt")), Data("B".utf8))
+    }
+
+    // A second t=P while a drag is already live must not start another drag.
+    func testDuplicateStartDragIsIgnored() {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = startedController(host: host, recorder: recorder)  // one drag started
+        XCTAssertEqual(host.begun.count, 1)
+        c.handleInboundSequence("t=P:x=-1")  // duplicate
+        XCTAssertEqual(host.begun.count, 1)
+    }
+
     // A nested directory: a child that is itself a directory declares its own
     // handle and pushes its grandchildren, all unsolicited.
     func testRemoteNestedDirectoryIsPushed() async throws {

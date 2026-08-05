@@ -80,6 +80,10 @@ final class KittyDnDController {
     // Whether a native drag we started (a drag-out) is currently running. Used to
     // recognize a same-window self-drag when a drop lands here.
     private var selfDragInProgress = false
+    // Whether a local drag start is mid-flight in the async deferred-data pull
+    // window (before the native drag begins). Guards against a second t=P starting
+    // a duplicate drag or draining the first pull's data.
+    private var startingDrag = false
     private var offerMimeTypes: [String] = []
     private var offerOperations = 0
     private var offerData: [Int: Data] = [:]
@@ -546,6 +550,12 @@ final class KittyDnDController {
         guard message.intValue("x") == -1 else {
             return
         }
+        // Ignore a t=P while a drag is already live or being assembled, so a
+        // duplicate does not start a second native drag or drain an in-flight
+        // deferred-data pull.
+        guard !selfDragInProgress, !startingDrag, remoteDragFetch == nil else {
+            return
+        }
         // If the program is remote and offering files, its file:// URIs are not
         // readable here. Fetch each one from the program via t=k, materialize
         // copies in a temp directory, and drag those local copies. Otherwise the
@@ -562,6 +572,7 @@ final class KittyDnDController {
         // data pre-sent) stays synchronous.
         let missing = offerMimeTypes.indices.filter { offerData[$0] == nil }
         guard missing.isEmpty else {
+            startingDrag = true
             Task { @MainActor in await self.beginLocalDragFetchingMissing(missing) }
             return
         }
@@ -574,6 +585,9 @@ final class KittyDnDController {
     /// Request each offered MIME the program did not pre-send (the lazy delivery
     /// path), then start the drag once the data is in hand.
     private func beginLocalDragFetchingMissing(_ missing: [Int]) async {
+        // The async pull window is over once we return (we either start the drag,
+        // which sets selfDragInProgress, or bail); clear the guard either way.
+        defer { startingDrag = false }
         let generation = offerGeneration
         for index in missing {
             let data: Data? = await withCheckedContinuation { continuation in
