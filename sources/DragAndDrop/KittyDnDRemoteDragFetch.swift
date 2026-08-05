@@ -57,9 +57,9 @@ final class KittyDnDRemoteDragFetch {
     private var entryCount = 0
     private var totalBytes = 0
     private var finished = false
-    // Bumped on each unit of progress; the idle timeout only fires if it is
-    // unchanged after `timeout` seconds.
-    private var activityToken = 0
+    // The pending idle-timeout, canceled and replaced on each unit of progress so
+    // stale timers do not pile up during a large transfer.
+    private var idleWorkItem: DispatchWorkItem?
     // Addressing keys of entries already accounted for, so a duplicate or
     // contradictory push (a second data push, or a data push plus a t=R error for
     // the same address) cannot decrement the outstanding count twice and finish
@@ -104,12 +104,13 @@ final class KittyDnDRemoteDragFetch {
     /// pass with NO further progress, so a steadily-progressing large transfer is
     /// not killed by an absolute deadline while a genuinely stalled peer still is.
     private func armIdleTimeout() {
-        activityToken += 1
-        let token = activityToken
-        DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in
-            guard let self, !self.finished, token == self.activityToken else { return }
+        idleWorkItem?.cancel()
+        let item = DispatchWorkItem { [weak self] in
+            guard let self, !self.finished else { return }
             self.finish(nil)
         }
+        idleWorkItem = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + timeout, execute: item)
     }
 
     /// A t=k data push from the program: a regular file (no X, or X=0), a symlink
@@ -268,6 +269,8 @@ final class KittyDnDRemoteDragFetch {
     private func finish(_ urls: [URL]?) {
         guard !finished else { return }
         finished = true
+        idleWorkItem?.cancel()
+        idleWorkItem = nil
         let completion = self.completion
         self.completion = nil
         completion?(urls)
