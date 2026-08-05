@@ -1204,6 +1204,15 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     NSArray *cells = [control cells];
     int i, cellCount = [cells count];
     float position = [control orientation] == PSMTabBarHorizontalOrientation ? [[control style] leftMarginForTabBarControl] : [[control style] topMarginForTabBarControl];
+    // Cells keep their y (and so their row) through the drag, but the reflow below
+    // advances `position` across every cell in sequence. On two rows that pushed the
+    // lower row's tabs off the right edge, since they continued from where the upper
+    // row ended. Restart `position` at each row's own left edge instead. Only in
+    // two-row mode, so the single-row reflow every user gets stays untouched. NAN
+    // means "no row seen yet"; any comparison against it is false, so the first cell
+    // always starts a row.
+    const BOOL twoRow = ([control horizontalRowCount] == 2);
+    CGFloat rowTopForPosition = NAN;
 
     // identify target cell
     // mouse at beginning of tabs
@@ -1214,7 +1223,11 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 
     if ([self destinationTabBar] == control) {
         removeFlag = NO;
-        if (mouseLoc.x < [[control style] leftMarginForTabBarControl]) {
+        // "Left of the first tab" has to be measured against the left edge of the row
+        // under the mouse. With two rows the lower row starts further left than the
+        // style's left margin, so using the margin made a drop anywhere in that
+        // reclaimed inset insert at the very front of the first row instead.
+        if (mouseLoc.x < [control leftEdgeOfHorizontalCellRowAtY:mouseLoc.y]) {
             proposedTarget = [cells objectAtIndex:0];
         } else {
             overCell = [control cellForPoint:mouseLoc cellFrame:&overCellRect];
@@ -1343,6 +1356,10 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         }
 
         if ([control orientation] == PSMTabBarHorizontalOrientation) {
+            if (twoRow && !(fabs(newRect.origin.y - rowTopForPosition) <= 0.5)) {
+                rowTopForPosition = newRect.origin.y;
+                position = [control leftEdgeOfHorizontalCellRowAtY:newRect.origin.y];
+            }
             newRect.origin.x = position;
             position += newRect.size.width;
             // Only add intercell spacing after non-placeholder cells (real tabs).

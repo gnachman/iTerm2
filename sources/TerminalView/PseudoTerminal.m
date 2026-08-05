@@ -8558,11 +8558,21 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (void)tabViewDidChangeDesiredHeight:(NSTabView *)tabView {
-    // The two-row tab bar changed its row count. Besides the height, this flips
-    // whether the bar belongs in the titlebar (accessory) or the content view,
-    // which requires reconfiguring the window chrome (style mask, transparency,
-    // titlebar). A partial relayout leaves the content-view bar clipped under a
-    // leftover titlebar, so do the full refresh that window-style changes use.
+    // The two-row tab bar changed its row count, so the bar's height changed. When
+    // that also flips whether the bar belongs in the titlebar (accessory) or the
+    // content view, the window chrome — style mask, transparency, titlebar — has to be
+    // reconfigured; a partial relayout there leaves the content-view bar clipped under
+    // a leftover titlebar, so do the full refresh that window-style changes use.
+    //
+    // When the bar isn't moving, though, only its height changed and the much cheaper
+    // relayout is enough. Minimal and Compact are never accessories, so that's the
+    // path they always take — which matters while drag-resizing across the row-count
+    // boundary, where a full window-chrome rebuild per crossing visibly janks the drag.
+    if ([self tabBarShouldBeAccessory] == _contentView.tabBarControlOnLoan) {
+        [self repositionWidgets];
+        [self fitTabsToWindow];
+        return;
+    }
     [self refreshTerminal:nil];
 }
 

@@ -220,8 +220,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     if (cellCount <= 1) {
         return 1;
     }
-    // How many cells fit on a single row at minimum width? If they all fit, stay
-    // on one row; only spill onto a second row once they would overflow.
+    // Would every cell fit on a single row? If so, stay on one row; only spill onto a
+    // second row once they would overflow.
     const CGFloat available = [self singleRowAvailableCellWidthWithOverflow:NO];
     const CGFloat minW = self.cellMinWidth;
     const CGFloat spacing = _style.intercellSpacing;
@@ -231,9 +231,18 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     if (minW <= 0 || available < minW) {
         return 1;
     }
-    NSInteger capacity = (NSInteger)floor((available + spacing) / (minW + spacing));
-    capacity = MAX(1, capacity);
-    return (cellCount > capacity) ? 2 : 1;
+    // Ask the same minimum-width fit question the single-row layout asks itself,
+    // pinned tabs included at their own fixed width. Estimating every cell at
+    // cellMinWidth instead let this decision disagree with what one row would really
+    // show — most visibly with pinned tabs, whose width isn't cellMinWidth at all.
+    const NSUInteger pinnedCount = [self numberOfPinnedCells];
+    const NSInteger unpinnedCount = cellCount - (NSInteger)pinnedCount;
+    const CGFloat pinnedSpace = [self totalPinnedSpaceForPinnedCount:pinnedCount
+                                                       unpinnedCount:(NSUInteger)unpinnedCount];
+    const CGFloat widthNeededForOneRow = (pinnedSpace +
+                                          minW * unpinnedCount +
+                                          spacing * MAX(0, unpinnedCount - 1));
+    return (widthNeededForOneRow > available) ? 2 : 1;
 }
 
 // Cache each cell's isFirstInHorizontalRow/isLastInHorizontalRow flags in a single
@@ -330,6 +339,41 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         aRect.size.height = self.height;
     }
     return aRect;
+}
+
+// The x at which the row of cells containing the given y begins. Normally the style's
+// left margin, but in two-row mode the lower row reclaims the left inset (there's no
+// traffic-light or window-shortcut chrome down there) and so starts further left.
+// Callers that compare against "the left edge of the tabs" need this: with the plain
+// left margin, a point anywhere in the lower row's reclaimed inset — about 75pt under
+// the traffic lights in compact — reads as being before the very first tab.
+- (CGFloat)leftEdgeOfHorizontalCellRowAtY:(CGFloat)y {
+    const CGFloat leftMargin = [_style leftMarginForTabBarControl];
+    if (_orientation != PSMTabBarHorizontalOrientation || [self horizontalRowCount] != 2) {
+        return leftMargin;
+    }
+    if (y < self.insets.top + [self twoRowStride]) {
+        return leftMargin;  // Upper row.
+    }
+    return leftMargin - MAX(0, self.insets.left);
+}
+
+// The region the cells actually occupy, for hit testing. This is the generic cell rect
+// in single-row mode, but two rows don't fit inside it: the lower row starts further
+// left (see -leftEdgeOfHorizontalCellRowAtY:) and the pair of rows extends down to the
+// smaller -twoRowBottomInset rather than insets.bottom. Hit-testing against the generic
+// rect left those margins dead to clicks, drags, close buttons, and tooltips.
+- (NSRect)cellHitTestBoundsWithOverflow:(BOOL)withOverflow {
+    NSRect rect = [self genericCellRectWithOverflow:withOverflow];
+    if (_orientation != PSMTabBarHorizontalOrientation || [self horizontalRowCount] != 2) {
+        return rect;
+    }
+    const CGFloat lowerRowExtra = MAX(0, self.insets.left);
+    rect.origin.x -= lowerRowExtra;
+    rect.size.width += lowerRowExtra;
+    rect.origin.y = self.insets.top;
+    rect.size.height = MAX(0, self.height - self.insets.top - [self twoRowBottomInset]);
+    return rect;
 }
 
 #pragma mark -
@@ -728,12 +772,52 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     return NO;
 }
 
+// insets.left, except that the lower row of a two-row bar reclaims it and so begins at
+// 0. Deliberately expressed in terms of insets.left rather than the style's left margin
+// so single-row behavior is unchanged (the two differ slightly in some styles).
+- (CGFloat)insetAdjustedLeftEdgeOfHorizontalRowAtY:(CGFloat)y {
+    if (_orientation != PSMTabBarHorizontalOrientation || [self horizontalRowCount] != 2) {
+        return self.insets.left;
+    }
+    if (y < self.insets.top + [self twoRowStride]) {
+        return self.insets.left;  // Upper row keeps the inset for the window chrome.
+    }
+    // Mirrors lowerRowOriginX in the cell layout: the lower row gives the inset back.
+    const CGFloat reclaimed = MAX(0, self.insets.left);
+    return self.insets.left - reclaimed;
+}
+
+// The visible cell reaching furthest right on the row containing y, or nil if no row
+// contains it (e.g. the gap between rows). In single-row mode this is the last visible
+// cell, which is what callers used before two-row layout existed.
+- (PSMTabBarCell *)lastVisibleCellInHorizontalRowAtY:(CGFloat)y {
+    PSMTabBarCell *result = nil;
+    for (PSMTabBarCell *cell in _cells) {
+        if (cell.isInOverflowMenu) {
+            continue;
+        }
+        if (y < NSMinY(cell.frame) || y >= NSMaxY(cell.frame)) {
+            continue;
+        }
+        if (!result || NSMaxX(cell.frame) > NSMaxX(result.frame)) {
+            result = cell;
+        }
+    }
+    return result;
+}
+
 - (BOOL)wantsMouseDownAtPoint:(NSPoint)point {
     if ([self orientation] == PSMTabBarHorizontalOrientation) {
         if ([self pointIsInEdgeDragArea:point]) {
             return NO;
         }
-        if (point.x < self.insets.left) {
+        // Where the tabs begin depends on which row the point is on. The lower row of a
+        // two-row bar reclaims the left inset, so measuring every point against
+        // insets.left made that row's leading cells read as draggable background:
+        // -mouseDown: turned the click into a window drag and the tab never got
+        // selected. (Hover still worked, because tracking rects are geometric, which is
+        // why the close button appeared on a tab that couldn't be clicked.)
+        if (point.x < [self insetAdjustedLeftEdgeOfHorizontalRowAtY:point.y]) {
             return NO;
         }
         PSMTabBarCell *lastCell = _cells.lastObject;
@@ -743,7 +827,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
         if (lastCell.isInOverflowMenu) {
             return YES;
         }
-        const CGFloat maxX = NSMaxX(lastCell.frame);
+        // Where they end is per-row too: the two rows need not end at the same x.
+        PSMTabBarCell *const lastInRow = [self lastVisibleCellInHorizontalRowAtY:point.y] ?: lastCell;
+        const CGFloat maxX = NSMaxX(lastInRow.frame);
         return point.x < maxX;
     } else {
         if (point.y < self.insets.top) {
@@ -1472,6 +1558,14 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
                 [_animationTimer invalidate];
             }
             
+            // The animated path doesn't reach finishUpdateWithRegularWidths: until the
+            // animation ends, so refresh the cached per-row first/last flags here too.
+            // Otherwise styles draw the whole animation with flags left over from the
+            // previous cell set and the end separators land on the wrong tab. Safe to
+            // do once up front rather than per tick: animation only runs in single-row
+            // mode, where the flags are index-based and don't move as widths change.
+            [self updateHorizontalRowBoundaryFlags];
+
             _animationDelta = 0.0f;
             _animationTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 30.0
                                                                target:self
@@ -1900,16 +1994,24 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 
         if ([self orientation] == PSMTabBarHorizontalOrientation) {
             if ([self horizontalRowCount] == 2) {
-                // Place the + at the end of the TOP row. Passing the full width
-                // array would put styles that sum widths (Yosemite/Minimal) about
-                // two rows past the right edge; Tahoe ignores the widths anyway.
+                // Pass only one row's widths. The full array would put styles that sum
+                // widths (Yosemite/Minimal) about two rows past the right edge; Tahoe
+                // ignores the widths anyway. Both rows are stretched to end at the
+                // reserved right margin, so a single row's sum lands the + in that
+                // reserved slot.
                 const NSInteger row1Count = [self twoRowFirstRowCountForVisibleCells:newValues.count];
                 const NSUInteger clampedRow1Count = (NSUInteger)MAX((NSInteger)0, row1Count);
                 NSArray<NSNumber *> *row1Widths =
                     [newValues subarrayWithRange:NSMakeRange(0, MIN(clampedRow1Count, newValues.count))];
-                // One row's content height (the top row), matching _setupCells.
-                cellRect = [self.style frameForAddTabButtonWithCellWidths:row1Widths height:[self twoRowContentHeight]];
-                cellRect.origin.y = self.insets.top;
+                // One row's content height, matching _setupCells.
+                const CGFloat rowContentHeight = [self twoRowContentHeight];
+                cellRect = [self.style frameForAddTabButtonWithCellWidths:row1Widths height:rowContentHeight];
+                cellRect.size.height = MIN(cellRect.size.height, rowContentHeight);
+                // Put it on the BOTTOM row, next to the last tab, and centered in that
+                // row. On the top row it sat in space the top row's own tabs already
+                // stretch up to, leaving the bottom row's reserved slot empty.
+                const CGFloat rowTop = self.insets.top + [self twoRowStride];
+                cellRect.origin.y = rowTop + floor((rowContentHeight - cellRect.size.height) / 2.0);
             } else {
                 cellRect = [self.style frameForAddTabButtonWithCellWidths:newValues height:self.bounds.size.height];
             }
@@ -3057,7 +3159,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 - (id)cellForPoint:(NSPoint)point
          cellFrame:(NSRectPointer)outFrame {
     if ([self orientation] == PSMTabBarHorizontalOrientation &&
-        !NSPointInRect(point, [self genericCellRectWithOverflow:_lainOutWithOverflow])) {
+        !NSPointInRect(point, [self cellHitTestBoundsWithOverflow:_lainOutWithOverflow])) {
         return nil;
     }
 

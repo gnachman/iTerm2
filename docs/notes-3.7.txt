@@ -861,11 +861,14 @@ Settings Improvements:
   this Mac and in the folder, it asks which
   copy to keep rather than overwriting your
   changes.
-- A new advanced setting, “Show tab bar on
-  two rows,” distributes tabs across two
-  horizontal rows so each tab gets more room
-  for its title. Handy when many tabs are
-  open. Off by default.
+- A new advanced setting, “Allow the tab bar
+  to use two rows,” lets tabs spread over a
+  second row once there are more of them than
+  fit on one row, so each tab keeps more room
+  for its title instead of being squeezed.
+  Until then the tab bar is unchanged. Only
+  affects top and bottom tab bars. Off by
+  default.
 
 Bug Fixes:
 - Toggling Caps Lock no longer inserts an “A”

@@ -648,6 +648,11 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 }
 
 - (void)drawOutlineAfterSelectedTabInBottomTabBar:(PSMTabBarControl *)bar {
+    [self drawOutlineAfterSelectedTabInBottomTabBar:bar rightEdge:NSMaxX(bar.frame)];
+}
+
+- (void)drawOutlineAfterSelectedTabInBottomTabBar:(PSMTabBarControl *)bar
+                                        rightEdge:(CGFloat)rightEdge {
     NSBezierPath *path = [NSBezierPath bezierPath];
 
     PSMTabBarCell *const cell = [self selectedCellInTabBarControl:bar];
@@ -657,7 +662,7 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
     const CGFloat left = NSMaxX(cell.frame) + 0.5;
     // Top of the selected cell's own row (== bar top for a single row).
     const CGFloat top = NSMinY(cell.frame) + 0.5;
-    const CGFloat right = NSMaxX(bar.frame) - 0.5;
+    const CGFloat right = rightEdge - 0.5;
     const CGFloat bottom = NSMaxY(cell.frame) - 0.5;
 
     [path moveToPoint:NSMakePoint(left, bottom)];
@@ -723,6 +728,11 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 }
 
 - (void)drawOutlineAfterSelectedTabInTopTabBar:(PSMTabBarControl *)bar {
+    [self drawOutlineAfterSelectedTabInTopTabBar:bar rightEdge:NSMaxX(bar.frame)];
+}
+
+- (void)drawOutlineAfterSelectedTabInTopTabBar:(PSMTabBarControl *)bar
+                                     rightEdge:(CGFloat)rightEdge {
     NSBezierPath *path = [NSBezierPath bezierPath];
 
     PSMTabBarCell *const cell = [self selectedCellInTabBarControl:bar];
@@ -732,7 +742,7 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
     const CGFloat left = NSMaxX(cell.frame) + 0.5;
     // Top of the selected cell's own row (== bar top for a single row).
     const CGFloat top = NSMinY(cell.frame) + 0.5;
-    const CGFloat right = NSMaxX(bar.frame);
+    const CGFloat right = rightEdge;
     const CGFloat bottom = NSMaxY(cell.frame) - 0.5;
 
     [path moveToPoint:NSMakePoint(left, top)];
@@ -772,13 +782,27 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 
 #pragma mark Draw two-row outline (top tab bar)
 
-// Draw a plain full-width horizontal outline line at the given y.
-- (void)drawPlainHorizontalOutlineAtY:(CGFloat)y bar:(PSMTabBarControl *)bar {
+// Draw a plain horizontal outline line at the given y, from the left edge of the bar
+// to rightEdge.
+- (void)drawPlainHorizontalOutlineAtY:(CGFloat)y bar:(PSMTabBarControl *)bar rightEdge:(CGFloat)rightEdge {
     NSBezierPath *path = [NSBezierPath bezierPath];
     [path moveToPoint:NSMakePoint(0, y)];
-    [path lineToPoint:NSMakePoint(NSMaxX(bar.frame), y)];
+    [path lineToPoint:NSMakePoint(rightEdge, y)];
     [[self outlineColor] set];
     [path stroke];
+}
+
+// The x a line drawn between the two rows must stop at. The overflow chevron spans the
+// whole bar height, so a line taken all the way to NSMaxX(bar.frame) runs straight
+// through it. Lines along the bar's outer edge against the content don't need this —
+// they pass below (or above) the chevron, not across it.
+- (CGFloat)interRowDividerRightEdgeForTabBar:(PSMTabBarControl *)bar {
+    const CGFloat right = NSMaxX(bar.frame);
+    if (!bar.overflowPopUpButton || bar.overflowPopUpButton.isHidden) {
+        return right;
+    }
+    return right - [self rightMarginForTabBarControlWithOverflow:YES
+                                                   addTabButton:bar.showAddTabButton];
 }
 
 // In two-row mode draw a boundary line at the content-facing edge of every
@@ -811,22 +835,39 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
         }
     }
 
+    // Which row's boundary is the bar's outer edge against the content (drawn full
+    // width) rather than a divider between rows (which must dodge the overflow
+    // chevron)? For a top tab bar the content is below, so it's the last row; for a
+    // bottom tab bar the content is above, so it's the first row.
+    CGFloat contentFacingRowTop = isBottom ? CGFLOAT_MAX : -CGFLOAT_MAX;
+    for (NSValue *v in rows) {
+        const CGFloat top = v.pointValue.x;
+        if (isBottom ? (top < contentFacingRowTop) : (top > contentFacingRowTop)) {
+            contentFacingRowTop = top;
+        }
+    }
+    const CGFloat interRowRightEdge = [self interRowDividerRightEdgeForTabBar:bar];
+
     for (NSValue *v in rows) {
         const CGFloat rowTop = v.pointValue.x;
         const CGFloat rowBottom = v.pointValue.y;
         const BOOL selectedOnRow = haveSelected && fabs(selectedRowTop - rowTop) < 0.5;
+        const BOOL isInterRowDivider = fabs(rowTop - contentFacingRowTop) > 0.5;
+        const CGFloat rightEdge = isInterRowDivider ? interRowRightEdge : NSMaxX(bar.frame);
         if (selectedOnRow) {
             // Notch around the selected tab at this row's content-facing edge (the
             // before/after primitives use the selected cell's own row).
             if (isBottom) {
                 [self drawOutlineBeforeSelectedTabInBottomTabBar:bar];
-                [self drawOutlineAfterSelectedTabInBottomTabBar:bar];
+                [self drawOutlineAfterSelectedTabInBottomTabBar:bar rightEdge:rightEdge];
             } else {
                 [self drawOutlineBeforeSelectedTabInTopTabBar:bar];
-                [self drawOutlineAfterSelectedTabInTopTabBar:bar];
+                [self drawOutlineAfterSelectedTabInTopTabBar:bar rightEdge:rightEdge];
             }
         } else {
-            [self drawPlainHorizontalOutlineAtY:(isBottom ? rowTop + 0.5 : rowBottom - 0.5) bar:bar];
+            [self drawPlainHorizontalOutlineAtY:(isBottom ? rowTop + 0.5 : rowBottom - 0.5)
+                                            bar:bar
+                                      rightEdge:rightEdge];
         }
     }
 }
