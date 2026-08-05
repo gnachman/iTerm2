@@ -40,14 +40,16 @@ class BidiMirrorSelectionTests: XCTestCase {
         return BidiDisplayInfoObjc(sca)
     }
 
-    func testPureRTLParensAreMirrored() {
-        // «(بله)» — parens in pure RTL context must mirror.
+    func testPureRTLParensAreNotMirrored() {
+        // (بله) — parens are drawn as typed, never bidi-mirrored, so they hug
+        // the text «(بله)» instead of flipping to «)بله(». Persian readers
+        // expect the as-typed form.
         let s = "متن (بله) دیگر"
         guard let info = info(s) else { return XCTFail("no bidi info") }
         let open = Int32((s as NSString).range(of: "(").location)
         let close = Int32((s as NSString).range(of: ")").location)
-        XCTAssertTrue(info.mirrorsSourceCell(open), "open paren in RTL must mirror")
-        XCTAssertTrue(info.mirrorsSourceCell(close), "close paren in RTL must mirror")
+        XCTAssertFalse(info.mirrorsSourceCell(open), "open paren must not mirror (drawn as typed)")
+        XCTAssertFalse(info.mirrorsSourceCell(close), "close paren must not mirror (drawn as typed)")
     }
 
     func testParensAroundEnglishAreNotMirrored() {
@@ -63,13 +65,14 @@ class BidiMirrorSelectionTests: XCTestCase {
     }
 
     func testBothInSameLine() {
-        // A pure-RTL paren pair and an English-bracketing pair on one line.
+        // Neither the RTL-content pair nor the English-bracketing pair mirrors;
+        // both draw as typed.
         let s = "متن (بله) و (Feld) تمام"
         guard let info = info(s) else { return XCTFail("no bidi info") }
         let ns = s as NSString
         let rtlOpen = Int32(ns.range(of: "(بله").location)
         let enOpen = Int32(ns.range(of: "(Feld").location)
-        XCTAssertTrue(info.mirrorsSourceCell(rtlOpen), "RTL paren mirrors")
+        XCTAssertFalse(info.mirrorsSourceCell(rtlOpen), "RTL paren does not mirror (as typed)")
         XCTAssertFalse(info.mirrorsSourceCell(enOpen), "English paren does not mirror")
     }
 }
