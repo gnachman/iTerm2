@@ -36,6 +36,14 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
         guard let view = dataSource?.kittyDnDView, let event = pendingEvent else {
             return false
         }
+        // Refuse a stale gesture: a real drag-out holds the mouse button down
+        // through the t=o / t=P round trip, so no button being pressed means the
+        // gesture already ended. Without this a program could start a phantom drag
+        // from a long-dead event at a moment of its choosing.
+        guard NSEvent.pressedMouseButtons != 0 else {
+            pendingEvent = nil
+            return false
+        }
         let items = draggingItems(for: offer, in: view, event: event)
         guard !items.isEmpty else {
             return false
@@ -48,6 +56,10 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
     func cancelDrag() {
         // A running NSDraggingSession cannot be programmatically canceled cleanly;
         // this is best effort. The session's end callback still fires.
+        pendingEvent = nil
+    }
+
+    func clearPendingGesture() {
         pendingEvent = nil
     }
 

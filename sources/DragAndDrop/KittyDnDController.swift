@@ -176,6 +176,9 @@ final class KittyDnDController {
             multiplexerID = nil
         }
         isOfferingDrags = false
+        // Forget any pending drag gesture so a later t=P cannot start a phantom
+        // drag from a stale event.
+        dragHost?.clearPendingGesture()
         // Do NOT delete the remote drag-out temp files while a native drag is
         // still live (a prompt can appear mid-drag when the offering program
         // exits): they back the live drag's uri-list, and dragFinished's delayed
@@ -534,7 +537,9 @@ final class KittyDnDController {
         case 2:
             isOfferingDrags = false
             // Disabling offers ends any in-progress drag negotiation, so drain
-            // outstanding data-request completions rather than leaking them.
+            // outstanding data-request completions rather than leaking them, and
+            // forget any pending gesture so it cannot start a later phantom drag.
+            dragHost?.clearPendingGesture()
             resetOfferInProgress()
         default:
             // A t=o with neither x nor o is not a declaration; ignore it rather

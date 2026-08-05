@@ -29,12 +29,14 @@ final class KittyDnDOfferTests: XCTestCase {
     private final class FakeDragHost: KittyDnDDragHost {
         var begun: [KittyDnDDragOffer] = []
         var cancelCount = 0
+        var clearGestureCount = 0
         var beginResult = true
         func beginDrag(_ offer: KittyDnDDragOffer) -> Bool {
             begun.append(offer)
             return beginResult
         }
         func cancelDrag() { cancelCount += 1 }
+        func clearPendingGesture() { clearGestureCount += 1 }
     }
 
     private final class FakeEndpoint: KittyDnDEndpoint {
@@ -748,6 +750,22 @@ final class KittyDnDOfferTests: XCTestCase {
         c.handleInboundSequence("t=P:x=-1")
         XCTAssertEqual(host.begun.first?.mimeTypes, ["text/plain"])
         XCTAssertEqual(host.begun.first?.data[0], Data("hello".utf8))
+    }
+
+    // A prompt reset and an offer-disable must forget any pending drag gesture,
+    // so a later t=P cannot start a phantom drag from a stale event.
+    func testPendingGestureClearedOnResetAndOfferDisable() {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = makeController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.reset()
+        XCTAssertEqual(host.clearGestureCount, 1)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:x=2")  // disable offers
+        XCTAssertEqual(host.clearGestureCount, 2)
     }
 
     // MARK: - Same-window self-drag security (EPERM) (#5)

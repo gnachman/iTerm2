@@ -45,4 +45,8 @@ protocol KittyDnDDragHost: AnyObject {
 
     /// Cancel an in-progress native drag, if any (best effort).
     func cancelDrag()
+
+    /// Forget any pending drag gesture (a stored past mouse event) that has not
+    /// yet turned into a drag, so a later t=P cannot start a phantom drag from it.
+    func clearPendingGesture()
 }
