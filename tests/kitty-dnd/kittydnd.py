@@ -51,6 +51,25 @@ def parse(content):
     return md, payload
 
 
+def chunked(metadata, data, max_encoded=4096):
+    """Serialize binary `data` as OSC 72 messages: one or more m=1 data chunks
+    (each <= max_encoded base64 bytes) followed by an empty m=0 terminator, which
+    is how the terminal expects a chunked data transfer."""
+    messages = []
+    max_raw = max_encoded // 4 * 3
+    offset = 0
+    while offset < len(data):
+        chunk = data[offset:offset + max_raw]
+        offset += max_raw
+        md = dict(metadata)
+        md["m"] = "1"
+        messages.append(build(md, data_payload=chunk))
+    terminator = dict(metadata)
+    terminator["m"] = "0"
+    messages.append(build(terminator, text_payload=""))
+    return messages
+
+
 class OSC72Reader:
     """Scans a byte stream and yields (metadata, raw_payload) for each OSC 72."""
 

@@ -25,7 +25,7 @@ import termios
 import tty
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from kittydnd import build, OSC72Reader, machine_id  # noqa: E402
+from kittydnd import build, chunked, OSC72Reader, machine_id  # noqa: E402
 
 TEXT = b"Dragged out of iTerm2 via OSC 72\n"
 
@@ -84,6 +84,10 @@ class DragSource:
         if t == "o":
             # Terminal reports a drag gesture; make our offer.
             self.begin_offer(md)
+        elif t == "k":
+            # The terminal is fetching our offered file(s) because we are on a
+            # different machine (remote drag-out).
+            self.serve_remote_file(md)
         elif t == "E":
             if payload == "OK":
                 log("[drag_source] drag started OK")
@@ -99,6 +103,27 @@ class DragSource:
                 data = self.data[idx] if 0 <= idx < len(self.data) else b""
                 os.write(1, build({"t": "e", "y": str(idx), "m": "0"},
                                   data_payload=data).encode())
+
+    def serve_remote_file(self, md):
+        # Our uri-list has a single entry (the temp file), so only x=1 is valid.
+        # We offer no directories, so any Y-handle request is invalid.
+        if md.get("Y") is not None:
+            os.write(1, build({"t": "R", "Y": md["Y"], "y": md.get("y", "")},
+                              text_payload="EINVAL").encode())
+            return
+        idx = md.get("x")
+        if idx != "1":
+            os.write(1, build({"t": "R", "x": idx or ""}, text_payload="EINVAL").encode())
+            return
+        try:
+            with open(self.tmp_path, "rb") as f:
+                data = f.read()
+        except OSError:
+            os.write(1, build({"t": "R", "x": idx}, text_payload="EIO").encode())
+            return
+        for msg in chunked({"t": "k", "x": idx}, data):
+            os.write(1, msg.encode())
+        log("[drag_source] served file for t=k:x=%s (%d bytes)" % (idx, len(data)))
 
     def run(self):
         fd = sys.stdin.fileno()

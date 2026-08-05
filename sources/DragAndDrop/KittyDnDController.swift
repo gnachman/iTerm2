@@ -59,6 +59,14 @@ final class KittyDnDController {
     // MIME index (the program answers a t=e:x=5 request with t=e:y=idx;data).
     private var pendingDataRequests: [Int: (Data?) -> Void] = [:]
 
+    // Outstanding t=k remote-file fetches (dragging a remote program's files
+    // out), keyed by the request's addressing keys. The program answers a
+    // t=k request with the file bytes / symlink target / directory listing.
+    private var pendingRemoteFetches: [String: (KittyDnDMessage?) -> Void] = [:]
+    // Temp directory on this machine holding files fetched from a remote program
+    // for an in-progress drag-out; removed when the drag finishes.
+    private var remoteDragTempDir: URL?
+
     init(ourMachineID: String,
          endpoint: KittyDnDEndpoint,
          dragHost: KittyDnDDragHost? = nil,
@@ -79,6 +87,13 @@ final class KittyDnDController {
             || endpoint.isRemoteHost
     }
 
+    /// Whether the offering program is on a different machine, so its offered
+    /// file:// URIs are not readable here and must be fetched from it via t=k.
+    private var isRemoteOffer: Bool {
+        return KittyDnDMachineID.isRemote(theirID: peerMachineID, ourID: ourMachineID)
+            || endpoint.isRemoteHost
+    }
+
     /// Discard all drag-and-drop state. Called when a new shell prompt appears
     /// (the program that used the protocol has exited), so accept/offer state,
     /// open directory handles, and any partially-reassembled message do not leak
@@ -92,6 +107,7 @@ final class KittyDnDController {
         directoryHandles.removeAll()
         nextDirectoryHandle = 2
         isOfferingDrags = false
+        cleanupRemoteDragTempDir()
         resetOfferInProgress()   // clears offer fields and drains pending requests
         reassembler = KittyDnDChunkReassembler()
     }
@@ -128,6 +144,12 @@ final class KittyDnDController {
             handleDragDataReply(message)
         case "E":
             handleDragStatus(message)
+        case "k":
+            // The program's response to a t=k remote-file fetch (drag-out).
+            resolveRemoteFetch(message, failed: false)
+        case "R":
+            // An error reply to an outstanding t=k fetch, if any.
+            resolveRemoteFetch(message, failed: true)
         default:
             // Unknown messages are ignored (forward compatibility).
             break
@@ -365,16 +387,134 @@ final class KittyDnDController {
         guard message.intValue("x") == -1 else {
             return
         }
-        let offer = KittyDnDDragOffer(mimeTypes: offerMimeTypes,
-                                      data: offerData,
-                                      operations: offerOperations,
-                                      image: offerImage)
+        // If the program is remote and offering files, its file:// URIs are not
+        // readable here. Fetch each one from the program via t=k, materialize
+        // copies in a temp directory, and drag those local copies. Otherwise the
+        // offered URIs are local and we drag them directly.
+        if isRemoteOffer, let uriListIndex = offerMimeTypes.firstIndex(of: "text/uri-list") {
+            Task { @MainActor in
+                await self.beginRemoteFileDrag(uriListIndex: uriListIndex)
+            }
+            return
+        }
+        beginDrag(with: KittyDnDDragOffer(mimeTypes: offerMimeTypes,
+                                          data: offerData,
+                                          operations: offerOperations,
+                                          image: offerImage))
+    }
+
+    private func beginDrag(with offer: KittyDnDDragOffer) {
         guard let dragHost, dragHost.beginDrag(offer) else {
             send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "EIO:could not start drag"))
+            cleanupRemoteDragTempDir()
             resetOfferInProgress()
             return
         }
         send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "OK"))
+    }
+
+    /// Fetch the offered files from the remote program via t=k into a temp dir,
+    /// then drag those local copies.
+    private func beginRemoteFileDrag(uriListIndex: Int) async {
+        let names = Self.uriListNames(offerData[uriListIndex])
+        guard !names.isEmpty else {
+            send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "EINVAL:no files"))
+            resetOfferInProgress()
+            return
+        }
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("iterm2-kittydnd-\(UUID().uuidString)")
+        remoteDragTempDir = tempDir
+        var localURLs: [URL] = []
+        for (offset, name) in names.enumerated() {
+            let dest = tempDir.appendingPathComponent(name)
+            let ok = await materializeRemoteEntry(request: ["x": String(offset + 1)], to: dest)
+            if !ok {
+                send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "EIO:fetch failed"))
+                cleanupRemoteDragTempDir()
+                resetOfferInProgress()
+                return
+            }
+            localURLs.append(dest)
+        }
+        // Replace the uri-list in the offer with the local temp copies.
+        var data = offerData
+        data[uriListIndex] = Data(localURLs.map { $0.absoluteString }.joined(separator: "\r\n").utf8)
+        beginDrag(with: KittyDnDDragOffer(mimeTypes: offerMimeTypes,
+                                          data: data,
+                                          operations: offerOperations,
+                                          image: offerImage))
+    }
+
+    /// Fetch one remote entry (identified by `request`, a t=k addressing dict)
+    /// and write it to `dest`: a regular file's bytes, a symlink's target, or a
+    /// directory (recursively). Returns false on any failure.
+    private func materializeRemoteEntry(request: [String: String], to dest: URL) async -> Bool {
+        guard let message = await fetchRemoteEntry(request) else {
+            return false
+        }
+        let payload = message.dataPayload ?? Data()
+        if let typeFlag = message.metadata["X"] {
+            if typeFlag == "1" {
+                let target = String(decoding: payload, as: UTF8.self)
+                return await Self.writeOffMainThread {
+                    try? FileManager.default.createDirectory(
+                        at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
+                    try FileManager.default.createSymbolicLink(atPath: dest.path, withDestinationPath: target)
+                }
+            }
+            guard let handle = Int(typeFlag) else {
+                return false
+            }
+            let created = await Self.writeOffMainThread {
+                try FileManager.default.createDirectory(at: dest, withIntermediateDirectories: true)
+            }
+            guard created else { return false }
+            let childNames = payload.split(separator: 0)
+                .map { Self.sanitizeComponent(String(decoding: $0, as: UTF8.self)) }
+            for (offset, childName) in childNames.enumerated() {
+                let ok = await materializeRemoteEntry(
+                    request: ["Y": String(handle), "y": String(offset + 1)],
+                    to: dest.appendingPathComponent(childName))
+                if !ok { return false }
+            }
+            return true
+        }
+        // Regular file.
+        return await Self.writeOffMainThread {
+            try FileManager.default.createDirectory(
+                at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try payload.write(to: dest)
+        }
+    }
+
+    /// Send one t=k request and await the reassembled response (nil on error).
+    private func fetchRemoteEntry(_ request: [String: String]) async -> KittyDnDMessage? {
+        let key = Self.remoteFetchKey(request)
+        return await withCheckedContinuation { (continuation: CheckedContinuation<KittyDnDMessage?, Never>) in
+            pendingRemoteFetches[key]?(nil)   // fail any stale fetch for this key
+            pendingRemoteFetches[key] = { continuation.resume(returning: $0) }
+            var metadata = request
+            metadata["t"] = "k"
+            send(KittyDnDMessage(metadata: metadata))
+        }
+    }
+
+    private func resolveRemoteFetch(_ message: KittyDnDMessage, failed: Bool) {
+        let key = Self.remoteFetchKey(message.metadata)
+        guard let completion = pendingRemoteFetches.removeValue(forKey: key) else {
+            return
+        }
+        completion(failed ? nil : message)
+    }
+
+    private func cleanupRemoteDragTempDir() {
+        guard let dir = remoteDragTempDir else { return }
+        remoteDragTempDir = nil
+        let path = dir
+        Task.detached(priority: .utility) {
+            try? FileManager.default.removeItem(at: path)
+        }
     }
 
     private func handleDragDataReply(_ message: KittyDnDMessage) {
@@ -430,6 +570,7 @@ final class KittyDnDController {
 
     func dragFinished(canceled: Bool) {
         send(KittyDnDMessage(metadata: ["t": "e", "x": "4", "y": canceled ? "1" : "0"]))
+        cleanupRemoteDragTempDir()
         resetOfferInProgress()
     }
 
@@ -452,6 +593,56 @@ final class KittyDnDController {
             completion(nil)
         }
         pendingDataRequests = [:]
+        for (_, completion) in pendingRemoteFetches {
+            completion(nil)
+        }
+        pendingRemoteFetches = [:]
+    }
+
+    // MARK: - Remote drag-out helpers
+
+    /// Base names of the entries in a text/uri-list payload, sanitized to a
+    /// single safe path component each.
+    private static func uriListNames(_ data: Data?) -> [String] {
+        guard let data, let list = String(data: data, encoding: .utf8) else {
+            return []
+        }
+        return list
+            .split(whereSeparator: { $0.isNewline })
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty && !$0.hasPrefix("#") }
+            .map { sanitizeComponent(URL(string: $0)?.lastPathComponent ?? "") }
+    }
+
+    /// Reduce an untrusted name from a remote program to a single safe path
+    /// component so it cannot escape the temp directory.
+    private static func sanitizeComponent(_ name: String) -> String {
+        let cleaned = name.replacingOccurrences(of: "/", with: "_")
+        if cleaned.isEmpty || cleaned == "." || cleaned == ".." {
+            return "item"
+        }
+        return cleaned
+    }
+
+    private static func remoteFetchKey(_ metadata: [String: String]) -> String {
+        if let parent = metadata["Y"], let child = metadata["y"] {
+            return "Y=\(parent):y=\(child)"
+        }
+        if let index = metadata["x"] {
+            return "x=\(index)"
+        }
+        return ""
+    }
+
+    private static func writeOffMainThread(_ block: @escaping @Sendable () throws -> Void) async -> Bool {
+        return await Task.detached(priority: .utility) {
+            do {
+                try block()
+                return true
+            } catch {
+                return false
+            }
+        }.value
     }
 
     // MARK: - Outbound helpers
