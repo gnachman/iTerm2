@@ -128,11 +128,12 @@ class KittyDnDBridge: NSObject {
         controller.dragExited()
     }
 
-    @objc(performDropWithCellX:cellY:pixelX:pixelY:operation:pasteboard:)
+    @objc(performDropWithCellX:cellY:pixelX:pixelY:operation:pasteboard:sameWindowSelfDrag:)
     func performDrop(cellX: Int, cellY: Int, pixelX: Int, pixelY: Int,
-                     operation: Int, pasteboard: NSPasteboard) {
+                     operation: Int, pasteboard: NSPasteboard, sameWindowSelfDrag: Bool) {
         let drop = KittyDnDPasteboardDropData(pasteboard: pasteboard)
         controller.performDrop(cellX: cellX, cellY: cellY, pixelX: pixelX,
-                               pixelY: pixelY, operations: operation, drop: drop)
+                               pixelY: pixelY, operations: operation, drop: drop,
+                               originatedInSameWindow: sameWindowSelfDrag)
     }
 }

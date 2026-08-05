@@ -855,6 +855,22 @@ final class KittyDnDOfferTests: XCTestCase {
                        "self-drag guard must survive \(midDragSequence)")
     }
 
+    // A drag from another pane of the SAME window (detected at the AppKit layer)
+    // must be refused with EPERM even though this session's own self-drag flag is
+    // not set.
+    func testCrossPaneSelfDragIsRefusedWithEPERM() {
+        let recorder = Recorder()
+        let c = makeController(host: FakeDragHost(), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/plain"],
+                                         dataByIndex: [1: Data("secret".utf8)]),
+                      originatedInSameWindow: true)
+        recorder.reports.removeAll()
+        c.handleInboundSequence("t=r:x=1")
+        XCTAssertEqual(recorder.last?.textPayload, "EPERM")
+    }
+
     // A normal (external-source) drop is served: no self-drag is active.
     func testExternalDropIsNotRefused() {
         let recorder = Recorder()

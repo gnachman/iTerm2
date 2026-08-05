@@ -17,10 +17,18 @@
 import AppKit
 
 @available(macOS 11.0, *)
+@objc(iTermKittyDnDViewDragHost)
 @MainActor
 final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
     private weak var dataSource: KittyDnDBridgeDataSource?
     weak var controller: KittyDnDController?
+
+    /// The window the drag-out originates from. A drop whose NSDraggingSource is a
+    /// KittyDnDViewDragHost with this same window is a same-window self-drag, which
+    /// the spec requires be refused (EPERM).
+    @objc var sourceWindow: NSWindow? {
+        return dataSource?.kittyDnDView?.window
+    }
 
     /// The mouse event that started the gesture, captured when the terminal told
     /// the program about it. Used to begin the drag once the program says go.

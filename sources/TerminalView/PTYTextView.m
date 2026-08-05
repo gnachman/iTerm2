@@ -5193,12 +5193,21 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         int operation;
         [self kittyDnDParamsForSender:sender coord:&coord pixel:&pixel operation:&operation];
         RLog(@"Forwarding drop to Kitty DnD program");
+        // Detect a same-window self-drag (e.g. dragged out of another split pane):
+        // the spec requires refusing data reads for a drag that originated in the
+        // same window, which the per-session guard alone cannot see across panes.
+        BOOL sameWindowSelfDrag = NO;
+        id draggingSource = [sender draggingSource];
+        if ([draggingSource isKindOfClass:[iTermKittyDnDViewDragHost class]]) {
+            sameWindowSelfDrag = ([(iTermKittyDnDViewDragHost *)draggingSource sourceWindow] == self.window);
+        }
         [kittyBridge performDropWithCellX:coord.x
                                     cellY:coord.y
                                    pixelX:(int)round(pixel.x)
                                    pixelY:(int)round(pixel.y)
                                 operation:operation
-                               pasteboard:sender.draggingPasteboard];
+                               pasteboard:sender.draggingPasteboard
+                        sameWindowSelfDrag:sameWindowSelfDrag];
         return YES;
     }
 

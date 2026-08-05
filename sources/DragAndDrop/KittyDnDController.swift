@@ -321,18 +321,24 @@ final class KittyDnDController {
                        operations: 0, mimeTypes: nil)
     }
 
+    /// - Parameter originatedInSameWindow: whether the AppKit layer determined the
+    ///   drag came from a Kitty drag-out in the same OS window (e.g. another split
+    ///   pane). The spec requires EPERM for a drop whose drag originated in the
+    ///   same window, which per-session state alone cannot detect across panes.
     func performDrop(cellX: Int, cellY: Int, pixelX: Int, pixelY: Int,
-                     operations: Int, drop: KittyDnDDropData) {
+                     operations: Int, drop: KittyDnDDropData,
+                     originatedInSameWindow: Bool = false) {
         guard isAcceptingDrops else { return }
         currentDrop = drop
         // A fresh drop: the previous drop's completed-operation no longer applies,
         // and any read still in flight from before must not stream into this drop.
         lastCompletedDropOperation = nil
         acceptGeneration += 1
-        // Latch whether this drop is our own drag-out landing here, so the later
-        // (asynchronous, over-the-pty) data reads are refused even after the
-        // native drag has ended and cleared selfDragInProgress.
-        currentDropIsSelfDrag = selfDragInProgress
+        // Latch whether this drop is our own drag-out landing here (same session,
+        // via selfDragInProgress) or a drag from another pane of the same window
+        // (via the AppKit signal), so the later asynchronous over-the-pty data
+        // reads are refused even after the native drag has ended.
+        currentDropIsSelfDrag = selfDragInProgress || originatedInSameWindow
         sendMoveOrDrop(type: "M", cellX: cellX, cellY: cellY, pixelX: pixelX,
                        pixelY: pixelY, operations: operations, mimeTypes: drop.mimeTypes)
     }
