@@ -270,15 +270,34 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
     }
 }
 
+// Grow a style-provided single-row height to fit the rows the bar will actually use.
+// Styles report their own single-row height; the two-row geometry belongs to the
+// shared layer (PSMTabBarControl) so every theme gets it. A no-op on one row, and
+// for vertical bars, where horizontalRowCount is always 1.
+- (CGFloat)heightForRowsGivenSingleRowHeight:(CGFloat)singleRowHeight {
+    if ([self horizontalRowCount] > 1) {
+        return [self twoRowHeightForSingleRowHeight:singleRowHeight];
+    }
+    return singleRowHeight;
+}
+
 - (void)setOrientation:(PSMTabBarOrientation)orientation {
     [super setOrientation:orientation];
     if (@available(macOS 26, *)) {
         self.style.orientation = self.orientation;
-        CGFloat tabBarHeight = self.style.tabBarHeight;
-        if (tabBarHeight <= 0) {
-            tabBarHeight = [self.delegate tabViewDesiredTabBarHeight:self.tabView];
+        const CGFloat styleHeight = self.style.tabBarHeight;
+        if (styleHeight > 0) {
+            // The style's height is per-row, so apply the row count here. This method
+            // runs on every layout pass (via setTabLocation:), so without it a
+            // two-row bar was immediately shrunk back to one row's height after
+            // updateHeightWithDefault: had set it correctly — leaving both rows
+            // crammed into a single-row-tall bar in themes whose style reports a
+            // nonzero height, i.e. everything except Minimal (0) and Tahoe.
+            self.height = [self heightForRowsGivenSingleRowHeight:styleHeight];
+        } else {
+            // Already row-aware: the delegate's desired height accounts for the rows.
+            self.height = [self.delegate tabViewDesiredTabBarHeight:self.tabView];
         }
-        self.height = tabBarHeight;
     }
     self.showAddTabButton = ![iTermAdvancedSettingsModel removeAddTabButton] && (orientation == PSMTabBarHorizontalOrientation);
 }
@@ -290,7 +309,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
             self.style.orientation = self.orientation;
             const CGFloat styleHeight = self.style.tabBarHeight;
             if (styleHeight > 0) {
-                self.height = styleHeight;
+                self.height = [self heightForRowsGivenSingleRowHeight:styleHeight];
                 if (self.height != previousHeight) {
                     [self update:NO];
                 }

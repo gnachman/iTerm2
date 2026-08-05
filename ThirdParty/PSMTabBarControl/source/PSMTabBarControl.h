@@ -273,6 +273,12 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 - (void)changeIdentifier:(nullable id)newIdentifier atIndex:(int)theIndex;
 - (void)moveTabAtIndex:(NSInteger)i1 toIndex:(NSInteger)i2;
 
+// Re-lay out the cells. Call after changing anything the layout depends on that the
+// control can't observe for itself, such as -height. Declared here for subclasses:
+// PSMTabBarControlProtocol also declares it, but PSMTabBarControl doesn't list that
+// protocol in its interface, so it wasn't visible through this header.
+- (void)update:(BOOL)animate;
+
 // the buttons
 - (nullable PSMRolloverButton *)addTabButton;
 
