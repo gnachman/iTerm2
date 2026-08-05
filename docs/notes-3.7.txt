@@ -2569,6 +2569,11 @@ Bug Fixes:
   resolution, so a bracket around an English
   phrase inside Persian is handled the same
   way other Mac apps handle it.
+- Persian and Arabic quotation marks « » are
+  drawn as typed instead of bidi-mirrored, so
+  «text» keeps its marks hugging the text
+  rather than pointing outward. Brackets and
+  parentheses still mirror.
 - New Advanced setting, off by default: “Treat
   Latin words as left-to-right islands in
   right-to-left text.” Turn it on and English

@@ -156,11 +156,14 @@ fileprivate struct IntermediateLookupTable {
     // has no cell.
     init(line: CTLine, string: NSString, cellForIndex: [Int32], count: Int) {
         self.count = count
-        // When Latin runs are isolated, guillemets keep their natural glyph
-        // (« opens on the right in Persian, and stays un-flipped around English)
-        // rather than following the standard bidi mirroring the user found
-        // inverted. Brackets still mirror, matching TextEdit / macOS.
-        let dontMirrorPunctuation = iTermAdvancedSettingsModel.isolateLatinRunsInRTL()
+        // Guillemets keep their typed glyph instead of following bidi mirroring.
+        // The Unicode algorithm mirrors « » (and ‹ ›) in a right-to-left run, so
+        // «متن» renders »متن« with the marks pointing outward — CoreText and
+        // TextEdit do this. Persian/Arabic readers expect the marks to hug the
+        // text as typed («متن»), so we deliberately don't mirror them. Brackets
+        // and parentheses still mirror, matching macOS. This is unconditional
+        // (not tied to the Latin-islands setting); it only runs at all when
+        // right-to-left support is enabled, so it's inert otherwise.
         func isGuillemet(_ c: unichar) -> Bool {
             return c == 0x00AB || c == 0x00BB || c == 0x2039 || c == 0x203A
         }
@@ -212,7 +215,7 @@ fileprivate struct IntermediateLookupTable {
                         var chars: [unichar] = [ch]
                         var defaultGlyphs = [CGGlyph](repeating: 0, count: 1)
                         CTFontGetGlyphsForCharacters(font, &chars, &defaultGlyphs, 1)
-                        if glyphs[i] != defaultGlyphs[0] && !(dontMirrorPunctuation && isGuillemet(ch)) {
+                        if glyphs[i] != defaultGlyphs[0] && !isGuillemet(ch) {
                             mirroredIndexes.insert(sourceCell)
                         }
                     }
