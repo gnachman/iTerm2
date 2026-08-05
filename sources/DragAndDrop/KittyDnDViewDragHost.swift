@@ -139,6 +139,9 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
               image.data.count == image.width * image.height * samplesPerPixel else {
             return nil
         }
+        // Kitty's RGBA (format 32) is non-premultiplied; say so or semi-transparent
+        // pixels render with wrong colors.
+        let bitmapFormat: NSBitmapImageRep.Format = samplesPerPixel == 4 ? .alphaNonpremultiplied : []
         guard let rep = NSBitmapImageRep(
             bitmapDataPlanes: nil,
             pixelsWide: image.width,
@@ -148,6 +151,7 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
             hasAlpha: samplesPerPixel == 4,
             isPlanar: false,
             colorSpaceName: .deviceRGB,
+            bitmapFormat: bitmapFormat,
             bytesPerRow: image.width * samplesPerPixel,
             bitsPerPixel: samplesPerPixel * 8),
               let dest = rep.bitmapData else {
