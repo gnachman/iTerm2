@@ -4844,10 +4844,6 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     *operationOut = operation == 0 ? 1 : operation;
 }
 
-- (NSDragOperation)dragOperationFromKittyOperation:(int)operation {
-    return (operation == 2) ? NSDragOperationMove : NSDragOperationCopy;
-}
-
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
     // NOTE: draggingUpdated: calls this method because they need the same implementation.
     iTermKittyDnDBridge *bridge = [self kittyDnDBridgeForDrag];
@@ -4862,7 +4858,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                   pixelY:(int)round(pixel.y)
                                operation:operation
                               pasteboard:sender.draggingPasteboard];
-        return [self dragOperationFromKittyOperation:operation];
+        // Report the operation the PROGRAM accepted (via its t=m:o reply), not
+        // the source's allowed mask. It is none until the program replies, so the
+        // drop reads as "not accepted" during that round trip.
+        return bridge.forwardedDragOperation;
     }
     int numValid = -1;
     if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {  // Option-drag to copy
@@ -4901,7 +4900,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                   pixelX:(int)round(pixel.x)
                                   pixelY:(int)round(pixel.y)
                                operation:operation];
-        return [self dragOperationFromKittyOperation:operation];
+        return bridge.forwardedDragOperation;
     }
     NSPoint windowDropPoint = [sender draggingLocation];
     NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
@@ -5183,6 +5182,12 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     // Route the drop to a program that has opted into Kitty drag-and-drop.
     iTermKittyDnDBridge *kittyBridge = [self kittyDnDBridgeForDrag];
     if (kittyBridge) {
+        // The program must have accepted the drop (a nonzero operation in its
+        // t=m:o reply). If it rejected or has not replied, do not deliver.
+        if (kittyBridge.forwardedDragOperation == NSDragOperationNone) {
+            RLog(@"Kitty DnD program has not accepted the drop; refusing");
+            return NO;
+        }
         VT100GridCoord coord;
         NSPoint pixel;
         int operation;

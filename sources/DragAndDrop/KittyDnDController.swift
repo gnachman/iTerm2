@@ -42,6 +42,11 @@ final class KittyDnDController {
     // The MIME types the program announced it accepts. Currently informational
     // (our drop path sends the pasteboard's full list); exposed for tests.
     private(set) var acceptedMimeTypes: [String] = []
+    // The operation the program said it will perform for the current drag, from
+    // its t=m:o reply: 0 = not accepted, 1 = copy, 2 = move. nil means it has not
+    // replied yet, in which case the drop is not (yet) accepted. Reset when a drag
+    // enters or leaves.
+    private(set) var acceptedDropOperation: Int?
     private var peerMachineID: String?
     private var currentDrop: KittyDnDDropData?
     // Whether the current drop originated from our own drag-out in this same
@@ -126,6 +131,7 @@ final class KittyDnDController {
     func reset() {
         isAcceptingDrops = false
         acceptedMimeTypes = []
+        acceptedDropOperation = nil
         peerMachineID = nil
         currentDrop = nil
         currentDropIsSelfDrag = false
@@ -158,10 +164,13 @@ final class KittyDnDController {
         case "r":
             handleDataRequest(message)
         case "m":
-            // The program's acceptance response to a move; nothing to do here in
-            // the accept-drop path (the AppKit adapter reads the chosen operation
-            // in a later phase).
-            break
+            // The program's acceptance reply to a move: t=m:o=O tells us the
+            // operation it will perform (0 not accepted, 1 copy, 2 move). The
+            // AppKit adapter reads acceptedDropOperation to set the OS drag
+            // feedback and to gate the drop.
+            if let operation = message.intValue("o") {
+                acceptedDropOperation = operation
+            }
         case "o":
             handleOffer(message)
         case "p":
@@ -234,6 +243,7 @@ final class KittyDnDController {
         currentDrop = nil
         currentDropIsSelfDrag = false
         lastCompletedDropOperation = nil
+        acceptedDropOperation = nil
         acceptGeneration += 1
         directoryHandles.removeAll()
         nextDirectoryHandle = 2
@@ -249,6 +259,8 @@ final class KittyDnDController {
 
     func dragExited() {
         guard isAcceptingDrops else { return }
+        // The drag left; a re-enter starts a fresh acceptance negotiation.
+        acceptedDropOperation = nil
         sendMoveOrDrop(type: "m", cellX: -1, cellY: -1, pixelX: 0, pixelY: 0,
                        operations: 0, mimeTypes: nil)
     }

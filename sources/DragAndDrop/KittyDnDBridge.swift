@@ -112,6 +112,18 @@ class KittyDnDBridge: NSObject {
                              pixelY: pixelY, operations: operation)
     }
 
+    /// The drag operation to report to the OS for a forwarded drag, from the
+    /// program's latest t=m:o reply: none until it replies, or if it rejected
+    /// (o=0); copy for o=1; move for o=2. PTYTextView returns this from
+    /// draggingEntered/Updated and refuses the drop when it is none.
+    @objc var forwardedDragOperation: NSDragOperation {
+        switch controller.acceptedDropOperation {
+        case 1: return .copy
+        case 2: return .move
+        default: return []
+        }
+    }
+
     @objc func draggingExited() {
         controller.dragExited()
     }

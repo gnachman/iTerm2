@@ -526,6 +526,64 @@ final class KittyDnDAcceptTests: XCTestCase {
         XCTAssertEqual(resp?.textPayload, "ENOENT")
     }
 
+    // MARK: - Program acceptance reply (t=m:o) (#3)
+
+    // The program replies to our t=m with the operation it will perform (0 not
+    // accepted, 1 copy, 2 move). Until then the drop is not accepted.
+    func testAcceptOperationIsNilUntilProgramReplies() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.dragEntered(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0,
+                      operations: 3, mimeTypes: ["text/plain"])
+        XCTAssertNil(c.acceptedDropOperation)
+    }
+
+    func testProgramAcceptReplyIsRecorded() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.dragEntered(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0,
+                      operations: 3, mimeTypes: ["text/plain"])
+        c.handleInboundSequence("t=m:o=2;text/plain")
+        XCTAssertEqual(c.acceptedDropOperation, 2)
+    }
+
+    func testProgramRejectReplyIsRecorded() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.dragEntered(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0,
+                      operations: 3, mimeTypes: ["text/plain"])
+        c.handleInboundSequence("t=m:o=0")
+        XCTAssertEqual(c.acceptedDropOperation, 0)
+    }
+
+    func testAcceptOperationResetsOnNewDrag() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.dragEntered(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0,
+                      operations: 3, mimeTypes: ["text/plain"])
+        c.handleInboundSequence("t=m:o=1")
+        XCTAssertEqual(c.acceptedDropOperation, 1)
+        // A new drag cycle starts with no reply yet.
+        c.dragEntered(cellX: 1, cellY: 1, pixelX: 0, pixelY: 0,
+                      operations: 3, mimeTypes: ["text/plain"])
+        XCTAssertNil(c.acceptedDropOperation)
+    }
+
+    func testAcceptOperationResetsOnExit() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.dragEntered(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0,
+                      operations: 3, mimeTypes: ["text/plain"])
+        c.handleInboundSequence("t=m:o=1")
+        c.dragExited()
+        XCTAssertNil(c.acceptedDropOperation)
+    }
+
     // MARK: - Drop completion (t=r:o=operation) (#2)
 
     // Spec: "Once the client program finishes reading all the dropped data it
