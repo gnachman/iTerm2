@@ -4908,8 +4908,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (void)draggingExited:(nullable id <NSDraggingInfo>)sender {
     // Report the leave to the program if this drag was routed to it, using the
-    // latched decision so a program that stopped accepting mid-drag still gets a
-    // leave. The drag left our view; clear the latch (a re-enter re-decides).
+    // latched decision so a mid-drag Option press does not suppress it (the
+    // controller still no-ops the leave if the program has since sent t=A). The
+    // drag left our view; clear the latch (a re-enter re-decides).
     [[self latchedKittyDragBridge] draggingExited];
     _kittyDragRoutedForCurrentDrag = NO;
     _drawingHelper.showDropTargets = NO;
