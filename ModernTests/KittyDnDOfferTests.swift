@@ -380,6 +380,78 @@ final class KittyDnDOfferTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: dirURL.appendingPathComponent("b.txt")), Data("B".utf8))
     }
 
+    // A single remote drag with several uri-list entries; `respond` serves each
+    // t=k request. Returns the local temp URLs from the started drag's offer.
+    private func runRemoteDrag(uriList: String,
+                              respond: @escaping (KittyDnDMessage, KittyDnDController) -> Void)
+        async throws -> [URL] {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = remoteOfferController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:o=1;text/uri-list")
+        presend(c, index: 0, data: Data(uriList.utf8))
+        let done = expectation(description: "drag or error")
+        done.assertForOverFulfill = false
+        recorder.onReport = { msg in
+            if msg.type == "k" { respond(msg, c) } else if msg.type == "E" { done.fulfill() }
+        }
+        c.handleInboundSequence("t=P:x=-1")
+        await fulfillment(of: [done], timeout: 5)
+        guard let uriData = host.begun.first?.data[0] else { return [] }
+        return String(decoding: uriData, as: UTF8.self)
+            .split(separator: "\r\n").map(String.init).compactMap { URL(string: $0) }
+    }
+
+    // A regular file may be flagged explicitly with X=0 (not just absent X); it
+    // must be treated as a file, not directory handle 0.
+    func testRemoteFileWithExplicitX0IsRegularFile() async throws {
+        let urls = try await runRemoteDrag(uriList: "file:///remote/a.txt") { msg, c in
+            c.handleInboundSequence(
+                KittyDnDMessage(metadata: ["t": "k", "x": msg.metadata["x"]!, "X": "0"],
+                                dataPayload: Data("hello".utf8)).serializedContent())
+        }
+        XCTAssertEqual(urls.count, 1)
+        defer { try? FileManager.default.removeItem(at: urls[0].deletingLastPathComponent().deletingLastPathComponent()) }
+        XCTAssertEqual(try Data(contentsOf: urls[0]), Data("hello".utf8))
+    }
+
+    // Two offered files with the same basename must not overwrite each other.
+    func testRemoteDuplicateBasenamesDoNotCollide() async throws {
+        let urls = try await runRemoteDrag(uriList: "file:///a/x.txt\r\nfile:///b/x.txt") { msg, c in
+            let content = msg.metadata["x"] == "1" ? "AAA" : "BBB"
+            c.handleInboundSequence(
+                KittyDnDMessage(metadata: ["t": "k", "x": msg.metadata["x"]!],
+                                dataPayload: Data(content.utf8)).serializedContent())
+        }
+        XCTAssertEqual(urls.count, 2)
+        XCTAssertNotEqual(urls[0], urls[1])
+        XCTAssertEqual(try Data(contentsOf: urls[0]), Data("AAA".utf8))
+        XCTAssertEqual(try Data(contentsOf: urls[1]), Data("BBB".utf8))
+        try? FileManager.default.removeItem(at: urls[0].deletingLastPathComponent().deletingLastPathComponent())
+    }
+
+    // A symlink entry (X=1) is skipped, not materialized, and does not appear in
+    // the drag (its target is untrusted and meaningless on this machine).
+    func testRemoteSymlinkEntryIsSkipped() async throws {
+        let urls = try await runRemoteDrag(uriList: "file:///a.txt\r\nfile:///evil-link") { msg, c in
+            if msg.metadata["x"] == "1" {
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "k", "x": "1"],
+                                    dataPayload: Data("hello".utf8)).serializedContent())
+            } else {
+                // Symlink pointing at a local secret.
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "k", "x": "2", "X": "1"],
+                                    dataPayload: Data("/Users/victim/.ssh/id_rsa".utf8)).serializedContent())
+            }
+        }
+        XCTAssertEqual(urls.count, 1, "the symlink must be dropped from the drag")
+        XCTAssertEqual(urls[0].lastPathComponent, "a.txt")
+        try? FileManager.default.removeItem(at: urls[0].deletingLastPathComponent().deletingLastPathComponent())
+    }
+
     // reset() (a new prompt) drains a pending data request with nil.
     func testResetDrainsPendingRequestWithNil() {
         let recorder = Recorder()

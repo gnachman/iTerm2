@@ -66,6 +66,10 @@ final class KittyDnDController {
     // Temp directory on this machine holding files fetched from a remote program
     // for an in-progress drag-out; removed when the drag finishes.
     private var remoteDragTempDir: URL?
+    // Bumped whenever the offer state is reset. An async remote-file build
+    // captures it and aborts if it changes, so a superseded build cannot stomp a
+    // newer drag's state.
+    private var offerGeneration = 0
 
     init(ourMachineID: String,
          endpoint: KittyDnDEndpoint,
@@ -416,6 +420,11 @@ final class KittyDnDController {
     /// Fetch the offered files from the remote program via t=k into a temp dir,
     /// then drag those local copies.
     private func beginRemoteFileDrag(uriListIndex: Int) async {
+        // Discard any temp dir from a prior build, and take a generation so that a
+        // reset / new offer arriving while we await can abort this build instead
+        // of stomping the newer one.
+        cleanupRemoteDragTempDir()
+        let generation = offerGeneration
         let names = Self.uriListNames(offerData[uriListIndex])
         guard !names.isEmpty else {
             send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "EINVAL:no files"))
@@ -424,19 +433,38 @@ final class KittyDnDController {
         }
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("iterm2-kittydnd-\(UUID().uuidString)")
-        remoteDragTempDir = tempDir
         var localURLs: [URL] = []
         for (offset, name) in names.enumerated() {
-            let dest = tempDir.appendingPathComponent(name)
+            // Each entry gets its own numbered subdirectory so two entries with
+            // the same basename cannot overwrite each other.
+            let dest = tempDir.appendingPathComponent(String(offset + 1)).appendingPathComponent(name)
             let ok = await materializeRemoteEntry(request: ["x": String(offset + 1)], to: dest)
+            guard generation == offerGeneration else {
+                Self.removeItemOffMainThread(tempDir)   // superseded; discard our work
+                return
+            }
             if !ok {
                 send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "EIO:fetch failed"))
-                cleanupRemoteDragTempDir()
+                Self.removeItemOffMainThread(tempDir)
                 resetOfferInProgress()
                 return
             }
-            localURLs.append(dest)
+            // A refused entry (e.g. an unsafe symlink) writes nothing; skip it.
+            if FileManager.default.fileExists(atPath: dest.path) {
+                localURLs.append(dest)
+            }
         }
+        guard generation == offerGeneration else {
+            Self.removeItemOffMainThread(tempDir)
+            return
+        }
+        guard !localURLs.isEmpty else {
+            send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "EIO:no usable files"))
+            Self.removeItemOffMainThread(tempDir)
+            resetOfferInProgress()
+            return
+        }
+        remoteDragTempDir = tempDir
         // Replace the uri-list in the offer with the local temp copies.
         var data = offerData
         data[uriListIndex] = Data(localURLs.map { $0.absoluteString }.joined(separator: "\r\n").utf8)
@@ -447,25 +475,23 @@ final class KittyDnDController {
     }
 
     /// Fetch one remote entry (identified by `request`, a t=k addressing dict)
-    /// and write it to `dest`: a regular file's bytes, a symlink's target, or a
-    /// directory (recursively). Returns false on any failure.
+    /// and write it to `dest`. Returns false only on a hard failure (a refused
+    /// entry, e.g. an unsafe symlink, returns true but writes nothing).
     private func materializeRemoteEntry(request: [String: String], to dest: URL) async -> Bool {
         guard let message = await fetchRemoteEntry(request) else {
             return false
         }
         let payload = message.dataPayload ?? Data()
-        if let typeFlag = message.metadata["X"] {
-            if typeFlag == "1" {
-                let target = String(decoding: payload, as: UTF8.self)
-                return await Self.writeOffMainThread {
-                    try? FileManager.default.createDirectory(
-                        at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
-                    try FileManager.default.createSymbolicLink(atPath: dest.path, withDestinationPath: target)
-                }
-            }
-            guard let handle = Int(typeFlag) else {
-                return false
-            }
+        // Type: absent or 0 = regular file, 1 = symlink, >=2 = directory handle.
+        let typeFlag = message.metadata["X"].flatMap(Int.init) ?? 0
+        switch typeFlag {
+        case 1:
+            // The symlink target is controlled by the untrusted remote and is
+            // meaningless on this machine; a symlink into the dragged tree could
+            // also exfiltrate a local file if the drop destination follows it.
+            // Skip symlinks entirely.
+            return true
+        case 2...:
             let created = await Self.writeOffMainThread {
                 try FileManager.default.createDirectory(at: dest, withIntermediateDirectories: true)
             }
@@ -474,17 +500,18 @@ final class KittyDnDController {
                 .map { Self.sanitizeComponent(String(decoding: $0, as: UTF8.self)) }
             for (offset, childName) in childNames.enumerated() {
                 let ok = await materializeRemoteEntry(
-                    request: ["Y": String(handle), "y": String(offset + 1)],
+                    request: ["Y": String(typeFlag), "y": String(offset + 1)],
                     to: dest.appendingPathComponent(childName))
                 if !ok { return false }
             }
             return true
-        }
-        // Regular file.
-        return await Self.writeOffMainThread {
-            try FileManager.default.createDirectory(
-                at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
-            try payload.write(to: dest)
+        default:
+            // Regular file (X absent or 0).
+            return await Self.writeOffMainThread {
+                try FileManager.default.createDirectory(
+                    at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try payload.write(to: dest)
+            }
         }
     }
 
@@ -511,9 +538,12 @@ final class KittyDnDController {
     private func cleanupRemoteDragTempDir() {
         guard let dir = remoteDragTempDir else { return }
         remoteDragTempDir = nil
-        let path = dir
+        Self.removeItemOffMainThread(dir)
+    }
+
+    private static func removeItemOffMainThread(_ url: URL) {
         Task.detached(priority: .utility) {
-            try? FileManager.default.removeItem(at: path)
+            try? FileManager.default.removeItem(at: url)
         }
     }
 
@@ -585,6 +615,7 @@ final class KittyDnDController {
     }
 
     private func resetOfferInProgress() {
+        offerGeneration += 1
         offerMimeTypes = []
         offerOperations = 0
         offerData = [:]
