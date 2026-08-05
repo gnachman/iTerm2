@@ -1110,6 +1110,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_nameController release];
     [_tailFindController stopTailFind];  // This frees the substring in the tail find context, if needed.
     _shell.delegate = nil;
+    [_kittyDnDBridge release];
     [_pasteboard release];
     [_pbtext release];
     [_creationDate release];
