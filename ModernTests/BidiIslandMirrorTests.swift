@@ -58,19 +58,22 @@ class BidiIslandMirrorTests: XCTestCase {
         return BidiDisplayInfoObjc(sca)
     }
 
-    // Parens are drawn as typed everywhere now (never bidi-mirrored), so a paren
-    // opening a Persian phrase after an English island stays «(فصل تابستان)»
-    // rather than flipping to «)فصل تابستان(».
-    func testParenOpeningPersianAfterIslandIsNotMirrored() {
+    // The open paren after an English island opens a Persian phrase, so it sits
+    // OUTSIDE the island and must mirror (this is the bug this feature fixed:
+    // the paren was absorbed into "School of Hip Hop (" and left un-mirrored).
+    // The open paren after an English island opens a Persian phrase, so it sits
+    // OUTSIDE the island and mirrors like standard bidi (the island-boundary fix:
+    // it was being absorbed into "School of Hip Hop (" and drawn un-flipped).
+    func testParenOpeningPersianAfterIslandMirrors() {
         let s = "School of Hip Hop (فصل تابستان) در شهر"
         guard let info = info(s) else { return XCTFail("no bidi info") }
         let ns = s as NSString
         let open = Int32(ns.range(of: "(").location)
         let close = Int32(ns.range(of: ")").location)
-        XCTAssertFalse(info.mirrorsSourceCell(open),
-                       "paren opening a Persian phrase must not mirror (drawn as typed)")
-        XCTAssertFalse(info.mirrorsSourceCell(close),
-                       "paren closing a Persian phrase must not mirror (drawn as typed)")
+        XCTAssertTrue(info.mirrorsSourceCell(open),
+                      "paren opening a Persian phrase after an English island must mirror")
+        XCTAssertTrue(info.mirrorsSourceCell(close),
+                      "paren closing a Persian phrase must mirror")
     }
 
     // A parenthetical that wraps English is part of the island and stays LTR, so
@@ -87,8 +90,8 @@ class BidiIslandMirrorTests: XCTestCase {
                        "paren wrapping English must not mirror")
     }
 
-    // One line with both: parens draw as typed for English AND Persian content —
-    // neither mirrors.
+    // One line with both: «(English)» stays LTR (no mirror) while «(فارسی)»
+    // mirrors, decided per-bracket by what the bracket wraps.
     func testEnglishAndPersianParentheticalsOnOneLine() {
         // Plain Persian words only (no combining marks) so cell == UTF-16 index.
         let s = "متن (English) و متن (فارسی)"
@@ -97,6 +100,6 @@ class BidiIslandMirrorTests: XCTestCase {
         let enOpen = Int32(ns.range(of: "(English").location)
         let faOpen = Int32(ns.range(of: "(فارسی").location)
         XCTAssertFalse(info.mirrorsSourceCell(enOpen), "English parenthetical must not mirror")
-        XCTAssertFalse(info.mirrorsSourceCell(faOpen), "Persian parenthetical must not mirror (as typed)")
+        XCTAssertTrue(info.mirrorsSourceCell(faOpen), "Persian parenthetical must mirror")
     }
 }
