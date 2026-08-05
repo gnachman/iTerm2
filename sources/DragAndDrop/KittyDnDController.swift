@@ -56,6 +56,12 @@ final class KittyDnDController {
     // reserved by the protocol for the file/symlink type indicators).
     private var directoryHandles: [Int: [URL]] = [:]
     private var nextDirectoryHandle = 2
+    // Bumped at every drop-context boundary (new drag cycle, new drop, drop
+    // completion, reset). An async filesystem read captures it before awaiting and
+    // discards its result if it changed, so a read still in flight when the drop
+    // is superseded or completed cannot stream stale data or resurrect a freed
+    // directory handle. This makes the "discard queued requests" guarantee real.
+    private var acceptGeneration = 0
     // The final operation from the last drop-completion signal (t=r:o=operation):
     // 0 means the drop was canceled, nonzero is the action the program took.
     private(set) var lastCompletedDropOperation: Int?
@@ -124,6 +130,7 @@ final class KittyDnDController {
         currentDrop = nil
         currentDropIsSelfDrag = false
         selfDragInProgress = false
+        acceptGeneration += 1
         directoryHandles.removeAll()
         nextDirectoryHandle = 2
         lastCompletedDropOperation = nil
@@ -226,6 +233,8 @@ final class KittyDnDController {
         // pointed into the previous drop's files.
         currentDrop = nil
         currentDropIsSelfDrag = false
+        lastCompletedDropOperation = nil
+        acceptGeneration += 1
         directoryHandles.removeAll()
         nextDirectoryHandle = 2
         sendMoveOrDrop(type: "m", cellX: cellX, cellY: cellY, pixelX: pixelX,
@@ -248,6 +257,10 @@ final class KittyDnDController {
                      operations: Int, drop: KittyDnDDropData) {
         guard isAcceptingDrops else { return }
         currentDrop = drop
+        // A fresh drop: the previous drop's completed-operation no longer applies,
+        // and any read still in flight from before must not stream into this drop.
+        lastCompletedDropOperation = nil
+        acceptGeneration += 1
         // Latch whether this drop is our own drag-out landing here, so the later
         // (asynchronous, over-the-pty) data reads are refused even after the
         // native drag has ended and cleared selfDragInProgress.
@@ -263,6 +276,7 @@ final class KittyDnDController {
         lastCompletedDropOperation = operation
         currentDrop = nil
         currentDropIsSelfDrag = false
+        acceptGeneration += 1
         directoryHandles.removeAll()
         nextDirectoryHandle = 2
     }
@@ -367,9 +381,14 @@ final class KittyDnDController {
     /// handle (X=handle). The dropped files are local to us, so this is the
     /// terminal-reads-and-streams half of the protocol's cross-machine support.
     private func answerFilesystemEntry(url: URL, responseMetadata: [String: String]) {
+        // Capture the drop context now; if it changes while we read (the drop was
+        // completed, superseded, or reset), discard the result so we neither
+        // stream stale bytes nor resurrect a freed directory handle.
+        let generation = acceptGeneration
         Task { @MainActor in
             do {
                 let entry = try await Self.readEntryOffMainThread(url)
+                guard generation == self.acceptGeneration else { return }
                 switch entry {
                 case .regularFile(let data):
                     sendChunkedData(baseMetadata: responseMetadata, data: data)
@@ -387,8 +406,10 @@ final class KittyDnDController {
             } catch is EntryTypeError {
                 // Spec: EINVAL if the entry is not a regular file, symlink, or
                 // directory (e.g. a socket or FIFO).
+                guard generation == self.acceptGeneration else { return }
                 sendError(baseMetadata: responseMetadata, code: "EINVAL")
             } catch {
+                guard generation == self.acceptGeneration else { return }
                 sendError(baseMetadata: responseMetadata, code: "EIO")
             }
         }
