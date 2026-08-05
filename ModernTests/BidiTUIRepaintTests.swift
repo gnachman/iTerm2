@@ -335,4 +335,60 @@ class BidiTUIRepaintTests: XCTestCase {
         })
         assertHasRTLRuns(historyInfo, "after scrolling into history")
     }
+
+    // The visual (display) order a row renders in: read the row content and its
+    // bidi map exactly as the renderer does, then place each logical cell at its
+    // visual column. With no bidi the row is drawn in logical order.
+    private func visualOrder(_ screen: VT100Screen, row: Int32) -> (visual: String, hasBidi: Bool) {
+        let sca = screen.screenCharArray(forLine: row)
+        let logical = Array(sca.stringValue)
+        guard let bidi = screen.bidiInfo(forLine: row) else {
+            return (sca.stringValue, false)
+        }
+        var visual = ""
+        for v in 0..<bidi.numberOfCells {
+            let lg = Int(bidi.logicalForVisual(v))
+            if lg >= 0 && lg < logical.count { visual.append(logical[lg]) }
+        }
+        return (visual, true)
+    }
+
+    // Regression: a wrapped RTL paragraph that scrolls into scrollback must keep
+    // its reorder map on EVERY wrapped row, not just the first. The linebuffer
+    // double-split each continuation row's bidi to an empty range and dropped it,
+    // so from history those rows drew in logical order — reversed/scrambled. This
+    // drives the same accessor the renderer reads (screen.bidiInfo(forLine:)) and
+    // requires each row to render identically from history and from the grid.
+    func testWrappedRTLKeepsBidiAfterScrollingIntoHistory() {
+        let para = "اگر بگویی امروز روز کاری‌ات است یا تعطیل، تنها هستی یا با کسی، و چند ساعت آزاد داری، می‌توانم این را به یک برنامه‌ی ساعت‌به‌ساعت واقعی برای برلین تبدیل کنم."
+        let width: Int32 = 77
+        let screen = makeScreen(width: width, height: 6)
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            mutableState.maxScrollbackLines = 1000
+            mutableState.appendString(atCursor: para)
+            mutableState.appendCarriageReturnLineFeed()
+            mutableState.populateRTLStateIfNeeded()
+        })
+        let gridRow0 = visualOrder(screen, row: 0)
+        let gridRow1 = visualOrder(screen, row: 1)
+        XCTAssertTrue(gridRow0.hasBidi, "row 0 must have bidi on the grid")
+        XCTAssertTrue(gridRow1.hasBidi, "continuation row must have bidi on the grid")
+
+        // Scroll the paragraph up into the linebuffer, populating each frame.
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            for _ in 0..<10 {
+                mutableState.appendCarriageReturnLineFeed()
+                mutableState.populateRTLStateIfNeeded()
+            }
+        })
+        let histRow0 = visualOrder(screen, row: 0)
+        let histRow1 = visualOrder(screen, row: 1)
+        XCTAssertTrue(histRow0.hasBidi, "first wrapped row must keep bidi in history")
+        XCTAssertTrue(histRow1.hasBidi,
+                      "continuation wrapped row must keep bidi in history (else it draws scrambled)")
+        XCTAssertEqual(histRow0.visual, gridRow0.visual,
+                       "row 0 must render the same from history as on the grid")
+        XCTAssertEqual(histRow1.visual, gridRow1.visual,
+                       "continuation row must render the same from history as on the grid, not scrambled")
+    }
 }
