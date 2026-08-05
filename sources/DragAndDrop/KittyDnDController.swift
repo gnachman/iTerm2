@@ -728,6 +728,10 @@ final class KittyDnDController {
 
     func dragFinished(canceled: Bool) {
         send(KittyDnDMessage(metadata: ["t": "e", "x": "4", "y": canceled ? "1" : "0"]))
+        // The native drag has truly ended: it is now safe to drop the self-drag
+        // guard. This is the ONLY inbound-independent place it is cleared (plus
+        // reset()), so a program cannot clear it early to defeat the EPERM check.
+        selfDragInProgress = false
         // Do NOT delete the temp copies immediately: when the drop lands in
         // another terminal session, that session reads these files lazily over
         // the pty AFTER the drag ends, so deleting now would make its read fail.
@@ -748,7 +752,13 @@ final class KittyDnDController {
 
     private func resetOfferInProgress() {
         offerGeneration += 1
-        selfDragInProgress = false
+        // NOTE: selfDragInProgress is deliberately NOT cleared here. This runs
+        // from program-controlled inbound messages (t=o:x=2, a new offer, t=E
+        // cancel) that do not actually end the live OS drag (cancelDrag is
+        // best-effort and cannot stop a running NSDraggingSession). Clearing it
+        // here would let a program turn off the self-drag guard mid-drag and then
+        // read local files by dropping its own drag onto itself. It is cleared
+        // only when the native drag truly ends (dragFinished) or on reset().
         offerMimeTypes = []
         offerOperations = 0
         offerData = [:]

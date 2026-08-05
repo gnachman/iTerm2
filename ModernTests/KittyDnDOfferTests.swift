@@ -530,6 +530,38 @@ final class KittyDnDOfferTests: XCTestCase {
         XCTAssertEqual(recorder.last?.textPayload, "EPERM")
     }
 
+    // The self-drag guard must not be defeatable by program-controlled messages
+    // that clear offer state but do NOT end the live OS drag. A program could
+    // otherwise disable offers / cancel / re-offer mid-drag, then drop its own
+    // drag onto itself and read local files.
+    func testSelfDragEPERMSurvivesDisableOffersMidDrag() {
+        assertSelfDragStillRefusedAfter("t=o:x=2")
+    }
+
+    func testSelfDragEPERMSurvivesInboundCancelMidDrag() {
+        assertSelfDragStillRefusedAfter("t=E:y=-1")
+    }
+
+    func testSelfDragEPERMSurvivesNewOfferMidDrag() {
+        assertSelfDragStillRefusedAfter("t=o:o=1;text/plain")
+    }
+
+    private func assertSelfDragStillRefusedAfter(_ midDragSequence: String) {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = startedController(host: host, recorder: recorder)  // our drag is active
+        c.handleInboundSequence("t=a;text/plain")
+        // Attacker attempts to clear the self-drag flag without ending the drag.
+        c.handleInboundSequence(midDragSequence)
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/plain"],
+                                         dataByIndex: [1: Data("secret".utf8)]))
+        recorder.reports.removeAll()
+        c.handleInboundSequence("t=r:x=1")
+        XCTAssertEqual(recorder.last?.textPayload, "EPERM",
+                       "self-drag guard must survive \(midDragSequence)")
+    }
+
     // A normal (external-source) drop is served: no self-drag is active.
     func testExternalDropIsNotRefused() {
         let recorder = Recorder()
