@@ -151,6 +151,12 @@ const CGFloat PTYTextViewMarginClickGraceWidth = 2.0;
     // Helps drawing text and background.
     iTermTextDrawingHelper *_drawingHelper;
 
+    // Whether the current drag entering our view was routed to a Kitty DnD
+    // program. Latched at draggingEntered so a mid-drag Option press (or a program
+    // toggling accept) cannot flip routing to the legacy paste/upload path and
+    // strand the program.
+    BOOL _kittyDragRoutedForCurrentDrag;
+
     // Last position that accessibility was read up to.
     int _lastAccessibilityCursorX;
     long long _lastAccessibiltyAbsoluteCursorY;
@@ -4803,6 +4809,16 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return bridge.isAcceptingDrops ? bridge : nil;
 }
 
+// The bridge to route the current drag to, honoring the decision LATCHED at
+// draggingEntered rather than re-deciding (which would let a mid-drag Option
+// press or accept-toggle flip routing). nil means the legacy path owns this drag.
+- (iTermKittyDnDBridge *)latchedKittyDragBridge {
+    if (!_kittyDragRoutedForCurrentDrag) {
+        return nil;
+    }
+    return [self.delegate textViewKittyDnDBridge];
+}
+
 // Computes the drop location (cell + pixel offset within the cell) and the kitty
 // operation flags (1 copy, 2 move, 3 either) for a drag. The cell is
 // screen-relative (0..height-1), matching iTerm2's own mouse reporting, not the
@@ -4846,7 +4862,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
     // NOTE: draggingUpdated: calls this method because they need the same implementation.
+    // Latch the routing decision for this entry so mid-drag Option/accept changes
+    // cannot flip it.
     iTermKittyDnDBridge *bridge = [self kittyDnDBridgeForDrag];
+    _kittyDragRoutedForCurrentDrag = (bridge != nil);
     if (bridge) {
         VT100GridCoord coord;
         NSPoint pixel;
@@ -4863,6 +4882,13 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         // drop reads as "not accepted" during that round trip.
         return bridge.forwardedDragOperation;
     }
+    return [self legacyDraggingOperationForSender:sender];
+}
+
+// The default (paste/upload) drag feedback, factored out so draggingUpdated: can
+// reuse it WITHOUT calling draggingEntered: (which would re-latch the kitty/legacy
+// routing decision on every update).
+- (NSDragOperation)legacyDraggingOperationForSender:(id<NSDraggingInfo>)sender {
     int numValid = -1;
     if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {  // Option-drag to copy
         _drawingHelper.showDropTargets = YES;
@@ -4877,9 +4903,11 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (void)draggingExited:(nullable id <NSDraggingInfo>)sender {
-    // Only report the leave if we would have forwarded this drag (same gate as
-    // enter/update), so an Option-held upload drag does not send a stray leave.
-    [[self kittyDnDBridgeForDrag] draggingExited];
+    // Report the leave to the program if this drag was routed to it, using the
+    // latched decision so a program that stopped accepting mid-drag still gets a
+    // leave. The drag left our view; clear the latch (a re-enter re-decides).
+    [[self latchedKittyDragBridge] draggingExited];
+    _kittyDragRoutedForCurrentDrag = NO;
     _drawingHelper.showDropTargets = NO;
     [self.delegate textViewDidUpdateDropTargetVisibility];
     [self requestDelegateRedraw];
@@ -4889,7 +4917,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 // Called when the dragged object is moved within our drop area
 //
 - (NSDragOperation)draggingUpdated:(id <NSDraggingInfo>)sender {
-    iTermKittyDnDBridge *bridge = [self kittyDnDBridgeForDrag];
+    iTermKittyDnDBridge *bridge = [self latchedKittyDragBridge];
     if (bridge) {
         VT100GridCoord coord;
         NSPoint pixel;
@@ -4909,7 +4937,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         _drawingHelper.dropLine = dropLine;
         [self requestDelegateRedraw];
     }
-    return [self draggingEntered:sender];
+    // Use the legacy body directly (not draggingEntered:) so the latch is not
+    // re-decided mid-drag.
+    return [self legacyDraggingOperationForSender:sender];
 }
 
 //
@@ -4918,8 +4948,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 - (BOOL)prepareForDragOperation:(id <NSDraggingInfo>)sender {
     BOOL result;
 
-    // A program that accepts Kitty drag-and-drop drops handles this drag.
-    if ([self kittyDnDBridgeForDrag]) {
+    // A program that accepts Kitty drag-and-drop drops handles this drag (use the
+    // latched decision, matching what performDragOperation: will do).
+    if ([self latchedKittyDragBridge]) {
         return YES;
     }
 
@@ -5179,11 +5210,14 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     _drawingHelper.showDropTargets = NO;
     [self.delegate textViewDidUpdateDropTargetVisibility];
 
-    // Route the drop to a program that has opted into Kitty drag-and-drop.
-    iTermKittyDnDBridge *kittyBridge = [self kittyDnDBridgeForDrag];
+    // Route the drop per the decision latched at draggingEntered, so a mid-drag
+    // Option press or a program toggling accept cannot divert it to legacy paste.
+    iTermKittyDnDBridge *kittyBridge = [self latchedKittyDragBridge];
+    _kittyDragRoutedForCurrentDrag = NO;  // the drag is over; clear the latch
     if (kittyBridge) {
         // The program must have accepted the drop (a nonzero operation in its
-        // t=m:o reply). If it rejected or has not replied, do not deliver.
+        // t=m:o reply). If it rejected, has not replied, or stopped accepting
+        // mid-drag, do not deliver and do NOT fall back to the legacy paste path.
         if (kittyBridge.forwardedDragOperation == NSDragOperationNone) {
             RLog(@"Kitty DnD program has not accepted the drop; refusing");
             return NO;
