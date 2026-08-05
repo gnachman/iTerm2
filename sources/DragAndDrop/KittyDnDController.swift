@@ -39,7 +39,9 @@ final class KittyDnDController {
 
     // Accept-drop state.
     private(set) var isAcceptingDrops = false
-    private var acceptedMimeTypes: [String] = []
+    // The MIME types the program announced it accepts. Currently informational
+    // (our drop path sends the pasteboard's full list); exposed for tests.
+    private(set) var acceptedMimeTypes: [String] = []
     private var peerMachineID: String?
     private var currentDrop: KittyDnDDropData?
 
@@ -170,7 +172,8 @@ final class KittyDnDController {
 
     private func handleAccept(_ message: KittyDnDMessage) {
         // x=2 unregisters; anything else (including absent) registers.
-        if message.intValue("x") == 2 {
+        let x = message.intValue("x")
+        if x == 2 {
             isAcceptingDrops = false
             return
         }
@@ -189,7 +192,13 @@ final class KittyDnDController {
             // normalize to lower case to match our own lower-case hex.
             peerMachineID = machineID.lowercased()
         }
-        acceptedMimeTypes = tokens.filter { !Self.isMachineIDToken($0) }
+        // `t=a:x=1 ; machine id` is the dedicated machine-id registration escape
+        // code and is distinct from the MIME-list registration (`t=a ; mimes`).
+        // It must not clear the MIME types the program announced earlier, so only
+        // the MIME-list form updates acceptedMimeTypes.
+        if x != 1 {
+            acceptedMimeTypes = tokens.filter { !Self.isMachineIDToken($0) }
+        }
     }
 
     // MARK: - AppKit drag events (accept-drop)
@@ -237,10 +246,19 @@ final class KittyDnDController {
             return
         }
         let requestedIndex = message.intValue("x")
-        guard let index = requestedIndex,
-              let drop = currentDrop,
-              index >= 1, index <= drop.mimeTypes.count else {
+        guard let drop = currentDrop else {
+            // No drop in progress: the request is not valid.
             sendDataError(index: requestedIndex, code: "EINVAL")
+            return
+        }
+        guard let index = requestedIndex else {
+            // A data request with no MIME index is malformed.
+            sendDataError(index: nil, code: "EINVAL")
+            return
+        }
+        guard index >= 1, index <= drop.mimeTypes.count else {
+            // Spec: "Terminals must reply with ENOENT if the index is out of bounds."
+            sendDataError(index: index, code: "ENOENT")
             return
         }
         let mime = drop.mimeTypes[index - 1]
@@ -248,10 +266,15 @@ final class KittyDnDController {
         // A sub-index (y) request is the cross-machine path: the program asks for
         // one file entry within the uri-list so it can pull the actual bytes.
         if let entryIndex = message.intValue("y") {
-            guard mime == "text/uri-list",
-                  entryIndex >= 1, entryIndex <= drop.fileURLs.count else {
+            guard mime == "text/uri-list" else {
+                // Sub-indexing only applies to a uri-list entry.
                 sendError(baseMetadata: ["x": String(index), "y": String(entryIndex)],
                           code: "EINVAL")
+                return
+            }
+            guard entryIndex >= 1, entryIndex <= drop.fileURLs.count else {
+                sendError(baseMetadata: ["x": String(index), "y": String(entryIndex)],
+                          code: "ENOENT")
                 return
             }
             answerFilesystemEntry(url: drop.fileURLs[entryIndex - 1],
@@ -282,7 +305,7 @@ final class KittyDnDController {
             return
         }
         guard num >= 1, num <= children.count else {
-            sendError(baseMetadata: ["Y": String(handle), "x": String(num)], code: "EINVAL")
+            sendError(baseMetadata: ["Y": String(handle), "x": String(num)], code: "ENOENT")
             return
         }
         answerFilesystemEntry(url: children[num - 1],
@@ -311,6 +334,10 @@ final class KittyDnDController {
                     let names = children.map { $0.lastPathComponent }.joined(separator: "\u{0}")
                     sendChunkedData(baseMetadata: metadata, data: Data(names.utf8))
                 }
+            } catch is EntryTypeError {
+                // Spec: EINVAL if the entry is not a regular file, symlink, or
+                // directory (e.g. a socket or FIFO).
+                sendError(baseMetadata: responseMetadata, code: "EINVAL")
             } catch {
                 sendError(baseMetadata: responseMetadata, code: "EIO")
             }
@@ -329,11 +356,27 @@ final class KittyDnDController {
         // program, so flag X=1; the program then pulls each file's bytes in-band
         // by sub-index (t=r:x=idx:y=entry). For a local drop the paths are
         // directly usable and no flag is set.
-        let uris = drop.fileURLs.map { $0.absoluteString }
+        let uris = drop.fileURLs.map { Self.directoryAwareURIString($0) }
         let extra = isRemoteDrop ? ["X": "1"] : [:]
         sendData(index: index,
                  data: Data(uris.joined(separator: "\r\n").utf8),
                  extraMetadata: extra)
+    }
+
+    /// The absolute file:// string for `url`, with a trailing slash if it points
+    /// to a directory on disk. Spec: "All file:// URLs that point to directories
+    /// must end with a /." The on-disk type is authoritative because a URL handed
+    /// to us may have been built without directory awareness.
+    static func directoryAwareURIString(_ url: URL) -> String {
+        let string = url.absoluteString
+        guard url.isFileURL, !string.hasSuffix("/") else {
+            return string
+        }
+        var isDir: ObjCBool = false
+        if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue {
+            return string + "/"
+        }
+        return string
     }
 
     // MARK: - Offer / drag-out (inbound)
@@ -752,11 +795,18 @@ final class KittyDnDController {
         case directory([URL])       // sorted child URLs
     }
 
+    /// Thrown when an entry is neither a regular file, symlink, nor directory
+    /// (e.g. a socket or FIFO). Mapped to EINVAL per the spec.
+    private struct EntryTypeError: Error {}
+
     /// Classify and read `url` off the main thread. A symlink is reported as a
-    /// symlink (not followed); a directory yields its sorted children.
+    /// symlink (not followed); a directory yields its sorted children. A special
+    /// file (socket, FIFO, device) throws EntryTypeError and is NEVER opened for
+    /// reading, since opening a FIFO would block.
     private static func readEntryOffMainThread(_ url: URL) async throws -> FilesystemEntry {
         return try await Task.detached(priority: .utility) {
-            let values = try url.resourceValues(forKeys: [.isSymbolicLinkKey, .isDirectoryKey])
+            let values = try url.resourceValues(
+                forKeys: [.isSymbolicLinkKey, .isDirectoryKey, .isRegularFileKey])
             if values.isSymbolicLink == true {
                 let target = try FileManager.default.destinationOfSymbolicLink(atPath: url.path)
                 return .symlink(target)
@@ -766,6 +816,9 @@ final class KittyDnDController {
                     .contentsOfDirectory(at: url, includingPropertiesForKeys: nil)
                     .sorted { $0.lastPathComponent < $1.lastPathComponent }
                 return .directory(children)
+            }
+            guard values.isRegularFile == true else {
+                throw EntryTypeError()
             }
             return .regularFile(try Data(contentsOf: url))
         }.value

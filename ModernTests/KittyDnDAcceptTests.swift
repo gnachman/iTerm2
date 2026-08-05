@@ -522,5 +522,79 @@ final class KittyDnDAcceptTests: XCTestCase {
         let c = remoteDropController(fileURLs: [file], recorder: recorder)
         let resp = await awaitResponse(recorder, c, "t=r:x=1:y=99")
         XCTAssertEqual(resp?.type, "R")
+        // An out-of-bounds sub-index is "does not exist", not "invalid request".
+        XCTAssertEqual(resp?.textPayload, "ENOENT")
+    }
+
+    // MARK: - Error-code conformance (#8)
+
+    // The spec: "Terminals must reply with ENOENT if the index is out of bounds."
+    func testOutOfBoundsMimeIndexReturnsENOENT() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/plain"]))
+        c.handleInboundSequence("t=r:x=5")
+        XCTAssertEqual(recorder.last?.type, "R")
+        XCTAssertEqual(recorder.last?.textPayload, "ENOENT")
+    }
+
+    // The spec: "Terminals must respond with EINVAL if the file is not a regular
+    // file or symlink or directory." A FIFO is such a file; it must also never be
+    // opened for reading (that would block), so EINVAL comes from a type check.
+    func testNonRegularFileReturnsEINVAL() async throws {
+        let dir = makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let fifo = dir.appendingPathComponent("pipe")
+        XCTAssertEqual(mkfifo(fifo.path, 0o644), 0)
+        let recorder = Recorder()
+        let c = remoteDropController(fileURLs: [fifo], recorder: recorder)
+        let resp = await awaitResponse(recorder, c, "t=r:x=1:y=1")
+        XCTAssertEqual(resp?.type, "R")
+        XCTAssertEqual(resp?.textPayload, "EINVAL")
+    }
+
+    // MARK: - Machine-id registration (#10)
+
+    // "t=a:x=1 ; machine id" registers the peer's machine id. It is a separate
+    // escape code from the MIME-list registration and must not clear the MIME
+    // types the program previously announced.
+    func testMachineIdRegistrationPreservesMimes() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain text/uri-list")
+        XCTAssertEqual(c.acceptedMimeTypes, ["text/plain", "text/uri-list"])
+        c.handleInboundSequence("t=a:x=1;\(peerID)")
+        XCTAssertEqual(c.acceptedMimeTypes, ["text/plain", "text/uri-list"],
+                       "a machine-id registration must not wipe the accepted MIME list")
+        // And the machine id took effect: a uri-list drop is now cross-machine.
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/uri-list"],
+                                         fileURLs: [URL(fileURLWithPath: "/tmp/a.txt")]))
+        c.handleInboundSequence("t=r:x=1")
+        XCTAssertEqual(reassembledDataResponse(recorder)?.metadata["X"], "1")
+    }
+
+    // MARK: - Directory file:// URIs end with "/" (#6)
+
+    // The spec: "All file:// URLs that point to directories must end with a /."
+    func testDirectoryURIListEntryHasTrailingSlash() {
+        let dir = makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        // Build a directory URL WITHOUT a trailing slash to prove the controller
+        // adds it based on the on-disk type, not the incoming URL's shape.
+        let noSlash = URL(fileURLWithPath: dir.path, isDirectory: false)
+        XCTAssertFalse(noSlash.absoluteString.hasSuffix("/"))
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/uri-list")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/uri-list"], fileURLs: [noSlash]))
+        c.handleInboundSequence("t=r:x=1")
+        let uriList = String(data: reassembledDataResponse(recorder)?.dataPayload ?? Data(),
+                             encoding: .utf8)
+        XCTAssertEqual(uriList?.hasSuffix("/"), true,
+                       "a directory entry in the uri-list must end with a slash")
     }
 }
