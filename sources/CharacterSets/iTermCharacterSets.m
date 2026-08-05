@@ -1265,8 +1265,8 @@ static void iTermCharacterSetsInit(void) {
         setRange(&sCodePointsWithOwnCellBMP, 0x109e, 40);
         setRange(&sCodePointsWithOwnCellBMP, 0x10c7, 1);
         setRange(&sCodePointsWithOwnCellBMP, 0x10cd, 1);
-        setRange(&sCodePointsWithOwnCellBMP, 0x10d0, 143);
-        setRange(&sCodePointsWithOwnCellBMP, 0x1161, 232);
+        setRange(&sCodePointsWithOwnCellBMP, 0x10d0, 48);
+        setRange(&sCodePointsWithOwnCellBMP, 0x1200, 73);
         setRange(&sCodePointsWithOwnCellBMP, 0x124a, 4);
         setRange(&sCodePointsWithOwnCellBMP, 0x1250, 7);
         setRange(&sCodePointsWithOwnCellBMP, 0x1258, 1);
@@ -1436,7 +1436,7 @@ static void iTermCharacterSetsInit(void) {
         setRange(&sCodePointsWithOwnCellBMP, 0xa900, 38);
         setRange(&sCodePointsWithOwnCellBMP, 0xa92e, 25);
         setRange(&sCodePointsWithOwnCellBMP, 0xa952, 2);
-        setRange(&sCodePointsWithOwnCellBMP, 0xa95f, 30);
+        setRange(&sCodePointsWithOwnCellBMP, 0xa95f, 1);
         setRange(&sCodePointsWithOwnCellBMP, 0xa983, 48);
         setRange(&sCodePointsWithOwnCellBMP, 0xa9b4, 2);
         setRange(&sCodePointsWithOwnCellBMP, 0xa9ba, 2);
@@ -1471,8 +1471,6 @@ static void iTermCharacterSetsInit(void) {
         setRange(&sCodePointsWithOwnCellBMP, 0xabe9, 4);
         setRange(&sCodePointsWithOwnCellBMP, 0xabf0, 10);
         setRange(&sCodePointsWithOwnCellBMP, 0xac00, 11172);
-        setRange(&sCodePointsWithOwnCellBMP, 0xd7b0, 23);
-        setRange(&sCodePointsWithOwnCellBMP, 0xd7cb, 49);
         setRange(&sCodePointsWithOwnCellBMP, 0xf900, 366);
         setRange(&sCodePointsWithOwnCellBMP, 0xfa70, 106);
         setRange(&sCodePointsWithOwnCellBMP, 0xfb00, 7);

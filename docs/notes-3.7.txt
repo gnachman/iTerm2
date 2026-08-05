@@ -2568,3 +2568,9 @@ Bug Fixes:
   because your input method changed the
   character a key produces, iTerm2 now offers
   to interpret key bindings by physical key.
+- Fixed a bug where decomposed Hangul, such
+  as Korean filenames stored by HFS+, was
+  drawn as separate jamo letters with the
+  wrong width, which corrupted cursor
+  movement. Conjoining jamo now compose
+  into a single syllable cell.
