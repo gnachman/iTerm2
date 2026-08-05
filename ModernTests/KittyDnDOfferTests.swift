@@ -222,6 +222,22 @@ final class KittyDnDOfferTests: XCTestCase {
         XCTAssertEqual(host.begun.count, 0)
     }
 
+    // Attacker-controlled dimensions must not overflow/crash; they are rejected.
+    func testHugeImageDimensionsAreRejectedNotCrashed() {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = makeController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:o=1;text/plain")
+        presend(c, index: 0, data: Data("hi".utf8))
+        offerImage(c, index: -1, format: 32, width: Int.max, height: 2, data: Data([0]))
+        c.handleInboundSequence("t=P:x=-1")
+        XCTAssertEqual(recorder.last?.type, "E")
+        XCTAssertEqual(recorder.last?.textPayload, "EFBIG")
+        XCTAssertEqual(host.begun.count, 0)
+    }
+
     // With multiple images, the first (index -1) is used as the drag thumbnail.
     func testFirstOfMultipleImagesIsUsed() {
         let recorder = Recorder()

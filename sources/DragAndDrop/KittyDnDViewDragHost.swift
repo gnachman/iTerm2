@@ -131,7 +131,11 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
     /// Build an NSImage from raw RGB (format 24) or RGBA (format 32) pixel data.
     private static func image(fromRaw image: KittyDnDDragImage) -> NSImage? {
         let samplesPerPixel = image.format == 32 ? 4 : 3
+        // Bound the dimensions so the size arithmetic below cannot overflow, then
+        // require the data length to match exactly (the controller already
+        // validates the primary image; this keeps the renderer self-consistent).
         guard image.width > 0, image.height > 0,
+              image.width <= 1 << 16, image.height <= 1 << 16,
               image.data.count == image.width * image.height * samplesPerPixel else {
             return nil
         }

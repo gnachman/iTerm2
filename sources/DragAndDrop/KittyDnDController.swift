@@ -569,7 +569,11 @@ final class KittyDnDController {
             case 24, 32:
                 let bytesPerPixel = image.format == 32 ? 4 : 3
                 guard image.width > 0, image.height > 0 else { return "EINVAL" }
-                let expected = image.width * image.height * bytesPerPixel
+                // Compute width*height*bpp without trapping on overflow from
+                // attacker-controlled dimensions.
+                let (area, o1) = image.width.multipliedReportingOverflow(by: image.height)
+                let (expected, o2) = o1 ? (0, true) : area.multipliedReportingOverflow(by: bytesPerPixel)
+                if o1 || o2 { return "EFBIG" }
                 if image.data.count != expected { return "EINVAL" }
                 if expected > Self.maxImageBytes { return "EFBIG" }
             default:
