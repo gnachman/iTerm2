@@ -294,15 +294,17 @@ const NSInteger kLongMaximumWordLength = 100000;
                                      big:(BOOL)big
                 additionalWordCharacters:(NSString *)additionalWordCharacters
                            regexPatterns:(NSArray<NSString *> *)regexPatterns {
+    // `visualLocation` is already a LOGICAL coordinate here: every caller (the
+    // mouse handler's begin-selection at PTYMouseHandler.m, autocomplete, and
+    // logical movement) has already converted the click from visual to logical
+    // before calling this. Converting again with logicalForVisual double-applies
+    // the bidi reorder map and lands on a different word — the "double-click a
+    // word and a different word gets selected" bug on right-to-left lines. Word
+    // boundaries are found in logical order, so operate on the logical location
+    // directly and return a logical range (the selection model is logical, and
+    // the highlight maps logical→visual via the LUT, exactly like a character
+    // selection).
     VT100GridCoord location = visualLocation;
-    iTermBidiDisplayInfo *bidi = nil;
-    if (_supportBidi) {
-        ScreenCharArray *sca = [_dataSource screenCharArrayForLine:visualLocation.y];
-        bidi = sca.bidiInfo;
-        if (bidi) {
-            location.x = [bidi logicalForVisual:visualLocation.x];
-        }
-    }
     iTermWordExtractor *wordExtractor = [[iTermWordExtractor alloc] initWithLocation:location
                                                                        maximumLength:maximumLength
                                                                                  big:big];
@@ -313,12 +315,7 @@ const NSInteger kLongMaximumWordLength = 100000;
         wordExtractor.regexPatterns = regexPatterns;
     }
     wordExtractor.dataSource = self;
-    VT100GridWindowedRange range = [wordExtractor windowedRange];
-    if (bidi) {
-        // TODO: This is wrong. When a word wraps, we need to select characters from the left side of the start line and the right side of the end line. Selections don't know how to do this currently.
-        return [self visualWindowedRangeForLogical:range];
-    }
-    return range;
+    return [wordExtractor windowedRange];
 }
 
 - (VT100GridCoordRange)visualRangeForLogical:(VT100GridCoordRange)logical {
