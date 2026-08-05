@@ -85,6 +85,17 @@ final class KittyDnDOfferTests: XCTestCase {
         XCTAssertFalse(c.isOfferingDrags)
     }
 
+    // An i key on the t=o enable registration is echoed on all our sends (the
+    // gesture notification, the t=E ack, lifecycle events).
+    func testMultiplexerIDFromOfferStampedOnSends() {
+        let recorder = Recorder()
+        let c = makeController(host: FakeDragHost(), recorder: recorder)
+        c.handleInboundSequence("t=o:x=1:i=9")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        XCTAssertEqual(recorder.last?.type, "o")
+        XCTAssertEqual(recorder.last?.metadata["i"], "9")
+    }
+
     // MARK: - Gesture notification
 
     func testGestureSendsOfferNotification() {

@@ -526,6 +526,49 @@ final class KittyDnDAcceptTests: XCTestCase {
         XCTAssertEqual(resp?.textPayload, "ENOENT")
     }
 
+    // MARK: - Multiplexer i key (#4)
+
+    // Spec: "When the terminal receives a t=a or t=o escape code that has the i
+    // key set, all escape codes it sends to the terminal program must include the
+    // i key with the same value." That includes t=m, t=M, and every t=r chunk.
+    func testMultiplexerIDStampedOnAllSends() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a:i=42;text/plain")
+        c.dragEntered(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0,
+                      operations: 1, mimeTypes: ["text/plain"])
+        XCTAssertEqual(recorder.last?.metadata["i"], "42", "t=m must carry i")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/plain"],
+                                         dataByIndex: [1: Data("hi".utf8)]))
+        XCTAssertEqual(recorder.last?.metadata["i"], "42", "t=M must carry i")
+        c.handleInboundSequence("t=r:x=1")
+        for chunk in recorder.messages.filter({ $0.type == "r" }) {
+            XCTAssertEqual(chunk.metadata["i"], "42", "every t=r chunk must carry i")
+        }
+    }
+
+    // A per-message echo (the query's own i) is not overridden by the stamp.
+    func testQueryEchoesItsOwnIOverStamp() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a:i=42;text/plain")
+        c.handleInboundSequence("t=q:i=7")
+        XCTAssertEqual(recorder.last?.type, "q")
+        XCTAssertEqual(recorder.last?.metadata["i"], "7")
+    }
+
+    // reset() forgets the multiplexer id.
+    func testResetClearsMultiplexerID() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a:i=42;text/plain")
+        c.reset()
+        c.handleInboundSequence("t=q")  // no i on the query
+        XCTAssertEqual(recorder.last?.type, "q")
+        XCTAssertNil(recorder.last?.metadata["i"])
+    }
+
     // MARK: - Program acceptance reply (t=m:o) (#3)
 
     // The program replies to our t=m with the operation it will perform (0 not

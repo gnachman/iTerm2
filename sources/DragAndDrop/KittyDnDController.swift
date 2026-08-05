@@ -36,6 +36,10 @@ final class KittyDnDController {
     private weak var dragHost: KittyDnDDragHost?
     private let report: (String) -> Void
     private var reassembler = KittyDnDChunkReassembler()
+    // The multiplexer routing id from a t=a/t=o registration that set the i key.
+    // Once set, every escape code we send carries it so a multiplexer (e.g. tmux)
+    // can route our replies back to the right pane. Cleared on reset().
+    private var multiplexerID: String?
 
     // Accept-drop state.
     private(set) var isAcceptingDrops = false
@@ -145,6 +149,7 @@ final class KittyDnDController {
         directoryHandles.removeAll()
         nextDirectoryHandle = 2
         lastCompletedDropOperation = nil
+        multiplexerID = nil
         isOfferingDrags = false
         cleanupRemoteDragTempDir()
         resetOfferInProgress()   // clears offer fields and drains pending requests
@@ -158,6 +163,12 @@ final class KittyDnDController {
     func handleInboundSequence(_ content: String) {
         guard let message = reassembler.accept(content) else {
             return
+        }
+        // A t=a or t=o registration carrying an i key sets the multiplexer routing
+        // id for all our subsequent sends. (t=q is a one-off whose response echoes
+        // its own i, handled in handleQuery, so it does not update this.)
+        if message.type == "a" || message.type == "o", let i = message.metadata["i"] {
+            multiplexerID = i
         }
         switch message.type {
         case "q":
@@ -886,6 +897,13 @@ final class KittyDnDController {
     }
 
     private func send(_ message: KittyDnDMessage) {
+        var message = message
+        // Stamp the multiplexer id on every outbound message (and every chunk,
+        // which each pass through here) unless the message already carries an
+        // explicit i (e.g. a query response echoing the query's own i).
+        if let multiplexerID, message.metadata["i"] == nil {
+            message.metadata["i"] = multiplexerID
+        }
         report(message.serialized())
     }
 
