@@ -863,6 +863,14 @@ Settings Improvements:
   changes.
 
 Bug Fixes:
+- On macOS Tahoe, dark-theme selected tabs no
+  longer draw their chrome at a fixed image
+  height while the tab cell uses a different
+  height (for example left tabs with a custom
+  Default tab bar height). Cap images scale to
+  the pill, and vertical bar height tracks the
+  container so the dual-layer look goes away
+  without needing a custom tab color.
 - Toggling Caps Lock no longer inserts an “A”
   in programs that use the Kitty keyboard
   protocol with “report all keys as escape

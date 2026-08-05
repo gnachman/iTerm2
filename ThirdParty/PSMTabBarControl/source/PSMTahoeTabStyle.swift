@@ -439,6 +439,13 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     // bar inside it, so it never crowds the tab title or status subtitle.
     private var progressRingWidth: CGFloat { 2 }
 
+    /// Corner radius for a drawn pill, derived from the pill's own height so it
+    /// stays stadium-shaped when cell height changes (vertical tabs + custom
+    /// `defaultTabBarHeight`).
+    private func pillCornerRadius(for rect: NSRect) -> CGFloat {
+        max(0, rect.height / 2.0 - 2.5)
+    }
+
     @objc func progressBarRect(forTabCell cell: PSMTabBarCell) -> NSRect {
         // Grow the bar past the pill on every side so it can render as an
         // outline around the tab. The middle is punched out by the clip path.
@@ -448,7 +455,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
 
     @objc func progressBarClipPath(forTabCell cell: PSMTabBarCell) -> NSBezierPath? {
         let pillRect = backgroundRect(for: cell.frame)
-        let pillRadius = max(0, barRadius - 2.5)
+        let pillRadius = pillCornerRadius(for: pillRect)
         let outerRect = pillRect.insetBy(dx: -progressRingWidth, dy: -progressRingWidth)
         let outerRadius = pillRadius + progressRingWidth
         // Two nested rounded rects with even-odd winding form a ring: the outer
@@ -579,7 +586,20 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
     }
 
-    private let barHeight = 28.0
+    /// Drawn pill height inside the horizontal tab-bar container (36pt). Vertical
+    /// tabs use the live cell height from `tabBar.height` so chrome tracks
+    /// Advanced Pref `defaultTabBarHeight` instead of staying pinned at 28.
+    private static let horizontalBarHeight: CGFloat = 28.0
+
+    private var barHeight: CGFloat {
+        if orientation == .verticalOrientation,
+           let height = tabBar?.height,
+           height > 0 {
+            return height
+        }
+        return Self.horizontalBarHeight
+    }
+
     private var barRadius: CGFloat { barHeight / 2.0 }
     let containerSideInset = CGFloat(8)
     var containerTopInset: CGFloat {
@@ -835,8 +855,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                                           isHighlighted: Bool) {
         backgroundColorSelected(selected, highlightAmount: isHighlighted ? 1.0 : 0.0).set()
         
-        let radius = barRadius - 2.5
         let rect = backgroundRect(for: cellFrame)
+        let radius = pillCornerRadius(for: rect)
         let path = NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
         path.fill()
         if selected {
@@ -1813,17 +1833,26 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
     }
     
     override func drawCellOutline(path: NSBezierPath, rect: NSRect, radius: CGFloat) {
-        let image = Self.leftTabCap
-        var dest = rect
-        dest.size = image.size
-        Self.leftTabCap.draw(in: dest)
-        
-        dest.origin.x = rect.maxX - image.size.width
-        Self.rightTabCap.draw(in: dest)
-        
-        dest.origin.x = rect.minX + image.size.width
-        dest.size.width = rect.width - (2 * image.size.width)
-        Self.tabMid.draw(in: dest)
+        // Scale the 9-slice-like cap/mid images to the pill rect. Previously
+        // dest.size was image.size, so chrome stayed at the asset's intrinsic
+        // height while the cell/backing grew with defaultTabBarHeight — a
+        // dual-height selected tab that vanished only when an opaque tab color
+        // painted over the caps.
+        let left = Self.leftTabCap
+        let scale = left.size.height > 0 ? rect.height / left.size.height : 1.0
+        let capWidth = left.size.width * scale
+
+        let leftDest = NSRect(x: rect.minX, y: rect.minY, width: capWidth, height: rect.height)
+        left.draw(in: leftDest)
+
+        let rightDest = NSRect(x: rect.maxX - capWidth, y: rect.minY, width: capWidth, height: rect.height)
+        Self.rightTabCap.draw(in: rightDest)
+
+        let midDest = NSRect(x: rect.minX + capWidth,
+                             y: rect.minY,
+                             width: max(0, rect.width - 2 * capWidth),
+                             height: rect.height)
+        Self.tabMid.draw(in: midDest)
     }
     
     private static let leftTabCap: NSImage = {
