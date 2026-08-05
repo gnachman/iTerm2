@@ -28,6 +28,10 @@ protocol KittyDnDBridgeDataSource: AnyObject {
 
     /// The terminal view a drag-out originates from.
     var kittyDnDView: NSView? { get }
+
+    /// A native drag-out session has begun, so the mouse handler should synthesize
+    /// the button-release report (the real mouseUp is swallowed by the drag).
+    func kittyDnDDragDidBegin()
 }
 
 @available(macOS 11.0, *)

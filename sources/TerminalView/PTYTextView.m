@@ -4619,6 +4619,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     [self updateCursorAndUnderlinedRange:event];
 }
 
+- (void)kittyDragDidBegin {
+    [_mouseHandler kittyDragDidBegin];
+}
+
 - (VT100GridCoord)moveCursorHorizontallyTo:(VT100GridCoord)target from:(VT100GridCoord)cursor {
     DLog(@"Moving cursor horizontally from %@ to %@",
          VT100GridCoordDescription(cursor), VT100GridCoordDescription(target));

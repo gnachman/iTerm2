@@ -79,6 +79,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Set once per mouse-down after we have offered the drag gesture to a program
     // that accepts Kitty drag-and-drop offers, so we only offer it once per drag.
     BOOL _kittyDragOfferStarted;
+    // The drag event we offered to a Kitty DnD program, kept so we can synthesize
+    // the button-release report if the program turns it into a native drag (whose
+    // session then swallows the real mouseUp).
+    NSEvent *_kittyDragGestureEvent;
 
     BOOL _committedToDrag;
 
@@ -263,6 +267,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     dragOk_ = YES;
     _committedToDrag = NO;
     _kittyDragOfferStarted = NO;
+    _kittyDragGestureEvent = nil;
     if (cmdPressed) {
         if (![self.mouseDelegate mouseHandlerViewHasFocus:self]) {
             if (![self.mouseDelegate mouseHandlerIsInKeyWindow:self]) {
@@ -763,6 +768,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self mouseEventIsReportable:event]) {
         if ([self.mouseDelegate mouseHandler:self reportKittyDragGestureWithEvent:event]) {
             _kittyDragOfferStarted = YES;
+            _kittyDragGestureEvent = event;
         }
     }
 
@@ -1275,6 +1281,36 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // If thiss changes also update wantsMouseMovementEvents
 - (BOOL)reportMouseEvent:(NSEvent *)event {
     return [self handleMouseEvent:event testOnly:NO deltaOut:NULL reportableOut:NULL];
+}
+
+// A Kitty DnD program turned the drag gesture into a native OS drag. The drag
+// session now owns event tracking, so the real mouseUp that would end this
+// gesture will never arrive. Synthesize the button-release report (so a
+// mouse-reporting program does not think the button is still held) and clear the
+// per-gesture state that mouseUp would otherwise have cleared.
+- (void)kittyDragDidBegin {
+    NSEvent *gesture = _kittyDragGestureEvent;
+    _kittyDragGestureEvent = nil;
+    if (gesture) {
+        NSEvent *release = [NSEvent mouseEventWithType:NSEventTypeLeftMouseUp
+                                              location:gesture.locationInWindow
+                                         modifierFlags:gesture.modifierFlags
+                                             timestamp:gesture.timestamp
+                                          windowNumber:gesture.windowNumber
+                                               context:nil
+                                           eventNumber:0
+                                            clickCount:1
+                                              pressure:0];
+        if (release) {
+            [self reportMouseEvent:release];
+        }
+    }
+    _kittyDragOfferStarted = NO;
+    _committedToDrag = NO;
+    _mouseDown = NO;
+    _mouseDownEvent = nil;
+    dragOk_ = NO;
+    [self.selection endLiveSelection];
 }
 
 // When in doubt this can return YES at the cost of a little CPU when moving the mouse around.

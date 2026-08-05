@@ -200,6 +200,13 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
     // MARK: - NSDraggingSource
 
     func draggingSession(_ session: NSDraggingSession,
+                         willBeginAt screenPoint: NSPoint) {
+        // The OS drag now owns event tracking; the mouse handler must synthesize
+        // the button-release report that the swallowed mouseUp would have sent.
+        dataSource?.kittyDnDDragDidBegin()
+    }
+
+    func draggingSession(_ session: NSDraggingSession,
                          sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation {
         var mask: NSDragOperation = []
         if currentOperations & 1 != 0 {

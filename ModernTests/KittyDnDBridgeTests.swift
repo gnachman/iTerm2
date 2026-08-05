@@ -21,6 +21,7 @@ final class KittyDnDBridgeTests: XCTestCase {
     private final class FakeDataSource: NSObject, KittyDnDBridgeDataSource {
         var kittyDnDConductor: Conductor? { nil }
         var kittyDnDView: NSView? { nil }
+        func kittyDnDDragDidBegin() {}
     }
 
     private let dataSource = FakeDataSource()

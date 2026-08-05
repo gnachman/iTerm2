@@ -613,6 +613,10 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // Changes the document cursor, if needed. The event is used to get modifier flags.
 - (void)updateCursor:(NSEvent *)event;
 
+// A Kitty DnD program turned an offered drag gesture into a native OS drag.
+// Forwards to the mouse handler so it can synthesize the button-release report.
+- (void)kittyDragDidBegin;
+
 // Call this to process a mouse-down, bypassing 3-finger-tap-gesture-recognizer. Returns YES if the
 // superview's mouseDown: should be called.
 - (BOOL)mouseDownImpl:(NSEvent*)event;

@@ -211,6 +211,11 @@ NS_DESIGNATED_INITIALIZER;
 - (BOOL)wantsScrollWheelMomentumEvents;
 - (BOOL)mouseEventIsReportable:(NSEvent *)event;
 
+// A Kitty DnD program turned the offered drag gesture into a native OS drag.
+// Synthesizes the mouse button-release report and clears the per-gesture state,
+// since the real mouseUp will be swallowed by the drag session.
+- (void)kittyDragDidBegin;
+
 @end
 
 NS_ASSUME_NONNULL_END
