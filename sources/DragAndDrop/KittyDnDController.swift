@@ -135,7 +135,12 @@ final class KittyDnDController {
         peerMachineID = nil
         currentDrop = nil
         currentDropIsSelfDrag = false
-        selfDragInProgress = false
+        // NOTE: selfDragInProgress is deliberately NOT cleared here. reset() runs
+        // at a new shell prompt (OSC 133), which a program can emit at will while
+        // its native drag is still live, so clearing the guard here would let it
+        // disarm the self-drag EPERM check mid-drag and then read local files by
+        // dropping onto itself. The flag is authoritatively cleared only when the
+        // native drag truly ends (dragFinished), which always fires.
         acceptGeneration += 1
         directoryHandles.removeAll()
         nextDirectoryHandle = 2
@@ -741,8 +746,9 @@ final class KittyDnDController {
     func dragFinished(canceled: Bool) {
         send(KittyDnDMessage(metadata: ["t": "e", "x": "4", "y": canceled ? "1" : "0"]))
         // The native drag has truly ended: it is now safe to drop the self-drag
-        // guard. This is the ONLY inbound-independent place it is cleared (plus
-        // reset()), so a program cannot clear it early to defeat the EPERM check.
+        // guard. This is the ONLY place it is cleared, so no program-controllable
+        // inbound sequence (offer/cancel messages, or an OSC 133 prompt that
+        // triggers reset()) can disarm the EPERM check while the drag is live.
         selfDragInProgress = false
         // Do NOT delete the temp copies immediately: when the drop lands in
         // another terminal session, that session reads these files lazily over

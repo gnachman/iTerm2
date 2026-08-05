@@ -546,6 +546,23 @@ final class KittyDnDOfferTests: XCTestCase {
         assertSelfDragStillRefusedAfter("t=o:o=1;text/plain")
     }
 
+    // A program can emit an OSC 133 prompt-start mid-drag, which drives
+    // controller.reset(); that must not disarm the self-drag guard while the
+    // native drag is still live, then let the program re-accept and read files.
+    func testSelfDragEPERMSurvivesPromptResetMidDrag() {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = startedController(host: host, recorder: recorder)  // our drag is active
+        c.reset()  // OSC 133 prompt-start while the OS drag is still live
+        c.handleInboundSequence("t=a;text/plain")  // re-enable accepting
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/plain"],
+                                         dataByIndex: [1: Data("secret".utf8)]))
+        recorder.reports.removeAll()
+        c.handleInboundSequence("t=r:x=1")
+        XCTAssertEqual(recorder.last?.textPayload, "EPERM")
+    }
+
     private func assertSelfDragStillRefusedAfter(_ midDragSequence: String) {
         let recorder = Recorder()
         let host = FakeDragHost()
