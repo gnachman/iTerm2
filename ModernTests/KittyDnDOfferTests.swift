@@ -41,6 +41,18 @@ final class KittyDnDOfferTests: XCTestCase {
         var isRemoteHost = false
     }
 
+    private final class FakeDropData: KittyDnDDropData {
+        let mimeTypes: [String]
+        let fileURLs: [URL]
+        private let dataByIndex: [Int: Data]
+        init(mimeTypes: [String], fileURLs: [URL] = [], dataByIndex: [Int: Data] = [:]) {
+            self.mimeTypes = mimeTypes
+            self.fileURLs = fileURLs
+            self.dataByIndex = dataByIndex
+        }
+        func data(forMimeIndex index: Int) -> Data? { dataByIndex[index] }
+    }
+
     private let ourID = KittyDnDMachineID.hashed("us")
 
     private func makeController(host: FakeDragHost,
@@ -478,6 +490,61 @@ final class KittyDnDOfferTests: XCTestCase {
         c.handleInboundSequence("t=P:x=-1")
         XCTAssertEqual(host.begun.first?.mimeTypes, ["text/plain"])
         XCTAssertEqual(host.begun.first?.data[0], Data("hello".utf8))
+    }
+
+    // MARK: - Same-window self-drag security (EPERM) (#5)
+
+    // Spec: "For security reasons, terminals must reply with EPERM if the drag
+    // originated in the same window as the drop." A program that both offers a
+    // drag and accepts drops could otherwise read local files by dragging onto
+    // itself. While our own drag session is active, data reads for a drop are
+    // refused.
+    func testSelfDragDropDataRequestIsRefusedWithEPERM() {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = startedController(host: host, recorder: recorder)  // our drag is now active
+        c.handleInboundSequence("t=a;text/plain")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/plain"],
+                                         dataByIndex: [1: Data("secret".utf8)]))
+        recorder.reports.removeAll()
+        c.handleInboundSequence("t=r:x=1")
+        XCTAssertEqual(recorder.last?.type, "R")
+        XCTAssertEqual(recorder.last?.textPayload, "EPERM")
+    }
+
+    // The EPERM latches with the drop: even after the native drag ends (which
+    // clears the active-drag flag), the deferred over-the-pty reads for that same
+    // self-drag drop are still refused.
+    func testSelfDragEPERMPersistsAfterDragEnds() {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = startedController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/plain"],
+                                         dataByIndex: [1: Data("secret".utf8)]))
+        c.dragFinished(canceled: false)  // native drag ends after the drop
+        recorder.reports.removeAll()
+        c.handleInboundSequence("t=r:x=1")
+        XCTAssertEqual(recorder.last?.textPayload, "EPERM")
+    }
+
+    // A normal (external-source) drop is served: no self-drag is active.
+    func testExternalDropIsNotRefused() {
+        let recorder = Recorder()
+        let c = makeController(host: FakeDragHost(), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/plain"],
+                                         dataByIndex: [1: Data("hello".utf8)]))
+        c.handleInboundSequence("t=r:x=1")
+        let reassembler = KittyDnDChunkReassembler()
+        var result: KittyDnDMessage?
+        for m in recorder.messages where m.type == "r" {
+            if let done = reassembler.accept(m.serializedContent()) { result = done }
+        }
+        XCTAssertEqual(result?.dataPayload, Data("hello".utf8))
     }
 
     // A second full offer cycle on the same controller must work (state resets).

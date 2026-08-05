@@ -44,6 +44,12 @@ final class KittyDnDController {
     private(set) var acceptedMimeTypes: [String] = []
     private var peerMachineID: String?
     private var currentDrop: KittyDnDDropData?
+    // Whether the current drop originated from our own drag-out in this same
+    // session. Latched at drop time so deferred over-the-pty reads are still
+    // refused after the native drag ends. Security: a program that both offers a
+    // drag and accepts drops could otherwise read local files by dropping its own
+    // drag onto itself.
+    private var currentDropIsSelfDrag = false
 
     // Open directory handles for the cross-machine traversal, mapping a handle to
     // that directory's ordered child URLs. Handles start at 2 (0 and 1 are
@@ -56,6 +62,9 @@ final class KittyDnDController {
 
     // Offer / drag-out state.
     private(set) var isOfferingDrags = false
+    // Whether a native drag we started (a drag-out) is currently running. Used to
+    // recognize a same-window self-drag when a drop lands here.
+    private var selfDragInProgress = false
     private var offerMimeTypes: [String] = []
     private var offerOperations = 0
     private var offerData: [Int: Data] = [:]
@@ -113,6 +122,8 @@ final class KittyDnDController {
         acceptedMimeTypes = []
         peerMachineID = nil
         currentDrop = nil
+        currentDropIsSelfDrag = false
+        selfDragInProgress = false
         directoryHandles.removeAll()
         nextDirectoryHandle = 2
         lastCompletedDropOperation = nil
@@ -214,6 +225,7 @@ final class KittyDnDController {
         // t=r cannot read stale data, including open directory handles that
         // pointed into the previous drop's files.
         currentDrop = nil
+        currentDropIsSelfDrag = false
         directoryHandles.removeAll()
         nextDirectoryHandle = 2
         sendMoveOrDrop(type: "m", cellX: cellX, cellY: cellY, pixelX: pixelX,
@@ -236,6 +248,10 @@ final class KittyDnDController {
                      operations: Int, drop: KittyDnDDropData) {
         guard isAcceptingDrops else { return }
         currentDrop = drop
+        // Latch whether this drop is our own drag-out landing here, so the later
+        // (asynchronous, over-the-pty) data reads are refused even after the
+        // native drag has ended and cleared selfDragInProgress.
+        currentDropIsSelfDrag = selfDragInProgress
         sendMoveOrDrop(type: "M", cellX: cellX, cellY: cellY, pixelX: pixelX,
                        pixelY: pixelY, operations: operations, mimeTypes: drop.mimeTypes)
     }
@@ -246,6 +262,7 @@ final class KittyDnDController {
     private func finishDrop(operation: Int) {
         lastCompletedDropOperation = operation
         currentDrop = nil
+        currentDropIsSelfDrag = false
         directoryHandles.removeAll()
         nextDirectoryHandle = 2
     }
@@ -260,6 +277,16 @@ final class KittyDnDController {
         if message.metadata["x"] == nil, message.metadata["Y"] == nil,
            message.metadata["o"] != nil {
             finishDrop(operation: message.intValue("o") ?? 0)
+            return
+        }
+        // Security: refuse to serve data for a drop that came from our own
+        // drag-out in this same session. Echo the request's addressing keys.
+        if currentDropIsSelfDrag {
+            var addressing: [String: String] = [:]
+            for key in ["x", "y", "Y"] where message.metadata[key] != nil {
+                addressing[key] = message.metadata[key]
+            }
+            sendError(baseMetadata: addressing, code: "EPERM")
             return
         }
         // A directory-handle request is part of the cross-machine traversal and
@@ -480,6 +507,9 @@ final class KittyDnDController {
             resetOfferInProgress()
             return
         }
+        // A native drag we started is now running: a drop that lands on this same
+        // session is a self-drag and its data reads must be refused (EPERM).
+        selfDragInProgress = true
         send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "OK"))
     }
 
@@ -697,6 +727,7 @@ final class KittyDnDController {
 
     private func resetOfferInProgress() {
         offerGeneration += 1
+        selfDragInProgress = false
         offerMimeTypes = []
         offerOperations = 0
         offerData = [:]
