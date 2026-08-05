@@ -4796,6 +4796,113 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     return [PTYSession performKeyBindingAction:action event:event];
 }
 
+// Single detection point for the "your shortcut didn't fire because this key's
+// character changed; match by physical key?" offer. Called once per keyDown from
+// iTermApplication's -handleKeyDownEvent: only when no binding claimed the event, so
+// there is exactly one decision and one presentation per event. `session` is the
+// terminal session receiving the keystroke (for the in-session announcement) or nil
+// when a non-terminal responder / non-terminal window is focused (modal instead).
++ (void)maybeSuggestPhysicalKeyBindingsForKeyDownEvent:(NSEvent *)event
+                                             inSession:(nullable PTYSession *)session {
+    if (event.type != NSEventTypeKeyDown) {
+        return;
+    }
+    // Auto-repeat adds nothing to a one-time offer, and repeating this scan while a key
+    // is held would be wasted work before the first offer fires, so ignore repeats.
+    if (event.isARepeat) {
+        return;
+    }
+    // Offer at most once per launch. Once an offer fires this bails cheaply; combined
+    // with the repeat check above, holding a key never re-runs the scan. "Don't Ask
+    // Again" makes it permanent across launches and enabling the preference likewise
+    // stops it.
+    static BOOL didOfferThisLaunch = NO;
+    if (didOfferThisLaunch) {
+        return;
+    }
+    // Cheap in-memory gates before the user-defaults read and the keymap scan. Only
+    // Cmd/Ctrl/Opt shortcuts are considered. Plain typing stays off this hot path;
+    // Shift-only bindings are intentionally out of scope (including Shift would put
+    // capital-letter and shifted-punctuation typing on the scan path for a rare
+    // binding class, which can still enable the preference manually); and bare special
+    // keys (arrows, function keys) are layout-stable so they don't suffer this drift.
+    const NSEventModifierFlags mask = (NSEventModifierFlagCommand |
+                                       NSEventModifierFlagControl |
+                                       NSEventModifierFlagOption);
+    if ((event.it_modifierFlags & mask) == 0) {
+        return;
+    }
+    if ([iTermPreferences boolForKey:kPreferenceKeyLanguageAgnosticKeyBindings]) {
+        return;
+    }
+    if (iTermUserDefaults.suppressPhysicalKeyBindingSuggestion) {
+        return;
+    }
+    iTermKeystroke *keystroke = [iTermKeystroke withEvent:event];
+    // nil profile map means the coordinator searches the global map only.
+    NSDictionary *keyMappings = session.profile[KEY_KEYBOARD_MAP];
+    if (![iTermKeyMappings keystrokeWouldMatchOnlyByPhysicalKey:keystroke keyMappings:keyMappings]) {
+        return;
+    }
+    didOfferThisLaunch = YES;
+    DLog(@"Offer physical-key binding for %@ (session=%@)", keystroke.serialized, session);
+    if (session) {
+        [session suggestEnablingPhysicalKeyBindings];
+    } else {
+        // No terminal session is receiving the keystroke, so there is nothing to
+        // attach a session announcement to; present a modal instead. Defer so we
+        // don't run a modal run loop inside event dispatch.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self explainAndOfferPhysicalKeyBindings];
+        });
+    }
+}
+
++ (void)enablePhysicalKeyBindings {
+    DLog(@"User accepted: enabling language-agnostic key bindings");
+    [iTermPreferences setBool:YES forKey:kPreferenceKeyLanguageAgnosticKeyBindings];
+}
+
++ (void)suppressPhysicalKeyBindingSuggestion {
+    DLog(@"User chose Don't Ask Again for physical-key binding suggestion");
+    iTermUserDefaults.suppressPhysicalKeyBindingSuggestion = YES;
+}
+
+// Shows the detailed explanation as a modal (which has room to wrap, unlike the
+// one-line announcement) and applies the user's choice. Reused by the no-session
+// path above and by the in-session announcement's “Learn More” action. Guards
+// against overlapping presentations and re-checks that the offer still applies.
++ (void)explainAndOfferPhysicalKeyBindings {
+    static BOOL showing = NO;
+    if (showing) {
+        return;
+    }
+    if ([iTermPreferences boolForKey:kPreferenceKeyLanguageAgnosticKeyBindings] ||
+        iTermUserDefaults.suppressPhysicalKeyBindingSuggestion) {
+        return;
+    }
+    showing = YES;
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:@"A keyboard shortcut didn’t run because this physical key now produces a different character than it did when the shortcut was created, usually after switching keyboard layout or input method. Matching key bindings by physical key makes shortcuts work regardless of the character a key produces. This affects all key bindings; you can change it later in Settings > Keys."
+                                   actions:@[ @"Use Physical Key", @"Not Now", @"Don’t Ask Again" ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Match key bindings by physical key?"
+                                    window:nil];
+    showing = NO;
+    switch (selection) {
+        case kiTermWarningSelection0:
+            [self enablePhysicalKeyBindings];
+            break;
+        case kiTermWarningSelection2:
+            [self suppressPhysicalKeyBindingSuggestion];
+            break;
+        default:
+            break;
+    }
+}
+
 + (void)selectMenuItemWithSelector:(SEL)theSelector {
     if (![self _recursiveSelectMenuWithSelector:theSelector inMenu:[NSApp mainMenu]]) {
         DLog(@"Beep: failed to find menu item with selector %@", NSStringFromSelector(theSelector));
@@ -12283,6 +12390,39 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
     DLog(@"Special handler: KEY BINDING ACTION");
     return YES;
+}
+
+- (void)suggestEnablingPhysicalKeyBindings {
+    NSString *const identifier = @"NoSyncPhysicalKeyBindingSuggestion";
+    if ([self announcementWithIdentifier:identifier]) {
+        return;
+    }
+    // The banner shows only two buttons before overflowing into a "More Actions…"
+    // pull-down, so "Use Physical Key" is the button and Learn More / Don't Ask Again
+    // land in the overflow. All three are reachable; the coordinator's once-per-launch
+    // guard is what prevents nagging.
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:@"This key now types a different character. Match key bindings by physical key?"
+                                                         style:kiTermAnnouncementViewStyleQuestion
+                                                   withActions:@[ @"Use Physical Key", @"Learn More", @"Don’t Ask Again" ]
+                                                    completion:^(int selection) {
+        switch (selection) {
+            case 0:
+                [PTYSession enablePhysicalKeyBindings];
+                break;
+            case 1:
+                // Learn More: the detailed modal carries the full explanation and its
+                // own Don't Ask Again.
+                [PTYSession explainAndOfferPhysicalKeyBindings];
+                break;
+            case 2:
+                [PTYSession suppressPhysicalKeyBindingSuggestion];
+                break;
+            default:
+                break;
+        }
+    }];
+    [self queueAnnouncement:announcement identifier:identifier];
 }
 
 - (void)handleKeypressInInstantReplay:(NSEvent *)event {

@@ -50,6 +50,7 @@ static NSString *const iTermUserDefaultsKeyClaudeCodeDiffModeBackfilled = @"NoSy
 static NSString *const iTermUserDefaultsKeyClaudeCodeReviewSystemPromptCommandBackfilled = @"NoSyncClaudeCodeReviewSystemPromptCommandBackfilled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeAutoSendClippingsBackfilled = @"NoSyncClaudeCodeAutoSendClippingsBackfilled";
 static NSString *const iTermUserDefaultsKeyClaudeCodeAutoRequestReviewBackfilled = @"NoSyncClaudeCodeAutoRequestReviewBackfilled";
+static NSString *const iTermUserDefaultsKeySuppressPhysicalKeyBindingSuggestion = @"NoSyncSuppressPhysicalKeyBindingSuggestion";
 static NSString *const iTermUserDefaultsKeyAIModelCatalogUpdateConsent = @"NoSyncAIModelCatalogUpdateConsent";
 static NSString *const iTermUserDefaultsKeyAutoProvideConsent = @"NoSyncAutoProvideConsent";
 static NSString *const iTermUserDefaultsKeyHaveShownMacOS13RequirementNotice = @"NoSyncHaveShownMacOS13RequirementNotice";
@@ -379,6 +380,15 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 + (void)setWorkgroupShortcutsBackfilled:(BOOL)value {
     [self.userDefaults setBool:value
                         forKey:iTermUserDefaultsKeyWorkgroupShortcutsBackfilled];
+}
+
++ (BOOL)suppressPhysicalKeyBindingSuggestion {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeySuppressPhysicalKeyBindingSuggestion];
+}
+
++ (void)setSuppressPhysicalKeyBindingSuggestion:(BOOL)value {
+    [self.userDefaults setBool:value
+                        forKey:iTermUserDefaultsKeySuppressPhysicalKeyBindingSuggestion];
 }
 
 + (BOOL)claudeCodeDiffModeBackfilled {

@@ -2558,3 +2558,7 @@ Bug Fixes:
   no longer runs Intel Python interpreters
   found on your PATH, which could trigger a
   macOS “Intel-only binary” warning.
+- When a keyboard shortcut stops matching
+  because your input method changed the
+  character a key produces, iTerm2 now offers
+  to interpret key bindings by physical key.

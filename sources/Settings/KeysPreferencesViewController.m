@@ -12,6 +12,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermHotKeyController.h"
 #import "iTermHotkeyPreferencesWindowController.h"
+#import "iTermPreferenceDidChangeNotification.h"
 #import "iTermAppHotKeyProvider.h"
 #import "iTermKeyMappingViewController.h"
 #import "iTermKeyMappings.h"
@@ -136,6 +137,15 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
                     key:kPreferenceKeyLanguageAgnosticKeyBindings
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
+    // This preference can be enabled from outside Settings (the offer shown when a
+    // shortcut fails to match because an input method changed a key's character), so
+    // keep the checkbox in sync if it changes while this panel is open.
+    [iTermPreferenceDidChangeNotification subscribe:self
+                                              block:^(iTermPreferenceDidChangeNotification * _Nonnull notification) {
+        if ([notification.key isEqualToString:kPreferenceKeyLanguageAgnosticKeyBindings]) {
+            [weakSelf updateControlForKey:kPreferenceKeyLanguageAgnosticKeyBindings];
+        }
+    }];
 
     // Modifier remapping
     info = [self defineControl:_leftControlButton

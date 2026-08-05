@@ -770,6 +770,13 @@ backgroundColor:(nullable NSColor *)backgroundColor;
                        profileMutator:(Profile *(^)(Profile *))profileMutator;
 
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
+
+// Considers offering to enable physical-key key-binding matching for a keyDown that
+// no binding claimed. Call once per keyDown from the app's key-event router. `session`
+// is the terminal session receiving the keystroke, or nil when a non-terminal
+// responder/window is focused (in which case a modal is used instead of a banner).
++ (void)maybeSuggestPhysicalKeyBindingsForKeyDownEvent:(NSEvent *)event
+                                             inSession:(nullable PTYSession *)session;
 + (void)selectMenuItem:(NSString*)theName;
 + (void)registerBuiltInFunctions;
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap;

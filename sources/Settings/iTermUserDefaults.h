@@ -108,6 +108,12 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 // session has run. NoSync for the same reason as workgroupShortcutsBackfilled.
 @property (class, nonatomic) BOOL claudeCodeAutoRequestReviewBackfilled;
 
+// Set when the user chooses “Don’t Ask Again” on the offer to interpret key
+// bindings by physical key (shown when a keystroke fails to match a binding but
+// would match on the same physical key, e.g. after an input-method change).
+// NoSync because it is a local dismissal, not a synced setting.
+@property (class, nonatomic) BOOL suppressPhysicalKeyBindingSuggestion;
+
 // Tri-state consent for the AI model catalog updater (AIModelCatalogUpdater) to
 // periodically download a refreshed, signed model list from the network.
 // Defaults to Unknown; we ask the user once (and only if AI is fully enabled)
