@@ -50,6 +50,9 @@ final class KittyDnDController {
     // reserved by the protocol for the file/symlink type indicators).
     private var directoryHandles: [Int: [URL]] = [:]
     private var nextDirectoryHandle = 2
+    // The final operation from the last drop-completion signal (t=r:o=operation):
+    // 0 means the drop was canceled, nonzero is the action the program took.
+    private(set) var lastCompletedDropOperation: Int?
 
     // Offer / drag-out state.
     private(set) var isOfferingDrags = false
@@ -112,6 +115,7 @@ final class KittyDnDController {
         currentDrop = nil
         directoryHandles.removeAll()
         nextDirectoryHandle = 2
+        lastCompletedDropOperation = nil
         isOfferingDrags = false
         cleanupRemoteDragTempDir()
         resetOfferInProgress()   // clears offer fields and drains pending requests
@@ -236,9 +240,28 @@ final class KittyDnDController {
                        pixelY: pixelY, operations: operations, mimeTypes: drop.mimeTypes)
     }
 
+    /// The program signaled it finished reading the dropped data (t=r:o=op).
+    /// Record the final operation and discard all per-drop state so a later stray
+    /// request cannot read stale data or use a now-invalid directory handle.
+    private func finishDrop(operation: Int) {
+        lastCompletedDropOperation = operation
+        currentDrop = nil
+        directoryHandles.removeAll()
+        nextDirectoryHandle = 2
+    }
+
     // MARK: - Data request handling
 
     private func handleDataRequest(_ message: KittyDnDMessage) {
+        // t=r:o=operation with no addressing keys (x / Y) is the drop-completion
+        // signal: the program has finished reading. It is not a data request, so
+        // it must not draw an error. Discard the per-drop state and any queued
+        // directory handles; o=0 (or absent) means the drop was canceled.
+        if message.metadata["x"] == nil, message.metadata["Y"] == nil,
+           message.metadata["o"] != nil {
+            finishDrop(operation: message.intValue("o") ?? 0)
+            return
+        }
         // A directory-handle request is part of the cross-machine traversal and
         // is not tied to the MIME index.
         if let handle = message.intValue("Y") {

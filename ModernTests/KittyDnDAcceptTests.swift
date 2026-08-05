@@ -526,6 +526,58 @@ final class KittyDnDAcceptTests: XCTestCase {
         XCTAssertEqual(resp?.textPayload, "ENOENT")
     }
 
+    // MARK: - Drop completion (t=r:o=operation) (#2)
+
+    // Spec: "Once the client program finishes reading all the dropped data it
+    // needs, it must send t=r:o=operation." This is the completion signal, not a
+    // data request, so it must not draw an error reply.
+    func testDropCompletionIsNotAnError() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/plain"],
+                                         dataByIndex: [1: Data("hi".utf8)]))
+        c.handleInboundSequence("t=r:o=1")
+        XCTAssertNil(recorder.messages.first(where: { $0.type == "R" }),
+                     "the drop-completion signal must not produce an error")
+        XCTAssertEqual(c.lastCompletedDropOperation, 1)
+    }
+
+    // Spec: "If unset (aka 0) the terminal must assume the drop was canceled."
+    func testDropCompletionWithZeroOperationIsCancel() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/plain"]))
+        c.handleInboundSequence("t=r:o=0")
+        XCTAssertEqual(c.lastCompletedDropOperation, 0)
+    }
+
+    // After completion the per-drop state is gone: a later data request errors
+    // and an open directory handle is invalid ("Any queued data requests must be
+    // discarded by the terminal").
+    func testDropCompletionDiscardsDropStateAndHandles() async throws {
+        let dir = makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let sub = dir.appendingPathComponent("sub")
+        try FileManager.default.createDirectory(at: sub, withIntermediateDirectories: true)
+        try Data("A".utf8).write(to: sub.appendingPathComponent("a.txt"))
+        let recorder = Recorder()
+        let c = remoteDropController(fileURLs: [sub], recorder: recorder)
+        let dirResp = await awaitResponse(recorder, c, "t=r:x=1:y=1")
+        let handle = dirResp?.metadata["X"]
+        XCTAssertNotNil(handle)
+
+        c.handleInboundSequence("t=r:o=1")
+
+        let staleHandle = await awaitResponse(recorder, c, "t=r:Y=\(handle!):x=1")
+        XCTAssertEqual(staleHandle?.type, "R")
+        let staleData = await awaitResponse(recorder, c, "t=r:x=1")
+        XCTAssertEqual(staleData?.type, "R")
+    }
+
     // MARK: - Error-code conformance (#8)
 
     // The spec: "Terminals must reply with ENOENT if the index is out of bounds."
