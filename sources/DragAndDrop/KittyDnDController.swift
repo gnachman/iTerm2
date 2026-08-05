@@ -149,7 +149,13 @@ final class KittyDnDController {
         directoryHandles.removeAll()
         nextDirectoryHandle = 2
         lastCompletedDropOperation = nil
-        multiplexerID = nil
+        // Keep the multiplexer routing id while a native drag is still live (the
+        // same reason selfDragInProgress survives reset): the drag's remaining
+        // lifecycle events must stay routable to the right pane. It is dropped at
+        // the next prompt reset once no drag is in flight.
+        if !selfDragInProgress {
+            multiplexerID = nil
+        }
         isOfferingDrags = false
         cleanupRemoteDragTempDir()
         resetOfferInProgress()   // clears offer fields and drains pending requests
@@ -225,6 +231,11 @@ final class KittyDnDController {
             return
         }
         isAcceptingDrops = true
+        // A (re)registration starts a fresh acceptance negotiation: forget any
+        // operation left over from a previous drag, so a drag that enters while
+        // the program was momentarily not accepting cannot inherit a stale accept
+        // (dragEntered's reset is skipped when isAcceptingDrops was false).
+        acceptedDropOperation = nil
         // Payload is plain text: space-separated MIME types, optionally including
         // the peer's machine id ("1:<hex>").
         let tokens = (message.textPayload ?? "")
@@ -304,6 +315,7 @@ final class KittyDnDController {
         lastCompletedDropOperation = operation
         currentDrop = nil
         currentDropIsSelfDrag = false
+        acceptedDropOperation = nil
         acceptGeneration += 1
         directoryHandles.removeAll()
         nextDirectoryHandle = 2

@@ -616,6 +616,33 @@ final class KittyDnDAcceptTests: XCTestCase {
         XCTAssertNil(c.acceptedDropOperation)
     }
 
+    func testAcceptOperationClearedOnDropCompletion() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.dragEntered(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0,
+                      operations: 3, mimeTypes: ["text/plain"])
+        c.handleInboundSequence("t=m:o=1")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/plain"]))
+        c.handleInboundSequence("t=r:o=1")  // completion
+        XCTAssertNil(c.acceptedDropOperation)
+    }
+
+    // A stale accept must not survive into a later drag that enters while the
+    // program is momentarily not accepting, then re-registers.
+    func testAcceptOperationClearedOnReRegistration() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.dragEntered(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0,
+                      operations: 3, mimeTypes: ["text/plain"])
+        c.handleInboundSequence("t=m:o=1")
+        XCTAssertEqual(c.acceptedDropOperation, 1)
+        c.handleInboundSequence("t=a;text/plain")  // re-register
+        XCTAssertNil(c.acceptedDropOperation)
+    }
+
     func testAcceptOperationResetsOnExit() {
         let recorder = Recorder()
         let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
