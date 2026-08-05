@@ -4865,9 +4865,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
-    // NOTE: draggingUpdated: calls this method because they need the same implementation.
     // Latch the routing decision for this entry so mid-drag Option/accept changes
-    // cannot flip it.
+    // cannot flip it. (draggingUpdated: deliberately does NOT call this method, so
+    // the latch is decided once per entry; it reuses latchedKittyDragBridge and
+    // legacyDraggingOperationForSender: instead.)
     iTermKittyDnDBridge *bridge = [self kittyDnDBridgeForDrag];
     _kittyDragRoutedForCurrentDrag = (bridge != nil);
     if (bridge) {

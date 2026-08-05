@@ -100,6 +100,14 @@ final class KittyDnDRemoteDragFetch {
         armIdleTimeout()
     }
 
+    /// Note any inbound activity from the peer (including a chunk of a large file
+    /// that has not completed a message yet) so the idle timeout does not fire on
+    /// a healthy, steadily-progressing transfer.
+    func noteActivity() {
+        guard !finished else { return }
+        armIdleTimeout()
+    }
+
     /// (Re)arm the idle timeout. It aborts the fetch only if `timeout` seconds
     /// pass with NO further progress, so a steadily-progressing large transfer is
     /// not killed by an absolute deadline while a genuinely stalled peer still is.
@@ -137,7 +145,6 @@ final class KittyDnDRemoteDragFetch {
         }
         // Ignore a duplicate push for a slot we already accounted for.
         guard seenSlots.insert(slot).inserted else { return }
-        armIdleTimeout()   // progress: reset the stall deadline
         let topLevelIndex = topLevelIndex(of: message)
         let typeFlag = message.metadata["X"].flatMap(Int.init) ?? 0
 
@@ -197,7 +204,6 @@ final class KittyDnDRemoteDragFetch {
     func receiveError(_ message: KittyDnDMessage) {
         guard !finished, resolveDest(message) != nil, let slot = slotKey(message) else { return }
         guard seenSlots.insert(slot).inserted else { return }
-        armIdleTimeout()
         entryFailed(topLevelIndex: topLevelIndex(of: message))
     }
 

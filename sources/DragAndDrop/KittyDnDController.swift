@@ -195,6 +195,11 @@ final class KittyDnDController {
     /// Feed one OSC 72 sequence's raw content (everything after "72;"). Chunked
     /// messages are reassembled internally.
     func handleInboundSequence(_ content: String) {
+        // Any inbound sequence from the program is a sign of life for an in-progress
+        // remote drag-out fetch, including the individual chunks of one large file
+        // (which never produce a completed message until m=0). Rearm the fetch's
+        // idle timeout here so a healthy long transfer is not aborted mid-stream.
+        remoteDragFetch?.noteActivity()
         guard let message = reassembler.accept(content) else {
             return
         }
