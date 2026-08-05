@@ -541,6 +541,17 @@ final class KittyDnDController {
         Self.removeItemOffMainThread(dir)
     }
 
+    /// Remove the drag-out temp dir after a delay, so a drop landing in another
+    /// terminal session (which reads the files lazily after the drag ends) has
+    /// time to finish, while still guaranteeing eventual cleanup.
+    private func scheduleDelayedTempCleanup() {
+        guard let dir = remoteDragTempDir else { return }
+        remoteDragTempDir = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 300) {
+            Self.removeItemOffMainThread(dir)
+        }
+    }
+
     private static func removeItemOffMainThread(_ url: URL) {
         Task.detached(priority: .utility) {
             try? FileManager.default.removeItem(at: url)
@@ -600,7 +611,11 @@ final class KittyDnDController {
 
     func dragFinished(canceled: Bool) {
         send(KittyDnDMessage(metadata: ["t": "e", "x": "4", "y": canceled ? "1" : "0"]))
-        cleanupRemoteDragTempDir()
+        // Do NOT delete the temp copies immediately: when the drop lands in
+        // another terminal session, that session reads these files lazily over
+        // the pty AFTER the drag ends, so deleting now would make its read fail.
+        // Remove them after a delay long enough for such a read to finish.
+        scheduleDelayedTempCleanup()
         resetOfferInProgress()
     }
 
