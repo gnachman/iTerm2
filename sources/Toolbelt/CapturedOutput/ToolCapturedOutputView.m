@@ -253,9 +253,16 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     if (@available(macOS 10.16, *)) {
         fudgeFactor = 32;
     }
-    column.minWidth = contentSize.width - fudgeFactor;
-    column.maxWidth = contentSize.width - fudgeFactor;
-    [tableView_ sizeToFit];
+    // See the note in ToolCommandHistoryView.relayout_bigSur: a zero-width toolbelt during
+    // new-window construction poisons the column width and hides freshly reloaded cells until a
+    // manual resize. Only pin the column when the width is sane.
+    const CGFloat targetWidth = contentSize.width - fudgeFactor;
+    if (targetWidth > 0) {
+        // Raise the ceiling before the floor so a previously-poisoned maxWidth can't clamp minWidth.
+        column.maxWidth = targetWidth;
+        column.minWidth = targetWidth;
+        [tableView_ sizeToFit];
+    }
     [tableView_ reloadData];
 }
 
