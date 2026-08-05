@@ -163,6 +163,81 @@ final class KittyDnDOfferTests: XCTestCase {
         XCTAssertEqual(image?.data, png)
     }
 
+    // MARK: - Image conformance (#11)
+
+    private func offerImage(_ c: KittyDnDController, index: Int, format: Int,
+                           width: Int, height: Int, data: Data) {
+        c.handleInboundSequence(
+            KittyDnDMessage(metadata: ["t": "p", "x": String(index), "y": String(format),
+                                       "X": String(width), "Y": String(height)],
+                            dataPayload: data).serializedContent())
+    }
+
+    // Raw RGB/RGBA image data whose length does not match the declared dimensions
+    // must be rejected with EINVAL, and the drag must not start.
+    func testImageSizeMismatchIsRejectedWithEINVAL() {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = makeController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:o=1;text/plain")
+        presend(c, index: 0, data: Data("hi".utf8))
+        // 2x2 RGB should be 12 bytes; send 3.
+        offerImage(c, index: -1, format: 24, width: 2, height: 2, data: Data([1, 2, 3]))
+        c.handleInboundSequence("t=P:x=-1")
+        XCTAssertEqual(recorder.last?.type, "E")
+        XCTAssertEqual(recorder.last?.textPayload, "EINVAL")
+        XCTAssertEqual(host.begun.count, 0)
+    }
+
+    // A correctly-sized raw image is accepted and the drag starts.
+    func testValidRawImageStartsDrag() {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = makeController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:o=1;text/plain")
+        presend(c, index: 0, data: Data("hi".utf8))
+        offerImage(c, index: -1, format: 24, width: 1, height: 1, data: Data([9, 9, 9]))
+        c.handleInboundSequence("t=P:x=-1")
+        XCTAssertEqual(host.begun.count, 1)
+        XCTAssertEqual(host.begun.first?.image?.format, 24)
+    }
+
+    // An image exceeding the size cap is rejected with EFBIG.
+    func testOversizedImageIsRejectedWithEFBIG() {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = makeController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:o=1;text/plain")
+        presend(c, index: 0, data: Data("hi".utf8))
+        offerImage(c, index: -1, format: 100, width: 1, height: 1,
+                   data: Data(count: 64 * 1024 * 1024 + 1))
+        c.handleInboundSequence("t=P:x=-1")
+        XCTAssertEqual(recorder.last?.textPayload, "EFBIG")
+        XCTAssertEqual(host.begun.count, 0)
+    }
+
+    // With multiple images, the first (index -1) is used as the drag thumbnail.
+    func testFirstOfMultipleImagesIsUsed() {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = makeController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:o=1;text/plain")
+        presend(c, index: 0, data: Data("hi".utf8))
+        offerImage(c, index: -2, format: 24, width: 1, height: 1, data: Data([1, 1, 1]))
+        offerImage(c, index: -1, format: 100, width: 8, height: 8, data: Data([0x89, 0x50]))
+        c.handleInboundSequence("t=P:x=-1")
+        XCTAssertEqual(host.begun.first?.image?.format, 100)
+        XCTAssertEqual(host.begun.first?.image?.width, 8)
+    }
+
     func testChunkedPreSendIsReassembled() {
         let recorder = Recorder()
         let host = FakeDragHost()

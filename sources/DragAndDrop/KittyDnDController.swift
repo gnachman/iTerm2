@@ -87,7 +87,18 @@ final class KittyDnDController {
     private var offerMimeTypes: [String] = []
     private var offerOperations = 0
     private var offerData: [Int: Data] = [:]
-    private var offerImage: KittyDnDDragImage?
+    // Drag thumbnails the program pre-sent, keyed by their (negative) index: -1 is
+    // the first image, -2 the second, and so on. The drag uses the first.
+    private var offerImages: [Int: KittyDnDDragImage] = [:]
+    /// Cap on a single drag image's byte size (raw or encoded), to bound the work
+    /// of converting it for display. Beyond this the drag is refused with EFBIG.
+    private static let maxImageBytes = 64 * 1024 * 1024
+
+    /// The primary drag thumbnail (index -1, else the first provided).
+    private var primaryOfferImage: KittyDnDDragImage? {
+        guard let key = offerImages.keys.max() else { return nil }
+        return offerImages[key]
+    }
     // Completion handlers for outstanding lazy data requests, keyed by 0-based
     // MIME index (the program answers a t=e:x=5 request with t=e:y=idx;data).
     private var pendingDataRequests: [Int: (Data?) -> Void] = [:]
@@ -488,6 +499,11 @@ final class KittyDnDController {
         guard url.isFileURL, !string.hasSuffix("/") else {
             return string
         }
+        // A symlink is served to the program as a symlink (X=1), not a directory,
+        // even if it points at one, so never give it a directory trailing slash.
+        if (try? url.resourceValues(forKeys: [.isSymbolicLinkKey]))?.isSymbolicLink == true {
+            return string
+        }
         var isDir: ObjCBool = false
         if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue {
             return string + "/"
@@ -534,14 +550,35 @@ final class KittyDnDController {
         }
         let data = message.dataPayload ?? Data()
         if index < 0 {
-            // Negative index: a drag thumbnail image.
-            offerImage = KittyDnDDragImage(format: message.intValue("y") ?? 0,
-                                           width: message.intValue("X") ?? 0,
-                                           height: message.intValue("Y") ?? 0,
-                                           data: data)
+            // Negative index: a drag thumbnail image (-1 first, -2 second, ...).
+            offerImages[index] = KittyDnDDragImage(format: message.intValue("y") ?? 0,
+                                                   width: message.intValue("X") ?? 0,
+                                                   height: message.intValue("Y") ?? 0,
+                                                   data: data)
         } else {
             offerData[index] = data
         }
+    }
+
+    /// Validate the pre-sent drag images against the spec: raw RGB/RGBA data must
+    /// match the declared dimensions (else EINVAL), and no image may exceed the
+    /// size cap (else EFBIG). Returns the error code to report, or nil if OK.
+    private func offerImageError() -> String? {
+        for (_, image) in offerImages {
+            switch image.format {
+            case 24, 32:
+                let bytesPerPixel = image.format == 32 ? 4 : 3
+                guard image.width > 0, image.height > 0 else { return "EINVAL" }
+                let expected = image.width * image.height * bytesPerPixel
+                if image.data.count != expected { return "EINVAL" }
+                if expected > Self.maxImageBytes { return "EFBIG" }
+            default:
+                // PNG (100), text (0), or an unknown format: no fixed size to
+                // check, just guard the byte cap.
+                if image.data.count > Self.maxImageBytes { return "EFBIG" }
+            }
+        }
+        return nil
     }
 
     private func handleStartDrag(_ message: KittyDnDMessage) {
@@ -554,6 +591,12 @@ final class KittyDnDController {
         // duplicate does not start a second native drag or drain an in-flight
         // deferred-data pull.
         guard !selfDragInProgress, !startingDrag, remoteDragFetch == nil else {
+            return
+        }
+        // Reject malformed or oversized drag images before starting.
+        if let code = offerImageError() {
+            send(KittyDnDMessage(metadata: ["t": "E"], textPayload: code))
+            resetOfferInProgress()
             return
         }
         // If the program is remote and offering files, its file:// URIs are not
@@ -579,7 +622,7 @@ final class KittyDnDController {
         beginDrag(with: KittyDnDDragOffer(mimeTypes: offerMimeTypes,
                                           data: offerData,
                                           operations: offerOperations,
-                                          image: offerImage))
+                                          image: primaryOfferImage))
     }
 
     /// Request each offered MIME the program did not pre-send (the lazy delivery
@@ -603,7 +646,7 @@ final class KittyDnDController {
         beginDrag(with: KittyDnDDragOffer(mimeTypes: offerMimeTypes,
                                           data: offerData,
                                           operations: offerOperations,
-                                          image: offerImage))
+                                          image: primaryOfferImage))
     }
 
     private func beginDrag(with offer: KittyDnDDragOffer) {
@@ -676,7 +719,7 @@ final class KittyDnDController {
         beginDrag(with: KittyDnDDragOffer(mimeTypes: offerMimeTypes,
                                           data: data,
                                           operations: offerOperations,
-                                          image: offerImage))
+                                          image: primaryOfferImage))
     }
 
     private func cleanupRemoteDragTempDir() {
@@ -790,7 +833,7 @@ final class KittyDnDController {
         offerMimeTypes = []
         offerOperations = 0
         offerData = [:]
-        offerImage = nil
+        offerImages = [:]
         for (_, completion) in pendingDataRequests {
             completion(nil)
         }

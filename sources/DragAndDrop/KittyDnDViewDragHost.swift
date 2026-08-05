@@ -111,11 +111,52 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
     }
 
     private func dragImage(for offer: KittyDnDDragOffer) -> NSImage? {
-        // Only PNG thumbnails are supported for now (format 100).
-        guard let image = offer.image, image.format == 100 else {
+        guard let image = offer.image else {
             return nil
         }
-        return NSImage(data: image.data)
+        switch image.format {
+        case 100:
+            // PNG.
+            return NSImage(data: image.data)
+        case 24, 32:
+            // Raw RGB / RGBA. The controller has already validated that the byte
+            // count matches width*height*bytesPerPixel.
+            return Self.image(fromRaw: image)
+        default:
+            // Format 0 (text) or unknown: no thumbnail.
+            return nil
+        }
+    }
+
+    /// Build an NSImage from raw RGB (format 24) or RGBA (format 32) pixel data.
+    private static func image(fromRaw image: KittyDnDDragImage) -> NSImage? {
+        let samplesPerPixel = image.format == 32 ? 4 : 3
+        guard image.width > 0, image.height > 0,
+              image.data.count == image.width * image.height * samplesPerPixel else {
+            return nil
+        }
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: image.width,
+            pixelsHigh: image.height,
+            bitsPerSample: 8,
+            samplesPerPixel: samplesPerPixel,
+            hasAlpha: samplesPerPixel == 4,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: image.width * samplesPerPixel,
+            bitsPerPixel: samplesPerPixel * 8),
+              let dest = rep.bitmapData else {
+            return nil
+        }
+        image.data.withUnsafeBytes { raw in
+            if let base = raw.baseAddress {
+                dest.update(from: base.assumingMemoryBound(to: UInt8.self), count: raw.count)
+            }
+        }
+        let result = NSImage(size: NSSize(width: image.width, height: image.height))
+        result.addRepresentation(rep)
+        return result
     }
 
     private func textImage(_ text: String, size: NSSize) -> NSImage {
