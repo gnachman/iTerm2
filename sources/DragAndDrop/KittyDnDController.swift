@@ -88,10 +88,10 @@ final class KittyDnDController {
     // MIME index (the program answers a t=e:x=5 request with t=e:y=idx;data).
     private var pendingDataRequests: [Int: (Data?) -> Void] = [:]
 
-    // Outstanding t=k remote-file fetches (dragging a remote program's files
-    // out), keyed by the request's addressing keys. The program answers a
-    // t=k request with the file bytes / symlink target / directory listing.
-    private var pendingRemoteFetches: [String: (KittyDnDMessage?) -> Void] = [:]
+    // The in-progress fetch of a remote program's offered files (dragging them
+    // out). It collects the t=k pushes; case "k"/"R" route to it. nil when no
+    // remote drag-out is being assembled.
+    private var remoteDragFetch: KittyDnDRemoteDragFetch?
     // Temp directory on this machine holding files fetched from a remote program
     // for an in-progress drag-out; removed when the drag finishes.
     private var remoteDragTempDir: URL?
@@ -204,11 +204,12 @@ final class KittyDnDController {
         case "E":
             handleDragStatus(message)
         case "k":
-            // The program's response to a t=k remote-file fetch (drag-out).
-            resolveRemoteFetch(message, failed: false)
+            // A t=k push from a remote program for an in-progress drag-out: the
+            // top-level entry we requested, or one of its children (unsolicited).
+            remoteDragFetch?.receive(message)
         case "R":
-            // An error reply to an outstanding t=k fetch, if any.
-            resolveRemoteFetch(message, failed: true)
+            // An error reply to an outstanding t=k entry, if any.
+            remoteDragFetch?.receiveError(message)
         default:
             // Unknown messages are ignored (forward compatibility).
             break
@@ -575,7 +576,9 @@ final class KittyDnDController {
     }
 
     /// Fetch the offered files from the remote program via t=k into a temp dir,
-    /// then drag those local copies.
+    /// then drag those local copies. The terminal requests only the top-level
+    /// uri-list entries; the program pushes directory children unsolicited, which
+    /// KittyDnDRemoteDragFetch assembles.
     private func beginRemoteFileDrag(uriListIndex: Int) async {
         // Discard any temp dir from a prior build, and take a generation so that a
         // reset / new offer arriving while we await can abort this build instead
@@ -590,106 +593,46 @@ final class KittyDnDController {
         }
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("iterm2-kittydnd-\(UUID().uuidString)")
-        var localURLs: [URL] = []
-        for (offset, name) in names.enumerated() {
-            // Each entry gets its own numbered subdirectory so two entries with
-            // the same basename cannot overwrite each other.
-            let dest = tempDir.appendingPathComponent(String(offset + 1)).appendingPathComponent(name)
-            let ok = await materializeRemoteEntry(request: ["x": String(offset + 1)], to: dest)
-            guard generation == offerGeneration else {
-                Self.removeItemOffMainThread(tempDir)   // superseded; discard our work
-                return
-            }
-            if !ok {
-                send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "EIO:fetch failed"))
-                Self.removeItemOffMainThread(tempDir)
-                resetOfferInProgress()
-                return
-            }
-            // A refused entry (e.g. an unsafe symlink) writes nothing; skip it.
-            if FileManager.default.fileExists(atPath: dest.path) {
-                localURLs.append(dest)
-            }
+
+        var fetchRef: KittyDnDRemoteDragFetch?
+        let localURLs: [URL]? = await withCheckedContinuation { continuation in
+            let fetch = KittyDnDRemoteDragFetch(
+                tempDir: tempDir,
+                topLevelNames: names,
+                send: { [weak self] in self?.send($0) },
+                completion: { continuation.resume(returning: $0) })
+            fetchRef = fetch
+            self.remoteDragFetch = fetch
+            fetch.start()
         }
+        // Only clear the reference if it is still ours (a newer offer may have
+        // replaced it while we awaited).
+        if remoteDragFetch === fetchRef {
+            remoteDragFetch = nil
+        }
+
         guard generation == offerGeneration else {
+            // Superseded by a reset / newer offer while fetching; discard quietly.
             Self.removeItemOffMainThread(tempDir)
             return
         }
-        guard !localURLs.isEmpty else {
+        guard let localURLs, !localURLs.isEmpty else {
+            // Aborted, resource-limited, or nothing usable (e.g. all symlinks).
             send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "EIO:no usable files"))
             Self.removeItemOffMainThread(tempDir)
             resetOfferInProgress()
             return
         }
         remoteDragTempDir = tempDir
-        // Replace the uri-list in the offer with the local temp copies.
+        // Replace the uri-list in the offer with the local temp copies. Directory
+        // entries get a trailing slash per the spec.
         var data = offerData
-        data[uriListIndex] = Data(localURLs.map { $0.absoluteString }.joined(separator: "\r\n").utf8)
+        data[uriListIndex] = Data(localURLs.map { Self.directoryAwareURIString($0) }
+            .joined(separator: "\r\n").utf8)
         beginDrag(with: KittyDnDDragOffer(mimeTypes: offerMimeTypes,
                                           data: data,
                                           operations: offerOperations,
                                           image: offerImage))
-    }
-
-    /// Fetch one remote entry (identified by `request`, a t=k addressing dict)
-    /// and write it to `dest`. Returns false only on a hard failure (a refused
-    /// entry, e.g. an unsafe symlink, returns true but writes nothing).
-    private func materializeRemoteEntry(request: [String: String], to dest: URL) async -> Bool {
-        guard let message = await fetchRemoteEntry(request) else {
-            return false
-        }
-        let payload = message.dataPayload ?? Data()
-        // Type: absent or 0 = regular file, 1 = symlink, >=2 = directory handle.
-        let typeFlag = message.metadata["X"].flatMap(Int.init) ?? 0
-        switch typeFlag {
-        case 1:
-            // The symlink target is controlled by the untrusted remote and is
-            // meaningless on this machine; a symlink into the dragged tree could
-            // also exfiltrate a local file if the drop destination follows it.
-            // Skip symlinks entirely.
-            return true
-        case 2...:
-            let created = await Self.writeOffMainThread {
-                try FileManager.default.createDirectory(at: dest, withIntermediateDirectories: true)
-            }
-            guard created else { return false }
-            let childNames = payload.split(separator: 0)
-                .map { Self.sanitizeComponent(String(decoding: $0, as: UTF8.self)) }
-            for (offset, childName) in childNames.enumerated() {
-                let ok = await materializeRemoteEntry(
-                    request: ["Y": String(typeFlag), "y": String(offset + 1)],
-                    to: dest.appendingPathComponent(childName))
-                if !ok { return false }
-            }
-            return true
-        default:
-            // Regular file (X absent or 0).
-            return await Self.writeOffMainThread {
-                try FileManager.default.createDirectory(
-                    at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
-                try payload.write(to: dest)
-            }
-        }
-    }
-
-    /// Send one t=k request and await the reassembled response (nil on error).
-    private func fetchRemoteEntry(_ request: [String: String]) async -> KittyDnDMessage? {
-        let key = Self.remoteFetchKey(request)
-        return await withCheckedContinuation { (continuation: CheckedContinuation<KittyDnDMessage?, Never>) in
-            pendingRemoteFetches[key]?(nil)   // fail any stale fetch for this key
-            pendingRemoteFetches[key] = { continuation.resume(returning: $0) }
-            var metadata = request
-            metadata["t"] = "k"
-            send(KittyDnDMessage(metadata: metadata))
-        }
-    }
-
-    private func resolveRemoteFetch(_ message: KittyDnDMessage, failed: Bool) {
-        let key = Self.remoteFetchKey(message.metadata)
-        guard let completion = pendingRemoteFetches.removeValue(forKey: key) else {
-            return
-        }
-        completion(failed ? nil : message)
     }
 
     private func cleanupRemoteDragTempDir() {
@@ -709,7 +652,7 @@ final class KittyDnDController {
         }
     }
 
-    private static func removeItemOffMainThread(_ url: URL) {
+    static func removeItemOffMainThread(_ url: URL) {
         Task.detached(priority: .utility) {
             try? FileManager.default.removeItem(at: url)
         }
@@ -808,10 +751,10 @@ final class KittyDnDController {
             completion(nil)
         }
         pendingDataRequests = [:]
-        for (_, completion) in pendingRemoteFetches {
-            completion(nil)
-        }
-        pendingRemoteFetches = [:]
+        // Abandon any in-progress remote drag-out fetch (resumes its awaiter with
+        // nil so beginRemoteFileDrag cleans up its temp dir).
+        remoteDragFetch?.abort()
+        remoteDragFetch = nil
     }
 
     // MARK: - Remote drag-out helpers
@@ -831,7 +774,7 @@ final class KittyDnDController {
 
     /// Reduce an untrusted name from a remote program to a single safe path
     /// component so it cannot escape the temp directory.
-    private static func sanitizeComponent(_ name: String) -> String {
+    static func sanitizeComponent(_ name: String) -> String {
         let cleaned = name.replacingOccurrences(of: "/", with: "_")
         if cleaned.isEmpty || cleaned == "." || cleaned == ".." {
             return "item"
@@ -839,17 +782,7 @@ final class KittyDnDController {
         return cleaned
     }
 
-    private static func remoteFetchKey(_ metadata: [String: String]) -> String {
-        if let parent = metadata["Y"], let child = metadata["y"] {
-            return "Y=\(parent):y=\(child)"
-        }
-        if let index = metadata["x"] {
-            return "x=\(index)"
-        }
-        return ""
-    }
-
-    private static func writeOffMainThread(_ block: @escaping @Sendable () throws -> Void) async -> Bool {
+    static func writeOffMainThread(_ block: @escaping @Sendable () throws -> Void) async -> Bool {
         return await Task.detached(priority: .utility) {
             do {
                 try block()

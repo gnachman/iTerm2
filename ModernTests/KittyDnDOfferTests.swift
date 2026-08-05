@@ -364,7 +364,10 @@ final class KittyDnDOfferTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: url), Data("hello".utf8))
     }
 
-    func testRemoteDirectoryDragIsFetchedRecursively() async throws {
+    // A directory entry: the terminal requests only the top-level entry; the
+    // program PUSHES the directory listing and every child unsolicited (the
+    // spec forbids the terminal from requesting children).
+    func testRemoteDirectoryDragIsPushedByProgram() async throws {
         let recorder = Recorder()
         let host = FakeDragHost()
         let c = remoteOfferController(host: host, recorder: recorder)
@@ -376,18 +379,18 @@ final class KittyDnDOfferTests: XCTestCase {
         let started = expectation(description: "drag started")
         started.assertForOverFulfill = false
         recorder.onReport = { msg in
-            if msg.type == "k" {
-                if let x = msg.metadata["x"], msg.metadata["Y"] == nil {
-                    // Top-level entry is a directory (X=handle) with two children.
-                    c.handleInboundSequence(
-                        KittyDnDMessage(metadata: ["t": "k", "x": x, "X": "7"],
-                                        dataPayload: Data("a.txt\u{0}b.txt".utf8)).serializedContent())
-                } else if let parent = msg.metadata["Y"], let child = msg.metadata["y"] {
-                    let content = child == "1" ? "A" : "B"
-                    c.handleInboundSequence(
-                        KittyDnDMessage(metadata: ["t": "k", "Y": parent, "y": child],
-                                        dataPayload: Data(content.utf8)).serializedContent())
-                }
+            if msg.type == "k", let x = msg.metadata["x"], msg.metadata["Y"] == nil {
+                // Respond to the single top-level request by pushing the directory
+                // listing followed by both children, all unsolicited.
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "k", "x": x, "X": "7"],
+                                    dataPayload: Data("a.txt\u{0}b.txt".utf8)).serializedContent())
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "k", "Y": "7", "y": "1"],
+                                    dataPayload: Data("A".utf8)).serializedContent())
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "k", "Y": "7", "y": "2"],
+                                    dataPayload: Data("B".utf8)).serializedContent())
             } else if msg.type == "E" {
                 started.fulfill()
             }
@@ -395,12 +398,59 @@ final class KittyDnDOfferTests: XCTestCase {
         c.handleInboundSequence("t=P:x=-1")
         await fulfillment(of: [started], timeout: 5)
 
+        // Conformance: the terminal must NOT have requested any child.
+        XCTAssertFalse(recorder.messages.contains { $0.type == "k" && $0.metadata["Y"] != nil },
+                       "terminal must not request directory children in the t=k flow")
+
         let uriData = try XCTUnwrap(host.begun.first?.data[0])
         let dirURL = try XCTUnwrap(URL(string: String(decoding: uriData, as: UTF8.self)))
         defer { try? FileManager.default.removeItem(at: dirURL.deletingLastPathComponent()) }
         XCTAssertEqual(dirURL.lastPathComponent, "dir")
+        // The uri-list entry for a directory ends with a slash.
+        XCTAssertEqual(String(decoding: uriData, as: UTF8.self).hasSuffix("/"), true)
         XCTAssertEqual(try Data(contentsOf: dirURL.appendingPathComponent("a.txt")), Data("A".utf8))
         XCTAssertEqual(try Data(contentsOf: dirURL.appendingPathComponent("b.txt")), Data("B".utf8))
+    }
+
+    // A nested directory: a child that is itself a directory declares its own
+    // handle and pushes its grandchildren, all unsolicited.
+    func testRemoteNestedDirectoryIsPushed() async throws {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = remoteOfferController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:o=1;text/uri-list")
+        presend(c, index: 0, data: Data("file:///remote/top".utf8))
+
+        let started = expectation(description: "drag started")
+        started.assertForOverFulfill = false
+        recorder.onReport = { msg in
+            guard msg.type == "k", let x = msg.metadata["x"], msg.metadata["Y"] == nil else {
+                if msg.type == "E" { started.fulfill() }
+                return
+            }
+            // top/ -> handle 7 with one child "inner" (a directory) ...
+            c.handleInboundSequence(
+                KittyDnDMessage(metadata: ["t": "k", "x": x, "X": "7"],
+                                dataPayload: Data("inner".utf8)).serializedContent())
+            // ... inner/ (child 1 of handle 7) -> handle 8 with one child "deep.txt" ...
+            c.handleInboundSequence(
+                KittyDnDMessage(metadata: ["t": "k", "Y": "7", "y": "1", "X": "8"],
+                                dataPayload: Data("deep.txt".utf8)).serializedContent())
+            // ... deep.txt (child 1 of handle 8).
+            c.handleInboundSequence(
+                KittyDnDMessage(metadata: ["t": "k", "Y": "8", "y": "1"],
+                                dataPayload: Data("deep".utf8)).serializedContent())
+        }
+        c.handleInboundSequence("t=P:x=-1")
+        await fulfillment(of: [started], timeout: 5)
+
+        let uriData = try XCTUnwrap(host.begun.first?.data[0])
+        let topURL = try XCTUnwrap(URL(string: String(decoding: uriData, as: UTF8.self)))
+        defer { try? FileManager.default.removeItem(at: topURL.deletingLastPathComponent()) }
+        let deep = topURL.appendingPathComponent("inner").appendingPathComponent("deep.txt")
+        XCTAssertEqual(try Data(contentsOf: deep), Data("deep".utf8))
     }
 
     // A single remote drag with several uri-list entries; `respond` serves each
