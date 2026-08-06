@@ -4670,6 +4670,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_shell.winSizeController setGridSize:_screen.size
                                  viewSize:_screen.viewSize
                               scaleFactor:self.backingScaleFactor];
+    // The old program's Kitty drag-and-drop registration must not survive a shell
+    // restart (the bridge is reused).
+    [_kittyDnDBridge reset];
     [self resetForRelaunch];
     __weak __typeof(self) weakSelf = self;
     [self startProgram:_program
@@ -15129,6 +15132,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_textview requestDelegateRedraw];
     [self restoreColorsFromProfile];
     _screen.trackCursorLineMovement = NO;
+    // A terminal reset (RIS / the Reset menu) clears Kitty drag-and-drop state too,
+    // so a program that registered t=a/t=o and then exited does not leave the
+    // protocol enabled in sessions without shell integration (which never emit the
+    // OSC 133 prompt mark that otherwise resets it).
+    [_kittyDnDBridge reset];
 }
 
 - (void)restoreColorsFromProfile {
