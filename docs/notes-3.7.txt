@@ -1455,6 +1455,11 @@ Bug Fixes:
   a backslash instead of ¥ on non-JIS
   keyboards. Restore ⌥+¥ sending ESC+\
   (with Option=Esc+) on JIS keyboards.
+- Fix a bug where a restored session whose
+  working directory was on an unmounted drive
+  could fail to relaunch, closing the tab. The
+  session now starts in your home directory and
+  shows a notice. Issue 12955.
 - Fix various crashes.
 - Fix wrong terminal size after exiting
   fullscreen with multiple tabs.

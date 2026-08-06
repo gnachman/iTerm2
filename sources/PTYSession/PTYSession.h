@@ -638,6 +638,12 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // symlinks resolved is returned.
 @property(nonatomic, readonly, nullable) NSString *currentLocalWorkingDirectory;
 
+// When the session's requested working directory did not exist at launch (for example, a restored
+// session whose directory was on a drive that is no longer mounted), the launch falls back to the
+// home directory and stashes the unavailable path here so a notice can be shown once the shell
+// starts. Cleared after the notice is displayed. Issue 12955.
+@property(nonatomic, nullable, copy) NSString *unavailableWorkingDirectory;
+
 // Async version of currentLocalWorkingDirectory.
 - (void)asyncCurrentLocalWorkingDirectory:(void (^)(NSString * _Nullable pwd))completion;
 
