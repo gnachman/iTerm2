@@ -2591,3 +2591,10 @@ Bug Fixes:
   rows, so Persian, Arabic, and Hebrew lines
   keep their correct display order instead of
   falling back to logical order.
+- Fixed misplaced letters in right-to-left words
+  that combine a lam-alef ligature with a
+  diacritic, like the Persian کاملاً and لطفاً:
+  the combining mark's glyph position no longer
+  perturbs the display order, so the word's
+  letters stay in right-to-left order and the
+  mark stays on its base letter.

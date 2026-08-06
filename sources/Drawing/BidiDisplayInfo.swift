@@ -196,6 +196,17 @@ fileprivate struct IntermediateLookupTable {
                 let stringIndex = stringIndices[i]
                 let sourceCell = cell(stringIndex)
                 if sourceCell < 0 { continue }  // inserted isolate control: no cell
+                // Only the cell's base character (its first UTF-16 unit) may
+                // set the cell's position. A combining mark merged into a cell
+                // is a zero-advance glyph positioned over its base's glyph — or
+                // over a ligature that consumed the base, as in کاملاً where
+                // the fathatan rides the lam-alef ligature. Crediting the
+                // mark's x to the cell gave the alef's cell an absolute
+                // position at/right of the ligature's origin, sorting it to the
+                // wrong side of the lam. Ignored, the cell falls back to
+                // leftOfPredecessor/rightOfPredecessor as ligature-consumed
+                // cells are meant to.
+                if stringIndex > 0 && cell(stringIndex - 1) == sourceCell { continue }
                 if var existing = sourceCellToPositionRange[sourceCell] {
                     existing.formUnion(positions[i].x...positions[i].x)
                     sourceCellToPositionRange[sourceCell] = existing
