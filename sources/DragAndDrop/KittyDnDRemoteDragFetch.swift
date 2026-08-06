@@ -148,13 +148,33 @@ final class KittyDnDRemoteDragFetch {
         let topLevelIndex = topLevelIndex(of: message)
         let typeFlag = message.metadata["X"].flatMap(Int.init) ?? 0
 
+        // X: absent or 0 = regular file, 1 = symlink, ANY OTHER integer (including
+        // negatives) = a directory handle. The spec defines a handle as "an
+        // arbitrary integer (handle) other than 0 or 1"; kitty emits unsigned ones
+        // but a conforming client may use negatives.
         switch typeFlag {
+        case 0:
+            // Regular file.
+            recordMaterialized(dest, for: message)
+            Task { @MainActor in
+                let ok = await KittyDnDController.writeOffMainThread {
+                    try FileManager.default.createDirectory(
+                        at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
+                    try payload.write(to: dest)
+                }
+                guard !self.finished else { return }
+                if ok {
+                    self.completeOne()
+                } else {
+                    self.entryFailed(topLevelIndex: topLevelIndex)
+                }
+            }
         case 1:
             // Symlink: skip entirely. Its target is attacker-controlled and
             // meaningless here, and following it at the drop destination could
             // exfiltrate a local file.
             completeOne()
-        case 2...:
+        default:
             // Directory: register its children as newly outstanding, then create
             // the directory. The children arrive later via Y=handle:y=num.
             let names = payload.split(separator: 0)
@@ -172,22 +192,6 @@ final class KittyDnDRemoteDragFetch {
             Task { @MainActor in
                 let ok = await KittyDnDController.writeOffMainThread {
                     try FileManager.default.createDirectory(at: dest, withIntermediateDirectories: true)
-                }
-                guard !self.finished else { return }
-                if ok {
-                    self.completeOne()   // the directory itself is now materialized
-                } else {
-                    self.entryFailed(topLevelIndex: topLevelIndex)
-                }
-            }
-        default:
-            // Regular file.
-            recordMaterialized(dest, for: message)
-            Task { @MainActor in
-                let ok = await KittyDnDController.writeOffMainThread {
-                    try FileManager.default.createDirectory(
-                        at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
-                    try payload.write(to: dest)
                 }
                 guard !self.finished else { return }
                 if ok {

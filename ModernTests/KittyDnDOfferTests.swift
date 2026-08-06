@@ -30,8 +30,8 @@ final class KittyDnDOfferTests: XCTestCase {
         var begun: [KittyDnDDragOffer] = []
         var cancelCount = 0
         var clearGestureCount = 0
-        var beginResult = true
-        func beginDrag(_ offer: KittyDnDDragOffer) -> Bool {
+        var beginResult: KittyDnDDragStartResult = .started
+        func beginDrag(_ offer: KittyDnDDragOffer) -> KittyDnDDragStartResult {
             begun.append(offer)
             return beginResult
         }
@@ -285,6 +285,22 @@ final class KittyDnDOfferTests: XCTestCase {
         }
         c.handleInboundSequence("t=P:x=-1")
         XCTAssertEqual(host.begun.first?.data[0], big)
+    }
+
+    // If the gesture is gone by the time the program commits (the user let go),
+    // the drag-start reply is EPERM, not EIO.
+    func testStartDragWithGoneGestureRepliesEPERM() {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        host.beginResult = .gestureGone
+        let c = makeController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:o=1;text/plain")
+        presend(c, index: 0, data: Data("hi".utf8))
+        c.handleInboundSequence("t=P:x=-1")
+        XCTAssertEqual(recorder.last?.type, "E")
+        XCTAssertEqual(recorder.last?.textPayload, "EPERM:drag gesture ended")
     }
 
     func testStartDragWithoutHostReportsError() {
@@ -609,6 +625,76 @@ final class KittyDnDOfferTests: XCTestCase {
         XCTAssertEqual(host.begun.count, 1)
         c.handleInboundSequence("t=P:x=-1")  // duplicate
         XCTAssertEqual(host.begun.count, 1)
+    }
+
+    // A remote program that DEFERRED its uri-list (did not pre-send it) must be
+    // pulled via t=e:x=5 before the t=k fetch, not rejected with EINVAL:no files.
+    func testRemoteDeferredUriListIsPulledThenFetched() async throws {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = remoteOfferController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:o=1;text/uri-list")
+        // Note: the uri-list (index 0) is NOT pre-sent.
+
+        let started = expectation(description: "drag started")
+        started.assertForOverFulfill = false
+        recorder.onReport = { msg in
+            if msg.type == "e", msg.metadata["x"] == "5", let y = msg.metadata["y"] {
+                // Terminal pulls the deferred uri-list; answer it.
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "e", "y": y],
+                                    dataPayload: Data("file:///remote/a.txt".utf8)).serializedContent())
+            } else if msg.type == "k", let x = msg.metadata["x"], msg.metadata["Y"] == nil {
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "k", "x": x],
+                                    dataPayload: Data("hello".utf8)).serializedContent())
+            } else if msg.type == "E" {
+                started.fulfill()
+            }
+        }
+        c.handleInboundSequence("t=P:x=-1")
+        await fulfillment(of: [started], timeout: 5)
+
+        XCTAssertEqual(recorder.messages.last { $0.type == "E" }?.textPayload, "OK")
+        let uriData = try XCTUnwrap(host.begun.first?.data[0])
+        let url = try XCTUnwrap(URL(string: String(decoding: uriData, as: UTF8.self)))
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent().deletingLastPathComponent()) }
+        XCTAssertEqual(try Data(contentsOf: url), Data("hello".utf8))
+    }
+
+    // A negative directory handle (X=-2) is a directory handle, not a file.
+    func testRemoteNegativeDirectoryHandleIsADirectory() async throws {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = remoteOfferController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:o=1;text/uri-list")
+        presend(c, index: 0, data: Data("file:///remote/dir".utf8))
+
+        let started = expectation(description: "drag started")
+        started.assertForOverFulfill = false
+        recorder.onReport = { msg in
+            if msg.type == "k", let x = msg.metadata["x"], msg.metadata["Y"] == nil {
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "k", "x": x, "X": "-2"],
+                                    dataPayload: Data("a.txt".utf8)).serializedContent())
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "k", "Y": "-2", "y": "1"],
+                                    dataPayload: Data("A".utf8)).serializedContent())
+            } else if msg.type == "E" {
+                started.fulfill()
+            }
+        }
+        c.handleInboundSequence("t=P:x=-1")
+        await fulfillment(of: [started], timeout: 5)
+
+        let uriData = try XCTUnwrap(host.begun.first?.data[0])
+        let dirURL = try XCTUnwrap(URL(string: String(decoding: uriData, as: UTF8.self)))
+        defer { try? FileManager.default.removeItem(at: dirURL.deletingLastPathComponent()) }
+        XCTAssertEqual(try Data(contentsOf: dirURL.appendingPathComponent("a.txt")), Data("A".utf8))
     }
 
     // A nested directory: a child that is itself a directory declares its own

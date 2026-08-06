@@ -526,6 +526,25 @@ final class KittyDnDAcceptTests: XCTestCase {
         XCTAssertEqual(resp?.textPayload, "ENOENT")
     }
 
+    // MARK: - Machine-id version (#6)
+
+    // A machine id with a version we do not understand ("2:...") must be treated
+    // as a DIFFERENT machine (remote), and kept out of the accepted MIME list.
+    func testUnknownMachineIdVersionIsTreatedAsRemote() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/uri-list")
+        c.handleInboundSequence("t=a:x=1;2:deadbeef")  // future version id
+        XCTAssertEqual(c.acceptedMimeTypes, ["text/uri-list"],
+                       "a machine-id token must not leak into the MIME list")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/uri-list"],
+                                         fileURLs: [URL(fileURLWithPath: "/tmp/a.txt")]))
+        c.handleInboundSequence("t=r:x=1")
+        XCTAssertEqual(reassembledDataResponse(recorder)?.metadata["X"], "1",
+                       "an unknown-version peer id must route as remote (X=1)")
+    }
+
     // MARK: - Multiplexer i key (#4)
 
     // Spec: "When the terminal receives a t=a or t=o escape code that has the i

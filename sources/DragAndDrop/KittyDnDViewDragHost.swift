@@ -15,6 +15,7 @@
 //
 
 import AppKit
+import UniformTypeIdentifiers
 
 @available(macOS 11.0, *)
 @objc(iTermKittyDnDViewDragHost)
@@ -40,9 +41,13 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
         self.dataSource = dataSource
     }
 
-    func beginDrag(_ offer: KittyDnDDragOffer) -> Bool {
-        guard let view = dataSource?.kittyDnDView, let event = pendingEvent else {
-            return false
+    func beginDrag(_ offer: KittyDnDDragOffer) -> KittyDnDDragStartResult {
+        guard let view = dataSource?.kittyDnDView else {
+            return .failed
+        }
+        guard let event = pendingEvent else {
+            // No stored gesture: the drag request came without (or after) one.
+            return .gestureGone
         }
         // Refuse a stale gesture: a real drag-out holds the mouse button down
         // through the t=o / t=P round trip, so no button being pressed means the
@@ -50,15 +55,15 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
         // from a long-dead event at a moment of its choosing.
         guard NSEvent.pressedMouseButtons != 0 else {
             pendingEvent = nil
-            return false
+            return .gestureGone
         }
         let items = draggingItems(for: offer, in: view, event: event)
         guard !items.isEmpty else {
-            return false
+            return .failed
         }
         currentOperations = offer.operations
         view.beginDraggingSession(with: items, event: event, source: self)
-        return true
+        return .started
     }
 
     func cancelDrag() {
@@ -83,9 +88,11 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
                            y: origin.y - size.height / 2,
                            width: size.width, height: size.height)
 
-        // Prefer real file URLs (from text/uri-list) so a drop onto Finder works.
+        var items: [NSDraggingItem] = []
+
+        // Real file URLs (from text/uri-list) so a drop onto Finder works.
         if let urls = fileURLs(from: offer), !urls.isEmpty {
-            return urls.enumerated().map { index, url in
+            items = urls.enumerated().map { index, url in
                 let item = NSDraggingItem(pasteboardWriter: url as NSURL)
                 let contents = image ?? NSWorkspace.shared.icon(forFile: url.path)
                 item.setDraggingFrame(frame.offsetBy(dx: CGFloat(index) * 6, dy: 0),
@@ -94,18 +101,60 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
             }
         }
 
-        // Otherwise a plain-text drag.
+        // Every other offered MIME type with data, so a destination can pick its
+        // preferred flavor (image/png, application/json, custom types, ...), not
+        // just uri-list and plain text.
+        if let pbItem = Self.pasteboardItem(from: offer) {
+            let item = NSDraggingItem(pasteboardWriter: pbItem)
+            let contents = image ?? dragThumbnail(for: offer, size: size)
+            item.setDraggingFrame(frame.offsetBy(dx: CGFloat(items.count) * 6, dy: 0),
+                                  contents: contents)
+            items.append(item)
+        }
+
+        return items
+    }
+
+    /// A single pasteboard item carrying every offered non-file MIME's data, typed
+    /// by its UTType (or the raw MIME string as a custom type for unknown MIMEs).
+    private static func pasteboardItem(from offer: KittyDnDDragOffer) -> NSPasteboardItem? {
+        let pbItem = NSPasteboardItem()
+        var added = false
+        for (index, mime) in offer.mimeTypes.enumerated() where mime != "text/uri-list" {
+            guard let data = offer.data[index] else { continue }
+            if mime == "text/plain", let text = String(data: data, encoding: .utf8) {
+                pbItem.setString(text, forType: .string)
+            } else {
+                pbItem.setData(data, forType: pasteboardType(forMIME: mime))
+            }
+            added = true
+        }
+        return added ? pbItem : nil
+    }
+
+    private static func pasteboardType(forMIME mime: String) -> NSPasteboard.PasteboardType {
+        if let type = UTType(mimeType: mime) {
+            return NSPasteboard.PasteboardType(type.identifier)
+        }
+        // Unknown MIME: use the MIME string itself as a custom pasteboard type.
+        return NSPasteboard.PasteboardType(mime)
+    }
+
+    /// A thumbnail for a non-file drag: the first offered image, else a text
+    /// snippet, else a blank square.
+    private func dragThumbnail(for offer: KittyDnDDragOffer, size: NSSize) -> NSImage {
+        for (index, mime) in offer.mimeTypes.enumerated()
+        where mime.hasPrefix("image/") {
+            if let data = offer.data[index], let image = NSImage(data: data) {
+                return image
+            }
+        }
         if let index = offer.mimeTypes.firstIndex(of: "text/plain"),
            let data = offer.data[index],
            let text = String(data: data, encoding: .utf8) {
-            let pbItem = NSPasteboardItem()
-            pbItem.setString(text, forType: .string)
-            let item = NSDraggingItem(pasteboardWriter: pbItem)
-            item.setDraggingFrame(frame, contents: image ?? textImage(text, size: size))
-            return [item]
+            return textImage(text, size: size)
         }
-
-        return []
+        return NSImage(size: size)
     }
 
     private func fileURLs(from offer: KittyDnDDragOffer) -> [URL]? {

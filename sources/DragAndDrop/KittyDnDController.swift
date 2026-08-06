@@ -65,6 +65,10 @@ final class KittyDnDController {
     // reserved by the protocol for the file/symlink type indicators).
     private var directoryHandles: [Int: [URL]] = [:]
     private var nextDirectoryHandle = 2
+    // Addressing keys of filesystem-entry reads currently in flight, so an
+    // identical t=r request repeated while one is being served does not spawn a
+    // second full read and multiply the memory/IO spike.
+    private var inFlightEntryRequests: Set<String> = []
     // Bumped at every drop-context boundary (new drag cycle, new drop, drop
     // completion, reset). An async filesystem read captures it before awaiting and
     // discards its result if it changed, so a read still in flight when the drop
@@ -97,6 +101,10 @@ final class KittyDnDController {
     /// with arbitrary indices or unbounded payloads.
     private static let maxOfferImages = 16
     private static let maxOfferBytes = 256 * 1024 * 1024
+    /// Cap on simultaneously-open directory handles in the accept-drop traversal,
+    /// so a program that re-lists directories in a loop cannot grow memory without
+    /// bound. Beyond this a directory request is answered with ENOMEM.
+    private static let maxDirectoryHandles = 512
 
     /// The primary drag thumbnail (index -1, else the first provided).
     private var primaryOfferImage: KittyDnDDragImage? {
@@ -167,6 +175,7 @@ final class KittyDnDController {
         acceptGeneration += 1
         directoryHandles.removeAll()
         nextDirectoryHandle = 2
+        inFlightEntryRequests.removeAll()
         lastCompletedDropOperation = nil
         // Keep the multiplexer routing id while a native drag is still live (the
         // same reason selfDragInProgress survives reset): the drag's remaining
@@ -308,6 +317,7 @@ final class KittyDnDController {
         acceptGeneration += 1
         directoryHandles.removeAll()
         nextDirectoryHandle = 2
+        inFlightEntryRequests.removeAll()
         sendMoveOrDrop(type: "m", cellX: cellX, cellY: cellY, pixelX: pixelX,
                        pixelY: pixelY, operations: operations, mimeTypes: mimeTypes)
     }
@@ -359,6 +369,7 @@ final class KittyDnDController {
         acceptGeneration += 1
         directoryHandles.removeAll()
         nextDirectoryHandle = 2
+        inFlightEntryRequests.removeAll()
     }
 
     // MARK: - Data request handling
@@ -461,22 +472,35 @@ final class KittyDnDController {
     /// handle (X=handle). The dropped files are local to us, so this is the
     /// terminal-reads-and-streams half of the protocol's cross-machine support.
     private func answerFilesystemEntry(url: URL, responseMetadata: [String: String]) {
+        // Drop an identical request already being served, so a program cannot
+        // multiply the read/memory spike by repeating the same t=r in a loop.
+        let requestKey = Self.entryRequestKey(responseMetadata)
+        guard inFlightEntryRequests.insert(requestKey).inserted else { return }
         // Capture the drop context now; if it changes while we read (the drop was
         // completed, superseded, or reset), discard the result so we neither
         // stream stale bytes nor resurrect a freed directory handle.
         let generation = acceptGeneration
         Task { @MainActor in
+            defer { self.inFlightEntryRequests.remove(requestKey) }
             do {
                 let entry = try await Self.readEntryOffMainThread(url)
                 guard generation == self.acceptGeneration else { return }
                 switch entry {
                 case .regularFile(let data):
-                    sendChunkedData(baseMetadata: responseMetadata, data: data)
+                    // Stream the (memory-mapped) file one chunk at a time so only a
+                    // single chunk's base64 is resident, not the whole file's.
+                    sendChunkedDataStreaming(baseMetadata: responseMetadata, data: data,
+                                             generation: generation)
                 case .symlink(let target):
                     var metadata = responseMetadata
                     metadata["X"] = "1"
                     sendChunkedData(baseMetadata: metadata, data: Data(target.utf8))
                 case .directory(let children):
+                    guard directoryHandles.count < Self.maxDirectoryHandles else {
+                        // Spec: terminals must return ENOMEM on resource exhaustion.
+                        sendError(baseMetadata: responseMetadata, code: "ENOMEM")
+                        return
+                    }
                     let handle = allocateDirectoryHandle(children: children)
                     var metadata = responseMetadata
                     metadata["X"] = String(handle)
@@ -685,34 +709,50 @@ final class KittyDnDController {
         // which sets selfDragInProgress, or bail); clear the guard either way.
         defer { startingDrag = false }
         let generation = offerGeneration
-        for index in missing {
-            let data: Data? = await withCheckedContinuation { continuation in
-                requestDragData(mimeIndex: index) { continuation.resume(returning: $0) }
-            }
-            // A reset / new offer while awaiting supersedes this drag.
-            guard generation == offerGeneration else { return }
-            if let data {
-                offerData[index] = data
-            }
+        guard await pullDeferredOfferData(missing, generation: generation) else {
+            return
         }
-        guard generation == offerGeneration else { return }
         beginDrag(with: KittyDnDDragOffer(mimeTypes: offerMimeTypes,
                                           data: offerData,
                                           operations: offerOperations,
                                           image: primaryOfferImage))
     }
 
+    /// Pull each of the given offered MIME indices the program did not pre-send
+    /// via the t=e:x=5 request path, filling offerData. Returns false if the offer
+    /// was superseded (a reset / new offer) while awaiting.
+    private func pullDeferredOfferData(_ missing: [Int], generation: Int) async -> Bool {
+        for index in missing {
+            let data: Data? = await withCheckedContinuation { continuation in
+                requestDragData(mimeIndex: index) { continuation.resume(returning: $0) }
+            }
+            guard generation == offerGeneration else { return false }
+            if let data {
+                offerData[index] = data
+            }
+        }
+        return generation == offerGeneration
+    }
+
     private func beginDrag(with offer: KittyDnDDragOffer) {
-        guard let dragHost, dragHost.beginDrag(offer) else {
+        let result = dragHost?.beginDrag(offer) ?? .failed
+        switch result {
+        case .started:
+            // A native drag we started is now running: a drop that lands on this
+            // same session is a self-drag and its data reads must be refused (EPERM).
+            selfDragInProgress = true
+            send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "OK"))
+        case .gestureGone:
+            // The user let go before the program committed. Spec: reply EPERM when
+            // the drag gesture has already been terminated.
+            send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "EPERM:drag gesture ended"))
+            cleanupRemoteDragTempDir()
+            resetOfferInProgress()
+        case .failed:
             send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "EIO:could not start drag"))
             cleanupRemoteDragTempDir()
             resetOfferInProgress()
-            return
         }
-        // A native drag we started is now running: a drop that lands on this same
-        // session is a self-drag and its data reads must be refused (EPERM).
-        selfDragInProgress = true
-        send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "OK"))
     }
 
     /// Fetch the offered files from the remote program via t=k into a temp dir,
@@ -723,11 +763,15 @@ final class KittyDnDController {
         // The start is no longer pending once we return (we either begin the drag,
         // which sets selfDragInProgress, or bail); clear the idempotency guard.
         defer { startingDrag = false }
-        // Discard any temp dir from a prior build, and take a generation so that a
-        // reset / new offer arriving while we await can abort this build instead
-        // of stomping the newer one.
-        cleanupRemoteDragTempDir()
         let generation = offerGeneration
+        // Pre-sending is optional: the program may have deferred the uri-list (or
+        // other MIMEs) expecting us to pull them. Do that before reading the list.
+        let missing = offerMimeTypes.indices.filter { offerData[$0] == nil }
+        guard await pullDeferredOfferData(missing, generation: generation) else {
+            return
+        }
+        // Discard any temp dir from a prior build.
+        cleanupRemoteDragTempDir()
         let names = Self.uriListNames(offerData[uriListIndex])
         guard !names.isEmpty else {
             send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "EINVAL:no files"))
@@ -814,6 +858,14 @@ final class KittyDnDController {
         // t=E from the program. y=-1 cancels the whole drag; otherwise it is an
         // error reply to a lazy data request for that MIME index.
         guard let y = message.intValue("y") else {
+            // A t=E with no y is a generic client error (spec: "If any error
+            // occurs in the client while reading the data"). During a remote
+            // drag-out fetch it means the program failed to provide its data, so
+            // abort now instead of leaving the user holding a dead drag until the
+            // idle timeout. resetOfferInProgress aborts the fetch and drains.
+            if remoteDragFetch != nil {
+                resetOfferInProgress()
+            }
             return
         }
         if y == -1 {
@@ -973,6 +1025,39 @@ final class KittyDnDController {
         }
     }
 
+    /// Like sendChunkedData but emits each chunk as it is encoded rather than
+    /// materializing the whole base64 array first, so only one chunk's encoding is
+    /// resident at a time. With a memory-mapped `data` the raw bytes are OS-paged
+    /// too, keeping the footprint of serving a huge dropped file bounded. Rechecks
+    /// the drop generation between chunks so a completed/superseded drop stops the
+    /// stream promptly.
+    private func sendChunkedDataStreaming(baseMetadata: [String: String], data: Data,
+                                          generation: Int) {
+        var metadata = baseMetadata
+        metadata["t"] = "r"
+        let windowSize = KittyDnDChunker.maxRawChunkSize
+        var offset = 0
+        while offset < data.count {
+            guard generation == acceptGeneration else { return }
+            let end = min(offset + windowSize, data.count)
+            var chunk = metadata
+            chunk["m"] = "1"
+            send(KittyDnDMessage(metadata: chunk, dataPayload: data.subdata(in: offset..<end)))
+            offset = end
+        }
+        guard generation == acceptGeneration else { return }
+        // End of data: empty payload with m=0.
+        var terminator = metadata
+        terminator["m"] = "0"
+        send(KittyDnDMessage(metadata: terminator, rawPayload: ""))
+    }
+
+    /// Stable key for an entry request's addressing keys (x / y / Y), for
+    /// in-flight dedup.
+    private static func entryRequestKey(_ metadata: [String: String]) -> String {
+        return ["Y", "x", "y"].map { "\($0)=\(metadata[$0] ?? "")" }.joined(separator: ":")
+    }
+
     private func sendDataError(index: Int?, code: String) {
         sendError(baseMetadata: index.map { ["x": String($0)] } ?? [:], code: code)
     }
@@ -1029,15 +1114,25 @@ final class KittyDnDController {
             guard values.isRegularFile == true else {
                 throw EntryTypeError()
             }
-            return .regularFile(try Data(contentsOf: url))
+            // Memory-map so a huge file is not loaded wholly into RAM; the streamed
+            // send then base64-encodes it a window at a time.
+            return .regularFile(try Data(contentsOf: url, options: .mappedIfSafe))
         }.value
     }
 
     // MARK: - Machine id
 
+    // A machine id is `version:printable-chars`. We recognize ANY numeric version
+    // (not just "1:") so that a future version is still treated as a machine id: a
+    // "2:..." id we don't understand differs from our "1:..." id and so is treated
+    // as a different machine (spec: "If the terminal sees a version it does not
+    // understand, it must assume that the machine id does not match"), and it is
+    // kept out of the MIME list. A MIME type ("text/plain") never has this shape.
     private static func isMachineIDToken(_ token: String) -> Bool {
-        guard token.hasPrefix("1:") else { return false }
-        let hex = token.dropFirst(2)
-        return hex.count == 64 && hex.allSatisfy { $0.isHexDigit }
+        guard let colon = token.firstIndex(of: ":"), colon != token.startIndex else {
+            return false
+        }
+        let version = token[token.startIndex..<colon]
+        return version.allSatisfy { $0.isNumber }
     }
 }

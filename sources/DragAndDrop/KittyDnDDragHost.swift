@@ -38,10 +38,22 @@ struct KittyDnDDragOffer: Equatable {
     var image: KittyDnDDragImage?
 }
 
+/// The outcome of trying to start a native drag, so the controller can pick the
+/// right protocol error code.
+enum KittyDnDDragStartResult {
+    /// The drag started.
+    case started
+    /// The gesture is gone (no pending gesture, or the mouse button was already
+    /// released): the user let go before the program committed. Maps to EPERM.
+    case gestureGone
+    /// A genuine environmental failure (no view, no draggable items). Maps to EIO.
+    case failed
+}
+
 @MainActor
 protocol KittyDnDDragHost: AnyObject {
-    /// Begin a native OS drag for `offer`. Returns true if the drag started.
-    func beginDrag(_ offer: KittyDnDDragOffer) -> Bool
+    /// Begin a native OS drag for `offer`, reporting the outcome.
+    func beginDrag(_ offer: KittyDnDDragOffer) -> KittyDnDDragStartResult
 
     /// Cancel an in-progress native drag, if any (best effort).
     func cancelDrag()
