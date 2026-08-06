@@ -62,8 +62,11 @@ final class KittyDnDController {
         if let op = acceptedDropOperation {
             return op
         }
+        // Optimistically prefer copy (non-destructive) so a move the OS source acts
+        // on before the program has confirmed cannot delete the source's only copy;
+        // fall back to move only if the source offers move-only (kitty op == 2).
         let offered = lastReportedMove?.operations ?? 1
-        return offered == 2 ? 2 : 1   // 3 (either) or 1 -> copy
+        return (offered & 1) != 0 ? 1 : 2
     }
 
     // The last hover (t=m) report we sent, to suppress duplicate stationary moves.
@@ -91,6 +94,10 @@ final class KittyDnDController {
     // accept generation so an old drop's completing read cannot remove a new
     // drop's key.
     private var inFlightEntryRequests: Set<String> = []
+    // Tail of the serialized chain of entry-response Tasks. Each response awaits
+    // the previous so their chunked outputs never interleave on the pty (the
+    // streaming send yields, which would otherwise allow interleaving).
+    private var responseTail: Task<Void, Never>?
     /// Cap on concurrent filesystem-entry reads. Spec: "if too many requests are
     /// received, terminals must deny the request with EMFILE and end the drop."
     private static let maxConcurrentEntryRequests = 64
@@ -556,7 +563,7 @@ final class KittyDnDController {
         // remove a new drop's key (which would let a duplicate slip through).
         let requestKey = "\(generation):\(Self.entryRequestKey(responseMetadata))"
         guard inFlightEntryRequests.insert(requestKey).inserted else { return }
-        Task { @MainActor in
+        enqueueResponse {
             defer { self.inFlightEntryRequests.remove(requestKey) }
             do {
                 let entry = try await Self.readEntryOffMainThread(url)
@@ -564,39 +571,54 @@ final class KittyDnDController {
                 switch entry {
                 case .regularFile(let data):
                     guard data.count <= Self.maxServedFileBytes else {
-                        sendError(baseMetadata: responseMetadata, code: "EFBIG")
+                        self.sendError(baseMetadata: responseMetadata, code: "EFBIG")
                         return
                     }
                     // Stream the (memory-mapped) file one chunk at a time so only a
                     // single chunk's base64 is resident, not the whole file's, and
                     // yielding so a huge file does not freeze the UI.
-                    await sendChunkedDataStreaming(baseMetadata: responseMetadata, data: data,
-                                                   generation: generation)
+                    await self.sendChunkedDataStreaming(baseMetadata: responseMetadata, data: data,
+                                                        generation: generation)
                 case .symlink(let target):
                     var metadata = responseMetadata
                     metadata["X"] = "1"
-                    sendChunkedData(baseMetadata: metadata, data: Data(target.utf8))
+                    self.sendChunkedData(baseMetadata: metadata, data: Data(target.utf8))
                 case .directory(let children):
-                    guard directoryHandles.count < Self.maxDirectoryHandles else {
+                    guard self.directoryHandles.count < Self.maxDirectoryHandles else {
                         // Spec: terminals must return ENOMEM on resource exhaustion.
-                        sendError(baseMetadata: responseMetadata, code: "ENOMEM")
+                        self.sendError(baseMetadata: responseMetadata, code: "ENOMEM")
                         return
                     }
-                    let handle = allocateDirectoryHandle(children: children)
+                    let handle = self.allocateDirectoryHandle(children: children)
                     var metadata = responseMetadata
                     metadata["X"] = String(handle)
                     let names = children.map { $0.lastPathComponent }.joined(separator: "\u{0}")
-                    sendChunkedData(baseMetadata: metadata, data: Data(names.utf8))
+                    self.sendChunkedData(baseMetadata: metadata, data: Data(names.utf8))
                 }
             } catch is EntryTypeError {
                 // Spec: EINVAL if the entry is not a regular file, symlink, or
                 // directory (e.g. a socket or FIFO).
                 guard generation == self.acceptGeneration else { return }
-                sendError(baseMetadata: responseMetadata, code: "EINVAL")
+                self.sendError(baseMetadata: responseMetadata, code: "EINVAL")
             } catch {
                 guard generation == self.acceptGeneration else { return }
-                sendError(baseMetadata: responseMetadata, code: Self.errorCode(for: error))
+                self.sendError(baseMetadata: responseMetadata, code: Self.errorCode(for: error))
             }
+        }
+    }
+
+    /// Run `body` (a filesystem-entry response) on a serialized chain so its
+    /// chunked t=r output is emitted contiguously and cannot interleave with
+    /// another entry response's chunks on the pty (the reassembler concatenates
+    /// same-t chunks and would corrupt them). The streaming file send yields
+    /// periodically, so without this a second concurrent entry response could run
+    /// in a gap. (The small synchronous uri-list / plain-MIME sends are not routed
+    /// here; see docs/kitty-dnd-design.md section 8 for the narrow residual.)
+    private func enqueueResponse(_ body: @escaping @MainActor () async -> Void) {
+        let previous = responseTail
+        responseTail = Task { @MainActor in
+            await previous?.value
+            await body()
         }
     }
 
