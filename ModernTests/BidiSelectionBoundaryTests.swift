@@ -87,9 +87,10 @@ class BidiSelectionBoundaryTests: XCTestCase {
     }
 
     // Simulates a character drag over visual columns and returns
-    // (highlighted logical indexes mid-drag, final subselection ranges).
+    // (highlighted logical indexes mid-drag, final subselection ranges,
+    // per-subselection connected flags).
     private func drag(_ bidi: BidiDisplayInfoObjc,
-                      fromVisual v1: Int32, toVisual v2: Int32) -> (IndexSet, [NSRange]) {
+                      fromVisual v1: Int32, toVisual v2: Int32) -> (IndexSet, [NSRange], [Bool]) {
         let delegate = VisualSelectionDelegate(width: 80, bidi: bidi)
         let selection = iTermSelection()
         selection.delegate = delegate
@@ -104,14 +105,15 @@ class BidiSelectionBoundaryTests: XCTestCase {
             let r = sub.absRange.coordRange
             return NSRange(location: Int(r.start.x), length: Int(r.end.x - r.start.x))
         }
-        return (highlighted, subs)
+        let connected = selection.allSubSelections.map { $0.connected }
+        return (highlighted, subs, connected)
     }
 
     func testRightMarginDragSelectsFromFirstCharacter() {
         guard let bidi = paddedInfo() else { return XCTFail("no bidi info") }
         // Drag from the right margin (visual 80) left over three cells:
         // visual 77..79 = logical 0..2 (آیا's first letters).
-        let (highlighted, subs) = drag(bidi, fromVisual: 80, toVisual: 77)
+        let (highlighted, subs, _) = drag(bidi, fromVisual: 80, toVisual: 77)
         XCTAssertEqual(highlighted, IndexSet(0...2))
         XCTAssertEqual(subs, [NSRange(location: 0, length: 3)])
     }
@@ -121,7 +123,7 @@ class BidiSelectionBoundaryTests: XCTestCase {
         let periodVisual = bidi.visualForLogical(33)   // 46
         // Drag rightward from the period's left edge over three cells:
         // period + ت + س = logical 31..33.
-        let (highlighted, subs) = drag(bidi, fromVisual: periodVisual, toVisual: periodVisual + 3)
+        let (highlighted, subs, _) = drag(bidi, fromVisual: periodVisual, toVisual: periodVisual + 3)
         XCTAssertEqual(highlighted, IndexSet(31...33))
         XCTAssertEqual(subs, [NSRange(location: 31, length: 3)])
     }
@@ -144,7 +146,7 @@ class BidiSelectionBoundaryTests: XCTestCase {
         // Drag from the period's visual position to digit 4: the visual span
         // covers digits 4,5 plus the Persian tail, not digits 1-3.
         let vPeriod = bidi.visualForLogical(lastLogical)
-        let (highlighted, _) = drag(bidi, fromVisual: vPeriod, toVisual: v4)
+        let (highlighted, subs, connected) = drag(bidi, fromVisual: vPeriod, toVisual: v4)
         // Expectation computed directly from the visual span.
         var expected = IndexSet()
         for v in min(vPeriod, v4)..<max(vPeriod, v4) {
@@ -158,6 +160,12 @@ class BidiSelectionBoundaryTests: XCTestCase {
         XCTAssertTrue(highlighted.contains(Int(digitsStart + 2)))
         XCTAssertFalse(highlighted.contains(Int(digitsStart + 3)))
         XCTAssertFalse(highlighted.contains(Int(digitsStart + 4)))
+        // The logically discontiguous pieces of one contiguous visual sweep
+        // must copy concatenated in reading order, not on separate lines:
+        // every same-line piece except the last is connected (no newline).
+        XCTAssertGreaterThan(subs.count, 1, "the sweep splits into logical runs")
+        XCTAssertEqual(connected, (0..<subs.count).map { $0 < subs.count - 1 },
+                       "all but the last same-line piece are connected")
     }
 
     func testUpwardDragKeepsAnchorLineWords() {

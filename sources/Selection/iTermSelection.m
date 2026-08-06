@@ -848,6 +848,16 @@ static NSString *const kiTermSubSelectionBoxColumnBounds = @"Box Column Bounds";
                 extended.coordRange.end = VT100GridAbsCoordMake(NSMaxRange(run), y);
                 previousSub.absRange = extended;
             } else {
+                if (previousSub != nil &&
+                    previousSub.absRange.coordRange.end.y == y) {
+                    // Another logical run follows on the SAME line: one
+                    // contiguous visual sweep split into logical pieces
+                    // (part of an embedded LTR run was not swept). Copy must
+                    // concatenate the pieces in reading order, not stack them
+                    // on separate lines, so mark the boundary as connected
+                    // (no newline after it).
+                    previousSub.connected = YES;
+                }
                 iTermSubSelection *sub = [[[iTermSubSelection alloc] init] autorelease];
                 sub.absRange = VT100GridAbsWindowedRangeMake(
                     VT100GridAbsCoordRangeMake(run.location, y, NSMaxRange(run), y), 0, 0);

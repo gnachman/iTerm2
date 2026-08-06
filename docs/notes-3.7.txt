@@ -2703,3 +2703,9 @@ Bug Fixes:
   right-justifies the way the same text renders
   in command output, instead of staying
   anchored to the Latin prompt.
+- Copying a single visual sweep that covers
+  logically separated pieces of a mixed
+  right-to-left line now concatenates the
+  pieces in reading order instead of stacking
+  them on separate lines. Pieces on different
+  lines still copy with line breaks.
