@@ -292,8 +292,14 @@ fileprivate func isolateLatinRuns(_ s: NSString, deltas: UnsafePointer<Int32>) -
         return (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A) || isLatinExtendedLetter(c)
     }
     // Island content: printable ASCII (no space), plus accented Latin letters so
-    // a word like "Müggelsee" is not split at the ü.
-    func isIsland(_ c: unichar) -> Bool { (c > 0x20 && c < 0x7F) || isLatinExtendedLetter(c) }
+    // a word like "Müggelsee" is not split at the ü. Guillemets count as island
+    // content so «machine learning» keeps its marks on their typed sides: left
+    // outside the island the UBA places them by direction run and the pair
+    // shows up swapped (»machine learning«). A guillemet with no adjacent
+    // Latin letters forms no island (hasLetter stays false), so Persian
+    // «سلام دنیا» is unaffected.
+    func isGuillemet(_ c: unichar) -> Bool { c == 0xAB || c == 0xBB || c == 0x2039 || c == 0x203A }
+    func isIsland(_ c: unichar) -> Bool { (c > 0x20 && c < 0x7F) || isLatinExtendedLetter(c) || isGuillemet(c) }
     func isDigit(_ c: unichar) -> Bool { c >= 0x30 && c <= 0x39 }
     func isAlnum(_ c: unichar) -> Bool { isLetter(c) || isDigit(c) }
     func isOpeningBracket(_ c: unichar) -> Bool { c == 0x28 || c == 0x5B || c == 0x7B }
@@ -369,31 +375,41 @@ fileprivate func makeLookupTable(_ string: NSString,
 
     let paragraphIsRTL: Bool =
         iTermAdvancedSettingsModel.detectParagraphDirection() &&
-        firstStrongIsRTL(string)
+        detectedParagraphIsRTL(string)
     return (intermediate.lut, intermediate.rtlIndexes, intermediate.mirroredIndexes, paragraphIsRTL)
 }
 
-// Base direction from the first strong directional character that is NOT inside
-// a Latin isolate. Without the isolate feature (no LRI/PDI) this is just the
-// first strong character, so behavior is unchanged. With it, a line that opens
-// with an English word is still treated as right-to-left when its real content
-// is right-to-left, instead of following that leading English word.
-fileprivate func firstStrongIsRTL(_ s: NSString) -> Bool {
+// A line lays out right-to-left when its first strong character is RTL, OR
+// when its strong RTL characters outnumber the strong LTR ones. Either signal
+// alone misfires: first-strong lays out «Berlin شهری بزرگ در آلمان» — a
+// Persian sentence that happens to open with an English word — left-to-right,
+// and majority alone flips a Persian-syntax line that quotes a lot of English
+// («کلمهٔ conversion rate و growth plan در گزارش آمد.») to left-to-right.
+// The union gets both right, and an English sentence containing one Persian
+// word («The word سلام means hello in Persian.») stays left-to-right instead
+// of being right-justified into an unreadable order. Isolate control
+// characters are skipped; the characters inside isolates count normally.
+fileprivate func detectedParagraphIsRTL(_ s: NSString) -> Bool {
     guard let ltr = NSCharacterSet.strongLTRCodePoints(),
           let rtl = NSCharacterSet.strongRTLCodePoints() else {
         return false
     }
-    var isolateDepth = 0
+    var firstStrongIsRTL: Bool? = nil
+    var ltrCount = 0
+    var rtlCount = 0
     for i in 0..<s.length {
         let c = s.character(at: i)
-        if c == iTermLRI || c == iTermRLI || c == iTermFSI { isolateDepth += 1; continue }
-        if c == iTermPDI { if isolateDepth > 0 { isolateDepth -= 1 }; continue }
-        if isolateDepth > 0 { continue }
+        if c == iTermLRI || c == iTermRLI || c == iTermFSI || c == iTermPDI { continue }
         guard let scalar = Unicode.Scalar(c) else { continue }
-        if rtl.contains(scalar) { return true }
-        if ltr.contains(scalar) { return false }
+        if rtl.contains(scalar) {
+            rtlCount += 1
+            if firstStrongIsRTL == nil { firstStrongIsRTL = true }
+        } else if ltr.contains(scalar) {
+            ltrCount += 1
+            if firstStrongIsRTL == nil { firstStrongIsRTL = false }
+        }
     }
-    return false
+    return firstStrongIsRTL == true || rtlCount > ltrCount
 }
 
 extension IndexSet {
@@ -464,41 +480,6 @@ class BidiDisplayInfoObjc: NSObject {
         return guts.mirroredIndexes.contains(Int(cell))
     }
 
-    // The LOGICAL coordinate a character selection should anchor at for a
-    // click on `visualCell`. Two corrections over plain logicalForVisual:
-    //
-    // 1. A click at or beyond the last column of a fully padded row (a
-    //    right-justified RTL line) anchors at the logical cell of the last
-    //    visual column — the visually-first character — instead of the
-    //    logical end of the line. The legacy value made the selection cover
-    //    the entire row the moment a drag from the right margin started.
-    //
-    // 2. iTerm anchors a click at the boundary on the logical-start side of
-    //    the clicked cell. For an RTL cell that boundary is its VISUAL-RIGHT
-    //    edge, so a click on the left half of the trailing period of
-    //    «…درست.» dragged visually rightward could never include the period.
-    //    Use the half of the cell that was clicked to pick the nearer
-    //    logical boundary for RTL cells. LTR cells keep the historical floor
-    //    semantics, so left-to-right lines are unchanged.
-    @objc(selectionAnchorForVisualCell:leftHalf:gridWidth:)
-    func selectionAnchor(forVisualCell visualCell: Int32, leftHalf: Bool, gridWidth: Int32) -> Int32 {
-        if visualCell >= numberOfCells {
-            if numberOfCells == gridWidth && numberOfCells > 0 {
-                return logicalForVisual(numberOfCells - 1)
-            }
-            // Unpadded row: keep the legacy identity so selecting the
-            // emptiness after the content still works like a plain LTR line.
-            return visualCell
-        }
-        if visualCell < 0 {
-            return visualCell
-        }
-        let logical = logicalForVisual(visualCell)
-        if leftHalf && guts.rtlIndexes.contains(Int(logical)) {
-            return logical + 1
-        }
-        return logical
-    }
 
     private enum Keys: String {
         case lut = "lut"
