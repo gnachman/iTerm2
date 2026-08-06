@@ -248,6 +248,21 @@ class SpyPTYSession: PTYSession {
     }
 }
 
+// MARK: - RevealSpyPTYSession
+
+// Records calls to revealAsPeerWithoutActivatingWindow so teardown
+// tests can assert whether the surviving leader was swapped back into
+// the shared pane (the issue-12967 blank-pane fix). Doesn't call super:
+// there is no real port/tab in unit tests, and the swap itself is
+// covered by the production peer-port paths.
+class RevealSpyPTYSession: PTYSession {
+    var spy_revealAsPeerCount: Int = 0
+
+    override func revealAsPeerWithoutActivatingWindow() {
+        spy_revealAsPeerCount += 1
+    }
+}
+
 // MARK: - Config builders
 
 // Builders for the tree shapes called out in the workgroup-entry

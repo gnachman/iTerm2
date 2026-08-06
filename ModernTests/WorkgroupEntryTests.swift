@@ -676,6 +676,76 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
             "Child termination should drive the workgroup out")
     }
 
+    // MARK: - §9.3 Leader restored to shared pane on teardown (issue 12967)
+
+    // The main peer group shares one tab pane; only the active member's
+    // view is installed, the rest are buried. When the pane is showing a
+    // NON-leader peer and the workgroup tears down (here: a sibling
+    // non-peer tab is closed), invalidate() terminates that visible peer.
+    // Without the fix its dead view is left in the tab — the blank pane
+    // in the bug report. teardown must first swap the surviving leader
+    // back into the pane.
+    func test_9_3_teardownRestoresLeaderWhenNonLeaderPeerIsVisible() {
+        leader = RevealSpyPTYSession(synthetic: false)!
+        let spyLeader = leader as! RevealSpyPTYSession
+
+        let root = WGFix.makeRoot()
+        let peer = WGFix.makePeer(parentID: root.uniqueIdentifier)
+        let tab = WGFix.makeTab(parentID: root.uniqueIdentifier)
+        let wg = WGFix.wrap(name: "rootPeerTab",
+                            sessions: [root, peer, tab])
+        enterWorkgroup(wg)
+        XCTAssertNotNil(instance)
+
+        // Simulate the user switching the shared pane to the peer.
+        instance!.peerPort.activeSessionIdentifier = peer.uniqueIdentifier
+        XCTAssertTrue(instance!.peerPort.activeSession !== spyLeader,
+                      "Precondition: a non-leader peer occupies the pane")
+
+        // Close the separate non-peer tab: its termination drives the
+        // whole workgroup through teardown.
+        let tabSession = spawner.session(forConfigID: tab.uniqueIdentifier)!
+        NotificationCenter.default.post(
+            name: NSNotification.Name.iTermSessionWillTerminate,
+            object: tabSession)
+
+        XCTAssertNil(
+            iTermWorkgroupController.instance.workgroupInstance(on: leader),
+            "Sibling-tab termination should drive the workgroup out")
+        XCTAssertEqual(spyLeader.spy_revealAsPeerCount, 1,
+                       "Leader must be swapped back into the shared pane so the tab isn't left showing a terminated peer")
+    }
+
+    // Inverse guard: when the terminating session IS the member holding
+    // the shared pane, that pane's own tab is the one closing. Restoring
+    // the leader into a closing tab would be wrong, so teardown must
+    // leave it alone.
+    func test_9_3_teardownDoesNotRestoreLeaderWhenVisiblePeerIsClosing() {
+        leader = RevealSpyPTYSession(synthetic: false)!
+        let spyLeader = leader as! RevealSpyPTYSession
+
+        let root = WGFix.makeRoot()
+        let peer = WGFix.makePeer(parentID: root.uniqueIdentifier)
+        let wg = WGFix.wrap(name: "rootPeer", sessions: [root, peer])
+        enterWorkgroup(wg)
+        XCTAssertNotNil(instance)
+
+        instance!.peerPort.activeSessionIdentifier = peer.uniqueIdentifier
+        let peerSession = spawner.session(forConfigID: peer.uniqueIdentifier)!
+        XCTAssertTrue(instance!.peerPort.activeSession === peerSession,
+                      "Precondition: the peer occupies the pane")
+
+        // Close the pane's own visible peer.
+        NotificationCenter.default.post(
+            name: NSNotification.Name.iTermSessionWillTerminate,
+            object: peerSession)
+
+        XCTAssertNil(
+            iTermWorkgroupController.instance.workgroupInstance(on: leader))
+        XCTAssertEqual(spyLeader.spy_revealAsPeerCount, 0,
+                       "Closing the pane's own visible peer must not reveal the leader into a closing tab")
+    }
+
     // MARK: - §10 Tree shape
 
     // §10.2 — recursive descent realizes every node. A

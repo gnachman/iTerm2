@@ -2628,3 +2628,7 @@ Bug Fixes:
   terminal instead of queueing it, so you can
   answer a prompt the paste is stuck on (such as
   a password or zsh’s spelling correction).
+- Exiting a workgroup, or closing one of its
+  tabs, no longer leaves the main session’s tab
+  showing a blank pane when a non-main peer was
+  the visible one.
