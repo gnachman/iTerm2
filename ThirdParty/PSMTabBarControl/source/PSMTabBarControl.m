@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "NSBezierPath+iTerm.h"
 #import "PSMTabBarCell.h"
 #import "PSMOverflowPopUpButton.h"
@@ -158,6 +159,11 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 
     // vertical tab resizing
     BOOL _resizing;
+
+    // How far the vertical (left-side) tab bar is scrolled, in points. 0 means the first tab is at
+    // the top. Only meaningful when the scrollable vertical tab bar is enabled; otherwise tabs that
+    // don't fit go into the overflow menu and this stays 0.
+    CGFloat _verticalScrollOffset;
 
     // animation for hide/show
     int _currentStep;
@@ -1214,6 +1220,104 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     [self syncTabProgressBars];
 }
 
+#pragma mark - Scrollable vertical tab bar
+
+// The left-side tab bar normally drops tabs that don't fit into the overflow menu. When this is on
+// they stay in the bar and the scroll wheel moves through them instead.
+- (BOOL)verticalTabBarIsScrollable {
+    return (_orientation == PSMTabBarVerticalOrientation &&
+            [iTermAdvancedSettingsModel scrollableVerticalTabBar]);
+}
+
+// Height of one vertical cell. Every cell in a vertical bar is the same height.
+- (CGFloat)verticalCellHeight {
+    return [self genericCellRectWithOverflow:(NO || _showAddTabButton)].size.height;
+}
+
+// How far you can scroll before the last tab sits at the bottom of the bar. 0 when everything fits.
+- (CGFloat)maximumVerticalScrollOffsetForCellHeight:(CGFloat)cellHeight cellCount:(NSInteger)cellCount {
+    const CGFloat contentHeight = ([[self style] topMarginForTabBarControl] +
+                                   (cellHeight * (CGFloat)cellCount));
+    return MAX(0, contentHeight - [self frame].size.height);
+}
+
+- (void)clampVerticalScrollOffsetForCellHeight:(CGFloat)cellHeight cellCount:(NSInteger)cellCount {
+    const CGFloat maximum = [self maximumVerticalScrollOffsetForCellHeight:cellHeight cellCount:cellCount];
+    _verticalScrollOffset = MAX(0, MIN(maximum, _verticalScrollOffset));
+}
+
+- (void)scrollWheel:(NSEvent *)event {
+    if (![self verticalTabBarIsScrollable]) {
+        [super scrollWheel:event];
+        return;
+    }
+    const CGFloat cellHeight = [self verticalCellHeight];
+    if (cellHeight <= 0) {
+        [super scrollWheel:event];
+        return;
+    }
+    const CGFloat maximum = [self maximumVerticalScrollOffsetForCellHeight:cellHeight
+                                                                 cellCount:(NSInteger)_cells.count];
+    if (maximum <= 0) {
+        // Everything fits; let the event go on to whatever is behind us.
+        [super scrollWheel:event];
+        return;
+    }
+    // Precise deltas (trackpad, Magic Mouse) are already in points. Line-based deltas (a notched
+    // wheel) are in lines, so scale them to one tab per line.
+    CGFloat delta = event.scrollingDeltaY;
+    if (!event.hasPreciseScrollingDeltas) {
+        delta *= cellHeight;
+    }
+    // The view is flipped, so scrolling content down means decreasing the offset.
+    const CGFloat proposed = _verticalScrollOffset - delta;
+    const CGFloat clamped = MAX(0, MIN(maximum, proposed));
+    if (clamped == _verticalScrollOffset) {
+        return;
+    }
+    _verticalScrollOffset = clamped;
+    [self update:NO];
+}
+
+// Keeps the selected tab on screen -- e.g. after cmd-shift-[ walks past the top edge, or when a tab
+// is selected from somewhere other than the bar.
+- (void)scrollSelectedTabIntoView {
+    if (![self verticalTabBarIsScrollable]) {
+        return;
+    }
+    const NSInteger index = [_cells indexOfObjectPassingTest:^BOOL(PSMTabBarCell *cell, NSUInteger i, BOOL *stop) {
+        return [[cell representedObject] isEqualTo:[self->_tabView selectedTabViewItem]];
+    }];
+    if (index == NSNotFound) {
+        return;
+    }
+    const CGFloat cellHeight = [self verticalCellHeight];
+    if (cellHeight <= 0) {
+        return;
+    }
+    const CGFloat topMargin = [[self style] topMarginForTabBarControl];
+    const CGFloat cellTop = topMargin + (cellHeight * (CGFloat)index);
+    const CGFloat cellBottom = cellTop + cellHeight;
+    const CGFloat viewportHeight = [self frame].size.height;
+
+    CGFloat offset = _verticalScrollOffset;
+    if (cellTop < offset) {
+        offset = cellTop;
+    } else if (cellBottom > offset + viewportHeight) {
+        offset = cellBottom - viewportHeight;
+    } else {
+        return;
+    }
+    const CGFloat maximum = [self maximumVerticalScrollOffsetForCellHeight:cellHeight
+                                                                 cellCount:(NSInteger)_cells.count];
+    offset = MAX(0, MIN(maximum, offset));
+    if (offset == _verticalScrollOffset) {
+        return;
+    }
+    _verticalScrollOffset = offset;
+    [self update:NO];
+}
+
 - (void)update:(BOOL)animate {
     // This method handles all of the cell layout, and is called when something changes to require
     // the refresh.  This method is not called during drag and drop. See the PSMTabDragAssistant's
@@ -1331,16 +1435,31 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
         NSRect cellRect = [self genericCellRectWithOverflow:(NO || _showAddTabButton)];
         NSMutableArray *newOrigins = [NSMutableArray arrayWithCapacity:cellCount];
 
-        for (int i = 0; i < cellCount; ++i) {
-            if (currentOrigin + cellRect.size.height <= [self frame].size.height) {
+        if ([self verticalTabBarIsScrollable]) {
+            // Give every cell an origin, shifted up by the scroll offset. Cells above or below the
+            // visible rect just get off-screen frames and are clipped when drawn, so nothing lands
+            // in the overflow menu -- the scroll wheel reaches them instead.
+            // NSView.clipsToBounds defaults to NO on macOS 14+, so ask for clipping explicitly or
+            // the scrolled-away tabs paint over the window's chrome.
+            self.clipsToBounds = YES;
+            [self clampVerticalScrollOffsetForCellHeight:cellRect.size.height cellCount:cellCount];
+            currentOrigin -= _verticalScrollOffset;
+            for (int i = 0; i < cellCount; ++i) {
                 [newOrigins addObject:[NSNumber numberWithFloat:currentOrigin]];
                 currentOrigin += cellRect.size.height;
-            } else {
-                // Out of room, the remaining unpinned tabs go into overflow.
-                if ([newOrigins count] > 0 && [self frame].size.height - currentOrigin < cellRect.size.height) {
-                    [newOrigins removeLastObject];
+            }
+        } else {
+            for (int i = 0; i < cellCount; ++i) {
+                if (currentOrigin + cellRect.size.height <= [self frame].size.height) {
+                    [newOrigins addObject:[NSNumber numberWithFloat:currentOrigin]];
+                    currentOrigin += cellRect.size.height;
+                } else {
+                    // Out of room, the remaining unpinned tabs go into overflow.
+                    if ([newOrigins count] > 0 && [self frame].size.height - currentOrigin < cellRect.size.height) {
+                        [newOrigins removeLastObject];
+                    }
+                    break;
                 }
-                break;
             }
         }
         [self finishUpdateWithRegularWidths:newOrigins widthsWithOverflow:newOrigins];
@@ -1640,8 +1759,13 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 
     [_overflowPopUpButton setHidden:(overflowMenu == nil)];
 
-    // Set up add tab button.
-    if (!overflowMenu && _showAddTabButton) {
+    // Set up add tab button. A scrollable vertical bar has no overflow menu, so check directly
+    // whether the tabs run past the bottom -- the button would otherwise be placed off-screen.
+    const BOOL addTabButtonWouldBeOffscreen =
+        ([self verticalTabBarIsScrollable] &&
+         [self maximumVerticalScrollOffsetForCellHeight:[self verticalCellHeight]
+                                              cellCount:(NSInteger)_cells.count] > 0);
+    if (!overflowMenu && _showAddTabButton && !addTabButtonWouldBeOffscreen) {
         NSRect cellRect = [self genericCellRectWithOverflow:YES];
         cellRect.size = [_addTabButton frame].size;
 
@@ -2532,6 +2656,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     // message, thus I can end up updating when there are no cells, if no tabs were (yet) present
     if ([_cells count] > 0) {
         [self update];
+        [self scrollSelectedTabIntoView];
     }
     if ([[self delegate] respondsToSelector:@selector(tabView:didSelectTabViewItem:)]) {
         [[self delegate] tabView:aTabView didSelectTabViewItem:tabViewItem];
