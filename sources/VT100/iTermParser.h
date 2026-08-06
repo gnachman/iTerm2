@@ -257,10 +257,10 @@ static inline int iTermParserGetCSISubparameter(CSIParam *csi, int parameter_ind
     int i = 0;
     for (int j = 0; j < csi->num_subparameters; j++) {
         if (csi->subparameters[j].parameter_index == parameter_index) {
-            if (i == 0) {
+            if (i == subparameter_index) {
                 return csi->subparameters[j].value;
             }
-            i--;
+            i++;
         }
     }
     return -1;
