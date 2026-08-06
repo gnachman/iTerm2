@@ -220,7 +220,7 @@ static inline NSString *CSIParamDescription(CSIParam csi) {
 }
 
 static inline void iTermParserAddCSIParameter(CSIParam *csi, int value) {
-    if (csi->count + 1 >= VT100CSIPARAM_MAX) {
+    if (csi->count >= VT100CSIPARAM_MAX) {
         // Avoid exceeding bounds; possibly discard or clamp this value.
         return;
     }
