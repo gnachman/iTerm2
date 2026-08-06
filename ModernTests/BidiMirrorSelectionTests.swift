@@ -21,8 +21,24 @@ class BidiMirrorSelectionTests: XCTestCase {
         }
     }
 
-    override func setUp() { super.setUp(); setBidiPreference(true) }
-    override func tearDown() { setBidiPreference(false); super.tearDown() }
+    private var savedDetect: Any?
+    override func setUp() {
+        super.setUp()
+        setBidiPreference(true)
+        // The assertions below describe the detect-OFF configuration (see the
+        // NOTE); force it so a leaked default from another suite (or a crashed
+        // run's skipped tearDown) can't flip the expected mirroring.
+        savedDetect = iTermUserDefaults.userDefaults().object(forKey: "DetectParagraphDirection")
+        iTermUserDefaults.userDefaults().set(false, forKey: "DetectParagraphDirection")
+        iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+    }
+    override func tearDown() {
+        if let v = savedDetect { iTermUserDefaults.userDefaults().set(v, forKey: "DetectParagraphDirection") }
+        else { iTermUserDefaults.userDefaults().removeObject(forKey: "DetectParagraphDirection") }
+        iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+        setBidiPreference(false)
+        super.tearDown()
+    }
 
     // NOTE ON CONFIGURATION: these assertions describe the default paragraph
     // direction (forced LTR base, i.e. "auto-detect paragraph direction" OFF).

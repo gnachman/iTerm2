@@ -364,8 +364,24 @@ fileprivate func isolateLatinRuns(_ s: NSString, deltas: UnsafePointer<Int32>) -
 fileprivate func makeLookupTable(_ string: NSString,
                                  cellForIndex: [Int32],
                                  count: Int) -> ([Int32], IndexSet, IndexSet, Bool) {
+    let paragraphIsRTL: Bool =
+        iTermAdvancedSettingsModel.detectParagraphDirection() &&
+        detectedParagraphIsRTL(string)
+    // The CTLine must be laid out with the SAME base direction the line is
+    // justified with. Leaving it to CoreText's own first-strong detection
+    // diverges on a line that opens LTR but is majority-RTL (a shell prompt
+    // with pasted Persian): the line right-justifies by our rule while the
+    // neutrals inside resolve against an LTR base, so a sentence-final period
+    // detaches from its sentence and lands across the gap by the prompt's
+    // clock.
+    let paragraphStyle = NSMutableParagraphStyle()
+    if iTermAdvancedSettingsModel.detectParagraphDirection() {
+        paragraphStyle.baseWritingDirection = paragraphIsRTL ? .rightToLeft : .leftToRight
+    } else {
+        paragraphStyle.baseWritingDirection = .leftToRight
+    }
     let attributedString = NSAttributedString(string: string as String,
-                                              attributes: [.paragraphStyle: BidiDisplayInfo.paragraphStyleForLookup])
+                                              attributes: [.paragraphStyle: paragraphStyle])
     // Create a CTLine from the attributed string
     let line = CTLineCreateWithAttributedString(attributedString)
     let intermediate = IntermediateLookupTable(line: line,
@@ -373,9 +389,6 @@ fileprivate func makeLookupTable(_ string: NSString,
                                                cellForIndex: cellForIndex,
                                                count: count)
 
-    let paragraphIsRTL: Bool =
-        iTermAdvancedSettingsModel.detectParagraphDirection() &&
-        detectedParagraphIsRTL(string)
     return (intermediate.lut, intermediate.rtlIndexes, intermediate.mirroredIndexes, paragraphIsRTL)
 }
 
@@ -908,14 +921,6 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
         self.rtlIndexes = rtlIndexes
         self.mirroredIndexes = mirroredIndexes
         self.paragraphIsRTL = paragraphIsRTL
-    }
-
-    static var paragraphStyleForLookup: NSParagraphStyle {
-        let paragraphStyle = NSMutableParagraphStyle()
-        if !iTermAdvancedSettingsModel.detectParagraphDirection() {
-            paragraphStyle.baseWritingDirection = .leftToRight
-        }
-        return paragraphStyle
     }
 
     // Builds the string CoreText should lay out and a per-UTF-16-index map to

@@ -2648,3 +2648,11 @@ Bug Fixes:
   from the first letter of a right-to-left line
   was a dead end, since the previous selection
   always sat under the click.
+- The base direction used to lay out a line now
+  matches the direction it is justified with.
+  They could disagree on a line that opens
+  left-to-right but is mostly Persian, such as
+  a shell prompt after pasting a Persian
+  sentence, and the sentence-final period
+  detached from its sentence and rendered
+  across the gap next to the prompt's clock.
