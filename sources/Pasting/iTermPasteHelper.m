@@ -126,6 +126,8 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     iTermPasteViewManager *_pasteViewManager;
 }
 
+@synthesize keystrokePassthrough = _keystrokePassthrough;
+
 + (NSMutableCharacterSet *)unsafeControlCodeSet {
     NSMutableCharacterSet *controlSet = [[NSMutableCharacterSet alloc] init];
     [controlSet addCharactersInRange:NSMakeRange(0, 32)];
@@ -528,6 +530,12 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 - (void)enqueueEvent:(NSEvent *)event {
     DLog(@"Enqueue paste event %@", event);
     [_eventQueue addObject:event];
+    // If the user is typing (not a queued paste) while we're paused waiting for a
+    // prompt, they may not realize their keystrokes are being held. Point them at
+    // the passthrough control, which is visible in this state.
+    if (_pasteContext.isBlocked && ![event isKindOfClass:[PasteEvent class]]) {
+        [_pasteViewManager showKeystrokeQueuedHint];
+    }
 }
 
 - (void)showPasteIndicatorInView:(NSView *)view
@@ -581,6 +589,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         } else {
             _pasteContext.isBlocked = YES;
             _timer = nil;
+            [_pasteViewManager setWaitingForPrompt:YES];
         }
     } else {
         RLog(@"Done pasting");
@@ -607,7 +616,40 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 - (void)unblock {
     if (_pasteContext.isBlocked) {
         _pasteContext.isBlocked = NO;
+        [_pasteViewManager setWaitingForPrompt:NO];
         [self pasteNextChunkAndScheduleTimer];
+    }
+}
+
+// The user toggled the paste indicator's "send keystrokes to the terminal"
+// control. When turning it on, flush whatever keystrokes were already queued
+// (they were typed meaning to reach the terminal, e.g. a password) and let
+// subsequent keystrokes through; see PTYTextView's queueing gate.
+- (void)pasteViewManagerDidSetKeystrokePassthrough:(BOOL)on {
+    _keystrokePassthrough = on;
+    if (on) {
+        [self flushQueuedKeystrokes];
+    }
+}
+
+- (void)flushQueuedKeystrokes {
+    // Snapshot and clear first: replaying a keydown re-enters the key path,
+    // which could otherwise mutate _eventQueue while we iterate it.
+    NSArray<NSEvent *> *events = [_eventQueue copy];
+    [_eventQueue removeAllObjects];
+    // Send the keystrokes queued ahead of any pending paste to the terminal, in
+    // order. Stop at the first queued PasteEvent so we don't hoist later
+    // keystrokes ahead of a paste that FIFO ordering says should run first;
+    // re-queue that paste and everything after it, preserving order.
+    NSUInteger i = 0;
+    for (; i < events.count; i++) {
+        if ([events[i] isKindOfClass:[PasteEvent class]]) {
+            break;
+        }
+        [_delegate pasteHelperKeyDown:events[i]];
+    }
+    for (; i < events.count; i++) {
+        [_eventQueue addObject:events[i]];
     }
 }
 
@@ -618,6 +660,9 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 - (void)pasteLiteralEventUnconditionallyImmediately:(PasteEvent *)pasteEvent {
     [_buffer appendString:pasteEvent.string];
 
+    // Each paste starts with keystrokes queued (the default); the user opts into
+    // passthrough per paste via the paste indicator.
+    _keystrokePassthrough = NO;
     _pasteContext = [[PasteContext alloc] initWithPasteEvent:pasteEvent];
     const int kPasteBytesPerSecond = 10000;  // This is a wild-ass guess.
     const NSTimeInterval sumOfDelays =
@@ -635,6 +680,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     if (_pasteContext.blockAtNewline && [_delegate pasteHelperShouldWaitForPrompt]) {
         RLog(@"Not at shell prompt at start of paste.");
         _pasteContext.isBlocked = YES;
+        [_pasteViewManager setWaitingForPrompt:YES];
         return;
     }
 

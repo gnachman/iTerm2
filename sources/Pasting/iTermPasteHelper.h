@@ -59,6 +59,13 @@ extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
 @property(nonatomic, readonly) BOOL isWaitingForPrompt;
 @property(nonatomic, readonly) PasteContext *pasteContext;
 
+// While a paste is in progress, keystrokes are normally queued and replayed
+// after it finishes. When the user turns on the paste indicator's "send
+// keystrokes to the terminal" control this becomes YES, and keystrokes are sent
+// to the terminal instead (e.g. to answer a password prompt). Reset when a new
+// paste begins.
+@property(nonatomic, readonly) BOOL keystrokePassthrough;
+
 + (BOOL)promptToConvertTabsToSpacesWhenPasting;
 + (void)togglePromptToConvertTabsToSpacesWhenPasting;
 

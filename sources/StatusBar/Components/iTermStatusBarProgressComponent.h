@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermStatusBarProgressComponentDelegate<NSObject>
 - (void)statusBarProgressComponentDidCancel;
+- (void)statusBarProgressComponentDidSetKeystrokePassthrough:(BOOL)on;
 @end
 
 @interface iTermStatusBarProgressComponent : iTermStatusBarBaseComponent
@@ -21,6 +22,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) int bufferLength;
 @property (nonatomic) int remainingLength;
 @property (nonatomic, weak) id<iTermStatusBarProgressComponentDelegate> progressDelegate;
+
+// Show/hide the "send keystrokes to the terminal" control in the paste indicator.
+- (void)setWaitingForPrompt:(BOOL)waitingForPrompt;
+
+// Show the "typing is queued" hint pointing at that control.
+- (void)showKeystrokeQueuedHint;
 
 @end
 

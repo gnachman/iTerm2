@@ -373,6 +373,17 @@
     if (!_pasteSpecialViewController.shouldUseBracketedPasteMode) {
         return NO;
     }
+    // Splitting the newlines out of the bracketed segments exists only to make
+    // “Wait for shell prompt before pasting each line” work on shells that
+    // swallow newlines inside a bracketed paste: the per-line feeder needs each
+    // line to end in a bare newline the shell will submit. With wait-for-prompt
+    // off there is no per-line feeding, so keep the whole block inside one
+    // bracketed envelope (like an ordinary paste) so it lands on the command
+    // line as one editable buffer the user submits with a single Return, rather
+    // than executing each line as it arrives (issue 5749).
+    if (!_pasteSpecialViewController.shouldWaitForPrompt) {
+        return NO;
+    }
     NSSet<NSString *> *shellsThatSwallowNewlines = [NSSet setWithArray:@[ @"zsh", @"fish", @"bash" ]];
     return [shellsThatSwallowNewlines containsObject:_shell ?: @""];
 }

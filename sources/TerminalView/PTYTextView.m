@@ -7188,7 +7188,7 @@ static NSString *iTermStringFromRange(NSRange range) {
         iTermApplicationDelegate *appDelegate = [iTermApplication.sharedApplication delegate];
         [appDelegate userDidInteractWithASession];
     });
-    if ([_delegate isPasting]) {
+    if ([_delegate isPasting] && ![_delegate pasteKeystrokePassthroughEnabled]) {
         [_delegate queueKeyDown:event];
         return NO;
     }
