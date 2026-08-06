@@ -210,6 +210,32 @@ class BidiSelectionBoundaryTests: XCTestCase {
         XCTAssertTrue(on.paragraphIsRTL, "one Persian word flips the line with the rule at 1")
     }
 
+    func testLatinOpeningRTLLineRightJustifies() {
+        // With the minimum-RTL-words rule at 1, «The word سلام means hello in
+        // Persian.» becomes a right-to-left paragraph even though it opens
+        // with a Latin cell. It must then right-justify like any other RTL
+        // line; the old padding guard keyed on the first CELL's direction and
+        // left such lines reordered but glued to the left margin.
+        let saved = iTermUserDefaults.userDefaults().object(forKey: "RtlParagraphMinimumWords")
+        defer {
+            if let saved { iTermUserDefaults.userDefaults().set(saved, forKey: "RtlParagraphMinimumWords") }
+            else { iTermUserDefaults.userDefaults().removeObject(forKey: "RtlParagraphMinimumWords") }
+            iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+        }
+        iTermUserDefaults.userDefaults().set(1, forKey: "RtlParagraphMinimumWords")
+        iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+
+        let s = "The word سلام means hello in Persian."
+        let sca = screenCharArrayWithDefaultStyle(s, eol: EOL_HARD)
+        guard let info = BidiDisplayInfoObjc(sca) else { return XCTFail("no bidi info") }
+        XCTAssertTrue(info.paragraphIsRTL, "one Persian word flips the paragraph at minimum 1")
+        let growth = 80 - info.numberOfCells
+        guard let padded = info.subInfo(range: NSRange(location: 0, length: Int(info.numberOfCells)),
+                                        paddedTo: 80) else { return XCTFail("no padded info") }
+        XCTAssertGreaterThanOrEqual(padded.visualForLogical(0), growth,
+                                    "an RTL paragraph must right-justify even when its first cell is Latin")
+    }
+
     func testGuillemetsJoinLatinIsland() throws {
         // «machine learning» inside a Persian sentence must render with the
         // marks on their typed sides: the guillemets join the LTR island, so

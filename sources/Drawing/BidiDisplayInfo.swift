@@ -1069,11 +1069,14 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
         guard width > lut.count else {
             return self
         }
-        guard rtlIndexes.contains(0) else {
+        // Justify by the line's detected paragraph direction. The old guard
+        // (first CELL is RTL) predates the majority and minimum-RTL-words
+        // rules: a line those rules turn right-to-left can open with a Latin
+        // cell («The word سلام means hello»), which then reordered RTL but
+        // stayed glued to the left margin instead of right-justifying.
+        guard paragraphIsRTL else {
             return self
         }
-        // It would be better to keep an index of strong ltr/rtl charactesr so that subinfos could
-        // use the first strong character to define the justification for the wrapped line.
         return BidiDisplayInfo(basedOn: self, paddedTo: width)
     }
 
