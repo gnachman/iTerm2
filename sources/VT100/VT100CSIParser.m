@@ -183,10 +183,10 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
     //        this sequence should be mark as unrecognized.
     BOOL isSub = NO;
     BOOL readNumericParameter = NO;
-    // Set once the parameter list is full. Parameters past the limit are discarded, and so are
-    // their subparameters: attaching them to the last parameter that did fit would change its
-    // meaning.
-    BOOL parameterOverflowed = NO;
+    // Whether the most recently opened parameter was actually stored. Subparameters belong to
+    // that parameter, so when it was discarded for lack of room they must be discarded too:
+    // attaching them to the last parameter that did fit would change its meaning.
+    BOOL lastParameterStored = NO;
     unsigned char c;
     while (iTermParserTryPeek(context, &c) && c >= 0x30 && c <= 0x3f) {
         switch (c) {
@@ -212,7 +212,7 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                     }
                 }
 
-                if (isSub && param->count > 0 && !parameterOverflowed) {
+                if (isSub && param->count > 0 && lastParameterStored) {
                     // This implementation is not really well aligned with the spec. In ECMA-48
                     // section 5.4, the format of a CSI code is described. The parameter string,
                     // which follows CSI, is a semicolon-delimited list of parameter substrings
@@ -230,8 +230,9 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                     param->p[param->count] = n;
                     // increment the parameter count
                     param->count++;
+                    lastParameterStored = YES;
                 } else if (!isSub) {
-                    parameterOverflowed = YES;
+                    lastParameterStored = NO;
                 }
 
                 // set the numeric parameter flag
@@ -241,16 +242,18 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
             }
 
             case ';': {
-                // If we got an implied (blank) parameter, increment the parameter count again
-                BOOL openedStorableBlankParameter = NO;
-                if (param->count < VT100CSIPARAM_MAX && readNumericParameter == NO) {
-                    param->count++;
-                    openedStorableBlankParameter = YES;
+                if (readNumericParameter == NO) {
+                    // An implied (blank) parameter. Like any other it can take subparameters, but
+                    // only if there was room to store it.
+                    if (param->count < VT100CSIPARAM_MAX) {
+                        param->count++;
+                        lastParameterStored = YES;
+                    } else {
+                        lastParameterStored = NO;
+                    }
                 }
-                // Once the list is full every following parameter is discarded, including its
-                // subparameters. But a blank parameter that just filled the final slot is itself a
-                // valid parameter and may still take subparameters, so it doesn't count as overflow.
-                parameterOverflowed = (param->count >= VT100CSIPARAM_MAX) && !openedStorableBlankParameter;
+                // Otherwise the parameter that just ended keeps whatever status it had: a
+                // subparameter arriving without a new parameter belongs to it.
                 // reset the parameter flag
                 readNumericParameter = NO;
                 isSub = NO;
