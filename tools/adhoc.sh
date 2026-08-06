@@ -6,6 +6,7 @@ function die {
 
 echo Enter the notarization password
 read -s NOTPASS
+echo Thanks
 COMPACTDATE=$(date +"%Y%m%d_%H%M%S")
 VERSION="0.$COMPACTDATE-adhoc"
 echo "$VERSION" > version.txt

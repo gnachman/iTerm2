@@ -501,6 +501,10 @@ lengthExcludingInBandSignaling:(int)lengthExcludingInBandSignaling
 // This will be true while there's a request for a report that hasn't been responded to yet.
 @property (atomic, readonly) BOOL sendingIsBlocked;
 
+// Issue 12965 diagnostics: pending-report count plus the names and timestamps
+// of the reports that were promised but not yet sent.
+- (NSString *)pendingReportsDebugDescription;
+
 #pragma mark - Triggers
 
 - (void)performPeriodicTriggerCheck;

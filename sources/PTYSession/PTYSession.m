@@ -3958,16 +3958,27 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                 _sshWriteQueue = [[NSMutableData alloc] init];
             }
             [_sshWriteQueue appendData:data];
+            RLog(@"12965: %@ queue %@ byte(s) to sshWriteQueue (now %@ byte(s)) conductor=%p: %@",
+                 self.guid, @(data.length), @(_sshWriteQueue.length), _conductor,
+                 [[string stringByMakingControlCharactersToPrintable] it_substringToIndex:80]);
             return;
         }
-        if ((_buffering || _screen.sendingIsBlocked || _bracketedPastePending > 0) && !reporting) {
-            DLog(@"Defer write of %@", [data stringWithEncoding:NSUTF8StringEncoding]);
+        const BOOL sendingIsBlocked = _screen.sendingIsBlocked;
+        if ((_buffering || sendingIsBlocked || _bracketedPastePending > 0) && !reporting) {
+            // Issue 12965: this branch silently swallows user input when one of
+            // the gating flags wedges, so log the full gate state every time.
+            RLog(@"12965: %@ DEFER write (buffering=%@ sendingIsBlocked=%@ [%@] bracketedPastePending=%@ dataQueueCount=%@): %@",
+                 self.guid, @(_buffering), @(sendingIsBlocked), [_screen pendingReportsDebugDescription],
+                 @(_bracketedPastePending), @(_dataQueue.count),
+                 [[string stringByMakingControlCharactersToPrintable] it_substringToIndex:80]);
             if (!_dataQueue) {
                 _dataQueue = [[NSMutableArray alloc] init];
             }
             [_dataQueue addObject:data];
         } else {
-            DLog(@"Write immediately: %@", [data stringWithEncoding:NSUTF8StringEncoding]);
+            RLog(@"12965: %@ write immediately %@ byte(s): %@",
+                 self.guid, @(data.length),
+                 [[string stringByMakingControlCharactersToPrintable] it_substringToIndex:80]);
             [self writeData:data];
         }
     }
@@ -4189,6 +4200,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             [_conductor sendKeys:[string dataUsingEncoding:encoding]];
         } else if (_connectingSSH) {
             [_queuedConnectingSSH appendData:[string dataUsingEncoding:encoding]];
+            RLog(@"12965: %@ queue %@ byte(s) to queuedConnectingSSH (now %@ byte(s))",
+                 self.guid, @(string.length), @(_queuedConnectingSSH.length));
         } else {
             assert(self.tmuxMode == TMUX_CLIENT);
             [[_tmuxController gateway] sendKeys:string
@@ -4863,6 +4876,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 - (void)insertText:(NSString *)string {
     if (_exited) {
+        RLog(@"12965: %@ DROP insertText because _exited: %@",
+             self.guid, [[string stringByMakingControlCharactersToPrintable] it_substringToIndex:80]);
         return;
     }
 
@@ -10704,6 +10719,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)queueKeyDown:(NSEvent *)event {
+    RLog(@"12965: %@ queueKeyDown because isPasting (isPasting=%@): %@",
+         self.guid, @(_pasteHelper.isPasting), event);
     [_pasteHelper enqueueEvent:event];
 }
 
@@ -10890,6 +10907,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self removeSelectedCommandRange];
     [self enableOffscreenMarkAlertsIfNeeded];
     const BOOL accept = [self shouldAcceptKeyDownEvent:event];
+    // Issue 12965: one line per keystroke so the log shows whether input died
+    // before or after the session-level gates. Deliberately not using the
+    // NSEvent description, whose chars= fields get scrubbed from the ring.
+    RLog(@"12965: %@ keyDown accept=%@ keyCode=%@ mods=0x%llx characters=%@",
+         self.guid, @(accept), @(event.keyCode),
+         (unsigned long long)event.it_modifierFlags, event.characters);
     if (accept) {
         [_cadenceController didHandleKeystroke];
     }
@@ -15541,6 +15564,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)screenDidSendAllPendingReports {
+    RLog(@"12965: %@ screenDidSendAllPendingReports (dataQueueCount=%@ bracketedPastePending=%@ buffering=%@)",
+         self.guid, @(_dataQueue.count), @(_bracketedPastePending), @(_buffering));
     [self sendDataQueue];
 }
 
@@ -15558,7 +15583,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)sendDataQueue {
-    DLog(@"called");
+    if (_dataQueue.count > 0) {
+        RLog(@"12965: %@ flush %@ deferred write(s)", self.guid, @(_dataQueue.count));
+    }
     for (NSData *data in _dataQueue) {
         DLog(@"Send deferred write of %@", [data stringWithEncoding:NSUTF8StringEncoding]);
         [self writeData:data];
@@ -15570,7 +15597,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 // The first chunk was already queued synchronously; now we can flush if conditions allow.
 - (void)bracketedPasteDidExpect {
     _bracketedPastePending -= 1;
-    DLog(@"new count=%@", @(_bracketedPastePending));
+    RLog(@"12965: %@ bracketedPasteDidExpect -> count=%@", self.guid, @(_bracketedPastePending));
     if (_bracketedPastePending == 0 && !_buffering && !_screen.sendingIsBlocked) {
         [self sendDataQueue];
     }
@@ -24110,6 +24137,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 - (void)toggleBufferInput {
     _buffering = !_buffering;
+    RLog(@"12965: %@ buffering -> %@", self.guid, @(_buffering));
     [self requestRedraw];
     if (!_screen.sendingIsBlocked && !_buffering) {
         [self sendDataQueue];

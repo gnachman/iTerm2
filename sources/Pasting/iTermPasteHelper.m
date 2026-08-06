@@ -410,7 +410,8 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         }
     }
     if ([self isPasting]) {
-        RLog(@"Already pasting. Enqueue event.");
+        RLog(@"12965: Already pasting. Enqueue event. timer=%@ pasteContext.isBlocked=%@ queueDepth=%@ bufferLength=%@",
+             _timer, @(_pasteContext.isBlocked), @(_eventQueue.count), @(_buffer.length));
         [self enqueueEvent:pasteEvent];
         return;
     }
@@ -579,6 +580,8 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         if (!block) {
             [self scheduleNextPasteForCurrentPasteContext];
         } else {
+            RLog(@"12965: paste blocked at newline waiting for prompt; bufferLength=%@ queueDepth=%@",
+                 @(_buffer.length), @(_eventQueue.count));
             _pasteContext.isBlocked = YES;
             _timer = nil;
         }
@@ -606,6 +609,8 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
 
 - (void)unblock {
     if (_pasteContext.isBlocked) {
+        RLog(@"12965: paste unblocked; bufferLength=%@ queueDepth=%@",
+             @(_buffer.length), @(_eventQueue.count));
         _pasteContext.isBlocked = NO;
         [self pasteNextChunkAndScheduleTimer];
     }

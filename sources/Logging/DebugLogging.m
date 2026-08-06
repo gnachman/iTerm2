@@ -35,7 +35,9 @@ static NSMutableDictionary *gPinnedMessages;
 // Save Retrospective Debug Logs action (via iTermRetrospectiveLogString).
 static NSMutableArray<NSString *> *gRetrospectiveLog;
 static NSUInteger gRetrospectiveLogBytes;
-static const NSUInteger kRetrospectiveLogMaxBytes = 10 * 1024 * 1024;
+// Issue 12965 diagnostic build: enlarged from 10 MB so days of report/write
+// instrumentation survive until the user captures the log.
+static const NSUInteger kRetrospectiveLogMaxBytes = 200 * 1024 * 1024;
 
 BOOL gDebugLogging = NO;
 // Keys already emitted by DLogOncePerLoggingSession this logging
@@ -310,12 +312,21 @@ void RetrospectiveLogImpl(const char *file, int line, const char *function, NSSt
     }
     [gRetrospectiveLog addObject:entry];
     gRetrospectiveLogBytes += entry.length;
-    // Evict oldest lines until back under the cap, but always keep the most
-    // recent line even if it alone exceeds the cap.
-    while (gRetrospectiveLogBytes > kRetrospectiveLogMaxBytes && gRetrospectiveLog.count > 1) {
-        NSString *oldest = gRetrospectiveLog[0];
-        gRetrospectiveLogBytes -= oldest.length;
-        [gRetrospectiveLog removeObjectAtIndex:0];
+    // Evict oldest lines when over the cap, but always keep the most recent
+    // line even if it alone exceeds the cap. Evict a 10%-of-cap batch in a
+    // single removeObjectsInRange: so the O(n) array shift is amortized; with
+    // a large cap, removing one element per append would shift millions of
+    // pointers on every log line once full.
+    if (gRetrospectiveLogBytes > kRetrospectiveLogMaxBytes && gRetrospectiveLog.count > 1) {
+        const NSUInteger bytesToFree = gRetrospectiveLogBytes - (kRetrospectiveLogMaxBytes - kRetrospectiveLogMaxBytes / 10);
+        NSUInteger freed = 0;
+        NSUInteger i = 0;
+        while (i < gRetrospectiveLog.count - 1 && freed < bytesToFree) {
+            freed += [gRetrospectiveLog[i] length];
+            i++;
+        }
+        [gRetrospectiveLog removeObjectsInRange:NSMakeRange(0, i)];
+        gRetrospectiveLogBytes -= freed;
     }
     [GetDebugLogLock() unlock];
 #if ITERM_DEBUG

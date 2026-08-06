@@ -1846,6 +1846,7 @@ extension Conductor {
     }
 
     @objc func sendKeys(_ data: Data) {
+        RLog("12965: Conductor.sendKeys \(data.count) byte(s) framedPID=\(String(describing: framedPID)) state=\(state) queueWrites=\(queueWrites)")
         guard let pid = framedPID else {
             DLog("[sendKeys] Write: \(data.stringOrHex)")
             delegate?.conductorWrite(string: String(data: data, encoding: .isoLatin1)!)

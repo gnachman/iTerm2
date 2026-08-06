@@ -70,8 +70,8 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p regex=%@ hasCompleted=%@ successor=%p>",
-            NSStringFromClass(self.class), self, _regex, @(self.hasCompleted), _successor];
+    return [NSString stringWithFormat:@"<%@: %p regex=%@ hasCompleted=%@ userWillExpectCalled=%@ successor=%p>",
+            NSStringFromClass(self.class), self, _regex, @(self.hasCompleted), @(self.userWillExpectCalled), _successor];
 }
 
 - (iTermExpectation *)lastExpectation {
@@ -121,6 +121,13 @@
 }
 
 - (void)cancel {
+    if (self.userWillExpectCallback && !self.userWillExpectCalled) {
+        // Issue 12965: this expectation promised a willExpect callback that
+        // never ran, and cancellation guarantees it never will. If the callback
+        // was bracketedPasteDidExpect, the pending count just leaked and the
+        // session's input is permanently wedged.
+        RLog(@"12965: BUG canceling expectation whose userWillExpect never fired: %@", self);
+    }
     [_successor cancel];
     _predecessor.successor = nil;
     _hasCompleted = YES;
@@ -202,7 +209,7 @@
     if (_dry) {
         return;
     }
-    DLog(@"Wet add expectation");
+    RLog(@"12965: wet add expectation %@ (original=%@)", expectation, expectation.original);
     dispatch_async(dispatch_get_main_queue(), ^{
         [expectation.original invokeUserWillExpectCallbackIfNeeded];
     });

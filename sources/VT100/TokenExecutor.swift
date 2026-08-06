@@ -519,7 +519,10 @@ private class TokenExecutorImpl {
 
         if executingSideEffects.getAndSet(true) {
             // Do not allow re-entrant side-effects.
-            if gDebugLogging.boolValue { DLog("[side effects] reentrancy detected! aborting") }
+            // Issue 12965: the aborted call relies on the in-flight one (plus the
+            // periodic scheduler) to drain anything just appended; log so a lost
+            // side effect (e.g. a didSendReport) is visible in the field.
+            RLog("12965: side-effect reentrancy abort; pending=\(sideEffects.count)")
             return
         }
         if gDebugLogging.boolValue { DLog("[side effects] dequeuing side effects") }

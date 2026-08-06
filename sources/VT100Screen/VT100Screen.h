@@ -124,6 +124,9 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property (nonatomic) long long savedFindContextAbsPos;
 @property (nonatomic, readonly) BOOL sendingIsBlocked;
 
+// Issue 12965 diagnostics: pending-report count and the names of unsent reports.
+- (NSString *)pendingReportsDebugDescription;
+
 @property (nonatomic, readonly) BOOL isAtCommandPrompt;
 @property (nonatomic, readonly) VT100ScreenMutableState *mutableState;  // for tests
 @property (nonatomic, readonly) VT100ScreenState *immutableState;  // for tests

@@ -651,12 +651,12 @@ typedef struct {
 
 - (void)terminalReportVariableNamed:(NSString *)variable {
     DLog(@"begin %@", variable);
-    [self willSendReport];
+    [self willSendReportNamed:@"report variable"];
     __weak __typeof(self) weakSelf = self;
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenReportVariableNamed:variable];
-        [weakSelf didSendReport:delegate];
+        [weakSelf didSendReport:delegate named:@"report variable"];
     } name:@"report variable"];
 }
 
@@ -670,12 +670,16 @@ typedef struct {
     DLog(@"begin %@", report);
     if (!self.config.isTmuxClient && report) {
         DLog(@"report %@", [report stringWithEncoding:NSUTF8StringEncoding]);
-        [self willSendReport];
+        // Issue 12965: name the report by its payload so a leaked ledger entry
+        // identifies which query went unanswered.
+        NSString *payload = [[report stringWithEncoding:NSUTF8StringEncoding] stringByMakingControlCharactersToPrintable] ?: [report it_hexEncoded];
+        NSString *name = [NSString stringWithFormat:@"send report %@", [payload it_substringToIndex:64]];
+        [self willSendReportNamed:name];
         __weak __typeof(self) weakSelf = self;
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             DLog(@"begin side-effect");
             [delegate screenSendReportData:report];
-            [weakSelf didSendReport:delegate];
+            [weakSelf didSendReport:delegate named:name];
         } name:@"send report"];
     }
 }
@@ -693,11 +697,11 @@ typedef struct {
     }
     DLog(@"Sending report");
     // tmux: dispatch to session for tmux-specific handling (3.6+)
-    [self willSendReport];
+    [self willSendReportNamed:@"OSC 4 tmux report"];
     __weak __typeof(self) weakSelf = self;
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenSendTmuxOSC4Report:report];
-        [weakSelf didSendReport:delegate];
+        [weakSelf didSendReport:delegate named:@"OSC 4 tmux report"];
     } name:@"OSC 4 tmux report"];
 }
 
@@ -1206,14 +1210,14 @@ typedef struct {
 
 - (void)terminalReportPasteboard:(NSString *)pasteboard {
     DLog(@"begin");
-    [self willSendReport];
+    [self willSendReportNamed:@"report pasteboard"];
     __weak __typeof(self) weakSelf = self;
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         DLog(@"running");
         [delegate screenReportPasteboard:pasteboard completion:^{
             DLog(@"unpausing");
             [unpauser unpause];
-            [weakSelf didSendReport:delegate];
+            [weakSelf didSendReport:delegate named:@"report pasteboard"];
         }];
     } name:@"report pasteboard"];
 }
@@ -1472,11 +1476,11 @@ typedef struct {
     if (!self.config.allowTitleReporting) {
         return;
     }
-    [self willSendReport];
+    [self willSendReportNamed:@"report icon title"];
     __weak __typeof(self) weakSelf = self;
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenReportIconTitle];
-        [weakSelf didSendReport:delegate];
+        [weakSelf didSendReport:delegate named:@"report icon title"];
     } name:@"report icon title"];
 }
 
@@ -1485,11 +1489,11 @@ typedef struct {
     if (!self.config.allowTitleReporting) {
         return;
     }
-    [self willSendReport];
+    [self willSendReportNamed:@"report window title"];
     __weak __typeof(self) weakSelf = self;
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenReportWindowTitle];
-        [weakSelf didSendReport:delegate];
+        [weakSelf didSendReport:delegate named:@"report window title"];
     } name:@"report window title"];
 }
 
@@ -3555,12 +3559,12 @@ typedef struct {
 
 - (void)terminalSendCapabilitiesReport {
     DLog(@"begin");
-    [self willSendReport];
+    [self willSendReportNamed:@"send caps"];
     __weak __typeof(self) weakSelf = self;
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenReportCapabilities];
-        [weakSelf didSendReport:delegate];
+        [weakSelf didSendReport:delegate named:@"send caps"];
     } name:@"send caps"];
 }
 

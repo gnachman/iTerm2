@@ -25,6 +25,8 @@
 }
 @end
 
+#import <sys/time.h>
+
 #import "CapturedOutput.h"
 #import "DebugLogging.h"
 #import "iTermRateLimitedUpdate.h"
@@ -114,6 +116,7 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     if (self) {
         _uniqueIdentifier = [[NSUUID UUID] UUIDString];
         _bottommostFoldAbsLine = -1;
+        _pendingReportLedger = [NSMutableArray array];
         // The base class's initForMutationOnQueue: already set a fresh
         // _rcGuid (main-thread pool). Don't touch it here; the override of
         // -rcGuid below returns _uniqueIdentifier so the mutation-thread
@@ -383,7 +386,10 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     DLog(@"[side effects] begin side-effect %@", name);
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
     if (!delegate) {
-        DLog(@"[side effects] no delegate for %@", name);
+        // Issue 12965: a skipped side effect never runs its block. If the block
+        // held a didSendReport: call, the pending-report count leaks and input
+        // wedges. Log loudly so the leak site is visible in the field.
+        RLog(@"12965: SKIPPED side effect %@ because delegate is nil. %@", name, [self pendingReportsDebugDescription]);
         return;
     }
     [self reallyPerformSideEffect:block delegate:delegate name:name];
@@ -407,7 +413,9 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     DLog(@"[side effects] begin %@", name);
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
     if (!delegate) {
-        DLog(@"[side effects] dealloced");
+        // Issue 12965: see performSideEffect:name:. A skipped paused side
+        // effect can leak the pending-report count too.
+        RLog(@"12965: SKIPPED paused side effect %@ because delegate is nil. %@", name, [self pendingReportsDebugDescription]);
         [unpauser unpause];
         return;
     }
@@ -7833,16 +7841,45 @@ launchCoprocessWithCommand:(NSString *)command
     }
 }
 
-- (void)willSendReport {
+- (void)willSendReportNamed:(NSString *)name {
     const int newCount = ++_pendingReportCount;
-    DLog(@"_pendingReportCount += 1 -> %@", @(newCount));
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    NSString *entry = [NSString stringWithFormat:@"%@ at %lld.%06lld",
+                       name, (long long)tv.tv_sec, (long long)tv.tv_usec];
+    @synchronized (_pendingReportLedger) {
+        [_pendingReportLedger addObject:entry];
+    }
+    RLog(@"12965: willSendReport %@ -> count=%d session=%@", entry, newCount, self.config.sessionGuid);
 }
 
-- (void)didSendReport:(id<VT100ScreenDelegate>)delegate {
+- (void)didSendReport:(id<VT100ScreenDelegate>)delegate named:(NSString *)name {
     const int newCount = --_pendingReportCount;
-    DLog(@"_pendingReportCount -= 1 -> %@", @(newCount));
+    @synchronized (_pendingReportLedger) {
+        const NSUInteger i = [_pendingReportLedger indexOfObjectPassingTest:^BOOL(NSString *entry, NSUInteger idx, BOOL *stop) {
+            return [entry hasPrefix:name];
+        }];
+        if (i == NSNotFound) {
+            RLog(@"12965: BUG didSendReport %@ has no matching ledger entry; ledger=[%@]",
+                 name, [_pendingReportLedger componentsJoinedByString:@", "]);
+        } else {
+            [_pendingReportLedger removeObjectAtIndex:i];
+        }
+    }
+    RLog(@"12965: didSendReport %@ -> count=%d delegate=%p session=%@", name, newCount, delegate, self.config.sessionGuid);
     if (newCount == 0) {
+        if (!delegate) {
+            RLog(@"12965: BUG report count hit 0 with nil delegate; deferred writes will NOT flush until the next report completes. session=%@",
+                 self.config.sessionGuid);
+        }
         [delegate screenDidSendAllPendingReports];
+    }
+}
+
+- (NSString *)pendingReportsDebugDescription {
+    @synchronized (_pendingReportLedger) {
+        return [NSString stringWithFormat:@"count=%d ledger=[%@]",
+                _pendingReportCount, [_pendingReportLedger componentsJoinedByString:@", "]];
     }
 }
 
@@ -7918,13 +7955,13 @@ launchCoprocessWithCommand:(NSString *)command
 #pragma mark - iTermKittyImageControllerDelegate
 
 - (void)kittyImageControllerReportWithMessage:(NSString *)string {
-    [self willSendReport];
+    [self willSendReportNamed:@"kitty image report"];
     __weak __typeof(self) weakSelf = self;
     const NSStringEncoding encoding = self.terminal.encoding;
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenSendReportData:[string dataUsingEncoding:encoding]];
-        [weakSelf didSendReport:delegate];
+        [weakSelf didSendReport:delegate named:@"kitty image report"];
     } name:@"kitty image report"];
 }
 

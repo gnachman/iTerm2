@@ -185,6 +185,8 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     // Queue subsequent writes until the expectation is ready.
     // Use reference counting to handle overlapping pastes correctly.
     self.bracketedPastePending += 1;
+    RLog(@"12965: %@ begin bracketed paste watch, pending -> %@ prefix=%@ priorExpectation=%@",
+         self.guid, @(self.bracketedPastePending), prefix, self.pasteBracketingOopsieExpectation);
 
     // Add first chunk to queue synchronously, before dispatching sync.
     // This ensures it's in the queue before any subsequent chunks from the paste timer.
@@ -224,6 +226,12 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 }
 
 - (void)didFindPasteBracketingOopsie {
+    // Issue 12965: if the expectation being canceled here has not yet had its
+    // willExpect callback invoked (it was created after the one whose match
+    // fired and never synced to the mutation thread), canceling it leaks
+    // bracketedPastePending and input wedges permanently.
+    RLog(@"12965: %@ didFindPasteBracketingOopsie canceling %@ pending=%@",
+         self.guid, self.pasteBracketingOopsieExpectation, @(self.bracketedPastePending));
     [_expect cancelExpectation:self.pasteBracketingOopsieExpectation];
     [self maybeTurnOffPasteBracketing];
 }

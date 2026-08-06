@@ -2102,6 +2102,10 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     return _mutableState.sendingIsBlocked;
 }
 
+- (NSString *)pendingReportsDebugDescription {
+    return [_mutableState pendingReportsDebugDescription];
+}
+
 #pragma mark - VT100ScreenSideEffectPerforming
 
 // THis is accessed by both main and mutation queues and it must be atomic.

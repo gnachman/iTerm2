@@ -371,6 +371,11 @@ static void HandleSigChld(int n) {
     assert(!jobManager || !self.jobManager.isReadOnly);
     [writeLock lock];
     [writeBuffer appendData:data];
+    // Issue 12965: if writeBuffer only ever grows here, the wedge is below the
+    // session layer (TaskNotifier/fd); if these lines are absent while the user
+    // types, the wedge is above.
+    RLog(@"12965: writeTask fd=%d append %@ byte(s); writeBuffer now %@ byte(s)",
+         self.fd, @(data.length), @(writeBuffer.length));
     [[TaskNotifier sharedInstance] unblock];
     [writeLock unlock];
 }

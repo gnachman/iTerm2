@@ -49,6 +49,11 @@ iTermTriggerScopeProvider> {
     dispatch_group_t _tmuxGroup;
     NSArray<NSString *> *_sshIntegrationFlags;
     _Atomic int _pendingReportCount;
+    // Issue 12965 diagnostics: names+timestamps of reports counted in
+    // _pendingReportCount that have not yet been sent. Guarded by
+    // @synchronized (_pendingReportLedger). If _pendingReportCount wedges
+    // above zero, the stale entry here names the leaking call site.
+    NSMutableArray<NSString *> *_pendingReportLedger;
     BOOL _compressionScheduled;
     iTermPromptStateMachine *_promptStateMachine;
     NSString *_currentBlockIDList;
@@ -112,8 +117,8 @@ iTermTriggerScopeProvider> {
 - (void)addNoDelegateSideEffect:(void (^)(void))sideEffect
                            name:(NSString *)name;
 
-- (void)willSendReport;
-- (void)didSendReport:(id<VT100ScreenDelegate>)delegate;
+- (void)willSendReportNamed:(NSString *)name;
+- (void)didSendReport:(id<VT100ScreenDelegate>)delegate named:(NSString *)name;
 
 - (void)executePostTriggerActions;
 - (void)performBlockWithoutTriggers:(void (^)(void))block;
