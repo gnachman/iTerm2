@@ -439,11 +439,11 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     // bar inside it, so it never crowds the tab title or status subtitle.
     private var progressRingWidth: CGFloat { 2 }
 
-    /// Corner radius for a drawn pill, derived from the pill's own height so it
-    /// stays stadium-shaped when cell height changes (vertical tabs + custom
-    /// `defaultTabBarHeight`).
+    /// Stadium corner radius for a drawn pill (`height/2`), so fill, stroke,
+    /// tab-color tint, progress ring, and dark-theme cap chrome share one
+    /// curvature when cell height changes.
     private func pillCornerRadius(for rect: NSRect) -> CGFloat {
-        max(0, rect.height / 2.0 - 2.5)
+        max(0, rect.height / 2.0)
     }
 
     @objc func progressBarRect(forTabCell cell: PSMTabBarCell) -> NSRect {
@@ -586,20 +586,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
     }
 
-    /// Drawn pill height inside the horizontal tab-bar container (36pt). Vertical
-    /// tabs use the live cell height from `tabBar.height` so chrome tracks
-    /// Advanced Pref `defaultTabBarHeight` instead of staying pinned at 28.
-    private static let horizontalBarHeight: CGFloat = 28.0
-
-    private var barHeight: CGFloat {
-        if orientation == .verticalOrientation,
-           let height = tabBar?.height,
-           height > 0 {
-            return height
-        }
-        return Self.horizontalBarHeight
-    }
-
+    // Drawn pill height inside the horizontal tab-bar container (36pt).
+    // Only `clippingPath` reads this; cell pills use `pillCornerRadius(for:)`.
+    private let barHeight = 28.0
     private var barRadius: CGFloat { barHeight / 2.0 }
     let containerSideInset = CGFloat(8)
     var containerTopInset: CGFloat {
@@ -860,7 +849,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         let path = NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
         path.fill()
         if selected {
-            drawCellOutline(path: path, rect: rect, radius: radius)
+            drawCellOutline(path: path, rect: rect)
         }
 
         if let tabColor {
@@ -901,7 +890,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
     }
     
-    func drawCellOutline(path: NSBezierPath, rect: NSRect, radius: CGFloat) {
+    func drawCellOutline(path: NSBezierPath, rect: NSRect) {
         Self.outlineColor.set()
         path.stroke()
     }
@@ -1832,15 +1821,13 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
         }
     }
     
-    override func drawCellOutline(path: NSBezierPath, rect: NSRect, radius: CGFloat) {
-        // Scale the 9-slice-like cap/mid images to the pill rect. Previously
-        // dest.size was image.size, so chrome stayed at the asset's intrinsic
-        // height while the cell/backing grew with defaultTabBarHeight — a
-        // dual-height selected tab that vanished only when an opaque tab color
-        // painted over the caps.
+    override func drawCellOutline(path: NSBezierPath, rect: NSRect) {
+        // Cap images must scale to the pill height so chrome matches the cell
+        // when Default tab bar height changes (left/right tabs).
         let left = Self.leftTabCap
         let scale = left.size.height > 0 ? rect.height / left.size.height : 1.0
-        let capWidth = left.size.width * scale
+        // Clamp so left and right caps never overlap on a narrow tall pill.
+        let capWidth = min(left.size.width * scale, rect.width / 2.0)
 
         let leftDest = NSRect(x: rect.minX, y: rect.minY, width: capWidth, height: rect.height)
         left.draw(in: leftDest)

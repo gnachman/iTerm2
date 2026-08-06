@@ -868,8 +868,7 @@ Bug Fixes:
   height while the tab cell uses a different
   height (for example left tabs with a custom
   Default tab bar height). Cap images scale to
-  the pill, and vertical bar height tracks the
-  container so the dual-layer look goes away
+  the pill so the dual-layer look goes away
   without needing a custom tab color.
 - Toggling Caps Lock no longer inserts an “A”
   in programs that use the Kitty keyboard
