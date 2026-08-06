@@ -229,7 +229,7 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
                                                                               string:message];
     } else {
         [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:nil
-                                                                              format:@"Malformed invocation in session name controller. The invocation is:\n%@\nIt doesn't look like a function call! The parser said:\n",
+                                                                              format:@"Malformed invocation in session name controller. The invocation is:\n%@\nIt doesn't look like a function call! The parser said:\n%@",
          invocation,
          invocationError.localizedDescription];
     }

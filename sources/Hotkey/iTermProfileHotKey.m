@@ -607,6 +607,7 @@ static NSString *const kArrangement = @"Arrangement";
     self.windowController.window.animator.alphaValue = 0;
 #if BETA
     SetPinnedDebugLogMessage([NSString stringWithFormat:@"Fade out hotkey window %p", self],
+                             @"%@",
                              [[NSThread callStackSymbols] componentsJoinedByString:@"\n"]);
 #endif
     [NSAnimationContext endGrouping];
