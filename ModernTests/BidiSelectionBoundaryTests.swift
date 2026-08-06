@@ -183,6 +183,33 @@ class BidiSelectionBoundaryTests: XCTestCase {
         XCTAssertFalse(top.contains(0), "upper line's first character is right of the pointer")
     }
 
+    func testMinimumRTLWordsFlipsLatinMajorityLine() {
+        // «novid ~ % تلفن» opens LTR and Latin holds the majority, so by
+        // default it stays a left-to-right paragraph. With the minimum-RTL-
+        // words rule set to 1, one Persian word is enough to lay the line out
+        // right-to-left, so a prompt holding a pasted Persian word
+        // right-justifies like the same text does in command output.
+        let saved = iTermUserDefaults.userDefaults().object(forKey: "RtlParagraphMinimumWords")
+        defer {
+            if let saved { iTermUserDefaults.userDefaults().set(saved, forKey: "RtlParagraphMinimumWords") }
+            else { iTermUserDefaults.userDefaults().removeObject(forKey: "RtlParagraphMinimumWords") }
+            iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+        }
+        let line = "novid@mac ~ % تلفن"
+
+        iTermUserDefaults.userDefaults().set(0, forKey: "RtlParagraphMinimumWords")
+        iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+        let sca1 = screenCharArrayWithDefaultStyle(line, eol: EOL_HARD)
+        guard let off = BidiDisplayInfoObjc(sca1) else { return XCTFail("no bidi info") }
+        XCTAssertFalse(off.paragraphIsRTL, "Latin-majority line stays LTR with the rule off")
+
+        iTermUserDefaults.userDefaults().set(1, forKey: "RtlParagraphMinimumWords")
+        iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+        let sca2 = screenCharArrayWithDefaultStyle(line, eol: EOL_HARD)
+        guard let on = BidiDisplayInfoObjc(sca2) else { return XCTFail("no bidi info") }
+        XCTAssertTrue(on.paragraphIsRTL, "one Persian word flips the line with the rule at 1")
+    }
+
     func testGuillemetsJoinLatinIsland() throws {
         // «machine learning» inside a Persian sentence must render with the
         // marks on their typed sides: the guillemets join the LTR island, so

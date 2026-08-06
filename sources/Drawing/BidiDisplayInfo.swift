@@ -410,19 +410,36 @@ fileprivate func detectedParagraphIsRTL(_ s: NSString) -> Bool {
     var firstStrongIsRTL: Bool? = nil
     var ltrCount = 0
     var rtlCount = 0
+    // A "word" is a maximal group of strong-RTL characters; a space or a
+    // strong-LTR character ends it, while neutrals and marks (ZWNJ inside
+    // دانش‌آموزان, combining marks) do not, so such a word counts once.
+    var rtlWordCount = 0
+    var inRTLWord = false
     for i in 0..<s.length {
         let c = s.character(at: i)
         if c == iTermLRI || c == iTermRLI || c == iTermFSI || c == iTermPDI { continue }
         guard let scalar = Unicode.Scalar(c) else { continue }
         if rtl.contains(scalar) {
             rtlCount += 1
+            if !inRTLWord { rtlWordCount += 1; inRTLWord = true }
             if firstStrongIsRTL == nil { firstStrongIsRTL = true }
         } else if ltr.contains(scalar) {
             ltrCount += 1
+            inRTLWord = false
             if firstStrongIsRTL == nil { firstStrongIsRTL = false }
+        } else if c == 0x20 {
+            inRTLWord = false
         }
     }
-    return firstStrongIsRTL == true || rtlCount > ltrCount
+    if firstStrongIsRTL == true || rtlCount > ltrCount {
+        return true
+    }
+    // Optional user rule: a line with at least this many RTL words lays out
+    // right-to-left even when it opens LTR and Latin holds the majority. At 1,
+    // a shell prompt holding a pasted Persian word right-justifies like the
+    // same text does in command output. Off (0) by default.
+    let minimumWords = Int(iTermAdvancedSettingsModel.rtlParagraphMinimumWords())
+    return minimumWords > 0 && rtlWordCount >= minimumWords
 }
 
 extension IndexSet {

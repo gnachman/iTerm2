@@ -2696,3 +2696,10 @@ Bug Fixes:
   sentence, and the sentence-final period
   detached from its sentence and rendered
   across the gap next to the prompt's clock.
+- New advanced setting: treat a line as
+  right-to-left when it contains at least N
+  right-to-left words (off by default). At 1,
+  a shell prompt holding a pasted Persian word
+  right-justifies the way the same text renders
+  in command output, instead of staying
+  anchored to the Latin prompt.
