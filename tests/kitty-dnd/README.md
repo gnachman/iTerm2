@@ -12,21 +12,24 @@ Run each inside a debug-build iTerm2 session (`make run`).
 - `drop_target.py` — announces it accepts drops; logs hover/drop events and
   prints (or saves, with `--outdir`) the dropped data. Drag files/text onto the
   window.
-- `drag_source.py` — offers text and a file to be dragged out; logs the drag
-  lifecycle. Start a drag over the window and drop onto Finder/TextEdit.
+- `drag_source.py` — offers text, a file, and a directory tree to be dragged
+  out; logs the drag lifecycle. Start a drag over the window and drop onto
+  Finder/TextEdit.
 - `kittydnd.py` — shared build/parse/reader helpers (also a spec reference).
 
-## What works at each stage
+## What works
 
-- The **inbound handshake** (query, accept/offer registration, and reports back
-  to the program) is wired now, so `probe.py` should report the query as
-  recognized, and `drop_target.py` / `drag_source.py` will register without
-  error.
-- **Actual drops** onto the window are forwarded to the program only once the
-  accept-drop AppKit adapter lands (then `drop_target.py` receives t=m/t=M/t=r).
-- **Dragging out** works only once the offer AppKit adapter lands, and the
-  drag-out gesture fires only when the app has mouse reporting enabled (the
-  chosen way to avoid clobbering text selection).
+Both directions are implemented on this branch:
+
+- **Inbound handshake** — `probe.py` reports the query as recognized; the
+  clients register without error.
+- **Drops onto the window** are forwarded to the program, so `drop_target.py`
+  receives t=m/t=M/t=r (hold Option while dropping to force the old
+  paste/upload behavior).
+- **Dragging out** works, but the drag-out gesture fires only while the app has
+  mouse reporting enabled (`drag_source.py` turns it on for you). This is the
+  chosen way to avoid clobbering text selection, so drag-out works from a
+  full-screen / mouse-reporting program, not a plain shell prompt.
 
 ## Notes
 

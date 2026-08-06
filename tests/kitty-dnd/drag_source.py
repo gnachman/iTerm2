@@ -88,7 +88,9 @@ class DragSource:
 
     def start(self):
         os.write(1, MOUSE_REPORTING_ON.encode())
-        payload = machine_id() if self.args.machine_id else None
+        # Send our machine id by default so a drag-out over plain ssh is detected
+        # as cross-machine and fetched in-band (matching drop_target.py).
+        payload = None if self.args.no_machine_id else machine_id()
         os.write(1, build({"t": "o", "x": "1"}, text_payload=payload).encode())
         log("[drag_source] offering enabled, mouse reporting on. Drag over the window.")
         log("[drag_source] offering: %s" % [os.path.basename(p) for p in self.entry_paths])
@@ -187,7 +189,10 @@ class DragSource:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--machine-id", action="store_true")
+    # The machine id is sent by default; --machine-id is kept as a no-op.
+    ap.add_argument("--machine-id", action="store_true", help="(default; kept for compatibility)")
+    ap.add_argument("--no-machine-id", action="store_true",
+                    help="do not send our machine id (treat drag-out as local)")
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args()
 
@@ -203,6 +208,8 @@ def main():
         source.start()
         source.run()
     finally:
+        # Stop offering drags on exit (spec: "On exit ... send t=o:x=2").
+        os.write(1, build({"t": "o", "x": "2"}).encode())
         os.write(1, MOUSE_REPORTING_OFF.encode())
         termios.tcsetattr(fd, termios.TCSADRAIN, saved)
         shutil.rmtree(source.tmp_root, ignore_errors=True)

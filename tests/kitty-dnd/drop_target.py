@@ -30,6 +30,7 @@ import tempfile
 import termios
 import tty
 from collections import deque
+from urllib.parse import urlparse, unquote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from kittydnd import build, OSC72Reader, machine_id  # noqa: E402
@@ -53,15 +54,18 @@ class DropTarget:
         self.pending = deque()       # queued requests: (metadata, context)
         self.uri_mime_index = None   # 1-based index of text/uri-list in t=M
         self.handle_remaining = {}   # dir handle -> children still outstanding
+        self.response_md = None      # metadata from the FIRST chunk of a response
+        self.drop_active = False     # a drop's reads are in progress
 
     # MARK: - Lifecycle
 
     def start(self):
-        payload = ACCEPTED
+        # Two distinct registrations per the spec: the MIME list (t=a) and the
+        # machine id (t=a:x=1). Merging them makes the terminal discard the list.
+        os.write(1, build({"t": "a"}, text_payload=ACCEPTED).encode())
         mid = None if self.args.no_machine_id else machine_id()
         if mid:
-            payload = ACCEPTED + " " + mid
-        os.write(1, build({"t": "a", "x": "1"}, text_payload=payload).encode())
+            os.write(1, build({"t": "a", "x": "1"}, text_payload=mid).encode())
         log("[drop_target] announced accept: %s" % ACCEPTED)
         log("[drop_target] machine id: %s" % (mid or "(none)"))
         log("[drop_target] saving cross-machine files under: %s" % self.outdir)
@@ -80,15 +84,20 @@ class DropTarget:
         metadata, context = self.pending.popleft()
         self.current = context
         self.accum = bytearray()
+        self.response_md = None
         os.write(1, build(metadata).encode())
 
-    def on_complete_response(self, md):
+    def on_complete_response(self):
         context = self.current
         self.current = None
         data = bytes(self.accum)
+        # Use the FIRST chunk's metadata (only it is guaranteed to carry the X /
+        # type flag; the terminating m=0 chunk may carry only m).
+        md = self.response_md or {}
         if context is not None:
             context["handler"](md, data, context)
         self.dispatch_next()
+        self._maybe_complete_drop()
 
     def on_error(self, md, payload):
         log("[drop_target] ERROR %s: %s" % (dict(md), payload))
@@ -98,6 +107,16 @@ class DropTarget:
         if context is not None:
             self._release_parent(context.get("parent"))
         self.dispatch_next()
+        self._maybe_complete_drop()
+
+    def _maybe_complete_drop(self):
+        # Spec: once all dropped data is read, send t=r:o=operation. Without it the
+        # terminal treats the drop as canceled and never runs its completion path.
+        if (self.drop_active and self.current is None and not self.pending
+                and not self.handle_remaining):
+            os.write(1, build({"t": "r", "o": "1"}).encode())
+            log("[drop_target] sent drop completion (t=r:o=1)")
+            self.drop_active = False
 
     def _release_parent(self, parent):
         if parent is None or parent not in self.handle_remaining:
@@ -130,6 +149,7 @@ class DropTarget:
             offered = (payload or "").split()
             log("[drop_target] DROP at cell (%s,%s) offering: %s" %
                 (md.get("x"), md.get("y"), offered))
+            self.drop_active = True
             if "text/uri-list" in offered:
                 self.uri_mime_index = offered.index("text/uri-list") + 1
                 self.enqueue({"t": "r", "x": str(self.uri_mime_index)},
@@ -138,10 +158,12 @@ class DropTarget:
                 # Just fetch and print the first offered type.
                 self.enqueue({"t": "r", "x": "1"}, {"handler": self.on_plain_data})
         elif t == "r":
+            if self.response_md is None:
+                self.response_md = md
             if payload:
-                self.accum += base64.b64decode(payload)
+                self.accum += base64.b64decode(payload + "=" * (-len(payload) % 4))
             if md.get("m") != "1":
-                self.on_complete_response(md)
+                self.on_complete_response()
         elif t == "R":
             self.on_error(md, payload)
 
@@ -155,7 +177,9 @@ class DropTarget:
         if md.get("X") == "1":
             log("[drop_target] cross-machine drop; pulling %d item(s) in-band" % len(uris))
             for subidx, uri in enumerate(uris, start=1):
-                name = os.path.basename(uri.rstrip("/")) or "item-%d" % subidx
+                # Decode percent-encoding and take the basename of the path.
+                path = unquote(urlparse(uri).path).rstrip("/")
+                name = os.path.basename(path) or "item-%d" % subidx
                 self.enqueue({"t": "r", "x": str(self.uri_mime_index), "y": str(subidx)},
                              {"handler": self.on_entry,
                               "dest": os.path.join(self.outdir, name),
@@ -169,8 +193,8 @@ class DropTarget:
             self._release_parent(context.get("parent"))
             return
         x = md.get("X")
-        if x is None:
-            # Regular file.
+        if x is None or x == "0":
+            # Regular file (X absent or explicit 0).
             self._write_file(dest, data)
             log("[drop_target] saved file: %s (%d bytes)" % (dest, len(data)))
         elif x == "1":
@@ -244,6 +268,9 @@ def main():
         target.start()
         target.run()
     finally:
+        # Deregister on exit (spec: "at exit, it should send t=A") so drops onto
+        # the now-plain shell are not routed into the protocol path.
+        os.write(1, build({"t": "A"}).encode())
         termios.tcsetattr(fd, termios.TCSADRAIN, saved)
     log("\n[drop_target] bye")
     return 0

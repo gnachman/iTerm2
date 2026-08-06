@@ -10,12 +10,12 @@ whatever the terminal reports back.
 
 What it checks:
   - t=q  (query support): a compliant terminal replies with t=q, echoing i=.
-  - t=a  (announce accept): no reply expected; just verifies it is accepted
-         without disturbing the terminal.
+  - t=a  (announce accept): no reply expected; it deregisters with t=A before
+         exiting so it does not leave the protocol enabled on the shell.
 
 The actual drag-and-drop (dropping files onto the window, dragging out of it)
-is AppKit UI and cannot be exercised from a script; use a real drag once the
-AppKit adapter lands.
+is AppKit UI and cannot be exercised from a script; use a real drag with
+drop_target.py / drag_source.py.
 """
 
 import os
@@ -71,6 +71,8 @@ def main() -> int:
         send("\x1b]72;t=a;text/plain text/uri-list\x1b\\")
         stray = read_reply(timeout=0.3)
     finally:
+        # Deregister so we do not leave the protocol enabled on the shell.
+        send("\x1b]72;t=A\x1b\\")
         termios.tcsetattr(fd, termios.TCSADRAIN, saved)
 
     print("\r")
