@@ -1133,6 +1133,8 @@ final class KittyDnDController {
             return false
         }
         let version = token[token.startIndex..<colon]
-        return version.allSatisfy { $0.isNumber }
+        // ASCII decimal digits only: a machine-id version is a plain integer, and
+        // Character.isNumber would also accept non-ASCII digit scalars.
+        return version.allSatisfy { $0.isASCII && $0.isNumber }
     }
 }
