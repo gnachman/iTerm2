@@ -57,6 +57,12 @@ final class KittyDnDRemoteDragFetch {
     private var entryCount = 0
     private var totalBytes = 0
     private var finished = false
+    // In-flight write/mkdir tasks. If the fetch finishes early (abort/timeout)
+    // while a write is running, completion is deferred until these drain, so the
+    // caller does not delete the temp dir out from under a write that would
+    // recreate it (leaking the recreated tree).
+    private var activeWrites = 0
+    private var deferredResult: [URL]??
     // The pending idle-timeout, canceled and replaced on each unit of progress so
     // stale timers do not pile up during a large transfer.
     private var idleWorkItem: DispatchWorkItem?
@@ -156,19 +162,12 @@ final class KittyDnDRemoteDragFetch {
         case 0:
             // Regular file.
             recordMaterialized(dest, for: message)
-            Task { @MainActor in
-                let ok = await KittyDnDController.writeOffMainThread {
-                    try FileManager.default.createDirectory(
-                        at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
-                    try payload.write(to: dest)
-                }
-                guard !self.finished else { return }
-                if ok {
-                    self.completeOne()
-                } else {
-                    self.entryFailed(topLevelIndex: topLevelIndex)
-                }
-            }
+            performWrite({
+                try FileManager.default.createDirectory(
+                    at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try payload.write(to: dest)
+            }, onSuccess: { self.completeOne() },
+               onFailure: { self.entryFailed(topLevelIndex: topLevelIndex) })
         case 1:
             // Symlink: skip entirely. Its target is attacker-controlled and
             // meaningless here, and following it at the drop destination could
@@ -189,17 +188,27 @@ final class KittyDnDRemoteDragFetch {
             handleChildNames[typeFlag] = names
             recordMaterialized(dest, for: message)
             pending += names.count
-            Task { @MainActor in
-                let ok = await KittyDnDController.writeOffMainThread {
-                    try FileManager.default.createDirectory(at: dest, withIntermediateDirectories: true)
-                }
-                guard !self.finished else { return }
-                if ok {
-                    self.completeOne()
-                } else {
-                    self.entryFailed(topLevelIndex: topLevelIndex)
-                }
+            performWrite({
+                try FileManager.default.createDirectory(at: dest, withIntermediateDirectories: true)
+            }, onSuccess: { self.completeOne() },
+               onFailure: { self.entryFailed(topLevelIndex: topLevelIndex) })
+        }
+    }
+
+    /// Run a filesystem write off the main thread while tracking it, so an early
+    /// finish waits for it before the temp dir is removed.
+    private func performWrite(_ block: @escaping @Sendable () throws -> Void,
+                              onSuccess: @escaping () -> Void,
+                              onFailure: @escaping () -> Void) {
+        activeWrites += 1
+        Task { @MainActor in
+            let ok = await KittyDnDController.writeOffMainThread(block)
+            self.activeWrites -= 1
+            if self.finished {
+                self.deliverDeferredIfDrained()
+                return
             }
+            if ok { onSuccess() } else { onFailure() }
         }
     }
 
@@ -281,6 +290,22 @@ final class KittyDnDRemoteDragFetch {
         finished = true
         idleWorkItem?.cancel()
         idleWorkItem = nil
+        if activeWrites > 0 {
+            // Wait for in-flight writes so the caller does not remove the temp dir
+            // while a write is still creating files in it.
+            deferredResult = .some(urls)
+            return
+        }
+        deliver(urls)
+    }
+
+    private func deliverDeferredIfDrained() {
+        guard activeWrites == 0, let urls = deferredResult else { return }
+        deferredResult = nil
+        deliver(urls)
+    }
+
+    private func deliver(_ urls: [URL]?) {
         let completion = self.completion
         self.completion = nil
         completion?(urls)

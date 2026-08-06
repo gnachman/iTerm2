@@ -76,6 +76,10 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
         pendingEvent = nil
     }
 
+    var hasLiveGesture: Bool {
+        return pendingEvent != nil && NSEvent.pressedMouseButtons != 0
+    }
+
     // MARK: - Building the drag items
 
     private func draggingItems(for offer: KittyDnDDragOffer,

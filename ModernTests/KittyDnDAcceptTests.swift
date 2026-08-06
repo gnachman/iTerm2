@@ -347,14 +347,37 @@ final class KittyDnDAcceptTests: XCTestCase {
         XCTAssertEqual(recorder.last?.type, "R")
     }
 
-    func testDataRequestWithMissingIndexSendsError() {
+    // A bare t=r (no x, no Y, no o) is the canceled drop-completion signal, not a
+    // malformed request; it must not draw an error and must clear the drop.
+    func testBareDataRequestIsCanceledCompletion() {
         let recorder = Recorder()
         let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
         c.handleInboundSequence("t=a;text/plain")
         c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
-                      drop: FakeDropData(mimeTypes: ["text/plain"]))
-        c.handleInboundSequence("t=r")  // no x=
+                      drop: FakeDropData(mimeTypes: ["text/plain"], dataByIndex: [1: Data("x".utf8)]))
+        c.handleInboundSequence("t=r")  // no x, no Y, no o
+        XCTAssertNil(recorder.messages.first { $0.type == "R" })
+        XCTAssertEqual(c.lastCompletedDropOperation, 0)  // 0 = canceled
+        // The drop is now cleared: a later read errors.
+        c.handleInboundSequence("t=r:x=1")
         XCTAssertEqual(recorder.last?.type, "R")
+    }
+
+    // A sub-index request before the client has requested the uri-list is EINVAL.
+    func testSubIndexBeforeURIListRequestIsEINVAL() async {
+        let dir = makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let file = dir.appendingPathComponent("a.txt")
+        try? Data("hi".utf8).write(to: file)
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/uri-list \(peerID)")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/uri-list"], fileURLs: [file]))
+        // Straight to a sub-index without first requesting the uri-list.
+        let resp = await awaitResponse(recorder, c, "t=r:x=1:y=1")
+        XCTAssertEqual(resp?.type, "R")
+        XCTAssertEqual(resp?.textPayload, "EINVAL")
     }
 
     // MARK: - Cross-machine in-band file/dir transfer (plain ssh, no conductor)
@@ -402,6 +425,9 @@ final class KittyDnDAcceptTests: XCTestCase {
         c.handleInboundSequence("t=a;text/uri-list \(peerID)")
         c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
                       drop: FakeDropData(mimeTypes: ["text/uri-list"], fileURLs: fileURLs))
+        // The client must request the uri-list before sub-indexing its entries;
+        // do so here so the per-entry tests can drive t=r:x=1:y=N directly.
+        c.handleInboundSequence("t=r:x=1")
         return c
     }
 

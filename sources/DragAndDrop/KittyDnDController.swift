@@ -15,6 +15,7 @@
 //
 
 import Foundation
+import ImageIO
 
 /// The data available from an in-progress or completed drop, as seen by the
 /// controller. The AppKit adapter implements this over NSDraggingInfo; faked in
@@ -67,8 +68,16 @@ final class KittyDnDController {
     private var nextDirectoryHandle = 2
     // Addressing keys of filesystem-entry reads currently in flight, so an
     // identical t=r request repeated while one is being served does not spawn a
-    // second full read and multiply the memory/IO spike.
+    // second full read and multiply the memory/IO spike. Keys are scoped by the
+    // accept generation so an old drop's completing read cannot remove a new
+    // drop's key.
     private var inFlightEntryRequests: Set<String> = []
+    /// Cap on concurrent filesystem-entry reads. Spec: "if too many requests are
+    /// received, terminals must deny the request with EMFILE and end the drop."
+    private static let maxConcurrentEntryRequests = 64
+    // Whether the program has requested the text/uri-list MIME type for the
+    // current drop. A sub-index (y) request before that is EINVAL per the spec.
+    private var uriListRequested = false
     // Bumped at every drop-context boundary (new drag cycle, new drop, drop
     // completion, reset). An async filesystem read captures it before awaiting and
     // discards its result if it changed, so a read still in flight when the drop
@@ -97,6 +106,10 @@ final class KittyDnDController {
     /// Cap on a single drag image's byte size (raw or encoded), to bound the work
     /// of converting it for display. Beyond this the drag is refused with EFBIG.
     private static let maxImageBytes = 64 * 1024 * 1024
+    /// Cap on a drag image's DECODED pixel count (width*height), so a small
+    /// compressed PNG declaring huge dimensions cannot force a giant bitmap decode.
+    /// 4 bytes/pixel of the byte cap => ~16M pixels (e.g. 4096x4096).
+    private static let maxImagePixels = maxImageBytes / 4
     /// Bounds on pre-sent offer data, so an offering program cannot grow memory
     /// with arbitrary indices or unbounded payloads.
     private static let maxOfferImages = 16
@@ -176,6 +189,7 @@ final class KittyDnDController {
         directoryHandles.removeAll()
         nextDirectoryHandle = 2
         inFlightEntryRequests.removeAll()
+        uriListRequested = false
         lastCompletedDropOperation = nil
         // Keep the multiplexer routing id while a native drag is still live (the
         // same reason selfDragInProgress survives reset): the drag's remaining
@@ -225,6 +239,10 @@ final class KittyDnDController {
             handleAccept(message)
         case "A":
             isAcceptingDrops = false
+            // Forget any latched acceptance so a drop after the program stopped
+            // accepting is not reported to the OS as accepted while performDrop
+            // silently discards it.
+            acceptedDropOperation = nil
         case "r":
             handleDataRequest(message)
         case "m":
@@ -271,6 +289,7 @@ final class KittyDnDController {
         let x = message.intValue("x")
         if x == 2 {
             isAcceptingDrops = false
+            acceptedDropOperation = nil
             return
         }
         isAcceptingDrops = true
@@ -318,6 +337,7 @@ final class KittyDnDController {
         directoryHandles.removeAll()
         nextDirectoryHandle = 2
         inFlightEntryRequests.removeAll()
+        uriListRequested = false
         sendMoveOrDrop(type: "m", cellX: cellX, cellY: cellY, pixelX: pixelX,
                        pixelY: pixelY, operations: operations, mimeTypes: mimeTypes)
     }
@@ -370,17 +390,18 @@ final class KittyDnDController {
         directoryHandles.removeAll()
         nextDirectoryHandle = 2
         inFlightEntryRequests.removeAll()
+        uriListRequested = false
     }
 
     // MARK: - Data request handling
 
     private func handleDataRequest(_ message: KittyDnDMessage) {
-        // t=r:o=operation with no addressing keys (x / Y) is the drop-completion
-        // signal: the program has finished reading. It is not a data request, so
-        // it must not draw an error. Discard the per-drop state and any queued
-        // directory handles; o=0 (or absent) means the drop was canceled.
-        if message.metadata["x"] == nil, message.metadata["Y"] == nil,
-           message.metadata["o"] != nil {
+        // A t=r with no addressing keys (x / Y) is the drop-completion signal: the
+        // program has finished reading (spec: "a request for data with no MIME
+        // type specified"). o defaults to 0 = canceled when absent. It is not a
+        // data request, so it must not draw an error; discard the per-drop state
+        // and any queued directory handles.
+        if message.metadata["x"] == nil, message.metadata["Y"] == nil {
             finishDrop(operation: message.intValue("o") ?? 0)
             return
         }
@@ -427,6 +448,13 @@ final class KittyDnDController {
                           code: "EINVAL")
                 return
             }
+            guard uriListRequested else {
+                // Spec: EINVAL if the client did not first request the uri-list
+                // MIME type (the sub-index space is anchored to a list it has seen).
+                sendError(baseMetadata: ["x": String(index), "y": String(entryIndex)],
+                          code: "EINVAL")
+                return
+            }
             guard entryIndex >= 1, entryIndex <= drop.fileURLs.count else {
                 sendError(baseMetadata: ["x": String(index), "y": String(entryIndex)],
                           code: "ENOENT")
@@ -439,6 +467,7 @@ final class KittyDnDController {
         }
 
         if mime == "text/uri-list" {
+            uriListRequested = true
             answerURIList(index: index, drop: drop)
         } else if let data = drop.data(forMimeIndex: index) {
             sendData(index: index, data: data, extraMetadata: [:])
@@ -472,14 +501,23 @@ final class KittyDnDController {
     /// handle (X=handle). The dropped files are local to us, so this is the
     /// terminal-reads-and-streams half of the protocol's cross-machine support.
     private func answerFilesystemEntry(url: URL, responseMetadata: [String: String]) {
-        // Drop an identical request already being served, so a program cannot
-        // multiply the read/memory spike by repeating the same t=r in a loop.
-        let requestKey = Self.entryRequestKey(responseMetadata)
-        guard inFlightEntryRequests.insert(requestKey).inserted else { return }
         // Capture the drop context now; if it changes while we read (the drop was
         // completed, superseded, or reset), discard the result so we neither
         // stream stale bytes nor resurrect a freed directory handle.
         let generation = acceptGeneration
+        // Cap concurrent reads. Spec: "if too many requests are received, terminals
+        // must deny the request with EMFILE and end the drop."
+        guard inFlightEntryRequests.count < Self.maxConcurrentEntryRequests else {
+            sendError(baseMetadata: responseMetadata, code: "EMFILE")
+            finishDrop(operation: 0)
+            return
+        }
+        // Drop an identical request already being served, so a program cannot
+        // multiply the read/memory spike by repeating the same t=r in a loop. The
+        // key is scoped by generation so an old drop's completing read cannot
+        // remove a new drop's key (which would let a duplicate slip through).
+        let requestKey = "\(generation):\(Self.entryRequestKey(responseMetadata))"
+        guard inFlightEntryRequests.insert(requestKey).inserted else { return }
         Task { @MainActor in
             defer { self.inFlightEntryRequests.remove(requestKey) }
             do {
@@ -514,9 +552,40 @@ final class KittyDnDController {
                 sendError(baseMetadata: responseMetadata, code: "EINVAL")
             } catch {
                 guard generation == self.acceptGeneration else { return }
-                sendError(baseMetadata: responseMetadata, code: "EIO")
+                sendError(baseMetadata: responseMetadata, code: Self.errorCode(for: error))
             }
         }
+    }
+
+    /// Map a filesystem read error to the spec's protocol code: ENOENT for a
+    /// missing file, EPERM for a permission failure, EIO otherwise.
+    private static func errorCode(for error: Error) -> String {
+        let nsError = error as NSError
+        if let posix = error as? POSIXError {
+            switch posix.code {
+            case .ENOENT: return "ENOENT"
+            case .EACCES, .EPERM: return "EPERM"
+            default: break
+            }
+        }
+        if nsError.domain == NSCocoaErrorDomain {
+            switch nsError.code {
+            case NSFileReadNoSuchFileError, NSFileNoSuchFileError:
+                return "ENOENT"
+            case NSFileReadNoPermissionError:
+                return "EPERM"
+            default:
+                break
+            }
+        }
+        if nsError.domain == NSPOSIXErrorDomain {
+            switch Int32(nsError.code) {
+            case ENOENT: return "ENOENT"
+            case EACCES, EPERM: return "EPERM"
+            default: break
+            }
+        }
+        return "EIO"
     }
 
     private func allocateDirectoryHandle(children: [URL]) -> Int {
@@ -582,6 +651,16 @@ final class KittyDnDController {
             guard message.metadata["o"] != nil else {
                 return
             }
+            // Only a program that opted in (t=o:x=1) may declare an offer.
+            guard isOfferingDrags else {
+                return
+            }
+            // If the drag gesture has already been terminated (the user let go),
+            // reply EPERM instead of pre-sending/pulling data for a doomed drag.
+            if let dragHost, !dragHost.hasLiveGesture {
+                send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "EPERM:drag gesture ended"))
+                return
+            }
             // The program's offer declaration for a started gesture: operations
             // plus the offered MIME list. Abandon any prior half-built offer and
             // drain its outstanding data requests before starting fresh.
@@ -601,23 +680,54 @@ final class KittyDnDController {
         let data = message.dataPayload ?? Data()
         if index < 0 {
             // Negative index: a drag thumbnail image (-1 first, -2 second, ...).
-            // Bound the number of thumbnails and the cumulative offer size so a
-            // program cannot store unbounded data with arbitrary indices.
-            guard index >= -Self.maxOfferImages else { return }
+            // Bound the number of thumbnails and the cumulative offer size; over
+            // budget aborts the drag with EFBIG (spec: too much data cancels it).
+            guard index >= -Self.maxOfferImages else {
+                rejectOffer(code: "EFBIG:too many images")
+                return
+            }
             let existing = offerImages[index]?.data.count ?? 0
-            guard withinOfferBudget(replacing: existing, adding: data.count) else { return }
+            guard withinOfferBudget(replacing: existing, adding: data.count) else {
+                rejectOffer(code: "EFBIG:offer too large")
+                return
+            }
             offerImages[index] = KittyDnDDragImage(format: message.intValue("y") ?? 0,
                                                    width: message.intValue("X") ?? 0,
                                                    height: message.intValue("Y") ?? 0,
                                                    data: data)
         } else {
-            // Only accept indices within the announced offer's MIME list, and keep
-            // the cumulative pre-sent size under budget.
+            // Only accept indices within the announced offer's MIME list (a
+            // malformed index is ignored), and keep the cumulative pre-sent size
+            // under budget (over budget aborts with EFBIG).
             guard index < offerMimeTypes.count else { return }
             let existing = offerData[index]?.count ?? 0
-            guard withinOfferBudget(replacing: existing, adding: data.count) else { return }
+            guard withinOfferBudget(replacing: existing, adding: data.count) else {
+                rejectOffer(code: "EFBIG:offer too large")
+                return
+            }
             offerData[index] = data
         }
+    }
+
+    /// The decoded pixel count (width*height) of an image, read from its header
+    /// without a full decode. nil if the header cannot be parsed.
+    private static func imagePixelCount(_ data: Data) -> Int? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let width = props[kCGImagePropertyPixelWidth] as? Int,
+              let height = props[kCGImagePropertyPixelHeight] as? Int else {
+            return nil
+        }
+        let (product, overflow) = width.multipliedReportingOverflow(by: height)
+        return overflow ? Int.max : product
+    }
+
+    /// Abort an in-progress drag offer with an error, per the spec's "reply with
+    /// t=E ; <code> and cancel the drag".
+    private func rejectOffer(code: String) {
+        send(KittyDnDMessage(metadata: ["t": "E"], textPayload: code))
+        cleanupRemoteDragTempDir()
+        resetOfferInProgress()
     }
 
     /// Whether storing `adding` bytes (after removing `replacing` bytes for an
@@ -644,9 +754,18 @@ final class KittyDnDController {
                 if o1 || o2 { return "EFBIG" }
                 if image.data.count != expected { return "EINVAL" }
                 if expected > Self.maxImageBytes { return "EFBIG" }
+            case 100:
+                // PNG: guard the byte cap, and the DECODED pixel dimensions (read
+                // from the header without a full decode) so a small compressed file
+                // declaring huge dimensions cannot force a multi-GB bitmap decode.
+                if image.data.count > Self.maxImageBytes { return "EFBIG" }
+                if let pixels = Self.imagePixelCount(image.data),
+                   pixels > Self.maxImagePixels {
+                    return "EFBIG"
+                }
             default:
-                // PNG (100), text (0), or an unknown format: no fixed size to
-                // check, just guard the byte cap.
+                // Text (0) or an unknown format: no fixed size to check, just guard
+                // the byte cap.
                 if image.data.count > Self.maxImageBytes { return "EFBIG" }
             }
         }
@@ -654,6 +773,10 @@ final class KittyDnDController {
     }
 
     private func handleStartDrag(_ message: KittyDnDMessage) {
+        // Only a program that opted in (t=o:x=1) may start a drag.
+        guard isOfferingDrags else {
+            return
+        }
         // t=P:x=-1 starts the drag; other x values change the drag image, which
         // we do not support yet.
         guard message.intValue("x") == -1 else {
@@ -728,6 +851,14 @@ final class KittyDnDController {
             }
             guard generation == offerGeneration else { return false }
             if let data {
+                // Charge pulled data against the same budget as pre-sent data, so a
+                // program cannot bypass the t=p cap by deferring everything to the
+                // pull path. Over budget aborts the drag with EFBIG.
+                let existing = offerData[index]?.count ?? 0
+                guard withinOfferBudget(replacing: existing, adding: data.count) else {
+                    rejectOffer(code: "EFBIG:offer too large")
+                    return false
+                }
                 offerData[index] = data
             }
         }
@@ -845,13 +976,25 @@ final class KittyDnDController {
         }
     }
 
+    /// Whether we are assembling an offer that has not yet turned into a live
+    /// drag (i.e. we have not sent t=E ; OK). Solicited data replies to our
+    /// t=e:x=5 are expected here; any UNSOLICITED t=e/t=E is a protocol error.
+    private var offerBeingAssembled: Bool {
+        return isOfferingDrags && !selfDragInProgress
+    }
+
     private func handleDragDataReply(_ message: KittyDnDMessage) {
         // The program's reply to a t=e:x=5 lazy data request: t=e:y=idx;data.
-        guard let index = message.intValue("y"),
-              let completion = pendingDataRequests.removeValue(forKey: index) else {
+        if let index = message.intValue("y"),
+           let completion = pendingDataRequests.removeValue(forKey: index) {
+            completion(message.dataPayload)
             return
         }
-        completion(message.dataPayload)
+        // An unsolicited t=e before the drag started is a protocol error (spec:
+        // "must respond with t=E ; EINVAL and abort the drag").
+        if offerBeingAssembled {
+            rejectOffer(code: "EINVAL:unexpected t=e")
+        }
     }
 
     private func handleDragStatus(_ message: KittyDnDMessage) {
@@ -859,11 +1002,11 @@ final class KittyDnDController {
         // error reply to a lazy data request for that MIME index.
         guard let y = message.intValue("y") else {
             // A t=E with no y is a generic client error (spec: "If any error
-            // occurs in the client while reading the data"). During a remote
-            // drag-out fetch it means the program failed to provide its data, so
-            // abort now instead of leaving the user holding a dead drag until the
-            // idle timeout. resetOfferInProgress aborts the fetch and drains.
-            if remoteDragFetch != nil {
+            // occurs in the client while reading the data"). During a remote fetch
+            // OR a local deferred-data pull it means the program failed to provide
+            // its data, so abort now instead of leaving the user holding a dead
+            // drag (there is no timeout on the local pull) until a prompt reset.
+            if remoteDragFetch != nil || startingDrag {
                 resetOfferInProgress()
             }
             return
@@ -873,6 +1016,9 @@ final class KittyDnDController {
             resetOfferInProgress()
         } else if let completion = pendingDataRequests.removeValue(forKey: y) {
             completion(nil)
+        } else if offerBeingAssembled {
+            // Unsolicited t=E:y before the drag started: protocol error, abort.
+            rejectOffer(code: "EINVAL:unexpected t=E")
         }
     }
 
@@ -1106,8 +1252,21 @@ final class KittyDnDController {
                 return .symlink(target)
             }
             if values.isDirectory == true {
+                // The listing must contain only transferable entries (regular
+                // files, symlinks, directories); a special file (socket, FIFO)
+                // would otherwise be listed, and a conforming client requesting it
+                // gets EINVAL and aborts the whole drop.
+                let typeKeys: Set<URLResourceKey> = [.isRegularFileKey, .isSymbolicLinkKey,
+                                                     .isDirectoryKey]
                 let children = try FileManager.default
-                    .contentsOfDirectory(at: url, includingPropertiesForKeys: nil)
+                    .contentsOfDirectory(at: url, includingPropertiesForKeys: Array(typeKeys))
+                    .filter { child in
+                        guard let v = try? child.resourceValues(forKeys: typeKeys) else {
+                            return false
+                        }
+                        return v.isSymbolicLink == true || v.isDirectory == true
+                            || v.isRegularFile == true
+                    }
                     .sorted { $0.lastPathComponent < $1.lastPathComponent }
                 return .directory(children)
             }

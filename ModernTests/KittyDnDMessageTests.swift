@@ -69,6 +69,41 @@ final class KittyDnDMessageTests: XCTestCase {
         XCTAssertNil(msg.dataPayload)
     }
 
+    // The spec allows omitting base64 padding; we must still decode it.
+    func testUnpaddedBase64DecodesCorrectly() {
+        // "abcd" -> "YWJjZA==" padded; unpadded is "YWJjZA".
+        let padded = KittyDnDMessage(oscContent: "t=r:x=1;YWJjZA==")
+        XCTAssertEqual(padded.dataPayload, Data("abcd".utf8))
+        let unpadded = KittyDnDMessage(oscContent: "t=r:x=1;YWJjZA")
+        XCTAssertEqual(unpadded.dataPayload, Data("abcd".utf8))
+        // "abcde" -> "YWJjZGU=" padded; unpadded "YWJjZGU".
+        let unpadded2 = KittyDnDMessage(oscContent: "t=r:x=1;YWJjZGU")
+        XCTAssertEqual(unpadded2.dataPayload, Data("abcde".utf8))
+    }
+
+    // A base64 length of 4n+1 is never valid; it must decode to nil, not crash.
+    func testInvalidBase64LengthDecodesToNil() {
+        let msg = KittyDnDMessage(oscContent: "t=r:x=1;YWJjZ")  // length 5 (4n+1)
+        XCTAssertNil(msg.dataPayload)
+    }
+
+    // A chunk sequence whose final chunk drops its padding still reassembles.
+    func testUnpaddedFinalChunkReassembles() {
+        let data = Data((0..<5000).map { UInt8($0 & 0xff) })
+        let messages = KittyDnDChunker.messages(baseMetadata: ["t": "r", "x": "1"], data: data)
+        let reassembler = KittyDnDChunkReassembler()
+        var completed: KittyDnDMessage?
+        for (i, message) in messages.enumerated() {
+            var content = message.serializedContent()
+            // Strip trailing padding from the last data-bearing chunk.
+            if i == messages.count - 2 {
+                while content.hasSuffix("=") { content.removeLast() }
+            }
+            if let done = reassembler.accept(content) { completed = done }
+        }
+        XCTAssertEqual(completed?.dataPayload, data)
+    }
+
     func testUnknownKeysArePreserved() {
         let msg = KittyDnDMessage(oscContent: "t=a:zz=hello")
         XCTAssertEqual(msg.metadata["zz"], "hello")

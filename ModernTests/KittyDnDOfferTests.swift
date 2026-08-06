@@ -31,12 +31,14 @@ final class KittyDnDOfferTests: XCTestCase {
         var cancelCount = 0
         var clearGestureCount = 0
         var beginResult: KittyDnDDragStartResult = .started
+        var liveGesture = true
         func beginDrag(_ offer: KittyDnDDragOffer) -> KittyDnDDragStartResult {
             begun.append(offer)
             return beginResult
         }
         func cancelDrag() { cancelCount += 1 }
         func clearPendingGesture() { clearGestureCount += 1 }
+        var hasLiveGesture: Bool { liveGesture }
     }
 
     private final class FakeEndpoint: KittyDnDEndpoint {

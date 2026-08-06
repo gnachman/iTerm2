@@ -61,4 +61,9 @@ protocol KittyDnDDragHost: AnyObject {
     /// Forget any pending drag gesture (a stored past mouse event) that has not
     /// yet turned into a drag, so a later t=P cannot start a phantom drag from it.
     func clearPendingGesture()
+
+    /// Whether a drag gesture is still live (a stored gesture event and the mouse
+    /// button still down). Used to reply EPERM to an offer for a gesture the user
+    /// has already released.
+    var hasLiveGesture: Bool { get }
 }
