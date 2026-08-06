@@ -69,6 +69,21 @@ Major New Features:
   they harmonize with any theme. Off by
   default.
 
+- Fixed a bug where an SGR sequence or SGR
+  trigger with more parameters than fit
+  attached the extra parameters’
+  subparameters to the last parameter that
+  did fit, changing its meaning: underline
+  could turn into dashed underline. SGR
+  triggers also silently dropped their 16th
+  parameter.
+
+- Fixed a bug where toolbelt lists
+  (Command History, Recent Directories,
+  Captured Output) could stay blank until
+  the window was resized when a new window
+  was opened with the toolbelt showing.
+
 - There's a new kind of AI chat called
   "orchestration" which can view all your
   sessions and operate iTerm2 for you.
@@ -863,6 +878,13 @@ Settings Improvements:
   changes.
 
 Bug Fixes:
+- On macOS Tahoe, dark-theme selected tabs no
+  longer draw their chrome at a fixed image
+  height while the tab cell uses a different
+  height (for example left tabs with a custom
+  Default tab bar height). Cap images scale to
+  the pill so the dual-layer look goes away
+  without needing a custom tab color.
 - Toggling Caps Lock no longer inserts an “A”
   in programs that use the Kitty keyboard
   protocol with “report all keys as escape
@@ -1449,6 +1471,11 @@ Bug Fixes:
   a backslash instead of ¥ on non-JIS
   keyboards. Restore ⌥+¥ sending ESC+\
   (with Option=Esc+) on JIS keyboards.
+- Fix a bug where a restored session whose
+  working directory was on an unmounted drive
+  could fail to relaunch, closing the tab. The
+  session now starts in your home directory and
+  shows a notice. Issue 12955.
 - Fix various crashes.
 - Fix wrong terminal size after exiting
   fullscreen with multiple tabs.
@@ -2562,6 +2589,19 @@ Bug Fixes:
   because your input method changed the
   character a key produces, iTerm2 now offers
   to interpret key bindings by physical key.
+- Fixed a bug where decomposed Hangul, such
+  as Korean filenames stored by HFS+, was
+  drawn as separate jamo letters with the
+  wrong width, which corrupted cursor
+  movement. Conjoining jamo now compose
+  into a single syllable cell.
+- OSC 9;4;4, the ConEmu progress protocol’s
+  paused state, now works when the percentage
+  is left out, which the protocol allows. The
+  bar keeps the percentage it was showing and
+  changes color instead of doing nothing. If
+  there was none, it shows a small one so the
+  paused state is visible.
 - Parentheses, brackets, and other mirrored
   punctuation now draw correctly in right-to-
   left text when right-to-left support is on.

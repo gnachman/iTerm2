@@ -11,6 +11,7 @@ Data sources:
 - emoji-data.txt: Emoji properties (Emoji, Emoji_Presentation)
 - emoji-sequences.txt: Emoji sequences (for VS16 detection)
 - idn-chars.txt: IDN characters for URL detection
+- HangulSyllableType.txt: Conjoining jamo (L/V/T) that must not start their own cell
 
 Usage:
     python3 tools/generate_nscharacterset.py
@@ -35,6 +36,7 @@ EMOJI_DATA_URL = "https://unicode.org/Public/UCD/latest/ucd/emoji/emoji-data.txt
 EMOJI_SEQUENCES_URL = "https://unicode.org/Public/emoji/latest/emoji-sequences.txt"
 IDN_CHARS_URL = "https://unicode.org/reports/tr36/idn-chars.txt"
 BIDI_MIRRORING_URL = "https://unicode.org/Public/UCD/latest/ucd/BidiMirroring.txt"
+HANGUL_SYLLABLE_TYPE_URL = "https://unicode.org/Public/UCD/latest/ucd/HangulSyllableType.txt"
 
 # Cache directory for downloaded files
 CACHE_DIR = Path(__file__).parent / ".unicode_cache"
@@ -382,6 +384,7 @@ def main():
     emoji_sequences_content = get_cached_or_fetch(EMOJI_SEQUENCES_URL, "emoji-sequences.txt")
     idn_content = get_cached_or_fetch(IDN_CHARS_URL, "idn-chars.txt")
     bidi_mirroring_content = get_cached_or_fetch(BIDI_MIRRORING_URL, "BidiMirroring.txt")
+    hangul_syllable_type_content = get_cached_or_fetch(HANGUL_SYLLABLE_TYPE_URL, "HangulSyllableType.txt")
 
     print("Parsing Unicode data...")
     unicode_data = parse_unicode_data(unicode_data_content)
@@ -447,7 +450,22 @@ def main():
     modifier_letter_codes = set(
         code for code, info in unicode_data.items() if info['gc'] == 'Lm'
     )
-    own_cell_codes = sorted(base_codes | set(spacing_combining_codes) | modifier_letter_codes)
+    # Conjoining Hangul jamo (Hangul_Syllable_Type L, V, T) are Grapheme_Base, so
+    # they land in the own-cell set above. But UAX #29 rules GB6-GB8 forbid breaking
+    # within an L(+)V(+T) sequence, and CFStringGetRangeOfComposedCharactersAtIndex
+    # already groups such a sequence into one grapheme cluster. Letting the own-cell
+    # scan re-split it renders decomposed Hangul (e.g. from HFS+ filenames, printf
+    # '가') as separate letters with the wrong width. Exclude conjoining
+    # jamo so a mid-cluster jamo stays attached. Precomposed syllables (LV/LVT,
+    # U+AC00..U+D7A3) are single code points and keep their own cell.
+    conjoining_jamo = (
+        parse_derived_props(hangul_syllable_type_content, "L")
+        | parse_derived_props(hangul_syllable_type_content, "V")
+        | parse_derived_props(hangul_syllable_type_content, "T")
+    )
+    own_cell_codes = sorted(
+        (base_codes | set(spacing_combining_codes) | modifier_letter_codes) - conjoining_jamo
+    )
 
     # Split into BMP and supplementary for each set
     ignorable_bmp, ignorable_supp = split_bmp_supp(ignorable_codes)

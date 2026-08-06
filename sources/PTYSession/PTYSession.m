@@ -3425,12 +3425,31 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                         DLog(@"Sending initial text immediately");
                         [self sendInitialText];
                     }
+                    [self showUnavailableWorkingDirectoryNoticeIfNeeded];
                     if (completion) {
                         completion(YES);
                     }
                 }];
             }];
         }];
+    }];
+}
+
+// If the requested working directory didn't exist at launch, iTermSessionFactory fell back to the
+// home directory and stashed the original path. Tell the user why we're not where they expected.
+// Issue 12955.
+- (void)showUnavailableWorkingDirectoryNoticeIfNeeded {
+    NSString *unavailable = self.unavailableWorkingDirectory;
+    if (!unavailable.length) {
+        return;
+    }
+    self.unavailableWorkingDirectory = nil;
+    NSString *message = [NSString stringWithFormat:@"The directory “%@” is unavailable. Started in home directory instead.",
+                         unavailable];
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal,
+                                    VT100ScreenMutableState *mutableState,
+                                    id<VT100ScreenDelegate> delegate) {
+        [mutableState appendBannerMessage:message];
     }];
 }
 

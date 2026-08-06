@@ -21,6 +21,7 @@
 #include <string.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <util.h>
@@ -484,9 +485,19 @@ static void iTermSpawnInitializeActions(const char *argpath,
         }
     }
     if (initialPwd) {
-        rc = posix_spawn_file_actions_addchdir_np(actionsPtr, initialPwd);
-        if (rc != 0) {
-            iTermSpawnFailed(argpath, errorFd, "posix_spawn_file_actions_addchdir_np", rc);
+        // Only chdir if the directory actually exists. Unlike the fork+exec path (see iTermExec),
+        // whose chdir() failure is silently ignored so the shell still launches in a fallback
+        // directory, a chdir file action that fails aborts the entire posix_spawn. That would
+        // kill the session before the shell ever runs, e.g. when restoring a session whose saved
+        // working directory was on a drive that is no longer mounted (issue 12955). Skipping the
+        // action leaves the child in the server's directory, matching the fork path's best-effort
+        // behavior. stat() is async-signal-safe, which matters because this runs after fork().
+        struct stat sb;
+        if (stat(initialPwd, &sb) == 0 && S_ISDIR(sb.st_mode)) {
+            rc = posix_spawn_file_actions_addchdir_np(actionsPtr, initialPwd);
+            if (rc != 0) {
+                iTermSpawnFailed(argpath, errorFd, "posix_spawn_file_actions_addchdir_np", rc);
+            }
         }
     }
 }

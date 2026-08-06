@@ -336,6 +336,21 @@ NS_ASSUME_NONNULL_BEGIN
             DLog(@"pwd was empty. Use home directory of %@", pwd);
         }
     }
+    // If the working directory no longer exists (for example, a restored session whose saved
+    // directory was on a drive that is no longer mounted), fall back to the home directory so the
+    // shell can still launch, and stash the original path so the session can show a notice once it
+    // starts (issue 12955). Skip this in ssh mode, where the path refers to the remote host and
+    // can't be checked against the local filesystem.
+    const BOOL willLaunch = !self.hasServerConnection && self.partialAttachment == nil;
+    if (willLaunch && !self.ssh && pwd.length > 0) {
+        BOOL isDirectory = NO;
+        const BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:pwd isDirectory:&isDirectory];
+        if (!exists || !isDirectory) {
+            DLog(@"Working directory %@ is unavailable; falling back to home directory", pwd);
+            self.session.unavailableWorkingDirectory = pwd;
+            pwd = NSHomeDirectory();
+        }
+    }
     _workingDirectory = [pwd copy];
     _environment = [self.environment ?: @{} dictionaryBySettingObject:_workingDirectory
                                                                forKey:@"PWD"];
