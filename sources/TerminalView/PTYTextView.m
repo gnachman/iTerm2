@@ -4885,9 +4885,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                   pixelY:(int)round(pixel.y)
                                operation:operation
                               pasteboard:sender.draggingPasteboard];
-        // Report the operation the PROGRAM accepted (via its t=m:o reply), not
-        // the source's allowed mask. It is none until the program replies, so the
-        // drop reads as "not accepted" during that round trip.
+        // Report the operation the bridge advertises: the program's accepted op
+        // once it replies (t=m:o), or an optimistic offered op before then (so a
+        // fast drop is not sprung back). See KittyDnDController.osDragOperation.
         return bridge.forwardedDragOperation;
     }
     return [self legacyDraggingOperationForSender:sender];
@@ -4898,11 +4898,15 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 // routing decision on every update).
 - (NSDragOperation)legacyDraggingOperationForSender:(id<NSDraggingInfo>)sender {
     int numValid = -1;
-    if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {  // Option-drag to copy
+    NSDragOperation operation = [self dragOperationForSender:sender numberOfValidItems:&numValid];
+    // Option-drag to copy: show drop targets only when there is actually a valid
+    // drop. The view registers image pasteboard types for Kitty DnD, so without
+    // this gate an image-only drag with no accepting program (e.g. an image from a
+    // browser) would light up drop-target affordances for a drop that cannot land.
+    if (([NSEvent modifierFlags] & NSEventModifierFlagOption) && numValid > 0) {
         _drawingHelper.showDropTargets = YES;
         [self.delegate textViewDidUpdateDropTargetVisibility];
     }
-    NSDragOperation operation = [self dragOperationForSender:sender numberOfValidItems:&numValid];
     if (numValid != sender.numberOfValidItemsForDrop) {
         sender.numberOfValidItemsForDrop = numValid;
     }
@@ -4948,6 +4952,16 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                   pixelX:(int)round(pixel.x)
                                   pixelY:(int)round(pixel.y)
                                operation:operation];
+        // Option escape hatch: while Option is held, advertise the LEGACY operation
+        // (the routing latch stays, so the program still gets hover updates) so the
+        // OS calls performDragOperation: on release, where the Option branch falls
+        // through to the paste/upload path. Without this, a program that rejected
+        // the drop (forwardedDragOperation == none) makes the drag spring back and
+        // performDragOperation: never fires, so "hold Option while dropping" cannot
+        // engage. Matches the drop-time branch in performDragOperation:.
+        if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {
+            return [self legacyDraggingOperationForSender:sender];
+        }
         return bridge.forwardedDragOperation;
     }
     NSPoint windowDropPoint = [sender draggingLocation];
