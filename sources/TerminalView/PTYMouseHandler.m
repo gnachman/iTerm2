@@ -421,6 +421,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (iTermClickSideEffects)mouseUpImpl:(NSEvent *)event {
     DLog(@"Mouse Up on %@ with event %@, numTouches=%d, mouseDown=%@", self, event, _numTouches, @(_mouseDown));
+    // If we offered a Kitty DnD drag gesture this mouse-down but no native drag
+    // started (which would have consumed the mouseUp and cleared this), the
+    // gesture is over: tell the bridge to forget the stored event so a later t=P
+    // cannot start a phantom drag from it.
+    if (_kittyDragGestureEvent) {
+        _kittyDragGestureEvent = nil;
+        [self.mouseDelegate mouseHandlerKittyDragGestureDidEnd:self];
+    }
     _makingThreeFingerSelection = NO;
     DLog(@"_makingThreeFingerSelection <- NO");
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];

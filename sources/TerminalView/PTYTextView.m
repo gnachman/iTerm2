@@ -5240,6 +5240,11 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         // mid-drag, do not deliver and do NOT fall back to the legacy paste path.
         if (kittyBridge.forwardedDragOperation == NSDragOperationNone) {
             RLog(@"Kitty DnD program has not accepted the drop; refusing");
+            // The program saw enter/move events; tell it the drag left so it does
+            // not stay stuck in a hover state (draggingExited: won't fire for a
+            // drop released over the view, and draggingEnded: now sees the latch
+            // already cleared).
+            [kittyBridge draggingExited];
             return NO;
         }
         VT100GridCoord coord;
@@ -8041,6 +8046,10 @@ static NSString *iTermStringFromRange(NSRange range) {
 
 - (BOOL)mouseHandlerHasKittyDragOffer:(PTYMouseHandler *)handler {
     return [self.delegate textViewKittyDnDBridge].isOfferingDrags;
+}
+
+- (void)mouseHandlerKittyDragGestureDidEnd:(PTYMouseHandler *)handler {
+    [[self.delegate textViewKittyDnDBridge] clearPendingDragGesture];
 }
 
 - (BOOL)mouseHandler:(PTYMouseHandler *)handler

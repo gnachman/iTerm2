@@ -89,6 +89,9 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
 // return NO.
 - (BOOL)mouseHandler:(PTYMouseHandler *)handler
     reportKittyDragGestureWithEvent:(NSEvent *)event;
+// A Kitty DnD drag gesture we offered ended without becoming a native drag
+// (mouse released); forget the pending gesture so it cannot start a phantom drag.
+- (void)mouseHandlerKittyDragGestureDidEnd:(PTYMouseHandler *)handler;
 - (BOOL)mouseHandlerCanWriteToTTY:(PTYMouseHandler *)handler;
 - (BOOL)mouseHandlerViewIsFirstResponder:(PTYMouseHandler *)mouseHandler;
 - (BOOL)mouseHandlerShouldReportClicksAndDrags:(PTYMouseHandler *)mouseHandler;

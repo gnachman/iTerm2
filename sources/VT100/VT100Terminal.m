@@ -2649,6 +2649,13 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             // per-session controller; here we just forward the raw content.
             if (token.string) {
                 [_delegate terminalDidReceiveKittyDragAndDrop:token.string];
+            } else {
+                // The accumulated OSC bytes were not decodable in the session
+                // encoding (a corrupted or non-ASCII stream; conforming senders use
+                // ASCII metadata/base64). Log rather than silently drop, since a
+                // dropped chunk can leave the reassembler pending until the next
+                // prompt reset. See docs/kitty-dnd-design.md section 8.
+                DLog(@"Dropping undecodable OSC 72 (Kitty DnD) sequence");
             }
             break;
         case XTERMCC_RESET_COLOR:

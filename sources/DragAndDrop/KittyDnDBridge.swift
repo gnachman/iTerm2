@@ -76,6 +76,12 @@ class KittyDnDBridge: NSObject {
         controller.reset()
     }
 
+    /// Forget a pending drag gesture that ended without a native drag starting
+    /// (the mouse was released), so a later t=P cannot start a phantom drag.
+    @objc func clearPendingDragGesture() {
+        dragHost.clearPendingGesture()
+    }
+
     // MARK: - Offer / drag-out (from PTYMouseHandler)
 
     /// Whether the program has enabled drag offers. PTYMouseHandler checks this
@@ -104,7 +110,9 @@ class KittyDnDBridge: NSObject {
     @objc(draggingEnteredWithCellX:cellY:pixelX:pixelY:operation:pasteboard:)
     func draggingEntered(cellX: Int, cellY: Int, pixelX: Int, pixelY: Int,
                          operation: Int, pasteboard: NSPasteboard) {
-        let mimeTypes = KittyDnDPasteboardDropData(pasteboard: pasteboard).mimeTypes
+        // Derive the hover MIME list from type presence only; the full pasteboard
+        // (file URLs, string, image data) is read lazily at drop time.
+        let mimeTypes = KittyDnDPasteboardDropData.mimeTypes(for: pasteboard)
         controller.dragEntered(cellX: cellX, cellY: cellY, pixelX: pixelX,
                                pixelY: pixelY, operations: operation, mimeTypes: mimeTypes)
     }

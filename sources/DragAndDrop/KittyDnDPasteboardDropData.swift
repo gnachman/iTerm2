@@ -67,4 +67,24 @@ final class KittyDnDPasteboardDropData: KittyDnDDropData {
     func data(forMimeIndex index: Int) -> Data? {
         return dataByIndex[index]
     }
+
+    /// The MIME list a drag pasteboard would produce, derived from type PRESENCE
+    /// only (no data reads), in the same order the full initializer uses. Used at
+    /// hover time so crossing into the view does not synchronously read (and, for
+    /// TIFF, re-encode) tens of MB on the main thread; the full data is read only
+    /// at drop time.
+    static func mimeTypes(for pasteboard: NSPasteboard) -> [String] {
+        var mimes: [String] = []
+        if pasteboard.canReadObject(forClasses: [NSURL.self],
+                                    options: [.urlReadingFileURLsOnly: true]) {
+            mimes.append("text/uri-list")
+        }
+        if pasteboard.availableType(from: [.string]) != nil {
+            mimes.append("text/plain")
+        }
+        if pasteboard.availableType(from: [.png, .tiff]) != nil {
+            mimes.append("image/png")
+        }
+        return mimes
+    }
 }
