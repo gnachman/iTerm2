@@ -557,6 +557,18 @@
     XCTAssert(subs[3] == 0);
 }
 
+- (void)testSubparametersOfABlankSixteenthParameterAreKept {
+    // The 16th parameter here is an implied blank created by a doubled semicolon. It still fills a
+    // valid slot (index 15), so a subparameter attached to it must be kept, not discarded as if it
+    // belonged to an overflow parameter beyond the 16th.
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;;:5m",
+                         VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_SGR);
+    XCTAssert(token.csi->count == 16);
+    XCTAssert(iTermParserGetNumberOfCSISubparameters(token.csi, 15) == 1);
+    XCTAssert(iTermParserGetCSISubparameter(token.csi, 15, 0) == 5);
+}
+
 - (void)testGetCSISubparameterByIndex {
     VT100Token *token = [self tokenForDataWithFormat:@"%c[4:1:2:3m", VT100CC_ESC];
     XCTAssert(token->type == VT100CSI_SGR);

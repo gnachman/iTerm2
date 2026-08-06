@@ -240,14 +240,17 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                 break;
             }
 
-            case ';':
+            case ';': {
                 // If we got an implied (blank) parameter, increment the parameter count again
+                BOOL openedStorableBlankParameter = NO;
                 if (param->count < VT100CSIPARAM_MAX && readNumericParameter == NO) {
                     param->count++;
+                    openedStorableBlankParameter = YES;
                 }
                 // Once the list is full every following parameter is discarded, including its
-                // subparameters.
-                parameterOverflowed = (param->count >= VT100CSIPARAM_MAX);
+                // subparameters. But a blank parameter that just filled the final slot is itself a
+                // valid parameter and may still take subparameters, so it doesn't count as overflow.
+                parameterOverflowed = (param->count >= VT100CSIPARAM_MAX) && !openedStorableBlankParameter;
                 // reset the parameter flag
                 readNumericParameter = NO;
                 isSub = NO;
@@ -255,6 +258,7 @@ static BOOL ParseCSIParameters(iTermParserContext *context,
                     return NO;
                 }
                 break;
+            }
 
             case ':':
                 // 2013/1/10 H. Saito
