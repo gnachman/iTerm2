@@ -4962,6 +4962,14 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {
             return [self legacyDraggingOperationForSender:sender];
         }
+        // Option was released after having been held: clear any legacy drop-target
+        // affordance the Option branch drew, since releasing now routes to the
+        // program, not a legacy paste.
+        if (_drawingHelper.showDropTargets) {
+            _drawingHelper.showDropTargets = NO;
+            [self.delegate textViewDidUpdateDropTargetVisibility];
+            [self requestDelegateRedraw];
+        }
         return bridge.forwardedDragOperation;
     }
     NSPoint windowDropPoint = [sender draggingLocation];
