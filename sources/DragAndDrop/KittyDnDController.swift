@@ -59,6 +59,14 @@ final class KittyDnDController {
     /// the reply's pty round trip completes is accepted rather than springing back.
     /// A drop is only refused when the program explicitly answered 0.
     var osDragOperation: Int {
+        // If the program is no longer accepting drops (it sent t=A or t=a:x=2, or
+        // reset() ran at a prompt), report 0 so the OS treats the drop as refused.
+        // Otherwise the optimistic branch below would advertise copy/move even
+        // though performDrop discards the drop (its own isAcceptingDrops guard),
+        // leaving the source believing a move succeeded and deleting its only copy.
+        guard isAcceptingDrops else {
+            return 0
+        }
         if let op = acceptedDropOperation {
             return op
         }
@@ -101,6 +109,12 @@ final class KittyDnDController {
     // the previous so their chunked outputs never interleave on the pty (the
     // streaming send yields, which would otherwise allow interleaving).
     private var responseTail: Task<Void, Never>?
+    // The base metadata (t=r plus addressing keys, no m) of the streamed file
+    // response currently emitting chunks, or nil when none is. Lets a drop-context
+    // change close the chunk sequence with its m=0 terminator before it sends the
+    // interrupting escape, so the client neither hangs on a half-open transfer nor
+    // concatenates the new escape onto it.
+    private var inFlightStreamMetadata: [String: String]?
     /// Cap on concurrent filesystem-entry reads. Spec: "if too many requests are
     /// received, terminals must deny the request with EMFILE and end the drop."
     private static let maxConcurrentEntryRequests = 64
@@ -138,7 +152,7 @@ final class KittyDnDController {
     /// Cap on a drag image's DECODED pixel count (width*height), so a small
     /// compressed PNG declaring huge dimensions cannot force a giant bitmap decode.
     /// 4 bytes/pixel of the byte cap => ~16M pixels (e.g. 4096x4096).
-    private static let maxImagePixels = maxImageBytes / 4
+    static let maxImagePixels = maxImageBytes / 4
     /// Bounds on pre-sent offer data, so an offering program cannot grow memory
     /// with arbitrary indices or unbounded payloads.
     private static let maxOfferImages = 16
@@ -150,6 +164,12 @@ final class KittyDnDController {
     /// Cap on a single dropped file we will stream to a program (t=r). Beyond this
     /// we answer EFBIG rather than paging gigabytes through the pty write buffer.
     private static let maxServedFileBytes = 2 * 1024 * 1024 * 1024
+    /// Bounds on a t=a / t=o MIME-type (or machine-id) list, so splitting a
+    /// hostile payload (up to the reassembler's cap) into per-token Strings cannot
+    /// amplify memory. 64 KB of MIME text and 4096 types are both absurdly generous
+    /// for a real registration; beyond either we cancel with EFBIG per the spec.
+    private static let maxMimeListBytes = 64 * 1024
+    private static let maxMimeTypes = 4096
 
     /// The primary drag thumbnail (index -1, else the first provided).
     private var primaryOfferImage: KittyDnDDragImage? {
@@ -205,6 +225,9 @@ final class KittyDnDController {
     /// into whatever runs next, mirroring how the terminal resets other modes at
     /// a prompt.
     func reset() {
+        // Close any file still streaming so the reset does not leave a half-open
+        // chunk sequence behind (the program that pulled it has exited).
+        terminateInFlightStream()
         isAcceptingDrops = false
         acceptedMimeTypes = []
         acceptedDropOperation = nil
@@ -294,6 +317,13 @@ final class KittyDnDController {
         case "e":
             handleDragDataReply(message)
         case "E":
+            // A t=E addressed to an in-flight remote drag-out entry (t=E ; code
+            // with x=idx or Y=handle:y=num) is the spec's per-entry client error:
+            // let the fetch skip just that entry. Anything else (a bare t=E, the
+            // y=-1 drag cancel, a lazy-pull error reply) is a drag-status message.
+            if remoteDragFetch?.receiveError(message) == true {
+                break
+            }
             handleDragStatus(message)
         case "k":
             // A t=k push from a remote program for an in-progress drag-out: the
@@ -324,17 +354,20 @@ final class KittyDnDController {
             acceptedDropOperation = nil
             return
         }
+        // Payload is plain text: space-separated MIME types, optionally including
+        // the peer's machine id ("1:<hex>"). Refuse an over-long list with EFBIG
+        // rather than materializing millions of token Strings; leave the previous
+        // acceptance state untouched.
+        guard let tokens = boundedTokens(message.textPayload) else {
+            send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "EFBIG"))
+            return
+        }
         isAcceptingDrops = true
         // A (re)registration starts a fresh acceptance negotiation: forget any
         // operation left over from a previous drag, so a drag that enters while
         // the program was momentarily not accepting cannot inherit a stale accept
         // (dragEntered's reset is skipped when isAcceptingDrops was false).
         acceptedDropOperation = nil
-        // Payload is plain text: space-separated MIME types, optionally including
-        // the peer's machine id ("1:<hex>").
-        let tokens = (message.textPayload ?? "")
-            .split(separator: " ")
-            .map(String.init)
         if let machineID = tokens.first(where: Self.isMachineIDToken) {
             // The machine id is a stable property of the peer's connection: it
             // cannot change without the program itself changing machines, which
@@ -358,6 +391,9 @@ final class KittyDnDController {
     func dragEntered(cellX: Int, cellY: Int, pixelX: Int, pixelY: Int,
                      operations: Int, mimeTypes: [String]) {
         guard isAcceptingDrops else { return }
+        // Close any file still streaming from the previous cycle before the t=m
+        // below, so it is not truncated into a half-open (hanging) chunk sequence.
+        terminateInFlightStream()
         // A new drag cycle: forget any drop from the previous cycle so a stray
         // t=r cannot read stale data, including open directory handles that
         // pointed into the previous drop's files.
@@ -407,6 +443,8 @@ final class KittyDnDController {
                      operations: Int, drop: KittyDnDDropData,
                      originatedInSameWindow: Bool = false) {
         guard isAcceptingDrops else { return }
+        // Close any file still streaming from a prior context before the t=M below.
+        terminateInFlightStream()
         currentDrop = drop
         // A fresh drop: the previous drop's completed-operation no longer applies,
         // and any read still in flight from before must not stream into this drop.
@@ -425,6 +463,9 @@ final class KittyDnDController {
     /// Record the final operation and discard all per-drop state so a later stray
     /// request cannot read stale data or use a now-invalid directory handle.
     private func finishDrop(operation: Int) {
+        // Close any file still streaming so the completed drop does not leave a
+        // half-open chunk sequence behind.
+        terminateInFlightStream()
         lastCompletedDropOperation = operation
         currentDrop = nil
         currentDropIsSelfDrag = false
@@ -459,8 +500,14 @@ final class KittyDnDController {
             return
         }
         // A directory-handle request is part of the cross-machine traversal and
-        // is not tied to the MIME index.
-        if let handle = message.intValue("Y") {
+        // is not tied to the MIME index. A present-but-unparseable Y is a malformed
+        // request, not an absent one: reply EINVAL echoing the raw key so the client
+        // can match the response rather than falling through to a plain MIME read.
+        if let rawHandle = message.metadata["Y"] {
+            guard let handle = message.intValue("Y") else {
+                sendError(baseMetadata: ["Y": rawHandle], code: "EINVAL")
+                return
+            }
             handleDirectoryRequest(handle: handle, message: message)
             return
         }
@@ -477,14 +524,23 @@ final class KittyDnDController {
         }
         guard index >= 1, index <= drop.mimeTypes.count else {
             // Spec: "Terminals must reply with ENOENT if the index is out of bounds."
-            sendDataError(index: index, code: "ENOENT")
+            // Echo a sub-index (y) if present so a pipelining client can match the
+            // error to its request (every response is keyed by x, y, and Y).
+            var addressing = ["x": String(index)]
+            if let rawY = message.metadata["y"] { addressing["y"] = rawY }
+            sendError(baseMetadata: addressing, code: "ENOENT")
             return
         }
         let mime = drop.mimeTypes[index - 1]
 
         // A sub-index (y) request is the cross-machine path: the program asks for
-        // one file entry within the uri-list so it can pull the actual bytes.
-        if let entryIndex = message.intValue("y") {
+        // one file entry within the uri-list so it can pull the actual bytes. A
+        // present-but-unparseable y is malformed (EINVAL), not absent.
+        if let rawEntryIndex = message.metadata["y"] {
+            guard let entryIndex = message.intValue("y") else {
+                sendError(baseMetadata: ["x": String(index), "y": rawEntryIndex], code: "EINVAL")
+                return
+            }
             guard mime == "text/uri-list" else {
                 // Sub-indexing only applies to a uri-list entry.
                 sendError(baseMetadata: ["x": String(index), "y": String(entryIndex)],
@@ -702,7 +758,10 @@ final class KittyDnDController {
         switch message.intValue("x") {
         case 1:
             isOfferingDrags = true
-            let tokens = (message.textPayload ?? "").split(separator: " ").map(String.init)
+            guard let tokens = boundedTokens(message.textPayload) else {
+                send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "EFBIG"))
+                return
+            }
             if let machineID = tokens.first(where: Self.isMachineIDToken) {
                 peerMachineID = machineID.lowercased()
             }
@@ -730,14 +789,17 @@ final class KittyDnDController {
                 return
             }
             // The program's offer declaration for a started gesture: operations
-            // plus the offered MIME list. Abandon any prior half-built offer and
-            // drain its outstanding data requests before starting fresh.
+            // plus the offered MIME list. Refuse an over-long list with EFBIG
+            // before touching the in-progress offer.
+            guard let tokens = boundedTokens(message.textPayload) else {
+                rejectOffer(code: "EFBIG")
+                return
+            }
+            // Abandon any prior half-built offer and drain its outstanding data
+            // requests before starting fresh.
             resetOfferInProgress()
             offerOperations = message.intValue("o") ?? 0
-            offerMimeTypes = (message.textPayload ?? "")
-                .split(separator: " ")
-                .map(String.init)
-                .filter { !Self.isMachineIDToken($0) }
+            offerMimeTypes = tokens.filter { !Self.isMachineIDToken($0) }
         }
     }
 
@@ -790,8 +852,9 @@ final class KittyDnDController {
     }
 
     /// The decoded pixel count (width*height) of an image, read from its header
-    /// without a full decode. nil if the header cannot be parsed.
-    private static func imagePixelCount(_ data: Data) -> Int? {
+    /// without a full decode. nil if the header cannot be parsed. Also used by the
+    /// drag host to cap an image/* MIME payload before rendering it as a thumbnail.
+    static func imagePixelCount(_ data: Data) -> Int? {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil),
               let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
               let width = props[kCGImagePropertyPixelWidth] as? Int,
@@ -1092,12 +1155,19 @@ final class KittyDnDController {
         // error reply to a lazy data request for that MIME index.
         guard let y = message.intValue("y") else {
             // A t=E with no y is a generic client error (spec: "If any error
-            // occurs in the client while reading the data"). During a remote fetch
-            // OR a local deferred-data pull it means the program failed to provide
-            // its data, so abort now instead of leaving the user holding a dead
-            // drag (there is no timeout on the local pull) until a prompt reset.
+            // occurs in the client while reading the data").
             if remoteDragFetch != nil || startingDrag {
+                // We are actively pulling data (a remote fetch or a local deferred
+                // pull); the client is reporting it cannot provide the data. Abort
+                // now instead of leaving the user holding a dead drag (there is no
+                // timeout on the local pull) until a prompt reset.
                 resetOfferInProgress()
+            } else if offerBeingAssembled {
+                // A client error before the drag started with no pull outstanding
+                // (e.g. it failed while pre-sending and reported a bare t=E ; EIO).
+                // Spec: "If t=e or t=E escape codes are sent to the terminal before
+                // the drag is started ... respond with t=E ; EINVAL and abort."
+                rejectOffer(code: "EINVAL:unexpected t=E")
             }
             return
         }
@@ -1190,17 +1260,30 @@ final class KittyDnDController {
 
     // MARK: - Remote drag-out helpers
 
+    /// Cap on how many top-level uri-list entries a remote drag-out will parse and
+    /// fetch. Matches KittyDnDRemoteDragFetch.Limits.maxEntries; parsing stops here
+    /// so a hostile uri-list (up to the offer budget) cannot allocate millions of
+    /// name Strings on the main thread before the fetch's own limit applies.
+    nonisolated static let maxRemoteDragEntries = 65_536
+
     /// Base names of the entries in a text/uri-list payload, sanitized to a
-    /// single safe path component each.
-    private static func uriListNames(_ data: Data?) -> [String] {
+    /// single safe path component each. Parsing stops at `cap` entries (line by
+    /// line, so an enormous list is not fully materialized first).
+    private static func uriListNames(_ data: Data?,
+                                     cap: Int = maxRemoteDragEntries) -> [String] {
         guard let data, let list = String(data: data, encoding: .utf8) else {
             return []
         }
-        return list
-            .split(whereSeparator: { $0.isNewline })
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty && !$0.hasPrefix("#") }
-            .map { sanitizeComponent(URL(string: $0)?.lastPathComponent ?? "") }
+        var names: [String] = []
+        list.enumerateLines { line, stop in
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty, !trimmed.hasPrefix("#") else { return }
+            names.append(sanitizeComponent(URL(string: trimmed)?.lastPathComponent ?? ""))
+            if names.count >= cap {
+                stop = true
+            }
+        }
+        return names
     }
 
     /// Reduce an untrusted name from a remote program to a single safe path
@@ -1271,12 +1354,19 @@ final class KittyDnDController {
                                           generation: Int) async {
         var metadata = baseMetadata
         metadata["t"] = "r"
+        // Publish the sequence so a drop-context change during a yield gap can close
+        // it (terminateInFlightStream). If it does, that clears the field and sends
+        // m=0, and the generation guard below then stops us cleanly.
+        inFlightStreamMetadata = metadata
         let windowSize = KittyDnDChunker.maxRawChunkSize
-        var offset = 0
+        // Index from the data's own startIndex: a memory-mapped Data is zero-based
+        // today, but Data.subdata(in:) uses the instance's index space, so a future
+        // slice caller would otherwise crash on the range.
+        var offset = data.startIndex
         var sinceYield = 0
-        while offset < data.count {
+        while offset < data.endIndex {
             guard generation == acceptGeneration else { return }
-            let end = min(offset + windowSize, data.count)
+            let end = min(offset + windowSize, data.endIndex)
             var chunk = metadata
             chunk["m"] = "1"
             send(KittyDnDMessage(metadata: chunk, dataPayload: data.subdata(in: offset..<end)))
@@ -1292,6 +1382,22 @@ final class KittyDnDController {
         }
         guard generation == acceptGeneration else { return }
         // End of data: empty payload with m=0.
+        inFlightStreamMetadata = nil
+        var terminator = metadata
+        terminator["m"] = "0"
+        send(KittyDnDMessage(metadata: terminator, rawPayload: ""))
+    }
+
+    /// Close any in-flight streamed file response by sending its m=0 terminator,
+    /// so a drop-context change (a new drag, drop, completion, or reset) that is
+    /// about to send an interrupting escape does not leave the chunk sequence
+    /// half-open (hanging the client) or let the escape concatenate onto it. Runs
+    /// synchronously on the main actor before the interrupting escape; the
+    /// streaming loop, resuming after its yield, sees the bumped generation and
+    /// stops without sending its own (now redundant) terminator.
+    private func terminateInFlightStream() {
+        guard let metadata = inFlightStreamMetadata else { return }
+        inFlightStreamMetadata = nil
         var terminator = metadata
         terminator["m"] = "0"
         send(KittyDnDMessage(metadata: terminator, rawPayload: ""))
@@ -1386,6 +1492,17 @@ final class KittyDnDController {
     // as a different machine (spec: "If the terminal sees a version it does not
     // understand, it must assume that the machine id does not match"), and it is
     // kept out of the MIME list. A MIME type ("text/plain") never has this shape.
+    /// Split a space-separated MIME/machine-id payload into tokens, or nil if the
+    /// payload is so long that splitting it would amplify memory (the caller then
+    /// cancels with EFBIG). Bounds both the raw byte length and the token count.
+    private func boundedTokens(_ payload: String?) -> [String]? {
+        let text = payload ?? ""
+        guard text.utf8.count <= Self.maxMimeListBytes else { return nil }
+        let tokens = text.split(separator: " ").map(String.init)
+        guard tokens.count <= Self.maxMimeTypes else { return nil }
+        return tokens
+    }
+
     private static func isMachineIDToken(_ token: String) -> Bool {
         guard let colon = token.firstIndex(of: ":"), colon != token.startIndex else {
             return false

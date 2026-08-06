@@ -33,9 +33,13 @@ enum KittyDnDChunker {
             return [""]
         }
         var chunks: [String] = []
-        var offset = 0
-        while offset < payload.count {
-            let end = min(offset + maxRaw, payload.count)
+        // Index from the payload's own startIndex, not 0: Data.subdata(in:) uses
+        // the instance's index space, and a Data slice (e.g. data[5...]) has a
+        // nonzero startIndex. Callers pass whole zero-based Data today, but this
+        // keeps a future slice caller from a range crash.
+        var offset = payload.startIndex
+        while offset < payload.endIndex {
+            let end = min(offset + maxRaw, payload.endIndex)
             let slice = payload.subdata(in: offset..<end)
             chunks.append(slice.base64EncodedString())
             offset = end

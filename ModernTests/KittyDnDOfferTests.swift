@@ -621,6 +621,40 @@ final class KittyDnDOfferTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: dirURL.appendingPathComponent("b.txt")), Data("B".utf8))
     }
 
+    // A client that reports a bare t=E (no y) BEFORE the drag starts (e.g. it hit
+    // an error while pre-sending) must get EINVAL and have its offer aborted, per
+    // the spec's "t=e/t=E before the drag is started -> t=E ; EINVAL and abort".
+    func testClientErrorBeforeDragStartRepliesEINVAL() {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = makeController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:o=1;text/plain")  // offer declared, drag not started
+        c.handleInboundSequence("t=E;EIO:read failed")  // bare client error before t=P
+        XCTAssertEqual(recorder.last?.type, "E")
+        XCTAssertEqual(recorder.last?.textPayload, "EINVAL:unexpected t=E")
+    }
+
+    // A per-entry client error in the spec's t=E form (addressed by x or Y:y) must
+    // skip just that entry, matching iTerm2's tolerance of the t=R extension form.
+    func testRemotePerEntryErrorViaCapitalEIsSkipped() async throws {
+        let urls = try await runRemoteDrag(uriList: "file:///a.txt\r\nfile:///bad.txt") { msg, c in
+            if msg.metadata["x"] == "1" {
+                c.handleInboundSequence(
+                    KittyDnDMessage(metadata: ["t": "k", "x": "1"],
+                                    dataPayload: Data("hello".utf8)).serializedContent())
+            } else {
+                // The client cannot provide entry 2: report the spec-form t=E error.
+                c.handleInboundSequence("t=E:x=2;EIO:cannot read")
+            }
+        }
+        XCTAssertEqual(urls.count, 1, "the errored entry must be dropped, not abort the drag")
+        XCTAssertEqual(urls[0].lastPathComponent, "a.txt")
+        try? FileManager.default.removeItem(
+            at: urls[0].deletingLastPathComponent().deletingLastPathComponent())
+    }
+
     // A second t=P while a drag is already live must not start another drag.
     func testDuplicateStartDragIsIgnored() {
         let recorder = Recorder()

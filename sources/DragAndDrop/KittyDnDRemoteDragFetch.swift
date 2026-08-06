@@ -100,6 +100,14 @@ final class KittyDnDRemoteDragFetch {
             finish(.success([]))
             return
         }
+        // Bound the top-level entry count BEFORE the fan-out below (one t=k request
+        // and two URL allocations per entry). The maxEntries check in receive()
+        // fires only after the fan-out, so without this a uri-list with millions of
+        // entries would hang the main thread and balloon memory before any limit.
+        guard topLevelNames.count <= limits.maxEntries else {
+            finish(.failure(code: "EMFILE"))
+            return
+        }
         pending = topLevelNames.count
         for (offset, name) in topLevelNames.enumerated() {
             let idx = offset + 1
@@ -219,12 +227,22 @@ final class KittyDnDRemoteDragFetch {
         }
     }
 
-    /// A t=R error for an outstanding entry: skip it (materialize nothing) and
-    /// count it done, rather than failing the whole drag.
-    func receiveError(_ message: KittyDnDMessage) {
-        guard !finished, resolveDest(message) != nil, let slot = slotKey(message) else { return }
-        guard seenSlots.insert(slot).inserted else { return }
+    /// A per-entry error for an outstanding entry: skip it (materialize nothing)
+    /// and count it done, rather than failing the whole drag. Returns true if the
+    /// message addressed a fetch slot (so the caller does not also route it
+    /// elsewhere); a message not addressed to this fetch returns false and is
+    /// handled by the caller. The spec's client error form is t=E ; the terminal
+    /// also tolerates t=R (a terminal-to-client type) as an extension.
+    @discardableResult
+    func receiveError(_ message: KittyDnDMessage) -> Bool {
+        guard !finished, resolveDest(message) != nil, let slot = slotKey(message) else {
+            return false
+        }
+        // Addressed to a known slot: consume it. A duplicate (already-seen slot) is
+        // still "ours" and must not fall through to the generic drag-status path.
+        guard seenSlots.insert(slot).inserted else { return true }
         entryFailed(topLevelIndex: topLevelIndex(of: message))
+        return true
     }
 
     /// Abandon the fetch (a reset or a superseding offer). The caller discards the

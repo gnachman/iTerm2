@@ -598,6 +598,72 @@ final class KittyDnDAcceptTests: XCTestCase {
         XCTAssertEqual(c.osDragOperation, 0, "explicit refuse")
     }
 
+    // If the program stops accepting mid-drag (t=A), the OS operation must go to 0
+    // so the drop is not reported accepted while performDrop silently discards it.
+    func testOsDragOperationIsZeroWhenNotAccepting() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.dragEntered(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0,
+                      operations: 1, mimeTypes: ["text/plain"])
+        XCTAssertEqual(c.osDragOperation, 1, "accepting + copy offered -> optimistic copy")
+        c.handleInboundSequence("t=A")  // program stops accepting mid-drag
+        XCTAssertEqual(c.osDragOperation, 0,
+                       "not accepting must read as refused, not optimistically accepted")
+    }
+
+    // A t=a whose MIME list is absurdly long is refused with EFBIG rather than
+    // amplified into millions of token Strings; acceptance is not enabled.
+    func testOverlongMimeListIsRejectedWithEFBIG() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        let huge = String(repeating: "a ", count: 40_000)  // > 64 KB
+        c.handleInboundSequence("t=a;\(huge)")
+        XCTAssertEqual(recorder.last?.type, "E")
+        XCTAssertEqual(recorder.last?.textPayload, "EFBIG")
+        XCTAssertFalse(c.isAcceptingDrops, "an over-long registration must not enable accepting")
+    }
+
+    // A present-but-unparseable directory handle (Y) is EINVAL, not a fall-through
+    // to a plain MIME read; the raw key is echoed so the client can match it.
+    func testUnparseableDirectoryHandleIsEINVAL() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/plain"], dataByIndex: [1: Data("x".utf8)]))
+        c.handleInboundSequence("t=r:Y=zzz:x=1")
+        XCTAssertEqual(recorder.last?.type, "R")
+        XCTAssertEqual(recorder.last?.textPayload, "EINVAL")
+        XCTAssertEqual(recorder.last?.metadata["Y"], "zzz", "the raw Y key is echoed")
+    }
+
+    // A present-but-unparseable sub-index (y) is EINVAL, not treated as absent.
+    func testUnparseableSubIndexIsEINVAL() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/plain"], dataByIndex: [1: Data("x".utf8)]))
+        c.handleInboundSequence("t=r:x=1:y=zz")
+        XCTAssertEqual(recorder.last?.type, "R")
+        XCTAssertEqual(recorder.last?.textPayload, "EINVAL")
+    }
+
+    // An out-of-bounds x that also carries a sub-index y must echo y in the ENOENT
+    // response so a pipelining client can match the error to its request.
+    func testOutOfBoundsIndexWithSubIndexEchoesSubIndex() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/plain"]))
+        c.handleInboundSequence("t=r:x=9:y=2")
+        XCTAssertEqual(recorder.last?.type, "R")
+        XCTAssertEqual(recorder.last?.textPayload, "ENOENT")
+        XCTAssertEqual(recorder.last?.metadata["y"], "2", "the sub-index must be echoed")
+    }
+
     // MARK: - Machine-id version (#6)
 
     // A machine id with a version we do not understand ("2:...") must be treated

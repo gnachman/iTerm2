@@ -156,7 +156,17 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
     private func dragThumbnail(for offer: KittyDnDDragOffer, size: NSSize) -> NSImage {
         for (index, mime) in offer.mimeTypes.enumerated()
         where mime.hasPrefix("image/") {
-            if let data = offer.data[index], let image = NSImage(data: data) {
+            guard let data = offer.data[index] else { continue }
+            // Cap the DECODED pixel count before handing the payload to AppKit: a
+            // small compressed file declaring huge dimensions would otherwise force
+            // a multi-GB bitmap allocation when the drag image is rendered. This is
+            // the same guard the controller applies to pre-sent t=p thumbnails; a
+            // MIME image used only as a thumbnail bypasses that path.
+            if let pixels = KittyDnDController.imagePixelCount(data),
+               pixels > KittyDnDController.maxImagePixels {
+                continue
+            }
+            if let image = NSImage(data: data) {
                 return image
             }
         }
