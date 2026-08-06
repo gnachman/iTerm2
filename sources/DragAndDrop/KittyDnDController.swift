@@ -65,8 +65,11 @@ final class KittyDnDController {
         // Optimistically prefer copy (non-destructive) so a move the OS source acts
         // on before the program has confirmed cannot delete the source's only copy;
         // fall back to move only if the source offers move-only (kitty op == 2).
+        // Report move only when the source offers move without copy; every other
+        // case (copy, copy+move, or an empty/unknown mask) reports copy so an
+        // unexpected value can never optimistically authorize a destructive move.
         let offered = lastReportedMove?.operations ?? 1
-        return (offered & 1) != 0 ? 1 : 2
+        return (offered & 2) != 0 && (offered & 1) == 0 ? 2 : 1
     }
 
     // The last hover (t=m) report we sent, to suppress duplicate stationary moves.
