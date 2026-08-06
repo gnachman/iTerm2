@@ -876,6 +876,14 @@ Settings Improvements:
   this Mac and in the folder, it asks which
   copy to keep rather than overwriting your
   changes.
+- A new advanced setting, “Allow the tab bar
+  to use two rows,” lets tabs spread over a
+  second row once there are more of them than
+  fit on one row, so each tab keeps more room
+  for its title instead of being squeezed.
+  Until then the tab bar is unchanged. Only
+  affects top and bottom tab bars. Off by
+  default.
 
 Bug Fixes:
 - On macOS Tahoe, dark-theme selected tabs no
