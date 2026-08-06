@@ -4837,11 +4837,13 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     VT100GridCoord coord = VT100GridCoordMake((int)(relativeX / _charWidth),
                                               (int)(relativeY / _lineHeight));
     // Clamp the cell to the visible grid so a drop in the right/bottom margin does
-    // not report an out-of-range cell (x == width is not a valid cell).
-    const int cols = MAX(1, (int)(liveRect.size.width / _charWidth));
-    const int rows = MAX(1, (int)(liveRect.size.height / _lineHeight));
-    coord.x = MIN(MAX(0, coord.x), cols - 1);
-    coord.y = MIN(MAX(0, coord.y), rows - 1);
+    // not report an out-of-range cell (x == width is not a valid cell). Use the
+    // authoritative integer grid dimensions, not liveRect/_charWidth, which can
+    // round a last-column drop one cell short for a non-integer cell width.
+    const int maxX = MAX(0, [_dataSource width] - 1);
+    const int maxY = MAX(0, [_dataSource height] - 1);
+    coord.x = MIN(MAX(0, coord.x), maxX);
+    coord.y = MIN(MAX(0, coord.y), maxY);
     *coordOut = coord;
     // Pointer pixel position relative to the grid origin (not a within-cell offset).
     *pixelOut = NSMakePoint(relativeX, relativeY);
