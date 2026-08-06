@@ -3990,10 +3990,12 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     DLog(@"Move selection endpoint to %d,%d, coord=%@",
          x, y, [NSValue valueWithPoint:locationInTextView]);
     int width = [_dataSource width];
+    BOOL completingPreviousLine = NO;
     if (locationInTextView.y == 0) {
         x = y = 0;
     } else if (locationInTextView.x < [iTermPreferences sideMargins] && _selection.liveRange.coordRange.start.y < y) {
         // complete selection of previous line
+        completingPreviousLine = YES;
         x = width;
         y--;
     }
@@ -4001,24 +4003,19 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     if (y >= numberOfLines) {
         y = numberOfLines - 1;
     }
-    // The x above is a visual column. On a bidi-reordered line convert it to the
-    // logical cell the selection stores; a no-op on left-to-right lines and for
-    // the past-the-end boundary values set just above. Only convert for an
-    // on-screen line: selection auto-scroll can pass a y below the top (negative)
-    // or an empty buffer can leave y = -1, and fetching that line to read its
-    // bidi info would assert.
-    if (x >= 0 && x < width && y >= 0 && y < numberOfLines) {
+    // The x above is a VISUAL coordinate. Character selections are VISUAL on
+    // bidi lines — the live range stores the columns the user dragged over,
+    // the highlight converts per line, and endLiveSelection decomposes into
+    // logical subselections — so x passes through untouched. Word and line
+    // modes expand from the logical cell, so convert for them; a no-op on
+    // left-to-right lines. Only convert for an on-screen line: selection
+    // auto-scroll can pass a y below the top (negative) or an empty buffer
+    // can leave y = -1, and fetching that line to read its bidi info would
+    // assert.
+    if (!completingPreviousLine && y >= 0 && y < numberOfLines &&
+        _selection.selectionMode != kiTermSelectionModeCharacter &&
+        x >= 0 && x < width) {
         x = [self logicalCoordForVisualCoord:VT100GridCoordMake(x, y)].x;
-    } else if (x >= width && y >= 0 && y < numberOfLines && [iTermPreferences bidiEnabled]) {
-        // Pointer in the right margin. On a right-justified RTL row the legacy
-        // value (the grid width) is the LOGICAL end of the line, whose visual
-        // position is the far LEFT — the selection would jump to cover the
-        // whole row. Anchor at the visually-last column instead, which is the
-        // line's first character.
-        iTermBidiDisplayInfo *bidi = [_dataSource screenCharArrayForLine:y].bidiInfo;
-        if (bidi) {
-            x = [bidi selectionAnchorForVisualCell:width leftHalf:NO gridWidth:width];
-        }
     }
     const BOOL hasColumnWindow = (_selection.liveRange.columnWindow.location > 0 ||
                                   _selection.liveRange.columnWindow.length < width);
@@ -6068,6 +6065,37 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     [self.delegate textViewLiveSelectionDidEnd];
 }
 
+- (NSIndexSet *)selectionLogicalIndexesForVisualRange:(NSRange)visualRange
+                                       onAbsoluteLine:(long long)absLine {
+    const long long line = absLine - _dataSource.totalScrollbackOverflow;
+    if (line < 0 || line > INT_MAX || ![iTermPreferences bidiEnabled]) {
+        return [NSIndexSet indexSetWithIndexesInRange:visualRange];
+    }
+    iTermBidiDisplayInfo *bidi = [_dataSource bidiInfoForLine:line];
+    if (!bidi) {
+        return [NSIndexSet indexSetWithIndexesInRange:visualRange];
+    }
+    NSMutableIndexSet *logical = [NSMutableIndexSet indexSet];
+    const NSUInteger count = bidi.numberOfCells;
+    for (NSUInteger v = visualRange.location; v < NSMaxRange(visualRange); v++) {
+        if (v < count) {
+            [logical addIndex:[bidi logicalForVisual:(int)v]];
+        } else {
+            // Beyond the mapped cells: identity, like a left-to-right line.
+            [logical addIndex:v];
+        }
+    }
+    return logical;
+}
+
+- (BOOL)selectionParagraphIsRTLOnAbsoluteLine:(long long)absLine {
+    const long long line = absLine - _dataSource.totalScrollbackOverflow;
+    if (line < 0 || line > INT_MAX || ![iTermPreferences bidiEnabled]) {
+        return NO;
+    }
+    return [_dataSource bidiInfoForLine:line].paragraphIsRTL;
+}
+
 - (VT100GridRange)selectionRangeOfTerminalNullsOnAbsoluteLine:(long long)absLineNumber {
     const long long lineNumber = absLineNumber - _dataSource.totalScrollbackOverflow;
     if (lineNumber < 0 || lineNumber > INT_MAX) {
@@ -8055,28 +8083,6 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
     return [self logicalCoordForVisualCoord:visualCoord];
 }
 
-- (VT100GridCoord)mouseHandler:(PTYMouseHandler *)handler
-characterSelectionAnchorForEvent:(NSEvent *)event
-                   visualCoord:(VT100GridCoord)visualCoord
-                  logicalCoord:(VT100GridCoord)logicalCoord {
-    if (![iTermPreferences bidiEnabled]) {
-        return logicalCoord;
-    }
-    if (visualCoord.y < 0 || visualCoord.y >= [_dataSource numberOfLines]) {
-        return logicalCoord;
-    }
-    iTermBidiDisplayInfo *bidi = [_dataSource screenCharArrayForLine:visualCoord.y].bidiInfo;
-    if (!bidi) {
-        return logicalCoord;
-    }
-    const NSPoint p = [self convertPoint:event.locationInWindow fromView:nil];
-    const CGFloat fx = (p.x - [iTermPreferences sideMargins]) / _charWidth;
-    const BOOL leftHalf = (fx - floor(fx)) < 0.5;
-    const int x = [bidi selectionAnchorForVisualCell:visualCoord.x
-                                            leftHalf:leftHalf
-                                           gridWidth:[_dataSource width]];
-    return VT100GridCoordMake(x, visualCoord.y);
-}
 
 - (NSString *)mouseHandler:(PTYMouseHandler *)mouseHandler
         stringForUpOrRight:(BOOL)upOrRight  // if NO, then down/left

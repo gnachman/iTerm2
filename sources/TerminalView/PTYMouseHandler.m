@@ -359,9 +359,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             _imageBeingClickedOn = imageBeingClickedOn;
             _mouseDownOnImage = YES;
             self.selection.appending = NO;
-        } else if (mouseDownOnSelection) {
+        } else if (mouseDownOnSelection &&
+                   (![iTermAdvancedSettingsModel requireCmdForDraggingText] || cmdPressed)) {
             // not holding down shift key but there is an existing selection.
-            // Possibly a drag coming up (if a cmd-drag follows)
+            // Possibly a drag coming up (if a cmd-drag follows). When dragging
+            // text requires Cmd and it isn't held, fall through and start a
+            // new selection instead: otherwise a press on the selection is a
+            // dead end (no drag, no new selection), which reads as selection
+            // being frozen — especially on right-to-left lines where a repeat
+            // drag naturally starts on the previous selection.
             DLog(@"mouse down on selection, returning");
             _mouseDownOnSelection = YES;
             self.selection.appending = NO;
@@ -370,14 +376,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // start a new selection
             VT100GridCoord anchor = clickPointCoord;
             if (mode == kiTermSelectionModeCharacter) {
-                // Character selection anchors at a cell BOUNDARY. On a bidi
-                // line the boundary needs the clicked half of the cell and
-                // right-margin clamping; other modes expand from the cell
-                // itself, so they keep the plain logical coordinate.
-                anchor = [self.mouseDelegate mouseHandler:self
-                         characterSelectionAnchorForEvent:event
-                                              visualCoord:visualClickPoint
-                                             logicalCoord:clickPointCoord];
+                // Character selections are VISUAL: the live range stores the
+                // columns the user actually drags over. iTermSelection
+                // converts to logical cells for the highlight per line and
+                // decomposes into logical subselections when the drag ends.
+                anchor = visualClickPoint;
             }
             [self.selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(anchor.x, anchor.y + overflow)
                                                 mode:mode

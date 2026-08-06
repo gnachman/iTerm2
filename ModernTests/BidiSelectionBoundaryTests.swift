@@ -2,19 +2,55 @@
 //  BidiSelectionBoundaryTests.swift
 //  ModernTests
 //
-//  A character selection anchors at a cell BOUNDARY. On a bidi line the
-//  boundary on the logical-start side of an RTL cell is its VISUAL-RIGHT
-//  edge, so a naive visual→logical cell map is off by one on one side:
-//  clicking the trailing period of «…درست.» and dragging visually right could
-//  never include the period, and a click in the right margin of a
-//  right-justified row anchored at the logical END of the line, selecting the
-//  whole row the moment the drag started. selectionAnchorForVisualCell picks
-//  the nearer boundary from the clicked half of the cell and clamps margin
-//  clicks; these tests pin its mapping.
+//  Character selections on bidi lines are VISUAL: the live range stores the
+//  columns the user drags over, the highlight converts them to logical cells
+//  per line, and when the drag ends the visual span is decomposed into
+//  logical subselections so copying stays in reading order. These tests drive
+//  the real iTermSelection through that pipeline with a real BidiDisplayInfo
+//  for the line «آیا این درست است؟ بله؛ کاملاً درست.» (34 cells, padded to 80,
+//  logical 0 at visual 79) and for a mixed line with an embedded LTR island.
 //
 
 import XCTest
 @testable import iTerm2SharedARC
+
+private class VisualSelectionDelegate: NSObject, iTermSelectionDelegate {
+    let width: Int32
+    let bidi: BidiDisplayInfoObjc?
+    init(width: Int32, bidi: BidiDisplayInfoObjc?) {
+        self.width = width
+        self.bidi = bidi
+    }
+    func selectionDidChange(_ selection: iTermSelection!) {}
+    func liveSelectionDidEnd() {}
+    func selectionAbsRangeForParenthetical(at coord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange { VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0) }
+    func selectionAbsRangeForWord(at coord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange { VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0) }
+    func selectionAbsRangeForSmartSelection(at absCoord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange { VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0) }
+    func selectionAbsRangeForWrappedLine(at absCoord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange { VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, absCoord.y, width, absCoord.y), 0, 0) }
+    func selectionAbsRangeForLine(at absCoord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange { VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(0, absCoord.y, width, absCoord.y), 0, 0) }
+    func selectionRangeOfTerminalNulls(onAbsoluteLine absLineNumber: Int64) -> VT100GridRange { VT100GridRangeMake(34, width - 34) }
+    func selectionPredecessor(of absCoord: VT100GridAbsCoord) -> VT100GridAbsCoord { VT100GridAbsCoordMake(0, 0) }
+    func selectionViewportWidth() -> Int32 { width }
+    func selectionTotalScrollbackOverflow() -> Int64 { 0 }
+    func selectionIndexes(onAbsoluteLine line: Int64, containingCharacter c: unichar, in range: NSRange) -> IndexSet { IndexSet() }
+    func selectionParagraphIsRTL(onAbsoluteLine line: Int64) -> Bool {
+        return bidi?.paragraphIsRTL ?? false
+    }
+    func selectionLogicalIndexes(forVisualRange visualRange: NSRange, onAbsoluteLine line: Int64) -> IndexSet {
+        guard let bidi, let range = Range(visualRange) else {
+            return IndexSet(integersIn: Range(visualRange) ?? 0..<0)
+        }
+        var result = IndexSet()
+        for v in range {
+            if v < Int(bidi.numberOfCells) {
+                result.insert(Int(bidi.logicalForVisual(Int32(v))))
+            } else {
+                result.insert(v)
+            }
+        }
+        return result
+    }
+}
 
 class BidiSelectionBoundaryTests: XCTestCase {
     private func setBidiPreference(_ enabled: Bool) {
@@ -25,73 +61,148 @@ class BidiSelectionBoundaryTests: XCTestCase {
         }
     }
     private var savedDetect: Any?
+    private var savedIsolate: Any?
     override func setUp() {
         super.setUp()
         setBidiPreference(true)
-        // Match the real app: paragraph direction auto-detected so the RTL test
-        // line right-justifies (content pushed right, padding on the left).
         savedDetect = iTermUserDefaults.userDefaults().object(forKey: "DetectParagraphDirection")
+        savedIsolate = iTermUserDefaults.userDefaults().object(forKey: "IsolateLatinRunsInRTL")
         iTermUserDefaults.userDefaults().set(true, forKey: "DetectParagraphDirection")
+        iTermUserDefaults.userDefaults().set(true, forKey: "IsolateLatinRunsInRTL")
         iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
     }
     override func tearDown() {
         if let v = savedDetect { iTermUserDefaults.userDefaults().set(v, forKey: "DetectParagraphDirection") }
         else { iTermUserDefaults.userDefaults().removeObject(forKey: "DetectParagraphDirection") }
+        if let v = savedIsolate { iTermUserDefaults.userDefaults().set(v, forKey: "IsolateLatinRunsInRTL") }
+        else { iTermUserDefaults.userDefaults().removeObject(forKey: "IsolateLatinRunsInRTL") }
         iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
         setBidiPreference(false)
         super.tearDown()
     }
 
-    // «آیا این درست است؟ بله؛ کاملاً درست.» = 34 cells, padded to 80.
-    // With an RTL paragraph: logical 0 (آ) at visual 79, period (33) at 46.
-    private func paddedInfo() -> BidiDisplayInfoObjc? {
-        let s = "آیا این درست است؟ بله؛ کاملاً درست."
+    private func paddedInfo(_ s: String = "آیا این درست است؟ بله؛ کاملاً درست.") -> BidiDisplayInfoObjc? {
         let sca = screenCharArrayWithDefaultStyle(s, eol: EOL_HARD)
         return BidiDisplayInfoObjc(sca, paddedTo: 80)
     }
 
-    func testRightMarginClickAnchorsAtFirstCharacter() {
-        guard let info = paddedInfo() else { return XCTFail("no bidi info") }
-        XCTAssertEqual(info.numberOfCells, 80, "expected a fully padded row")
-        // Overflow (margin) click: anchor at the logical cell of the last
-        // visual column — the line's first character — not logical 80.
-        XCTAssertEqual(info.selectionAnchor(forVisualCell: 80, leftHalf: false, gridWidth: 80), 0)
-        XCTAssertEqual(info.selectionAnchor(forVisualCell: 80, leftHalf: true, gridWidth: 80), 0)
-        // Right half of آ itself: boundary before it.
-        XCTAssertEqual(info.selectionAnchor(forVisualCell: 79, leftHalf: false, gridWidth: 80), 0)
-        // Left half of آ: boundary between آ and ی.
-        XCTAssertEqual(info.selectionAnchor(forVisualCell: 79, leftHalf: true, gridWidth: 80), 1)
+    // Simulates a character drag over visual columns and returns
+    // (highlighted logical indexes mid-drag, final subselection ranges).
+    private func drag(_ bidi: BidiDisplayInfoObjc,
+                      fromVisual v1: Int32, toVisual v2: Int32) -> (IndexSet, [NSRange]) {
+        let delegate = VisualSelectionDelegate(width: 80, bidi: bidi)
+        let selection = iTermSelection()
+        selection.delegate = delegate
+        selection.begin(at: VT100GridAbsCoordMake(v1, 0),
+                        mode: iTermSelectionMode.kiTermSelectionModeCharacter,
+                        resume: false,
+                        append: false)
+        selection.moveEndpoint(to: VT100GridAbsCoordMake(v2, 0))
+        let highlighted = IndexSet(selection.selectedIndexes(onAbsoluteLine: 0))
+        selection.endLive()
+        let subs = selection.allSubSelections.map { sub -> NSRange in
+            let r = sub.absRange.coordRange
+            return NSRange(location: Int(r.start.x), length: Int(r.end.x - r.start.x))
+        }
+        return (highlighted, subs)
     }
 
-    func testTrailingPeriodLeftHalfAnchorsAfterIt() {
-        guard let info = paddedInfo() else { return XCTFail("no bidi info") }
-        let periodVisual = info.visualForLogical(33)
-        XCTAssertEqual(info.logicalForVisual(periodVisual), 33)
-        // Left half of the period cell: the boundary AFTER the period
-        // logically, so a visually-rightward drag includes it.
-        XCTAssertEqual(info.selectionAnchor(forVisualCell: periodVisual, leftHalf: true, gridWidth: 80), 34)
-        // Right half: boundary before the period (it stays excluded, matching
-        // the left-to-right mirror of this gesture).
-        XCTAssertEqual(info.selectionAnchor(forVisualCell: periodVisual, leftHalf: false, gridWidth: 80), 33)
+    func testRightMarginDragSelectsFromFirstCharacter() {
+        guard let bidi = paddedInfo() else { return XCTFail("no bidi info") }
+        // Drag from the right margin (visual 80) left over three cells:
+        // visual 77..79 = logical 0..2 (آیا's first letters).
+        let (highlighted, subs) = drag(bidi, fromVisual: 80, toVisual: 77)
+        XCTAssertEqual(highlighted, IndexSet(0...2))
+        XCTAssertEqual(subs, [NSRange(location: 0, length: 3)])
     }
 
-    func testPaddingCellsKeepFloorSemantics() {
-        guard let info = paddedInfo() else { return XCTFail("no bidi info") }
-        // Padding cells are not RTL; both halves anchor at the same cell.
-        let logical = info.logicalForVisual(10)
-        XCTAssertEqual(info.selectionAnchor(forVisualCell: 10, leftHalf: true, gridWidth: 80), logical)
-        XCTAssertEqual(info.selectionAnchor(forVisualCell: 10, leftHalf: false, gridWidth: 80), logical)
+    func testDragAcrossTrailingPeriodIncludesIt() {
+        guard let bidi = paddedInfo() else { return XCTFail("no bidi info") }
+        let periodVisual = bidi.visualForLogical(33)   // 46
+        // Drag rightward from the period's left edge over three cells:
+        // period + ت + س = logical 31..33.
+        let (highlighted, subs) = drag(bidi, fromVisual: periodVisual, toVisual: periodVisual + 3)
+        XCTAssertEqual(highlighted, IndexSet(31...33))
+        XCTAssertEqual(subs, [NSRange(location: 31, length: 3)])
     }
 
-    func testUnpaddedRowKeepsLegacyOverflowIdentity() {
-        // LTR-first mixed line: no right-justification, so the row is not
-        // padded and clicks past the content keep the legacy identity mapping
-        // (selecting the emptiness after the line must still work).
-        let s = "The word سلام means hello"
+    func testMixedLineVisualSpanDecomposesIntoLogicalRuns() {
+        // «کد پستی 12345 است.» — the digits are an LTR island. A visual drag
+        // covering the last two digits and the following Persian word covers a
+        // logically discontiguous set; the highlight must match the dragged
+        // visual span exactly and the final subselections must be its logical
+        // runs.
+        let s = "کد پستی 12345 است."
+        guard let bidi = paddedInfo(s) else { return XCTFail("no bidi info") }
+        let ns = s as NSString
+        let digitsStart = Int32(ns.range(of: "12345").location)   // logical 8
+        let lastLogical = Int32(ns.length - 1)                    // the period
+        // Visual columns of logical cells:
+        let v4 = bidi.visualForLogical(digitsStart + 3)   // digit 4
+        let v5 = bidi.visualForLogical(digitsStart + 4)   // digit 5
+        XCTAssertEqual(v5, v4 + 1, "digits render left-to-right")
+        // Drag from the period's visual position to digit 4: the visual span
+        // covers digits 4,5 plus the Persian tail, not digits 1-3.
+        let vPeriod = bidi.visualForLogical(lastLogical)
+        let (highlighted, _) = drag(bidi, fromVisual: vPeriod, toVisual: v4)
+        // Expectation computed directly from the visual span.
+        var expected = IndexSet()
+        for v in min(vPeriod, v4)..<max(vPeriod, v4) {
+            expected.insert(Int(bidi.logicalForVisual(v)))
+        }
+        XCTAssertEqual(highlighted, expected)
+        // The span runs from the period (far left) up to digit 4's left edge:
+        // it covers digits 1-3 (visually left of 4) and the Persian tail, and
+        // excludes digits 4 and 5.
+        XCTAssertTrue(highlighted.contains(Int(digitsStart)))
+        XCTAssertTrue(highlighted.contains(Int(digitsStart + 2)))
+        XCTAssertFalse(highlighted.contains(Int(digitsStart + 3)))
+        XCTAssertFalse(highlighted.contains(Int(digitsStart + 4)))
+    }
+
+    func testUpwardDragKeepsAnchorLineWords() {
+        // Anchor near the visual LEFT of the bottom RTL line (its reading
+        // end) and drag up to the line above. The anchor line must keep
+        // everything from its reading start (visual right edge) to the
+        // anchor — with the left-to-right convention it kept the visually
+        // LEFT side instead and the anchor line's words all deselected.
+        guard let bidi = paddedInfo() else { return XCTFail("no bidi info") }
+        let delegate = VisualSelectionDelegate(width: 80, bidi: bidi)
+        let selection = iTermSelection()
+        selection.delegate = delegate
+        selection.begin(at: VT100GridAbsCoordMake(10, 1),
+                        mode: iTermSelectionMode.kiTermSelectionModeCharacter,
+                        resume: false,
+                        append: false)
+        selection.moveEndpoint(to: VT100GridAbsCoordMake(70, 0))
+        let bottom = IndexSet(selection.selectedIndexes(onAbsoluteLine: 1))
+        let top = IndexSet(selection.selectedIndexes(onAbsoluteLine: 0))
+        XCTAssertTrue(bottom.contains(0), "anchor line keeps its first character (visual right edge)")
+        XCTAssertTrue(bottom.contains(33), "anchor line keeps its trailing period")
+        XCTAssertTrue(top.contains(33), "upper line selected from the pointer to its reading end")
+        XCTAssertFalse(top.contains(0), "upper line's first character is right of the pointer")
+    }
+
+    func testGuillemetsJoinLatinIsland() throws {
+        // «machine learning» inside a Persian sentence must render with the
+        // marks on their typed sides: the guillemets join the LTR island, so
+        // visually the quoted phrase reads «machine learning» as typed
+        // instead of the UBA placement »machine learning«.
+        guard iTermAdvancedSettingsModel.isolateLatinRunsInRTL() else {
+            throw XCTSkip("isolateLatinRunsInRTL is off")
+        }
+        let s = "اصطلاح «machine learning» را جستجو کن."
+        let ns = s as NSString
         let sca = screenCharArrayWithDefaultStyle(s, eol: EOL_HARD)
-        guard let info = BidiDisplayInfoObjc(sca) else { return XCTFail("no bidi info") }
-        XCTAssertLessThan(info.numberOfCells, 80)
-        XCTAssertEqual(info.selectionAnchor(forVisualCell: 60, leftHalf: true, gridWidth: 80), 60)
-        XCTAssertEqual(info.selectionAnchor(forVisualCell: 60, leftHalf: false, gridWidth: 80), 60)
+        guard let bidi = BidiDisplayInfoObjc(sca) else { return XCTFail("no bidi info") }
+        let open = Int32(ns.range(of: "«").location)
+        let close = Int32(ns.range(of: "»").location)
+        let mStart = Int32(ns.range(of: "machine").location)
+        // As typed: « immediately left of the m of machine, » immediately
+        // right of the g of learning.
+        XCTAssertEqual(bidi.visualForLogical(open), bidi.visualForLogical(mStart) - 1,
+                       "opening guillemet must sit visually left of 'machine'")
+        XCTAssertEqual(bidi.visualForLogical(close), bidi.visualForLogical(close - 1) + 1,
+                       "closing guillemet must sit visually right of 'learning'")
     }
 }

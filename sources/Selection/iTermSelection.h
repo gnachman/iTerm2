@@ -60,6 +60,19 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
                                     containingCharacter:(unichar)c
                                                 inRange:(NSRange)range;
 
+// Maps a VISUAL column range on a line to the set of LOGICAL cell indexes it
+// covers. Identity when the line is not bidi-reordered. Used by visual
+// (what-you-see) character selections on bidi lines: the live range stores
+// visual columns, and this converts them for highlighting and for building
+// the final logical subselections.
+- (NSIndexSet *)selectionLogicalIndexesForVisualRange:(NSRange)visualRange
+                                       onAbsoluteLine:(long long)line;
+
+// Whether the line lays out right-to-left (right-justified with its reading
+// start at the visual right edge). Determines which side of a multi-line
+// visual selection's first and last lines is open.
+- (BOOL)selectionParagraphIsRTLOnAbsoluteLine:(long long)line;
+
 - (void)liveSelectionDidEnd;
 
 @end

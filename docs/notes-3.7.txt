@@ -2608,12 +2608,43 @@ Bug Fixes:
   colors (both renderers), and the GPU renderer
   shapes the whole row at once instead of one
   background run at a time.
-- Fixed one-cell selection errors on right-to-left
-  lines: starting a drag from the right margin of
-  a right-justified line no longer selects the
-  whole row (it anchors at the line's first
-  character), and clicking the left half of a
-  right-to-left cell anchors the selection on its
-  left edge, so the trailing period of a Persian
-  sentence can be selected by dragging rightward
-  from it.
+- Selection on right-to-left lines is now visual:
+  a drag selects exactly the columns under it,
+  like every other terminal action. Previously
+  the selection was a logical range, so dragging
+  over a line with embedded English or digits
+  highlighted a different, discontiguous span
+  (selecting «کد پستی 12345» could light 345 but
+  not 12), the first character of a
+  right-justified line could not be selected
+  from the margin, and the trailing period was
+  unreachable. Copy converts the visual span
+  back to logical runs, so copied text stays in
+  reading order; partially-selected English
+  inside Persian copies its selected cells only.
+- Guillemets around an English phrase in
+  right-to-left text keep their typed sides:
+  «machine learning» no longer renders as
+  »machine learning«. The marks now join the
+  Latin island between them.
+- Extending a selection upward from a
+  right-justified line keeps the anchor line's
+  words: the per-line share of a multi-line
+  selection now follows each line's reading
+  direction instead of always opening on the
+  left.
+- A line's paragraph direction is right-to-left
+  when it starts with a right-to-left character
+  or when most of its strong characters are
+  right-to-left. An English sentence containing
+  one Persian word no longer right-justifies
+  into an unreadable order, while Persian lines
+  that open with an English word stay
+  right-justified.
+- When “Require Cmd modifier to drag text from
+  a selection” is on, pressing on the selection
+  without Cmd now starts a new selection instead
+  of doing nothing. Without it, re-selecting
+  from the first letter of a right-to-left line
+  was a dead end, since the previous selection
+  always sat under the click.

@@ -8,6 +8,7 @@
 
 #import "iTermSelection.h"
 #import "DebugLogging.h"
+#import "iTermPreferences.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSIndexSet+iTerm.h"
@@ -169,6 +170,15 @@ static NSString *const kiTermSubSelectionBoxColumnBounds = @"Box Column Bounds";
     VT100GridAbsWindowedRange _initialAbsRange;
     BOOL _live;
     BOOL _extend;
+    // When YES, the live range's x coordinates are VISUAL columns (what the
+    // user sees and drags over), not logical cells. Used for character
+    // selections when bidi is enabled so a drag always selects exactly the
+    // visual span under it — a logical range's visual image is discontiguous
+    // when the span crosses an embedded LTR run (numbers or English inside a
+    // Persian line). The highlight converts per line via the delegate, and
+    // endLiveSelection decomposes the visual span into logical subselections
+    // so copying stays in logical (reading) order.
+    BOOL _liveRangeIsVisual;
     NSMutableArray<iTermSubSelection *> *_subSelections;
 }
 
@@ -394,6 +404,9 @@ static NSString *const kiTermSubSelectionBoxColumnBounds = @"Box Column Bounds";
     _extend = NO;
     _haveClearedColumnWindow = NO;
     _selectionMode = mode;
+    // Character selections track the VISUAL span when bidi is on; see the
+    // ivar comment. Other modes (word/line/smart/box) stay logical.
+    _liveRangeIsVisual = (mode == kiTermSelectionModeCharacter && [iTermPreferences bidiEnabled]);
     _absRange = [self absRangeForCurrentModeAtAbsCoord:absCoord
                                  includeParentheticals:YES
                                     needAccurateWindow:YES];
@@ -443,11 +456,23 @@ static NSString *const kiTermSubSelectionBoxColumnBounds = @"Box Column Bounds";
             _initialAbsRange = _absRange;
         }
         if ([self haveLiveSelection]) {
-            iTermSubSelection *sub = [[[iTermSubSelection alloc] init] autorelease];
-            sub.absRange = _absRange;
-            sub.selectionMode = _selectionMode;
-            [_subSelections addObject:sub];
-            _resumable = YES;
+            if (_liveRangeIsVisual) {
+                // Decompose the visual span into LOGICAL subselections so
+                // copying produces reading-order text. On a bidi line a
+                // contiguous visual span can cover a logically discontiguous
+                // set of cells (an embedded LTR run selected partially); each
+                // contiguous logical run becomes its own subselection, in
+                // logical order. Runs that meet at a line boundary are merged
+                // so soft-wrapped lines keep copying without injected
+                // newlines.
+                _resumable = [self appendLogicalSubSelectionsForVisualLiveRange];
+            } else {
+                iTermSubSelection *sub = [[[iTermSubSelection alloc] init] autorelease];
+                sub.absRange = _absRange;
+                sub.selectionMode = _selectionMode;
+                [_subSelections addObject:sub];
+                _resumable = YES;
+            }
         } else {
             _resumable = NO;
         }
@@ -455,6 +480,7 @@ static NSString *const kiTermSubSelectionBoxColumnBounds = @"Box Column Bounds";
     _absRange = VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0);
     _extend = NO;
     _live = NO;
+    _liveRangeIsVisual = NO;
 
     if (sideEffects) {
         [_delegate selectionDidChange:[[self retain] autorelease]];
@@ -511,6 +537,7 @@ static NSString *const kiTermSubSelectionBoxColumnBounds = @"Box Column Bounds";
     if (self.hasSelection) {
         DLog(@"Clear selection");
         _absRange = VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(-1, -1, -1, -1), 0, 0);
+        _liveRangeIsVisual = NO;
         [_subSelections removeAllObjects];
         [_delegate selectionDidChange:[[self retain] autorelease]];
     }
@@ -719,6 +746,10 @@ static NSString *const kiTermSubSelectionBoxColumnBounds = @"Box Column Bounds";
     theCopy->_initialAbsRange = _initialAbsRange;
     theCopy->_live = _live;
     theCopy->_extend = _extend;
+    // Without this, a copy of a live VISUAL selection reinterprets its visual
+    // coordinates as logical cells (the dirty-region diff in PTYTextView uses
+    // such a copy), which marks the wrong cells and leaves stale highlight.
+    theCopy->_liveRangeIsVisual = _liveRangeIsVisual;
     for (iTermSubSelection *sub in _subSelections) {
         [theCopy->_subSelections addObject:[[sub copy] autorelease]];
     }
@@ -789,8 +820,56 @@ static NSString *const kiTermSubSelectionBoxColumnBounds = @"Box Column Bounds";
     return range;
 }
 
+// Converts the visual live range into logical character-mode subselections,
+// one per contiguous logical run per line, merging runs that meet at a line
+// boundary. Returns YES if anything was added.
+- (BOOL)appendLogicalSubSelectionsForVisualLiveRange {
+    const VT100GridAbsWindowedRange live = [self unflippedLiveAbsRange];
+    const int width = [self width];
+    __block BOOL added = NO;
+    __block iTermSubSelection *previousSub = nil;
+    for (long long y = live.coordRange.start.y; y <= live.coordRange.end.y; y++) {
+        const NSRange visualRange = [self visualRangeOfIndexesInAbsRange:live
+                                                          onAbsoluteLine:y];
+        if (visualRange.length == 0) {
+            previousSub = nil;
+            continue;
+        }
+        NSIndexSet *logical = [_delegate selectionLogicalIndexesForVisualRange:visualRange
+                                                                onAbsoluteLine:y];
+        [logical enumerateRangesUsingBlock:^(NSRange run, BOOL *stop) {
+            if (previousSub != nil &&
+                run.location == 0 &&
+                previousSub.absRange.coordRange.end.y == y - 1 &&
+                previousSub.absRange.coordRange.end.x == width) {
+                // Continues from the previous line's right edge: merge so a
+                // soft-wrapped line copies without an injected newline.
+                VT100GridAbsWindowedRange extended = previousSub.absRange;
+                extended.coordRange.end = VT100GridAbsCoordMake(NSMaxRange(run), y);
+                previousSub.absRange = extended;
+            } else {
+                iTermSubSelection *sub = [[[iTermSubSelection alloc] init] autorelease];
+                sub.absRange = VT100GridAbsWindowedRangeMake(
+                    VT100GridAbsCoordRangeMake(run.location, y, NSMaxRange(run), y), 0, 0);
+                sub.selectionMode = kiTermSelectionModeCharacter;
+                [_subSelections addObject:sub];
+                previousSub = sub;
+            }
+            added = YES;
+        }];
+    }
+    return added;
+}
+
 - (void)extendPastNulls {
     if (_selectionMode == kiTermSelectionModeBox) {
+        return;
+    }
+    if (_liveRangeIsVisual) {
+        // The live range holds VISUAL columns; the null ranges are logical
+        // cells, so this comparison would corrupt the range. On a
+        // right-justified RTL line the trailing nulls sit on the visual LEFT
+        // anyway — the drag covers them or not by itself.
         return;
     }
     if ([self hasSelection] && _live) {
@@ -935,6 +1014,42 @@ static NSRange iTermMakeRange(NSInteger location, NSInteger length) {
     return NSMakeRange(location, MAX(0, length));
 }
 
+// Per-line span of a VISUAL character range. Like the character-mode case of
+// rangeOfIndexesInAbsRange:onAbsoluteLine:mode:, except that on a line that
+// lays out right-to-left the open edge of the first and last lines flips: the
+// selection runs in READING order from the start coordinate to the end
+// coordinate, and an RTL line's reading start is its visual RIGHT edge. With
+// the left-to-right convention, extending a selection upward from a
+// right-justified line dropped the anchor line's words (it kept the visually
+// LEFT side, which is the line's reading END).
+- (NSRange)visualRangeOfIndexesInAbsRange:(VT100GridAbsWindowedRange)range
+                           onAbsoluteLine:(long long)line {
+    if (range.coordRange.start.y == range.coordRange.end.y) {
+        return [self rangeOfIndexesInAbsRange:range
+                               onAbsoluteLine:line
+                                         mode:kiTermSelectionModeCharacter];
+    }
+    const int width = [self width];
+    if (line == range.coordRange.start.y) {
+        // First (top) line: from the start coordinate to the reading end.
+        if ([_delegate selectionParagraphIsRTLOnAbsoluteLine:line]) {
+            return iTermMakeRange(0, range.coordRange.start.x);
+        }
+        return iTermMakeRange(range.coordRange.start.x, width - range.coordRange.start.x);
+    }
+    if (line == range.coordRange.end.y) {
+        // Last (bottom) line: from the reading start to the end coordinate.
+        if ([_delegate selectionParagraphIsRTLOnAbsoluteLine:line]) {
+            return iTermMakeRange(range.coordRange.end.x, width - range.coordRange.end.x);
+        }
+        return iTermMakeRange(0, range.coordRange.end.x);
+    }
+    if (line > range.coordRange.start.y && line < range.coordRange.end.y) {
+        return iTermMakeRange(0, width);
+    }
+    return iTermMakeRange(0, 0);
+}
+
 - (NSRange)rangeOfIndexesInAbsRange:(VT100GridAbsWindowedRange)range
                      onAbsoluteLine:(long long)line
                                mode:(iTermSelectionMode)mode {
@@ -1007,6 +1122,18 @@ static NSRange iTermMakeRange(NSInteger location, NSInteger length) {
     }
     if (_live && numberOfSubSelections == 0) {
         // Fast path
+        if (_liveRangeIsVisual) {
+            // The live range holds VISUAL columns; convert to the logical
+            // cells they cover so the highlight lights exactly the dragged
+            // visual span on a bidi line.
+            const NSRange visualRange =
+                [self visualRangeOfIndexesInAbsRange:[self unflippedLiveAbsRange]
+                                      onAbsoluteLine:line];
+            if (visualRange.length == 0) {
+                return [NSIndexSet indexSet];
+            }
+            return [_delegate selectionLogicalIndexesForVisualRange:visualRange onAbsoluteLine:line];
+        }
         NSRange theRange = [self rangeOfIndexesInAbsRange:[self unflippedLiveAbsRange]
                                            onAbsoluteLine:line
                                                      mode:_selectionMode];
