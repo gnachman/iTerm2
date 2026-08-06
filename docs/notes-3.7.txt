@@ -2579,3 +2579,10 @@ Bug Fixes:
   wrong width, which corrupted cursor
   movement. Conjoining jamo now compose
   into a single syllable cell.
+- OSC 9;4;4, the ConEmu progress protocol’s
+  paused state, now works when the percentage
+  is left out, which the protocol allows. The
+  bar keeps the percentage it was showing and
+  changes color instead of doing nothing. If
+  there was none, it shows a small one so the
+  paused state is visible.

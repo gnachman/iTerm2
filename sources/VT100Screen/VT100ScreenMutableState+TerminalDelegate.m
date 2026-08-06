@@ -23,6 +23,12 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermHistogram.h"
 
+// When the ConEmu progress protocol pauses without giving a percentage and there is none to
+// keep, show this much. The bar's width comes from the percentage, so 0 would be invisible.
+// Windows Terminal substitutes the same value in Terminal::SetTaskbarProgress, where it is
+// called TaskbarMinProgress.
+static const int kMinimumVisibleProgressPercentage = 10;
+
 @implementation VT100ScreenMutableState (TerminalDelegate)
 
 - (BOOL)enteringCommand {
@@ -1525,7 +1531,11 @@ typedef struct {
         if ([params[0] intValue] == 4) {
             if (params.count >= 2 && [params[1] isNumeric]) {
                 const int st = [params[1] intValue];
-                const int pr = params.count >= 3 ? [params[2] intValue] : -1;
+                // A missing pr is not the same as an invalid one: st=4 preserves the current
+                // percentage when pr is absent but ignores an explicit out-of-range value.
+                // An empty field (as in 9;4;4;) counts as present and parses as 0.
+                const BOOL havePR = params.count >= 3;
+                const int pr = havePR ? [params[2] intValue] : -1;
                 switch (st) {
                     case 0:
                         [self setProgress:VT100ScreenProgressStopped];
@@ -1545,11 +1555,22 @@ typedef struct {
                     case 3:  // set indeterminate state
                         [self setProgress:VT100ScreenProgressIndeterminate];
                         break;
-                    case 4:  // set error state in progress. pr is optional
+                    case 4: {  // set paused state in progress. pr is optional
                         if (pr >= 0 && pr <= 100) {
                             [self setProgress:VT100ScreenProgressWarningBase + pr];
+                        } else if (!havePR) {
+                            // Keep the percentage that is already showing and just recolor it,
+                            // as Ghostty does: its docs say the value is used when specified and
+                            // the current one is left unchanged otherwise. There is no encoding
+                            // for a paused state without a percentage, so when there is nothing
+                            // to keep, show the minimum visible amount.
+                            const int currentPercentage = VT100ScreenProgressPercentage(self.progress);
+                            const int percentage = currentPercentage > 0 ? currentPercentage : kMinimumVisibleProgressPercentage;
+                            [self setProgress:VT100ScreenProgressWarningBase + percentage];
                         }
+                        // A pr that is present but out of range is ignored, as in case 1.
                         break;
+                    }
                 }
             } else if (params.count == 1) {
                 [self setProgress:VT100ScreenProgressStopped];
