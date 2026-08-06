@@ -133,8 +133,11 @@ class DragSource:
     def serve_entry(self, md):
         # The terminal must only request top-level entries (t=k:x=idx). A Y-keyed
         # request would be a protocol violation on its part.
+        # A client signals a per-entry error with t=E ; code (the spec's
+        # client-to-terminal error form). t=R is a terminal-to-client type; iTerm2
+        # tolerates it as an extension but a spec-only terminal would ignore it.
         if md.get("Y") is not None:
-            os.write(1, build({"t": "R", "Y": md["Y"], "y": md.get("y", "")},
+            os.write(1, build({"t": "E", "Y": md["Y"], "y": md.get("y", "")},
                               text_payload="EINVAL").encode())
             log("[drag_source] unexpected child request; terminals must not send these")
             return
@@ -144,7 +147,7 @@ class DragSource:
         except (TypeError, ValueError):
             entry = -1
         if not (0 <= entry < len(self.entry_paths)):
-            os.write(1, build({"t": "R", "x": idx or ""}, text_payload="ENOENT").encode())
+            os.write(1, build({"t": "E", "x": idx or ""}, text_payload="ENOENT").encode())
             return
         self._push(self.entry_paths[entry], {"x": idx})
 

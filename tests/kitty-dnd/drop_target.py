@@ -139,6 +139,12 @@ class DropTarget:
 
     def handle(self, md, payload):
         t = md.get("t")
+        # A continuation chunk may omit all metadata except m (and i), per the spec.
+        # If an r-response sequence is open, a t-less message is its continuation.
+        # (iTerm2's chunker repeats full metadata on every chunk, so this only
+        # matters against a terminal that exercises that freedom.)
+        if t is None and self.response_md is not None:
+            t = "r"
         if t == "m":
             if self.args.verbose:
                 log("[drop_target] hover cell (%s,%s) ops=%s" %

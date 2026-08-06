@@ -283,6 +283,7 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
                 @(XTERMCC_MULTITOKEN_BODY):         @"XTERMCC_MULTITOKEN_BODY",
                 @(XTERMCC_MULTITOKEN_END):          @"XTERMCC_MULTITOKEN_END",
                 @(XTERMCC_PASTE64):                 @"XTERMCC_PASTE64",
+                @(XTERMCC_KITTY_DND):               @"XTERMCC_KITTY_DND",
                 @(XTERMCC_RESET_COLOR):             @"XTERMCC_RESET_COLOR",
                 
                 @(XTERMCC_RESET_VT100_TEXT_FOREGROUND_COLOR): @"XTERMCC_RESET_VT100_TEXT_FOREGROUND_COLOR",
