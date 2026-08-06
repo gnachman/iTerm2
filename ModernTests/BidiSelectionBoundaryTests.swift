@@ -127,7 +127,7 @@ class BidiSelectionBoundaryTests: XCTestCase {
     }
 
     func testMixedLineVisualSpanDecomposesIntoLogicalRuns() {
-        // «کد پستی 12345 است.» — the digits are an LTR island. A visual drag
+        // «کد پستی 12345 است.»: the digits are an LTR island. A visual drag
         // covering the last two digits and the following Persian word covers a
         // logically discontiguous set; the highlight must match the dragged
         // visual span exactly and the final subselections must be its logical
@@ -164,7 +164,7 @@ class BidiSelectionBoundaryTests: XCTestCase {
         // Anchor near the visual LEFT of the bottom RTL line (its reading
         // end) and drag up to the line above. The anchor line must keep
         // everything from its reading start (visual right edge) to the
-        // anchor — with the left-to-right convention it kept the visually
+        // anchor, with the left-to-right convention it kept the visually
         // LEFT side instead and the anchor line's words all deselected.
         guard let bidi = paddedInfo() else { return XCTFail("no bidi info") }
         let delegate = VisualSelectionDelegate(width: 80, bidi: bidi)

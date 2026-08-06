@@ -366,7 +366,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // text requires Cmd and it isn't held, fall through and start a
             // new selection instead: otherwise a press on the selection is a
             // dead end (no drag, no new selection), which reads as selection
-            // being frozen — especially on right-to-left lines where a repeat
+            // being frozen, especially on right-to-left lines where a repeat
             // drag naturally starts on the previous selection.
             DLog(@"mouse down on selection, returning");
             _mouseDownOnSelection = YES;

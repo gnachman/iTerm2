@@ -37,7 +37,7 @@ class BidiSelectionHighlightTests: XCTestCase {
 
         // Select the first two LOGICAL cells. This is asymmetric under the
         // reversal, so testing the visual column (the old bug) and the logical
-        // index (the fix) give different answers — cell 0 lives at the far right.
+        // index (the fix) give different answers, cell 0 lives at the far right.
         var selected = IndexSet()
         selected.insert(integersIn: 0..<2)
 

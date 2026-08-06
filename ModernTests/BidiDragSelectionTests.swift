@@ -7,7 +7,7 @@
 //  highlight draws each selected logical cell at its visual column. On a right-
 //  justified RTL line (content pushed right by trailing spaces that reorder to
 //  the visual left) the highlight must cover the same visual columns the user
-//  dragged over — not empty space on the far left.
+//  dragged over, not empty space on the far left.
 //
 
 import XCTest
@@ -170,7 +170,7 @@ class BidiDragSelectionTests: XCTestCase {
     // tests above simulate the endpoint conversion with bidi.logicalForVisual;
     // this proves iTermTextExtractor.logicalCoordForVisualCoord: (what
     // PTYMouseHandler/PTYTextView actually call) returns exactly that for every
-    // visual column of the mixed island line — so the simulation is faithful and
+    // visual column of the mixed island line, so the simulation is faithful and
     // the fetched line/coord are right (no off-by-one, no wrong line).
     func testExtractorConversionMatchesBidiLogicalForVisual() {
         let content = "Berlin شهری بزرگ در آلمان"

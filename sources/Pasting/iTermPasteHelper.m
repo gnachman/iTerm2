@@ -264,7 +264,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         // clean. Gated on the right-to-left support preference so it is fully
         // inert unless bidi is on, and OFF by default even then: these
         // characters are meaningful (the Persian half-space ZWNJ, the LTR/RTL
-        // marks), so removing them changes the text — the user's explicit choice.
+        // marks), so removing them changes the text; it is the user's explicit choice.
         theString =
         [[theString componentsSeparatedByCharactersInSet:[iTermPasteHelper zeroWidthFormatCharacterSet]]
          componentsJoinedByString:@""];

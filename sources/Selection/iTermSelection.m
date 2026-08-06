@@ -173,7 +173,7 @@ static NSString *const kiTermSubSelectionBoxColumnBounds = @"Box Column Bounds";
     // When YES, the live range's x coordinates are VISUAL columns (what the
     // user sees and drags over), not logical cells. Used for character
     // selections when bidi is enabled so a drag always selects exactly the
-    // visual span under it — a logical range's visual image is discontiguous
+    // visual span under it; a logical range's visual image is discontiguous
     // when the span crosses an embedded LTR run (numbers or English inside a
     // Persian line). The highlight converts per line via the delegate, and
     // endLiveSelection decomposes the visual span into logical subselections
@@ -869,7 +869,7 @@ static NSString *const kiTermSubSelectionBoxColumnBounds = @"Box Column Bounds";
         // The live range holds VISUAL columns; the null ranges are logical
         // cells, so this comparison would corrupt the range. On a
         // right-justified RTL line the trailing nulls sit on the visual LEFT
-        // anyway — the drag covers them or not by itself.
+        // anyway; the drag covers them or not by itself.
         return;
     }
     if ([self hasSelection] && _live) {

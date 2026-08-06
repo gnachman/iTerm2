@@ -7,7 +7,7 @@
 //  interior spaces, and any brackets that wrap Latin content, so those stay
 //  left-to-right and un-mirrored. A bracket that opens the following Persian
 //  phrase must be left OUT of the island so it mirrors like any other bracket
-//  in right-to-left text — the "School of Hip Hop (فصل …" case, where the open
+//  in right-to-left text, the "School of Hip Hop (فصل …" case, where the open
 //  paren was being pulled into the island and drawn un-mirrored.
 //
 

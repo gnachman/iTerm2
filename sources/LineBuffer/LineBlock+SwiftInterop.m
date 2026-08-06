@@ -109,7 +109,7 @@
     // to width). Splitting again by lineOffset (== that same offset) double-
     // applies the offset: for the first wrapped row offset is 0 so it is a
     // harmless no-op, but for every continuation row offset == width, so it asks
-    // for [width, …) of a bidi that only has `width` cells and gets nothing —
+    // for [width, …) of a bidi that only has `width` cells and gets nothing;
     // leaving the row with no reorder map, so a right-to-left wrapped line drawn
     // from scrollback renders its continuation rows unreordered (scrambled).
     return bidiInfo;

@@ -194,7 +194,7 @@ NSString *const iTermDrawInCellIndexAttribute = @"iTermDrawInCellIndexAttribute"
         // instead of starting a new one (so Arabic shaping survives a selection
         // boundary). -build folds the per-character cell-index blobs and the
         // source-columns range into the FINAL run's attributes only, but
-        // consumers read them at index 0 — so spread them across the whole
+        // consumers read them at index 0, so spread them across the whole
         // string. The blobs cover every character appended over the builder's
         // lifetime, so full-range application is correct for merged runs too.
         NSMutableAttributedString *mas = [NSMutableAttributedString castFrom:_attributedString];

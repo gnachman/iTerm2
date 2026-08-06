@@ -101,7 +101,7 @@ class BidiTUIRepaintTests: XCTestCase {
         XCTAssertNotNil(info, message, file: file, line: line)
         if let info {
             XCTAssertFalse(info.rtlIndexes.isEmpty,
-                           "bidi info exists but has no RTL runs — \(message)",
+                           "bidi info exists but has no RTL runs, \(message)",
                            file: file, line: line)
         }
     }
@@ -241,7 +241,7 @@ class BidiTUIRepaintTests: XCTestCase {
     // Streaming within a row: agents append a sentence to the same row in
     // several chunks, and a bidi pass (≈ a drawn frame) can run between any
     // two chunks. The final row's reordering table must be identical to the
-    // one produced by writing the whole sentence at once — a stale mid-write
+    // one produced by writing the whole sentence at once, a stale mid-write
     // table shifts every subsequent letter by a cell.
     func testChunkedAppendMatchesOneShotBidiInfo() {
         // ZWNJ-heavy, like real Persian prose.
@@ -356,7 +356,7 @@ class BidiTUIRepaintTests: XCTestCase {
     // Regression: a wrapped RTL paragraph that scrolls into scrollback must keep
     // its reorder map on EVERY wrapped row, not just the first. The linebuffer
     // double-split each continuation row's bidi to an empty range and dropped it,
-    // so from history those rows drew in logical order — reversed/scrambled. This
+    // so from history those rows drew in logical order, reversed/scrambled. This
     // drives the same accessor the renderer reads (screen.bidiInfo(forLine:)) and
     // requires each row to render identically from history and from the grid.
     func testWrappedRTLKeepsBidiAfterScrollingIntoHistory() {

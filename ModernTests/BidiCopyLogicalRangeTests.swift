@@ -6,7 +6,7 @@
 //  text of that LOGICAL range in reading order. On a reordered right-to-left
 //  line the extractor's bidi branch used to treat the range as VISUAL, so a
 //  partial selection (and the last line of a multi-line selection) extracted
-//  the empty left margin instead of the words — the copy came back empty even
+//  the empty left margin instead of the words, the copy came back empty even
 //  though the highlight (which correctly uses the logical range) showed text.
 //
 
@@ -101,7 +101,7 @@ class BidiCopyLogicalRangeTests: XCTestCase {
     }
 
     // A partial selection covering an English word embedded in RTL must copy the
-    // whole word contiguously — «Berlin» must not come out as «B … شهری» (the
+    // whole word contiguously, «Berlin» must not come out as «B … شهری» (the
     // visually-adjacent-but-logically-split result the user hit).
     func testPartialCopyKeepsEnglishWordWhole() {
         let width = 40
@@ -117,7 +117,7 @@ class BidiCopyLogicalRangeTests: XCTestCase {
         let extractor = iTermTextExtractor(dataSource: ds)
         extractor.supportBidi = true
 
-        // Select logical [0, 12): «متن Berlin ش» — covers متن plus the whole Berlin island.
+        // Select logical [0, 12): «متن Berlin ش»: covers متن plus the whole Berlin island.
         let range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 12, 0), 0, 0)
         let text = extractor.content(in: range, excludingSubranges: nil) ?? ""
         XCTAssertTrue(text.contains("Berlin"),

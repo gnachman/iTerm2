@@ -475,7 +475,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 // complicating its ASCII fastpath.
                 int lastCellDraw;
                 if (bidiLUT && i - 1 < bidiLUTLength) {
-                    lastCellDraw = bidiLUT[i - i];
+                    lastCellDraw = bidiLUT[i - 1];
                 } else {
                     lastCellDraw = i - 1;
                 }
@@ -848,7 +848,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 // SGR color change mid-word) must not start a new attributed
                 // string on a bidi line: each string is shaped independently by
                 // CoreText, so splitting inside an Arabic word severs the cursive
-                // joining — selecting «کامل» out of «کاملاً» redrew the letters in
+                // joining: selecting «کامل» out of «کاملاً» redrew the letters in
                 // their isolated forms. Instead the caller keeps appending to the
                 // same builder and just swaps its attributes, producing one shaped
                 // string with per-range colors. Underline/strikethrough/URL runs

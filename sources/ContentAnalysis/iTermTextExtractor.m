@@ -298,7 +298,7 @@ const NSInteger kLongMaximumWordLength = 100000;
     // mouse handler's begin-selection at PTYMouseHandler.m, autocomplete, and
     // logical movement) has already converted the click from visual to logical
     // before calling this. Converting again with logicalForVisual double-applies
-    // the bidi reorder map and lands on a different word — the "double-click a
+    // the bidi reorder map and lands on a different word: the "double-click a
     // word and a different word gets selected" bug on right-to-left lines. Word
     // boundaries are found in logical order, so operate on the logical location
     // directly and return a logical range (the selection model is logical, and
@@ -2044,9 +2044,9 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                 // The selection is stored in LOGICAL coordinates (the highlight uses
                 // them too), so emit the logical range in reading order rather than
                 // gathering the cells that happen to fall under a visual span. That
-                // keeps a partial selection on a mixed line a contiguous string — an
+                // keeps a partial selection on a mixed line a contiguous string (an
                 // English word embedded in right-to-left text (e.g. «Berlin») is
-                // copied whole instead of split into visually-adjacent pieces — while
+                // copied whole instead of split into visually-adjacent pieces) while
                 // the bytes stay in the logical order that editors re-render correctly.
                 // Report each cell's visual column via the LUT for callers that use it.
                 const int lo = MIN(width - 1, MAX(range.columnWindow.location, startx));

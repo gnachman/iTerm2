@@ -158,7 +158,7 @@ fileprivate struct IntermediateLookupTable {
         self.count = count
         // Guillemets keep their typed glyph instead of following bidi mirroring.
         // The Unicode algorithm mirrors « » (and ‹ ›) in a right-to-left run, so
-        // «متن» renders »متن« with the marks pointing outward — CoreText and
+        // «متن» renders »متن« with the marks pointing outward; CoreText and
         // TextEdit do this. Persian/Arabic readers expect the marks to hug the
         // text as typed («متن»), so we deliberately don't mirror them. Brackets
         // and parentheses still mirror, matching macOS. This is unconditional
@@ -198,7 +198,7 @@ fileprivate struct IntermediateLookupTable {
                 if sourceCell < 0 { continue }  // inserted isolate control: no cell
                 // Only the cell's base character (its first UTF-16 unit) may
                 // set the cell's position. A combining mark merged into a cell
-                // is a zero-advance glyph positioned over its base's glyph — or
+                // is a zero-advance glyph positioned over its base's glyph, or
                 // over a ligature that consumed the base, as in کاملاً where
                 // the fathatan rides the lam-alef ligature. Crediting the
                 // mark's x to the cell gave the alef's cell an absolute
@@ -329,7 +329,7 @@ fileprivate func isolateLatinRuns(_ s: NSString, deltas: UnsafePointer<Int32>) -
                     // (capital)") stays a single island. Look through an opening
                     // bracket to what it introduces: a bracket that opens Latin
                     // content belongs to the phrase, but one that opens the next
-                    // Persian phrase — as in "School of Hip Hop (فصل …" — is left
+                    // Persian phrase (as in "School of Hip Hop (فصل …") is left
                     // outside the island so it mirrors normally.
                     var k = j
                     while k < n && s.character(at: k) == 0x20 { k += 1 }
@@ -394,8 +394,8 @@ fileprivate func makeLookupTable(_ string: NSString,
 
 // A line lays out right-to-left when its first strong character is RTL, OR
 // when its strong RTL characters outnumber the strong LTR ones. Either signal
-// alone misfires: first-strong lays out «Berlin شهری بزرگ در آلمان» — a
-// Persian sentence that happens to open with an English word — left-to-right,
+// alone misfires: first-strong lays out «Berlin شهری بزرگ در آلمان», a
+// Persian sentence that happens to open with an English word, left-to-right,
 // and majority alone flips a Persian-syntax line that quotes a lot of English
 // («کلمهٔ conversion rate و growth plan در گزارش آمد.») to left-to-right.
 // The union gets both right, and an English sentence containing one Persian
@@ -415,10 +415,12 @@ fileprivate func detectedParagraphIsRTL(_ s: NSString) -> Bool {
     // دانش‌آموزان, combining marks) do not, so such a word counts once.
     var rtlWordCount = 0
     var inRTLWord = false
-    for i in 0..<s.length {
-        let c = s.character(at: i)
-        if c == iTermLRI || c == iTermRLI || c == iTermFSI || c == iTermPDI { continue }
-        guard let scalar = Unicode.Scalar(c) else { continue }
+    // Walk scalars, not UTF-16 units: surrogate halves never form a scalar, so
+    // a UTF-16 walk ignored supplementary-plane strong-RTL scripts (Adlam,
+    // Hanifi Rohingya) and misdetected the direction of lines written in them.
+    for scalar in (s as String).unicodeScalars {
+        let c = scalar.value
+        if c == UInt32(iTermLRI) || c == UInt32(iTermRLI) || c == UInt32(iTermFSI) || c == UInt32(iTermPDI) { continue }
         if rtl.contains(scalar) {
             rtlCount += 1
             if !inRTLWord { rtlWordCount += 1; inRTLWord = true }

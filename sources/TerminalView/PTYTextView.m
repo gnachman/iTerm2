@@ -4004,9 +4004,9 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         y = numberOfLines - 1;
     }
     // The x above is a VISUAL coordinate. Character selections are VISUAL on
-    // bidi lines — the live range stores the columns the user dragged over,
+    // bidi lines: the live range stores the columns the user dragged over,
     // the highlight converts per line, and endLiveSelection decomposes into
-    // logical subselections — so x passes through untouched. Word and line
+    // logical subselections, so x passes through untouched. Word and line
     // modes expand from the logical cell, so convert for them; a no-op on
     // left-to-right lines. Only convert for an on-screen line: selection
     // auto-scroll can pass a y below the top (negative) or an empty buffer
@@ -4062,8 +4062,8 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     // The caller (word selection) passes a coordinate that has already been
     // converted from visual to logical. Run the extractor in logical space
-    // (supportBidi off) so it neither re-converts the input — which would land on
-    // the mirror-image cell — nor converts the result back to visual. That keeps
+    // (supportBidi off) so it neither re-converts the input (which would land on
+    // the mirror-image cell) nor converts the result back to visual. That keeps
     // the returned word range logical, matching how the selection is stored,
     // highlighted, and copied.
     extractor.supportBidi = NO;

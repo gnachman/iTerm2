@@ -5,7 +5,7 @@
 //  Double-click word selection on a right-to-left line. The mouse handler
 //  converts the click's VISUAL column to a LOGICAL cell (logicalForVisual), then
 //  rangeForWordAt finds the word at that logical cell. Clicking a word must
-//  select THAT word — not a different one elsewhere on the line. This models the
+//  select THAT word, not a different one elsewhere on the line. This models the
 //  pure-Persian TUI case (no Latin) where the bug shows up: click the first
 //  word, a word from the middle/end gets selected.
 //
@@ -48,7 +48,7 @@ final class BidiWordSelectionTests: XCTestCase {
         savedDetect = iTermUserDefaults.userDefaults().object(forKey: "DetectParagraphDirection")
         savedIsolate = iTermUserDefaults.userDefaults().object(forKey: "IsolateLatinRunsInRTL")
         iTermUserDefaults.userDefaults().set(true, forKey: "DetectParagraphDirection")
-        // Pure Persian (no Latin) — islands is irrelevant. Test the default path.
+        // Pure Persian (no Latin), islands is irrelevant. Test the default path.
         iTermUserDefaults.userDefaults().set(false, forKey: "IsolateLatinRunsInRTL")
         iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
     }
@@ -135,7 +135,7 @@ final class BidiWordSelectionTests: XCTestCase {
     }
 
     // The fundamental invariant, tested on the user's ACTUAL line (with Persian
-    // commas, a colon, and guillemets — mixed neutrals that reorder): clicking a
+    // commas, a colon, and guillemets, mixed neutrals that reorder): clicking a
     // cell must select a word range that CONTAINS that cell. The reported bug is
     // clicking the first word and getting a word from the middle/end, which
     // violates this.
@@ -156,7 +156,7 @@ final class BidiWordSelectionTests: XCTestCase {
                                          maximumLength: 1000)
             let lo = Int(range.coordRange.start.x), hi = Int(range.coordRange.end.x)
             XCTAssertTrue(clicked >= lo && clicked < hi,
-                          "click on logical \(clicked) (visual \(visualCol)) selected [\(lo),\(hi)) which does NOT contain it — wrong word",
+                          "click on logical \(clicked) (visual \(visualCol)) selected [\(lo),\(hi)) which does NOT contain it, wrong word",
                           file: file, line: line)
         }
     }
@@ -170,7 +170,7 @@ final class BidiWordSelectionTests: XCTestCase {
     }
 
     // The user's ACTUAL config: IsolateLatinRunsInRTL = ON. Pure Persian has no
-    // Latin runs, so in principle it should behave like islands-off — but the
+    // Latin runs, so in principle it should behave like islands-off, but the
     // isolate path builds a different string/LUT, so test it directly.
     private func withIslands(_ on: Bool, _ body: () -> Void) {
         iTermUserDefaults.userDefaults().set(on, forKey: "IsolateLatinRunsInRTL")
@@ -199,7 +199,7 @@ final class BidiWordSelectionTests: XCTestCase {
     }
 
     // THE REAL APP PATH: the line bidi is BidiDisplayInfoObjc(sca, paddedTo:
-    // width) with rightJustifyRTLLines ON (its default) — a right-justify shift
+    // width) with rightJustifyRTLLines ON (its default), a right-justify shift
     // (Self.pad) the mouse handler's logicalForVisual reads. All the tests above
     // used the UNPADDED base bidi, so they missed this. Reproduce the reported
     // bug: on a right-justified full-width line, clicking the first word selects
@@ -240,7 +240,7 @@ final class BidiWordSelectionTests: XCTestCase {
             let range = ext.rangeForWord(at: VT100GridCoord(x: Int32(clicked), y: 0), maximumLength: 1000)
             let lo = Int(range.coordRange.start.x), hi = Int(range.coordRange.end.x)
             XCTAssertTrue(clicked >= lo && clicked < hi,
-                          "PADDED: click logical \(logical) drew at visual \(v), mouse read it as logical \(clicked), selected [\(lo),\(hi)) — wrong word",
+                          "PADDED: click logical \(logical) drew at visual \(v), mouse read it as logical \(clicked), selected [\(lo),\(hi)), wrong word",
                           file: file, line: line)
         }
     }

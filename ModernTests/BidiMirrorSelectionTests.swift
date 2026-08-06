@@ -57,7 +57,7 @@ class BidiMirrorSelectionTests: XCTestCase {
     }
 
     func testPureRTLParensAreMirrored() {
-        // «(بله)» — parens in pure RTL context must mirror.
+        // «(بله)»: parens in pure RTL context must mirror.
         let s = "متن (بله) دیگر"
         guard let info = info(s) else { return XCTFail("no bidi info") }
         let open = Int32((s as NSString).range(of: "(").location)
@@ -67,7 +67,7 @@ class BidiMirrorSelectionTests: XCTestCase {
     }
 
     func testParensAroundEnglishAreNotMirrored() {
-        // Persian «(English)» — the brackets wrap an LTR run and must NOT mirror.
+        // Persian «(English)»: the brackets wrap an LTR run and must NOT mirror.
         let s = "توی (Tempelhofer) قدیمی"
         guard let info = info(s) else { return XCTFail("no bidi info") }
         let open = Int32((s as NSString).range(of: "(").location)

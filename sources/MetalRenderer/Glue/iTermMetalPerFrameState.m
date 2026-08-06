@@ -1699,7 +1699,11 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         }
 
         const vector_float4 bgColor = attributes[visualX].backgroundColor;
-        BOOL selected = [selectedIndexes containsIndex:visualX];
+        // selectedIndexes is in LOGICAL coordinates; testing visualX here gave
+        // a glyph the selected background with the unselected foreground on
+        // reordered lines (the background path below tests logicalX), which
+        // made selected glyphs disappear on the GPU renderer.
+        BOOL selected = [selectedIndexes containsIndex:logicalIndex];
         BOOL findMatch = NO;
         if (findMatches && !selected) {
             findMatch = CheckFindMatchAtIndex(findMatches, logicalIndex);
@@ -1717,7 +1721,9 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
             // Normal code path
             lastSelected = selected;
         }
-        const BOOL annotated = [annotatedIndexes containsIndex:visualX];
+        // Annotation indexes are logical as well; the attribute is still
+        // STORED at the visual column, where the cell draws.
+        const BOOL annotated = [annotatedIndexes containsIndex:logicalIndex];
         const BOOL inUnderlinedRange = NSLocationInRange(logicalIndex, underlinedRange) || annotated;
 
 
@@ -1970,7 +1976,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         // On a bidi line, build the whole row in ONE call instead of one call
         // per background-color run. Each call shapes its range independently,
         // so per-run calls sever Arabic cursive joining wherever the background
-        // changes — a selection or SGR background split «کاملاً» into final and
+        // changes: a selection or SGR background split «کاملاً» into final and
         // isolated letter forms on the Metal renderer. The colors the builder
         // resolves depend on the background (minimum contrast, faint blending),
         // but this path ignores them: glyph tinting is per cell from the
@@ -1990,7 +1996,8 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                 .bgGreen = line[bgrle->origin].bgGreen,
                 .bgBlue = line[bgrle->origin].bgBlue,
                 .bgColorMode = line[bgrle->origin].backgroundColorMode,
-                .selected = [selectedIndexes containsIndex:bgrle->origin],
+                // selectedIndexes is logical; bgrle->origin is a visual column.
+                .selected = [selectedIndexes containsIndex:bgrle->logicalOrigin],
                 .isMatch = (findMatches &&
                             !run.selected &&
                             CheckFindMatchAtIndex(findMatches, bgrle->origin)),

@@ -40,7 +40,7 @@ class BidiCombiningMarkTests: XCTestCase {
     }
 
     func testLamAlefWithFathatanKeepsCellsInRTLOrder() {
-        // «کاملاً درست.» — the word ends in lam + alef + fathatan. The mark
+        // «کاملاً درست.»: the word ends in lam + alef + fathatan. The mark
         // merges into the alef's cell; the lam-alef ligature consumes the
         // alef's glyph. Cells of کاملاً: ک=23 ا=24 م=25 ل=26 اً=27, space=28.
         assertAdjacentRTL("آیا این درست است؟ بله؛ کاملاً درست.",
