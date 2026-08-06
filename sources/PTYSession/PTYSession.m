@@ -10840,6 +10840,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return _pasteHelper.isPasting;
 }
 
+- (BOOL)pasteKeystrokePassthroughEnabled {
+    return _pasteHelper.keystrokePassthrough;
+}
+
 - (void)queueKeyDown:(NSEvent *)event {
     [_pasteHelper enqueueEvent:event];
 }
@@ -11223,6 +11227,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (BOOL)eventAbortsPasteWaitingForPrompt:(NSEvent *)event {
     if (!_pasteHelper.isWaitingForPrompt) {
+        return NO;
+    }
+    if (_pasteHelper.keystrokePassthrough) {
+        // The user chose to type directly to the terminal, so Esc and ^C should
+        // reach the shell (to answer/interrupt the prompt) rather than aborting
+        // the paste. The paste indicator's Cancel button remains the way to abort.
         return NO;
     }
     if (event.keyCode == kVK_Escape) {

@@ -86,6 +86,9 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)xtermMouseReportingAllowMouseWheel;
 - (BOOL)xtermMouseReportingAllowClicksAndDrags;
 - (BOOL)isPasting;
+// YES when the user has asked, via the paste indicator, for keystrokes to go
+// straight to the terminal during a paste instead of being queued.
+- (BOOL)pasteKeystrokePassthroughEnabled;
 - (void)queueKeyDown:(NSEvent *)event;
 - (void)keyDown:(NSEvent *)event;
 - (void)keyUp:(NSEvent *)event;

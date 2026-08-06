@@ -2602,6 +2602,18 @@ Bug Fixes:
   changes color instead of doing nothing. If
   there was none, it shows a small one so the
   paused state is visible.
+- Advanced Paste with bracketed paste on but
+  “Wait for shell prompt” off now pastes a
+  multi-line block as one editable buffer on
+  zsh, bash, and fish, so you can review it and
+  press Return once, instead of running each
+  line as it arrives.
+- When a paste is paused waiting for a shell
+  prompt, the paste indicator now has a keyboard
+  button that sends your typing straight to the
+  terminal instead of queueing it, so you can
+  answer a prompt the paste is stuck on (such as
+  a password or zsh’s spelling correction).
 - Parentheses, brackets, and other mirrored
   punctuation now draw correctly in right-to-
   left text when right-to-left support is on.
