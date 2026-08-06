@@ -1745,6 +1745,7 @@ void TurnOnDebugLoggingAutomatically(void) {
         [iTermWorkgroupMenu attachTo:_workgroupsMenuItem
                            separator:_workgroupsSeparator];
     }
+    [[iTermAIMenuBarStatusController sharedInstance] start];
 #if DEBUG
     NSMenu *appMenu = [[[[NSApp mainMenu] itemArray] firstObject] submenu];
     [appMenu addItem:[NSMenuItem separatorItem]];
