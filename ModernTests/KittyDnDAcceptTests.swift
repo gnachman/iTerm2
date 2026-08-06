@@ -256,6 +256,7 @@ final class KittyDnDAcceptTests: XCTestCase {
                       drop: FakeDropData(mimeTypes: ["text/plain"]))
         c.handleInboundSequence("t=r:x=5")
         XCTAssertEqual(recorder.last?.type, "R")
+        XCTAssertEqual(recorder.last?.textPayload, "ENOENT", "out-of-bounds index is ENOENT")
     }
 
     func testMissingContentDataSendsError() {
@@ -266,6 +267,8 @@ final class KittyDnDAcceptTests: XCTestCase {
                       drop: FakeDropData(mimeTypes: ["image/png"]))
         c.handleInboundSequence("t=r:x=1")
         XCTAssertEqual(recorder.last?.type, "R")
+        XCTAssertEqual(recorder.last?.textPayload, "ENOENT",
+                       "an in-bounds index with no data is ENOENT")
     }
 
     // MARK: - text/uri-list three-tier routing
@@ -345,6 +348,7 @@ final class KittyDnDAcceptTests: XCTestCase {
         // No drop yet.
         c.handleInboundSequence("t=r:x=1")
         XCTAssertEqual(recorder.last?.type, "R")
+        XCTAssertEqual(recorder.last?.textPayload, "EINVAL", "a request with no drop is EINVAL")
     }
 
     // A bare t=r (no x, no Y, no o) is the canceled drop-completion signal, not a
@@ -378,6 +382,74 @@ final class KittyDnDAcceptTests: XCTestCase {
         let resp = await awaitResponse(recorder, c, "t=r:x=1:y=1")
         XCTAssertEqual(resp?.type, "R")
         XCTAssertEqual(resp?.textPayload, "EINVAL")
+    }
+
+    // Spec: "if too many requests are received, terminals must deny the request
+    // with EMFILE and end the drop." The in-flight key is inserted synchronously
+    // before the async read, so 65 distinct sub-index requests fired in one batch
+    // trip the 64-request cap on the 65th and end the drop.
+    func testTooManyConcurrentEntryRequestsIsEMFILEAndEndsDrop() throws {
+        let dir = makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let file = dir.appendingPathComponent("a.txt")
+        try Data("x".utf8).write(to: file)
+        let recorder = Recorder()
+        // 65 entries so 65 distinct sub-index reads can be in flight at once.
+        let c = remoteDropController(fileURLs: Array(repeating: file, count: 65), recorder: recorder)
+        recorder.reports.removeAll()
+        // Fire all 65 synchronously: no async read completes during the loop, so
+        // all 64 keys stay in flight and the 65th is over the cap.
+        for y in 1...65 {
+            c.handleInboundSequence("t=r:x=1:y=\(y)")
+        }
+        XCTAssertEqual(recorder.last?.type, "R")
+        XCTAssertEqual(recorder.last?.textPayload, "EMFILE")
+        // The drop was ended: a following request finds no drop and errors.
+        c.handleInboundSequence("t=r:x=1")
+        XCTAssertEqual(recorder.last?.type, "R")
+        XCTAssertEqual(recorder.last?.textPayload, "EINVAL")
+    }
+
+    // A streamed file response interrupted mid-flight by a new drag must be closed
+    // with its m=0 terminator (so the client does not hang) and must emit no
+    // further chunks (the generation guard). Interrupts from onReport after the
+    // first data chunk, exercising terminateInFlightStream and the mid-stream guard.
+    func testInFlightStreamIsTerminatedAndStoppedByNewDrag() async throws {
+        let dir = makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let file = dir.appendingPathComponent("big.bin")
+        // Several chunks (maxRawChunkSize is 3072 bytes).
+        try Data(count: 10_000).write(to: file)
+        let recorder = Recorder()
+        let c = remoteDropController(fileURLs: [file], recorder: recorder)
+        recorder.reports.removeAll()
+
+        var interrupted = false
+        var chunksAfterInterrupt = 0
+        let done = expectation(description: "terminator after interrupt")
+        done.assertForOverFulfill = false
+        recorder.onReport = { msg in
+            guard msg.type == "r" else { return }
+            if !interrupted {
+                if msg.metadata["m"] == "1" {
+                    // First data chunk: interrupt with a new drag (bumps the
+                    // generation and terminates the stream).
+                    interrupted = true
+                    c.dragEntered(cellX: 9, cellY: 9, pixelX: 0, pixelY: 0,
+                                  operations: 1, mimeTypes: ["text/uri-list"])
+                }
+            } else if msg.metadata["m"] == "1" {
+                chunksAfterInterrupt += 1
+            } else {
+                done.fulfill()  // the m=0 terminator emitted by the interrupt
+            }
+        }
+        c.handleInboundSequence("t=r:x=1:y=1")
+        await fulfillment(of: [done], timeout: 5)
+        recorder.onReport = nil
+        XCTAssertEqual(chunksAfterInterrupt, 0, "no chunks may follow the terminator")
+        let terminators = recorder.messages.filter { $0.type == "r" && $0.metadata["m"] == "0" }
+        XCTAssertEqual(terminators.count, 1, "exactly one m=0 terminator (not zero, not two)")
     }
 
     // MARK: - Cross-machine in-band file/dir transfer (plain ssh, no conductor)
@@ -596,6 +668,25 @@ final class KittyDnDAcceptTests: XCTestCase {
         XCTAssertEqual(c.osDragOperation, 1, "program's reply wins")
         c.handleInboundSequence("t=m:o=0")
         XCTAssertEqual(c.osDragOperation, 0, "explicit refuse")
+    }
+
+    // Security-critical default: before the program replies, a copy+move offer
+    // (and any empty/unknown mask) must optimistically report COPY, never move, so
+    // an unconfirmed drop cannot authorize a destructive move that deletes the
+    // source's only copy. Only a move-ONLY offer optimistically reports move.
+    func testOptimisticDropOperationPrefersCopy() {
+        func optimisticOp(forOffered offered: Int) -> Int {
+            let recorder = Recorder()
+            let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+            c.handleInboundSequence("t=a;text/plain")
+            c.dragEntered(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0,
+                          operations: offered, mimeTypes: ["text/plain"])
+            return c.osDragOperation
+        }
+        XCTAssertEqual(optimisticOp(forOffered: 3), 1, "copy+move must optimistically be copy")
+        XCTAssertEqual(optimisticOp(forOffered: 0), 1, "empty/unknown mask must be copy")
+        XCTAssertEqual(optimisticOp(forOffered: 1), 1, "copy-only is copy")
+        XCTAssertEqual(optimisticOp(forOffered: 2), 2, "move-only may optimistically be move")
     }
 
     // If the program stops accepting mid-drag (t=A), the OS operation must go to 0

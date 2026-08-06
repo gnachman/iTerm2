@@ -110,6 +110,29 @@ final class KittyDnDChunkerTests: XCTestCase {
         XCTAssertEqual(completed?.dataPayload, payload)
     }
 
+    // An over-large sequence is abandoned at the cap, its remaining chunks are
+    // drained (not misread as a new message), an interleaved query is still
+    // surfaced during the drain, and the reassembler recovers for the next message.
+    func testOverCapSequenceIsDrainedThenRecovers() {
+        let reassembler = KittyDnDChunkReassembler(maxAccumulatedBytes: 100)
+        let sixty = String(repeating: "A", count: 60)
+        // First chunk (60 bytes) is under the cap.
+        XCTAssertNil(reassembler.accept("t=r:x=1:m=1;\(sixty)"))
+        // Second chunk pushes the total to 120 > 100: abandoned, now draining.
+        XCTAssertNil(reassembler.accept("t=r:x=1:m=1;\(sixty)"))
+        // A query mid-drain is still surfaced (different t), not swallowed.
+        let query = reassembler.accept("t=q:i=5")
+        XCTAssertEqual(query?.type, "q")
+        // A further continuation chunk of the abandoned sequence is discarded.
+        XCTAssertNil(reassembler.accept("t=r:x=1:m=1;\(sixty)"))
+        // The terminator ends the drain (no message surfaces).
+        XCTAssertNil(reassembler.accept("t=r:x=1;\(sixty)"))
+        // The reassembler has recovered: the next message reassembles normally.
+        let recovered = reassembler.accept("t=M:x=9;YWJj")
+        XCTAssertEqual(recovered?.type, "M")
+        XCTAssertEqual(recovered?.dataPayload, Data("abc".utf8))
+    }
+
     func testReassemblerPassesThroughSingleMessage() {
         let reassembler = KittyDnDChunkReassembler()
         let result = reassembler.accept("t=M:x=1:y=2;YWJj")

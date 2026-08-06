@@ -92,6 +92,15 @@ final class KittyDnDChunkReassembler {
     /// chunks are drained.
     static let maxAccumulatedBytes = 512 * 1024 * 1024
 
+    /// The effective cap for this instance. Defaults to `maxAccumulatedBytes`;
+    /// overridable so the breach/drain path can be exercised in tests without
+    /// allocating half a gigabyte.
+    private let maxBytes: Int
+
+    init(maxAccumulatedBytes: Int = KittyDnDChunkReassembler.maxAccumulatedBytes) {
+        self.maxBytes = maxAccumulatedBytes
+    }
+
     private var accumulatedPayload = ""
     private var accumulatedByteCount = 0
     private var pendingMetadata: [String: String]?
@@ -145,7 +154,7 @@ final class KittyDnDChunkReassembler {
         accumulatedByteCount += payloadString.utf8.count
         sawPayloadSection = sawPayloadSection || hasPayloadSection
 
-        if accumulatedByteCount > Self.maxAccumulatedBytes {
+        if accumulatedByteCount > maxBytes {
             // Abandon this sequence and free its buffer now. Keep the sequence
             // identity and drain the rest unless this chunk already terminated it.
             let terminated = metadata["m"] != "1"

@@ -9,6 +9,7 @@
 //
 
 import XCTest
+import AppKit
 @testable import iTerm2SharedARC
 
 @MainActor
@@ -258,6 +259,41 @@ final class KittyDnDOfferTests: XCTestCase {
         XCTAssertEqual(recorder.last?.type, "E")
         XCTAssertEqual(recorder.last?.textPayload, "EFBIG")
         XCTAssertEqual(host.begun.count, 0)
+    }
+
+    // A tiny compressed PNG that DECLARES huge pixel dimensions must be rejected
+    // with EFBIG by the decoded-pixel-count guard, even though it is well under the
+    // byte cap. testOversizedImageIsRejectedWithEFBIG trips the byte cap first and
+    // never reaches this check, so this drives it directly.
+    func testPNGDeclaringHugeDimensionsIsRejectedWithEFBIG() {
+        let recorder = Recorder()
+        let host = FakeDragHost()
+        let c = makeController(host: host, recorder: recorder)
+        c.handleInboundSequence("t=o:x=1")
+        c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
+        c.handleInboundSequence("t=o:o=1;text/plain")
+        presend(c, index: 0, data: Data("hi".utf8))
+        // A valid solid-color PNG just over the 16.77M-pixel cap: it decodes to a
+        // ~50 MB bitmap but compresses to a few KB, the decompression-bomb shape.
+        let bomb = Self.solidPNG(width: 4097, height: 4097)  // 4096x4096 == cap
+        XCTAssertLessThan(bomb.count, 64 * 1024 * 1024, "fixture must be under the byte cap")
+        // Sanity: the header dimensions are what the guard reads.
+        XCTAssertEqual(KittyDnDController.imagePixelCount(bomb), 4097 * 4097)
+        offerImage(c, index: -1, format: 100, width: 0, height: 0, data: bomb)
+        c.handleInboundSequence("t=P:x=-1")
+        XCTAssertEqual(recorder.last?.type, "E")
+        XCTAssertEqual(recorder.last?.textPayload, "EFBIG")
+        XCTAssertEqual(host.begun.count, 0)
+    }
+
+    // A valid PNG of the given pixel dimensions filled with a solid color, so it
+    // stays tiny on disk while its header reports a huge decoded size.
+    private static func solidPNG(width: Int, height: Int) -> Data {
+        let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: width, pixelsHigh: height,
+            bitsPerSample: 8, samplesPerPixel: 3, hasAlpha: false, isPlanar: false,
+            colorSpaceName: .deviceRGB, bytesPerRow: width * 3, bitsPerPixel: 24)!
+        return rep.representation(using: .png, properties: [:])!
     }
 
     // With multiple images, the first (index -1) is used as the drag thumbnail.
