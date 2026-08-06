@@ -4823,27 +4823,28 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return [self.delegate textViewKittyDnDBridge];
 }
 
-// Computes the drop location (cell + pixel offset within the cell) and the kitty
-// operation flags (1 copy, 2 move, 3 either) for a drag. The cell is
-// screen-relative (0..height-1), matching iTerm2's own mouse reporting, not the
-// whole-buffer coordinate coordForPoint: returns.
-// Screen-relative cell and pixel offset within the cell for a point in view
-// coordinates, matching iTerm2's mouse reporting.
+// Computes the drop location for a drag: the screen-relative cell (0..height-1,
+// matching iTerm2's mouse reporting, not the whole-buffer coordForPoint:) and the
+// pointer's pixel position relative to the top-left of the grid. The spec says
+// "Pixel x-coordinate origin is 0, 0 at top left of screen" and kitty sends the
+// pointer's position there, NOT the offset within the cell.
 - (void)kittyDnDCoord:(VT100GridCoord *)coordOut
                 pixel:(NSPoint *)pixelOut
     forLocationInView:(NSPoint)locationInView {
     const NSRect liveRect = [self liveRect];
-    const CGFloat relativeX = locationInView.x - liveRect.origin.x;
-    const CGFloat relativeY = locationInView.y - liveRect.origin.y;
+    const CGFloat relativeX = MAX(0, locationInView.x - liveRect.origin.x);
+    const CGFloat relativeY = MAX(0, locationInView.y - liveRect.origin.y);
     VT100GridCoord coord = VT100GridCoordMake((int)(relativeX / _charWidth),
                                               (int)(relativeY / _lineHeight));
-    coord.x = MAX(0, coord.x);
-    coord.y = MAX(0, coord.y);
+    // Clamp the cell to the visible grid so a drop in the right/bottom margin does
+    // not report an out-of-range cell (x == width is not a valid cell).
+    const int cols = MAX(1, (int)(liveRect.size.width / _charWidth));
+    const int rows = MAX(1, (int)(liveRect.size.height / _lineHeight));
+    coord.x = MIN(MAX(0, coord.x), cols - 1);
+    coord.y = MIN(MAX(0, coord.y), rows - 1);
     *coordOut = coord;
-    // Clamp to non-negative so a drop in the left/top margin does not report a
-    // negative offset.
-    *pixelOut = NSMakePoint(MAX(0, relativeX - coord.x * _charWidth),
-                            MAX(0, relativeY - coord.y * _lineHeight));
+    // Pointer pixel position relative to the grid origin (not a within-cell offset).
+    *pixelOut = NSMakePoint(relativeX, relativeY);
 }
 
 - (void)kittyDnDParamsForSender:(id<NSDraggingInfo>)sender
@@ -4917,6 +4918,17 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     _drawingHelper.showDropTargets = NO;
     [self.delegate textViewDidUpdateDropTargetVisibility];
     [self requestDelegateRedraw];
+}
+
+// Called when the drag session ends over this destination. If the drag was routed
+// to a Kitty DnD program but the program never accepted it (so performDragOperation:
+// and draggingExited: did not fire and clear the latch), tell the program the drag
+// left, so it does not stay stuck believing a drag is still hovering.
+- (void)draggingEnded:(id<NSDraggingInfo>)sender {
+    if (_kittyDragRoutedForCurrentDrag) {
+        [[self latchedKittyDragBridge] draggingExited];
+        _kittyDragRoutedForCurrentDrag = NO;
+    }
 }
 
 //
