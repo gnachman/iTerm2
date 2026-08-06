@@ -1967,15 +1967,25 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     if (bidiInfo || _configuration->_renderInputs.ligaturesEnabled) {
         allAttributedStrings = [NSMutableArray array];
 
-        for (int i = 0; i < rles; i++) {
+        // On a bidi line, build the whole row in ONE call instead of one call
+        // per background-color run. Each call shapes its range independently,
+        // so per-run calls sever Arabic cursive joining wherever the background
+        // changes — a selection or SGR background split «کاملاً» into final and
+        // isolated letter forms on the Metal renderer. The colors the builder
+        // resolves depend on the background (minimum contrast, faint blending),
+        // but this path ignores them: glyph tinting is per cell from the
+        // attributes buffer. Only the shaping matters, so one representative
+        // background color is fine.
+        const int rleCountForStrings = (bidiInfo && rles > 0) ? 1 : rles;
+        for (int i = 0; i < rleCountForStrings; i++) {
             const iTermMetalBackgroundColorRLE *bgrle = &backgroundRLE[i];
             NSColor *bgColor = [NSColor colorWithDisplayP3Red:bgrle->color.x
                                                         green:bgrle->color.y
                                                          blue:bgrle->color.z
                                                         alpha:bgrle->color.w];
             iTermBackgroundColorRun run = {
-                .modelRange = NSMakeRange(bgrle->logicalOrigin, bgrle->count),
-                .visualRange = NSMakeRange(bgrle->origin, bgrle->count),
+                .modelRange = bidiInfo ? NSMakeRange(0, width) : NSMakeRange(bgrle->logicalOrigin, bgrle->count),
+                .visualRange = bidiInfo ? NSMakeRange(0, width) : NSMakeRange(bgrle->origin, bgrle->count),
                 .bgColor = line[bgrle->origin].backgroundColor,
                 .bgGreen = line[bgrle->origin].bgGreen,
                 .bgBlue = line[bgrle->origin].bgBlue,
