@@ -4009,6 +4009,16 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     // bidi info would assert.
     if (x >= 0 && x < width && y >= 0 && y < numberOfLines) {
         x = [self logicalCoordForVisualCoord:VT100GridCoordMake(x, y)].x;
+    } else if (x >= width && y >= 0 && y < numberOfLines && [iTermPreferences bidiEnabled]) {
+        // Pointer in the right margin. On a right-justified RTL row the legacy
+        // value (the grid width) is the LOGICAL end of the line, whose visual
+        // position is the far LEFT — the selection would jump to cover the
+        // whole row. Anchor at the visually-last column instead, which is the
+        // line's first character.
+        iTermBidiDisplayInfo *bidi = [_dataSource screenCharArrayForLine:y].bidiInfo;
+        if (bidi) {
+            x = [bidi selectionAnchorForVisualCell:width leftHalf:NO gridWidth:width];
+        }
     }
     const BOOL hasColumnWindow = (_selection.liveRange.columnWindow.location > 0 ||
                                   _selection.liveRange.columnWindow.length < width);
@@ -8043,6 +8053,29 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
 - (VT100GridCoord)mouseHandler:(PTYMouseHandler *)handler
     logicalCoordForVisualCoord:(VT100GridCoord)visualCoord {
     return [self logicalCoordForVisualCoord:visualCoord];
+}
+
+- (VT100GridCoord)mouseHandler:(PTYMouseHandler *)handler
+characterSelectionAnchorForEvent:(NSEvent *)event
+                   visualCoord:(VT100GridCoord)visualCoord
+                  logicalCoord:(VT100GridCoord)logicalCoord {
+    if (![iTermPreferences bidiEnabled]) {
+        return logicalCoord;
+    }
+    if (visualCoord.y < 0 || visualCoord.y >= [_dataSource numberOfLines]) {
+        return logicalCoord;
+    }
+    iTermBidiDisplayInfo *bidi = [_dataSource screenCharArrayForLine:visualCoord.y].bidiInfo;
+    if (!bidi) {
+        return logicalCoord;
+    }
+    const NSPoint p = [self convertPoint:event.locationInWindow fromView:nil];
+    const CGFloat fx = (p.x - [iTermPreferences sideMargins]) / _charWidth;
+    const BOOL leftHalf = (fx - floor(fx)) < 0.5;
+    const int x = [bidi selectionAnchorForVisualCell:visualCoord.x
+                                            leftHalf:leftHalf
+                                           gridWidth:[_dataSource width]];
+    return VT100GridCoordMake(x, visualCoord.y);
 }
 
 - (NSString *)mouseHandler:(PTYMouseHandler *)mouseHandler

@@ -60,6 +60,17 @@ NS_ASSUME_NONNULL_BEGIN
 // bidi-reordered, so left-to-right text is unaffected.
 - (VT100GridCoord)mouseHandler:(PTYMouseHandler *)handler
         logicalCoordForVisualCoord:(VT100GridCoord)visualCoord;
+
+// The logical coordinate a *character* selection should anchor at. Differs
+// from logicalCoordForVisualCoord only on bidi-reordered lines: the sub-cell
+// click position picks the nearer boundary of a right-to-left cell, and a
+// right-margin click on a right-justified row anchors at the visually last
+// column instead of the logical end of the line (which would select the whole
+// row as soon as the drag started).
+- (VT100GridCoord)mouseHandler:(PTYMouseHandler *)handler
+characterSelectionAnchorForEvent:(NSEvent *)event
+                   visualCoord:(VT100GridCoord)visualCoord
+                  logicalCoord:(VT100GridCoord)logicalCoord;
 - (NSPoint)mouseHandlerReportablePointForPointInView:(NSPoint)point;
 - (void)mouseHandlerMoveCursorToCoord:(VT100GridCoord)coord
                              forEvent:(NSEvent *)event;

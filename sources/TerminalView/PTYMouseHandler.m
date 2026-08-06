@@ -286,12 +286,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Convert the visual click to a LOGICAL coordinate. The whole selection model
     // (character drag, word/line/smart ranges, the highlight, and copy) works in
     // logical space, so every mode begins from the logical coordinate.
+    const VT100GridCoord visualClickPoint = [self.mouseDelegate mouseHandler:self
+                                                                  clickPoint:event
+                                                               allowOverflow:YES
+                                                                  firstMouse:_mouseDownWasFirstMouse];
     const VT100GridCoord clickPointCoord =
-        [self.mouseDelegate mouseHandler:self
-              logicalCoordForVisualCoord:[self.mouseDelegate mouseHandler:self
-                                                               clickPoint:event
-                                                            allowOverflow:YES
-                                                               firstMouse:_mouseDownWasFirstMouse]];
+        [self.mouseDelegate mouseHandler:self logicalCoordForVisualCoord:visualClickPoint];
     const int x = clickPointCoord.x;
     const int y = clickPointCoord.y;
     if ([self.mouseDelegate mouseHandler:self coordIsMutable:VT100GridCoordMake(x, y)] &&
@@ -368,7 +368,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             return YES;
         } else {
             // start a new selection
-            [self.selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(x, y + overflow)
+            VT100GridCoord anchor = clickPointCoord;
+            if (mode == kiTermSelectionModeCharacter) {
+                // Character selection anchors at a cell BOUNDARY. On a bidi
+                // line the boundary needs the clicked half of the cell and
+                // right-margin clamping; other modes expand from the cell
+                // itself, so they keep the plain logical coordinate.
+                anchor = [self.mouseDelegate mouseHandler:self
+                         characterSelectionAnchorForEvent:event
+                                              visualCoord:visualClickPoint
+                                             logicalCoord:clickPointCoord];
+            }
+            [self.selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(anchor.x, anchor.y + overflow)
                                                 mode:mode
                                               resume:NO
                                               append:(cmdPressed && !altPressed)];

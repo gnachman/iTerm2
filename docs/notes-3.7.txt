@@ -2608,3 +2608,12 @@ Bug Fixes:
   colors (both renderers), and the GPU renderer
   shapes the whole row at once instead of one
   background run at a time.
+- Fixed one-cell selection errors on right-to-left
+  lines: starting a drag from the right margin of
+  a right-justified line no longer selects the
+  whole row (it anchors at the line's first
+  character), and clicking the left half of a
+  right-to-left cell anchors the selection on its
+  left edge, so the trailing period of a Persian
+  sentence can be selected by dragging rightward
+  from it.

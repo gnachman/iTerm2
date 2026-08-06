@@ -464,6 +464,42 @@ class BidiDisplayInfoObjc: NSObject {
         return guts.mirroredIndexes.contains(Int(cell))
     }
 
+    // The LOGICAL coordinate a character selection should anchor at for a
+    // click on `visualCell`. Two corrections over plain logicalForVisual:
+    //
+    // 1. A click at or beyond the last column of a fully padded row (a
+    //    right-justified RTL line) anchors at the logical cell of the last
+    //    visual column — the visually-first character — instead of the
+    //    logical end of the line. The legacy value made the selection cover
+    //    the entire row the moment a drag from the right margin started.
+    //
+    // 2. iTerm anchors a click at the boundary on the logical-start side of
+    //    the clicked cell. For an RTL cell that boundary is its VISUAL-RIGHT
+    //    edge, so a click on the left half of the trailing period of
+    //    «…درست.» dragged visually rightward could never include the period.
+    //    Use the half of the cell that was clicked to pick the nearer
+    //    logical boundary for RTL cells. LTR cells keep the historical floor
+    //    semantics, so left-to-right lines are unchanged.
+    @objc(selectionAnchorForVisualCell:leftHalf:gridWidth:)
+    func selectionAnchor(forVisualCell visualCell: Int32, leftHalf: Bool, gridWidth: Int32) -> Int32 {
+        if visualCell >= numberOfCells {
+            if numberOfCells == gridWidth && numberOfCells > 0 {
+                return logicalForVisual(numberOfCells - 1)
+            }
+            // Unpadded row: keep the legacy identity so selecting the
+            // emptiness after the content still works like a plain LTR line.
+            return visualCell
+        }
+        if visualCell < 0 {
+            return visualCell
+        }
+        let logical = logicalForVisual(visualCell)
+        if leftHalf && guts.rtlIndexes.contains(Int(logical)) {
+            return logical + 1
+        }
+        return logical
+    }
+
     private enum Keys: String {
         case lut = "lut"
         case rtlIndexes = "rtlIndexes"
