@@ -1015,20 +1015,28 @@ final class KittyDnDOfferTests: XCTestCase {
                        "self-drag guard must survive \(midDragSequence)")
     }
 
-    // A drag from another pane of the SAME window (detected at the AppKit layer)
-    // must be refused with EPERM even though this session's own self-drag flag is
-    // not set.
-    func testCrossPaneSelfDragIsRefusedWithEPERM() {
+    // A drop from a DIFFERENT session (another split pane or another window) is a
+    // different program, not a self-drag, and must be served. The spec's EPERM is
+    // scoped to the same kitty window (= session): a program dropping its OWN drag
+    // onto itself. A different session has no selfDragInProgress, so it is served.
+    func testCrossSessionDropIsServedNotRefused() {
         let recorder = Recorder()
+        // This controller never started a drag (selfDragInProgress is false), which
+        // is what a different session's controller looks like at drop time.
         let c = makeController(host: FakeDragHost(), recorder: recorder)
         c.handleInboundSequence("t=a;text/plain")
         c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
                       drop: FakeDropData(mimeTypes: ["text/plain"],
-                                         dataByIndex: [1: Data("secret".utf8)]),
-                      originatedInSameWindow: true)
-        recorder.reports.removeAll()
+                                         dataByIndex: [1: Data("hello".utf8)]))
         c.handleInboundSequence("t=r:x=1")
-        XCTAssertEqual(recorder.last?.textPayload, "EPERM")
+        let reassembler = KittyDnDChunkReassembler()
+        var result: KittyDnDMessage?
+        for m in recorder.messages where m.type == "r" {
+            if let done = reassembler.accept(m.serializedContent()) { result = done }
+        }
+        XCTAssertEqual(result?.dataPayload, Data("hello".utf8),
+                       "a cross-session drop must be served, not refused with EPERM")
+        XCTAssertNil(recorder.messages.first { $0.textPayload == "EPERM" })
     }
 
     // A normal (external-source) drop is served: no self-drag is active.

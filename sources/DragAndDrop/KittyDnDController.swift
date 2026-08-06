@@ -435,13 +435,8 @@ final class KittyDnDController {
                        operations: 0, mimeTypes: nil)
     }
 
-    /// - Parameter originatedInSameWindow: whether the AppKit layer determined the
-    ///   drag came from a Kitty drag-out in the same OS window (e.g. another split
-    ///   pane). The spec requires EPERM for a drop whose drag originated in the
-    ///   same window, which per-session state alone cannot detect across panes.
     func performDrop(cellX: Int, cellY: Int, pixelX: Int, pixelY: Int,
-                     operations: Int, drop: KittyDnDDropData,
-                     originatedInSameWindow: Bool = false) {
+                     operations: Int, drop: KittyDnDDropData) {
         guard isAcceptingDrops else { return }
         // Close any file still streaming from a prior context before the t=M below.
         terminateInFlightStream()
@@ -450,11 +445,14 @@ final class KittyDnDController {
         // and any read still in flight from before must not stream into this drop.
         lastCompletedDropOperation = nil
         acceptGeneration += 1
-        // Latch whether this drop is our own drag-out landing here (same session,
-        // via selfDragInProgress) or a drag from another pane of the same window
-        // (via the AppKit signal), so the later asynchronous over-the-pty data
-        // reads are refused even after the native drag has ended.
-        currentDropIsSelfDrag = selfDragInProgress || originatedInSameWindow
+        // Spec: EPERM only when the drag originated in the SAME kitty window as the
+        // drop, i.e. our own drag-out landing back on this same session (a program
+        // dropping its own drag onto itself to read local files). That is exactly
+        // selfDragInProgress. A drop from a DIFFERENT session (another split pane or
+        // another window) is a different program and is served normally; blocking
+        // it would break legitimate terminal-to-terminal drags. Latched here so the
+        // later async over-the-pty reads stay refused after the native drag ends.
+        currentDropIsSelfDrag = selfDragInProgress
         sendMoveOrDrop(type: "M", cellX: cellX, cellY: cellY, pixelX: pixelX,
                        pixelY: pixelY, operations: operations, mimeTypes: drop.mimeTypes)
     }
@@ -755,6 +753,7 @@ final class KittyDnDController {
     // MARK: - Offer / drag-out (inbound)
 
     private func handleOffer(_ message: KittyDnDMessage) {
+        DLog("handleOffer x=\(message.metadata["x"] ?? "nil") o=\(message.metadata["o"] ?? "nil") isOfferingDrags=\(isOfferingDrags) hasLiveGesture=\(dragHost?.hasLiveGesture ?? false)")
         switch message.intValue("x") {
         case 1:
             isOfferingDrags = true
@@ -916,19 +915,24 @@ final class KittyDnDController {
     }
 
     private func handleStartDrag(_ message: KittyDnDMessage) {
+        DLog("handleStartDrag x=\(message.metadata["x"] ?? "nil") isOfferingDrags=\(isOfferingDrags) selfDragInProgress=\(selfDragInProgress) startingDrag=\(startingDrag) remoteDragFetch=\(remoteDragFetch != nil) mimeTypes=\(offerMimeTypes) offerData indices=\(offerData.keys.sorted())")
+        DLog("handleStartDrag isRemoteOffer=\(isRemoteOffer) peerMachineID=\(peerMachineID ?? "nil") ourMachineID=\(ourMachineID) endpoint.isRemoteHost=\(endpoint.isRemoteHost)")
         // Only a program that opted in (t=o:x=1) may start a drag.
         guard isOfferingDrags else {
+            DLog("handleStartDrag: not offering; ignore")
             return
         }
         // t=P:x=-1 starts the drag; other x values change the drag image, which
         // we do not support yet.
         guard message.intValue("x") == -1 else {
+            DLog("handleStartDrag: x != -1 (image change unsupported); ignore")
             return
         }
         // Ignore a t=P while a drag is already live or being assembled, so a
         // duplicate does not start a second native drag or drain an in-flight
         // deferred-data pull.
         guard !selfDragInProgress, !startingDrag, remoteDragFetch == nil else {
+            DLog("handleStartDrag: a drag is already live/assembling; ignore")
             return
         }
         // Reject malformed or oversized drag images before starting.
@@ -1010,6 +1014,7 @@ final class KittyDnDController {
 
     private func beginDrag(with offer: KittyDnDDragOffer) {
         let result = dragHost?.beginDrag(offer) ?? .failed
+        DLog("beginDrag mimeTypes=\(offer.mimeTypes) hasHost=\(dragHost != nil) result=\(result)")
         switch result {
         case .started:
             // A native drag we started is now running: a drop that lands on this
@@ -1186,6 +1191,7 @@ final class KittyDnDController {
 
     /// The AppKit adapter detected a drag gesture starting over the terminal.
     func dragGestureDetected(cellX: Int, cellY: Int, pixelX: Int, pixelY: Int) {
+        DLog("dragGestureDetected cell=(\(cellX),\(cellY)) isOfferingDrags=\(isOfferingDrags)")
         guard isOfferingDrags else { return }
         send(KittyDnDMessage(metadata: [
             "t": "o",

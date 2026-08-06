@@ -24,13 +24,6 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
     private weak var dataSource: KittyDnDBridgeDataSource?
     weak var controller: KittyDnDController?
 
-    /// The window number the drag-out originated from, captured at drag start so
-    /// it survives the source view later losing its window. A drop whose
-    /// NSDraggingSource is a KittyDnDViewDragHost with this same window number is a
-    /// same-window self-drag, which the spec requires be refused (EPERM). 0 means
-    /// no drag is in progress.
-    @objc private(set) var originWindowNumber: Int = 0
-
     /// The mouse event that started the gesture, captured when the terminal told
     /// the program about it. Used to begin the drag once the program says go.
     var pendingEvent: NSEvent?
@@ -43,10 +36,12 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
 
     func beginDrag(_ offer: KittyDnDDragOffer) -> KittyDnDDragStartResult {
         guard let view = dataSource?.kittyDnDView else {
+            DLog("KittyDnD beginDrag: no view; failed")
             return .failed
         }
         guard let event = pendingEvent else {
             // No stored gesture: the drag request came without (or after) one.
+            DLog("KittyDnD beginDrag: no pending gesture event; gestureGone")
             return .gestureGone
         }
         // Refuse a stale gesture: a real drag-out holds THE SAME mouse button down
@@ -54,15 +49,17 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
         // any button being pressed, which a later unrelated click would satisfy)
         // stops a program starting a phantom drag from a long-dead event.
         guard Self.gestureIsLive(event) else {
+            DLog("KittyDnD beginDrag: gesture no longer live (button released); gestureGone. pressedButtons=\(NSEvent.pressedMouseButtons) buttonNumber=\(event.buttonNumber)")
             pendingEvent = nil
             return .gestureGone
         }
         let items = draggingItems(for: offer, in: view, event: event)
         guard !items.isEmpty else {
+            DLog("KittyDnD beginDrag: no dragging items built from offer mimeTypes=\(offer.mimeTypes); failed")
             return .failed
         }
+        DLog("KittyDnD beginDrag: starting NSDraggingSession with \(items.count) item(s), window=\(view.window?.windowNumber ?? 0)")
         currentOperations = offer.operations
-        originWindowNumber = view.window?.windowNumber ?? 0
         view.beginDraggingSession(with: items, event: event, source: self)
         return .started
     }
@@ -99,11 +96,16 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
                            y: origin.y - size.height / 2,
                            width: size.width, height: size.height)
 
-        var items: [NSDraggingItem] = []
-
-        // Real file URLs (from text/uri-list) so a drop onto Finder works.
+        // Real file URLs (from text/uri-list) so a drop onto Finder works. When the
+        // offer includes files, the drag is FILE-ONLY: we deliberately do not also
+        // add the non-file MIME pasteboard item below. Finder (and other strict
+        // destinations) reject a drag that MIXES file and non-file items, accepting
+        // only all-file drags; in-app destinations that tolerate a mixed pasteboard
+        // do not, which is why such a drag dropped into another terminal but was
+        // refused by Finder. A file drag's payload is the file itself, so dropping
+        // the extra text/MIME flavor here is the right trade.
         if let urls = fileURLs(from: offer), !urls.isEmpty {
-            items = urls.enumerated().map { index, url in
+            return urls.enumerated().map { index, url in
                 let item = NSDraggingItem(pasteboardWriter: url as NSURL)
                 let contents = image ?? NSWorkspace.shared.icon(forFile: url.path)
                 item.setDraggingFrame(frame.offsetBy(dx: CGFloat(index) * 6, dy: 0),
@@ -112,14 +114,14 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
             }
         }
 
-        // Every other offered MIME type with data, so a destination can pick its
-        // preferred flavor (image/png, application/json, custom types, ...), not
-        // just uri-list and plain text.
+        // A non-file offer: a single pasteboard item carrying every offered MIME
+        // type's data, so a destination can pick its preferred flavor (image/png,
+        // application/json, text/plain, custom types, ...).
+        var items: [NSDraggingItem] = []
         if let pbItem = Self.pasteboardItem(from: offer) {
             let item = NSDraggingItem(pasteboardWriter: pbItem)
             let contents = image ?? dragThumbnail(for: offer, size: size)
-            item.setDraggingFrame(frame.offsetBy(dx: CGFloat(items.count) * 6, dy: 0),
-                                  contents: contents)
+            item.setDraggingFrame(frame, contents: contents)
             items.append(item)
         }
 
@@ -298,6 +300,5 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
             controller?.dragFinished(canceled: false)
         }
         pendingEvent = nil
-        originWindowNumber = 0
     }
 }

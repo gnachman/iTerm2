@@ -5064,6 +5064,13 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     } else {
         // No luck.
         DLog(@"Not allowing drag");
+        // Report zero valid items, not the caller's -1 initializer: leaving it at
+        // -1 makes AppKit draw a bogus "-1" count badge on the drag image while it
+        // hovers over an area that cannot accept it (e.g. a Kitty drag-out file
+        // passing back over our own window).
+        if (numberOfValidItemsPtr) {
+            *numberOfValidItemsPtr = 0;
+        }
         return NSDragOperationNone;
     }
 }
@@ -5281,24 +5288,17 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         int operation;
         [self kittyDnDParamsForSender:sender coord:&coord pixel:&pixel operation:&operation];
         RLog(@"Forwarding drop to Kitty DnD program");
-        // Detect a same-window self-drag (e.g. dragged out of another split pane):
-        // the spec requires refusing data reads for a drag that originated in the
-        // same window, which the per-session guard alone cannot see across panes.
-        BOOL sameWindowSelfDrag = NO;
-        id draggingSource = [sender draggingSource];
-        if ([draggingSource isKindOfClass:[iTermKittyDnDViewDragHost class]]) {
-            // Compare the source's CAPTURED origin window number (survives the
-            // source view losing its window) to this view's window.
-            const NSInteger origin = [(iTermKittyDnDViewDragHost *)draggingSource originWindowNumber];
-            sameWindowSelfDrag = (origin != 0 && origin == self.window.windowNumber);
-        }
+        // A same-session self-drag (a program dropping its own drag onto itself) is
+        // refused inside the controller via its per-session guard. A drop from any
+        // OTHER session (another split pane or window) is a different program and is
+        // served: the spec's EPERM applies to the same kitty window (= session),
+        // not the OS window.
         [kittyBridge performDropWithCellX:coord.x
                                     cellY:coord.y
                                    pixelX:(int)round(pixel.x)
                                    pixelY:(int)round(pixel.y)
                                 operation:operation
-                               pasteboard:sender.draggingPasteboard
-                        sameWindowSelfDrag:sameWindowSelfDrag];
+                               pasteboard:sender.draggingPasteboard];
         return YES;
     }
 
@@ -8087,6 +8087,7 @@ static NSString *iTermStringFromRange(NSRange range) {
 - (BOOL)mouseHandler:(PTYMouseHandler *)handler
     reportKittyDragGestureWithEvent:(NSEvent *)event {
     iTermKittyDnDBridge *bridge = [self.delegate textViewKittyDnDBridge];
+    DLog(@"reportKittyDragGestureWithEvent bridge=%@ isOfferingDrags=%d", bridge, bridge.isOfferingDrags);
     if (!bridge.isOfferingDrags) {
         return NO;
     }

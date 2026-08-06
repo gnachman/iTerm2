@@ -775,12 +775,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // gesture is otherwise a text selection), not for a three-finger drag, not
     // with Option held, and only once per mouse-down. Done before the report
     // below so the program learns of the drag as it starts.
+    if ([self.mouseDelegate mouseHandlerHasKittyDragOffer:self]) {
+        DLog(@"Kitty drag offer available. dragThresholdMet=%d makingThreeFingerSelection=%d "
+             @"kittyDragOfferStarted=%d optionHeld=%d reportable=%d",
+             dragThresholdMet, _makingThreeFingerSelection, _kittyDragOfferStarted,
+             (int)(([event modifierFlags] & NSEventModifierFlagOption) != 0),
+             [self mouseEventIsReportable:event]);
+    }
     if (dragThresholdMet &&
         !_makingThreeFingerSelection &&
         !_kittyDragOfferStarted &&
         !([event modifierFlags] & NSEventModifierFlagOption) &&
         [self.mouseDelegate mouseHandlerHasKittyDragOffer:self] &&
         [self mouseEventIsReportable:event]) {
+        DLog(@"Offering Kitty drag gesture to program");
         if ([self.mouseDelegate mouseHandler:self reportKittyDragGestureWithEvent:event]) {
             _kittyDragOfferStarted = YES;
             _kittyDragGestureEvent = event;
