@@ -235,10 +235,12 @@ final class KittyDnDOfferTests: XCTestCase {
         c.dragGestureDetected(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0)
         c.handleInboundSequence("t=o:o=1;text/plain")
         presend(c, index: 0, data: Data("hi".utf8))
+        // An over-cap image is rejected at pre-send time (EFBIG), aborting the
+        // offer before t=P.
         offerImage(c, index: -1, format: 100, width: 1, height: 1,
                    data: Data(count: 64 * 1024 * 1024 + 1))
-        c.handleInboundSequence("t=P:x=-1")
-        XCTAssertEqual(recorder.last?.textPayload, "EFBIG")
+        XCTAssertEqual(recorder.last?.type, "E")
+        XCTAssertEqual(recorder.last?.textPayload, "EFBIG:image too large")
         XCTAssertEqual(host.begun.count, 0)
     }
 

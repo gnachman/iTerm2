@@ -33,12 +33,19 @@ final class KittyDnDRemoteDragFetch {
         var maxBytes = 2 * 1024 * 1024 * 1024
     }
 
+    /// The result of a fetch. On failure the protocol error code lets the caller
+    /// send the right t=E (EMFILE for a resource-limit breach, EIO otherwise).
+    enum Outcome {
+        case success([URL])
+        case failure(code: String)
+    }
+
     private let tempDir: URL
     private let topLevelNames: [String]
     private let send: (KittyDnDMessage) -> Void
     private let limits: Limits
     private let timeout: TimeInterval
-    private var completion: (([URL]?) -> Void)?
+    private var completion: ((Outcome) -> Void)?
 
     // Destination path for each 1-based top-level entry, and the local URL of
     // each one actually materialized (a file or a directory; a skipped symlink or
@@ -62,7 +69,7 @@ final class KittyDnDRemoteDragFetch {
     // caller does not delete the temp dir out from under a write that would
     // recreate it (leaking the recreated tree).
     private var activeWrites = 0
-    private var deferredResult: [URL]??
+    private var deferredResult: Outcome?
     // The pending idle-timeout, canceled and replaced on each unit of progress so
     // stale timers do not pile up during a large transfer.
     private var idleWorkItem: DispatchWorkItem?
@@ -77,7 +84,7 @@ final class KittyDnDRemoteDragFetch {
          limits: Limits = Limits(),
          timeout: TimeInterval = 30,
          send: @escaping (KittyDnDMessage) -> Void,
-         completion: @escaping ([URL]?) -> Void) {
+         completion: @escaping (Outcome) -> Void) {
         self.tempDir = tempDir
         self.topLevelNames = topLevelNames
         self.limits = limits
@@ -90,7 +97,7 @@ final class KittyDnDRemoteDragFetch {
     /// unsolicited afterward.
     func start() {
         guard !topLevelNames.isEmpty else {
-            finish([])
+            finish(.success([]))
             return
         }
         pending = topLevelNames.count
@@ -121,7 +128,7 @@ final class KittyDnDRemoteDragFetch {
         idleWorkItem?.cancel()
         let item = DispatchWorkItem { [weak self] in
             guard let self, !self.finished else { return }
-            self.finish(nil)
+            self.finish(.failure(code: "EIO:remote drag-out stalled"))
         }
         idleWorkItem = item
         DispatchQueue.main.asyncAfter(deadline: .now() + timeout, execute: item)
@@ -133,7 +140,7 @@ final class KittyDnDRemoteDragFetch {
         guard !finished else { return }
         entryCount += 1
         if entryCount > limits.maxEntries {
-            finish(nil)
+            finish(.failure(code: "EMFILE"))
             return
         }
         // Charge every payload (directory listings included) against the byte
@@ -141,7 +148,7 @@ final class KittyDnDRemoteDragFetch {
         let payload = message.dataPayload ?? Data()
         totalBytes += payload.count
         if totalBytes > limits.maxBytes {
-            finish(nil)
+            finish(.failure(code: "EMFILE"))
             return
         }
         guard let dest = resolveDest(message), let slot = slotKey(message) else {
@@ -181,7 +188,7 @@ final class KittyDnDRemoteDragFetch {
             // Bound the declared child count so a program cannot inflate the
             // outstanding set without bound.
             if pending + names.count > limits.maxEntries {
-                finish(nil)
+                finish(.failure(code: "EMFILE"))
                 return
             }
             handleDir[typeFlag] = dest
@@ -220,10 +227,10 @@ final class KittyDnDRemoteDragFetch {
         entryFailed(topLevelIndex: topLevelIndex(of: message))
     }
 
-    /// Abandon the fetch (a reset or a superseding offer). Resumes the caller with
-    /// nil so it can clean up.
+    /// Abandon the fetch (a reset or a superseding offer). The caller discards the
+    /// result on a generation mismatch, so the code here is not surfaced.
     func abort() {
-        finish(nil)
+        finish(.failure(code: "EIO"))
     }
 
     // MARK: - Private
@@ -242,12 +249,15 @@ final class KittyDnDRemoteDragFetch {
         return nil
     }
 
-    /// A stable key identifying the entry a message addresses, for dedup.
+    /// A stable key identifying the entry a message addresses, for dedup. Built
+    /// from the PARSED integers (the same values resolveDest uses), so that two
+    /// spellings of the same address (e.g. x=1 and x=01) map to one slot and
+    /// cannot both pass the seen-set guard and double-count.
     private func slotKey(_ message: KittyDnDMessage) -> String? {
-        if let parent = message.metadata["Y"], let num = message.metadata["y"] {
+        if let parent = message.intValue("Y"), let num = message.intValue("y") {
             return "Y=\(parent):y=\(num)"
         }
-        if let idx = message.metadata["x"] {
+        if let idx = message.intValue("x") {
             return "x=\(idx)"
         }
         return nil
@@ -281,11 +291,11 @@ final class KittyDnDRemoteDragFetch {
         pending -= 1
         if pending <= 0 {
             let ordered = topLevelNames.indices.compactMap { topLevelURL[$0 + 1] }
-            finish(ordered)
+            finish(.success(ordered))
         }
     }
 
-    private func finish(_ urls: [URL]?) {
+    private func finish(_ outcome: Outcome) {
         guard !finished else { return }
         finished = true
         idleWorkItem?.cancel()
@@ -293,21 +303,21 @@ final class KittyDnDRemoteDragFetch {
         if activeWrites > 0 {
             // Wait for in-flight writes so the caller does not remove the temp dir
             // while a write is still creating files in it.
-            deferredResult = .some(urls)
+            deferredResult = outcome
             return
         }
-        deliver(urls)
+        deliver(outcome)
     }
 
     private func deliverDeferredIfDrained() {
-        guard activeWrites == 0, let urls = deferredResult else { return }
+        guard activeWrites == 0, let outcome = deferredResult else { return }
         deferredResult = nil
-        deliver(urls)
+        deliver(outcome)
     }
 
-    private func deliver(_ urls: [URL]?) {
+    private func deliver(_ outcome: Outcome) {
         let completion = self.completion
         self.completion = nil
-        completion?(urls)
+        completion?(outcome)
     }
 }

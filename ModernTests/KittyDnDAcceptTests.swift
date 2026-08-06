@@ -552,6 +552,52 @@ final class KittyDnDAcceptTests: XCTestCase {
         XCTAssertEqual(resp?.textPayload, "ENOENT")
     }
 
+    // A t=r carrying y but no x/Y is a malformed sub-index request, not the
+    // completion signal; it must draw EINVAL and NOT clear the drop.
+    func testSubIndexRequestWithMissingIndexIsEINVAL() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.performDrop(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0, operations: 1,
+                      drop: FakeDropData(mimeTypes: ["text/plain"], dataByIndex: [1: Data("x".utf8)]))
+        c.handleInboundSequence("t=r:y=1")
+        XCTAssertEqual(recorder.last?.type, "R")
+        XCTAssertEqual(recorder.last?.textPayload, "EINVAL")
+        XCTAssertNil(c.lastCompletedDropOperation)  // not treated as completion
+    }
+
+    // AppKit delivers periodic stationary hover updates; identical moves must not
+    // be re-sent over the pty.
+    func testStationaryHoverMovesAreDeduped() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.dragEntered(cellX: 1, cellY: 1, pixelX: 2, pixelY: 3,
+                      operations: 1, mimeTypes: ["text/plain"])
+        func moveCount() -> Int { recorder.messages.filter { $0.type == "m" }.count }
+        XCTAssertEqual(moveCount(), 1)
+        c.dragMoved(cellX: 1, cellY: 1, pixelX: 2, pixelY: 3, operations: 1)  // identical
+        c.dragMoved(cellX: 1, cellY: 1, pixelX: 2, pixelY: 3, operations: 1)  // identical
+        XCTAssertEqual(moveCount(), 1, "duplicate stationary moves must be dropped")
+        c.dragMoved(cellX: 2, cellY: 1, pixelX: 2, pixelY: 3, operations: 1)  // moved
+        XCTAssertEqual(moveCount(), 2)
+    }
+
+    // Before the program replies, the OS operation is optimistically the offered
+    // one (so a fast drop is accepted, not sprung back); an explicit o=0 refuses.
+    func testOptimisticDropOperationBeforeReply() {
+        let recorder = Recorder()
+        let c = makeController(endpoint: FakeEndpoint(isRemoteHost: false), recorder: recorder)
+        c.handleInboundSequence("t=a;text/plain")
+        c.dragEntered(cellX: 0, cellY: 0, pixelX: 0, pixelY: 0,
+                      operations: 2, mimeTypes: ["text/plain"])
+        XCTAssertEqual(c.osDragOperation, 2, "no reply yet -> optimistic offered op (move)")
+        c.handleInboundSequence("t=m:o=1")
+        XCTAssertEqual(c.osDragOperation, 1, "program's reply wins")
+        c.handleInboundSequence("t=m:o=0")
+        XCTAssertEqual(c.osDragOperation, 0, "explicit refuse")
+    }
+
     // MARK: - Machine-id version (#6)
 
     // A machine id with a version we do not understand ("2:...") must be treated

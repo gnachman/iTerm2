@@ -129,7 +129,7 @@ class KittyDnDBridge: NSObject {
     /// (o=0); copy for o=1; move for o=2. PTYTextView returns this from
     /// draggingEntered/Updated and refuses the drop when it is none.
     @objc var forwardedDragOperation: NSDragOperation {
-        switch controller.acceptedDropOperation {
+        switch controller.osDragOperation {
         case 1: return .copy
         case 2: return .move
         default: return []

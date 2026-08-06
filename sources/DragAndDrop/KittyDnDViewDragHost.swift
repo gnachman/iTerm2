@@ -24,12 +24,12 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
     private weak var dataSource: KittyDnDBridgeDataSource?
     weak var controller: KittyDnDController?
 
-    /// The window the drag-out originates from. A drop whose NSDraggingSource is a
-    /// KittyDnDViewDragHost with this same window is a same-window self-drag, which
-    /// the spec requires be refused (EPERM).
-    @objc var sourceWindow: NSWindow? {
-        return dataSource?.kittyDnDView?.window
-    }
+    /// The window number the drag-out originated from, captured at drag start so
+    /// it survives the source view later losing its window. A drop whose
+    /// NSDraggingSource is a KittyDnDViewDragHost with this same window number is a
+    /// same-window self-drag, which the spec requires be refused (EPERM). 0 means
+    /// no drag is in progress.
+    @objc private(set) var originWindowNumber: Int = 0
 
     /// The mouse event that started the gesture, captured when the terminal told
     /// the program about it. Used to begin the drag once the program says go.
@@ -49,11 +49,11 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
             // No stored gesture: the drag request came without (or after) one.
             return .gestureGone
         }
-        // Refuse a stale gesture: a real drag-out holds the mouse button down
-        // through the t=o / t=P round trip, so no button being pressed means the
-        // gesture already ended. Without this a program could start a phantom drag
-        // from a long-dead event at a moment of its choosing.
-        guard NSEvent.pressedMouseButtons != 0 else {
+        // Refuse a stale gesture: a real drag-out holds THE SAME mouse button down
+        // through the t=o / t=P round trip. Checking that specific button (not just
+        // any button being pressed, which a later unrelated click would satisfy)
+        // stops a program starting a phantom drag from a long-dead event.
+        guard Self.gestureIsLive(event) else {
             pendingEvent = nil
             return .gestureGone
         }
@@ -62,6 +62,7 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
             return .failed
         }
         currentOperations = offer.operations
+        originWindowNumber = view.window?.windowNumber ?? 0
         view.beginDraggingSession(with: items, event: event, source: self)
         return .started
     }
@@ -77,7 +78,13 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
     }
 
     var hasLiveGesture: Bool {
-        return pendingEvent != nil && NSEvent.pressedMouseButtons != 0
+        guard let event = pendingEvent else { return false }
+        return Self.gestureIsLive(event)
+    }
+
+    /// Whether the specific mouse button that started `event` is still pressed.
+    private static func gestureIsLive(_ event: NSEvent) -> Bool {
+        return (NSEvent.pressedMouseButtons & (1 << event.buttonNumber)) != 0
     }
 
     // MARK: - Building the drag items
@@ -281,5 +288,6 @@ final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {
             controller?.dragFinished(canceled: false)
         }
         pendingEvent = nil
+        originWindowNumber = 0
     }
 }

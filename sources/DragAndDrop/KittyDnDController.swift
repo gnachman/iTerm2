@@ -52,6 +52,25 @@ final class KittyDnDController {
     // replied yet, in which case the drop is not (yet) accepted. Reset when a drag
     // enters or leaves.
     private(set) var acceptedDropOperation: Int?
+
+    /// The drag operation to advertise to the OS (kitty op: 0 not accepted, 1 copy,
+    /// 2 move). If the program has replied (t=m:o) we honor it; otherwise we
+    /// optimistically report the offered operation so a fast drop released before
+    /// the reply's pty round trip completes is accepted rather than springing back.
+    /// A drop is only refused when the program explicitly answered 0.
+    var osDragOperation: Int {
+        if let op = acceptedDropOperation {
+            return op
+        }
+        let offered = lastReportedMove?.operations ?? 1
+        return offered == 2 ? 2 : 1   // 3 (either) or 1 -> copy
+    }
+
+    // The last hover (t=m) report we sent, to suppress duplicate stationary moves.
+    private struct MoveReport: Equatable {
+        var cellX, cellY, pixelX, pixelY, operations: Int
+    }
+    private var lastReportedMove: MoveReport?
     private var peerMachineID: String?
     private var currentDrop: KittyDnDDropData?
     // Whether the current drop originated from our own drag-out in this same
@@ -118,6 +137,9 @@ final class KittyDnDController {
     /// so a program that re-lists directories in a loop cannot grow memory without
     /// bound. Beyond this a directory request is answered with ENOMEM.
     private static let maxDirectoryHandles = 512
+    /// Cap on a single dropped file we will stream to a program (t=r). Beyond this
+    /// we answer EFBIG rather than paging gigabytes through the pty write buffer.
+    private static let maxServedFileBytes = 2 * 1024 * 1024 * 1024
 
     /// The primary drag thumbnail (index -1, else the first provided).
     private var primaryOfferImage: KittyDnDDragImage? {
@@ -338,12 +360,22 @@ final class KittyDnDController {
         nextDirectoryHandle = 2
         inFlightEntryRequests.removeAll()
         uriListRequested = false
+        lastReportedMove = MoveReport(cellX: cellX, cellY: cellY, pixelX: pixelX,
+                                      pixelY: pixelY, operations: operations)
         sendMoveOrDrop(type: "m", cellX: cellX, cellY: cellY, pixelX: pixelX,
                        pixelY: pixelY, operations: operations, mimeTypes: mimeTypes)
     }
 
     func dragMoved(cellX: Int, cellY: Int, pixelX: Int, pixelY: Int, operations: Int) {
         guard isAcceptingDrops else { return }
+        // AppKit delivers periodic hover updates (~10/sec) even while the pointer
+        // is stationary; skip a move that is identical to the last reported one so
+        // we do not stream a train of duplicate t=m over the pty (sustained ssh
+        // traffic and remote wakeups for zero information).
+        let move = MoveReport(cellX: cellX, cellY: cellY, pixelX: pixelX,
+                              pixelY: pixelY, operations: operations)
+        guard move != lastReportedMove else { return }
+        lastReportedMove = move
         sendMoveOrDrop(type: "m", cellX: cellX, cellY: cellY, pixelX: pixelX,
                        pixelY: pixelY, operations: operations, mimeTypes: nil)
     }
@@ -352,6 +384,7 @@ final class KittyDnDController {
         guard isAcceptingDrops else { return }
         // The drag left; a re-enter starts a fresh acceptance negotiation.
         acceptedDropOperation = nil
+        lastReportedMove = nil
         sendMoveOrDrop(type: "m", cellX: -1, cellY: -1, pixelX: 0, pixelY: 0,
                        operations: 0, mimeTypes: nil)
     }
@@ -396,12 +429,12 @@ final class KittyDnDController {
     // MARK: - Data request handling
 
     private func handleDataRequest(_ message: KittyDnDMessage) {
-        // A t=r with no addressing keys (x / Y) is the drop-completion signal: the
-        // program has finished reading (spec: "a request for data with no MIME
-        // type specified"). o defaults to 0 = canceled when absent. It is not a
-        // data request, so it must not draw an error; discard the per-drop state
-        // and any queued directory handles.
-        if message.metadata["x"] == nil, message.metadata["Y"] == nil {
+        // A t=r with NO addressing keys (x / y / Y) is the drop-completion signal:
+        // the program has finished reading (spec: "a request for data with no MIME
+        // type specified"). o defaults to 0 = canceled when absent. A message that
+        // carries y is an attempted (malformed) sub-index request, not completion.
+        if message.metadata["x"] == nil, message.metadata["Y"] == nil,
+           message.metadata["y"] == nil {
             finishDrop(operation: message.intValue("o") ?? 0)
             return
         }
@@ -483,9 +516,14 @@ final class KittyDnDController {
             sendError(baseMetadata: ["Y": String(handle)], code: "EINVAL")
             return
         }
-        guard let num = message.intValue("x") else {
-            // No index: the program is done with this directory; free it.
+        // Only a request with the x key ABSENT is the free-handle form; a present
+        // but unparseable x is a malformed request, not a free.
+        if message.metadata["x"] == nil {
             directoryHandles.removeValue(forKey: handle)
+            return
+        }
+        guard let num = message.intValue("x") else {
+            sendError(baseMetadata: ["Y": String(handle)], code: "EINVAL")
             return
         }
         guard num >= 1, num <= children.count else {
@@ -525,10 +563,15 @@ final class KittyDnDController {
                 guard generation == self.acceptGeneration else { return }
                 switch entry {
                 case .regularFile(let data):
+                    guard data.count <= Self.maxServedFileBytes else {
+                        sendError(baseMetadata: responseMetadata, code: "EFBIG")
+                        return
+                    }
                     // Stream the (memory-mapped) file one chunk at a time so only a
-                    // single chunk's base64 is resident, not the whole file's.
-                    sendChunkedDataStreaming(baseMetadata: responseMetadata, data: data,
-                                             generation: generation)
+                    // single chunk's base64 is resident, not the whole file's, and
+                    // yielding so a huge file does not freeze the UI.
+                    await sendChunkedDataStreaming(baseMetadata: responseMetadata, data: data,
+                                                   generation: generation)
                 case .symlink(let target):
                     var metadata = responseMetadata
                     metadata["X"] = "1"
@@ -674,16 +717,28 @@ final class KittyDnDController {
     }
 
     private func handlePreSend(_ message: KittyDnDMessage) {
+        // Pre-sent data is only meaningful during an offer the program has
+        // DECLARED (t=o:o=...), which only happens after a live drag gesture. This
+        // gates the image branch too, so output the user merely cats cannot park
+        // data in offerImages without an active, gesture-backed offer.
+        guard !offerMimeTypes.isEmpty else {
+            return
+        }
         guard let index = message.intValue("x") else {
             return
         }
         let data = message.dataPayload ?? Data()
         if index < 0 {
             // Negative index: a drag thumbnail image (-1 first, -2 second, ...).
-            // Bound the number of thumbnails and the cumulative offer size; over
-            // budget aborts the drag with EFBIG (spec: too much data cancels it).
+            // Bound the number of thumbnails, per-image size, and cumulative offer
+            // size; over budget aborts the drag with EFBIG (spec: too much data
+            // cancels it).
             guard index >= -Self.maxOfferImages else {
                 rejectOffer(code: "EFBIG:too many images")
+                return
+            }
+            guard data.count <= Self.maxImageBytes else {
+                rejectOffer(code: "EFBIG:image too large")
                 return
             }
             let existing = offerImages[index]?.data.count ?? 0
@@ -913,7 +968,7 @@ final class KittyDnDController {
             .appendingPathComponent("iterm2-kittydnd-\(UUID().uuidString)")
 
         var fetchRef: KittyDnDRemoteDragFetch?
-        let localURLs: [URL]? = await withCheckedContinuation { continuation in
+        let outcome: KittyDnDRemoteDragFetch.Outcome = await withCheckedContinuation { continuation in
             let fetch = KittyDnDRemoteDragFetch(
                 tempDir: tempDir,
                 topLevelNames: names,
@@ -934,9 +989,19 @@ final class KittyDnDController {
             Self.removeItemOffMainThread(tempDir)
             return
         }
-        guard let localURLs, !localURLs.isEmpty else {
-            // Aborted, resource-limited, or nothing usable (e.g. all symlinks).
+        let localURLs: [URL]
+        switch outcome {
+        case .success(let urls) where !urls.isEmpty:
+            localURLs = urls
+        case .success:
+            // Nothing usable (e.g. all symlinks).
             send(KittyDnDMessage(metadata: ["t": "E"], textPayload: "EIO:no usable files"))
+            Self.removeItemOffMainThread(tempDir)
+            resetOfferInProgress()
+            return
+        case .failure(let code):
+            // A resource-limit breach (EMFILE), stall, or IO error: report the code.
+            send(KittyDnDMessage(metadata: ["t": "E"], textPayload: code))
             Self.removeItemOffMainThread(tempDir)
             resetOfferInProgress()
             return
@@ -1178,11 +1243,12 @@ final class KittyDnDController {
     /// the drop generation between chunks so a completed/superseded drop stops the
     /// stream promptly.
     private func sendChunkedDataStreaming(baseMetadata: [String: String], data: Data,
-                                          generation: Int) {
+                                          generation: Int) async {
         var metadata = baseMetadata
         metadata["t"] = "r"
         let windowSize = KittyDnDChunker.maxRawChunkSize
         var offset = 0
+        var sinceYield = 0
         while offset < data.count {
             guard generation == acceptGeneration else { return }
             let end = min(offset + windowSize, data.count)
@@ -1190,6 +1256,14 @@ final class KittyDnDController {
             chunk["m"] = "1"
             send(KittyDnDMessage(metadata: chunk, dataPayload: data.subdata(in: offset..<end)))
             offset = end
+            // Yield periodically so a huge file does not monopolize the main actor
+            // (freezing the UI) and so the generation check above can actually fire
+            // after a reset/cancel that happened during the transfer.
+            sinceYield += 1
+            if sinceYield >= 256 {
+                sinceYield = 0
+                await Task.yield()
+            }
         }
         guard generation == acceptGeneration else { return }
         // End of data: empty payload with m=0.
