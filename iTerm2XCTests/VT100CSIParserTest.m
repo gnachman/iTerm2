@@ -513,4 +513,57 @@
     XCTAssert(token->type == VT100_UNKNOWNCHAR);
 }
 
+- (void)testMaximumNumberOfParameters {
+    // VT100CSIPARAM_MAX is 16, and all 16 slots should be usable.
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16m",
+                         VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_SGR);
+    XCTAssert(token.csi->count == 16);
+    XCTAssert(token.csi->p[15] == 16);
+}
+
+- (void)testParametersPastTheMaximumAreDiscarded {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16;17m",
+                         VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_SGR);
+    XCTAssert(token.csi->count == 16);
+    XCTAssert(token.csi->p[15] == 16);
+}
+
+- (void)testSubparametersOfADiscardedParameterDoNotAttachToTheLastOneKept {
+    // The 17th parameter doesn't fit. Its subparameter must be discarded with it: attaching it to
+    // the 16th parameter would turn plain underline (4) into dashed underline (4:5).
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;4;3:5m",
+                         VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_SGR);
+    XCTAssert(token.csi->count == 16);
+    XCTAssert(token.csi->p[15] == 4);
+    XCTAssert(iTermParserGetNumberOfCSISubparameters(token.csi, 15) == 0);
+}
+
+- (void)testSubparametersOfTheSixteenthParameter {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;38:2:255:0:0m",
+                         VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_SGR);
+    XCTAssert(token.csi->count == 16);
+    XCTAssert(token.csi->p[15] == 38);
+
+    int subs[VT100CSISUBPARAM_MAX];
+    const int numberOfSubparameters = iTermParserGetAllCSISubparametersForParameter(token.csi, 15, subs);
+    XCTAssert(numberOfSubparameters == 4);
+    XCTAssert(subs[0] == 2);
+    XCTAssert(subs[1] == 255);
+    XCTAssert(subs[2] == 0);
+    XCTAssert(subs[3] == 0);
+}
+
+- (void)testGetCSISubparameterByIndex {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[4:1:2:3m", VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_SGR);
+    XCTAssert(iTermParserGetCSISubparameter(token.csi, 0, 0) == 1);
+    XCTAssert(iTermParserGetCSISubparameter(token.csi, 0, 1) == 2);
+    XCTAssert(iTermParserGetCSISubparameter(token.csi, 0, 2) == 3);
+    XCTAssert(iTermParserGetCSISubparameter(token.csi, 0, 3) == -1);
+}
+
 @end

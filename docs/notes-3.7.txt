@@ -69,11 +69,14 @@ Major New Features:
   they harmonize with any theme. Off by
   default.
 
-- Fixed a bug where an SGR trigger whose
-  parameter list had 16 entries dropped the
-  last one, and attached its subparameters
-  (such as the components of a 24-bit color)
-  to the preceding parameter.
+- Fixed a bug where an SGR sequence or SGR
+  trigger with more parameters than fit
+  attached the extra parameters’
+  subparameters to the last parameter that
+  did fit, changing its meaning: underline
+  could turn into dashed underline. SGR
+  triggers also silently dropped their 16th
+  parameter.
 
 - Fixed a bug where toolbelt lists
   (Command History, Recent Directories,
