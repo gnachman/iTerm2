@@ -5234,6 +5234,13 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     // Option press or a program toggling accept cannot divert it to legacy paste.
     iTermKittyDnDBridge *kittyBridge = [self latchedKittyDragBridge];
     _kittyDragRoutedForCurrentDrag = NO;  // the drag is over; clear the latch
+    // Honor the Option escape hatch at drop time (macOS resolves drag modifiers
+    // continuously, and the release note promises "hold Option while dropping"):
+    // tell the program the drag left, then fall through to the legacy path.
+    if (kittyBridge && ([NSEvent modifierFlags] & NSEventModifierFlagOption)) {
+        [kittyBridge draggingExited];
+        kittyBridge = nil;
+    }
     if (kittyBridge) {
         // The program must have accepted the drop (a nonzero operation in its
         // t=m:o reply). If it rejected, has not replied, or stopped accepting
@@ -5258,7 +5265,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         BOOL sameWindowSelfDrag = NO;
         id draggingSource = [sender draggingSource];
         if ([draggingSource isKindOfClass:[iTermKittyDnDViewDragHost class]]) {
-            sameWindowSelfDrag = ([(iTermKittyDnDViewDragHost *)draggingSource sourceWindow] == self.window);
+            // Compare the source's CAPTURED origin window number (survives the
+            // source view losing its window) to this view's window.
+            const NSInteger origin = [(iTermKittyDnDViewDragHost *)draggingSource originWindowNumber];
+            sameWindowSelfDrag = (origin != 0 && origin == self.window.windowNumber);
         }
         [kittyBridge performDropWithCellX:coord.x
                                     cellY:coord.y

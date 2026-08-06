@@ -267,6 +267,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     dragOk_ = YES;
     _committedToDrag = NO;
     _kittyDragOfferStarted = NO;
+    // If a previous gesture's mouseUp was swallowed (a modal panel/alert or menu
+    // tracking opened mid-drag), the drag host still holds the stale pending event.
+    // Tell it to forget it before we drop our own reference, so a program's t=P
+    // cannot start a phantom drag from it.
+    if (_kittyDragGestureEvent) {
+        [self.mouseDelegate mouseHandlerKittyDragGestureDidEnd:self];
+    }
     _kittyDragGestureEvent = nil;
     if (cmdPressed) {
         if (![self.mouseDelegate mouseHandlerViewHasFocus:self]) {
