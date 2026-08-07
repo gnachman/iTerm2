@@ -899,6 +899,12 @@ Settings Improvements:
   changes.
 
 Bug Fixes:
+- Fixed a multi-second hang that could occur
+  when a window changed appearance (for example
+  when another app or a second iTerm2 instance
+  stole focus) while in traditional fullscreen.
+  Setting a window to its current appearance no
+  longer re-triggers a refresh loop.
 - On macOS Tahoe, dark-theme selected tabs no
   longer draw their chrome at a fixed image
   height while the tab cell uses a different

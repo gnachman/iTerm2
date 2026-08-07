@@ -934,8 +934,12 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 }
 
 - (void)viewDidChangeEffectiveAppearance NS_AVAILABLE_MAC(10_14) {
+    RLog(@"iTermRootTerminalView viewDidChangeEffectiveAppearance -> %@ (window key=%@ main=%@ appActive=%@)",
+         self.effectiveAppearance.name,
+         @(self.window.isKeyWindow), @(self.window.isMainWindow), @(NSApp.isActive));
     // This can be called from within -[NSWindow setStyleMask:]
     dispatch_async(dispatch_get_main_queue(), ^{
+        RLog(@"iTermRootTerminalView appearance-change block -> rootTerminalViewDidChangeEffectiveAppearance");
         [self.delegate rootTerminalViewDidChangeEffectiveAppearance];
     });
     [self updateBorderViews];

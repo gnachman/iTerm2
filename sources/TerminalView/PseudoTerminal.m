@@ -8204,6 +8204,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         _desiredAppearance = [appearance retain];
         return;
     }
+    NSAppearance *current = self.window.appearance;
+    if (current == appearance || [current.name isEqual:appearance.name]) {
+        // Setting the window's appearance to its current value still causes AppKit to
+        // recompute effective appearance and fire -viewDidChangeEffectiveAppearance, which
+        // calls back into -refreshTerminal: and can spin for many seconds (especially in
+        // traditional fullscreen, where each pass does a full-window setFrame:display:YES).
+        // Skip the redundant assignment to break that feedback loop.
+        RLog(@"Appearance already %@; skip redundant set", appearance.name);
+        return;
+    }
     RLog(@"Immediately set appearance to %@", appearance.name);
     self.window.appearance = appearance;
 }
@@ -10722,6 +10732,12 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (void)refreshTerminal:(NSNotification *)aNotification {
+    RLog(@"refreshTerminal: trigger=%@ effective=%@ desiredAppearance=%@ fullScreen=%@ lionFullScreen=%@ key=%@ main=%@ appActive=%@",
+         aNotification ? aNotification.name : @"(nil/internal)",
+         self.window.effectiveAppearance.name,
+         self.window.appearance.name,
+         @(self.fullScreen), @(self.lionFullScreen),
+         @(self.window.isKeyWindow), @(self.window.isMainWindow), @(NSApp.isActive));
     PtyLog(@"refreshTerminal - calling fitWindowToTabs");
     if (_settingStyleMask) {
         RLog(@"Prevent re-entrant style mask setting");
@@ -10888,6 +10904,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (void)rootTerminalViewDidChangeEffectiveAppearance {
+    RLog(@"rootTerminalViewDidChangeEffectiveAppearance -> refreshTerminal: (effective=%@)",
+         self.window.effectiveAppearance.name);
     [self refreshTerminal:nil];
 }
 
