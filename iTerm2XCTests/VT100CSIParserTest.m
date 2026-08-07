@@ -578,4 +578,26 @@
     XCTAssert(iTermParserGetCSISubparameter(token.csi, 0, 3) == -1);
 }
 
+- (void)testSubparameterAfterAFullParameterListBelongsToTheLastParameter {
+    // A parameter substring that starts with a colon doesn't open a parameter of its own, so this
+    // subparameter belongs to the 16th parameter, which was stored. Nothing overflowed, so it must
+    // be kept — the list being full is not by itself a reason to discard it.
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16;:5m",
+                         VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_SGR);
+    XCTAssert(token.csi->count == 16);
+    XCTAssert(iTermParserGetNumberOfCSISubparameters(token.csi, 15) == 1);
+    XCTAssert(iTermParserGetCSISubparameter(token.csi, 15, 0) == 5);
+}
+
+- (void)testSubparameterAfterADiscardedParameterIsDiscarded {
+    // Here the 17th parameter was discarded, so the subparameter that follows it belongs to a
+    // parameter that doesn't exist and must go with it rather than landing on the 16th.
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16;17;:5m",
+                         VT100CC_ESC];
+    XCTAssert(token->type == VT100CSI_SGR);
+    XCTAssert(token.csi->count == 16);
+    XCTAssert(iTermParserGetNumberOfCSISubparameters(token.csi, 15) == 0);
+}
+
 @end

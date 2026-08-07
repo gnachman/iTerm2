@@ -76,6 +76,12 @@ Major New Features:
   they harmonize with any theme. Off by
   default.
 
+- Fixed a bug where a subparameter written
+  after a full CSI parameter list was
+  dropped even though it belonged to a
+  parameter that had been stored, such as
+  the 16th.
+
 - Fixed a bug where an SGR sequence or SGR
   trigger with more parameters than fit
   attached the extra parameters’
