@@ -123,6 +123,7 @@ NSString *const kPreferenceKeyShowPaneTitles = @"ShowPaneTitles";
 NSString *const kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane = @"ShowPaneTitlesEvenIfOnlyOnePane";
 NSString *const kPreferenceKeyPerPaneBackgroundImage = @"PerPaneBackgroundImage";
 NSString *const kPreferenceKeyStretchTabsToFillBar = @"StretchTabsToFillBar";
+NSString *const kPreferenceKeyScrollableSideTabBar = @"ScrollableSideTabBar";
 NSString *const kPreferenceKeyHideMenuBarInFullscreen = @"HideMenuBarInFullscreen";
 NSString *const kPreferenceKeyUIElement = @"HideFromDockAndAppSwitcher";
 NSString *const kPreferenceKeyUIElementRequiresHotkeys = @"UIElementRequiresHotkeys";
@@ -802,6 +803,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
                   kPreferenceKeyHideTabActivityIndicator: @NO,
                   kPreferenceKeyShowNewOutputIndicator: @YES,
                   kPreferenceKeyStretchTabsToFillBar: @YES,
+                  kPreferenceKeyScrollableSideTabBar: @NO,
 
                   kPreferenceKeyShowPaneTitles: @YES,
                   kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane: @NO,

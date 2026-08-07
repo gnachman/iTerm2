@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermPreferences.h"
 #import "NSBezierPath+iTerm.h"
 #import "PSMTabBarCell.h"
 #import "PSMOverflowPopUpButton.h"
@@ -164,6 +165,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     // the top. Only meaningful when the scrollable vertical tab bar is enabled; otherwise tabs that
     // don't fit go into the overflow menu and this stays 0.
     CGFloat _verticalScrollOffset;
+
 
     // animation for hide/show
     int _currentStep;
@@ -1158,11 +1160,49 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
         [cell setIsLast:NO];
     }
     [[[self cells] lastObject] setIsLast:YES];
+
+    // The scrollable vertical bar scrolls cells past the top and bottom edges, and past the top they
+    // slide under the window decorations (stoplights, window number, shortcut indicator). Handle both
+    // by clipping the drawing region: nothing is painted in the decoration band or past the bottom, so
+    // no cell shows there. This is a pure drawing clip -- no clipsToBounds (which forces layer backing
+    // and makes the bar render opaque) and no background fill of our own (which would break the bar's
+    // transparency). The band just shows whatever is behind the control, same as an empty margin.
+    const BOOL scrollable = [self verticalTabBarIsScrollable];
+    const CGFloat topInset = scrollable ? [[self style] topMarginForTabBarControl] : 0;
+    const CGFloat cellHeight = scrollable ? [self verticalCellHeight] : 0;
+    const CGFloat maximumOffset = (scrollable && cellHeight > 0
+                                   ? [self maximumVerticalScrollOffsetForCellHeight:cellHeight
+                                                                          cellCount:(NSInteger)_cells.count]
+                                   : 0);
+    const BOOL cutOffDecorationBand = (scrollable && _verticalScrollOffset > 0 && topInset > 0);
+    // Only clip when tabs actually overflow the bar; with everything visible there is nothing to clip.
+    const BOOL needClip = (scrollable && maximumOffset > 0);
+
+    if (cutOffDecorationBand) {
+        // Paint the bar's normal background into the decoration band (source-over, so it composites
+        // over the vibrancy or transparent window exactly like the empty top margin does). The cells
+        // are then clipped out of this band below, so nothing but bar background shows there.
+        [_style drawBackgroundInRect:NSMakeRect(0, 0, self.bounds.size.width, topInset)
+                               color:[[self style] backgroundColorSelected:NO highlightAmount:0]
+                          horizontal:(_orientation == PSMTabBarHorizontalOrientation)];
+    }
+
+    if (needClip) {
+        [NSGraphicsContext saveGraphicsState];
+        // Below the decoration band when scrolled up under it; otherwise the whole bounds (to clip
+        // cells scrolled past the bottom edge).
+        NSRectClip(cutOffDecorationBand
+                   ? NSMakeRect(0, topInset, self.bounds.size.width, self.bounds.size.height - topInset)
+                   : self.bounds);
+    }
     [_style drawTabBar:self
                 inRect:self.bounds
               clipRect:rect
             horizontal:(_orientation == PSMTabBarHorizontalOrientation)
           withOverflow:_lainOutWithOverflow];
+    if (needClip) {
+        [NSGraphicsContext restoreGraphicsState];
+    }
 
 #if PSM_DEBUG_DRAG_PERFORMANCE
     CFAbsoluteTime end = CFAbsoluteTimeGetCurrent();
@@ -1226,12 +1266,16 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 // they stay in the bar and the scroll wheel moves through them instead.
 - (BOOL)verticalTabBarIsScrollable {
     return (_orientation == PSMTabBarVerticalOrientation &&
-            [iTermAdvancedSettingsModel scrollableVerticalTabBar]);
+            [iTermPreferences boolForKey:kPreferenceKeyScrollableSideTabBar]);
+}
+
+- (CGFloat)verticalScrollOffset {
+    return _verticalScrollOffset;
 }
 
 // Height of one vertical cell. Every cell in a vertical bar is the same height.
 - (CGFloat)verticalCellHeight {
-    return [self genericCellRectWithOverflow:(NO || _showAddTabButton)].size.height;
+    return [self genericCellRectWithOverflow:_showAddTabButton].size.height;
 }
 
 // How far you can scroll before the last tab sits at the bottom of the bar. 0 when everything fits.
@@ -1277,6 +1321,9 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     }
     _verticalScrollOffset = clamped;
     [self update:NO];
+    // Cells moved under a stationary cursor, so tracking areas didn't fire. Re-sync hover/highlight
+    // state to the cells now under the mouse.
+    [self updateTrackingAreas];
 }
 
 // Keeps the selected tab on screen -- e.g. after cmd-shift-[ walks past the top edge, or when a tab
@@ -1301,9 +1348,14 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     const CGFloat viewportHeight = [self frame].size.height;
 
     CGFloat offset = _verticalScrollOffset;
-    if (cellTop < offset) {
-        offset = cellTop;
-    } else if (cellBottom > offset + viewportHeight) {
+    // The region not hidden by the window decorations is [topMargin, viewportHeight] on screen, and a
+    // cell's on-screen top is (cellTop - offset). Bring the whole cell into that region so an activated
+    // tab ends up fully visible rather than tucked under the decorations.
+    if (cellTop - offset < topMargin) {
+        // Under the decorations or scrolled off the top: put the cell's top just below them.
+        offset = cellTop - topMargin;
+    } else if (cellBottom - offset > viewportHeight) {
+        // Below the bottom edge: bring the cell's bottom up to the bottom edge.
         offset = cellBottom - viewportHeight;
     } else {
         return;
@@ -1316,6 +1368,35 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     }
     _verticalScrollOffset = offset;
     [self update:NO];
+    // Cells moved under a stationary cursor, so tracking areas didn't fire. Re-sync hover/highlight.
+    [self updateTrackingAreas];
+}
+
+// Per-cell accessory subviews (the activity spinner, custom download progress bars) draw on top of
+// drawRect:, so the drawRect clip cannot cover them. A clipping container is not an option here:
+// clipsToBounds forces layer backing, which makes the bar render opaque over a transparent window. So
+// instead, after every layout pass has positioned its subviews, hide any accessory whose final frame
+// reaches above the decoration band or below the bottom edge. Runs last so nothing added or moved
+// after _setupCells can leak one out of the scrollable region.
+- (void)hideAccessoriesOutsideScrollRegion {
+    if (![self verticalTabBarIsScrollable]) {
+        return;
+    }
+    const CGFloat topInset = [[self style] topMarginForTabBarControl];
+    const CGFloat bottom = self.bounds.size.height;
+    for (PSMTabBarCell *cell in _cells) {
+        NSView *indicator = [cell indicator];
+        if (indicator.superview == self &&
+            (NSMinY(indicator.frame) < topInset || NSMaxY(indicator.frame) > bottom)) {
+            [indicator removeFromSuperview];
+        }
+    }
+    for (NSView *progressBar in _tabProgressBars.objectEnumerator) {
+        if (progressBar.superview == self && !progressBar.isHidden &&
+            (NSMinY(progressBar.frame) < topInset || NSMaxY(progressBar.frame) > bottom)) {
+            progressBar.hidden = YES;
+        }
+    }
 }
 
 - (void)update:(BOOL)animate {
@@ -1437,11 +1518,8 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 
         if ([self verticalTabBarIsScrollable]) {
             // Give every cell an origin, shifted up by the scroll offset. Cells above or below the
-            // visible rect just get off-screen frames and are clipped when drawn, so nothing lands
-            // in the overflow menu -- the scroll wheel reaches them instead.
-            // NSView.clipsToBounds defaults to NO on macOS 14+, so ask for clipping explicitly or
-            // the scrolled-away tabs paint over the window's chrome.
-            self.clipsToBounds = YES;
+            // visible rect just get off-screen frames and are clipped when drawn (see the drawRect:
+            // clip), so nothing lands in the overflow menu -- the scroll wheel reaches them instead.
             [self clampVerticalScrollOffsetForCellHeight:cellRect.size.height cellCount:cellCount];
             currentOrigin -= _verticalScrollOffset;
             for (int i = 0; i < cellCount; ++i) {
@@ -1466,6 +1544,7 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     }
 
     [self syncTabProgressBars];
+    [self hideAccessoriesOutsideScrollRegion];
     [self setNeedsDisplay:YES];
 }
 
@@ -1868,7 +1947,8 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
             [cell setTabState:tabState];
             [cell setIsInOverflowMenu:NO];
 
-            // indicator
+            // indicator (accessories outside the scroll region are hidden later by
+            // hideAccessoriesOutsideScrollRegion)
             if (![[cell indicator] isHidden] && !_hideIndicators) {
                 [[cell indicator] setFrame:[cell indicatorRectForFrame:cellRect]];
                 if (![[self subviews] containsObject:[cell indicator]]) {
@@ -2708,6 +2788,10 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         }
         i++;
     }
+
+    // A newly created tab is selected before its cell exists, so tabView:didSelectTabViewItem:
+    // could not scroll it into view yet. Now that the cell exists, do it here.
+    [self scrollSelectedTabIntoView];
 
     // pass along for other delegate responses
     if ([[self delegate] respondsToSelector:@selector(tabViewDidChangeNumberOfTabViewItems:)]) {

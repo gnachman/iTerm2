@@ -46,6 +46,13 @@ Major New Features:
   bitrate multiplier and the flow-control
   back-off thresholds.
 
+- A new setting in Settings > Appearance makes
+  the side tab bar scrollable. When the tab bar
+  is on the left or right and has more tabs than
+  fit, instead of moving the extras into the
+  “More tabs” overflow menu they stay in the bar
+  and you scroll to reach them. Off by default.
+
 - iTerm2 now probes the local network on
   every launch so macOS keeps it in the
   Local Network privacy list. This recovers
