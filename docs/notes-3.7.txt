@@ -2635,3 +2635,8 @@ Bug Fixes:
 - Fixed a workgroup whose tab (or split) hosts
   its own peer group coming up with no toolbar
   and no peer switcher.
+- Workgroup peers nested inside a tab or split
+  now inherit their profile and directory from
+  the session the workgroup was opened on, so a
+  workgroup opened on a remote host keeps every
+  peer on that host.

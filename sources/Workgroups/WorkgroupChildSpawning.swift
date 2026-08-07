@@ -94,6 +94,16 @@ extension iTermWorkgroupInstance {
         let peerConfigs = [config] + peerChildren
         var peers: [String: iTermPromise<PTYSession>] = [:]
         peers[config.uniqueIdentifier] = iTermPromise<PTYSession>(value: session)
+        // Peers inherit their profile, working directory, and size from
+        // the session that existed before the workgroup was entered (the
+        // main session), so a workgroup opened on a remote host or in a
+        // specific profile spawns all its peers there too. `parent` is
+        // only the host's immediate config-parent — for a peer group
+        // nested two or more levels deep that's an intermediate spawned
+        // pane, not the entry session, so use mainSession directly. (At
+        // depth 1 the two coincide.) Fall back to `parent` only if the
+        // main session has already gone away mid-spawn.
+        let peerBasis = mainSession ?? parent
         for peer in peerChildren {
             // .diff peers resolve gitBase at fire time; see the
             // matching spawnSplit/spawnTab/enter branches.
@@ -101,7 +111,7 @@ extension iTermWorkgroupInstance {
                 ? peer
                 : peer.substitutingGitBase(currentGitBase)
             peers[peer.uniqueIdentifier] =
-                spawner.spawnPeer(parent: parent,
+                spawner.spawnPeer(parent: peerBasis,
                                   config: configToSpawn,
                                   workgroupInstanceID: instanceUniqueIdentifier)
         }

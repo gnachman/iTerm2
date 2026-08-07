@@ -350,6 +350,47 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
                        "Tab peer-host returned an empty toolbar; its peer switcher would be missing")
     }
 
+    // §4.2c — a peer group nested two levels deep spawns its peers from
+    // the entry (main) session, not the intermediate host. Peers inherit
+    // their profile / working directory / size from the session that
+    // existed before the workgroup was entered (e.g. so a workgroup
+    // opened on a remote host puts every peer on that host), so the
+    // spawn basis must be mainSession regardless of nesting depth. At
+    // depth 1 the host's config-parent already IS mainSession; this
+    // covers the depth >= 2 case, where `parent` would otherwise be an
+    // intermediate spawned pane.
+    func test_4_2c_deeplyNestedPeersSpawnFromMainSession() {
+        let root = WGFix.makeRoot()
+        let outerTab = WGFix.makeTab(parentID: root.uniqueIdentifier,
+                                     displayName: "Outer")
+        let innerTab = WGFix.makeTab(parentID: outerTab.uniqueIdentifier,
+                                     items: [.modeSwitcher],
+                                     displayName: "Inner")
+        let peerA = WGFix.makePeer(parentID: innerTab.uniqueIdentifier,
+                                   displayName: "InnerPeerA")
+        let peerB = WGFix.makePeer(parentID: innerTab.uniqueIdentifier,
+                                   displayName: "InnerPeerB")
+        let wg = WGFix.wrap(name: "deepNestedPeers",
+                            sessions: [root, outerTab, innerTab, peerA, peerB])
+        enterWorkgroup(wg)
+
+        // The intermediate host (outer tab) is a spawned pane, not the
+        // entry session.
+        let outerLive = liveSession(forConfigID: outerTab.uniqueIdentifier)!
+        XCTAssertTrue(outerLive !== leader)
+
+        for peerID in [peerA.uniqueIdentifier, peerB.uniqueIdentifier] {
+            let record = spawner.records.first {
+                $0.kind == .peer && $0.config.uniqueIdentifier == peerID
+            }
+            XCTAssertNotNil(record, "Peer \(peerID) was never spawned")
+            XCTAssertTrue(record?.parent === leader,
+                          "Deeply-nested peer must inherit from the entry (main) session")
+            XCTAssertTrue(record?.parent !== outerLive,
+                          "Deeply-nested peer must not inherit from the intermediate host")
+        }
+    }
+
     // §4.3 — non-peer host with no peer children does NOT get a port.
     func test_4_3_noNestedPortForLeafSplit() {
         let wg = WGFix.wgRootWithSplits(n: 1, splitItems: [.reload(nil)])
