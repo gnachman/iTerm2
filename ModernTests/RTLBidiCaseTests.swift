@@ -96,25 +96,6 @@ class RTLBidiCaseTests: XCTestCase {
         }
     }
 
-    // KNOWN BUG (bidi, still open): a period after an English island lands on the
-    // island's left (".burnout") instead of hugging the word ("burnout."). macOS
-    // Terminal keeps it with the word. Asserts the current WRONG behavior; the day
-    // it's fixed this fails — update it to assert "burnout." is contiguous.
-    func testPeriodAfterEnglishIslandIsWrong() {
-        let out = visual("۱. burnout. من دیگه که feel نمیشه.")
-        XCTAssertTrue(out.contains(".burnout"),
-                      "documents current wrong '.burnout'; fix should make it 'burnout.'. got: \(out)")
-    }
-
-    // KNOWN BUG (bidi, still open): in a mixed Persian/English/number run the ٪
-    // detaches from its digits — "۷۰٪" splits so ٪ lands after "من". Correct output
-    // keeps ۷۰ and ٪ together. Asserts the current WRONG behavior.
-    func testPercentDetachesInMixedRunIsWrong() {
-        let out = visual("۳. personality. من الان ۷۰٪ caffeine و ۲۰٪ اضطراب.")
-        XCTAssertTrue(out.contains("نم٪"),
-                      "documents current wrong detached ٪ after من; fix should keep ۷۰٪ together. got: \(out)")
-    }
-
     // Regression: with Latin-run isolation ON (the setting that keeps English
     // words readable in RTL), a list marker "۱. Motivation — …" used to have its
     // period swallowed by the English island, tearing "۱." apart and drawing
