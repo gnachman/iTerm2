@@ -240,6 +240,11 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 - (void)bindPropertiesForCell:(PSMTabBarCell *)cell andTabViewItem:(NSTabViewItem *)item;
 - (void)removeTabForCell:(PSMTabBarCell *)cell;
 
+// How far the scrollable side tab bar is scrolled, in points. 0 unless the scrollable vertical tab
+// bar is enabled and in use. The tab drag assistant reads this so it lays cells out at the same
+// scrolled positions reallyUpdate: gives them.
+@property(nonatomic, readonly) CGFloat verticalScrollOffset;
+
 #pragma mark - iTerm add-ons
 
 // Internal inset. Ensures nothing but background is drawn in this are.

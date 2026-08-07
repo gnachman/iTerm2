@@ -2046,6 +2046,17 @@ ITERM_WEAKLY_REFERENCEABLE
                      identifier:(NSString*)identifier
                     genericName:(NSString *)genericName
 {
+    return [self confirmCloseForSessions:sessions
+                              identifier:identifier
+                             genericName:genericName
+                       additionalMessage:nil];
+}
+
+- (BOOL)confirmCloseForSessions:(NSArray *)sessions
+                     identifier:(NSString*)identifier
+                    genericName:(NSString *)genericName
+              additionalMessage:(NSString *)additionalMessage
+{
     NSArray *names = @[];
     for (PTYSession *aSession in sessions) {
         if (![aSession exited]) {
@@ -2071,6 +2082,9 @@ ITERM_WEAKLY_REFERENCEABLE
                    [sortedNames count] == 11 ? @"other" : @"others"];
     } else {
         message = [NSString stringWithFormat:@"%@ will be closed.", identifier];
+    }
+    if (additionalMessage.length > 0) {
+        message = [NSString stringWithFormat:@"%@\n\n%@", message, additionalMessage];
     }
     // The PseudoTerminal might close while the dialog is open so keep it around for now.
     [[self retain] autorelease];
@@ -2130,7 +2144,8 @@ ITERM_WEAKLY_REFERENCEABLE
         return [self confirmCloseForSessions:sessions
                                   identifier:identifier
                                  genericName:[NSString stringWithFormat:@"tab #%d",
-                                              [aTab tabNumber]]];
+                                              [aTab tabNumber]]
+                           additionalMessage:[iTermWorkgroupInstance closeCascadeWarningForSessions:sessions]];
     }
     return YES;
 }
@@ -2484,7 +2499,8 @@ ITERM_WEAKLY_REFERENCEABLE
       okToClose = [self confirmCloseForSessions:[NSArray arrayWithObject:aSession]
                                      identifier:aSession.locked ? @"This locked session" : @"This session"
                                     genericName:[NSString stringWithFormat:@"session \"%@\"",
-                                                    [[aSession name] removingHTMLFromTabTitleIfNeeded]]];
+                                                    [[aSession name] removingHTMLFromTabTitleIfNeeded]]
+                              additionalMessage:[iTermWorkgroupInstance closeCascadeWarningForSessions:@[aSession]]];
     }
     if (okToClose) {
         [self closeSessionWithoutConfirmation:aSession];
@@ -10901,7 +10917,23 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 - (CGFloat)_desiredTabBarHeight {
     if ([self shouldHaveTallTabBar]) {
         return [iTermAdvancedSettingsModel compactMinimalTabBarHeight];
-    } else {
+    }
+    // For left/right tab bars in the Minimal theme, grow each tab to the same
+    // height as a top Minimal tab bar. For a vertical tab bar this value is
+    // used as the per-tab height, and the standard height is too short to hold
+    // a subtitle without looking cramped. We intentionally do not go through
+    // shouldHaveTallTabBar here: that path is about making room for the window
+    // title and stoplights in a compact top bar (and drives stoplight
+    // positioning), neither of which applies to a side tab bar.
+    {
+        const PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
+        const iTermPreferencesTabStyle tabStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+        if (tabStyle == TAB_STYLE_MINIMAL &&
+            (tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab)) {
+            return [iTermAdvancedSettingsModel compactMinimalTabBarHeight];
+        }
+    }
+    {
         if (iTermWindowTypeIsCompact(self.windowType) ||
             iTermWindowTypeIsCompact(self.savedWindowType)) {
             return [iTermAdvancedSettingsModel defaultTabBarHeight];

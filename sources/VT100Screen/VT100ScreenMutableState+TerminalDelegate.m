@@ -3996,6 +3996,15 @@ willExecuteToken:(VT100Token *)token
     [_kittyImageController executeCommand:kittyImageCommand];
 }
 
+- (void)terminalDidReceiveKittyDragAndDrop:(NSString *)content {
+    // The Kitty DnD controller lives on the main-thread session (it drives
+    // AppKit drag machinery and the @MainActor SSH endpoint), so hop out of the
+    // mutation thread to deliver the raw OSC 72 content.
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDidReceiveKittyDragAndDrop:content];
+    } name:@"kitty drag-and-drop"];
+}
+
 - (void)terminalStartWrappedCommand:(NSString *)command channel:(NSString *)uid {
     if (![iTermAdvancedSettingsModel channelsEnabled]) {
         return;

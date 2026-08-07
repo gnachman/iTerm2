@@ -404,6 +404,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 @interface PTYSession(AppSwitching)<iTermAppSwitchingPreventionDetectorDelegate>
 @end
 
+@interface PTYSession () <iTermKittyDnDBridgeDataSource>
+@end
+
 // Background-drawing delegate used when rendering a screenshot. It forwards to the
 // session but forces transparency off, so the saved/preview background image is opaque
 // (a screenshot has nothing behind it). This matches the tile branch, which also draws
@@ -660,6 +663,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     id<iTermKeyMapper> _keyMapper;
     iTermKeyMappingMode _keyMappingMode;
+
+    // Kitty drag-and-drop protocol (OSC 72). Created lazily on the first OSC 72
+    // sequence.
+    iTermKittyDnDBridge *_kittyDnDBridge;
 
     NSString *_badgeFontName;
     iTermVariableScope *_variablesScope;
@@ -1103,6 +1110,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_nameController release];
     [_tailFindController stopTailFind];  // This frees the substring in the tail find context, if needed.
     _shell.delegate = nil;
+    [_kittyDnDBridge release];
     [_pasteboard release];
     [_pbtext release];
     [_creationDate release];
@@ -4662,6 +4670,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_shell.winSizeController setGridSize:_screen.size
                                  viewSize:_screen.viewSize
                               scaleFactor:self.backingScaleFactor];
+    // The old program's Kitty drag-and-drop registration must not survive a shell
+    // restart (the bridge is reused).
+    [_kittyDnDBridge reset];
     [self resetForRelaunch];
     __weak __typeof(self) weakSelf = self;
     [self startProgram:_program
@@ -15121,6 +15132,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_textview requestDelegateRedraw];
     [self restoreColorsFromProfile];
     _screen.trackCursorLineMovement = NO;
+    // A terminal reset (RIS / the Reset menu) clears Kitty drag-and-drop state too,
+    // so a program that registered t=a/t=o and then exited does not leave the
+    // protocol enabled in sessions without shell integration (which never emit the
+    // OSC 133 prompt mark that otherwise resets it).
+    [_kittyDnDBridge reset];
 }
 
 - (void)restoreColorsFromProfile {
@@ -16198,6 +16214,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         [self clearTabStatus];
     });
     [_pasteHelper unblock];
+    // A program that used the Kitty drag-and-drop protocol has exited (the shell
+    // is back at a prompt), so clear its offer/accept state rather than let it
+    // linger, the same way other modes are reset at a prompt.
+    [_kittyDnDBridge reset];
 }
 
 - (void)screenPromptOfNonInitialKindDidStart:(VT100PromptKind)kind {
@@ -17727,6 +17747,33 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (VT100GridRange)screenRangeOfVisibleLines {
     return [_textview rangeOfVisibleLines];
+}
+
+- (void)screenDidReceiveKittyDragAndDrop:(NSString *)content {
+    if (!_kittyDnDBridge) {
+        __weak __typeof(self) weakSelf = self;
+        _kittyDnDBridge = [[iTermKittyDnDBridge alloc] initWithDataSource:self
+                                                                  report:^(NSData *data) {
+            [weakSelf screenSendReportData:data];
+        }];
+    }
+    [_kittyDnDBridge handleInboundSequence:content];
+}
+
+- (iTermConductor *)kittyDnDConductor {
+    return _conductor;
+}
+
+- (NSView *)kittyDnDView {
+    return _textview;
+}
+
+- (void)kittyDnDDragDidBegin {
+    [_textview kittyDragDidBegin];
+}
+
+- (iTermKittyDnDBridge *)textViewKittyDnDBridge {
+    return _kittyDnDBridge;
 }
 
 - (void)screenSetPointerShape:(NSString *)pointerShape {

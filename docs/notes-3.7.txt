@@ -46,6 +46,13 @@ Major New Features:
   bitrate multiplier and the flow-control
   back-off thresholds.
 
+- A new setting in Settings > Appearance makes
+  the side tab bar scrollable. When the tab bar
+  is on the left or right and has more tabs than
+  fit, instead of moving the extras into the
+  “More tabs” overflow menu they stay in the bar
+  and you scroll to reach them. Off by default.
+
 - iTerm2 now probes the local network on
   every launch so macOS keeps it in the
   Local Network privacy list. This recovers
@@ -155,6 +162,16 @@ Major New Features:
   The Claude Code integration uses Clippings to
   store code review comments so they can be shared
   between related sessions in a Workgroup.
+- Added support for the Kitty drag-and-drop
+  protocol (OSC 72). A program running in the
+  terminal can accept files, text, and images
+  dropped onto the window, and (when it has mouse
+  reporting on, e.g. a full-screen TUI) can offer
+  its own data to be dragged out to other apps.
+  For a program on a remote host, dropped files
+  are transferred to it over the connection. Hold
+  Option while dropping to use the old
+  paste/upload behavior instead.
 - A new tmux window opened with Command-T now
   picks up the profile’s custom tab title, if
   one is set.
@@ -460,6 +477,10 @@ New Features in Terminal Sessions:
   previously rounded to whole minutes.
 
 Tabs, Windows, and UI:
+- Left and right tabs in the Minimal theme are now
+  as tall as top tabs, giving subtitles room to
+  render legibly. The height follows the existing
+  Minimal tab bar height advanced setting.
 - Most window types support initial size as a
   percentage of the screen (used to be only number
   of rows and columns).
@@ -2721,3 +2742,19 @@ Bug Fixes:
   pieces in reading order instead of stacking
   them on separate lines. Pieces on different
   lines still copy with line breaks.
+- Exiting a workgroup, or closing one of its
+  tabs, no longer leaves the main session’s tab
+  showing a blank pane when a non-main peer was
+  the visible one.
+- Fixed a workgroup whose tab (or split) hosts
+  its own peer group coming up with no toolbar
+  and no peer switcher.
+- Workgroup peers nested inside a tab or split
+  now inherit their profile and directory from
+  the session the workgroup was opened on, so a
+  workgroup opened on a remote host keeps every
+  peer on that host.
+- Closing a workgroup session that would exit the
+  whole workgroup now warns you that its other
+  sessions will close too, naming the workgroup
+  and how many more sessions will end.
