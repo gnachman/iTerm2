@@ -10901,7 +10901,23 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 - (CGFloat)_desiredTabBarHeight {
     if ([self shouldHaveTallTabBar]) {
         return [iTermAdvancedSettingsModel compactMinimalTabBarHeight];
-    } else {
+    }
+    // For left/right tab bars in the Minimal theme, grow each tab to the same
+    // height as a top Minimal tab bar. For a vertical tab bar this value is
+    // used as the per-tab height, and the standard height is too short to hold
+    // a subtitle without looking cramped. We intentionally do not go through
+    // shouldHaveTallTabBar here: that path is about making room for the window
+    // title and stoplights in a compact top bar (and drives stoplight
+    // positioning), neither of which applies to a side tab bar.
+    {
+        const PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
+        const iTermPreferencesTabStyle tabStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+        if (tabStyle == TAB_STYLE_MINIMAL &&
+            (tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab)) {
+            return [iTermAdvancedSettingsModel compactMinimalTabBarHeight];
+        }
+    }
+    {
         if (iTermWindowTypeIsCompact(self.windowType) ||
             iTermWindowTypeIsCompact(self.savedWindowType)) {
             return [iTermAdvancedSettingsModel defaultTabBarHeight];

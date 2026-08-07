@@ -470,6 +470,10 @@ New Features in Terminal Sessions:
   previously rounded to whole minutes.
 
 Tabs, Windows, and UI:
+- Left and right tabs in the Minimal theme are now
+  as tall as top tabs, giving subtitles room to
+  render legibly. The height follows the existing
+  Minimal tab bar height advanced setting.
 - Most window types support initial size as a
   percentage of the screen (used to be only number
   of rows and columns).
