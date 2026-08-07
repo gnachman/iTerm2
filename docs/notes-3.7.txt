@@ -2640,3 +2640,7 @@ Bug Fixes:
   the session the workgroup was opened on, so a
   workgroup opened on a remote host keeps every
   peer on that host.
+- Closing a workgroup session that would exit the
+  whole workgroup now warns you that its other
+  sessions will close too, naming the workgroup
+  and how many more sessions will end.

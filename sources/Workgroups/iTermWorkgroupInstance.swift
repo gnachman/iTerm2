@@ -102,6 +102,76 @@ final class iTermWorkgroupInstance: NSObject {
         return [peerPort] + nestedPeerPorts
     }
 
+    // Human-readable workgroup name for user-facing messages, with the
+    // same empty-name fallback the Workgroups menu uses.
+    @objc var workgroupDisplayName: String {
+        return workgroup.name.isEmpty ? "Untitled" : workgroup.name
+    }
+
+    // Every live session teardown would terminate: the main session,
+    // every realized peer (main + nested ports), and every non-peer
+    // split/tab child. Deduped by identity (the main session and each
+    // nested host appear in both a peer port and, for hosts, the
+    // non-peer entries) and excludes already-exited sessions. Used to
+    // warn the user how much closing one member will take down with it.
+    @objc var liveMemberSessions: [PTYSession] {
+        var seen = Set<ObjectIdentifier>()
+        var result: [PTYSession] = []
+        func add(_ session: PTYSession?) {
+            guard let session, !session.exited else { return }
+            if seen.insert(ObjectIdentifier(session)).inserted {
+                result.append(session)
+            }
+        }
+        add(mainSession)
+        for port in allPeerPorts {
+            for session in port.realizedPeerSessions {
+                add(session)
+            }
+        }
+        for entry in nonPeerEntriesByConfigID.values {
+            add(entry.session)
+        }
+        return result
+    }
+
+    // Warning text to append to a close confirmation when closing
+    // `closingSessions` would tear a workgroup down and take other
+    // sessions with it. Any workgroup member's termination drives the
+    // whole instance through teardown (see sessionWillTerminate), so if
+    // a closing session belongs to a workgroup that has live members
+    // beyond the ones already closing, tell the user those will close
+    // too. Returns nil when nothing extra would close (e.g. the closing
+    // set already covers the whole workgroup, or no member is a
+    // workgroup session).
+    @objc(closeCascadeWarningForSessions:)
+    static func closeCascadeWarning(forSessions closingSessions: [PTYSession]) -> String? {
+        let closingIDs = Set(closingSessions.map { ObjectIdentifier($0) })
+        var instancesByID: [ObjectIdentifier: iTermWorkgroupInstance] = [:]
+        for session in closingSessions {
+            if let instance = session.workgroupInstance {
+                instancesByID[ObjectIdentifier(instance)] = instance
+            }
+        }
+        guard !instancesByID.isEmpty else { return nil }
+        var names: [String] = []
+        var extraCount = 0
+        for instance in instancesByID.values {
+            let extras = instance.liveMemberSessions.filter {
+                !closingIDs.contains(ObjectIdentifier($0))
+            }
+            guard !extras.isEmpty else { continue }
+            extraCount += extras.count
+            names.append(instance.workgroupDisplayName)
+        }
+        guard extraCount > 0 else { return nil }
+        let sessionWord = extraCount == 1 ? "session" : "sessions"
+        if names.count == 1 {
+            return "This will also exit the workgroup “\(names[0])” and close \(extraCount) other \(sessionWord)."
+        }
+        return "This will also exit \(names.count) workgroups and close \(extraCount) other \(sessionWord)."
+    }
+
     // Workgroup-wide git poller, shared across every gitStatus and
     // changedFileSelector view in every peer group AND every non-peer
     // host. Built once at instance creation if any session in the

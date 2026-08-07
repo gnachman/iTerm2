@@ -825,6 +825,66 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
                        "Closing the pane's own visible peer must not reveal the leader into a closing tab")
     }
 
+    // MARK: - §9.4 Close-cascade warning (workgroup-aware close confirm)
+
+    // Closing one member of a workgroup tears the whole thing down, so
+    // the close confirmation must warn that the workgroup's other
+    // sessions will close too. Closing just the tab child of a
+    // root+2-peers+tab workgroup should report the workgroup name and
+    // the three other live sessions (main + two peers).
+    func test_9_4_closeCascadeWarning_namesWorkgroupAndCountsOthers() {
+        let root = WGFix.makeRoot()
+        let peer0 = WGFix.makePeer(parentID: root.uniqueIdentifier)
+        let peer1 = WGFix.makePeer(parentID: root.uniqueIdentifier)
+        let tab = WGFix.makeTab(parentID: root.uniqueIdentifier)
+        let wg = WGFix.wrap(name: "Deploy",
+                            sessions: [root, peer0, peer1, tab])
+        enterWorkgroup(wg)
+
+        let tabSession = spawner.session(forConfigID: tab.uniqueIdentifier)!
+        let warning = iTermWorkgroupInstance.closeCascadeWarning(
+            forSessions: [tabSession])
+        XCTAssertNotNil(warning)
+        XCTAssertTrue(warning!.contains("“Deploy”"),
+                      "Warning should name the workgroup: \(warning ?? "nil")")
+        XCTAssertTrue(warning!.contains("3 other sessions"),
+                      "Warning should count the main session + two peers: \(warning ?? "nil")")
+    }
+
+    // No warning when the closing set already covers every live member
+    // (e.g. closing the whole workgroup at once) — nothing extra dies.
+    func test_9_4_closeCascadeWarning_nilWhenClosingWholeWorkgroup() {
+        let root = WGFix.makeRoot()
+        let peer0 = WGFix.makePeer(parentID: root.uniqueIdentifier)
+        let wg = WGFix.wrap(name: "Deploy", sessions: [root, peer0])
+        enterWorkgroup(wg)
+        let all = instance!.liveMemberSessions
+        XCTAssertEqual(all.count, 2)
+        XCTAssertNil(iTermWorkgroupInstance.closeCascadeWarning(forSessions: all))
+    }
+
+    // No warning for a session that isn't in any workgroup.
+    func test_9_4_closeCascadeWarning_nilForNonWorkgroupSession() {
+        let loner = PTYSession(synthetic: false)!
+        XCTAssertNil(
+            iTermWorkgroupInstance.closeCascadeWarning(forSessions: [loner]))
+    }
+
+    // Singular wording when exactly one other session would close.
+    func test_9_4_closeCascadeWarning_singularForOneOther() {
+        let root = WGFix.makeRoot()
+        let peer0 = WGFix.makePeer(parentID: root.uniqueIdentifier)
+        let wg = WGFix.wrap(name: "Deploy", sessions: [root, peer0])
+        enterWorkgroup(wg)
+        // Close the peer; only the main session remains.
+        let peerSession = spawner.session(forConfigID: peer0.uniqueIdentifier)!
+        let warning = iTermWorkgroupInstance.closeCascadeWarning(
+            forSessions: [peerSession])
+        XCTAssertNotNil(warning)
+        XCTAssertTrue(warning!.contains("1 other session."),
+                      "Expected singular wording: \(warning ?? "nil")")
+    }
+
     // MARK: - §10 Tree shape
 
     // §10.2 — recursive descent realizes every node. A
