@@ -102,4 +102,37 @@ class BidiIslandMirrorTests: XCTestCase {
         XCTAssertFalse(info.mirrorsSourceCell(enOpen), "English parenthetical must not mirror")
         XCTAssertTrue(info.mirrorsSourceCell(faOpen), "Persian parenthetical must mirror")
     }
+
+    // A parenthetical that mixes Latin then Persian ("(ZWNJ حاضر است)") must
+    // mirror: the open paren can't join the Latin island because its partner is
+    // on the far side of the Persian content, so both brackets stay in the RTL
+    // run and mirror as a pair. Regression: the "(" was absorbed into "(ZWNJ" and
+    // drawn un-mirrored while ")" mirrored, splitting the pair.
+    func testMixedLatinPersianParentheticalMirrors() {
+        let s = "متن (ZWNJ حاضر است) خوب"
+        guard let info = info(s) else { return XCTFail("no bidi info") }
+        let ns = s as NSString
+        let open = Int32(ns.range(of: "(").location)
+        let close = Int32(ns.range(of: ")").location)
+        XCTAssertTrue(info.mirrorsSourceCell(open),
+                      "open paren of a mixed Latin+Persian parenthetical must mirror")
+        XCTAssertTrue(info.mirrorsSourceCell(close),
+                      "close paren of a mixed Latin+Persian parenthetical must mirror")
+    }
+
+    // An all-Latin parenthetical containing a symbol ("(ZWNJ = U+200C)") must
+    // stay ONE left-to-right island with un-mirrored brackets. Regression: the
+    // "=" (island content but not alphanumeric) split it into "(ZWNJ" and
+    // "= U+200C)", two islands that reordered against each other in the RTL line.
+    func testSymbolInsideLatinParentheticalStaysOneIsland() {
+        let s = "متن (ZWNJ = U+200C) خوب"
+        guard let info = info(s) else { return XCTFail("no bidi info") }
+        let ns = s as NSString
+        let open = Int32(ns.range(of: "(").location)
+        let close = Int32(ns.range(of: ")").location)
+        XCTAssertFalse(info.mirrorsSourceCell(open),
+                       "open paren of an all-Latin parenthetical must not mirror")
+        XCTAssertFalse(info.mirrorsSourceCell(close),
+                       "close paren of an all-Latin parenthetical must not mirror")
+    }
 }

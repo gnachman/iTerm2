@@ -303,6 +303,21 @@ fileprivate func isolateLatinRuns(_ s: NSString, deltas: UnsafePointer<Int32>) -
     func isDigit(_ c: unichar) -> Bool { c >= 0x30 && c <= 0x39 }
     func isAlnum(_ c: unichar) -> Bool { isLetter(c) || isDigit(c) }
     func isOpeningBracket(_ c: unichar) -> Bool { c == 0x28 || c == 0x5B || c == 0x7B }
+    func isClosingBracket(_ c: unichar) -> Bool { c == 0x29 || c == 0x5D || c == 0x7D }
+    // Whether a Latin letter lies ahead in the upcoming island run, spanning
+    // symbols like "=" and interior spaces, before any non-island (Persian)
+    // character. Lets "(ZWNJ = U+200C)" stay one island instead of splitting at
+    // the "=" (which is island content but not alphanumeric), which would leave
+    // the two halves to reorder against each other in an RTL line.
+    func latinLetterAhead(_ start: Int) -> Bool {
+        var m = start
+        while m < s.length {
+            let cm = s.character(at: m)
+            if isLetter(cm) { return true }
+            if isIsland(cm) || cm == 0x20 { m += 1 } else { return false }
+        }
+        return false
+    }
     let n = s.length
     var out = [unichar]()
     var map = [Int32]()
@@ -335,7 +350,12 @@ fileprivate func isolateLatinRuns(_ s: NSString, deltas: UnsafePointer<Int32>) -
                     while k < n && s.character(at: k) == 0x20 { k += 1 }
                     var probe = k
                     if probe < n && isOpeningBracket(s.character(at: probe)) { probe += 1 }
-                    if probe < n && isAlnum(s.character(at: probe)) {
+                    // Span the space toward more Latin content: the next token is
+                    // alphanumeric, OR a Latin letter still lies ahead past a
+                    // symbol like "=" ("ZWNJ = U+200C"). A bracket that opens
+                    // Persian ("School … (فصل") has no Latin letter ahead, so it
+                    // still ends the island and mirrors normally.
+                    if (probe < n && isAlnum(s.character(at: probe))) || latinLetterAhead(k) {
                         j = k  // interior space before more Latin content: keep going
                     } else {
                         break  // island ends here
@@ -344,12 +364,27 @@ fileprivate func isolateLatinRuns(_ s: NSString, deltas: UnsafePointer<Int32>) -
                     break
                 }
             }
+            // If the run starts with an opening bracket whose partner is not in
+            // this island, its content turns Persian ("(ZWNJ حاضر است)"), leave
+            // that bracket in the RTL run so the pair mirrors together, and begin
+            // the island after it. An all-Latin bracket ("(Berlin capital)")
+            // keeps its partner inside and is unaffected.
+            var start = i
+            if isOpeningBracket(s.character(at: i)) {
+                var matched = false
+                var m = i + 1
+                while m < j { if isClosingBracket(s.character(at: m)) { matched = true; break }; m += 1 }
+                if !matched {
+                    out.append(s.character(at: i)); map.append(CellOffsetFromUTF16Offset(Int32(i), deltas))
+                    start = i + 1
+                }
+            }
             if hasLetter {
                 out.append(iTermLRI); map.append(-1)
-                for k in i..<j { out.append(s.character(at: k)); map.append(CellOffsetFromUTF16Offset(Int32(k), deltas)) }
+                for k in start..<j { out.append(s.character(at: k)); map.append(CellOffsetFromUTF16Offset(Int32(k), deltas)) }
                 out.append(iTermPDI); map.append(-1)
             } else {
-                for k in i..<j { out.append(s.character(at: k)); map.append(CellOffsetFromUTF16Offset(Int32(k), deltas)) }
+                for k in start..<j { out.append(s.character(at: k)); map.append(CellOffsetFromUTF16Offset(Int32(k), deltas)) }
             }
             i = j
         } else {
