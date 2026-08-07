@@ -5749,7 +5749,7 @@ lengthExcludingInBandSignaling:data.length
 }
 
 - (BOOL)shouldPopulateRTLState {
-    if (self.terminal.softAlternateScreenMode && !iTermAdvancedSettingsModel.alternateScreenBidi) {
+    if (self.terminal.softAlternateScreenMode && iTermAdvancedSettingsModel.disableBidiInAlternateScreen) {
         return NO;
     }
     return self.linebuffer.lastRawLine.metadata.rtlFound || self.currentGrid.mayContainRTL;
