@@ -9,6 +9,9 @@
 #import "iTermShaderTypes.h"
 #import "iTermSharedImageStore.h"
 
+#import <AVFoundation/AVFoundation.h>
+#import <CoreVideo/CoreVideo.h>
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermBackgroundImageRendererTransientState ()
@@ -55,6 +58,14 @@ NS_ASSUME_NONNULL_BEGIN
     CGRect _frame;
     CGRect _containerFrame;
     vector_float4 _color;
+
+    // Video backgrounds: pixel buffers from the wrapper's AVPlayerItemVideoOutput
+    // are wrapped as Metal textures through this cache. The CVMetalTexture that
+    // backs the current and previous frame must stay alive until the GPU is done
+    // sampling them, hence the keep-alive references.
+    CVMetalTextureCacheRef _videoTextureCache;
+    id _videoTextureKeepAlive;
+    id _previousVideoTextureKeepAlive;
 }
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -78,6 +89,12 @@ NS_ASSUME_NONNULL_BEGIN
     return self;
 }
 
+- (void)dealloc {
+    if (_videoTextureCache) {
+        CFRelease(_videoTextureCache);
+    }
+}
+
 - (BOOL)rendererDisabled {
     return NO;
 }
@@ -93,17 +110,83 @@ NS_ASSUME_NONNULL_BEGIN
            color:(vector_float4)defaultBackgroundColor
       colorSpace:(NSColorSpace *)colorSpace
          context:(nullable iTermMetalBufferPoolContext *)context {
-    DLog(@"setImage:%@ mode:%@ frame:%@ containerRect:%@", 
+    DLog(@"setImage:%@ mode:%@ frame:%@ containerRect:%@",
          image.image, @(mode), NSStringFromRect(frame), NSStringFromRect(containerRect));
     if (image != _image) {
         RLog(@"Will create texture from image");
+        // For videos this is the poster frame; it covers the gap until the
+        // first decoded frame arrives below.
         _texture = image ? [_metalRenderer textureFromImage:image context:context colorSpace:colorSpace] : nil;
+        _videoTextureKeepAlive = nil;
+        _previousVideoTextureKeepAlive = nil;
+    }
+    if (image.isVideo) {
+        id<MTLTexture> videoTexture = [self dequeueVideoTextureForImage:image];
+        if (videoTexture) {
+            _texture = videoTexture;
+        }
     }
     _frame = frame;
     _color = defaultBackgroundColor;
     _containerFrame = containerRect;
     _image = image;
     _mode = mode;
+}
+
+// Returns a texture for the video frame that should be visible now, or nil
+// to keep showing the previous one.
+- (nullable id<MTLTexture>)dequeueVideoTextureForImage:(iTermImageWrapper *)image {
+    AVPlayerItemVideoOutput *output = image.videoOutput;
+    if (!output) {
+        return nil;
+    }
+    const CMTime itemTime = [output itemTimeForHostTime:CACurrentMediaTime()];
+    if (![output hasNewPixelBufferForItemTime:itemTime]) {
+        return nil;
+    }
+    CVPixelBufferRef pixelBuffer = [output copyPixelBufferForItemTime:itemTime itemTimeForDisplay:NULL];
+    if (!pixelBuffer) {
+        return nil;
+    }
+    id<MTLTexture> texture = [self textureFromPixelBuffer:pixelBuffer];
+    CVPixelBufferRelease(pixelBuffer);
+    return texture;
+}
+
+- (nullable id<MTLTexture>)textureFromPixelBuffer:(CVPixelBufferRef)pixelBuffer {
+    if (!_videoTextureCache) {
+        const CVReturn err = CVMetalTextureCacheCreate(kCFAllocatorDefault,
+                                                       NULL,
+                                                       _metalRenderer.device,
+                                                       NULL,
+                                                       &_videoTextureCache);
+        if (err != kCVReturnSuccess) {
+            DLog(@"CVMetalTextureCacheCreate failed: %d", err);
+            return nil;
+        }
+    }
+    const size_t width = CVPixelBufferGetWidth(pixelBuffer);
+    const size_t height = CVPixelBufferGetHeight(pixelBuffer);
+    CVMetalTextureRef cvTexture = NULL;
+    const CVReturn err = CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+                                                                   _videoTextureCache,
+                                                                   pixelBuffer,
+                                                                   NULL,
+                                                                   MTLPixelFormatBGRA8Unorm,
+                                                                   width,
+                                                                   height,
+                                                                   0,
+                                                                   &cvTexture);
+    if (err != kCVReturnSuccess || !cvTexture) {
+        DLog(@"CVMetalTextureCacheCreateTextureFromImage failed: %d", err);
+        return nil;
+    }
+    id<MTLTexture> texture = CVMetalTextureGetTexture(cvTexture);
+    // The previous frame's GPU work has completed by the time a new frame
+    // replaces the previous keep-alive, so retaining two generations is enough.
+    _previousVideoTextureKeepAlive = _videoTextureKeepAlive;
+    _videoTextureKeepAlive = (__bridge_transfer id)cvTexture;
+    return texture;
 }
 
 #if ENABLE_TRANSPARENT_METAL_WINDOWS

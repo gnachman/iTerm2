@@ -11,7 +11,9 @@
 #import "iTermMalloc.h"
 #import "NSArray+iTerm.h"
 #import "NSImage+iTerm.h"
+#import "NSObject+iTerm.h"
 
+#import <AVFoundation/AVFoundation.h>
 #import <QuartzCore/QuartzCore.h>
 
 @interface CALayer (CALayerAdditions)
@@ -138,6 +140,16 @@
 
 @implementation iTermInternalImageView {
     CGFloat _lastTilingScale;
+
+    // Set only while showing a video background. The player layer sits on top
+    // of self.layer and inherits the superview's alpha, so blend and
+    // transparency work the same as for still images. The player itself is
+    // owned by the image wrapper and shared with other consumers; we hold a
+    // playback interest on _playbackInterestImage while visible. That may
+    // lag _image briefly during an image change, which is why it's tracked
+    // separately: the release must go to the wrapper that was retained.
+    AVPlayerLayer *_playerLayer;
+    iTermImageWrapper *_playbackInterestImage;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
@@ -164,6 +176,10 @@
                                                    object:nil];
     }
     return self;
+}
+
+- (void)dealloc {
+    [_playbackInterestImage releaseVideoPlaybackInterest];
 }
 
 - (void)setBlend:(CGFloat)blend {
@@ -214,6 +230,7 @@
     [super setHidden:hidden];
 
     [CATransaction commit];
+    [self updateVideoPlaybackState];
 }
 
 - (void)update {
@@ -226,6 +243,11 @@
 }
 
 - (void)reallyUpdate {
+    if (_image.isVideo) {
+        [self loadVideo];
+        return;
+    }
+    [self destroyVideoPlayer];
     switch (_contentMode) {
         case iTermBackgroundImageModeTile:
             [self loadTiledImage];
@@ -257,6 +279,89 @@
     _lastTilingScale = -1;
 }
 
+#pragma mark - Video
+
+- (AVLayerVideoGravity)desiredVideoGravity {
+    switch (_contentMode) {
+        case iTermBackgroundImageModeStretch:
+            return AVLayerVideoGravityResize;
+        case iTermBackgroundImageModeScaleAspectFit:
+            return AVLayerVideoGravityResizeAspect;
+        case iTermBackgroundImageModeScaleAspectFill:
+        case iTermBackgroundImageModeTile:
+            // Tiling a video isn't supported; fill is the least surprising stand-in.
+            return AVLayerVideoGravityResizeAspectFill;
+    }
+    return AVLayerVideoGravityResizeAspectFill;
+}
+
+- (void)loadVideo {
+    self.layer.contents = nil;
+    self.layer.backgroundColor = nil;
+    _lastTilingScale = -1;
+
+    if (_playerLayer && _playerLayer.player == _image.videoPlayer) {
+        _playerLayer.videoGravity = [self desiredVideoGravity];
+        return;
+    }
+    [self destroyVideoPlayer];
+
+    _playerLayer = [AVPlayerLayer playerLayerWithPlayer:_image.videoPlayer];
+    _playerLayer.videoGravity = [self desiredVideoGravity];
+    _playerLayer.actions = @{ @"bounds": [NSNull null],
+                              @"position": [NSNull null] };
+    _playerLayer.frame = self.layer.bounds;
+    [self.layer addSublayer:_playerLayer];
+
+    [self updateVideoPlaybackState];
+}
+
+- (void)destroyVideoPlayer {
+    [self setPlaybackInterestImage:nil];
+    [_playerLayer removeFromSuperlayer];
+    _playerLayer = nil;
+}
+
+- (void)setPlaybackInterestImage:(iTermImageWrapper *)image {
+    if (image == _playbackInterestImage) {
+        return;
+    }
+    [_playbackInterestImage releaseVideoPlaybackInterest];
+    _playbackInterestImage = image;
+    [_playbackInterestImage retainVideoPlaybackInterest];
+}
+
+// Decoding a video that nobody can see wastes power, so track visibility.
+// SessionView toggles hidden on an ancestor, hence the OrHasHiddenAncestor
+// check and the viewDidHide/viewDidUnhide overrides.
+- (void)updateVideoPlaybackState {
+    if (!_playerLayer) {
+        return;
+    }
+    const BOOL visible = !self.isHiddenOrHasHiddenAncestor && self.window != nil;
+    [self setPlaybackInterestImage:visible ? _image : nil];
+}
+
+- (void)viewDidHide {
+    [super viewDidHide];
+    [self updateVideoPlaybackState];
+}
+
+- (void)viewDidUnhide {
+    [super viewDidUnhide];
+    [self updateVideoPlaybackState];
+}
+
+- (void)layout {
+    [super layout];
+    if (_playerLayer) {
+        [CATransaction begin];
+        [CATransaction setDisableActions:YES];
+        _playerLayer.frame = self.layer.bounds;
+        [CATransaction commit];
+    }
+}
+
 - (CGFloat)scale {
     if (!self.window) {
         return 2;
@@ -267,6 +372,7 @@
 - (void)viewDidMoveToWindow {
     // The scale may have changed which affects tiled images.
     [self update];
+    [self updateVideoPlaybackState];
 }
 
 - (void)windowDidChangeScreen:(NSNotification *)notification {

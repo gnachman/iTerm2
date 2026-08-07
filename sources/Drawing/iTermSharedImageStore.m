@@ -11,6 +11,7 @@
 #import "NSArray+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
+#import <AVFoundation/AVFoundation.h>
 #import <QuartzCore/QuartzCore.h>
 
 @interface NSFileManager(CachedImage)
@@ -111,13 +112,25 @@
 
 @end
 
+static void *iTermImageWrapperCurrentItemContext = &iTermImageWrapperCurrentItemContext;
+
 @implementation iTermImageWrapper {
     id _cgimage;
     NSMutableDictionary<NSNumber *, NSImage *> *_tilingImages;
     NSMutableDictionary<NSString *, NSBitmapImageRep *> *_reps;
+
+    AVQueuePlayer *_videoPlayer;
+    AVPlayerLooper *_videoLooper;
+    AVPlayerItemVideoOutput *_videoOutput;
+    NSInteger _videoPlaybackInterestCount;
 }
 
+@synthesize videoOutput = _videoOutput;
+
 + (instancetype)withContentsOfFile:(NSString *)path {
+    if ([self pathIsVideo:path]) {
+        return [[self alloc] initWithVideoURL:[NSURL fileURLWithPath:path]];
+    }
     NSImage *image = [[NSImage alloc] initWithContentsOfFile:path];
     if (!image) {
         return nil;
@@ -127,6 +140,142 @@
 
 + (instancetype)withImage:(NSImage *)image {
     return [[self alloc] initWithImage:image];
+}
+
++ (NSArray<UTType *> *)videoContentTypes {
+    return @[ UTTypeMPEG4Movie, UTTypeQuickTimeMovie ];
+}
+
++ (BOOL)pathIsVideo:(NSString *)path {
+    NSString *extension = path.pathExtension;
+    if (extension.length == 0) {
+        return NO;
+    }
+    UTType *type = [UTType typeWithFilenameExtension:extension];
+    if (!type) {
+        return NO;
+    }
+    for (UTType *videoType in [self videoContentTypes]) {
+        if ([type conformsToType:videoType]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (instancetype)initWithVideoURL:(NSURL *)url {
+    // The placeholder keeps image-only consumers working until the poster
+    // frame arrives; views that can play video ignore it.
+    self = [self initWithImage:[[NSImage alloc] initWithSize:NSMakeSize(1, 1)]];
+    if (self) {
+        _videoURL = [url copy];
+        [self loadPosterFrame];
+    }
+    return self;
+}
+
+- (BOOL)isVideo {
+    return _videoURL != nil;
+}
+
+- (void)loadPosterFrame {
+    AVURLAsset *asset = [AVURLAsset URLAssetWithURL:_videoURL options:nil];
+    AVAssetImageGenerator *generator = [[AVAssetImageGenerator alloc] initWithAsset:asset];
+    generator.appliesPreferredTrackTransform = YES;
+    __weak __typeof(self) weakSelf = self;
+    [generator generateCGImagesAsynchronouslyForTimes:@[ [NSValue valueWithCMTime:kCMTimeZero] ]
+                                    completionHandler:^(CMTime requestedTime,
+                                                        CGImageRef _Nullable cgImage,
+                                                        CMTime actualTime,
+                                                        AVAssetImageGeneratorResult result,
+                                                        NSError * _Nullable error) {
+        if (result != AVAssetImageGeneratorSucceeded || !cgImage) {
+            DLog(@"Failed to generate poster frame: %@", error);
+            return;
+        }
+        NSImage *poster = [[NSImage alloc] initWithCGImage:cgImage
+                                                      size:NSMakeSize(CGImageGetWidth(cgImage),
+                                                                      CGImageGetHeight(cgImage))];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf setPosterFrame:poster];
+        });
+    }];
+}
+
+// Main queue only. Replaces the placeholder and invalidates derived caches.
+- (void)setPosterFrame:(NSImage *)poster {
+    _image = poster;
+    _cgimage = nil;
+    [_tilingImages removeAllObjects];
+    [_reps removeAllObjects];
+}
+
+#pragma mark - Video playback
+
+- (AVQueuePlayer *)videoPlayer {
+    if (!self.isVideo) {
+        return nil;
+    }
+    if (!_videoPlayer) {
+        AVPlayerItem *item = [AVPlayerItem playerItemWithURL:_videoURL];
+        _videoPlayer = [AVQueuePlayer queuePlayerWithItems:@[ item ]];
+        _videoPlayer.muted = YES;
+        _videoPlayer.preventsDisplaySleepDuringVideoPlayback = NO;
+        _videoLooper = [AVPlayerLooper playerLooperWithPlayer:_videoPlayer templateItem:item];
+        _videoOutput = [[AVPlayerItemVideoOutput alloc] initWithPixelBufferAttributes:@{
+            (id)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA),
+            (id)kCVPixelBufferMetalCompatibilityKey: @YES
+        }];
+        // AVPlayerLooper rotates through replica items, so the output must
+        // chase the current item; observing with Initial covers the first one.
+        [_videoPlayer addObserver:self
+                       forKeyPath:@"currentItem"
+                          options:NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew
+                          context:iTermImageWrapperCurrentItemContext];
+    }
+    return _videoPlayer;
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary *)change
+                       context:(void *)context {
+    if (context != iTermImageWrapperCurrentItemContext) {
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+        return;
+    }
+    AVPlayerItem *item = _videoPlayer.currentItem;
+    if (item && _videoOutput && ![item.outputs containsObject:_videoOutput]) {
+        [item addOutput:_videoOutput];
+    }
+}
+
+- (void)retainVideoPlaybackInterest {
+    if (!self.isVideo) {
+        return;
+    }
+    _videoPlaybackInterestCount += 1;
+    if (_videoPlaybackInterestCount == 1) {
+        [self.videoPlayer play];
+    }
+}
+
+- (void)releaseVideoPlaybackInterest {
+    if (!self.isVideo) {
+        return;
+    }
+    _videoPlaybackInterestCount = MAX(0, _videoPlaybackInterestCount - 1);
+    if (_videoPlaybackInterestCount == 0) {
+        [_videoPlayer pause];
+    }
+}
+
+- (void)dealloc {
+    if (_videoPlayer) {
+        [_videoPlayer removeObserver:self
+                          forKeyPath:@"currentItem"
+                             context:iTermImageWrapperCurrentItemContext];
+    }
 }
 
 - (instancetype)initWithImage:(NSImage *)unsafeImage {
