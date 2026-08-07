@@ -1290,7 +1290,13 @@ const void *PSMTabStyleDarkColorKey = "dark";
 
     // Background to the right of the rightmost tab and left of the leftmost tab.
     NSColor *marginColor = [self backgroundColorSelected:NO highlightAmount:0];
-    [self drawBackgroundInRect:clipRect color:marginColor horizontal:horizontal];
+    // A scroll-margin pass asks us to paint just the bar background into a strip: it clips the graphics
+    // context to the strip and passes an empty clipRect so no cells draw. Filling an empty rect would
+    // paint nothing and leave the margin bare, so fall back to the full inRect (already clipped to the
+    // strip by the caller) in that case.
+    [self drawBackgroundInRect:(NSIsEmptyRect(clipRect) ? rect : clipRect)
+                         color:marginColor
+                    horizontal:horizontal];
 
     // Draw line above tab bar.
     NSColor *topLineColor = [self topLineColorSelected:NO];

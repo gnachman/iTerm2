@@ -1664,6 +1664,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     [self.tabBarControl setSizeCellsToFit:[iTermAdvancedSettingsModel useUnevenTabs]];
     [self.tabBarControl setStretchCellsToFit:[iTermPreferences boolForKey:kPreferenceKeyStretchTabsToFillBar]];
     [self.tabBarControl setCellOptimumWidth:[iTermAdvancedSettingsModel optimumTabWidth]];
+    [self.tabBarControl setScrollableTabWidth:[iTermAdvancedSettingsModel scrollableTabWidth]];
     [self.tabBarControl setPinnedTabWidth:[iTermAdvancedSettingsModel pinnedTabWidth]];
     self.tabBarControl.smartTruncation = [iTermAdvancedSettingsModel tabTitlesUseSmartTruncation];
 

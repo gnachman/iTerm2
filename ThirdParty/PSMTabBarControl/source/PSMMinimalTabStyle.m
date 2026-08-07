@@ -397,7 +397,23 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
     PSMTabBarCell *selectedCell = [self selectedCellInTabBarControl:self.tabBar];
     const CGFloat highlightAmount = [selectedCell highlightAmount];
     [[self backgroundColorSelected:YES highlightAmount:highlightAmount] set];
-    NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
+    if (self.tabBar.orientation == PSMTabBarHorizontalOrientation && self.tabBar.cells.count > 0) {
+        // Fill only the area between the start and end insets. Those insets are painted with their own
+        // colors just below; filling the background under them and then painting the insets on top
+        // would stack two partly transparent fills into a darker band on a transparent window. This
+        // matters especially for the scroll margins (the leading decoration band and the add-tab-button
+        // gap), which are painted through this same path.
+        const CGFloat insetLeft = NSMaxX([self startInsetFrame]);
+        const CGFloat insetRight = NSMinX([self endInsetFrame]);
+        const CGFloat minX = MAX(NSMinX(rect), insetLeft);
+        const CGFloat maxX = MIN(NSMaxX(rect), insetRight);
+        if (maxX > minX) {
+            NSRectFillUsingOperation(NSMakeRect(minX, NSMinY(rect), maxX - minX, NSHeight(rect)),
+                                     NSCompositingOperationSourceOver);
+        }
+    } else {
+        NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
+    }
 
     [self drawStartInset];
     [self drawEndInset];
@@ -476,7 +492,11 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
             return NSZeroRect;
         }
         PSMTabBarCell *cell = self.tabBar.cells.firstObject;
-        return NSMakeRect(0, 0, NSMinX(cell.frame), cell.frame.size.height);
+        // Extend to the leading margin so a first tab scrolled under the window decorations is covered
+        // by the decoration color, rather than leaving a gap that the background fill would paint with
+        // the darker selected-background base (a distracting dark box on a transparent window).
+        const CGFloat right = MAX(NSMinX(cell.frame), [self leftMarginForTabBarControl]);
+        return NSMakeRect(0, 0, right, cell.frame.size.height);
     } else {
         return NSMakeRect(0, 0, NSWidth(self.tabBar.frame), self.tabBar.insets.top);
     }
@@ -489,9 +509,17 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
     PSMTabBarCell *cell = self.lastVisibleCell;
     PSMTabBarControl *bar = self.tabBar;
     if (bar.orientation == PSMTabBarHorizontalOrientation) {
-        return NSMakeRect(NSMaxX(cell.frame),
+        // Clamp to the scroll viewport so a last tab scrolled under the add-tab button is covered by the
+        // decoration color, rather than leaving a gap that the background fill would paint with the
+        // darker selected-background base (a distracting dark box on a transparent window).
+        CGFloat left = NSMaxX(cell.frame);
+        const CGFloat viewport = self.tabBar.scrollViewportLength;
+        if (left > viewport) {
+            left = viewport;
+        }
+        return NSMakeRect(left,
                           0,
-                          self.tabBar.frame.size.width - NSMaxX(cell.frame),
+                          self.tabBar.frame.size.width - left,
                           cell.frame.size.height);
     } else {
         // Vertical tab bar
@@ -561,6 +589,18 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 
     const BOOL horizontalOrientation = bar.orientation == PSMTabBarHorizontalOrientation;
 
+    if (horizontalOrientation && NSIsEmptyRect(clipRect)) {
+        // Background-only pass for a horizontal bar (empty cell clip rect), used to paint a scroll
+        // margin: the leading decoration band on the left and the add-tab-button gap on the right.
+        // Draw only the bar-edge line, which is meant to span across the whole bar (under the button
+        // on a top bar, over it on a bottom bar); never the vertical tab-framing strokes, which must
+        // stop at the tabs. The real pass (non-empty clip rect, clipped to the tab region) draws the
+        // full notch, so a selected last tab whose right edge sits at the button margin gets no stray
+        // vertical border there.
+        [self drawScrollMarginEdgeLineForBar:bar];
+        return;
+    }
+
     const NSInteger selectedIndex = [self selectedIndex:bar];
     const NSInteger numberOfVisibleCells = [self numberOfVisibleCells:bar];
 
@@ -593,6 +633,58 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
             [self drawOutlineAroundBottomTabBarWithInteriorTabSelected:bar];
         }
     }
+
+    if (horizontalOrientation) {
+        [self drawActiveTabButtonEdgeBorderForBar:bar];
+    }
+}
+
+// Draws just the bar's edge line (the horizontal dividing line) across the full width, at the same
+// position the selected-tab notch would put it: the bottom edge for a top bar, the top edge for a
+// bottom bar. The caller clips this to a scroll-margin strip, so it fills the edge line where the
+// notch is intentionally skipped, without any vertical strokes crossing the add-tab button.
+- (void)drawScrollMarginEdgeLineForBar:(PSMTabBarControl *)bar {
+    PSMTabBarCell *const cell = [self selectedCellInTabBarControl:bar];
+    if (!cell || cell.isInOverflowMenu) {
+        return;
+    }
+    const CGFloat y = (bar.tabLocation == PSMTab_BottomTab) ? 0.5 : NSMaxY(cell.frame) - 0.5;
+    NSBezierPath *const path = [NSBezierPath bezierPath];
+    [path moveToPoint:NSMakePoint(0, y)];
+    [path lineToPoint:NSMakePoint(NSMaxX(bar.frame), y)];
+    [[self outlineColor] set];
+    [path stroke];
+}
+
+// Caps the active tab with a right vertical border just to the LEFT of the add-tab button whenever the
+// tab's right edge reaches that button edge: its left part is still visible but its right border would
+// land at (or under) the button. The notch draws its own right border at the tab's true right edge,
+// NSMaxX + 0.5; once that is at or past the viewport edge the tab-region clip drops it, leaving the tab
+// open on the right. This draws a stand-in at the viewport edge so the active tab still reads as closed
+// right where it meets the button. Drawn in the tab-region pass so it lands left of the button rather
+// than behind it. A tab whose right border is still comfortably inside the region (the notch draws it)
+// or that is fully past the button (invisible) gets nothing here.
+- (void)drawActiveTabButtonEdgeBorderForBar:(PSMTabBarControl *)bar {
+    PSMTabBarCell *const cell = [self selectedCellInTabBarControl:bar];
+    if (!cell || cell.isInOverflowMenu) {
+        return;
+    }
+    const CGFloat viewport = bar.scrollViewportLength;
+    if (NSMinX(cell.frame) >= viewport || NSMaxX(cell.frame) <= viewport - 0.5) {
+        return;
+    }
+    const CGFloat x = viewport - 0.5;
+    // Extend half a point past the bar-edge line (the bottom for a top bar, the top for a bottom bar)
+    // so the cap reaches the line's outer edge and forms a clean corner instead of stopping at its
+    // center.
+    const BOOL bottomTab = (bar.tabLocation == PSMTab_BottomTab);
+    const CGFloat yTop = bottomTab ? 0.0 : 0.5;
+    const CGFloat yBottom = bottomTab ? NSMaxY(cell.frame) - 0.5 : NSMaxY(cell.frame);
+    NSBezierPath *const path = [NSBezierPath bezierPath];
+    [path moveToPoint:NSMakePoint(x, yTop)];
+    [path lineToPoint:NSMakePoint(x, yBottom)];
+    [[self outlineColor] set];
+    [path stroke];
 }
 
 - (void)drawDividerBetweenTabBarAndContent:(NSRect)rect bar:(PSMTabBarControl *)bar {

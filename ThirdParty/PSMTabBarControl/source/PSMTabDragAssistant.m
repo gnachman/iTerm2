@@ -1203,10 +1203,13 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     BOOL removeFlag = YES;
     NSArray *cells = [control cells];
     int i, cellCount = [cells count];
-    // For a scrollable vertical bar the layout starts above the top edge by the scroll offset, so the
-    // dragged cells line up with the scrolled positions reallyUpdate: gave the rest. verticalScrollOffset
-    // is 0 for horizontal bars and when scrolling is off, so this is a no-op there.
-    float position = [control orientation] == PSMTabBarHorizontalOrientation ? [[control style] leftMarginForTabBarControl] : ([[control style] topMarginForTabBarControl] - [control verticalScrollOffset]);
+    // A scrollable bar starts its layout shifted by the scroll offset (up for a vertical bar, left for
+    // a horizontal one), so the dragged cells line up with the scrolled positions reallyUpdate: gave
+    // the rest. scrollOffset is 0 when scrolling is off, so this is a no-op there.
+    const float leadingMargin = ([control orientation] == PSMTabBarHorizontalOrientation
+                                 ? [[control style] leftMarginForTabBarControl]
+                                 : [[control style] topMarginForTabBarControl]);
+    float position = leadingMargin - [control scrollOffset];
 
     // identify target cell
     // mouse at beginning of tabs

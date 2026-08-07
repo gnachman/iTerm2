@@ -47,11 +47,15 @@ Major New Features:
   back-off thresholds.
 
 - A new setting in Settings > Appearance makes
-  the side tab bar scrollable. When the tab bar
-  is on the left or right and has more tabs than
-  fit, instead of moving the extras into the
-  “More tabs” overflow menu they stay in the bar
-  and you scroll to reach them. Off by default.
+  the tab bar scrollable. When the tab bar has
+  more tabs than fit, instead of moving the
+  extras into the “More tabs” overflow menu they
+  stay in the bar and you scroll to reach them.
+  Works for top, bottom, left, and right tab
+  bars. A horizontal bar scrolls with a trackpad
+  swipe or shift + mouse wheel. Off by default.
+  The “Tab width when the tab bar is scrollable”
+  advanced setting sets the scrolled tab size.
 
 - iTerm2 now probes the local network on
   every launch so macOS keeps it in the

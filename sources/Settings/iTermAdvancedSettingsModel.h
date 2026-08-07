@@ -373,6 +373,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)openQuicklyAnimationDuration;
 + (BOOL)openUntitledFile;
 + (int)optimumTabWidth;
++ (int)scrollableTabWidth;
 + (BOOL)oscColorReport16Bits;
 + (BOOL)p3;
 + (int)pasteHistoryMaxOptions;

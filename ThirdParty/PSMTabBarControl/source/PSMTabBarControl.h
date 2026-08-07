@@ -196,6 +196,9 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 @property(nonatomic, assign) int cellMinWidth;
 @property(nonatomic, assign) int cellMaxWidth;
 @property(nonatomic, assign) int cellOptimumWidth;
+// Tab width used when the bar is scrollable: the fixed width for equal-sized tabs, and the minimum
+// width for uneven tabs. Distinct from cellOptimumWidth, which applies to the non-scrollable bar.
+@property(nonatomic, assign) int scrollableTabWidth;
 @property(nonatomic, assign) int pinnedTabWidth;
 @property(nonatomic, assign) BOOL sizeCellsToFit;
 @property(nonatomic, assign) BOOL stretchCellsToFit;
@@ -240,10 +243,15 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 - (void)bindPropertiesForCell:(PSMTabBarCell *)cell andTabViewItem:(NSTabViewItem *)item;
 - (void)removeTabForCell:(PSMTabBarCell *)cell;
 
-// How far the scrollable side tab bar is scrolled, in points. 0 unless the scrollable vertical tab
-// bar is enabled and in use. The tab drag assistant reads this so it lays cells out at the same
-// scrolled positions reallyUpdate: gives them.
-@property(nonatomic, readonly) CGFloat verticalScrollOffset;
+// How far the scrollable tab bar is scrolled along its scroll axis (y for a vertical bar, x for a
+// horizontal one), in points. 0 unless the scrollable tab bar is enabled and in use. The tab drag
+// assistant reads this so it lays cells out at the same scrolled positions reallyUpdate: gives them.
+@property(nonatomic, readonly) CGFloat scrollOffset;
+
+// Length of the scrollable tab region along the scroll axis. For a horizontal bar this stops short of
+// the pinned add-tab button on the right; a tab whose frame extends past this length is (partly) in the
+// button margin. Styles read it to decide how to draw a tab that straddles that edge.
+@property(nonatomic, readonly) CGFloat scrollViewportLength;
 
 #pragma mark - iTerm add-ons
 
