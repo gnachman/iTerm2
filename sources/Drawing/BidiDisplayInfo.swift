@@ -379,6 +379,25 @@ fileprivate func isolateLatinRuns(_ s: NSString, deltas: UnsafePointer<Int32>) -
                     start = i + 1
                 }
             }
+            // A list marker like "۱. " puts a period (island content) before the
+            // English word, separated by a space. Absorbing it into the word's
+            // island tears the period away from its number and reorders the marker
+            // wrong ("Motivation۱ ." instead of "۱. Motivation"). If the island
+            // content before its first letter contains a space, leave that leading
+            // punctuation and space outside the island so the marker stays put.
+            if hasLetter {
+                var firstLetter = start
+                while firstLetter < j && !isLetter(s.character(at: firstLetter)) { firstLetter += 1 }
+                var lastSpace = -1
+                var t = start
+                while t < firstLetter { if s.character(at: t) == 0x20 { lastSpace = t }; t += 1 }
+                if lastSpace >= start {
+                    for k in start...lastSpace {
+                        out.append(s.character(at: k)); map.append(CellOffsetFromUTF16Offset(Int32(k), deltas))
+                    }
+                    start = lastSpace + 1
+                }
+            }
             if hasLetter {
                 out.append(iTermLRI); map.append(-1)
                 for k in start..<j { out.append(s.character(at: k)); map.append(CellOffsetFromUTF16Offset(Int32(k), deltas)) }
@@ -393,6 +412,27 @@ fileprivate func isolateLatinRuns(_ s: NSString, deltas: UnsafePointer<Int32>) -
         }
     }
     return (NSString(characters: out, length: out.count), map)
+}
+
+// Empty cells hold code 0, which ScreenCharArrayToString stringifies to U+0000.
+// A TUI (Claude Code / Ink) positions words with absolute-column moves (CHA,
+// ESC[<n>G) and never writes real spaces, so the gaps between words are code-0
+// holes. U+0000 is bidi class BN (Boundary Neutral); next to a number (EN) or a
+// ZWNJ it perturbs the reorder so every following cell maps one visual column
+// too far, and the line renders with spaces inside words. Treat holes as real
+// spaces (bidi-neutral whitespace, one UTF-16 unit each so all cell/delta
+// indices are unchanged) — which is also how empty cells actually draw.
+private func replacingNulWithSpace(_ s: NSString) -> NSString {
+    let n = s.length
+    guard n > 0 else { return s }
+    var buf = [unichar](repeating: 0, count: n)
+    s.getCharacters(&buf, range: NSRange(location: 0, length: n))
+    var changed = false
+    for i in 0..<n where buf[i] == 0 {
+        buf[i] = 0x20
+        changed = true
+    }
+    return changed ? NSString(characters: buf, length: n) : s
 }
 
 // Make a lookup table that maps source cell to display cell.
@@ -983,15 +1023,16 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
     // cell map.
     fileprivate static func mappedString(_ s: NSString,
                                          deltas: UnsafePointer<Int32>) -> (NSString, [Int32]) {
+        let sanitized = replacingNulWithSpace(s)
         if iTermAdvancedSettingsModel.isolateLatinRunsInRTL() {
-            return isolateLatinRuns(s, deltas: deltas)
+            return isolateLatinRuns(sanitized, deltas: deltas)
         }
         var map = [Int32]()
-        map.reserveCapacity(s.length)
-        for k in 0..<s.length {
+        map.reserveCapacity(sanitized.length)
+        for k in 0..<sanitized.length {
             map.append(CellOffsetFromUTF16Offset(Int32(k), deltas))
         }
-        return (s, map)
+        return (sanitized, map)
     }
 
     // Fails if no RTL was found
