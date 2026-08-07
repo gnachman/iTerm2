@@ -2641,6 +2641,113 @@ Bug Fixes:
   terminal instead of queueing it, so you can
   answer a prompt the paste is stuck on (such as
   a password or zsh’s spelling correction).
+- Parentheses, brackets, and other mirrored
+  punctuation now draw correctly in right-to-
+  left text when right-to-left support is on.
+  The direction follows CoreText's own bidi
+  resolution, so a bracket around an English
+  phrase inside Persian is handled the same
+  way other Mac apps handle it.
+- Persian and Arabic quotation marks « » are
+  drawn as typed instead of bidi-mirrored, so
+  «text» keeps its marks hugging the text
+  rather than pointing outward. Brackets and
+  parentheses still mirror.
+- New Advanced setting, off by default: “Treat
+  Latin words as left-to-right islands in
+  right-to-left text.” Turn it on and English
+  words, file paths, and code inside Persian or
+  Arabic keep their natural left-to-right order
+  and un-flipped brackets, while the
+  surrounding text still follows the standard
+  bidi rules. Aimed at terminals that mix
+  technical English into right-to-left prose.
+- Fixed right-to-left text getting scrambled in
+  full-screen programs and AI agent CLIs that
+  scroll or repaint their output region: the
+  per-line right-to-left annotation now moves
+  with the content when a scroll region shifts
+  rows, so Persian, Arabic, and Hebrew lines
+  keep their correct display order instead of
+  falling back to logical order.
+- Fixed misplaced letters in right-to-left words
+  that combine a lam-alef ligature with a
+  diacritic, like the Persian کاملاً and لطفاً:
+  the combining mark's glyph position no longer
+  perturbs the display order, so the word's
+  letters stay in right-to-left order and the
+  mark stays on its base letter.
+- Selecting part of an Arabic or Persian word no
+  longer breaks its cursive joining. Text used
+  to be shaped in fragments split at every text
+  color or background change, so a selection or
+  a mid-word SGR color turned کامل into isolated
+  letter forms. Runs that differ only in color
+  are now shaped as one string with per-range
+  colors (both renderers), and the GPU renderer
+  shapes the whole row at once instead of one
+  background run at a time.
+- Selection on right-to-left lines is now visual:
+  a drag selects exactly the columns under it,
+  like every other terminal action. Previously
+  the selection was a logical range, so dragging
+  over a line with embedded English or digits
+  highlighted a different, discontiguous span
+  (selecting «کد پستی 12345» could light 345 but
+  not 12), the first character of a
+  right-justified line could not be selected
+  from the margin, and the trailing period was
+  unreachable. Copy converts the visual span
+  back to logical runs, so copied text stays in
+  reading order; partially-selected English
+  inside Persian copies its selected cells only.
+- Guillemets around an English phrase in
+  right-to-left text keep their typed sides:
+  «machine learning» no longer renders as
+  »machine learning«. The marks now join the
+  Latin island between them.
+- Extending a selection upward from a
+  right-justified line keeps the anchor line's
+  words: the per-line share of a multi-line
+  selection now follows each line's reading
+  direction instead of always opening on the
+  left.
+- A line's paragraph direction is right-to-left
+  when it starts with a right-to-left character
+  or when most of its strong characters are
+  right-to-left. An English sentence containing
+  one Persian word no longer right-justifies
+  into an unreadable order, while Persian lines
+  that open with an English word stay
+  right-justified.
+- When “Require Cmd modifier to drag text from
+  a selection” is on, pressing on the selection
+  without Cmd now starts a new selection instead
+  of doing nothing. Without it, re-selecting
+  from the first letter of a right-to-left line
+  was a dead end, since the previous selection
+  always sat under the click.
+- The base direction used to lay out a line now
+  matches the direction it is justified with.
+  They could disagree on a line that opens
+  left-to-right but is mostly Persian, such as
+  a shell prompt after pasting a Persian
+  sentence, and the sentence-final period
+  detached from its sentence and rendered
+  across the gap next to the prompt's clock.
+- New advanced setting: treat a line as
+  right-to-left when it contains at least N
+  right-to-left words (off by default). At 1,
+  a shell prompt holding a pasted Persian word
+  right-justifies the way the same text renders
+  in command output, instead of staying
+  anchored to the Latin prompt.
+- Copying a single visual sweep that covers
+  logically separated pieces of a mixed
+  right-to-left line now concatenates the
+  pieces in reading order instead of stacking
+  them on separate lines. Pieces on different
+  lines still copy with line breaks.
 - Exiting a workgroup, or closing one of its
   tabs, no longer leaves the main session’s tab
   showing a blank pane when a non-main peer was

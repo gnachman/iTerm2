@@ -300,10 +300,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return YES;
     }
 
-    const VT100GridCoord clickPointCoord = [self.mouseDelegate mouseHandler:self
-                                                                 clickPoint:event
-                                                              allowOverflow:YES
-                                                                 firstMouse:_mouseDownWasFirstMouse];
+    // Convert the visual click to a LOGICAL coordinate. The whole selection model
+    // (character drag, word/line/smart ranges, the highlight, and copy) works in
+    // logical space, so every mode begins from the logical coordinate.
+    const VT100GridCoord visualClickPoint = [self.mouseDelegate mouseHandler:self
+                                                                  clickPoint:event
+                                                               allowOverflow:YES
+                                                                  firstMouse:_mouseDownWasFirstMouse];
+    const VT100GridCoord clickPointCoord =
+        [self.mouseDelegate mouseHandler:self logicalCoordForVisualCoord:visualClickPoint];
     const int x = clickPointCoord.x;
     const int y = clickPointCoord.y;
     if ([self.mouseDelegate mouseHandler:self coordIsMutable:VT100GridCoordMake(x, y)] &&
@@ -371,16 +376,30 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             _imageBeingClickedOn = imageBeingClickedOn;
             _mouseDownOnImage = YES;
             self.selection.appending = NO;
-        } else if (mouseDownOnSelection) {
+        } else if (mouseDownOnSelection &&
+                   (![iTermAdvancedSettingsModel requireCmdForDraggingText] || cmdPressed)) {
             // not holding down shift key but there is an existing selection.
-            // Possibly a drag coming up (if a cmd-drag follows)
+            // Possibly a drag coming up (if a cmd-drag follows). When dragging
+            // text requires Cmd and it isn't held, fall through and start a
+            // new selection instead: otherwise a press on the selection is a
+            // dead end (no drag, no new selection), which reads as selection
+            // being frozen, especially on right-to-left lines where a repeat
+            // drag naturally starts on the previous selection.
             DLog(@"mouse down on selection, returning");
             _mouseDownOnSelection = YES;
             self.selection.appending = NO;
             return YES;
         } else {
             // start a new selection
-            [self.selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(x, y + overflow)
+            VT100GridCoord anchor = clickPointCoord;
+            if (mode == kiTermSelectionModeCharacter) {
+                // Character selections are VISUAL: the live range stores the
+                // columns the user actually drags over. iTermSelection
+                // converts to logical cells for the highlight per line and
+                // decomposes into logical subselections when the drag ends.
+                anchor = visualClickPoint;
+            }
+            [self.selection beginSelectionAtAbsCoord:VT100GridAbsCoordMake(anchor.x, anchor.y + overflow)
                                                 mode:mode
                                               resume:NO
                                               append:(cmdPressed && !altPressed)];

@@ -14,6 +14,7 @@
 #import "iTermAttributedStringBuilder.h"
 #import "iTermAttributedStringProxy.h"
 #import "iTermBoxDrawingBezierCurveFactory.h"
+#import "iTermCharacterSets.h"
 #import "iTermCharacterSource.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
@@ -1015,6 +1016,7 @@ NS_INLINE int iTermGlyphKeyEmitRegular(iTermCachedGlyphKeysBuffer *buf,
                                        unichar regionalIndicatorSuccessor,
                                        const int *bidiLUT,
                                        int bidiLUTLength,
+                                       iTermBidiDisplayInfo * _Nullable bidiInfo,
                                        iTermLineAttribute lineAttribute) {
     iTermCachedGlyphKeysBufferEnsureSize(buf, i);
     iTermMetalGlyphKey *glyphKeys = buf->buffer;
@@ -1022,6 +1024,15 @@ NS_INLINE int iTermGlyphKeyEmitRegular(iTermCachedGlyphKeysBuffer *buf,
     if (characterIsDrawable) {
         glyphKeys[i].payload.regular.code = line[logicalIndex].code;
         glyphKeys[i].payload.regular.isComplex = line[logicalIndex].complexChar;
+        // UBA rule L4: draw a bidi-mirrorable character (e.g. a bracket) as its
+        // counterpart when CoreText resolved this cell right-to-left. Only simple
+        // cells mirror. The CoreGraphics renderer does this in
+        // iTermAttributedStringBuilder.m; the Metal glyph path needs it too, or
+        // parentheses in right-to-left text render reversed («)تهران(» for
+        // «(تهران)»).
+        if (bidiInfo && !line[logicalIndex].complexChar && [bidiInfo mirrorsSourceCell:logicalIndex]) {
+            glyphKeys[i].payload.regular.code = iTermBidiMirroredCounterpart(glyphKeys[i].payload.regular.code);
+        }
     } else {
         glyphKeys[i].payload.regular.code = ' ';
         glyphKeys[i].payload.regular.isComplex = NO;
@@ -1404,7 +1415,13 @@ int iTermGetMetalBackgroundColors(iTermMetalPerFrameState *self,
             }
             continue;
         }
-        const BOOL selected = [selectedIndexes containsIndex:visualX];
+        // selectedIndexes is in LOGICAL coordinates (the selection is stored and
+        // reported logically), so test the logical cell index. The run is still
+        // positioned at its visual column via the LUT above; testing visualX here
+        // lit the mirror-image cells on right-to-left lines (the highlight landed
+        // on empty trailing-space columns at the left). Matches the CoreGraphics
+        // path in iTermBackgroundColorRun.m.
+        const BOOL selected = [selectedIndexes containsIndex:logicalX];
         BOOL findMatch = NO;
         if (findMatches && !selected) {
             findMatch = CheckFindMatchAtIndex(findMatches, logicalX);
@@ -1682,7 +1699,11 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         }
 
         const vector_float4 bgColor = attributes[visualX].backgroundColor;
-        BOOL selected = [selectedIndexes containsIndex:visualX];
+        // selectedIndexes is in LOGICAL coordinates; testing visualX here gave
+        // a glyph the selected background with the unselected foreground on
+        // reordered lines (the background path below tests logicalX), which
+        // made selected glyphs disappear on the GPU renderer.
+        BOOL selected = [selectedIndexes containsIndex:logicalIndex];
         BOOL findMatch = NO;
         if (findMatches && !selected) {
             findMatch = CheckFindMatchAtIndex(findMatches, logicalIndex);
@@ -1700,7 +1721,9 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
             // Normal code path
             lastSelected = selected;
         }
-        const BOOL annotated = [annotatedIndexes containsIndex:visualX];
+        // Annotation indexes are logical as well; the attribute is still
+        // STORED at the visual column, where the cell draws.
+        const BOOL annotated = [annotatedIndexes containsIndex:logicalIndex];
         const BOOL inUnderlinedRange = NSLocationInRange(logicalIndex, underlinedRange) || annotated;
 
 
@@ -1821,6 +1844,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
                                           regionalIndicatorSuccessor,
                                           bidiLUT,
                                           bidiLUTLength,
+                                          bidiInfo,
                                           lineAttribute);
         } else {
             iTermGlyphKeyEmitPlaceholder(buf, gk, logicalIndex, bidiLUT, bidiLUTLength);
@@ -1949,20 +1973,31 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     if (bidiInfo || _configuration->_renderInputs.ligaturesEnabled) {
         allAttributedStrings = [NSMutableArray array];
 
-        for (int i = 0; i < rles; i++) {
+        // On a bidi line, build the whole row in ONE call instead of one call
+        // per background-color run. Each call shapes its range independently,
+        // so per-run calls sever Arabic cursive joining wherever the background
+        // changes: a selection or SGR background split «کاملاً» into final and
+        // isolated letter forms on the Metal renderer. The colors the builder
+        // resolves depend on the background (minimum contrast, faint blending),
+        // but this path ignores them: glyph tinting is per cell from the
+        // attributes buffer. Only the shaping matters, so one representative
+        // background color is fine.
+        const int rleCountForStrings = (bidiInfo && rles > 0) ? 1 : rles;
+        for (int i = 0; i < rleCountForStrings; i++) {
             const iTermMetalBackgroundColorRLE *bgrle = &backgroundRLE[i];
             NSColor *bgColor = [NSColor colorWithDisplayP3Red:bgrle->color.x
                                                         green:bgrle->color.y
                                                          blue:bgrle->color.z
                                                         alpha:bgrle->color.w];
             iTermBackgroundColorRun run = {
-                .modelRange = NSMakeRange(bgrle->logicalOrigin, bgrle->count),
-                .visualRange = NSMakeRange(bgrle->origin, bgrle->count),
+                .modelRange = bidiInfo ? NSMakeRange(0, width) : NSMakeRange(bgrle->logicalOrigin, bgrle->count),
+                .visualRange = bidiInfo ? NSMakeRange(0, width) : NSMakeRange(bgrle->origin, bgrle->count),
                 .bgColor = line[bgrle->origin].backgroundColor,
                 .bgGreen = line[bgrle->origin].bgGreen,
                 .bgBlue = line[bgrle->origin].bgBlue,
                 .bgColorMode = line[bgrle->origin].backgroundColorMode,
-                .selected = [selectedIndexes containsIndex:bgrle->origin],
+                // selectedIndexes is logical; bgrle->origin is a visual column.
+                .selected = [selectedIndexes containsIndex:bgrle->logicalOrigin],
                 .isMatch = (findMatches &&
                             !run.selected &&
                             CheckFindMatchAtIndex(findMatches, bgrle->origin)),

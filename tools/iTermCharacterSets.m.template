@@ -325,3 +325,33 @@ CFIndex iTermFindFirstCodePointWithOwnCell(const UniChar *chars,
     }
     return kCFNotFound;
 }
+
+// ============================================================================
+// Bidi mirroring (BidiMirroring.txt, UBA rule L4)
+// ============================================================================
+
+// (code point, Bidi_Mirroring_Glyph counterpart) sorted by code point.
+// Every pair in BidiMirroring.txt is in the BMP; the generator fails if a
+// future Unicode version breaks that assumption.
+static const uint16_t sBidiMirroringPairs[][2] = {
+{{BIDI_MIRRORING_PAIRS}}
+};
+static const int sBidiMirroringPairCount = {{BIDI_MIRRORING_PAIR_COUNT}};
+
+unichar iTermBidiMirroredCounterpart(unichar cp) {
+    int lo = 0;
+    int hi = sBidiMirroringPairCount - 1;
+    while (lo <= hi) {
+        const int mid = (lo + hi) / 2;
+        const uint16_t key = sBidiMirroringPairs[mid][0];
+        if (key == cp) {
+            return sBidiMirroringPairs[mid][1];
+        }
+        if (key < cp) {
+            lo = mid + 1;
+        } else {
+            hi = mid - 1;
+        }
+    }
+    return cp;
+}

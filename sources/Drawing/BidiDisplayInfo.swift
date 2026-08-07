@@ -44,6 +44,22 @@ extension CTRun {
         CTRunGetPositions(self, wholeRange, &values)
         return values
     }
+    var glyphs: [CGGlyph] {
+        let count = glyphCount
+        var values = Array<CGGlyph>(repeating: 0, count: count)
+        CTRunGetGlyphs(self, wholeRange, &values)
+        return values
+    }
+    // The font CoreText actually used for this run (post-substitution). Needed
+    // to ask the font for a character's default (un-mirrored) glyph so we can
+    // detect whether CoreText applied bidi mirroring (rule L4) to a glyph.
+    var font: CTFont? {
+        guard let attributes = CTRunGetAttributes(self) as? [String: Any],
+              let font = attributes[kCTFontAttributeName as String] else {
+            return nil
+        }
+        return (font as! CTFont)
+    }
     var status: CTRunStatus {
         CTRunGetStatus(self)
     }
@@ -124,12 +140,39 @@ struct ResolvedCellPosition: Comparable {
 
 fileprivate struct IntermediateLookupTable {
     var rtlIndexes = IndexSet()
+    // Source cells whose character CoreText actually drew as its bidi-mirrored
+    // counterpart (UBA rule L4). This is distinct from rtlIndexes: a bracket
+    // that brackets an embedded left-to-right run is in an RTL run for
+    // positioning yet must NOT be mirrored, and CoreText resolves that
+    // correctly here. Driving mirroring off run direction instead reverses
+    // brackets around English words inside Persian text.
+    var mirroredIndexes = IndexSet()
     var sourceCellToPositionRange: Array<ClosedRange<CGFloat>?>
     var count: Int
 
-    init(line: CTLine, deltas: UnsafePointer<Int32>, count: Int) {
+    // `string` is what CoreText laid out (which may contain inserted isolate
+    // controls when Latin runs are isolated). `cellForIndex` maps each UTF-16
+    // index of `string` to a source cell, or -1 for an inserted control that
+    // has no cell.
+    init(line: CTLine, string: NSString, cellForIndex: [Int32], count: Int) {
         self.count = count
+        // Guillemets keep their typed glyph instead of following bidi mirroring.
+        // The Unicode algorithm mirrors « » (and ‹ ›) in a right-to-left run, so
+        // «متن» renders »متن« with the marks pointing outward; CoreText and
+        // TextEdit do this. Persian/Arabic readers expect the marks to hug the
+        // text as typed («متن»), so we deliberately don't mirror them. Brackets
+        // and parentheses still mirror, matching macOS. This is unconditional
+        // (not tied to the Latin-islands setting); it only runs at all when
+        // right-to-left support is enabled, so it's inert otherwise.
+        func isGuillemet(_ c: unichar) -> Bool {
+            return c == 0x00AB || c == 0x00BB || c == 0x2039 || c == 0x203A
+        }
         let runs = CTLineGetGlyphRuns(line) as! [CTRun]
+
+        func cell(_ stringIndex: Int) -> Int {
+            guard stringIndex >= 0 && stringIndex < cellForIndex.count else { return -1 }
+            return Int(cellForIndex[stringIndex])
+        }
 
         // Source cell to range of positions
         sourceCellToPositionRange = Array<ClosedRange<CGFloat>?>(repeating: nil, count: count)
@@ -140,21 +183,53 @@ fileprivate struct IntermediateLookupTable {
             // Update rtlIndexes
             if isRTL {
                 for stringIndex in run.stringRange {
-                    let sourceCell = Int(CellOffsetFromUTF16Offset(Int32(stringIndex), deltas))
-                    rtlIndexes.insert(sourceCell)
+                    let sourceCell = cell(stringIndex)
+                    if sourceCell >= 0 { rtlIndexes.insert(sourceCell) }
                 }
             }
 
-            // Update sourceCellToPositionRange
+            // Update sourceCellToPositionRange, and detect L4 mirroring.
             let positions = run.positions
+            let glyphs = run.glyphs
+            let font = run.font
             for i in 0..<run.glyphCount {
                 let stringIndex = stringIndices[i]
-                let sourceCell = Int(CellOffsetFromUTF16Offset(Int32(stringIndex), deltas))
+                let sourceCell = cell(stringIndex)
+                if sourceCell < 0 { continue }  // inserted isolate control: no cell
+                // Only the cell's base character (its first UTF-16 unit) may
+                // set the cell's position. A combining mark merged into a cell
+                // is a zero-advance glyph positioned over its base's glyph, or
+                // over a ligature that consumed the base, as in کاملاً where
+                // the fathatan rides the lam-alef ligature. Crediting the
+                // mark's x to the cell gave the alef's cell an absolute
+                // position at/right of the ligature's origin, sorting it to the
+                // wrong side of the lam. Ignored, the cell falls back to
+                // leftOfPredecessor/rightOfPredecessor as ligature-consumed
+                // cells are meant to.
+                if stringIndex > 0 && cell(stringIndex - 1) == sourceCell { continue }
                 if var existing = sourceCellToPositionRange[sourceCell] {
                     existing.formUnion(positions[i].x...positions[i].x)
                     sourceCellToPositionRange[sourceCell] = existing
                 } else {
                     sourceCellToPositionRange[sourceCell] = positions[i].x...positions[i].x
+                }
+
+                // A character is mirrored iff it is bidi-mirrorable AND the
+                // glyph CoreText chose differs from the font's default glyph
+                // for that character. Comparing against the run's own font
+                // (post-substitution) keeps the comparison valid.
+                if let font,
+                   stringIndex >= 0,
+                   stringIndex < string.length {
+                    let ch = string.character(at: stringIndex)
+                    if iTermBidiMirroredCounterpart(ch) != ch {
+                        var chars: [unichar] = [ch]
+                        var defaultGlyphs = [CGGlyph](repeating: 0, count: 1)
+                        CTFontGetGlyphsForCharacters(font, &chars, &defaultGlyphs, 1)
+                        if glyphs[i] != defaultGlyphs[0] && !isGuillemet(ch) {
+                            mirroredIndexes.insert(sourceCell)
+                        }
+                    }
                 }
             }
         }
@@ -196,30 +271,252 @@ fileprivate struct IntermediateLookupTable {
     }
 }
 
+// Wrap maximal runs of non-space ASCII text that contain a Latin letter in
+// isolate controls (LRI…PDI) so CoreText lays them out as left-to-right
+// islands: English words, file paths, and code keep their natural order and
+// their surrounding brackets stay un-mirrored. Returns the isolated string and,
+// per UTF-16 index of it, the source cell (-1 for an inserted control).
+private let iTermLRI: unichar = 0x2066
+private let iTermRLI: unichar = 0x2067
+private let iTermFSI: unichar = 0x2068
+private let iTermPDI: unichar = 0x2069
+
+fileprivate func isolateLatinRuns(_ s: NSString, deltas: UnsafePointer<Int32>) -> (NSString, [Int32]) {
+    // Accented Latin letters (Müggelsee, café, Tegernsee, …). Latin-1 Supplement
+    // and Latin Extended-A letters, minus the two math signs × and ÷.
+    func isLatinExtendedLetter(_ c: unichar) -> Bool {
+        if c == 0xD7 || c == 0xF7 { return false }
+        return (c >= 0xC0 && c <= 0xFF) || (c >= 0x100 && c <= 0x17F)
+    }
+    func isLetter(_ c: unichar) -> Bool {
+        return (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A) || isLatinExtendedLetter(c)
+    }
+    // Island content: printable ASCII (no space), plus accented Latin letters so
+    // a word like "Müggelsee" is not split at the ü. Guillemets count as island
+    // content so «machine learning» keeps its marks on their typed sides: left
+    // outside the island the UBA places them by direction run and the pair
+    // shows up swapped (»machine learning«). A guillemet with no adjacent
+    // Latin letters forms no island (hasLetter stays false), so Persian
+    // «سلام دنیا» is unaffected.
+    func isGuillemet(_ c: unichar) -> Bool { c == 0xAB || c == 0xBB || c == 0x2039 || c == 0x203A }
+    func isIsland(_ c: unichar) -> Bool { (c > 0x20 && c < 0x7F) || isLatinExtendedLetter(c) || isGuillemet(c) }
+    func isDigit(_ c: unichar) -> Bool { c >= 0x30 && c <= 0x39 }
+    func isAlnum(_ c: unichar) -> Bool { isLetter(c) || isDigit(c) }
+    func isOpeningBracket(_ c: unichar) -> Bool { c == 0x28 || c == 0x5B || c == 0x7B }
+    func isClosingBracket(_ c: unichar) -> Bool { c == 0x29 || c == 0x5D || c == 0x7D }
+    // Whether a Latin letter lies ahead in the upcoming island run, spanning
+    // symbols like "=" and interior spaces, before any non-island (Persian)
+    // character. Lets "(ZWNJ = U+200C)" stay one island instead of splitting at
+    // the "=" (which is island content but not alphanumeric), which would leave
+    // the two halves to reorder against each other in an RTL line.
+    func latinLetterAhead(_ start: Int) -> Bool {
+        var m = start
+        while m < s.length {
+            let cm = s.character(at: m)
+            if isLetter(cm) { return true }
+            if isIsland(cm) || cm == 0x20 { m += 1 } else { return false }
+        }
+        return false
+    }
+    let n = s.length
+    var out = [unichar]()
+    var map = [Int32]()
+    out.reserveCapacity(n + 8)
+    map.reserveCapacity(n + 8)
+    var i = 0
+    while i < n {
+        let c = s.character(at: i)
+        if isIsland(c) {
+            // Extend across island characters, and across interior spaces that
+            // have island content on the far side, so a multi-word phrase like
+            // "Tempelhofer Feld" or "Google Chrome" stays a single island. A
+            // trailing space before non-island (e.g. Persian) content ends it.
+            var j = i
+            var hasLetter = false
+            while j < n {
+                let cj = s.character(at: j)
+                if isIsland(cj) {
+                    if isLetter(cj) { hasLetter = true }
+                    j += 1
+                } else if cj == 0x20 {
+                    // Span an interior space when more Latin content follows, so a
+                    // multi-word phrase ("Google Chrome", "Windows 11", "Berlin
+                    // (capital)") stays a single island. Look through an opening
+                    // bracket to what it introduces: a bracket that opens Latin
+                    // content belongs to the phrase, but one that opens the next
+                    // Persian phrase (as in "School of Hip Hop (فصل …") is left
+                    // outside the island so it mirrors normally.
+                    var k = j
+                    while k < n && s.character(at: k) == 0x20 { k += 1 }
+                    var probe = k
+                    if probe < n && isOpeningBracket(s.character(at: probe)) { probe += 1 }
+                    // Span the space toward more Latin content: the next token is
+                    // alphanumeric, OR a Latin letter still lies ahead past a
+                    // symbol like "=" ("ZWNJ = U+200C"). A bracket that opens
+                    // Persian ("School … (فصل") has no Latin letter ahead, so it
+                    // still ends the island and mirrors normally.
+                    if (probe < n && isAlnum(s.character(at: probe))) || latinLetterAhead(k) {
+                        j = k  // interior space before more Latin content: keep going
+                    } else {
+                        break  // island ends here
+                    }
+                } else {
+                    break
+                }
+            }
+            // If the run starts with an opening bracket whose partner is not in
+            // this island, its content turns Persian ("(ZWNJ حاضر است)"), leave
+            // that bracket in the RTL run so the pair mirrors together, and begin
+            // the island after it. An all-Latin bracket ("(Berlin capital)")
+            // keeps its partner inside and is unaffected.
+            var start = i
+            if isOpeningBracket(s.character(at: i)) {
+                var matched = false
+                var m = i + 1
+                while m < j { if isClosingBracket(s.character(at: m)) { matched = true; break }; m += 1 }
+                if !matched {
+                    out.append(s.character(at: i)); map.append(CellOffsetFromUTF16Offset(Int32(i), deltas))
+                    start = i + 1
+                }
+            }
+            // A list marker like "۱. " puts a period (island content) before the
+            // English word, separated by a space. Absorbing it into the word's
+            // island tears the period away from its number and reorders the marker
+            // wrong ("Motivation۱ ." instead of "۱. Motivation"). If the island
+            // content before its first letter contains a space, leave that leading
+            // punctuation and space outside the island so the marker stays put.
+            if hasLetter {
+                var firstLetter = start
+                while firstLetter < j && !isLetter(s.character(at: firstLetter)) { firstLetter += 1 }
+                var lastSpace = -1
+                var t = start
+                while t < firstLetter { if s.character(at: t) == 0x20 { lastSpace = t }; t += 1 }
+                if lastSpace >= start {
+                    for k in start...lastSpace {
+                        out.append(s.character(at: k)); map.append(CellOffsetFromUTF16Offset(Int32(k), deltas))
+                    }
+                    start = lastSpace + 1
+                }
+            }
+            if hasLetter {
+                out.append(iTermLRI); map.append(-1)
+                for k in start..<j { out.append(s.character(at: k)); map.append(CellOffsetFromUTF16Offset(Int32(k), deltas)) }
+                out.append(iTermPDI); map.append(-1)
+            } else {
+                for k in start..<j { out.append(s.character(at: k)); map.append(CellOffsetFromUTF16Offset(Int32(k), deltas)) }
+            }
+            i = j
+        } else {
+            out.append(c); map.append(CellOffsetFromUTF16Offset(Int32(i), deltas))
+            i += 1
+        }
+    }
+    return (NSString(characters: out, length: out.count), map)
+}
+
+// Empty cells hold code 0, which ScreenCharArrayToString stringifies to U+0000.
+// A TUI (Claude Code / Ink) positions words with absolute-column moves (CHA,
+// ESC[<n>G) and never writes real spaces, so the gaps between words are code-0
+// holes. U+0000 is bidi class BN (Boundary Neutral); next to a number (EN) or a
+// ZWNJ it perturbs the reorder so every following cell maps one visual column
+// too far, and the line renders with spaces inside words. Treat holes as real
+// spaces (bidi-neutral whitespace, one UTF-16 unit each so all cell/delta
+// indices are unchanged) — which is also how empty cells actually draw.
+private func replacingNulWithSpace(_ s: NSString) -> NSString {
+    let n = s.length
+    guard n > 0 else { return s }
+    var buf = [unichar](repeating: 0, count: n)
+    s.getCharacters(&buf, range: NSRange(location: 0, length: n))
+    var changed = false
+    for i in 0..<n where buf[i] == 0 {
+        buf[i] = 0x20
+        changed = true
+    }
+    return changed ? NSString(characters: buf, length: n) : s
+}
+
 // Make a lookup table that maps source cell to display cell.
-fileprivate func makeLookupTable(_ attributedString: NSAttributedString,
-                                     deltas: UnsafePointer<Int32>,
-                                 count: Int) -> ([Int32], IndexSet, Bool) {
+fileprivate func makeLookupTable(_ string: NSString,
+                                 cellForIndex: [Int32],
+                                 count: Int) -> ([Int32], IndexSet, IndexSet, Bool) {
+    let paragraphIsRTL: Bool =
+        iTermAdvancedSettingsModel.detectParagraphDirection() &&
+        detectedParagraphIsRTL(string)
+    // The CTLine must be laid out with the SAME base direction the line is
+    // justified with. Leaving it to CoreText's own first-strong detection
+    // diverges on a line that opens LTR but is majority-RTL (a shell prompt
+    // with pasted Persian): the line right-justifies by our rule while the
+    // neutrals inside resolve against an LTR base, so a sentence-final period
+    // detaches from its sentence and lands across the gap by the prompt's
+    // clock.
+    let paragraphStyle = NSMutableParagraphStyle()
+    if iTermAdvancedSettingsModel.detectParagraphDirection() {
+        paragraphStyle.baseWritingDirection = paragraphIsRTL ? .rightToLeft : .leftToRight
+    } else {
+        paragraphStyle.baseWritingDirection = .leftToRight
+    }
+    let attributedString = NSAttributedString(string: string as String,
+                                              attributes: [.paragraphStyle: paragraphStyle])
     // Create a CTLine from the attributed string
     let line = CTLineCreateWithAttributedString(attributedString)
-    let intermediate = IntermediateLookupTable(line: line, deltas: deltas, count: count)
+    let intermediate = IntermediateLookupTable(line: line,
+                                               string: string,
+                                               cellForIndex: cellForIndex,
+                                               count: count)
 
-    let firstStrongLTR = attributedString.string.rangeOfCharacter(from: NSCharacterSet.strongLTRCodePoints())
-    let firstStrongRTL = attributedString.string.rangeOfCharacter(from: NSCharacterSet.strongRTLCodePoints())
+    return (intermediate.lut, intermediate.rtlIndexes, intermediate.mirroredIndexes, paragraphIsRTL)
+}
 
-    let paragraphIsRTL: Bool =
-        if iTermAdvancedSettingsModel.detectParagraphDirection() {
-            if let firstStrongLTR, let firstStrongRTL {
-                firstStrongLTR.lowerBound > firstStrongRTL.lowerBound
-            } else if firstStrongRTL != nil {
-                true
-            } else {
-                false
-            }
-        } else {
-            false
+// A line lays out right-to-left when its first strong character is RTL, OR
+// when its strong RTL characters outnumber the strong LTR ones. Either signal
+// alone misfires: first-strong lays out «Berlin شهری بزرگ در آلمان», a
+// Persian sentence that happens to open with an English word, left-to-right,
+// and majority alone flips a Persian-syntax line that quotes a lot of English
+// («کلمهٔ conversion rate و growth plan در گزارش آمد.») to left-to-right.
+// The union gets both right, and an English sentence containing one Persian
+// word («The word سلام means hello in Persian.») stays left-to-right instead
+// of being right-justified into an unreadable order. Isolate control
+// characters are skipped; the characters inside isolates count normally.
+fileprivate func detectedParagraphIsRTL(_ s: NSString) -> Bool {
+    guard let ltr = NSCharacterSet.strongLTRCodePoints(),
+          let rtl = NSCharacterSet.strongRTLCodePoints() else {
+        return false
+    }
+    var firstStrongIsRTL: Bool? = nil
+    var ltrCount = 0
+    var rtlCount = 0
+    // A "word" is a maximal group of strong-RTL characters; a space or a
+    // strong-LTR character ends it, while neutrals and marks (ZWNJ inside
+    // دانش‌آموزان, combining marks) do not, so such a word counts once.
+    var rtlWordCount = 0
+    var inRTLWord = false
+    // Walk scalars, not UTF-16 units: surrogate halves never form a scalar, so
+    // a UTF-16 walk ignored supplementary-plane strong-RTL scripts (Adlam,
+    // Hanifi Rohingya) and misdetected the direction of lines written in them.
+    for scalar in (s as String).unicodeScalars {
+        let c = scalar.value
+        if c == UInt32(iTermLRI) || c == UInt32(iTermRLI) || c == UInt32(iTermFSI) || c == UInt32(iTermPDI) { continue }
+        if rtl.contains(scalar) {
+            rtlCount += 1
+            if !inRTLWord { rtlWordCount += 1; inRTLWord = true }
+            if firstStrongIsRTL == nil { firstStrongIsRTL = true }
+        } else if ltr.contains(scalar) {
+            ltrCount += 1
+            inRTLWord = false
+            if firstStrongIsRTL == nil { firstStrongIsRTL = false }
+        } else if c == 0x20 {
+            inRTLWord = false
         }
-    return (intermediate.lut, intermediate.rtlIndexes, paragraphIsRTL)
+    }
+    if firstStrongIsRTL == true || rtlCount > ltrCount {
+        return true
+    }
+    // Optional user rule: a line with at least this many RTL words lays out
+    // right-to-left even when it opens LTR and Latin holds the majority. At 1,
+    // a shell prompt holding a pasted Persian word right-justifies like the
+    // same text does in command output. Off (0) by default.
+    let minimumWords = Int(iTermAdvancedSettingsModel.rtlParagraphMinimumWords())
+    return minimumWords > 0 && rtlWordCount >= minimumWords
 }
 
 extension IndexSet {
@@ -284,9 +581,17 @@ class BidiDisplayInfoObjc: NSObject {
 
     @objc var paragraphIsRTL: Bool { guts.paragraphIsRTL }
 
+    // Whether the given source cell's glyph must be drawn bidi-mirrored (L4).
+    @objc(mirrorsSourceCell:)
+    func mirrorsSourceCell(_ cell: Int32) -> Bool {
+        return guts.mirroredIndexes.contains(Int(cell))
+    }
+
+
     private enum Keys: String {
         case lut = "lut"
         case rtlIndexes = "rtlIndexes"
+        case mirroredIndexes = "mirroredIndexes"
         case paragraphIsRTL = "paragraphIsRTL"
     }
 
@@ -294,6 +599,7 @@ class BidiDisplayInfoObjc: NSObject {
     var dictionaryValue: [String: Any] {
         return [Keys.lut.rawValue: guts.lut.efficientlyEncodedForPlist(),
                 Keys.rtlIndexes.rawValue: rtlIndexes.rangeView.map { NSValue(range: NSRange($0)) },
+                Keys.mirroredIndexes.rawValue: guts.mirroredIndexes.rangeView.map { NSValue(range: NSRange($0)) },
                 Keys.paragraphIsRTL.rawValue: guts.paragraphIsRTL ]
     }
 
@@ -320,6 +626,12 @@ class BidiDisplayInfoObjc: NSObject {
             return nil
         }
         let indexes = IndexSet(ranges: indexesArray.compactMap { Range($0.rangeValue) })
+        let mirroredIndexes: IndexSet =
+            if let obj = dictionary[Keys.mirroredIndexes.rawValue], let arr = obj as? Array<NSValue> {
+                IndexSet(ranges: arr.compactMap { Range($0.rangeValue) })
+            } else {
+                IndexSet()
+            }
         let paragraphIsRTL: Bool =
             if let obj = dictionary[Keys.paragraphIsRTL.rawValue],
                let convertedParagraphIsRTL = obj as? Bool {
@@ -329,6 +641,7 @@ class BidiDisplayInfoObjc: NSObject {
             }
         guts = BidiDisplayInfo(lut: lut,
                                rtlIndexes: indexes,
+                               mirroredIndexes: mirroredIndexes,
                                paragraphIsRTL: paragraphIsRTL)
     }
 
@@ -619,6 +932,11 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
     // direction. Adjacent RTL indexes will be drawn right-to-left.
     fileprivate let rtlIndexes: IndexSet
 
+    // Source cells whose glyph must be drawn bidi-mirrored (UBA rule L4).
+    // Computed from CoreText's actual per-character resolution, not from run
+    // direction, so brackets around embedded LTR runs are correctly excluded.
+    fileprivate let mirroredIndexes: IndexSet
+
     // Base writing direction. Determines how the paragraph should be justified.
     fileprivate let paragraphIsRTL: Bool
 
@@ -691,18 +1009,30 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
 
     fileprivate init(lut: [Int32],
                      rtlIndexes: IndexSet,
+                     mirroredIndexes: IndexSet = IndexSet(),
                      paragraphIsRTL: Bool) {
         self.lut = lut
         self.rtlIndexes = rtlIndexes
+        self.mirroredIndexes = mirroredIndexes
         self.paragraphIsRTL = paragraphIsRTL
     }
 
-    private static var paragraphStyle: NSParagraphStyle {
-        let paragraphStyle = NSMutableParagraphStyle()
-        if !iTermAdvancedSettingsModel.detectParagraphDirection() {
-            paragraphStyle.baseWritingDirection = .leftToRight
+    // Builds the string CoreText should lay out and a per-UTF-16-index map to
+    // source cells. With Latin-run isolation on, the string gains isolate
+    // controls (mapping to cell -1); otherwise it is the input with an identity
+    // cell map.
+    fileprivate static func mappedString(_ s: NSString,
+                                         deltas: UnsafePointer<Int32>) -> (NSString, [Int32]) {
+        let sanitized = replacingNulWithSpace(s)
+        if iTermAdvancedSettingsModel.isolateLatinRunsInRTL() {
+            return isolateLatinRuns(sanitized, deltas: deltas)
         }
-        return paragraphStyle
+        var map = [Int32]()
+        map.reserveCapacity(sanitized.length)
+        for k in 0..<sanitized.length {
+            map.append(CellOffsetFromUTF16Offset(Int32(k), deltas))
+        }
+        return (sanitized, map)
     }
 
     // Fails if no RTL was found
@@ -719,22 +1049,20 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
             free(buffer)
         }
 
-        let attributedString = NSAttributedString(string: string,
-                                                  attributes: [.paragraphStyle: Self.paragraphStyle])
-        (lut, rtlIndexes, paragraphIsRTL) = makeLookupTable(attributedString,
-                                                            deltas: deltas!,
-                                                            count: Int(nonEmptyCount))
+        let (laidOut, cellForIndex) = Self.mappedString(string as NSString, deltas: deltas!)
+        (lut, rtlIndexes, mirroredIndexes, paragraphIsRTL) = makeLookupTable(laidOut,
+                                                                            cellForIndex: cellForIndex,
+                                                                            count: Int(nonEmptyCount))
         if rtlIndexes.isEmpty {
             return nil
         }
     }
 
     init?(deltaString: DeltaString, usedCount: Int) {
-        let attributedString = NSAttributedString(string: deltaString.unsafeString as String,
-                                                  attributes: [.paragraphStyle: Self.paragraphStyle])
-        (lut, rtlIndexes, paragraphIsRTL) = makeLookupTable(attributedString,
-                                                            deltas: deltaString.deltas,
-                                                            count: usedCount)
+        let (laidOut, cellForIndex) = Self.mappedString(deltaString.unsafeString, deltas: deltaString.deltas)
+        (lut, rtlIndexes, mirroredIndexes, paragraphIsRTL) = makeLookupTable(laidOut,
+                                                                            cellForIndex: cellForIndex,
+                                                                            count: usedCount)
         if rtlIndexes.isEmpty {
             return nil
         }
@@ -756,6 +1084,9 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
         }
         let growth = width - Int32(temp.lut.count)
         self.paragraphIsRTL = temp.paragraphIsRTL
+        // Padding only appends cells at the edge; existing source-cell indices
+        // (which mirroredIndexes keys on) are unchanged, so carry it verbatim.
+        self.mirroredIndexes = temp.mirroredIndexes
         if growth == 0 || !iTermAdvancedSettingsModel.rightJustifyRTLLines() {
             self.lut = temp.lut
             self.rtlIndexes = temp.rtlIndexes
@@ -769,6 +1100,7 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
     init(basedOn base: BidiDisplayInfo, paddedTo width: Int32) {
         lut = iTermAdvancedSettingsModel.rightJustifyRTLLines() ? Self.pad(lut: base.lut, width: width, paragraphIsRTL: base.paragraphIsRTL) : base.lut
         rtlIndexes = base.rtlIndexes
+        mirroredIndexes = base.mirroredIndexes
         paragraphIsRTL = base.paragraphIsRTL
     }
 
@@ -787,6 +1119,11 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
             return nil
         }
 
+        var subMirrored = IndexSet()
+        for mirroredRange in mirroredIndexes.rangeView(of: range) {
+            subMirrored.insert(integersIn: mirroredRange.shifted(by: -nsrange.location))
+        }
+
         let sublut = lut[range]
         let sorted = sublut.sorted()
 
@@ -797,7 +1134,7 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
         let fixed = sublut.map {
             compression[$0]!
         }
-        return BidiDisplayInfo(lut: fixed, rtlIndexes: subIndexes, paragraphIsRTL: paragraphIsRTL)
+        return BidiDisplayInfo(lut: fixed, rtlIndexes: subIndexes, mirroredIndexes: subMirrored, paragraphIsRTL: paragraphIsRTL)
     }
 
     func subInfo(range nsrange: NSRange, width: Int32) -> BidiDisplayInfo? {
@@ -808,11 +1145,14 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
         guard width > lut.count else {
             return self
         }
-        guard rtlIndexes.contains(0) else {
+        // Justify by the line's detected paragraph direction. The old guard
+        // (first CELL is RTL) predates the majority and minimum-RTL-words
+        // rules: a line those rules turn right-to-left can open with a Latin
+        // cell («The word سلام means hello»), which then reordered RTL but
+        // stayed glued to the left margin instead of right-justifying.
+        guard paragraphIsRTL else {
             return self
         }
-        // It would be better to keep an index of strong ltr/rtl charactesr so that subinfos could
-        // use the first strong character to define the justification for the wrapped line.
         return BidiDisplayInfo(basedOn: self, paddedTo: width)
     }
 

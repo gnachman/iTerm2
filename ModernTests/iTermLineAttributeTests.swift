@@ -2503,6 +2503,10 @@ final class iTermLineAttributeTests: XCTestCase {
         func selectionViewportWidth() -> Int32 { return width }
         func selectionTotalScrollbackOverflow() -> Int64 { return 0 }
         func selectionIndexes(onAbsoluteLine line: Int64, containingCharacter c: unichar, in range: NSRange) -> IndexSet { return IndexSet() }
+        func selectionLogicalIndexes(forVisualRange visualRange: NSRange, onAbsoluteLine line: Int64) -> IndexSet {
+            return IndexSet(integersIn: Range(visualRange) ?? 0..<0)
+        }
+        func selectionParagraphIsRTL(onAbsoluteLine line: Int64) -> Bool { return false }
     }
 
     /// Use the actual "Copy with Control Sequences" extractor on a screen.

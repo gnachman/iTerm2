@@ -12,6 +12,7 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermBackgroundColorRun.h"
 #import "iTermBoxDrawingBezierCurveFactory.h"
+#import "iTermCharacterSets.h"
 #import "iTermExternalAttributeIndex.h"
 #import "iTermColorMap.h"
 #import "iTermMutableAttributedStringBuilder.h"
@@ -46,7 +47,8 @@ typedef NS_ENUM(unsigned char, iTermCharacterAttributesUnderline) {
 };
 
 // IMPORTANT: If you add a field here also update the comparison function
-// shouldSegmentWithAttributes:imageAttributes:previousAttributes:previousImageAttributes:combinedAttributesChanged:
+// shouldSegmentWithAttributes:imageAttributes:previousAttributes:previousImageAttributes:mergeColorOnlyChanges:combinedAttributesChanged:
+// (both the changed check and the onlyColorDiffers check).
 typedef struct {
     BOOL initialized;
     BOOL shouldAntiAlias;
@@ -437,6 +439,17 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         unichar code = c.code;
         BOOL isComplex = c.complexChar;
 
+        // UBA rule L4: draw a bidi-mirrorable character as its counterpart when
+        // CoreText resolved it to right-to-left. Driven by the per-cell set
+        // BidiDisplayInfo computed from CoreText's real resolution, so brackets
+        // around an embedded LTR run (e.g. Persian «(English)») are correctly
+        // left un-mirrored. Only simple (non-complex) cells can mirror.
+        BOOL manuallyMirrored = NO;
+        if (!isComplex && [bidiInfo mirrorsSourceCell:i]) {
+            code = iTermBidiMirroredCounterpart(code);
+            manuallyMirrored = YES;
+        }
+
         NSString *charAsString;
 
         CGFloat xPosition;
@@ -462,12 +475,12 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 // complicating its ASCII fastpath.
                 int lastCellDraw;
                 if (bidiLUT && i - 1 < bidiLUTLength) {
-                    lastCellDraw = bidiLUT[i - i];
+                    lastCellDraw = bidiLUT[i - 1];
                 } else {
                     lastCellDraw = i - 1;
                 }
                 [builder appendString:charAsString
-                                  rtl:c.rtlStatus == RTLStatusRTL
+                                  rtl:(manuallyMirrored ? NO : (c.rtlStatus == RTLStatusRTL))
                            sourceCell:i
                            drawInCell:lastCellDraw];
                 const CGFloat lastValue = CTVectorGet(positions, CTVectorCount(positions) - 1);
@@ -530,7 +543,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 [self updateBuilder:builder
                          withString:drawable ? charAsString : @" "
                         orCharacter:code
-                                rtl:c.rtlStatus == RTLStatusRTL
+                                rtl:(manuallyMirrored ? NO : (c.rtlStatus == RTLStatusRTL))
                           positions:positions
                              offset:xPosition
                          sourceCell:i
@@ -579,6 +592,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                               imageAttributes:imageAttributes
                            previousAttributes:&previousCharacterAttributes
                       previousImageAttributes:previousImageAttributes
+                        mergeColorOnlyChanges:(bidiInfo != nil)
                      combinedAttributesChanged:&combinedAttributesChanged]) {
             iTermPreciseTimerStatsStartTimer(_stats.buildMutableAttributedString);
             builder.endColumn = i;
@@ -638,7 +652,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
             [self updateBuilder:builder
                      withString:drawable ? charAsString : @" "
                     orCharacter:code
-                            rtl:c.rtlStatus == RTLStatusRTL
+                            rtl:(manuallyMirrored ? NO : (c.rtlStatus == RTLStatusRTL))
                       positions:positions
                          offset:xPosition
                      sourceCell:i
@@ -799,6 +813,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                     imageAttributes:(NSDictionary *)imageAttributes
                  previousAttributes:(iTermCharacterAttributes *)previousAttributes
             previousImageAttributes:(NSDictionary *)previousImageAttributes
+              mergeColorOnlyChanges:(BOOL)mergeColorOnlyChanges
            combinedAttributesChanged:(BOOL *)combinedAttributesChanged {
     if (unlikely(!previousAttributes->initialized)) {
         // First char of first segment
@@ -828,6 +843,37 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                                           newAttributes->drawable != previousAttributes->drawable ||
                                           newAttributes->rtlStatus != previousAttributes->rtlStatus ||
                                           !iTermCharacterAttributesUnderlineColorEqual(newAttributes, previousAttributes));
+            if (*combinedAttributesChanged && mergeColorOnlyChanges) {
+                // A change in foreground color alone (a selection boundary, or an
+                // SGR color change mid-word) must not start a new attributed
+                // string on a bidi line: each string is shaped independently by
+                // CoreText, so splitting inside an Arabic word severs the cursive
+                // joining: selecting «کامل» out of «کاملاً» redrew the letters in
+                // their isolated forms. Instead the caller keeps appending to the
+                // same builder and just swaps its attributes, producing one shaped
+                // string with per-range colors. Underline/strikethrough/URL runs
+                // are excluded because iTermUnderlineLengthAttribute is applied
+                // per built string.
+                const BOOL onlyColorDiffers = (newAttributes->shouldAntiAlias == previousAttributes->shouldAntiAlias &&
+                                               newAttributes->boxDrawing == previousAttributes->boxDrawing &&
+                                               newAttributes->contrastIneligible == previousAttributes->contrastIneligible &&
+                                               [newAttributes->font isEqual:previousAttributes->font] &&
+                                               newAttributes->ligatureLevel == previousAttributes->ligatureLevel &&
+                                               newAttributes->bold == previousAttributes->bold &&
+                                               newAttributes->faint == previousAttributes->faint &&
+                                               newAttributes->fakeItalic == previousAttributes->fakeItalic &&
+                                               newAttributes->underlineType == iTermCharacterAttributesUnderlineNone &&
+                                               previousAttributes->underlineType == iTermCharacterAttributesUnderlineNone &&
+                                               !newAttributes->strikethrough &&
+                                               !previousAttributes->strikethrough &&
+                                               !newAttributes->isURL &&
+                                               !previousAttributes->isURL &&
+                                               newAttributes->drawable == previousAttributes->drawable &&
+                                               newAttributes->rtlStatus == previousAttributes->rtlStatus);
+                if (onlyColorDiffers) {
+                    return NO;
+                }
+            }
         }
         return *combinedAttributesChanged;
     } else if ((imageAttributes == nil) != (previousImageAttributes == nil)) {

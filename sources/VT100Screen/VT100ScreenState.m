@@ -763,7 +763,7 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
     const int width = self.currentGrid.size.width;
     int numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:width];
     if (lineNumber >= numLinesInLineBuffer) {
-        if (!self.terminalSoftAlternateScreenMode || iTermAdvancedSettingsModel.alternateScreenBidi) {
+        if (!self.terminalSoftAlternateScreenMode || !iTermAdvancedSettingsModel.disableBidiInAlternateScreen) {
             return [self.currentGrid bidiInfoForLine:lineNumber - numLinesInLineBuffer];
         } else {
             return nil;
