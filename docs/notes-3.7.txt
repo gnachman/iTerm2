@@ -2632,3 +2632,6 @@ Bug Fixes:
   tabs, no longer leaves the main session’s tab
   showing a blank pane when a non-main peer was
   the visible one.
+- Fixed a workgroup whose tab (or split) hosts
+  its own peer group coming up with no toolbar
+  and no peer switcher.

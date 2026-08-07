@@ -312,6 +312,44 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
                        "Nested port's leader should be the host")
     }
 
+    // §4.2b — a .tab child that hosts its own peer group wires up a
+    // nested port and a resolvable toolbar, exactly like the split-host
+    // case. Guards the shape behind the "second tab had no peers or
+    // toolbar" bug: the tab host must resolve to its nested port's
+    // toolbar items (from which the peer switcher is drawn), not to an
+    // empty list. The missing-refresh half of that bug (nothing pushed
+    // these items to the SessionView after the port was built) is a UI
+    // timing issue that needs a live delegate and is verified manually;
+    // this locks in the data-model wiring the refresh depends on.
+    func test_4_2b_nestedPortForTabHost() {
+        let wg = WGFix.wgTwoTabsEachWithPeers(peerCount: 2)
+        enterWorkgroup(wg)
+        let tabHost = wg.sessions.first(where: {
+            if case .tab = $0.kind { return true }
+            return false
+        })!
+        let hostLive = liveSession(forConfigID: tabHost.uniqueIdentifier)!
+        guard let port = hostLive.peerPort as? iTermWorkgroupPeerPort else {
+            XCTFail("Tab peer-host should have a nested peer port assigned")
+            return
+        }
+        let peerKidIDs = wg.sessions
+            .filter { $0.parentID == tabHost.uniqueIdentifier }
+            .filter { if case .peer = $0.kind { return true }; return false }
+            .map { $0.uniqueIdentifier }
+        let expected = Set([tabHost.uniqueIdentifier] + peerKidIDs)
+        for id in expected {
+            let live = liveSession(forConfigID: id)!
+            XCTAssertEqual(port.identifier(for: live), id)
+        }
+        XCTAssertEqual(port.activeSessionIdentifier, tabHost.uniqueIdentifier,
+                       "Nested port's leader should be the tab host")
+        // The host must resolve through the nested port to a non-empty
+        // toolbar (this is what the SessionView refresh applies).
+        XCTAssertFalse(instance!.toolbarItems(for: hostLive).isEmpty,
+                       "Tab peer-host returned an empty toolbar; its peer switcher would be missing")
+    }
+
     // §4.3 — non-peer host with no peer children does NOT get a port.
     func test_4_3_noNestedPortForLeafSplit() {
         let wg = WGFix.wgRootWithSplits(n: 1, splitItems: [.reload(nil)])

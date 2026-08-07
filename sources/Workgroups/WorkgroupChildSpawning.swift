@@ -121,5 +121,19 @@ extension iTermWorkgroupInstance {
                                hostConfig: config,
                                peerChildrenPromises: childPromises)
         attachBackPointers(toEach: Array(peers.values))
+        // The host's toolbar was applied empty when its tab/split was
+        // first inserted into the window — that happens inside the
+        // spawner call above, before this nested peer port (and the
+        // host's workgroupInstance back-pointer, set by attachBackPointers)
+        // existed, so desiredToolbarItems returned nil then. Nothing
+        // re-applies it afterward, so without this the host shows no
+        // toolbar and therefore no peer switcher (issue: second tab of a
+        // two-tabs-each-with-peers workgroup had no peers or toolbar).
+        // registerNonPeer does the equivalent refresh for the leaf case;
+        // this is its nested-peer-host counterpart. attachBackPointers
+        // ran synchronously for the host (its promise is pre-fulfilled),
+        // so workgroupInstance is set by now and toolbarItems(for:)
+        // resolves through the nested port.
+        session.delegate?.sessionDidChangeDesiredToolbarItems(session)
     }
 }

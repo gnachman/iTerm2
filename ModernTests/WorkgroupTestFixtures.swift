@@ -406,6 +406,32 @@ enum WGFix {
         return wrap(name: "wgRootSplitWithPeers", sessions: sessions)
     }
 
+    // wgTwoTabsEachWithPeers — root (its own tab) hosts a peer group,
+    // plus a .tab child that itself hosts a peer group. Two tabs, each
+    // with peers. This is the issue-shape where the second (tab-hosted)
+    // nested peer group came up with no toolbar / no peer switcher.
+    static func wgTwoTabsEachWithPeers(
+        items: [iTermWorkgroupToolbarItem] = [.modeSwitcher, .reload(nil)],
+        peerCount: Int = 2) -> iTermWorkgroup {
+        let root = makeRoot(items: items)
+        var sessions = [root]
+        for i in 0..<peerCount {
+            sessions.append(makePeer(parentID: root.uniqueIdentifier,
+                                     items: items,
+                                     displayName: "RootPeer\(i)"))
+        }
+        let tab = makeTab(parentID: root.uniqueIdentifier,
+                          items: items,
+                          displayName: "TabHost")
+        sessions.append(tab)
+        for i in 0..<peerCount {
+            sessions.append(makePeer(parentID: tab.uniqueIdentifier,
+                                     items: items,
+                                     displayName: "TabPeer\(i)"))
+        }
+        return wrap(name: "wgTwoTabsEachWithPeers", sessions: sessions)
+    }
+
     // wgRootPeersAndSplits — root has peer children AND split children.
     static func wgRootPeersAndSplits(peerCount: Int = 2,
                                      splitCount: Int = 2) -> iTermWorkgroup {
