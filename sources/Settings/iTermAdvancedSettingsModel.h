@@ -194,6 +194,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)doNotSetCtype;
 + (BOOL)doubleClickTabToEdit;
 + (BOOL)doubleReportScrollWheel;
++ (BOOL)scrollableVerticalTabBar;
 + (NSString *)downloadsDirectory;
 + (double)noSyncDownloadPrefsTimeout;
 + (BOOL)noSyncOpenLinksInApp;
