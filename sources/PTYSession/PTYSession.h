@@ -395,6 +395,9 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // This comes from prefs and is kept up to date.
 @property(nonatomic, readonly) BOOL alertOnMarksinOffscreenSessions;
 @property(nonatomic, copy, nullable) NSColor *tabColor;
+// The configured tab color after applying the optional inactivity timeout.
+// Unlike tabColor, this may be nil without changing the saved color.
+@property(nonatomic, readonly, nullable) NSColor *displayedTabColor;
 
 // Seconds (monotonic) since the rendered screen contents last changed, i.e.
 // since the last textViewDidFindDirtyRects. Used by the orchestrator's
@@ -1335,4 +1338,3 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 @end
 
 NS_ASSUME_NONNULL_END
-

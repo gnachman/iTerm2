@@ -7184,16 +7184,17 @@ typedef struct {
 // TODO: Move the rest of the delegate methods here.
 
 - (BOOL)sessionTabHasMultipleDistinctTabColors {
-    NSString *firstColor = nil;
+    NSString *firstAppearance = nil;
     for (PTYSession *session in [self sessions]) {
-        NSColor *tabColor = session.tabColor;
-        if (!tabColor) {
+        if (!session.tabColor) {
             continue;
         }
-        NSString *hex = tabColor.srgbHexString;
-        if (!firstColor) {
-            firstColor = hex;
-        } else if (![firstColor isEqualToString:hex]) {
+        // An expired custom color is a visual state of its own. This lets a
+        // still-active sibling keep its pane tint in the Minimal theme.
+        NSString *appearance = session.displayedTabColor.srgbHexString ?: @"expired";
+        if (!firstAppearance) {
+            firstAppearance = appearance;
+        } else if (![firstAppearance isEqualToString:appearance]) {
             return YES;
         }
     }

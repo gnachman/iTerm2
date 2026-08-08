@@ -8108,7 +8108,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     for (PTYTab *aTab in [self tabs]) {
         NSTabViewItem *tabViewItem = [aTab tabViewItem];
         PTYSession *aSession = [aTab activeSession];
-        NSColor *color = [aSession tabColor];
+        NSColor *color = [aSession displayedTabColor];
         [_contentView.tabBarControl setTabColor:color forTabViewItem:tabViewItem];
         if ([_contentView.tabView selectedTabViewItem] == tabViewItem) {
             NSColor* newTabColor = [_contentView.tabBarControl tabColorForTabViewItem:tabViewItem];
@@ -9604,8 +9604,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         // The new session came with a tab color of its own so don't inherit.
         tabColor = newSession.tabColor;
     } else {
-        // Inherit from tab.
-        tabColor = [[[_contentView.tabBarControl tabColorForTabViewItem:[tab tabViewItem]] retain] autorelease];
+        // Inherit the configured color, not the possibly expired color that
+        // the tab bar is currently displaying.
+        tabColor = [[[tab.activeSession tabColor] retain] autorelease];
     }
     SessionView *originalNewSessionView = [[newSession.view retain] autorelease];
 
@@ -10866,7 +10867,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 
 - (NSColor *)rootTerminalViewTabBarBackgroundColorIgnoringTabColor:(BOOL)ignoreTabColor {
     // This is for the fake title bar and for the status bar background color.
-    return [[iTermTheme sharedInstance] tabBarBackgroundColorForTabColor:ignoreTabColor ? nil : self.currentSession.tabColor
+    return [[iTermTheme sharedInstance] tabBarBackgroundColorForTabColor:ignoreTabColor ? nil : self.currentSession.displayedTabColor
                                                                    style:_contentView.tabBarControl.style
                                                        transparencyAlpha:self.currentSession.textview.transparencyAlpha];
 }
@@ -10874,7 +10875,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 - (NSColor *)windowDecorationColor {
     const BOOL fakeWindowTitleBar = ([self.tabView indexOfTabViewItem:self.tabView.selectedTabViewItem] == 0 &&
                             !self.tabBarAlwaysVisible);
-    if (self.currentSession.tabColor &&
+    if (self.currentSession.displayedTabColor &&
         fakeWindowTitleBar &&
         [iTermAdvancedSettingsModel minimalTabStyleTreatLeftInsetAsPartOfFirstTab]) {
         // The window number will be displayed over the tab color.
@@ -10887,7 +10888,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     const BOOL mainAndActive = (self.window.isMainWindow && NSApp.isActive);
     NSColor *color;
     color = [_contentView.tabBarControl.style textColorDefaultSelected:mainAndActive
-                                                       backgroundColor:fakeWindowTitleBar ? self.currentSession.tabColor : nil
+                                                       backgroundColor:fakeWindowTitleBar ? self.currentSession.displayedTabColor : nil
                                             windowIsMainAndAppIsActive:mainAndActive];
     if (mainAndActive) {
         return [color colorWithAlphaComponent:0.65];
