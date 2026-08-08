@@ -5458,6 +5458,7 @@
 		ADC7FB502202FA2C5A67E470 /* iTermWorkgroupPeerPort.swift in Sources */ = {isa = PBXBuildFile; fileRef = B048AAFA78F22F2C8CB157F3 /* iTermWorkgroupPeerPort.swift */; };
 		ADD0A0ADE0A926F49C2D6116 /* WindowCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F5137AE2C71CDD51D7C53D /* WindowCommand.swift */; };
 		AE70AD01774C1A0D459D83EB /* ChatProviderBinding.swift in Sources */ = {isa = PBXBuildFile; fileRef = F93A075070332E927BC887FD /* ChatProviderBinding.swift */; };
+		B0DBAA2AED68CD2C26771677 /* PSMTabGroupChipView.m in Sources */ = {isa = PBXBuildFile; fileRef = 693EE5C4C127AC8FB85F37D9 /* PSMTabGroupChipView.m */; };
 		B227A6877007742A924ACE7D /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = EFA829AC3181DC26280758FC /* ArgumentParser */; };
 		B2CA85E23B4CCCC3391BA025 /* NotifyingDictionary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877B9444B69DE32D9CF87354 /* NotifyingDictionary.swift */; };
 		B3E079E1F626A259EDC76153 /* PeerSessionSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3298E60BA3D410B4C3FC1A98 /* PeerSessionSettingsViewController.swift */; };
@@ -6727,6 +6728,7 @@
 		677BAE3BF6167A6719904C54 /* iTermJobTerminationMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermJobTerminationMonitor.swift; sourceTree = "<group>"; };
 		68BF1DCEF74D6DEC0A2552F2 /* MonitorCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MonitorCommand.swift; path = it2cli/Sources/it2core/Commands/MonitorCommand.swift; sourceTree = "<group>"; };
 		6939F904AA40A26F5FC90AB0 /* WorkgroupWatcher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupWatcher.swift; sourceTree = "<group>"; };
+		693EE5C4C127AC8FB85F37D9 /* PSMTabGroupChipView.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = PSMTabGroupChipView.m; sourceTree = "<group>"; };
 		698A89FD3A725D31E135A5A6 /* iTermCursorBlinkFadePreset.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermCursorBlinkFadePreset.m; sourceTree = "<group>"; };
 		6B3B7308CA423F151EA51042 /* KittyDnDViewDragHost.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KittyDnDViewDragHost.swift; sourceTree = "<group>"; };
 		6D70E7DE7E81B39DC29CC27B /* VT100PromptKind.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = VT100PromptKind.h; sourceTree = "<group>"; };
@@ -16249,6 +16251,7 @@
 				A6B60CAA245E33C200DBD6A7 /* PSMCachedTitle.m */,
 				A6DCDD1E2560B410004EA8A1 /* NSAttributedString+PSM.h */,
 				A6DCDD1F2560B410004EA8A1 /* NSAttributedString+PSM.m */,
+				693EE5C4C127AC8FB85F37D9 /* PSMTabGroupChipView.m */,
 			);
 			name = source;
 			path = PSMTabBarControl/source;
@@ -22550,6 +22553,7 @@
 				A6C762C11B45C52B00E3C992 /* NSTextField+iTerm.m in Sources */,
 				A6FEA2711CF2C8EE00376F28 /* iTermProfileHotKey.m in Sources */,
 				A6C763E61B45C70100E3C992 /* SCEvents.m in Sources */,
+				B0DBAA2AED68CD2C26771677 /* PSMTabGroupChipView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

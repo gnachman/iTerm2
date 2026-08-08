@@ -19,6 +19,7 @@
 #import "PSMTabStyle.h"
 #import "PSMYosemiteTabStyle.h"
 #import "PSMTabDragAssistant.h"
+#import "PSMTabGroupChipView.h"
 #import "PTYTask.h"
 #import "NSColor+PSM.h"
 #import "NSWindow+PSM.h"
@@ -151,6 +152,9 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 @implementation PSMTabBarControl {
     // control basics
     NSMutableArray<PSMTabBarCell *> *_cells; // the cells that draw the tabs
+    // Group chips keyed by group id; positioned at each contiguous run's
+    // leading edge in -updateTabGroupChips. Owned here (subviews).
+    NSMutableDictionary<NSString *, PSMTabGroupChipView *> *_tabGroupChips;
     NSButton *_overflowPopUpButton; // for too many tabs
     PSMRolloverButton *_addTabButton;
 
@@ -392,6 +396,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    [_tabGroupChips release];
 
     // Remove bindings.
     NSArray *temp = [[_cells copy] autorelease];
@@ -1622,6 +1628,7 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 
     [self syncTabProgressBars];
     [self hideAccessoriesOutsideScrollRegion];
+    [self updateTabGroupChips];
     if (_keepSelectedTabInView && !_adjustingScrollForSelection) {
         // Re-check after each layout so a tab whose width settles asynchronously ends up fully visible.
         _adjustingScrollForSelection = YES;
@@ -1629,6 +1636,95 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
         _adjustingScrollForSelection = NO;
     }
     [self setNeedsDisplay:YES];
+}
+
+// Place a name+color chip at the leading edge of each contiguous run of
+// tabs that share a group id. v0: horizontal bars only (the vertical bar
+// wants its own design), and the chip sits at the run's first cell's
+// leading edge without reserving a gap yet. Appearance is delegated to
+// the tab style (PSMTabGroupChipView), so themes can differ.
+- (void)updateTabGroupChips {
+    if (!_tabGroupChips) {
+        _tabGroupChips = [[NSMutableDictionary alloc] init];
+    }
+    if (self.orientation != PSMTabBarHorizontalOrientation ||
+        self.tabGroupDataSource == nil) {
+        [self removeTabGroupChipsNotInSet:[NSSet set]];
+        return;
+    }
+
+    NSMutableSet<NSString *> *present = [NSMutableSet set];
+    NSString *runID = nil;
+    PSMTabBarCell *firstCell = nil;
+    BOOL runHasSelected = NO;
+    for (PSMTabBarCell *cell in _cells) {
+        NSString *gid = cell.tabGroupIdentifier;
+        if (gid != nil && [gid isEqualToString:runID]) {
+            runHasSelected = runHasSelected || [self cellIsSelected:cell];
+            continue;
+        }
+        if (runID != nil && [self positionChipForGroup:runID
+                                           leadingCell:firstCell
+                                              selected:runHasSelected]) {
+            [present addObject:runID];
+        }
+        runID = gid;
+        firstCell = (gid != nil) ? cell : nil;
+        runHasSelected = (gid != nil) ? [self cellIsSelected:cell] : NO;
+    }
+    if (runID != nil && [self positionChipForGroup:runID
+                                       leadingCell:firstCell
+                                          selected:runHasSelected]) {
+        [present addObject:runID];
+    }
+
+    [self removeTabGroupChipsNotInSet:present];
+}
+
+- (BOOL)cellIsSelected:(PSMTabBarCell *)cell {
+    return [cell representedObject] == [self.tabView selectedTabViewItem];
+}
+
+// Returns YES if a chip is showing for this group (has a definition and a
+// leading cell), NO if it was skipped/removed.
+- (BOOL)positionChipForGroup:(NSString *)groupID
+                 leadingCell:(PSMTabBarCell *)cell
+                    selected:(BOOL)selected {
+    id<PSMTabGroup> group = [self.tabGroupDataSource tabGroupWithIdentifier:groupID];
+    if (group == nil || cell == nil) {
+        PSMTabGroupChipView *existing = _tabGroupChips[groupID];
+        if (existing) {
+            [existing removeFromSuperview];
+            [_tabGroupChips removeObjectForKey:groupID];
+        }
+        return NO;
+    }
+    PSMTabGroupChipView *chip = _tabGroupChips[groupID];
+    if (chip == nil) {
+        chip = [[[PSMTabGroupChipView alloc] initWithFrame:NSZeroRect] autorelease];
+        chip.tabBarControl = self;
+        _tabGroupChips[groupID] = chip;
+        [self addSubview:chip];
+    }
+    chip.groupName = group.name;
+    chip.groupColor = group.color;
+    chip.selected = selected;
+    const NSRect cellFrame = cell.frame;
+    chip.frame = NSMakeRect(NSMinX(cellFrame),
+                            NSMinY(cellFrame),
+                            [chip preferredWidth],
+                            NSHeight(cellFrame));
+    [chip setNeedsDisplay:YES];
+    return YES;
+}
+
+- (void)removeTabGroupChipsNotInSet:(NSSet<NSString *> *)keep {
+    for (NSString *groupID in _tabGroupChips.allKeys) {
+        if (![keep containsObject:groupID]) {
+            [_tabGroupChips[groupID] removeFromSuperview];
+            [_tabGroupChips removeObjectForKey:groupID];
+        }
+    }
 }
 
 // Lays out a horizontal bar in scrollable mode. If the tabs at their natural widths overflow the bar,
