@@ -30,7 +30,8 @@ final class iTermTabGroupRegistry: NSObject, PSMTabGroupDataSource {
         return groupsByID[identifier]
     }
 
-    @objc func add(_ group: iTermTabGroup) {
+    @objc(addGroup:)
+    func add(_ group: iTermTabGroup) {
         groupsByID[group.uniqueIdentifier] = group
     }
 

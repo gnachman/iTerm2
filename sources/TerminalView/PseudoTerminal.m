@@ -7726,6 +7726,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [item setRepresentedObject:tabViewItem];
     [rootMenu addItem:item];
 
+    [self addTabGroupMenuItemsToMenu:rootMenu forTabViewItem:tabViewItem];
+
     PTYTab *theTab = [tabViewItem identifier];
     if (![theTab isTmuxTab]) {
         item = [[[NSMenuItem alloc] initWithTitle:@"Duplicate Tab"
@@ -8163,6 +8165,104 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         }
     }
     [self.tabGroupRegistry pruneGroupsKeepingIDs:inUse];
+}
+
+// Firefox-style "Add Tab to Group" submenu: New Group, then existing
+// groups (checkmarked if this tab is already in one), and a Remove item
+// when the tab is grouped.
+- (void)addTabGroupMenuItemsToMenu:(NSMenu *)rootMenu forTabViewItem:(NSTabViewItem *)tabViewItem {
+    PTYTab *theTab = [tabViewItem identifier];
+    if (!theTab) {
+        return;
+    }
+    NSMenu *groupMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
+
+    NSMenuItem *newGroupItem = [[[NSMenuItem alloc] initWithTitle:@"New Group"
+                                                           action:@selector(addTabToNewGroup:)
+                                                    keyEquivalent:@""] autorelease];
+    newGroupItem.representedObject = tabViewItem;
+    newGroupItem.target = self;
+    [groupMenu addItem:newGroupItem];
+
+    NSArray<iTermTabGroup *> *groups = self.tabGroupRegistry.allGroups;
+    if (groups.count > 0) {
+        [groupMenu addItem:[NSMenuItem separatorItem]];
+        for (iTermTabGroup *group in groups) {
+            NSString *title = group.name.length > 0 ? group.name : @"Untitled";
+            NSMenuItem *gi = [[[NSMenuItem alloc] initWithTitle:title
+                                                         action:@selector(addTabToExistingGroup:)
+                                                  keyEquivalent:@""] autorelease];
+            gi.representedObject = @{ @"tab": tabViewItem, @"group": group.uniqueIdentifier };
+            gi.target = self;
+            gi.state = [group.uniqueIdentifier isEqualToString:theTab.tabGroupID] ? NSControlStateValueOn
+                                                                                  : NSControlStateValueOff;
+            [groupMenu addItem:gi];
+        }
+    }
+
+    NSMenuItem *groupRoot = [[[NSMenuItem alloc] initWithTitle:@"Add Tab to Group"
+                                                        action:nil
+                                                 keyEquivalent:@""] autorelease];
+    [rootMenu addItem:groupRoot];
+    [rootMenu setSubmenu:groupMenu forItem:groupRoot];
+
+    if (theTab.tabGroupID) {
+        NSMenuItem *removeItem = [[[NSMenuItem alloc] initWithTitle:@"Remove Tab from Group"
+                                                             action:@selector(removeTabFromGroup:)
+                                                      keyEquivalent:@""] autorelease];
+        removeItem.representedObject = tabViewItem;
+        removeItem.target = self;
+        [rootMenu addItem:removeItem];
+    }
+}
+
+- (void)addTabToNewGroup:(id)sender {
+    NSTabViewItem *tabViewItem = [sender representedObject];
+    PTYTab *theTab = [tabViewItem identifier];
+    if (!theTab) {
+        return;
+    }
+    NSString *name = [tabViewItem label].length > 0 ? [tabViewItem label] : @"Group";
+    iTermTabGroup *group = [[[iTermTabGroup alloc] initWithName:name
+                                                         color:[self nextTabGroupColor]] autorelease];
+    [self.tabGroupRegistry addGroup:group];
+    theTab.tabGroupID = group.uniqueIdentifier;
+    [self updateTabColors];
+}
+
+- (void)addTabToExistingGroup:(id)sender {
+    NSDictionary *rep = [sender representedObject];
+    NSTabViewItem *tabViewItem = rep[@"tab"];
+    NSString *groupID = rep[@"group"];
+    PTYTab *theTab = [tabViewItem identifier];
+    if (!theTab || !groupID) {
+        return;
+    }
+    theTab.tabGroupID = groupID;
+    [self updateTabColors];
+}
+
+- (void)removeTabFromGroup:(id)sender {
+    NSTabViewItem *tabViewItem = [sender representedObject];
+    PTYTab *theTab = [tabViewItem identifier];
+    theTab.tabGroupID = nil;
+    [self updateTabColors];
+}
+
+// Cycle a small system palette so consecutive new groups look distinct.
+- (NSColor *)nextTabGroupColor {
+    static NSArray<NSColor *> *palette;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        palette = [@[
+            [NSColor systemBlueColor], [NSColor systemGreenColor],
+            [NSColor systemOrangeColor], [NSColor systemPurpleColor],
+            [NSColor systemRedColor], [NSColor systemTealColor],
+            [NSColor systemYellowColor], [NSColor systemPinkColor],
+        ] retain];
+    });
+    NSUInteger index = self.tabGroupRegistry.allGroups.count % palette.count;
+    return palette[index];
 }
 
 - (BOOL)tabBarProvidesProgressVisibility {
