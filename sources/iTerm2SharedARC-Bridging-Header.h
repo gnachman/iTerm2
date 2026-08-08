@@ -212,6 +212,7 @@
 #import "ProfilePreferencesViewController.h"
 #import "PSMCachedTitle.h"
 #import "PSMRolloverButton.h"
+#import "PSMTabBarCell.h"
 #import "PSMTabBarControl.h"
 #import "PSMTabStyle.h"
 #import "PSMYosemiteTabStyle.h"

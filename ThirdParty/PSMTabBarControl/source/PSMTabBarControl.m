@@ -1765,6 +1765,60 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     [self removeTabGroupChipsNotInSet:present];
 }
 
++ (NSArray<PSMTabBarCell *> *)cellsByInsertingTabGroupChipsInto:(NSArray<PSMTabBarCell *> *)tabCells
+                                                   controlView:(PSMTabBarControl *)controlView {
+    NSMutableArray<PSMTabBarCell *> *result = [NSMutableArray array];
+    NSString *runID = nil;
+    for (PSMTabBarCell *cell in tabCells) {
+        if ([cell isTabGroupChip]) {
+            // Defensive: caller should pass only tab cells; drop stray chips.
+            continue;
+        }
+        NSString *gid = [cell tabGroupIdentifier];
+        const BOOL grouped = (gid.length > 0);
+        if (grouped && ![gid isEqualToString:runID]) {
+            // First cell of a new run: insert its chip immediately before it.
+            PSMTabBarCell *chip = [[[PSMTabBarCell alloc] initWithControlView:controlView] autorelease];
+            [chip setIsTabGroupChip:YES];
+            [chip setTabGroupIdentifier:gid];
+            [result addObject:chip];
+        }
+        runID = grouped ? gid : nil;
+        [result addObject:cell];
+    }
+    return result;
+}
+
++ (NSInteger)cellIndexForTabIndex:(NSInteger)tabIndex inCells:(NSArray<PSMTabBarCell *> *)cells {
+    NSInteger tab = -1;
+    for (NSInteger i = 0; i < (NSInteger)cells.count; i++) {
+        if ([cells[i] isTabGroupChip]) {
+            continue;
+        }
+        tab++;
+        if (tab == tabIndex) {
+            return i;
+        }
+    }
+    return (NSInteger)cells.count;
+}
+
++ (NSInteger)tabIndexForCellIndex:(NSInteger)cellIndex inCells:(NSArray<PSMTabBarCell *> *)cells {
+    if (cellIndex < 0 || cellIndex >= (NSInteger)cells.count) {
+        return NSNotFound;
+    }
+    if ([cells[cellIndex] isTabGroupChip]) {
+        return NSNotFound;
+    }
+    NSInteger tab = -1;
+    for (NSInteger i = 0; i <= cellIndex; i++) {
+        if (![cells[i] isTabGroupChip]) {
+            tab++;
+        }
+    }
+    return tab;
+}
+
 - (BOOL)cellIsSelected:(PSMTabBarCell *)cell {
     return [cell representedObject] == [self.tabView selectedTabViewItem];
 }

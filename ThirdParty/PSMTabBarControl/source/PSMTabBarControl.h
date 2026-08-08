@@ -277,6 +277,22 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // chips with the cells.
 - (CGFloat)tabGroupLeadingGapForCellAtIndex:(NSInteger)i;
 - (void)updateTabGroupChips;
+
+// Pure helpers for making group chips first-class cells (window-free, so
+// they're unit-tested directly).
+//
+// Insert a chip cell before each contiguous run of tab cells that share a
+// non-nil tabGroupIdentifier. `tabCells` must contain only tab cells (no
+// chips); returns a new array of tab + chip cells.
++ (NSArray<PSMTabBarCell *> *)cellsByInsertingTabGroupChipsInto:(NSArray<PSMTabBarCell *> *)tabCells
+                                                   controlView:(nullable PSMTabBarControl *)controlView
+    NS_SWIFT_NAME(cellsByInsertingTabGroupChips(into:controlView:));
+// Map an NSTabView index to the index of the corresponding tab cell in a
+// cell list that includes chip cells (returns cells.count if past the end).
++ (NSInteger)cellIndexForTabIndex:(NSInteger)tabIndex inCells:(NSArray<PSMTabBarCell *> *)cells;
+// Map a cell-list index back to its NSTabView index, skipping chip cells;
+// NSNotFound if the cell at that index is itself a chip or out of range.
++ (NSInteger)tabIndexForCellIndex:(NSInteger)cellIndex inCells:(NSArray<PSMTabBarCell *> *)cells;
 - (void)setIsPinned:(BOOL)pinned forTabViewItem:(NSTabViewItem *)tabViewItem;
 - (BOOL)isPinnedForTabViewItem:(NSTabViewItem *)tabViewItem;
 - (void)setModifier:(NSUInteger)mask;

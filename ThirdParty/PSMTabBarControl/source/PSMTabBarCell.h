@@ -40,6 +40,12 @@
 @property(nonatomic, assign) BOOL hasIcon;
 @property(nonatomic, assign) int count;
 @property(nonatomic, assign) BOOL isPlaceholder;
+// A tab-group chip cell: a first-class cell in the control's cell list
+// that heads a contiguous run of same-group tabs. Like a placeholder it
+// has no representedObject/tab (so it's inert to selection/close/drop),
+// but unlike a placeholder it is persistent. Its group is tabGroupIdentifier;
+// name/color come from the control's tabGroupDataSource at draw time.
+@property(nonatomic, assign) BOOL isTabGroupChip;
 @property(nonatomic, assign) int currentStep;
 @property(nonatomic, copy) NSString *modifierString;
 @property(nonatomic, retain) NSColor *tabColor;
