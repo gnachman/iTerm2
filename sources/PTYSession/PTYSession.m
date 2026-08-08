@@ -463,6 +463,14 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // Time since reference date when the tab label was last updated.
     NSTimeInterval _lastUpdate;
 
+    // Time since reference date when a tab color was explicitly set. This
+    // prevents a newly assigned color from immediately expiring just because
+    // the session had already been quiet for longer than the timeout.
+    NSTimeInterval _tabColorLastChangedAt;
+    NSTimeInterval _lastTabColorExpirationCheck;
+    BOOL _tabColorExpirationStateInitialized;
+    BOOL _tabColorWasExpired;
+
     // Monotonic (it_timeSinceBoot) time the rendered screen contents last
     // changed, updated from textViewDidFindDirtyRects. Read by the
     // orchestrator's tab-status escalation backstop to measure how long a
@@ -834,6 +842,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
         _lastOutputIgnoringOutputAfterResizing = _lastInput;
         _lastUpdate = _lastInput;
+        _tabColorLastChangedAt = _lastInput;
+        _tabColorExpirationStateInitialized = YES;
         _lastScreenContentsChangeTime = [NSDate it_timeSinceBoot];
         _pasteHelper = [[iTermPasteHelper alloc] init];
         _pasteHelper.delegate = self;
@@ -7270,6 +7280,19 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                  _cadenceController.histogram.stringValue);
     }
     _timerRunning = YES;
+
+    const NSTimeInterval tabColorExpirationCheckTime = [NSDate timeIntervalSinceReferenceDate];
+    const BOOL outputMayRestoreExpiredTabColor =
+        (_tabColorWasExpired && _lastOutputIgnoringOutputAfterResizing > _lastTabColorExpirationCheck);
+    if (outputMayRestoreExpiredTabColor || tabColorExpirationCheckTime - _lastTabColorExpirationCheck >= 1) {
+        _lastTabColorExpirationCheck = tabColorExpirationCheckTime;
+        const BOOL expired = (self.tabColor != nil && self.displayedTabColor == nil);
+        if (!_tabColorExpirationStateInitialized || expired != _tabColorWasExpired) {
+            _tabColorExpirationStateInitialized = YES;
+            _tabColorWasExpired = expired;
+            [_delegate.realParentWindow updateTabColors];
+        }
+    }
 
     // This syncs with the mutation thread.
     DLog(@"Session %@ calling refresh", self);
@@ -17084,6 +17107,22 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return [self tabColorInProfile:_profile];
 }
 
+- (NSColor *)displayedTabColor {
+    NSColor *color = self.tabColor;
+    if (!color) {
+        return nil;
+    }
+    const NSTimeInterval lastActivity = MAX(_lastOutputIgnoringOutputAfterResizing,
+                                            _tabColorLastChangedAt);
+    const NSTimeInterval inactiveSeconds = MAX(0, [NSDate timeIntervalSinceReferenceDate] - lastActivity);
+    const double expirationHours = [iTermAdvancedSettingsModel tabColorInactivityTimeoutHours];
+    if (![iTermTabColorInactivityPolicy shouldShowCustomColorWithExpirationHours:expirationHours
+                                                               inactiveSeconds:inactiveSeconds]) {
+        return nil;
+    }
+    return color;
+}
+
 - (void)setTabColor:(NSColor *)color {
     [self setTabColor:color fromEscapeSequence:NO];
 }
@@ -17179,11 +17218,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         } else {
             [self clearTabColorByEscapeSequence];
         }
-
-
     } else {
         [self setTabColorByUI:color];
     }
+    _tabColorLastChangedAt = [NSDate timeIntervalSinceReferenceDate];
+    _tabColorExpirationStateInitialized = YES;
+    _tabColorWasExpired = NO;
 }
 
 - (void)setTabColorByUI:(NSColor *)color {
@@ -20656,7 +20696,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (NSColor *)sessionViewTabColor {
-    return self.tabColor;
+    return self.displayedTabColor;
 }
 
 - (BOOL)sessionViewTabHasMultipleDistinctTabColors {

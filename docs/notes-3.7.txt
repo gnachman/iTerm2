@@ -9,6 +9,10 @@ to version 3.6.7 and duplicates some items in
 betas since then.
 
 Major New Features:
+- Added an advanced setting to hide tab colors
+  after a configurable period without terminal
+  output.
+
 - Companion App: a new iOS app, iTerm2 Buddy,
   pairs with your Mac by scanning a QR code
   (iTerm2 > Companion Device Settings) and

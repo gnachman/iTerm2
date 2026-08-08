@@ -307,7 +307,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         iTermOpenQuicklySessionItem *item = [[iTermOpenQuicklySessionItem alloc] init];
         item.logoGenerator.textColor = session.foregroundColor;
         item.logoGenerator.backgroundColor = session.backgroundColor;
-        item.logoGenerator.tabColor = session.tabColor;
+        item.logoGenerator.tabColor = session.displayedTabColor;
         item.logoGenerator.cursorColor = session.cursorColor;
 
         NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
