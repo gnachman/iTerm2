@@ -11,6 +11,7 @@
 #import "PSMTabStyle.h"
 #import "PSMProgressIndicator.h"
 #import "PSMTabDragAssistant.h"
+#import "PSMTabGroupChipView.h"
 
 extern void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...);
 
@@ -526,6 +527,17 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
         }
         [[NSColor colorWithCalibratedWhite:0 alpha:0.2] set];
         NSRectFillUsingOperation(cellFrame, NSCompositingOperationSourceAtop);
+        return;
+    }
+
+    if (_isTabGroupChip) {
+        // Draw the group chip. Name/color come from the control's tab-group
+        // data source; a future per-style hook can replace the basic look.
+        PSMTabBarControl *bar = (PSMTabBarControl *)[self psmTabControlView];
+        id<PSMTabGroup> group = [bar.tabGroupDataSource tabGroupWithIdentifier:self.tabGroupIdentifier];
+        [PSMTabGroupChipView drawChipInFrame:cellFrame
+                                        name:group ? group.name : @""
+                                       color:group ? group.color : nil];
         return;
     }
 

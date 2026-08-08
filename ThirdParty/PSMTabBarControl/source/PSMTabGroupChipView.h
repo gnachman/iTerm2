@@ -37,6 +37,10 @@ NS_ASSUME_NONNULL_BEGIN
 // Height reserved above a vertical bar's run for its chip.
 + (CGFloat)verticalChipHeight;
 
+// Draw the basic chip (rounded pill + name) into `frame`. Shared by the
+// (legacy) overlay view and the first-class chip cell.
++ (void)drawChipInFrame:(NSRect)frame name:(NSString *)name color:(NSColor *)color;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -59,14 +59,21 @@ static const CGFloat PSMTabGroupChipVerticalHeight = 18;
     [self drawBasicChip];
 }
 
-// Fallback look used until a tab style overrides
-// -drawTabGroupChipWithName:color:selected:frame:inControl:. A rounded
-// rect filled with the group color and the name in a contrasting color.
 - (void)drawBasicChip {
-    NSColor *color = self.groupColor ?: [NSColor grayColor];
-    NSRect bounds = NSInsetRect(self.bounds, 1, 3);
+    [PSMTabGroupChipView drawChipInFrame:self.bounds
+                                    name:self.groupName ?: @""
+                                   color:self.groupColor ?: [NSColor grayColor]];
+}
+
+// Basic chip look, shared by the overlay view and the first-class chip
+// cell (PSMTabBarCell drawing). A rounded rect filled with the group
+// color and the name in a contrasting color. Used until a tab style
+// overrides the chip drawing.
++ (void)drawChipInFrame:(NSRect)frame name:(NSString *)name color:(NSColor *)color {
+    color = color ?: [NSColor grayColor];
+    NSRect bounds = NSInsetRect(frame, 1, 3);
     bounds.size.width -= PSMTabGroupChipTrailingGap;
-    if (bounds.size.width <= 0) {
+    if (bounds.size.width <= 0 || NSHeight(bounds) <= 0) {
         return;
     }
     const CGFloat radius = NSHeight(bounds) / 2.0;
@@ -76,7 +83,6 @@ static const CGFloat PSMTabGroupChipVerticalHeight = 18;
     [color set];
     [path fill];
 
-    NSString *name = self.groupName ?: @"";
     if (name.length == 0) {
         return;
     }
@@ -87,7 +93,7 @@ static const CGFloat PSMTabGroupChipVerticalHeight = 18;
                                    : 0.5;
     NSColor *textColor = brightness < 0.55 ? [NSColor whiteColor]
                                            : [NSColor blackColor];
-    NSDictionary *attrs = @{ NSFontAttributeName: self.font,
+    NSDictionary *attrs = @{ NSFontAttributeName: [self chipFont],
                              NSForegroundColorAttributeName: textColor };
     NSSize textSize = [name sizeWithAttributes:attrs];
     NSRect textRect = NSMakeRect(NSMinX(bounds) + PSMTabGroupChipHInset,
