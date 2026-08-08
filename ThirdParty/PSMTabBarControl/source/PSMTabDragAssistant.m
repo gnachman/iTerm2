@@ -484,6 +484,12 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 - (void)reallyPerformDragOperation:(id<NSDraggingInfo>)sender {
     // Move cell.
     int destinationIndex = [[[self destinationTabBar] cells] indexOfObject:[self targetCell]];
+    RLog(@"tabGroup: drop draggedCell=%@ destinationIndex=%d (draggedGroup=%@ targetGroup=%@ sameBar=%d)",
+         [[self draggedCell] representedObject] ? [(NSTabViewItem *)[[self draggedCell] representedObject] label] : @"?",
+         destinationIndex,
+         [[self draggedCell] tabGroupIdentifier],
+         [[self targetCell] tabGroupIdentifier],
+         [self sourceTabBar] == [self destinationTabBar]);
 
     //there is the slight possibility of the targetCell now being set properly, so avoid errors
     if (destinationIndex >= [[[self destinationTabBar] cells] count])  {

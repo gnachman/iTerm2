@@ -1700,12 +1700,22 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
         return;
     }
 
+    // Log the per-cell group order once (gated below on there being any
+    // grouped cell) so a mis-split run is visible in a debug log without
+    // spamming when no groups exist.
+    NSMutableArray<NSString *> *order = [NSMutableArray array];
+    BOOL anyGrouped = NO;
+
     NSMutableSet<NSString *> *present = [NSMutableSet set];
     NSString *runID = nil;
     PSMTabBarCell *firstCell = nil;
     BOOL runHasSelected = NO;
     for (PSMTabBarCell *cell in _cells) {
         NSString *gid = cell.tabGroupIdentifier;
+        [order addObject:(gid ? [gid substringToIndex:MIN(4u, gid.length)] : @"-")];
+        if (gid != nil) {
+            anyGrouped = YES;
+        }
         if (gid != nil && [gid isEqualToString:runID]) {
             runHasSelected = runHasSelected || [self cellIsSelected:cell];
             continue;
@@ -1725,6 +1735,14 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
         [present addObject:runID];
     }
 
+    if (anyGrouped) {
+        RLog(@"tabGroup: updateTabGroupChips orientation=%@ cellGroups=[%@] chipsForRuns=%@ totalGap=%.1f",
+             _orientation == PSMTabBarHorizontalOrientation ? @"H" : @"V",
+             [order componentsJoinedByString:@","],
+             present.allObjects,
+             [self totalTabGroupGap]);
+    }
+
     [self removeTabGroupChipsNotInSet:present];
 }
 
@@ -1739,6 +1757,8 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
                     selected:(BOOL)selected {
     id<PSMTabGroup> group = [self.tabGroupDataSource tabGroupWithIdentifier:groupID];
     if (group == nil || cell == nil) {
+        RLog(@"tabGroup: no chip for run %@ (group def %@, leadingCell %p)",
+             groupID, group ? @"present" : @"MISSING", cell);
         PSMTabGroupChipView *existing = _tabGroupChips[groupID];
         if (existing) {
             [existing removeFromSuperview];
@@ -1752,6 +1772,7 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
         chip.tabBarControl = self;
         _tabGroupChips[groupID] = chip;
         [self addSubview:chip];
+        RLog(@"tabGroup: created chip for group %@ (%@)", groupID, group.name);
     }
     chip.groupName = group.name;
     chip.groupColor = group.color;
@@ -1774,6 +1795,8 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
                                 NSWidth(self.bounds),
                                 height);
     }
+    RLog(@"tabGroup: chip %@ frame=%@ (leadingCell frame=%@)",
+         groupID, NSStringFromRect(chip.frame), NSStringFromRect(cellFrame));
     [chip setNeedsDisplay:YES];
     return YES;
 }
@@ -1781,6 +1804,7 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 - (void)removeTabGroupChipsNotInSet:(NSSet<NSString *> *)keep {
     for (NSString *groupID in _tabGroupChips.allKeys) {
         if (![keep containsObject:groupID]) {
+            RLog(@"tabGroup: removing chip for group %@ (no run present)", groupID);
             [_tabGroupChips[groupID] removeFromSuperview];
             [_tabGroupChips removeObjectForKey:groupID];
         }
@@ -3365,6 +3389,8 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         if ([cell representedObject] == tabViewItem) {
             if (cell.tabGroupIdentifier != identifier &&
                 ![cell.tabGroupIdentifier isEqualToString:identifier]) {
+                RLog(@"tabGroup: cell %p (%@) group %@ -> %@",
+                     cell, [tabViewItem label], cell.tabGroupIdentifier, identifier);
                 cell.tabGroupIdentifier = identifier;
                 // Group runs affect chip placement, so relayout like a
                 // pinned-state change does.
@@ -3373,6 +3399,8 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
             return;
         }
     }
+    RLog(@"tabGroup: setTabGroupIdentifier %@ for tabViewItem %@ found no matching cell",
+         identifier, [tabViewItem label]);
 }
 
 - (NSString *)tabGroupIdentifierForTabViewItem:(NSTabViewItem *)tabViewItem {

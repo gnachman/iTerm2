@@ -8164,6 +8164,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             [inUse addObject:groupID];
         }
     }
+    if (inUse.count > 0 || !self.tabGroupRegistry.isEmpty) {
+        RLog(@"tabGroup: updateTabGroups pushed membership for %ld tabs; inUse=%@ registry=%@",
+             (long)[self tabs].count, inUse.allObjects,
+             [self.tabGroupRegistry.allGroups valueForKey:@"uniqueIdentifier"]);
+    }
     [self.tabGroupRegistry pruneGroupsKeepingIDs:inUse];
 }
 
@@ -8227,6 +8232,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                                          color:[self nextTabGroupColor]] autorelease];
     [self.tabGroupRegistry addGroup:group];
     theTab.tabGroupID = group.uniqueIdentifier;
+    RLog(@"tabGroup: New Group %@ (%@) from tab %@", group.uniqueIdentifier, name, [tabViewItem label]);
     [self updateTabColors];
 }
 
@@ -8239,12 +8245,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return;
     }
     theTab.tabGroupID = groupID;
+    RLog(@"tabGroup: added tab %@ to existing group %@", [tabViewItem label], groupID);
     [self updateTabColors];
 }
 
 - (void)removeTabFromGroup:(id)sender {
     NSTabViewItem *tabViewItem = [sender representedObject];
     PTYTab *theTab = [tabViewItem identifier];
+    RLog(@"tabGroup: removed tab %@ from group %@", [tabViewItem label], theTab.tabGroupID);
     theTab.tabGroupID = nil;
     [self updateTabColors];
 }
@@ -8445,6 +8453,20 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermTabDidChangePositionInWindowNotification object:nil];
     for (PTYSession *session in self.allSessions) {
         [session didMoveSession];
+    }
+    NSMutableArray<NSString *> *groupOrder = [NSMutableArray array];
+    BOOL anyGrouped = NO;
+    for (PTYTab *tab in [self tabs]) {
+        NSString *gid = tab.tabGroupID;
+        if (gid) {
+            anyGrouped = YES;
+        }
+        [groupOrder addObject:(gid ? [gid substringToIndex:MIN(4u, gid.length)] : @"-")];
+    }
+    if (anyGrouped) {
+        // The reorder changed tab order; membership (source of truth) is on
+        // the PTYTabs. This logs it so a stale-cell mismatch is visible.
+        RLog(@"tabGroup: tabsDidReorder tabGroupOrder=[%@]", [groupOrder componentsJoinedByString:@","]);
     }
 }
 
