@@ -227,19 +227,18 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     const CGFloat rightMargin = [_style rightMarginForTabBarControlWithOverflow:withOverflow
                                                                    addTabButton:self.showAddTabButton];
     const CGFloat leftMargin = [_style leftMarginForTabBarControl];
-    width = width - leftMargin - rightMargin - [self totalTabGroupGapWidth];
+    width = width - leftMargin - rightMargin;
+    if (_orientation == PSMTabBarHorizontalOrientation) {
+        // Chips consume horizontal space on a horizontal bar; leave room.
+        width -= [self totalTabGroupGap];
+    }
     return width;
 }
 
-// The horizontal space reserved for group chips: the sum of each run's
-// leading chip width. Subtracted from the available cell width so fit
-// mode shrinks tabs to make room, and added to the scroll content extent
-// so a scrolled bar can reach the end. Zero for vertical bars or when no
-// data source / no groups are present.
-- (CGFloat)totalTabGroupGapWidth {
-    if (_orientation != PSMTabBarHorizontalOrientation || self.tabGroupDataSource == nil) {
-        return 0;
-    }
+// Total space group chips reserve along the layout axis: chip widths on a
+// horizontal bar, chip heights on a vertical bar. Used to budget the fit
+// layout and extend the scroll range.
+- (CGFloat)totalTabGroupGap {
     CGFloat total = 0;
     for (NSInteger i = 0; i < (NSInteger)_cells.count; i++) {
         total += [self tabGroupLeadingGapForCellAtIndex:i];
@@ -247,10 +246,11 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     return total;
 }
 
-// The chip width to reserve immediately before cell `i`: nonzero only
+// The gap to reserve immediately before cell `i` along the layout axis
+// (chip width when horizontal, chip height when vertical): nonzero only
 // when cell `i` begins a contiguous run of a group that has a definition.
 - (CGFloat)tabGroupLeadingGapForCellAtIndex:(NSInteger)i {
-    if (_orientation != PSMTabBarHorizontalOrientation || self.tabGroupDataSource == nil) {
+    if (self.tabGroupDataSource == nil) {
         return 0;
     }
     if (i < 0 || i >= (NSInteger)_cells.count) {
@@ -268,7 +268,10 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     if (group == nil) {
         return 0;
     }
-    return [PSMTabGroupChipView preferredWidthForName:group.name];
+    if (_orientation == PSMTabBarHorizontalOrientation) {
+        return [PSMTabGroupChipView preferredWidthForName:group.name];
+    }
+    return [PSMTabGroupChipView verticalChipHeight];
 }
 
 - (NSRect)genericCellRectWithOverflow:(BOOL)withOverflow {
@@ -1642,16 +1645,20 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
             // Give every cell an origin, shifted up by the scroll offset. Cells above or below the
             // visible rect just get off-screen frames and are clipped when drawn (see the drawRect:
             // clip), so nothing lands in the overflow menu -- the scroll wheel reaches them instead.
-            _scrollContentExtent = [[self style] topMarginForTabBarControl] + cellRect.size.height * (CGFloat)cellCount;
+            _scrollContentExtent = [[self style] topMarginForTabBarControl] + cellRect.size.height * (CGFloat)cellCount + [self totalTabGroupGap];
             [self clampScrollOffset];
             currentOrigin -= _scrollOffset;
             for (int i = 0; i < cellCount; ++i) {
+                // Reserve the gap above a run's first cell for its chip.
+                currentOrigin += [self tabGroupLeadingGapForCellAtIndex:i];
                 [newOrigins addObject:[NSNumber numberWithFloat:currentOrigin]];
                 currentOrigin += cellRect.size.height;
             }
         } else {
             for (int i = 0; i < cellCount; ++i) {
-                if (currentOrigin + cellRect.size.height <= [self frame].size.height) {
+                const CGFloat gap = [self tabGroupLeadingGapForCellAtIndex:i];
+                if (currentOrigin + gap + cellRect.size.height <= [self frame].size.height) {
+                    currentOrigin += gap;
                     [newOrigins addObject:[NSNumber numberWithFloat:currentOrigin]];
                     currentOrigin += cellRect.size.height;
                 } else {
@@ -1679,16 +1686,16 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 }
 
 // Place a name+color chip at the leading edge of each contiguous run of
-// tabs that share a group id. v0: horizontal bars only (the vertical bar
-// wants its own design), and the chip sits at the run's first cell's
-// leading edge without reserving a gap yet. Appearance is delegated to
-// the tab style (PSMTabGroupChipView), so themes can differ.
+// tabs that share a group id: to the left of the run on a horizontal bar,
+// above the run on a vertical bar (see -positionChipForGroup:...). The
+// layout reserves the gap so the chip doesn't overlap the first cell.
+// Appearance is delegated to the tab style (PSMTabGroupChipView), so
+// themes can differ.
 - (void)updateTabGroupChips {
     if (!_tabGroupChips) {
         _tabGroupChips = [[NSMutableDictionary alloc] init];
     }
-    if (self.orientation != PSMTabBarHorizontalOrientation ||
-        self.tabGroupDataSource == nil) {
+    if (self.tabGroupDataSource == nil) {
         [self removeTabGroupChipsNotInSet:[NSSet set]];
         return;
     }
@@ -1749,15 +1756,24 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     chip.groupName = group.name;
     chip.groupColor = group.color;
     chip.selected = selected;
-    // The x-walk reserved a leading gap and shifted the run's first cell
-    // right by the chip width, so the chip sits in that gap, immediately
-    // to the left of the first cell.
+    // The layout reserved a gap before the run's first cell; place the
+    // chip in it. Horizontal: to the left of the first cell (chip width
+    // wide, cell tall). Vertical: above the first cell (bar wide, fixed
+    // chip height). The control is flipped, so "above" is a smaller y.
     const NSRect cellFrame = cell.frame;
-    const CGFloat width = [chip preferredWidth];
-    chip.frame = NSMakeRect(NSMinX(cellFrame) - width,
-                            NSMinY(cellFrame),
-                            width,
-                            NSHeight(cellFrame));
+    if (_orientation == PSMTabBarHorizontalOrientation) {
+        const CGFloat width = [chip preferredWidth];
+        chip.frame = NSMakeRect(NSMinX(cellFrame) - width,
+                                NSMinY(cellFrame),
+                                width,
+                                NSHeight(cellFrame));
+    } else {
+        const CGFloat height = [PSMTabGroupChipView verticalChipHeight];
+        chip.frame = NSMakeRect(0,
+                                NSMinY(cellFrame) - height,
+                                NSWidth(self.bounds),
+                                height);
+    }
     [chip setNeedsDisplay:YES];
     return YES;
 }
@@ -1790,7 +1806,7 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     if (cellCount > 0 && totalTabWidth > [self availableCellWidthWithOverflow:NO]) {
         // Overflows: natural widths + scroll. Content extent is the leading margin plus the whole run
         // plus the group-chip gaps reserved between runs.
-        _scrollContentExtent = [[self style] leftMarginForTabBarControl] + totalTabWidth + [self totalTabGroupGapWidth];
+        _scrollContentExtent = [[self style] leftMarginForTabBarControl] + totalTabWidth + [self totalTabGroupGap];
         [self clampScrollOffset];
         [self finishUpdateWithRegularWidths:widths widthsWithOverflow:widths];
     } else {

@@ -34,6 +34,9 @@ NS_ASSUME_NONNULL_BEGIN
 // gap during layout before the chip subview exists.
 + (CGFloat)preferredWidthForName:(NSString *)name;
 
+// Height reserved above a vertical bar's run for its chip.
++ (CGFloat)verticalChipHeight;
+
 @end
 
 NS_ASSUME_NONNULL_END

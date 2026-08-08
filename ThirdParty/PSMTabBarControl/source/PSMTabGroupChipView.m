@@ -13,6 +13,9 @@
 // control leaves between the chip and the run's first tab.
 static const CGFloat PSMTabGroupChipHInset = 8;
 static const CGFloat PSMTabGroupChipTrailingGap = 4;
+// Height of the chip that heads a vertical bar's run (it sits above the
+// run spanning the bar width), and the gap the control reserves for it.
+static const CGFloat PSMTabGroupChipVerticalHeight = 18;
 
 - (BOOL)isFlipped {
     return NO;
@@ -36,6 +39,11 @@ static const CGFloat PSMTabGroupChipTrailingGap = 4;
 
 - (CGFloat)preferredWidth {
     return [PSMTabGroupChipView preferredWidthForName:self.groupName];
+}
+
+// Height reserved above a vertical bar's run for its chip.
++ (CGFloat)verticalChipHeight {
+    return PSMTabGroupChipVerticalHeight;
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
