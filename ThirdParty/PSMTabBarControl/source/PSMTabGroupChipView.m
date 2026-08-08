@@ -71,8 +71,9 @@ static const CGFloat PSMTabGroupChipVerticalHeight = 18;
 // overrides the chip drawing.
 + (void)drawChipInFrame:(NSRect)frame name:(NSString *)name color:(NSColor *)color {
     color = color ?: [NSColor grayColor];
-    NSRect bounds = NSInsetRect(frame, 1, 3);
-    bounds.size.width -= PSMTabGroupChipTrailingGap;
+    // Inset the capsule from the cell edges (a bit more horizontally so
+    // the rounded ends aren't clipped and it matches the tab insets).
+    NSRect bounds = NSInsetRect(frame, 4, 3);
     if (bounds.size.width <= 0 || NSHeight(bounds) <= 0) {
         return;
     }
@@ -93,12 +94,19 @@ static const CGFloat PSMTabGroupChipVerticalHeight = 18;
                                    : 0.5;
     NSColor *textColor = brightness < 0.55 ? [NSColor whiteColor]
                                            : [NSColor blackColor];
+    NSMutableParagraphStyle *para = [[[NSMutableParagraphStyle alloc] init] autorelease];
+    para.alignment = NSTextAlignmentCenter;
+    para.lineBreakMode = NSLineBreakByTruncatingTail;
     NSDictionary *attrs = @{ NSFontAttributeName: [self chipFont],
-                             NSForegroundColorAttributeName: textColor };
+                             NSForegroundColorAttributeName: textColor,
+                             NSParagraphStyleAttributeName: para };
+    // Center vertically; the paragraph style centers horizontally and
+    // truncates if the name is wider than the capsule.
+    const CGFloat inset = PSMTabGroupChipHInset;
     NSSize textSize = [name sizeWithAttributes:attrs];
-    NSRect textRect = NSMakeRect(NSMinX(bounds) + PSMTabGroupChipHInset,
+    NSRect textRect = NSMakeRect(NSMinX(bounds) + inset,
                                  NSMidY(bounds) - textSize.height / 2.0,
-                                 NSWidth(bounds) - PSMTabGroupChipHInset * 2,
+                                 MAX(0, NSWidth(bounds) - inset * 2),
                                  textSize.height);
     [name drawInRect:textRect withAttributes:attrs];
 }
