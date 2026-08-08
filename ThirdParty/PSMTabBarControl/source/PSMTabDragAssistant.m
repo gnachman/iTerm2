@@ -1354,10 +1354,6 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
             break;
         }
 
-        // Reserve the same group-chip gap the steady-state layout uses so
-        // tabs keep their group spacing while dragging (the chip is moved
-        // into the gap by -updateTabGroupChips after this loop).
-        position += [control tabGroupLeadingGapForCellAtIndex:i];
         if ([control orientation] == PSMTabBarHorizontalOrientation) {
             newRect.origin.x = position;
             position += newRect.size.width;
@@ -1380,10 +1376,6 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         if([cell indicator])
             [[cell indicator] setFrame:[[control style] indicatorRectForTabCell:cell]];
     }
-
-    // Cells just moved (and gaps were reserved above); move the group
-    // chips to match so they don't lag behind during the drag.
-    [control updateTabGroupChips];
 
 #if PSM_DEBUG_DRAG_PERFORMANCE
     CFAbsoluteTime cellLoopEnd = CFAbsoluteTimeGetCurrent();
