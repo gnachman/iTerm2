@@ -36,10 +36,20 @@ final class PSMTabGroupCellTests: XCTestCase {
         return cell
     }
 
+    private func placeholderCell() -> PSMTabBarCell {
+        let cell = PSMTabBarCell(controlView: control)!
+        cell.isPlaceholder = true
+        return cell
+    }
+
     // Render a cell list as tokens: "-" ungrouped tab, "A" grouped tab,
-    // "chip:A" a chip, so a single equality assert describes the structure.
+    // "chip:A" a chip, "ph" a placeholder, so a single equality assert
+    // describes the structure.
     private func tokens(_ cells: [PSMTabBarCell]) -> [String] {
         return cells.map { cell in
+            if cell.isPlaceholder {
+                return "ph"
+            }
             if cell.isTabGroupChip {
                 return "chip:\(cell.tabGroupIdentifier ?? "")"
             }
@@ -91,6 +101,49 @@ final class PSMTabGroupCellTests: XCTestCase {
                                             [chipCell("A"), tabCell("A"), tabCell("A")],
                                          controlView: control)
         XCTAssertEqual(tokens(out), ["chip:A", "A", "A"])
+    }
+
+    // MARK: - Drag-time chip insertion (placeholders transparent)
+
+    func testDragChipsPlaceholdersPassThroughUngrouped() {
+        // A placeholder-laden ungrouped bar gets no chips.
+        let out = PSMTabBarControl.cellsByInsertingDragChips(into:
+                                            [placeholderCell(), tabCell(nil), placeholderCell(), tabCell(nil), placeholderCell()],
+                                         controlView: control)
+        XCTAssertEqual(tokens(out), ["ph", "-", "ph", "-", "ph"])
+    }
+
+    func testDragChipInsertedAfterPrecedingPlaceholder() {
+        // The chip glues to its run's first tab, sitting just after that tab's
+        // leading placeholder (the drop-before-group slot stays outside the group).
+        let out = PSMTabBarControl.cellsByInsertingDragChips(into:
+                                            [placeholderCell(), tabCell(nil), placeholderCell(), tabCell("A"), placeholderCell(), tabCell("A"), placeholderCell()],
+                                         controlView: control)
+        XCTAssertEqual(tokens(out), ["ph", "-", "ph", "chip:A", "A", "ph", "A", "ph"])
+    }
+
+    func testDragChipRunSurvivesSplittingPlaceholder() {
+        // A group whose tabs are separated only by a placeholder (e.g. the gap
+        // left by the dragged tab) stays a single run -> exactly one chip.
+        let out = PSMTabBarControl.cellsByInsertingDragChips(into:
+                                            [tabCell("A"), placeholderCell(), tabCell("A")],
+                                         controlView: control)
+        XCTAssertEqual(tokens(out), ["chip:A", "A", "ph", "A"])
+    }
+
+    func testDragChipsStrayChipsDropped() {
+        let out = PSMTabBarControl.cellsByInsertingDragChips(into:
+                                            [chipCell("A"), placeholderCell(), tabCell("A"), tabCell("A")],
+                                         controlView: control)
+        XCTAssertEqual(tokens(out), ["ph", "chip:A", "A", "A"])
+    }
+
+    func testDragChipsAdjacentGroupsAcrossPlaceholder() {
+        // Two different groups separated by a placeholder each keep their chip.
+        let out = PSMTabBarControl.cellsByInsertingDragChips(into:
+                                            [tabCell("A"), placeholderCell(), tabCell("B")],
+                                         controlView: control)
+        XCTAssertEqual(tokens(out), ["chip:A", "A", "ph", "chip:B", "B"])
     }
 
     // MARK: - Index conversion

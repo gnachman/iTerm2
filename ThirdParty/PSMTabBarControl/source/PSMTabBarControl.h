@@ -281,12 +281,31 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 + (NSArray<PSMTabBarCell *> *)cellsByInsertingTabGroupChipsInto:(NSArray<PSMTabBarCell *> *)tabCells
                                                    controlView:(nullable PSMTabBarControl *)controlView
     NS_SWIFT_NAME(cellsByInsertingTabGroupChips(into:controlView:));
+// Like cellsByInsertingTabGroupChipsInto:, but tolerates a cell list that
+// already contains placeholder cells mid-drag: placeholders are copied through
+// untouched and are transparent when detecting contiguous runs (a group split
+// only by placeholders stays one run), and any stray chip cells are dropped and
+// re-derived. Used to keep chips visible during a drag without disturbing the
+// pure tab/placeholder index math the drag relies on.
++ (NSArray<PSMTabBarCell *> *)cellsByInsertingDragChipsInto:(NSArray<PSMTabBarCell *> *)cells
+                                                controlView:(nullable PSMTabBarControl *)controlView
+    NS_SWIFT_NAME(cellsByInsertingDragChips(into:controlView:));
+// Width of a horizontal group-chip cell (its name, via the data source).
+- (CGFloat)widthOfTabGroupChipCell:(PSMTabBarCell *)cell;
 // Map an NSTabView index to the index of the corresponding tab cell in a
 // cell list that includes chip cells (returns cells.count if past the end).
 + (NSInteger)cellIndexForTabIndex:(NSInteger)tabIndex inCells:(NSArray<PSMTabBarCell *> *)cells;
 // Map a cell-list index back to its NSTabView index, skipping chip cells;
 // NSNotFound if the cell at that index is itself a chip or out of range.
 + (NSInteger)tabIndexForCellIndex:(NSInteger)cellIndex inCells:(NSArray<PSMTabBarCell *> *)cells;
+
+// Strip all chip cells from the cell list (leaving only tab cells) and
+// re-derive one chip before each contiguous run. The drag assistant strips
+// chips when a drag begins so its placeholder/index math runs in a pure
+// tab-cell world, and re-normalizes when the drag ends.
+- (void)removeAllTabGroupChipCells;
+- (void)normalizeTabGroupChipCells;
+- (void)update;
 - (void)setIsPinned:(BOOL)pinned forTabViewItem:(NSTabViewItem *)tabViewItem;
 - (BOOL)isPinnedForTabViewItem:(NSTabViewItem *)tabViewItem;
 - (void)setModifier:(NSUInteger)mask;

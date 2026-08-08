@@ -1269,11 +1269,16 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     [_tabView insertTabViewItem:theItem atIndex:destIndex];
     [theItem release];
 
+    // sourceIndex/destIndex are tab-view indices. Strip chip cells so the
+    // _cells move uses those indices directly (cell index == tab index in a
+    // pure tab-cell list), then re-derive chips from the new order.
+    [self removeAllTabGroupChipCells];
     id cell = [_cells objectAtIndex:sourceIndex];
     [cell retain];
     [_cells removeObjectAtIndex:sourceIndex];
     [_cells insertObject:cell atIndex:destIndex];
     [cell release];
+    [self normalizeTabGroupChipCells];
 
     [_tabView setDelegate:tempDelegate];
 
@@ -1679,6 +1684,35 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     return result;
 }
 
++ (NSArray<PSMTabBarCell *> *)cellsByInsertingDragChipsInto:(NSArray<PSMTabBarCell *> *)cells
+                                                controlView:(PSMTabBarControl *)controlView {
+    NSMutableArray<PSMTabBarCell *> *result = [NSMutableArray array];
+    NSString *runID = nil;
+    for (PSMTabBarCell *cell in cells) {
+        if ([cell isTabGroupChip]) {
+            // Stray chip from a prior pass: drop it, we re-derive below.
+            continue;
+        }
+        if ([cell isPlaceholder]) {
+            // Placeholders are transparent to run detection so a group split
+            // only by placeholders (e.g. the dragged tab's gap) stays one run.
+            [result addObject:cell];
+            continue;
+        }
+        NSString *gid = [cell tabGroupIdentifier];
+        const BOOL grouped = (gid.length > 0);
+        if (grouped && ![gid isEqualToString:runID]) {
+            PSMTabBarCell *chip = [[[PSMTabBarCell alloc] initWithControlView:controlView] autorelease];
+            [chip setIsTabGroupChip:YES];
+            [chip setTabGroupIdentifier:gid];
+            [result addObject:chip];
+        }
+        runID = grouped ? gid : nil;
+        [result addObject:cell];
+    }
+    return result;
+}
+
 + (NSInteger)cellIndexForTabIndex:(NSInteger)tabIndex inCells:(NSArray<PSMTabBarCell *> *)cells {
     NSInteger tab = -1;
     for (NSInteger i = 0; i < (NSInteger)cells.count; i++) {
@@ -1884,6 +1918,12 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 
     NSMutableArray<NSNumber *> *result = [NSMutableArray array];
     CGFloat used = 0;
+    // perTab is chosen so the tab cells fill `available` exactly, so the running
+    // sum lands right at `available` for the last cell. Allow a sub-point
+    // tolerance so floating-point rounding across the per-tab divisions doesn't
+    // spuriously push the last tab into the overflow menu, which would leave a
+    // full tab-width of empty space on the right.
+    const CGFloat fitTolerance = 0.5;
     for (PSMTabBarCell *cell in _cells) {
         CGFloat width;
         if (cell.isTabGroupChip) {
@@ -1894,7 +1934,7 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
             width = perTab;
         }
         const CGFloat need = width + (result.count > 0 ? spacing : 0);
-        if (result.count > 0 && used + need > available) {
+        if (result.count > 0 && used + need > available + fitTolerance) {
             break;  // out of room; the rest overflow
         }
         [result addObject:@(width)];
@@ -3509,6 +3549,11 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 
 - (void)moveTabAtIndex:(NSInteger)sourceIndex toTabBar:(PSMTabBarControl *)destinationTabBar atIndex:(NSInteger)destinationIndex {
     assert(destinationTabBar != self);
+    // sourceIndex/destinationIndex are tab indices. Chip cells make _cells no
+    // longer 1:1 with tabs, so strip them from both bars, do the move in
+    // pure tab-index space, then re-derive the chips.
+    [self removeAllTabGroupChipCells];
+    [destinationTabBar removeAllTabGroupChipCells];
     PSMTabBarCell *movingCell = _cells[sourceIndex];
     [destinationTabBar.cells insertObject:movingCell atIndex:destinationIndex];
     [movingCell setControlView:destinationTabBar];
@@ -3543,6 +3588,11 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         [self.delegate respondsToSelector:@selector(tabView:closeWindowForLastTabViewItem:)]) {
         [self.delegate tabView:self.tabView closeWindowForLastTabViewItem:[movingCell representedObject]];
     }
+    // Re-derive chip cells now that both bars' tab runs have settled.
+    [self normalizeTabGroupChipCells];
+    [self update];
+    [destinationTabBar normalizeTabGroupChipCells];
+    [destinationTabBar update];
 }
 
 - (void)setNeedsUpdate:(BOOL)needsUpdate {
