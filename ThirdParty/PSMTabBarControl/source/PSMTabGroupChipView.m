@@ -15,10 +15,7 @@ static const CGFloat PSMTabGroupChipHInset = 8;
 static const CGFloat PSMTabGroupChipTrailingGap = 4;
 // Height of the chip that heads a vertical bar's run (it sits above the
 // run spanning the bar width), and the gap the control reserves for it.
-static const CGFloat PSMTabGroupChipVerticalHeight = 26;
-// Empty space left below the vertical chip's capsule so it doesn't touch
-// the tab beneath it.
-static const CGFloat PSMTabGroupChipVerticalBottomGap = 5;
+static const CGFloat PSMTabGroupChipVerticalHeight = 28;
 
 - (BOOL)isFlipped {
     return NO;
@@ -49,11 +46,6 @@ static const CGFloat PSMTabGroupChipVerticalBottomGap = 5;
     return PSMTabGroupChipVerticalHeight;
 }
 
-// Space the caller should leave empty below a vertical chip's capsule.
-+ (CGFloat)verticalChipBottomGap {
-    return PSMTabGroupChipVerticalBottomGap;
-}
-
 - (void)drawRect:(NSRect)dirtyRect {
     id<PSMTabStyle> style = self.tabBarControl.style;
     if ([style respondsToSelector:@selector(drawTabGroupChipWithName:color:selected:frame:inControl:)]) {
@@ -79,9 +71,9 @@ static const CGFloat PSMTabGroupChipVerticalBottomGap = 5;
 // overrides the chip drawing.
 + (void)drawChipInFrame:(NSRect)frame name:(NSString *)name color:(NSColor *)color {
     color = color ?: [NSColor grayColor];
-    // Inset the capsule from the cell edges (more horizontally so the
-    // rounded ends aren't clipped; little vertically so the label fits).
-    NSRect bounds = NSInsetRect(frame, 4, 2);
+    // Inset the capsule so it's centered in the cell with a margin on all
+    // sides (the vertical margin separates it from the tabs above/below).
+    NSRect bounds = NSInsetRect(frame, 4, 5);
     if (bounds.size.width <= 0 || NSHeight(bounds) <= 0) {
         return;
     }
@@ -102,19 +94,22 @@ static const CGFloat PSMTabGroupChipVerticalBottomGap = 5;
                                    : 0.5;
     NSColor *textColor = brightness < 0.55 ? [NSColor whiteColor]
                                            : [NSColor blackColor];
+    NSFont *font = [self chipFont];
     NSMutableParagraphStyle *para = [[[NSMutableParagraphStyle alloc] init] autorelease];
     // Left-align so the chip label lines up with the tab labels below it.
     para.alignment = NSTextAlignmentLeft;
     para.lineBreakMode = NSLineBreakByTruncatingTail;
-    NSDictionary *attrs = @{ NSFontAttributeName: [self chipFont],
+    NSDictionary *attrs = @{ NSFontAttributeName: font,
                              NSForegroundColorAttributeName: textColor,
                              NSParagraphStyleAttributeName: para };
     const CGFloat inset = PSMTabGroupChipHInset;
-    NSSize textSize = [name sizeWithAttributes:attrs];
+    // Vertically center on the cap height (control is flipped): put the
+    // line box top so the glyph body straddles the capsule's midline.
+    const CGFloat textTop = NSMidY(bounds) - font.ascender + font.capHeight / 2.0;
     NSRect textRect = NSMakeRect(NSMinX(bounds) + inset,
-                                 NSMidY(bounds) - textSize.height / 2.0,
+                                 textTop,
                                  MAX(0, NSWidth(bounds) - inset * 2),
-                                 textSize.height);
+                                 NSHeight(bounds));
     [name drawInRect:textRect withAttributes:attrs];
 }
 

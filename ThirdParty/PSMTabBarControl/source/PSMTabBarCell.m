@@ -535,13 +535,7 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
         // data source; a future per-style hook can replace the basic look.
         PSMTabBarControl *bar = (PSMTabBarControl *)[self psmTabControlView];
         id<PSMTabGroup> group = [bar.tabGroupDataSource tabGroupWithIdentifier:self.tabGroupIdentifier];
-        NSRect chipFrame = cellFrame;
-        if (bar.orientation != PSMTabBarHorizontalOrientation) {
-            // Leave a gap below the capsule (control is flipped: the tab
-            // below is at larger y, i.e. the bottom of this frame).
-            chipFrame.size.height -= [PSMTabGroupChipView verticalChipBottomGap];
-        }
-        [PSMTabGroupChipView drawChipInFrame:chipFrame
+        [PSMTabGroupChipView drawChipInFrame:cellFrame
                                         name:group ? group.name : @""
                                        color:group ? group.color : nil];
         return;
