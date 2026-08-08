@@ -49,7 +49,8 @@ final class iTermTabGroupRegistry: NSObject, PSMTabGroupDataSource {
     // Drop every group whose id isn't in `inUseIdentifiers` (the set of
     // group ids currently referenced by this window's tabs). Called
     // after a tab closes or moves so orphaned definitions don't persist.
-    @objc func pruneGroups(keepingIDs inUseIdentifiers: Set<String>) {
+    @objc(pruneGroupsKeepingIDs:)
+    func pruneGroups(keepingIDs inUseIdentifiers: Set<String>) {
         for identifier in groupsByID.keys where !inUseIdentifiers.contains(identifier) {
             groupsByID.removeValue(forKey: identifier)
         }

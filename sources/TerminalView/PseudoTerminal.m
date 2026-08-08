@@ -271,6 +271,11 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
 @implementation PseudoTerminal {
     ////////////////////////////////////////////////////////////////////////////
+    // Per-window tab-group definitions (name/color by id). Source of the
+    // tab bar's tabGroupDataSource. Lazily created; see -tabGroupRegistry.
+    iTermTabGroupRegistry *_tabGroupRegistry;
+
+    ////////////////////////////////////////////////////////////////////////////
     // Instant Replay
     iTermInstantReplayWindowController *_instantReplayWindowController;
 
@@ -8128,6 +8133,36 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         }
     }
     [_contentView updateTitleAndBorderViews];
+    [self updateTabGroups];
+}
+
+- (iTermTabGroupRegistry *)tabGroupRegistry {
+    if (!_tabGroupRegistry) {
+        _tabGroupRegistry = [[iTermTabGroupRegistry alloc] init];
+    }
+    return _tabGroupRegistry;
+}
+
+// Push each tab's group membership to the tab bar and drop group
+// definitions no tab references anymore. Piggybacks on updateTabColors,
+// which already runs at every point tab membership/order can change.
+- (void)updateTabGroups {
+    PSMTabBarControl *control = _contentView.tabBarControl;
+    if (!control) {
+        return;
+    }
+    if (control.tabGroupDataSource != self.tabGroupRegistry) {
+        control.tabGroupDataSource = self.tabGroupRegistry;
+    }
+    NSMutableSet<NSString *> *inUse = [NSMutableSet set];
+    for (PTYTab *aTab in [self tabs]) {
+        NSString *groupID = aTab.tabGroupID;
+        [control setTabGroupIdentifier:groupID forTabViewItem:aTab.tabViewItem];
+        if (groupID) {
+            [inUse addObject:groupID];
+        }
+    }
+    [self.tabGroupRegistry pruneGroupsKeepingIDs:inUse];
 }
 
 - (BOOL)tabBarProvidesProgressVisibility {
