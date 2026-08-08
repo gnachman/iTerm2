@@ -8169,7 +8169,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
              (long)[self tabs].count, inUse.allObjects,
              [self.tabGroupRegistry.allGroups valueForKey:@"uniqueIdentifier"]);
     }
-    [self.tabGroupRegistry pruneGroupsKeepingIDs:inUse];
+    // Deliberately do NOT prune here. This runs constantly (via
+    // updateTabColors), and a grouped tab that briefly leaves [self tabs]
+    // during a drag would make its group momentarily unreferenced -- a
+    // prune here then destroyed the group's name/color, orphaning the tab
+    // when it returned (id present, definition gone, no chip). Group defs
+    // are tiny; keep them for the window's life. A def that outlives all
+    // its tabs is inert (no run -> no chip). Cross-window transfer and a
+    // real cleanup pass are separate follow-ups.
 }
 
 // Firefox-style "Add Tab to Group" submenu: New Group, then existing
@@ -8468,6 +8475,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         // the PTYTabs. This logs it so a stale-cell mismatch is visible.
         RLog(@"tabGroup: tabsDidReorder tabGroupOrder=[%@]", [groupOrder componentsJoinedByString:@","]);
     }
+    // Re-push membership so the tab bar's per-cell group ids track the new
+    // order; the reorder path doesn't otherwise run updateTabColors, which
+    // would leave cell group ids stale and gaps/chips at the wrong tabs.
+    [self updateTabGroups];
 }
 
 - (PTYTabView *)tabView
