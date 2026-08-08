@@ -37,6 +37,10 @@ NS_ASSUME_NONNULL_BEGIN
 // Height reserved above a vertical bar's run for its chip.
 + (CGFloat)verticalChipHeight;
 
+// Space to leave empty below a vertical chip's capsule (so it doesn't
+// touch the tab beneath). The caller shrinks the draw frame by this.
++ (CGFloat)verticalChipBottomGap;
+
 // Draw the basic chip (rounded pill + name) into `frame`. Shared by the
 // (legacy) overlay view and the first-class chip cell.
 + (void)drawChipInFrame:(NSRect)frame name:(NSString *)name color:(NSColor *)color;

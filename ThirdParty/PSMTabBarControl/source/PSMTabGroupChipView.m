@@ -15,7 +15,10 @@ static const CGFloat PSMTabGroupChipHInset = 8;
 static const CGFloat PSMTabGroupChipTrailingGap = 4;
 // Height of the chip that heads a vertical bar's run (it sits above the
 // run spanning the bar width), and the gap the control reserves for it.
-static const CGFloat PSMTabGroupChipVerticalHeight = 18;
+static const CGFloat PSMTabGroupChipVerticalHeight = 26;
+// Empty space left below the vertical chip's capsule so it doesn't touch
+// the tab beneath it.
+static const CGFloat PSMTabGroupChipVerticalBottomGap = 5;
 
 - (BOOL)isFlipped {
     return NO;
@@ -46,6 +49,11 @@ static const CGFloat PSMTabGroupChipVerticalHeight = 18;
     return PSMTabGroupChipVerticalHeight;
 }
 
+// Space the caller should leave empty below a vertical chip's capsule.
++ (CGFloat)verticalChipBottomGap {
+    return PSMTabGroupChipVerticalBottomGap;
+}
+
 - (void)drawRect:(NSRect)dirtyRect {
     id<PSMTabStyle> style = self.tabBarControl.style;
     if ([style respondsToSelector:@selector(drawTabGroupChipWithName:color:selected:frame:inControl:)]) {
@@ -71,9 +79,9 @@ static const CGFloat PSMTabGroupChipVerticalHeight = 18;
 // overrides the chip drawing.
 + (void)drawChipInFrame:(NSRect)frame name:(NSString *)name color:(NSColor *)color {
     color = color ?: [NSColor grayColor];
-    // Inset the capsule from the cell edges (a bit more horizontally so
-    // the rounded ends aren't clipped and it matches the tab insets).
-    NSRect bounds = NSInsetRect(frame, 4, 3);
+    // Inset the capsule from the cell edges (more horizontally so the
+    // rounded ends aren't clipped; little vertically so the label fits).
+    NSRect bounds = NSInsetRect(frame, 4, 2);
     if (bounds.size.width <= 0 || NSHeight(bounds) <= 0) {
         return;
     }
@@ -95,13 +103,12 @@ static const CGFloat PSMTabGroupChipVerticalHeight = 18;
     NSColor *textColor = brightness < 0.55 ? [NSColor whiteColor]
                                            : [NSColor blackColor];
     NSMutableParagraphStyle *para = [[[NSMutableParagraphStyle alloc] init] autorelease];
-    para.alignment = NSTextAlignmentCenter;
+    // Left-align so the chip label lines up with the tab labels below it.
+    para.alignment = NSTextAlignmentLeft;
     para.lineBreakMode = NSLineBreakByTruncatingTail;
     NSDictionary *attrs = @{ NSFontAttributeName: [self chipFont],
                              NSForegroundColorAttributeName: textColor,
                              NSParagraphStyleAttributeName: para };
-    // Center vertically; the paragraph style centers horizontally and
-    // truncates if the name is wider than the capsule.
     const CGFloat inset = PSMTabGroupChipHInset;
     NSSize textSize = [name sizeWithAttributes:attrs];
     NSRect textRect = NSMakeRect(NSMinX(bounds) + inset,
