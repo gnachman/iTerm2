@@ -1583,10 +1583,7 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     // Calculate number of cells to fit in the control and cell widths.
     const NSInteger cellCount = [_cells count];
     if ([self orientation] == PSMTabBarHorizontalOrientation) {
-        if ([self tabBarIsScrollable] || [self hasTabGroupChipCells]) {
-            // Chip cells use the natural-width layout (see
-            // layoutScrollableHorizontalTabsWithCellCount:), which sizes
-            // them per-cell instead of shrink-to-fit.
+        if ([self tabBarIsScrollable]) {
             [self layoutScrollableHorizontalTabsWithCellCount:cellCount];
         } else if ((animate || _animationTimer != nil) && cellCount > 0) {
             // Animate only on horizontal tab bars.
@@ -1728,13 +1725,8 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
         sum += w.doubleValue;
     }
     const CGFloat totalTabWidth = sum + spacing * MAX(0, (CGFloat)(cellCount - 1));
-    // Use natural widths when the tabs overflow OR whenever chip cells are
-    // present (chip cells are sized per-cell in naturalHorizontalCellWidths;
-    // the shrink-to-fit path below doesn't size them).
-    if (cellCount > 0 && (totalTabWidth > [self availableCellWidthWithOverflow:NO] ||
-                          [self hasTabGroupChipCells])) {
-        // Natural widths (+ scroll if they overflow). Content extent is the
-        // leading margin plus the whole run.
+    if (cellCount > 0 && totalTabWidth > [self availableCellWidthWithOverflow:NO]) {
+        // Overflows: natural widths + scroll.
         _scrollContentExtent = [[self style] leftMarginForTabBarControl] + totalTabWidth;
         [self clampScrollOffset];
         [self finishUpdateWithRegularWidths:widths widthsWithOverflow:widths];
@@ -1857,7 +1849,64 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     return !self.stretchCellsToFit && canFitAllCellsOptimally;
 }
 
+// Fit/stretch layout when group chip cells are present. Chip (and pinned)
+// cells keep their fixed width; the remaining space is shared among the
+// tab cells, which stretch to fill when stretchCellsToFit is on. Kept
+// separate from the pinned-centric path below so the (well-tested)
+// no-chips case is untouched. Returns a contiguous prefix; anything that
+// doesn't fit goes to the overflow menu.
+- (NSArray<NSNumber *> *)cellWidthsForHorizontalArrangementWithChipsWithOverflow:(BOOL)withOverflow {
+    const CGFloat available = [self availableCellWidthWithOverflow:withOverflow];
+    const CGFloat spacing = _style.intercellSpacing;
+    const NSInteger cellCount = (NSInteger)_cells.count;
+    const CGFloat totalSpacing = spacing * MAX(0, (CGFloat)(cellCount - 1));
+
+    CGFloat reserved = 0;  // fixed width for chip + pinned cells
+    NSInteger tabCount = 0;
+    for (PSMTabBarCell *cell in _cells) {
+        if (cell.isTabGroupChip) {
+            reserved += [self widthOfTabGroupChipCell:cell];
+        } else if (cell.isPinned) {
+            reserved += _pinnedTabWidth;
+        } else {
+            tabCount++;
+        }
+    }
+
+    CGFloat perTab = 0;
+    if (tabCount > 0) {
+        perTab = MAX(0, available - reserved - totalSpacing) / (CGFloat)tabCount;
+        if (!self.stretchCellsToFit) {
+            perTab = MIN(perTab, self.cellOptimumWidth);
+        }
+        perTab = MAX(self.cellMinWidth, MIN(perTab, (CGFloat)_cellMaxWidth));
+    }
+
+    NSMutableArray<NSNumber *> *result = [NSMutableArray array];
+    CGFloat used = 0;
+    for (PSMTabBarCell *cell in _cells) {
+        CGFloat width;
+        if (cell.isTabGroupChip) {
+            width = [self widthOfTabGroupChipCell:cell];
+        } else if (cell.isPinned) {
+            width = _pinnedTabWidth;
+        } else {
+            width = perTab;
+        }
+        const CGFloat need = width + (result.count > 0 ? spacing : 0);
+        if (result.count > 0 && used + need > available) {
+            break;  // out of room; the rest overflow
+        }
+        [result addObject:@(width)];
+        used += need;
+    }
+    return result;
+}
+
 - (NSArray<NSNumber *> *)cellWidthsForHorizontalArrangementWithOverflow:(BOOL)withOverflow {
+    if ([self hasTabGroupChipCells]) {
+        return [self cellWidthsForHorizontalArrangementWithChipsWithOverflow:withOverflow];
+    }
     const NSUInteger cellCount = _cells.count;
     const CGFloat availableWidth = [self availableCellWidthWithOverflow:withOverflow];
     const CGFloat intercellSpacing = _style.intercellSpacing;
@@ -2122,8 +2171,7 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     // lands at its scrolled on-screen position (the horizontal analogue of the vertical origins the
     // scrollable branch bakes the offset into). Vertical bars already have the offset in newValues.
     if ([self orientation] == PSMTabBarHorizontalOrientation &&
-        ([self tabBarIsScrollable] || [self hasTabGroupChipCells]) &&
-        [self maximumScrollOffset] > 0) {
+        [self tabBarIsScrollable] && [self maximumScrollOffset] > 0) {
         cellRect.origin.x -= _scrollOffset;
     }
 
