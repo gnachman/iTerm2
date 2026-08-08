@@ -10,6 +10,7 @@
 
 #import "PSMCachedTitle.h"
 #import "PSMProgressIndicator.h"
+#import "PSMTabGroup.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -217,6 +218,9 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 
 @property(nonatomic, retain, nullable) IBOutlet NSTabView *tabView;
 @property(nonatomic, weak, nullable) id<PSMTabBarControlDelegate> delegate;
+// Supplies tab-group definitions (name/color by identifier) for chip
+// rendering. Owned by the window controller; held weakly here.
+@property(nonatomic, weak, nullable) id<PSMTabGroupDataSource> tabGroupDataSource;
 @property(nonatomic, retain, nullable) id partnerView;
 @property(nonatomic, readonly, nullable) NSButton *overflowPopUpButton;
 @property(nonatomic, assign) BOOL ignoreTrailingParentheticalsForSmartTruncation;
@@ -261,6 +265,12 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 
 - (void)setTabColor:(nullable NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
 - (nullable NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
+// The tab-group membership of a tab, pushed per-tab like tabColor. The
+// control groups contiguous cells sharing an identifier into one run and
+// draws that run's chip using attributes from tabGroupDataSource. nil
+// means the tab is not in any group.
+- (void)setTabGroupIdentifier:(nullable NSString *)identifier forTabViewItem:(NSTabViewItem *)tabViewItem;
+- (nullable NSString *)tabGroupIdentifierForTabViewItem:(NSTabViewItem *)tabViewItem;
 - (void)setIsPinned:(BOOL)pinned forTabViewItem:(NSTabViewItem *)tabViewItem;
 - (BOOL)isPinnedForTabViewItem:(NSTabViewItem *)tabViewItem;
 - (void)setModifier:(NSUInteger)mask;

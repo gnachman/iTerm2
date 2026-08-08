@@ -17,7 +17,7 @@ import AppKit
 // group can be dragged into another window (its definition moves to
 // that window's registry) without colliding or losing identity.
 @objc(iTermTabGroup)
-final class iTermTabGroup: NSObject {
+final class iTermTabGroup: NSObject, PSMTabGroup {
     @objc let uniqueIdentifier: String
     @objc var name: String
     @objc var color: NSColor

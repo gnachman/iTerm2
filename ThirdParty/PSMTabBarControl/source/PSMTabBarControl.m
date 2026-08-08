@@ -3200,6 +3200,30 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     return nil;
 }
 
+- (void)setTabGroupIdentifier:(NSString *)identifier forTabViewItem:(NSTabViewItem *)tabViewItem {
+    for (PSMTabBarCell *cell in _cells) {
+        if ([cell representedObject] == tabViewItem) {
+            if (cell.tabGroupIdentifier != identifier &&
+                ![cell.tabGroupIdentifier isEqualToString:identifier]) {
+                cell.tabGroupIdentifier = identifier;
+                // Group runs affect chip placement, so relayout like a
+                // pinned-state change does.
+                [self update:YES];
+            }
+            return;
+        }
+    }
+}
+
+- (NSString *)tabGroupIdentifierForTabViewItem:(NSTabViewItem *)tabViewItem {
+    for (PSMTabBarCell *cell in _cells) {
+        if ([cell representedObject] == tabViewItem) {
+            return [cell tabGroupIdentifier];
+        }
+    }
+    return nil;
+}
+
 - (void)setIsPinned:(BOOL)pinned forTabViewItem:(NSTabViewItem *)tabViewItem {
     BOOL updated = NO;
 

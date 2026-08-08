@@ -43,6 +43,12 @@
 @property(nonatomic, assign) int currentStep;
 @property(nonatomic, copy) NSString *modifierString;
 @property(nonatomic, retain) NSColor *tabColor;
+// Identifier of the tab group this cell belongs to, or nil. The control
+// uses runs of equal identifiers to place group chips; attributes come
+// from the control's tabGroupDataSource, not from the cell. (No
+// nullability specifier: this header has no NS_ASSUME_NONNULL region and
+// annotating one pointer would force annotating them all.)
+@property(nonatomic, copy) NSString *tabGroupIdentifier;
 @property(nonatomic, readonly) PSMProgressIndicator *indicator;
 @property(nonatomic, readonly) PSMCachedTitle *cachedTitle;
 @property(nonatomic, readonly) PSMCachedTitle *cachedSubtitle;

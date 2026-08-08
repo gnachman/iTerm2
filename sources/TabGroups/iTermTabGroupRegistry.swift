@@ -16,10 +16,17 @@ import Foundation
 // order. Groups that no membership references any longer are pruned so
 // a closed-out group's definition doesn't linger in the arrangement.
 @objc(iTermTabGroupRegistry)
-final class iTermTabGroupRegistry: NSObject {
+final class iTermTabGroupRegistry: NSObject, PSMTabGroupDataSource {
     private var groupsByID: [String: iTermTabGroup] = [:]
 
     @objc func group(withID identifier: String) -> iTermTabGroup? {
+        return groupsByID[identifier]
+    }
+
+    // PSMTabGroupDataSource: the tab bar's typed view of group(withID:).
+    // Returns the concrete iTermTabGroup as an id<PSMTabGroup> so the
+    // vendored control reads name/color without knowing the model type.
+    @objc func tabGroup(withIdentifier identifier: String) -> PSMTabGroup? {
         return groupsByID[identifier]
     }
 
