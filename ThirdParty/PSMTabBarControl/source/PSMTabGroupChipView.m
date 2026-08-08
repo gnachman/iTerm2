@@ -18,15 +18,24 @@ static const CGFloat PSMTabGroupChipTrailingGap = 4;
     return NO;
 }
 
-- (NSFont *)font {
++ (NSFont *)chipFont {
     return [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
 }
 
-- (CGFloat)preferredWidth {
-    NSString *name = self.groupName ?: @"";
-    NSDictionary *attrs = @{ NSFontAttributeName: self.font };
-    const CGFloat textWidth = ceil([name sizeWithAttributes:attrs].width);
+- (NSFont *)font {
+    return [PSMTabGroupChipView chipFont];
+}
+
+// Class method so the tab bar can reserve the leading gap during layout,
+// before any chip instance exists. Must match -preferredWidth exactly.
++ (CGFloat)preferredWidthForName:(NSString *)name {
+    NSDictionary *attrs = @{ NSFontAttributeName: [self chipFont] };
+    const CGFloat textWidth = ceil([(name ?: @"") sizeWithAttributes:attrs].width);
     return textWidth + PSMTabGroupChipHInset * 2 + PSMTabGroupChipTrailingGap;
+}
+
+- (CGFloat)preferredWidth {
+    return [PSMTabGroupChipView preferredWidthForName:self.groupName];
 }
 
 - (void)drawRect:(NSRect)dirtyRect {

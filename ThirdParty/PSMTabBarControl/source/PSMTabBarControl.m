@@ -227,8 +227,48 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     const CGFloat rightMargin = [_style rightMarginForTabBarControlWithOverflow:withOverflow
                                                                    addTabButton:self.showAddTabButton];
     const CGFloat leftMargin = [_style leftMarginForTabBarControl];
-    width = width - leftMargin - rightMargin;
+    width = width - leftMargin - rightMargin - [self totalTabGroupGapWidth];
     return width;
+}
+
+// The horizontal space reserved for group chips: the sum of each run's
+// leading chip width. Subtracted from the available cell width so fit
+// mode shrinks tabs to make room, and added to the scroll content extent
+// so a scrolled bar can reach the end. Zero for vertical bars or when no
+// data source / no groups are present.
+- (CGFloat)totalTabGroupGapWidth {
+    if (_orientation != PSMTabBarHorizontalOrientation || self.tabGroupDataSource == nil) {
+        return 0;
+    }
+    CGFloat total = 0;
+    for (NSInteger i = 0; i < (NSInteger)_cells.count; i++) {
+        total += [self tabGroupLeadingGapForCellAtIndex:i];
+    }
+    return total;
+}
+
+// The chip width to reserve immediately before cell `i`: nonzero only
+// when cell `i` begins a contiguous run of a group that has a definition.
+- (CGFloat)tabGroupLeadingGapForCellAtIndex:(NSInteger)i {
+    if (_orientation != PSMTabBarHorizontalOrientation || self.tabGroupDataSource == nil) {
+        return 0;
+    }
+    if (i < 0 || i >= (NSInteger)_cells.count) {
+        return 0;
+    }
+    NSString *gid = [_cells[i] tabGroupIdentifier];
+    if (gid == nil) {
+        return 0;
+    }
+    NSString *prev = (i > 0) ? [_cells[i - 1] tabGroupIdentifier] : nil;
+    if (prev != nil && [prev isEqualToString:gid]) {
+        return 0;  // continuation of the run; the chip precedes the first cell only
+    }
+    id<PSMTabGroup> group = [self.tabGroupDataSource tabGroupWithIdentifier:gid];
+    if (group == nil) {
+        return 0;
+    }
+    return [PSMTabGroupChipView preferredWidthForName:group.name];
 }
 
 - (NSRect)genericCellRectWithOverflow:(BOOL)withOverflow {
@@ -1709,10 +1749,14 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     chip.groupName = group.name;
     chip.groupColor = group.color;
     chip.selected = selected;
+    // The x-walk reserved a leading gap and shifted the run's first cell
+    // right by the chip width, so the chip sits in that gap, immediately
+    // to the left of the first cell.
     const NSRect cellFrame = cell.frame;
-    chip.frame = NSMakeRect(NSMinX(cellFrame),
+    const CGFloat width = [chip preferredWidth];
+    chip.frame = NSMakeRect(NSMinX(cellFrame) - width,
                             NSMinY(cellFrame),
-                            [chip preferredWidth],
+                            width,
                             NSHeight(cellFrame));
     [chip setNeedsDisplay:YES];
     return YES;
@@ -1744,8 +1788,9 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     }
     const CGFloat totalTabWidth = sum + spacing * MAX(0, (CGFloat)(cellCount - 1));
     if (cellCount > 0 && totalTabWidth > [self availableCellWidthWithOverflow:NO]) {
-        // Overflows: natural widths + scroll. Content extent is the leading margin plus the whole run.
-        _scrollContentExtent = [[self style] leftMarginForTabBarControl] + totalTabWidth;
+        // Overflows: natural widths + scroll. Content extent is the leading margin plus the whole run
+        // plus the group-chip gaps reserved between runs.
+        _scrollContentExtent = [[self style] leftMarginForTabBarControl] + totalTabWidth + [self totalTabGroupGapWidth];
         [self clampScrollOffset];
         [self finishUpdateWithRegularWidths:widths widthsWithOverflow:widths];
     } else {
@@ -2122,6 +2167,9 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
         if (i < numberOfVisibleCells) {
             // set cell frame
             if ([self orientation] == PSMTabBarHorizontalOrientation) {
+                // Reserve the leading gap for a group chip before the run's
+                // first cell; this shifts this cell and all after it right.
+                cellRect.origin.x += [self tabGroupLeadingGapForCellAtIndex:i];
                 cellRect.size.width = [[newValues objectAtIndex:i] floatValue];
             } else {
                 cellRect.size.width = [self frame].size.width;

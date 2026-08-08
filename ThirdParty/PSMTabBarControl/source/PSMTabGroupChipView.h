@@ -30,6 +30,10 @@ NS_ASSUME_NONNULL_BEGIN
 // reserve a leading gap for it before the run's first cell.
 - (CGFloat)preferredWidth;
 
+// Same width computed from a name alone, so the tab bar can reserve the
+// gap during layout before the chip subview exists.
++ (CGFloat)preferredWidthForName:(NSString *)name;
+
 @end
 
 NS_ASSUME_NONNULL_END
