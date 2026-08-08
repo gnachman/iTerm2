@@ -253,6 +253,15 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     if (self.tabGroupDataSource == nil) {
         return 0;
     }
+    // While a drag is in progress, treat the bar as gapless so the drag
+    // system (placeholder distribution, drop hit-testing, the reorder
+    // animation) works exactly like it does without groups. The reserved
+    // gap is invisible to that machinery and otherwise throws off the
+    // drop target and jerks the chip around. Gaps and chips are restored
+    // by the layout that runs when the drag ends.
+    if ([[PSMTabDragAssistant sharedDragAssistant] isDragging]) {
+        return 0;
+    }
     if (i < 0 || i >= (NSInteger)_cells.count) {
         return 0;
     }
@@ -1699,6 +1708,16 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
         [self removeTabGroupChipsNotInSet:[NSSet set]];
         return;
     }
+    // During a drag the bar is laid out gapless (see
+    // tabGroupLeadingGapForCellAtIndex:), so there is nowhere to put a
+    // chip; hide them rather than chase the shifting cells to off-screen
+    // positions. They reappear when the post-drop layout runs.
+    if ([[PSMTabDragAssistant sharedDragAssistant] isDragging]) {
+        for (PSMTabGroupChipView *chip in _tabGroupChips.allValues) {
+            chip.hidden = YES;
+        }
+        return;
+    }
 
     // Log the per-cell group order once (gated below on there being any
     // grouped cell) so a mis-split run is visible in a debug log without
@@ -1774,6 +1793,7 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
         [self addSubview:chip];
         RLog(@"tabGroup: created chip for group %@ (%@)", groupID, group.name);
     }
+    chip.hidden = NO;
     chip.groupName = group.name;
     chip.groupColor = group.color;
     chip.selected = selected;
