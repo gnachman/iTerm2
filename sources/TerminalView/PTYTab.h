@@ -90,6 +90,11 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // Set to nil to use the default behavior. This is a swifty string.
 @property (nonatomic, copy) NSString *titleOverride;
 @property(nonatomic, getter=isPinned) BOOL pinned;
+// Identifier of the tab group this tab belongs to, or nil. Source of
+// truth for group membership (persisted in the tab arrangement); the
+// window controller pushes it to the tab bar via
+// -setTabGroupIdentifier:forTabViewItem:.
+@property (nonatomic, copy) NSString *tabGroupID;
 @property(nonatomic, readonly) NSString *title;  // the effective title
 @property (nonatomic, readonly) iTermVariableScope<iTermTabScope> *variablesScope;
 @property(nonatomic, readonly) iTermMetalUnavailableReason metalUnavailableReason;
