@@ -2134,6 +2134,10 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
         _animationTimer = nil;
     }
 
+    // The cells shifted this frame (and finishUpdate above, which runs
+    // _setupCells, does not itself move chips), so re-place the chips to
+    // track them through the add/remove animation and its final layout.
+    [self updateTabGroupChips];
     [self setNeedsDisplay:YES];
 }
 

@@ -271,6 +271,12 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // means the tab is not in any group.
 - (void)setTabGroupIdentifier:(nullable NSString *)identifier forTabViewItem:(NSTabViewItem *)tabViewItem;
 - (nullable NSString *)tabGroupIdentifierForTabViewItem:(NSTabViewItem *)tabViewItem;
+// The gap (along the layout axis) to reserve before cell `i` for a group
+// chip, and a re-place of the chip subviews. Exposed for the drag
+// assistant so its reorder animation keeps group spacing and moves the
+// chips with the cells.
+- (CGFloat)tabGroupLeadingGapForCellAtIndex:(NSInteger)i;
+- (void)updateTabGroupChips;
 - (void)setIsPinned:(BOOL)pinned forTabViewItem:(NSTabViewItem *)tabViewItem;
 - (BOOL)isPinnedForTabViewItem:(NSTabViewItem *)tabViewItem;
 - (void)setModifier:(NSUInteger)mask;
