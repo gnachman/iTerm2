@@ -705,6 +705,163 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                 selectedCell.drawPostHocDecorations(onSelectedCell: selectedCell, tabBarControl: bar)
             }
         }
+
+        drawTabGroupRunDecorations(forTabBar: bar, clipRect: clipRect)
+    }
+
+    // The chip cell draws nothing; the whole group run's decoration (name
+    // capsule + enclosing pill) is drawn here in -drawTabBar:, since the pill
+    // spans multiple cells.
+    @objc func usesExternalTabGroupDecoration() -> Bool {
+        return true
+    }
+
+    // Group-decoration geometry, shared by the chip-cell width reservation and
+    // the drawing so the name capsule and the colored "B" area stay consistent.
+    private static let groupNameCapsulePad: CGFloat = 8    // horizontal padding in the name capsule
+    private static let groupNameCapsuleMargin: CGFloat = 1 // group-color margin around the name capsule
+    private static let groupBAreaWidth: CGFloat = 3        // colored area between the name capsule and first tab (yields a 4pt name-to-tab gap)
+    private static let groupChipToTabGap: CGFloat = 1      // bg gap between that colored area and the first tab
+
+    @objc func tabGroupChipCellWidth(forName name: String) -> CGFloat {
+        let font = NSFont.boldSystemFont(ofSize: NSFont.smallSystemFontSize)
+        let textWidth = ceil((name as NSString).size(withAttributes: [.font: font]).width)
+        return Self.groupNameCapsuleMargin * 2 + textWidth + Self.groupNameCapsulePad * 2 + Self.groupBAreaWidth
+    }
+
+    @objc func drawTabGroupRunDecorations(forTabBar bar: PSMTabBarControl, clipRect: NSRect) {
+        guard orientation == .horizontalOrientation else {
+            return  // Regular horizontal only for now; vertical has its own design.
+        }
+        guard let cells = bar.cells() as? [PSMTabBarCell] else {
+            return
+        }
+        var i = 0
+        while i < cells.count {
+            let chip = cells[i]
+            guard chip.isTabGroupChip, let gid = chip.tabGroupIdentifier else {
+                i += 1
+                continue
+            }
+            var tabsRect = NSRect.zero
+            var firstTab: PSMTabBarCell?
+            var any = false
+            var j = i + 1
+            while j < cells.count {
+                let c = cells[j]
+                if c.isTabGroupChip || c.isInOverflowMenu {
+                    break
+                }
+                if c.tabGroupIdentifier != gid {
+                    break
+                }
+                let vis = backgroundRect(for: c.frame)
+                tabsRect = any ? tabsRect.union(vis) : vis
+                if firstTab == nil {
+                    firstTab = c
+                }
+                any = true
+                j += 1
+            }
+            if any {
+                drawTabGroupRun(chip: chip, tabsRect: tabsRect, firstTab: firstTab, groupID: gid, bar: bar)
+            }
+            i = j  // j >= i + 1, so this always advances.
+        }
+    }
+
+    private func drawTabGroupRun(chip: PSMTabBarCell,
+                                 tabsRect: NSRect,
+                                 firstTab: PSMTabBarCell?,
+                                 groupID: String,
+                                 bar: PSMTabBarControl) {
+        let group = bar.tabGroupDataSource?.tabGroup(withIdentifier: groupID)
+        let groupColor = group?.color ?? NSColor.systemBlue
+        let bgColor = Self.backgroundColor
+        let textCol = firstTab.map { textColor(for: $0) } ?? NSColor.labelColor
+        let name = group?.name ?? ""
+
+        let chipFrame = chip.frame
+        // Outset the pill so its 1pt outline clears the tab pills by 1pt on
+        // top/bottom/right (at outset 1 the line touched the tabs).
+        let outset: CGFloat = 2
+        let pill = NSRect(x: chipFrame.minX,
+                          y: tabsRect.minY - outset,
+                          width: tabsRect.maxX + outset - chipFrame.minX,
+                          height: tabsRect.height + 2 * outset)
+        guard pill.width > 0, pill.height > 0 else {
+            return
+        }
+        let radius = pill.height / 2.0
+
+        // Group-color fill for the left of the run: the pill's rounded left cap
+        // plus the "B" area, whose RIGHT edge is a concave scoop that hugs the
+        // first tab (the "( (" shape), not a convex stadium end. Build it as a
+        // rounded-left rect clipped just short of the first tab, minus a circle
+        // the size of the pill that carves the concave right edge.
+        let firstVis = firstTab.map { backgroundRect(for: $0.frame) } ?? tabsRect
+        let bGap = Self.groupChipToTabGap
+        let tabRadius = firstVis.height / 2.0
+        // Clip to the first tab's center so the fill stops there, then fill a
+        // rounded-left region and carve a concave that follows the first tab's
+        // left curve offset by bGap, so the blue hugs the tab (the "( (" shape).
+        let clipRight = firstVis.midX
+        if clipRight > pill.minX {
+            NSGraphicsContext.saveGraphicsState()
+            NSRect(x: pill.minX, y: pill.minY,
+                   width: clipRight - pill.minX, height: pill.height).clip()
+            let region = NSBezierPath(roundedRect: NSRect(x: pill.minX,
+                                                          y: pill.minY,
+                                                          width: (clipRight - pill.minX) + radius,
+                                                          height: pill.height),
+                                      xRadius: radius, yRadius: radius)
+            region.append(NSBezierPath(roundedRect: firstVis.insetBy(dx: -bGap, dy: -bGap),
+                                       xRadius: tabRadius + bGap,
+                                       yRadius: tabRadius + bGap))
+            region.windingRule = .evenOdd
+            groupColor.set()
+            region.fill()
+            NSGraphicsContext.restoreGraphicsState()
+        }
+
+        // Name capsule (tabbar background) with a group-color margin around it, so
+        // the name reads on the bar rather than on the group color.
+        let capsuleMargin = Self.groupNameCapsuleMargin
+        let font = NSFont.boldSystemFont(ofSize: NSFont.smallSystemFontSize)
+        let textWidth = ceil((name as NSString).size(withAttributes: [.font: font]).width)
+        let capsulePad = Self.groupNameCapsulePad
+        let capsuleHeight = pill.height - capsuleMargin * 2
+        let capsuleRadius = capsuleHeight / 2.0
+        let capsuleWidth = textWidth + capsulePad * 2
+        let capsule = NSRect(x: pill.minX + capsuleMargin,
+                             y: pill.minY + capsuleMargin,
+                             width: capsuleWidth,
+                             height: capsuleHeight)
+        bgColor.set()
+        NSBezierPath(roundedRect: capsule, xRadius: capsuleRadius, yRadius: capsuleRadius).fill()
+
+        if !name.isEmpty {
+            let para = NSMutableParagraphStyle()
+            para.alignment = .center
+            para.lineBreakMode = .byTruncatingTail
+            let attrs: [NSAttributedString.Key: Any] = [.font: font,
+                                                         .foregroundColor: textCol,
+                                                         .paragraphStyle: para]
+            let textHeight = ceil(font.ascender - font.descender)
+            let textRect = NSRect(x: capsule.minX,
+                                  y: capsule.midY - textHeight / 2.0,
+                                  width: capsule.width,
+                                  height: textHeight)
+            (name as NSString).draw(in: textRect, withAttributes: attrs)
+        }
+
+        // Enclosing pill outline (1pt), inset a half point so the stroke is crisp.
+        groupColor.set()
+        let outline = NSBezierPath(roundedRect: pill.insetBy(dx: 0.5, dy: 0.5),
+                                   xRadius: radius,
+                                   yRadius: radius)
+        outline.lineWidth = 1
+        outline.stroke()
     }
 
     var dividerColor: NSColor {
@@ -716,6 +873,12 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             return
         }
         if leftCell.isHighlighted || rightCell.isHighlighted || leftCell.state == .on || rightCell.state == .on {
+            return
+        }
+        // No divider touching a group: it would overlap the group's enclosing
+        // blue outline (on either side of the group) or sit inside it.
+        if leftCell.isTabGroupChip || rightCell.isTabGroupChip ||
+            leftCell.tabGroupIdentifier != nil || rightCell.tabGroupIdentifier != nil {
             return
         }
         guard let cells = tabBar?.cells() as? [PSMTabBarCell], cells.count >= 3 else {

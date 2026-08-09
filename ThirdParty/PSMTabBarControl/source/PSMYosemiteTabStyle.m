@@ -1361,6 +1361,109 @@ const void *PSMTabStyleDarkColorKey = "dark";
             [cell drawPostHocDecorationsOnSelectedCell:cell tabBarControl:bar];
         }
     }
+
+    [self drawTabGroupRunDecorationsForTabBar:bar clipRect:clipRect];
+}
+
+// Geometry for the tab-group decoration. The pill hugs the visible tabs with a
+// small outset; the visual inset approximates the gap between a tab cell's frame
+// and its drawn (rounded) background. Tunable while dialing in the look.
+static const CGFloat kPSMGroupPillTabVisualInset = 3;   // cell frame -> drawn tab
+static const CGFloat kPSMGroupPillOutset = 1;           // pill sits this far outside the tab
+static const CGFloat kPSMGroupNameToTabGap = 4;         // gap between name capsule and first tab
+
+- (BOOL)usesExternalTabGroupDecoration {
+    return YES;
+}
+
+- (void)drawTabGroupRunDecorationsForTabBar:(PSMTabBarControl *)bar clipRect:(NSRect)clipRect {
+    if (![self usesExternalTabGroupDecoration]) {
+        return;  // A subclass (e.g. Minimal) opts out and keeps the basic chip.
+    }
+    if (bar.orientation != PSMTabBarHorizontalOrientation) {
+        return;  // Regular horizontal only for now; vertical has its own design.
+    }
+    NSArray<PSMTabBarCell *> *cells = [bar cells];
+    for (NSInteger i = 0; i < (NSInteger)cells.count; i++) {
+        PSMTabBarCell *chip = cells[i];
+        if (![chip isTabGroupChip]) {
+            continue;
+        }
+        NSString *gid = chip.tabGroupIdentifier;
+        NSRect tabsRect = NSZeroRect;
+        BOOL any = NO;
+        for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
+            PSMTabBarCell *c = cells[j];
+            if (c.isTabGroupChip || c.isInOverflowMenu) {
+                break;
+            }
+            if (![c.tabGroupIdentifier isEqualToString:gid]) {
+                break;
+            }
+            tabsRect = any ? NSUnionRect(tabsRect, [c frame]) : [c frame];
+            any = YES;
+        }
+        if (!any) {
+            continue;  // No visible tabs in this run (e.g. a sole member being dragged out).
+        }
+        [self drawTabGroupRunWithChip:chip tabsRect:tabsRect inBar:bar];
+    }
+}
+
+- (void)drawTabGroupRunWithChip:(PSMTabBarCell *)chip
+                       tabsRect:(NSRect)tabsRect
+                          inBar:(PSMTabBarControl *)bar {
+    id<PSMTabGroup> group = [bar.tabGroupDataSource tabGroupWithIdentifier:chip.tabGroupIdentifier];
+    NSColor *groupColor = group.color ?: [NSColor systemBlueColor];
+    NSColor *bgColor = [self tabBarColor];
+    const BOOL mainActive = (bar.window.isKeyWindow && [NSApp isActive]);
+    NSColor *textColor = [self textColorDefaultSelected:NO backgroundColor:nil windowIsMainAndAppIsActive:mainActive];
+    NSString *name = group.name ?: @"";
+
+    const NSRect chipFrame = [chip frame];
+    const CGFloat vInset = kPSMGroupPillTabVisualInset - kPSMGroupPillOutset;
+    NSRect pill = NSMakeRect(NSMinX(chipFrame),
+                             NSMinY(tabsRect) + vInset,
+                             NSMaxX(tabsRect) + kPSMGroupPillOutset - NSMinX(chipFrame),
+                             NSHeight(tabsRect) - 2 * vInset);
+    if (NSWidth(pill) <= 0 || NSHeight(pill) <= 0) {
+        return;
+    }
+    const CGFloat radius = NSHeight(pill) / 2.0;
+
+    // Name capsule at the left, filled with the tabbar background so the name
+    // reads on the bar rather than on the group color.
+    NSFont *font = [NSFont boldSystemFontOfSize:[NSFont smallSystemFontSize]];
+    const CGFloat textWidth = ceil([name sizeWithAttributes:@{ NSFontAttributeName: font }].width);
+    const CGFloat capsulePad = 10;
+    const CGFloat maxCapsule = MAX(0, NSWidth(pill) - kPSMGroupNameToTabGap);
+    const CGFloat capsuleWidth = MIN(maxCapsule, textWidth + capsulePad * 2);
+    NSRect capsule = NSMakeRect(NSMinX(pill), NSMinY(pill), capsuleWidth, NSHeight(pill));
+    [bgColor set];
+    [[NSBezierPath bezierPathWithRoundedRect:capsule xRadius:radius yRadius:radius] fill];
+
+    if (name.length > 0) {
+        NSMutableParagraphStyle *para = [[NSMutableParagraphStyle alloc] init];
+        para.alignment = NSTextAlignmentCenter;
+        para.lineBreakMode = NSLineBreakByTruncatingTail;
+        NSDictionary *attrs = @{ NSFontAttributeName: font,
+                                 NSForegroundColorAttributeName: textColor,
+                                 NSParagraphStyleAttributeName: para };
+        const CGFloat textHeight = ceil(font.ascender - font.descender);
+        NSRect textRect = NSMakeRect(NSMinX(capsule),
+                                     NSMidY(capsule) - textHeight / 2.0,
+                                     NSWidth(capsule),
+                                     textHeight);
+        [name drawInRect:textRect withAttributes:attrs];
+    }
+
+    // Enclosing pill outline (1pt), inset a half point so the stroke is crisp.
+    NSBezierPath *outline = [NSBezierPath bezierPathWithRoundedRect:NSInsetRect(pill, 0.5, 0.5)
+                                                           xRadius:radius
+                                                           yRadius:radius];
+    [outline setLineWidth:1];
+    [groupColor set];
+    [outline stroke];
 }
 
 - (void)drawDividerBetweenTabBarAndContent:(NSRect)rect bar:(PSMTabBarControl *)bar {

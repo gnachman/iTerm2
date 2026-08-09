@@ -1806,7 +1806,14 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 // Width of a horizontal group-chip cell (its name, via the data source).
 - (CGFloat)widthOfTabGroupChipCell:(PSMTabBarCell *)cell {
     id<PSMTabGroup> group = [self.tabGroupDataSource tabGroupWithIdentifier:cell.tabGroupIdentifier];
-    return [PSMTabGroupChipView preferredWidthForName:group ? group.name : @""];
+    NSString *name = group ? group.name : @"";
+    // A style that draws its own run decoration (e.g. Tahoe) reserves extra
+    // width for the name capsule plus the colored area between it and the first
+    // tab; others use the basic chip width.
+    if ([self.style respondsToSelector:@selector(tabGroupChipCellWidthForName:)]) {
+        return [self.style tabGroupChipCellWidthForName:name];
+    }
+    return [PSMTabGroupChipView preferredWidthForName:name];
 }
 
 - (NSArray<NSNumber *> *)naturalHorizontalCellWidths {

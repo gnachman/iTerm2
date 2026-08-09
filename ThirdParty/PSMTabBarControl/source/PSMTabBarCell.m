@@ -531,9 +531,14 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     }
 
     if (_isTabGroupChip) {
-        // Draw the group chip. Name/color come from the control's tab-group
-        // data source; a future per-style hook can replace the basic look.
         PSMTabBarControl *bar = (PSMTabBarControl *)[self psmTabControlView];
+        if ([bar.style respondsToSelector:@selector(usesExternalTabGroupDecoration)] &&
+            [bar.style usesExternalTabGroupDecoration]) {
+            // The style draws the whole group run's decoration (name capsule +
+            // enclosing pill) in -drawTabBar:, so the chip cell draws nothing.
+            return;
+        }
+        // Basic look: name/color from the control's tab-group data source.
         id<PSMTabGroup> group = [bar.tabGroupDataSource tabGroupWithIdentifier:self.tabGroupIdentifier];
         [PSMTabGroupChipView drawChipInFrame:cellFrame
                                         name:group ? group.name : @""

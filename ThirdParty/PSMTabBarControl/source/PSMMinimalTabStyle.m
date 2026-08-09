@@ -48,6 +48,12 @@
     return @"Minimal";
 }
 
+// Minimal has its own tab-group design (not yet implemented); keep the basic
+// per-cell chip for now rather than inheriting the Regular run decoration.
+- (BOOL)usesExternalTabGroupDecoration {
+    return NO;
+}
+
 - (NSRect)adjustedCellRect:(NSRect)rect generic:(NSRect)generic {
     return rect;
 }

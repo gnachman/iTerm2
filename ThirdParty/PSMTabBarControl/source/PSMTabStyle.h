@@ -55,6 +55,17 @@ NS_ASSUME_NONNULL_BEGIN
                         selected:(BOOL)selected
                            frame:(NSRect)frame
                        inControl:(PSMTabBarControl *)control;
+// YES if this style draws whole-run tab-group decoration itself (in
+// -drawTabBar:), in which case the group chip CELL draws nothing. Styles that
+// return NO keep the basic per-cell chip.
+- (BOOL)usesExternalTabGroupDecoration;
+// Width to reserve for the group chip cell (the name capsule plus the colored
+// area between it and the first tab). Defaults to the basic chip width.
+- (CGFloat)tabGroupChipCellWidthForName:(NSString *)name;
+// Draw the decoration for whole tab-group runs (the name capsule and the
+// enclosing colored pill around the group's tabs) in -drawTabBar:, since the
+// enclosing pill spans multiple cells.
+- (void)drawTabGroupRunDecorationsForTabBar:(PSMTabBarControl *)bar clipRect:(NSRect)clipRect;
 @required
 - (NSRect)objectCounterRectForTabCell:(PSMTabBarCell *)cell;
 - (float)minimumWidthOfTabCell:(PSMTabBarCell *)cell;
