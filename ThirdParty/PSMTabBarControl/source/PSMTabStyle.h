@@ -62,6 +62,10 @@ NS_ASSUME_NONNULL_BEGIN
 // Width to reserve for the group chip cell (the name capsule plus the colored
 // area between it and the first tab). Defaults to the basic chip width.
 - (CGFloat)tabGroupChipCellWidthForName:(NSString *)name;
+// Height to reserve for the group chip cell on a vertical bar (the name capsule
+// plus the colored area between it and the first tab). Defaults to the basic
+// vertical chip height.
+- (CGFloat)tabGroupChipCellHeightForName:(NSString *)name;
 // Draw the decoration for whole tab-group runs (the name capsule and the
 // enclosing colored pill around the group's tabs) in -drawTabBar:, since the
 // enclosing pill spans multiple cells.

@@ -1624,7 +1624,6 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
         CGFloat currentOrigin = [[self style] topMarginForTabBarControl];
         NSRect cellRect = [self genericCellRectWithOverflow:(NO || _showAddTabButton)];
         const CGFloat tabHeight = cellRect.size.height;
-        const CGFloat chipHeight = [PSMTabGroupChipView verticalChipHeight];
         NSMutableArray *newOrigins = [NSMutableArray arrayWithCapacity:cellCount];
 
         if ([self tabBarIsScrollable]) {
@@ -1634,18 +1633,18 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
             // Group chip cells are short; everything else uses the tab height.
             CGFloat totalHeight = 0;
             for (PSMTabBarCell *cell in _cells) {
-                totalHeight += cell.isTabGroupChip ? chipHeight : tabHeight;
+                totalHeight += cell.isTabGroupChip ? [self heightOfTabGroupChipCell:cell] : tabHeight;
             }
             _scrollContentExtent = [[self style] topMarginForTabBarControl] + totalHeight;
             [self clampScrollOffset];
             currentOrigin -= _scrollOffset;
             for (int i = 0; i < cellCount; ++i) {
                 [newOrigins addObject:@(currentOrigin)];
-                currentOrigin += _cells[i].isTabGroupChip ? chipHeight : tabHeight;
+                currentOrigin += _cells[i].isTabGroupChip ? [self heightOfTabGroupChipCell:_cells[i]] : tabHeight;
             }
         } else {
             for (int i = 0; i < cellCount; ++i) {
-                const CGFloat h = _cells[i].isTabGroupChip ? chipHeight : tabHeight;
+                const CGFloat h = _cells[i].isTabGroupChip ? [self heightOfTabGroupChipCell:_cells[i]] : tabHeight;
                 if (currentOrigin + h <= [self frame].size.height) {
                     [newOrigins addObject:@(currentOrigin)];
                     currentOrigin += h;
@@ -1814,6 +1813,17 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
         return [self.style tabGroupChipCellWidthForName:name];
     }
     return [PSMTabGroupChipView preferredWidthForName:name];
+}
+
+// Height reserved for a group chip cell on a vertical bar (style-aware, like
+// -widthOfTabGroupChipCell: for horizontal).
+- (CGFloat)heightOfTabGroupChipCell:(PSMTabBarCell *)cell {
+    id<PSMTabGroup> group = [self.tabGroupDataSource tabGroupWithIdentifier:cell.tabGroupIdentifier];
+    NSString *name = group ? group.name : @"";
+    if ([self.style respondsToSelector:@selector(tabGroupChipCellHeightForName:)]) {
+        return [self.style tabGroupChipCellHeightForName:name];
+    }
+    return [PSMTabGroupChipView verticalChipHeight];
 }
 
 - (NSArray<NSNumber *> *)naturalHorizontalCellWidths {
@@ -2246,8 +2256,8 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
                 cellRect.size.width = [[newValues objectAtIndex:i] floatValue];
             } else {
                 cellRect.size.width = [self frame].size.width;
-                // Chip cells are short; tabs use the generic height.
-                cellRect.size.height = cell.isTabGroupChip ? [PSMTabGroupChipView verticalChipHeight]
+                // Chip cells reserve their own (style-aware) height; tabs use the generic height.
+                cellRect.size.height = cell.isTabGroupChip ? [self heightOfTabGroupChipCell:cell]
                                                            : generic.size.height;
                 cellRect.origin.y = [[newValues objectAtIndex:i] floatValue];
                 cellRect.origin.x = 0;
