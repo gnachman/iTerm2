@@ -448,6 +448,13 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         if (!isComplex && [bidiInfo mirrorsSourceCell:i]) {
             code = iTermBidiMirroredCounterpart(code);
             manuallyMirrored = YES;
+            // The glyph is now the mirrored counterpart and must be drawn as-is. Mark
+            // the cell left-to-right so it gets an LTR writing-direction override: that
+            // stops CoreText from mirroring it a second time (the double-mirror that drew
+            // "(تهران)" as ")تهران(" when the bracket shared a CoreText run with RTL
+            // letters) and segments it out of the surrounding RTL run so its direction
+            // can differ from the shaped letters around it.
+            c.rtlStatus = RTLStatusLTR;
         }
 
         NSString *charAsString;
