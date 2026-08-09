@@ -525,31 +525,17 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     }
     CGContextSetTextMatrix(_context, textMatrix);
 
-    // Clear the drawn area, ready for next iteration/character.
-    // For emoji, clear the entire context because CTLineGetImageBounds returns unreliable
-    // bounds. For regular text, clear only the calculated bounds for speed.
-    // Must happen after RestoreGState to ensure no transforms affect the clear.
-    // Use frameFlipped:NO because CGContextClearRect uses native CoreGraphics
-    // coordinates (origin at bottom-left), not flipped coordinates.
-    CGRect drawnRect;
-    if (_isEmoji) {
-        drawnRect = CGRectMake(0, 0, _size.width, _size.height);
-    } else {
-        drawnRect = [self frameFlipped:NO];
-        if ([self drawScale] > 1) {
-            // Scaled glyphs can overflow beyond _size. Clear the entire context.
-            drawnRect = CGRectMake(0, 0, CGBitmapContextGetWidth(_context),
-                                        CGBitmapContextGetHeight(_context));
-        }
-    }
-
-    if ([self drawScale] > 1) {
-        // TODO: This is slow and with just a little math it could be avoided.
-        // Use memset for scaled glyphs. Clear the full backing store.
-        memset(CGBitmapContextGetData(_context), 0, _bytesPerRow * _numberOfRows);
-    } else {
-        CGContextClearRect(_context, drawnRect);
-    }
+    // Clear the drawn area, ready for next iteration/character. Must happen
+    // after RestoreGState so no transforms affect the clear.
+    //
+    // Clear the full backing store, not just the glyph's nominal frame. A glyph
+    // whose ink overflows its frame (a wide ligature, or a cursive Arabic/Persian
+    // form that spills past the cell) would otherwise leave stray pixels outside
+    // drawnRect that bleed into the next glyph drawn in this shared context, and
+    // trip the DEBUG sanity check below (a 1px overflow currently aborts the app).
+    // This runs once per uniquely rasterized glyph, so clearing the whole bitmap
+    // is cheap, and it matches what the scaled-glyph path already does.
+    memset(CGBitmapContextGetData(_context), 0, _bytesPerRow * _numberOfRows);
 
     // Skip the post-draw verify for scaled glyphs — the verify bounds don't
     // correctly account for the scaled drawing area.
@@ -560,6 +546,10 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 #if DEBUG
     // Verify the drawn area is actually clear
     {
+        // The glyph's nominal frame (drawScale > 1 already returned above), kept
+        // only for the diagnostic message below.
+        const CGRect drawnRect = _isEmoji ? CGRectMake(0, 0, _size.width, _size.height)
+                                          : [self frameFlipped:NO];
         const unsigned char *data = CGBitmapContextGetData(_context);
         const size_t bytesPerRow = CGBitmapContextGetBytesPerRow(_context);
         const int contextWidth = (int)_size.width;
