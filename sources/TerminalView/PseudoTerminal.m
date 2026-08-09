@@ -7380,6 +7380,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     [self setNeedsUpdateTabObjectCounts:YES];
 
+    // The tab now lives in `term`; resolve its group membership from where it
+    // landed and push it (which re-derives the group chips) BEFORE the
+    // synchronous -display below. The drag stripped chips for its index math, so
+    // drawing before this re-derivation would flash the chip away.
+    [term resolveDroppedTabGroupMembership:aTab];
+    [term updateTabGroups];
+    [term relayoutTabGroupChipsSynchronously];
+
     // In fullscreen mode reordering the tabs causes the tabview not to be displayed properly.
     // This seems to fix it.
     [_contentView.tabView display];
@@ -8179,6 +8187,21 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     // real cleanup pass are separate follow-ups.
 }
 
+// Re-derive the group chips and lay the tab bar out synchronously. The drag
+// strips chips for its index math and restores them only in -finishDrag, which
+// runs after the drop delegate's synchronous -display; and -setTabGroupIdentifier
+// relays out with animation, which defers frame-setting to a timer. Either way a
+// -display before this would draw a chip that is missing or at a zero frame,
+// blinking it. Call this right before that -display.
+- (void)relayoutTabGroupChipsSynchronously {
+    PSMTabBarControl *control = _contentView.tabBarControl;
+    [control normalizeTabGroupChipCells];
+    // Cancel any in-flight animation so this lays out for real (a plain -update
+    // would defer to the running timer, leaving the chip mid-animation for the
+    // first drawn frame -- it jumps into place).
+    [control updateWithoutAnimation];
+}
+
 // Firefox-style "Add Tab to Group" submenu: New Group, then existing
 // groups (checkmarked if this tab is already in one), and a Remove item
 // when the tab is grouped.
@@ -8444,6 +8467,32 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     return NO;
 }
 
+
+// Resolve a just-dropped tab's group membership from where it landed so that a
+// group's tabs stay consecutive. Only the dropped tab changes: dropping it
+// strictly between two members of a group joins that group; dragging a member to
+// the group's edge (or elsewhere) removes it; a lone one-tab group survives.
+// Neighbors are never touched, so an innocent bystander isn't absorbed.
+- (void)resolveDroppedTabGroupMembership:(PTYTab *)droppedTab {
+    NSArray<PTYTab *> *tabs = [self tabs];
+    const NSInteger index = [tabs indexOfObject:droppedTab];
+    if (index == NSNotFound) {
+        return;
+    }
+    NSMutableArray *order = [NSMutableArray arrayWithCapacity:tabs.count];
+    for (PTYTab *tab in tabs) {
+        [order addObject:(tab.tabGroupID ?: (id)[NSNull null])];
+    }
+    NSString *resolved = [iTermTabGroupContiguity resolvedGroupForTabAt:index order:order];
+    if (resolved == droppedTab.tabGroupID || [resolved isEqualToString:droppedTab.tabGroupID]) {
+        return;
+    }
+    RLog(@"tabGroup: dropped tab %@ membership %@ -> %@",
+         [droppedTab.tabViewItem label],
+         droppedTab.tabGroupID ?: @"(none)",
+         resolved ?: @"(none)");
+    droppedTab.tabGroupID = resolved;
+}
 
 - (void)tabsDidReorder {
     TmuxController *controller = nil;

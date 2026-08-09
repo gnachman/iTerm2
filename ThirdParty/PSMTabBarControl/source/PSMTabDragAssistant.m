@@ -56,6 +56,10 @@ static os_log_t PSMTabDragLog(void) {
 - (PSMTabBarCell *)dropTargetForUnhitPoint:(NSPoint)point
                                  inControl:(PSMTabBarControl *)control
                                      cells:(NSArray *)cells;
+- (BOOL)cellIsSoleGroupMember:(PSMTabBarCell *)cell inControl:(PSMTabBarControl *)control;
+- (NSImage *)dragImageForCell:(PSMTabBarCell *)cell
+                    inControl:(PSMTabBarControl *)control
+                     tabInset:(CGFloat *)outTabInset;
 @end
 
 // CVDisplayLink callback - runs on a background thread, so we need to get to main thread
@@ -245,7 +249,14 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 
     [[NSCursor closedHandCursor] set];
 
-    NSImage *dragImage = [cell dragImage];
+    // If this tab is the only member of its group, the group has no tab left in
+    // the bar to anchor a chip during the drag, so carry the chip along in the
+    // drag image (to the left of the tab). chipLeadingInset shifts the window so
+    // the tab -- not the chip -- stays under the cursor.
+    CGFloat chipLeadingInset = 0;
+    NSImage *dragImage = [self cellIsSoleGroupMember:cell inControl:control]
+        ? [self dragImageForCell:cell inControl:control tabInset:&chipLeadingInset]
+        : [cell dragImage];
     [[cell indicator] removeFromSuperview];
     [self distributePlaceholdersInTabBar:control withDraggedCell:cell];
 
@@ -297,7 +308,9 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [dragItem setDraggingFrame:draggingRect contents:imageToDrag];
     NSPoint windowCoord = event.locationInWindow;
     NSPoint cellOriginInWindow = [control convertPoint:cellFrame.origin toView:nil];
-    _dragTabOffset = NSMakeSize(windowCoord.x - cellOriginInWindow.x,
+    // Shift the window left by the carried chip's width (via a larger offset) so
+    // the tab portion of the composed image stays under the cursor.
+    _dragTabOffset = NSMakeSize(windowCoord.x - cellOriginInWindow.x + chipLeadingInset,
                                 windowCoord.y - cellOriginInWindow.y);
     ILog(@"Begin dragging session for tab bar %p", control);
     NSDraggingSession *draggingSession = [control beginDraggingSessionWithItems:@[ dragItem ]
@@ -1499,6 +1512,54 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         }
         [chip setFrame:frame];
     }
+}
+
+// YES if `cell` is a grouped tab and the only member of its group in the bar.
+// Such a drag leaves no tab to anchor the chip, so it must ride the drag image.
+- (BOOL)cellIsSoleGroupMember:(PSMTabBarCell *)cell inControl:(PSMTabBarControl *)control {
+    NSString *gid = cell.tabGroupIdentifier;
+    if (gid.length == 0) {
+        return NO;
+    }
+    NSInteger count = 0;
+    for (PSMTabBarCell *c in [control cells]) {
+        if (![c isTabGroupChip] && [c.tabGroupIdentifier isEqualToString:gid]) {
+            count++;
+            if (count > 1) {
+                return NO;
+            }
+        }
+    }
+    return count == 1;
+}
+
+// Drag image for a sole-member group tab: capture the chip and tab together
+// from the bar exactly as rendered (so the chip travels attached, with the same
+// alignment it has in the bar -- hand-drawing it into an unflipped image put the
+// text too high). Returns via outTabInset the tab's horizontal offset within the
+// image, for the drag-window offset. Falls back to the plain tab image.
+- (NSImage *)dragImageForCell:(PSMTabBarCell *)cell
+                    inControl:(PSMTabBarControl *)control
+                     tabInset:(CGFloat *)outTabInset {
+    NSArray *cells = [control cells];
+    const NSInteger index = [cells indexOfObject:cell];
+    PSMTabBarCell *chip = (index != NSNotFound && index > 0 && [cells[index - 1] isTabGroupChip]) ? cells[index - 1] : nil;
+    if (!chip) {
+        if (outTabInset) {
+            *outTabInset = 0;
+        }
+        return [cell dragImage];
+    }
+    const NSRect tabRect = [cell frame];
+    const NSRect unionRect = NSUnionRect([chip frame], tabRect);
+    NSBitmapImageRep *rep = [control bitmapImageRepForCachingDisplayInRect:unionRect];
+    [control cacheDisplayInRect:unionRect toBitmapImageRep:rep];
+    NSImage *image = [[[NSImage alloc] initWithSize:rep.size] autorelease];
+    [image addRepresentation:rep];
+    if (outTabInset) {
+        *outTabInset = NSMinX(tabRect) - NSMinX(unionRect);
+    }
+    return image;
 }
 
 // The nearest cell to one side of the given index that is not a group chip

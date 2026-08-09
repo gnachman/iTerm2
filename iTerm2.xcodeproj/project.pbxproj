@@ -5528,6 +5528,7 @@
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
 		DE3AD6D8904090E875D5EFF7 /* AIExplanationResponse+Mac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F06ECF8A1AE910A311E3128 /* AIExplanationResponse+Mac.swift */; };
 		DECF12ECD66573849C34F781 /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E1B6BE78A6A0C18980A2A46 /* Helpers.swift */; };
+		DF93E577C867F721A8F84CB7 /* iTermTabGroupContiguity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842E85C7646AD1CE30E147AD /* iTermTabGroupContiguity.swift */; };
 		E2DFAD8D76A3655948CB3F37 /* iTermModalSheetRunner.m in Sources */ = {isa = PBXBuildFile; fileRef = E9B6267AF6FAE7F906B1DBF9 /* iTermModalSheetRunner.m */; };
 		E3F691502939DF2E874D7DD1 /* IT2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92FC80BA122066E3610BEA16 /* IT2.swift */; };
 		E42AFCD2191DB57A5A504F23 /* AIProviderPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC183FBA34E8F9843DD6AA6 /* AIProviderPreset.swift */; };
@@ -6776,6 +6777,7 @@
 		8363B81B060F3C03B5F2A3BA /* iTermRowContentIdentity.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermRowContentIdentity.h; sourceTree = "<group>"; };
 		83F411648885DE6A00CA8321 /* ClaudeCodeIntegrationMenuController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClaudeCodeIntegrationMenuController.swift; sourceTree = "<group>"; };
 		8414509943BEC14005C3E043 /* IT2Embedded.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = IT2Embedded.swift; path = it2cli/Sources/it2core/IT2Embedded.swift; sourceTree = "<group>"; };
+		842E85C7646AD1CE30E147AD /* iTermTabGroupContiguity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermTabGroupContiguity.swift; sourceTree = "<group>"; };
 		8479D131E84B1C22C982BFC1 /* iTermGitStringMaker.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermGitStringMaker.h; sourceTree = "<group>"; };
 		84897A6E8B159D2C3608965D /* WorkgroupAutoRequestReviewToolbarItem.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupAutoRequestReviewToolbarItem.swift; sourceTree = "<group>"; };
 		84A25904AA380F451E72C586 /* OrchestratorClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrchestratorClient.swift; sourceTree = "<group>"; };
@@ -16310,6 +16312,7 @@
 			children = (
 				9946FFB23BB5ECE2EDCA77F6 /* iTermTabGroup.swift */,
 				20D6A955A738F94D53BE9263 /* iTermTabGroupRegistry.swift */,
+				842E85C7646AD1CE30E147AD /* iTermTabGroupContiguity.swift */,
 			);
 			name = TabGroups;
 			path = TabGroups;
@@ -22268,6 +22271,7 @@
 				D14E96013DD1B056E5D3648A /* KittyDnDViewDragHost.swift in Sources */,
 				744CA48D7CA218E894A7745D /* iTermTabGroup.swift in Sources */,
 				387A0F6C690CF762955E780B /* iTermTabGroupRegistry.swift in Sources */,
+				DF93E577C867F721A8F84CB7 /* iTermTabGroupContiguity.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

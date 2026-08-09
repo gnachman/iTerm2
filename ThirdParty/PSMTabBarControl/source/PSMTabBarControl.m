@@ -1293,6 +1293,18 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     [self update:NO];
 }
 
+// Lay out immediately, canceling any in-flight width animation. -update:NO alone
+// still takes the animated branch while _animationTimer is running (e.g. right
+// after a membership change animates in a chip), which defers frame-setting to
+// the timer. Use this when a caller needs final frames before the next draw.
+- (void)updateWithoutAnimation {
+    if (_animationTimer) {
+        [_animationTimer invalidate];
+        _animationTimer = nil;
+    }
+    [self update:NO];
+}
+
 - (void)setFrame:(NSRect)frame {
     [super setFrame:frame];
     [self syncTabProgressBars];
@@ -3445,8 +3457,34 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     }
     NSArray<PSMTabBarCell *> *normalized =
         [PSMTabBarControl cellsByInsertingTabGroupChipsInto:tabCells controlView:self];
-    if (![normalized isEqualToArray:_cells]) {
-        [_cells setArray:normalized];
+    if ([normalized isEqualToArray:_cells]) {
+        return;
+    }
+    [_cells setArray:normalized];
+    // Seed each freshly created chip with a valid frame from its run's first tab
+    // (correct height/position), placed just before it. cellsByInserting... makes
+    // chips with a zero frame, and an animated relayout only tweaks width, so a
+    // draw before the next full layout would otherwise show the chip collapsed to
+    // zero height, blinking it.
+    const BOOL horizontal = (_orientation == PSMTabBarHorizontalOrientation);
+    for (NSInteger i = 0; i < (NSInteger)_cells.count; i++) {
+        PSMTabBarCell *chip = _cells[i];
+        if (![chip isTabGroupChip]) {
+            continue;
+        }
+        for (NSInteger j = i + 1; j < (NSInteger)_cells.count; j++) {
+            if ([_cells[j] isTabGroupChip]) {
+                continue;
+            }
+            NSRect frame = [_cells[j] frame];
+            if (horizontal) {
+                frame.size.width = [self widthOfTabGroupChipCell:chip];
+            } else {
+                frame.size.height = [PSMTabGroupChipView verticalChipHeight];
+            }
+            [chip setFrame:frame];
+            break;
+        }
     }
 }
 

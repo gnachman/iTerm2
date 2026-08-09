@@ -306,6 +306,7 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 - (void)removeAllTabGroupChipCells;
 - (void)normalizeTabGroupChipCells;
 - (void)update;
+- (void)updateWithoutAnimation;
 - (void)setIsPinned:(BOOL)pinned forTabViewItem:(NSTabViewItem *)tabViewItem;
 - (BOOL)isPinnedForTabViewItem:(NSTabViewItem *)tabViewItem;
 - (void)setModifier:(NSUInteger)mask;
