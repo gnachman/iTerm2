@@ -36,29 +36,35 @@ extension iTermCoreTextLineRenderingHelper {
 
         var lastDisplayColumn = Int32(-1)
         var maxExtent = lastMaxExtent.pointee
-        var lastColumnExtent = maxExtent
 
-        // It is *super* sketchy to use maxExtent for this. positions[0].x is probably a better
-        // choice. This matches the pre-bidi logic, but I am pretty sure it was wrong. I'm just
-        // waiting for a reproducible case to fix this.
-        var lastGlyphExtent = maxExtent
+        // Baseline for the current display column: the run-space x of that
+        // column's first (leftmost) glyph. Anchoring to the column's own base
+        // glyph, rather than to the previous glyph's trailing edge, is what
+        // makes a run whose display order runs opposite to its glyph order lay
+        // out correctly. That happens for an LTR island embedded in an RTL line,
+        // e.g. a "8)" or "10)" list marker: its digits and paren are a single
+        // left-to-right run, but the surrounding RTL line places that run's
+        // columns right-to-left, so the glyphs must be un-piled column by
+        // column. The permutation visits columns left-to-right and, within a
+        // column, the base glyph before its combining marks, so each glyph keeps
+        // its offset from the base and combining marks still land on their base.
+        var columnBaseline = maxExtent
 
         for i in 0..<Int(glyphCount) {
             let j = permutation[i]
             let c = glyphIndexToCharacterIndex[j]
             let displayColumn = characterIndexToDisplayCell[c]
-            if displayColumn != lastDisplayColumn {
-                lastColumnExtent = lastGlyphExtent
-            }
             let savedPosition = positions[j].x
+            if displayColumn != lastDisplayColumn {
+                columnBaseline = savedPosition
+            }
             if alignToZero {
-                positions[j].x -= lastColumnExtent
+                positions[j].x = savedPosition - columnBaseline
             } else {
-                positions[j].x += xOriginsForCharacters[c] - lastColumnExtent
+                positions[j].x = xOriginsForCharacters[c] + (savedPosition - columnBaseline)
             }
             lastDisplayColumn = displayColumn
-            lastGlyphExtent = savedPosition + advances[j].width
-            maxExtent = max(maxExtent, lastGlyphExtent)
+            maxExtent = max(maxExtent, savedPosition + advances[j].width)
         }
         lastMaxExtent.pointee = maxExtent
     }
