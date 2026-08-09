@@ -450,12 +450,22 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 - (void)drawEndInset {
     NSColor *color;
     PSMTabBarControl *bar = self.tabBar;
-    PSMTabBarCell *cell = [self selectedCellInTabBarControl:bar];
-    if (cell == nil || cell.isInOverflowMenu) {
-        // Must be one of the overflow tabs
-        color = [self selectedTabColor];
-    } else {
+    if (bar.orientation != PSMTabBarHorizontalOrientation) {
+        // Vertical: the end inset is the empty area below the last tab (and
+        // behind the overflow button). It should read as the sidebar's tab
+        // background, so always use the non-selected tab color. The selected-
+        // color branch below is a horizontal concern (the selected tab scrolled
+        // into the overflow) and here it painted this strip lighter -- the "last
+        // tab bleeding into the overflow area" bug.
         color = [self nonSelectedTabColor];
+    } else {
+        PSMTabBarCell *cell = [self selectedCellInTabBarControl:bar];
+        if (cell == nil || cell.isInOverflowMenu) {
+            // Must be one of the overflow tabs
+            color = [self selectedTabColor];
+        } else {
+            color = [self nonSelectedTabColor];
+        }
     }
     [self drawRect:[self endInsetFrame] withColor:color];
 }
@@ -522,14 +532,12 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
                           self.tabBar.frame.size.width - left,
                           cell.frame.size.height);
     } else {
-        // Vertical tab bar
-        if (!self.tabBar.overflowPopUpButton.isHidden) {
-            // Popup button visible, so end inset equals its frame
-            return NSMakeRect(0,
-                              NSHeight(self.tabBar.frame) - NSHeight(cell.frame),
-                              NSWidth(cell.frame),
-                              NSHeight(cell.frame));
-        }
+        // Vertical tab bar: the end inset is everything below the last visible
+        // tab, all the way to the bottom -- including the gap left when tabs
+        // don't divide the bar height evenly and the overflow button's area.
+        // (Covering only the button's slab left that gap painted with the
+        // lighter selected-background base, so the last tab appeared to bleed
+        // into the overflow area.) The overflow button draws on top of this.
         return NSMakeRect(0,
                           NSMaxY(cell.frame),
                           NSWidth(cell.frame),
