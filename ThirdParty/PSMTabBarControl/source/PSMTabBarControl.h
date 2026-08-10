@@ -119,6 +119,10 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 - (BOOL)tabView:(NSTabView *)aTabView shouldDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(nullable PSMTabBarControl *)tabBarControl moveSourceWindow:(nullable BOOL *)moveSourceWindow;
 - (void)tabView:(NSTabView*)aTabView willDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)tabBarControl;
 - (void)tabView:(NSTabView*)aTabView didDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)tabBarControl;
+// A whole group was reordered within the same bar (chip drag). Membership is
+// unchanged; the delegate should resync tab order and persistence but must NOT
+// run per-tab group-membership resolution.
+- (void)tabView:(NSTabView*)aTabView didReorderTabsInTabBar:(PSMTabBarControl *)tabBarControl;
 
 //Tear-off tabs methods
 - (nullable NSImage *)tabView:(NSTabView *)aTabView imageForTabViewItem:(NSTabViewItem *)tabViewItem styleMask:(NSWindowStyleMask *)styleMask;

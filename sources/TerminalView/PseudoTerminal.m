@@ -7372,6 +7372,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [self didDonateTab:aTab toWindowController:term];
 }
 
+- (void)tabView:(NSTabView*)aTabView
+    didReorderTabsInTabBar:(PSMTabBarControl *)aTabBarControl {
+    // A whole tab group moved as a block (chip drag). The members kept their
+    // group, so unlike a single-tab drop this must NOT resolve per-tab
+    // membership; just resync order and persistence. -tabsDidReorder re-pushes
+    // membership so the cells track the new order and marks state dirty.
+    [self tabsDidReorder];
+}
+
 - (void)didDonateTab:(PTYTab *)aTab toWindowController:(PseudoTerminal *)term {
     if ([term numberOfTabs] == 1) {
         [term fitWindowToTabs];
