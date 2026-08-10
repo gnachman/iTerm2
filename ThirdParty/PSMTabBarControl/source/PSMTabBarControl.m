@@ -1818,6 +1818,14 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 // Height reserved for a group chip cell on a vertical bar (style-aware, like
 // -widthOfTabGroupChipCell: for horizontal).
 - (CGFloat)heightOfTabGroupChipCell:(PSMTabBarCell *)cell {
+    // A style that draws its own run decoration renders the chip as a one-row
+    // header band, so on a vertical bar it should be exactly as tall as a normal
+    // tab row. Using the style's name-based height (sized for the horizontal
+    // name capsule) would make the header dwarf the tabs.
+    if ([self.style respondsToSelector:@selector(usesExternalTabGroupDecoration)] &&
+        [self.style usesExternalTabGroupDecoration]) {
+        return [self verticalCellHeight];
+    }
     id<PSMTabGroup> group = [self.tabGroupDataSource tabGroupWithIdentifier:cell.tabGroupIdentifier];
     NSString *name = group ? group.name : @"";
     if ([self.style respondsToSelector:@selector(tabGroupChipCellHeightForName:)]) {
@@ -1940,9 +1948,13 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     if (tabCount > 0) {
         perTab = MAX(0, available - reserved - totalSpacing) / (CGFloat)tabCount;
         if (!self.stretchCellsToFit) {
+            // Match the no-chips path: when not stretching, cells grow to their
+            // optimum but no further. When stretching, they fill the bar with no
+            // upper cap (the non-chip path's computeCellFramesInContainerOfWidth
+            // has no cellMaxWidth cap either).
             perTab = MIN(perTab, self.cellOptimumWidth);
         }
-        perTab = MAX(self.cellMinWidth, MIN(perTab, (CGFloat)_cellMaxWidth));
+        perTab = MAX(self.cellMinWidth, perTab);
     }
 
     NSMutableArray<NSNumber *> *result = [NSMutableArray array];
@@ -3497,7 +3509,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
             if (horizontal) {
                 frame.size.width = [self widthOfTabGroupChipCell:chip];
             } else {
-                frame.size.height = [PSMTabGroupChipView verticalChipHeight];
+                frame.size.height = [self heightOfTabGroupChipCell:chip];
             }
             [chip setFrame:frame];
             break;

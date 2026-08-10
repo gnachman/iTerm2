@@ -1508,7 +1508,7 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         if (horizontal) {
             frame.size.width = [control widthOfTabGroupChipCell:chip];
         } else {
-            frame.size.height = [PSMTabGroupChipView verticalChipHeight];
+            frame.size.height = [control heightOfTabGroupChipCell:chip];
         }
         [chip setFrame:frame];
     }

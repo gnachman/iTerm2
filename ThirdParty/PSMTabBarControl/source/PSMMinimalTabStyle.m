@@ -48,11 +48,9 @@
     return @"Minimal";
 }
 
-// Minimal has its own tab-group design (not yet implemented); keep the basic
-// per-cell chip for now rather than inheriting the Regular run decoration.
-- (BOOL)usesExternalTabGroupDecoration {
-    return NO;
-}
+// Minimal inherits the squared tab-group run decoration from PSMYosemiteTabStyle
+// (usesExternalTabGroupDecoration + drawTabGroupRunDecorationsForTabBar:), so it
+// needs no override here.
 
 - (NSRect)adjustedCellRect:(NSRect)rect generic:(NSRect)generic {
     return rect;

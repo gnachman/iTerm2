@@ -292,6 +292,8 @@ extern const CGFloat PSMTabBarProgressBarHeight;
     NS_SWIFT_NAME(cellsByInsertingDragChips(into:controlView:));
 // Width of a horizontal group-chip cell (its name, via the data source).
 - (CGFloat)widthOfTabGroupChipCell:(PSMTabBarCell *)cell;
+// Height of a vertical group-chip cell (a one-row header band).
+- (CGFloat)heightOfTabGroupChipCell:(PSMTabBarCell *)cell;
 // Map an NSTabView index to the index of the corresponding tab cell in a
 // cell list that includes chip cells (returns cells.count if past the end).
 + (NSInteger)cellIndexForTabIndex:(NSInteger)tabIndex inCells:(NSArray<PSMTabBarCell *> *)cells;
