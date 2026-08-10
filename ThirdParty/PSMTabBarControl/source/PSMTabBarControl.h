@@ -123,6 +123,17 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 // unchanged; the delegate should resync tab order and persistence but must NOT
 // run per-tab group-membership resolution.
 - (void)tabView:(NSTabView*)aTabView didReorderTabsInTabBar:(PSMTabBarControl *)tabBarControl;
+// A group's chip was dragged out of the bar (chip drag). `items` are the group's
+// member tabs in order and `groupID` its identifier. The delegate should move
+// the whole group to whichever window's tab bar is under `screenPoint`, or tear
+// it off into a new window if none is, carrying the group's definition along.
+// `dragImageTopLeft` is the top-left (screen coords) of the drag snapshot, for
+// positioning a torn-off window where the group visually was.
+- (void)tabView:(NSTabView*)aTabView
+    moveTabGroupWithIdentifier:(NSString *)groupID
+                  tabViewItems:(NSArray<NSTabViewItem *> *)items
+                 toScreenPoint:(NSPoint)screenPoint
+              dragImageTopLeft:(NSPoint)dragImageTopLeft;
 
 //Tear-off tabs methods
 - (nullable NSImage *)tabView:(NSTabView *)aTabView imageForTabViewItem:(NSTabViewItem *)tabViewItem styleMask:(NSWindowStyleMask *)styleMask;

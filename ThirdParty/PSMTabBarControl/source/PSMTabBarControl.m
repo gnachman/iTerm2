@@ -2837,13 +2837,16 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 
     const NSRange runRange = [self tabRangeForChip:chip memberCount:(NSInteger)members.count];
     const NSPoint startMouse = [NSEvent mouseLocation];
-    // Releasing well outside the bar cancels (a way to abort, and where cross-
-    // window tear-off will eventually take over). Allow a generous slop so a
-    // slightly-off release still lands.
-    const CGFloat kCancelSlop = 40;
-    const NSRect liveRect = NSInsetRect(self.bounds, -kCancelSlop, -kCancelSlop);
+    // A drop inside the bar reorders the group here; a drop outside is handed to
+    // the delegate, which can move the whole group to another window's tab bar or
+    // tear it off into a new window (the vendored control must not know about
+    // other windows). Allow a generous slop so a slightly-off release still
+    // counts as inside.
+    const CGFloat kOutsideSlop = 40;
+    const NSRect liveRect = NSInsetRect(self.bounds, -kOutsideSlop, -kOutsideSlop);
     NSInteger dropBoundary = (NSInteger)runRange.location;  // default: no move
-    BOOL cancelled = NO;
+    BOOL insideBar = YES;
+    NSPoint dropScreenPoint = NSZeroPoint;
     BOOL dragging = YES;
     while (dragging) {
         NSEvent *event = [NSApp nextEventMatchingMask:(NSEventMaskLeftMouseDragged | NSEventMaskLeftMouseUp)
@@ -2852,7 +2855,8 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
                                               dequeue:YES];
         const NSPoint viewPoint = [self convertPoint:[event locationInWindow] fromView:nil];
         if (event.type == NSEventTypeLeftMouseUp) {
-            cancelled = !NSPointInRect(viewPoint, liveRect);
+            insideBar = NSPointInRect(viewPoint, liveRect);
+            dropScreenPoint = [NSEvent mouseLocation];
             dragging = NO;
             continue;
         }
@@ -2873,10 +2877,33 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
         }
     }
 
+    // The floating snapshot's top-left in screen coords: where the group visually
+    // is at drop, so a new window can be placed there (like the single-tab
+    // tear-off) rather than at the cursor.
+    const NSRect dragFrame = [dragWindow frame];
+    const NSPoint dragImageTopLeft = NSMakePoint(NSMinX(dragFrame), NSMaxY(dragFrame));
+
     [marker removeFromSuperview];
     [dragWindow orderOut:nil];
-    if (!cancelled) {
+    if (insideBar) {
         [self moveTabGroupMembers:members toBoundary:dropBoundary run:runRange];
+        return;
+    }
+    // Outside the bar: hand the whole group's tabs to the delegate for a
+    // cross-window move or a new-window tear-off.
+    NSMutableArray<NSTabViewItem *> *items = [NSMutableArray arrayWithCapacity:members.count];
+    for (PSMTabBarCell *c in members) {
+        if ([c representedObject]) {
+            [items addObject:[c representedObject]];
+        }
+    }
+    if (items.count > 0 &&
+        [self.delegate respondsToSelector:@selector(tabView:moveTabGroupWithIdentifier:tabViewItems:toScreenPoint:dragImageTopLeft:)]) {
+        [self.delegate tabView:_tabView
+     moveTabGroupWithIdentifier:[chip tabGroupIdentifier]
+                   tabViewItems:items
+                  toScreenPoint:dropScreenPoint
+               dragImageTopLeft:dragImageTopLeft];
     }
 }
 

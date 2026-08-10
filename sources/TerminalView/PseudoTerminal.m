@@ -260,6 +260,10 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 - (void)enforceTabGroupContiguityInvariant;
 - (void)applyTabOrder:(NSArray<PTYTab *> *)target;
 - (void)moveCurrentTabUnitByOffset:(NSInteger)offset;
+// Chip drag-out helpers (defined below).
+- (PseudoTerminal *)terminalWithTabBarUnderScreenPoint:(NSPoint)screenPoint excluding:(PseudoTerminal *)excluded;
+- (void)moveTabGroup:(iTermTabGroup *)group tabs:(NSArray<PTYTab *> *)tabs toTerminal:(PseudoTerminal *)dest;
+- (void)tearOffTabGroup:(iTermTabGroup *)group tabs:(NSArray<PTYTab *> *)tabs atScreenPoint:(NSPoint)screenPoint;
 
 // Session ID of session that currently has an auto-command history window open
 @property(nonatomic, copy) NSString *autoCommandHistorySessionGuid;
@@ -7388,6 +7392,131 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     // group, so unlike a single-tab drop this must NOT resolve per-tab
     // membership; just resync order and persistence. -tabsDidReorder re-pushes
     // membership so the cells track the new order and marks state dirty.
+    [self tabsDidReorder];
+}
+
+// A group's chip was dragged out of this window's tab bar. Move the whole group
+// (all its member tabs, in order) to whichever window's tab bar is under the drop
+// point, or tear it off into a new window if none is. The group's definition
+// (name/color) travels with it; each tab keeps its tabGroupID.
+- (void)tabView:(NSTabView*)aTabView
+    moveTabGroupWithIdentifier:(NSString *)groupID
+                  tabViewItems:(NSArray<NSTabViewItem *> *)items
+                 toScreenPoint:(NSPoint)screenPoint
+              dragImageTopLeft:(NSPoint)dragImageTopLeft {
+    if (_layoutLocked || items.count == 0) {
+        return;
+    }
+    NSMutableArray<PTYTab *> *tabs = [NSMutableArray arrayWithCapacity:items.count];
+    for (NSTabViewItem *item in items) {
+        PTYTab *tab = [item identifier];
+        if (tab) {
+            [tabs addObject:tab];
+        }
+    }
+    if (tabs.count == 0) {
+        return;
+    }
+    iTermTabGroup *group = [self.tabGroupRegistry groupWithID:groupID];
+    PseudoTerminal *dest = [self terminalWithTabBarUnderScreenPoint:screenPoint excluding:self];
+    if (dest) {
+        [self moveTabGroup:group tabs:tabs toTerminal:dest];
+    } else {
+        [self tearOffTabGroup:group tabs:tabs atScreenPoint:dragImageTopLeft];
+    }
+}
+
+- (PseudoTerminal *)terminalWithTabBarUnderScreenPoint:(NSPoint)screenPoint
+                                             excluding:(PseudoTerminal *)excluded {
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        if (term == excluded) {
+            continue;
+        }
+        PSMTabBarControl *bar = term->_contentView.tabBarControl;
+        if (!bar || bar.isHidden || !bar.window) {
+            continue;
+        }
+        const NSRect inWindow = [bar convertRect:bar.bounds toView:nil];
+        const NSRect onScreen = [bar.window convertRectToScreen:inWindow];
+        if (NSPointInRect(screenPoint, onScreen)) {
+            return term;
+        }
+    }
+    return nil;
+}
+
+// Copy the group's definition into `registry` if it isn't already there,
+// preserving the identifier so the moved tabs (which keep their tabGroupID)
+// still resolve to it.
+- (void)ensureGroup:(iTermTabGroup *)group inRegistry:(iTermTabGroupRegistry *)registry {
+    if (!group || [registry groupWithID:group.uniqueIdentifier]) {
+        return;
+    }
+    [registry addGroup:[[[iTermTabGroup alloc] initWithUniqueIdentifier:group.uniqueIdentifier
+                                                                   name:group.name
+                                                                  color:group.color] autorelease]];
+}
+
+- (void)moveTabGroup:(iTermTabGroup *)group
+                tabs:(NSArray<PTYTab *> *)tabs
+          toTerminal:(PseudoTerminal *)dest {
+    if (dest == self || dest == nil) {
+        return;
+    }
+    [self ensureGroup:group inRegistry:dest.tabGroupRegistry];
+    int index = [dest numberOfTabs];
+    for (PTYTab *tab in tabs) {
+        NSTabViewItem *item = tab.tabViewItem;
+        [item retain];
+        [_contentView.tabView removeTabViewItem:item];
+        [dest insertTab:tab atIndex:index++];
+        [item release];
+    }
+    [dest fitWindowToTabs];
+    [[dest window] makeKeyAndOrderFront:nil];
+    [dest updateTabGroups];
+    [dest tabsDidReorder];
+    // Moving the whole group out can empty this window; close it rather than
+    // leaving a tabless window behind.
+    if ([self numberOfTabs] == 0) {
+        [[self window] close];
+        return;
+    }
+    [self tabsDidReorder];
+}
+
+- (void)tearOffTabGroup:(iTermTabGroup *)group
+                   tabs:(NSArray<PTYTab *> *)tabs
+          atScreenPoint:(NSPoint)screenPoint {
+    PTYTab *first = tabs.firstObject;
+    // -it_moveTabToNewWindow: creates the window and moves the first tab; it
+    // refuses when this window has fewer than two tabs (nothing to tear off).
+    PseudoTerminal *dest = [self it_moveTabToNewWindow:first];
+    if (!dest) {
+        return;
+    }
+    [self ensureGroup:group inRegistry:dest.tabGroupRegistry];
+    int index = 1;
+    for (NSInteger i = 1; i < (NSInteger)tabs.count; i++) {
+        PTYTab *tab = tabs[i];
+        NSTabViewItem *item = tab.tabViewItem;
+        [item retain];
+        [_contentView.tabView removeTabViewItem:item];
+        [dest insertTab:tab atIndex:index++];
+        [item release];
+    }
+    [dest fitWindowToTabs];
+    // Place the new window at the drop location (it_moveTabToNewWindow puts it at
+    // a fixed offset, which is the menu-action behavior, not a drag's).
+    [[dest window] setFrameTopLeftPoint:screenPoint];
+    [dest updateTabGroups];
+    [dest tabsDidReorder];
+    // Tearing off the whole group can empty this window; close it rather than
+    // leaving a tabless window behind.
+    if ([self numberOfTabs] == 0) {
+        [[self window] close];
+        return;
+    }
     [self tabsDidReorder];
 }
 
