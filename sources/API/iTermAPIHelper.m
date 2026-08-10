@@ -2508,7 +2508,10 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     if (request.hasTabIndex) {
         NSInteger sourceIndex = [term indexOfTab:tab];
         if (term.numberOfTabs > request.tabIndex && sourceIndex != NSNotFound) {
-            [term.tabBarControl moveTabAtIndex:sourceIndex toIndex:request.tabIndex];
+            // Go through PseudoTerminal (not the control directly) so this resyncs
+            // order/persistence and repairs the group-contiguity invariant via
+            // -tabsDidReorder.
+            [term moveTabAtIndex:sourceIndex toIndex:request.tabIndex];
         } else {
             status = ITMCreateTabResponse_Status_InvalidTabIndex;
         }

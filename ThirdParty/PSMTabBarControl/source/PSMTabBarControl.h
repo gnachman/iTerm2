@@ -194,6 +194,10 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 
 // control configuration
 @property(nonatomic, assign) BOOL disableTabClose;
+// Set transiently while capturing the plain-tab drag image so the bar-level run
+// decoration (chip + enclosing outline) is left out of it. The live bar keeps
+// its decoration during the drag so groups remain visible as drop targets.
+@property(nonatomic, assign) BOOL suppressTabGroupRunDecoration;
 @property(nonatomic, assign) PSMTabBarOrientation orientation;
 @property(nonatomic, retain) id<PSMTabStyle> style;
 @property(nonatomic, assign) BOOL hideForSingleTab;

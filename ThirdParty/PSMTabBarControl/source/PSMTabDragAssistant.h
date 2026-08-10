@@ -23,6 +23,13 @@
 
 @property (nonatomic, readonly) BOOL dropping;
 
+// Set during a drop if the tab landed inside a group's bracket (right after its
+// chip, or between/among its members), so the drop handler can join it to that
+// group -- including a one-tab group, which has no "between two members" gap.
+// nil if the drop was outside every group. Valid only while a drop is being
+// handled (cleared when the drag finishes).
+@property (nonatomic, readonly, copy) NSString *droppedInsideGroupID;
+
 // Creation/destruction
 + (PSMTabDragAssistant *)sharedDragAssistant;
 

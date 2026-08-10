@@ -37,6 +37,7 @@
 #import "PSMDarkTabStyle.h"
 #import "PSMLightHighContrastTabStyle.h"
 #import "PSMMinimalTabStyle.h"
+#import "PSMTabDragAssistant.h"
 #import "PSMTabStyle.h"
 #import "PSMYosemiteTabStyle.h"
 #import "PTYScrollView.h"
@@ -255,6 +256,11 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
 @property(nonatomic, assign) BOOL windowInitialized;
 
+// Tab-group contiguity enforcement + keyboard unit reordering (defined below).
+- (void)enforceTabGroupContiguityInvariant;
+- (void)applyTabOrder:(NSArray<PTYTab *> *)target;
+- (void)moveCurrentTabUnitByOffset:(NSInteger)offset;
+
 // Session ID of session that currently has an auto-command history window open
 @property(nonatomic, copy) NSString *autoCommandHistorySessionGuid;
 @property(nonatomic, assign) NSTimeInterval timeOfLastResize;
@@ -274,6 +280,10 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     // Per-window tab-group definitions (name/color by id). Source of the
     // tab bar's tabGroupDataSource. Lazily created; see -tabGroupRegistry.
     iTermTabGroupRegistry *_tabGroupRegistry;
+
+    // Reentrancy guard for -enforceTabGroupContiguityInvariant (it reorders
+    // tabs, which can funnel back through reorder plumbing).
+    BOOL _enforcingTabGroupContiguity;
 
     ////////////////////////////////////////////////////////////////////////////
     // Instant Replay
@@ -8286,6 +8296,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     theTab.tabGroupID = groupID;
     RLog(@"tabGroup: added tab %@ to existing group %@", [tabViewItem label], groupID);
     [self updateTabColors];
+    // The added tab may be far from the group's other members; repair the
+    // contiguity invariant so they become one block.
+    [self tabsDidReorder];
 }
 
 - (void)removeTabFromGroup:(id)sender {
@@ -8488,11 +8501,22 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (index == NSNotFound) {
         return;
     }
-    NSMutableArray *order = [NSMutableArray arrayWithCapacity:tabs.count];
-    for (PTYTab *tab in tabs) {
-        [order addObject:(tab.tabGroupID ?: (id)[NSNull null])];
+    NSString *resolved;
+    // The drag assistant, which can see the group chips, reports when the tab
+    // landed inside a group's bracket (the reliable signal for joining a group,
+    // including a one-tab group that has no between-members gap). Outside every
+    // bracket, fall back to the order-only rule, which handles leaving a group,
+    // reordering within one, and keeping a lone one-tab group.
+    NSString *insideGroup = [[PSMTabDragAssistant sharedDragAssistant] droppedInsideGroupID];
+    if (insideGroup.length > 0) {
+        resolved = insideGroup;
+    } else {
+        NSMutableArray *order = [NSMutableArray arrayWithCapacity:tabs.count];
+        for (PTYTab *tab in tabs) {
+            [order addObject:(tab.tabGroupID ?: (id)[NSNull null])];
+        }
+        resolved = [iTermTabGroupContiguity resolvedGroupForTabAt:index order:order];
     }
-    NSString *resolved = [iTermTabGroupContiguity resolvedGroupForTabAt:index order:order];
     if (resolved == droppedTab.tabGroupID || [resolved isEqualToString:droppedTab.tabGroupID]) {
         return;
     }
@@ -8503,7 +8527,68 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     droppedTab.tabGroupID = resolved;
 }
 
+// Reorder the tab view so `target` (a permutation of the current tabs) becomes
+// the on-screen order. Applied as a sequence of single moves through the tab
+// bar so tabView, cells, and chips stay in sync each step.
+- (void)applyTabOrder:(NSArray<PTYTab *> *)target {
+    for (NSInteger i = 0; i < (NSInteger)target.count; i++) {
+        const NSInteger cur = [self indexOfTab:target[i]];
+        if (cur != NSNotFound && cur != i) {
+            [_contentView.tabBarControl moveTabAtIndex:cur toIndex:i];
+        }
+    }
+}
+
+// The invariant: all tabs sharing a group id are contiguous. Any reorder path
+// (keyboard, drag, Python API, ...) that funnels through -tabsDidReorder is made
+// safe here: if a group's members ended up split, compact each group into one
+// block anchored at the position of its first member (membership is preserved;
+// only order is repaired). A no-op when already contiguous, so paths that
+// resolve membership themselves (e.g. a single-tab drop) are unaffected.
+- (void)enforceTabGroupContiguityInvariant {
+    if (_enforcingTabGroupContiguity) {
+        return;
+    }
+    NSArray<PTYTab *> *tabs = self.tabs;
+    NSMutableArray<PTYTab *> *target = [NSMutableArray arrayWithCapacity:tabs.count];
+    NSMutableSet<NSString *> *placed = [NSMutableSet set];
+    for (PTYTab *tab in tabs) {
+        NSString *gid = tab.tabGroupID;
+        if (gid == nil) {
+            [target addObject:tab];
+            continue;
+        }
+        if ([placed containsObject:gid]) {
+            continue;  // already emitted with its group's block
+        }
+        [placed addObject:gid];
+        for (PTYTab *other in tabs) {
+            if ([other.tabGroupID isEqualToString:gid]) {
+                [target addObject:other];
+            }
+        }
+    }
+    // Identity compare: if order is unchanged there was no split to repair.
+    BOOL changed = (target.count != tabs.count);
+    for (NSInteger i = 0; !changed && i < (NSInteger)tabs.count; i++) {
+        if (target[i] != tabs[i]) {
+            changed = YES;
+        }
+    }
+    if (!changed) {
+        return;
+    }
+    _enforcingTabGroupContiguity = YES;
+    [self applyTabOrder:target];
+    _enforcingTabGroupContiguity = NO;
+}
+
 - (void)tabsDidReorder {
+    // Repair the group-contiguity invariant first so everything below (and the
+    // persisted arrangement) sees a valid order regardless of how the reorder
+    // happened.
+    [self enforceTabGroupContiguityInvariant];
+
     TmuxController *controller = nil;
     NSMutableArray *windowIds = [NSMutableArray array];
 
@@ -10738,9 +10823,93 @@ typedef struct {
 }
 
 - (IBAction)moveTabLeft:(id)sender {
-    NSInteger selectedIndex = [_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]];
-    NSInteger destinationIndex = selectedIndex - 1;
-    [self moveTabAtIndex:selectedIndex toIndex:destinationIndex];
+    [self moveCurrentTabUnitByOffset:-1];
+}
+
+// Keyboard tab reordering treats each tab group as one indivisible unit so it
+// can never split a group: moving toward a group jumps the whole group, and
+// selecting a group member moves the entire group. An ungrouped tab is its own
+// unit, so with no groups this behaves exactly like the old single-tab swap.
+- (void)moveCurrentTabUnitByOffset:(NSInteger)offset {
+    if (_layoutLocked) {
+        RLog(@"Layout is locked, refusing to move tab");
+        return;
+    }
+    NSArray<PTYTab *> *tabs = self.tabs;
+    if (tabs.count < 2) {
+        return;
+    }
+    const NSInteger sel = [_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]];
+    if (sel < 0 || sel >= (NSInteger)tabs.count) {
+        return;
+    }
+
+    // Units: a contiguous same-group run, or a single ungrouped tab.
+    NSMutableArray<NSValue *> *units = [NSMutableArray array];
+    NSInteger i = 0;
+    while (i < (NSInteger)tabs.count) {
+        NSString *gid = tabs[i].tabGroupID;
+        NSInteger j = i + 1;
+        if (gid != nil) {
+            while (j < (NSInteger)tabs.count && [tabs[j].tabGroupID isEqualToString:gid]) {
+                j++;
+            }
+        }
+        [units addObject:[NSValue valueWithRange:NSMakeRange(i, j - i)]];
+        i = j;
+    }
+    const NSInteger unitCount = (NSInteger)units.count;
+
+    NSInteger u = NSNotFound;
+    for (NSInteger k = 0; k < unitCount; k++) {
+        const NSRange r = units[k].rangeValue;
+        if (sel >= (NSInteger)r.location && sel < (NSInteger)(r.location + r.length)) {
+            u = k;
+            break;
+        }
+    }
+    if (u == NSNotFound || unitCount < 2) {
+        return;
+    }
+
+    // New unit sequence: remove unit u, reinsert it one unit over (wrapping).
+    NSMutableArray<NSNumber *> *seq = [NSMutableArray arrayWithCapacity:unitCount];
+    for (NSInteger k = 0; k < unitCount; k++) {
+        [seq addObject:@(k)];
+    }
+    [seq removeObjectAtIndex:u];
+    NSInteger insertAt;
+    if (offset > 0) {
+        insertAt = (u == unitCount - 1) ? 0 : (u + 1);
+    } else {
+        insertAt = (u == 0) ? (NSInteger)seq.count : (u - 1);
+    }
+    [seq insertObject:@(u) atIndex:insertAt];
+
+    // Expand to a tab order.
+    NSMutableArray<PTYTab *> *target = [NSMutableArray arrayWithCapacity:tabs.count];
+    for (NSNumber *unitIndex in seq) {
+        const NSRange r = units[unitIndex.integerValue].rangeValue;
+        for (NSInteger k = (NSInteger)r.location; k < (NSInteger)(r.location + r.length); k++) {
+            [target addObject:tabs[k]];
+        }
+    }
+
+    // Keep the pinned-left / unpinned-right invariant; abort if the move breaks it.
+    BOOL seenUnpinned = NO;
+    for (PTYTab *tab in target) {
+        if (tab.isPinned) {
+            if (seenUnpinned) {
+                return;
+            }
+        } else {
+            seenUnpinned = YES;
+        }
+    }
+
+    [self applyTabOrder:target];
+    [self setNeedsUpdateTabObjectCounts:YES];
+    [self tabsDidReorder];
 }
 
 - (void)moveTabAtIndex:(NSInteger)selectedIndex toIndex:(NSInteger)destinationIndex {
@@ -10787,9 +10956,7 @@ typedef struct {
 }
 
 - (IBAction)moveTabRight:(id)sender {
-    NSInteger selectedIndex = [_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]];
-    NSInteger destinationIndex = (selectedIndex + 1) % [_contentView.tabView numberOfTabViewItems];
-    [self moveTabAtIndex:selectedIndex toIndex:destinationIndex];
+    [self moveCurrentTabUnitByOffset:1];
 }
 
 - (IBAction)increaseHeight:(id)sender {

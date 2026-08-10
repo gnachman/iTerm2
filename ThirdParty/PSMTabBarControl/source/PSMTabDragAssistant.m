@@ -36,6 +36,7 @@ static os_log_t PSMTabDragLog(void) {
 @property (nonatomic) BOOL isDragging;
 @property (nonatomic) NSPoint currentMouseLoc;
 @property (nonatomic, retain) PSMTabBarCell *targetCell;
+@property (nonatomic, copy, readwrite) NSString *droppedInsideGroupID;
 
 // While the last tab in a window is being dragged, the window is hidden so
 // that you can drop the tab on targets beneath the window. Setting the
@@ -60,6 +61,8 @@ static os_log_t PSMTabDragLog(void) {
 - (NSImage *)dragImageForCell:(PSMTabBarCell *)cell
                     inControl:(PSMTabBarControl *)control
                      tabInset:(CGFloat *)outTabInset;
+- (NSString *)groupContainingDropOfCell:(PSMTabBarCell *)cell
+                               inTabBar:(PSMTabBarControl *)control;
 @end
 
 // CVDisplayLink callback - runs on a background thread, so we need to get to main thread
@@ -159,6 +162,7 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [_animationTimer release];
     [_sineCurveWidths release];
     [_targetCell release];
+    [_droppedInsideGroupID release];
     [_temporarilyHiddenWindow release];
 #if PSM_DEBUG_DRAG_PERFORMANCE
     [_timerFireTimes release];
@@ -218,6 +222,7 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
                fromTabBar:(PSMTabBarControl *)control
        withMouseDownEvent:(NSEvent *)event {
     [self setIsDragging:YES];
+    [self setDroppedInsideGroupID:nil];
     [self setSourceTabBar:control];
     [self setDestinationTabBar:control];
     [_participatingTabBars addObject:control];
@@ -249,14 +254,14 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 
     [[NSCursor closedHandCursor] set];
 
-    // If this tab is the only member of its group, the group has no tab left in
-    // the bar to anchor a chip during the drag, so carry the chip along in the
-    // drag image (to the left of the tab). chipLeadingInset shifts the window so
-    // the tab -- not the chip -- stays under the cursor.
+    // The plain-tab drag image must not include the group run decoration (chip +
+    // enclosing outline) the bar draws over grouped tabs. Suppress it just for the
+    // offscreen capture; the live bar keeps its decoration so groups stay visible
+    // as drop targets during the drag.
     CGFloat chipLeadingInset = 0;
-    NSImage *dragImage = [self cellIsSoleGroupMember:cell inControl:control]
-        ? [self dragImageForCell:cell inControl:control tabInset:&chipLeadingInset]
-        : [cell dragImage];
+    [control setSuppressTabGroupRunDecoration:YES];
+    NSImage *dragImage = [cell dragImage];
+    [control setSuppressTabGroupRunDecoration:NO];
     [[cell indicator] removeFromSuperview];
     [self distributePlaceholdersInTabBar:control withDraggedCell:cell];
 
@@ -530,6 +535,13 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 }
 
 - (void)reallyPerformDragOperation:(id<NSDraggingInfo>)sender {
+    // With chips still present, decide whether the dragged tab landed inside a
+    // group's bracket (right after its chip, or between/among members) so the
+    // drop handler can join it -- including a one-tab group, which has no
+    // "between two members" gap. Must run before the chips are stripped below.
+    [self setDroppedInsideGroupID:[self groupContainingDropOfCell:[self draggedCell]
+                                                         inTabBar:[self destinationTabBar]]];
+
     // The chips were reinserted only so they'd stay visible mid-drag. Strip
     // them so all the index math below runs in the pure tab/placeholder world it
     // was written for; -finishDrag re-derives chips from the settled tab order.
@@ -707,8 +719,12 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
             [tabView setDelegate:tempDelegate];
         }
 
+        // Fire didDrop when the position changed OR when the drop landed inside a
+        // group (a membership change even if the tab index is unchanged, e.g.
+        // dropping a tab from just-left of a group into its front slot).
         if (([self sourceTabBar] != [self destinationTabBar] ||
-             [[[self sourceTabBar] cells] indexOfObject:[self draggedCell]] != _draggedCellIndex) &&
+             [[[self sourceTabBar] cells] indexOfObject:[self draggedCell]] != _draggedCellIndex ||
+             [self droppedInsideGroupID] != nil) &&
             [[[self sourceTabBar] delegate] respondsToSelector:@selector(tabView:didDropTabViewItem:inTabBar:)]) {
 
             [[[self sourceTabBar] delegate] tabView:[[self sourceTabBar] tabView]
@@ -935,6 +951,7 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     }
     [_participatingTabBars removeAllObjects];
     [self setDraggedCell:nil];
+    [self setDroppedInsideGroupID:nil];
 #if PSM_DEBUG_DRAG_PERFORMANCE
     NSLog(@"[PSMTabDrag] Stopping animation timer. Final FPS stats: %d frames recorded", (int)_timerFireTimes.count);
 #endif
@@ -1291,7 +1308,31 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 
     if ([self destinationTabBar] == control) {
         removeFlag = NO;
-        if (mouseLoc.x < [[control style] leftMarginForTabBarControl]) {
+        // A group chip has a drop slot on each side: the one to its left drops
+        // before the group, the one to its right (between chip and first member)
+        // joins the group at its front. -cellForPoint: skips chips, so handle a
+        // chip hover explicitly and pick the side by the chip's midpoint, so both
+        // slots are reachable from either direction.
+        const BOOL horizontalAxis = ([control orientation] == PSMTabBarHorizontalOrientation);
+        PSMTabBarCell *chipUnderMouse = nil;
+        for (PSMTabBarCell *c in cells) {
+            if ([c isTabGroupChip] && NSPointInRect(mouseLoc, [c frame])) {
+                chipUnderMouse = c;
+                break;
+            }
+        }
+        if (chipUnderMouse) {
+            const NSInteger ci = [cells indexOfObject:chipUnderMouse];
+            const CGFloat mid = horizontalAxis ? NSMidX([chipUnderMouse frame]) : NSMidY([chipUnderMouse frame]);
+            const CGFloat along = horizontalAxis ? mouseLoc.x : mouseLoc.y;
+            if (along < mid) {
+                proposedTarget = [self nonChipNeighborInCells:cells atIndex:ci direction:-1];
+            } else if (ci + 1 < (NSInteger)cells.count && [cells[ci + 1] isPlaceholder]) {
+                proposedTarget = cells[ci + 1];
+            } else {
+                proposedTarget = [self nonChipNeighborInCells:cells atIndex:ci direction:1];
+            }
+        } else if (mouseLoc.x < [[control style] leftMarginForTabBarControl]) {
             proposedTarget = [cells objectAtIndex:0];
         } else {
             overCell = [control cellForPoint:mouseLoc cellFrame:&overCellRect];
@@ -1512,6 +1553,34 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         }
         [chip setFrame:frame];
     }
+
+    // Add a persistent drop slot BETWEEN each chip and its first member -- the
+    // "drop into the group at its front" target. It coexists with the slot to
+    // the left of the chip (drop before the group), and animates like any other
+    // placeholder (targeted when the mouse is over the first member's leading
+    // half; -nonChipNeighborInCells:atIndex:direction: naturally returns it since
+    // it sits immediately before the member). Collapsed by default so it adds no
+    // width until targeted.
+    NSMutableArray *withSlots = [NSMutableArray arrayWithCapacity:cells.count];
+    for (NSInteger i = 0; i < (NSInteger)cells.count; i++) {
+        PSMTabBarCell *c = cells[i];
+        [withSlots addObject:c];
+        if (![c isTabGroupChip]) {
+            continue;
+        }
+        NSRect slotFrame = [c frame];
+        for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
+            if (![cells[j] isTabGroupChip]) {
+                slotFrame = [cells[j] frame];
+                break;
+            }
+        }
+        PSMTabBarCell *slot = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:slotFrame
+                                                                     expanded:NO
+                                                                inControlView:control] autorelease];
+        [withSlots addObject:slot];
+    }
+    [cells setArray:withSlots];
 }
 
 // YES if `cell` is a grouped tab and the only member of its group in the bar.
@@ -1531,6 +1600,71 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         }
     }
     return count == 1;
+}
+
+// With chips still present in `control`, return the group id whose bracket the
+// just-dropped `cell` fell inside, or nil if it landed outside every group. The
+// group's run of cells is [chip, member1..memberK]; the "inside" gaps are those
+// strictly within it: right after the chip, and between adjacent members. So the
+// drop is inside group G iff the dragged cell's left neighbor is in G's run (its
+// chip or a member) AND its right neighbor is a member of G. Dropping after the
+// last member (left is a member, right is not) or before the chip (right is the
+// chip, not a member) is outside. Placeholders are skipped.
+- (NSString *)groupContainingDropOfCell:(PSMTabBarCell *)cell
+                               inTabBar:(PSMTabBarControl *)control {
+    // The tab lands at the target slot, so the first real (non-placeholder,
+    // non-dragged) cell at/after it is the drop's right neighbor and the first
+    // one before it is the left neighbor. There is no drop slot between a chip
+    // and its first member, so a "front of group" drop lands right before the
+    // chip; joining sets the membership and -normalizeTabGroupChipCells then
+    // re-derives the chip to the left of the new member, giving [chip, X, m1].
+    PSMTabBarCell *target = [self targetCell];
+    NSArray *cells = [control cells];
+    const NSInteger idx = target ? [cells indexOfObject:target] : NSNotFound;
+    if (idx == NSNotFound) {
+        return nil;
+    }
+    PSMTabBarCell *afterReal = nil;
+    for (NSInteger k = idx; k < (NSInteger)cells.count; k++) {
+        PSMTabBarCell *c = cells[k];
+        if (c != [self draggedCell] && ![c isPlaceholder]) {
+            afterReal = c;
+            break;
+        }
+    }
+    PSMTabBarCell *beforeReal = nil;
+    for (NSInteger k = idx - 1; k >= 0; k--) {
+        PSMTabBarCell *c = cells[k];
+        if (c != [self draggedCell] && ![c isPlaceholder]) {
+            beforeReal = c;
+            break;
+        }
+    }
+    RLog(@"tabGroup: dropCtx targetIdx=%ld targetPH=%d afterChip=%d afterGid=%@ beforeChip=%d beforeGid=%@",
+         (long)idx, (int)target.isPlaceholder,
+         (int)afterReal.isTabGroupChip, afterReal.tabGroupIdentifier ?: @"-",
+         (int)beforeReal.isTabGroupChip, beforeReal.tabGroupIdentifier ?: @"-");
+    NSMutableString *dump = [NSMutableString string];
+    for (NSInteger k = 0; k < (NSInteger)cells.count; k++) {
+        PSMTabBarCell *c = cells[k];
+        NSString *tg = c.isTabGroupChip ? @"CHIP" : (c.isPlaceholder ? @"ph" : @"tab");
+        [dump appendFormat:@"%ld%@%@%@ ", (long)k, (c == target ? @"*" : @":"), tg, c.tabGroupIdentifier ? [c.tabGroupIdentifier substringToIndex:2] : @"-"];
+    }
+    RLog(@"tabGroup: dropCells %@", dump);
+
+    // Join iff the drop lands inside a group's bracket: the next real cell is a
+    // member of G and the previous real cell is in G's run (its chip -- the front
+    // slot -- or another member -- between members). Landing before the chip
+    // (next real cell is the chip) is outside, so the "drop before the group"
+    // slot doesn't join.
+    if (!afterReal || afterReal.isTabGroupChip || afterReal.tabGroupIdentifier.length == 0) {
+        return nil;
+    }
+    NSString *gid = afterReal.tabGroupIdentifier;
+    if (beforeReal && [beforeReal.tabGroupIdentifier isEqualToString:gid]) {
+        return gid;
+    }
+    return nil;
 }
 
 // Drag image for a sole-member group tab: capture the chip and tab together

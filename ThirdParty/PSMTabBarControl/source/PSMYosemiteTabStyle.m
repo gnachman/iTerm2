@@ -1403,7 +1403,7 @@ static const CGFloat kPSMSquaredGroupOutset = 1;     // outline sits this far ou
 }
 
 - (void)drawTabGroupRunDecorationsForTabBar:(PSMTabBarControl *)bar clipRect:(NSRect)clipRect {
-    if (![self usesExternalTabGroupDecoration]) {
+    if (![self usesExternalTabGroupDecoration] || bar.suppressTabGroupRunDecoration) {
         return;
     }
     const BOOL horizontal = (bar.orientation == PSMTabBarHorizontalOrientation);
@@ -1419,6 +1419,13 @@ static const CGFloat kPSMSquaredGroupOutset = 1;     // outline sits this far ou
         BOOL any = NO;
         for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
             PSMTabBarCell *c = cells[j];
+            // A drag interleaves placeholder cells between real ones; they're
+            // transparent to the run, so skip (not break) so the outline still
+            // spans the group's members and grows to enclose the open drop slot
+            // when a tab is dragged into the group.
+            if (c.isPlaceholder) {
+                continue;
+            }
             if (c.isTabGroupChip || c.isInOverflowMenu || ![c.tabGroupIdentifier isEqualToString:gid]) {
                 break;
             }

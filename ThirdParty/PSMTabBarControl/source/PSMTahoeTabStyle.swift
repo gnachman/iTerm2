@@ -737,6 +737,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
 
     @objc func drawTabGroupRunDecorations(forTabBar bar: PSMTabBarControl, clipRect: NSRect) {
+        if bar.suppressTabGroupRunDecoration {
+            return
+        }
         guard let cells = bar.cells() as? [PSMTabBarCell] else {
             return
         }
@@ -754,6 +757,14 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             var j = i + 1
             while j < cells.count {
                 let c = cells[j]
+                // A drag interleaves placeholder cells between real ones; they're
+                // transparent to the run, so skip (not break) so the outline still
+                // spans the group's members and grows to enclose the open drop
+                // slot when a tab is dragged into the group.
+                if c.isPlaceholder {
+                    j += 1
+                    continue
+                }
                 if c.isTabGroupChip || c.isInOverflowMenu {
                     break
                 }
