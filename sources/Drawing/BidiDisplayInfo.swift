@@ -167,6 +167,64 @@ fileprivate struct IntermediateLookupTable {
         func isGuillemet(_ c: unichar) -> Bool {
             return c == 0x00AB || c == 0x00BB || c == 0x2039 || c == 0x203A
         }
+        // CoreText may report bracket glyphs inside an LRI as mirrored when the
+        // LRI is itself nested in an outer RTL isolate. The LRI explicitly
+        // makes that content an LTR island, so its brackets must retain their
+        // typed glyphs just as they do when the island is not nested.
+        var latinIsolateIndexes = IndexSet()
+        var isolateStack = [unichar]()
+        for index in 0..<string.length {
+            let character = string.character(at: index)
+            if character == iTermLRI || character == iTermRLI || character == iTermFSI {
+                isolateStack.append(character)
+            } else if character == iTermPDI {
+                if !isolateStack.isEmpty { isolateStack.removeLast() }
+            } else if isolateStack.contains(iTermLRI) {
+                latinIsolateIndexes.insert(index)
+            }
+        }
+        // An outer RTL isolate can also make CoreText mirror brackets around a
+        // plain LTR phrase when Latin-run isolation is disabled. Preserve the
+        // typed bracket glyphs for a pair whose enclosed strong characters are
+        // exclusively LTR; pairs around RTL text still mirror normally.
+        var ltrBracketIndexes = IndexSet()
+        if let strongLTR = NSCharacterSet.strongLTRCodePoints(),
+           let strongRTL = NSCharacterSet.strongRTLCodePoints() {
+            var bracketStack = [(character: unichar, index: Int)]()
+            func matchingOpen(_ close: unichar) -> unichar? {
+                switch close {
+                case 0x29: return 0x28
+                case 0x5D: return 0x5B
+                case 0x7D: return 0x7B
+                default: return nil
+                }
+            }
+            for index in 0..<string.length {
+                let character = string.character(at: index)
+                if character == 0x28 || character == 0x5B || character == 0x7B {
+                    bracketStack.append((character, index))
+                } else if let open = matchingOpen(character),
+                          let top = bracketStack.last,
+                          top.character == open {
+                    bracketStack.removeLast()
+                    var hasLTR = false
+                    var hasRTL = false
+                    if top.index + 1 < index {
+                        for enclosedIndex in (top.index + 1)..<index {
+                            let enclosed = string.character(at: enclosedIndex)
+                            if let scalar = Unicode.Scalar(enclosed) {
+                                hasLTR = hasLTR || strongLTR.contains(scalar)
+                                hasRTL = hasRTL || strongRTL.contains(scalar)
+                            }
+                        }
+                    }
+                    if hasLTR && !hasRTL {
+                        ltrBracketIndexes.insert(top.index)
+                        ltrBracketIndexes.insert(index)
+                    }
+                }
+            }
+        }
         let runs = CTLineGetGlyphRuns(line) as! [CTRun]
 
         func cell(_ stringIndex: Int) -> Int {
@@ -226,7 +284,10 @@ fileprivate struct IntermediateLookupTable {
                         var chars: [unichar] = [ch]
                         var defaultGlyphs = [CGGlyph](repeating: 0, count: 1)
                         CTFontGetGlyphsForCharacters(font, &chars, &defaultGlyphs, 1)
-                        if glyphs[i] != defaultGlyphs[0] && !isGuillemet(ch) {
+                        if glyphs[i] != defaultGlyphs[0] &&
+                           !isGuillemet(ch) &&
+                           !latinIsolateIndexes.contains(stringIndex) &&
+                           !ltrBracketIndexes.contains(stringIndex) {
                             mirroredIndexes.insert(sourceCell)
                         }
                     }
@@ -433,6 +494,120 @@ private func replacingNulWithSpace(_ s: NSString) -> NSString {
         changed = true
     }
     return changed ? NSString(characters: buf, length: n) : s
+}
+
+// A terminal line is an LTR container even when its content is RTL. With an LTR
+// paragraph base alone, however, mixed Hebrew/Latin text is split into separate
+// directional runs and its word order becomes unnatural. Keep any leading
+// prompt/command cells in the outer LTR paragraph and place an RTL-first payload
+// in one RLI isolate. A quoted or bracketed payload that has a strong LTR
+// character before its first RTL character is LTR-first and stays in the outer
+// paragraph. If the line itself starts in RTL (for example command output), the
+// whole line becomes the isolate. This gives prompts and commands a stable left
+// edge while the payload's own first strong character determines its direction.
+private func isolateRTLSuffixAfterLTRPrefix(_ s: NSString,
+                                            cellForIndex: [Int32]) -> (NSString, [Int32]) {
+    guard !iTermAdvancedSettingsModel.detectParagraphDirection(),
+          let rtl = NSCharacterSet.strongRTLCodePoints(),
+          let ltr = NSCharacterSet.strongLTRCodePoints() else {
+        return (s, cellForIndex)
+    }
+
+    var utf16Offset = 0
+    var boundary: Int?
+    for scalar in (s as String).unicodeScalars {
+        if rtl.contains(scalar) {
+            boundary = utf16Offset
+            break
+        }
+        utf16Offset += scalar.utf16.count
+    }
+    guard var boundary else { return (s, cellForIndex) }
+
+    // Find an unmatched quote or bracket containing the first RTL character.
+    // It gives us a useful payload boundary without knowing which shell or
+    // command produced the line. Quotes inside brackets are tracked as nested
+    // delimiters; bracket characters inside quotes are ordinary text.
+    func isEscaped(_ index: Int) -> Bool {
+        guard index > 0 else { return false }
+        var backslashes = 0
+        var cursor = index - 1
+        while cursor >= 0 && s.character(at: cursor) == 0x5C {
+            backslashes += 1
+            cursor -= 1
+        }
+        return backslashes % 2 == 1
+    }
+    func closingDelimiter(for opening: unichar) -> unichar {
+        switch opening {
+        case 0x28: return 0x29
+        case 0x5B: return 0x5D
+        case 0x7B: return 0x7D
+        default: return opening
+        }
+    }
+    var delimiterStack = [(character: unichar, index: Int)]()
+    if boundary > 0 {
+        for index in 0..<boundary {
+            let character = s.character(at: index)
+            if let top = delimiterStack.last,
+               top.character == 0x22 || top.character == 0x27 {
+                if character == top.character && !isEscaped(index) {
+                    delimiterStack.removeLast()
+                }
+                continue
+            }
+            if (character == 0x22 || character == 0x27) && !isEscaped(index) {
+                delimiterStack.append((character, index))
+            } else if character == 0x28 || character == 0x5B || character == 0x7B {
+                delimiterStack.append((character, index))
+            } else if let top = delimiterStack.last,
+                      character == closingDelimiter(for: top.character) {
+                delimiterStack.removeLast()
+            }
+        }
+    }
+
+    if let opening = delimiterStack.last {
+        let payloadPrefixRange = NSRange(location: opening.index + 1,
+                                         length: boundary - opening.index - 1)
+        let payloadPrefix = s.substring(with: payloadPrefixRange)
+        if payloadPrefix.unicodeScalars.contains(where: ltr.contains) {
+            return (s, cellForIndex)
+        }
+        // Keep the opening delimiter with an RTL-first payload. Leaving it in
+        // the outer paragraph puts both delimiters beside the command instead
+        // of around the visually reordered argument. This also covers spaces
+        // between the opening delimiter and the first strong character.
+        boundary = opening.index
+    } else {
+        // With no payload delimiter there is no reliable way to distinguish an
+        // LTR command prefix from an English-first sentence. Preserve the
+        // standard first-strong behavior: an exposed line that already has a
+        // strong LTR character before its first RTL character remains LTR. A
+        // symbols-only prompt followed by RTL still has no strong LTR prefix,
+        // so it continues to get an RTL isolate after the prompt.
+        let prefix = s.substring(to: boundary)
+        if prefix.unicodeScalars.contains(where: ltr.contains) {
+            return (s, cellForIndex)
+        }
+    }
+
+    var input = [unichar](repeating: 0, count: s.length)
+    s.getCharacters(&input, range: NSRange(location: 0, length: s.length))
+    var output = [unichar]()
+    var outputMap = [Int32]()
+    output.reserveCapacity(input.count + 2)
+    outputMap.reserveCapacity(cellForIndex.count + 2)
+    output.append(contentsOf: input[..<boundary])
+    outputMap.append(contentsOf: cellForIndex[..<boundary])
+    output.append(iTermRLI)
+    outputMap.append(-1)
+    output.append(contentsOf: input[boundary...])
+    outputMap.append(contentsOf: cellForIndex[boundary...])
+    output.append(iTermPDI)
+    outputMap.append(-1)
+    return (NSString(characters: output, length: output.count), outputMap)
 }
 
 // Make a lookup table that maps source cell to display cell.
@@ -1024,15 +1199,18 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
     fileprivate static func mappedString(_ s: NSString,
                                          deltas: UnsafePointer<Int32>) -> (NSString, [Int32]) {
         let sanitized = replacingNulWithSpace(s)
+        let mapped: (NSString, [Int32])
         if iTermAdvancedSettingsModel.isolateLatinRunsInRTL() {
-            return isolateLatinRuns(sanitized, deltas: deltas)
+            mapped = isolateLatinRuns(sanitized, deltas: deltas)
+        } else {
+            var map = [Int32]()
+            map.reserveCapacity(sanitized.length)
+            for k in 0..<sanitized.length {
+                map.append(CellOffsetFromUTF16Offset(Int32(k), deltas))
+            }
+            mapped = (sanitized, map)
         }
-        var map = [Int32]()
-        map.reserveCapacity(sanitized.length)
-        for k in 0..<sanitized.length {
-            map.append(CellOffsetFromUTF16Offset(Int32(k), deltas))
-        }
-        return (sanitized, map)
+        return isolateRTLSuffixAfterLTRPrefix(mapped.0, cellForIndex: mapped.1)
     }
 
     // Fails if no RTL was found

@@ -307,6 +307,52 @@ class BidiTUIRepaintTests: XCTestCase {
         }
     }
 
+    // zsh edits a line in place instead of repainting it wholesale. For
+    //
+    //   echo 'מה קורה מותק, how are you'
+    //
+    // Left, Left, Left, Backspace produces this byte-level repaint sequence:
+    // four BS characters, "ou' ", then four more BS characters. The logical
+    // row becomes "... how are ou'" and the cursor lands before the `o`.
+    // The post-edit frame must not reuse the pre-edit bidi table, which would
+    // draw the overwritten tail in its old visual columns.
+    func testZshPartialLineEditRefreshesBidiMapping() {
+        let width: Int32 = 80
+        let screen = makeScreen(width: width, height: 6)
+        let beforeText = "BIDI> echo 'מה קורה מותק, how are you'"
+        let afterText = "BIDI> echo 'מה קורה מותק, how are ou'"
+
+        frame(screen) { mutableState in
+            mutableState.appendString(atCursor: beforeText)
+        }
+
+        var logicalCursorX: Int32 = -1
+        frame(screen) { mutableState in
+            for _ in 0..<4 { mutableState.backspace() }
+            mutableState.appendString(atCursor: "ou' ")
+            for _ in 0..<4 { mutableState.backspace() }
+            logicalCursorX = mutableState.currentGrid.cursorX
+        }
+
+        let sca = screen.screenCharArray(forLine: 0)
+        XCTAssertTrue(sca.stringValue.hasPrefix(afterText),
+                      "zsh repaint must leave the expected logical row")
+        guard let stored = screen.bidiInfo(forLine: 0),
+              let fresh = BidiDisplayInfoObjc(sca, paddedTo: width) else {
+            return XCTFail("edited mixed row must have bidi information")
+        }
+        XCTAssertEqual(stored, fresh,
+                       "partial overwrite must refresh the renderer's bidi table")
+        let expectedVisual = "BIDI> echo 'how are ou ,קתומ הרוק המ'"
+        XCTAssertEqual(visualOrder(screen, row: 0).visual.trimmingCharacters(in: .whitespaces),
+                       expectedVisual,
+                       "partial repaint must draw exactly like a full repaint")
+        let expectedCursorX = (expectedVisual as NSString).range(of: "ou").location
+        XCTAssertEqual(stored.visualForLogical(logicalCursorX),
+                       Int32(expectedCursorX),
+                       "cursor must land before the remaining `ou`, not at its pre-edit column")
+    }
+
     // The rewritten row scrolls into history; its bidi info must survive in
     // the line buffer, which is what the renderer consults for history rows.
     func testRepaintedRowScrolledIntoHistoryKeepsBidiInfo() {

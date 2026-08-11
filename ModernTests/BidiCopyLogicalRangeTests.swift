@@ -123,6 +123,48 @@ class BidiCopyLogicalRangeTests: XCTestCase {
         XCTAssertTrue(text.contains("Berlin"),
                       "English island was split by the copy; expected whole 'Berlin', got >>>\(text)<<<")
     }
+
+    func testHebrewSentenceCopiesInOriginalLogicalOrder() {
+        let content = "מה קורה חבר HELOO אתה בסדר?"
+        let width = 40
+        guard let (sca, _) = reorderedLine(content, width: width) else { return }
+        let dataSource = BidiLinesDataSource([sca], width: Int32(width))
+        let extractor = iTermTextExtractor(dataSource: dataSource)
+        extractor.supportBidi = true
+
+        let range = VT100GridWindowedRangeMake(
+            VT100GridCoordRangeMake(0, 0, Int32(content.count), 0), 0, 0)
+        let copied = extractor.content(in: range, excludingSubranges: nil) ?? ""
+        XCTAssertEqual(copied, content)
+    }
+
+    func testLongHebrewSentenceWithFourLTRIslandsCopiesInOriginalLogicalOrder() {
+        let content = "ראית ש iTerm2 הוסיפו תמיכה ב RTL ועכשיו אפשר לעבוד בצורה נוחה ונעימה, it's awesome, במיוחד עם README.md בעברית"
+        let width = 160
+        guard let (sca, _) = reorderedLine(content, width: width) else { return }
+        let dataSource = BidiLinesDataSource([sca], width: Int32(width))
+        let extractor = iTermTextExtractor(dataSource: dataSource)
+        extractor.supportBidi = true
+
+        let range = VT100GridWindowedRangeMake(
+            VT100GridCoordRangeMake(0, 0, Int32((content as NSString).length), 0), 0, 0)
+        let copied = extractor.content(in: range, excludingSubranges: nil) ?? ""
+        XCTAssertEqual(copied, content)
+    }
+
+    func testArabicSentenceCopiesInOriginalLogicalOrder() {
+        let content = "مرحبا يا صديقي, HELOO كيف حالك؟"
+        let width = 40
+        guard let (sca, _) = reorderedLine(content, width: width) else { return }
+        let dataSource = BidiLinesDataSource([sca], width: Int32(width))
+        let extractor = iTermTextExtractor(dataSource: dataSource)
+        extractor.supportBidi = true
+
+        let range = VT100GridWindowedRangeMake(
+            VT100GridCoordRangeMake(0, 0, Int32(content.count), 0), 0, 0)
+        let copied = extractor.content(in: range, excludingSubranges: nil) ?? ""
+        XCTAssertEqual(copied, content)
+    }
 }
 
 // Minimal delegate for driving a VISUAL character selection end to end.
