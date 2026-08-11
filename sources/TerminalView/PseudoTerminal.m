@@ -262,7 +262,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 - (void)moveCurrentTabUnitByOffset:(NSInteger)offset;
 // Chip drag-out helpers (defined below).
 - (PseudoTerminal *)terminalWithTabBarUnderScreenPoint:(NSPoint)screenPoint excluding:(PseudoTerminal *)excluded;
-- (void)moveTabGroup:(iTermTabGroup *)group tabs:(NSArray<PTYTab *> *)tabs toTerminal:(PseudoTerminal *)dest;
+- (void)moveTabGroup:(iTermTabGroup *)group tabs:(NSArray<PTYTab *> *)tabs toTerminal:(PseudoTerminal *)dest atIndex:(NSInteger)dropIndex;
 - (void)tearOffTabGroup:(iTermTabGroup *)group tabs:(NSArray<PTYTab *> *)tabs atScreenPoint:(NSPoint)screenPoint;
 
 // Session ID of session that currently has an auto-command history window open
@@ -7399,10 +7399,17 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 // (all its member tabs, in order) to whichever window's tab bar is under the drop
 // point, or tear it off into a new window if none is. The group's definition
 // (name/color) travels with it; each tab keeps its tabGroupID.
+- (PSMTabBarControl *)tabView:(NSTabView*)aTabView
+    tabBarControlForScreenPoint:(NSPoint)screenPoint {
+    PseudoTerminal *term = [self terminalWithTabBarUnderScreenPoint:screenPoint excluding:self];
+    return term ? term->_contentView.tabBarControl : nil;
+}
+
 - (void)tabView:(NSTabView*)aTabView
     moveTabGroupWithIdentifier:(NSString *)groupID
                   tabViewItems:(NSArray<NSTabViewItem *> *)items
                  toScreenPoint:(NSPoint)screenPoint
+                  dropTabIndex:(NSInteger)dropTabIndex
               dragImageTopLeft:(NSPoint)dragImageTopLeft {
     if (_layoutLocked || items.count == 0) {
         return;
@@ -7420,7 +7427,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     iTermTabGroup *group = [self.tabGroupRegistry groupWithID:groupID];
     PseudoTerminal *dest = [self terminalWithTabBarUnderScreenPoint:screenPoint excluding:self];
     if (dest) {
-        [self moveTabGroup:group tabs:tabs toTerminal:dest];
+        [self moveTabGroup:group tabs:tabs toTerminal:dest atIndex:dropTabIndex];
     } else {
         [self tearOffTabGroup:group tabs:tabs atScreenPoint:dragImageTopLeft];
     }
@@ -7459,12 +7466,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)moveTabGroup:(iTermTabGroup *)group
                 tabs:(NSArray<PTYTab *> *)tabs
-          toTerminal:(PseudoTerminal *)dest {
+          toTerminal:(PseudoTerminal *)dest
+             atIndex:(NSInteger)dropIndex {
     if (dest == self || dest == nil) {
         return;
     }
     [self ensureGroup:group inRegistry:dest.tabGroupRegistry];
-    int index = [dest numberOfTabs];
+    int index = (dropIndex >= 0 && dropIndex <= [dest numberOfTabs]) ? (int)dropIndex : [dest numberOfTabs];
     for (PTYTab *tab in tabs) {
         NSTabViewItem *item = tab.tabViewItem;
         [item retain];
@@ -7476,6 +7484,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [[dest window] makeKeyAndOrderFront:nil];
     [dest updateTabGroups];
     [dest tabsDidReorder];
+    // Inserting the members one at a time animated the destination through each
+    // intermediate tab count (existing tab ballooning, group tabs popping in).
+    // Snap straight to the final layout so the group simply fills the drop gap.
+    [dest->_contentView.tabBarControl updateWithoutAnimation];
     // Moving the whole group out can empty this window; close it rather than
     // leaving a tabless window behind.
     if ([self numberOfTabs] == 0) {
