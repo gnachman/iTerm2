@@ -285,6 +285,25 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [[NSNotificationCenter defaultCenter] postNotificationName:PSMTabDragDidBeginNotification
                                                         object:nil];
 
+    [self beginDragSessionForControl:control
+                                cell:cell
+                               image:dragImage
+                      mouseDownEvent:event
+                           cellFrame:cellFrame
+                    chipLeadingInset:chipLeadingInset];
+}
+
+// Shared tail of a drag start (single tab or whole group): builds the floating
+// drag window, computes _dragTabOffset, begins the AppKit dragging session, and
+// starts the CVDisplayLink mouse polling. `cellFrame` is the dragged unit's frame
+// already adjusted for a flipped bar; `chipLeadingInset` shifts the window so the
+// intended part of a composed image stays under the cursor.
+- (void)beginDragSessionForControl:(PSMTabBarControl *)control
+                              cell:(PSMTabBarCell *)cell
+                             image:(NSImage *)dragImage
+                    mouseDownEvent:(NSEvent *)event
+                         cellFrame:(NSRect)cellFrame
+                  chipLeadingInset:(CGFloat)chipLeadingInset {
     // Retain the control in case the drag operation causes the control to be released
     [control retain];
 
