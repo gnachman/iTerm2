@@ -52,6 +52,12 @@
 // Functionality
 - (void)startAnimationWithOrientation:(PSMTabBarOrientation)orientation width:(CGFloat)width;
 - (void)startDraggingCell:(PSMTabBarCell *)cell fromTabBar:(PSMTabBarControl *)control withMouseDownEvent:(NSEvent *)event;
+// Start dragging a whole tab group by its chip (the group's block flows through
+// the same machinery as a single tab). `members` are the group's member tab cells.
+- (void)startDraggingGroupWithChip:(PSMTabBarCell *)chip
+                           members:(NSArray<PSMTabBarCell *> *)members
+                        fromTabBar:(PSMTabBarControl *)control
+                withMouseDownEvent:(NSEvent *)event;
 - (void)draggingEnteredTabBar:(PSMTabBarControl *)control atPoint:(NSPoint)mouseLoc;
 - (void)draggingUpdatedInTabBar:(PSMTabBarControl *)control atPoint:(NSPoint)mouseLoc;
 - (void)draggingExitedTabBar:(PSMTabBarControl *)control;

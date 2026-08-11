@@ -214,6 +214,7 @@
 #import "PSMRolloverButton.h"
 #import "PSMTabBarCell.h"
 #import "PSMTabBarControl.h"
+#import "PSMTabDragAssistant.h"
 #import "PSMTabStyle.h"
 #import "PSMYosemiteTabStyle.h"
 #import "PTYScrollView.h"

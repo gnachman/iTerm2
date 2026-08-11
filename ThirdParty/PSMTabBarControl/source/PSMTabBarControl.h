@@ -119,27 +119,21 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 - (BOOL)tabView:(NSTabView *)aTabView shouldDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(nullable PSMTabBarControl *)tabBarControl moveSourceWindow:(nullable BOOL *)moveSourceWindow;
 - (void)tabView:(NSTabView*)aTabView willDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)tabBarControl;
 - (void)tabView:(NSTabView*)aTabView didDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)tabBarControl;
-// A whole group was reordered within the same bar (chip drag). Membership is
-// unchanged; the delegate should resync tab order and persistence but must NOT
-// run per-tab group-membership resolution.
-- (void)tabView:(NSTabView*)aTabView didReorderTabsInTabBar:(PSMTabBarControl *)tabBarControl;
-// During a chip drag, the bar (whose tab bar is) under `screenPoint`, or nil if
-// none. Used to open a drop-gap preview in a destination window's bar.
-- (nullable PSMTabBarControl *)tabView:(NSTabView*)aTabView
-             tabBarControlForScreenPoint:(NSPoint)screenPoint;
-// A group's chip was dragged out of the bar (chip drag). `items` are the group's
-// member tabs in order and `groupID` its identifier. The delegate should move
-// the whole group to whichever window's tab bar is under `screenPoint` (dropping
-// at `dropTabIndex`, or the end if it is negative), or tear it off into a new
-// window if none is, carrying the group's definition along. `dragImageTopLeft`
-// is the top-left (screen coords) of the drag snapshot, for positioning a
-// torn-off window where the group visually was.
+// A whole tab group was dropped onto `destTabBar` (this window's or another's)
+// during a chip drag. `members` are the group's member tabs in order; insert them
+// before `anchor` (or at the end if nil), carrying the group's definition. The
+// delegate must move the whole block, not resolve per-tab membership.
 - (void)tabView:(NSTabView*)aTabView
-    moveTabGroupWithIdentifier:(NSString *)groupID
-                  tabViewItems:(NSArray<NSTabViewItem *> *)items
-                 toScreenPoint:(NSPoint)screenPoint
-                  dropTabIndex:(NSInteger)dropTabIndex
-              dragImageTopLeft:(NSPoint)dragImageTopLeft;
+    dropGroupWithID:(NSString *)groupID
+            members:(NSArray<NSTabViewItem *> *)members
+           inTabBar:(PSMTabBarControl *)destTabBar
+  beforeTabViewItem:(nullable NSTabViewItem *)anchor;
+// A whole tab group was dropped outside any tab bar: tear it off into a new
+// window positioned at `screenPoint` (top-left), carrying the group's definition.
+- (void)tabView:(NSTabView*)aTabView
+    tearOffGroupWithID:(NSString *)groupID
+               members:(NSArray<NSTabViewItem *> *)members
+         atScreenPoint:(NSPoint)screenPoint;
 
 //Tear-off tabs methods
 - (nullable NSImage *)tabView:(NSTabView *)aTabView imageForTabViewItem:(NSTabViewItem *)tabViewItem styleMask:(NSWindowStyleMask *)styleMask;

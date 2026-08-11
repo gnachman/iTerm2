@@ -102,6 +102,15 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     PSMTabBarCell *_targetCell;
     NSSize _dragTabOffset;
 
+    // Group drag: when a whole tab group is dragged by its chip, the drag runs
+    // through the same placeholder/animation/session path as a single tab, but
+    // the dragged unit is the group's block: one wide placeholder stands in for
+    // the chip + member cells. _draggedGroupID is nil for a normal single-tab
+    // drag. _draggedGroupMembers are the group's member tab cells (draggedCell is
+    // members.firstObject); held so the drop can restore them to the source bar.
+    NSString *_draggedGroupID;
+    NSArray<PSMTabBarCell *> *_draggedGroupMembers;
+
     // The drag window stays at its initial position along the cross-axis
     // (Y for horizontal tab bars, X for vertical) until movement exceeds a threshold.
     NSPoint _initialDragWindowOrigin;
@@ -163,6 +172,8 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [_sineCurveWidths release];
     [_targetCell release];
     [_droppedInsideGroupID release];
+    [_draggedGroupID release];
+    [_draggedGroupMembers release];
     [_temporarilyHiddenWindow release];
 #if PSM_DEBUG_DRAG_PERFORMANCE
     [_timerFireTimes release];
@@ -368,6 +379,90 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [control release];
 }
 
+// Start dragging a whole tab group by its chip. Runs through the same
+// placeholder/animation/session path as -startDraggingCell:, but the dragged
+// unit is the group's block (chip + members): one wide placeholder (group width)
+// stands in for the run, the drag image is a snapshot of the run, and the drop is
+// handled by the group branches in -reallyPerformDragOperation:/-draggedImageEndedAt:.
+- (void)startDraggingGroupWithChip:(PSMTabBarCell *)chip
+                           members:(NSArray<PSMTabBarCell *> *)members
+                        fromTabBar:(PSMTabBarControl *)control
+                withMouseDownEvent:(NSEvent *)event {
+    if (members.count == 0) {
+        return;
+    }
+    PSMTabBarCell *first = members.firstObject;
+    [self setIsDragging:YES];
+    [self setDroppedInsideGroupID:nil];
+    [self setSourceTabBar:control];
+    [self setDestinationTabBar:control];
+    [_participatingTabBars addObject:control];
+    [self setDraggedCell:first];
+    [_draggedGroupID release];
+    _draggedGroupID = [[chip tabGroupIdentifier] copy];
+    [_draggedGroupMembers release];
+    _draggedGroupMembers = [members copy];
+
+    // draggedCellIndex = first member's position among non-chip cells.
+    NSArray *startCells = [control cells];
+    const NSInteger rawIndex = [startCells indexOfObject:first];
+    NSInteger chipsBeforeCell = 0;
+    for (NSInteger i = 0; i < rawIndex; i++) {
+        if ([startCells[i] isTabGroupChip]) {
+            chipsBeforeCell++;
+        }
+    }
+    [self setDraggedCellIndex:(int)(rawIndex - chipsBeforeCell)];
+
+    // The dragged unit is the whole run: chip + members. Its frame drives the
+    // placeholder width (via the sine curve) so every drop slot opens to group
+    // width, and it is the drag image.
+    NSRect runFrame = [chip frame];
+    for (PSMTabBarCell *c in members) {
+        runFrame = NSUnionRect(runFrame, [c frame]);
+    }
+    [self addSineCurveWidthsWithOrientation:[control orientation] size:runFrame.size];
+
+    [[control overflowPopUpButton] setHidden:YES];
+    [[control addTabButton] setHidden:YES];
+    [[NSCursor closedHandCursor] set];
+
+    // Drag image = snapshot of the run WITH its decoration (chip + outline), so
+    // the floating image looks like the group. Round out to whole pixels (+1 on
+    // w/h so the 1pt outline edge isn't clipped), clamped to the bar.
+    NSRect capture = NSIntegralRect(runFrame);
+    capture.size.width += 1;
+    capture.size.height += 1;
+    capture = NSIntersectionRect(capture, [control bounds]);
+    NSBitmapImageRep *rep = [control bitmapImageRepForCachingDisplayInRect:capture];
+    [control cacheDisplayInRect:capture toBitmapImageRep:rep];
+    NSImage *dragImage = [[[NSImage alloc] initWithSize:capture.size] autorelease];
+    [dragImage addRepresentation:rep];
+
+    [[first indicator] removeFromSuperview];
+    [self distributePlaceholdersInTabBar:control withDraggedGroupMembers:members chip:chip];
+
+    [self setCurrentMouseLoc:[control convertPoint:[event locationInWindow] fromView:nil]];
+
+    NSRect cellFrame = runFrame;
+    if ([control isFlipped]) {
+        cellFrame.origin.y += cellFrame.size.height;
+    }
+    [self calculateDragAnimationForTabBar:control];
+    [control setNeedsDisplay:YES];
+    [self startAnimation];
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:PSMTabDragDidBeginNotification
+                                                        object:nil];
+
+    [self beginDragSessionForControl:control
+                                cell:first
+                               image:dragImage
+                      mouseDownEvent:event
+                           cellFrame:cellFrame
+                    chipLeadingInset:0];
+}
+
 - (void)draggingEnteredTabBar:(PSMTabBarControl *)control atPoint:(NSPoint)mouseLoc {
     if (!_animationTimer) {
         [self startAnimation];
@@ -553,7 +648,82 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     _dropping = NO;
 }
 
+// Put the dragged group's member cells back into the source bar at their
+// original position, undoing the wide-placeholder swap, so the source's cells
+// match its tabViewItems before the delegate performs the real (tabViewItem
+// level) move. Runs in the pure tab-cell world (chips stripped, then re-derived).
+- (void)restoreDraggedGroupToSource {
+    PSMTabBarControl *source = [self sourceTabBar];
+    if (!source || _draggedGroupMembers.count == 0) {
+        return;
+    }
+    [self removeAllPlaceholdersFromTabBar:source];
+    [source removeAllTabGroupChipCells];
+    NSMutableArray *cells = [source cells];
+    NSInteger idx = [self draggedCellIndex];
+    if (idx < 0) {
+        idx = 0;
+    }
+    if (idx > (NSInteger)cells.count) {
+        idx = (NSInteger)cells.count;
+    }
+    for (NSInteger i = 0; i < (NSInteger)_draggedGroupMembers.count; i++) {
+        [cells insertObject:_draggedGroupMembers[i] atIndex:(idx + i)];
+    }
+    [source normalizeTabGroupChipCells];
+}
+
+// A group was dropped onto a tab bar (this window's or another's). Find the tab
+// the group should land before (the drop anchor), restore the source, and let the
+// delegate do the actual move (which handles same-window reorder, cross-window
+// move + group-def transfer).
+- (void)performGroupDropOntoBar {
+    PSMTabBarControl *destination = [self destinationTabBar];
+    NSTabViewItem *anchor = nil;
+    if (destination) {
+        NSArray *dcells = [destination cells];
+        NSInteger tIdx = [dcells indexOfObject:[self targetCell]];
+        if (tIdx == NSNotFound) {
+            tIdx = 0;
+        }
+        for (NSInteger i = tIdx; i < (NSInteger)dcells.count; i++) {
+            PSMTabBarCell *c = dcells[i];
+            if ([c isTabGroupChip] || [c isPlaceholder] || [_draggedGroupMembers containsObject:c]) {
+                continue;
+            }
+            if ([c representedObject]) {
+                anchor = [c representedObject];
+                break;
+            }
+        }
+    }
+    NSMutableArray<NSTabViewItem *> *items = [NSMutableArray array];
+    for (PSMTabBarCell *c in _draggedGroupMembers) {
+        if ([c representedObject]) {
+            [items addObject:[c representedObject]];
+        }
+    }
+    NSString *gid = [[_draggedGroupID retain] autorelease];
+    [self restoreDraggedGroupToSource];
+
+    id delegate = [[self sourceTabBar] delegate];
+    if (items.count > 0 && destination &&
+        [delegate respondsToSelector:@selector(tabView:dropGroupWithID:members:inTabBar:beforeTabViewItem:)]) {
+        [delegate tabView:[[self sourceTabBar] tabView]
+          dropGroupWithID:gid
+                  members:items
+                 inTabBar:destination
+        beforeTabViewItem:anchor];
+    }
+    [self finishDrag];
+}
+
 - (void)reallyPerformDragOperation:(id<NSDraggingInfo>)sender {
+    // A group drag moves the whole block, not a single cell: hand it off.
+    if (_draggedGroupID) {
+        [self performGroupDropOntoBar];
+        return;
+    }
     // With chips still present, decide whether the dragged tab landed inside a
     // group's bracket (right after its chip, or between/among members) so the
     // drop handler can join it -- including a one-tab group, which has no
@@ -847,14 +1017,40 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 }
 
 - (void)cancelDrag {
-    // _draggedCellIndex was captured in the chip-free world at drag start; strip
-    // the mid-drag chips so the snap-back insert lands at that same index.
-    // -finishDrag re-derives chips afterward.
-    [[self sourceTabBar] removeAllTabGroupChipCells];
-    [[[self sourceTabBar] cells] insertObject:[self draggedCell] atIndex:[self draggedCellIndex]];
+    if (_draggedGroupMembers.count > 0) {
+        // Group snap-back: restore the whole block to the source.
+        [self restoreDraggedGroupToSource];
+    } else {
+        // _draggedCellIndex was captured in the chip-free world at drag start;
+        // strip the mid-drag chips so the snap-back insert lands at that same
+        // index. -finishDrag re-derives chips afterward.
+        [[self sourceTabBar] removeAllTabGroupChipCells];
+        [[[self sourceTabBar] cells] insertObject:[self draggedCell] atIndex:[self draggedCellIndex]];
+    }
     [[[self sourceTabBar] window] setAlphaValue:1];  // Make the window visible again.
     [[[self sourceTabBar] window] orderFront:nil];
     [[self sourceTabBar] dragDidFinish];
+}
+
+// A group was dropped outside any tab bar: tear it off into a new window at the
+// drop origin (or snap back if a new window isn't warranted).
+- (void)performGroupTearOffAtScreenPoint:(NSPoint)origin {
+    NSMutableArray<NSTabViewItem *> *items = [NSMutableArray array];
+    for (PSMTabBarCell *c in _draggedGroupMembers) {
+        if ([c representedObject]) {
+            [items addObject:[c representedObject]];
+        }
+    }
+    NSString *gid = [[_draggedGroupID retain] autorelease];
+    [self restoreDraggedGroupToSource];
+    id delegate = [[self sourceTabBar] delegate];
+    if (items.count > 0 &&
+        [delegate respondsToSelector:@selector(tabView:tearOffGroupWithID:members:atScreenPoint:)]) {
+        [delegate tabView:[[self sourceTabBar] tabView]
+       tearOffGroupWithID:gid
+                  members:items
+            atScreenPoint:origin];
+    }
 }
 
 - (void)draggedImageEndedAt:(NSPoint)aPoint operation:(NSDragOperation)operation {
@@ -868,6 +1064,19 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 
     const NSPoint origin = [self topLeftPointOfDragViewWindowForMouseLocation:aPoint];
     BOOL moveSourceWindow = NO;
+    if (_draggedGroupID) {
+        // A group dropped outside any bar: tear off the whole group, else snap back.
+        if ([self shouldCreateNewWindowOnDrop:&moveSourceWindow]) {
+            [self performGroupTearOffAtScreenPoint:origin];
+        } else {
+            [self cancelDrag];
+        }
+        [[NSNotificationCenter defaultCenter] postNotificationName:PSMTabDragDidEndNotification object:nil];
+        [self finishDrag];
+        [source sanityCheck:@"draggedImageEndedAt - group source"];
+        [destination sanityCheck:@"draggedImageEndedAt - group destination"];
+        return;
+    }
     if ([self shouldCreateNewWindowOnDrop:&moveSourceWindow]) {
         const CGFloat height = _dragViewWindow.frame.size.height;
         PSMTabBarControl *control = [sourceDelegate tabView:[[self sourceTabBar] tabView]
@@ -971,6 +1180,10 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [_participatingTabBars removeAllObjects];
     [self setDraggedCell:nil];
     [self setDroppedInsideGroupID:nil];
+    [_draggedGroupID release];
+    _draggedGroupID = nil;
+    [_draggedGroupMembers release];
+    _draggedGroupMembers = nil;
 #if PSM_DEBUG_DRAG_PERFORMANCE
     NSLog(@"[PSMTabDrag] Stopping animation timer. Final FPS stats: %d frames recorded", (int)_timerFireTimes.count);
 #endif
@@ -1782,6 +1995,50 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [self reinsertDragChipsInTabBar:control];
     ILog(@"distributePlaceholdersInTabBar:withDraggedCell:%@", cell);
     return;
+}
+
+// Group variant of -distributePlaceholdersInTabBar:withDraggedCell:. After the
+// base 2*i stride (chips stripped), replace the whole contiguous run of `members`
+// with ONE expanded placeholder sized to the group, and collapse the run's
+// interior + flanking stride placeholders into it -- the block analogue of the
+// single-cell cellIndex±1 removal. This yields one drop slot for the group plus
+// one before each remaining tab, exactly like a single tab drag.
+- (void)distributePlaceholdersInTabBar:(PSMTabBarControl *)control
+               withDraggedGroupMembers:(NSArray<PSMTabBarCell *> *)members
+                                  chip:(PSMTabBarCell *)chip {
+    // Snapshot the run's frame BEFORE stripping chips. -distributePlaceholdersInTabBar:
+    // calls -removeAllTabGroupChipCells, which drops the control's only strong
+    // reference to `chip` -- PSMTabBarCell is ARC, and the MRR drag callers hold
+    // `chip` unretained, so it is deallocated by the strip. Reading [chip frame]
+    // afterward is a use-after-free. Members are tab cells, not chips, so they
+    // survive the strip and stay valid below.
+    NSRect runFrame = [chip frame];
+    for (PSMTabBarCell *c in members) {
+        runFrame = NSUnionRect(runFrame, [c frame]);
+    }
+    [self distributePlaceholdersInTabBar:control];
+    NSMutableArray *cells = [control cells];
+    const NSInteger cA = [cells indexOfObject:members.firstObject];
+    const NSInteger cB = [cells indexOfObject:members.lastObject];
+    if (cA == NSNotFound || cB == NSNotFound || cB < cA) {
+        [self reinsertDragChipsInTabBar:control];
+        return;
+    }
+    PSMTabBarCell *pc = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:runFrame
+                                                               expanded:YES
+                                                          inControlView:control] autorelease];
+    pc.truncationStyle = members.firstObject.truncationStyle;
+    [cells replaceObjectAtIndex:cA withObject:pc];
+    // Remove the members' interior + the placeholder after the last member.
+    for (NSInteger i = cB + 1; i >= cA + 1; i--) {
+        [cells removeObjectAtIndex:i];
+    }
+    // Remove the placeholder before the first member.
+    if (cA - 1 >= 0) {
+        [cells removeObjectAtIndex:(cA - 1)];
+    }
+    [self setTargetCell:pc];
+    [self reinsertDragChipsInTabBar:control];
 }
 
 - (void)distributePlaceholdersInTabBar:(PSMTabBarControl *)control {

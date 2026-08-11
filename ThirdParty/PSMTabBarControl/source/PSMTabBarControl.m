@@ -150,17 +150,6 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
 - (void)removeTabProgressBarForCell:(PSMTabBarCell *)cell;
 // Hit-test a group chip (chips are invisible to -cellForPoint:).
 - (PSMTabBarCell *)chipForPoint:(NSPoint)point;
-// Run a self-contained mouse-tracking drag that moves a whole group (its chip
-// plus contiguous member tabs) to a new position within this bar.
-- (void)trackGroupDragForChip:(PSMTabBarCell *)chip startPoint:(NSPoint)startPoint;
-// Group drop preview (this bar is a drop target for a group dragged from another
-// window). Opens an animated gap of `width` at the drop position nearest
-// `pointInBar` and returns the tab index the group would land at.
-- (NSInteger)updateGroupDropGapAtPoint:(NSPoint)pointInBar tabCount:(NSInteger)tabCount;
-- (void)closeGroupDropGapAnimated:(BOOL)animated;
-- (void)stepGroupDropGap:(NSTimer *)timer;
-- (void)applyGroupDropGap;
-- (void)teardownGroupDropGapRestoringLayout:(BOOL)restore;
 @end
 
 @implementation PSMTabBarControl {
@@ -209,17 +198,6 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     BOOL _didDrag;
     BOOL _closeClicked;
 
-    // Group drop preview: an animated gap opened in this bar (a drop target)
-    // while a group is being dragged over it. The gap width is reserved from
-    // -availableCellWidthWithOverflow: so the real layout shrinks/redistributes
-    // the existing tabs to make room; a timer animates it open/closed.
-    NSTimer *_groupDropGapTimer;
-    NSInteger _groupDropGapCellIndex;   // cells at/after this index shift right by the gap
-    CGFloat _groupDropGapWidth;         // current (reserved) width
-    CGFloat _groupDropGapTargetWidth;   // width to animate toward (0 = close)
-    CGFloat _groupDropGapAppliedWidth;  // last width relaid out (skip redundant relayouts)
-    NSInteger _groupDropGapAppliedIndex;
-
     // iTerm2 additions
     NSUInteger _modifier;
     BOOL _hasCloseButton;
@@ -250,12 +228,6 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
                                                                    addTabButton:self.showAddTabButton];
     const CGFloat leftMargin = [_style leftMarginForTabBarControl];
     width = width - leftMargin - rightMargin;
-    // While previewing a group drop into this bar, reserve the gap so the layout
-    // shrinks/redistributes the existing tabs to make room (a real space, not an
-    // overhang). Horizontal bars only; the gap is applied along x.
-    if (_groupDropGapWidth > 0 && _orientation == PSMTabBarHorizontalOrientation) {
-        width -= _groupDropGapWidth;
-    }
     return width;
 }
 
@@ -2583,13 +2555,12 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     NSRect cellFrame;
     NSPoint trackingStartPoint = [self convertPoint:_initialDragLocation fromView:nil];
 
-    // A drag that begins on a group chip moves the whole group as a block. Chips
-    // are invisible to -cellForPoint:, so dispatch this before the single-tab
-    // path (which would find no cell under the chip and do nothing) and before
-    // the window-drag conversion below (a chip sits in the top edge strip that
-    // would otherwise be read as "drag the window"). The tracking method runs
-    // its own event loop and returns once the mouse is released, so reset the
-    // drag-tracking state the consumed mouseUp would normally clear.
+    // A drag that begins on a group chip moves the whole group as a block through
+    // the same drag machinery as a single tab (the group is the dragged unit).
+    // Chips are invisible to -cellForPoint:, so dispatch this before the
+    // single-tab path (which would find no cell under the chip) and before the
+    // window-drag conversion below (a chip sits in the top edge strip that would
+    // otherwise be read as "drag the window").
     PSMTabBarCell *chip = nil;
     if (!_didDrag && ![[PSMTabDragAssistant sharedDragAssistant] isDragging]) {
         chip = [self chipForPoint:trackingStartPoint];
@@ -2597,9 +2568,14 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
             const CGFloat dx = currentPoint.x - trackingStartPoint.x;
             const CGFloat dy = currentPoint.y - trackingStartPoint.y;
             if (sqrt(dx * dx + dy * dy) >= self.minimumTabDragDistance) {
-                [self trackGroupDragForChip:chip startPoint:trackingStartPoint];
-                _haveInitialDragLocation = NO;
-                _preDragSelectedTabIndex = NSNotFound;
+                NSArray<PSMTabBarCell *> *members = [self tabGroupMemberCellsForChip:chip];
+                if (members.count > 0) {
+                    _didDrag = YES;
+                    [[PSMTabDragAssistant sharedDragAssistant] startDraggingGroupWithChip:chip
+                                                                                 members:members
+                                                                              fromTabBar:self
+                                                                      withMouseDownEvent:[self lastMouseDownEvent]];
+                }
             }
             return;
         }
@@ -2672,431 +2648,6 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     return members;
 }
 
-// Tab-index range the dragged run occupies (chip precedes its members, so the
-// first member's tab index is the number of tab cells before the chip).
-- (NSRange)tabRangeForChip:(PSMTabBarCell *)chip memberCount:(NSInteger)count {
-    NSInteger tabIndex = 0;
-    for (PSMTabBarCell *cell in _cells) {
-        if (cell == chip) {
-            break;
-        }
-        if (![cell isTabGroupChip]) {
-            tabIndex++;
-        }
-    }
-    return NSMakeRange(tabIndex, count);
-}
-
-// Nearest valid drop boundary (an original tab-index in 0..tabCount) to the
-// cursor. Valid boundaries are between top-level "units" (an ungrouped tab or a
-// whole group run), so a group never lands inside another group. Boundaries
-// strictly inside the dragged run are excluded. Returns the boundary; writes the
-// boundary's along-axis coordinate to *outCoord for the insertion marker.
-- (NSInteger)groupDropBoundaryForPoint:(NSPoint)point
-                            horizontal:(BOOL)horizontal
-                          excludingRun:(NSRange)runRange
-                           markerCoord:(CGFloat *)outCoord {
-    const CGFloat cursor = horizontal ? point.x : point.y;
-
-    NSMutableArray<NSNumber *> *unitStart = [NSMutableArray array];
-    NSMutableArray<NSNumber *> *unitLead = [NSMutableArray array];
-    NSMutableArray<NSNumber *> *unitTrail = [NSMutableArray array];
-    NSInteger tabIndex = 0;
-    NSString *curGid = nil;
-    BOOL inUnit = NO;
-    for (PSMTabBarCell *cell in _cells) {
-        if (cell.isTabGroupChip) {
-            continue;
-        }
-        const NSRect f = [cell frame];
-        const CGFloat lead = horizontal ? NSMinX(f) : NSMinY(f);
-        const CGFloat trail = horizontal ? NSMaxX(f) : NSMaxY(f);
-        NSString *gid = cell.tabGroupIdentifier;
-        const BOOL continues = inUnit && gid != nil && [gid isEqualToString:curGid];
-        if (continues) {
-            unitTrail[unitTrail.count - 1] = @(trail);
-        } else {
-            [unitStart addObject:@(tabIndex)];
-            [unitLead addObject:@(lead)];
-            [unitTrail addObject:@(trail)];
-            curGid = gid;
-            inUnit = YES;
-        }
-        tabIndex++;
-    }
-    const NSInteger totalTabs = tabIndex;
-    const NSInteger unitCount = (NSInteger)unitStart.count;
-
-    NSInteger bestB = (NSInteger)runRange.location;
-    CGFloat bestDist = CGFLOAT_MAX;
-    CGFloat bestCoord = 0;
-    for (NSInteger k = 0; k <= unitCount; k++) {
-        NSInteger B;
-        CGFloat coord;
-        if (k == 0) {
-            B = 0;
-            coord = [unitLead[0] doubleValue];
-        } else if (k == unitCount) {
-            B = totalTabs;
-            coord = [unitTrail[unitCount - 1] doubleValue];
-        } else {
-            B = [unitStart[k] integerValue];
-            coord = ([unitTrail[k - 1] doubleValue] + [unitLead[k] doubleValue]) / 2.0;
-        }
-        if (B > (NSInteger)runRange.location &&
-            B < (NSInteger)(runRange.location + runRange.length)) {
-            continue;
-        }
-        const CGFloat dist = fabs(coord - cursor);
-        if (dist < bestDist) {
-            bestDist = dist;
-            bestB = B;
-            bestCoord = coord;
-        }
-    }
-    if (outCoord) {
-        *outCoord = bestCoord;
-    }
-    return bestB;
-}
-
-// Move the group's member tabs (a contiguous block) so the block lands at the
-// original-order boundary B. Membership is unchanged.
-- (void)moveTabGroupMembers:(NSArray<PSMTabBarCell *> *)members
-                 toBoundary:(NSInteger)B
-                        run:(NSRange)runRange {
-    const NSInteger runStart = (NSInteger)runRange.location;
-    const NSInteger count = (NSInteger)runRange.length;
-    if (count == 0 || B == runStart || B == runStart + count) {
-        return;  // no-op: block would land where it already is
-    }
-    // Convert the original-order boundary to a post-removal insertion index.
-    const NSInteger insertAt = (B <= runStart) ? B : (B - count);
-
-    NSMutableArray<NSTabViewItem *> *items = [NSMutableArray array];
-    for (PSMTabBarCell *cell in members) {
-        NSTabViewItem *item = [cell representedObject];
-        if (item) {
-            [items addObject:item];
-        }
-    }
-    if (items.count == 0) {
-        return;
-    }
-
-    NSTabViewItem *selected = [_tabView selectedTabViewItem];
-    id<NSTabViewDelegate> tempDelegate = [_tabView delegate];
-    [_tabView setDelegate:nil];
-    for (NSTabViewItem *item in items) {
-        [item retain];
-    }
-    for (NSTabViewItem *item in items) {
-        [_tabView removeTabViewItem:item];
-    }
-    NSInteger idx = insertAt;
-    for (NSTabViewItem *item in items) {
-        [_tabView insertTabViewItem:item atIndex:idx++];
-        [item release];
-    }
-    [_tabView setDelegate:tempDelegate];
-    if (selected) {
-        [_tabView selectTabViewItem:selected];
-    }
-
-    // Rebuild _cells to match the new tab order, then re-derive chip cells.
-    [self removeAllTabGroupChipCells];
-    [_cells sortUsingComparator:^NSComparisonResult(PSMTabBarCell *a, PSMTabBarCell *b) {
-        const NSInteger ia = [self->_tabView indexOfTabViewItem:[a representedObject]];
-        const NSInteger ib = [self->_tabView indexOfTabViewItem:[b representedObject]];
-        if (ia < ib) {
-            return NSOrderedAscending;
-        }
-        if (ia > ib) {
-            return NSOrderedDescending;
-        }
-        return NSOrderedSame;
-    }];
-    [self normalizeTabGroupChipCells];
-
-    if ([self.delegate respondsToSelector:@selector(tabView:didReorderTabsInTabBar:)]) {
-        [self.delegate tabView:_tabView didReorderTabsInTabBar:self];
-    }
-    [self update:YES];
-}
-
-- (void)trackGroupDragForChip:(PSMTabBarCell *)chip startPoint:(NSPoint)startPoint {
-    NSArray<PSMTabBarCell *> *members = [self tabGroupMemberCellsForChip:chip];
-    if (members.count == 0) {
-        return;
-    }
-    const BOOL horizontal = (_orientation == PSMTabBarHorizontalOrientation);
-
-    // Snapshot the run (chip + members) into a floating drag image. Round the
-    // union out to whole pixels and include the group outline's trailing edge
-    // (the cell frames can be fractional and the decoration draws 1pt past them),
-    // clamped to the bar, so the snapshot isn't clipped short on the bottom/right.
-    NSRect runFrame = [chip frame];
-    for (PSMTabBarCell *c in members) {
-        runFrame = NSUnionRect(runFrame, [c frame]);
-    }
-    runFrame = NSIntegralRect(runFrame);
-    runFrame.size.width += 1;
-    runFrame.size.height += 1;
-    runFrame = NSIntersectionRect(runFrame, self.bounds);
-    NSBitmapImageRep *rep = [self bitmapImageRepForCachingDisplayInRect:runFrame];
-    [self cacheDisplayInRect:runFrame toBitmapImageRep:rep];
-    NSImage *image = [[[NSImage alloc] initWithSize:runFrame.size] autorelease];
-    [image addRepresentation:rep];
-
-    const NSRect runInWindow = [self convertRect:runFrame toView:nil];
-    const NSRect runOnScreen = [self.window convertRectToScreen:runInWindow];
-    PSMTabDragWindow *dragWindow =
-        [PSMTabDragWindow dragWindowWithTabBarCell:chip
-                                             image:image
-                                         styleMask:NSWindowStyleMaskBorderless];
-    [dragWindow setFrame:runOnScreen display:YES];
-    [dragWindow setAlphaValue:0.75];
-    [dragWindow orderFront:nil];
-
-    // Insertion marker in the group color; a layer-backed subview so no drawRect
-    // change is needed.
-    id<PSMTabGroup> group = [self.tabGroupDataSource tabGroupWithIdentifier:[chip tabGroupIdentifier]];
-    NSColor *markerColor = group.color ?: [NSColor systemBlueColor];
-    NSView *marker = [[[NSView alloc] initWithFrame:NSZeroRect] autorelease];
-    marker.wantsLayer = YES;
-    marker.layer.backgroundColor = markerColor.CGColor;
-    [self addSubview:marker];
-
-    const NSRange runRange = [self tabRangeForChip:chip memberCount:(NSInteger)members.count];
-    const NSPoint startMouse = [NSEvent mouseLocation];
-    // A drop inside the bar reorders the group here; a drop outside is handed to
-    // the delegate, which can move the whole group to another window's tab bar or
-    // tear it off into a new window (the vendored control must not know about
-    // other windows). Allow a generous slop so a slightly-off release still
-    // counts as inside.
-    const CGFloat kOutsideSlop = 40;
-    const NSRect liveRect = NSInsetRect(self.bounds, -kOutsideSlop, -kOutsideSlop);
-    NSInteger dropBoundary = (NSInteger)runRange.location;  // default: no move
-    BOOL insideBar = YES;
-    NSPoint dropScreenPoint = NSZeroPoint;
-    // A destination bar opens a gap sized to how wide these tabs will be THERE.
-    const NSInteger memberCount = (NSInteger)members.count;
-    PSMTabBarControl *destBar = nil;    // another window's bar under the cursor
-    NSInteger destDropIndex = 0;        // where the group would land in destBar
-    BOOL dragging = YES;
-    while (dragging) {
-        NSEvent *event = [NSApp nextEventMatchingMask:(NSEventMaskLeftMouseDragged | NSEventMaskLeftMouseUp)
-                                            untilDate:[NSDate distantFuture]
-                                               inMode:NSEventTrackingRunLoopMode
-                                              dequeue:YES];
-        const NSPoint viewPoint = [self convertPoint:[event locationInWindow] fromView:nil];
-        if (event.type == NSEventTypeLeftMouseUp) {
-            insideBar = NSPointInRect(viewPoint, liveRect);
-            dropScreenPoint = [NSEvent mouseLocation];
-            dragging = NO;
-            continue;
-        }
-        const NSPoint mouse = [NSEvent mouseLocation];
-        [dragWindow setFrameOrigin:NSMakePoint(runOnScreen.origin.x + (mouse.x - startMouse.x),
-                                               runOnScreen.origin.y + (mouse.y - startMouse.y))];
-
-        // Is another window's tab bar under the cursor? If so, open an animated
-        // drop gap there and suppress the source-bar marker.
-        PSMTabBarControl *overBar = nil;
-        if ([self.delegate respondsToSelector:@selector(tabView:tabBarControlForScreenPoint:)]) {
-            overBar = [self.delegate tabView:_tabView tabBarControlForScreenPoint:mouse];
-        }
-        if (overBar != destBar) {
-            [destBar closeGroupDropGapAnimated:YES];
-            destBar = overBar;
-        }
-        if (destBar) {
-            const NSPoint inWindow = [[destBar window] convertPointFromScreen:mouse];
-            const NSPoint inBar = [destBar convertPoint:inWindow fromView:nil];
-            destDropIndex = [destBar updateGroupDropGapAtPoint:inBar tabCount:memberCount];
-            marker.hidden = YES;
-            continue;
-        }
-
-        CGFloat markerCoord = 0;
-        dropBoundary = [self groupDropBoundaryForPoint:viewPoint
-                                            horizontal:horizontal
-                                          excludingRun:runRange
-                                           markerCoord:&markerCoord];
-        const BOOL outside = !NSPointInRect(viewPoint, liveRect);
-        marker.hidden = outside;
-        if (horizontal) {
-            marker.frame = NSMakeRect(markerCoord - 1, 0, 2, NSHeight(self.bounds));
-        } else {
-            marker.frame = NSMakeRect(0, markerCoord - 1, NSWidth(self.bounds), 2);
-        }
-    }
-
-    // The floating snapshot's top-left in screen coords: where the group visually
-    // is at drop, so a new window can be placed there (like the single-tab
-    // tear-off) rather than at the cursor.
-    const NSRect dragFrame = [dragWindow frame];
-    const NSPoint dragImageTopLeft = NSMakePoint(NSMinX(dragFrame), NSMaxY(dragFrame));
-
-    // Snap the destination gap shut now; the group will be inserted there and the
-    // bar relaid out. Do it before the delegate move so there's no double gap.
-    const NSInteger destIndex = destDropIndex;
-    const BOOL droppedOnDestBar = (destBar != nil);
-    [destBar closeGroupDropGapAnimated:NO];
-
-    [marker removeFromSuperview];
-    [dragWindow orderOut:nil];
-    if (insideBar && !droppedOnDestBar) {
-        [self moveTabGroupMembers:members toBoundary:dropBoundary run:runRange];
-        return;
-    }
-    // Outside the bar: hand the whole group's tabs to the delegate for a
-    // cross-window move (into the bar under the cursor, at destIndex) or a
-    // new-window tear-off.
-    NSMutableArray<NSTabViewItem *> *items = [NSMutableArray arrayWithCapacity:members.count];
-    for (PSMTabBarCell *c in members) {
-        if ([c representedObject]) {
-            [items addObject:[c representedObject]];
-        }
-    }
-    if (items.count > 0 &&
-        [self.delegate respondsToSelector:@selector(tabView:moveTabGroupWithIdentifier:tabViewItems:toScreenPoint:dropTabIndex:dragImageTopLeft:)]) {
-        [self.delegate tabView:_tabView
-     moveTabGroupWithIdentifier:[chip tabGroupIdentifier]
-                   tabViewItems:items
-                  toScreenPoint:dropScreenPoint
-                   dropTabIndex:(droppedOnDestBar ? destIndex : -1)
-               dragImageTopLeft:dragImageTopLeft];
-    }
-}
-
-#pragma mark - Group drop preview (destination bar)
-
-- (NSInteger)updateGroupDropGapAtPoint:(NSPoint)pointInBar tabCount:(NSInteger)tabCount {
-    const BOOL horizontal = (_orientation == PSMTabBarHorizontalOrientation);
-    // Drop cell index: before the first cell whose current midpoint is past the
-    // point (nearest insertion boundary); default is the end.
-    const CGFloat along = horizontal ? pointInBar.x : pointInBar.y;
-    NSInteger gapCellIndex = (NSInteger)_cells.count;
-    for (NSInteger i = 0; i < (NSInteger)_cells.count; i++) {
-        const NSRect f = [_cells[i] frame];
-        const CGFloat mid = horizontal ? NSMidX(f) : NSMidY(f);
-        if (along < mid) {
-            gapCellIndex = i;
-            break;
-        }
-    }
-    _groupDropGapCellIndex = gapCellIndex;
-
-    // Target gap width = how wide the incoming tabs will be HERE once the layout
-    // makes room. When stretching to fill, every tab (existing + incoming)
-    // becomes uniform, so the gap is available * count/(existing+count) and the
-    // reservation shrinks the existing tabs to match. Otherwise it's the natural
-    // per-tab width times the count.
-    NSInteger existingTabs = 0;
-    CGFloat naturalPerTab = self.cellOptimumWidth;
-    for (PSMTabBarCell *c in _cells) {
-        if (![c isTabGroupChip] && ![c isPlaceholder]) {
-            if (existingTabs == 0) {
-                naturalPerTab = horizontal ? NSWidth([c frame]) : NSHeight([c frame]);
-            }
-            existingTabs++;
-        }
-    }
-    const CGFloat count = MAX(0, tabCount);
-    const CGFloat rightMargin = [_style rightMarginForTabBarControlWithOverflow:NO
-                                                                   addTabButton:self.showAddTabButton];
-    const CGFloat leftMargin = [_style leftMarginForTabBarControl];
-    const CGFloat baseAvailable = self.frame.size.width - leftMargin - rightMargin;
-    if (self.stretchCellsToFit && (existingTabs + count) > 0) {
-        _groupDropGapTargetWidth = baseAvailable * count / (existingTabs + count);
-    } else {
-        _groupDropGapTargetWidth = count * naturalPerTab;
-    }
-
-    if (!_groupDropGapTimer) {
-        _groupDropGapTimer = [NSTimer timerWithTimeInterval:(1.0 / 60.0)
-                                                     target:self
-                                                   selector:@selector(stepGroupDropGap:)
-                                                   userInfo:nil
-                                                    repeats:YES];
-        [[NSRunLoop currentRunLoop] addTimer:_groupDropGapTimer forMode:NSEventTrackingRunLoopMode];
-        [[NSRunLoop currentRunLoop] addTimer:_groupDropGapTimer forMode:NSDefaultRunLoopMode];
-    }
-    // Tab index at the gap (skip chip cells before it).
-    NSInteger tabIndex = 0;
-    for (NSInteger i = 0; i < gapCellIndex && i < (NSInteger)_cells.count; i++) {
-        if (![_cells[i] isTabGroupChip]) {
-            tabIndex++;
-        }
-    }
-    return tabIndex;
-}
-
-- (void)stepGroupDropGap:(NSTimer *)timer {
-    const CGFloat kStep = 40;  // px per tick; the gap can be wide so open briskly
-    if (_groupDropGapWidth < _groupDropGapTargetWidth) {
-        _groupDropGapWidth = MIN(_groupDropGapTargetWidth, _groupDropGapWidth + kStep);
-    } else if (_groupDropGapWidth > _groupDropGapTargetWidth) {
-        _groupDropGapWidth = MAX(_groupDropGapTargetWidth, _groupDropGapWidth - kStep);
-    }
-    if (_groupDropGapWidth != _groupDropGapAppliedWidth ||
-        _groupDropGapCellIndex != _groupDropGapAppliedIndex) {
-        [self applyGroupDropGap];
-        _groupDropGapAppliedWidth = _groupDropGapWidth;
-        _groupDropGapAppliedIndex = _groupDropGapCellIndex;
-    }
-    if (_groupDropGapWidth == _groupDropGapTargetWidth && _groupDropGapTargetWidth == 0) {
-        // Animated close finished (the cursor left the bar): restore the layout.
-        [self teardownGroupDropGapRestoringLayout:YES];
-    }
-}
-
-- (void)applyGroupDropGap {
-    // Relayout with the gap reserved (availableCellWidthWithOverflow subtracts
-    // _groupDropGapWidth), so the existing tabs shrink/redistribute to fit the
-    // remaining width, then slide the cells at/after the gap right to open the
-    // real space.
-    [self updateWithoutAnimation];
-    const BOOL horizontal = (_orientation == PSMTabBarHorizontalOrientation);
-    for (NSInteger i = _groupDropGapCellIndex; i < (NSInteger)_cells.count; i++) {
-        NSRect f = [_cells[i] frame];
-        if (horizontal) {
-            f.origin.x += _groupDropGapWidth;
-        } else {
-            f.origin.y += _groupDropGapWidth;
-        }
-        [_cells[i] setFrame:f];
-    }
-    [self setNeedsDisplay:YES];
-}
-
-- (void)teardownGroupDropGapRestoringLayout:(BOOL)restore {
-    [_groupDropGapTimer invalidate];
-    _groupDropGapTimer = nil;
-    _groupDropGapWidth = 0;
-    _groupDropGapTargetWidth = 0;
-    _groupDropGapCellIndex = 0;
-    _groupDropGapAppliedWidth = -1;
-    _groupDropGapAppliedIndex = -1;
-    if (restore) {
-        [self update];  // no drop happening: relayout without the reservation
-    }
-    // When not restoring (a drop is landing here), leave the cells in their
-    // gapped positions; the caller's tab insertion relays out from there, so the
-    // existing tabs don't jump to full width and back.
-}
-
-- (void)closeGroupDropGapAnimated:(BOOL)animated {
-    if (_groupDropGapWidth == 0 && !_groupDropGapTimer) {
-        return;
-    }
-    if (animated) {
-        _groupDropGapTargetWidth = 0;  // the timer closes it, then tears down + restores
-    } else {
-        [self teardownGroupDropGapRestoringLayout:NO];  // drop: insertion will relayout
-    }
-}
 
 - (void)otherMouseUp:(NSEvent *)theEvent
 {
