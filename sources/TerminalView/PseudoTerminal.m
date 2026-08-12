@@ -463,6 +463,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 @synthesize variables = _variables;
 @synthesize windowTitleOverrideSwiftyString = _windowTitleOverrideSwiftyString;
 @synthesize tabViewItemForColorPicker = _tabViewItemForColorPicker;
+@synthesize tabGroupIDForColorPicker = _tabGroupIDForColorPicker;
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
     for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
@@ -8016,6 +8017,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [item setView:labelTrackView];
     [item setRepresentedObject:tabViewItem];
     _tabViewItemForColorPicker = tabViewItem;
+    _tabGroupIDForColorPicker = nil;  // this picker targets a tab, not a group
     [rootMenu addItem:item];
     rootMenu.minimumWidth = tabColorViewSize.width;
 
@@ -8551,7 +8553,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         ] retain];
     });
     NSUInteger index = [self tabGroupsInWindow].count % palette.count;
-    return palette[index];
+    // System colors (systemBlueColor, ...) are catalog colors with no direct
+    // -colorSpace; the tab color swatch view calls -colorSpace when comparing,
+    // which throws for catalog colors. Store the group color in a concrete color
+    // space like tab colors are, so the picker can use it safely.
+    return [palette[index] it_colorInDefaultColorSpace];
 }
 
 - (BOOL)tabBarProvidesProgressVisibility {
@@ -8828,8 +8834,60 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         mi.representedObject = groupID;
         mi.target = self;
         [menu addItem:mi];
+
+        // The color swatch picker (same control as Tab Color) goes right after
+        // Rename, before the first separator.
+        if ([spec[1] isEqualToString:@"renameTabGroupFromMenu:"]) {
+            [self addTabGroupColorItemToMenu:menu forGroupID:groupID];
+        }
     }
     return menu;
+}
+
+- (void)addTabGroupColorItemToMenu:(NSMenu *)menu forGroupID:(NSString *)groupID {
+    NSArray<PTYTab *> *members = [self tabsInGroup:groupID];
+    const NSSize size = [ColorsMenuItemView preferredSize];
+    ColorsMenuItemView *colorView =
+        [[[ColorsMenuItemView alloc] initWithFrame:NSMakeRect(0, 0, size.width, size.height)] autorelease];
+    // Convert to a concrete color space: a catalog color (e.g. a legacy group
+    // created before this fix) makes the swatch view throw in -colorSpace.
+    colorView.currentColor = [members.firstObject.tabGroupColor it_colorInDefaultColorSpace];
+    colorView.delegate = self;
+    NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:@"Group Color"
+                                                  action:@selector(changeTabGroupColorToMenuAction:)
+                                           keyEquivalent:@""] autorelease];
+    item.view = colorView;
+    item.representedObject = groupID;
+    item.target = self;
+    // Route the "more colors" picker and its live updates to this group; anchor
+    // the popover to the group's first member.
+    _tabGroupIDForColorPicker = groupID;
+    _tabViewItemForColorPicker = members.firstObject.tabViewItem;
+    [menu addItem:item];
+    if (menu.minimumWidth < size.width) {
+        menu.minimumWidth = size.width;
+    }
+}
+
+// Preset/reset swatch chosen from the group's color picker.
+- (void)changeTabGroupColorToMenuAction:(id)sender {
+    NSColor *color = [(ColorsMenuItemView *)[sender view] color];
+    [self setTabGroupColor:color forGroupID:[sender representedObject]];
+}
+
+// Set the color on every member of the group (the definition rides the tabs).
+- (void)setTabGroupColor:(NSColor *)color forGroupID:(NSString *)groupID {
+    if (groupID.length == 0) {
+        return;
+    }
+    for (PTYTab *member in [self tabsInGroup:groupID]) {
+        member.tabGroupColor = color;
+    }
+    if (color) {
+        [[iTermRecentTabColors shared] addColor:color];
+    }
+    [self updateTabColors];
+    [self relayoutTabGroupChipsSynchronously];
 }
 
 - (void)renameTabGroupFromMenu:(id)sender {

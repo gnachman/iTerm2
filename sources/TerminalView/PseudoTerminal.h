@@ -123,6 +123,12 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 // Tab whose color is being changed via the color picker.
 @property(nonatomic, weak) NSTabViewItem *tabViewItemForColorPicker;
+// Non-nil while the color picker is targeting a tab group (its members' color)
+// rather than a single tab. When set, color changes apply to the whole group.
+@property(nonatomic, copy) NSString *tabGroupIDForColorPicker;
+// Set the given color on every member of a tab group (the color rides the
+// tabs). A nil color clears it (the chip falls back to its default).
+- (void)setTabGroupColor:(NSColor *)color forGroupID:(NSString *)groupID;
 
 // Mutable state for the tab color picker (popover, debounce timer, etc.).
 @property(nonatomic, strong) TabColorPickerState *tabColorPickerState;

@@ -258,6 +258,12 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
     }
 
     private func applyTabColor(_ color: NSColor) {
+        // When the picker was opened for a group (its members share one color),
+        // apply to the whole group instead of a single tab.
+        if let groupID = tabGroupIDForColorPicker, !groupID.isEmpty {
+            setTabGroupColor(color, forGroupID: groupID)
+            return
+        }
         guard let tab = targetTab() else { return }
         for session in tab.sessions() {
             session.tabColor = color
