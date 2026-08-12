@@ -60,7 +60,11 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
     
     @objc var intercellSpacing: CGFloat {
-        1.0
+        // 2pt of frame spacing leaves ~1pt of clear gap between adjacent selected
+        // tabs' outline strokes (each stroke reaches ~0.5pt past its pill), which
+        // matches the system tab bar. At 1pt the two strokes met and the group
+        // run's enclosing outline overlapped the neighboring tab.
+        2.0
     }
     
     @objc var supportsMultiLineLabels: Bool {
