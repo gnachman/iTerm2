@@ -1816,19 +1816,28 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     for (NSInteger i = 0; i < (NSInteger)cells.count; i++) {
         PSMTabBarCell *c = cells[i];
         [withSlots addObject:c];
+        // The front-of-group and end-of-group slots are "join this group"
+        // affordances that only make sense for a single-tab drag. A whole-group
+        // drag is never allowed to land inside another group, so add neither.
+        const BOOL draggingGroup = (_draggedGroupID.length > 0);
         if ([c isTabGroupChip]) {
-            // Front-of-group slot, sized to the first member.
-            NSRect slotFrame = [c frame];
-            for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
-                if (![cells[j] isTabGroupChip]) {
-                    slotFrame = [cells[j] frame];
-                    break;
+            if (!draggingGroup) {
+                // Front-of-group slot, sized to the first member.
+                NSRect slotFrame = [c frame];
+                for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
+                    if (![cells[j] isTabGroupChip]) {
+                        slotFrame = [cells[j] frame];
+                        break;
+                    }
                 }
+                PSMTabBarCell *slot = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:slotFrame
+                                                                             expanded:NO
+                                                                        inControlView:control] autorelease];
+                [withSlots addObject:slot];
             }
-            PSMTabBarCell *slot = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:slotFrame
-                                                                         expanded:NO
-                                                                    inControlView:control] autorelease];
-            [withSlots addObject:slot];
+            continue;
+        }
+        if (draggingGroup) {
             continue;
         }
         // End-of-group slot: after a group's LAST member add a slot tagged to
