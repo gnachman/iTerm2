@@ -732,6 +732,11 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     private static let groupNameCapsuleMargin: CGFloat = 1 // group-color margin around the name capsule
     private static let groupBAreaWidth: CGFloat = 3        // colored area between the name capsule and first tab (yields a 4pt name-to-tab gap)
     private static let groupChipToTabGap: CGFloat = 1      // bg gap between that colored area and the first tab
+    private static let groupRunOutset: CGFloat = 2         // how far the enclosing pill extends past the wrapped tabs
+
+    @objc func tabGroupRunOutset() -> CGFloat {
+        return Self.groupRunOutset
+    }
 
     @objc func tabGroupChipCellWidth(forName name: String) -> CGFloat {
         let font = NSFont.boldSystemFont(ofSize: NSFont.smallSystemFontSize)
@@ -819,7 +824,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         let chipFrame = chip.frame
         // Outset the pill so its 1pt outline clears the tab pills by 1pt on
         // top/bottom/right (at outset 1 the line touched the tabs).
-        let outset: CGFloat = 2
+        let outset = Self.groupRunOutset
         let pill = NSRect(x: chipFrame.minX,
                           y: tabsRect.minY - outset,
                           width: tabsRect.maxX + outset - chipFrame.minX,
@@ -915,7 +920,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         let name = group?.name ?? ""
 
         let chipFrame = chip.frame
-        let outset: CGFloat = 2
+        let outset = Self.groupRunOutset
         let pill = NSRect(x: tabsRect.minX - outset,
                           y: chipFrame.minY,
                           width: tabsRect.width + 2 * outset,

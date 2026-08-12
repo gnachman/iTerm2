@@ -70,6 +70,10 @@ NS_ASSUME_NONNULL_BEGIN
 // enclosing colored pill around the group's tabs) in -drawTabBar:, since the
 // enclosing pill spans multiple cells.
 - (void)drawTabGroupRunDecorationsForTabBar:(PSMTabBarControl *)bar clipRect:(NSRect)clipRect;
+// How far the enclosing group-run pill extends past the tab cells it wraps.
+// The scrollable-bar viewport clip stops at the last tab, so it must widen by
+// this much or the last group's outline is clipped. Defaults to 0.
+- (CGFloat)tabGroupRunOutset;
 @required
 - (NSRect)objectCounterRectForTabCell:(PSMTabBarCell *)cell;
 - (float)minimumWidthOfTabCell:(PSMTabBarCell *)cell;

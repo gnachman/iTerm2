@@ -1209,7 +1209,13 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     // Only clip when tabs actually overflow the bar; with everything visible there is nothing to clip.
     const BOOL needClip = (scrollable && maximumOffset > 0);
     const CGFloat leadingClip = cutOffDecorationBand ? leadingMargin : 0;
-    const CGFloat trailingClip = scrollable ? [self scrollViewportLength] : fullLength;
+    // The viewport clip stops at the last tab. A group's enclosing pill extends a
+    // little past its tabs, so widen the trailing edge by that outset (into the
+    // add-button margin, which has room) or the last group's outline is clipped.
+    const CGFloat groupRunOutset = ([_style respondsToSelector:@selector(tabGroupRunOutset)]
+                                    ? [_style tabGroupRunOutset]
+                                    : 0);
+    const CGFloat trailingClip = scrollable ? ([self scrollViewportLength] + groupRunOutset) : fullLength;
 
     // Paint the bar background in the leading decoration band and the trailing add-button margin, and
     // the tabs in the region between. Each strip goes through the style's own tab-bar drawing (clipped
