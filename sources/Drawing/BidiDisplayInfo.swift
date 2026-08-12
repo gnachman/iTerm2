@@ -171,60 +171,29 @@ fileprivate struct IntermediateLookupTable {
         // LRI is itself nested in an outer RTL isolate. The LRI explicitly
         // makes that content an LTR island, so its brackets must retain their
         // typed glyphs just as they do when the island is not nested.
+        // Only isolate controls WE inserted count (they map to no cell, so
+        // cellForIndex is negative): a program-printed LRI with no closing PDI
+        // is content and must not blanket-exempt the rest of the line. The
+        // innermost isolate decides, so islands stay exempt inside an outer
+        // RLI while RTL text outside them keeps mirroring.
         var latinIsolateIndexes = IndexSet()
         var isolateStack = [unichar]()
         for index in 0..<string.length {
             let character = string.character(at: index)
+            let inserted = index < cellForIndex.count && cellForIndex[index] < 0
             if character == iTermLRI || character == iTermRLI || character == iTermFSI {
-                isolateStack.append(character)
+                if inserted { isolateStack.append(character) }
             } else if character == iTermPDI {
-                if !isolateStack.isEmpty { isolateStack.removeLast() }
-            } else if isolateStack.contains(iTermLRI) {
+                if inserted && !isolateStack.isEmpty { isolateStack.removeLast() }
+            } else if isolateStack.last == iTermLRI {
                 latinIsolateIndexes.insert(index)
             }
         }
-        // An outer RTL isolate can also make CoreText mirror brackets around a
-        // plain LTR phrase when Latin-run isolation is disabled. Preserve the
-        // typed bracket glyphs for a pair whose enclosed strong characters are
-        // exclusively LTR; pairs around RTL text still mirror normally.
-        var ltrBracketIndexes = IndexSet()
-        if let strongLTR = NSCharacterSet.strongLTRCodePoints(),
-           let strongRTL = NSCharacterSet.strongRTLCodePoints() {
-            var bracketStack = [(character: unichar, index: Int)]()
-            func matchingOpen(_ close: unichar) -> unichar? {
-                switch close {
-                case 0x29: return 0x28
-                case 0x5D: return 0x5B
-                case 0x7D: return 0x7B
-                default: return nil
-                }
-            }
-            for index in 0..<string.length {
-                let character = string.character(at: index)
-                if character == 0x28 || character == 0x5B || character == 0x7B {
-                    bracketStack.append((character, index))
-                } else if let open = matchingOpen(character),
-                          let top = bracketStack.last,
-                          top.character == open {
-                    bracketStack.removeLast()
-                    var hasLTR = false
-                    var hasRTL = false
-                    if top.index + 1 < index {
-                        for enclosedIndex in (top.index + 1)..<index {
-                            let enclosed = string.character(at: enclosedIndex)
-                            if let scalar = Unicode.Scalar(enclosed) {
-                                hasLTR = hasLTR || strongLTR.contains(scalar)
-                                hasRTL = hasRTL || strongRTL.contains(scalar)
-                            }
-                        }
-                    }
-                    if hasLTR && !hasRTL {
-                        ltrBracketIndexes.insert(top.index)
-                        ltrBracketIndexes.insert(index)
-                    }
-                }
-            }
-        }
+        // NOTE: brackets around a pure-LTR phrase in an RTL context need NO
+        // exemption here. CoreText both repositions the pair (the LUT keeps
+        // those swapped positions) and mirrors the glyphs, and the two cancel
+        // out to a correct-facing pair. Suppressing only the mirror half
+        // renders )hello( — see testParenthesesAroundLatinIslandKeepMirrorCancellation.
         let runs = CTLineGetGlyphRuns(line) as! [CTRun]
 
         func cell(_ stringIndex: Int) -> Int {
@@ -286,8 +255,7 @@ fileprivate struct IntermediateLookupTable {
                         CTFontGetGlyphsForCharacters(font, &chars, &defaultGlyphs, 1)
                         if glyphs[i] != defaultGlyphs[0] &&
                            !isGuillemet(ch) &&
-                           !latinIsolateIndexes.contains(stringIndex) &&
-                           !ltrBracketIndexes.contains(stringIndex) {
+                           !latinIsolateIndexes.contains(stringIndex) {
                             mirroredIndexes.insert(sourceCell)
                         }
                     }
@@ -546,6 +514,9 @@ private func isolateRTLSuffixAfterLTRPrefix(_ s: NSString,
         default: return opening
         }
     }
+    func isWordCharacter(_ c: unichar) -> Bool {
+        return (c >= 0x30 && c <= 0x39) || (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A)
+    }
     var delimiterStack = [(character: unichar, index: Int)]()
     if boundary > 0 {
         for index in 0..<boundary {
@@ -557,8 +528,13 @@ private func isolateRTLSuffixAfterLTRPrefix(_ s: NSString,
                 }
                 continue
             }
+            // A quote glued to a letter or digit (teachers', 5") is prose
+            // punctuation, not an opening shell quote.
+            let afterWordCharacter = index > 0 && isWordCharacter(s.character(at: index - 1))
             if (character == 0x22 || character == 0x27) && !isEscaped(index) {
-                delimiterStack.append((character, index))
+                if !afterWordCharacter {
+                    delimiterStack.append((character, index))
+                }
             } else if character == 0x28 || character == 0x5B || character == 0x7B {
                 delimiterStack.append((character, index))
             } else if let top = delimiterStack.last,
@@ -568,6 +544,12 @@ private func isolateRTLSuffixAfterLTRPrefix(_ s: NSString,
         }
     }
 
+    // The isolate ends at the opening delimiter's matching closer, so anything
+    // typed after the closed argument (&& ls, a prose tail) stays in the outer
+    // LTR paragraph. An unmatched delimiter (still typing) extends to the end
+    // of the line, as does a payload with no delimiter at all.
+    let firstRTL = boundary
+    var isolateEnd = s.length - 1
     if let opening = delimiterStack.last {
         let payloadPrefixRange = NSRange(location: opening.index + 1,
                                          length: boundary - opening.index - 1)
@@ -580,6 +562,35 @@ private func isolateRTLSuffixAfterLTRPrefix(_ s: NSString,
         // of around the visually reordered argument. This also covers spaces
         // between the opening delimiter and the first strong character.
         boundary = opening.index
+        let closer = closingDelimiter(for: opening.character)
+        if opening.character == 0x22 || opening.character == 0x27 {
+            // No unescaped closer can precede the first RTL character, or the
+            // outer scan would have popped this quote already.
+            var index = firstRTL
+            while index < s.length {
+                if s.character(at: index) == closer && !isEscaped(index) {
+                    isolateEnd = index
+                    break
+                }
+                index += 1
+            }
+        } else {
+            var depth = 1
+            var index = opening.index + 1
+            while index < s.length {
+                let character = s.character(at: index)
+                if character == opening.character {
+                    depth += 1
+                } else if character == closer {
+                    depth -= 1
+                    if depth == 0 {
+                        isolateEnd = index
+                        break
+                    }
+                }
+                index += 1
+            }
+        }
     } else {
         // With no payload delimiter there is no reliable way to distinguish an
         // LTR command prefix from an English-first sentence. Preserve the
@@ -603,10 +614,14 @@ private func isolateRTLSuffixAfterLTRPrefix(_ s: NSString,
     outputMap.append(contentsOf: cellForIndex[..<boundary])
     output.append(iTermRLI)
     outputMap.append(-1)
-    output.append(contentsOf: input[boundary...])
-    outputMap.append(contentsOf: cellForIndex[boundary...])
+    output.append(contentsOf: input[boundary...isolateEnd])
+    outputMap.append(contentsOf: cellForIndex[boundary...isolateEnd])
     output.append(iTermPDI)
     outputMap.append(-1)
+    if isolateEnd + 1 < input.count {
+        output.append(contentsOf: input[(isolateEnd + 1)...])
+        outputMap.append(contentsOf: cellForIndex[(isolateEnd + 1)...])
+    }
     return (NSString(characters: output, length: output.count), outputMap)
 }
 

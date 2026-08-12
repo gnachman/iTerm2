@@ -416,4 +416,148 @@ class RTLBidiCaseTests: XCTestCase {
             print("RTLCASE   out=[\(visual(line))]")
         }
     }
+
+    // Pins Detect/Justify/Isolate to the shipped defaults for the duration of
+    // one closure, restoring whatever was there before.
+    private func withShippedDefaults(_ body: () -> Void) {
+        let d = iTermUserDefaults.userDefaults()
+        let keys = ["DetectParagraphDirection", "RightJustifyRTLLines", "IsolateLatinRunsInRTL"]
+        let saved = keys.map { d.object(forKey: $0) }
+        keys.forEach { d.set(false, forKey: $0) }
+        iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+        defer {
+            for (key, value) in zip(keys, saved) {
+                if let value { d.set(value, forKey: key) } else { d.removeObject(forKey: key) }
+            }
+            iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+        }
+        body()
+    }
+
+    private func rev(_ s: String) -> String { String(s.reversed()) }
+
+    // The RTL isolate must stop at the closing delimiter, not run to the end of
+    // the line: anything typed after the quoted argument stays where it was typed.
+    func testCommandTailAfterQuotedRTLArgumentStaysAtLineEnd() {
+        withShippedDefaults {
+            let input = "echo 'سلام دنیا' && ls"
+            let expected = "echo '" + rev("دنیا") + " " + rev("سلام") + "' && ls"
+            XCTAssertEqual(visual(input).trimmingCharacters(in: .whitespaces), expected,
+                           "text after the closing quote must not join the RTL isolate")
+        }
+    }
+
+    // English prose with a quoted RTL word: the tail after the closing quote
+    // stays in place.
+    func testEnglishProseWithQuotedRTLWordKeepsTailInPlace() {
+        withShippedDefaults {
+            let input = "he said 'سلام' to me"
+            let expected = "he said '" + rev("سلام") + "' to me"
+            XCTAssertEqual(visual(input).trimmingCharacters(in: .whitespaces), expected,
+                           "prose after a closed quote must keep its position")
+        }
+    }
+
+    // An apostrophe glued to a letter (possessive, inch mark) is punctuation,
+    // not an opening shell quote, and must not move the isolate boundary.
+    func testPossessiveApostropheBeforeRTLDoesNotOpenAQuote() {
+        withShippedDefaults {
+            let input = "teachers' سلام okay"
+            let expected = "teachers' " + rev("سلام") + " okay"
+            XCTAssertEqual(visual(input).trimmingCharacters(in: .whitespaces), expected,
+                           "a possessive apostrophe must stay glued to its word")
+        }
+    }
+
+    // CoreText both repositions AND mirrors a bracket pair around an LTR island
+    // inside an RTL context; the two cancel out to a correct-facing (hello).
+    // The LUT keeps the swapped positions, so the mirror flags must stay set —
+    // suppressing them draws )hello(.
+    func testParenthesesAroundLatinIslandKeepMirrorCancellation() {
+        withShippedDefaults {
+            let input = "echo 'سلام (hello) دنیا'"
+            let ns = input as NSString
+            let openIndex = Int32(ns.range(of: "(").location)
+            let closeIndex = Int32(ns.range(of: ")").location)
+            guard let bidi = BidiDisplayInfoObjc(
+                screenCharArrayWithDefaultStyle(input, eol: EOL_HARD)) else {
+                return XCTFail("mixed parenthesized argument must produce bidi info")
+            }
+            XCTAssertGreaterThan(bidi.visualForLogical(openIndex),
+                                 bidi.visualForLogical(closeIndex),
+                                 "CoreText swaps the bracket positions in an RTL context")
+            XCTAssertTrue(bidi.mirrorsSourceCell(openIndex),
+                          "the repositioned ( must keep its mirror flag or it faces outward")
+            XCTAssertTrue(bidi.mirrorsSourceCell(closeIndex),
+                          "the repositioned ) must keep its mirror flag or it faces outward")
+        }
+    }
+
+    // A leading RLM (U+200F) is a formatting mark, not text: it must not cause
+    // an otherwise-Latin line to be wrapped in an RTL isolate.
+    func testLeadingRLMDoesNotWrapLatinLine() {
+        withShippedDefaults {
+            let input = "\u{200F}hello world."
+            let sca = screenCharArrayWithDefaultStyle(input, eol: EOL_HARD)
+            guard let bidi = BidiDisplayInfoObjc(sca) else {
+                return  // No bidi info at all is equally verbatim.
+            }
+            let ns = input as NSString
+            for logical in 1..<ns.length {
+                XCTAssertEqual(bidi.visualForLogical(Int32(logical)), Int32(logical),
+                               "ASCII text after a leading RLM must stay verbatim at cell \(logical)")
+            }
+        }
+    }
+
+    // A program-printed LRI (U+2066) with no closing PDI is content, not one of
+    // our inserted controls: it must not blanket-exempt the rest of the line
+    // from bracket mirroring.
+    func testContentLRIDoesNotSuppressMirroringForRestOfLine() {
+        withShippedDefaults {
+            let input = "\u{2066}chat سلام (تهران) دنیا"
+            let sca = screenCharArrayWithDefaultStyle(input, eol: EOL_HARD)
+            // Index against the cell string: a zero-width control may not
+            // survive as its own cell, shifting everything after it.
+            let cells = sca.stringValue as NSString
+            let openIndex = Int32(cells.range(of: "(").location)
+            let closeIndex = Int32(cells.range(of: ")").location)
+            guard let bidi = BidiDisplayInfoObjc(sca) else {
+                return XCTFail("mixed line with a content LRI must produce bidi info")
+            }
+            guard bidi.visualForLogical(openIndex) > bidi.visualForLogical(closeIndex) else {
+                return  // Parens not repositioned here; nothing to cancel.
+            }
+            XCTAssertTrue(bidi.mirrorsSourceCell(openIndex),
+                          "( around RTL text must keep mirroring despite a stray content LRI")
+            XCTAssertTrue(bidi.mirrorsSourceCell(closeIndex),
+                          ") around RTL text must keep mirroring despite a stray content LRI")
+        }
+    }
+
+    // With Latin-run isolation ON, a quote glued to an option (--message=") sits
+    // inside an LRI island; splicing the RLI at that quote used to cross-nest the
+    // isolates and re-scramble the payload.
+    func testGluedQuoteInsideLatinIslandDoesNotCrossNestIsolates() {
+        let d = iTermUserDefaults.userDefaults()
+        let keys = ["DetectParagraphDirection", "RightJustifyRTLLines", "IsolateLatinRunsInRTL"]
+        let saved = keys.map { d.object(forKey: $0) }
+        d.set(false, forKey: "DetectParagraphDirection")
+        d.set(false, forKey: "RightJustifyRTLLines")
+        d.set(true, forKey: "IsolateLatinRunsInRTL")
+        iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+        defer {
+            for (key, value) in zip(keys, saved) {
+                if let value { d.set(value, forKey: key) } else { d.removeObject(forKey: key) }
+            }
+            iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
+        }
+
+        let input = "git commit --message=\"سلام iTerm2 دنیا\""
+        let output = visual(input).trimmingCharacters(in: .whitespaces)
+        XCTAssertTrue(output.hasPrefix("git commit --message=\""),
+                      "command and glued quote must stay anchored left: \(output)")
+        XCTAssertTrue(output.contains(rev("دنیا") + " iTerm2 " + rev("سلام")),
+                      "RTL-first payload must read right-to-left around the island: \(output)")
+    }
 }

@@ -40,15 +40,26 @@ class BidiMirrorSelectionTests: XCTestCase {
         super.tearDown()
     }
 
-    // NOTE ON CONFIGURATION: these assertions describe the default paragraph
-    // direction (forced LTR base, i.e. "auto-detect paragraph direction" OFF).
-    // There, bracket pairs whose content matches the LTR base (an English run)
-    // resolve to LTR and are NOT mirrored, while brackets around RTL content
-    // are. When auto-detect is ON, a Persian-first line gets an RTL base and
-    // CoreText then mirrors BOTH pairs; the production code follows CoreText's
-    // decision either way (it is not hard-coded here), so it stays correct in
-    // both configurations. The value of this fix is precisely that: mirroring
-    // tracks CoreText's real per-character resolution instead of run direction.
+    // NOTE ON CONFIGURATION: correctness here is an INVARIANT, not a fixed
+    // flag. CoreText both repositions a bracket pair and mirrors its glyphs
+    // when the pair resolves RTL; the two cancel out to a correct-facing
+    // pair. So the mirror flag must equal "the pair was repositioned",
+    // whatever CoreText decides for a given base direction. (An RTL-first
+    // line gets an RTL base from the payload isolate even with auto-detect
+    // OFF, so English-bracketing pairs may legitimately reposition+mirror.)
+    private func assertMirrorMatchesRepositioning(_ info: BidiDisplayInfoObjc,
+                                                  open: Int32,
+                                                  close: Int32,
+                                                  file: StaticString = #filePath,
+                                                  line: UInt = #line) {
+        let swapped = info.visualForLogical(open) > info.visualForLogical(close)
+        XCTAssertEqual(info.mirrorsSourceCell(open), swapped,
+                       "open paren mirror flag must match repositioning",
+                       file: file, line: line)
+        XCTAssertEqual(info.mirrorsSourceCell(close), swapped,
+                       "close paren mirror flag must match repositioning",
+                       file: file, line: line)
+    }
 
     // For an all-BMP, no-combining string, cell index == UTF-16 index.
     private func info(_ s: String) -> BidiDisplayInfoObjc? {
@@ -64,18 +75,17 @@ class BidiMirrorSelectionTests: XCTestCase {
         let close = Int32((s as NSString).range(of: ")").location)
         XCTAssertTrue(info.mirrorsSourceCell(open), "open paren in RTL must mirror")
         XCTAssertTrue(info.mirrorsSourceCell(close), "close paren in RTL must mirror")
+        assertMirrorMatchesRepositioning(info, open: open, close: close)
     }
 
-    func testParensAroundEnglishAreNotMirrored() {
-        // Persian «(English)»: the brackets wrap an LTR run and must NOT mirror.
+    func testParensAroundEnglishMatchRepositioning() {
+        // Persian «(English)»: whether the pair repositions depends on the
+        // base direction CoreText resolves; the mirror flag must track it.
         let s = "توی (Tempelhofer) قدیمی"
         guard let info = info(s) else { return XCTFail("no bidi info") }
         let open = Int32((s as NSString).range(of: "(").location)
         let close = Int32((s as NSString).range(of: ")").location)
-        XCTAssertFalse(info.mirrorsSourceCell(open),
-                       "open paren bracketing English must not mirror")
-        XCTAssertFalse(info.mirrorsSourceCell(close),
-                       "close paren bracketing English must not mirror")
+        assertMirrorMatchesRepositioning(info, open: open, close: close)
     }
 
     func testBothInSameLine() {
@@ -84,8 +94,11 @@ class BidiMirrorSelectionTests: XCTestCase {
         guard let info = info(s) else { return XCTFail("no bidi info") }
         let ns = s as NSString
         let rtlOpen = Int32(ns.range(of: "(بله").location)
+        let rtlClose = rtlOpen + 4
         let enOpen = Int32(ns.range(of: "(Feld").location)
+        let enClose = enOpen + 5
         XCTAssertTrue(info.mirrorsSourceCell(rtlOpen), "RTL paren mirrors")
-        XCTAssertFalse(info.mirrorsSourceCell(enOpen), "English paren does not mirror")
+        assertMirrorMatchesRepositioning(info, open: rtlOpen, close: rtlClose)
+        assertMirrorMatchesRepositioning(info, open: enOpen, close: enClose)
     }
 }

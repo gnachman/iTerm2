@@ -2671,6 +2671,17 @@ Bug Fixes:
   perturbs the display order, so the word's
   letters stay in right-to-left order and the
   mark stays on its base letter.
+- Shell commands with a quoted Persian, Arabic,
+  or Hebrew argument now keep the prompt and
+  command anchored at the left edge while the
+  argument reads in its natural right-to-left
+  order (no more word-order scrambling in the
+  default configuration). The rewrite stops at
+  the closing quote, so anything typed after
+  the argument (&& ls, a redirect) stays where
+  you typed it, and an apostrophe glued to a
+  word (teachers’) is not mistaken for an
+  opening quote.
 - Selecting part of an Arabic or Persian word no
   longer breaks its cursive joining. Text used
   to be shaped in fragments split at every text
