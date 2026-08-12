@@ -8037,6 +8037,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return nil;
     }
 
+    // A single tab dragged out of the tab bar becomes an ungrouped tab in its new
+    // window. Only a whole-group tear-off (handled by tearOffGroupWithID:) preserves
+    // group membership.
+    if (aTab.tabGroupID != nil) {
+        RLog(@"tabGroup: clearing group %@ from tab %@ torn off into a new window",
+             aTab.tabGroupID, [tabViewItem label]);
+        aTab.tabGroupID = nil;
+        [self reconcileTabGroupDefinitionForTab:aTab];
+    }
+
     NSWindowController<iTermWindowController> * term =
     [self terminalDraggedFromAnotherWindowAtPoint:point];
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
