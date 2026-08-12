@@ -8977,9 +8977,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (closable.count == 0) {
         return;
     }
+    NSString *count = (closable.count == 1) ? @"1 tab"
+                                            : [NSString stringWithFormat:@"%lu tabs", (unsigned long)closable.count];
     const iTermWarningSelection selection =
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"%@ (%lu tabs)",
-                                            question, (unsigned long)closable.count]
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"%@ (%@)", question, count]
                                    actions:@[ @"Close", @"Cancel" ]
                                  accessory:nil
                                 identifier:@"NoSyncCloseTabGroup"

@@ -3295,6 +3295,15 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         [self updateTooltipAppearance];
     });
 
+    // A group chip has no tab view item, so the per-tab tooltip (Name/Profile/
+    // Command) would read a nil session. Show the group's name instead, or no
+    // tooltip if it is unnamed.
+    PSMTabBarCell *chip = [self chipForPoint:point];
+    if (chip) {
+        id<PSMTabGroup> group = [self.tabGroupDataSource tabGroupWithIdentifier:chip.tabGroupIdentifier];
+        return group.name.length > 0 ? group.name : @"";
+    }
+
     if ([[self delegate] respondsToSelector:@selector(tabView:toolTipForTabViewItem:)]) {
         return [[self delegate] tabView:[self tabView] toolTipForTabViewItem:[[self cellForPoint:point cellFrame:nil] representedObject]];
     }
