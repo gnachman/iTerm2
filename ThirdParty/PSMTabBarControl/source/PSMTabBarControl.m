@@ -2734,15 +2734,23 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 - (NSMenu *)menuForEvent:(NSEvent *)event
 {
     NSMenu *menu = nil;
-    NSTabViewItem *item = [[self cellForPoint:[self convertPoint:[event locationInWindow] fromView:nil] cellFrame:nil] representedObject];
+    const NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+    NSTabViewItem *item = [[self cellForPoint:point cellFrame:nil] representedObject];
 
     if (item && [[self delegate] respondsToSelector:@selector(tabView:menuForTabViewItem:)]) {
         menu = [[self delegate] tabView:_tabView menuForTabViewItem:item];
     }
     else if (!item) {
+        // A right-click on a group chip (chips are invisible to -cellForPoint:)
+        // gets the group's contextual menu.
+        PSMTabBarCell *chip = [self chipForPoint:point];
+        if (chip.tabGroupIdentifier.length > 0 &&
+            [[self delegate] respondsToSelector:@selector(tabView:menuForTabGroup:)]) {
+            menu = [[self delegate] tabView:_tabView menuForTabGroup:chip.tabGroupIdentifier];
+        }
         // when the "LSUIElement hack" (issue #954) is enabled, the menu bar is inaccessible,
         // so show it as a context menu when right-clicking empty tabBar region
-        if ([[[NSBundle mainBundle] infoDictionary] objectForKey:@"LSUIElement"]) {
+        if (!menu && [[[NSBundle mainBundle] infoDictionary] objectForKey:@"LSUIElement"]) {
             menu = [NSApp mainMenu];
         }
     }

@@ -113,6 +113,9 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 
 //Contextual menu method
 - (nullable NSMenu *)tabView:(NSTabView *)aTabView menuForTabViewItem:(NSTabViewItem *)tabViewItem;
+// Contextual menu for a right-click on a tab group's chip (checked with
+// -respondsToSelector:, like the other methods here).
+- (nullable NSMenu *)tabView:(NSTabView *)aTabView menuForTabGroup:(NSString *)tabGroupIdentifier;
 
 //Drag and drop methods
 - (BOOL)tabView:(NSTabView *)aTabView shouldDragTabViewItem:(NSTabViewItem *)tabViewItem fromTabBar:(PSMTabBarControl *)tabBarControl;

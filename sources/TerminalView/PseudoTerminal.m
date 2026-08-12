@@ -8483,23 +8483,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 // Rename every tab in the group, since the name is carried per-member.
 - (void)renameTabGroup:(id)sender {
-    NSTabViewItem *tabViewItem = [sender representedObject];
-    PTYTab *theTab = [tabViewItem identifier];
-    NSString *groupID = theTab.tabGroupID;
-    if (groupID.length == 0) {
-        return;
-    }
-    NSString *name = [self promptForTabGroupName:(theTab.tabGroupName ?: @"") title:@"Rename Tab Group"];
-    if (!name) {
-        return;  // user cancelled
-    }
-    for (PTYTab *member in [self tabs]) {
-        if ([member.tabGroupID isEqualToString:groupID]) {
-            member.tabGroupName = name;
-        }
-    }
-    RLog(@"tabGroup: renamed group %@ to %@", groupID, name);
-    [self updateTabColors];
+    PTYTab *theTab = [[sender representedObject] identifier];
+    [self renameTabGroupWithID:theTab.tabGroupID];
 }
 
 // Modal name prompt for creating/renaming a group. Returns the entered string
@@ -8511,7 +8496,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
     NSTextField *field = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 240, 24)] autorelease];
-    field.stringValue = initialValue ?: @"";
+    // Tab labels come with a trailing newline; trim so it doesn't seed the field
+    // (or the resulting group name) with stray whitespace.
+    NSCharacterSet *trim = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    field.stringValue = [(initialValue ?: @"") stringByTrimmingCharactersInSet:trim];
     [field selectText:nil];
     alert.accessoryView = field;
     alert.window.initialFirstResponder = field;
@@ -8519,7 +8507,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (response != NSAlertFirstButtonReturn) {
         return nil;
     }
-    return field.stringValue;
+    return [field.stringValue stringByTrimmingCharactersInSet:trim];
 }
 
 // Distinct tab groups in this window, derived from the member tabs (there is
@@ -8790,6 +8778,204 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             tab.tabGroupColor = member.tabGroupColor;
             return;
         }
+    }
+}
+
+#pragma mark - Tab group context menu
+
+// Member tabs of `groupID`, in tab order.
+- (NSArray<PTYTab *> *)tabsInGroup:(NSString *)groupID {
+    if (groupID.length == 0) {
+        return @[];
+    }
+    NSMutableArray<PTYTab *> *result = [NSMutableArray array];
+    for (PTYTab *aTab in [self tabs]) {
+        if ([aTab.tabGroupID isEqualToString:groupID]) {
+            [result addObject:aTab];
+        }
+    }
+    return result;
+}
+
+// PSMTabViewDelegate: right-click on a group chip.
+- (NSMenu *)tabView:(NSTabView *)aTabView menuForTabGroup:(NSString *)groupID {
+    if ([self tabsInGroup:groupID].count == 0) {
+        return nil;
+    }
+    NSMenu *menu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
+    menu.autoenablesItems = NO;  // contextual actions are always applicable
+    NSArray<NSArray<NSString *> *> *specs = @[
+        @[@"Rename Group…", @"renameTabGroupFromMenu:"],
+        @[@"-", @""],
+        @[@"Duplicate Group", @"duplicateTabGroup:"],
+        @[@"Move Group to New Window", @"moveTabGroupToNewWindow:"],
+        @[@"Save Group as Window Arrangement…", @"saveTabGroupAsWindowArrangement:"],
+        @[@"-", @""],
+        @[@"Remove All Tabs from Group", @"ungroupTabGroup:"],
+        @[@"-", @""],
+        @[@"Close Group", @"closeTabGroup:"],
+        @[@"Close Other Tabs", @"closeTabsOutsideGroup:"],
+        @[@"Close Tabs to the Right", @"closeTabsRightOfGroup:"],
+    ];
+    for (NSArray<NSString *> *spec in specs) {
+        if ([spec[0] isEqualToString:@"-"]) {
+            [menu addItem:[NSMenuItem separatorItem]];
+            continue;
+        }
+        NSMenuItem *mi = [[[NSMenuItem alloc] initWithTitle:spec[0]
+                                                     action:NSSelectorFromString(spec[1])
+                                              keyEquivalent:@""] autorelease];
+        mi.representedObject = groupID;
+        mi.target = self;
+        [menu addItem:mi];
+    }
+    return menu;
+}
+
+- (void)renameTabGroupFromMenu:(id)sender {
+    [self renameTabGroupWithID:[sender representedObject]];
+}
+
+- (void)renameTabGroupWithID:(NSString *)groupID {
+    NSArray<PTYTab *> *members = [self tabsInGroup:groupID];
+    if (members.count == 0) {
+        return;
+    }
+    NSString *name = [self promptForTabGroupName:(members.firstObject.tabGroupName ?: @"") title:@"Rename Tab Group"];
+    if (!name) {
+        return;  // cancelled
+    }
+    for (PTYTab *member in members) {
+        member.tabGroupName = name;
+    }
+    RLog(@"tabGroup: renamed group %@ to %@", groupID, name);
+    [self updateTabColors];
+}
+
+- (void)ungroupTabGroup:(id)sender {
+    for (PTYTab *member in [self tabsInGroup:[sender representedObject]]) {
+        member.tabGroupID = nil;
+        [self reconcileTabGroupDefinitionForTab:member];
+    }
+    [self updateTabColors];
+    [self tabsDidReorder];
+}
+
+- (void)moveTabGroupToNewWindow:(id)sender {
+    NSArray<PTYTab *> *members = [self tabsInGroup:[sender representedObject]];
+    if (members.count == 0) {
+        return;
+    }
+    // Reuse the drag tear-off, positioned just off this window's top-left. It
+    // no-ops if the group is the whole window (nothing to tear off).
+    NSRect frame = self.window.frame;
+    [self tearOffTabGroup:members atScreenPoint:NSMakePoint(NSMinX(frame) + 20, NSMaxY(frame) - 20)];
+}
+
+- (void)saveTabGroupAsWindowArrangement:(id)sender {
+    NSArray<PTYTab *> *members = [self tabsInGroup:[sender representedObject]];
+    if (members.count == 0) {
+        return;
+    }
+    NSDictionary *arrangement = [self arrangementWithTabs:members includingContents:NO];
+    if (!arrangement) {
+        return;
+    }
+    [WindowArrangements nameForNewArrangement:^(NSString *name) {
+        if (name) {
+            [WindowArrangements setArrangement:@[ arrangement ] withName:name];
+        }
+    }];
+}
+
+- (void)duplicateTabGroup:(id)sender {
+    if (_layoutLocked) {
+        RLog(@"Layout is locked, refusing to duplicate group");
+        return;
+    }
+    NSArray<PTYTab *> *members = [self tabsInGroup:[sender representedObject]];
+    if (members.count == 0) {
+        return;
+    }
+    NSString *newID = [[NSUUID UUID] UUIDString];
+    NSString *newName = [(members.firstObject.tabGroupName ?: @"Group") stringByAppendingString:@" copy"];
+    NSColor *newColor = members.firstObject.tabGroupColor;
+    // Duplicate each member (new sessions), then group the freshly created tabs.
+    NSMutableSet<PTYTab *> *before = [NSMutableSet setWithArray:[self tabs]];
+    for (PTYTab *member in members) {
+        [self createDuplicateOfTab:member inTerminal:self];
+    }
+    for (PTYTab *aTab in [self tabs]) {
+        if (![before containsObject:aTab]) {
+            aTab.tabGroupID = newID;
+            aTab.tabGroupName = newName;
+            aTab.tabGroupColor = newColor;
+        }
+    }
+    [self updateTabColors];
+    [self tabsDidReorder];  // enforce contiguity so the copies form one block
+}
+
+- (void)closeTabGroup:(id)sender {
+    [self closeTabs:[self tabsInGroup:[sender representedObject]]
+        confirmWith:@"Close this tab group?"];
+}
+
+- (void)closeTabsOutsideGroup:(id)sender {
+    NSString *groupID = [sender representedObject];
+    NSMutableArray<PTYTab *> *others = [NSMutableArray array];
+    for (PTYTab *aTab in [self tabs]) {
+        if (![aTab.tabGroupID isEqualToString:groupID]) {
+            [others addObject:aTab];
+        }
+    }
+    [self closeTabs:others confirmWith:@"Close all tabs outside this group?"];
+}
+
+- (void)closeTabsRightOfGroup:(id)sender {
+    NSArray<PTYTab *> *members = [self tabsInGroup:[sender representedObject]];
+    PTYTab *last = members.lastObject;
+    if (!last) {
+        return;
+    }
+    NSArray<PTYTab *> *tabs = [self tabs];
+    const NSInteger lastIndex = [tabs indexOfObject:last];
+    if (lastIndex == NSNotFound || lastIndex + 1 >= (NSInteger)tabs.count) {
+        return;
+    }
+    NSArray<PTYTab *> *toRight = [tabs subarrayWithRange:NSMakeRange(lastIndex + 1, tabs.count - lastIndex - 1)];
+    [self closeTabs:toRight confirmWith:@"Close all tabs to the right of this group?"];
+}
+
+// Close a batch of tabs with a single confirmation, skipping pinned tabs.
+- (void)closeTabs:(NSArray<PTYTab *> *)tabsToClose confirmWith:(NSString *)question {
+    if (_layoutLocked) {
+        RLog(@"Layout is locked, refusing to close tabs");
+        return;
+    }
+    NSMutableArray<PTYTab *> *closable = [NSMutableArray array];
+    for (PTYTab *aTab in tabsToClose) {
+        if (!aTab.isPinned) {
+            [closable addObject:aTab];
+        }
+    }
+    if (closable.count == 0) {
+        return;
+    }
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"%@ (%lu tabs)",
+                                            question, (unsigned long)closable.count]
+                                   actions:@[ @"Close", @"Cancel" ]
+                                 accessory:nil
+                                identifier:@"NoSyncCloseTabGroup"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Close Tabs"
+                                    window:self.window];
+    if (selection != kiTermWarningSelection0) {
+        return;
+    }
+    for (PTYTab *aTab in closable) {
+        [self closeTab:aTab];
     }
 }
 
