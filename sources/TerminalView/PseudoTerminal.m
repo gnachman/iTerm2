@@ -8470,16 +8470,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (!theTab || !groupID) {
         return;
     }
+    theTab.tabGroupID = groupID;
     // The definition has no separate store, so copy it from an existing member
     // to keep the new member self-sufficient.
-    for (PTYTab *member in [self tabs]) {
-        if (member != theTab && [member.tabGroupID isEqualToString:groupID]) {
-            theTab.tabGroupName = member.tabGroupName;
-            theTab.tabGroupColor = member.tabGroupColor;
-            break;
-        }
-    }
-    theTab.tabGroupID = groupID;
+    [self reconcileTabGroupDefinitionForTab:theTab];
     RLog(@"tabGroup: added tab %@ to existing group %@", [tabViewItem label], groupID);
     [self updateTabColors];
     // The added tab may be far from the group's other members; repair the
@@ -8552,6 +8546,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     PTYTab *theTab = [tabViewItem identifier];
     RLog(@"tabGroup: removed tab %@ from group %@", [tabViewItem label], theTab.tabGroupID);
     theTab.tabGroupID = nil;
+    [self reconcileTabGroupDefinitionForTab:theTab];
     [self updateTabColors];
 }
 
@@ -8771,6 +8766,31 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
          droppedTab.tabGroupID ?: @"(none)",
          resolved ?: @"(none)");
     droppedTab.tabGroupID = resolved;
+    // The definition rides each member tab, so a tab that just joined a group
+    // must adopt that group's name/color; otherwise it keeps its previous
+    // group's, and if it becomes the group's first tab the whole chip derives
+    // the wrong definition.
+    [self reconcileTabGroupDefinitionForTab:droppedTab];
+}
+
+// Make `tab`'s carried group name/color match the group it now belongs to,
+// copying from any existing member. Clears them when the tab belongs to no
+// group. A tab that is the sole member of its id keeps what it has (it is the
+// group's definer). Call after any change to a tab's tabGroupID.
+- (void)reconcileTabGroupDefinitionForTab:(PTYTab *)tab {
+    NSString *gid = tab.tabGroupID;
+    if (gid.length == 0) {
+        tab.tabGroupName = nil;
+        tab.tabGroupColor = nil;
+        return;
+    }
+    for (PTYTab *member in [self tabs]) {
+        if (member != tab && [member.tabGroupID isEqualToString:gid]) {
+            tab.tabGroupName = member.tabGroupName;
+            tab.tabGroupColor = member.tabGroupColor;
+            return;
+        }
+    }
 }
 
 // Reorder the tab view so `target` (a permutation of the current tabs) becomes
