@@ -1659,6 +1659,15 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
                                                 direction:-1];
         }
 
+        // A whole group can't be dropped inside another group, so never offer a
+        // slot in another group's interior; snap it to that group's near edge.
+        if (_draggedGroupID.length > 0 && proposedTarget) {
+            proposedTarget = [self groupDropTargetAvoidingOtherGroups:proposedTarget
+                                                              inCells:cells
+                                                              atMouse:mouseLoc
+                                                           horizontal:([control orientation] == PSMTabBarHorizontalOrientation)];
+        }
+
         [self setTargetCell:proposedTarget];
     } else {
         [self setTargetCell:nil];
@@ -1942,6 +1951,53 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         return nil;
     }
     return cells[i];
+}
+
+// A whole-group drag must not land inside another group. If `proposed` (a drop-
+// slot placeholder) sits in another group's interior -- strictly between its
+// chip and its last member -- snap it to that group's near edge instead: the
+// slot before the chip when the mouse is in the group's leading half, else the
+// slot after the last member. Slots at a run's edges, and everywhere outside a
+// run, are returned unchanged.
+- (PSMTabBarCell *)groupDropTargetAvoidingOtherGroups:(PSMTabBarCell *)proposed
+                                              inCells:(NSArray<PSMTabBarCell *> *)cells
+                                              atMouse:(NSPoint)mouseLoc
+                                           horizontal:(BOOL)horizontal {
+    const NSInteger p = [cells indexOfObject:proposed];
+    if (p == NSNotFound) {
+        return proposed;
+    }
+    for (NSInteger c = 0; c < (NSInteger)cells.count; c++) {
+        if (![cells[c] isTabGroupChip]) {
+            continue;
+        }
+        NSString *gid = cells[c].tabGroupIdentifier;
+        NSInteger last = c;
+        for (NSInteger j = c + 1; j < (NSInteger)cells.count; j++) {
+            if ([cells[j] isPlaceholder]) {
+                continue;
+            }
+            if ([cells[j] isTabGroupChip] || ![cells[j].tabGroupIdentifier isEqualToString:gid]) {
+                break;
+            }
+            last = j;
+        }
+        // Interior slots are those strictly inside the run: c < p <= last (the
+        // slot after the last member, at last+1, is the run's trailing edge).
+        if (c < p && p <= last) {
+            const NSRect runRect = NSUnionRect([cells[c] frame], [cells[last] frame]);
+            const CGFloat mid = horizontal ? NSMidX(runRect) : NSMidY(runRect);
+            const CGFloat along = horizontal ? mouseLoc.x : mouseLoc.y;
+            if (along < mid && c - 1 >= 0 && [cells[c - 1] isPlaceholder]) {
+                return cells[c - 1];
+            }
+            if (last + 1 < (NSInteger)cells.count && [cells[last + 1] isPlaceholder]) {
+                return cells[last + 1];
+            }
+            return proposed;
+        }
+    }
+    return proposed;
 }
 
 // Resolve a drop target for a point that -cellForPoint: didn't hit. That
