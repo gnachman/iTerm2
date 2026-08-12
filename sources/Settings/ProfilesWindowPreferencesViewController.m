@@ -949,6 +949,9 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     NSString *path = usesFolderRotation ? nil : [self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION];
     const BOOL isVideo = path.length > 0 && [iTermImageWrapper pathIsVideo:path];
     NSPopUpButton *modePopup = [NSPopUpButton castFrom:_backgroundImageMode];
+    // Menu validation runs when the popup opens and would re-enable the item
+    // out from under us, leaving Tile selectable but drawn as though disabled.
+    modePopup.autoenablesItems = NO;
     [modePopup.menu itemWithTag:iTermBackgroundImageModeTile].enabled = !isVideo;
 }
 
