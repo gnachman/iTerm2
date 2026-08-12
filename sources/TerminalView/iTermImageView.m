@@ -174,6 +174,10 @@
                                                  selector:@selector(windowDidChangeScreen:)
                                                      name:NSWindowDidChangeScreenNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowOcclusionDidChange:)
+                                                     name:NSWindowDidChangeOcclusionStateNotification
+                                                   object:nil];
     }
     return self;
 }
@@ -333,13 +337,22 @@
 
 // Decoding a video that nobody can see wastes power, so track visibility.
 // SessionView toggles hidden on an ancestor, hence the OrHasHiddenAncestor
-// check and the viewDidHide/viewDidUnhide overrides.
+// check and the viewDidHide/viewDidUnhide overrides. The view hierarchy says
+// nothing about the window being buried under other windows, miniaturized, or
+// on another Space; occlusionState covers all three.
 - (void)updateVideoPlaybackState {
     if (!_playerLayer) {
         return;
     }
-    const BOOL visible = !self.isHiddenOrHasHiddenAncestor && self.window != nil;
+    NSWindow *window = self.window;
+    const BOOL windowIsVisible =
+        window != nil && (window.occlusionState & NSWindowOcclusionStateVisible) != 0;
+    const BOOL visible = !self.isHiddenOrHasHiddenAncestor && windowIsVisible;
     [self setPlaybackInterestImage:visible ? _image : nil];
+}
+
+- (void)windowOcclusionDidChange:(NSNotification *)notification {
+    [self updateVideoPlaybackState];
 }
 
 - (void)viewDidHide {

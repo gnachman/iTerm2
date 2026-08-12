@@ -889,6 +889,7 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
             [strongSelf setUnsignedInteger:iTermBackgroundImageSourceModeSingleImage
                                     forKey:KEY_BACKGROUND_IMAGE_SOURCE_MODE];
             [strongSelf updateControlForKey:KEY_BACKGROUND_IMAGE_LOCATION];
+            [strongSelf updateControlForKey:KEY_BACKGROUND_IMAGE_SOURCE_MODE];
             [strongSelf synchronizeBackgroundImageEnabledState];
             [strongSelf loadBackgroundImageForCurrentSource];
             [strongSelf updateBackgroundImageUI];
@@ -941,6 +942,14 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     _backgroundImageFolderIntervalLabel.labelEnabled = usesFolderRotation;
     _rotationIntervalUnitsLabel.labelEnabled = usesFolderRotation;
     _backgroundImageFolderIntervalField.enabled = usesFolderRotation;
+
+    // Both renderers fall back to Scale to Fill when asked to tile a video, so
+    // don't offer a mode that won't be honored. The stored value is deliberately
+    // left alone: going back to a still image restores what the user picked.
+    NSString *path = usesFolderRotation ? nil : [self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION];
+    const BOOL isVideo = path.length > 0 && [iTermImageWrapper pathIsVideo:path];
+    NSPopUpButton *modePopup = [NSPopUpButton castFrom:_backgroundImageMode];
+    [modePopup.menu itemWithTag:iTermBackgroundImageModeTile].enabled = !isVideo;
 }
 
 - (void)synchronizeBackgroundImageEnabledState {
@@ -1047,13 +1056,19 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
                 completion(NO);
                 return;
             }
-            [iTermWarning showWarningWithTitle:@"Background videos play continuously while the window is visible. High-resolution or high-frame-rate videos increase energy use, which matters most on battery power."
-                                       actions:@[ @"OK" ]
-                                     accessory:nil
-                                    identifier:@"BackgroundVideoEnergyUse"
-                                   silenceable:kiTermWarningTypePermanentlySilenceable
-                                       heading:@"Video Backgrounds and Energy"
-                                        window:strongSelf.view.window];
+            // Re-picking the video that is already configured is a normal thing
+            // to do, and nagging about energy again for a setting the user has
+            // not changed just trains them to silence the notice.
+            NSString *current = [strongSelf stringForKey:KEY_BACKGROUND_IMAGE_LOCATION];
+            if (![filename isEqualToString:current]) {
+                [iTermWarning showWarningWithTitle:@"Background videos play continuously while the window is visible. High-resolution or high-frame-rate videos increase energy use, which matters most on battery power."
+                                           actions:@[ @"OK" ]
+                                         accessory:nil
+                                        identifier:@"BackgroundVideoEnergyUse"
+                                       silenceable:kiTermWarningTypePermanentlySilenceable
+                                           heading:@"Video Backgrounds and Energy"
+                                            window:strongSelf.view.window];
+            }
             completion(YES);
         });
     }];

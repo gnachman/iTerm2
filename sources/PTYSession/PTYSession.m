@@ -1028,6 +1028,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
                                                  selector:@selector(broadcastDomainsDidChange:)
                                                      name:iTermBroadcastDomainsDidChangeNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowOcclusionDidChange:)
+                                                     name:NSWindowDidChangeOcclusionStateNotification
+                                                   object:nil];
         [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                                selector:@selector(activeSpaceDidChange:)
                                                                    name:NSWorkspaceActiveSpaceDidChangeNotification
@@ -6310,7 +6314,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // care of itself through iTermImageView's visibility tracking.
 - (void)updateVideoBackgroundPlaybackInterest {
     iTermImageWrapper *effective = self.effectiveBackgroundImage;
-    iTermImageWrapper *desired = (_useMetal && effective.isVideo) ? effective : nil;
+    const BOOL wanted = (_useMetal &&
+                         effective.isVideo &&
+                         [self videoBackgroundIsOnScreen]);
+    iTermImageWrapper *desired = wanted ? effective : nil;
     if (desired == _videoBackgroundInterestImage) {
         return;
     }
@@ -6318,6 +6325,30 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_videoBackgroundInterestImage release];
     _videoBackgroundInterestImage = [desired retain];
     [_videoBackgroundInterestImage retainVideoPlaybackInterest];
+    if (_videoBackgroundInterestImage) {
+        // Nothing else kicks the first frame when the terminal is quiet: the
+        // cadence only speeds up once it has seen the video playing, and
+        // -updateDisplayBecause: is what notices. Without this, setting a video
+        // on an idle session decodes but shows a frozen frame until some
+        // unrelated event forces a redraw.
+        self.active = YES;
+        [_view.metalView setNeedsDisplay:YES];
+    }
+}
+
+// A video only needs to decode while somebody can see it. occlusionState
+// reports not-visible for a window that is fully covered, miniaturized, or on
+// another Space — none of which the view hierarchy reveals.
+- (BOOL)videoBackgroundIsOnScreen {
+    NSWindow *window = self.view.window;
+    if (!window) {
+        return NO;
+    }
+    return (window.occlusionState & NSWindowOcclusionStateVisible) != 0;
+}
+
+- (void)windowOcclusionDidChange:(NSNotification *)notification {
+    [self updateVideoBackgroundPlaybackInterest];
 }
 
 - (void)setSmartCursorColor:(BOOL)value {
