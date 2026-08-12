@@ -8911,6 +8911,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     for (PTYTab *aTab in [self tabs]) {
         if (![before containsObject:aTab]) {
+            // The copies append to the end of the bar, but pinned tabs must live
+            // in the front pinned zone. A duplicated group therefore starts
+            // unpinned rather than becoming a mix of pinned/unpinned members
+            // stranded at the end (which is an invalid state).
+            [aTab setPinned:NO];
             aTab.tabGroupID = newID;
             aTab.tabGroupName = newName;
             aTab.tabGroupColor = newColor;

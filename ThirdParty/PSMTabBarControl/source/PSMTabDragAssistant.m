@@ -2020,7 +2020,14 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     NSMutableArray *cells = [control cells];
     const NSInteger cA = [cells indexOfObject:members.firstObject];
     const NSInteger cB = [cells indexOfObject:members.lastObject];
-    if (cA == NSNotFound || cB == NSNotFound || cB < cA) {
+    // The members collapse into one wide placeholder, which requires them to be a
+    // single contiguous run in the (chip-stripped, placeholder-strided) cell list:
+    // positions cA, cA+2, ... cB, i.e. cB - cA == 2*(count-1). A group that isn't
+    // contiguous -- e.g. a mix of pinned and unpinned tabs, which the layout
+    // segregates to opposite ends -- can't be one block, so bail rather than run
+    // the removal off the end of the array.
+    if (cA == NSNotFound || cB == NSNotFound || cB < cA ||
+        (cB - cA) != 2 * ((NSInteger)members.count - 1)) {
         [self reinsertDragChipsInTabBar:control];
         return;
     }
