@@ -9,8 +9,8 @@
 #import "iTermShaderTypes.h"
 #import "iTermSharedImageStore.h"
 
-#import <AVFoundation/AVFoundation.h>
 #import <CoreVideo/CoreVideo.h>
+#import <QuartzCore/QuartzCore.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -25,6 +25,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) vector_float4 defaultBackgroundColor;
 @property (nullable, nonatomic, strong) id<MTLBuffer> box1;
 @property (nullable, nonatomic, strong) id<MTLBuffer> box2;
+// The CVMetalTexture that backs texture when it holds a video frame. texture
+// does not retain it, so it is parked here to keep the underlying IOSurface
+// alive for as long as this state lives — which is until the frame’s command
+// buffer completes, however many frames the driver keeps in flight.
+@property (nullable, nonatomic, strong) id videoTextureKeepAlive;
 @end
 
 @implementation iTermBackgroundImageRendererTransientState
@@ -59,13 +64,14 @@ NS_ASSUME_NONNULL_BEGIN
     CGRect _containerFrame;
     vector_float4 _color;
 
-    // Video backgrounds: pixel buffers from the wrapper's AVPlayerItemVideoOutput
-    // are wrapped as Metal textures through this cache. The CVMetalTexture that
-    // backs the current and previous frame must stay alive until the GPU is done
-    // sampling them, hence the keep-alive references.
-    CVMetalTextureCacheRef _videoTextureCache;
+    // Video backgrounds: the wrapper owns the decode and vends one Metal
+    // texture per frame, shared by every pane drawing that video on this
+    // device, so all of them sample the same frame. Each transient state takes
+    // its own reference to the CVMetalTexture it samples, so this only has to
+    // hold the one _texture currently points at.
     id _videoTextureKeepAlive;
-    id _previousVideoTextureKeepAlive;
+    // Which of the wrapper's frames _texture was built from. 0 means none.
+    NSInteger _videoFrameGeneration;
 }
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device {
@@ -87,12 +93,6 @@ NS_ASSUME_NONNULL_BEGIN
         _solidColorPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float4)];
     }
     return self;
-}
-
-- (void)dealloc {
-    if (_videoTextureCache) {
-        CFRelease(_videoTextureCache);
-    }
 }
 
 - (BOOL)rendererDisabled {
@@ -118,7 +118,7 @@ NS_ASSUME_NONNULL_BEGIN
         // first decoded frame arrives below.
         _texture = image ? [_metalRenderer textureFromImage:image context:context colorSpace:colorSpace] : nil;
         _videoTextureKeepAlive = nil;
-        _previousVideoTextureKeepAlive = nil;
+        _videoFrameGeneration = 0;
     }
     if (image.isVideo) {
         id<MTLTexture> videoTexture = [self dequeueVideoTextureForImage:image];
@@ -136,55 +136,17 @@ NS_ASSUME_NONNULL_BEGIN
 // Returns a texture for the video frame that should be visible now, or nil
 // to keep showing the previous one.
 - (nullable id<MTLTexture>)dequeueVideoTextureForImage:(iTermImageWrapper *)image {
-    AVPlayerItemVideoOutput *output = image.videoOutput;
-    if (!output) {
-        return nil;
-    }
-    const CMTime itemTime = [output itemTimeForHostTime:CACurrentMediaTime()];
-    if (![output hasNewPixelBufferForItemTime:itemTime]) {
-        return nil;
-    }
-    CVPixelBufferRef pixelBuffer = [output copyPixelBufferForItemTime:itemTime itemTimeForDisplay:NULL];
-    if (!pixelBuffer) {
-        return nil;
-    }
-    id<MTLTexture> texture = [self textureFromPixelBuffer:pixelBuffer];
-    CVPixelBufferRelease(pixelBuffer);
-    return texture;
-}
-
-- (nullable id<MTLTexture>)textureFromPixelBuffer:(CVPixelBufferRef)pixelBuffer {
-    if (!_videoTextureCache) {
-        const CVReturn err = CVMetalTextureCacheCreate(kCFAllocatorDefault,
-                                                       NULL,
-                                                       _metalRenderer.device,
-                                                       NULL,
-                                                       &_videoTextureCache);
-        if (err != kCVReturnSuccess) {
-            DLog(@"CVMetalTextureCacheCreate failed: %d", err);
-            return nil;
-        }
-    }
-    const size_t width = CVPixelBufferGetWidth(pixelBuffer);
-    const size_t height = CVPixelBufferGetHeight(pixelBuffer);
-    CVMetalTextureRef cvTexture = NULL;
-    const CVReturn err = CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
-                                                                   _videoTextureCache,
-                                                                   pixelBuffer,
-                                                                   NULL,
-                                                                   MTLPixelFormatBGRA8Unorm,
-                                                                   width,
-                                                                   height,
-                                                                   0,
-                                                                   &cvTexture);
-    if (err != kCVReturnSuccess || !cvTexture) {
-        DLog(@"CVMetalTextureCacheCreateTextureFromImage failed: %d", err);
+    CVMetalTextureRef cvTexture = [image copyVideoMetalTextureForHostTime:CACurrentMediaTime()
+                                                                   device:_metalRenderer.device
+                                                               generation:&_videoFrameGeneration];
+    if (!cvTexture) {
         return nil;
     }
     id<MTLTexture> texture = CVMetalTextureGetTexture(cvTexture);
-    // The previous frame's GPU work has completed by the time a new frame
-    // replaces the previous keep-alive, so retaining two generations is enough.
-    _previousVideoTextureKeepAlive = _videoTextureKeepAlive;
+    if (!texture) {
+        CFRelease(cvTexture);
+        return nil;
+    }
     _videoTextureKeepAlive = (__bridge_transfer id)cvTexture;
     return texture;
 }
@@ -312,6 +274,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)initializeTransientState:(iTermBackgroundImageRendererTransientState *)tState {
     tState.texture = _texture;
+    tState.videoTextureKeepAlive = _videoTextureKeepAlive;
     tState.mode = _mode;
     tState.imageSize = _image.image.size;
     tState.imageScale = [_image.image recommendedLayerContentsScale:tState.configuration.scale];

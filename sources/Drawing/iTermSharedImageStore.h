@@ -7,7 +7,11 @@
 
 #import <AppKit/AppKit.h>
 #import <AVFoundation/AVFoundation.h>
+#import <CoreVideo/CoreVideo.h>
+#import <CoreVideo/CVMetalTextureCache.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+
+@protocol MTLDevice;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -22,8 +26,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSSize scaledSize;
 // When the wrapped file is a video, image holds a placeholder (the poster
 // frame, once it loads asynchronously) and videoURL locates the file so views
-// can play it. Playback happens in iTermImageView; renderers that can only
-// draw still images fall back to the poster frame.
+// can play it. iTermImageView plays it with an AVPlayerLayer and the GPU
+// renderer samples frames through copyVideoPixelBufferForHostTime:generation:;
+// consumers that can only draw still images fall back to the poster frame.
 @property (nonatomic, readonly, nullable) NSURL *videoURL;
 @property (nonatomic, readonly) BOOL isVideo;
 
@@ -42,10 +47,32 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)releaseVideoPlaybackInterest;
 // Nil for non-videos. Created on first access; main queue only.
 @property (nonatomic, readonly, nullable) AVQueuePlayer *videoPlayer;
-// The output vends BGRA pixel buffers for the Metal renderer. Nil until
-// videoPlayer or a playback interest has created the player. Safe to read
-// from the render thread; AVPlayerItemVideoOutput itself is thread-safe.
-@property (atomic, readonly, nullable) AVPlayerItemVideoOutput *videoOutput;
+
+// Vends the Metal texture for the video frame that should be visible at
+// hostTime, for GPU renderers drawing on the given device.
+//
+// An AVPlayerItemVideoOutput is single-consumer: copying a pixel buffer marks
+// it acquired, so if each pane's renderer pulled from the output directly, only
+// the first pane to ask would get any given frame and the others would be stuck
+// one frame behind — visible as a flickering seam at split dividers when panes
+// share one background image. Instead this owns the pull, dequeueing at most
+// once per display refresh, and vends one texture per frame so every pane
+// sampling this wrapper in a given refresh samples the identical texture.
+//
+// generation identifies the frame the caller is showing: pass 0 if it has none.
+// Returns NULL when no frame has decoded yet or when the visible frame is still
+// the one identified by *generation — either way the caller should keep showing
+// what it has. Otherwise returns a texture the caller owns (release it with
+// CFRelease, and keep it alive for as long as the GPU may sample it) and sets
+// *generation to identify it.
+//
+// A texture is cached per device, so a second GPU — an eGPU, or the discrete
+// GPU on a dual-GPU Mac — gets its own. Safe to call from any thread; does not
+// create the player, so playback must already be under way (see
+// retainVideoPlaybackInterest).
+- (nullable CVMetalTextureRef)copyVideoMetalTextureForHostTime:(CFTimeInterval)hostTime
+                                                        device:(id<MTLDevice>)device
+                                                    generation:(inout NSInteger *)generation CF_RETURNS_RETAINED;
 
 - (instancetype)initWithImage:(NSImage *)image NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

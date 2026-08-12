@@ -12,7 +12,9 @@
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import <AVFoundation/AVFoundation.h>
+#import <Metal/Metal.h>
 #import <QuartzCore/QuartzCore.h>
+#import <os/lock.h>
 
 @interface NSFileManager(CachedImage)
 - (NSDate *)lastModifiedDateOfFile:(NSString *)path;
@@ -113,6 +115,85 @@
 @end
 
 static void *iTermImageWrapperCurrentItemContext = &iTermImageWrapperCurrentItemContext;
+static const CFTimeInterval iTermImageWrapperDefaultDisplayRefreshPeriod = 1.0 / 60.0;
+
+// A Metal texture cache for one GPU, plus the texture it produced for the frame
+// currently latched. Every pane drawing on that GPU shares the texture, so a
+// frame is wrapped once no matter how many panes show it. Not thread safe; the
+// wrapper calls into it under its own lock.
+@interface iTermVideoTextureCache: NSObject
+- (nullable instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
+// Returns a retained texture for pixelBuffer, reusing the previous one when
+// generation is unchanged.
+- (nullable CVMetalTextureRef)copyTextureForPixelBuffer:(CVPixelBufferRef)pixelBuffer
+                                             generation:(NSInteger)generation CF_RETURNS_RETAINED;
+@end
+
+@implementation iTermVideoTextureCache {
+    CVMetalTextureCacheRef _cache;
+    CVMetalTextureRef _texture;
+    NSInteger _generation;
+}
+
+- (instancetype)initWithDevice:(id<MTLDevice>)device {
+    self = [super init];
+    if (self) {
+        const CVReturn err = CVMetalTextureCacheCreate(kCFAllocatorDefault,
+                                                       NULL,
+                                                       device,
+                                                       NULL,
+                                                       &_cache);
+        if (err != kCVReturnSuccess || !_cache) {
+            DLog(@"CVMetalTextureCacheCreate failed: %d", err);
+            return nil;
+        }
+    }
+    return self;
+}
+
+- (void)dealloc {
+    if (_texture) {
+        CFRelease(_texture);
+    }
+    if (_cache) {
+        CFRelease(_cache);
+    }
+}
+
+- (CVMetalTextureRef)copyTextureForPixelBuffer:(CVPixelBufferRef)pixelBuffer
+                                     generation:(NSInteger)generation {
+    if (_texture && _generation == generation) {
+        return (CVMetalTextureRef)CFRetain(_texture);
+    }
+    CVMetalTextureRef texture = NULL;
+    const CVReturn err =
+        CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+                                                  _cache,
+                                                  pixelBuffer,
+                                                  NULL,
+                                                  MTLPixelFormatBGRA8Unorm,
+                                                  CVPixelBufferGetWidth(pixelBuffer),
+                                                  CVPixelBufferGetHeight(pixelBuffer),
+                                                  0,
+                                                  &texture);
+    if (err != kCVReturnSuccess || !texture) {
+        DLog(@"CVMetalTextureCacheCreateTextureFromImage failed: %d", err);
+        return NULL;
+    }
+    if (_texture) {
+        CFRelease(_texture);
+    }
+    _texture = texture;
+    _generation = generation;
+    // Textures for retired frames sit in the cache until it is flushed, and a
+    // frame change is the only time one can be retired. Anything a renderer
+    // still holds a reference to survives this.
+    CVMetalTextureCacheFlush(_cache, 0);
+    return (CVMetalTextureRef)CFRetain(_texture);
+}
+
+@end
 
 @implementation iTermImageWrapper {
     id _cgimage;
@@ -123,9 +204,21 @@ static void *iTermImageWrapperCurrentItemContext = &iTermImageWrapperCurrentItem
     AVPlayerLooper *_videoLooper;
     AVPlayerItemVideoOutput *_videoOutput;
     NSInteger _videoPlaybackInterestCount;
-}
 
-@synthesize videoOutput = _videoOutput;
+    // Guards everything below. The main queue creates and mutates the player
+    // while renderers pull frames on their metal drivers’ private queues.
+    // _videoOutput is only ever written on the main queue, so main-queue code
+    // may read it without the lock; anything off the main queue must not.
+    os_unfair_lock _videoLock;
+    // The frame every consumer sees until the next display refresh, the refresh
+    // it was latched for, and a counter that changes only when the frame does.
+    CVPixelBufferRef _latchedPixelBuffer;
+    int64_t _latchedTick;
+    NSInteger _videoFrameGeneration;
+    CFTimeInterval _displayRefreshPeriod;
+    // Keyed by MTLDevice registry ID.
+    NSMutableDictionary<NSNumber *, iTermVideoTextureCache *> *_videoTextureCaches;
+}
 
 + (instancetype)withContentsOfFile:(NSString *)path {
     if ([self pathIsVideo:path]) {
@@ -222,15 +315,20 @@ static void *iTermImageWrapperCurrentItemContext = &iTermImageWrapperCurrentItem
         _videoPlayer.muted = YES;
         _videoPlayer.preventsDisplaySleepDuringVideoPlayback = NO;
         _videoLooper = [AVPlayerLooper playerLooperWithPlayer:_videoPlayer templateItem:item];
-        _videoOutput = [[AVPlayerItemVideoOutput alloc] initWithPixelBufferAttributes:@{
+        AVPlayerItemVideoOutput *output = [[AVPlayerItemVideoOutput alloc] initWithPixelBufferAttributes:@{
             (id)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA),
             (id)kCVPixelBufferMetalCompatibilityKey: @YES
         }];
+        os_unfair_lock_lock(&_videoLock);
+        _videoOutput = output;
+        os_unfair_lock_unlock(&_videoLock);
         // AVPlayerLooper rotates through replica items, so the output must
         // chase the current item; observing with Initial covers the first one.
         [_videoPlayer addObserver:self
                        forKeyPath:@"currentItem"
-                          options:NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew
+                          options:(NSKeyValueObservingOptionInitial |
+                                   NSKeyValueObservingOptionOld |
+                                   NSKeyValueObservingOptionNew)
                           context:iTermImageWrapperCurrentItemContext];
     }
     return _videoPlayer;
@@ -244,10 +342,101 @@ static void *iTermImageWrapperCurrentItemContext = &iTermImageWrapperCurrentItem
         [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
         return;
     }
+    if (!_videoOutput) {
+        return;
+    }
+    // An AVPlayerItemVideoOutput may be attached to only one AVPlayerItem at a
+    // time, and AVPlayerLooper keeps its replica items alive and rotates
+    // currentItem among them as the video loops. Detach from the item being
+    // left before attaching to the new one; otherwise the wrap either stops the
+    // output vending buffers or throws for a double attachment.
+    AVPlayerItem *previous = [AVPlayerItem castFrom:change[NSKeyValueChangeOldKey]];
+    if (previous && [previous.outputs containsObject:_videoOutput]) {
+        [previous removeOutput:_videoOutput];
+    }
     AVPlayerItem *item = _videoPlayer.currentItem;
-    if (item && _videoOutput && ![item.outputs containsObject:_videoOutput]) {
+    if (item && ![item.outputs containsObject:_videoOutput]) {
         [item addOutput:_videoOutput];
     }
+}
+
+// The latch below advances once per display refresh, so it needs a refresh
+// rate. The main screen’s is an approximation — a wrapper can be shown on
+// several screens at once — and resampling it whenever playback starts is
+// enough to pick up a move between a 60Hz and a ProMotion display. Being stale
+// only caps the frame rate at the other screen’s. Main queue only.
+- (void)updateDisplayRefreshPeriod {
+    const NSInteger fps = NSScreen.mainScreen.maximumFramesPerSecond;
+    const CFTimeInterval period = fps > 0 ? 1.0 / (CFTimeInterval)fps : iTermImageWrapperDefaultDisplayRefreshPeriod;
+    os_unfair_lock_lock(&_videoLock);
+    _displayRefreshPeriod = period;
+    os_unfair_lock_unlock(&_videoLock);
+}
+
+// Advances the shared frame at most once per display refresh. Call with
+// _videoLock held.
+- (void)latchVideoFrameForHostTime:(CFTimeInterval)hostTime {
+    AVPlayerItemVideoOutput *output = _videoOutput;
+    if (!output) {
+        return;
+    }
+    const int64_t tick = (int64_t)floor(hostTime / _displayRefreshPeriod);
+    if (tick == _latchedTick) {
+        return;
+    }
+    // First consumer to ask for this refresh does the dequeue; the rest get
+    // what it latched. Mark the refresh as handled even when no new frame was
+    // ready so the others don’t each re-ask the output.
+    _latchedTick = tick;
+    const CMTime itemTime = [output itemTimeForHostTime:hostTime];
+    if (![output hasNewPixelBufferForItemTime:itemTime]) {
+        return;
+    }
+    CVPixelBufferRef pixelBuffer = [output copyPixelBufferForItemTime:itemTime
+                                                  itemTimeForDisplay:NULL];
+    if (!pixelBuffer) {
+        return;
+    }
+    if (_latchedPixelBuffer) {
+        CVPixelBufferRelease(_latchedPixelBuffer);
+    }
+    _latchedPixelBuffer = pixelBuffer;
+    _videoFrameGeneration += 1;
+}
+
+- (CVMetalTextureRef)copyVideoMetalTextureForHostTime:(CFTimeInterval)hostTime
+                                               device:(id<MTLDevice>)device
+                                           generation:(inout NSInteger *)generation {
+    if (!self.isVideo || !device) {
+        return NULL;
+    }
+    os_unfair_lock_lock(&_videoLock);
+    [self latchVideoFrameForHostTime:hostTime];
+    if (!_latchedPixelBuffer || (generation && *generation == _videoFrameGeneration)) {
+        // Nothing decoded yet, or the caller is already showing this frame.
+        os_unfair_lock_unlock(&_videoLock);
+        return NULL;
+    }
+    NSNumber *key = @(device.registryID);
+    iTermVideoTextureCache *cache = _videoTextureCaches[key];
+    if (!cache) {
+        cache = [[iTermVideoTextureCache alloc] initWithDevice:device];
+        if (!cache) {
+            os_unfair_lock_unlock(&_videoLock);
+            return NULL;
+        }
+        if (!_videoTextureCaches) {
+            _videoTextureCaches = [NSMutableDictionary dictionary];
+        }
+        _videoTextureCaches[key] = cache;
+    }
+    CVMetalTextureRef texture = [cache copyTextureForPixelBuffer:_latchedPixelBuffer
+                                                      generation:_videoFrameGeneration];
+    if (texture && generation) {
+        *generation = _videoFrameGeneration;
+    }
+    os_unfair_lock_unlock(&_videoLock);
+    return texture;
 }
 
 - (void)retainVideoPlaybackInterest {
@@ -257,6 +446,7 @@ static void *iTermImageWrapperCurrentItemContext = &iTermImageWrapperCurrentItem
     _videoPlaybackInterestCount += 1;
     if (_videoPlaybackInterestCount == 1) {
         [self.videoPlayer play];
+        [self updateDisplayRefreshPeriod];
     }
 }
 
@@ -276,6 +466,9 @@ static void *iTermImageWrapperCurrentItemContext = &iTermImageWrapperCurrentItem
                           forKeyPath:@"currentItem"
                              context:iTermImageWrapperCurrentItemContext];
     }
+    if (_latchedPixelBuffer) {
+        CVPixelBufferRelease(_latchedPixelBuffer);
+    }
 }
 
 - (instancetype)initWithImage:(NSImage *)unsafeImage {
@@ -283,6 +476,9 @@ static void *iTermImageWrapperCurrentItemContext = &iTermImageWrapperCurrentItem
     if (self) {
         _reps = [NSMutableDictionary dictionary];
         _tilingImages = [NSMutableDictionary dictionary];
+        _videoLock = OS_UNFAIR_LOCK_INIT;
+        _latchedTick = INT64_MIN;
+        _displayRefreshPeriod = iTermImageWrapperDefaultDisplayRefreshPeriod;
         NSImage *image = unsafeImage;
         if (unsafeImage.size.height > 0 && unsafeImage.size.width > 0) {
             // Downscale to deal with issue 9346

@@ -1019,7 +1019,7 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
 - (void)checkVideo:(NSString *)filename completion:(void (^)(BOOL))completion {
     AVURLAsset *asset = [AVURLAsset URLAssetWithURL:[NSURL fileURLWithPath:filename] options:nil];
     __weak __typeof(self) weakSelf = self;
-    [asset loadValuesAsynchronouslyForKeys:@[ @"playable" ] completionHandler:^{
+    [asset loadValuesAsynchronouslyForKeys:@[ @"playable", @"tracks" ] completionHandler:^{
         dispatch_async(dispatch_get_main_queue(), ^{
             __strong __typeof(weakSelf) strongSelf = weakSelf;
             if (!strongSelf) {
@@ -1027,9 +1027,17 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
                 return;
             }
             NSError *error = nil;
-            const BOOL loaded = [asset statusOfValueForKey:@"playable" error:&error] == AVKeyValueStatusLoaded;
-            if (!loaded || !asset.isPlayable) {
-                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The video “%@” could not be loaded because it is corrupt or not a supported format.", filename.lastPathComponent]
+            const BOOL loaded = ([asset statusOfValueForKey:@"playable" error:&error] == AVKeyValueStatusLoaded &&
+                                 [asset statusOfValueForKey:@"tracks" error:&error] == AVKeyValueStatusLoaded);
+            // isPlayable is also YES for an asset with no usable video track —
+            // an audio-only .mov, for instance. Accepting one would store it as
+            // the background, produce no poster frame, and then render black
+            // with nothing to explain why, so require a video track too.
+            const BOOL usable = (loaded &&
+                                 asset.isPlayable &&
+                                 [asset tracksWithMediaType:AVMediaTypeVideo].count > 0);
+            if (!usable) {
+                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The video “%@” could not be loaded because it is corrupt, is not a supported format, or has no video track.", filename.lastPathComponent]
                                            actions:@[ @"OK" ]
                                          accessory:nil
                                         identifier:@"BackgroundVideoUnreadable"
