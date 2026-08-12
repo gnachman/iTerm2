@@ -8558,8 +8558,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         palette = [@[
             [NSColor systemBlueColor], [NSColor systemGreenColor],
             [NSColor systemOrangeColor], [NSColor systemPurpleColor],
-            [NSColor systemRedColor], [NSColor systemTealColor],
-            [NSColor systemYellowColor], [NSColor systemPinkColor],
+            [NSColor systemRedColor], [NSColor colorFromHexString:@"#50afbc"],
+            [NSColor systemPinkColor],
         ] retain];
     });
     NSUInteger index = [self tabGroupsInWindow].count % palette.count;
