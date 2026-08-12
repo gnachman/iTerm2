@@ -764,8 +764,14 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                 // A drag interleaves placeholder cells between real ones; they're
                 // transparent to the run, so skip (not break) so the outline still
                 // spans the group's members and grows to enclose the open drop
-                // slot when a tab is dragged into the group.
+                // slot when a tab is dragged into the group. An "end of group"
+                // slot (tagged to join this group) sits past the last member, so
+                // union it explicitly -- otherwise the outline stops short and the
+                // join slot appears to be outside the group it drops into.
                 if c.isPlaceholder {
+                    if any, c.joinsTabGroupIdentifier == gid {
+                        tabsRect = tabsRect.union(backgroundRect(for: c.frame))
+                    }
                     j += 1
                     continue
                 }

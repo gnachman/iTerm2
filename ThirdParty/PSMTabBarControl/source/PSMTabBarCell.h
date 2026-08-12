@@ -55,6 +55,10 @@
 // nullability specifier: this header has no NS_ASSUME_NONNULL region and
 // annotating one pointer would force annotating them all.)
 @property(nonatomic, copy) NSString *tabGroupIdentifier;
+// For a drag drop-slot placeholder that sits just after a group's last member:
+// the id of the group a tab dropped here should join (its "end of group" slot).
+// nil on every non-slot cell and on slots that don't join a group.
+@property(nonatomic, copy) NSString *joinsTabGroupIdentifier;
 @property(nonatomic, readonly) PSMProgressIndicator *indicator;
 @property(nonatomic, readonly) PSMCachedTitle *cachedTitle;
 @property(nonatomic, readonly) PSMCachedTitle *cachedSubtitle;

@@ -910,10 +910,14 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 
         // Fire didDrop when the position changed OR when the drop landed inside a
         // group (a membership change even if the tab index is unchanged, e.g.
-        // dropping a tab from just-left of a group into its front slot).
+        // dropping a tab from just-left of a group into its front slot) OR when
+        // the dragged tab was itself grouped (it may have LEFT its group without
+        // changing tab index -- e.g. dragging a group's first member to before
+        // the chip, which must re-resolve membership so it doesn't snap back).
         if (([self sourceTabBar] != [self destinationTabBar] ||
              [[[self sourceTabBar] cells] indexOfObject:[self draggedCell]] != _draggedCellIndex ||
-             [self droppedInsideGroupID] != nil) &&
+             [self droppedInsideGroupID] != nil ||
+             [[self draggedCell] tabGroupIdentifier].length > 0) &&
             [[[self sourceTabBar] delegate] respondsToSelector:@selector(tabView:didDropTabViewItem:inTabBar:)]) {
 
             [[[self sourceTabBar] delegate] tabView:[[self sourceTabBar] tabView]
@@ -1602,9 +1606,15 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         }
 
         // Apply hysteresis around the real tab's midpoint, not the collapsed placeholder edge.
+        // Exempt an "end of group" join slot: it shares the gap past the last
+        // member with the after-group slot, and hysteresis toward the after-group
+        // slot would otherwise keep the join slot from ever opening when the group
+        // is approached from the right (the last member's leading half jumps
+        // straight to the between-members slot, skipping it). Let it open eagerly.
         PSMTabBarCell *currentTarget = [self targetCell];
         if (proposedTarget != currentTarget && currentTarget != nil && proposedTarget != nil &&
-            overCell != nil && ![overCell isPlaceholder]) {
+            overCell != nil && ![overCell isPlaceholder] &&
+            proposedTarget.joinsTabGroupIdentifier.length == 0) {
             const CGFloat hysteresis = 8.0; // pixels of dead zone around the tab center
             const NSInteger proposedIndex = [cells indexOfObject:proposedTarget];
             const NSInteger currentIndex = [cells indexOfObject:currentTarget];
@@ -1806,20 +1816,47 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     for (NSInteger i = 0; i < (NSInteger)cells.count; i++) {
         PSMTabBarCell *c = cells[i];
         [withSlots addObject:c];
-        if (![c isTabGroupChip]) {
+        if ([c isTabGroupChip]) {
+            // Front-of-group slot, sized to the first member.
+            NSRect slotFrame = [c frame];
+            for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
+                if (![cells[j] isTabGroupChip]) {
+                    slotFrame = [cells[j] frame];
+                    break;
+                }
+            }
+            PSMTabBarCell *slot = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:slotFrame
+                                                                         expanded:NO
+                                                                    inControlView:control] autorelease];
+            [withSlots addObject:slot];
             continue;
         }
-        NSRect slotFrame = [c frame];
-        for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
-            if (![cells[j] isTabGroupChip]) {
-                slotFrame = [cells[j] frame];
-                break;
-            }
+        // End-of-group slot: after a group's LAST member add a slot tagged to
+        // join that group. It shares the gap with the ordinary slot to its right
+        // (drop after the group); the two are distinguished visually because
+        // -drawTabGroupRunDecorations... grows the group outline over this one.
+        // Over the last member's trailing half the cursor picks this slot (join);
+        // over the next tab's leading half it picks the one after (drop after).
+        NSString *gid = c.tabGroupIdentifier;
+        if (gid.length == 0) {
+            continue;
         }
-        PSMTabBarCell *slot = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:slotFrame
-                                                                     expanded:NO
-                                                                inControlView:control] autorelease];
-        [withSlots addObject:slot];
+        BOOL isLastMember = YES;
+        for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
+            if ([cells[j] isPlaceholder]) {
+                continue;
+            }
+            isLastMember = ([cells[j] isTabGroupChip] ||
+                            ![[cells[j] tabGroupIdentifier] isEqualToString:gid]);
+            break;
+        }
+        if (isLastMember) {
+            PSMTabBarCell *endSlot = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:[c frame]
+                                                                            expanded:NO
+                                                                       inControlView:control] autorelease];
+            endSlot.joinsTabGroupIdentifier = gid;
+            [withSlots addObject:endSlot];
+        }
     }
     [cells setArray:withSlots];
 }
@@ -1860,6 +1897,12 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     // chip; joining sets the membership and -normalizeTabGroupChipCells then
     // re-derives the chip to the left of the new member, giving [chip, X, m1].
     PSMTabBarCell *target = [self targetCell];
+    // An "end of group" slot names the group to join outright: a tab dropped
+    // there lands in the group at its end (its right neighbor is not a member,
+    // so the bracket test below would otherwise call it "outside").
+    if (target.joinsTabGroupIdentifier.length > 0) {
+        return target.joinsTabGroupIdentifier;
+    }
     NSArray *cells = [control cells];
     const NSInteger idx = target ? [cells indexOfObject:target] : NSNotFound;
     if (idx == NSNotFound) {
@@ -2039,9 +2082,39 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     int cellIndex = [[control cells] indexOfObject:cell];
     PSMTabBarCell *pc = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:[[self draggedCell] frame] expanded:YES inControlView:control] autorelease];
     pc.truncationStyle = cell.truncationStyle;
+    // Carry the dragged cell's group id on its drop-slot placeholder so run
+    // detection keeps the group's chip anchored before this slot. Without it,
+    // dragging a group's FIRST member turns its slot into a group-less
+    // placeholder, the chip re-derives before the second member, and the slot
+    // jumps from right of the chip to left of it with no animation.
+    pc.tabGroupIdentifier = cell.tabGroupIdentifier;
+    // A group's edge member keeps the flanking placeholder on its outward side:
+    // the chip anchors before pc (above), so that placeholder becomes the "drop
+    // before/after the group" slot. Removing it, as for every other cell, would
+    // leave nothing outside the group to target from that side, so the first
+    // member could only be dropped out in front (and the last member out behind)
+    // by overshooting past the group.
+    NSString *draggedGid = cell.tabGroupIdentifier;
+    BOOL keepLeadingPlaceholder = NO;
+    BOOL keepTrailingPlaceholder = NO;
+    if (draggedGid.length > 0) {
+        NSArray *baseCells = [control cells];
+        const NSInteger prev = cellIndex - 2;  // previous tab cell (skip the flanking placeholder)
+        keepLeadingPlaceholder =
+            (prev < 0 ||
+             ![[[baseCells objectAtIndex:prev] tabGroupIdentifier] isEqualToString:draggedGid]);
+        const NSInteger next = cellIndex + 2;  // next tab cell (skip the flanking placeholder)
+        keepTrailingPlaceholder =
+            (next >= (NSInteger)baseCells.count ||
+             ![[[baseCells objectAtIndex:next] tabGroupIdentifier] isEqualToString:draggedGid]);
+    }
     [[control cells] replaceObjectAtIndex:cellIndex withObject:pc];
-    [[control cells] removeObjectAtIndex:(cellIndex + 1)];
-    [[control cells] removeObjectAtIndex:(cellIndex - 1)];
+    if (!keepTrailingPlaceholder) {
+        [[control cells] removeObjectAtIndex:(cellIndex + 1)];
+    }
+    if (!keepLeadingPlaceholder) {
+        [[control cells] removeObjectAtIndex:(cellIndex - 1)];
+    }
     // Set the expanded placeholder as the initial target to prevent the first
     // animation frame from picking the wrong target when currentMouseLoc hasn't
     // been set yet.

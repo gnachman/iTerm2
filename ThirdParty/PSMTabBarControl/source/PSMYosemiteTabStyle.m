@@ -1422,8 +1422,13 @@ static const CGFloat kPSMSquaredGroupOutset = 1;     // outline sits this far ou
             // A drag interleaves placeholder cells between real ones; they're
             // transparent to the run, so skip (not break) so the outline still
             // spans the group's members and grows to enclose the open drop slot
-            // when a tab is dragged into the group.
+            // when a tab is dragged into the group. An "end of group" slot
+            // (tagged to join this group) sits past the last member, so union it
+            // explicitly or the outline stops short of the slot it drops into.
             if (c.isPlaceholder) {
+                if (any && [c.joinsTabGroupIdentifier isEqualToString:gid]) {
+                    tabsRect = NSUnionRect(tabsRect, [c frame]);
+                }
                 continue;
             }
             if (c.isTabGroupChip || c.isInOverflowMenu || ![c.tabGroupIdentifier isEqualToString:gid]) {

@@ -1710,6 +1710,17 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
         if ([cell isPlaceholder]) {
             // Placeholders are transparent to run detection so a group split
             // only by placeholders (e.g. the dragged tab's gap) stays one run.
+            // Exception: the dragged member's drop-slot placeholder carries its
+            // group id, so it anchors the run (and its chip) at that slot rather
+            // than letting the chip jump past it to the next real member.
+            NSString *pgid = [cell tabGroupIdentifier];
+            if (pgid.length > 0 && ![pgid isEqualToString:runID]) {
+                PSMTabBarCell *chip = [[[PSMTabBarCell alloc] initWithControlView:controlView] autorelease];
+                [chip setIsTabGroupChip:YES];
+                [chip setTabGroupIdentifier:pgid];
+                [result addObject:chip];
+                runID = pgid;
+            }
             [result addObject:cell];
             continue;
         }
