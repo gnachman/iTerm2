@@ -98,6 +98,8 @@ static NSString* TAB_ARRANGEMENT_TITLE_OVERRIDE = @"Title Override";
 static NSString* TAB_GUID = @"Tab GUID";
 static NSString* TAB_ARRANGEMENT_PINNED = @"Pinned";
 static NSString* TAB_ARRANGEMENT_GROUP_ID = @"Tab Group ID";
+static NSString* TAB_ARRANGEMENT_GROUP_NAME = @"Tab Group Name";
+static NSString* TAB_ARRANGEMENT_GROUP_COLOR = @"Tab Group Color";
 
 static const BOOL USE_THIN_SPLITTERS = YES;
 
@@ -3575,6 +3577,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     theTab.titleOverride = [arrangement[TAB_ARRANGEMENT_TITLE_OVERRIDE] nilIfNull];
     theTab->_pinned = [arrangement[TAB_ARRANGEMENT_PINNED] boolValue];
     theTab.tabGroupID = [arrangement[TAB_ARRANGEMENT_GROUP_ID] nilIfNull];
+    theTab.tabGroupName = [arrangement[TAB_ARRANGEMENT_GROUP_NAME] nilIfNull];
+    NSDictionary *groupColorDict = [arrangement[TAB_ARRANGEMENT_GROUP_COLOR] nilIfNull];
+    if (groupColorDict) {
+        theTab.tabGroupColor = [groupColorDict colorValue];
+    }
     NSString *guid = arrangement[TAB_GUID];
     if (guid) {
         if ([[iTermController sharedInstance] tabWithGUID:guid] ||
@@ -3912,6 +3919,12 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
     encoder[TAB_ARRANGEMENT_PINNED] = @(self.isPinned);
     if (self.tabGroupID) {
         encoder[TAB_ARRANGEMENT_GROUP_ID] = self.tabGroupID;
+        if (self.tabGroupName) {
+            encoder[TAB_ARRANGEMENT_GROUP_NAME] = self.tabGroupName;
+        }
+        if (self.tabGroupColor) {
+            encoder[TAB_ARRANGEMENT_GROUP_COLOR] = self.tabGroupColor.dictionaryValue;
+        }
     }
     // If in screenshot mode, encode the live session instead of the synthetic one
     PTYSession *sessionToEncode = self.activeSession;

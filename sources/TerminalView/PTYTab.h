@@ -95,6 +95,13 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // window controller pushes it to the tab bar via
 // -setTabGroupIdentifier:forTabViewItem:.
 @property (nonatomic, copy) NSString *tabGroupID;
+// The tab group's definition (its name and color) travels on every member
+// tab, so it persists and moves across windows with the tabs and there is no
+// separate registry to keep in sync. All tabs sharing a tabGroupID carry the
+// same name/color; membership mutations copy them and rename fans them out.
+// Meaningful only when tabGroupID is non-nil.
+@property (nonatomic, copy) NSString *tabGroupName;
+@property (nonatomic, copy) NSColor *tabGroupColor;
 @property(nonatomic, readonly) NSString *title;  // the effective title
 @property (nonatomic, readonly) iTermVariableScope<iTermTabScope> *variablesScope;
 @property(nonatomic, readonly) iTermMetalUnavailableReason metalUnavailableReason;

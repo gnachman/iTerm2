@@ -727,7 +727,6 @@
 		370BED167A8A71DDDF7C4DBF /* iTermRowOutputCache.mm in Sources */ = {isa = PBXBuildFile; fileRef = F3F259C5F8B721015754BAE2 /* iTermRowOutputCache.mm */; };
 		379BC6FDE40ED00F0D1B4CFD /* VT100PromptKind.h in Sources */ = {isa = PBXBuildFile; fileRef = 6D70E7DE7E81B39DC29CC27B /* VT100PromptKind.h */; };
 		37CEE9E2B72C0F67F03A9587 /* iTermTmuxControlModeKeyName.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E02D44A9E1C1B28D6C40090 /* iTermTmuxControlModeKeyName.m */; };
-		387A0F6C690CF762955E780B /* iTermTabGroupRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20D6A955A738F94D53BE9263 /* iTermTabGroupRegistry.swift */; };
 		38C1ECCA9DCF67E64C50E1BC /* iTermRenderingComparer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80A64098B399CE71B981E2C7 /* iTermRenderingComparer.swift */; };
 		398447BD6E0F4CA316672068 /* CompanionPairingWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8D4F38B871E9DA9C0AA5E10 /* CompanionPairingWindowController.swift */; };
 		3B049F12D648A9AFEEFCA7A1 /* OpenDirectory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */; };
@@ -6397,7 +6396,6 @@
 		207C83644F1E850C9F1E918A /* iTermTouchIDHelper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermTouchIDHelper.swift; sourceTree = "<group>"; };
 		20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermApplicationDelegate.h; sourceTree = "<group>"; tabWidth = 4; };
 		20D5CC6404E7AA0500000106 /* iTermApplicationDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = iTermApplicationDelegate.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		20D6A955A738F94D53BE9263 /* iTermTabGroupRegistry.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermTabGroupRegistry.swift; sourceTree = "<group>"; };
 		20E74F4804E9089700000106 /* ITAddressBookMgr.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ITAddressBookMgr.h; sourceTree = "<group>"; tabWidth = 4; };
 		20E74F4904E9089700000106 /* ITAddressBookMgr.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ITAddressBookMgr.m; sourceTree = "<group>"; tabWidth = 4; };
 		21F8530D8EDE4464A3DC219F /* iTermInProcessIt2.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermInProcessIt2.h; sourceTree = "<group>"; };
@@ -16311,7 +16309,6 @@
 			isa = PBXGroup;
 			children = (
 				9946FFB23BB5ECE2EDCA77F6 /* iTermTabGroup.swift */,
-				20D6A955A738F94D53BE9263 /* iTermTabGroupRegistry.swift */,
 				842E85C7646AD1CE30E147AD /* iTermTabGroupContiguity.swift */,
 			);
 			name = TabGroups;
@@ -22270,7 +22267,6 @@
 				5F27E33052DAE794E62956B2 /* KittyDnDSSHEndpointAdapter.swift in Sources */,
 				D14E96013DD1B056E5D3648A /* KittyDnDViewDragHost.swift in Sources */,
 				744CA48D7CA218E894A7745D /* iTermTabGroup.swift in Sources */,
-				387A0F6C690CF762955E780B /* iTermTabGroupRegistry.swift in Sources */,
 				DF93E577C867F721A8F84CB7 /* iTermTabGroupContiguity.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -261,8 +261,8 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 - (void)applyTabOrder:(NSArray<PTYTab *> *)target;
 - (void)moveCurrentTabUnitByOffset:(NSInteger)offset;
 // Group drag helpers (defined below).
-- (void)moveTabGroup:(iTermTabGroup *)group tabs:(NSArray<PTYTab *> *)tabs toTerminal:(PseudoTerminal *)dest atIndex:(NSInteger)dropIndex;
-- (void)tearOffTabGroup:(iTermTabGroup *)group tabs:(NSArray<PTYTab *> *)tabs atScreenPoint:(NSPoint)screenPoint;
+- (void)moveTabGroup:(NSArray<PTYTab *> *)tabs toTerminal:(PseudoTerminal *)dest atIndex:(NSInteger)dropIndex;
+- (void)tearOffTabGroup:(NSArray<PTYTab *> *)tabs atScreenPoint:(NSPoint)screenPoint;
 - (PseudoTerminal *)terminalForTabBar:(PSMTabBarControl *)bar;
 - (void)reorderGroupTabs:(NSArray<PTYTab *> *)tabs beforeTabViewItem:(NSTabViewItem *)anchor;
 
@@ -281,10 +281,6 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 @end
 
 @implementation PseudoTerminal {
-    ////////////////////////////////////////////////////////////////////////////
-    // Per-window tab-group definitions (name/color by id). Source of the
-    // tab bar's tabGroupDataSource. Lazily created; see -tabGroupRegistry.
-    iTermTabGroupRegistry *_tabGroupRegistry;
 
     // Reentrancy guard for -enforceTabGroupContiguityInvariant (it reorders
     // tabs, which can funnel back through reorder plumbing).
@@ -7465,12 +7461,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [self reorderGroupTabs:tabs beforeTabViewItem:anchor];
         return;
     }
-    iTermTabGroup *group = [self.tabGroupRegistry groupWithID:groupID];
     NSInteger index = anchor ? [dest->_contentView.tabView indexOfTabViewItem:anchor] : [dest numberOfTabs];
     if (index == NSNotFound) {
         index = [dest numberOfTabs];
     }
-    [self moveTabGroup:group tabs:tabs toTerminal:dest atIndex:index];
+    [self moveTabGroup:tabs toTerminal:dest atIndex:index];
 }
 
 - (void)tabView:(NSTabView*)aTabView
@@ -7490,30 +7485,17 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (tabs.count == 0) {
         return;
     }
-    iTermTabGroup *group = [self.tabGroupRegistry groupWithID:groupID];
-    [self tearOffTabGroup:group tabs:tabs atScreenPoint:screenPoint];
+    [self tearOffTabGroup:tabs atScreenPoint:screenPoint];
 }
 
-// Copy the group's definition into `registry` if it isn't already there,
-// preserving the identifier so the moved tabs (which keep their tabGroupID)
-// still resolve to it.
-- (void)ensureGroup:(iTermTabGroup *)group inRegistry:(iTermTabGroupRegistry *)registry {
-    if (!group || [registry groupWithID:group.uniqueIdentifier]) {
-        return;
-    }
-    [registry addGroup:[[[iTermTabGroup alloc] initWithUniqueIdentifier:group.uniqueIdentifier
-                                                                   name:group.name
-                                                                  color:group.color] autorelease]];
-}
-
-- (void)moveTabGroup:(iTermTabGroup *)group
-                tabs:(NSArray<PTYTab *> *)tabs
+- (void)moveTabGroup:(NSArray<PTYTab *> *)tabs
           toTerminal:(PseudoTerminal *)dest
              atIndex:(NSInteger)dropIndex {
     if (dest == self || dest == nil) {
         return;
     }
-    [self ensureGroup:group inRegistry:dest.tabGroupRegistry];
+    // The group's definition (name/color) rides each member tab, so it travels
+    // to `dest` automatically; dest derives its group chip from the moved tabs.
     int index = (dropIndex >= 0 && dropIndex <= [dest numberOfTabs]) ? (int)dropIndex : [dest numberOfTabs];
     for (PTYTab *tab in tabs) {
         NSTabViewItem *item = tab.tabViewItem;
@@ -7539,17 +7521,17 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [self tabsDidReorder];
 }
 
-- (void)tearOffTabGroup:(iTermTabGroup *)group
-                   tabs:(NSArray<PTYTab *> *)tabs
+- (void)tearOffTabGroup:(NSArray<PTYTab *> *)tabs
           atScreenPoint:(NSPoint)screenPoint {
     PTYTab *first = tabs.firstObject;
     // -it_moveTabToNewWindow: creates the window and moves the first tab; it
     // refuses when this window has fewer than two tabs (nothing to tear off).
+    // The group definition rides each tab, so it comes along with `first` and
+    // the rest; the new window derives the chip from them, no registry copy.
     PseudoTerminal *dest = [self it_moveTabToNewWindow:first];
     if (!dest) {
         return;
     }
-    [self ensureGroup:group inRegistry:dest.tabGroupRegistry];
     int index = 1;
     for (NSInteger i = 1; i < (NSInteger)tabs.count; i++) {
         PTYTab *tab = tabs[i];
@@ -8354,45 +8336,41 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [self updateTabGroups];
 }
 
-- (iTermTabGroupRegistry *)tabGroupRegistry {
-    if (!_tabGroupRegistry) {
-        _tabGroupRegistry = [[iTermTabGroupRegistry alloc] init];
+// PSMTabGroupDataSource: the tab bar asks for a group's name/color by id at
+// draw time. The definition lives on the member tabs (there is no registry),
+// so answer from the first live tab carrying that id. Returns nil -- no chip --
+// when no tab references it, so a group with no members is simply gone.
+- (id<PSMTabGroup>)tabGroupWithIdentifier:(NSString *)identifier {
+    if (identifier.length == 0) {
+        return nil;
     }
-    return _tabGroupRegistry;
+    for (PTYTab *aTab in [self tabs]) {
+        if ([aTab.tabGroupID isEqualToString:identifier]) {
+            return [[[iTermTabGroup alloc] initWithUniqueIdentifier:identifier
+                                                               name:(aTab.tabGroupName ?: @"")
+                                                              color:(aTab.tabGroupColor ?: [NSColor systemBlueColor])] autorelease];
+        }
+    }
+    return nil;
 }
 
-// Push each tab's group membership to the tab bar and drop group
-// definitions no tab references anymore. Piggybacks on updateTabColors,
-// which already runs at every point tab membership/order can change.
+// Push each tab's group membership to the tab bar. The window controller is
+// itself the group data source; name/color come from the member tabs on
+// demand (see -tabGroupWithIdentifier:), so there is nothing else to sync and
+// nothing to prune -- a group with no members has no source tab and vanishes.
+// Piggybacks on updateTabColors, which already runs wherever membership/order
+// can change.
 - (void)updateTabGroups {
     PSMTabBarControl *control = _contentView.tabBarControl;
     if (!control) {
         return;
     }
-    if (control.tabGroupDataSource != self.tabGroupRegistry) {
-        control.tabGroupDataSource = self.tabGroupRegistry;
+    if (control.tabGroupDataSource != (id<PSMTabGroupDataSource>)self) {
+        control.tabGroupDataSource = (id<PSMTabGroupDataSource>)self;
     }
-    NSMutableSet<NSString *> *inUse = [NSMutableSet set];
     for (PTYTab *aTab in [self tabs]) {
-        NSString *groupID = aTab.tabGroupID;
-        [control setTabGroupIdentifier:groupID forTabViewItem:aTab.tabViewItem];
-        if (groupID) {
-            [inUse addObject:groupID];
-        }
+        [control setTabGroupIdentifier:aTab.tabGroupID forTabViewItem:aTab.tabViewItem];
     }
-    if (inUse.count > 0 || !self.tabGroupRegistry.isEmpty) {
-        RLog(@"tabGroup: updateTabGroups pushed membership for %ld tabs; inUse=%@ registry=%@",
-             (long)[self tabs].count, inUse.allObjects,
-             [self.tabGroupRegistry.allGroups valueForKey:@"uniqueIdentifier"]);
-    }
-    // Deliberately do NOT prune here. This runs constantly (via
-    // updateTabColors), and a grouped tab that briefly leaves [self tabs]
-    // during a drag would make its group momentarily unreferenced -- a
-    // prune here then destroyed the group's name/color, orphaning the tab
-    // when it returned (id present, definition gone, no chip). Group defs
-    // are tiny; keep them for the window's life. A def that outlives all
-    // its tabs is inert (no run -> no chip). Cross-window transfer and a
-    // real cleanup pass are separate follow-ups.
 }
 
 // Re-derive the group chips and lay the tab bar out synchronously. The drag
@@ -8420,14 +8398,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     NSMenu *groupMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
 
-    NSMenuItem *newGroupItem = [[[NSMenuItem alloc] initWithTitle:@"New Group"
+    NSMenuItem *newGroupItem = [[[NSMenuItem alloc] initWithTitle:@"New Group…"
                                                            action:@selector(addTabToNewGroup:)
                                                     keyEquivalent:@""] autorelease];
     newGroupItem.representedObject = tabViewItem;
     newGroupItem.target = self;
     [groupMenu addItem:newGroupItem];
 
-    NSArray<iTermTabGroup *> *groups = self.tabGroupRegistry.allGroups;
+    NSArray<iTermTabGroup *> *groups = [self tabGroupsInWindow];
     if (groups.count > 0) {
         [groupMenu addItem:[NSMenuItem separatorItem]];
         for (iTermTabGroup *group in groups) {
@@ -8450,6 +8428,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [rootMenu setSubmenu:groupMenu forItem:groupRoot];
 
     if (theTab.tabGroupID) {
+        NSMenuItem *renameItem = [[[NSMenuItem alloc] initWithTitle:@"Rename Group…"
+                                                            action:@selector(renameTabGroup:)
+                                                     keyEquivalent:@""] autorelease];
+        renameItem.representedObject = tabViewItem;
+        renameItem.target = self;
+        [rootMenu addItem:renameItem];
+
         NSMenuItem *removeItem = [[[NSMenuItem alloc] initWithTitle:@"Remove Tab from Group"
                                                              action:@selector(removeTabFromGroup:)
                                                       keyEquivalent:@""] autorelease];
@@ -8465,12 +8450,15 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (!theTab) {
         return;
     }
-    NSString *name = [tabViewItem label].length > 0 ? [tabViewItem label] : @"Group";
-    iTermTabGroup *group = [[[iTermTabGroup alloc] initWithName:name
-                                                         color:[self nextTabGroupColor]] autorelease];
-    [self.tabGroupRegistry addGroup:group];
-    theTab.tabGroupID = group.uniqueIdentifier;
-    RLog(@"tabGroup: New Group %@ (%@) from tab %@", group.uniqueIdentifier, name, [tabViewItem label]);
+    NSString *defaultName = [tabViewItem label].length > 0 ? [tabViewItem label] : @"Group";
+    NSString *name = [self promptForTabGroupName:defaultName title:@"New Tab Group"];
+    if (!name) {
+        return;  // user cancelled
+    }
+    theTab.tabGroupID = [[NSUUID UUID] UUIDString];
+    theTab.tabGroupName = name;
+    theTab.tabGroupColor = [self nextTabGroupColor];
+    RLog(@"tabGroup: New Group %@ (%@) from tab %@", theTab.tabGroupID, name, [tabViewItem label]);
     [self updateTabColors];
 }
 
@@ -8482,12 +8470,81 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (!theTab || !groupID) {
         return;
     }
+    // The definition has no separate store, so copy it from an existing member
+    // to keep the new member self-sufficient.
+    for (PTYTab *member in [self tabs]) {
+        if (member != theTab && [member.tabGroupID isEqualToString:groupID]) {
+            theTab.tabGroupName = member.tabGroupName;
+            theTab.tabGroupColor = member.tabGroupColor;
+            break;
+        }
+    }
     theTab.tabGroupID = groupID;
     RLog(@"tabGroup: added tab %@ to existing group %@", [tabViewItem label], groupID);
     [self updateTabColors];
     // The added tab may be far from the group's other members; repair the
     // contiguity invariant so they become one block.
     [self tabsDidReorder];
+}
+
+// Rename every tab in the group, since the name is carried per-member.
+- (void)renameTabGroup:(id)sender {
+    NSTabViewItem *tabViewItem = [sender representedObject];
+    PTYTab *theTab = [tabViewItem identifier];
+    NSString *groupID = theTab.tabGroupID;
+    if (groupID.length == 0) {
+        return;
+    }
+    NSString *name = [self promptForTabGroupName:(theTab.tabGroupName ?: @"") title:@"Rename Tab Group"];
+    if (!name) {
+        return;  // user cancelled
+    }
+    for (PTYTab *member in [self tabs]) {
+        if ([member.tabGroupID isEqualToString:groupID]) {
+            member.tabGroupName = name;
+        }
+    }
+    RLog(@"tabGroup: renamed group %@ to %@", groupID, name);
+    [self updateTabColors];
+}
+
+// Modal name prompt for creating/renaming a group. Returns the entered string
+// (may be empty -- names need not be unique or non-empty), or nil if cancelled.
+- (NSString *)promptForTabGroupName:(NSString *)initialValue title:(NSString *)title {
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = title;
+    alert.informativeText = @"Enter a name for this tab group.";
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+    NSTextField *field = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 240, 24)] autorelease];
+    field.stringValue = initialValue ?: @"";
+    [field selectText:nil];
+    alert.accessoryView = field;
+    alert.window.initialFirstResponder = field;
+    const NSModalResponse response = [alert runModal];
+    if (response != NSAlertFirstButtonReturn) {
+        return nil;
+    }
+    return field.stringValue;
+}
+
+// Distinct tab groups in this window, derived from the member tabs (there is
+// no registry). The first tab carrying each id supplies the name/color, and
+// order follows first appearance in the tab order.
+- (NSArray<iTermTabGroup *> *)tabGroupsInWindow {
+    NSMutableArray<iTermTabGroup *> *result = [NSMutableArray array];
+    NSMutableSet<NSString *> *seen = [NSMutableSet set];
+    for (PTYTab *aTab in [self tabs]) {
+        NSString *gid = aTab.tabGroupID;
+        if (gid.length == 0 || [seen containsObject:gid]) {
+            continue;
+        }
+        [seen addObject:gid];
+        [result addObject:[[[iTermTabGroup alloc] initWithUniqueIdentifier:gid
+                                                                      name:(aTab.tabGroupName ?: @"")
+                                                                     color:(aTab.tabGroupColor ?: [NSColor systemBlueColor])] autorelease]];
+    }
+    return result;
 }
 
 - (void)removeTabFromGroup:(id)sender {
@@ -8510,7 +8567,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             [NSColor systemYellowColor], [NSColor systemPinkColor],
         ] retain];
     });
-    NSUInteger index = self.tabGroupRegistry.allGroups.count % palette.count;
+    NSUInteger index = [self tabGroupsInWindow].count % palette.count;
     return palette[index];
 }
 
