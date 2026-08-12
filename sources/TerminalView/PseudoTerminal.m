@@ -8850,6 +8850,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     RLog(@"tabGroup: renamed group %@ to %@", groupID, name);
     [self updateTabColors];
+    // The chip's width is derived from the name, so re-derive and relay out the
+    // chips now; otherwise the chip keeps its old width until some later relayout
+    // (e.g. switching away and back to the app).
+    [self relayoutTabGroupChipsSynchronously];
 }
 
 - (void)ungroupTabGroup:(id)sender {
