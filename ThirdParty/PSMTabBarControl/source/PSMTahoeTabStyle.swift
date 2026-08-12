@@ -702,8 +702,13 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                     lhs.frame.minY < rhs.frame.minY
                 }
             }
-            for i in 0..<(sorted.count - 1) {
-                drawDivider(betweenCell: sorted[i], andCell: sorted[i + 1])
+            // Mid-drag the clip rect can cover only zero-width placeholders, so
+            // cellsForDividers filters to empty; guard the count or 0..<(-1)
+            // traps.
+            if sorted.count > 1 {
+                for i in 0..<(sorted.count - 1) {
+                    drawDivider(betweenCell: sorted[i], andCell: sorted[i + 1])
+                }
             }
             if let selectedCell = drawableCells.first, selectedCell.state == .on {
                 selectedCell.drawPostHocDecorations(onSelectedCell: selectedCell, tabBarControl: bar)
