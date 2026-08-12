@@ -8926,8 +8926,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (void)closeTabGroup:(id)sender {
+    // Close every member, including pinned ones -- the pinned tabs are the group.
     [self closeTabs:[self tabsInGroup:[sender representedObject]]
-        confirmWith:@"Close this tab group?"];
+        confirmWith:@"Close this tab group?"
+      skippingPinned:NO];
 }
 
 - (void)closeTabsOutsideGroup:(id)sender {
@@ -8938,7 +8940,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             [others addObject:aTab];
         }
     }
-    [self closeTabs:others confirmWith:@"Close all tabs outside this group?"];
+    [self closeTabs:others confirmWith:@"Close all tabs outside this group?" skippingPinned:YES];
 }
 
 - (void)closeTabsRightOfGroup:(id)sender {
@@ -8953,18 +8955,22 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return;
     }
     NSArray<PTYTab *> *toRight = [tabs subarrayWithRange:NSMakeRange(lastIndex + 1, tabs.count - lastIndex - 1)];
-    [self closeTabs:toRight confirmWith:@"Close all tabs to the right of this group?"];
+    [self closeTabs:toRight confirmWith:@"Close all tabs to the right of this group?" skippingPinned:YES];
 }
 
-// Close a batch of tabs with a single confirmation, skipping pinned tabs.
-- (void)closeTabs:(NSArray<PTYTab *> *)tabsToClose confirmWith:(NSString *)question {
+// Close a batch of tabs with a single confirmation. `skipPinned` protects
+// pinned tabs when closing things *around* a group (Close Other / to the
+// Right); Close Group passes NO so it can close its own pinned members.
+- (void)closeTabs:(NSArray<PTYTab *> *)tabsToClose
+      confirmWith:(NSString *)question
+   skippingPinned:(BOOL)skipPinned {
     if (_layoutLocked) {
         RLog(@"Layout is locked, refusing to close tabs");
         return;
     }
     NSMutableArray<PTYTab *> *closable = [NSMutableArray array];
     for (PTYTab *aTab in tabsToClose) {
-        if (!aTab.isPinned) {
+        if (!skipPinned || !aTab.isPinned) {
             [closable addObject:aTab];
         }
     }
