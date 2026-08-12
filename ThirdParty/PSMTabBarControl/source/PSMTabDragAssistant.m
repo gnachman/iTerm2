@@ -17,6 +17,8 @@
 #import <CoreVideo/CoreVideo.h>
 #import <sys/time.h>
 
+NSString *const PSMTabDragIsGroupPasteboardType = @"com.iterm2.psm.tabgroup";
+
 #if PSM_DEBUG_DRAG_PERFORMANCE
 static os_log_t PSMTabDragLog(void) {
     static os_log_t log;
@@ -321,6 +323,11 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
     [pbItem setString:[@([[control cells] indexOfObject:cell]) stringValue]
               forType:@"com.iterm2.psm.controlitem"];
+    // Mark whole-group drags so a drop target can tell them apart from a single
+    // tab by inspecting the pasteboard, without reaching into this assistant.
+    if (_draggedGroupID != nil) {
+        [pbItem setString:_draggedGroupID forType:PSMTabDragIsGroupPasteboardType];
+    }
 
     NSImage *imageToDrag;
     NSRect draggingRect;

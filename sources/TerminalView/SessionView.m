@@ -1989,7 +1989,17 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
 #pragma mark NSDraggingDestination protocol
 
+// Dropping a whole tab group onto a session pane has no sensible meaning (it
+// would split off just the first member), so refuse it. A single-tab drop is
+// still fine. Whole-group drags carry a marker on their pasteboard.
+- (BOOL)draggingIsWholeTabGroup:(id<NSDraggingInfo>)sender {
+    return [[sender draggingPasteboard] availableTypeFromArray:@[ PSMTabDragIsGroupPasteboardType ]] != nil;
+}
+
 - (NSDragOperation)draggingEntered:(id < NSDraggingInfo >)sender {
+    if ([self draggingIsWholeTabGroup:sender]) {
+        return NSDragOperationNone;
+    }
     return [_delegate sessionViewDraggingEntered:sender];
 }
 
@@ -2000,6 +2010,9 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 }
 
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
+    if ([self draggingIsWholeTabGroup:sender]) {
+        return NSDragOperationNone;
+    }
     if ([_delegate sessionViewShouldSplitSelectionAfterDragUpdate:sender]) {
         // draggingUpdated:'s draggingLocation can be stale during tab drags (see PSMTabDragAssistant).
         const NSPoint mouseLocationInWindow = [self.window convertPointFromScreen:[NSEvent mouseLocation]];
@@ -2013,13 +2026,16 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
     RLog(@"performDragOperation: %@", sender);
+    if ([self draggingIsWholeTabGroup:sender]) {
+        return NO;
+    }
     BOOL result = [_delegate sessionViewPerformDragOperation:sender];
     [_delegate sessionViewDraggingExited:sender];
     return result;
 }
 
 - (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender {
-    return YES;
+    return ![self draggingIsWholeTabGroup:sender];
 }
 
 - (BOOL)wantsPeriodicDraggingUpdates {

@@ -19,6 +19,11 @@
 #define kPSMTabDragWindowAlpha 0.75
 #define PI 3.1417
 
+// Present on a tab-bar drag's pasteboard when the dragged unit is a whole tab
+// group rather than a single tab. A drop target can read group-ness off the
+// NSDraggingInfo instead of querying the shared drag assistant.
+extern NSString *const PSMTabDragIsGroupPasteboardType;
+
 @interface PSMTabDragAssistant : NSObject
 
 @property (nonatomic, readonly) BOOL dropping;
