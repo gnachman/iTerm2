@@ -428,10 +428,14 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [[NSCursor closedHandCursor] set];
 
     // Drag image = snapshot of the run WITH its decoration (chip + outline), so
-    // the floating image looks like the group. Round out to whole pixels (+1 on
-    // w/h so the 1pt outline edge isn't clipped), clamped to the bar.
+    // the floating image looks like the group. The enclosing outline is outset
+    // ~2pt past the member pills on the right (see drawTabGroupRun in the tab
+    // style), beyond runFrame's right edge, so the width needs that much slack or
+    // the floating image clips the outline. The left edge is the chip, where the
+    // outline begins, so growing only the width keeps the drag offset intact.
+    // Round out to whole pixels and clamp to the bar.
     NSRect capture = NSIntegralRect(runFrame);
-    capture.size.width += 1;
+    capture.size.width += 3;
     capture.size.height += 1;
     capture = NSIntersectionRect(capture, [control bounds]);
     NSBitmapImageRep *rep = [control bitmapImageRepForCachingDisplayInRect:capture];
