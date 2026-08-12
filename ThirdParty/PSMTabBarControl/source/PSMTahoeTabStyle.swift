@@ -984,10 +984,15 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         if leftCell.isHighlighted || rightCell.isHighlighted || leftCell.state == .on || rightCell.state == .on {
             return
         }
-        // No divider touching a group: it would overlap the group's enclosing
-        // blue outline (on either side of the group) or sit inside it.
-        if leftCell.isTabGroupChip || rightCell.isTabGroupChip ||
-            leftCell.tabGroupIdentifier != nil || rightCell.tabGroupIdentifier != nil {
+        if leftCell.isTabGroupChip || rightCell.isTabGroupChip {
+            return
+        }
+        // Draw a divider only between two cells with the same group membership:
+        // both ungrouped, or both members of the same group (an interior divider
+        // marks the tab boundary inside the run, well within the enclosing
+        // outline). At a group edge the identifiers differ and a divider there
+        // would collide with that outline, so skip it.
+        if leftCell.tabGroupIdentifier != rightCell.tabGroupIdentifier {
             return
         }
         guard let cells = tabBar?.cells() as? [PSMTabBarCell], cells.count >= 3 else {
