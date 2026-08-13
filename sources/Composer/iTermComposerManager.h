@@ -24,6 +24,17 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)composerManagerDidRemoveTemporaryStatusBarComponent:(iTermComposerManager *)composerManager;
 - (void)composerManager:(iTermComposerManager *)composerManager
             sendCommand:(NSString *)command;
+// Types `command` into the active session of the 1-based tab number in this
+// session's window, as if typed there. Returns YES on success. `message` is
+// always set to a user-facing toast string (success or failure).
+- (BOOL)composerManager:(iTermComposerManager *)composerManager
+           routeCommand:(NSString *)command
+            toTabNumber:(NSInteger)tabNumber
+                message:(NSString * _Nullable * _Nonnull)message;
+// Same, but to the active session of every other tab in the window.
+- (BOOL)composerManager:(iTermComposerManager *)composerManager
+  routeCommandToAllTabs:(NSString *)command
+                message:(NSString * _Nullable * _Nonnull)message;
 - (void)composerManager:(iTermComposerManager *)composerManager
          enqueueCommand:(NSString *)command;
 - (void)composerManager:(iTermComposerManager *)composerManager

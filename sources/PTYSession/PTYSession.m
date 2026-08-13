@@ -23611,6 +23611,67 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self sendCommand:command];
 }
 
+- (NSString *)routedCommandByAppendingTerminator:(NSString *)command {
+    if ([command hasSuffix:@"\n"] || [command hasSuffix:@"\r"]) {
+        return command;
+    }
+    // CR matches what pressing Return sends; raw-mode TUIs require it.
+    return [command stringByAppendingString:@"\r"];
+}
+
+- (BOOL)composerManager:(iTermComposerManager *)composerManager
+           routeCommand:(NSString *)command
+            toTabNumber:(NSInteger)tabNumber
+                message:(NSString **)message {
+    DLog(@"Route command %@ to tab %@", command, @(tabNumber));
+    NSArray *tabs = [[_delegate realParentWindow] tabs];
+    if (tabNumber < 1 || tabNumber > (NSInteger)tabs.count) {
+        *message = [NSString stringWithFormat:@"No tab %@ in this window", @(tabNumber)];
+        return NO;
+    }
+    PTYTab *tab = tabs[tabNumber - 1];
+    PTYSession *target = tab.activeSession;
+    if (!target || target.exited) {
+        *message = [NSString stringWithFormat:@"Session in tab %@ has ended", @(tabNumber)];
+        return NO;
+    }
+    [target writeTaskNoBroadcast:[self routedCommandByAppendingTerminator:command]];
+    *message = [NSString stringWithFormat:@"Sent to tab %@ — %@", @(tabNumber), target.name ?: @""];
+    return YES;
+}
+
+- (BOOL)composerManager:(iTermComposerManager *)composerManager
+  routeCommandToAllTabs:(NSString *)command
+                message:(NSString **)message {
+    DLog(@"Route command %@ to all tabs", command);
+    NSArray *tabs = [[_delegate realParentWindow] tabs];
+    NSInteger others = 0;
+    NSInteger sent = 0;
+    NSString *terminated = [self routedCommandByAppendingTerminator:command];
+    for (PTYTab *tab in tabs) {
+        if ((id)tab == (id)_delegate) {
+            continue;
+        }
+        others += 1;
+        PTYSession *target = tab.activeSession;
+        if (!target || target.exited) {
+            continue;
+        }
+        [target writeTaskNoBroadcast:terminated];
+        sent += 1;
+    }
+    if (others == 0) {
+        *message = @"No other tabs";
+        return NO;
+    }
+    if (sent == 0) {
+        *message = @"No running sessions in other tabs";
+        return NO;
+    }
+    *message = [NSString stringWithFormat:@"Sent to %@ tab%@", @(sent), sent == 1 ? @"" : @"s"];
+    return YES;
+}
+
 - (BOOL)composerManagerHandleKeyDown:(NSEvent *)event {
     iTermKeystroke *keystroke = [iTermKeystroke withEvent:event];
     iTermKeyBindingAction *action = [iTermKeyMappings actionForKeystroke:keystroke
