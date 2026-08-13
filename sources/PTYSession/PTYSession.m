@@ -107,6 +107,7 @@
 #import "iTermCommandRunnerPool.h"
 #import "iTermComposerManager.h"
 #import "iTermController.h"
+#import "PseudoTerminal.h"
 #import "iTermCopyModeHandler.h"
 #import "iTermCopyModeState.h"
 #import "iTermDisclosableView.h"
@@ -23619,56 +23620,139 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return [command stringByAppendingString:@"\r"];
 }
 
-- (BOOL)composerManager:(iTermComposerManager *)composerManager
-           routeCommand:(NSString *)command
-            toTabNumber:(NSInteger)tabNumber
-                message:(NSString **)message {
-    DLog(@"Route command %@ to tab %@", command, @(tabNumber));
-    NSArray *tabs = [[_delegate realParentWindow] tabs];
-    if (tabNumber < 1 || tabNumber > (NSInteger)tabs.count) {
-        *message = [NSString stringWithFormat:@"No tab %@ in this window", @(tabNumber)];
-        return NO;
-    }
-    PTYTab *tab = tabs[tabNumber - 1];
-    PTYSession *target = tab.activeSession;
-    if (!target || target.exited) {
-        *message = [NSString stringWithFormat:@"Session in tab %@ has ended", @(tabNumber)];
-        return NO;
-    }
-    [target writeTaskNoBroadcast:[self routedCommandByAppendingTerminator:command]];
-    *message = [NSString stringWithFormat:@"Sent to tab %@ — %@", @(tabNumber), target.name ?: @""];
-    return YES;
+// Panes in visual reading order: top row first, then left to right.
+- (NSArray<PTYSession *> *)routingOrderedSessionsInTab:(PTYTab *)tab {
+    return [tab.sessions sortedArrayUsingComparator:^NSComparisonResult(PTYSession *a, PTYSession *b) {
+        const NSRect fa = [a.view convertRect:a.view.bounds toView:nil];
+        const NSRect fb = [b.view convertRect:b.view.bounds toView:nil];
+        if (fabs(NSMaxY(fa) - NSMaxY(fb)) > 1) {
+            return NSMaxY(fa) > NSMaxY(fb) ? NSOrderedAscending : NSOrderedDescending;
+        }
+        if (NSMinX(fa) != NSMinX(fb)) {
+            return NSMinX(fa) < NSMinX(fb) ? NSOrderedAscending : NSOrderedDescending;
+        }
+        return NSOrderedSame;
+    }];
 }
 
-- (BOOL)composerManager:(iTermComposerManager *)composerManager
-  routeCommandToAllTabs:(NSString *)command
-                message:(NSString **)message {
-    DLog(@"Route command %@ to all tabs", command);
-    NSArray *tabs = [[_delegate realParentWindow] tabs];
-    NSInteger others = 0;
-    NSInteger sent = 0;
-    NSString *terminated = [self routedCommandByAppendingTerminator:command];
-    for (PTYTab *tab in tabs) {
-        if ((id)tab == (id)_delegate) {
+- (PseudoTerminal *)routingWindowForDisplayedNumber:(NSInteger)displayedNumber {
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        if (term.number + 1 == displayedNumber) {
+            return term;
+        }
+    }
+    return nil;
+}
+
+- (void)routeCommand:(NSString *)terminated
+          toSessions:(NSArray<PTYSession *> *)sessions
+              others:(NSInteger *)others
+                sent:(NSInteger *)sent {
+    for (PTYSession *target in sessions) {
+        if (target == self) {
             continue;
         }
-        others += 1;
-        PTYSession *target = tab.activeSession;
-        if (!target || target.exited) {
+        *others += 1;
+        if (target.exited) {
             continue;
         }
         [target writeTaskNoBroadcast:terminated];
-        sent += 1;
+        *sent += 1;
     }
-    if (others == 0) {
-        *message = @"No other tabs";
+}
+
+- (BOOL)composerManager:(iTermComposerManager *)composerManager
+      sendRoutedCommand:(NSString *)command
+               toTarget:(iTermComposerTabRoute *)route
+                message:(NSString **)message {
+    DLog(@"Route command %@ kind=%@ w=%@ t=%@ p=%@",
+         command, @(route.kind), @(route.windowNumber), @(route.tabNumber), @(route.paneNumber));
+    NSString *terminated = [self routedCommandByAppendingTerminator:command];
+
+    if (route.kind == iTermComposerTabRouteKindAll ||
+        route.kind == iTermComposerTabRouteKindAllWindows) {
+        NSMutableArray<PTYSession *> *candidates = [NSMutableArray array];
+        if (route.kind == iTermComposerTabRouteKindAll) {
+            for (PTYTab *tab in [[_delegate realParentWindow] tabs]) {
+                [candidates addObjectsFromArray:tab.sessions];
+            }
+        } else {
+            for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+                for (PTYTab *tab in term.tabs) {
+                    [candidates addObjectsFromArray:tab.sessions];
+                }
+            }
+        }
+        NSInteger others = 0;
+        NSInteger sent = 0;
+        [self routeCommand:terminated toSessions:candidates others:&others sent:&sent];
+        if (others == 0) {
+            *message = route.kind == iTermComposerTabRouteKindAll ? @"No other sessions in this window" : @"No other sessions";
+            return NO;
+        }
+        if (sent == 0) {
+            *message = @"No running sessions to send to";
+            return NO;
+        }
+        *message = [NSString stringWithFormat:@"Sent to %@ session%@", @(sent), sent == 1 ? @"" : @"s"];
+        return YES;
+    }
+
+    // Single target: window → tab → pane, -1 meaning current/active.
+    id<iTermWindowController> term;
+    if (route.windowNumber >= 0) {
+        PseudoTerminal *found = [self routingWindowForDisplayedNumber:route.windowNumber];
+        if (!found) {
+            *message = [NSString stringWithFormat:@"No window %@", @(route.windowNumber)];
+            return NO;
+        }
+        term = found;
+    } else {
+        term = [_delegate realParentWindow];
+    }
+
+    NSMutableArray<NSString *> *phrase = [NSMutableArray array];
+    if (route.windowNumber >= 0) {
+        [phrase addObject:[NSString stringWithFormat:@"window %@", @(route.windowNumber)]];
+    }
+
+    NSArray *tabs = [term tabs];
+    PTYTab *tab;
+    if (route.tabNumber >= 0) {
+        if (route.tabNumber < 1 || route.tabNumber > (NSInteger)tabs.count) {
+            NSString *where = route.windowNumber >= 0 ? [NSString stringWithFormat:@"window %@", @(route.windowNumber)] : @"this window";
+            *message = [NSString stringWithFormat:@"No tab %@ in %@", @(route.tabNumber), where];
+            return NO;
+        }
+        tab = tabs[route.tabNumber - 1];
+        [phrase addObject:[NSString stringWithFormat:@"tab %@", @(route.tabNumber)]];
+    } else {
+        tab = [term currentTab];
+        if (!tab) {
+            *message = [NSString stringWithFormat:@"No active tab in window %@", @(route.windowNumber)];
+            return NO;
+        }
+    }
+
+    PTYSession *target;
+    if (route.paneNumber >= 0) {
+        NSArray<PTYSession *> *ordered = [self routingOrderedSessionsInTab:tab];
+        if (route.paneNumber < 1 || route.paneNumber > (NSInteger)ordered.count) {
+            *message = [NSString stringWithFormat:@"No pane %@ in %@", @(route.paneNumber), [phrase componentsJoinedByString:@", "]];
+            return NO;
+        }
+        target = ordered[route.paneNumber - 1];
+        [phrase addObject:[NSString stringWithFormat:@"pane %@", @(route.paneNumber)]];
+    } else {
+        target = tab.activeSession;
+    }
+
+    if (!target || target.exited) {
+        *message = [NSString stringWithFormat:@"Session at %@ has ended", [phrase componentsJoinedByString:@", "]];
         return NO;
     }
-    if (sent == 0) {
-        *message = @"No running sessions in other tabs";
-        return NO;
-    }
-    *message = [NSString stringWithFormat:@"Sent to %@ tab%@", @(sent), sent == 1 ? @"" : @"s"];
+    [target writeTaskNoBroadcast:terminated];
+    *message = [NSString stringWithFormat:@"Sent to %@ — %@", [phrase componentsJoinedByString:@", "], target.name ?: @""];
     return YES;
 }
 

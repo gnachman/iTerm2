@@ -348,10 +348,11 @@
     if ([iTermAdvancedSettingsModel composerTabRouting] && command.length > 0) {
         iTermComposerTabRoute *route = [iTermComposerTabRouter parse:command];
         switch (route.kind) {
-            case iTermComposerTabRouteKindTab:
+            case iTermComposerTabRouteKindTarget:
             case iTermComposerTabRouteKindAll:
+            case iTermComposerTabRouteKindAllWindows:
                 // Routed send: never dismiss; clear only on success so a
-                // mistyped tab number doesn't eat the text.
+                // mistyped address doesn't eat the text.
                 [self routeWithRoute:route];
                 return;
             case iTermComposerTabRouteKindEscaped:
@@ -380,17 +381,10 @@
 
 - (void)routeWithRoute:(iTermComposerTabRoute *)route {
     NSString *message = nil;
-    BOOL ok = NO;
-    if (route.kind == iTermComposerTabRouteKindAll) {
-        ok = [self.delegate composerManager:self
-                      routeCommandToAllTabs:route.payload
-                                    message:&message];
-    } else {
-        ok = [self.delegate composerManager:self
-                               routeCommand:route.payload
-                                toTabNumber:route.tabNumber
-                                    message:&message];
-    }
+    const BOOL ok = [self.delegate composerManager:self
+                                 sendRoutedCommand:route.payload
+                                          toTarget:route
+                                           message:&message];
     DLog(@"Routed send ok=%@ message=%@", @(ok), message);
     if (ok) {
         [self setStringValue:@""];

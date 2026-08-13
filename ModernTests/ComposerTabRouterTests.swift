@@ -4,7 +4,9 @@
 //
 //  Pins the @-address grammar for composer cross-tab routing. The
 //  fall-through cases (@2fa/cli, @alligator, bare @2) are the contract
-//  that keeps routing from hijacking ordinary composer text.
+//  that keeps routing from hijacking ordinary composer text. v2 adds
+//  pane (@2.3), window (@w3[.tab[.pane]]), and @wall addressing;
+//  -1 means “unspecified” (current window / active tab / active pane).
 //
 
 import XCTest
@@ -13,9 +15,45 @@ import XCTest
 class ComposerTabRouterTests: XCTestCase {
     func testRoutesToSingleTab() {
         let route = ComposerTabRouter.parse("@2 fix the failing test")
-        XCTAssertEqual(route.kind, .tab)
+        XCTAssertEqual(route.kind, .target)
+        XCTAssertEqual(route.windowNumber, -1)
         XCTAssertEqual(route.tabNumber, 2)
+        XCTAssertEqual(route.paneNumber, -1)
         XCTAssertEqual(route.payload, "fix the failing test")
+    }
+
+    func testRoutesToTabPane() {
+        let route = ComposerTabRouter.parse("@2.3 restart the dev server")
+        XCTAssertEqual(route.kind, .target)
+        XCTAssertEqual(route.windowNumber, -1)
+        XCTAssertEqual(route.tabNumber, 2)
+        XCTAssertEqual(route.paneNumber, 3)
+        XCTAssertEqual(route.payload, "restart the dev server")
+    }
+
+    func testRoutesToWindow() {
+        let route = ComposerTabRouter.parse("@w3 ls")
+        XCTAssertEqual(route.kind, .target)
+        XCTAssertEqual(route.windowNumber, 3)
+        XCTAssertEqual(route.tabNumber, -1)
+        XCTAssertEqual(route.paneNumber, -1)
+        XCTAssertEqual(route.payload, "ls")
+    }
+
+    func testRoutesToWindowTab() {
+        let route = ComposerTabRouter.parse("@w3.2 ls")
+        XCTAssertEqual(route.kind, .target)
+        XCTAssertEqual(route.windowNumber, 3)
+        XCTAssertEqual(route.tabNumber, 2)
+        XCTAssertEqual(route.paneNumber, -1)
+    }
+
+    func testRoutesToWindowTabPane() {
+        let route = ComposerTabRouter.parse("@w3.2.1 ls")
+        XCTAssertEqual(route.kind, .target)
+        XCTAssertEqual(route.windowNumber, 3)
+        XCTAssertEqual(route.tabNumber, 2)
+        XCTAssertEqual(route.paneNumber, 1)
     }
 
     func testRoutesToAll() {
@@ -24,11 +62,32 @@ class ComposerTabRouterTests: XCTestCase {
         XCTAssertEqual(route.payload, "/compact")
     }
 
+    func testRoutesToAllWindows() {
+        let route = ComposerTabRouter.parse("@wall /compact")
+        XCTAssertEqual(route.kind, .allWindows)
+        XCTAssertEqual(route.payload, "/compact")
+    }
+
     func testZeroParsesAsTabZero() {
         // Resolution (not parsing) rejects out-of-range numbers like 0.
         let route = ComposerTabRouter.parse("@0 x")
-        XCTAssertEqual(route.kind, .tab)
+        XCTAssertEqual(route.kind, .target)
         XCTAssertEqual(route.tabNumber, 0)
+    }
+
+    func testExplicitWindowZeroParses() {
+        // “No window 0” comes from resolution, not the parser.
+        let route = ComposerTabRouter.parse("@w0 x")
+        XCTAssertEqual(route.kind, .target)
+        XCTAssertEqual(route.windowNumber, 0)
+        XCTAssertEqual(route.tabNumber, -1)
+    }
+
+    func testExplicitPaneZeroParses() {
+        let route = ComposerTabRouter.parse("@2.0 x")
+        XCTAssertEqual(route.kind, .target)
+        XCTAssertEqual(route.tabNumber, 2)
+        XCTAssertEqual(route.paneNumber, 0)
     }
 
     func testEscapeSendsLiterally() {
@@ -55,22 +114,42 @@ class ComposerTabRouterTests: XCTestCase {
         XCTAssertEqual(ComposerTabRouter.parse("@2   ").kind, .none)
     }
 
+    func testTooManyComponentsFallsThrough() {
+        XCTAssertEqual(ComposerTabRouter.parse("@2.3.4 x").kind, .none)
+        XCTAssertEqual(ComposerTabRouter.parse("@w2.1.3.4 x").kind, .none)
+    }
+
+    func testEmptyComponentsFallThrough() {
+        XCTAssertEqual(ComposerTabRouter.parse("@2. x").kind, .none)
+        XCTAssertEqual(ComposerTabRouter.parse("@2..3 x").kind, .none)
+        XCTAssertEqual(ComposerTabRouter.parse("@.2 x").kind, .none)
+    }
+
+    func testBareWFallsThrough() {
+        XCTAssertEqual(ComposerTabRouter.parse("@w x").kind, .none)
+    }
+
+    func testNonDigitWindowFallsThrough() {
+        XCTAssertEqual(ComposerTabRouter.parse("@walls x").kind, .none)
+        XCTAssertEqual(ComposerTabRouter.parse("@w2a x").kind, .none)
+    }
+
     func testMultilinePayloadPreserved() {
         let route = ComposerTabRouter.parse("@2 first line\nsecond line")
-        XCTAssertEqual(route.kind, .tab)
+        XCTAssertEqual(route.kind, .target)
         XCTAssertEqual(route.payload, "first line\nsecond line")
     }
 
     func testNewlineSeparatorAccepted() {
         let route = ComposerTabRouter.parse("@2\nfoo")
-        XCTAssertEqual(route.kind, .tab)
+        XCTAssertEqual(route.kind, .target)
         XCTAssertEqual(route.tabNumber, 2)
         XCTAssertEqual(route.payload, "foo")
     }
 
     func testTabSeparatorAccepted() {
         let route = ComposerTabRouter.parse("@3\tls")
-        XCTAssertEqual(route.kind, .tab)
+        XCTAssertEqual(route.kind, .target)
         XCTAssertEqual(route.tabNumber, 3)
         XCTAssertEqual(route.payload, "ls")
     }
@@ -91,8 +170,9 @@ class ComposerTabRouterTests: XCTestCase {
     }
 
     func testUppercaseAllFallsThrough() {
-        // @all is case-sensitive by design.
+        // @all / @wall are case-sensitive by design.
         XCTAssertEqual(ComposerTabRouter.parse("@ALL x").kind, .none)
+        XCTAssertEqual(ComposerTabRouter.parse("@WALL x").kind, .none)
     }
 
     func testAddressMidTextFallsThrough() {
