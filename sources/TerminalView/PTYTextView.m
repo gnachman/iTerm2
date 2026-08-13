@@ -2429,7 +2429,13 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                      darkBackground:isDark];
     [_indicatorsHelper configurationDidComplete];
     NSRect rect = self.visibleRect;
-    rect.size.width -= rightMargin;
+    // Anchor the top-right indicators to the content's right edge (bounds) rather than the visible
+    // right edge. Normally these coincide, but while swiping between tabs the text view is
+    // horizontally clipped by the tab view, so visibleRect shifts every frame. Because the indicators
+    // are composited translucently and the live session keeps redrawing during the swipe, anchoring
+    // to the shifting visible edge draws them at a different content x each frame and leaves a
+    // horizontal smear. Anchoring to bounds keeps them glued to the content so they slide cleanly.
+    rect.size.width = NSMaxX(self.bounds) - NSMinX(rect) - rightMargin;
     return rect;
 }
 

@@ -80,6 +80,10 @@ Major New Features:
   they harmonize with any theme. Off by
   default.
 
+- Fixed a bug where the top-right session
+  indicators left a horizontal smear while
+  swiping between tabs with two fingers.
+
 - Fixed a bug where an SGR sequence or SGR
   trigger with more parameters than fit
   attached the extra parameters’
