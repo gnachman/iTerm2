@@ -33,6 +33,21 @@ Setup: `make run`, open a window with 3 tabs; run
       controller’s own tab.
 - [ ] `@wall x` hits every session in all
       windows except the controller.
+- [ ] Sticky: after `@2 echo a`, plain
+      `echo b` also lands in tab 2 (toast
+      confirms). `@3 echo c` re-sticks to 3.
+- [ ] `@. echo d` runs locally and toasts
+      “Default target cleared”; next plain
+      send is local again.
+- [ ] Close (Esc) and reopen the composer:
+      sticky target is forgotten.
+- [ ] Close the sticky target’s tab, then send
+      plain text: error toast ends with
+      “default target cleared”; text kept.
+- [ ] `@all`/`@wall` do NOT change the sticky
+      target.
+- [ ] Auto composer: plain commands always run
+      locally (stickiness never applies).
 - [ ] Target tab enrolled in Broadcast Input:
       command must NOT fan out to other sessions.
 - [ ] tmux integration window as target: works.

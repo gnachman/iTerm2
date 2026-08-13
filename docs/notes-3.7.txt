@@ -2668,6 +2668,9 @@ Bug Fixes:
   “@w3.2 ls” reaches window 3’s tab 2, “@all”
   goes to every other session in the window and
   “@wall” to every window. A toast confirms and
-  the composer stays open. Escape with a leading
+  the composer stays open. After an @-addressed
+  send, plain sends follow the same target until
+  “@. cmd” clears it (running cmd locally) or
+  the composer closes. Escape with a leading
   backslash. Controlled by the composerTabRouting
   advanced setting.
