@@ -14,6 +14,8 @@
 #import "iTermStatusBarViewController.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
+#import "ToastWindowController.h"
+#import "iTerm2SharedARC-Swift.h"
 
 @interface iTermComposerManager()<
     iTermMinimalComposerViewControllerDelegate,
@@ -342,20 +344,59 @@
             sendCommand:(nonnull NSString *)command
              addNewline:(BOOL)addNewline
                 dismiss:(BOOL)dismiss {
+    NSString *commandToSend = command;
+    if ([iTermAdvancedSettingsModel composerTabRouting] && command.length > 0) {
+        iTermComposerTabRoute *route = [iTermComposerTabRouter parse:command];
+        switch (route.kind) {
+            case iTermComposerTabRouteKindTab:
+            case iTermComposerTabRouteKindAll:
+                // Routed send: never dismiss; clear only on success so a
+                // mistyped tab number doesn't eat the text.
+                [self routeWithRoute:route];
+                return;
+            case iTermComposerTabRouteKindEscaped:
+                commandToSend = route.payload;
+                break;
+            case iTermComposerTabRouteKindNone:
+                break;
+        }
+    }
     NSString *string = composer.stringValue;
     const BOOL reset = dismiss && self.isAutoComposer;
     if (dismiss && !reset) {
         [self dismissMinimalViewAnimated:NO];
     }
-    if (command.length == 0 && !self.isAutoComposer) {
+    if (commandToSend.length == 0 && !self.isAutoComposer) {
         _saved = string;
         return;
     }
     _saved = nil;
-    [self.delegate composerManager:self sendCommand:addNewline ? [command stringByAppendingString:@"\n"] : command];
+    [self.delegate composerManager:self sendCommand:addNewline ? [commandToSend stringByAppendingString:@"\n"] : commandToSend];
     if (reset) {
         RLog(@"Erase composer content after sending command");
         [self setStringValue:@""];
+    }
+}
+
+- (void)routeWithRoute:(iTermComposerTabRoute *)route {
+    NSString *message = nil;
+    BOOL ok = NO;
+    if (route.kind == iTermComposerTabRouteKindAll) {
+        ok = [self.delegate composerManager:self
+                      routeCommandToAllTabs:route.payload
+                                    message:&message];
+    } else {
+        ok = [self.delegate composerManager:self
+                               routeCommand:route.payload
+                                toTabNumber:route.tabNumber
+                                    message:&message];
+    }
+    DLog(@"Routed send ok=%@ message=%@", @(ok), message);
+    if (ok) {
+        [self setStringValue:@""];
+    }
+    if (message.length > 0) {
+        [ToastWindowController showToastWithMessage:message];
     }
 }
 
