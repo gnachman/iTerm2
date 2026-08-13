@@ -366,6 +366,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (void)setOnePasswordAccount:(NSString *)value;
 + (BOOL)openFileInNewWindows;
 + (BOOL)openFileInSplitPanes;
++ (BOOL)composerTabRouting;
 + (BOOL)openFileInVerticalSplitPane;
 + (int)newInstanceOpenStyle;
 + (BOOL)openFileOverridesSendText;

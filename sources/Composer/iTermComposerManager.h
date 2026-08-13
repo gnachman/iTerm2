@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class TmuxController;
 @protocol VT100RemoteHostReading;
 @class iTermComposerManager;
+@class iTermComposerTabRoute;
 @protocol iTermSyntaxHighlighting;
 @class iTermVariableScope;
 @class iTermStatusBarViewController;
@@ -24,6 +25,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)composerManagerDidRemoveTemporaryStatusBarComponent:(iTermComposerManager *)composerManager;
 - (void)composerManager:(iTermComposerManager *)composerManager
             sendCommand:(NSString *)command;
+// Types `command` into the session(s) addressed by `route` — a parsed
+// @-address naming a window/tab/pane, every other session in this window
+// (all), or every other session anywhere (allWindows) — as if typed there.
+// Returns YES if at least one session received it. `message` is always set
+// to a user-facing toast string (success or failure).
+- (BOOL)composerManager:(iTermComposerManager *)composerManager
+      sendRoutedCommand:(NSString *)command
+               toTarget:(iTermComposerTabRoute *)route
+                message:(NSString * _Nullable * _Nonnull)message;
 - (void)composerManager:(iTermComposerManager *)composerManager
          enqueueCommand:(NSString *)command;
 - (void)composerManager:(iTermComposerManager *)composerManager

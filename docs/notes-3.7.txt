@@ -2661,3 +2661,16 @@ Bug Fixes:
   whole workgroup now warns you that its other
   sessions will close too, naming the workgroup
   and how many more sessions will end.
+- The composer can now send commands to other
+  tabs, panes, and windows: “@2 ls” types “ls”
+  into tab 2’s active session, “@2.3 ls” hits
+  pane 3 of tab 2 (panes count top-left first),
+  “@w3.2 ls” reaches window 3’s tab 2, “@all”
+  goes to every other session in the window and
+  “@wall” to every window. A toast confirms and
+  the composer stays open. After an @-addressed
+  send, plain sends follow the same target until
+  “@. cmd” clears it (running cmd locally) or
+  the composer closes. Escape with a leading
+  backslash. Controlled by the composerTabRouting
+  advanced setting.
