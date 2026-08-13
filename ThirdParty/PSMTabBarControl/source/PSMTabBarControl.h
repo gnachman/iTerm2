@@ -121,7 +121,14 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 - (BOOL)tabView:(NSTabView *)aTabView shouldDragTabViewItem:(NSTabViewItem *)tabViewItem fromTabBar:(PSMTabBarControl *)tabBarControl;
 - (BOOL)tabView:(NSTabView *)aTabView shouldDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(nullable PSMTabBarControl *)tabBarControl moveSourceWindow:(nullable BOOL *)moveSourceWindow;
 - (void)tabView:(NSTabView*)aTabView willDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)tabBarControl;
-- (void)tabView:(NSTabView*)aTabView didDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)tabBarControl;
+// `groupID` is the tab group whose bracket the drop landed inside (the tab
+// should join it), or nil when it landed outside every group. Passed
+// explicitly so the delegate never has to read drop context back out of the
+// shared drag assistant.
+- (void)tabView:(NSTabView*)aTabView
+    didDropTabViewItem:(NSTabViewItem *)tabViewItem
+              inTabBar:(PSMTabBarControl *)tabBarControl
+    joiningGroupWithID:(nullable NSString *)groupID;
 // A whole tab group was dropped onto `destTabBar` (this window's or another's)
 // during a chip drag. `members` are the group's member tabs in order; insert them
 // before `anchor` (or at the end if nil), carrying the group's definition. The
@@ -287,12 +294,16 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 
 - (void)setTabColor:(nullable NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
 - (nullable NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
-// The tab-group membership of a tab, pushed per-tab like tabColor. The
-// control groups contiguous cells sharing an identifier into one run and
-// draws that run's chip using attributes from tabGroupDataSource. nil
-// means the tab is not in any group.
-- (void)setTabGroupIdentifier:(nullable NSString *)identifier forTabViewItem:(NSTabViewItem *)tabViewItem;
-- (nullable NSString *)tabGroupIdentifierForTabViewItem:(NSTabViewItem *)tabViewItem;
+// Push every tab's group membership at once: identifiers[i] is the group id
+// (NSString) of the tab represented by tabViewItems[i], or NSNull for no
+// group. Cells are matched by tab view item, never by position -- mid-drag
+// the dragged tab's cell is a placeholder and absent, so positional pairing
+// would shift every later tab's id. The control groups contiguous cells
+// sharing an identifier into one run and draws that run's chip using
+// attributes from tabGroupDataSource. Chips are re-derived and the bar
+// relaid out at most once per call.
+- (void)setTabGroupIdentifiers:(NSArray *)identifiers
+               forTabViewItems:(NSArray<NSTabViewItem *> *)tabViewItems;
 
 // Pure helpers for making group chips first-class cells (window-free, so
 // they're unit-tested directly).
@@ -312,6 +323,45 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 + (NSArray<PSMTabBarCell *> *)cellsByInsertingDragChipsInto:(NSArray<PSMTabBarCell *> *)cells
                                                 controlView:(nullable PSMTabBarControl *)controlView
     NS_SWIFT_NAME(cellsByInsertingDragChips(into:controlView:));
+
+// Enumerate each tab-group run for drawing: for every chip cell, the union
+// rect of its run and the run's first tab cell. Placeholders are transparent
+// to run detection (a group split only by drag placeholders stays one run);
+// an "end of group" join slot past the last member is unioned in so the
+// outline encloses the slot it drops into; the run ends at another chip, an
+// overflowed cell, or a different group id. `rectForCell` maps a cell to the
+// rect unioned for it (styles differ, e.g. Tahoe insets to the background
+// rect); nil uses raw frames. Runs with no member tabs are skipped. This is
+// the single authority for run detection so styles and drag code cannot
+// drift.
+- (void)enumerateTabGroupRunsWithRect:(NSRect (^ _Nullable)(PSMTabBarCell *cell))rectForCell
+                                block:(void (NS_NOESCAPE ^)(PSMTabBarCell *chip,
+                                                            NSRect tabsRect,
+                                                            PSMTabBarCell *firstTab,
+                                                            NSString *groupID))block
+    NS_SWIFT_NAME(enumerateTabGroupRuns(rectForCell:block:));
+
+// Per-cell widths for a horizontal, non-scrollable bar (exposed for unit
+// tests of the chip-aware layout).
+- (nullable NSArray<NSNumber *> *)cellWidthsForHorizontalArrangementWithOverflow:(BOOL)withOverflow
+    NS_SWIFT_NAME(cellWidths(forHorizontalArrangementWithOverflow:));
+
+// Width of a chip cell for a group with the given name, in this bar's style
+// (for sizing an incoming group's chip whose definition this bar's data
+// source does not know).
+- (CGFloat)chipCellWidthForGroupName:(NSString *)name;
+
+// The width `tabCount` incoming tabs (plus a group chip of `chipWidth`, 0
+// for a single tab) would occupy once dropped into this horizontal bar; 0
+// for vertical bars. Sizes the drop-slot preview at the destination's
+// on-drop size rather than the dragged unit's size in its source bar.
+- (CGFloat)expectedDropExtentForIncomingTabCount:(NSInteger)tabCount
+                                       chipWidth:(CGFloat)chipWidth;
+
+// The style's tab-group run outset when any chip cell is present, else 0.
+// The scrollable bar widens its trailing clip by this so a group's enclosing
+// pill is not cut off; with no groups the clip stays exactly at the viewport.
+- (CGFloat)effectiveTabGroupRunOutset;
 // Width of a horizontal group-chip cell (its name, via the data source).
 - (CGFloat)widthOfTabGroupChipCell:(PSMTabBarCell *)cell;
 // Height of a vertical group-chip cell (a one-row header band).

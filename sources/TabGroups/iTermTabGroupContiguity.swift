@@ -7,10 +7,11 @@
 //  membership, so we resolve just that tab from where it landed:
 //    - strictly between two members of the same group -> join that group
 //      (this is how an ungrouped tab is added, or a tab moves between groups);
-//    - the sole member of its own group -> keep it (a one-tab group is
-//      contiguous by itself and shouldn't dissolve just because it was moved);
-//    - otherwise (at a multi-tab group's edge, or not near a group) -> leave any
-//      group, so dragging a member to the group's boundary removes it.
+//    - otherwise (at a group's edge, or not near a group) -> leave any group,
+//      so dragging a member out removes it -- including a one-tab group's sole
+//      member, whose group dissolves when its last tab is dragged out. (An
+//      in-place drop keeps membership, but that is signalled by the drop
+//      landing on the tab's own gid-carrying slot, upstream of this rule.)
 //  Only the dragged tab's membership ever changes, so neighbors are never
 //  absorbed. See PseudoTerminal.resolveDroppedTabGroupMembership:.
 //
@@ -26,18 +27,14 @@ class iTermTabGroupContiguity: NSObject {
         guard index >= 0, index < order.count else {
             return nil
         }
-        let current = order[index]
         let left = index > 0 ? order[index - 1] : nil
         let right = index + 1 < order.count ? order[index + 1] : nil
         // Strictly inside a run of a single group: join it.
         if let left, left == right {
             return left
         }
-        // The sole member of its own group keeps it (a one-tab group survives).
-        if let current, order.reduce(0, { $0 + ($1 == current ? 1 : 0) }) <= 1 {
-            return current
-        }
-        // At a group's edge or away from any group: not a member.
+        // At a group's edge or away from any group: not a member. A one-tab
+        // group's sole member dragged out dissolves its group.
         return nil
     }
 

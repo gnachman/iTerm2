@@ -1397,9 +1397,7 @@ static const CGFloat kPSMSquaredGroupOutset = 1;     // outline sits this far ou
 
 // Text color that contrasts with the group color (the name sits on the color).
 - (NSColor *)squaredGroupNameTextColorForColor:(NSColor *)color {
-    NSColor *rgb = [color colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
-    const CGFloat brightness = rgb ? (0.299 * rgb.redComponent + 0.587 * rgb.greenComponent + 0.114 * rgb.blueComponent) : 0.5;
-    return brightness < 0.6 ? [NSColor whiteColor] : [NSColor blackColor];
+    return [color psmContrastingTextColor];
 }
 
 - (void)drawTabGroupRunDecorationsForTabBar:(PSMTabBarControl *)bar clipRect:(NSRect)clipRect {
@@ -1407,48 +1405,20 @@ static const CGFloat kPSMSquaredGroupOutset = 1;     // outline sits this far ou
         return;
     }
     const BOOL horizontal = (bar.orientation == PSMTabBarHorizontalOrientation);
-    NSArray<PSMTabBarCell *> *cells = [bar cells];
-    for (NSInteger i = 0; i < (NSInteger)cells.count; i++) {
-        PSMTabBarCell *chip = cells[i];
-        if (![chip isTabGroupChip]) {
-            continue;
-        }
-        NSString *gid = chip.tabGroupIdentifier;
-        NSRect tabsRect = NSZeroRect;
-        PSMTabBarCell *firstTab = nil;
-        BOOL any = NO;
-        for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
-            PSMTabBarCell *c = cells[j];
-            // A drag interleaves placeholder cells between real ones; they're
-            // transparent to the run, so skip (not break) so the outline still
-            // spans the group's members and grows to enclose the open drop slot
-            // when a tab is dragged into the group. An "end of group" slot
-            // (tagged to join this group) sits past the last member, so union it
-            // explicitly or the outline stops short of the slot it drops into.
-            if (c.isPlaceholder) {
-                if (any && [c.joinsTabGroupIdentifier isEqualToString:gid]) {
-                    tabsRect = NSUnionRect(tabsRect, [c frame]);
-                }
-                continue;
-            }
-            if (c.isTabGroupChip || c.isInOverflowMenu || ![c.tabGroupIdentifier isEqualToString:gid]) {
-                break;
-            }
-            tabsRect = any ? NSUnionRect(tabsRect, [c frame]) : [c frame];
-            if (!firstTab) {
-                firstTab = c;
-            }
-            any = YES;
-        }
-        if (any) {
-            [self drawSquaredTabGroupRunHorizontal:horizontal
-                                              chip:chip
-                                          tabsRect:tabsRect
-                                          firstTab:firstTab
-                                           groupID:gid
-                                             inBar:bar];
-        }
-    }
+    // The bar owns run detection (placeholder transparency, join-slot union);
+    // this style only draws the geometry it is handed.
+    [bar enumerateTabGroupRunsWithRect:nil
+                                 block:^(PSMTabBarCell *chip,
+                                         NSRect tabsRect,
+                                         PSMTabBarCell *firstTab,
+                                         NSString *gid) {
+        [self drawSquaredTabGroupRunHorizontal:horizontal
+                                          chip:chip
+                                      tabsRect:tabsRect
+                                      firstTab:firstTab
+                                       groupID:gid
+                                         inBar:bar];
+    }];
 }
 
 - (void)drawSquaredTabGroupRunHorizontal:(BOOL)horizontal

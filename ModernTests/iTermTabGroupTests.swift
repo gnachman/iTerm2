@@ -43,9 +43,12 @@ final class iTermTabGroupTests: XCTestCase {
         XCTAssertNil(resolve(0, ["A", nil, "A", "A"]))
     }
 
-    func testLoneOneTabGroupSurvivesDrag() {
-        // Dragging the sole member of a one-tab group keeps its group.
-        XCTAssertEqual(resolve(1, [nil, "A", nil]), "A")
+    func testDraggingSoleMemberOutDissolvesGroup() {
+        // Dragging a one-tab group's sole member somewhere that is not inside
+        // another group dissolves the group. (An in-place drop keeps it, but
+        // that is signalled by the drop landing on the tab's own gid-carrying
+        // slot, not by this order rule.)
+        XCTAssertNil(resolve(1, [nil, "A", nil]))
     }
 
     func testDropAtGroupFrontEdgeLeaves() {
@@ -55,7 +58,7 @@ final class iTermTabGroupTests: XCTestCase {
 
     func testDropWithNoNeighborsUngrouped() {
         XCTAssertNil(resolve(0, [nil]))
-        XCTAssertEqual(resolve(0, ["A"]), "A")  // lone one-tab group kept
+        XCTAssertNil(resolve(0, ["A"]))  // dragged out alone: group dissolves
     }
 
     func testObjCBridgeResolves() {

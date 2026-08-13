@@ -28,15 +28,13 @@ extern NSString *const PSMTabDragIsGroupPasteboardType;
 
 @property (nonatomic, readonly) BOOL dropping;
 
-// Set during a drop if the tab landed inside a group's bracket (right after its
-// chip, or between/among its members), so the drop handler can join it to that
-// group -- including a one-tab group, which has no "between two members" gap.
-// nil if the drop was outside every group. Valid only while a drop is being
-// handled (cleared when the drag finishes).
-@property (nonatomic, readonly, copy) NSString *droppedInsideGroupID;
-
 // Creation/destruction
 + (PSMTabDragAssistant *)sharedDragAssistant;
+
+// Extra leftward shift applied to `tabBar`'s cells mid-drag so a drop slot
+// past a scrollable bar's viewport is revealed (drag auto-scroll), else 0.
+// The bar's drawRect reads this so its scroll clipping tracks the shift.
+- (CGFloat)dragScrollNudgeForTabBar:(PSMTabBarControl *)tabBar;
 
 // Accessors
 - (PSMTabBarControl *)sourceTabBar;
@@ -82,6 +80,18 @@ extern NSString *const PSMTabDragIsGroupPasteboardType;
 - (void)distributePlaceholdersInTabBar:(PSMTabBarControl *)control;
 - (void)removeAllPlaceholdersFromTabBar:(PSMTabBarControl *)control;
 
+// Re-derive chip cells (plus the front-of-group and end-of-group join slots)
+// into a chips-stripped, placeholder-laden cell list mid-drag. Exposed for
+// unit tests of the slot layout.
+- (void)reinsertDragChipsInTabBar:(PSMTabBarControl *)control;
+
+// With chips present in `control`, the group id the just-dropped cell landed
+// inside, or nil if it landed outside every group. Reads targetCell and
+// draggedCell. Exposed for unit tests of drop-membership resolution.
+- (NSString *)groupContainingDropOfCell:(PSMTabBarCell *)cell
+                               inTabBar:(PSMTabBarControl *)control
+    NS_SWIFT_NAME(groupContainingDrop(of:inTabBar:));
+
 @end
 
 @interface PSMTabBarControl (DragAccessors)
@@ -92,5 +102,7 @@ extern NSString *const PSMTabDragIsGroupPasteboardType;
 - (id)cellForPoint:(NSPoint)point cellFrame:(NSRectPointer)outFrame;
 - (PSMTabBarCell *)lastVisibleTab;
 - (int)numberOfVisibleTabs;
+- (float)availableCellWidthWithOverflow:(BOOL)withOverflow;
+- (BOOL)tabBarIsScrollable;
 
 @end

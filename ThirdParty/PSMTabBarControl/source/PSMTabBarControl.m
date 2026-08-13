@@ -1205,17 +1205,19 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     const CGFloat fullLength = vertical ? height : width;
     const CGFloat leadingMargin = scrollable ? [self scrollLeadingMargin] : 0;
     const CGFloat maximumOffset = scrollable ? [self maximumScrollOffset] : 0;
-    const BOOL cutOffDecorationBand = (scrollable && _scrollOffset > 0 && leadingMargin > 0);
+    // Drag auto-scroll (revealing a drop slot past the viewport) shifts cells
+    // left without touching _scrollOffset, so include it in the clip logic or
+    // the shifted leading cells draw under the window decorations.
+    const CGFloat dragNudge = scrollable ? [[PSMTabDragAssistant sharedDragAssistant] dragScrollNudgeForTabBar:self] : 0;
+    const CGFloat effectiveOffset = _scrollOffset + dragNudge;
+    const BOOL cutOffDecorationBand = (scrollable && effectiveOffset > 0 && leadingMargin > 0);
     // Only clip when tabs actually overflow the bar; with everything visible there is nothing to clip.
-    const BOOL needClip = (scrollable && maximumOffset > 0);
+    const BOOL needClip = (scrollable && (maximumOffset > 0 || dragNudge > 0));
     const CGFloat leadingClip = cutOffDecorationBand ? leadingMargin : 0;
     // The viewport clip stops at the last tab. A group's enclosing pill extends a
     // little past its tabs, so widen the trailing edge by that outset (into the
     // add-button margin, which has room) or the last group's outline is clipped.
-    const CGFloat groupRunOutset = ([_style respondsToSelector:@selector(tabGroupRunOutset)]
-                                    ? [_style tabGroupRunOutset]
-                                    : 0);
-    const CGFloat trailingClip = scrollable ? ([self scrollViewportLength] + groupRunOutset) : fullLength;
+    const CGFloat trailingClip = scrollable ? ([self scrollViewportLength] + [self effectiveTabGroupRunOutset]) : fullLength;
 
     // Paint the bar background in the leading decoration band and the trailing add-button margin, and
     // the tabs in the region between. Each strip goes through the style's own tab-bar drawing (clipped
@@ -1682,26 +1684,11 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 
 + (NSArray<PSMTabBarCell *> *)cellsByInsertingTabGroupChipsInto:(NSArray<PSMTabBarCell *> *)tabCells
                                                    controlView:(PSMTabBarControl *)controlView {
-    NSMutableArray<PSMTabBarCell *> *result = [NSMutableArray array];
-    NSString *runID = nil;
-    for (PSMTabBarCell *cell in tabCells) {
-        if ([cell isTabGroupChip]) {
-            // Defensive: caller should pass only tab cells; drop stray chips.
-            continue;
-        }
-        NSString *gid = [cell tabGroupIdentifier];
-        const BOOL grouped = (gid.length > 0);
-        if (grouped && ![gid isEqualToString:runID]) {
-            // First cell of a new run: insert its chip immediately before it.
-            PSMTabBarCell *chip = [[[PSMTabBarCell alloc] initWithControlView:controlView] autorelease];
-            [chip setIsTabGroupChip:YES];
-            [chip setTabGroupIdentifier:gid];
-            [result addObject:chip];
-        }
-        runID = grouped ? gid : nil;
-        [result addObject:cell];
-    }
-    return result;
+    // On a placeholder-free cell list the drag variant's placeholder branch
+    // never fires, so the two entry points share one implementation and the
+    // chip-minting rules cannot drift between the normalized and mid-drag
+    // worlds.
+    return [self cellsByInsertingDragChipsInto:tabCells controlView:controlView];
 }
 
 + (NSArray<PSMTabBarCell *> *)cellsByInsertingDragChipsInto:(NSArray<PSMTabBarCell *> *)cells
@@ -1822,17 +1809,91 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     return NO;
 }
 
+- (CGFloat)effectiveTabGroupRunOutset {
+    if (![self hasTabGroupChipCells]) {
+        return 0;
+    }
+    if (![_style respondsToSelector:@selector(tabGroupRunOutset)]) {
+        return 0;
+    }
+    return [_style tabGroupRunOutset];
+}
+
+// Measured chip sizes keyed by style class + group name. The measurement
+// (Core Text sizing) runs inside layout passes that ask for each chip's size
+// several times per update; the size depends only on the style and the name,
+// so cache it. A rename produces a different key, so nothing to invalidate.
+static NSCache<NSString *, NSNumber *> *PSMChipSizeCache(void) {
+    static NSCache<NSString *, NSNumber *> *cache;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        cache = [[NSCache alloc] init];
+        cache.countLimit = 512;
+    });
+    return cache;
+}
+
 // Width of a horizontal group-chip cell (its name, via the data source).
 - (CGFloat)widthOfTabGroupChipCell:(PSMTabBarCell *)cell {
     id<PSMTabGroup> group = [self.tabGroupDataSource tabGroupWithIdentifier:cell.tabGroupIdentifier];
-    NSString *name = group ? group.name : @"";
+    return [self chipCellWidthForGroupName:(group ? group.name : @"")];
+}
+
+// Width of a chip cell for a group with the given name, in this bar's style.
+// Split from -widthOfTabGroupChipCell: so a drag can size an INCOMING group's
+// chip (whose definition rides tabs in another window and is unknown to this
+// bar's data source).
+- (CGFloat)chipCellWidthForGroupName:(NSString *)name {
+    name = name ?: @"";
+    NSString *key = [NSString stringWithFormat:@"W:%@:%@", [(NSObject *)self.style class], name];
+    NSNumber *cached = [PSMChipSizeCache() objectForKey:key];
+    if (cached) {
+        return cached.doubleValue;
+    }
     // A style that draws its own run decoration (e.g. Tahoe) reserves extra
     // width for the name capsule plus the colored area between it and the first
     // tab; others use the basic chip width.
+    CGFloat width;
     if ([self.style respondsToSelector:@selector(tabGroupChipCellWidthForName:)]) {
-        return [self.style tabGroupChipCellWidthForName:name];
+        width = [self.style tabGroupChipCellWidthForName:name];
+    } else {
+        width = [PSMTabGroupChipView preferredWidthForName:name];
     }
-    return [PSMTabGroupChipView preferredWidthForName:name];
+    [PSMChipSizeCache() setObject:@(width) forKey:key];
+    return width;
+}
+
+// The width `tabCount` incoming tabs (plus a group chip of `chipWidth`, 0 for
+// a single tab) would occupy once dropped into this horizontal bar. Used to
+// size the drop-slot preview: a unit dragged from a wide window must open a
+// slot at THIS bar's on-drop size, not the size it had at home.
+- (CGFloat)expectedDropExtentForIncomingTabCount:(NSInteger)tabCount
+                                       chipWidth:(CGFloat)chipWidth {
+    if (tabCount <= 0 || _orientation != PSMTabBarHorizontalOrientation) {
+        return 0;
+    }
+    CGFloat perTab;
+    if ([self tabBarIsScrollable]) {
+        // Scrollable bars give every tab the uniform scrollable width (the
+        // fit-to-content variant still clamps to at least this).
+        perTab = _scrollableTabWidth;
+    } else {
+        NSInteger existing = 0;
+        for (PSMTabBarCell *cell in _cells) {
+            if (![cell isTabGroupChip] && ![cell isPlaceholder]) {
+                existing++;
+            }
+        }
+        const CGFloat spacing = _style.intercellSpacing;
+        const CGFloat available = MAX(0, [self availableCellWidthWithOverflow:NO] - chipWidth -
+                                      spacing * (CGFloat)(existing + tabCount));
+        perTab = available / (CGFloat)MAX((NSInteger)1, existing + tabCount);
+        if (!self.stretchCellsToFit) {
+            perTab = MIN(perTab, _cellOptimumWidth);
+        }
+        perTab = MAX(_cellMinWidth, perTab);
+    }
+    return chipWidth + perTab * (CGFloat)tabCount;
 }
 
 // Height reserved for a group chip cell on a vertical bar (style-aware, like
@@ -1848,10 +1909,19 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     }
     id<PSMTabGroup> group = [self.tabGroupDataSource tabGroupWithIdentifier:cell.tabGroupIdentifier];
     NSString *name = group ? group.name : @"";
-    if ([self.style respondsToSelector:@selector(tabGroupChipCellHeightForName:)]) {
-        return [self.style tabGroupChipCellHeightForName:name];
+    NSString *key = [NSString stringWithFormat:@"H:%@:%@", [(NSObject *)self.style class], name];
+    NSNumber *cached = [PSMChipSizeCache() objectForKey:key];
+    if (cached) {
+        return cached.doubleValue;
     }
-    return [PSMTabGroupChipView verticalChipHeight];
+    CGFloat height;
+    if ([self.style respondsToSelector:@selector(tabGroupChipCellHeightForName:)]) {
+        height = [self.style tabGroupChipCellHeightForName:name];
+    } else {
+        height = [PSMTabGroupChipView verticalChipHeight];
+    }
+    [PSMChipSizeCache() setObject:@(height) forKey:key];
+    return height;
 }
 
 - (NSArray<NSNumber *> *)naturalHorizontalCellWidths {
@@ -1909,7 +1979,9 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     NSMutableArray *desiredWidths = [NSMutableArray array];
     for (PSMTabBarCell *cell in _cells) {
         CGFloat width;
-        if (cell.isPinned) {
+        if (cell.isTabGroupChip) {
+            width = [self widthOfTabGroupChipCell:cell];
+        } else if (cell.isPinned) {
             width = _pinnedTabWidth;
         } else {
             width = MAX(_cellMinWidth, MIN([cell desiredWidthOfCell], _cellMaxWidth));
@@ -1947,6 +2019,15 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 // no-chips case is untouched. Returns a contiguous prefix; anything that
 // doesn't fit goes to the overflow menu.
 - (NSArray<NSNumber *> *)cellWidthsForHorizontalArrangementWithChipsWithOverflow:(BOOL)withOverflow {
+    // Honor fit-to-content exactly like the no-chips path below: when every
+    // cell (chips at their fixed width) fits at its desired width, use those.
+    // Creating a group must not silently switch the bar to uniform widths.
+    if (self.sizeCellsToFit) {
+        NSArray<NSNumber *> *widths = [self variableCellWidthsWithOverflow:withOverflow];
+        if (widths) {
+            return widths;
+        }
+    }
     const CGFloat available = [self availableCellWidthWithOverflow:withOverflow];
     const CGFloat spacing = _style.intercellSpacing;
     const NSInteger cellCount = (NSInteger)_cells.count;
@@ -2373,6 +2454,14 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
             cellRect.origin.x += [[newValues objectAtIndex:i] floatValue] + intercellSpacing;
 
         } else {
+            if (cell.isTabGroupChip) {
+                // A chip is not a tab: it gets no overflow menu item (its
+                // member tabs each get their own) and must not become a
+                // blank row whose action would select a nil tab view item.
+                [cell setIsInOverflowMenu:YES];
+                [[cell indicator] removeFromSuperview];
+                continue;
+            }
             // set up menu items
             NSMenuItem *menuItem;
             if (overflowMenu == nil) {
@@ -2869,6 +2958,15 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 
 #pragma mark NSDraggingDestination
 
+// [sender draggingLocation] is throttled and can be stale during tab drags
+// (fresh and stale positions interleave, flapping the drop target between two
+// spots); use the live mouse position instead, same workaround as
+// SessionView's draggingUpdated:.
+- (NSPoint)freshDragMouseLocation {
+    return [self convertPoint:[self.window convertPointFromScreen:[NSEvent mouseLocation]]
+                     fromView:nil];
+}
+
 - (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender {
     if ([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound) {
         if ([[self delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:moveSourceWindow:)] &&
@@ -2879,7 +2977,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
             return NSDragOperationNone;
         }
 
-        [[PSMTabDragAssistant sharedDragAssistant] draggingEnteredTabBar:self atPoint:[self convertPoint:[sender draggingLocation] fromView:nil]];
+        [[PSMTabDragAssistant sharedDragAssistant] draggingEnteredTabBar:self atPoint:[self freshDragMouseLocation]];
         return NSDragOperationMove;
     } else if ([[self delegate] respondsToSelector:@selector(tabView:draggingEnteredTabBarForSender:)]) {
         NSDragOperation op = [[self delegate] tabView:_tabView draggingEnteredTabBarForSender:sender];
@@ -2906,7 +3004,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
             return NSDragOperationNone;
         }
 
-        [[PSMTabDragAssistant sharedDragAssistant] draggingUpdatedInTabBar:self atPoint:[self convertPoint:[sender draggingLocation] fromView:nil]];
+        [[PSMTabDragAssistant sharedDragAssistant] draggingUpdatedInTabBar:self atPoint:[self freshDragMouseLocation]];
         return NSDragOperationMove;
     } else if ([[self delegate] respondsToSelector:@selector(tabView:shouldAcceptDragFromSender:)] &&
                [[self delegate] tabView:_tabView shouldAcceptDragFromSender:sender]) {
@@ -3467,25 +3565,40 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     return nil;
 }
 
+// The last visible tab-or-placeholder cell. Chip cells are not tabs: callers
+// use this as a drop target or selection anchor, so a chip (which represents
+// no tab view item) must never be returned. Placeholders do count -- during a
+// drag the trailing placeholder is the “past the end” drop slot.
 - (PSMTabBarCell *)lastVisibleTab
 {
-    int i, cellCount = [_cells count];
-    for(i = 0; i < cellCount; i++){
-        if ([[_cells objectAtIndex:i] isInOverflowMenu])
-            return [_cells objectAtIndex:(i-1)];
+    PSMTabBarCell *last = nil;
+    for (PSMTabBarCell *cell in _cells) {
+        if ([cell isInOverflowMenu]) {
+            break;
+        }
+        if ([cell isTabGroupChip]) {
+            continue;
+        }
+        last = cell;
     }
-    return [_cells objectAtIndex:(cellCount - 1)];
+    return last;
 }
 
+// Number of visible tab cells. Chip cells are excluded: a window whose sole
+// tab is in a one-tab group still has exactly one tab (the solitary-tab
+// window-drag conversion keys off this).
 - (int)numberOfVisibleTabs
 {
-    int i, cellCount = [_cells count];
-    for(i = 0; i < cellCount; i++){
-        if ([[_cells objectAtIndex:i] isInOverflowMenu]) {
-            return i;
+    int count = 0;
+    for (PSMTabBarCell *cell in _cells) {
+        if ([cell isInOverflowMenu]) {
+            break;
+        }
+        if (![cell isTabGroupChip]) {
+            count++;
         }
     }
-    return cellCount;
+    return count;
 }
 
 #pragma mark -
@@ -3497,7 +3610,14 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 
 - (NSArray*)accessibilityChildren {
     NSMutableArray *childElements = [NSMutableArray array];
-    for (PSMTabBarCell *cell in [_cells objectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [self numberOfVisibleTabs])]]) {
+    for (PSMTabBarCell *cell in _cells) {
+        if ([cell isInOverflowMenu]) {
+            break;
+        }
+        if ([cell isTabGroupChip]) {
+            // Chips represent no tab; publishing them creates phantom AX tabs.
+            continue;
+        }
         [childElements addObject:cell.element];
     }
     if (![_overflowPopUpButton isHidden]) {
@@ -3512,6 +3632,9 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
 - (NSArray*)accessibilityTabs {
     NSMutableArray *tabElements = [NSMutableArray array];
     for (PSMTabBarCell *cell in _cells) {
+        if ([cell isTabGroupChip]) {
+            continue;
+        }
         [tabElements addObject:cell.element];
     }
     return tabElements;
@@ -3554,20 +3677,97 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     return nil;
 }
 
-- (void)setTabGroupIdentifier:(NSString *)identifier forTabViewItem:(NSTabViewItem *)tabViewItem {
+- (void)setTabGroupIdentifiers:(NSArray *)identifiers
+               forTabViewItems:(NSArray<NSTabViewItem *> *)tabViewItems {
+    // Match strictly by tab view item: a cell whose item is not listed (or a
+    // tab whose cell is absent, e.g. the dragged tab mid-drag) is left alone.
+    // Re-derive chips and relayout at most once, however many memberships
+    // changed.
+    NSMapTable *gidByItem = [NSMapTable mapTableWithKeyOptions:(NSMapTableObjectPointerPersonality |
+                                                                NSMapTableStrongMemory)
+                                                  valueOptions:NSMapTableStrongMemory];
+    const NSUInteger count = MIN(identifiers.count, tabViewItems.count);
+    for (NSUInteger i = 0; i < count; i++) {
+        [gidByItem setObject:identifiers[i] forKey:tabViewItems[i]];
+    }
+    BOOL changed = NO;
     for (PSMTabBarCell *cell in _cells) {
-        // Skip chip cells (no representedObject) when matching a tab.
-        if (![cell isTabGroupChip] && [cell representedObject] == tabViewItem) {
-            if (cell.tabGroupIdentifier != identifier &&
-                ![cell.tabGroupIdentifier isEqualToString:identifier]) {
-                RLog(@"tabGroup: cell %p (%@) group %@ -> %@",
-                     cell, [tabViewItem label], cell.tabGroupIdentifier, identifier);
-                cell.tabGroupIdentifier = identifier;
-                // Membership changed: re-derive chip cells and relayout.
-                [self normalizeTabGroupChipCells];
-                [self update:YES];
+        if ([cell isTabGroupChip] || [cell isPlaceholder]) {
+            continue;
+        }
+        id item = [cell representedObject];
+        id value = item ? [gidByItem objectForKey:item] : nil;
+        if (!value) {
+            continue;
+        }
+        NSString *gid = [value isKindOfClass:[NSString class]] ? value : nil;
+        if (cell.tabGroupIdentifier != gid &&
+            ![cell.tabGroupIdentifier isEqualToString:gid]) {
+            RLog(@"tabGroup: cell %p group %@ -> %@",
+                 cell, cell.tabGroupIdentifier, gid);
+            cell.tabGroupIdentifier = gid;
+            changed = YES;
+        }
+    }
+    if (changed) {
+        [self normalizeTabGroupChipCells];
+        [self update:YES];
+    }
+}
+
+- (void)enumerateTabGroupRunsWithRect:(NSRect (^)(PSMTabBarCell *))rectForCell
+                                block:(void (NS_NOESCAPE ^)(PSMTabBarCell *,
+                                                            NSRect,
+                                                            PSMTabBarCell *,
+                                                            NSString *))block {
+    NSArray<PSMTabBarCell *> *cells = [self cells];
+    NSRect (^rect)(PSMTabBarCell *) = rectForCell ?: ^NSRect(PSMTabBarCell *c) {
+        return c.frame;
+    };
+    for (NSInteger i = 0; i < (NSInteger)cells.count; i++) {
+        PSMTabBarCell *chip = cells[i];
+        NSString *gid = chip.tabGroupIdentifier;
+        if (![chip isTabGroupChip] || gid.length == 0) {
+            continue;
+        }
+        NSRect tabsRect = NSZeroRect;
+        PSMTabBarCell *firstTab = nil;
+        BOOL any = NO;
+        for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
+            PSMTabBarCell *c = cells[j];
+            // A drag interleaves placeholder cells between real ones; they're
+            // transparent to the run, so skip (not break) so the run still
+            // spans the group's members and grows to enclose the open drop
+            // slot when a tab is dragged into the group. Two slot kinds are
+            // unioned explicitly: an "end of group" join slot past the last
+            // member, and the dragged member's OWN slot (it carries the
+            // group's id; dropping there keeps membership, so the outline
+            // must keep enclosing it rather than snapping down at drag start
+            // and shrinking only as the slot collapses).
+            if (c.isPlaceholder) {
+                if ([c.tabGroupIdentifier isEqualToString:gid]) {
+                    // The dragged member's own slot counts as part of the run
+                    // (it can even BE the run, e.g. the first or sole member
+                    // is being dragged and no real member precedes it).
+                    tabsRect = any ? NSUnionRect(tabsRect, rect(c)) : rect(c);
+                    any = YES;
+                } else if (any && [c.joinsTabGroupIdentifier isEqualToString:gid]) {
+                    tabsRect = NSUnionRect(tabsRect, rect(c));
+                }
+                continue;
             }
-            return;
+            if (c.isTabGroupChip || c.isInOverflowMenu ||
+                ![c.tabGroupIdentifier isEqualToString:gid]) {
+                break;
+            }
+            tabsRect = any ? NSUnionRect(tabsRect, rect(c)) : rect(c);
+            if (!firstTab) {
+                firstTab = c;
+            }
+            any = YES;
+        }
+        if (any) {
+            block(chip, tabsRect, firstTab, gid);
         }
     }
 }
@@ -3624,15 +3824,6 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     if (chipIndexes.count > 0) {
         [_cells removeObjectsAtIndexes:chipIndexes];
     }
-}
-
-- (NSString *)tabGroupIdentifierForTabViewItem:(NSTabViewItem *)tabViewItem {
-    for (PSMTabBarCell *cell in _cells) {
-        if ([cell representedObject] == tabViewItem) {
-            return [cell tabGroupIdentifier];
-        }
-    }
-    return nil;
 }
 
 - (void)setIsPinned:(BOOL)pinned forTabViewItem:(NSTabViewItem *)tabViewItem {
@@ -3744,10 +3935,11 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     // Select the newly moved item in the destination tab view.
     [[destinationTabBar tabView] selectTabViewItem:[movingCell representedObject]];
 
-    if ([self.delegate respondsToSelector:@selector(tabView:didDropTabViewItem:inTabBar:)]) {
+    if ([self.delegate respondsToSelector:@selector(tabView:didDropTabViewItem:inTabBar:joiningGroupWithID:)]) {
         [self.delegate tabView:self.tabView
             didDropTabViewItem:movingCell.representedObject
-                      inTabBar:destinationTabBar];
+                      inTabBar:destinationTabBar
+            joiningGroupWithID:nil];
     }
     if ([self.tabView numberOfTabViewItems] == 0 &&
         [self.delegate respondsToSelector:@selector(tabView:closeWindowForLastTabViewItem:)]) {

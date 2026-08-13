@@ -59,6 +59,11 @@
 // the id of the group a tab dropped here should join (its "end of group" slot).
 // nil on every non-slot cell and on slots that don't join a group.
 @property(nonatomic, copy) NSString *joinsTabGroupIdentifier;
+// The cell's width when drop-slot placeholders were distributed for the
+// current drag; 0 outside a drag. The drag animation shrinks real tabs
+// proportionally from this base when an expanding drop slot needs room in a
+// full (stretch-to-fit) bar, so repeated ticks never compound the shrink.
+@property(nonatomic, assign) CGFloat dragBaseWidth;
 @property(nonatomic, readonly) PSMProgressIndicator *indicator;
 @property(nonatomic, readonly) PSMCachedTitle *cachedTitle;
 @property(nonatomic, readonly) PSMCachedTitle *cachedSubtitle;

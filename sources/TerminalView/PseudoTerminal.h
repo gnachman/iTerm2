@@ -33,6 +33,7 @@
 @class iTermController;
 @class iTermTerminalWindowSizeHelper;
 @class PseudoTerminalState;
+@class PTYTab;
 @class TmuxController;
 @class WKWebViewConfiguration;
 
@@ -129,6 +130,8 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // Set the given color on every member of a tab group (the color rides the
 // tabs). A nil color clears it (the chip falls back to its default).
 - (void)setTabGroupColor:(NSColor *)color forGroupID:(NSString *)groupID;
+// Member tabs of the given group, in tab order.
+- (NSArray<PTYTab *> *)tabsInGroup:(NSString *)groupID;
 
 // Mutable state for the tab color picker (popover, debounce timer, etc.).
 @property(nonatomic, strong) TabColorPickerState *tabColorPickerState;
@@ -441,7 +444,11 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (iTermRestorableSession *)restorableSessionForSession:(PTYSession *)session;
 
 - (void)addSessionInNewTab:(PTYSession *)object;
-- (void)didDonateTab:(PTYTab *)aTab toWindowController:(PseudoTerminal *)term;
+// `groupID` is the tab group the drop landed inside (the tab joins it), or
+// nil when the tab arrived outside any group (menu/API moves pass nil).
+- (void)didDonateTab:(PTYTab *)aTab
+    toWindowController:(PseudoTerminal *)term
+    joiningGroupWithID:(NSString *)groupID;
 - (void)moveTabAtIndex:(NSInteger)selectedIndex toIndex:(NSInteger)destinationIndex;
 
 - (PseudoTerminal *)it_moveTabToNewWindow:(PTYTab *)aTab;

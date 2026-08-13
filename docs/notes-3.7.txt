@@ -2672,3 +2672,13 @@ Bug Fixes:
   whole workgroup now warns you that its other
   sessions will close too, naming the workgroup
   and how many more sessions will end.
+- Added tab groups: right-click a tab and choose
+  Add Tab to Group to group Chrome/Firefox-style
+  tabs. A named, colored chip heads each group;
+  right-click it to rename, recolor, duplicate,
+  move to a new window, ungroup, or close the
+  group. Drag the chip to move the whole group,
+  within a window or into another one; drag
+  single tabs into, around, or out of a group.
+  Groups persist their name and color with the
+  member tabs.

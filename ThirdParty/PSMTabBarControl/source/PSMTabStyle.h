@@ -44,17 +44,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSRect)progressBarRectForTabCell:(PSMTabBarCell *)cell;
 @optional
 - (nullable NSBezierPath *)progressBarClipPathForTabCell:(PSMTabBarCell *)cell;
-// Draw a tab group's chip into `frame` (the chip subview's bounds).
-// Optional: PSMTabGroupChipView draws a basic default when a style
-// doesn't implement it. `control.orientation` lets a style render the
-// horizontal and vertical tab bars differently, and it can adapt to the
-// theme (Tahoe/Yosemite/Minimal). `selected` is true when the chip's run
-// contains the active tab.
-- (void)drawTabGroupChipWithName:(NSString *)name
-                           color:(NSColor *)color
-                        selected:(BOOL)selected
-                           frame:(NSRect)frame
-                       inControl:(PSMTabBarControl *)control;
 // YES if this style draws whole-run tab-group decoration itself (in
 // -drawTabBar:), in which case the group chip CELL draws nothing. Styles that
 // return NO keep the basic per-cell chip.

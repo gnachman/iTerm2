@@ -2,44 +2,30 @@
 //  PSMTabGroupChipView.h
 //  PSMTabBarControl
 //
-//  The little name+color "chip" drawn at the leading edge of a contiguous
-//  run of tabs that share a tab group (Chrome/Firefox style). The control
-//  owns and positions these as subviews so they track tab-bar scrolling
-//  for free. Appearance is delegated to the current tab style so each
-//  theme (Tahoe, Yosemite, Minimal, ...) can render it differently; a
-//  basic built-in look is used when the style doesn't override.
+//  Metrics and basic drawing for the name+color "chip" that heads a
+//  contiguous run of tabs sharing a tab group (Chrome/Firefox style).
+//  Despite the historical name this is not a view: chips are first-class
+//  cells (PSMTabBarCell with isTabGroupChip) and these class helpers supply
+//  their size and default look. Styles that draw their own run decoration
+//  (e.g. Tahoe) bypass the basic look entirely.
 //
 
 #import <Cocoa/Cocoa.h>
 
-@class PSMTabBarControl;
-
 NS_ASSUME_NONNULL_BEGIN
 
-@interface PSMTabGroupChipView : NSView
+@interface PSMTabGroupChipView : NSObject
 
-@property(nonatomic, copy) NSString *groupName;
-@property(nonatomic, retain) NSColor *groupColor;
-// True when the run this chip heads contains the selected tab; styles may
-// use it to emphasize the active group.
-@property(nonatomic, assign) BOOL selected;
-// The control whose style draws the chip. Weak: the control owns the chip.
-@property(nonatomic, weak, nullable) PSMTabBarControl *tabBarControl;
-
-// Width this chip wants at the tab bar's height, so the control can
-// reserve a leading gap for it before the run's first cell.
-- (CGFloat)preferredWidth;
-
-// Same width computed from a name alone, so the tab bar can reserve the
-// gap during layout before the chip subview exists.
+// Width a horizontal chip cell wants for `name`, so the tab bar can size the
+// cell during layout.
 + (CGFloat)preferredWidthForName:(NSString *)name;
 
-// Height reserved above a vertical bar's run for its chip.
+// Height reserved for a vertical bar's chip cell.
 + (CGFloat)verticalChipHeight;
 
-// Draw the basic chip (rounded pill + name) into `frame`. Shared by the
-// (legacy) overlay view and the first-class chip cell.
-+ (void)drawChipInFrame:(NSRect)frame name:(NSString *)name color:(NSColor *)color;
+// Draw the basic chip (rounded pill + name) into `frame`. Used by
+// PSMTabBarCell for styles without their own run decoration.
++ (void)drawChipInFrame:(NSRect)frame name:(NSString *)name color:(nullable NSColor *)color;
 
 @end
 

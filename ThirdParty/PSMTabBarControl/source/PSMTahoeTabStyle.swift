@@ -754,60 +754,19 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         if bar.suppressTabGroupRunDecoration {
             return
         }
-        guard let cells = bar.cells() as? [PSMTabBarCell] else {
-            return
-        }
         let horizontal = (orientation == .horizontalOrientation)
-        var i = 0
-        while i < cells.count {
-            let chip = cells[i]
-            guard chip.isTabGroupChip, let gid = chip.tabGroupIdentifier else {
-                i += 1
-                continue
+        // The bar owns run detection (placeholder transparency, join-slot
+        // union); this style only maps each cell to its visible background
+        // rect and draws the geometry it is handed.
+        bar.enumerateTabGroupRuns(rectForCell: { [weak self] cell in
+            self?.backgroundRect(for: cell.frame) ?? cell.frame
+        }, block: { chip, tabsRect, firstTab, gid in
+            if horizontal {
+                self.drawTabGroupRun(chip: chip, tabsRect: tabsRect, firstTab: firstTab, groupID: gid, bar: bar)
+            } else {
+                self.drawTabGroupRunVertical(chip: chip, tabsRect: tabsRect, firstTab: firstTab, groupID: gid, bar: bar)
             }
-            var tabsRect = NSRect.zero
-            var firstTab: PSMTabBarCell?
-            var any = false
-            var j = i + 1
-            while j < cells.count {
-                let c = cells[j]
-                // A drag interleaves placeholder cells between real ones; they're
-                // transparent to the run, so skip (not break) so the outline still
-                // spans the group's members and grows to enclose the open drop
-                // slot when a tab is dragged into the group. An "end of group"
-                // slot (tagged to join this group) sits past the last member, so
-                // union it explicitly -- otherwise the outline stops short and the
-                // join slot appears to be outside the group it drops into.
-                if c.isPlaceholder {
-                    if any, c.joinsTabGroupIdentifier == gid {
-                        tabsRect = tabsRect.union(backgroundRect(for: c.frame))
-                    }
-                    j += 1
-                    continue
-                }
-                if c.isTabGroupChip || c.isInOverflowMenu {
-                    break
-                }
-                if c.tabGroupIdentifier != gid {
-                    break
-                }
-                let vis = backgroundRect(for: c.frame)
-                tabsRect = any ? tabsRect.union(vis) : vis
-                if firstTab == nil {
-                    firstTab = c
-                }
-                any = true
-                j += 1
-            }
-            if any {
-                if horizontal {
-                    drawTabGroupRun(chip: chip, tabsRect: tabsRect, firstTab: firstTab, groupID: gid, bar: bar)
-                } else {
-                    drawTabGroupRunVertical(chip: chip, tabsRect: tabsRect, firstTab: firstTab, groupID: gid, bar: bar)
-                }
-            }
-            i = j  // j >= i + 1, so this always advances.
-        }
+        })
     }
 
     private func drawTabGroupRun(chip: PSMTabBarCell,

@@ -7378,20 +7378,18 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)tabView:(NSTabView*)aTabView
     didDropTabViewItem:(NSTabViewItem *)tabViewItem
-              inTabBar:(PSMTabBarControl *)aTabBarControl {
+              inTabBar:(PSMTabBarControl *)aTabBarControl
+    joiningGroupWithID:(NSString *)groupID {
     PTYTab *aTab = [tabViewItem identifier];
     PseudoTerminal *term = (PseudoTerminal *)[aTabBarControl delegate];
-    [self didDonateTab:aTab toWindowController:term];
+    [self didDonateTab:aTab toWindowController:term joiningGroupWithID:groupID];
 }
 
-// The terminal whose tab bar is `bar`, or nil.
+// The terminal whose tab bar is `bar`, or nil. The bar's delegate is its
+// window controller (see iTermRootTerminalView), same as the sibling
+// tabView:didDropTabViewItem:inTabBar:joiningGroupWithID: above.
 - (PseudoTerminal *)terminalForTabBar:(PSMTabBarControl *)bar {
-    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
-        if (term->_contentView.tabBarControl == bar) {
-            return term;
-        }
-    }
-    return nil;
+    return [PseudoTerminal castFrom:[bar delegate]];
 }
 
 // Reorder a group's tabs within this window so they land contiguously before
@@ -7525,11 +7523,12 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (void)tearOffTabGroup:(NSArray<PTYTab *> *)tabs
           atScreenPoint:(NSPoint)screenPoint {
     PTYTab *first = tabs.firstObject;
-    // -it_moveTabToNewWindow: creates the window and moves the first tab; it
-    // refuses when this window has fewer than two tabs (nothing to tear off).
-    // The group definition rides each tab, so it comes along with `first` and
-    // the rest; the new window derives the chip from them, no registry copy.
-    PseudoTerminal *dest = [self it_moveTabToNewWindow:first];
+    // -it_moveTabToNewWindow:ungroup: creates the window and moves the first
+    // tab; it refuses when this window has fewer than two tabs (nothing to
+    // tear off). ungroup:NO because this IS a whole-group move: the definition
+    // rides each tab, so it comes along with `first` and the rest; the new
+    // window derives the chip from them, no registry copy.
+    PseudoTerminal *dest = [self it_moveTabToNewWindow:first ungroup:NO];
     if (!dest) {
         return;
     }
@@ -7563,7 +7562,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [self tabsDidReorder];
 }
 
-- (void)didDonateTab:(PTYTab *)aTab toWindowController:(PseudoTerminal *)term {
+- (void)didDonateTab:(PTYTab *)aTab
+    toWindowController:(PseudoTerminal *)term
+    joiningGroupWithID:(NSString *)groupID {
     if ([term numberOfTabs] == 1) {
         [term fitWindowToTabs];
     } else {
@@ -7574,8 +7575,12 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     // The tab now lives in `term`; resolve its group membership from where it
     // landed and push it (which re-derives the group chips) BEFORE the
     // synchronous -display below. The drag stripped chips for its index math, so
-    // drawing before this re-derivation would flash the chip away.
-    [term resolveDroppedTabGroupMembership:aTab];
+    // drawing before this re-derivation would flash the chip away. A single
+    // tab dragged to another window keeps membership only when it lands inside
+    // a group's bracket there; otherwise the resolver clears it (so a member
+    // leaves its group behind, and a one-tab group's sole member dissolves its
+    // group). Only whole-group (chip) drags move a group between windows.
+    [term resolveDroppedTabGroupMembership:aTab insideGroupWithID:groupID];
     [term updateTabGroups];
     [term relayoutTabGroupChipsSynchronously];
 
@@ -8016,8 +8021,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                 keyEquivalent:@""] autorelease];
     [item setView:labelTrackView];
     [item setRepresentedObject:tabViewItem];
-    _tabViewItemForColorPicker = tabViewItem;
-    _tabGroupIDForColorPicker = nil;  // this picker targets a tab, not a group
+    // The picker's target (tab vs group) is captured when the picker actually
+    // opens -- see colorsMenuItemViewDidRequestColorPicker -- not at menu build,
+    // so an open color panel can't be retargeted by merely showing a menu.
     [rootMenu addItem:item];
     rootMenu.minimumWidth = tabColorViewSize.width;
 
@@ -8380,9 +8386,18 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (control.tabGroupDataSource != (id<PSMTabGroupDataSource>)self) {
         control.tabGroupDataSource = (id<PSMTabGroupDataSource>)self;
     }
-    for (PTYTab *aTab in [self tabs]) {
-        [control setTabGroupIdentifier:aTab.tabGroupID forTabViewItem:aTab.tabViewItem];
+    NSArray<PTYTab *> *tabs = [self tabs];
+    NSMutableArray *identifiers = [NSMutableArray arrayWithCapacity:tabs.count];
+    NSMutableArray<NSTabViewItem *> *items = [NSMutableArray arrayWithCapacity:tabs.count];
+    for (PTYTab *aTab in tabs) {
+        NSTabViewItem *item = aTab.tabViewItem;
+        if (!item) {
+            continue;
+        }
+        [identifiers addObject:(aTab.tabGroupID ?: (id)[NSNull null])];
+        [items addObject:item];
     }
+    [control setTabGroupIdentifiers:identifiers forTabViewItems:items];
 }
 
 // Re-derive the group chips and lay the tab bar out synchronously. The drag
@@ -8740,19 +8755,19 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 // strictly between two members of a group joins that group; dragging a member to
 // the group's edge (or elsewhere) removes it; a lone one-tab group survives.
 // Neighbors are never touched, so an innocent bystander isn't absorbed.
-- (void)resolveDroppedTabGroupMembership:(PTYTab *)droppedTab {
+- (void)resolveDroppedTabGroupMembership:(PTYTab *)droppedTab
+                       insideGroupWithID:(NSString *)insideGroup {
     NSArray<PTYTab *> *tabs = [self tabs];
     const NSInteger index = [tabs indexOfObject:droppedTab];
     if (index == NSNotFound) {
         return;
     }
     NSString *resolved;
-    // The drag assistant, which can see the group chips, reports when the tab
-    // landed inside a group's bracket (the reliable signal for joining a group,
+    // The drop path, which can see the group chips, passes the group whose
+    // bracket the tab landed inside (the reliable signal for joining a group,
     // including a one-tab group that has no between-members gap). Outside every
     // bracket, fall back to the order-only rule, which handles leaving a group,
     // reordering within one, and keeping a lone one-tab group.
-    NSString *insideGroup = [[PSMTabDragAssistant sharedDragAssistant] droppedInsideGroupID];
     if (insideGroup.length > 0) {
         resolved = insideGroup;
     } else {
@@ -8869,10 +8884,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     item.view = colorView;
     item.representedObject = groupID;
     item.target = self;
-    // Route the "more colors" picker and its live updates to this group; anchor
-    // the popover to the group's first member.
-    _tabGroupIDForColorPicker = groupID;
-    _tabViewItemForColorPicker = members.firstObject.tabViewItem;
+    // The "more colors" picker resolves its target (this group) from the menu
+    // item when it opens -- see colorsMenuItemViewDidRequestColorPicker.
     [menu addItem:item];
     if (menu.minimumWidth < size.width) {
         menu.minimumWidth = size.width;
@@ -9064,9 +9077,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 // Reorder the tab view so `target` (a permutation of the current tabs) becomes
-// the on-screen order. Applied as a sequence of single moves through the tab
-// bar so tabView, cells, and chips stay in sync each step.
+// the on-screen order. The target is first canonicalized (pinned prefix, then
+// group contiguity within each class) so no caller can violate the tab-bar
+// invariants -- e.g. a wrapped Move Tab Left/Right or a group dropped before a
+// pinned tab gets clamped rather than applied verbatim. Applied as a sequence
+// of single moves through the tab bar so tabView, cells, and chips stay in
+// sync each step.
 - (void)applyTabOrder:(NSArray<PTYTab *> *)target {
+    target = [self canonicalTabOrderFor:target];
     for (NSInteger i = 0; i < (NSInteger)target.count; i++) {
         const NSInteger cur = [self indexOfTab:target[i]];
         if (cur != NSNotFound && cur != i) {
@@ -9075,36 +9093,38 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 }
 
-// The invariant: all tabs sharing a group id are contiguous. Any reorder path
-// (keyboard, drag, Python API, ...) that funnels through -tabsDidReorder is made
-// safe here: if a group's members ended up split, compact each group into one
-// block anchored at the position of its first member (membership is preserved;
-// only order is repaired). A no-op when already contiguous, so paths that
-// resolve membership themselves (e.g. a single-tab drop) are unaffected.
+// `proposed` reordered by iTermTabGroupOrdering's canonical permutation:
+// pinned tabs keep a stable prefix, and each group's members are compacted
+// within the pinned/unpinned class of their first member.
+- (NSArray<PTYTab *> *)canonicalTabOrderFor:(NSArray<PTYTab *> *)proposed {
+    NSMutableArray *groupIDs = [NSMutableArray arrayWithCapacity:proposed.count];
+    NSMutableArray<NSNumber *> *pinned = [NSMutableArray arrayWithCapacity:proposed.count];
+    for (PTYTab *tab in proposed) {
+        [groupIDs addObject:(tab.tabGroupID ?: (id)[NSNull null])];
+        [pinned addObject:@(tab.isPinned)];
+    }
+    NSArray<NSNumber *> *order = [iTermTabGroupOrdering canonicalOrderForGroupIDs:groupIDs
+                                                                           pinned:pinned];
+    NSMutableArray<PTYTab *> *result = [NSMutableArray arrayWithCapacity:proposed.count];
+    for (NSNumber *index in order) {
+        [result addObject:proposed[index.integerValue]];
+    }
+    return result;
+}
+
+// The invariants: pinned tabs form a prefix, and all tabs sharing a group id
+// are contiguous (within their pinned class -- pinning wins when the two
+// conflict). Any reorder path (keyboard, drag, Python API, ...) that funnels
+// through -tabsDidReorder is made safe here: the canonical order preserves
+// membership and pinning and only repairs order, and it is idempotent, so
+// this is a no-op for any order that already satisfies both invariants.
 - (void)enforceTabGroupContiguityInvariant {
     if (_enforcingTabGroupContiguity) {
         return;
     }
     NSArray<PTYTab *> *tabs = self.tabs;
-    NSMutableArray<PTYTab *> *target = [NSMutableArray arrayWithCapacity:tabs.count];
-    NSMutableSet<NSString *> *placed = [NSMutableSet set];
-    for (PTYTab *tab in tabs) {
-        NSString *gid = tab.tabGroupID;
-        if (gid == nil) {
-            [target addObject:tab];
-            continue;
-        }
-        if ([placed containsObject:gid]) {
-            continue;  // already emitted with its group's block
-        }
-        [placed addObject:gid];
-        for (PTYTab *other in tabs) {
-            if ([other.tabGroupID isEqualToString:gid]) {
-                [target addObject:other];
-            }
-        }
-    }
-    // Identity compare: if order is unchanged there was no split to repair.
+    NSArray<PTYTab *> *target = [self canonicalTabOrderFor:tabs];
+    // Identity compare: if order is unchanged there was nothing to repair.
     BOOL changed = (target.count != tabs.count);
     for (NSInteger i = 0; !changed && i < (NSInteger)tabs.count; i++) {
         if (target[i] != tabs[i]) {
@@ -9140,18 +9160,23 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     for (PTYSession *session in self.allSessions) {
         [session didMoveSession];
     }
-    NSMutableArray<NSString *> *groupOrder = [NSMutableArray array];
     BOOL anyGrouped = NO;
     for (PTYTab *tab in [self tabs]) {
-        NSString *gid = tab.tabGroupID;
-        if (gid) {
+        if (tab.tabGroupID) {
             anyGrouped = YES;
+            break;
         }
-        [groupOrder addObject:(gid ? [gid substringToIndex:MIN(4u, gid.length)] : @"-")];
     }
     if (anyGrouped) {
         // The reorder changed tab order; membership (source of truth) is on
         // the PTYTabs. This logs it so a stale-cell mismatch is visible.
+        // RLog always evaluates its arguments, so only build the string dump
+        // in windows that actually have groups.
+        NSMutableArray<NSString *> *groupOrder = [NSMutableArray array];
+        for (PTYTab *tab in [self tabs]) {
+            NSString *gid = tab.tabGroupID;
+            [groupOrder addObject:(gid ? [gid substringToIndex:MIN(4u, gid.length)] : @"-")];
+        }
         RLog(@"tabGroup: tabsDidReorder tabGroupOrder=[%@]", [groupOrder componentsJoinedByString:@","]);
     }
     // Re-push membership so the tab bar's per-cell group ids track the new
@@ -11431,18 +11456,9 @@ typedef struct {
         }
     }
 
-    // Keep the pinned-left / unpinned-right invariant; abort if the move breaks it.
-    BOOL seenUnpinned = NO;
-    for (PTYTab *tab in target) {
-        if (tab.isPinned) {
-            if (seenUnpinned) {
-                return;
-            }
-        } else {
-            seenUnpinned = YES;
-        }
-    }
-
+    // -applyTabOrder: canonicalizes the target, so a wrapped move that would
+    // break the pinned-left invariant is clamped into the legal zone (matching
+    // the old moveTabLeft:/moveTabRight: clamping) instead of aborting.
     [self applyTabOrder:target];
     [self setNeedsUpdateTabObjectCounts:YES];
     [self tabsDidReorder];
@@ -13632,6 +13648,17 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (PseudoTerminal *)it_moveTabToNewWindow:(PTYTab *)aTab {
+    // A single tab moved to a new window becomes ungrouped, exactly like the
+    // drag tear-off path: only a whole-group move preserves membership.
+    // Without this, the menu/Python paths clone the group (same UUID live in
+    // two windows, names and colors silently diverging).
+    return [self it_moveTabToNewWindow:aTab ungroup:YES];
+}
+
+// `ungroup:NO` is for -tearOffTabGroup:atScreenPoint: only, which moves the
+// FIRST member this way and needs the id preserved so the rest of the group
+// can follow it into the new window.
+- (PseudoTerminal *)it_moveTabToNewWindow:(PTYTab *)aTab ungroup:(BOOL)ungroup {
     if (_layoutLocked) {
         RLog(@"Layout is locked, refusing to move tab to a new window");
         return nil;
@@ -13643,6 +13670,12 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         return nil;
     }
     ITAssertWithMessage([self.tabs containsObject:aTab], @"Called on wrong window");
+    if (ungroup && aTab.tabGroupID != nil) {
+        RLog(@"tabGroup: clearing group %@ from tab %@ moved to a new window",
+             aTab.tabGroupID, [aTab.tabViewItem label]);
+        aTab.tabGroupID = nil;
+        [self reconcileTabGroupDefinitionForTab:aTab];
+    }
     NSTabViewItem *aTabViewItem = aTab.tabViewItem;
     NSPoint point = [[self window] frame].origin;
     point.x += 10;

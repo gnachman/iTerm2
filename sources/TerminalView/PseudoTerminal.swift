@@ -96,7 +96,41 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
 
     // MARK: - ColorsMenuItemViewDelegate
 
+    // What a color picker opened from a menu's swatch row should recolor: the
+    // menu item's representedObject is a group id (group context menu) or an
+    // NSTabViewItem (tab context menu). Pure so it can be unit tested.
+    enum TabColorPickerTarget: Equatable {
+        case group(String)
+        case tab(NSTabViewItem)
+    }
+
+    static func colorPickerTarget(for item: NSMenuItem?) -> TabColorPickerTarget? {
+        if let groupID = item?.representedObject as? String {
+            return .group(groupID)
+        }
+        if let tabViewItem = item?.representedObject as? NSTabViewItem {
+            return .tab(tabViewItem)
+        }
+        return nil
+    }
+
     public func colorsMenuItemViewDidRequestColorPicker(_ view: ColorsMenuItemView!) {
+        // Capture the picker's target from the menu item the swatch view lives
+        // in, at the moment the picker opens. The pickers (popover and shared
+        // NSColorPanel) outlive the menu, so binding the target when a menu was
+        // merely built would leave a stale target behind: a panel opened for a
+        // single tab would silently start recoloring whichever group's context
+        // menu was opened (and dismissed untouched) last.
+        switch PseudoTerminal.colorPickerTarget(for: view.enclosingMenuItem) {
+        case .group(let groupID):
+            tabGroupIDForColorPicker = groupID
+            tabViewItemForColorPicker = tabs(inGroup: groupID).first?.tabViewItem
+        case .tab(let tabViewItem):
+            tabGroupIDForColorPicker = nil
+            tabViewItemForColorPicker = tabViewItem
+        case nil:
+            break
+        }
         if UserDefaults.standard.bool(forKey: kUseSystemColorPickerKey) {
             showSystemTabColorPicker()
         } else {

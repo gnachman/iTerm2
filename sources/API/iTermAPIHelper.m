@@ -2512,6 +2512,12 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
             // order/persistence and repairs the group-contiguity invariant via
             // -tabsDidReorder.
             [term moveTabAtIndex:sourceIndex toIndex:request.tabIndex];
+            // The move can be refused (layout locked) or clamped (pinned zone,
+            // group contiguity). The tab exists either way, but don't claim the
+            // requested index was honored when it wasn't.
+            if ([term indexOfTab:tab] != request.tabIndex) {
+                status = ITMCreateTabResponse_Status_InvalidTabIndex;
+            }
         } else {
             status = ITMCreateTabResponse_Status_InvalidTabIndex;
         }
@@ -3697,7 +3703,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
             [source.tabView removeTabViewItem:tab.tabViewItem];
             
             [destination insertTab:tab atIndex:index];
-            [source didDonateTab:tab toWindowController:destination];
+            [source didDonateTab:tab toWindowController:destination joiningGroupWithID:nil];
             if (source.tabs.count == 0) {
                 [source.window close];
             }
