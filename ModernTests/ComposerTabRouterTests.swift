@@ -90,6 +90,21 @@ class ComposerTabRouterTests: XCTestCase {
         XCTAssertEqual(route.paneNumber, 0)
     }
 
+    func testHereClearsDefaultAndRunsLocally() {
+        let route = ComposerTabRouter.parse("@. ls -l")
+        XCTAssertEqual(route.kind, .here)
+        XCTAssertEqual(route.payload, "ls -l")
+    }
+
+    func testBareHereFallsThrough() {
+        XCTAssertEqual(ComposerTabRouter.parse("@.").kind, .none)
+        XCTAssertEqual(ComposerTabRouter.parse("@.   ").kind, .none)
+    }
+
+    func testDoubleDotFallsThrough() {
+        XCTAssertEqual(ComposerTabRouter.parse("@.. x").kind, .none)
+    }
+
     func testEscapeSendsLiterally() {
         let route = ComposerTabRouter.parse("\\@2 x")
         XCTAssertEqual(route.kind, .escaped)

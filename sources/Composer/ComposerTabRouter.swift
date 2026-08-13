@@ -21,6 +21,9 @@ enum ComposerTabRouteKind: Int {
     case all
     // Send payload to every other session in every window.
     case allWindows
+    // “@. cmd” — send payload to the composer's own session and clear any
+    // sticky default target.
+    case here
 }
 
 @objc(iTermComposerTabRoute)
@@ -76,6 +79,9 @@ class ComposerTabRouter: NSObject {
         }
         if address == "wall" {
             return ComposerTabRoute(kind: .allWindows, payload: payload)
+        }
+        if address == "." {
+            return ComposerTabRoute(kind: .here, payload: payload)
         }
 
         var numberPart = address[...]

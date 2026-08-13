@@ -30,6 +30,10 @@
     BOOL _preserveSaved;
     BOOL _dismissCanceled;
     CGFloat _preferredTopOffset;  // only used for initialization. Not kept up to date.
+    // Sticky default target: set by a successful @-addressed send (popup
+    // composer only), applied to plain sends, cleared by @., dismissal, or a
+    // failed sticky send.
+    iTermComposerTabRoute *_stickyRoute;
 }
 
 - (void)setCommand:(NSString *)command {
@@ -353,12 +357,24 @@
             case iTermComposerTabRouteKindAllWindows:
                 // Routed send: never dismiss; clear only on success so a
                 // mistyped address doesn't eat the text.
-                [self routeWithRoute:route];
+                [self routeWithRoute:route fromSticky:NO];
                 return;
             case iTermComposerTabRouteKindEscaped:
                 commandToSend = route.payload;
                 break;
+            case iTermComposerTabRouteKindHere:
+                if (_stickyRoute) {
+                    _stickyRoute = nil;
+                    [ToastWindowController showToastWithMessage:@"Default target cleared"];
+                }
+                commandToSend = route.payload;
+                break;
             case iTermComposerTabRouteKindNone:
+                if (_stickyRoute && !self.isAutoComposer) {
+                    // A sticky target is active: plain sends follow it.
+                    [self routeWithRoute:_stickyRoute withCommand:command];
+                    return;
+                }
                 break;
         }
     }
@@ -379,15 +395,32 @@
     }
 }
 
-- (void)routeWithRoute:(iTermComposerTabRoute *)route {
+- (void)routeWithRoute:(iTermComposerTabRoute *)route fromSticky:(BOOL)fromSticky {
+    [self routeWithRoute:route command:route.payload fromSticky:fromSticky];
+}
+
+- (void)routeWithRoute:(iTermComposerTabRoute *)route withCommand:(NSString *)command {
+    [self routeWithRoute:route command:command fromSticky:YES];
+}
+
+- (void)routeWithRoute:(iTermComposerTabRoute *)route
+               command:(NSString *)command
+            fromSticky:(BOOL)fromSticky {
     NSString *message = nil;
     const BOOL ok = [self.delegate composerManager:self
-                                 sendRoutedCommand:route.payload
+                                 sendRoutedCommand:command
                                           toTarget:route
                                            message:&message];
-    DLog(@"Routed send ok=%@ message=%@", @(ok), message);
+    DLog(@"Routed send ok=%@ fromSticky=%@ message=%@", @(ok), @(fromSticky), message);
     if (ok) {
         [self setStringValue:@""];
+        if (route.kind == iTermComposerTabRouteKindTarget && !self.isAutoComposer) {
+            // Remember the last explicit target so plain sends can follow it.
+            _stickyRoute = route;
+        }
+    } else if (fromSticky) {
+        _stickyRoute = nil;
+        message = [message stringByAppendingString:@" — default target cleared"];
     }
     if (message.length > 0) {
         [ToastWindowController showToastWithMessage:message];
@@ -505,6 +538,7 @@
 
 - (void)dismissMinimalViewAnimated:(BOOL)animated {
     DLog(@"dismissMinimalViewAnimated:%@", @(animated));
+    _stickyRoute = nil;
     iTermMinimalComposerViewController *vc = _minimalViewController;
     __weak __typeof(self) weakSelf = self;
     _dismissCanceled = NO;
