@@ -19,8 +19,20 @@ Setup: `make run`, open a window with 3 tabs; run
 - [ ] One-tab window: `@all x` → “No other tabs”.
 - [ ] `\@2 x` → “@2 x” typed into OWN session.
 - [ ] `@2fa/cli --help` → sent locally unchanged.
-- [ ] Split panes in tab 2: only the active pane
-      receives the command.
+- [ ] Split panes in tab 2: `@2 x` goes to the
+      active pane only.
+- [ ] `@2.1` / `@2.2` hit panes of tab 2 in
+      reading order (top-left is 1). `@2.9` →
+      toast “No pane 9 in tab 2”.
+- [ ] Second window open: `@w2 x` lands in
+      window 2’s active tab (window numbers as
+      in ⌘⌥N). `@w2.1.2` reaches a pane there.
+      `@w9 x` → “No window 9”. Focus stays put.
+- [ ] `@all x` now hits every other pane in the
+      window, including siblings of the
+      controller’s own tab.
+- [ ] `@wall x` hits every session in all
+      windows except the controller.
 - [ ] Target tab enrolled in Broadcast Input:
       command must NOT fan out to other sessions.
 - [ ] tmux integration window as target: works.
