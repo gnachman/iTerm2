@@ -661,6 +661,7 @@ DEFINE_STRING(alternateSSHIntegrationScript, @"", SECTION_DEBUGGING @"Alternate 
 
 #define SECTION_SESSION @"Session: "
 
+DEFINE_BOOL(composerTabRouting, YES, SECTION_SESSION @"Interpret @-prefixes in the composer to send commands to other tabs?\nWhen enabled, composer text like “@2 ls” types “ls” into the active session of tab 2 of the current window, and “@all ls” sends to every other tab. Prefix with a backslash to send such text literally.");
 DEFINE_BOOL(runJobsInServers, YES, SECTION_SESSION @"Enable session restoration.\nSession restoration runs jobs in separate processes. They will survive crashes, force quits, and upgrades.\nYou must restart iTerm2 for this change to take effect.");
 DEFINE_BOOL(bootstrapDaemon, YES, SECTION_SESSION @"Allow sessions to survive logging out and back in.\nThis breaks the “auth sufficient pam_tid.so” hack some people use to allow sudo to authenticate with Touch ID.");
 
