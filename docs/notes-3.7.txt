@@ -907,6 +907,13 @@ Settings Improvements:
   changes.
 
 Bug Fixes:
+- Fixed a beachball that could occur when the
+  tab style preference changed: every session’s
+  announcement view was re-fitted synchronously,
+  each fit re-running an expensive text-layout
+  search. Measurements are now cached and reused,
+  and a resize to the same size no longer
+  re-fits.
 - Fixed a multi-second hang that could occur
   when a window changed appearance (for example
   when another app or a second iTerm2 instance
