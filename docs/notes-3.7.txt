@@ -2691,3 +2691,8 @@ Bug Fixes:
   animates: the member tabs slide shut and open.
   Works on horizontal and vertical tab bars in
   every theme.
+- A new “Session Status” status bar component
+  summarizes the status of this window’s
+  sessions, as set by Set Tab Status triggers or
+  the OSC 21337 control sequence. Click it to
+  list them and jump to one.
