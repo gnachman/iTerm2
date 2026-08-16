@@ -47,6 +47,8 @@ extern NSString *const PSMTabDragIsGroupPasteboardType;
 - (void)setDraggedCellIndex:(int)value;
 - (BOOL)isDragging;
 - (void)setIsDragging:(BOOL)value;
+// YES if `item` is the tab being dragged (or a member of the dragged group).
+- (BOOL)isDraggingTabViewItem:(NSTabViewItem *)item;
 - (NSPoint)currentMouseLoc;
 - (void)setCurrentMouseLoc:(NSPoint)point;
 - (PSMTabBarCell *)targetCell;

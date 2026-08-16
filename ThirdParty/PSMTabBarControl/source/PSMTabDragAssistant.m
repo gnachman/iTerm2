@@ -184,6 +184,24 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [super dealloc];
 }
 
+// YES if `item` is the tab currently being dragged out, or (for a group drag)
+// one of the group's members. Used to decide whether a drag's source window
+// needs to move its selection off a leaving tab.
+- (BOOL)isDraggingTabViewItem:(NSTabViewItem *)item {
+    if (item == nil) {
+        return NO;
+    }
+    if ([[self draggedCell] representedObject] == item) {
+        return YES;
+    }
+    for (PSMTabBarCell *member in _draggedGroupMembers) {
+        if ([member representedObject] == item) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 #pragma mark -
 #pragma mark Functionality
 
@@ -463,14 +481,24 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [[NSCursor closedHandCursor] set];
 
     // Drag image = snapshot of the run WITH its decoration (chip + outline), so
-    // the floating image looks like the group. The enclosing outline is outset
-    // ~2pt past the member pills on the right (see drawTabGroupRun in the tab
-    // style), beyond runFrame's right edge, so the width needs that much slack or
-    // the floating image clips the outline. The left edge is the chip, where the
-    // outline begins, so growing only the width keeps the drag offset intact.
-    // Round out to whole pixels and clamp to the bar.
+    // the floating image looks like the group. The group pill's outline is outset
+    // past the run frame on BOTH horizontal edges (see -drawTabGroupRun /
+    // -drawCollapsedTabGroupChip), so the capture must grow by the outset on each
+    // side or the floating image clips the outline. The right outset is the style
+    // constant; the left is neighbor-aware (0 when the preceding cell already
+    // covers the shared inter-group gap, which also avoids grabbing that neighbor's
+    // outline). Both collapsed and expanded runs outset identically. Growing the
+    // LEFT moves the capture origin, so the drag anchor (cellFrame, below) shifts
+    // by the same amount to keep the group under the cursor. Round out and clamp.
+    id<PSMTabStyle> dragStyle = [control style];
+    CGFloat leftOut = 0;
+    if ([dragStyle respondsToSelector:@selector(tabGroupChipLeftOutsetForChip:bar:)]) {
+        leftOut = ceil([dragStyle tabGroupChipLeftOutsetForChip:chip bar:control]);
+    }
+    const CGFloat rightOut = ceil([control effectiveTabGroupRunOutset]) + 1;  // +1 px round-up slack
     NSRect capture = NSIntegralRect(runFrame);
-    capture.size.width += 3;
+    capture.origin.x -= leftOut;
+    capture.size.width += leftOut + rightOut;
     capture.size.height += 1;
     capture = NSIntersectionRect(capture, [control bounds]);
     NSBitmapImageRep *rep = [control bitmapImageRepForCachingDisplayInRect:capture];
@@ -484,6 +512,10 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [self setCurrentMouseLoc:[control convertPoint:[event locationInWindow] fromView:nil]];
 
     NSRect cellFrame = runFrame;
+    // The drag anchor must sit at the captured image's left edge, which the left
+    // outset moved leftward (and bounds-clamping may have pulled back). Match it so
+    // the floating image stays aligned under the cursor.
+    cellFrame.origin.x = capture.origin.x;
     if ([control isFlipped]) {
         cellFrame.origin.y += cellFrame.size.height;
     }
@@ -611,7 +643,12 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
                         case PSMTab_TopTab:
                         case PSMTab_LeftTab:
                         case PSMTab_RightTab:
-                            drawPoint.y = viewImage.size.height - self.draggedCell.frame.size.height;
+                            // Use the dragged image's own height, not the dragged
+                            // cell's: a collapsed group's dragged cell is its first
+                            // member, which is a zero-height hidden cell, so using
+                            // its height would draw the chip entirely off the top of
+                            // the tear-off preview (nothing shows for the group).
+                            drawPoint.y = viewImage.size.height - [tabImage size].height;
                             break;
                         case PSMTab_BottomTab:
                             drawPoint.y = 0;
@@ -1970,23 +2007,63 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     NSArray *withChips = [PSMTabBarControl cellsByInsertingDragChipsInto:cells controlView:control];
     [cells setArray:withChips];
     const BOOL horizontal = ([control orientation] == PSMTabBarHorizontalOrientation);
+    // A reference cell for the cross-axis (y/height for a horizontal bar): every
+    // real tab shares the bar's cell height. A COLLAPSED group's members are
+    // zero-frame, so seeding a chip from such a member would give it a zero-size
+    // cross-axis and draw it shifted. Use any non-chip cell with a real size:
+    // an ordinary tab, or (when every group in the bar is collapsed, so there is
+    // no full-size tab) the dragged unit's own wide placeholder, which carries
+    // the bar's cell height. Chips are excluded since they are what we're sizing.
+    NSRect reference = [PSMTabBarControl firstFullSizeTabCellFrameInCells:cells];
     for (NSInteger i = 0; i < (NSInteger)cells.count; i++) {
         PSMTabBarCell *chip = cells[i];
         if (![chip isTabGroupChip]) {
             continue;
         }
         // Size the chip from its run's first tab (the next non-chip cell); the
-        // animation loop fixes the origin, so only the size matters here.
+        // animation loop fixes the origin, so only the size matters here. Tally the
+        // run's members and whether they are all collapsed so the chip is sized at
+        // its COLLAPSED width when appropriate: this chip is freshly synthesized and
+        // is NOT in the control's cells, so the index-based width query cannot find
+        // it (it would fall back to the narrower name-only width, and the group
+        // would jump wider on drop). The local index is in hand, so this also avoids
+        // the O(cells^2) -indexOfObject: rescan.
         NSRect frame = NSZeroRect;
+        NSInteger memberCount = 0;
+        BOOL allCollapsed = YES;
         for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
-            if (![cells[j] isTabGroupChip]) {
-                frame = [cells[j] frame];
+            PSMTabBarCell *c = cells[j];
+            if (c.isPlaceholder) {
+                continue;  // a drop slot is transparent to the run (as elsewhere)
+            }
+            if ([c isTabGroupChip] ||
+                ![c.tabGroupIdentifier isEqualToString:chip.tabGroupIdentifier]) {
                 break;
             }
+            if (memberCount == 0) {
+                frame = [c frame];
+            }
+            memberCount++;
+            if (!c.isCollapsedHidden) {
+                allCollapsed = NO;
+            }
         }
+        const BOOL collapsedRun = (memberCount > 0 && allCollapsed);
         if (horizontal) {
-            frame.size.width = [control widthOfTabGroupChipCell:chip];
+            // The first member may be a zero-height collapsed cell; take the
+            // cross-axis (y + height) from the reference so the chip is full height.
+            if (!NSIsEmptyRect(reference)) {
+                frame.origin.y = reference.origin.y;
+                frame.size.height = reference.size.height;
+            }
+            frame.size.width = [control widthOfTabGroupChipCellForIdentifier:chip.tabGroupIdentifier
+                                                                   collapsed:collapsedRun
+                                                                 memberCount:memberCount];
         } else {
+            if (!NSIsEmptyRect(reference)) {
+                frame.origin.x = reference.origin.x;
+                frame.size.width = reference.size.width;
+            }
             frame.size.height = [control heightOfTabGroupChipCell:chip];
         }
         [chip setFrame:frame];

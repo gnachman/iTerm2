@@ -286,6 +286,14 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     // tabs, which can funnel back through reorder plumbing).
     BOOL _enforcingTabGroupContiguity;
 
+    // Nonzero while a batch operation (duplicate, whole-group move/tear-off,
+    // reorder) transiently selects tabs: auto-selecting a collapsed member would
+    // otherwise fire -tabView:didSelectTabViewItem: and spuriously expand its
+    // group mid-operation. Deferred here and enforced once when the operation
+    // settles. A counter (not a BOOL) so nested suppressions compose; manage it
+    // only via -performWithTabGroupAutoExpandSuppressed: so it is exception-safe.
+    NSInteger _tabGroupAutoExpandSuppressionCount;
+
     ////////////////////////////////////////////////////////////////////////////
     // Instant Replay
     iTermInstantReplayWindowController *_instantReplayWindowController;
@@ -1319,6 +1327,25 @@ ITERM_WEAKLY_REFERENCEABLE
     const BOOL begin = [notification.name isEqualToString:PSMTabDragDidBeginNotification];
     [iTermPreferences setHideTabBarSuppressedDuringDrag:begin];
     [self updateUseMetalInAllTabs];
+
+    // A group drag can leave the tab bar's collapsed-hidden cell flags out of
+    // sync with the model: dragging a collapsed group out of the bar lets the
+    // _cells<->tabView reconcile re-add its held members as fresh (non-collapsed)
+    // cells, and a drop path that skips the reorder (e.g. dropped back in place,
+    // or snapped back) never re-hides them. The per-tab tabGroupCollapsed flags
+    // stay correct throughout, so re-push them from the model when the drag ends.
+    if (!begin) {
+        for (PTYTab *aTab in [self tabs]) {
+            if (aTab.tabGroupCollapsed) {
+                // Auto-expand was suppressed during the drag (isDragging), so settle
+                // the invariant now and re-push the model's collapsed flags to the
+                // cells (the reconcile can have re-added held members as fresh,
+                // non-collapsed cells). Same settle every reorder/move/tear-off uses.
+                [self settleTabGroupCollapsedStateAfterReorder];
+                break;
+            }
+        }
+    }
 }
 
 - (void)rightExtraDidChange {
@@ -3991,8 +4018,29 @@ ITERM_WEAKLY_REFERENCEABLE
 
     const int tabIndex = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] intValue];
     if (tabIndex >= 0 && tabIndex < [_contentView.tabView numberOfTabViewItems]) {
+        // This runs AFTER -restoreTabsFromArrangement: already cleared
+        // _restoringWindow, so keep the restore auto-expand suppression covering
+        // this final selection too (making the guard's comment at
+        // -tabView:didSelectTabViewItem: actually true). Otherwise selecting a tab
+        // that a malformed/legacy arrangement saved as a collapsed member would
+        // auto-expand its group here; -normalizeTabGroupCollapsedState
+        // below is the single authority that decides each group's collapsed state.
+        const BOOL savedRestoringWindow = _restoringWindow;
+        _restoringWindow = YES;
         [_contentView.tabView selectTabViewItemAtIndex:tabIndex];
+        _restoringWindow = savedRestoringWindow;
     }
+    // Restored tabs carry per-member collapsed flags. Normalize each group to a
+    // uniform state (and never collapsed while it holds the active tab) so a
+    // hand-edited or older arrangement can't leave a group with some members
+    // hidden and no chevron, then push the normalized flags to the tab bar.
+    [self normalizeTabGroupCollapsedState];
+    [self updateTabGroups];
+    // -updateTabGroups pushed the collapsed flags with an animated -update:YES; a
+    // restored collapsed group would otherwise show its members and then slide
+    // shut. Settle synchronously to final frames before the first display, like
+    // every other internal collapse caller.
+    [self relayoutTabGroupChipsSynchronously];
 
     Profile* addressbookEntry = [[[[[self tabs] objectAtIndex:0] sessions] objectAtIndex:0] profile];
     _spaceSetting = [addressbookEntry[KEY_SPACE] intValue];
@@ -7006,6 +7054,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [self hideAutoCommandHistory];
     }
     PTYTab *tab = [tabViewItem identifier];
+    // Invariant: the active tab is never inside a collapsed group. Any path that
+    // selects a collapsed member (cmd-number, next/prev, close-forwarding, the
+    // scripting API) funnels through here, so expand its group synchronously
+    // before the bar's next display -- UNLESS a batch operation is deferring the
+    // enforcement (it selects tabs transiently and settles the invariant once at
+    // the end; see -tabGroupAutoExpandIsSuppressed).
+    if (tab.tabGroupID.length > 0 && tab.tabGroupCollapsed &&
+        ![self tabGroupAutoExpandIsSuppressed]) {
+        [self expandTabGroup:tab.tabGroupID];
+    }
     for (PTYSession *aSession in [tab sessions]) {
         RLog(@"Clear new-output flag in %@", aSession);
         [aSession setNewOutput:NO];
@@ -7423,15 +7481,23 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (!inserted) {
         [order addObjectsFromArray:tabs];  // anchor nil or not found: append
     }
-    [self applyTabOrder:order];
-    [self tabsDidReorder];
-    // -applyTabOrder: moves each tab via -moveTabAtIndex:toIndex:, whose
-    // animated -update:YES starts the slide from the cells' current positions --
-    // which -restoreDraggedGroupToSource had just reset to the group's ORIGINAL
-    // slot. That makes the group visibly flip back to where it started and then
-    // animate to the drop location. Cancel the animation and lay out the final
-    // order in one shot so it simply appears where it was dropped.
-    [_contentView.tabBarControl updateWithoutAnimation];
+    // A collapsed group dragged within its window stays collapsed: the flag rides
+    // each tab, so suppress auto-expand across the reorder (which transiently
+    // selects tabs) to keep the model correct, then settle from the model.
+    [self performWithTabGroupAutoExpandSuppressed:^{
+        [self applyTabOrder:order];
+        [self tabsDidReorder];
+        // -applyTabOrder: moves each tab via -moveTabAtIndex:toIndex:, whose
+        // animated -update:YES starts the slide from the cells' current positions
+        // -- which -restoreDraggedGroupToSource had just reset to the group's
+        // ORIGINAL slot. That makes the group visibly flip back to where it
+        // started and then animate to the drop location. Cancel the animation and
+        // lay out the final order in one shot so it simply appears where dropped.
+        [self->_contentView.tabBarControl updateWithoutAnimation];
+    }];
+    // Re-establish the invariant and re-push the model's collapsed flags to the
+    // cells (relaid out during the drag).
+    [self settleTabGroupCollapsedStateAfterReorder];
 }
 
 - (void)tabView:(NSTabView*)aTabView
@@ -7493,20 +7559,41 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (dest == self || dest == nil) {
         return;
     }
-    // The group's definition (name/color) rides each member tab, so it travels
-    // to `dest` automatically; dest derives its group chip from the moved tabs.
-    int index = (dropIndex >= 0 && dropIndex <= [dest numberOfTabs]) ? (int)dropIndex : [dest numberOfTabs];
-    for (PTYTab *tab in tabs) {
-        NSTabViewItem *item = tab.tabViewItem;
-        [item retain];
-        [_contentView.tabView removeTabViewItem:item];
-        [dest insertTab:tab atIndex:index++];
-        [item release];
+    // The group's definition (name/color/collapsed) rides each member tab, so it
+    // travels to `dest` automatically; dest derives its group chip from the moved
+    // tabs. The collapsed flag rides the tabs too, so suppress auto-expand across
+    // the inserts (which auto-select each member) to keep the model correct, then
+    // settle from the model on `dest`.
+    const BOOL wasCollapsed = tabs.firstObject.tabGroupCollapsed;
+    // -insertTab: auto-selects each inserted member, so after the loop dest's
+    // active tab is the last moved member. For a COLLAPSED group that violates the
+    // invariant (the active tab would be a hidden member), so remember dest's real
+    // selection and restore it, keeping that window's focus and the group collapsed.
+    // For an EXPANDED group we WANT the drop to take focus, so leave the moved
+    // member selected (restoring dest's old selection would deny the group focus).
+    NSTabViewItem *destSelectedItem = dest.tabView.selectedTabViewItem;
+    const int startIndex = (dropIndex >= 0 && dropIndex <= [dest numberOfTabs]) ? (int)dropIndex : [dest numberOfTabs];
+    // Suppress on `dest`: it is dest's -didSelectTabViewItem: that fires as each
+    // member is inserted and selected there.
+    [dest performWithTabGroupAutoExpandSuppressed:^{
+        int index = startIndex;
+        for (PTYTab *tab in tabs) {
+            NSTabViewItem *item = tab.tabViewItem;
+            [item retain];
+            [self->_contentView.tabView removeTabViewItem:item];
+            [dest insertTab:tab atIndex:index++];
+            [item release];
+        }
+    }];
+    if (wasCollapsed && destSelectedItem && [dest.tabView.tabViewItems containsObject:destSelectedItem]) {
+        [dest.tabView selectTabViewItem:destSelectedItem];
     }
     [dest fitWindowToTabs];
     [[dest window] makeKeyAndOrderFront:nil];
-    [dest updateTabGroups];
     [dest tabsDidReorder];
+    // Re-establish the invariant and re-push the model's collapsed flags on dest.
+    // With dest's own selection restored above, a collapsed group stays collapsed.
+    [dest settleTabGroupCollapsedStateAfterReorder];
     // Inserting the members one at a time animated the destination through each
     // intermediate tab count (existing tab ballooning, group tabs popping in).
     // Snap straight to the final layout so the group simply fills the drop gap.
@@ -7532,27 +7619,30 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (!dest) {
         return;
     }
-    int index = 1;
-    for (NSInteger i = 1; i < (NSInteger)tabs.count; i++) {
-        PTYTab *tab = tabs[i];
-        NSTabViewItem *item = tab.tabViewItem;
-        [item retain];
-        [_contentView.tabView removeTabViewItem:item];
-        [dest insertTab:tab atIndex:index++];
-        [item release];
-    }
+    // Suppress auto-expand on `dest` across the inserts (each auto-selects there);
+    // the torn-off group is the whole new window, so it settles expanded anyway,
+    // but this keeps the model consistent through the batch.
+    [dest performWithTabGroupAutoExpandSuppressed:^{
+        int index = 1;
+        for (NSInteger i = 1; i < (NSInteger)tabs.count; i++) {
+            PTYTab *tab = tabs[i];
+            NSTabViewItem *item = tab.tabViewItem;
+            [item retain];
+            [self->_contentView.tabView removeTabViewItem:item];
+            [dest insertTab:tab atIndex:index++];
+            [item release];
+        }
+    }];
     [dest fitWindowToTabs];
     // Place the new window at the drop location (it_moveTabToNewWindow puts it at
     // a fixed offset, which is the menu-action behavior, not a drag's).
     [[dest window] setFrameTopLeftPoint:screenPoint];
-    [dest updateTabGroups];
-    // The new window was created with just the first tab (it_moveTabToNewWindow),
-    // then the rest were inserted with the tab bar's add animation running and
-    // the group chip not yet derived. Settle the chips and cancel that animation
-    // so the window's first drawn frame is the final group (chip + all members)
-    // at the right sizes, rather than a full-width single tab that animates down.
-    [dest relayoutTabGroupChipsSynchronously];
     [dest tabsDidReorder];
+    // The torn-off group is the whole new window, so the invariant forces it
+    // expanded (its members hold the active tab); this settle also re-derives the
+    // chip and cancels the per-insert add animation, so the window's first drawn
+    // frame is the final group (chip + all members) rather than a single wide tab.
+    [dest settleTabGroupCollapsedStateAfterReorder];
     // Tearing off the whole group can empty this window; close it rather than
     // leaving a tabless window behind.
     if ([self numberOfTabs] == 0) {
@@ -8388,6 +8478,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     NSArray<PTYTab *> *tabs = [self tabs];
     NSMutableArray *identifiers = [NSMutableArray arrayWithCapacity:tabs.count];
+    NSMutableArray<NSNumber *> *collapsedFlags = [NSMutableArray arrayWithCapacity:tabs.count];
     NSMutableArray<NSTabViewItem *> *items = [NSMutableArray arrayWithCapacity:tabs.count];
     for (PTYTab *aTab in tabs) {
         NSTabViewItem *item = aTab.tabViewItem;
@@ -8395,9 +8486,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             continue;
         }
         [identifiers addObject:(aTab.tabGroupID ?: (id)[NSNull null])];
+        [collapsedFlags addObject:@(aTab.tabGroupCollapsed)];
         [items addObject:item];
     }
     [control setTabGroupIdentifiers:identifiers forTabViewItems:items];
+    [control setTabGroupCollapsedFlags:collapsedFlags forTabViewItems:items];
 }
 
 // Re-derive the group chips and lay the tab bar out synchronously. The drag
@@ -8499,13 +8592,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     theTab.tabGroupID = groupID;
     // The definition has no separate store, so copy it from an existing member
-    // to keep the new member self-sufficient.
+    // (name/color, and the collapsed flag) to keep the new member self-sufficient.
     [self reconcileTabGroupDefinitionForTab:theTab];
     RLog(@"tabGroup: added tab %@ to existing group %@", [tabViewItem label], groupID);
     [self updateTabColors];
     // The added tab may be far from the group's other members; repair the
     // contiguity invariant so they become one block.
     [self tabsDidReorder];
+    // If the added tab is the active one and it just joined a collapsed group,
+    // expand it so the active tab is never hidden.
+    [self expandTabGroupIfSelectedTabIsCollapsed];
 }
 
 // Rename every tab in the group, since the name is carried per-member.
@@ -8604,10 +8700,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     const BOOL hasSingleTab = (self.numberOfTabs == 1);
     const BOOL hasSplitPanes = (tab.sessions.count > 1);
-    const BOOL isInOverflow = [_contentView.tabBarControl isInOverflowMenuForTabWithIdentifier:tab];
-    const BOOL result = (hasSingleTab || hasSplitPanes || isInOverflow || !tabBarVisible);
-    DLog(@"shouldShowInlineProgressBarForSession: hasSingleTab=%d hasSplitPanes=%d isInOverflow=%d tabBarVisible=%d -> %d",
-         hasSingleTab, hasSplitPanes, isInOverflow, tabBarVisible, result);
+    const BOOL isHiddenInBar = [_contentView.tabBarControl tabIsHiddenInBarWithIdentifier:tab];
+    const BOOL result = (hasSingleTab || hasSplitPanes || isHiddenInBar || !tabBarVisible);
+    DLog(@"shouldShowInlineProgressBarForSession: hasSingleTab=%d hasSplitPanes=%d isHiddenInBar=%d tabBarVisible=%d -> %d",
+         hasSingleTab, hasSplitPanes, isHiddenInBar, tabBarVisible, result);
     return result;
 }
 
@@ -8801,12 +8897,25 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (gid.length == 0) {
         tab.tabGroupName = nil;
         tab.tabGroupColor = nil;
+        tab.tabGroupCollapsed = NO;
         return;
     }
     for (PTYTab *member in [self tabs]) {
         if (member != tab && [member.tabGroupID isEqualToString:gid]) {
             tab.tabGroupName = member.tabGroupName;
             tab.tabGroupColor = member.tabGroupColor;
+            // Adopt the group's collapsed state so a tab joining a collapsed
+            // group matches its siblings. The invariant is restored afterward:
+            // if the joining tab is the active one, PseudoTerminal expands it.
+            tab.tabGroupCollapsed = member.tabGroupCollapsed;
+            // A group must be entirely pinned or entirely unpinned, or it would
+            // straddle the pinned/unpinned boundary and become non-contiguous
+            // (pinned tabs live in the front zone). Match the joining tab's pinned
+            // state to the group's before the caller reorders; the setter moves it
+            // to the correct zone and the contiguity pass then blocks the group.
+            if (tab.isPinned != member.isPinned) {
+                tab.pinned = member.isPinned;
+            }
             return;
         }
     }
@@ -8835,7 +8944,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     NSMenu *menu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
     menu.autoenablesItems = NO;  // contextual actions are always applicable
+    const BOOL collapsed = [self tabsInGroup:groupID].firstObject.tabGroupCollapsed;
     NSArray<NSArray<NSString *> *> *specs = @[
+        collapsed ? @[@"Expand Group", @"expandTabGroupFromMenu:"]
+                  : @[@"Collapse Group", @"collapseTabGroupFromMenu:"],
+        @[@"-", @""],
         @[@"Rename Group…", @"renameTabGroupFromMenu:"],
         @[@"-", @""],
         @[@"Duplicate Group", @"duplicateTabGroup:"],
@@ -8858,6 +8971,12 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                               keyEquivalent:@""] autorelease];
         mi.representedObject = groupID;
         mi.target = self;
+        // Collapsing is impossible when the group is the whole window (no tab to
+        // move the active selection to), so disable the item there.
+        if ([spec[1] isEqualToString:@"collapseTabGroupFromMenu:"] &&
+            [self tabGroupIsWholeWindow:groupID]) {
+            mi.enabled = NO;
+        }
         [menu addItem:mi];
 
         // The color swatch picker (same control as Tab Color) goes right after
@@ -8911,6 +9030,219 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     [self updateTabColors];
     [self relayoutTabGroupChipsSynchronously];
+}
+
+#pragma mark - Tab group collapse
+
+// Collapse a group: its members stay in the tab view but are hidden in the bar.
+// The invariant "the active tab is never in a collapsed group" is enforced by
+// first moving selection to the nearest tab outside the group. If there is no
+// tab outside (the group is the whole window) collapse is refused.
+- (void)collapseTabGroup:(NSString *)groupID {
+    [self collapseTabGroup:groupID animated:NO];
+}
+
+// `animated`: user-initiated toggles animate the member tabs sliding shut;
+// internal/invariant-enforcing callers pass NO so the layout settles
+// synchronously (before a drag's or restore's next -display).
+- (void)collapseTabGroup:(NSString *)groupID animated:(BOOL)animated {
+    NSArray<PTYTab *> *members = [self tabsInGroup:groupID];
+    if (members.count == 0) {
+        return;
+    }
+    if ([members containsObject:self.currentTab]) {
+        NSArray<PTYTab *> *tabs = [self tabs];
+        NSMutableArray *order = [NSMutableArray arrayWithCapacity:tabs.count];
+        NSMutableArray<NSNumber *> *collapsedFlags = [NSMutableArray arrayWithCapacity:tabs.count];
+        for (PTYTab *aTab in tabs) {
+            [order addObject:(aTab.tabGroupID ?: (id)[NSNull null])];
+            [collapsedFlags addObject:@(aTab.tabGroupCollapsed)];
+        }
+        NSNumber *outside = [iTermTabGroupOrdering indexOfNearestTabOutsideGroupInOrder:order
+                                                                              collapsed:collapsedFlags
+                                                                                 group:groupID];
+        if (!outside) {
+            if ([self tabGroupIsWholeWindow:groupID]) {
+                // The group is the whole window: there is genuinely nowhere to move
+                // the active tab, so collapse is impossible. Return silently (the
+                // menu item is disabled for this and a chip click is a no-op via
+                // -toggleTabGroupCollapsed), rather than beeping.
+                return;
+            }
+            // There ARE tabs outside this group, but every one is a hidden member of
+            // ANOTHER collapsed group, so the invariant-preserving move (land on a
+            // visible tab) has no target. Rather than dead-end with a bare beep,
+            // land on the nearest such tab and expand ITS group so the active tab
+            // becomes visible; then this group can collapse. Re-run the search with
+            // no collapsed tabs skipped to find that tab.
+            NSNumber *hidden = [iTermTabGroupOrdering indexOfNearestTabOutsideGroupInOrder:order
+                                                                                 collapsed:@[]
+                                                                                     group:groupID];
+            if (!hidden) {
+                return;  // defensive: nothing outside at all (whole-window handled above)
+            }
+            PTYTab *target = tabs[hidden.integerValue];
+            if (target.tabGroupID.length > 0) {
+                [self expandTabGroup:target.tabGroupID];  // non-animated snap
+            }
+            [_contentView.tabView selectTabViewItem:target.tabViewItem];
+        } else {
+            [_contentView.tabView selectTabViewItem:tabs[outside.integerValue].tabViewItem];
+        }
+    }
+    for (PTYTab *member in members) {
+        member.tabGroupCollapsed = YES;
+    }
+    RLog(@"tabGroup: collapsed group %@ animated=%d", groupID, animated);
+    [self updateTabColors];  // pushes the collapsed flags via -updateTabGroups
+    if (!animated) {
+        // -updateTabGroups pushed the flags with an animated -update:YES; snap
+        // to the final layout instead.
+        [self relayoutTabGroupChipsSynchronously];
+    }
+}
+
+- (void)expandTabGroup:(NSString *)groupID {
+    [self expandTabGroup:groupID animated:NO];
+}
+
+- (void)expandTabGroup:(NSString *)groupID animated:(BOOL)animated {
+    NSArray<PTYTab *> *members = [self tabsInGroup:groupID];
+    if (members.count == 0) {
+        return;
+    }
+    BOOL changed = NO;
+    for (PTYTab *member in members) {
+        if (member.tabGroupCollapsed) {
+            member.tabGroupCollapsed = NO;
+            changed = YES;
+        }
+    }
+    if (!changed) {
+        return;  // already expanded; idempotent
+    }
+    RLog(@"tabGroup: expanded group %@ animated=%d", groupID, animated);
+    [self updateTabColors];
+    if (!animated) {
+        [self relayoutTabGroupChipsSynchronously];
+    }
+}
+
+- (void)toggleTabGroupCollapsed:(NSString *)groupID {
+    NSArray<PTYTab *> *members = [self tabsInGroup:groupID];
+    if (members.count == 0) {
+        return;
+    }
+    // User-initiated: animate.
+    if (members.firstObject.tabGroupCollapsed) {
+        [self expandTabGroup:groupID animated:YES];
+    } else if ([self tabGroupIsWholeWindow:groupID]) {
+        // Collapse is impossible when the group is the whole window (nowhere to
+        // move the active tab). The menu item is disabled for this; make a chip
+        // click do nothing too, rather than beep, so the two entry points match.
+        return;
+    } else {
+        [self collapseTabGroup:groupID animated:YES];
+    }
+}
+
+// YES if tab-group auto-expand is currently deferred: a batch operation is
+// transiently selecting tabs (duplicate/move/tear-off/reorder, via
+// -performWithTabGroupAutoExpandSuppressed:), a window is being restored, or a
+// live drag is in flight. The single owner of the "don't auto-expand right now"
+// decision, so a new batch path suppresses via the helper below instead of adding
+// another negative flag to the -didSelectTabViewItem: guard.
+- (BOOL)tabGroupAutoExpandIsSuppressed {
+    return _tabGroupAutoExpandSuppressionCount > 0 ||
+           _restoringWindow ||
+           [[PSMTabDragAssistant sharedDragAssistant] isDragging];
+}
+
+// Run `block` with tab-group auto-expand deferred. Nestable (a counter) and
+// exception-safe (@finally), so an early return or throw inside the block cannot
+// leave auto-expand disabled window-wide. Callers settle the invariant afterward
+// with -settleTabGroupCollapsedStateAfterReorder.
+- (void)performWithTabGroupAutoExpandSuppressed:(void (NS_NOESCAPE ^)(void))block {
+    _tabGroupAutoExpandSuppressionCount++;
+    @try {
+        block();
+    } @finally {
+        _tabGroupAutoExpandSuppressionCount--;
+    }
+}
+
+// Restore the invariant after a selection or membership change may have left the
+// active tab inside a collapsed group. Called from the tear-off/move/restore
+// sites where AppKit's per-item auto-select can't be relied on.
+- (void)expandTabGroupIfSelectedTabIsCollapsed {
+    PTYTab *current = self.currentTab;
+    if (current.tabGroupID.length > 0 && current.tabGroupCollapsed) {
+        [self expandTabGroup:current.tabGroupID];
+    }
+}
+
+// The one settle point after a whole-group reorder/move/tear-off. The collapsed
+// state rides each member tab, so with auto-expand suppressed during the mutation
+// (via -performWithTabGroupAutoExpandSuppressed:) the model stays correct; this
+// normalizes each group to a uniform state honoring the invariant (which also
+// heals the mixed state a menu tear-off's first-tab auto-select can leave, since
+// that select happens before the suppression window), then re-pushes the model's
+// per-tab flags to the tab bar. This replaces the wasCollapsed snapshot +
+// per-caller re-apply ritual; it is the work -draggingDidBeginOrEnd: also does.
+- (void)settleTabGroupCollapsedStateAfterReorder {
+    [self normalizeTabGroupCollapsedState];
+    [self updateTabColors];
+    [self updateTabGroups];
+    [self relayoutTabGroupChipsSynchronously];
+}
+
+// Force each group to a uniform collapsed state and honor the invariant. A group
+// is collapsed only if every member is collapsed AND it does not hold the active
+// tab; otherwise it is fully expanded. Heals an inconsistent (mixed) group, e.g.
+// on restore, or after a whole-group move/tear-off where an early per-insert
+// auto-select expanded one member; it is the model-driven authority both
+// -normalize... callers and -settleTabGroupCollapsedStateAfterReorder rely on.
+- (void)normalizeTabGroupCollapsedState {
+    PTYTab *current = self.currentTab;
+    NSMutableSet<NSString *> *processed = [NSMutableSet set];
+    for (PTYTab *tab in [self tabs]) {
+        NSString *gid = tab.tabGroupID;
+        if (gid.length == 0 || [processed containsObject:gid]) {
+            continue;
+        }
+        [processed addObject:gid];
+        NSArray<PTYTab *> *members = [self tabsInGroup:gid];
+        BOOL allCollapsed = YES;
+        for (PTYTab *member in members) {
+            if (!member.tabGroupCollapsed) {
+                allCollapsed = NO;
+                break;
+            }
+        }
+        const BOOL collapsed = allCollapsed && ![members containsObject:current];
+        for (PTYTab *member in members) {
+            member.tabGroupCollapsed = collapsed;
+        }
+    }
+}
+
+// YES if collapsing `groupID` is impossible because it is the whole window.
+- (BOOL)tabGroupIsWholeWindow:(NSString *)groupID {
+    NSArray<PTYTab *> *members = [self tabsInGroup:groupID];
+    return members.count > 0 && members.count == [self tabs].count;
+}
+
+- (void)collapseTabGroupFromMenu:(id)sender {
+    [self collapseTabGroup:[sender representedObject] animated:YES];
+}
+
+- (void)expandTabGroupFromMenu:(id)sender {
+    [self expandTabGroup:[sender representedObject] animated:YES];
+}
+
+// PSMTabBarControlDelegate: a plain click on a group chip toggles its collapse.
+- (void)tabView:(NSTabView *)aTabView toggleCollapseOfTabGroup:(NSString *)groupID {
+    [self toggleTabGroupCollapsed:groupID];
 }
 
 - (void)renameTabGroupFromMenu:(id)sender {
@@ -8986,22 +9318,35 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     NSString *newName = [(members.firstObject.tabGroupName ?: @"Group") stringByAppendingString:@" copy"];
     NSColor *newColor = members.firstObject.tabGroupColor;
     // Duplicate each member (new sessions), then group the freshly created tabs.
+    // Each copy is restored carrying the SOURCE group id with collapsed=YES and is
+    // auto-selected. Suppress the auto-expand (they share the source id, so it
+    // would expand the source group), and reassign each copy to its own (expanded)
+    // group as soon as it is created -- before the next copy is made -- so a copy
+    // never lingers as a hidden member of the collapsed source group (which would
+    // transiently violate "active tab is never in a collapsed group").
     NSMutableSet<PTYTab *> *before = [NSMutableSet setWithArray:[self tabs]];
-    for (PTYTab *member in members) {
-        [self createDuplicateOfTab:member inTerminal:self];
-    }
-    for (PTYTab *aTab in [self tabs]) {
-        if (![before containsObject:aTab]) {
-            // The copies append to the end of the bar, but pinned tabs must live
-            // in the front pinned zone. A duplicated group therefore starts
-            // unpinned rather than becoming a mix of pinned/unpinned members
-            // stranded at the end (which is an invalid state).
-            [aTab setPinned:NO];
-            aTab.tabGroupID = newID;
-            aTab.tabGroupName = newName;
-            aTab.tabGroupColor = newColor;
+    [self performWithTabGroupAutoExpandSuppressed:^{
+        for (PTYTab *member in members) {
+            [self createDuplicateOfTab:member inTerminal:self];
+            for (PTYTab *aTab in [self tabs]) {
+                if ([before containsObject:aTab]) {
+                    continue;
+                }
+                // The copies append to the end of the bar, but pinned tabs must
+                // live in the front pinned zone. A duplicated group therefore
+                // starts unpinned rather than becoming a mix of pinned/unpinned
+                // members stranded at the end (which is an invalid state).
+                [aTab setPinned:NO];
+                aTab.tabGroupID = newID;
+                aTab.tabGroupName = newName;
+                aTab.tabGroupColor = newColor;
+                // Start expanded (the copy inherited the source's collapsed flag)
+                // so the freshly-selected copy never sits inside a collapsed group.
+                aTab.tabGroupCollapsed = NO;
+                [before addObject:aTab];
+            }
         }
-    }
+    }];
     [self updateTabColors];
     [self tabsDidReorder];  // enforce contiguity so the copies form one block
 }

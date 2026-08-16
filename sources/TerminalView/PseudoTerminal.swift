@@ -367,7 +367,32 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
         if tab.tmuxController() != nil {
             return
         }
-        tab.isPinned = !tab.isPinned
+        let newPinned = !tab.isPinned
+        if let gid = tab.tabGroupID, !gid.isEmpty {
+            let members = tabs(inGroup: gid) ?? []
+            // Pin/unpin the whole group as a block so it stays entirely pinned or
+            // entirely unpinned. Pinning only one member would strand it across
+            // the pinned/unpinned boundary and split the group (non-contiguous).
+            // Pinning is unavailable for tmux tabs, so if any member is a tmux tab
+            // we cannot pin the block: refuse the whole toggle, mirroring the
+            // per-tab guard above and the context menu (disabled for tmux tabs).
+            if members.contains(where: { $0.tmuxController() != nil }) {
+                return
+            }
+            for member in members where member.isPinned != newPinned {
+                member.isPinned = newPinned
+            }
+            // Each isPinned change reorders that tab to the pinned/unpinned boundary
+            // and runs the contiguity pass as a side effect -- but only when the tab
+            // actually moves. The last member toggled can already sit at the
+            // boundary (no move -> no reorder -> no contiguity pass), which strands
+            // the group split across the boundary until some later reorder. Enforce
+            // contiguity once here, after the whole group's pin state is settled, so
+            // the members always end up contiguous.
+            tabsDidReorder()
+        } else {
+            tab.isPinned = newPinned
+        }
     }
 
     // Delegate method call forwarded from main class.

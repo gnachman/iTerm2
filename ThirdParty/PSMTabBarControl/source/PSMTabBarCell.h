@@ -46,6 +46,12 @@
 // but unlike a placeholder it is persistent. Its group is tabGroupIdentifier;
 // name/color come from the control's tabGroupDataSource at draw time.
 @property(nonatomic, assign) BOOL isTabGroupChip;
+// A real tab cell whose group is collapsed: it stays in the control's cell list
+// and in the NSTabView (so every select/close/move path keeps working), but is
+// given a zero-size frame, no intercell spacing, and is skipped by every
+// draw/count/hit-test/accessibility loop. Unlike isInOverflowMenu it never gets
+// an overflow "..." menu item, so a collapsed member is truly hidden.
+@property(nonatomic, assign) BOOL isCollapsedHidden;
 @property(nonatomic, assign) int currentStep;
 @property(nonatomic, copy) NSString *modifierString;
 @property(nonatomic, retain) NSColor *tabColor;

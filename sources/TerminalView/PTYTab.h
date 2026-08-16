@@ -102,6 +102,11 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // Meaningful only when tabGroupID is non-nil.
 @property (nonatomic, copy) NSString *tabGroupName;
 @property (nonatomic, copy) NSColor *tabGroupColor;
+// Whether this tab's group is collapsed (its members are hidden in the tab bar
+// but remain in the NSTabView). Like name/color it rides every member of the
+// group; the invariant "the active tab is never in a collapsed group" is
+// enforced by PseudoTerminal. Meaningful only when tabGroupID is non-nil.
+@property (nonatomic) BOOL tabGroupCollapsed;
 @property(nonatomic, readonly) NSString *title;  // the effective title
 @property (nonatomic, readonly) iTermVariableScope<iTermTabScope> *variablesScope;
 @property(nonatomic, readonly) iTermMetalUnavailableReason metalUnavailableReason;

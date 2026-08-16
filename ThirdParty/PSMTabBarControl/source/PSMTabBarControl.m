@@ -161,6 +161,33 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     // drawing style
     NSTimer *_animationTimer;
     float _animationDelta;
+    // One-shot: the next horizontal layout is a collapse/expand and should run
+    // the dedicated collapse animator (below). Set by a collapse/expand toggle
+    // and consumed by -reallyUpdate:. A scrollable bar otherwise never animates
+    // width, and a non-scrollable bar's default animation is the width-only
+    // -_animateCells, so this scopes the collapse animator to collapse/expand.
+    BOOL _collapseExpandPending;
+
+    // Collapse/expand animation. This is a dedicated frame interpolator (not the
+    // width-only _animateCells): it interpolates each cell's width from a start
+    // to a target array and re-lays-out via -_setupCells: each frame so the bar
+    // stays contiguous with correct cross-axis, scroll, and chip height. While it
+    // runs, -_setupCells: lays out collapsed members with their (shrinking) width
+    // instead of zeroing them, so they animate rather than snap.
+    NSTimer *_collapseAnimTimer;
+    NSArray<NSNumber *> *_collapseStartWidths;
+    NSArray<NSNumber *> *_collapseTargetWidths;
+    CGFloat _collapseAnimT;         // 0..1 progress
+    BOOL _collapseAnimating;        // a collapse/expand slide is running
+    NSSize _collapseAnimBounds;     // bar size at slide start; a change cancels it
+    // Vertical variant: a vertical bar can't slide via -_setupCells: (the style's
+    // -adjustedCellRect: normalizes every row to a uniform height), so the frames
+    // are set directly. The start/target arrays above then hold HEIGHTS, and these
+    // hold the shared cell x/width (all vertical rows share them).
+    BOOL _collapseVertical;
+    CGFloat _collapseVerticalCellX;
+    CGFloat _collapseVerticalCellWidth;
+    CGFloat _collapseVerticalGap;   // divider gap: slot advance minus drawn height
 
     // vertical tab resizing
     BOOL _resizing;
@@ -421,10 +448,28 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider = @"PSMTabBarCon
     [_style release];
     [_tooltips release];
     _tooltips = nil;
+    [_collapseAnimTimer invalidate];
+    [_collapseStartWidths release];
+    [_collapseTargetWidths release];
 
     [self unregisterDraggedTypes];
 
     [super dealloc];
+}
+
+- (void)viewWillMoveToWindow:(NSWindow *)newWindow {
+    [super viewWillMoveToWindow:newWindow];
+    if (!newWindow) {
+        // The repeating animation timers retain self (target:self). When the view
+        // is detached (window closing), stop them so the last strong reference is
+        // dropped and -dealloc can run, rather than the timer continuing to fire
+        // -_animateCollapse:/-_animateCells: against a tearing-down tabView.
+        [self cancelCollapseAnimation];
+        if (_animationTimer) {
+            [_animationTimer invalidate];
+            _animationTimer = nil;
+        }
+    }
 }
 
 - (void)setHeight:(CGFloat)height {
@@ -832,6 +877,17 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     [_tabProgressBars removeObjectForKey:cell];
 }
 
+// The custom progress bars are repositioned only by -syncTabProgressBars (once
+// per settled layout), not per animation frame, so during a collapse/expand slide
+// they would sit at stale positions and then jump. Hide them for the duration; the
+// slide ends with -update:NO, which re-runs -syncTabProgressBars and restores them
+// at their final positions.
+- (void)hideTabProgressBarsForCollapseAnimation {
+    for (NSView *progressBar in _tabProgressBars.objectEnumerator.allObjects) {
+        progressBar.hidden = YES;
+    }
+}
+
 - (void)syncTabProgressBars {
     NSMutableSet<PSMTabBarCell *> *visibleCells = [NSMutableSet set];
     for (PSMTabBarCell *cell in _cells) {
@@ -904,29 +960,92 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     _preDragSelectedTabIndex = NSNotFound;
 }
 
+// YES if `item`'s cell is currently hidden in the bar (overflowed or its group
+// is collapsed), so it should not be chosen as the source window's selection.
+- (BOOL)tabViewItemIsHiddenInBar:(NSTabViewItem *)item {
+    for (PSMTabBarCell *cell in _cells) {
+        if ([cell representedObject] == item) {
+            return ![self cellIsDrawnInBar:cell];
+        }
+    }
+    return NO;
+}
+
+// YES if `cell` is actually drawn in the bar: not scrolled into the overflow
+// menu and not hidden inside a collapsed group. The single owner of the
+// "is this cell visible in the bar" test (the cell-level companion to
+// -tabViewItemIsHiddenInBar:); route cell loops that mean "drawn"/"not drawn"
+// (isLast, hit-test tracking rects, and similar) through it rather than
+// re-spelling `!isInOverflowMenu && !isCollapsedHidden`, so a future addition to
+// the definition of "drawn" lands everywhere. (Loops that additionally exclude
+// chips or placeholders express a DIFFERENT concept -- a real drawable tab cell
+// -- and intentionally do not funnel through here.)
+- (BOOL)cellIsDrawnInBar:(PSMTabBarCell *)cell {
+    return ![cell isInOverflowMenu] && ![cell isCollapsedHidden];
+}
+
 - (void)dragWillExitTabBar {
     const NSInteger count = self.tabView.tabViewItems.count;
-    if (_preDragSelectedTabIndex == NSNotFound || _preDragSelectedTabIndex < 0 || _preDragSelectedTabIndex >= count) {
-        // There is no most-recent. Can we select the next one?
-        if (count == 1) {
-            // No next one exists.
-            return;
-        }
-        NSInteger currentIndex = [[self tabView] indexOfTabViewItem:self.tabView.selectedTabViewItem];
-        if (currentIndex == NSNotFound) {
-            // Shouldn't happen
-            return;
-        }
-        NSInteger indexToSelect;
-        if (currentIndex + 1 < count) {
-            indexToSelect = currentIndex + 1;
-        } else {
-            indexToSelect = currentIndex - 1;
-        }
-        [self.tabView selectTabViewItem:self.tabView.tabViewItems[indexToSelect]];
+    if (count <= 1) {
+        _preDragSelectedTabIndex = NSNotFound;  // clear it on every exit, like the paths below
         return;
     }
-    [self.tabView selectTabViewItem:self.tabView.tabViewItems[_preDragSelectedTabIndex]];
+    // Only move the selection if the tab that is leaving IS the selected one.
+    // A group drag whose members don't include the active tab (the common case
+    // of dragging a collapsed group while some other tab is active) must not
+    // yank selection onto an arbitrary -- possibly collapsed/hidden -- neighbor.
+    NSTabViewItem *selected = self.tabView.selectedTabViewItem;
+    if (![[PSMTabDragAssistant sharedDragAssistant] isDraggingTabViewItem:selected]) {
+        _preDragSelectedTabIndex = NSNotFound;
+        return;
+    }
+    // Prefer the pre-drag selection if it's still a real, visible tab.
+    if (_preDragSelectedTabIndex != NSNotFound && _preDragSelectedTabIndex >= 0 &&
+        _preDragSelectedTabIndex < count) {
+        NSTabViewItem *item = self.tabView.tabViewItems[_preDragSelectedTabIndex];
+        if (![self tabViewItemIsHiddenInBar:item] &&
+            ![[PSMTabDragAssistant sharedDragAssistant] isDraggingTabViewItem:item]) {
+            [self.tabView selectTabViewItem:item];
+            _preDragSelectedTabIndex = NSNotFound;
+            return;
+        }
+    }
+    // Otherwise pick the nearest visible tab that is neither leaving nor hidden.
+    // If every remaining tab is hidden (all neighbors are collapsed members or in
+    // the overflow menu), fall back to the nearest hidden non-leaving tab: leaving
+    // the selection on the tab being torn out would let AppKit auto-select an
+    // arbitrary neighbor after removal. When the fallback is a collapsed member the
+    // drag-end heal (-expandTabGroupIfSelectedTabIsCollapsed via
+    // -draggingDidBeginOrEnd:) expands its group and restores the invariant.
+    const NSInteger currentIndex = [self.tabView indexOfTabViewItem:selected];
+    if (currentIndex != NSNotFound) {
+        NSTabViewItem *hiddenFallback = nil;  // nearest non-leaving tab, even if hidden
+        for (NSInteger delta = 1; delta < count; delta++) {
+            for (NSInteger sign = 1; sign >= -1; sign -= 2) {
+                const NSInteger idx = currentIndex + sign * delta;
+                if (idx < 0 || idx >= count) {
+                    continue;
+                }
+                NSTabViewItem *item = self.tabView.tabViewItems[idx];
+                if ([[PSMTabDragAssistant sharedDragAssistant] isDraggingTabViewItem:item]) {
+                    continue;  // this one is leaving with the drag
+                }
+                if (![self tabViewItemIsHiddenInBar:item]) {
+                    [self.tabView selectTabViewItem:item];
+                    _preDragSelectedTabIndex = NSNotFound;
+                    return;
+                }
+                if (!hiddenFallback) {
+                    hiddenFallback = item;  // nearest hidden candidate, kept as last resort
+                }
+            }
+        }
+        if (hiddenFallback) {
+            [self.tabView selectTabViewItem:hiddenFallback];
+            _preDragSelectedTabIndex = NSNotFound;
+            return;
+        }
+    }
     _preDragSelectedTabIndex = NSNotFound;
 }
 
@@ -1188,7 +1307,20 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     for (PSMTabBarCell *cell in [self cells]) {
         [cell setIsLast:NO];
     }
-    [[[self cells] lastObject] setIsLast:YES];
+    // The cell's isLast property is read ONLY by the cmd-9 "last tab" number badge
+    // (the right-edge divider computes its own `cell == cells.lastObject` locally),
+    // and cmd-9 always selects the last LOGICAL tab. So mark the last non-chip cell
+    // even if it is overflowed or collapsed: the draw loop skips a non-drawn cell,
+    // so the badge simply is not painted then (matching the pre-group behavior).
+    // Targeting the last DRAWN cell instead would paint "9" on a tab cmd-9 does not
+    // select (or on a trailing group chip, which draws no badge, hiding the hint).
+    PSMTabBarCell *lastTab = nil;
+    for (PSMTabBarCell *cell in [self cells]) {
+        if (![cell isTabGroupChip]) {
+            lastTab = cell;
+        }
+    }
+    [lastTab setIsLast:YES];
 
     // A scrollable bar's cells run from the leading edge (under the window decorations -- stoplights,
     // window number, shortcut indicator -- when scrolled there) to the trailing edge (the right margin
@@ -1313,6 +1445,9 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
         [_animationTimer invalidate];
         _animationTimer = nil;
     }
+    // Explicit "I need final frames now" (drag, restore, invariant enforcement):
+    // stop any collapse/expand slide so -update:NO settles to final frames.
+    [self cancelCollapseAnimation];
     [self update:NO];
 }
 
@@ -1524,6 +1659,11 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
         }
     }
     if ((NSUInteger)[_tabView numberOfTabViewItems] != tabCellCount) {
+        // The pending collapse/expand flag is consumed only inside -reallyUpdate:,
+        // which this early return skips. Clear it here or it would survive to the
+        // next ordinary relayout (a title/activity refresh) and spuriously launch a
+        // collapse slide from unrelated frame state.
+        _collapseExpandPending = NO;
         return;
     }
 
@@ -1610,9 +1750,45 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 
     // Calculate number of cells to fit in the control and cell widths.
     const NSInteger cellCount = [_cells count];
+    // A collapse/expand toggle -- or a chip cell being inserted/removed -- asks
+    // (once) for the dedicated collapse animator, which lays out every frame via
+    // -_setupCells: (correct per-frame positions, unlike -_animateCells:) and
+    // handles both scrollable and non-scrollable horizontal bars.
+    const BOOL collapseExpand = _collapseExpandPending;
+    _collapseExpandPending = NO;
+    if (_collapseAnimating && !collapseExpand) {
+        if ((NSInteger)_cells.count == (NSInteger)_collapseStartWidths.count &&
+            NSEqualSizes(self.bounds.size, _collapseAnimBounds)) {
+            // An incidental relayout arrived mid-slide with the SAME cell set and
+            // the SAME bar size -- e.g. a revealed member's session refreshing its
+            // title/activity fires a plain -update. Keep the slide going: re-apply
+            // the current frame so nothing snaps. Explicit snaps (drag, restore,
+            // invariant) come via -updateWithoutAnimation, which cancels the slide
+            // first, so they don't reach here. (This is why expand -- which reveals
+            // tabs -- used to jump to its final frame while collapse never did.)
+            [self layoutCollapseAnimationFrame];
+            return;
+        }
+        // The cell set changed (tab added/removed/reordered) or the bar's size
+        // changed (window resize, fullscreen, toolbelt): the slide's captured
+        // start/target widths no longer fit, so cancel and let the layout below
+        // settle to the new geometry.
+        [self cancelCollapseAnimation];
+    }
     if ([self orientation] == PSMTabBarHorizontalOrientation) {
         if ([self tabBarIsScrollable]) {
-            [self layoutScrollableHorizontalTabsWithCellCount:cellCount];
+            [self layoutScrollableHorizontalTabsWithCellCount:cellCount animate:collapseExpand];
+        } else if (collapseExpand && cellCount > 0) {
+            // Animate toward the POST-toggle arrangement. _lainOutWithOverflow
+            // still holds the PRE-toggle overflow state (it is only written when a
+            // layout completes, see finishUpdateWithRegularWidths:), and the two
+            // overflow variants differ (withOverflow reserves a wider right margin
+            // and drops tail cells). Reusing the cached flag would slide toward the
+            // wrong widths while the settle lands on the other variant, snapping
+            // tail tabs into the overflow menu at the end. Pick the variant the
+            // settle will choose.
+            [self startCollapseAnimationWithTargetWidths:[self settledHorizontalCellWidths]];
+            return;
         } else if ((animate || _animationTimer != nil) && cellCount > 0) {
             // Animate only on horizontal tab bars.
             if (_animationTimer) {
@@ -1632,6 +1808,10 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
         }
     } else {
         // Vertical orientation
+        if (collapseExpand && cellCount > 0) {
+            [self startVerticalCollapseAnimation];
+            return;
+        }
         CGFloat currentOrigin = [[self style] topMarginForTabBarControl];
         NSRect cellRect = [self genericCellRectWithOverflow:(NO || _showAddTabButton)];
         const CGFloat tabHeight = cellRect.size.height;
@@ -1644,6 +1824,9 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
             // Group chip cells are short; everything else uses the tab height.
             CGFloat totalHeight = 0;
             for (PSMTabBarCell *cell in _cells) {
+                if (cell.isCollapsedHidden) {
+                    continue;  // hidden by a collapsed group: no height
+                }
                 totalHeight += cell.isTabGroupChip ? [self heightOfTabGroupChipCell:cell] : tabHeight;
             }
             _scrollContentExtent = [[self style] topMarginForTabBarControl] + totalHeight;
@@ -1651,18 +1834,37 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
             currentOrigin -= _scrollOffset;
             for (int i = 0; i < cellCount; ++i) {
                 [newOrigins addObject:@(currentOrigin)];
+                if (_cells[i].isCollapsedHidden) {
+                    continue;  // zero height: keep this origin but don't advance
+                }
                 currentOrigin += _cells[i].isTabGroupChip ? [self heightOfTabGroupChipCell:_cells[i]] : tabHeight;
             }
         } else {
             for (int i = 0; i < cellCount; ++i) {
+                if (_cells[i].isCollapsedHidden) {
+                    // Zero height, index-aligned origin, never breaks the walk.
+                    [newOrigins addObject:@(currentOrigin)];
+                    continue;
+                }
                 const CGFloat h = _cells[i].isTabGroupChip ? [self heightOfTabGroupChipCell:_cells[i]] : tabHeight;
                 if (currentOrigin + h <= [self frame].size.height) {
                     [newOrigins addObject:@(currentOrigin)];
                     currentOrigin += h;
                 } else {
-                    // Out of room; the rest go into overflow.
+                    // Out of room; the rest go into overflow. Reclaim a drawn
+                    // cell-height for the bottom-pinned overflow button. A trailing
+                    // collapsed member has zero height, so removing it frees no
+                    // vertical space (the last visible cell would still end at
+                    // currentOrigin and overlap the overflow control): pop past any
+                    // trailing collapsed members to the last real origin.
                     if ([newOrigins count] > 0 && [self frame].size.height - currentOrigin < h) {
-                        [newOrigins removeLastObject];
+                        while (newOrigins.count > 0 &&
+                               _cells[newOrigins.count - 1].isCollapsedHidden) {
+                            [newOrigins removeLastObject];
+                        }
+                        if (newOrigins.count > 0) {
+                            [newOrigins removeLastObject];
+                        }
                     }
                     break;
                 }
@@ -1764,9 +1966,11 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 // Lays out a horizontal bar in scrollable mode. If the tabs at their natural widths overflow the bar,
 // give every cell its natural width and scroll (no overflow menu, no width animation). If they fit,
 // fall back to the normal fit layout so the bar looks exactly as it does without scrolling.
-- (void)layoutScrollableHorizontalTabsWithCellCount:(NSInteger)cellCount {
-    if (_animationTimer) {
-        // A width animation from a prior state would fight the scroll layout.
+- (void)layoutScrollableHorizontalTabsWithCellCount:(NSInteger)cellCount
+                                            animate:(BOOL)animate {
+    if (_animationTimer && !animate) {
+        // A width animation from a prior state would fight the scroll layout,
+        // unless we are the ones starting a collapse/expand animation now.
         [_animationTimer invalidate];
         _animationTimer = nil;
     }
@@ -1776,19 +1980,296 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     for (NSNumber *w in widths) {
         sum += w.doubleValue;
     }
-    const CGFloat totalTabWidth = sum + spacing * MAX(0, (CGFloat)(cellCount - 1));
+    // Collapsed members contribute 0 width (naturalHorizontalCellWidths) and no
+    // intercell spacing, so count only non-collapsed cells for the spacing budget.
+    const NSInteger visibleCellCount = [self numberOfCellsContributingIntercellSpacing];
+    const CGFloat totalTabWidth = sum + spacing * MAX(0, (CGFloat)(visibleCellCount - 1));
+    NSArray<NSNumber *> *targetWidths;
+    NSArray<NSNumber *> *overflowWidths;
     if (cellCount > 0 && totalTabWidth > [self availableCellWidthWithOverflow:NO]) {
         // Overflows: natural widths + scroll.
         _scrollContentExtent = [[self style] leftMarginForTabBarControl] + totalTabWidth;
         [self clampScrollOffset];
-        [self finishUpdateWithRegularWidths:widths widthsWithOverflow:widths];
+        targetWidths = widths;
+        overflowWidths = widths;
     } else {
         // Everything fits: keep the normal look (stretch/optimal), no scroll.
         _scrollContentExtent = 0;
         [self clampScrollOffset];
-        [self finishUpdateWithRegularWidths:[self cellWidthsForHorizontalArrangementWithOverflow:NO]
-                         widthsWithOverflow:[self cellWidthsForHorizontalArrangementWithOverflow:YES]];
+        targetWidths = [self cellWidthsForHorizontalArrangementWithOverflow:NO];
+        overflowWidths = [self cellWidthsForHorizontalArrangementWithOverflow:YES];
     }
+    if (animate && cellCount > 0) {
+        [self startCollapseAnimationWithTargetWidths:targetWidths];
+    } else {
+        [self finishUpdateWithRegularWidths:targetWidths widthsWithOverflow:overflowWidths];
+    }
+}
+
+// Begin (or retarget) the collapse/expand width animation. Interpolates each
+// cell's width from its current value to `targetWidths` and re-lays-out via
+// -_setupCells: each frame, so scroll, chip height, cross-axis, and contiguity
+// stay correct. Chip cells snap to their target width immediately: a group chip
+// is a label, not a tab, and tweening its width oversizes the colored area
+// beside the name mid-slide. The single target array (which already reflects the
+// post-change fit/stretch layout) makes the group shrink and the survivors grow
+// in one pass rather than two.
+- (void)startCollapseAnimationWithTargetWidths:(NSArray<NSNumber *> *)targetWidths {
+    // Cancel any width animation from the other animator so they don't fight.
+    if (_animationTimer) {
+        [_animationTimer invalidate];
+        _animationTimer = nil;
+    }
+    NSMutableArray<NSNumber *> *start = [NSMutableArray arrayWithCapacity:_cells.count];
+    for (NSInteger i = 0; i < (NSInteger)_cells.count; i++) {
+        [start addObject:@(NSWidth(_cells[i].frame))];
+    }
+    NSMutableArray<NSNumber *> *target = [[targetWidths mutableCopy] autorelease];
+    // The caller's width array is an index-aligned PREFIX of _cells: on a
+    // non-scrollable bar that overflows it stops at the fit boundary (the tail
+    // goes to the "..." menu). The remap below and the per-frame interpolation
+    // index it by full _cells position, so pad it to _cells.count to avoid an
+    // out-of-range access. A cell past the boundary is not shown, so its
+    // interpolation target is 0; the settled layout is recomputed fresh at
+    // -finishCollapseAnimation (via -update:NO), which maps the tail back into
+    // the overflow menu.
+    while ((NSInteger)target.count < (NSInteger)_cells.count) {
+        [target addObject:@0];
+    }
+
+    // The chip tweens its width like any other cell: its start is its current
+    // frame (the WIDE collapsed width when expanding, the NARROW expanded width
+    // when collapsing) and its target is the settled width the caller supplied
+    // (narrow when expanding, wide when collapsing). So a chip gradually shrinks as
+    // its members grow out of it (expand) and gradually grows as they shrink in
+    // (collapse), with the group's total width continuous at both endpoints -- no
+    // solid-chip snap, and no delta remap that would also wrongly resize sibling
+    // groups the whole-bar relayout happens to be shrinking. Mid-slide the chip is
+    // wider than its name needs, so the group-color band between the name and the
+    // first tab is briefly wider; it narrows to its settled size as the slide ends.
+
+    // MRR: retain-on-assign (copy), releasing any previous arrays first. The
+    // settled layout is recomputed fresh by -finishCollapseAnimation (via
+    // -update:NO), so there is nothing else to stash here.
+    [_collapseStartWidths release];
+    _collapseStartWidths = [start copy];
+    [_collapseTargetWidths release];
+    _collapseTargetWidths = [target copy];
+    _collapseAnimT = 0.0;
+    _collapseAnimating = YES;
+    _collapseAnimBounds = self.bounds.size;
+    if (_collapseAnimTimer) {
+        [_collapseAnimTimer invalidate];
+    }
+    [self hideTabProgressBarsForCollapseAnimation];
+    // Lay out the first (t=0) frame immediately so nothing blinks, then tick.
+    [self layoutCollapseAnimationFrame];
+    _collapseAnimTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 60.0
+                                                          target:self
+                                                        selector:@selector(_animateCollapse:)
+                                                      userInfo:nil
+                                                       repeats:YES];
+}
+
+// Smoothstep ease so the slide starts and ends gently.
+static CGFloat PSMCollapseEase(CGFloat t) {
+    if (t <= 0) {
+        return 0;
+    }
+    if (t >= 1) {
+        return 1;
+    }
+    return t * t * (3.0 - 2.0 * t);
+}
+
+- (void)layoutCollapseAnimationFrame {
+    if (_collapseVertical) {
+        [self layoutVerticalCollapseFrame];
+        return;
+    }
+    const CGFloat eased = PSMCollapseEase(_collapseAnimT);
+    NSMutableArray<NSNumber *> *widths = [NSMutableArray arrayWithCapacity:_cells.count];
+    for (NSInteger i = 0; i < (NSInteger)_cells.count; i++) {
+        // Interpolate every cell (including the chip) from its current width to
+        // the target. The chip's start width is its current frame -- collapsed
+        // (wide, with the count+chevron room) when expanding, expanded (narrow)
+        // when collapsing -- so the slide begins at the true starting size and no
+        // neighbor jumps: expand shrinks the chip as members grow, collapse widens
+        // it as members shrink, both monotonic.
+        const CGFloat a = (i < (NSInteger)_collapseStartWidths.count) ? _collapseStartWidths[i].doubleValue : 0;
+        const CGFloat b = (i < (NSInteger)_collapseTargetWidths.count) ? _collapseTargetWidths[i].doubleValue : 0;
+        [widths addObject:@(a + (b - a) * eased)];
+    }
+    if ([self tabBarIsScrollable]) {
+        // The interpolated widths differ from the settled extent that
+        // -layoutScrollableHorizontalTabs... clamped to before the slide, so keep
+        // the scroll geometry valid each frame (mirrors the vertical path); a bar
+        // scrolled to the right would otherwise gap or jump mid-slide.
+        CGFloat sum = 0;
+        NSInteger laidOut = 0;
+        for (NSInteger i = 0; i < (NSInteger)_cells.count; i++) {
+            const CGFloat w = widths[i].doubleValue;
+            sum += w;
+            // A collapsed member with a zero interpolated width is not laid out
+            // (no cell, no intercell spacing); everything else advances.
+            if (!(_cells[i].isCollapsedHidden && w <= 0)) {
+                laidOut++;
+            }
+        }
+        const CGFloat spacing = _style.intercellSpacing;
+        _scrollContentExtent = [[self style] leftMarginForTabBarControl] + sum +
+                               spacing * MAX(0, (CGFloat)(laidOut - 1));
+        [self clampScrollOffset];
+    }
+    // The interpolated width > 0 keeps a collapsing member laid out (not zeroed)
+    // by -_setupCells: so it slides shut/open.
+    [self _setupCells:widths];
+    [self setNeedsDisplay:YES];
+}
+
+- (void)_animateCollapse:(NSTimer *)timer {
+    // A drag lays the bar out itself (the drag assistant inserts placeholder
+    // cells and sets frames); if a drag started mid-slide, keeping the timer
+    // running would re-set every frame each tick and fight it. Stop the slide as
+    // soon as a drag is in progress. This covers both the source bar and a
+    // drop-target bar, without settling (the drag's own layout takes over).
+    if ([[PSMTabDragAssistant sharedDragAssistant] isDragging]) {
+        [self cancelCollapseAnimation];
+        return;
+    }
+    // ~0.18s total (1/60s per tick).
+    _collapseAnimT += (1.0 / 60.0) / 0.18;
+    if (_collapseAnimT >= 1.0) {
+        [self finishCollapseAnimation];
+        return;
+    }
+    [self layoutCollapseAnimationFrame];
+}
+
+// Vertical collapse/expand. A vertical bar's cells are a uniform-width column
+// stacked by origin; only the member heights change. -adjustedCellRect: would
+// clobber a partial height, so the frames are set directly here (no tracking
+// rects -- a full layout at -finish restores them). No chip-width delta exists
+// (the vertical chip is always one tab row tall), so this is a straight height
+// interpolation with no first-member remap.
+- (void)startVerticalCollapseAnimation {
+    if (_animationTimer) {
+        [_animationTimer invalidate];
+        _animationTimer = nil;
+    }
+    const CGFloat tabHeight = [self verticalCellHeight];  // full slot advance for a tab
+    // Reference geometry from a settled, visible tab: shared x/width (all vertical
+    // rows share them) plus the DRAWN height, which -adjustedCellRect: makes
+    // shorter than the slot advance. That difference is the inter-cell divider gap
+    // the settled layout leaves; matching it keeps static cells perfectly still
+    // and makes the finish seam-free.
+    CGFloat refX = 0;
+    CGFloat refW = NSWidth(self.frame);
+    CGFloat refDrawnH = tabHeight;
+    const NSRect refCell = [PSMTabBarControl firstFullSizeTabCellFrameInCells:_cells];
+    if (!NSIsEmptyRect(refCell)) {
+        refX = NSMinX(refCell);
+        refW = NSWidth(refCell);
+        refDrawnH = NSHeight(refCell);
+    }
+    _collapseVerticalGap = MAX(0.0, tabHeight - refDrawnH);
+    // Interpolate SLOT advances (not drawn heights): a visible cell's slot is its
+    // full advance, a collapsed member's is 0. Start is keyed on whether the cell
+    // is currently visible, target on its post-change collapsed state -- so a
+    // STATIC cell (visible before and after) has start == target and does not move
+    // or resize while another group animates. The drawn height each frame is the
+    // slot minus the divider gap.
+    NSMutableArray<NSNumber *> *start = [NSMutableArray arrayWithCapacity:_cells.count];
+    NSMutableArray<NSNumber *> *target = [NSMutableArray arrayWithCapacity:_cells.count];
+    for (PSMTabBarCell *cell in _cells) {
+        const CGFloat fullSlot = cell.isTabGroupChip ? [self heightOfTabGroupChipCell:cell] : tabHeight;
+        [start addObject:@((NSHeight(cell.frame) > 0) ? fullSlot : 0.0)];
+        [target addObject:@(cell.isCollapsedHidden ? 0.0 : fullSlot)];
+    }
+    [_collapseStartWidths release];
+    _collapseStartWidths = [start copy];
+    [_collapseTargetWidths release];
+    _collapseTargetWidths = [target copy];
+    _collapseVerticalCellX = refX;
+    _collapseVerticalCellWidth = refW;
+    _collapseVertical = YES;
+    _collapseAnimT = 0.0;
+    _collapseAnimating = YES;
+    _collapseAnimBounds = self.bounds.size;
+    if (_collapseAnimTimer) {
+        [_collapseAnimTimer invalidate];
+    }
+    [self hideTabProgressBarsForCollapseAnimation];
+    [self layoutCollapseAnimationFrame];
+    _collapseAnimTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 60.0
+                                                          target:self
+                                                        selector:@selector(_animateCollapse:)
+                                                          userInfo:nil
+                                                         repeats:YES];
+}
+
+- (void)layoutVerticalCollapseFrame {
+    const CGFloat eased = PSMCollapseEase(_collapseAnimT);
+    const NSInteger n = _cells.count;
+    NSMutableArray<NSNumber *> *slots = [NSMutableArray arrayWithCapacity:n];
+    CGFloat total = 0;
+    for (NSInteger i = 0; i < n; i++) {
+        const CGFloat a = (i < (NSInteger)_collapseStartWidths.count) ? _collapseStartWidths[i].doubleValue : 0;
+        const CGFloat b = (i < (NSInteger)_collapseTargetWidths.count) ? _collapseTargetWidths[i].doubleValue : 0;
+        const CGFloat slot = a + (b - a) * eased;
+        [slots addObject:@(slot)];
+        total += slot;
+    }
+    // Track the interpolated content height so the scroll offset stays valid as
+    // the column grows/shrinks under a scrolled vertical bar.
+    _scrollContentExtent = [[self style] topMarginForTabBarControl] + total;
+    [self clampScrollOffset];
+    CGFloat origin = [[self style] topMarginForTabBarControl] - _scrollOffset;
+    for (NSInteger i = 0; i < n; i++) {
+        const CGFloat slot = slots[i].doubleValue;
+        // Advance by the full slot (matching the settled layout), but draw the
+        // cell one divider-gap shorter, so the settled frames are reproduced
+        // exactly at the end and static cells never move.
+        const CGFloat drawnH = MAX(0.0, slot - _collapseVerticalGap);
+        [_cells[i] setFrame:NSMakeRect(_collapseVerticalCellX, origin, _collapseVerticalCellWidth, drawnH)];
+        origin += slot;
+    }
+    [self setNeedsDisplay:YES];
+}
+
+- (BOOL)collapseAnimating {
+    return _collapseAnimating;
+}
+
+// Stop the collapse/expand slide immediately WITHOUT settling the layout. The
+// caller is expected to lay out right after (e.g. -updateWithoutAnimation snaps
+// to final frames). Safe to call when no animation is running.
+- (void)cancelCollapseAnimation {
+    [_collapseAnimTimer invalidate];
+    _collapseAnimTimer = nil;
+    _collapseAnimating = NO;
+    _collapseVertical = NO;
+    [_collapseStartWidths release];
+    _collapseStartWidths = nil;
+    [_collapseTargetWidths release];
+    _collapseTargetWidths = nil;
+}
+
+- (void)finishCollapseAnimation {
+    // Same teardown as -cancelCollapseAnimation (one owner of the release/reset of
+    // the collapse-animation state), then settle. Reuse it so a future field added
+    // to that state is torn down in one place, not two.
+    [self cancelCollapseAnimation];
+    // Settle to the true final layout with a fresh non-animated relayout. This
+    // recomputes the settled widths -- including BOTH the fit and with-overflow
+    // variants for a non-scrollable bar, so the last tab can't overlap the
+    // overflow chevron when an expand pushes the bar into overflow -- and the
+    // scroll geometry for a scrollable bar. With _collapseAnimating now NO,
+    // -_setupCells: zeroes collapsed members again. (The horizontal slide set
+    // frames via -_setupCells:, the vertical directly; either way this re-lays
+    // out from the settled state.)
+    [self update:NO];
+    [self setNeedsDisplay:YES];
 }
 
 // Widths for a horizontal bar in scrollable mode. Pinned cells get the pinned width. For the rest, the
@@ -1833,10 +2314,112 @@ static NSCache<NSString *, NSNumber *> *PSMChipSizeCache(void) {
     return cache;
 }
 
-// Width of a horizontal group-chip cell (its name, via the data source).
+// One scanner for the contiguous run of same-group members after the chip at
+// `chipIndex` -- collapse detection, chip-width sizing, chip enumeration, and the
+// collapse animator all call this so the "skip placeholders, break on a chip or a
+// different group id" traversal stays in lockstep. `firstMember` is -1 when there
+// are none.
+typedef struct {
+    NSInteger firstMember;
+    NSInteger memberCount;
+    BOOL allCollapsed;   // every member is collapsed-hidden
+    BOOL anyCollapsed;   // at least one member is collapsed-hidden
+    BOOL anySized;       // at least one member has a nonzero-width frame (mid-slide)
+} PSMTabGroupRun;
+
+- (PSMTabGroupRun)tabGroupRunAfterChipAtIndex:(NSInteger)chipIndex {
+    PSMTabGroupRun run = { -1, 0, YES, NO, NO };
+    if (chipIndex < 0 || chipIndex >= (NSInteger)_cells.count) {
+        return run;
+    }
+    PSMTabBarCell *chip = _cells[chipIndex];
+    NSString *gid = chip.tabGroupIdentifier;
+    if (![chip isTabGroupChip] || gid.length == 0) {
+        return run;
+    }
+    for (NSInteger j = chipIndex + 1; j < (NSInteger)_cells.count; j++) {
+        PSMTabBarCell *c = _cells[j];
+        if (c.isPlaceholder) {
+            continue;
+        }
+        if (c.isTabGroupChip || ![c.tabGroupIdentifier isEqualToString:gid]) {
+            break;
+        }
+        if (run.firstMember < 0) {
+            run.firstMember = j;
+        }
+        run.memberCount++;
+        if (c.isCollapsedHidden) {
+            run.anyCollapsed = YES;
+        } else {
+            run.allCollapsed = NO;
+        }
+        if (NSWidth(c.frame) > 0) {
+            run.anySized = YES;
+        }
+    }
+    return run;
+}
+
+// YES if `chip` heads a fully collapsed run (all its members are hidden), and
+// fills in the member count. Mirrors -enumerateCollapsedTabGroupChipsWithBlock:
+// for the layout paths that need to size a chip before drawing.
+// Width of a horizontal group-chip cell at `index` (its name, via the data
+// source). A collapsed chip is wider: it also shows a member-count badge and a
+// chevron. Index-based so the layout loops, which already have the index in hand,
+// don't pay an -indexOfObject: rescan (which made each width pass O(cells^2)).
+- (CGFloat)widthOfTabGroupChipCellAtIndex:(NSInteger)index {
+    PSMTabBarCell *cell = _cells[index];
+    const PSMTabGroupRun run = [self tabGroupRunAfterChipAtIndex:index];
+    return [self widthOfTabGroupChipCellForIdentifier:cell.tabGroupIdentifier
+                                            collapsed:(run.memberCount > 0 && run.allCollapsed)
+                                          memberCount:run.memberCount];
+}
+
+// Chip width from explicit group state, so a SYNTHESIZED chip (a drag chip that
+// is not in _cells, and so cannot be found by index) can still be sized at its
+// COLLAPSED width -- the collapsed chip reserves member-count badge + chevron room
+// and is wider than the name-only expanded chip, so sizing it name-only makes the
+// dragged group jump wider on drop.
+- (CGFloat)widthOfTabGroupChipCellForIdentifier:(NSString *)identifier
+                                      collapsed:(BOOL)collapsed
+                                    memberCount:(NSInteger)memberCount {
+    id<PSMTabGroup> group = [self.tabGroupDataSource tabGroupWithIdentifier:identifier];
+    NSString *name = group ? group.name : @"";
+    if (collapsed && memberCount > 0) {
+        return [self collapsedChipCellWidthForGroupName:name memberCount:memberCount];
+    }
+    return [self chipCellWidthForGroupName:name];
+}
+
 - (CGFloat)widthOfTabGroupChipCell:(PSMTabBarCell *)cell {
-    id<PSMTabGroup> group = [self.tabGroupDataSource tabGroupWithIdentifier:cell.tabGroupIdentifier];
-    return [self chipCellWidthForGroupName:(group ? group.name : @"")];
+    const NSInteger idx = [_cells indexOfObject:cell];
+    if (idx == NSNotFound) {
+        id<PSMTabGroup> group = [self.tabGroupDataSource tabGroupWithIdentifier:cell.tabGroupIdentifier];
+        return [self chipCellWidthForGroupName:(group ? group.name : @"")];
+    }
+    return [self widthOfTabGroupChipCellAtIndex:idx];
+}
+
+// Width of a collapsed group-chip cell, in this bar's style.
+- (CGFloat)collapsedChipCellWidthForGroupName:(NSString *)name memberCount:(NSInteger)count {
+    name = name ?: @"";
+    NSString *key = [NSString stringWithFormat:@"WC:%@:%ld:%@",
+                     [(NSObject *)self.style class], (long)count, name];
+    NSNumber *cached = [PSMChipSizeCache() objectForKey:key];
+    if (cached) {
+        return cached.doubleValue;
+    }
+    CGFloat width;
+    if ([self.style respondsToSelector:@selector(tabGroupCollapsedChipCellWidthForName:memberCount:)]) {
+        width = [self.style tabGroupCollapsedChipCellWidthForName:name memberCount:count];
+    } else {
+        // Fallback: the name-only width (the count/chevron may crowd, but the
+        // basic styles don't draw a collapsed chip anyway).
+        width = [self chipCellWidthForGroupName:name];
+    }
+    [PSMChipSizeCache() setObject:@(width) forKey:key];
+    return width;
 }
 
 // Width of a chip cell for a group with the given name, in this bar's style.
@@ -1880,7 +2463,11 @@ static NSCache<NSString *, NSNumber *> *PSMChipSizeCache(void) {
     } else {
         NSInteger existing = 0;
         for (PSMTabBarCell *cell in _cells) {
-            if (![cell isTabGroupChip] && ![cell isPlaceholder]) {
+            // A collapsed-hidden member contributes 0 width and 0 intercell
+            // spacing to the real layout (like every other width builder), so it
+            // must not count here or the reserved spacing and per-tab denominator
+            // inflate and the drop slot comes out narrower than the settled size.
+            if (![cell isTabGroupChip] && ![cell isPlaceholder] && ![cell isCollapsedHidden]) {
                 existing++;
             }
         }
@@ -1928,10 +2515,13 @@ static NSCache<NSString *, NSNumber *> *PSMChipSizeCache(void) {
     const BOOL uniform = !self.sizeCellsToFit;
     const CGFloat scrollableWidth = _scrollableTabWidth;
     NSMutableArray<NSNumber *> *widths = [NSMutableArray arrayWithCapacity:_cells.count];
-    for (PSMTabBarCell *cell in _cells) {
+    for (NSInteger cellIdx = 0; cellIdx < (NSInteger)_cells.count; cellIdx++) {
+        PSMTabBarCell *cell = _cells[cellIdx];
         CGFloat width;
-        if (cell.isTabGroupChip) {
-            width = [self widthOfTabGroupChipCell:cell];
+        if (cell.isCollapsedHidden) {
+            width = 0;  // hidden by a collapsed group; keeps index alignment
+        } else if (cell.isTabGroupChip) {
+            width = [self widthOfTabGroupChipCellAtIndex:cellIdx];
         } else if (cell.isPinned) {
             width = _pinnedTabWidth;
         } else if (uniform) {
@@ -1951,6 +2541,22 @@ static NSCache<NSString *, NSNumber *> *PSMChipSizeCache(void) {
     NSUInteger count = 0;
     for (PSMTabBarCell *cell in _cells) {
         if (cell.isPinned) {
+            count++;
+        }
+    }
+    return count;
+}
+
+// The number of cells that occupy space in the bar: everything EXCEPT
+// collapsed-hidden members, which get zero width and no intercell spacing. The
+// single owner of the spacing-budget count (N such cells have N-1 gaps); every
+// horizontal width builder must use this rather than the raw cell count, or a
+// phantom gap per collapsed member inflates the total and can flip a bar that
+// really fits into scroll mode / inflate _scrollContentExtent.
+- (NSInteger)numberOfCellsContributingIntercellSpacing {
+    NSInteger count = 0;
+    for (PSMTabBarCell *cell in _cells) {
+        if (!cell.isCollapsedHidden) {
             count++;
         }
     }
@@ -1977,10 +2583,13 @@ static NSCache<NSString *, NSNumber *> *PSMChipSizeCache(void) {
     const CGFloat availableWidth = [self availableCellWidthWithOverflow:withOverflow];
     CGFloat totalDesiredWidth = 0.0;
     NSMutableArray *desiredWidths = [NSMutableArray array];
-    for (PSMTabBarCell *cell in _cells) {
+    for (NSInteger cellIdx = 0; cellIdx < (NSInteger)_cells.count; cellIdx++) {
+        PSMTabBarCell *cell = _cells[cellIdx];
         CGFloat width;
-        if (cell.isTabGroupChip) {
-            width = [self widthOfTabGroupChipCell:cell];
+        if (cell.isCollapsedHidden) {
+            width = 0;  // hidden by a collapsed group; keeps index alignment
+        } else if (cell.isTabGroupChip) {
+            width = [self widthOfTabGroupChipCellAtIndex:cellIdx];
         } else if (cell.isPinned) {
             width = _pinnedTabWidth;
         } else {
@@ -2030,14 +2639,20 @@ static NSCache<NSString *, NSNumber *> *PSMChipSizeCache(void) {
     }
     const CGFloat available = [self availableCellWidthWithOverflow:withOverflow];
     const CGFloat spacing = _style.intercellSpacing;
-    const NSInteger cellCount = (NSInteger)_cells.count;
-    const CGFloat totalSpacing = spacing * MAX(0, (CGFloat)(cellCount - 1));
+    // Collapsed members are hidden: they get no width and no intercell spacing,
+    // so count only non-collapsed cells for the spacing budget.
+    const NSInteger visibleCellCount = [self numberOfCellsContributingIntercellSpacing];
+    const CGFloat totalSpacing = spacing * MAX(0, (CGFloat)(visibleCellCount - 1));
 
     CGFloat reserved = 0;  // fixed width for chip + pinned cells
     NSInteger tabCount = 0;
-    for (PSMTabBarCell *cell in _cells) {
+    for (NSInteger cellIdx = 0; cellIdx < (NSInteger)_cells.count; cellIdx++) {
+        PSMTabBarCell *cell = _cells[cellIdx];
+        if (cell.isCollapsedHidden) {
+            continue;  // hidden by a collapsed group: no reserved width, not a tab
+        }
         if (cell.isTabGroupChip) {
-            reserved += [self widthOfTabGroupChipCell:cell];
+            reserved += [self widthOfTabGroupChipCellAtIndex:cellIdx];
         } else if (cell.isPinned) {
             reserved += _pinnedTabWidth;
         } else {
@@ -2060,29 +2675,66 @@ static NSCache<NSString *, NSNumber *> *PSMChipSizeCache(void) {
 
     NSMutableArray<NSNumber *> *result = [NSMutableArray array];
     CGFloat used = 0;
+    // Whether a non-collapsed cell has been emitted yet. Used (instead of
+    // result.count) to decide the leading intercell gap so a collapsed cell at
+    // the front reserves no phantom leading spacing.
+    BOOL emittedVisible = NO;
     // perTab is chosen so the tab cells fill `available` exactly, so the running
     // sum lands right at `available` for the last cell. Allow a sub-point
     // tolerance so floating-point rounding across the per-tab divisions doesn't
     // spuriously push the last tab into the overflow menu, which would leave a
     // full tab-width of empty space on the right.
     const CGFloat fitTolerance = 0.5;
-    for (PSMTabBarCell *cell in _cells) {
+    for (NSInteger cellIdx = 0; cellIdx < (NSInteger)_cells.count; cellIdx++) {
+        PSMTabBarCell *cell = _cells[cellIdx];
+        if (cell.isCollapsedHidden) {
+            // Keep the index-aligned prefix contract: emit a zero-width entry
+            // with no spacing and never break here, so a collapsed member in the
+            // middle of the bar doesn't misalign later cells' frames.
+            [result addObject:@(0)];
+            continue;
+        }
         CGFloat width;
         if (cell.isTabGroupChip) {
-            width = [self widthOfTabGroupChipCell:cell];
+            width = [self widthOfTabGroupChipCellAtIndex:cellIdx];
         } else if (cell.isPinned) {
             width = _pinnedTabWidth;
         } else {
             width = perTab;
         }
-        const CGFloat need = width + (result.count > 0 ? spacing : 0);
-        if (result.count > 0 && used + need > available + fitTolerance) {
+        const CGFloat need = width + (emittedVisible ? spacing : 0);
+        if (emittedVisible && used + need > available + fitTolerance) {
             break;  // out of room; the rest overflow
         }
         [result addObject:@(width)];
         used += need;
+        emittedVisible = YES;
     }
     return result;
+}
+
+// The single owner of the overflow-variant choice: YES if a settled layout with
+// these no-overflow widths must fall back to the with-overflow variant (some
+// cells did not fit, so the array is shorter than _cells, or the add-tab button
+// needs reserved room). Shared by -finishUpdateWithRegularWidths: (which settles)
+// and -settledHorizontalCellWidths (which targets the collapse animation at that
+// same settled layout) so the rule is written once; if the two derived it
+// independently, a future change to one would make the slide land on a different
+// variant than the settle, popping tail tabs into/out of the overflow menu.
+- (BOOL)shouldUseOverflowVariantForRegularWidths:(NSArray *)regularWidths {
+    return _showAddTabButton || regularWidths.count < _cells.count;
+}
+
+// The horizontal cell widths the next settled layout will adopt: the same choice
+// finishUpdateWithRegularWidths: makes between the no-overflow and with-overflow
+// variants. Used to target the collapse animation at the correct post-toggle
+// arrangement instead of the stale _lainOutWithOverflow flag.
+- (NSArray<NSNumber *> *)settledHorizontalCellWidths {
+    NSArray<NSNumber *> *regularWidths = [self cellWidthsForHorizontalArrangementWithOverflow:NO];
+    if ([self shouldUseOverflowVariantForRegularWidths:regularWidths]) {
+        return [self cellWidthsForHorizontalArrangementWithOverflow:YES];
+    }
+    return regularWidths;
 }
 
 - (NSArray<NSNumber *> *)cellWidthsForHorizontalArrangementWithOverflow:(BOOL)withOverflow {
@@ -2298,7 +2950,7 @@ static NSCache<NSString *, NSNumber *> *PSMChipSizeCache(void) {
                    widthsWithOverflow:(NSArray *)widthsWithOverflow {
     // Set up overflow menu.
     NSArray *newValues;
-    if (_showAddTabButton || regularWidths.count < _cells.count) {
+    if ([self shouldUseOverflowVariantForRegularWidths:regularWidths]) {
         newValues = widthsWithOverflow;
     } else {
         newValues = regularWidths;
@@ -2341,6 +2993,32 @@ static NSCache<NSString *, NSNumber *> *PSMChipSizeCache(void) {
     }
 }
 
+// The trailing intercell gap for cell `i` during a horizontal collapse slide.
+// A collapsed member laid out with a nonzero interpolated width also injects a
+// full intercell gap in the x-walk, but the SETTLED layout excludes collapsed
+// members from both width and spacing. Unless the gap sheds in lockstep with the
+// width, every survivor to the right of the group snaps left by
+// (memberCount * intercellSpacing) at the end of the slide (2pt/member on Tahoe).
+// Scale the gap by the member's presence (current width / expanded width) so it
+// reaches 0 exactly when the width does. Non-animating or non-member cells get
+// the full gap.
+- (CGFloat)collapseTrailingSpacingForCellAtIndex:(NSInteger)i
+                                interpolatedWidth:(CGFloat)w
+                                 intercellSpacing:(CGFloat)intercellSpacing {
+    if (!_collapseAnimating || _collapseVertical ||
+        i < 0 || i >= (NSInteger)_cells.count || !_cells[i].isCollapsedHidden) {
+        return intercellSpacing;
+    }
+    const CGFloat full = (i < (NSInteger)_collapseStartWidths.count &&
+                          i < (NSInteger)_collapseTargetWidths.count)
+        ? MAX(_collapseStartWidths[i].doubleValue, _collapseTargetWidths[i].doubleValue)
+        : 0;
+    if (full <= 0) {
+        return 0;
+    }
+    return intercellSpacing * MIN(1.0, MAX(0.0, w / full));
+}
+
 - (NSMenu *)_setupCells:(NSArray *)newValues {
     const int cellCount = [_cells count];
     const int numberOfVisibleCells = [newValues count];
@@ -2358,10 +3036,35 @@ static NSCache<NSString *, NSNumber *> *PSMChipSizeCache(void) {
     }
 
     // Set up cells with frames and rects
+    const BOOL horizontalLayout = ([self orientation] == PSMTabBarHorizontalOrientation);
     for (int i = 0; i < cellCount; i++) {
         PSMTabBarCell *cell = [_cells objectAtIndex:i];
         int tabState = 0;
         if (i < numberOfVisibleCells) {
+            // A collapsed member is zeroed unless a slide is actively sizing it.
+            // On a horizontal bar that shows up as a nonzero interpolated WIDTH in
+            // newValues; on a vertical bar newValues holds ORIGINS (not sizes) and
+            // there is no width-driven slide, so it always zeroes -- otherwise a
+            // non-first collapsed member (origin > 0) would slip through and take a
+            // full height.
+            const BOOL animatingSize = (horizontalLayout &&
+                                        [[newValues objectAtIndex:i] doubleValue] > 0);
+            if (cell.isCollapsedHidden && !animatingSize) {
+                // Hidden by a collapsed group: give it a zero-size frame, drop
+                // its tracking rects and indicator, keep it out of the overflow
+                // menu, and do NOT advance the x-origin (the `continue` skips the
+                // intercell-gap advance below) so the bar closes up around it.
+                // Keyed on the requested width, not a global flag, so ONLY the
+                // group being animated (whose collapsed members get a nonzero
+                // interpolated width) slides; every other collapsed group stays
+                // fully zeroed and renders as its self-contained chip.
+                [cell setFrame:NSMakeRect(cellRect.origin.x, cellRect.origin.y, 0, 0)];
+                [cell removeCellTrackingRectFrom:self];
+                [cell removeCloseButtonTrackingRectFrom:self];
+                [[cell indicator] removeFromSuperview];
+                [cell setIsInOverflowMenu:NO];
+                continue;
+            }
             // set cell frame
             if ([self orientation] == PSMTabBarHorizontalOrientation) {
                 // Chip cells' width comes from the widths array like any
@@ -2451,13 +3154,25 @@ static NSCache<NSString *, NSNumber *> *PSMChipSizeCache(void) {
             }
 
             // next...
-            cellRect.origin.x += [[newValues objectAtIndex:i] floatValue] + intercellSpacing;
+            const CGFloat advanceWidth = [[newValues objectAtIndex:i] floatValue];
+            cellRect.origin.x += advanceWidth +
+                [self collapseTrailingSpacingForCellAtIndex:i
+                                          interpolatedWidth:advanceWidth
+                                           intercellSpacing:intercellSpacing];
 
         } else {
             if (cell.isTabGroupChip) {
                 // A chip is not a tab: it gets no overflow menu item (its
                 // member tabs each get their own) and must not become a
                 // blank row whose action would select a nil tab view item.
+                [cell setIsInOverflowMenu:YES];
+                [[cell indicator] removeFromSuperview];
+                continue;
+            }
+            if (cell.isCollapsedHidden) {
+                // A collapsed member that fell past the visible prefix: hidden,
+                // and never added to the overflow "..." menu (that would defeat
+                // collapse).
                 [cell setIsInOverflowMenu:YES];
                 [[cell indicator] removeFromSuperview];
                 continue;
@@ -2729,6 +3444,12 @@ static NSCache<NSString *, NSNumber *> *PSMChipSizeCache(void) {
         if (![cell isTabGroupChip]) {
             continue;
         }
+        // An overflowed chip keeps a stale on-bar frame; hit-testing it would let a
+        // click near the right edge toggle a group that is not actually drawn there.
+        // Only match chips that are drawn in the bar.
+        if (![self cellIsDrawnInBar:cell]) {
+            continue;
+        }
         if (NSPointInRect(point, [cell frame])) {
             return cell;
         }
@@ -2829,6 +3550,22 @@ static NSCache<NSString *, NSNumber *> *PSMChipSizeCache(void) {
 
             default:
                 return;
+        }
+    }
+
+    // A plain click on a group chip (no drag) toggles its collapsed state. Chips
+    // are invisible to -cellForPoint:, so `cell` is nil here; resolve the chip at
+    // both the down and up points so a click that starts on one chip and ends on
+    // another does nothing. A chip DRAG (group move) sets _didDrag and is handled
+    // elsewhere, so gate on !_didDrag -- the two are mutually exclusive.
+    if (cell == nil && !_didDrag && theEvent.clickCount == 1) {
+        PSMTabBarCell *downChip = [self chipForPoint:trackingStartPoint];
+        PSMTabBarCell *upChip = [self chipForPoint:clickPoint];
+        if (downChip != nil && downChip == upChip &&
+            upChip.tabGroupIdentifier.length > 0 &&
+            [[self delegate] respondsToSelector:@selector(tabView:toggleCollapseOfTabGroup:)]) {
+            [[self delegate] tabView:_tabView toggleCollapseOfTabGroup:upChip.tabGroupIdentifier];
+            return;
         }
     }
 
@@ -3169,7 +3906,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
                                          fromView:nil];
 
     for (PSMTabBarCell *cell in _cells) {
-        if ([cell isInOverflowMenu]) {
+        if (![self cellIsDrawnInBar:cell]) {
             continue;
         }
 
@@ -3495,9 +4232,13 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     [self syncTabProgressBars];
 }
 
-- (BOOL)isInOverflowMenuForTabWithIdentifier:(id)identifier {
+- (BOOL)tabIsHiddenInBarWithIdentifier:(id)identifier {
     PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
-    return cell.isInOverflowMenu;
+    // "Hidden in bar" = not drawn: in the overflow menu OR inside a collapsed
+    // group. Keying on isInOverflowMenu alone missed a horizontal collapsed member
+    // (zero frame, isInOverflowMenu==NO), so its inline progress fallback never
+    // fired. A missing cell is treated as drawn (returns NO), as before.
+    return cell != nil && ![self cellIsDrawnInBar:cell];
 }
 
 - (void)graphicDidChangeForTabWithIdentifier:(id)identifier {
@@ -3552,7 +4293,8 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         // Chip cells are not tabs: they're not clickable, draggable, or a
         // drop target, so hit-testing skips them (a click over a chip is
         // treated as "no cell", e.g. so it doesn't suppress window drag).
-        if ([cell isTabGroupChip]) {
+        // Collapsed members are hidden (zero frame) and must not be hit either.
+        if ([cell isTabGroupChip] || [cell isCollapsedHidden]) {
             continue;
         }
         if (NSPointInRect(point, [cell frame])) {
@@ -3576,7 +4318,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         if ([cell isInOverflowMenu]) {
             break;
         }
-        if ([cell isTabGroupChip]) {
+        if ([cell isTabGroupChip] || [cell isCollapsedHidden]) {
             continue;
         }
         last = cell;
@@ -3594,6 +4336,11 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         if ([cell isInOverflowMenu]) {
             break;
         }
+        // A collapsed member is hidden in the bar but is still a real tab: this
+        // count is the structural tab count (it drives the drag's one-placeholder-
+        // per-tab distribution and the solitary-tab window-drag gate), NOT the
+        // number drawn, so collapsed members must be counted. Only chips (which
+        // are not tabs) are excluded.
         if (![cell isTabGroupChip]) {
             count++;
         }
@@ -3614,8 +4361,11 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         if ([cell isInOverflowMenu]) {
             break;
         }
-        if ([cell isTabGroupChip]) {
-            // Chips represent no tab; publishing them creates phantom AX tabs.
+        if ([cell isTabGroupChip] || [cell isCollapsedHidden]) {
+            // Chips represent no tab; collapsed members are off-screen. Either
+            // one published here would create a phantom or invisible AX tab.
+            // (Collapsed members remain in -accessibilityTabs, the full logical
+            // list, exactly like overflowed tabs.)
             continue;
         }
         [childElements addObject:cell.element];
@@ -3710,9 +4460,104 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         }
     }
     if (changed) {
+        const NSUInteger cellCountBefore = _cells.count;
         [self normalizeTabGroupChipCells];
+        if (_cells.count != cellCountBefore) {
+            // A chip cell was inserted or removed. Route the relayout through the
+            // dedicated collapse animator, which lays out every frame via
+            // -_setupCells: so the new/removed chip is positioned correctly
+            // throughout and its width tweens in lockstep with the other tabs
+            // shrinking/growing. -_animateCells: (the default width animator) shifts
+            // origins by accumulated width delta and never repositions a freshly
+            // inserted cell, so the chip sits at its seed position for the whole
+            // slide and snaps into place only at the end (space opens, then the chip
+            // pops in).
+            _collapseExpandPending = YES;
+        }
         [self update:YES];
     }
+}
+
+- (void)setTabGroupCollapsedFlags:(NSArray<NSNumber *> *)flags
+                  forTabViewItems:(NSArray<NSTabViewItem *> *)tabViewItems {
+    // Mirror -setTabGroupIdentifiers:forTabViewItems:: match strictly by tab
+    // view item and relayout at most once. Collapse doesn't change chip
+    // derivation (that depends only on tabGroupIdentifier), so no re-normalize.
+    NSMapTable *flagByItem = [NSMapTable mapTableWithKeyOptions:(NSMapTableObjectPointerPersonality |
+                                                                NSMapTableStrongMemory)
+                                                   valueOptions:NSMapTableStrongMemory];
+    const NSUInteger count = MIN(flags.count, tabViewItems.count);
+    for (NSUInteger i = 0; i < count; i++) {
+        [flagByItem setObject:flags[i] forKey:tabViewItems[i]];
+    }
+    BOOL changed = NO;
+    for (PSMTabBarCell *cell in _cells) {
+        if ([cell isTabGroupChip] || [cell isPlaceholder]) {
+            continue;
+        }
+        id item = [cell representedObject];
+        NSNumber *value = item ? [flagByItem objectForKey:item] : nil;
+        if (!value) {
+            continue;
+        }
+        const BOOL collapsed = value.boolValue;
+        if (cell.isCollapsedHidden != collapsed) {
+            cell.isCollapsedHidden = collapsed;
+            changed = YES;
+        }
+    }
+    if (changed) {
+        // Ask the next horizontal layout to run the dedicated collapse animator.
+        // A non-animated caller snaps right after (via -updateWithoutAnimation),
+        // cancelling it.
+        _collapseExpandPending = YES;
+        [self update:YES];
+    }
+}
+
+// Enumerate each FULLY collapsed tab group: a chip whose following same-group
+// members all exist and are all collapsed-hidden. The member count is derived
+// from _cells (the members are still there), so no data-source round trip is
+// needed. Used by the styles to draw the self-contained collapsed chip.
+- (void)enumerateCollapsedTabGroupChipsWithBlock:(void (NS_NOESCAPE ^)(PSMTabBarCell *chip,
+                                                                       NSInteger memberCount,
+                                                                       NSString *gid))block {
+    for (NSInteger i = 0; i < (NSInteger)_cells.count; i++) {
+        PSMTabBarCell *chip = _cells[i];
+        if (![chip isTabGroupChip] || chip.tabGroupIdentifier.length == 0) {
+            continue;
+        }
+        // A chip that fell past the fit boundary is marked in-overflow but keeps a
+        // stale on-bar frame (its members keep zero-width frames). Drawing its
+        // collapsed pill there would ghost near the right edge over the last visible
+        // tab and the "..." chevron; the expanded-run enumerator already excludes
+        // overflowed groups (its member scan breaks on isInOverflowMenu). Skip a
+        // chip that is not drawn in the bar.
+        if (![self cellIsDrawnInBar:chip]) {
+            continue;
+        }
+        const PSMTabGroupRun run = [self tabGroupRunAfterChipAtIndex:i];
+        // Skip a group whose members are mid-collapse-slide (any still has a
+        // width): the run enumeration draws its enclosing outline, and the
+        // self-contained chip only takes over once the slide settles and its
+        // members are zeroed. Other, settled collapsed groups still draw here.
+        if (run.memberCount > 0 && run.allCollapsed && !run.anySized) {
+            block(chip, run.memberCount, chip.tabGroupIdentifier);
+        }
+    }
+}
+
+// Like NSUnionRect, but a zero-WIDTH rect still contributes its x-position.
+// NSUnionRect treats any zero-width/height rect as empty and returns the other
+// operand, so unioning two zero-width member rects yields NSZeroRect -- collapsing
+// the run's origin to (0,0). During a collapse/expand slide members really are
+// zero-width for a frame, so use this to keep the run anchored at their x.
+static NSRect PSMRunUnionRect(NSRect a, NSRect b) {
+    const CGFloat minX = MIN(NSMinX(a), NSMinX(b));
+    const CGFloat maxX = MAX(NSMaxX(a), NSMaxX(b));
+    const CGFloat minY = MIN(NSMinY(a), NSMinY(b));
+    const CGFloat maxY = MAX(NSMaxY(a), NSMaxY(b));
+    return NSMakeRect(minX, minY, maxX - minX, maxY - minY);
 }
 
 - (void)enumerateTabGroupRunsWithRect:(NSRect (^)(PSMTabBarCell *))rectForCell
@@ -3735,6 +4580,15 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
         BOOL any = NO;
         for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
             PSMTabBarCell *c = cells[j];
+            // A collapsed member is hidden (zero frame): skip it so it never
+            // enters the run's rect. A fully-collapsed run then leaves any==NO,
+            // so no enclosing pill is drawn (the collapsed chip draws its own).
+            // Exception: while a collapse slide runs, a collapsed member still has
+            // a (shrinking) width, so keep it in the run and the outline encloses
+            // it as it slides shut -- matching expand's growing outline.
+            if (c.isCollapsedHidden && NSWidth(c.frame) <= 0) {
+                continue;
+            }
             // A drag interleaves placeholder cells between real ones; they're
             // transparent to the run, so skip (not break) so the run still
             // spans the group's members and grows to enclose the open drop
@@ -3760,7 +4614,7 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
                 ![c.tabGroupIdentifier isEqualToString:gid]) {
                 break;
             }
-            tabsRect = any ? NSUnionRect(tabsRect, rect(c)) : rect(c);
+            tabsRect = any ? PSMRunUnionRect(tabsRect, rect(c)) : rect(c);
             if (!firstTab) {
                 firstTab = c;
             }
@@ -3770,6 +4624,58 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
             block(chip, tabsRect, firstTab, gid);
         }
     }
+}
+
+- (BOOL)cellPrecedingChipCoversInterGroupGap:(PSMTabBarCell *)chip {
+    const NSInteger idx = [_cells indexOfObject:chip];
+    if (idx == NSNotFound) {
+        return NO;
+    }
+    for (NSInteger j = idx - 1; j >= 0; j--) {
+        PSMTabBarCell *c = _cells[j];
+        if (c.isPlaceholder) {
+            continue;
+        }
+        // Previous real cell: a grouped tab -- or a (zero-frame) collapsed member
+        // of the group before this one -- already outsets its right edge into the
+        // shared gap. A plain (ungrouped) tab or a chip does not cover the gap.
+        return !c.isTabGroupChip && c.tabGroupIdentifier.length > 0;
+    }
+    return NO;  // chip is first in the bar: outset normally
+}
+
+// The frame of the first full-size real tab cell in `cells`: skips chips and
+// collapsed (zero-frame) members, requiring a nonzero width and height. Used to
+// seed a chip's cross-axis and a vertical slide's reference geometry from a
+// settled tab (every tab shares the bar's cell size). NSZeroRect if there is none
+// (a bar of only collapsed groups). Shared so the "what is a valid reference cell"
+// rule lives in one place.
++ (NSRect)firstFullSizeTabCellFrameInCells:(NSArray<PSMTabBarCell *> *)cells {
+    for (PSMTabBarCell *c in cells) {
+        if (![c isTabGroupChip] && ![c isCollapsedHidden] &&
+            NSWidth(c.frame) > 0 && NSHeight(c.frame) > 0) {
+            return c.frame;
+        }
+    }
+    return NSZeroRect;
+}
+
+- (PSMTabBarCell *)firstNonMemberCellAfterChip:(PSMTabBarCell *)chip
+                                       groupID:(NSString *)groupID {
+    const NSInteger idx = [_cells indexOfObject:chip];
+    if (idx == NSNotFound) {
+        return nil;
+    }
+    for (NSInteger k = idx + 1; k < (NSInteger)_cells.count; k++) {
+        PSMTabBarCell *c = _cells[k];
+        if (c.isPlaceholder) {
+            continue;
+        }
+        if (c.isTabGroupChip || ![c.tabGroupIdentifier isEqualToString:groupID]) {
+            return c;
+        }
+    }
+    return nil;
 }
 
 // Rebuild _cells so exactly one chip cell precedes each contiguous run of
@@ -3794,6 +4700,16 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
     // draw before the next full layout would otherwise show the chip collapsed to
     // zero height, blinking it.
     const BOOL horizontal = (_orientation == PSMTabBarHorizontalOrientation);
+    // A COLLAPSED group's first member is a zero-frame cell, so seeding a chip
+    // from it would give the chip a zero cross-axis (height on a horizontal bar)
+    // and draw it shifted/degenerate. Take the cross-axis from any real-size cell
+    // instead (every tab shares the bar's cell size).
+    NSRect reference = [PSMTabBarControl firstFullSizeTabCellFrameInCells:_cells];
+    if (NSIsEmptyRect(reference)) {
+        // Every real cell is collapsed (a bar of only collapsed groups). Use the
+        // standard cell rect for the cross-axis.
+        reference = [self genericCellRectWithOverflow:_showAddTabButton];
+    }
     for (NSInteger i = 0; i < (NSInteger)_cells.count; i++) {
         PSMTabBarCell *chip = _cells[i];
         if (![chip isTabGroupChip]) {
@@ -3805,8 +4721,15 @@ static CFAbsoluteTime gDragMoveFirstTime = 0;
             }
             NSRect frame = [_cells[j] frame];
             if (horizontal) {
-                frame.size.width = [self widthOfTabGroupChipCell:chip];
+                frame.origin.y = reference.origin.y;
+                frame.size.height = reference.size.height;
+                // The chip index `i` is already in hand; use the index-based query
+                // so this synchronous seeding pass stays O(cells) instead of the
+                // O(cells^2) an -indexOfObject: rescan per chip would reintroduce.
+                frame.size.width = [self widthOfTabGroupChipCellAtIndex:i];
             } else {
+                frame.origin.x = reference.origin.x;
+                frame.size.width = reference.size.width;
                 frame.size.height = [self heightOfTabGroupChipCell:chip];
             }
             [chip setFrame:frame];

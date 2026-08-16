@@ -2682,3 +2682,12 @@ Bug Fixes:
   single tabs into, around, or out of a group.
   Groups persist their name and color with the
   member tabs.
+- Tab groups can be collapsed: click a group's
+  chip (or use its menu) to hide its tabs behind
+  the chip, which shows a member count. Selecting
+  a hidden tab reveals the group. Collapsed state
+  persists across restarts.
+- Collapsing and expanding a tab group now
+  animates: the member tabs slide shut and open.
+  Works on horizontal and vertical tab bars in
+  every theme.

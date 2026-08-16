@@ -63,6 +63,17 @@ NS_ASSUME_NONNULL_BEGIN
 // The scrollable-bar viewport clip stops at the last tab, so it must widen by
 // this much or the last group's outline is clipped. Defaults to 0.
 - (CGFloat)tabGroupRunOutset;
+// How far the group pill for `chip` extends past the LEFT (leading) edge of the
+// chip. Unlike -tabGroupRunOutset (a constant), this is 0 when the preceding
+// cell already covers the shared inter-group gap. Used to size a group's drag
+// image so its outline is captured without grabbing the neighbor group's outline.
+// Defaults to 0.
+- (CGFloat)tabGroupChipLeftOutsetForChip:(PSMTabBarCell *)chip bar:(PSMTabBarControl *)bar;
+// Width to reserve for a COLLAPSED group's chip cell: the name capsule plus a
+// member-count badge and a collapse chevron (a collapsed run has no visible
+// member tabs, so the chip is the whole affordance). Defaults to the expanded
+// name-only chip width when unimplemented.
+- (CGFloat)tabGroupCollapsedChipCellWidthForName:(NSString *)name memberCount:(NSInteger)count;
 @required
 - (NSRect)objectCounterRectForTabCell:(PSMTabBarCell *)cell;
 - (float)minimumWidthOfTabCell:(PSMTabBarCell *)cell;

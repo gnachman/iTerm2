@@ -341,6 +341,10 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // All tabs in this window.
 - (NSArray<PTYTab *> *)tabs;
 
+// Call after changing the tab order (or a tab's pinned/group state) to repair the
+// tab-group contiguity invariant and re-push membership to the tab bar.
+- (void)tabsDidReorder;
+
 // Updates the window when screen parameters (number of screens, resolutions,
 // etc.) change.
 - (void)screenParametersDidChange;

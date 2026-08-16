@@ -116,6 +116,9 @@ extern PSMTabBarControlOptionKey PSMTabBarControlOptionPUAFontProvider;  // id<P
 // Contextual menu for a right-click on a tab group's chip (checked with
 // -respondsToSelector:, like the other methods here).
 - (nullable NSMenu *)tabView:(NSTabView *)aTabView menuForTabGroup:(NSString *)tabGroupIdentifier;
+// A single click on a tab group's chip: toggle the group's collapsed state
+// (checked with -respondsToSelector:).
+- (void)tabView:(NSTabView *)aTabView toggleCollapseOfTabGroup:(NSString *)tabGroupIdentifier;
 
 //Drag and drop methods
 - (BOOL)tabView:(NSTabView *)aTabView shouldDragTabViewItem:(NSTabViewItem *)tabViewItem fromTabBar:(PSMTabBarControl *)tabBarControl;
@@ -219,6 +222,10 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // decoration (chip + enclosing outline) is left out of it. The live bar keeps
 // its decoration during the drag so groups remain visible as drop targets.
 @property(nonatomic, assign) BOOL suppressTabGroupRunDecoration;
+// YES while a collapse/expand slide is running. A style can clip each cell's
+// drawing to its frame during the slide so a shrinking member's title cannot
+// overflow past the group outline.
+@property(nonatomic, readonly) BOOL collapseAnimating;
 @property(nonatomic, assign) PSMTabBarOrientation orientation;
 @property(nonatomic, retain) id<PSMTabStyle> style;
 @property(nonatomic, assign) BOOL hideForSingleTab;
@@ -305,6 +312,18 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 - (void)setTabGroupIdentifiers:(NSArray *)identifiers
                forTabViewItems:(NSArray<NSTabViewItem *> *)tabViewItems;
 
+// Push per-tab collapsed state (parallel to setTabGroupIdentifiers:). A
+// collapsed member stays in the cell list and the tab view but is hidden in the
+// bar. `flags` are NSNumber booleans matched to `tabViewItems` by identity.
+- (void)setTabGroupCollapsedFlags:(NSArray<NSNumber *> *)flags
+                  forTabViewItems:(NSArray<NSTabViewItem *> *)tabViewItems;
+
+// Enumerate each fully collapsed group's chip with its (derived) member count.
+- (void)enumerateCollapsedTabGroupChipsWithBlock:(void (NS_NOESCAPE ^)(PSMTabBarCell *chip,
+                                                                       NSInteger memberCount,
+                                                                       NSString *groupID))block
+    NS_SWIFT_NAME(enumerateCollapsedTabGroupChips(block:));
+
 // Pure helpers for making group chips first-class cells (window-free, so
 // they're unit-tested directly).
 //
@@ -341,6 +360,22 @@ extern const CGFloat PSMTabBarProgressBarHeight;
                                                             NSString *groupID))block
     NS_SWIFT_NAME(enumerateTabGroupRuns(rectForCell:block:));
 
+// YES if the real cell immediately before `chip` (skipping placeholders) belongs
+// to a group, so that group's right outset already covers the shared inter-group
+// gap and `chip`'s group must NOT also outset its left edge. Computed over the
+// cells directly (no NSArray->Swift bridge) so the draw path can call it per run
+// per frame without allocating.
+- (BOOL)cellPrecedingChipCoversInterGroupGap:(PSMTabBarCell *)chip
+    NS_SWIFT_NAME(cellPrecedingChipCoversInterGroupGap(_:));
+
+// The first real cell after `chip`'s run that is NOT a member of `groupID` (a
+// chip, or a differently-grouped/ungrouped tab), skipping placeholders; nil if
+// the run reaches the end. Used to clamp a vertical run's pill bottom. Computed
+// over the cells directly (no NSArray->Swift bridge).
+- (nullable PSMTabBarCell *)firstNonMemberCellAfterChip:(PSMTabBarCell *)chip
+                                                groupID:(NSString *)groupID
+    NS_SWIFT_NAME(firstNonMemberCell(afterChip:groupID:));
+
 // Per-cell widths for a horizontal, non-scrollable bar (exposed for unit
 // tests of the chip-aware layout).
 - (nullable NSArray<NSNumber *> *)cellWidthsForHorizontalArrangementWithOverflow:(BOOL)withOverflow
@@ -362,8 +397,19 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // The scrollable bar widens its trailing clip by this so a group's enclosing
 // pill is not cut off; with no groups the clip stays exactly at the viewport.
 - (CGFloat)effectiveTabGroupRunOutset;
+// The frame of the first full-size real tab cell in `cells` (skips chips and
+// zero-frame collapsed members), or NSZeroRect if there is none. Used to seed a
+// chip's cross-axis from a settled tab. Class method so the drag assistant can
+// pass its own synthesized cell array.
++ (NSRect)firstFullSizeTabCellFrameInCells:(NSArray<PSMTabBarCell *> *)cells;
 // Width of a horizontal group-chip cell (its name, via the data source).
 - (CGFloat)widthOfTabGroupChipCell:(PSMTabBarCell *)cell;
+// Width of a horizontal group-chip cell from explicit state, for a synthesized
+// chip (e.g. a drag chip not in the control's cells): a collapsed chip is wider
+// (member-count badge + chevron).
+- (CGFloat)widthOfTabGroupChipCellForIdentifier:(NSString *)identifier
+                                      collapsed:(BOOL)collapsed
+                                    memberCount:(NSInteger)memberCount;
 // Height of a vertical group-chip cell (a one-row header band).
 - (CGFloat)heightOfTabGroupChipCell:(PSMTabBarCell *)cell;
 // Map an NSTabView index to the index of the corresponding tab cell in a
@@ -397,7 +443,15 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 - (BOOL)shouldShowCustomProgressBarForTabCell:(PSMTabBarCell *)cell;
 - (nullable NSView *)customProgressBarViewForTabCell:(PSMTabBarCell *)cell;
 - (void)configureCustomProgressBarView:(NSView *)view forTabCell:(PSMTabBarCell *)cell;
-- (BOOL)isInOverflowMenuForTabWithIdentifier:(nullable id)identifier;
+// YES if the tab is not drawn in the bar (scrolled into the overflow menu OR
+// hidden inside a collapsed group), so a caller should fall back to the inline
+// (in-session) progress bar. NO for an unknown identifier.
+- (BOOL)tabIsHiddenInBarWithIdentifier:(nullable id)identifier;
+
+// YES if `cell` is actually drawn in the bar: not in the overflow menu and not
+// hidden inside a collapsed group. The single owner of the "is this cell visible
+// in the bar" test; route cell loops that mean "drawn"/"not drawn" through it.
+- (BOOL)cellIsDrawnInBar:(PSMTabBarCell *)cell;
 - (void)setIcon:(nullable NSImage *)icon forTabWithIdentifier:(nullable id)identifier;
 - (void)setObjectCount:(NSInteger)objectCount forTabWithIdentifier:(nullable id)identifier;
 - (void)graphicDidChangeForTabWithIdentifier:(nullable id)identifier;
