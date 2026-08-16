@@ -1304,11 +1304,15 @@ private struct LiveCanvas: UIViewRepresentable {
             guard let end = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
             // The frame arrives in window coordinates; convert to the container.
             keyboardTopInContainer = container.convert(end, from: nil).minY
+            // Re-flow the canvas so its bottom inset accounts for the keyboard (letting
+            // the last lines scroll above it), then reposition the composer.
+            applyLayout()
             layoutComposer()
         }
 
         @objc private func keyboardWillHideNote(_ note: Notification) {
             keyboardTopInContainer = container.bounds.height
+            applyLayout()   // drop the keyboard inset now that it is gone
             // A modal we put up (e.g. the enable-dictation alert) hides the keyboard
             // without meaning to close the composer: keep it open (it is behind the alert
             // dimming) and just reposition; the keyboard returns when the alert dismisses.
@@ -1632,8 +1636,15 @@ private struct LiveCanvas: UIViewRepresentable {
         /// fills the full width, so without them those columns can never be cleared).
         private func desiredContentInsets() -> UIEdgeInsets {
             let safe = scrollView.safeAreaInsets
+            // When the keyboard is up it covers the bottom of the canvas - which is where
+            // the shell prompt is, and where the user is typing. Grow the bottom inset by
+            // how much the keyboard (including its accessory bar) overlaps the scroll view
+            // so the last lines can scroll up above it. Falls back to the tab-bar safe area
+            // when the keyboard is down.
+            let keyboardOverlap = max(0, container.bounds.height - keyboardTopInContainer)
+            let bottom = max(safe.bottom, keyboardOverlap) + Self.bottomMargin
             return UIEdgeInsets(top: safe.top, left: safe.left,
-                                bottom: safe.bottom + Self.bottomMargin, right: safe.right)
+                                bottom: bottom, right: safe.right)
         }
 
         /// Apply new content insets only when they change, so a no-op layout pass does

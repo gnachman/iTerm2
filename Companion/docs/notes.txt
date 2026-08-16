@@ -33,6 +33,11 @@ Bug Fixes:
   an action you need to take, and a chat you
   reconnect to mid-reply still notifies you when
   the reply arrives.
+- When the keyboard is open over a live session,
+  the bottom lines (where you’re typing) can now
+  scroll up above it instead of hiding behind it,
+  and the key bar’s background fills the gap at
+  the keyboard’s rounded corners.
 
 New Features:
 - You can now type into a live session. Tap the

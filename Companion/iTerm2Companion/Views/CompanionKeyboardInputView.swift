@@ -275,6 +275,25 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
     }
 }
 
+/// A chrome-material fill that continues an accessory bar's background from its bottom
+/// edge down to the bottom of the screen, so the gap left by the keyboard's rounded top
+/// corners is filled and the bar still reads as a solid panel during the app-switch
+/// transition (when the bar shows but the keyboard does not).
+private func makeKeyboardBarBottomFill() -> UIVisualEffectView {
+    let fill = UIVisualEffectView(effect: UIBlurEffect(style: .systemChromeMaterial))
+    fill.isUserInteractionEnabled = false
+    return fill
+}
+
+/// Size the fill to span from the bar's bottom edge to the bottom of its window. Requires
+/// the host view to have `clipsToBounds = false` and to insert the fill behind its content.
+private func layoutKeyboardBarBottomFill(_ fill: UIVisualEffectView, under view: UIView) {
+    guard let window = view.window else { fill.frame = .zero; return }
+    let bottomInWindow = view.convert(CGPoint(x: 0, y: view.bounds.maxY), to: nil).y
+    let height = max(0, window.bounds.maxY - bottomInWindow)
+    fill.frame = CGRect(x: 0, y: view.bounds.height, width: view.bounds.width, height: height)
+}
+
 /// A UIInputView that hosts the SwiftUI accessory and sizes itself via
 /// intrinsicContentSize (which UIKit reads for input accessory views), switching
 /// between the compact and expanded heights. It opts into key-click feedback so the
@@ -284,6 +303,7 @@ final class KeyboardAccessoryInputView: UIInputView, UIInputViewAudioFeedback {
     var enableInputClicksWhenVisible: Bool { true }
 
     private let host: UIHostingController<SessionKeyboardAccessory>
+    private let bottomFill = makeKeyboardBarBottomFill()
     private var expanded = false
 
     init(controller: SessionKeyboardController) {
@@ -293,6 +313,8 @@ final class KeyboardAccessoryInputView: UIInputView, UIInputViewAudioFeedback {
                    inputViewStyle: .keyboard)
         allowsSelfSizing = true
         translatesAutoresizingMaskIntoConstraints = false
+        clipsToBounds = false
+        insertSubview(bottomFill, at: 0)
         host.view.backgroundColor = .clear
         addSubview(host.view)
     }
@@ -316,6 +338,7 @@ final class KeyboardAccessoryInputView: UIInputView, UIInputViewAudioFeedback {
     override func layoutSubviews() {
         super.layoutSubviews()
         host.view.frame = bounds
+        layoutKeyboardBarBottomFill(bottomFill, under: self)
     }
 }
 
@@ -326,6 +349,7 @@ final class ComposerAccessoryInputView: UIInputView, UIInputViewAudioFeedback {
     var enableInputClicksWhenVisible: Bool { true }
 
     private let host: UIHostingController<SessionComposerAccessory>
+    private let bottomFill = makeKeyboardBarBottomFill()
 
     init(model: AppModel,
          dictationToken: UUID,
@@ -339,6 +363,8 @@ final class ComposerAccessoryInputView: UIInputView, UIInputViewAudioFeedback {
                    inputViewStyle: .keyboard)
         allowsSelfSizing = true
         translatesAutoresizingMaskIntoConstraints = false
+        clipsToBounds = false
+        insertSubview(bottomFill, at: 0)
         host.view.backgroundColor = .clear
         addSubview(host.view)
     }
@@ -354,6 +380,7 @@ final class ComposerAccessoryInputView: UIInputView, UIInputViewAudioFeedback {
     override func layoutSubviews() {
         super.layoutSubviews()
         host.view.frame = bounds
+        layoutKeyboardBarBottomFill(bottomFill, under: self)
     }
 }
 
