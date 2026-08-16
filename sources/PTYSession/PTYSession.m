@@ -19743,6 +19743,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return [iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] && ![self.delegate sessionBelongsToHotkeyWindow:self];
 }
 
+- (NSColor *)popupWindowBackgroundColor {
+    return self.effectiveUnprocessedBackgroundColor;
+}
+
 - (VT100Screen *)popupVT100Screen {
     return _screen;
 }
