@@ -1141,8 +1141,13 @@ private struct LiveCanvas: UIViewRepresentable {
         /// Whether the session is still live (refreshed from updateUIView). A tap only
         /// raises the keyboard while live, so keys can't be typed into an ended session.
         var isLive = true
-        /// The canvas root, a UIKeyInput first responder so a tap raises the keyboard.
-        private let container = CompanionKeyboardInputView()
+        /// The canvas root: the coordinate space that hosts the scroll view, selection
+        /// handles, edit menu, and loupe. Plain view; text entry lives on `keyInput`.
+        private let container = UIView()
+        /// A hidden, zero-size first responder that owns the keyboard. Separate from the
+        /// container so it can be a UITextView (which the system dictation key requires)
+        /// without the container itself becoming a text/scroll view.
+        private let keyInput = CompanionKeyboardInputView()
         /// Drives the on-screen keyboard: routes typed + accessory keys to the session.
         private let keyboardController = SessionKeyboardController()
         private let scrollView = LayoutObservingScrollView()
@@ -1163,6 +1168,13 @@ private struct LiveCanvas: UIViewRepresentable {
         /// Extra breathing room added below the safe-area bottom inset, so the last
         /// line sits a little above the tab bar rather than flush against it.
         static let bottomMargin: CGFloat = 16
+
+        // Composer presentation. The keyboard's top edge (in container coords) is
+        // tracked from keyboard-frame notifications so the composer can sit just above
+        // it; it starts off-screen at the container bottom.
+        private var keyboardTopInContainer: CGFloat = .greatestFiniteMagnitude
+        private static let composerHeight: CGFloat = 140
+        private static let composerMargin: CGFloat = 8
 
         // History canvas layout (set from updateUIView).
         var layout: CompanionLiveCanvasLayout?
@@ -1250,12 +1262,65 @@ private struct LiveCanvas: UIViewRepresentable {
         func setLive(_ live: Bool) {
             isLive = live
             if !live {
-                container.resignFirstResponder()
+                // A dead session drops keys; collapse the composer (keeping the draft)
+                // before the keyboard goes away.
+                keyInput.exitComposer(clearDraft: false)
+                keyInput.resignFirstResponder()
+            }
+        }
+
+        // MARK: Composer layout
+
+        /// Position the composer above the keyboard when open, or shrink it to nothing
+        /// when passing through. Driven by mode changes and keyboard-frame changes.
+        func layoutComposer() {
+            switch keyInput.mode {
+            case .passthrough:
+                // Not zero-size: a zero-size text view forces the system dictation key
+                // onto its degenerate insertText path (which we would forward to the
+                // terminal). A real (if invisible, behind the opaque canvas) frame lets
+                // dictation use its rich path, which deposits into the document so
+                // textViewDidChange can catch it and open the composer.
+                container.sendSubviewToBack(keyInput)
+                keyInput.frame = CGRect(x: 0, y: 0, width: max(1, container.bounds.width), height: 44)
+            case .composer:
+                container.bringSubviewToFront(keyInput)
+                let width = max(0, container.bounds.width - Self.composerMargin * 2)
+                let top = keyboardTopInContainer - Self.composerHeight - Self.composerMargin
+                keyInput.frame = CGRect(x: Self.composerMargin, y: max(0, top),
+                                        width: width, height: Self.composerHeight)
+            }
+        }
+
+        @objc private func keyboardFrameWillChange(_ note: Notification) {
+            guard let end = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+            // The frame arrives in window coordinates; convert to the container.
+            keyboardTopInContainer = container.convert(end, from: nil).minY
+            layoutComposer()
+        }
+
+        @objc private func keyboardWillHideNote(_ note: Notification) {
+            keyboardTopInContainer = container.bounds.height
+            // The keyboard is going away (dismiss / session end); collapse the composer
+            // but keep the draft for next time.
+            if keyInput.mode == .composer { keyInput.exitComposer(clearDraft: false) }
+        }
+
+        @objc private func dictationDidBegin(_ note: Notification) {
+            // The dictation key was tapped and recording is starting (before any word is
+            // recognized): open the composer now so it appears on the tap. Deferred a
+            // runloop tick so we do not swap input views from inside the notification
+            // while dictation is still spinning up.
+            guard keyInput.isFirstResponder, keyInput.mode == .passthrough else { return }
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.keyInput.mode == .passthrough else { return }
+                self.keyInput.enterComposer()
             }
         }
 
         func tearDown() {
-            container.resignFirstResponder()
+            NotificationCenter.default.removeObserver(self)
+            keyInput.resignFirstResponder()
             editMenu?.dismissMenu()
             growthTimer?.invalidate()
             growthTimer = nil
@@ -1287,9 +1352,37 @@ private struct LiveCanvas: UIViewRepresentable {
                 self.model.sendKey(event, toSessionGuid: self.guid)
             }
             keyboardController.dismiss = { [weak self] in
-                self?.container.resignFirstResponder()
+                self?.keyInput.resignFirstResponder()
             }
-            container.installAccessory(controller: keyboardController)
+            // The compose button (and dictation start) open the local composer - the
+            // key-input view's expanded state; its Send types the draft to the session.
+            keyboardController.openComposer = { [weak self] in self?.keyInput.enterComposer() }
+            keyInput.onSendComposerText = { [weak self] text in self?.keyboardController.sendLiteral(text) }
+            keyInput.onModeChanged = { [weak self] in self?.layoutComposer() }
+            keyInput.installAccessory(controller: keyboardController)
+            // The keyboard host is a hidden, zero-size subview while passing through (it
+            // never draws or takes touches; the canvas gestures live on contentView/
+            // scrollView). When the composer opens it is sized above the keyboard by
+            // layoutComposer and brought to the front.
+            container.addSubview(keyInput)
+            // Track the keyboard's top so the composer can sit just above it. The
+            // reported end frame includes the (swapped-in) composer accessory, so the
+            // composer's bottom lands right above that bar.
+            NotificationCenter.default.addObserver(
+                self, selector: #selector(keyboardFrameWillChange(_:)),
+                name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+            NotificationCenter.default.addObserver(
+                self, selector: #selector(keyboardWillHideNote(_:)),
+                name: UIResponder.keyboardWillHideNotification, object: nil)
+            // The system posts this the instant the dictation key is tapped, before any
+            // word is recognized - so we can open the composer on the tap rather than
+            // after the first word. It is an undocumented name (best effort): if it ever
+            // stops firing, the textViewDidChange path still opens the composer once
+            // dictation delivers its first text. It is dictation-specific, so it does not
+            // fire for a globe/keyboard switch.
+            NotificationCenter.default.addObserver(
+                self, selector: #selector(dictationDidBegin(_:)),
+                name: Notification.Name("UIKeyboardDidBeginDictationNotification"), object: nil)
             scrollView.frame = container.bounds
             scrollView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             scrollView.minimumZoomScale = 1
@@ -1353,7 +1446,10 @@ private struct LiveCanvas: UIViewRepresentable {
                 container.addSubview(handle)
             }
 
-            scrollView.onLayout = { [weak self] in self?.applyLayout() }
+            scrollView.onLayout = { [weak self] in
+                self?.applyLayout()
+                self?.layoutComposer()   // keep the (passthrough or composer) key-input sized
+            }
 
             // Grow the document as the live top advances (4 Hz; cheap no-op when the
             // extent is unchanged or the user is interacting).
@@ -2014,7 +2110,7 @@ private struct LiveCanvas: UIViewRepresentable {
             // read isLive == true and raise the keyboard; the very next updateUIView
             // brings it back down. Self-correcting, so we don't re-read a per-guid ended
             // source of truth here.
-            if isLive && model.keyInputSupported && container.becomeFirstResponder() {
+            if isLive && model.keyInputSupported && keyInput.becomeFirstResponder() {
                 model.markSessionKeyboardRevealed()
             }
         }

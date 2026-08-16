@@ -46,6 +46,16 @@ New Features:
   selection is showing, a single tap clears it
   instead of opening the keyboard. Requires an
   up-to-date Mac.
+- A composer for sending longer input to a live
+  session. Tap the compose button in the keyboard
+  bar to open a local editor above the keyboard,
+  write or edit your text, then Send types it to
+  the session all at once. Editing locally avoids
+  the round-trip lag of sending each keystroke.
+  Tapping the keyboard’s dictation mic opens the
+  composer too, so you can speak a command and
+  review it before it runs. Send does not add a
+  Return, so press the Return key if you want one.
 - The live session view now fills the screen edge
   to edge, behind the translucent nav bar, tab
   bar, and the dynamic island in landscape.

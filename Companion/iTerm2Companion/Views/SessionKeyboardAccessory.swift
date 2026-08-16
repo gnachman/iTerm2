@@ -43,6 +43,8 @@ final class SessionKeyboardController: ObservableObject {
     var send: ((CompanionKeyEvent) -> Void)?
     /// Dismisses the on-screen keyboard (resigns the container's first responder).
     var dismiss: (() -> Void)?
+    /// Opens the local composer (the key-input view's expanded state).
+    var openComposer: (() -> Void)?
     /// Notifies the host that the accessory's height changed (the tray expanded or
     /// collapsed) so it can resize the input accessory view.
     var onExpandedChanged: ((Bool) -> Void)?
@@ -103,6 +105,13 @@ final class SessionKeyboardController: ObservableObject {
     func sendControlC() {
         send?(CompanionKeyEvent(key: .text("c"), modifiers: CompanionKeyModifiers(control: true)))
         consumeArmedModifiers()
+    }
+
+    /// Type a whole string to the session at once, with no modifiers - used by the
+    /// composer's Send. The mac re-encodes it through the session's key mapper.
+    func sendLiteral(_ text: String) {
+        guard !text.isEmpty else { return }
+        send?(CompanionKeyEvent(key: .text(text), modifiers: CompanionKeyModifiers(control: false)))
     }
 
     // MARK: Modifier dead-keys
@@ -225,6 +234,7 @@ struct SessionKeyboardAccessory: View {
             keyCap(systemImage: "arrow.up") { controller.sendSpecial(.up) }
             keyCap(systemImage: "arrow.right") { controller.sendSpecial(.right) }
             Spacer(minLength: 4)
+            keyCap(systemImage: "square.and.pencil") { controller.openComposer?() }
             keyCap(systemImage: controller.expanded ? "chevron.down" : "chevron.up") {
                 controller.toggleExpanded()
             }
