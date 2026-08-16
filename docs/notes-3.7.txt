@@ -2691,3 +2691,7 @@ Bug Fixes:
   animates: the member tabs slide shut and open.
   Works on horizontal and vertical tab bars in
   every theme.
+- The About window now has a dark frosted-glass
+  appearance that follows the current theme and
+  updates live when you switch between light
+  and dark.
