@@ -116,6 +116,7 @@ NS_ASSUME_NONNULL_BEGIN
                                  [iTermStatusBarActionMenuComponent class],
                                  [iTermStatusBarSnippetMenuComponent class],
                                  [iTermStatusBarTriggersComponent class],
+                                 [iTermStatusBarSessionStatusComponent class],
 
                                  [iTermStatusBarGitComponent class],
                                  [iTermStatusBarHostnameComponent class],
