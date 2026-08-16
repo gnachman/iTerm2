@@ -8626,6 +8626,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [field selectText:nil];
     alert.accessoryView = field;
     alert.window.initialFirstResponder = field;
+    BOOL isDark;
+    if ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL) {
+        isDark = self.minimalTabStyleBackgroundColor.isDark;
+    } else {
+        isDark = [self.window.effectiveAppearance bestMatchFromAppearancesWithNames:@[NSAppearanceNameDarkAqua, NSAppearanceNameAqua]] == NSAppearanceNameDarkAqua;
+    }
+    alert.window.appearance = [NSAppearance appearanceNamed:isDark ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua];
     const NSModalResponse response = [alert runModal];
     if (response != NSAlertFirstButtonReturn) {
         return nil;
@@ -8943,6 +8950,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return nil;
     }
     NSMenu *menu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
+    if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
+        NSColor *bgColor = [self.window.ptyWindow it_terminalWindowDecorationBackgroundColor];
+        NSAppearanceName appearanceName = bgColor.perceivedBrightness < 0.5 ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua;
+        menu.appearance = [NSAppearance appearanceNamed:appearanceName];
+    } else {
+        menu.appearance = self.window.appearance;
+    }
     menu.autoenablesItems = NO;  // contextual actions are always applicable
     const BOOL collapsed = [self tabsInGroup:groupID].firstObject.tabGroupCollapsed;
     NSArray<NSArray<NSString *> *> *specs = @[
