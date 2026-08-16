@@ -2691,3 +2691,7 @@ Bug Fixes:
   animates: the member tabs slide shut and open.
   Works on horizontal and vertical tab bars in
   every theme.
+- The tab group context menu and the New Tab
+  Group and Rename Tab Group dialogs now match
+  the window’s light or dark appearance,
+  including under the Minimal theme.
