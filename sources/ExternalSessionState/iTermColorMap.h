@@ -31,6 +31,8 @@ extern const int kColorMapInvalid;
 extern const int kColorMapUnderline;
 extern const int kColorMapMatch;
 extern const int kColorMapIMECursor;
+extern const int kColorMapLinkHover;
+extern const int kColorMapLinkActive;
 
 // This value plus 0...255 are accepted. The ANSI colors below followed by their bright
 // variants make the first 16 entries of the 256-color space.
