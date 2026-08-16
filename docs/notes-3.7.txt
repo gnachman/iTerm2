@@ -2691,3 +2691,8 @@ Bug Fixes:
   animates: the member tabs slide shut and open.
   Works on horizontal and vertical tab bars in
   every theme.
+- Under the Minimal theme, popups and panels —
+  toasts, global search, instant replay, and
+  autocomplete — now take their light or dark
+  appearance from the session’s background
+  color rather than the system setting.
