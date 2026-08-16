@@ -1,1 +1,9 @@
 Version TBD (unreleased; built off master)
+
+Bug Fixes:
+- Under the Minimal theme, popups and panels —
+  toasts, global search, Open Quickly, instant
+  replay, autocomplete, and the About window —
+  now take their light or dark appearance from
+  the session’s background color rather than the
+  system setting.
