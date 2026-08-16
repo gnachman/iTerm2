@@ -2630,3 +2630,8 @@ Bug Fixes:
   on an inner sub-tab (such as AI > Features). It
   switches to the correct nested tab before
   highlighting, instead of dimming a bogus area.
+- A new “Session Status” status bar component
+  summarizes the status of this window’s
+  sessions, as set by Set Tab Status triggers or
+  the OSC 21337 control sequence. Click it to
+  list them and jump to one.
