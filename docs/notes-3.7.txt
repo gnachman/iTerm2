@@ -2691,3 +2691,11 @@ Bug Fixes:
   animates: the member tabs slide shut and open.
   Works on horizontal and vertical tab bars in
   every theme.
+- New “Link hover” and “Link active” profile
+  colors (Settings > Profiles > Colors), each
+  with its own checkbox, let a link change color
+  as you point at it and click it. Off by
+  default.
+- A new “Link style” setting there picks the
+  underline drawn under OSC 8 hyperlinks:
+  single, double, curly, dotted, or dashed.
