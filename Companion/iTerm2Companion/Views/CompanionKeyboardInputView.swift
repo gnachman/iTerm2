@@ -71,9 +71,15 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
         it_fatalError("init(coder:) is not supported")
     }
 
-    /// Build both accessory bars for the given controller and install the terminal one.
-    /// Called once by the canvas coordinator after wiring the controller's closures.
-    func installAccessory(controller: SessionKeyboardController) {
+    /// Build both accessory bars and install the terminal one. Called once by the canvas
+    /// coordinator, which owns the composer's Send/Close/Mic behavior (it drives the
+    /// shared dictation controller), so those arrive as closures.
+    func installAccessory(controller: SessionKeyboardController,
+                          model: AppModel,
+                          dictationToken: UUID,
+                          onComposerSend: @escaping () -> Void,
+                          onComposerClose: @escaping () -> Void,
+                          onComposerMic: @escaping () -> Void) {
         self.controller = controller
         let terminal = KeyboardAccessoryInputView(controller: controller)
         terminalAccessory = terminal
@@ -87,8 +93,20 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
         }
         // The composer bar is built up front and swapped in when the composer opens.
         composerAccessory = ComposerAccessoryInputView(
-            onSend: { [weak self] in self?.sendComposerTapped() },
-            onClose: { [weak self] in self?.exitComposer(clearDraft: false) })
+            model: model, dictationToken: dictationToken,
+            onSend: onComposerSend, onClose: onComposerClose, onMic: onComposerMic)
+    }
+
+    /// Type the draft to the session (no trailing newline) and collapse, clearing the
+    /// draft. Empty draft just collapses (keeping nothing). Called by the coordinator,
+    /// which first finalizes any in-flight Whisper dictation so the tail is included.
+    func commitDraftAndSend() {
+        // Strip any stray dictation placeholder (U+FFFC object replacement char) so it
+        // can never reach the shell.
+        let draft = (text ?? "").replacingOccurrences(of: "\u{FFFC}", with: "")
+        guard !draft.isEmpty else { exitComposer(clearDraft: false); return }
+        onSendComposerText?(draft)
+        exitComposer(clearDraft: true)
     }
 
     override var canBecomeFirstResponder: Bool { true }
@@ -118,15 +136,6 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
         onModeChanged?()
     }
 
-    private func sendComposerTapped() {
-        // Strip any stray dictation placeholder (U+FFFC object replacement char) so it
-        // can never reach the shell.
-        let draft = (text ?? "").replacingOccurrences(of: "\u{FFFC}", with: "")
-        guard !draft.isEmpty else { exitComposer(clearDraft: false); return }
-        onSendComposerText?(draft)
-        exitComposer(clearDraft: true)
-    }
-
     /// Invisible and caretless (the coordinator keeps it a small strip behind the opaque
     /// canvas), but scroll-enabled: a scroll-disabled, zero-size text view pushes the
     /// system dictation key onto its degenerate insertText path. Keeping it a real,
@@ -150,6 +159,63 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
         textContainerInset = UIEdgeInsets(top: 10, left: 8, bottom: 10, right: 8)
         layer.cornerRadius = 12
         layer.masksToBounds = true
+    }
+
+    // MARK: On-device (Whisper) dictation live span
+
+    // Whisper re-transcribes the whole recording each pass, so each partial replaces the
+    // last instead of appending. We own a range in the document and rewrite it on every
+    // update, leaving anything the user typed before it untouched. Mirrors the chat
+    // composer's MentionComposerController. Only used for the Whisper mic button; the
+    // system dictation key writes into the document natively and needs none of this.
+
+    /// The span currently owned by live Whisper dictation, or nil when not dictating.
+    private var liveRange: NSRange?
+    /// Prefix the transcript with a space when it starts right after non-whitespace, so
+    /// it reads as a new word rather than being glued on.
+    private var liveNeedsLeadingSpace = false
+
+    private var composerTextAttributes: [NSAttributedString.Key: Any] {
+        [.font: font ?? UIFont.preferredFont(forTextStyle: .body),
+         .foregroundColor: UIColor.label]
+    }
+
+    /// Mark the cursor position as the start of a live dictation segment.
+    func beginLiveTranscript() {
+        let location = selectedRange.location
+        liveRange = NSRange(location: location, length: 0)
+        let contents = attributedText.string as NSString
+        if location > 0, location <= contents.length {
+            let preceding = contents.substring(with: NSRange(location: location - 1, length: 1))
+            liveNeedsLeadingSpace = !preceding.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        } else {
+            liveNeedsLeadingSpace = false
+        }
+    }
+
+    /// Replace the live segment with the latest partial transcript, leaving text typed
+    /// before it untouched.
+    func updateLiveTranscript(_ text: String) {
+        guard let range = liveRange else { return }
+        let prefix = (liveNeedsLeadingSpace && !text.isEmpty) ? " " : ""
+        let replacement = NSAttributedString(string: prefix + text, attributes: composerTextAttributes)
+        let updated = NSMutableAttributedString(attributedString: attributedText)
+        guard range.location + range.length <= updated.length else { liveRange = nil; return }
+        updated.replaceCharacters(in: range, with: replacement)
+        attributedText = updated
+        let newRange = NSRange(location: range.location, length: replacement.length)
+        liveRange = newRange
+        selectedRange = NSRange(location: newRange.location + newRange.length, length: 0)
+        typingAttributes = composerTextAttributes
+        scrollRangeToVisible(selectedRange)
+    }
+
+    /// Apply the definitive final transcript and finish. Passing "" just drops the live
+    /// span (e.g. dictation was abandoned).
+    func commitLiveTranscript(_ text: String) {
+        updateLiveTranscript(text)
+        liveRange = nil
+        liveNeedsLeadingSpace = false
     }
 
     // MARK: Text entry
@@ -261,8 +327,14 @@ final class ComposerAccessoryInputView: UIInputView, UIInputViewAudioFeedback {
 
     private let host: UIHostingController<SessionComposerAccessory>
 
-    init(onSend: @escaping () -> Void, onClose: @escaping () -> Void) {
-        host = UIHostingController(rootView: SessionComposerAccessory(onSend: onSend, onClose: onClose))
+    init(model: AppModel,
+         dictationToken: UUID,
+         onSend: @escaping () -> Void,
+         onClose: @escaping () -> Void,
+         onMic: @escaping () -> Void) {
+        host = UIHostingController(rootView: SessionComposerAccessory(
+            model: model, dictationToken: dictationToken,
+            onSend: onSend, onClose: onClose, onMic: onMic))
         super.init(frame: CGRect(x: 0, y: 0, width: 0, height: SessionComposerAccessory.height),
                    inputViewStyle: .keyboard)
         allowsSelfSizing = true
@@ -285,14 +357,24 @@ final class ComposerAccessoryInputView: UIInputView, UIInputViewAudioFeedback {
     }
 }
 
-/// The composer's button bar: Close on the left (keeps the draft), Send on the right
-/// (types the draft to the session with no trailing newline). The Whisper mic button
-/// lands here in a later step.
+/// The composer's button bar: Close (keeps the draft), the on-device (Whisper) mic, and
+/// Send (types the draft to the session, no trailing newline). The coordinator owns the
+/// dictation lifecycle; this bar renders the mic state from the shared controller and
+/// reports taps.
 struct SessionComposerAccessory: View {
     static let height: CGFloat = 52
 
+    let model: AppModel
+    let dictationToken: UUID
     let onSend: () -> Void
     let onClose: () -> Void
+    let onMic: () -> Void
+
+    /// This composer owns the dictation cycle (vs. a chat's bar, which shares the same
+    /// recorder), so only then does the mic read as listening.
+    private var listening: Bool {
+        model.dictation.owns(dictationToken) && model.dictation.voice.state == .listening
+    }
 
     var body: some View {
         HStack(spacing: 16) {
@@ -304,10 +386,8 @@ struct SessionComposerAccessory: View {
             .accessibilityLabel("Close composer")
 
             Spacer()
-            Text("Compose")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
-            Spacer()
+
+            micButton
 
             Button(action: onSend) {
                 Image(systemName: "arrow.up.circle.fill")
@@ -319,5 +399,21 @@ struct SessionComposerAccessory: View {
         .padding(.horizontal, 16)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.bar)
+    }
+
+    @ViewBuilder private var micButton: some View {
+        Button(action: onMic) {
+            switch model.whisperManager.status {
+            case .downloading, .preparing:
+                ProgressView().frame(width: 30, height: 30)
+            default:
+                Image(systemName: listening ? "stop.circle.fill" : "mic.circle.fill")
+                    .font(.system(size: 30))
+                    .foregroundStyle(listening ? Color.red : Color.accentColor)
+                    .scaleEffect(listening ? 1 + CGFloat(model.dictation.voice.audioLevel) * 0.3 : 1)
+                    .animation(.easeOut(duration: 0.1), value: model.dictation.voice.audioLevel)
+            }
+        }
+        .accessibilityLabel(listening ? "Stop dictation" : "Dictate")
     }
 }

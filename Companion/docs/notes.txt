@@ -54,8 +54,11 @@ New Features:
   the round-trip lag of sending each keystroke.
   Tapping the keyboard’s dictation mic opens the
   composer too, so you can speak a command and
-  review it before it runs. Send does not add a
-  Return, so press the Return key if you want one.
+  review it before it runs. The composer also has
+  its own on-device dictation mic that transcribes
+  entirely on your phone, with no cloud and no
+  cost. Send does not add a Return, so press the
+  Return key if you want one.
 - The live session view now fills the screen edge
   to edge, behind the translucent nav bar, tab
   bar, and the dynamic island in landscape.

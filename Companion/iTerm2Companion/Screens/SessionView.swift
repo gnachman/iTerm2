@@ -1176,6 +1176,13 @@ private struct LiveCanvas: UIViewRepresentable {
         private static let composerHeight: CGFloat = 140
         private static let composerMargin: CGFloat = 8
 
+        /// Identifies this composer's ownership of the shared on-device dictation cycle.
+        private let dictationToken = UUID()
+        /// True while an alert we presented over the composer is up. Presenting it hides
+        /// the keyboard, but that must NOT close the composer - we keep it open and
+        /// restore the keyboard when the alert is dismissed.
+        private var presentingComposerModal = false
+
         // History canvas layout (set from updateUIView).
         var layout: CompanionLiveCanvasLayout?
         /// The live video band within the (tall) content view, in content coords.
@@ -1262,8 +1269,9 @@ private struct LiveCanvas: UIViewRepresentable {
         func setLive(_ live: Bool) {
             isLive = live
             if !live {
-                // A dead session drops keys; collapse the composer (keeping the draft)
-                // before the keyboard goes away.
+                // A dead session drops keys; stop any dictation and collapse the composer
+                // (keeping the draft) before the keyboard goes away.
+                cancelWhisperDictation()
                 keyInput.exitComposer(clearDraft: false)
                 keyInput.resignFirstResponder()
             }
@@ -1301,9 +1309,16 @@ private struct LiveCanvas: UIViewRepresentable {
 
         @objc private func keyboardWillHideNote(_ note: Notification) {
             keyboardTopInContainer = container.bounds.height
-            // The keyboard is going away (dismiss / session end); collapse the composer
-            // but keep the draft for next time.
-            if keyInput.mode == .composer { keyInput.exitComposer(clearDraft: false) }
+            // A modal we put up (e.g. the enable-dictation alert) hides the keyboard
+            // without meaning to close the composer: keep it open (it is behind the alert
+            // dimming) and just reposition; the keyboard returns when the alert dismisses.
+            if presentingComposerModal { layoutComposer(); return }
+            // Otherwise the keyboard is genuinely going away (dismiss / session end): stop
+            // any dictation and collapse the composer, keeping the draft for next time.
+            if keyInput.mode == .composer {
+                cancelWhisperDictation()
+                keyInput.exitComposer(clearDraft: false)
+            }
         }
 
         @objc private func dictationDidBegin(_ note: Notification) {
@@ -1318,8 +1333,141 @@ private struct LiveCanvas: UIViewRepresentable {
             }
         }
 
+        // MARK: Composer Send/Close/Mic (on-device Whisper dictation)
+
+        private func composerSendTapped() {
+            // Finalize any in-flight Whisper dictation first so its trailing words are in
+            // the draft, then type the draft to the session.
+            Task {
+                if model.dictation.owns(dictationToken) {
+                    await finishWhisperDictation()
+                }
+                keyInput.commitDraftAndSend()
+            }
+        }
+
+        private func composerCloseTapped() {
+            cancelWhisperDictation()
+            keyInput.exitComposer(clearDraft: false)
+        }
+
+        private func whisperMicTapped() {
+            let d = model.dictation
+            if d.owns(dictationToken), d.voice.state == .listening {
+                Task { await finishWhisperDictation() }
+                return
+            }
+            // Ignore taps while the recorder is busy (ours mid-finalize, or another bar's).
+            guard d.voice.state == .idle else { return }
+            switch model.whisperManager.status {
+            case .ready:
+                startWhisperDictation()
+            case .downloading, .preparing:
+                break   // the button shows a spinner
+            case .idle, .failed:
+                if model.whisperManager.isDownloaded {
+                    startWhisperDictation()   // start() loads the cached model, then records
+                } else {
+                    promptEnableDictation()
+                }
+            }
+        }
+
+        private func startWhisperDictation() {
+            let tab = model.selectedTab
+            Task {
+                switch await model.dictation.start(token: dictationToken, tab: tab) {
+                case .started:
+                    keyInput.beginLiveTranscript()
+                    observeWhisperLiveText()
+                case .alreadyActive, .busy, .superseded:
+                    break
+                case .failed(let message):
+                    presentComposerAlert(title: "Voice Input", message: message)
+                }
+            }
+        }
+
+        private func finishWhisperDictation() async {
+            let final = await model.dictation.finish(token: dictationToken)
+            keyInput.commitLiveTranscript(final ?? "")
+        }
+
+        private func cancelWhisperDictation() {
+            let owned = model.dictation.owns(dictationToken)
+            model.dictation.relinquish(dictationToken)
+            if owned { keyInput.commitLiveTranscript("") }
+        }
+
+        /// Feed the recorder's running transcript into the composer's live span. The
+        /// Observation onChange fires once, so we re-arm after each update; it stops
+        /// re-arming once we no longer own the cycle (finished / stolen / cancelled).
+        private func observeWhisperLiveText() {
+            withObservationTracking {
+                _ = model.dictation.voice.liveText
+            } onChange: { [weak self] in
+                Task { @MainActor in
+                    guard let self, self.model.dictation.owns(self.dictationToken) else { return }
+                    self.keyInput.updateLiveTranscript(self.model.dictation.voice.liveText)
+                    self.observeWhisperLiveText()
+                }
+            }
+        }
+
+        private func promptEnableDictation() {
+            let alert = UIAlertController(
+                title: "Enable Voice Dictation?",
+                message: "Dictation needs a speech model (about 240 MB) downloaded to this device. It runs entirely on your phone, with no cloud and no cost. You can change or remove it later in Settings.",
+                preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Download & Enable", style: .default) { [weak self] _ in
+                guard let self else { return }
+                self.restoreComposerKeyboard()
+                // Enable + start: the mic shows a spinner (whisperManager.status) while the
+                // model downloads and loads, then dictation records - composer stays open.
+                self.model.whisperManager.enableWithDefaultModel()
+                self.startWhisperDictation()
+            })
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
+                self?.restoreComposerKeyboard()
+            })
+            presentComposerModal(alert)
+        }
+
+        private func presentComposerAlert(title: String, message: String) {
+            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .cancel) { [weak self] _ in
+                self?.restoreComposerKeyboard()
+            })
+            presentComposerModal(alert)
+        }
+
+        /// Present from the nearest real view controller (not the keyboard/accessory
+        /// window) so the alert appears reliably over the session view, and mark that the
+        /// composer must survive the keyboard hide the presentation triggers.
+        private func presentComposerModal(_ vc: UIViewController) {
+            presentingComposerModal = true
+            var responder: UIResponder? = container
+            while let r = responder {
+                if let host = r as? UIViewController { host.present(vc, animated: true); return }
+                responder = r.next
+            }
+            container.window?.rootViewController?.present(vc, animated: true)
+        }
+
+        /// The composer alert was dismissed: clear the flag and bring the keyboard (and
+        /// thus the still-open composer) back. Deferred so the alert finishes dismissing
+        /// first.
+        private func restoreComposerKeyboard() {
+            presentingComposerModal = false
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.keyInput.mode == .composer else { return }
+                self.keyInput.becomeFirstResponder()
+            }
+        }
+
         func tearDown() {
             NotificationCenter.default.removeObserver(self)
+            cancelWhisperDictation()
             keyInput.resignFirstResponder()
             editMenu?.dismissMenu()
             growthTimer?.invalidate()
@@ -1359,7 +1507,18 @@ private struct LiveCanvas: UIViewRepresentable {
             keyboardController.openComposer = { [weak self] in self?.keyInput.enterComposer() }
             keyInput.onSendComposerText = { [weak self] text in self?.keyboardController.sendLiteral(text) }
             keyInput.onModeChanged = { [weak self] in self?.layoutComposer() }
-            keyInput.installAccessory(controller: keyboardController)
+            keyInput.installAccessory(
+                controller: keyboardController,
+                model: model,
+                dictationToken: dictationToken,
+                onComposerSend: { [weak self] in self?.composerSendTapped() },
+                onComposerClose: { [weak self] in self?.composerCloseTapped() },
+                onComposerMic: { [weak self] in self?.whisperMicTapped() })
+            // Warm the speech model so the composer's mic starts instantly on first tap.
+            if model.whisperManager.isEnabled, model.whisperManager.isDownloaded,
+               case .idle = model.whisperManager.status {
+                Task { await model.whisperManager.prepare() }
+            }
             // The keyboard host is a hidden, zero-size subview while passing through (it
             // never draws or takes touches; the canvas gestures live on contentView/
             // scrollView). When the composer opens it is sized above the keyboard by
