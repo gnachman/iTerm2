@@ -196,6 +196,10 @@ static vector_float4 VectorForColor(NSColor *color) {
     _selectedCommandRegion.location += drawingHelper.totalScrollbackOverflow;
     _totalScrollbackOverflow = drawingHelper.totalScrollbackOverflow;
 
+    _linkUnderlineStyle = drawingHelper.linkUnderlineStyle;
+    _useLinkHoverColor = [_colorMap colorForKey:kColorMapLinkHover] != nil;
+    _useLinkActiveColor = [_colorMap colorForKey:kColorMapLinkActive] != nil;
+
     // All row-build inputs are populated. Derive a per-textview config
     // generation by exact comparison against the previous frame (collision-free,
     // unlike a hash). The color space and font table are compared as objects

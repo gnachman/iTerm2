@@ -30,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _belongsToBlock;
     NSData *_matches;
     NSRange _underlinedRange;  // Underline for semantic history
+    NSRange _activeLinkRange;
     BOOL _x_inDeselectedRegion;
     id<iTermExternalAttributeIndexReading> _eaIndex;
     // Collision-free identity of this row's content, for the per-row draw cache.

@@ -188,6 +188,8 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
         KEY_BACKGROUND_COLOR,
         KEY_BOLD_COLOR,
         KEY_LINK_COLOR,
+        KEY_LINK_HOVER_COLOR,
+        KEY_LINK_ACTIVE_COLOR,
         KEY_MATCH_COLOR,
         KEY_SELECTION_COLOR,
         KEY_SELECTED_TEXT_COLOR,
