@@ -1,0 +1,96 @@
+Version 3.7.0beta10 was built on August 16, 2026.
+
+Changes since 3.7.0beta9:
+
+This version requires macOS 13 (Ventura) or later.
+macOS 12 is no longer supported. Sorry for the
+inconvenience!
+
+New Features:
+- Tab groups. Select tabs and gather them into a
+  named, colored group marked by a chip on the
+  tab bar. Groups stay contiguous, can be
+  collapsed and expanded with an animation, and
+  can be dragged as a unit within a window or out
+  to a new or existing window. A right-click chip
+  menu and a Firefox-style "Add Tab to Group" tab
+  menu let you rename, recolor, close, or ungroup.
+  Works on horizontal and vertical tab bars.
+- Kitty terminal drag-and-drop (OSC 72). Programs
+  that speak the protocol can accept files dropped
+  onto the terminal window and can start a drag of
+  their own content out to other apps, including
+  across an SSH connection when using it2ssh.
+- The left/right (vertical) tab bar can now be
+  made scrollable: turn on the new setting and
+  tabs that don't fit stay in the bar and are
+  reached by scrolling instead of the "More tabs"
+  overflow menu. This also works on horizontal
+  tab bars.
+- The uv-based Python runtime is now the default
+  on macOS 13 and later. This gives newly created,
+  imported, and migrated API scripts a faster,
+  self-managing interpreter. macOS 12 keeps the
+  previous bundled runtime, and you can still
+  override the choice in Advanced Settings.
+  Already-provisioned scripts are unaffected.
+
+Improvements:
+- A new per-profile "Use ANSI colors for marks"
+  setting (Profiles > Colors, off by default)
+  draws command-prompt mark indicators using the
+  color preset's ANSI blue, red, and yellow so
+  they harmonize with your theme.
+- The Advanced Paste indicator now has a keyboard
+  toggle so you can switch a running paste between
+  waiting for the shell prompt and sending
+  keystrokes straight through, which lets you
+  answer a password or other non-standard prompt
+  mid-paste. Issue 5749.
+- When a keystroke with a modifier matches no key
+  binding by character but does match one for the
+  same physical key (for example after switching
+  keyboard layout or when an input method changes
+  the character a key reports), iTerm2 now offers
+  to turn on "Interpret key bindings based on
+  physical key".
+- The confirmation for closing a workgroup session
+  now warns that the rest of the workgroup, its
+  peers and their tabs, will close too.
+- The ConEmu progress protocol's paused state
+  (OSC 9;4;4) is now honored even when the
+  percentage is omitted. Issue 723.
+
+Bug Fixes:
+- Restoring a session whose saved working
+  directory no longer exists (for example a
+  network drive that is not mounted at launch) no
+  longer fails to relaunch the shell and silently
+  closes the tab. Issue 12955.
+- Decomposed Hangul jamo are now recomposed into a
+  single cell instead of being split into separate
+  cells. Issue 3063.
+- The 16th parameter of an SGR trigger is no
+  longer dropped by an off-by-one in the parameter
+  store. Issue 722.
+- Toolbelt list tools (Command History, Recent
+  Directories, Captured Output) no longer draw
+  their rows at zero width when a window opens
+  with the toolbelt showing. Issue 12964.
+- On macOS Tahoe dark themes, selected left/right
+  tab chrome is drawn at the tab's real height
+  again instead of a fixed cap-image height, so a
+  custom tab bar height looks right. Issue 715.
+- The top-right session indicators no longer smear
+  while swiping between tabs.
+- Fixed a window leak from the frame
+  canonicalizer.
+- A workgroup no longer shows a blank pane when it
+  tears down while a non-main peer is on screen,
+  and a peer host's toolbar now refreshes after
+  its nested port is wired.
+- Fixed word-boundary punctuation typos in the
+  default settings. Issue 720.
+- Fixed two format-string bugs in logging calls.
+  Issue 712.
+- Fixed various crashes.
