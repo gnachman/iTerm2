@@ -13,7 +13,7 @@ HOMEBREW_PREFIX ?= $(shell brew --prefix 2>/dev/null || echo /opt/homebrew)
 CMAKE ?= $(HOMEBREW_PREFIX)/bin/cmake
 PKG_CONFIG ?= $(HOMEBREW_PREFIX)/bin/pkg-config
 RUSTUP ?= $(shell PATH="$(ORIG_PATH):$(HOME)/.cargo/bin" which rustup 2>/dev/null)
-DEPLOYMENT_TARGET=12.0
+DEPLOYMENT_TARGET=13.0
 
 # Build product directory: defaults to xcodebuild's SYMROOT.
 # Override with BUILD_DIR=/path/to/dir on the command line.

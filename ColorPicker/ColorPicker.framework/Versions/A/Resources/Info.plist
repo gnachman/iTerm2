@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>BuildMachineOSBuild</key>
-	<string>25E246</string>
+	<string>25F80</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
@@ -43,7 +43,7 @@
 	<key>DTXcodeBuild</key>
 	<string>17F42</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>12.4</string>
+	<string>13.0</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2015 Google. All rights reserved.</string>
 </dict>
