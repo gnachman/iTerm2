@@ -48,6 +48,11 @@
 - (NSColor *)rootTerminalViewTabBarBackgroundColorIgnoringTabColor:(BOOL)ignoreTabColor;
 - (BOOL)rootTerminalViewWindowNumberLabelShouldBeVisible;
 - (BOOL)rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar;
+
+// The window name to show beside the tabs, or nil when it should not be shown.
+// Compact and minimal themes have no title bar, so without this the window name
+// is only visible when the tab bar is hidden and the title takes its place.
+- (NSString *)rootTerminalViewWindowNameBesideTabs;
 - (NSImage *)rootTerminalViewCurrentTabIcon;
 - (BOOL)rootTerminalViewShouldDrawStoplightButtons;
 - (BOOL)rootTerminalViewShouldRevealStandardWindowButtons;
@@ -75,6 +80,9 @@
 
 extern const NSInteger iTermRootTerminalViewWindowNumberLabelMargin;
 extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
+// Padding after the compact proxy icon when no window number follows it. Shared
+// so the tab bar's left inset and anything positioned inside it agree.
+extern const CGFloat iTermRootTerminalViewCompactProxyIconExtraPadding;
 
 @interface iTermRootTerminalView : SolidColorView
 
@@ -162,5 +170,12 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 - (void)setCurrentSessionAlpha:(CGFloat)alpha;
 - (void)updateProxyIcon;
 - (CGFloat)compactProxyIconWidthIncludingMargin;
+
+// Horizontal space the window name beside the tabs occupies, including its
+// margins, or 0 when it is not shown. The tab bar's left inset must reserve it.
+- (CGFloat)windowNameBesideTabsWidthIncludingMargin;
+
+// Re-reads the window name from the delegate and lays it out if it changed.
+- (void)updateWindowNameBesideTabs;
 
 @end
