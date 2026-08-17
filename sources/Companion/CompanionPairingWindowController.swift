@@ -189,7 +189,9 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
             if controller.isConnected || controller.hasPairedDevice {
                 showPairedState()
             } else {
-                startFreshPairingFlow()
+                // Never auto-prompt for auth: show the "Show QR Code" button and
+                // wait for a deliberate click before starting the pairing flow.
+                showReadyToPair()
             }
         }
     }
@@ -416,22 +418,41 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         if let remedyTitle {
             // A clean background and a larger default (accent-highlighted) button:
             // the dimmed placeholder QR would camouflage a plain push button.
-            gateButton.title = remedyTitle
-            gateButton.controlSize = .large
-            gateButton.keyEquivalent = "\r"
-            gateButton.sizeToFit()
-            let width = gateButton.frame.width + 48
-            gateButton.frame = NSRect(x: (360 - width) / 2,
-                                      y: 280,
-                                      width: width,
-                                      height: gateButton.frame.height)
-            gateButton.isHidden = false
+            presentPrimaryButton(title: remedyTitle)
         } else {
             // Nothing to click: fill the QR area with the dimmed placeholder.
             qrImageView.image = placeholderQRImage
             qrImageView.alphaValue = 0.18
             qrImageView.isHidden = false
         }
+    }
+
+    /// Present a single prominent default (accent-highlighted) button centered
+    /// in the top area. The caller sets gateAction to what the click should do.
+    private func presentPrimaryButton(title: String) {
+        gateButton.title = title
+        gateButton.controlSize = .large
+        gateButton.keyEquivalent = "\r"
+        gateButton.sizeToFit()
+        let width = gateButton.frame.width + 48
+        gateButton.frame = NSRect(x: (360 - width) / 2,
+                                  y: 280,
+                                  width: width,
+                                  height: gateButton.frame.height)
+        gateButton.isHidden = false
+    }
+
+    /// The allowed-but-unpaired idle state: an explicit “Show QR Code” button
+    /// rather than the pairing flow itself. Authentication (Touch ID / password)
+    /// must only ever happen in response to a deliberate click, so opening this
+    /// window or unpairing a device shows this button and never auto-prompts.
+    private func showReadyToPair() {
+        controller.stopAdvertising()
+        hideTopContent()
+        instructionsLabel.stringValue = "Pair a companion device to use iTerm2 from your iPhone."
+        setStatus("", color: .secondaryLabelColor)
+        gateAction = { [weak self] in self?.startFreshPairingFlow() }
+        presentPrimaryButton(title: "Show QR Code")
     }
 
     /// Build the placeholder once: a real QR of a throwaway string, Gaussian
@@ -635,7 +656,10 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
 
     @objc private func unpairPressed(_ sender: Any) {
         controller.unpair()
-        startFreshPairingFlow()
+        // Unpairing leaves the gate at .allowed, so refreshGateState won't
+        // re-present the top. Drop to the idle "Show QR Code" state directly
+        // rather than immediately prompting for auth to pair a new device.
+        showReadyToPair()
     }
 
     func windowWillClose(_ notification: Notification) {

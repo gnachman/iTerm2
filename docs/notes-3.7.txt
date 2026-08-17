@@ -912,6 +912,11 @@ Settings Improvements:
   changes.
 
 Bug Fixes:
+- Companion Device Settings no longer prompts
+  for Touch ID on its own. Opening the window
+  or unpairing a device now shows a “Show QR
+  Code” button, and authentication happens only
+  after you click it.
 - Cmd-W now closes the Companion Device
   Settings window instead of beeping.
 - Fixed a beachball that could occur when the
