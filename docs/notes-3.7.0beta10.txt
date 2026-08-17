@@ -27,13 +27,13 @@ New Features:
   reached by scrolling instead of the "More tabs"
   overflow menu. This also works on horizontal
   tab bars.
-- The uv-based Python runtime is now the default
-  on macOS 13 and later. This gives newly created,
-  imported, and migrated API scripts a faster,
-  self-managing interpreter. macOS 12 keeps the
-  previous bundled runtime, and you can still
-  override the choice in Advanced Settings.
-  Already-provisioned scripts are unaffected.
+- The uv-based Python runtime is now on by
+  default. Newly created, imported, and migrated
+  API scripts get a faster, self-managing
+  interpreter instead of the bundled Python
+  runtime. You can still override this in Advanced
+  Settings, and already-provisioned scripts are
+  unaffected.
 
 Improvements:
 - A new per-profile "Use ANSI colors for marks"
