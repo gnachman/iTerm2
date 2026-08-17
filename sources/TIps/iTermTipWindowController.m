@@ -447,30 +447,11 @@ static const CGFloat kWindowTopMargin = 8;
     [self dismiss];
 }
 
-// NOTE: the NSSharingServicePicker has a few problems, so I don't use it.
-// 1) It complains if you use it on mouseUp
-// 2) It does not work (when you tell it to performWithItems it just gets slow but does nothing).
-//    I'm sure this can be fixed but I don't have the time today.
-// It has a nice link to Settings for "more" but I can live without it.
 - (void)shareThis:(iTermTipCardViewController *)card {
     NSAttributedString *item = [self.tip attributedString];
-    NSArray<NSSharingService *> *services = [NSSharingService sharingServicesForItems:@[ item ]];
-
-    NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Sharing Services"];
-    for (NSSharingService *service in services) {
-        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:service.title
-                                                      action:@selector(shareWithService:)
-                                               keyEquivalent:@""];
-        item.image = service.image;
-        item.representedObject = service;
-        [menu addItem:item];
-    }
-    [NSMenu popUpContextMenu:menu withEvent:[NSApp currentEvent] forView:self.window.contentView];
-}
-
-- (void)shareWithService:(NSMenuItem *)menuItem {
-    NSSharingService *service = menuItem.representedObject;
-    [service performWithItems:@[ self.tip.attributedString ]];
+    NSSharingServicePicker *picker = [[NSSharingServicePicker alloc] initWithItems:@[ item ]];
+    NSView *anchor = self.window.contentView;
+    [picker showRelativeToRect:anchor.bounds ofView:anchor preferredEdge:NSMinYEdge];
 }
 
 - (void)toggleOptionsInCard:(iTermTipCardViewController *)card {
