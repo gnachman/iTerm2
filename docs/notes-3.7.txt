@@ -912,6 +912,8 @@ Settings Improvements:
   changes.
 
 Bug Fixes:
+- Cmd-W now closes the Companion Device
+  Settings window instead of beeping.
 - Fixed a beachball that could occur when the
   tab style preference changed: every session’s
   announcement view was re-fitted synchronously,

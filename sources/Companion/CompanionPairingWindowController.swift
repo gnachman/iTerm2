@@ -654,6 +654,18 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         controller.stopAdvertising()
     }
 
+    // The Close menu item (Cmd-W) is wired to closeCurrentSession: rather than
+    // performClose:, so this non-terminal window has to handle it explicitly or
+    // the menu item is disabled and the keystroke just beeps.
+    @objc func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        return menuItem.action == #selector(closeCurrentSession(_:))
+    }
+
+    @objc(closeCurrentSession:)
+    func closeCurrentSession(_ sender: Any) {
+        window?.performClose(sender)
+    }
+
     // MARK: Layout
 
     private func buildContent() {
