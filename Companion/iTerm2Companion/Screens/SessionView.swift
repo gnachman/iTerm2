@@ -1148,6 +1148,15 @@ private struct LiveCanvas: UIViewRepresentable {
         /// container so it can be a UITextView (which the system dictation key requires)
         /// without the container itself becoming a text/scroll view.
         private let keyInput = CompanionKeyboardInputView()
+        /// A Liquid Glass backing for the composer pane, rendered in SwiftUI with the same
+        /// `.glassEffect` the accessory bars use (the UIKit UIGlassEffect read as a flat,
+        /// non-translucent panel here). The text view rides on top with a clear background.
+        /// Drives the glass's vertical offset through SwiftUI (see ComposerGlassModel).
+        private let glassModel = ComposerGlassModel()
+        private lazy var composerGlassHost = UIHostingController(rootView: ComposerGlassBackground(model: glassModel))
+        /// Plain UIKit wrapper the glass host lives inside (kept clip-free so the SwiftUI
+        /// `.offset` can carry the glass down behind the keyboard).
+        private let composerGlass = UIView()
         /// Drives the on-screen keyboard: routes typed + accessory keys to the session.
         private let keyboardController = SessionKeyboardController()
         private let scrollView = LayoutObservingScrollView()
@@ -1182,6 +1191,12 @@ private struct LiveCanvas: UIViewRepresentable {
         /// the keyboard, but that must NOT close the composer - we keep it open and
         /// restore the keyboard when the alert is dismissed.
         private var presentingComposerModal = false
+        /// Interactive swipe-down-to-dismiss gesture on the composer pane.
+        private weak var composerDismissPan: UIPanGestureRecognizer?
+        /// True during an open or close animation, so a routine layout pass (keyboard
+        /// reflow, the growth timer) does not snap the pane back to rest and cut the
+        /// animation short.
+        private var composerAnimating = false
 
         // History canvas layout (set from updateUIView).
         var layout: CompanionLiveCanvasLayout?
@@ -1289,15 +1304,93 @@ private struct LiveCanvas: UIViewRepresentable {
                 // terminal). A real (if invisible, behind the opaque canvas) frame lets
                 // dictation use its rich path, which deposits into the document so
                 // textViewDidChange can catch it and open the composer.
+                composerGlass.isHidden = true
                 container.sendSubviewToBack(keyInput)
                 keyInput.frame = CGRect(x: 0, y: 0, width: max(1, container.bounds.width), height: 44)
             case .composer:
+                composerGlass.isHidden = false
+                container.bringSubviewToFront(composerGlass)
                 container.bringSubviewToFront(keyInput)
-                let width = max(0, container.bounds.width - Self.composerMargin * 2)
-                let top = keyboardTopInContainer - Self.composerHeight - Self.composerMargin
-                keyInput.frame = CGRect(x: Self.composerMargin, y: max(0, top),
-                                        width: width, height: Self.composerHeight)
+                // Don't yank it back to rest mid-animation or mid-drag (a layout pass could
+                // call us during either, which would cancel the in-flight animation).
+                if !composerAnimating, composerDismissPan?.state != .changed {
+                    setComposerRestFrame()
+                    positionComposer(offsetY: 0)
+                }
             }
+        }
+
+        /// The composer's mode flipped. Opening springs it in; closing hands off to the
+        /// plain reposition (which hides it).
+        private func composerModeDidChange() {
+            if keyInput.mode == .composer {
+                animateComposerEntrance()
+            } else {
+                layoutComposer()
+            }
+        }
+
+        /// Slide the pane up from behind the keyboard to rest.
+        private func animateComposerEntrance() {
+            composerGlass.isHidden = false
+            container.bringSubviewToFront(composerGlass)
+            container.bringSubviewToFront(keyInput)
+            setComposerRestFrame()
+            composerAnimating = true
+            positionComposer(offsetY: composerHiddenOffset)   // start off-screen + faded out
+            // Two channels, matched ease-out curves so text (UIKit) and glass (SwiftUI)
+            // stay in lockstep - sliding up and fading in together.
+            withAnimation(.easeOut(duration: 0.22)) {
+                glassModel.offsetY = 0
+                glassModel.opacity = 1
+            }
+            UIView.animate(withDuration: 0.22, delay: 0, options: [.curveEaseOut, .allowUserInteraction]) {
+                self.keyInput.transform = .identity
+                self.keyInput.alpha = 1
+            } completion: { _ in
+                self.composerAnimating = false
+                if self.keyInput.mode == .composer, self.composerDismissPan?.state != .changed {
+                    self.setComposerRestFrame()
+                }
+            }
+        }
+
+        /// The composer pane's resting frame (above the keyboard, inset by the margin).
+        private func composerBaseFrame() -> CGRect {
+            let width = max(0, container.bounds.width - Self.composerMargin * 2)
+            let top = keyboardTopInContainer - Self.composerHeight - Self.composerMargin
+            return CGRect(x: Self.composerMargin, y: max(0, top),
+                          width: width, height: Self.composerHeight)
+        }
+
+        /// Offset the pane `offsetY` points below rest, WITHOUT animating: the text view via
+        /// a layer transform, the glass via its SwiftUI model. Used for the finger-tracked
+        /// drag (both track instantly). Animated opens/closes drive these two channels
+        /// separately (UIView.animate for the text, withAnimation for the glass).
+        private func positionComposer(offsetY: CGFloat) {
+            keyInput.transform = offsetY == 0 ? .identity : CGAffineTransform(translationX: 0, y: offsetY)
+            glassModel.offsetY = offsetY
+            // Fade out over the visible band (roughly rest -> behind the keyboard) so a
+            // finger drag dims it as it goes.
+            let alpha = 1 - min(1, max(0, offsetY) / (Self.composerHeight + Self.composerMargin))
+            keyInput.alpha = alpha
+            glassModel.opacity = Double(alpha)
+        }
+
+        /// The downward offset that puts the pane's top right at the top of the keyboard
+        /// (so it is tucked just behind it). Slide from here on open, to here on close.
+        private var composerHiddenOffset: CGFloat { Self.composerHeight + Self.composerMargin }
+
+        /// Reset offsets and set the pane's rest frame. Only call at rest - setting a frame
+        /// while a transform is non-identity is undefined.
+        private func setComposerRestFrame() {
+            keyInput.transform = .identity
+            keyInput.alpha = 1
+            glassModel.offsetY = 0
+            glassModel.opacity = 1
+            let base = composerBaseFrame()
+            keyInput.frame = base
+            composerGlass.frame = base
         }
 
         @objc private func keyboardFrameWillChange(_ note: Notification) {
@@ -1341,18 +1434,103 @@ private struct LiveCanvas: UIViewRepresentable {
 
         private func composerSendTapped() {
             // Finalize any in-flight Whisper dictation first so its trailing words are in
-            // the draft, then type the draft to the session.
+            // the draft, type it to the session, then animate the pane away.
             Task {
                 if model.dictation.owns(dictationToken) {
                     await finishWhisperDictation()
                 }
-                keyInput.commitDraftAndSend()
+                keyInput.sendComposerDraft()
+                animateComposerDismiss(initialVelocity: 0) { [weak self] in
+                    self?.keyInput.exitComposer(clearDraft: true)
+                }
             }
         }
 
         private func composerCloseTapped() {
+            animateComposerDismiss(initialVelocity: 0) { [weak self] in
+                self?.collapseComposerKeepingDraft()
+            }
+        }
+
+        @objc private func handleComposerDismissPan(_ g: UIPanGestureRecognizer) {
+            guard keyInput.mode == .composer else { return }
+            let translation = max(0, g.translation(in: container).y)
+            switch g.state {
+            case .changed:
+                positionComposer(offsetY: translation)
+            case .ended:
+                let velocity = g.velocity(in: container).y
+                // Complete on a healthy flick or if dragged past ~40% of its height.
+                if velocity > 900 || translation > Self.composerHeight * 0.4 {
+                    animateComposerDismiss(initialVelocity: velocity) { [weak self] in
+                        self?.collapseComposerKeepingDraft()
+                    }
+                } else {
+                    snapComposerBackToRest(duration: 0.25)
+                }
+            case .cancelled, .failed:
+                snapComposerBackToRest(duration: 0.2)
+            default:
+                break
+            }
+        }
+
+        /// Animate the dragged pane back to rest (both channels, matched ease-out).
+        private func snapComposerBackToRest(duration: TimeInterval) {
+            withAnimation(.easeOut(duration: duration)) {
+                glassModel.offsetY = 0
+                glassModel.opacity = 1
+            }
+            UIView.animate(withDuration: duration, delay: 0, options: .curveEaseOut) {
+                self.keyInput.transform = .identity
+                self.keyInput.alpha = 1
+            }
+        }
+
+        /// Slide the pane the rest of the way off the bottom, then run `finish` (the actual
+        /// collapse). Shared by the Close button, Send, and the interactive swipe so they
+        /// all animate out identically. `initialVelocity` carries a flick's momentum.
+        /// Slide the pane straight down behind the keyboard (which clips it), then run the
+        /// collapse. Shared by Close, Send, and the interactive swipe. `initialVelocity`
+        /// (from a flick) makes it snappier.
+        private func animateComposerDismiss(initialVelocity: CGFloat, then finish: @escaping () -> Void) {
+            let currentOffset = max(0, keyInput.transform.ty)     // where a drag left it
+            let target = max(currentOffset, composerHiddenOffset) // at least fully behind the keyboard
+            let duration: TimeInterval = initialVelocity > 100 ? 0.15 : 0.22
+            composerAnimating = true
+            // Two channels, matched ease-out curves: text via UIKit transform, glass via
+            // its SwiftUI offset (a UIKit transform blanks the glass effect).
+            withAnimation(.easeOut(duration: duration)) {
+                glassModel.offsetY = target
+                glassModel.opacity = 0
+            }
+            UIView.animate(withDuration: duration, delay: 0, options: .curveEaseOut) {
+                self.keyInput.transform = CGAffineTransform(translationX: 0, y: target)
+                self.keyInput.alpha = 0
+            } completion: { _ in
+                self.composerAnimating = false
+                // Reset offset/alpha; the collapse (exitComposer -> layoutComposer) then
+                // repositions and hides the views.
+                self.keyInput.transform = .identity
+                self.keyInput.alpha = 1
+                self.glassModel.offsetY = 0
+                self.glassModel.opacity = 1
+                finish()
+            }
+        }
+
+        private func collapseComposerKeepingDraft() {
             cancelWhisperDictation()
             keyInput.exitComposer(clearDraft: false)
+        }
+
+        // Begin the interactive dismiss only on a mostly-downward drag that starts at the
+        // top of the (possibly scrolled) content; otherwise let the text view scroll.
+        func gestureRecognizerShouldBegin(_ g: UIGestureRecognizer) -> Bool {
+            guard g === composerDismissPan, let pan = g as? UIPanGestureRecognizer else { return true }
+            guard keyInput.mode == .composer else { return false }
+            let v = pan.velocity(in: container)
+            return v.y > 0 && v.y > abs(v.x) && keyInput.contentOffset.y <= 0
         }
 
         private func whisperMicTapped() {
@@ -1510,7 +1688,7 @@ private struct LiveCanvas: UIViewRepresentable {
             // key-input view's expanded state; its Send types the draft to the session.
             keyboardController.openComposer = { [weak self] in self?.keyInput.enterComposer() }
             keyInput.onSendComposerText = { [weak self] text in self?.keyboardController.sendLiteral(text) }
-            keyInput.onModeChanged = { [weak self] in self?.layoutComposer() }
+            keyInput.onModeChanged = { [weak self] in self?.composerModeDidChange() }
             keyInput.installAccessory(
                 controller: keyboardController,
                 model: model,
@@ -1528,6 +1706,29 @@ private struct LiveCanvas: UIViewRepresentable {
             // scrollView). When the composer opens it is sized above the keyboard by
             // layoutComposer and brought to the front.
             container.addSubview(keyInput)
+            // Interactive swipe-down-to-dismiss on the composer pane: it tracks the finger
+            // and completes on distance/velocity, like flicking a sheet away. It is gated
+            // (gestureRecognizerShouldBegin) to a downward drag from the top of the content,
+            // and the text view's own scroll waits for it to fail, so scrolling still works
+            // when there is more text than fits.
+            let dismissPan = UIPanGestureRecognizer(target: self, action: #selector(handleComposerDismissPan(_:)))
+            dismissPan.delegate = self
+            keyInput.addGestureRecognizer(dismissPan)
+            keyInput.panGestureRecognizer.require(toFail: dismissPan)
+            composerDismissPan = dismissPan
+            // Glass backing for the composer pane (positioned/shown by layoutComposer).
+            composerGlass.isHidden = true
+            composerGlass.isUserInteractionEnabled = false   // taps go to the text view
+            composerGlass.backgroundColor = .clear
+            composerGlass.clipsToBounds = false
+            // The SwiftUI glass fills the container; it slides via its own `.offset`
+            // (glassModel), so nothing here clips it as it moves behind the keyboard.
+            composerGlassHost.view.frame = composerGlass.bounds
+            composerGlassHost.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            composerGlassHost.view.backgroundColor = .clear
+            composerGlassHost.view.clipsToBounds = false
+            composerGlass.addSubview(composerGlassHost.view)
+            container.addSubview(composerGlass)
             // Track the keyboard's top so the composer can sit just above it. The
             // reported end frame includes the (swapped-in) composer accessory, so the
             // composer's bottom lands right above that bar.

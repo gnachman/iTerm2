@@ -215,10 +215,19 @@ struct SessionKeyboardAccessory: View {
                 expandedTray
             }
         }
-        .padding(.horizontal, 8)
+        .padding(.horizontal, 12)
         .padding(.vertical, Metrics.verticalPadding)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.bar)
+        // Float as a glass shape over the video (capsule for the single compact row, a
+        // rounded rectangle once the tray expands), with a margin off the screen edges.
+        .glassEffect(.regular, in: keyboardBarShape)
+        .padding(.horizontal, 8)
+        .frame(maxWidth: .infinity)
+    }
+
+    private var keyboardBarShape: AnyShape {
+        controller.expanded
+            ? AnyShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            : AnyShape(Capsule())
     }
 
     // MARK: Compact row

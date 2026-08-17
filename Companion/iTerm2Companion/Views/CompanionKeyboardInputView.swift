@@ -48,9 +48,20 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
     private var terminalAccessory: KeyboardAccessoryInputView?
     private var composerAccessory: ComposerAccessoryInputView?
 
+    /// Hint shown in the (otherwise empty) composer so it doesn't read as a blank slab.
+    private let placeholderLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Type here…"
+        label.textColor = .placeholderText
+        label.font = .preferredFont(forTextStyle: .body)
+        label.isHidden = true
+        return label
+    }()
+
     init() {
         super.init(frame: .zero, textContainer: nil)
         isEditable = true
+        addSubview(placeholderLabel)
         applyPassthroughStyling()
         // A terminal wants the raw keys, so disable every "helpful" transform: no
         // autocorrect, no autocapitalizing the first letter of a command, and no smart
@@ -97,16 +108,18 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
             onSend: onComposerSend, onClose: onComposerClose, onMic: onComposerMic)
     }
 
-    /// Type the draft to the session (no trailing newline) and collapse, clearing the
-    /// draft. Empty draft just collapses (keeping nothing). Called by the coordinator,
-    /// which first finalizes any in-flight Whisper dictation so the tail is included.
-    func commitDraftAndSend() {
+    /// Type the draft to the session (no trailing newline), returning whether anything
+    /// was sent. Does NOT collapse the composer - the coordinator animates that out and
+    /// clears the draft afterward. Called after any in-flight Whisper dictation is
+    /// finalized so its tail is included.
+    @discardableResult
+    func sendComposerDraft() -> Bool {
         // Strip any stray dictation placeholder (U+FFFC object replacement char) so it
         // can never reach the shell.
         let draft = (text ?? "").replacingOccurrences(of: "\u{FFFC}", with: "")
-        guard !draft.isEmpty else { exitComposer(clearDraft: false); return }
+        guard !draft.isEmpty else { return false }
         onSendComposerText?(draft)
-        exitComposer(clearDraft: true)
+        return true
     }
 
     override var canBecomeFirstResponder: Bool { true }
@@ -121,6 +134,7 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
         applyComposerStyling()
         inputAccessoryView = composerAccessory
         reloadInputViews()
+        updatePlaceholderVisibility()
         onModeChanged?()
     }
 
@@ -133,7 +147,22 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
         applyPassthroughStyling()
         inputAccessoryView = terminalAccessory
         reloadInputViews()
+        updatePlaceholderVisibility()
         onModeChanged?()
+    }
+
+    /// The composer placeholder shows only while composing with an empty draft.
+    private func updatePlaceholderVisibility() {
+        placeholderLabel.isHidden = mode != .composer || !(text ?? "").isEmpty
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        let x = textContainerInset.left + textContainer.lineFragmentPadding
+        let width = max(0, bounds.width - x - textContainerInset.right)
+        let height = placeholderLabel.sizeThatFits(
+            CGSize(width: width, height: .greatestFiniteMagnitude)).height
+        placeholderLabel.frame = CGRect(x: x, y: textContainerInset.top, width: width, height: height)
     }
 
     /// Invisible and caretless (the coordinator keeps it a small strip behind the opaque
@@ -146,20 +175,27 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
         textColor = .clear
         tintColor = .clear               // no visible caret
         layer.cornerRadius = 0
+        layer.borderWidth = 0
         layer.masksToBounds = false
     }
 
-    /// A visible, scrollable, rounded editor with a real caret.
+    /// A rounded editing surface with a real caret. Its background is clear: the
+    /// coordinator's Liquid Glass backing view sits directly behind it and supplies the
+    /// translucent blur and glass outline (matching system floating panels), so this view
+    /// just holds the (clipped) text on top.
     private func applyComposerStyling() {
         isScrollEnabled = true
-        backgroundColor = .secondarySystemBackground
+        backgroundColor = .clear
         textColor = .label
         tintColor = UIColor(Color.accentColor)   // visible caret in the app tint
         font = .preferredFont(forTextStyle: .body)
         textContainerInset = UIEdgeInsets(top: 10, left: 8, bottom: 10, right: 8)
-        layer.cornerRadius = 12
+        layer.cornerRadius = Self.composerCornerRadius
+        layer.cornerCurve = .continuous
         layer.masksToBounds = true
     }
+
+    static let composerCornerRadius: CGFloat = 14
 
     // MARK: On-device (Whisper) dictation live span
 
@@ -208,6 +244,7 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
         selectedRange = NSRange(location: newRange.location + newRange.length, length: 0)
         typingAttributes = composerTextAttributes
         scrollRangeToVisible(selectedRange)
+        updatePlaceholderVisibility()
     }
 
     /// Apply the definitive final transcript and finish. Passing "" just drops the live
@@ -267,31 +304,13 @@ final class CompanionKeyboardInputView: UITextView, UITextViewDelegate {
     // now-composer document). exitComposer clears its draft while still in composer mode,
     // so that clear does not bounce us straight back open.
     func textViewDidChange(_ textView: UITextView) {
+        updatePlaceholderVisibility()
         guard mode == .passthrough, textStorage.length > 0 else { return }
         DispatchQueue.main.async { [weak self] in
             guard let self, self.mode == .passthrough else { return }
             self.enterComposer()
         }
     }
-}
-
-/// A chrome-material fill that continues an accessory bar's background from its bottom
-/// edge down to the bottom of the screen, so the gap left by the keyboard's rounded top
-/// corners is filled and the bar still reads as a solid panel during the app-switch
-/// transition (when the bar shows but the keyboard does not).
-private func makeKeyboardBarBottomFill() -> UIVisualEffectView {
-    let fill = UIVisualEffectView(effect: UIBlurEffect(style: .systemChromeMaterial))
-    fill.isUserInteractionEnabled = false
-    return fill
-}
-
-/// Size the fill to span from the bar's bottom edge to the bottom of its window. Requires
-/// the host view to have `clipsToBounds = false` and to insert the fill behind its content.
-private func layoutKeyboardBarBottomFill(_ fill: UIVisualEffectView, under view: UIView) {
-    guard let window = view.window else { fill.frame = .zero; return }
-    let bottomInWindow = view.convert(CGPoint(x: 0, y: view.bounds.maxY), to: nil).y
-    let height = max(0, window.bounds.maxY - bottomInWindow)
-    fill.frame = CGRect(x: 0, y: view.bounds.height, width: view.bounds.width, height: height)
 }
 
 /// A UIInputView that hosts the SwiftUI accessory and sizes itself via
@@ -303,18 +322,18 @@ final class KeyboardAccessoryInputView: UIInputView, UIInputViewAudioFeedback {
     var enableInputClicksWhenVisible: Bool { true }
 
     private let host: UIHostingController<SessionKeyboardAccessory>
-    private let bottomFill = makeKeyboardBarBottomFill()
     private var expanded = false
 
     init(controller: SessionKeyboardController) {
         host = UIHostingController(rootView: SessionKeyboardAccessory(controller: controller))
         super.init(frame: CGRect(x: 0, y: 0, width: 0,
                                  height: SessionKeyboardAccessoryMetrics.compactHeight),
-                   inputViewStyle: .keyboard)
+                   inputViewStyle: .default)
         allowsSelfSizing = true
         translatesAutoresizingMaskIntoConstraints = false
-        clipsToBounds = false
-        insertSubview(bottomFill, at: 0)
+        // Transparent: the bar floats as a glass shape (drawn in SwiftUI) over the video,
+        // with the keyboard directly below. No opaque panel background.
+        backgroundColor = .clear
         host.view.backgroundColor = .clear
         addSubview(host.view)
     }
@@ -338,18 +357,16 @@ final class KeyboardAccessoryInputView: UIInputView, UIInputViewAudioFeedback {
     override func layoutSubviews() {
         super.layoutSubviews()
         host.view.frame = bounds
-        layoutKeyboardBarBottomFill(bottomFill, under: self)
     }
 }
 
-/// The composer's input-accessory bar (Send / Close), docked directly above the
+/// The composer's input-accessory bar (Close / mic / Send), docked directly above the
 /// keyboard while the composer is open. Fixed height; hosts the SwiftUI bar the same
 /// way KeyboardAccessoryInputView does.
 final class ComposerAccessoryInputView: UIInputView, UIInputViewAudioFeedback {
     var enableInputClicksWhenVisible: Bool { true }
 
     private let host: UIHostingController<SessionComposerAccessory>
-    private let bottomFill = makeKeyboardBarBottomFill()
 
     init(model: AppModel,
          dictationToken: UUID,
@@ -360,11 +377,10 @@ final class ComposerAccessoryInputView: UIInputView, UIInputViewAudioFeedback {
             model: model, dictationToken: dictationToken,
             onSend: onSend, onClose: onClose, onMic: onMic))
         super.init(frame: CGRect(x: 0, y: 0, width: 0, height: SessionComposerAccessory.height),
-                   inputViewStyle: .keyboard)
+                   inputViewStyle: .default)
         allowsSelfSizing = true
         translatesAutoresizingMaskIntoConstraints = false
-        clipsToBounds = false
-        insertSubview(bottomFill, at: 0)
+        backgroundColor = .clear
         host.view.backgroundColor = .clear
         addSubview(host.view)
     }
@@ -380,7 +396,31 @@ final class ComposerAccessoryInputView: UIInputView, UIInputViewAudioFeedback {
     override func layoutSubviews() {
         super.layoutSubviews()
         host.view.frame = bounds
-        layoutKeyboardBarBottomFill(bottomFill, under: self)
+    }
+}
+
+/// Drives the composer glass's vertical position. The glass must move via SwiftUI's own
+/// `.offset` (animated with `withAnimation`), because `.glassEffect` stops rendering the
+/// moment its hosting layer has a UIKit transform - so the coordinator can't slide it the
+/// way it slides the (UIKit) text view.
+@MainActor final class ComposerGlassModel: ObservableObject {
+    @Published var offsetY: CGFloat = 0
+    @Published var opacity: Double = 1
+}
+
+/// The composer pane's Liquid Glass backing, rendered in SwiftUI so it uses the exact
+/// same `.glassEffect` as the accessory bars (which read as properly translucent, unlike
+/// the UIKit UIGlassEffect, which can't sample the video layer). The text view sits on top
+/// with a clear background; this supplies the blur and the glass edge.
+struct ComposerGlassBackground: View {
+    @ObservedObject var model: ComposerGlassModel
+    var body: some View {
+        Color.clear
+            .glassEffect(.regular,
+                         in: RoundedRectangle(cornerRadius: CompanionKeyboardInputView.composerCornerRadius,
+                                              style: .continuous))
+            .opacity(model.opacity)
+            .offset(y: model.offsetY)
     }
 }
 
@@ -404,42 +444,52 @@ struct SessionComposerAccessory: View {
     }
 
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 14) {
             Button(action: onClose) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 26))
+                Image(systemName: "xmark")
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.secondary)
+                    .frame(width: 30, height: 30)
             }
             .accessibilityLabel("Close composer")
 
-            Spacer()
-
             micButton
 
+            Spacer(minLength: 8)
+
+            // Send is the one prominent action: a filled accent circle (like Messages),
+            // which reads clearly on the glass in both light and dark mode.
             Button(action: onSend) {
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.system(size: 30))
-                    .foregroundStyle(Color.accentColor)
+                Image(systemName: "arrow.up")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 30, height: 30)
+                    .background(Color.accentColor, in: Circle())
             }
             .accessibilityLabel("Send to session")
         }
-        .padding(.horizontal, 16)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.bar)
+        .padding(.leading, 18)
+        .padding(.trailing, 8)
+        .padding(.vertical, 7)
+        .glassEffect(.regular, in: Capsule())
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 
     @ViewBuilder private var micButton: some View {
         Button(action: onMic) {
-            switch model.whisperManager.status {
-            case .downloading, .preparing:
-                ProgressView().frame(width: 30, height: 30)
-            default:
-                Image(systemName: listening ? "stop.circle.fill" : "mic.circle.fill")
-                    .font(.system(size: 30))
-                    .foregroundStyle(listening ? Color.red : Color.accentColor)
-                    .scaleEffect(listening ? 1 + CGFloat(model.dictation.voice.audioLevel) * 0.3 : 1)
-                    .animation(.easeOut(duration: 0.1), value: model.dictation.voice.audioLevel)
+            Group {
+                switch model.whisperManager.status {
+                case .downloading, .preparing:
+                    ProgressView()
+                default:
+                    Image(systemName: listening ? "stop.fill" : "mic.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(listening ? Color.red : Color.primary)
+                        .scaleEffect(listening ? 1 + CGFloat(model.dictation.voice.audioLevel) * 0.3 : 1)
+                        .animation(.easeOut(duration: 0.1), value: model.dictation.voice.audioLevel)
+                }
             }
+            .frame(width: 30, height: 30)
         }
         .accessibilityLabel(listening ? "Stop dictation" : "Dictate")
     }
