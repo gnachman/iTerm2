@@ -254,40 +254,141 @@ NS_ASSUME_NONNULL_BEGIN
     checkedThisLaunch = YES;
     NSFileManager *fm = [NSFileManager defaultManager];
     NSString *scriptsPath = [fm scriptsPathWithoutSpaces];
-    // Walk the whole scripts tree (AutoLaunch and any nested folders), keyed by each
-    // container's path relative to the scripts folder so Scripts/foo and
-    // AutoLaunch/foo do not collide.
-    NSMutableDictionary<NSString *, NSString *> *requested = [NSMutableDictionary dictionary];
+    // Walk the whole scripts tree (AutoLaunch and any nested folders). Each record keeps
+    // the container's path relative to the scripts folder (so Scripts/foo and
+    // AutoLaunch/foo do not collide) plus the absolute path and dependencies the
+    // eager-upgrade button needs to migrate it.
+    NSMutableArray<iTermUvLegacyScript *> *scripts = [NSMutableArray array];
     [self collectLegacyFullEnvironmentScriptsUnder:scriptsPath
                                         scriptsRoot:scriptsPath
-                                               into:requested];
+                                               into:scripts];
+    NSMutableDictionary<NSString *, NSString *> *requested = [NSMutableDictionary dictionary];
+    for (iTermUvLegacyScript *script in scripts) {
+        requested[script.relativeName] = script.requestedVersion;
+    }
     NSString *text = [iTermUvMigration pendingVersionBumpWarningWithRequestedVersionsByScript:requested];
     if (!text) {
         return;
     }
-    [iTermWarning showWarningWithTitle:text
+    // A fresh identifier (not the old OK-only NoSyncUvVersionBumpWarning): the action list
+    // grew, and iTermWarning stores a silenced choice by index, so reusing the old id would
+    // remap a prior "OK" silence onto the new selection 0 ("Upgrade Now") and silently
+    // migrate at launch. A new id shows the upgraded dialog once to previously-silenced users.
+    //
+    // "Upgrade Now" (selection 0) is a one-shot action, not a standing preference. But the
+    // silence checkbox remembers whichever action was chosen, so a user who ticks it while
+    // clicking "Upgrade Now" would otherwise re-run the migration silently on every launch
+    // (and, for scripts that can't migrate, resurface "Upgrade Incomplete" forever). Clear
+    // any remembered "Upgrade Now" up front so only a "Not Now" silence persists; the dialog
+    // then always reappears for scripts that stayed legacy rather than auto-migrating.
+    NSString *const warningIdentifier = @"NoSyncUvVersionBumpWarningV2";
+    [iTermWarning unsilenceIdentifier:warningIdentifier ifSelectionEquals:kiTermWarningSelection0];
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:text
+                                   actions:@[ @"Upgrade Now", @"Not Now" ]
+                                 accessory:nil
+                                identifier:warningIdentifier
+                               silenceable:kiTermWarningTypePermanentlySilenceable
+                                   heading:@"Python Version Changes"
+                                    window:nil];
+    if (selection == kiTermWarningSelection0) {
+        [self upgradeBumpedScripts:[iTermUvMigration scriptsNeedingBump:scripts]];
+    }
+}
+
+// Eagerly migrate the force-bumped legacy scripts to uv, instead of waiting for each to
+// be launched. Scripts are migrated one at a time (a shared runtime download the first
+// needs is reused by the rest) behind one progress window; each failure rolls back to its
+// working legacy env and is collected for a single summary at the end.
+- (void)upgradeBumpedScripts:(NSArray<iTermUvLegacyScript *> *)scripts {
+    if (scripts.count == 0) {
+        return;
+    }
+    iTermProvisioningProgressWindowController *progress =
+        [[iTermProvisioningProgressWindowController alloc] init];
+    [self migrateBumpedScripts:scripts
+                         index:0
+                      progress:progress
+                      failures:[NSMutableArray array]];
+}
+
+- (void)migrateBumpedScripts:(NSArray<iTermUvLegacyScript *> *)scripts
+                       index:(NSUInteger)index
+                    progress:(iTermProvisioningProgressWindowController *)progress
+                    failures:(NSMutableArray<NSString *> *)failures {
+    if (index >= scripts.count) {
+        [progress dismiss];
+        [self reportBumpUpgradeFailures:failures];
+        return;
+    }
+    iTermUvLegacyScript *script = scripts[index];
+    void (^next)(void) = ^{
+        [self migrateBumpedScripts:scripts index:index + 1 progress:progress failures:failures];
+    };
+    if (script.dependencies == nil) {
+        // Its setup.cfg dependencies could not be parsed, so migrating would build a
+        // broken env (missing packages). Leave it on its legacy runtime, as the launcher
+        // does, and report it.
+        [failures addObject:script.relativeName];
+        next();
+        return;
+    }
+    [[iTermUvProvisioner shared] migrateLegacyScriptToUvWithContainer:script.containerPath
+                                              requestedPythonVersion:script.requestedVersion
+                                                        dependencies:script.dependencies
+                                                provisioningDidBegin:^{
+        [progress showWithMessage:[NSString stringWithFormat:@"Upgrading “%@”…", script.relativeName]];
+    }
+                                                          completion:^(NSError *error) {
+        if (error != nil) {
+            if ([iTermUvProvisioner isCancelationError:error]) {
+                // The user declined the one-time runtime download. Nothing was migrated and
+                // the rest would prompt again, so stop the batch quietly.
+                [progress dismiss];
+                return;
+            }
+            // A real failure. migrateLegacyScriptToUv already restored the legacy env, so the
+            // script still runs; record it and keep going.
+            [failures addObject:script.relativeName];
+        }
+        next();
+    }];
+}
+
+- (void)reportBumpUpgradeFailures:(NSArray<NSString *> *)failures {
+    if (failures.count == 0) {
+        // Silent success: the nag is resolved and the progress window already dismissed.
+        return;
+    }
+    NSString *list = [failures componentsJoinedByString:@"\n• "];
+    NSString *body = [NSString stringWithFormat:
+                      @"%@ could not be upgraded and still use the previous Python runtime. "
+                      @"Each will be upgraded automatically the next time it runs.\n\n• %@",
+                      failures.count == 1 ? @"One script" : @"Some scripts", list];
+    [iTermWarning showWarningWithTitle:body
                                actions:@[ @"OK" ]
                              accessory:nil
-                            identifier:@"NoSyncUvVersionBumpWarning"
+                            identifier:@"NoSyncUvBumpUpgradeIncomplete"
                            silenceable:kiTermWarningTypePermanentlySilenceable
-                               heading:@"Python Version Changes"
+                               heading:@"Upgrade Incomplete"
                                 window:nil];
 }
 
-// Recursively collect legacy full-environment script containers under `root`, keyed
-// by their path relative to `scriptsRoot` and mapped to their pinned Python version.
-// A directory with a setup.cfg is a container: it is recorded (if legacy) and not
-// descended into, so we never walk into .venv/iterm2env or a package's own setup.cfg.
+// Recursively collect legacy full-environment script containers under `root`, recording
+// for each its path relative to `scriptsRoot`, its absolute path, its pinned Python
+// version, and its dependencies. A directory with a setup.cfg is a container: it is
+// recorded (if legacy) and not descended into, so we never walk into .venv/iterm2env or
+// a package's own setup.cfg.
 - (void)collectLegacyFullEnvironmentScriptsUnder:(NSString *)root
                                      scriptsRoot:(NSString *)scriptsRoot
-                                            into:(NSMutableDictionary<NSString *, NSString *> *)requested {
-    [self collectLegacyFullEnvironmentScriptsUnder:root scriptsRoot:scriptsRoot depth:0 into:requested];
+                                            into:(NSMutableArray<iTermUvLegacyScript *> *)scripts {
+    [self collectLegacyFullEnvironmentScriptsUnder:root scriptsRoot:scriptsRoot depth:0 into:scripts];
 }
 
 - (void)collectLegacyFullEnvironmentScriptsUnder:(NSString *)root
                                      scriptsRoot:(NSString *)scriptsRoot
                                            depth:(int)depth
-                                            into:(NSMutableDictionary<NSString *, NSString *> *)requested {
+                                            into:(NSMutableArray<iTermUvLegacyScript *> *)scripts {
     NSFileManager *fm = [NSFileManager defaultManager];
     NSString *setupCfg = [root stringByAppendingPathComponent:@"setup.cfg"];
     if ([fm fileExistsAtPath:setupCfg]) {
@@ -311,7 +412,14 @@ NS_ASSUME_NONNULL_BEGIN
                 if (version) {
                     NSString *relative = [root substringFromIndex:scriptsRoot.length];
                     relative = [relative stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
-                    requested[relative.length ? relative : root.lastPathComponent] = version;
+                    NSString *name = relative.length ? relative : root.lastPathComponent;
+                    // nil dependencies (an unparseable setup.cfg) marks the script as
+                    // migratable-only-lazily; the eager-upgrade button skips and reports it.
+                    NSArray<NSString *> *dependencies = parser.dependenciesError ? nil : parser.dependencies;
+                    [scripts addObject:[[iTermUvLegacyScript alloc] initWithRelativeName:name
+                                                                          containerPath:root
+                                                                       requestedVersion:version
+                                                                           dependencies:dependencies]];
                 }
             }
             return;
@@ -337,7 +445,7 @@ NS_ASSUME_NONNULL_BEGIN
             [self collectLegacyFullEnvironmentScriptsUnder:child
                                                scriptsRoot:scriptsRoot
                                                      depth:depth + 1
-                                                      into:requested];
+                                                      into:scripts];
         }
     }
 }

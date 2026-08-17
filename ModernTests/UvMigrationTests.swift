@@ -62,6 +62,34 @@ final class UvMigrationTests: XCTestCase {
             requestedVersionsByScript: ["A": "3.10", "B": "3.12"]))
     }
 
+    // MARK: - Selecting the scripts an "Upgrade Now" button should migrate
+
+    func testScriptsNeedingBumpReturnsOnlyUnavailablePinsSortedByName() {
+        let scripts = [
+            iTermUvLegacyScript(relativeName: "Keeps", containerPath: "/s/Keeps",
+                                requestedVersion: "3.10", dependencies: ["iterm2"]),
+            iTermUvLegacyScript(relativeName: "Old", containerPath: "/s/Old",
+                                requestedVersion: "3.7", dependencies: ["iterm2"]),
+            iTermUvLegacyScript(relativeName: "AlsoOld", containerPath: "/s/AlsoOld",
+                                requestedVersion: "3.7", dependencies: []),
+        ]
+        let bumped = iTermUvMigration.scriptsNeedingBump(scripts, available: ["3.9", "3.10", "3.11"])
+        // Only the two 3.7 scripts are bumped, sorted by name; the 3.10 one is preserved.
+        XCTAssertEqual(bumped.map { $0.relativeName }, ["AlsoOld", "Old"])
+        // The full descriptor is carried through so the caller can migrate it directly.
+        XCTAssertEqual(bumped.first?.containerPath, "/s/AlsoOld")
+    }
+
+    func testScriptsNeedingBumpEmptyWhenAllAvailable() {
+        let scripts = [
+            iTermUvLegacyScript(relativeName: "A", containerPath: "/s/A",
+                                requestedVersion: "3.10", dependencies: ["iterm2"]),
+            iTermUvLegacyScript(relativeName: "B", containerPath: "/s/B",
+                                requestedVersion: "3.11.2", dependencies: nil),
+        ]
+        XCTAssertTrue(iTermUvMigration.scriptsNeedingBump(scripts, available: ["3.9", "3.10", "3.11"]).isEmpty)
+    }
+
     // MARK: - Rebuild-with-rollback file operations
 
     private func makeContainer() throws -> String {

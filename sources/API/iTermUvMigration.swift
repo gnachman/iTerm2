@@ -24,6 +24,29 @@ class iTermUvPythonRemap: NSObject {
     }
 }
 
+// A legacy full-environment script discovered by the startup scan: enough to both
+// warn about a forced Python bump and, if the user asks, migrate it to uv on the
+// spot. `dependencies` is nil when the script's setup.cfg dependencies could not be
+// parsed, in which case it cannot be migrated automatically (the same guard the
+// launcher applies).
+@objc(iTermUvLegacyScript)
+class iTermUvLegacyScript: NSObject {
+    @objc let relativeName: String
+    @objc let containerPath: String
+    @objc let requestedVersion: String
+    @objc let dependencies: [String]?
+
+    @objc init(relativeName: String,
+               containerPath: String,
+               requestedVersion: String,
+               dependencies: [String]?) {
+        self.relativeName = relativeName
+        self.containerPath = containerPath
+        self.requestedVersion = requestedVersion
+        self.dependencies = dependencies
+    }
+}
+
 @objc(iTermUvMigration)
 class iTermUvMigration: NSObject {
     // Given each script's pinned Python version and the minors uv can provide,
@@ -41,6 +64,24 @@ class iTermUvMigration: NSObject {
             }
         }
         return remaps.sorted { $0.scriptName.localizedCaseInsensitiveCompare($1.scriptName) == .orderedAscending }
+    }
+
+    // The subset of scanned legacy scripts whose pinned Python version must be bumped,
+    // i.e. the ones an "Upgrade Now" button should migrate now (the others migrate
+    // silently, keeping their minor, whenever they next run). Sorted by name so the
+    // batch order matches the consolidated warning's list.
+    @objc static func scriptsNeedingBump(_ scripts: [iTermUvLegacyScript],
+                                         available: [String]) -> [iTermUvLegacyScript] {
+        return scripts
+            .filter { iTermUvPythonVersion.resolve(requested: $0.requestedVersion,
+                                                   available: available).remappedFrom != nil }
+            .sorted { $0.relativeName.localizedCaseInsensitiveCompare($1.relativeName) == .orderedAscending }
+    }
+
+    // Convenience overload using the same known-available minors the startup warning
+    // scan uses, so the button migrates exactly the scripts the warning names.
+    @objc static func scriptsNeedingBump(_ scripts: [iTermUvLegacyScript]) -> [iTermUvLegacyScript] {
+        return scriptsNeedingBump(scripts, available: knownAvailableMinors)
     }
 
     // The minors python-build-standalone is known to provide, used for the one-time

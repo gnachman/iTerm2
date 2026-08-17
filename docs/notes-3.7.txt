@@ -664,6 +664,11 @@ Python API Improvements:
   button that removes stopped sessions from the
   list, so it no longer grows without bound when
   you repeatedly restart a script.
+- The warning that a script’s pinned Python
+  version will be bumped for the new uv runtime
+  now has an Upgrade Now button that migrates
+  those scripts immediately, instead of only
+  when each one next runs.
 
 Password Manager Improvements:
 - Bitwarden is now a supported password manager.
