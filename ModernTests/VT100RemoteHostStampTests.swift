@@ -48,9 +48,16 @@ final class VT100RemoteHostStampTests: XCTestCase {
         XCTAssertEqual(localityAfterReporting(local), .localhost)
     }
 
-    // A hostname that isn't ours: stamped remote.
+    // A hostname that isn't ours: stamped remote at report time. It stays remote
+    // even if our own .local name later drifts, because the verdict is frozen
+    // rather than recomputed from names.
     func testReportingForeignHostnameStampsRemote() {
-        XCTAssertEqual(localityAfterReporting("me@build-box.example.invalid"), .remote)
+        let screen = makeScreen()
+        report("me@build-box.example.invalid", to: screen)
+        let host = screen.lastRemoteHost()
+        XCTAssertEqual(host?.localityState, .remote)
+        XCTAssertEqual(host?.isRemoteHost, true)
+        XCTAssertEqual(host?.isLocalhost, false)
     }
 
     // A user-only re-report (trailing @, empty host) backfills the hostname

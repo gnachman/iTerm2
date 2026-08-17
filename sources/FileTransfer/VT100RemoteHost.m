@@ -113,13 +113,14 @@ static NSString *const kRemoteHostLocalityKey = @"Locality";
         case VT100RemoteHostLocalityUnknown:
             break;
     }
-    // Legacy fallback for hosts with no stamped locality (deserialized from an
-    // older format). Comparing the recorded name against the live local name
-    // is fragile across network-driven hostname changes, which is exactly why
-    // freshly reported hosts carry an explicit locality instead.
-    NSString *localHostName = [NSHost fullyQualifiedDomainName];
-    DLog(@"localHostName=%@, VT100RemoteHost.hostname=%@", localHostName, self.hostname);
-    return [localHostName isEqualToString:self.hostname];
+    // No frozen verdict (data from a format that predates the locality stamp).
+    // Best effort: compare the reported name against this machine's current
+    // names. Freshly reported hosts don't reach this, they carry a locality
+    // frozen at report time, because the local name can drift over time and
+    // this compare can't be trusted long-term.
+    const BOOL isLocal = [NSHost it_hostnameIsThisMachine:self.hostname];
+    DLog(@"VT100RemoteHost.hostname=%@ it_hostnameIsThisMachine=%@", self.hostname, @(isLocal));
+    return isLocal;
 }
 
 - (BOOL)isRemoteHost {

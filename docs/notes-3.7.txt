@@ -2691,3 +2691,8 @@ Bug Fixes:
   animates: the member tabs slide shut and open.
   Works on horizontal and vertical tab bars in
   every theme.
+- Dropping a file on a local terminal no longer
+  offers to upload it when the machine answers to
+  more than one name (for example .local versus a
+  DHCP-assigned name). Localhost is now recognized
+  by any of the machine's names.

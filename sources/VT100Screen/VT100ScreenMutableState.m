@@ -3783,22 +3783,37 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         user = [lastRemoteHost.username copy] ?: @"";
     }
 
-    // Determine localhost-ness now, while the reporting shell's name and our
-    // gethostname() are contemporaneous, and freeze it onto the host. This is
-    // the only reliable moment to compare: a later network change can rename
-    // the local .local host, breaking any after-the-fact string compare.
+    // Decide this host's locality now, while the reported name and our own name
+    // reflect the same instant, and freeze it. This is the only reliable moment
+    // to compare: the machine's names drift over time (mDNS can renumber
+    // MacBook-Pro-3.local to -2 tomorrow), so a frozen verdict must not be
+    // recomputed from names later. Precedence: an ssh/conductor boundary is
+    // structurally remote and outranks any name comparison.
     VT100RemoteHostLocality locality;
     if (viaSSHIntegration) {
-        // Reached via ssh integration / conductor: structurally remote.
+        // Reached via ssh integration / conductor: structurally remote, even if
+        // the far end reports a name that looks local (e.g. `ssh localhost`, or
+        // a container that shares our hostname). We can't prove the filesystem
+        // is shared across a real transport, so treat it as remote.
         locality = VT100RemoteHostLocalityRemote;
     } else if (!hostWasProvided) {
         // Only a username was reported; the hostname was carried over from the
         // previous host, so its locality carries over too rather than being
         // recomputed against a backfilled name.
         locality = lastRemoteHost ? lastRemoteHost.localityState : VT100RemoteHostLocalityUnknown;
-    } else if ([host isEqualToString:[NSHost fullyQualifiedDomainName]]) {
+    } else if ([NSHost it_hostnameIsThisMachine:host]) {
+        // One of this machine's names. Matching is robust to the machine
+        // answering to several at once (.local vs the DHCP FQDN) and to names it
+        // used before but has since drifted away from. Remember this name so it
+        // stays recognized after the live names drift too (a no-op unless it
+        // matches the live names now).
         locality = VT100RemoteHostLocalityLocalhost;
+        [NSHost it_rememberLocalHostname:host];
     } else {
+        // A different machine, as of this contemporaneous comparison. Freeze it:
+        // recomputing later against a drifted local name is unreliable and,
+        // worse than a stale remote, could turn a real remote into a false
+        // localhost if our own name later collides with it.
         locality = VT100RemoteHostLocalityRemote;
     }
 
