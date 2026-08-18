@@ -471,6 +471,19 @@ final class AILiveHarness: XCTestCase {
         return Int(digits)
     }
 
+    /// First Responses-API response id (resp_...) found in any captured
+    /// response body. Used to drive the previousResponseID delta path in a
+    /// second live turn.
+    static func responseID(in bodies: [String]) -> String? {
+        for body in bodies {
+            if let range = body.range(of: #"resp_[A-Za-z0-9]+"#,
+                                      options: .regularExpression) {
+                return String(body[range])
+            }
+        }
+        return nil
+    }
+
     private func runRefusal(vendor: String, apiKey: String, streaming: Bool) {
         for model in Self.models(forVendor: vendor) {
             throttle(forVendor: vendor)
@@ -565,6 +578,168 @@ final class AILiveHarness: XCTestCase {
         }
     }
 
+    // MARK: - Tool-schema acceptance
+
+    // The ACTUAL production tool schemas, from both code paths: the
+    // hand-authored orchestrator surface (JSONSchema(rawJSON:)) and the
+    // reflection-generated single-session RemoteCommand surface
+    // (JSONSchema(for:)). Deduped by name. This is the set that shipped a
+    // 400 ("'required' ... Missing 'direction'") the unit tests couldn't
+    // see, because nothing sent these exact schemas to a real vendor.
+    private func productionToolDeclarations() -> [ChatGPTFunctionDeclaration] {
+        var byName: [String: ChatGPTFunctionDeclaration] = [:]
+        var order: [String] = []
+        func add(_ decl: ChatGPTFunctionDeclaration) {
+            if byName[decl.name] == nil { order.append(decl.name) }
+            byName[decl.name] = decl
+        }
+        for def in OrchestratorCommand.allToolDefinitions {
+            add(ChatGPTFunctionDeclaration(name: def.name,
+                                           description: def.description,
+                                           parameters: JSONSchema(rawJSON: def.inputSchema)))
+        }
+        for content in RemoteCommand.Content.allCases {
+            guard let prototype = Mirror(reflecting: content).children.first?.value else {
+                continue
+            }
+            add(ChatGPTFunctionDeclaration(
+                name: content.functionName,
+                description: content.functionDescription,
+                parameters: JSONSchema(for: prototype, descriptions: content.argDescriptions)))
+        }
+        return order.compactMap { byName[$0] }
+    }
+
+    private func noopAnyFunction(_ decl: ChatGPTFunctionDeclaration) -> LLM.AnyFunction {
+        LLM.Function<AnyCodable>(
+            decl: decl,
+            call: { _, _, completion in try? completion(.success("{}")) },
+            parameterType: AnyCodable.self)
+    }
+
+    // Send every production tool schema to a real vendor and assert the API
+    // does not reject them. A benign prompt (we don't need the model to call
+    // anything); the point is purely that the vendor accepts the tool
+    // definitions. A schema the vendor rejects comes back as an HTTP 4xx,
+    // which AILiveDriver.run surfaces as a thrown error, failing the test
+    // with the vendor's exact complaint.
+    private func runToolSchemaAcceptance(vendor: String, apiKey: String) {
+        let decls = productionToolDeclarations()
+        guard !decls.isEmpty else {
+            XCTFail("[\(vendor)] no production tool declarations to validate")
+            return
+        }
+        let functions = decls.map(noopAnyFunction)
+        for model in Self.models(forVendor: vendor) {
+            guard let resolved = AIMetadata.instance.models.first(where: { $0.name == model }),
+                  resolved.features.contains(.functionCalling) else {
+                continue
+            }
+            let messages = [LLM.Message(role: .user,
+                                        content: "Reply with the single word: ok.")]
+            throttle(forVendor: vendor)
+            do {
+                let result = try AILiveDriver.run(
+                    modelName: model,
+                    apiKey: apiKey,
+                    messages: messages,
+                    streaming: false,
+                    function: Optional<AILiveFunctionSpec<EmptyArgs>>.none,
+                    extraFunctions: functions,
+                    scenarioTag: "toolSchemas",
+                    test: self)
+                print("[live] \(vendor)/\(model) toolSchemas OK "
+                      + "(\(decls.count) tools accepted)")
+                _ = result
+            } catch {
+                // A rejected tool schema comes back as HTTP 400 (the request
+                // body was malformed). Only that is a real failure here. Other
+                // statuses are environmental noise unrelated to schemas: 404 for
+                // a retired model, 401 for a bad key, 429/5xx for capacity. Skip
+                // those so a stale model id can't mask a genuine schema break.
+                if Self.httpStatusCode(inErrorText: "\(error)") == 400 {
+                    XCTFail("[\(vendor)/\(model)/toolSchemas] vendor rejected a production "
+                            + "tool schema: \(error)")
+                } else {
+                    print("[live] \(vendor)/\(model) toolSchemas skipped "
+                          + "(non-schema error: \(error))")
+                }
+            }
+        }
+    }
+
+    // MARK: - Volatile-context multi-turn
+
+    // End-to-end guard that a user's newest turn is never lost when a volatile
+    // per-turn context block (the orchestration <workgroups> snapshot, the
+    // session-bound terminal/screen block) is present. The plain runMultiTurn
+    // above sets no volatile context and never uses previousResponseID, so it
+    // could not catch the truncation bug where the Responses builder, sending
+    // only the newest message under previousResponseID, kept the trailing
+    // volatile message and dropped the user's actual turn.
+    //
+    // This drives a real two-turn conversation with a volatile block on BOTH
+    // turns. For OpenAI Responses models it uses previousResponseID (the delta
+    // path where the bug lived): turn 2 sends only the newest message plus the
+    // volatile block. For the other vendors, which have no server-side history
+    // and replay the full conversation every turn, it sends the whole history
+    // plus the volatile block. In either case the model must still answer turn
+    // 2's question, proving the user's turn survived alongside the context.
+    private func runVolatileContextMultiTurn(vendor: String, apiKey: String) throws {
+        guard let model = Self.models(forVendor: vendor).lazy
+            .compactMap({ name in AIMetadata.instance.models.first { $0.name == name } })
+            .first(where: { !Self.unreachableForNewKeys.contains($0.name) }) else {
+            throw XCTSkip("[\(vendor)] no reachable model in AIMetadata")
+        }
+        let codeword = "BANANA-7"
+        let volatile: () -> String? = {
+            "<context>Unrelated per-turn state: the terminal is idle.</context>"
+        }
+        let turn1 = "Remember this: my secret codeword is \(codeword). Reply with just: OK"
+        let turn2 = "What is my secret codeword? Reply with just the word."
+
+        throttle(forVendor: vendor)
+        let first = try AILiveDriver.run(
+            model: model, apiKey: apiKey,
+            messages: [LLM.Message(role: .user, content: turn1)],
+            streaming: false,
+            trailingVolatileTextProvider: volatile,
+            scenarioTag: "volatileTurn1", test: self)
+
+        // Delta mode only where the server holds history (OpenAI Responses).
+        let usesDelta = LLMProvider(model: model).supportsPreviousResponseID
+        let previousResponseID = usesDelta ? Self.responseID(in: first.capturedResponseBodies) : nil
+        let turn2Messages: [LLM.Message]
+        if usesDelta, previousResponseID != nil {
+            // Server holds the history; send only the newest turn (the exact
+            // shape that dropped the user's message before the fix).
+            turn2Messages = [LLM.Message(role: .user, content: turn2)]
+        } else {
+            // Stateless replay: resend the whole conversation.
+            turn2Messages = [
+                LLM.Message(role: .user, content: turn1),
+                LLM.Message(role: .assistant, content: first.finalText),
+                LLM.Message(role: .user, content: turn2),
+            ]
+        }
+
+        throttle(forVendor: vendor)
+        let second = try AILiveDriver.run(
+            model: model, apiKey: apiKey,
+            messages: turn2Messages,
+            streaming: false,
+            trailingVolatileTextProvider: volatile,
+            previousResponseID: previousResponseID,
+            scenarioTag: "volatileTurn2", test: self)
+
+        let delta = usesDelta && previousResponseID != nil
+        print("[live] \(vendor)/\(model.name) volatileMultiTurn delta=\(delta) -> "
+              + "\(second.finalText.replacingOccurrences(of: "\n", with: " ").prefix(60))")
+        XCTAssertTrue(second.finalText.uppercased().contains(codeword),
+                      "[\(vendor)/\(model.name)] turn-2 question was lost with a volatile context "
+                      + "block present (delta=\(delta)); model replied: \(second.finalText)")
+    }
+
     private func report(vendor: String,
                         model: String,
                         scenario: String,
@@ -596,6 +771,10 @@ final class AILiveHarness: XCTestCase {
         let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
         runMultiTurn(vendor: "openai", apiKey: key, streaming: false)
     }
+    func test_openai_volatileMultiTurn_keepsUserTurn() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        try runVolatileContextMultiTurn(vendor: "openai", apiKey: key)
+    }
     func test_openai_multiTurn_streaming() throws {
         let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
         runMultiTurn(vendor: "openai", apiKey: key, streaming: true)
@@ -607,6 +786,10 @@ final class AILiveHarness: XCTestCase {
     func test_openai_toolCall_streaming() throws {
         let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
         runToolCall(vendor: "openai", apiKey: key, streaming: true)
+    }
+    func test_openai_toolSchemaAcceptance() throws {
+        let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
+        runToolSchemaAcceptance(vendor: "openai", apiKey: key)
     }
     func test_openai_refusal_nonStreaming() throws {
         let key = try keyOrSkip(Self.loadKeys().openAI, vendor: "openai")
@@ -659,6 +842,10 @@ final class AILiveHarness: XCTestCase {
         let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
         runMultiTurn(vendor: "anthropic", apiKey: key, streaming: false)
     }
+    func test_anthropic_volatileMultiTurn_keepsUserTurn() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        try runVolatileContextMultiTurn(vendor: "anthropic", apiKey: key)
+    }
     func test_anthropic_multiTurn_streaming() throws {
         let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
         runMultiTurn(vendor: "anthropic", apiKey: key, streaming: true)
@@ -670,6 +857,10 @@ final class AILiveHarness: XCTestCase {
     func test_anthropic_toolCall_streaming() throws {
         let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
         runToolCall(vendor: "anthropic", apiKey: key, streaming: true)
+    }
+    func test_anthropic_toolSchemaAcceptance() throws {
+        let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
+        runToolSchemaAcceptance(vendor: "anthropic", apiKey: key)
     }
     func test_anthropic_refusal_nonStreaming() throws {
         let key = try keyOrSkip(Self.loadKeys().anthropic, vendor: "anthropic")
@@ -1123,6 +1314,10 @@ final class AILiveHarness: XCTestCase {
         let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
         runMultiTurn(vendor: "gemini", apiKey: key, streaming: false)
     }
+    func test_gemini_volatileMultiTurn_keepsUserTurn() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        try runVolatileContextMultiTurn(vendor: "gemini", apiKey: key)
+    }
     func test_gemini_multiTurn_streaming() throws {
         let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
         runMultiTurn(vendor: "gemini", apiKey: key, streaming: true)
@@ -1134,6 +1329,10 @@ final class AILiveHarness: XCTestCase {
     func test_gemini_toolCall_streaming() throws {
         let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
         runToolCall(vendor: "gemini", apiKey: key, streaming: true)
+    }
+    func test_gemini_toolSchemaAcceptance() throws {
+        let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
+        runToolSchemaAcceptance(vendor: "gemini", apiKey: key)
     }
     func test_gemini_refusal_nonStreaming() throws {
         let key = try keyOrSkip(Self.loadKeys().gemini, vendor: "gemini")
@@ -1370,6 +1569,10 @@ final class AILiveHarness: XCTestCase {
         let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
         runMultiTurn(vendor: "deepseek", apiKey: key, streaming: false)
     }
+    func test_deepseek_volatileMultiTurn_keepsUserTurn() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        try runVolatileContextMultiTurn(vendor: "deepseek", apiKey: key)
+    }
     func test_deepseek_multiTurn_streaming() throws {
         let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
         runMultiTurn(vendor: "deepseek", apiKey: key, streaming: true)
@@ -1381,6 +1584,10 @@ final class AILiveHarness: XCTestCase {
     func test_deepseek_toolCall_streaming() throws {
         let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
         runToolCall(vendor: "deepseek", apiKey: key, streaming: true)
+    }
+    func test_deepseek_toolSchemaAcceptance() throws {
+        let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
+        runToolSchemaAcceptance(vendor: "deepseek", apiKey: key)
     }
     func test_deepseek_refusal_nonStreaming() throws {
         let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")

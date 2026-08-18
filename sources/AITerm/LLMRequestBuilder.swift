@@ -73,7 +73,13 @@ struct LLMRequestBuilder {
                                          stream: stream,
                                          frozenHistoryElements: frozenHistoryElements).body()
         case .responses:
-            try ResponsesBodyRequestBuilder(messages: messagesWithVolatile,
+            // Pass the real messages and the volatile context SEPARATELY (not
+            // pre-folded via messagesWithVolatile): the Responses builder applies
+            // its previousResponseID suffix(1) truncation to the real messages
+            // and appends the volatile context afterward, so the user's newest
+            // turn is never the message that gets dropped. See the volatile-context
+            // tests (test_responses_withPreviousResponseID_keepsNewestUserTurnAndVolatile).
+            try ResponsesBodyRequestBuilder(messages: messages,
                                             provider: provider,
                                             functions: functions,
                                             stream: stream,
@@ -82,6 +88,7 @@ struct LLMRequestBuilder {
                                             shouldThink: shouldThink,
                                             reasoningEffort: reasoningEffort,
                                             serviceTier: serviceTier,
+                                            trailingVolatileText: trailingVolatileText,
                                             frozenHistoryElements: frozenHistoryElements).body()
         case .earlyO1:
             try O1BodyRequestBuilder(messages: messagesWithVolatile,

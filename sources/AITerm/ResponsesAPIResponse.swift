@@ -1452,7 +1452,15 @@ extension UnkeyedDecodingContainer {
     mutating func decode(_ type: [Any].Type) throws -> [Any] {
         var array: [Any] = []
         while isAtEnd == false {
-            if let value = try? decode(Bool.self) {
+            // A JSON null MUST be handled first, and it MUST consume the
+            // element. Without this, a null matched no branch below, the
+            // container never advanced, and the final `decode([Any].self)`
+            // branch re-entered this same method on the same container and
+            // recursed until the stack overflowed. Any vendor response with a
+            // null inside an array (a common shape) crashed the parser.
+            if try decodeNil() {
+                array.append(NSNull())
+            } else if let value = try? decode(Bool.self) {
                 array.append(value)
             } else if let value = try? decode(Int.self) {
                 array.append(value)
@@ -1462,8 +1470,17 @@ extension UnkeyedDecodingContainer {
                 array.append(value)
             } else if let nestedDictionary = try? decode([String: Any].self) {
                 array.append(nestedDictionary)
-            } else if let nestedArray = try? decode([Any].self) {
-                array.append(nestedArray)
+            } else if var nested = try? nestedUnkeyedContainer() {
+                // A nested array element needs its own container; the old code
+                // called decode([Any].self) on `self`, which did not descend.
+                array.append(try nested.decode([Any].self))
+            } else {
+                // Nothing matched and nothing was consumed. Bail rather than
+                // spin forever; a genuinely undecodable element is a bug worth
+                // surfacing, not looping on.
+                throw DecodingError.dataCorruptedError(
+                    in: self,
+                    debugDescription: "Unsupported element in JSON array")
             }
         }
         return array

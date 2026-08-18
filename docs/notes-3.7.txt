@@ -577,6 +577,15 @@ Triggers Improvements:
 
 
 AI Improvements:
+- Fixed AI chat failing on OpenAI models with an
+  error about an invalid tool schema. Also fixed
+  a crash while parsing AI responses that
+  contained a null value inside an array.
+- Fixed a bug where, on OpenAI models, the second
+  and later messages in an orchestration or
+  terminal-linked AI chat were ignored: the model
+  received only the terminal/workgroups context
+  and replied as if you had said nothing.
 - The AI chat “View History” permission is now
   “View Contents”. When it is set to provide
   contents automatically, a session-bound chat
