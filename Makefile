@@ -61,7 +61,7 @@ else
   RUST_NATIVE_TARGET = x86_64-apple-darwin
 endif
 
-.PHONY: clean all backup-old-iterm restart setup dangerous-setup _setup-main help doctor
+.PHONY: clean all backup-old-iterm restart setup dangerous-setup _setup-main help doctor companion-bump-build
 
 help:
 	@echo "iTerm2 — $(VERSION) ($(NATIVE_ARCH))"
@@ -92,6 +92,10 @@ help:
 	@echo "  make Nightly      Build Nightly configuration"
 	@echo "  make Deployment   Build Deployment configuration"
 	@echo ""
+	@echo "Companion (iOS):"
+	@echo "  make companion-bump-build   Bump app + PushService build # and regenerate"
+	@echo "                              (N=123 to set an explicit number)"
+	@echo ""
 	@echo "Diagnose:"
 	@echo "  make doctor       Check all build dependencies"
 	@echo ""
@@ -105,6 +109,15 @@ help:
 all: Development
 dev: Development
 prod: Deployment
+
+# Bump the Companion app + PushService build number and regenerate the Xcode
+# project so it takes effect. CURRENT_PROJECT_VERSION lives once in the generator
+# (the source of truth for both targets), so this keeps them in lockstep and
+# survives regeneration. Pass N=<number> to set an explicit build number instead
+# of incrementing (use this to jump past builds already on App Store Connect).
+companion-bump-build:
+	ruby Companion/tools/bump_build_number.rb $(N)
+	ruby Companion/tools/generate_companion_project.rb
 
 setup:
 	@BREW_BIN=$$(PATH="/opt/homebrew/bin:/usr/local/bin:$(ORIG_PATH)" command -v brew 2>/dev/null); \
