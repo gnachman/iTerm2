@@ -71,6 +71,9 @@ class H(BaseHTTPRequestHandler):
                 if SCENARIO == "nsf_list_fail":
                     _send(self, 200, {"error": "nsf-list unavailable", "status": "error"})
                     return
+                if SCENARIO == "nsf_list_not_available":
+                    _send(self, 200, {"error": "Nested Shared Folder not available", "status": "error"})
+                    return
                 nsf_data = [
                     {"Item Type": "Folder", "Parent/Folder": "",
                      "Title": "NewDemoFolder", "Type": "folder",
@@ -139,7 +142,7 @@ class H(BaseHTTPRequestHandler):
                 _send(self, 200, {
                     "command": "nsf-record-add",
                     "data": None,
-                    "message": "Record NSFUID123456789 was added successfully.",
+                    "message": "Record NSFUID1234567890123456 was added successfully.",
                     "status": "success",
                 })
                 return
@@ -374,7 +377,7 @@ server.serve_forever()
         XCTAssertEqual(result.status, 0, result.output)
         let json = try decodeJSON(result.output)
         let accountIdentifier = try XCTUnwrap(json["accountIdentifier"] as? [String: Any])
-        XCTAssertEqual(accountIdentifier["accountID"] as? String, "NSFUID123456789")
+        XCTAssertEqual(accountIdentifier["accountID"] as? String, "NSFUID1234567890123456")
     }
 
     func testAddAccountDefaultsToNestedSharedFolders() throws {
@@ -384,7 +387,7 @@ server.serve_forever()
         XCTAssertEqual(result.status, 0, result.output)
         let json = try decodeJSON(result.output)
         let accountIdentifier = try XCTUnwrap(json["accountIdentifier"] as? [String: Any])
-        XCTAssertEqual(accountIdentifier["accountID"] as? String, "NSFUID123456789")
+        XCTAssertEqual(accountIdentifier["accountID"] as? String, "NSFUID1234567890123456")
     }
 
     func testSetPasswordOnNestedRecordUsesNsfRecordUpdate() throws {
@@ -453,6 +456,15 @@ server.serve_forever()
         XCTAssertTrue(warning.contains("Nested Shared Folder"), warning)
     }
 
+    func testListAccountsOmitsWarningWhenNsfUnavailable() throws {
+        let server = try MockKeeperServer(scenario: "nsf_list_not_available")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())"}"#
+        let result = try run("list-accounts", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        XCTAssertNil(json["warning"] as? String)
+    }
+
     func testKeeperSyncDownSuccess() throws {
         let server = try MockKeeperServer()
         let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","commandName":"sync-down"}"#
@@ -508,7 +520,7 @@ server.serve_forever()
 
     func testSetPasswordErrorMapsToUserFacingMessage() throws {
         let server = try MockKeeperServer(scenario: "set_password_error")
-        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"newPassword":"new-pass"}"#
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"sourceLabel":"Classic","newPassword":"new-pass"}"#
         let result = try run("set-password", input: input)
         XCTAssertNotEqual(result.status, 0, result.output)
         let json = try decodeJSON(result.output)

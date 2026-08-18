@@ -391,36 +391,30 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         deleteOrphanedLegacyApiKeySettings()
     }
 
-    private var legacyApiKeyMigratedDefaultsKey: String {
-        "NoSyncKeeperLegacyApiKeyMigrated_\(identifier)"
-    }
-
     /// Pre-round-3 builds stored the API key under settings account "apiKey".
     /// Migrate into the master-password keychain slot once, then delete the orphan.
     private func migrateLegacyApiKeyIfNeeded() {
-        let defaults = iTermUserDefaults.userDefaults()
-        let flagKey = legacyApiKeyMigratedDefaultsKey
-        if defaults.bool(forKey: flagKey) {
+        let current = loadPersistedCredentials()
+        if let current, !current.isEmpty {
+            if masterPassword == nil || masterPassword!.isEmpty {
+                masterPassword = current
+            }
             return
         }
-        if let legacy = try? SSKeychain.password(forService: keychainCredentialServiceName, account: "apiKey"),
-        !legacy.isEmpty {
-            let current = loadPersistedCredentials()
-            if current == nil || current!.isEmpty {
-                persistCredentialsToKeychain(legacy)
-                if masterPassword == nil || masterPassword!.isEmpty {
-                    masterPassword = legacy
-                }
-            }
-            _ = SSKeychain.deletePassword(forService: keychainCredentialServiceName, account: "apiKey")
+        guard let legacy = try? SSKeychain.password(forService: keychainCredentialServiceName, account: "apiKey"),
+            !legacy.isEmpty else {
+            return
         }
-        defaults.set(true, forKey: flagKey)
+        persistCredentialsToKeychain(legacy)
+        if masterPassword == nil || masterPassword!.isEmpty {
+            masterPassword = legacy
+        }
+        _ = SSKeychain.deletePassword(forService: keychainCredentialServiceName, account: "apiKey")
     }
 
     /// Purge orphan settings apiKey (reset path). Does not migrate.
     private func deleteOrphanedLegacyApiKeySettings() {
         _ = SSKeychain.deletePassword(forService: keychainCredentialServiceName, account: "apiKey")
-        iTermUserDefaults.userDefaults().removeObject(forKey: legacyApiKeyMigratedDefaultsKey)
     }
 
     private func ensureAuthentication(window: NSWindow?, _ completion: @escaping (Error?) -> ()) {
@@ -635,8 +629,8 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         iTermWarning.show(withTitle: warning,
                                             actions: ["OK"],
                                             accessory: nil,
-                                            identifier: nil,
-                                            silenceable: .kiTermWarningTypePersistent,
+                                            identifier: "NoSyncKeeperListPartialFailure",
+                                            silenceable: .kiTermWarningTypePermanentlySilenceable,
                                             heading: "Password Manager",
                                             window: nil)
                     }
