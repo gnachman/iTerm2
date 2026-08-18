@@ -356,9 +356,13 @@ typedef struct {
     if (!_tabBarControlOnLoan && !_windowNumberLabel.hidden && view == _windowNumberLabel && !_tabBarControl.isHidden) {
         return _tabBarControl;
     } else if (!_tabBarControlOnLoan && !_windowNameBesideTabsLabel.hidden && view == _windowNameBesideTabsLabel && !_tabBarControl.isHidden) {
-        // Same as the window number: the name is painted over the strip, so
-        // clicks belong to the tab bar underneath it.
-        return _tabBarControl;
+        // Unlike the window number, the name answers one gesture of its own: a
+        // double-click opens the rename dialog, since the name is the one thing
+        // in the strip a user might want to change in place. It is detected in
+        // -mouseUp:, never -mouseDown: — overriding -mouseDown: at all switches
+        // off the automatic dragging that mouseDownCanMoveWindow provides, for
+        // the whole view and every window style.
+        return self;
     } else if (!_windowTitleLabel.hidden && view == _windowTitleLabel) {
         return self;
     } else {
@@ -366,20 +370,35 @@ typedef struct {
     }
 }
 
+- (BOOL)pointIsInWindowNameBesideTabs:(NSPoint)point {
+    return (!_tabBarControlOnLoan &&
+            !_windowNameBesideTabsLabel.hidden &&
+            !_tabBarControl.isHidden &&
+            NSPointInRect(point, _windowNameBesideTabsLabel.frame));
+}
+
 - (void)mouseUp:(NSEvent *)event {
-    if (!_windowTitleLabel.hidden && event.clickCount == 2) {
+    if (event.clickCount == 2) {
         const NSPoint point = [self convertPoint:event.locationInWindow fromView:nil];
-        const CGFloat titleBarHeight = _tabBarControl.height;
-        NSRect rect = NSMakeRect(0, self.bounds.size.height - titleBarHeight, self.bounds.size.width, titleBarHeight);
-        if (NSPointInRect(point, rect)) {
-            [self.window it_titleBarDoubleClick];
+        if ([self pointIsInWindowNameBesideTabs:point]) {
+            [self.delegate rootTerminalViewDidRequestEditWindowName];
+        } else if (!_windowTitleLabel.hidden) {
+            const CGFloat titleBarHeight = _tabBarControl.height;
+            NSRect rect = NSMakeRect(0, self.bounds.size.height - titleBarHeight, self.bounds.size.width, titleBarHeight);
+            if (NSPointInRect(point, rect)) {
+                [self.window it_titleBarDoubleClick];
+            }
         }
     }
     [super mouseUp:event];
 }
 
 - (NSMenu *)menuForEvent:(NSEvent *)event {
-    if (_windowTitleLabel.hidden) {
+    // Taking the name's clicks must not cost it the menu it had when those
+    // clicks went to the tab bar, so the name keeps the strip's context menu
+    // even though the fake title label is hidden.
+    if (_windowTitleLabel.hidden &&
+        ![self pointIsInWindowNameBesideTabs:[self convertPoint:event.locationInWindow fromView:nil]]) {
         return nil;
     }
     return [_tabBarControl menuForEvent:event];
