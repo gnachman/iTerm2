@@ -167,7 +167,20 @@ extension CompanionKeyEvent {
                     continue
                 }
                 let string = String(character)
-                if let event = Self.makeEvent(characters: base.characters ?? string,
+                // A real Ctrl+<key> press reports the control byte in NSEvent.characters
+                // (Ctrl+C -> U+0003). The injection send path emits .characters verbatim
+                // (iTermStandardKeyMapper.dataForRegularKeypress, and the modern mapper's
+                // legacy path) because it reaches the POST-Cocoa path, not the pre-Cocoa
+                // control path that would derive the code from charactersIgnoringModifiers.
+                // base.characters is the UNMODIFIED letter ("c"), so without substituting
+                // the control byte a Ctrl combo would type the plain letter (^C -> "c").
+                let characters: String
+                if deadKeyFlags.contains(.control), let controlByte = Self.controlByte(forBaseCharacter: character) {
+                    characters = String(controlByte)
+                } else {
+                    characters = base.characters ?? string
+                }
+                if let event = Self.makeEvent(characters: characters,
                                               charactersIgnoringModifiers: base.charactersIgnoringModifiers ?? string,
                                               flags: base.modifierFlags.union(deadKeyFlags),
                                               keyCode: Int(base.keyCode)) {
@@ -244,6 +257,25 @@ extension CompanionKeyEvent {
             return nil   // round-trips on the bare/shifted key: safe to synthesize
         }
         return characters   // needs Option, or a fallback key code: write literally
+    }
+
+    /// The control byte a real Ctrl+<char> press reports in NSEvent.characters, or nil
+    /// if the character has no standard control code (so the base character is kept).
+    /// Mirrors AppKit: @ A-Z [ \ ] ^ _ and a-z mask to 0x00-0x1f, space -> NUL, ? -> DEL.
+    private static func controlByte(forBaseCharacter character: Character) -> Character? {
+        guard let ascii = character.asciiValue else {
+            return nil
+        }
+        switch ascii {
+        case 0x40...0x5f, 0x61...0x7a:   // @ A-Z [ \ ] ^ _ , and a-z
+            return Character(UnicodeScalar(ascii & 0x1f))
+        case 0x20:                        // space -> NUL
+            return Character(UnicodeScalar(0))
+        case 0x3f:                        // ? -> DEL
+            return Character(UnicodeScalar(0x7f))
+        default:
+            return nil
+        }
     }
 
     private static func makeEvent(characters: String,
