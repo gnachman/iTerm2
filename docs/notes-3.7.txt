@@ -2536,3 +2536,10 @@ Bug Fixes:
   not named look exactly as before. The advanced
   setting “Show the window name beside the
   tabs” can turn it off or always show it.
+- Double-clicking the window name beside the
+  tabs now opens the same rename dialog as
+  Window > Edit Window Title, so a window can be
+  renamed where its name is shown rather than
+  only from the Window menu. Dragging the name
+  still moves the window and right-clicking it
+  still opens the tab bar menu.

@@ -363,14 +363,40 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     if (!_tabBarControlOnLoan && !_windowNumberLabel.hidden && view == _windowNumberLabel && !_tabBarControl.isHidden) {
         return _tabBarControl;
     } else if (!_tabBarControlOnLoan && !_windowNameBesideTabsLabel.hidden && view == _windowNameBesideTabsLabel && !_tabBarControl.isHidden) {
-        // Same as the window number: the name is painted over the strip, so
-        // clicks belong to the tab bar underneath it.
-        return _tabBarControl;
+        // Unlike the window number, the name answers one gesture of its own: a
+        // double-click opens the rename dialog, since the name is the one thing
+        // in the strip a user might want to change in place. -mouseDown: hands
+        // every other gesture straight back, so the strip is unchanged except
+        // for that one case.
+        return self;
     } else if (!_windowTitleLabel.hidden && view == _windowTitleLabel) {
         return self;
     } else {
         return view;
     }
+}
+
+- (BOOL)pointIsInWindowNameBesideTabs:(NSPoint)point {
+    return (!_tabBarControlOnLoan &&
+            !_windowNameBesideTabsLabel.hidden &&
+            !_tabBarControl.isHidden &&
+            NSPointInRect(point, _windowNameBesideTabsLabel.frame));
+}
+
+- (void)mouseDown:(NSEvent *)event {
+    if (![self pointIsInWindowNameBesideTabs:[self convertPoint:event.locationInWindow fromView:nil]]) {
+        [super mouseDown:event];
+        return;
+    }
+    if (event.clickCount == 2) {
+        [self.delegate rootTerminalViewDidRequestEditWindowName];
+        return;
+    }
+    // What makes an ordinary view behave like a title bar: the window follows
+    // the drag, and a plain click does nothing. It zooms on a double-click too,
+    // which is why the case above returns before reaching it — on the name, the
+    // double-click is spent on the title instead.
+    [self.window performWindowDragWithEvent:event];
 }
 
 - (void)mouseUp:(NSEvent *)event {
@@ -386,7 +412,11 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 }
 
 - (NSMenu *)menuForEvent:(NSEvent *)event {
-    if (_windowTitleLabel.hidden) {
+    // Taking the name's clicks must not cost it the menu it had when those
+    // clicks went to the tab bar, so the name keeps the strip's context menu
+    // even though the fake title label is hidden.
+    if (_windowTitleLabel.hidden &&
+        ![self pointIsInWindowNameBesideTabs:[self convertPoint:event.locationInWindow fromView:nil]]) {
         return nil;
     }
     return [_tabBarControl menuForEvent:event];
