@@ -76,6 +76,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Works around an apparent OS bug where we get drag events without a mousedown.
     BOOL dragOk_;
 
+    // Set once per mouse-down after we have offered the drag gesture to a program
+    // that accepts Kitty drag-and-drop offers, so we only offer it once per drag.
+    BOOL _kittyDragOfferStarted;
+    // The drag event we offered to a Kitty DnD program, kept so we can synthesize
+    // the button-release report if the program turns it into a native drag (whose
+    // session then swallows the real mouseUp).
+    NSEvent *_kittyDragGestureEvent;
+
     BOOL _committedToDrag;
 
     // Detects when the user is trying to scroll in alt screen with the scroll wheel.
@@ -258,6 +266,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     dragOk_ = YES;
     _committedToDrag = NO;
+    _kittyDragOfferStarted = NO;
+    // If a previous gesture's mouseUp was swallowed (a modal panel/alert or menu
+    // tracking opened mid-drag), the drag host still holds the stale pending event.
+    // Tell it to forget it before we drop our own reference, so a program's t=P
+    // cannot start a phantom drag from it.
+    if (_kittyDragGestureEvent) {
+        [self.mouseDelegate mouseHandlerKittyDragGestureDidEnd:self];
+    }
+    _kittyDragGestureEvent = nil;
     if (cmdPressed) {
         if (![self.mouseDelegate mouseHandlerViewHasFocus:self]) {
             if (![self.mouseDelegate mouseHandlerIsInKeyWindow:self]) {
@@ -411,6 +428,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (iTermClickSideEffects)mouseUpImpl:(NSEvent *)event {
     DLog(@"Mouse Up on %@ with event %@, numTouches=%d, mouseDown=%@", self, event, _numTouches, @(_mouseDown));
+    // If we offered a Kitty DnD drag gesture this mouse-down but no native drag
+    // started (which would have consumed the mouseUp and cleared this), the
+    // gesture is over: tell the bridge to forget the stored event so a later t=P
+    // cannot start a phantom drag from it.
+    if (_kittyDragGestureEvent) {
+        _kittyDragGestureEvent = nil;
+        [self.mouseDelegate mouseHandlerKittyDragGestureDidEnd:self];
+    }
     _makingThreeFingerSelection = NO;
     DLog(@"_makingThreeFingerSelection <- NO");
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
@@ -745,6 +770,31 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // results, and letting only some events report produced a drag split between the app's selection
     // and a local one. Hold Option to force a local selection while mouse reporting is on. Issues
     // 12953 and 12950.
+    // If a program has enabled Kitty drag-and-drop offers, hand it this gesture
+    // so it can turn the drag into a drag-out. Only in mouse-reporting mode (the
+    // gesture is otherwise a text selection), not for a three-finger drag, not
+    // with Option held, and only once per mouse-down. Done before the report
+    // below so the program learns of the drag as it starts.
+    if ([self.mouseDelegate mouseHandlerHasKittyDragOffer:self]) {
+        DLog(@"Kitty drag offer available. dragThresholdMet=%d makingThreeFingerSelection=%d "
+             @"kittyDragOfferStarted=%d optionHeld=%d reportable=%d",
+             dragThresholdMet, _makingThreeFingerSelection, _kittyDragOfferStarted,
+             (int)(([event modifierFlags] & NSEventModifierFlagOption) != 0),
+             [self mouseEventIsReportable:event]);
+    }
+    if (dragThresholdMet &&
+        !_makingThreeFingerSelection &&
+        !_kittyDragOfferStarted &&
+        !([event modifierFlags] & NSEventModifierFlagOption) &&
+        [self.mouseDelegate mouseHandlerHasKittyDragOffer:self] &&
+        [self mouseEventIsReportable:event]) {
+        DLog(@"Offering Kitty drag gesture to program");
+        if ([self.mouseDelegate mouseHandler:self reportKittyDragGestureWithEvent:event]) {
+            _kittyDragOfferStarted = YES;
+            _kittyDragGestureEvent = event;
+        }
+    }
+
     BOOL dragWasReportable = NO;
     if ([self handleMouseEvent:event testOnly:NO deltaOut:NULL reportableOut:&dragWasReportable]) {
         DLog(@"Reported drag");
@@ -1254,6 +1304,36 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // If thiss changes also update wantsMouseMovementEvents
 - (BOOL)reportMouseEvent:(NSEvent *)event {
     return [self handleMouseEvent:event testOnly:NO deltaOut:NULL reportableOut:NULL];
+}
+
+// A Kitty DnD program turned the drag gesture into a native OS drag. The drag
+// session now owns event tracking, so the real mouseUp that would end this
+// gesture will never arrive. Synthesize the button-release report (so a
+// mouse-reporting program does not think the button is still held) and clear the
+// per-gesture state that mouseUp would otherwise have cleared.
+- (void)kittyDragDidBegin {
+    NSEvent *gesture = _kittyDragGestureEvent;
+    _kittyDragGestureEvent = nil;
+    if (gesture) {
+        NSEvent *release = [NSEvent mouseEventWithType:NSEventTypeLeftMouseUp
+                                              location:gesture.locationInWindow
+                                         modifierFlags:gesture.modifierFlags
+                                             timestamp:gesture.timestamp
+                                          windowNumber:gesture.windowNumber
+                                               context:nil
+                                           eventNumber:0
+                                            clickCount:1
+                                              pressure:0];
+        if (release) {
+            [self reportMouseEvent:release];
+        }
+    }
+    _kittyDragOfferStarted = NO;
+    _committedToDrag = NO;
+    _mouseDown = NO;
+    _mouseDownEvent = nil;
+    dragOk_ = NO;
+    [self.selection endLiveSelection];
 }
 
 // When in doubt this can return YES at the cost of a little CPU when moving the mouse around.

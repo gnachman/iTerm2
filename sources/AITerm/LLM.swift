@@ -37,13 +37,30 @@ enum LLM {
         var choiceMessages: [Message] { get }
         var isStreamingResponse: Bool { get }
         var newlyCreatedResponseID: String? { get }
+        // The vendor's reported total INPUT (prompt) token count for this request, if
+        // any: prompt_tokens / input_tokens / promptTokenCount. nil when the vendor
+        // reported no usage. Used by blob capture to derive each round's real token
+        // weight (by subtraction) for truncation; falls back to a byte estimate when
+        // nil. This is the WHOLE prompt (system + tools + all history + this turn),
+        // not a per-round figure - the per-round split is a subtraction at capture.
+        var promptTokens: Int? { get }
     }
 }
 
 extension LLM.AnyResponse {
     // Default for vendors that don't expose a server-side response ID for chaining.
     var newlyCreatedResponseID: String? { nil }
+    // Default for vendors that don't surface usage (or a parser not yet wired to).
+    var promptTokens: Int? { nil }
 }
+
+extension LLM.AnyStreamingResponse {
+    // Default for streaming events that don't carry usage (most of them) and for
+    // vendors/parsers not yet wired to surface it. A type conforming to BOTH this and
+    // AnyResponse must declare promptTokens itself to resolve the two defaults.
+    var promptTokens: Int? { nil }
+}
+
 
 extension LLM {
 
@@ -54,6 +71,10 @@ extension LLM {
         var newlyCreatedResponseID: String? { get }
         var choiceMessages: [Message] { get }
         var isStreamingResponse: Bool { get }
+        // The vendor's reported total input (prompt) tokens, surfaced on the streaming
+        // event that carries usage (near end of stream); nil on every other event and
+        // for vendors that report none. See LLM.AnyResponse.promptTokens.
+        var promptTokens: Int? { get }
     }
 
     // This is a platform-independent representation of a message to or from an LLM.

@@ -209,6 +209,21 @@ class ChatListModel: ChatListDataSource {
                         createIfNeeded: false)?.firstIndex { $0.uniqueID == messageID }
     }
 
+    /// Link a display message to the blob for the round it begins (fork slicing uses
+    /// this). Set at capture on the round's first user message. Persists via the
+    /// message's updateQuery.
+    func setFirstBlobRef(_ blobID: String, forMessageID messageID: UUID, inChat chatID: String) {
+        guard let array = messages(forChat: chatID, createIfNeeded: false),
+              let index = array.firstIndex(where: { $0.uniqueID == messageID }) else {
+            return
+        }
+        do {
+            try array.modify(at: index) { $0.firstBlobRef = blobID }
+        } catch {
+            RLog("setFirstBlobRef failed for \(messageID) in \(chatID): \(error)")
+        }
+    }
+
     // The no-maxLength form is the ChatListDataSource witness (a defaulted
     // parameter can't satisfy a protocol requirement).
     func snippet(forChatID chatID: String) -> String? {
@@ -233,6 +248,15 @@ class ChatListModel: ChatListDataSource {
         }
         do {
             try messages.removeAll(where: { messageIDs.contains($0.uniqueID) })
+            // A deletion (edit/retry truncates the display log from a chosen
+            // message onward) breaks the append-only assumption wire-fragment blob
+            // capture relies on: it decides what is "new" by comparing the stored
+            // blob count to the reconstructed round count, which is only valid if
+            // rounds are never removed. Invalidate the chat's blobs so the next
+            // completed turn re-freezes the edited history from scratch, instead of
+            // leaving a stored sequence that describes a conversation that no longer
+            // exists (or, worse, splicing new rounds onto stale ones).
+            database.replaceBlobs(inChat: chatID, with: [])
         } catch {
             RLog("Failed to delete messages from chat \(chatID): \(error)")
         }
@@ -440,6 +464,25 @@ class ChatListModel: ChatListDataSource {
         try chatStorage.set(at: i, temp)
         postMetadataChange()
     }
+
+    /// Stamp the protocol a chat's wire-fragment blobs are frozen to (the iTermAIAPI
+    /// raw value), set on the first blob capture. Unlike the other setters this does
+    /// NOT postMetadataChange(): blobProtocol is an internal reconstruction detail,
+    /// not display metadata, so the chat list and model pickers needn't refresh.
+    func setBlobProtocol(_ blobProtocol: Int?, forChatID chatID: String) throws {
+        guard let i = index(of: chatID) else {
+            return
+        }
+        var temp = chatStorage[i]
+        temp.blobProtocol = blobProtocol
+        try chatStorage.set(at: i, temp)
+    }
+
+    /// Read access to the backing store for wire-fragment blob operations, so
+    /// callers reach the SAME database this list model uses (the real singleton in
+    /// production, a temp DB under test) rather than the ChatDatabase.instance
+    /// singleton directly.
+    var chatDatabase: ChatDatabase { database }
 
     // MARK: - Orchestrator-mode accessors
 

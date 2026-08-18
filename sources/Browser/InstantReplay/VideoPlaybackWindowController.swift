@@ -241,12 +241,11 @@ class VideoPlaybackWindowController: NSWindowController, NSMenuItemValidation {
             object: playerItem
         )
         
-        asset.loadValuesAsynchronously(forKeys: ["duration"]) { [weak self] in
-            DispatchQueue.main.async {
-                self?.updateScrubberRange()
-                self?.updateDurationDisplay()
-                self?.setupTimeObserver()
-            }
+        Task { @MainActor [weak self] in
+            _ = try? await asset.load(.duration)
+            self?.updateScrubberRange()
+            self?.updateDurationDisplay()
+            self?.setupTimeObserver()
         }
     }
     

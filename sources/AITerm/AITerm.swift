@@ -224,6 +224,69 @@ class AITermController {
     var hostedTools = HostedTools()
     var previousResponseID: String?
 
+    // Volatile per-request context (the orchestration <workgroups> snapshot,
+    // the session-bound terminal/screen block) appended after the cache
+    // breakpoint by AnthropicRequestBuilder so it never invalidates the cached
+    // history prefix. This is a PROVIDER, not a fixed string: it is evaluated
+    // fresh for every request (including each tool-loop continuation within a
+    // turn) so mid-turn session changes reach the model. A turn-start snapshot
+    // frozen for the whole tool loop would go stale — e.g. start_code_review
+    // reloads its target session, changing its session_guid, and a stale
+    // snapshot would keep pointing the model at the dead guid (infinite retry
+    // loop). Evaluated on the main thread at request-build time by ChatAgent's
+    // @MainActor closure; nil for non-orchestration turns.
+    var trailingVolatileTextProvider: (() -> String?)?
+
+    // Blob-native replay decision for the current turn, set each turn by the chat
+    // layer (exactly like trailingVolatileTextProvider, and for the same reason:
+    // it is per-turn request-build wiring that lives on the controller, not on the
+    // copied-forward AIConversation snapshot). Given the full conversation it
+    // returns the REDUCED message list ([system] + the current round only) plus the
+    // frozen-history bytes to splice, or nil to fall back to full reconstruction.
+    // nil for non-chat callers. AIConversation.complete consults this (never in
+    // Responses delta mode) and stamps frozenHistoryElements from the result.
+    var blobReplayProvider: (([Message]) -> (messages: [Message], frozen: Data)?)?
+
+    // Blob-native replay: the chat's verbatim frozen-history wire bytes (the
+    // comma-joined inner element bytes of the stored blobs, no surrounding
+    // brackets) that the per-vendor builder splices into its message array after
+    // the system message(s). Set once per turn by the chat layer (AIConversation
+    // from ChatAgent's decision) alongside sending the REDUCED message list
+    // ([system] + the current round only); the same bytes are re-spliced on every
+    // tool-loop sub-request of the turn, since the frozen prefix does not change
+    // mid-turn (only the current round's tail grows). nil for the normal path,
+    // where `messages` carries the whole conversation.
+    var frozenHistoryElements: Data?
+
+    // Blob-native replay escape hatch, set each turn by the chat layer ALONGSIDE
+    // blobReplayProvider (same lifecycle). When the chat layer pre-reduces
+    // conversation.messages to just the current round for the blob path (skipping
+    // the wasted translate of the frozen prefix), it hands this reconstructor of
+    // the FULL history so a bail (a protocol switch that needs re-freezing, or an
+    // oversized round the codec must elide) never sends a history-less request.
+    // nil when the turn was NOT pre-reduced (conversation.messages already holds
+    // the whole conversation) or for non-chat callers.
+    var fullHistoryProvider: (() -> [Message])?
+
+    // Blob-native pre-reduce: the previous_response_id from the frozen-away history's
+    // last assistant turn. Pre-reducing drops the prior assistant messages from
+    // conversation.messages, so complete() can no longer read the last one's
+    // responseID; this carries it forward so a pre-reduced Responses conversation
+    // still enters delta mode (send only the new turn + id) on the turn's first
+    // request instead of falling back to a full blob replay. Consulted only when
+    // conversation.messages has no assistant message yet. nil when not pre-reduced.
+    var reducedHistoryPreviousResponseID: String?
+
+    // The vendor's reported total input (prompt) tokens from the most recent
+    // response of the current turn (kept as the last non-nil value across a stream,
+    // since usage rides a single event). Read by the chat layer at turn end to derive
+    // the new round's real token weight for truncation. nil when no vendor usage was
+    // seen this turn. Reset to nil at turn start by AIConversation.complete so a turn
+    // whose vendor reports no usage does not read a stale prior-turn value; each
+    // request's parse updates it (last non-nil wins, and the turn's final request has
+    // the fullest input footprint).
+    var lastPromptTokens: Int?
+
     func define(functions: [LLM.AnyFunction]) {
         if llmProvider?.model.features.contains(.functionCalling) != true {
             return
@@ -524,10 +587,16 @@ class AITermController {
                                         messages: messages,
                                         functions: functions,
                                         hostedTools: hostedTools,
-                                        previousResponseID: previousResponseID,
+                                        // Only reference server-side stored state when the provider
+                                        // actually supports it. This is nil for non-Responses APIs and,
+                                        // crucially, for Zero Data Retention orgs (supportsPreviousResponseID
+                                        // returns false there), keeping the request a full stateless replay.
+                                        previousResponseID: llmProvider.supportsPreviousResponseID ? previousResponseID : nil,
                                         shouldThink: llmProvider.model.features.contains(.configurableThinking) ? shouldThink : nil,
                                         reasoningEffort: llmProvider.model.supports(reasoningEffort: reasoningEffort) ? reasoningEffort : nil,
-                                        serviceTier: llmProvider.model.supports(serviceTier: serviceTier) ? serviceTier : nil)
+                                        serviceTier: llmProvider.model.supports(serviceTier: serviceTier) ? serviceTier : nil,
+                                        trailingVolatileText: trailingVolatileTextProvider?())
+        builder.frozenHistoryElements = frozenHistoryElements
         builder.stream = stream != nil
         guard llmProvider.urlIsValid else {
             handle(event: .error(AIError("Invalid URL for AI provider of \(iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "(nil)")")))
@@ -922,6 +991,11 @@ class AITermController {
                             DLog("Stream finished")
                             break
                         }
+                        // Capture usage even on an "ignore" event (e.g. Anthropic's
+                        // message_start carries input usage but no content).
+                        if let promptTokens = response.promptTokens {
+                            lastPromptTokens = promptTokens
+                        }
                         if !response.ignore {
                             if let id = response.newlyCreatedResponseID {
                                 previousResponseID = id
@@ -1060,6 +1134,9 @@ class AITermController {
             }
             if let id = response.newlyCreatedResponseID {
                 previousResponseID = id
+            }
+            if let promptTokens = response.promptTokens {
+                lastPromptTokens = promptTokens
             }
             // Parsers now guarantee at most one Message per response: a single
             // assistant turn whose body is `.text`, `.functionCall`, or a

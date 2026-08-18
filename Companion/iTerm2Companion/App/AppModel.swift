@@ -138,7 +138,6 @@ final class AppModel {
     enum Destination: Hashable {
         case create
         case conversation(chatID: String)
-        case settings
         // originatingChatID is the chat the user tapped an @-mention in to reach
         // this session, if any; nil when reached from the session list or a
         // workgroup. The session view's compose overlay sends into that chat
@@ -1022,8 +1021,12 @@ final class AppModel {
         navigationPath.append(.create)
     }
 
+    /// Settings is a sheet (not a pushed screen) so it is reachable in every phase -
+    /// including before you are connected, where you may need to email diagnostic logs.
+    var showSettings = false
+
     func beginSettings() {
-        navigationPath.append(.settings)
+        showSettings = true
     }
 
     /// The navigation stack of whichever tab the user is looking at; mention

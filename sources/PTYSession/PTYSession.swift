@@ -796,8 +796,23 @@ extension PTYSession {
                        "AI tried to insert text but the escape sequence was malformed.")
             return
         }
-        writeTaskNoBroadcast(decoded)
-        try completion("Inserted", "Text inserted by AI.")
+        // A terminal Return key sends CR (0x0D), not LF (0x0A). Many
+        // raw-mode programs (shell line editors, REPLs, TUIs like Claude
+        // Code) treat a bare LF as "insert a literal newline" rather than
+        // "submit the line", so an AI-supplied \n often fails to act as
+        // Return. Translate LF to CR here. Collapse CRLF to a single CR
+        // first so we don't emit a double Return.
+        let normalized = decoded
+            .replacingOccurrences(of: "\r\n", with: "\r")
+            .replacingOccurrences(of: "\n", with: "\r")
+        writeTaskNoBroadcast(normalized)
+        // A bare "Inserted" reads as ambiguous to the model (did anything
+        // actually get typed?), which invites a duplicate insertion "to
+        // be sure." Report the concrete character count so the result is
+        // unmistakably a success.
+        let count = normalized.count
+        let noun = count == 1 ? "character" : "characters"
+        try completion("Inserted \(count) \(noun).", "Text inserted by AI.")
     }
 
     func deleteCurrentLineRemoteCommand(deleteCurrentLine: RemoteCommand.DeleteCurrentLine,
@@ -1838,6 +1853,7 @@ extension PTYSession {
     @objc
     func firePendingDiffLaunch() {
         let closure = swiftState.pendingDiffLaunch
+        RLog("PTYSession[\(guid)]: firePendingDiffLaunch hasClosure=\(closure != nil)")
         swiftState.pendingDiffLaunch = nil
         // While the diff-waiting overlay is up, -mainResponder routes to
         // its Run Anyway button, so the peer swap that revealed this
@@ -1882,7 +1898,10 @@ extension PTYSession {
     // driven path go through the same dismiss + launch sequence.
     @objc
     func presentDiffWaitingPromptOverlay() {
-        guard let sessionView: SessionView = view else { return }
+        guard let sessionView: SessionView = view else {
+            RLog("PTYSession[\(guid)]: presentDiffWaitingPromptOverlay aborted, session has no view")
+            return
+        }
         sessionView.presentDiffWaitingPromptOverlay { [weak self] in
             self?.firePendingDiffLaunch()
         }
@@ -1898,7 +1917,10 @@ extension PTYSession {
     // visible output).
     @objc
     func presentDiffWaitingPromptOverlayForQueuedReload() {
-        guard let sessionView: SessionView = view else { return }
+        guard let sessionView: SessionView = view else {
+            RLog("PTYSession[\(guid)]: presentDiffWaitingPromptOverlayForQueuedReload aborted, session has no view")
+            return
+        }
         sessionView.presentDiffWaitingPromptOverlayForQueuedReload(
             onRunAnyway: { [weak self] in
                 self?.firePendingDiffLaunch()
@@ -1955,13 +1977,20 @@ extension PTYSession {
     // restoration) that have no selector selection to resolve.
     func reloadDiffWithDeferralIfNeeded(resolveCommand: (() -> String?)? = nil) {
         let ready = workgroupInstance?.diffLaunchReady ?? false
+        RLog("PTYSession[\(guid)]: reloadDiffWithDeferralIfNeeded ready=\(ready) hasPendingDiffLaunch=\(hasPendingDiffLaunch) restartable=\(isRestartable())")
         if hasPendingDiffLaunch {
             if ready {
+                RLog("PTYSession[\(guid)]: reloadDiffWithDeferralIfNeeded firing pending diff launch (State A)")
                 firePendingDiffLaunch()
+            } else {
+                RLog("PTYSession[\(guid)]: reloadDiffWithDeferralIfNeeded waiting, launch not ready (State A)")
             }
             return
         }
-        guard isRestartable() else { return }
+        guard isRestartable() else {
+            RLog("PTYSession[\(guid)]: reloadDiffWithDeferralIfNeeded aborted, not restartable and no pending launch (State C)")
+            return
+        }
         // No inner isRestartable() re-check inside the closure: under
         // current invariants -isRestartable becomes true once _program
         // is assigned and never flips back (no code path clears
@@ -1976,9 +2005,11 @@ extension PTYSession {
             }
         }
         if ready {
+            RLog("PTYSession[\(guid)]: reloadDiffWithDeferralIfNeeded restarting immediately (State B, ready)")
             restartWithCurrentSelection()
             return
         }
+        RLog("PTYSession[\(guid)]: reloadDiffWithDeferralIfNeeded queuing restart and showing waiting overlay (State B, not ready)")
         pendingDiffLaunch = restartWithCurrentSelection
         // Queued-reload variant of the overlay: the previous diff
         // output is still on screen behind the panel. Cancel clears
@@ -2059,9 +2090,12 @@ extension PTYSession {
                         .bookmark(withGuid: guid) {
                         profile = override
                     }
-                    // Peer sessions live on the same screen as the
-                    // main session and should never prompt on close —
-                    // they're torn down when the workgroup exits.
+                    // Workgroup-spawned sessions must not auto-close when
+                    // their command exits (a git-diff peer would vanish the
+                    // moment diff finishes), and closing one should prompt
+                    // on Cmd-W since it tears the whole workgroup down.
+                    // Matches WorkgroupSessionSpawner's split/tab behavior:
+                    // always prompt on close, never auto-close on exit.
                     profile[KEY_PROMPT_CLOSE] = PROMPT_ALWAYS
                     profile[KEY_SESSION_END_ACTION] =
                         iTermSessionEndAction.default.rawValue

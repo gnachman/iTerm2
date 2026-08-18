@@ -60,6 +60,7 @@ class ImageRegistry: NSObject {
                 }
                 info.provisional = true
                 codeToImage[key.intValue] = info
+                RLog("ImageRegistry: restore code \(key.intValue) as provisional")
                 DLog("Decoded restorable state for image \(key): \(info)")
                 ScreenCharGeneration.counter.advance()
             }
@@ -84,6 +85,7 @@ class ImageRegistry: NSObject {
     @objc(removeCode:)
     func remove(code: Int) {
         mutex.sync {
+            RLog("ImageRegistry: remove code \(code) (ReleaseImage/mark dealloc)")
             DLog("ReleaseImage(\(code))")
             codeToImage.removeValue(forKey: code)
             codeToPropertyList.removeValue(forKey: NSNumber(value: code))
@@ -94,11 +96,12 @@ class ImageRegistry: NSObject {
     @objc
     func collectGarbage() {
         mutex.sync {
-            RLog("Garbage collect")
+            RLog("ImageRegistry: garbage collect")
             for (key, value) in codeToImage {
                 guard value.provisional else {
                     continue
                 }
+                RLog("ImageRegistry: GC reap still-provisional code \(key)")
                 DLog("Remove \(key)")
                 codeToImage.removeValue(forKey: key)
             }
@@ -108,6 +111,7 @@ class ImageRegistry: NSObject {
     @objc(clearProvisionalFlagForCode:)
     func clearProvisionalFlag(code: Int) {
         mutex.sync {
+            RLog("ImageRegistry: clear provisional for code \(code)\(codeToImage[code] == nil ? " (MISSING: no registry entry)" : "")")
             DLog("Clear provisional for \(code)")
             codeToImage[code]?.provisional = false
         }

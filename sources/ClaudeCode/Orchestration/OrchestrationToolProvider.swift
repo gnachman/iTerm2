@@ -72,13 +72,26 @@ final class OrchestrationToolProvider: ToolProvider {
     private let mode: Mode
     private let enableRequestHandler: EnableRequestHandler?
     private let externalInvoker: ExternalToolInvoker?
+    // .sessionBound only: whether to expose the watch tools this turn. True
+    // when the chat is linked to a terminal session (watchers observe a single
+    // session). Resolved each registerTools() so a Link/Unlink toggle picks up
+    // on the next register.
+    private let offerWatchers: () -> Bool
 
+    // The session-bound provider now carries an externalInvoker (like the
+    // orchestration one) so its watch tools can ride the same
+    // .remoteCommandRequest(.external(...)) broker path to OrchestratorClient.
+    // The RemoteCommand tool surface still routes through the agent's own
+    // session-bound dispatcher; only the watch tools use the invoker.
     static func sessionBound(
-        enableRequestHandler: @escaping EnableRequestHandler
+        enableRequestHandler: @escaping EnableRequestHandler,
+        externalInvoker: @escaping ExternalToolInvoker,
+        offerWatchers: @escaping () -> Bool
     ) -> OrchestrationToolProvider {
         OrchestrationToolProvider(mode: .sessionBound,
                                   enableRequestHandler: enableRequestHandler,
-                                  externalInvoker: nil)
+                                  externalInvoker: externalInvoker,
+                                  offerWatchers: offerWatchers)
     }
 
     static func orchestration(
@@ -86,15 +99,18 @@ final class OrchestrationToolProvider: ToolProvider {
     ) -> OrchestrationToolProvider {
         OrchestrationToolProvider(mode: .orchestration,
                                   enableRequestHandler: nil,
-                                  externalInvoker: externalInvoker)
+                                  externalInvoker: externalInvoker,
+                                  offerWatchers: { false })
     }
 
     private init(mode: Mode,
                  enableRequestHandler: EnableRequestHandler?,
-                 externalInvoker: ExternalToolInvoker?) {
+                 externalInvoker: ExternalToolInvoker?,
+                 offerWatchers: @escaping () -> Bool) {
         self.mode = mode
         self.enableRequestHandler = enableRequestHandler
         self.externalInvoker = externalInvoker
+        self.offerWatchers = offerWatchers
     }
 
     // MARK: - ToolProvider
@@ -103,23 +119,18 @@ final class OrchestrationToolProvider: ToolProvider {
         switch mode {
         case .sessionBound:
             registerEnableRequestTool(on: &conversation)
+            if offerWatchers() {
+                registerSessionBoundWatchTools(on: &conversation)
+            }
         case .orchestration:
             registerWorkgroupTools(on: &conversation)
             registerSessionTools(on: &conversation)
         }
     }
 
-    func transform(outgoingUserBody body: LLM.Message.Body) -> LLM.Message.Body {
-        guard mode == .orchestration else { return body }
-        let prefix = Self.workgroupsSnapshotPrefix()
-        switch body {
-        case .text(let s):
-            return .text(prefix + s)
-        case .multipart(let parts):
-            return .multipart([.text(prefix)] + parts)
-        case .uninitialized, .functionCall, .functionOutput, .attachment:
-            return body
-        }
+    func volatileContext() -> String? {
+        guard mode == .orchestration else { return nil }
+        return Self.workgroupsSnapshot()
     }
 
     // MARK: - request_orchestration_enable (.sessionBound)
@@ -156,11 +167,32 @@ final class OrchestrationToolProvider: ToolProvider {
         }
     }
 
+    // MARK: - Watch tools (.sessionBound, terminal-linked)
+
+    // The three watch tools for a session-bound chat. They dispatch through the
+    // SAME externalInvoker the orchestration surface uses, so the app-side
+    // OrchestratorClient runs the real watcher machinery (tab-status observer,
+    // screen pollers, persistence, restart reconciliation). register_watch here
+    // has no session_guid: the dispatcher fills the target from the chat's
+    // linked terminal session. request_notification_permission is filtered on
+    // companion state exactly as registerWorkgroupTools does.
+    private func registerSessionBoundWatchTools(on conversation: inout AIConversation) {
+        var definitions = OrchestratorCommand.sessionBoundWatchToolDefinitions
+        // Offer request_notification_permission on the same companion-state
+        // condition as the orchestration surface, reusing its shared definition
+        // rather than re-declaring the prose/schema here.
+        if CompanionPushRegistry.canPromptForPermission, !CompanionPushRegistry.canNotify,
+           let permission = OrchestratorCommand.allToolDefinitions.first(where: {
+               $0.name == ToolName.requestNotificationPermission.rawValue }) {
+            definitions.append(permission)
+        }
+        registerExternalTools(definitions, on: &conversation)
+    }
+
     // MARK: - Workgroup-shaped tools (.orchestration)
 
     private func registerWorkgroupTools(on conversation: inout AIConversation) {
-        guard let invoker = externalInvoker else { return }
-        for definition in OrchestratorCommand.allToolDefinitions {
+        let definitions = OrchestratorCommand.allToolDefinitions.filter { definition in
             // The push tools depend on the paired phone's state. Tools are
             // bound at agent creation, so a phone pairing mid-conversation
             // appears on the next agent rebuild; notify is offered whenever
@@ -170,12 +202,24 @@ final class OrchestrationToolProvider: ToolProvider {
             if definition.name == ToolName.notify.rawValue,
                !CompanionPushRegistry.phoneIsConnected,
                !CompanionPushRegistry.canNotify {
-                continue
+                return false
             }
             if definition.name == ToolName.requestNotificationPermission.rawValue,
                !CompanionPushRegistry.canPromptForPermission || CompanionPushRegistry.canNotify {
-                continue
+                return false
             }
+            return true
+        }
+        registerExternalTools(definitions, on: &conversation)
+    }
+
+    // Shared registration loop: turn each ToolDefinition into an LLM function
+    // whose invocation is forwarded through the externalInvoker. Used by both
+    // the orchestration workgroup surface and the session-bound watch surface.
+    private func registerExternalTools(_ definitions: [ToolDefinition],
+                                       on conversation: inout AIConversation) {
+        guard let invoker = externalInvoker else { return }
+        for definition in definitions {
             let decl = ChatGPTFunctionDeclaration(
                 name: definition.name,
                 description: definition.description,
@@ -284,10 +328,9 @@ final class OrchestrationToolProvider: ToolProvider {
 
     // MARK: - User-message transform
 
-    // The `<workgroups>` snapshot prefix that wraps every orchestration
-    // turn. Returned without trailing user text so callers can either
-    // prepend it to a text body or insert it as a leading subpart of a
-    // multipart body.
+    // The `<workgroups>` snapshot for the current turn. Emitted as a
+    // standalone trailing volatile block (not merged with the user body),
+    // so it needs no surrounding separators.
     //
     // Scope: by design the orchestrator sees the full app-wide workgroup
     // graph (every window, tab, split, and synthetic single-session
@@ -299,7 +342,7 @@ final class OrchestrationToolProvider: ToolProvider {
     // the whole graph so it can suggest cross-session coordination the
     // user hadn't explicitly surfaced.
     @MainActor
-    private static func workgroupsSnapshotPrefix() -> String {
+    private static func workgroupsSnapshot() -> String {
         let workgroups = WorkgroupIntrospection.allWorkgroups()
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
@@ -314,8 +357,6 @@ final class OrchestrationToolProvider: ToolProvider {
         <workgroups>
         \(json)
         </workgroups>
-
-
         """
     }
 
@@ -374,13 +415,16 @@ final class OrchestrationToolProvider: ToolProvider {
             return "Kicking off Code Review on " + sessionDescription(args: dict)
                 + " " + promptLabel
         case "register_watch":
+            // Session-bound register_watch carries no session_guid (the target
+            // is the chat's linked session); render that as "the linked session"
+            // rather than the "(unknown session)" fallback.
+            let hasGuid = (dict["session_guid"] as? String).map { !$0.isEmpty } ?? false
+            let target = hasGuid ? sessionDescription(args: dict) : "the linked session"
             if let condition = dict["condition"] as? String, !condition.isEmpty {
-                return "Will notify when " + sessionDescription(args: dict)
-                    + " satisfies: " + previewQuote(condition)
+                return "Will notify when " + target + " satisfies: " + previewQuote(condition)
             }
             let state = (dict["target_state"] as? String) ?? "?"
-            return "Will notify when " + sessionDescription(args: dict)
-                + " becomes **\(state)**"
+            return "Will notify when " + target + " becomes **\(state)**"
         case "unregister_watch":
             return "Cancelling a watch"
         case "list_watches":

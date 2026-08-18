@@ -52,6 +52,9 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return WINDOW_TYPE_MAXIMIZED;
 
+        case WINDOW_TYPE_COMPACT_CENTERED:
+            return WINDOW_TYPE_CENTERED;
+
         case WINDOW_TYPE_LION_FULL_SCREEN:
             return WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
     }
@@ -68,7 +71,6 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
-        case WINDOW_TYPE_CENTERED:
             return YES;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -76,9 +78,11 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             return YES;
 
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_NORMAL:
@@ -97,11 +101,11 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
-        case WINDOW_TYPE_CENTERED:
             return YES;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_ACCESSORY:
             return NO;
@@ -109,6 +113,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             return YES;
             break;
 
@@ -223,6 +228,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -241,6 +247,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
@@ -263,6 +270,8 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return YES;
 
@@ -270,7 +279,6 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
-        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
@@ -346,6 +354,7 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
             return YES;
 
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_MAXIMIZED:
@@ -453,11 +462,15 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     assert(_windowType == WINDOW_TYPE_NORMAL ||
            _windowType == WINDOW_TYPE_COMPACT ||
            _windowType == WINDOW_TYPE_MAXIMIZED ||
-           _windowType == WINDOW_TYPE_COMPACT_MAXIMIZED);
+           _windowType == WINDOW_TYPE_COMPACT_MAXIMIZED ||
+           _windowType == WINDOW_TYPE_CENTERED ||
+           _windowType == WINDOW_TYPE_COMPACT_CENTERED);
     assert(self.windowType == WINDOW_TYPE_NORMAL ||
            self.windowType == WINDOW_TYPE_COMPACT ||
            self.windowType == WINDOW_TYPE_MAXIMIZED ||
-           self.windowType == WINDOW_TYPE_COMPACT_MAXIMIZED);
+           self.windowType == WINDOW_TYPE_COMPACT_MAXIMIZED ||
+           self.windowType == WINDOW_TYPE_CENTERED ||
+           self.windowType == WINDOW_TYPE_COMPACT_CENTERED);
 
     _updatingWindowType = YES;
     [self updateWindowForWindowType:self.windowType];
@@ -991,7 +1004,9 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 #pragma mark - Compact Style
 
 BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
-    return windowType == WINDOW_TYPE_COMPACT || windowType == WINDOW_TYPE_COMPACT_MAXIMIZED;
+    return (windowType == WINDOW_TYPE_COMPACT ||
+            windowType == WINDOW_TYPE_COMPACT_MAXIMIZED ||
+            windowType == WINDOW_TYPE_COMPACT_CENTERED);
 }
 
 - (void)didChangeCompactness {
@@ -1010,19 +1025,20 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
             case WINDOW_TYPE_ACCESSORY:
             case WINDOW_TYPE_NORMAL:
             case WINDOW_TYPE_MAXIMIZED:
+            case WINDOW_TYPE_CENTERED:
                 return NO;
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_TOP_PERCENTAGE:
             case WINDOW_TYPE_BOTTOM_PERCENTAGE:
             case WINDOW_TYPE_LEFT_PERCENTAGE:
             case WINDOW_TYPE_RIGHT_PERCENTAGE:
-            case WINDOW_TYPE_CENTERED:
             case WINDOW_TYPE_TOP_CELLS:
             case WINDOW_TYPE_BOTTOM_CELLS:
             case WINDOW_TYPE_LEFT_CELLS:
             case WINDOW_TYPE_RIGHT_CELLS:
             case WINDOW_TYPE_COMPACT:
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
+            case WINDOW_TYPE_COMPACT_CENTERED:
                 return YES;
         }
     }
@@ -1044,7 +1060,6 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
-        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
@@ -1069,6 +1084,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
                     resizable);
 
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             return (mask |
                     NSWindowStyleMaskTitled |
                     NSWindowStyleMaskFullSizeContentView |
@@ -1077,6 +1093,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
                     resizable);
 
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
             return (mask |
                     NSWindowStyleMaskTitled |
                     NSWindowStyleMaskClosable |

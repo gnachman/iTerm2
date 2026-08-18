@@ -778,9 +778,24 @@ static void iTermUncaughtExceptionHandler(NSException *exception) {
         return YES;
     }
 
+    // No binding (profile or global) claimed this keyDown. This is the single point
+    // per event, so the physical-key-binding offer is decided and presented exactly
+    // once. Pass the session receiving the keystroke (for an in-session banner) or nil
+    // (for a modal) using the same terminal-responder test as handleShortcutWithoutTerminal:.
+    [self maybeSuggestPhysicalKeyBindingsForUnclaimedKeyDown:event];
+
     [self reportKeyDownToAPIClientsIfNeeded:event];
 
     return NO;
+}
+
+- (void)maybeSuggestPhysicalKeyBindingsForUnclaimedKeyDown:(NSEvent *)event {
+    NSWindow *keyWindow = [self keyWindow];
+    PTYSession *session = nil;
+    if ([keyWindow isTerminalWindow] && [[keyWindow firstResponder] it_isTerminalResponder]) {
+        session = [self sessionOfFirstResponder] ?: [[[iTermController sharedInstance] currentTerminal] currentSession];
+    }
+    [PTYSession maybeSuggestPhysicalKeyBindingsForKeyDownEvent:event inSession:session];
 }
 
 - (void)handleScrollWheelEvent:(NSEvent *)event {

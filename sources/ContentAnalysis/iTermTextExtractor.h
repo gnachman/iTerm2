@@ -213,6 +213,19 @@ extern const NSInteger kLongMaximumWordLength;
                              continuationChars:(NSMutableIndexSet * _Nullable)continuationChars
                            convertNullsToSpace:(BOOL)convertNullsToSpace;
 
+// Walks forward from `coord` (starting at its successor), collecting successive characters that are
+// members of `characterSet` into a located string with one grid coordinate per character. Each cell
+// is decoded to its actual character(s) before testing membership, so composed graphemes and non-BMP
+// characters are judged as `characterSet` intends; double-width spacer cells are transparent. Stops
+// at the first cell that is not a member of `characterSet` (including images and empty cells), the
+// end of the buffer, or once `maxChars` characters have been collected. When `respectHardNewlines`
+// is YES the walk also stops before crossing a hard line break (a line whose continuation is
+// EOL_HARD).
+- (iTermLocatedString *)locatedStringByWalkingForwardFrom:(VT100GridCoord)coord
+                                             characterSet:(NSCharacterSet *)characterSet
+                                                 maxChars:(int)maxChars
+                                      respectHardNewlines:(BOOL)respectHardNewlines;
+
 - (ScreenCharArray *)combinedLinesInRange:(NSRange)range;
 
 - (screen_char_t)characterAtVisualCoord:(VT100GridCoord)coord;

@@ -331,14 +331,9 @@ static const int iTermKeystrokeKeyCodeUnavailable = 0;
             return self.modifiedSerialized;
         }
 
-        NSString *portableSerialized = self.portableSerialized;
-        @autoreleasepool {
-            for (NSString *key in dict) {
-                iTermKeystroke *candidate = [[iTermKeystroke alloc] initWithString:key];
-                if ([candidate.portableSerialized isEqualToString:portableSerialized]) {
-                    return key;
-                }
-            }
+        NSString *portableKey = [self keyMatchingPhysicalIdentityInDictionary:dict];
+        if (portableKey) {
+            return portableKey;
         }
         if (dict[self.legacySerialized]) {
             // Fall back to a binding that doesn't include a keycode. This is necessary for
@@ -378,6 +373,41 @@ static const int iTermKeystrokeKeyCodeUnavailable = 0;
         return nil;
     }
     return dict[key];
+}
+
+// Returns the first key in dict whose physical-key identity (portableSerialized:
+// "*-0x<mods>-0x<keycode>", i.e. modifiers and keycode, ignoring the character)
+// equals this keystroke's, or nil. Shared by language-agnostic matching in
+// keyInBindingDictionary: and by the physical-key suggestion, so the serialization
+// format lives only in -portableSerialized. Allocates a candidate per key; callers
+// use it only after a character lookup already failed.
+- (NSString *)keyMatchingPhysicalIdentityInDictionary:(NSDictionary<NSString *, NSDictionary *> *)dict {
+    if (![dict isKindOfClass:[NSDictionary class]]) {
+        return nil;
+    }
+    NSString *portable = self.portableSerialized;
+    @autoreleasepool {
+        for (id keyObj in dict) {
+            NSString *key = [NSString castFrom:keyObj];
+            if (!key) {
+                continue;
+            }
+            iTermKeystroke *candidate = [[iTermKeystroke alloc] initWithString:key];
+            if ([candidate.portableSerialized isEqualToString:portable]) {
+                return key;
+            }
+        }
+    }
+    return nil;
+}
+
+- (BOOL)hasPhysicalKeyMatchInDictionary:(NSDictionary<NSString *, NSDictionary *> *)dict {
+    if (!self.hasVirtualKeyCode || _characterIsModified) {
+        // Without a keycode, portableSerialized is not the "*-mods-keycode" form, so
+        // this cannot be a physical-key match.
+        return NO;
+    }
+    return [self keyMatchingPhysicalIdentityInDictionary:dict] != nil;
 }
 
 - (BOOL)isEqual:(id)object {

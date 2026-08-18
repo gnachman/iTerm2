@@ -23,6 +23,12 @@
 @property (nonatomic) VT100GridCoord offset;
 @property (nonatomic, readonly) NSString *info;
 - (void)update;
+// Recursively grows edge leaves by a row to account for pane-border-status.
+// onTopEdge/onBottomEdge indicate whether this node's top/bottom edge is the
+// window's top/bottom edge.
+- (void)adjustForPaneBorderStatus:(iTermTmuxPaneBorderStatus)status
+                        onTopEdge:(BOOL)onTopEdge
+                     onBottomEdge:(BOOL)onBottomEdge;
 @end
 
 @implementation iTermTmuxLayoutBuilderNode
@@ -34,6 +40,12 @@
 - (NSString *)info {
     [self doesNotRecognizeSelector:_cmd];
     return nil;
+}
+
+- (void)adjustForPaneBorderStatus:(iTermTmuxPaneBorderStatus)status
+                        onTopEdge:(BOOL)onTopEdge
+                     onBottomEdge:(BOOL)onBottomEdge {
+    [self doesNotRecognizeSelector:_cmd];
 }
 
 @end
@@ -62,6 +74,18 @@
 }
 
 - (void)update {
+}
+
+- (void)adjustForPaneBorderStatus:(iTermTmuxPaneBorderStatus)status
+                        onTopEdge:(BOOL)onTopEdge
+                     onBottomEdge:(BOOL)onBottomEdge {
+    VT100GridSize size = self.size;
+    if (status == iTermTmuxPaneBorderStatusTop && onTopEdge) {
+        size.height += 1;
+    } else if (status == iTermTmuxPaneBorderStatusBottom && onBottomEdge) {
+        size.height += 1;
+    }
+    self.size = size;
 }
 
 @end
@@ -159,6 +183,26 @@
     [self updateSize];
 }
 
+- (void)adjustForPaneBorderStatus:(iTermTmuxPaneBorderStatus)status
+                        onTopEdge:(BOOL)onTopEdge
+                     onBottomEdge:(BOOL)onBottomEdge {
+    const NSInteger count = _children.count;
+    for (NSInteger i = 0; i < count; i++) {
+        BOOL childTopEdge = onTopEdge;
+        BOOL childBottomEdge = onBottomEdge;
+        if (!_verticalDividers) {
+            // Stacked panes: only the first child touches the top edge and only
+            // the last child touches the bottom edge. Side-by-side children
+            // (vertical dividers) all inherit the parent's edges.
+            childTopEdge = onTopEdge && (i == 0);
+            childBottomEdge = onBottomEdge && (i == count - 1);
+        }
+        [_children[i] adjustForPaneBorderStatus:status
+                                      onTopEdge:childTopEdge
+                                   onBottomEdge:childBottomEdge];
+    }
+}
+
 @end
 
 @implementation iTermTmuxLayoutBuilder {
@@ -171,6 +215,13 @@
         _root = node;
     }
     return self;
+}
+
+- (void)adjustForPaneBorderStatus:(iTermTmuxPaneBorderStatus)status {
+    if (status == iTermTmuxPaneBorderStatusOff) {
+        return;
+    }
+    [_root adjustForPaneBorderStatus:status onTopEdge:YES onBottomEdge:YES];
 }
 
 - (NSString *)layoutString {

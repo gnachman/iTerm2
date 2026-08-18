@@ -174,14 +174,17 @@ final class WorkgroupNavigationToolbarItem: SessionToolbarGenericView {
     }
 
     @objc private func didTapBack(_ sender: Any?) {
+        RLog("WorkgroupNavigationToolbarItem: Back tapped owner=\(ownerPeerID ?? "nil") delegate=\(navigationDelegate != nil)")
         navigationDelegate?.workgroupNavigationDidTapBack(ownerPeerID: ownerPeerID)
     }
 
     @objc private func didTapForward(_ sender: Any?) {
+        RLog("WorkgroupNavigationToolbarItem: Forward tapped owner=\(ownerPeerID ?? "nil") delegate=\(navigationDelegate != nil)")
         navigationDelegate?.workgroupNavigationDidTapForward(ownerPeerID: ownerPeerID)
     }
 
     @objc private func didTapReload(_ sender: Any?) {
+        RLog("WorkgroupNavigationToolbarItem: Reload tapped owner=\(ownerPeerID ?? "nil") delegate=\(navigationDelegate != nil)")
         navigationDelegate?.workgroupNavigationDidTapReload(ownerPeerID: ownerPeerID)
     }
 
@@ -240,6 +243,7 @@ final class WorkgroupReloadToolbarItem: SessionToolbarGenericView {
     }
 
     @objc private func didTapReload(_ sender: Any?) {
+        RLog("WorkgroupReloadToolbarItem: Reload tapped owner=\(ownerPeerID ?? "nil") delegate=\(navigationDelegate != nil)")
         navigationDelegate?.workgroupNavigationDidTapReload(ownerPeerID: ownerPeerID)
     }
 }

@@ -176,6 +176,12 @@ typedef enum {
                         } else if (c == '\\') {
                             nextState = kXtermParserFinishedState;
                         } else {
+                            // TODO(issue 12259 follow-up): an OSC with a doubled-up
+                            // terminator (ESC ESC \) or an aborting escape sequence
+                            // gets discarded here, and the trailing \ prints as a
+                            // stray glyph, the same pathology fixed for sixel in
+                            // VT100SixelParser. Dispatch the accumulated string and
+                            // let the ESC begin a fresh sequence instead.
                             nextState = kXtermParserFailedState;
                         }
                     } else {
@@ -289,6 +295,7 @@ typedef enum {
                // for this in iTerm2.
                @50: @(XTERMCC_SET_KVP),
                @52: @(XTERMCC_PASTE64),
+               @72: @(XTERMCC_KITTY_DND),
                @104: @(XTERMCC_RESET_COLOR),
                
                @(110): @(XTERMCC_RESET_VT100_TEXT_FOREGROUND_COLOR),

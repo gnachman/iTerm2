@@ -346,7 +346,11 @@ static _Atomic int64_t sOutstandingPreconvertBytes = 0;
 
     token->savingData = _saveData;
     if (token->type != VT100_WAIT && token->type != VT100CC_NULL) {
-        if (_saveData) {
+        if (_saveData && token.savedData == nil) {
+            // Don't clobber savedData that a DCS hook already populated (e.g.
+            // DCS_SIXEL). The raw stream slice would be wrong anyway (it can be
+            // empty when the hook backtracked, or a partial slice for a multi-read
+            // sixel), and overwriting it would drop the image the hook assembled.
             token.savedData = VT100ByteStreamCursorMakeData(&position, length);
         }
         if (token->type == VT100_ASCIISTRING ||

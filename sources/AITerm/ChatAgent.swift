@@ -114,6 +114,17 @@ class ChatAgent {
     private let chatID: String
     private var brokerSubscription: ChatBroker.Subscription?
     private var messageToPrompt = MessageToPromptStateMachine()
+    // True when load() pre-reduced conversation.messages to just the current round
+    // for this turn's blob-native send (the frozen prefix lives in blobs, so
+    // translating it here just to have the send path drop it again is pure waste).
+    // Read by the send path (frozenRoundCount 0 in blobReplayPlan) and by the
+    // needs-renaming check (a pre-reduced chat always has prior history). Reset each
+    // load(); the else branch translates the whole history exactly as before.
+    private var blobsCoverHistoryThisTurn = false
+    // When pre-reduced, the full-history reconstructor for the rare blob-path bail
+    // (protocol switch, oversized round). Recomputes translate() on demand so the
+    // codec fallback still sends everything. nil when NOT pre-reduced.
+    private var fullHistoryReconstructor: (() -> [AITermController.Message])?
     private var pendingRemoteCommands = [UUID: PendingRemoteCommand]()
     private let broker: ChatBroker
     private let prepPipeline: MessagePrepPipeline
@@ -122,6 +133,13 @@ class ChatAgent {
     // The visible screen last auto-provided to the model for this chat, so an
     // unchanged screen is sent as a short marker instead of resending the grid.
     private var lastAutoProvidedScreen: String?
+
+    // The vendor's reported total input tokens from the previous captured turn, used
+    // to derive the newest round's real token weight by subtraction (this turn minus
+    // last turn; the envelope cancels between adjacent turns). In-memory only: after
+    // a restart the first captured round falls back to the byte estimate, then real
+    // deltas resume. nil until the first turn with usage completes.
+    private var previousTurnPromptTokens: Int?
 
     // Optional developer-only console trace of chat-agent traffic.
     // Gated on the advanced setting "aiChatVerboseConsoleLogging";
@@ -178,6 +196,16 @@ class ChatAgent {
                 OrchestrationToolProvider.sessionBound(
                     enableRequestHandler: { [weak self] completion in
                         self?.parkOrchestrationRequest(completion: completion)
+                    },
+                    externalInvoker: { [weak self] name, llmMessage, args, completion in
+                        self?.publishExternalToolRequest(
+                            name: name,
+                            llmMessage: llmMessage,
+                            args: args,
+                            completion: completion)
+                    },
+                    offerWatchers: { [weak self] in
+                        self?.sessionBoundWatchersAvailable ?? false
                     }),
             ]
         case .orchestration:
@@ -346,6 +374,75 @@ class ChatAgent {
     // completion the same way the session-bound RemoteCommand path
     // does. The agent never touches PTYSession or the dispatcher
     // directly — the broker is the only transport.
+    // Which watch forms are satisfiable for this chat's linked terminal right
+    // now, or nil if the chat isn't terminal-linked. Derived from the dispatcher's
+    // single policy (watchReadRequirement + watchFormSatisfiable) so the tool
+    // offer/guidance can't drift from the per-call gate. Uses the raw permission
+    // SETTING (not the tool-exposure `permissions` set), because Check Terminal
+    // State = Always is deliberately dropped from the exposure set (the state is
+    // auto-provided) yet is the MOST permissive setting -- treating exposure as
+    // permission would invert it and hide watches from the user who granted the
+    // most access. Resolved live so a Link/Unlink or permission change is
+    // reflected on the next tool registration.
+    // Set for the span of one updateSystemMessage() pass so the guidance and the
+    // provider's offerWatchers() (invoked from the registerToolProviders() at the
+    // end of that pass) share a single computation instead of each redoing the
+    // session-graph resolve + permission reads. .valid gates the cache; .forms
+    // may itself be nil (chat not terminal-linked).
+    private var reusableWatchForms: (valid: Bool, forms: (condition: Bool, targetState: Bool)?) = (false, nil)
+
+    private var sessionBoundWatchForms: (condition: Bool, targetState: Bool)? {
+        if reusableWatchForms.valid {
+            return reusableWatchForms.forms
+        }
+        guard let terminal = broker.listModel.chat(id: chatID)?.terminalSessionGuid else {
+            return nil
+        }
+        let rce = RemoteCommandExecutor.instance
+        let viewContents = rce.permission(chatID: chatID, inSessionGuid: terminal,
+                                          category: .viewContents) != .never
+        let checkTerminalState = rce.permission(chatID: chatID, inSessionGuid: terminal,
+                                                category: .checkTerminalState) != .never
+        // Whether the session reports machine-readable status decides whether a
+        // target_state watch is satisfiable without View Contents (a reporting
+        // session fires from the transition; a statusless one must read the
+        // screen). Resolve best-effort; unresolvable -> non-reporting. When the
+        // session is genuinely gone, the dispatcher's gate also rejects (it can't
+        // resolve either), so the offer and the gate agree. The only divergence is
+        // a TRANSIENT resolve miss on a live session, which downgrades a
+        // status-reporting session to "statusless" and can hide a target_state
+        // form the gate would accept; it self-corrects on the next rebuild. Log it
+        // so a persistent case is diagnosable.
+        let resolvedTarget = WorkgroupIntrospection.resolve(sessionGuid: terminal)
+        if resolvedTarget == nil {
+            DLog("Watch offer: linked session \(terminal) did not resolve; treating as statusless, which may transiently hide the target_state form.")
+        }
+        let reportsStatus = resolvedTarget
+            .map { WorkgroupIntrospection.reportsSessionStatus($0.session) } ?? false
+        let conditionReq = OrchestratorDispatcher.watchReadRequirement(
+            condition: true, sessionReportsStatus: reportsStatus)
+        let targetStateReq = OrchestratorDispatcher.watchReadRequirement(
+            condition: false, sessionReportsStatus: reportsStatus)
+        return (
+            condition: OrchestratorDispatcher.watchFormSatisfiable(
+                requirement: conditionReq,
+                viewContentsPermitted: viewContents,
+                checkTerminalStatePermitted: checkTerminalState),
+            targetState: OrchestratorDispatcher.watchFormSatisfiable(
+                requirement: targetStateReq,
+                viewContentsPermitted: viewContents,
+                checkTerminalStatePermitted: checkTerminalState))
+    }
+
+    // Watchers observe a single terminal session, so they're offered only when
+    // this chat is linked to one AND at least one watch form is satisfiable for
+    // the current session/permission combination. Offering when nothing is
+    // satisfiable would advertise a tool the per-call dispatcher gate rejects.
+    private var sessionBoundWatchersAvailable: Bool {
+        guard let forms = sessionBoundWatchForms else { return false }
+        return forms.condition || forms.targetState
+    }
+
     private func publishExternalToolRequest(
         name: String,
         llmMessage: AITermController.Message,
@@ -394,7 +491,7 @@ class ChatAgent {
         }
     }
 
-    private func load(messages: [Message]) {
+    private func load(messages: [Message], reduceForReplay: Bool = false) {
         // Pre-pass: extract the latest setPermissions as agent state.
         // The translator below skips .setPermissions itself; this is
         // the only side effect history translation needs. Walk
@@ -407,7 +504,38 @@ class ChatAgent {
                 break
             }
         }
-        conversation.messages = translate(messages: messages)
+        // Blob-native fast path: when this chat's frozen blobs already cover its
+        // WHOLE prior history (one blob per round, and the row count equals the
+        // round count the reload would produce), the frozen prefix is sent verbatim
+        // from those blobs. Translating it here only to have the send path drop it
+        // again (messagesPastFrozenRounds) is O(history) waste every turn, which is
+        // exactly what blobs exist to avoid. Skip it: conversation.messages becomes
+        // just [system] + the current round (the new user turn is added after load,
+        // the tool loop grows it during the turn). The count is computed WITHOUT
+        // building any message body (reconstructedRoundCount), so the decision is
+        // cheap even for a chat whose rounds hold megabytes of tool output. A
+        // mismatch (partial capture, or a protocol switch caught downstream) falls to
+        // the full translate below, and the send path's fullHistoryProvider rebuilds
+        // everything if the blob path later bails.
+        let blobCount = reduceForReplay ? broker.listModel.chatDatabase.blobCount(inChat: chatID) : 0
+        if blobCount > 0 && Self.reconstructedRoundCount(messages) == blobCount
+            && !Self.historyUsesExplainFeature(messages) {
+            conversation.messages = []
+            blobsCoverHistoryThisTurn = true
+            fullHistoryReconstructor = { [weak self] in
+                self?.translate(messages: messages) ?? []
+            }
+            // Carry the frozen-away last assistant turn's response id forward so a
+            // pre-reduced Responses chat still enters delta mode on this turn's first
+            // request (see AITermController.reducedHistoryPreviousResponseID).
+            conversation.controller.reducedHistoryPreviousResponseID =
+                Self.carriedPreviousResponseID(messages)
+        } else {
+            conversation.messages = translate(messages: messages)
+            blobsCoverHistoryThisTurn = false
+            fullHistoryReconstructor = nil
+            conversation.controller.reducedHistoryPreviousResponseID = nil
+        }
 
         switch mode {
         case .sessionBound:
@@ -572,6 +700,124 @@ class ChatAgent {
         return aiMessages
     }
 
+    /// The number of rounds `translate(messages:)` would produce, WITHOUT building
+    /// any LLM message body (no repair, no stabilize, no copying megabyte tool
+    /// outputs) -- just the round boundaries. Used by load() to decide whether a
+    /// chat's blobs cover its whole history and the frozen-prefix translate can be
+    /// skipped, so it has to be far cheaper than translate itself.
+    ///
+    /// It MUST stay in lockstep with aiMessagesForStructuredReplay's content filter
+    /// (which messages become LLM messages) and role(from:) (which are role .user =
+    /// round starts) and ChatBlobCapture.rounds (a round begins at each user message
+    /// and the very first message always opens one), so it exactly equals
+    /// rounds(from: translate(messages)).count. That equality is pinned by test:
+    /// an UNDERCOUNT here would let the fast path silently drop un-frozen history.
+    /// Repair only synthesizes .function items, never adds or removes a .user
+    /// message, so it cannot change the round count; that is why counting the
+    /// pre-repair boundaries is exact.
+    static func reconstructedRoundCount(_ messages: [Message]) -> Int {
+        roundStartIndices(messages).count
+    }
+
+    /// The indices into `messages` where each reconstructed round begins: a message
+    /// that translate() would emit as role .user, or the first non-skipped message
+    /// (which always opens a round, mirroring ChatBlobCapture.rounds). This is the ONE
+    /// place the display->round boundary is derived without building message bodies;
+    /// reconstructedRoundCount and displayTailForNewRounds both read it, so the
+    /// aiMessagesForStructuredReplay content filter + role(from:) live here once. It
+    /// MUST agree with rounds(from: translate(messages)); that equality is pinned by
+    /// test (an undercount would drop un-frozen history on the send path, a wrong
+    /// boundary would freeze the wrong bytes on the capture path).
+    private static func roundStartIndices(_ messages: [Message]) -> [Int] {
+        var indices = [Int]()
+        var started = false
+        for (i, message) in messages.enumerated() {
+            switch message.content {
+            case .setPermissions, .clientLocal, .renameChat, .append, .appendAttachment,
+                    .commit, .vectorStoreCreated, .userCommand, .selectSessionRequest,
+                    .unsupported:
+                continue
+            case .remoteCommandRequest(let payload, safe: _):
+                // A request with no function_call is skipped by the replay filter
+                // (its orphaned response is healed by repair), so it opens no round.
+                guard payload.llmMessage.function_call != nil else { continue }
+            default:
+                break
+            }
+            if AITermController.Message.role(from: message) == .user || !started {
+                indices.append(i)
+            }
+            started = true
+        }
+        return indices
+    }
+
+    /// The suffix of `messages` that forms the rounds BEYOND the first `existing`
+    /// rounds, or nil when there are `existing` or fewer rounds (nothing new to
+    /// freeze). The suffix begins exactly at the (existing+1)-th round start (a user
+    /// message), so translating just it yields the new rounds and none of the
+    /// already-frozen prefix -- the capture-side counterpart of the send-side
+    /// pre-reduce. The caller re-derives the full history if the translated tail does
+    /// not begin with a clean user turn.
+    static func displayTailForNewRounds(_ messages: [Message], existing: Int) -> [Message]? {
+        guard existing >= 0 else { return nil }
+        let starts = roundStartIndices(messages)
+        guard starts.count > existing else { return nil }
+        return Array(messages[starts[existing]...])
+    }
+
+    /// True if the history uses the Explain feature. MessageToPromptStateMachine.mode
+    /// is the one piece of translate() state that CROSSES a round boundary: an
+    /// .explanationRequest sets a mode consumed by the NEXT round's first user turn
+    /// (wrapping it via conversationalPrompt). The reduced send path skips translate
+    /// entirely and the tail-only capture path translates a suffix through a fresh
+    /// state machine, so a mode leaked from a prior round would render the boundary
+    /// turn's bytes differently than the whole-history translate -- breaking the
+    /// byte-identical invariant (and, on Anthropic's byte-prefix cache, perturbing the
+    /// frozen prefix). Explain chats are rare, so both fast paths fall back to the full
+    /// translate when one is present rather than model the mode carry.
+    static func historyUsesExplainFeature(_ messages: [Message]) -> Bool {
+        messages.contains {
+            if case .explanationRequest = $0.content { return true }
+            return false
+        }
+    }
+
+    /// The previous_response_id to carry forward when load() pre-reduces a chat for
+    /// blob replay (AITermController.reducedHistoryPreviousResponseID). It approximates
+    /// what AIConversation.complete would pick from the non-reduced conversation --
+    /// `translate(messages).last { $0.role == .assistant }?.responseID` -- WITHOUT
+    /// translating, and is deliberately CONSERVATIVE: it never returns a non-nil id
+    /// that translate would not, because a wrong non-nil id is the only unsafe outcome
+    /// (delta mode would resume from a stale point and silently drop the tail); a nil
+    /// just falls back to a full, always-correct resend.
+    ///
+    /// It walks from the end applying aiMessagesForStructuredReplay's SAME content
+    /// filter (so a squelched function_call==nil request -- which role(from:) calls
+    /// .assistant but replay drops -- is skipped, not mistaken for the terminal
+    /// assistant) and returns the last INCLUDED message's id only if that message is
+    /// an assistant turn. A trailing user turn or tool-result turn yields nil: the
+    /// tool-result case matches translate, whose repair pass heals a trailing orphan
+    /// into a nil-id tool_use; the rarer incomplete-history cases resolve to the safe
+    /// full resend. The nil-inclusive assistant case is load-bearing (an interrupted
+    /// terminal turn with no id must not revive an earlier id).
+    static func carriedPreviousResponseID(_ messages: [Message]) -> String? {
+        for message in messages.reversed() {
+            switch message.content {
+            case .setPermissions, .clientLocal, .renameChat, .append, .appendAttachment,
+                    .commit, .vectorStoreCreated, .userCommand, .selectSessionRequest,
+                    .unsupported:
+                continue
+            case .remoteCommandRequest(let payload, safe: _):
+                guard payload.llmMessage.function_call != nil else { continue }
+            default:
+                break
+            }
+            return AITermController.Message.role(from: message) == .assistant ? message.responseID : nil
+        }
+        return nil
+    }
+
     /// Resolve a turn's model name the same way request routing does
     /// (AIConversation.complete: manual models first, then the built-in
     /// catalog, so a manual config wins over a built-in that shares its name).
@@ -614,6 +860,25 @@ class ChatAgent {
             reasoningContent: message.agentReasoning)
     }
 
+    // Short pointer so the model knows watchers exist on a terminal-linked
+    // session-bound chat; register_watch's own description carries the details.
+    // Takes the satisfiable-form flags (computed via the dispatcher's single
+    // policy in sessionBoundWatchForms) so it never advertises a form the
+    // per-call gate would reject. Returns nil when neither form is satisfiable.
+    private static func sessionBoundWatcherGuidance(conditionForm: Bool,
+                                                    targetStateForm: Bool) -> String? {
+        var forms = [String]()
+        if targetStateForm {
+            forms.append("a target_state (idle, working, or waiting) to fire when the program reports that transition")
+        }
+        if conditionForm {
+            forms.append("a plain-English condition an AI judges by reading the screen (e.g. a build printing a success or failure line)")
+        }
+        guard !forms.isEmpty else { return nil }
+        let formsText = forms.joined(separator: ", or ")
+        return "You can watch this terminal session for a future state instead of polling: call register_watch with \(formsText). It returns immediately and does not block your turn; when the watch fires, iTerm2 delivers a <status_update> message as a separate turn for you to act on. Use list_watches and unregister_watch to manage active watches, and do not repeatedly read the screen yourself while a watch is pending."
+    }
+
     private func updateSystemMessage(_ permissions: Set<RemoteCommand.Content.PermissionCategory>) {
         self.permissions = permissions
         var parts = [String]()
@@ -640,6 +905,24 @@ class ChatAgent {
         }
         parts.append(iTermPreferences.string(forKey: key))
         parts.append("If a zip file is provided (this is rare), you should extract it and analyze the contents in the context of the accompanying messages.")
+
+        // When the chat is linked to a terminal session and the model can call
+        // tools, tell it the watch capability exists (the tool descriptions
+        // carry the details). Tailored to the granted read permissions so the
+        // prose never advertises a form the per-call gate would reject; nil
+        // (neither permission) means no guidance and no watch tools. Compute the
+        // forms once here and cache them for the registerToolProviders() below,
+        // whose offerWatchers() would otherwise recompute the same thing.
+        let watchForms = sessionBoundWatchForms
+        reusableWatchForms = (valid: true, forms: watchForms)
+        defer { reusableWatchForms = (valid: false, forms: nil) }
+        if AITermController.provider?.functionsSupported == true,
+           let forms = watchForms,
+           let guidance = Self.sessionBoundWatcherGuidance(
+               conditionForm: forms.condition,
+               targetStateForm: forms.targetState) {
+            parts.append(guidance)
+        }
 
         conversation.systemMessage = parts.joined(separator: " ")
         if conversation.systemMessage != lastSystemMessage {
@@ -759,7 +1042,13 @@ class ChatAgent {
     /// not session-bound, has no linked session, or has granted neither "provided
     /// automatically" permission. Read at request time so it is fresh; an unchanged
     /// visible screen collapses to a short marker rather than resending the grid.
-    private func autoProvidedContext() -> String? {
+    /// - commit: when false, PEEK only - compute the block for sizing without
+    ///   advancing the visible-screen dedup watermark or showing the consent prompt.
+    ///   The truncation-budget path passes false so estimating the envelope size does
+    ///   not consume the screen; if it committed, the real send (the per-vendor
+    ///   builder, which runs AFTER budgeting) would then see the screen as unchanged
+    ///   and emit `<visible-screen unchanged="true"/>`, silently never sending it.
+    private func autoProvidedContext(commit: Bool = true) -> String? {
         guard mode == .sessionBound else {
             return nil
         }
@@ -783,7 +1072,9 @@ class ChatAgent {
         if Self.shouldSuppressAutoProvide(wantsAutoSend: wantsAutoSend,
                                           consent: iTermUserDefaults.autoProvideConsent) {
             RLog("autoProvidedContext: chat \(chatID) wants auto-send but consent is not granted (\(iTermUserDefaults.autoProvideConsent.rawValue)); suppressing")
-            requestAutoProvideConsentIfNeeded()
+            if commit {
+                requestAutoProvideConsentIfNeeded()
+            }
             return nil
         }
         var blocks = [String]()
@@ -797,7 +1088,12 @@ class ChatAgent {
             if screen == lastAutoProvidedScreen {
                 blocks.append("<visible-screen unchanged=\"true\"/>")
             } else {
-                lastAutoProvidedScreen = screen
+                // Only advance the watermark on a real send (commit); a budget peek
+                // sizes the full block but must leave the dedup state untouched so the
+                // actual send still emits the screen.
+                if commit {
+                    lastAutoProvidedScreen = screen
+                }
                 blocks.append("<visible-screen>\n" + Self.neutralizeContextDelimiters(screen) + "\n</visible-screen>")
             }
         }
@@ -855,6 +1151,24 @@ class ChatAgent {
         return consent == .unknown && !alreadyAskedThisSession
     }
 
+    /// Classify an error as an unusable Responses-API `previous_response_id`: the id
+    /// can expire on the server (retention), the referenced response may have had
+    /// `store` off, or it may have been deleted. That is NOT a real failure - the
+    /// turn should be retried as a full stateless replay from blobs with the id
+    /// omitted. Deliberately narrow: it must mention the PREVIOUS RESPONSE and a
+    /// not-usable reason, so a generic 4xx (rate limit, bad key, some other
+    /// not-found) is never misread as an expiry and silently retried.
+    nonisolated static func isUnusablePreviousResponseIDError(_ error: Error) -> Bool {
+        let text = "\(error)".lowercased()
+        let mentionsPreviousResponse =
+            text.contains("previous_response_id") || text.contains("previous response")
+        guard mentionsPreviousResponse else { return false }
+        return text.contains("not found")
+            || text.contains("expired")
+            || text.contains("does not exist")
+            || text.contains("no longer exists")
+    }
+
     /// Defang our control-tag delimiters in untrusted terminal content so it cannot
     /// break out of the <visible-screen> / <terminal-state> wrappers and inject
     /// trusted top-level context (prompt injection): terminal output that contains a
@@ -871,17 +1185,24 @@ class ChatAgent {
             .replacingOccurrences(of: "<terminal-state", with: "\u{2039}terminal-state")
     }
 
-    /// Append an auto-provided context block to the outgoing user body, matching how
-    /// the orchestration provider prepends its snapshot.
-    private static func appending(context: String, to body: LLM.Message.Body) -> LLM.Message.Body {
-        switch body {
-        case .text(let text):
-            return .text(text + "\n" + context)
-        case .multipart(let parts):
-            return .multipart(parts + [.text(context)])
-        case .uninitialized, .functionCall, .functionOutput, .attachment:
-            return body
-        }
+    /// Combine volatile per-request context sources (the <workgroups> snapshot,
+    /// the auto-provided terminal/screen block) into a single trailing block,
+    /// dropping nils and empties. Returns nil when there is nothing to add, so
+    /// non-orchestration / non-auto-provide turns carry no trailing volatile
+    /// message at all.
+    static func combinedVolatileText(_ parts: [String?]) -> String? {
+        let nonEmpty = parts.compactMap { $0 }.filter { !$0.isEmpty }
+        return nonEmpty.isEmpty ? nil : nonEmpty.joined(separator: "\n")
+    }
+
+    /// The volatile per-request context as of NOW: the orchestration
+    /// <workgroups> snapshot and/or the session-bound auto-provided
+    /// terminal/screen block, recomputed live so mid-turn session changes are
+    /// reflected. Invoked fresh for every request via the controller's
+    /// trailingVolatileTextProvider.
+    private func currentVolatileText(commit: Bool = true) -> String? {
+        let providerContext = toolProviders.lazy.compactMap { $0.volatileContext() }.first
+        return Self.combinedVolatileText([providerContext, autoProvidedContext(commit: commit)])
     }
 
     func fetchCompletion(userMessage: Message,
@@ -963,7 +1284,7 @@ class ChatAgent {
                          cancelPendingUploads: Bool,
                          streaming: ((StreamingUpdate) -> ())?,
                          completion: @escaping (Message?) -> ()) throws {
-        load(messages: history)
+        load(messages: history, reduceForReplay: true)
 
         // Remove items that won't have a previous response ID.
         let filteredHistory = history.filter { message in
@@ -1112,7 +1433,13 @@ class ChatAgent {
 
         cancelPendingCommands()
 
-        let needsRenaming = !conversation.messages.anySatisfies({ $0.role == .user})
+        // A pre-reduced conversation (blobsCoverHistoryThisTurn) intentionally holds
+        // no prior rounds, so the user-message probe below would misfire; but a
+        // blob-native chat has by definition already had a user turn, so it never
+        // needs renaming. Only the full-translate path (a brand-new or blobless chat)
+        // consults conversation.messages.
+        let needsRenaming = !blobsCoverHistoryThisTurn
+            && !conversation.messages.anySatisfies({ $0.role == .user})
         // Hosted-tool capability comes from the model the turn will ACTUALLY
         // run on (the binding's verdict, resolved the same way request
         // routing resolves conversation.model), not the global default.
@@ -1122,34 +1449,113 @@ class ChatAgent {
         let effectiveModel = Self.resolvedModel(named: turnModelName) ?? LLMMetadata.model()
         conversation.hostedTools = Self.hostedTools(features: effectiveModel?.features ?? [],
                                                     configuration: userMessage.configuration)
+        // Snapshot the turn's protocol / model / hosted-tools for blob capture at
+        // turn end: self.conversation is replaced by the amended copy on
+        // completion, so read these now while they reflect this turn.
+        let captureAPI = effectiveModel?.api
+        let captureModelName = turnModelName
+        let captureHostedTools = conversation.hostedTools
 
         if let responseID = userMessage.inResponseTo {
+            // deleteMessages both truncates conversation.messages at the anchor and
+            // stamps the delta previousResponseID. On a pre-reduced turn
+            // conversation.messages holds only the current round, so an anchor pointing
+            // into a PRIOR round can do neither -- it silently no-ops and the frozen
+            // history past the edit point still replays. Unreachable today: a non-tail
+            // anchor comes only from an edit/resume, which clears the chat's blobs
+            // (ChatListModel.delete -> replaceBlobs) and forces a NON-reduced turn; a
+            // normal send's anchor is the tail (a no-op anyway). Trip loudly if that
+            // coupling ever breaks rather than send stale history silently.
+            if blobsCoverHistoryThisTurn,
+               responseID != history.last(where: { $0.responseID != nil })?.responseID {
+                RLog("ChatAgent: non-tail inResponseTo anchor on a pre-reduced turn in \(chatID); stale frozen history may replay (edit-clears-blobs invariant violated?)")
+            }
             conversation.deleteMessages(after: responseID)
         }
 
-        // Build the user-side LLM message and let each tool provider
-        // transform the body (orchestration prepends a <workgroups>
-        // snapshot; session-bound providers leave it alone). The
-        // composition order matches toolProviders.
+        // Build the user-side LLM message. Two per-turn context sources are
+        // VOLATILE: the orchestration <workgroups> snapshot, and the
+        // session-bound auto-provided terminal state / visible screen (added
+        // server-side so phone- and desktop-originated turns both get it).
+        // Both must reach the model but must NOT be baked into the persisted
+        // user body, or they'd sit inside the cached prefix and re-cache the
+        // whole history every turn. Route them to trailingVolatileText, which
+        // the Anthropic builder appends AFTER the rolling cache breakpoint.
+        // The two sources are mutually exclusive by mode (orchestration vs
+        // session-bound); combine defensively. See AIChatTrailingVolatileTests.
         let baseUserAIMessage = aiMessage(from: userMessage)
-        var transformedBody = baseUserAIMessage.body
-        for provider in toolProviders {
-            transformedBody = provider.transform(outgoingUserBody: transformedBody)
+        // Regenerate the volatile context FRESH for every request, not once per
+        // turn: the builder appends it on each tool-loop continuation too, and a
+        // frozen turn-start snapshot goes stale mid-turn (e.g. start_code_review
+        // reloads its target session and swaps the session_guid; a stale snapshot
+        // keeps pointing the model at the dead guid and it retries forever). The
+        // closure is stored on the controller and evaluated on the main thread at
+        // request-build time. See AITermController.trailingVolatileTextProvider.
+        conversation.trailingVolatileTextProvider = { [weak self] in
+            MainActor.assumeIsolated { self?.currentVolatileText() }
         }
-        // Auto-provide the linked session's terminal state and/or visible screen when
-        // the user has granted the matching "provided automatically" permission for
-        // this chat (Check Terminal State -> state, View Contents -> visible screen).
-        // Done here (server-side) so phone- and desktop-originated turns both get it;
-        // the desktop compose path no longer injects it.
-        if let autoContext = autoProvidedContext() {
-            transformedBody = Self.appending(context: autoContext, to: transformedBody)
+        // Blob-native replay: if this chat has verbatim wire-fragment blobs frozen
+        // under the turn's protocol, send [system] + the current round and splice
+        // the frozen history bytes, instead of reconstructing the whole conversation
+        // (which churns the cached prefix). Set per turn like the volatile provider
+        // above (it lives on the controller and does not survive the amended copy).
+        // Returns nil -> full reconstruction for a legacy/blobless chat, a protocol
+        // mismatch, a misaligned round count, or a turn too large to fit even after
+        // dropping every blob (the codec's in-message elision handles that tail).
+        // Anthropic cuts DEEP on truncation (50% of context) for a long caching
+        // runway; other vendors (no cache pricing) just drop enough to fit.
+        if let captureAPI, let effectiveModel {
+            let replayChatID = chatID
+            let replayDatabase = broker.listModel.chatDatabase
+            // Budget the frozen prefix against the SAME limit the legacy truncate()
+            // path honors (the user's AiMaxTokens preference), clamped to the model's
+            // real context window, and reserve output room the same way. Without the
+            // clamp, blob-native chats would silently retain far more history than the
+            // user's configured cap on a model whose window exceeds it.
+            let maxTotalTokens = conversation.maxTotalTokens
+            let outputReserve = conversation.maxResponseTokens
+            let contextWindow = min(effectiveModel.contextWindowTokens, maxTotalTokens)
+            let policy: ChatBlobAssembler.TruncationPolicy =
+                captureAPI == .anthropic ? .anthropicHalve : .fitOnly
+            // Read the tool schemas + volatile context live at send time (they are
+            // not in the reduced message list but the builder adds them to the wire),
+            // so the truncation budget counts the whole request. Captured by
+            // reference; evaluated only on the blob path (envelopeTokens is a thunk).
+            let replayController = conversation.controller
+            let messagesAreReduced = blobsCoverHistoryThisTurn
+            conversation.blobReplayProvider = { [weak self] fullMessages in
+                ChatBlobAssembler.blobReplayPlan(
+                    chatID: replayChatID, fullMessages: fullMessages, expectedProtocol: captureAPI,
+                    contextWindow: contextWindow, outputReserve: outputReserve, policy: policy,
+                    messagesAreReduced: messagesAreReduced,
+                    tokenEstimate: { AIMetadata.instance.tokens(in: String(decoding: $0, as: UTF8.self)) },
+                    envelopeTokens: {
+                        // PEEK the volatile context for sizing only (commit: false):
+                        // the real send drives the stateful provider later, so committing
+                        // here would advance the auto-provided-screen dedup watermark and
+                        // make the actual request emit "<visible-screen unchanged>".
+                        let volatile = MainActor.assumeIsolated { self?.currentVolatileText(commit: false) } ?? ""
+                        let functionsJSON = (try? JSONEncoder().encode(replayController.functions.map { $0.decl }))
+                            .flatMap { String(data: $0, encoding: .utf8) } ?? ""
+                        return AIMetadata.instance.tokens(in: volatile)
+                            + AIMetadata.instance.tokens(in: functionsJSON)
+                    },
+                    database: replayDatabase)
+            }
+        } else {
+            conversation.blobReplayProvider = nil
         }
-        let userAIMessage = AITermController.Message(
-            responseID: baseUserAIMessage.responseID,
-            role: baseUserAIMessage.role,
-            body: transformedBody,
-            reasoningContent: baseUserAIMessage.reasoningContent)
-        conversation.add(userAIMessage)
+        // If load() pre-reduced conversation.messages for the blob path, hand the send
+        // path a reconstructor of the full history so a blob-path bail (protocol
+        // switch, oversized round, undecodable blob) still sends everything rather than
+        // just the current round. Set alongside blobReplayProvider and with the same
+        // per-turn lifecycle. nil when not pre-reduced (conversation.messages is whole).
+        if blobsCoverHistoryThisTurn, let fullHistoryReconstructor {
+            conversation.fullHistoryProvider = fullHistoryReconstructor
+        } else {
+            conversation.fullHistoryProvider = nil
+        }
+        conversation.add(baseUserAIMessage)
         // The binding's verdict, not the raw configuration: a turn with no
         // configuration runs on the chat's bound model.
         conversation.model = turnModelName
@@ -1160,7 +1566,7 @@ class ChatAgent {
         // Optional console trace (gated on the advanced setting). Not
         // coupled to orchestration mode anymore - any chat agent can
         // emit per-turn entries when the setting is on.
-        consoleLogger.beginTurn(userBody: userAIMessage.body.content)
+        consoleLogger.beginTurn(userBody: baseUserAIMessage.body.content)
 
         var uuid: UUID?
         let streamingCallback: ((LLM.StreamingUpdate, String?) -> ())?
@@ -1202,60 +1608,218 @@ class ChatAgent {
             conversation.cancelOutstandingOperation()
         }
         conversation.complete(streaming: streamingCallback) { [weak self] result in
-            guard let self else {
-                return
-            }
-            #if ITERM_DEBUG
-            // TEMPORARY probe (Development builds only — ITERM_DEBUG is set only
-            // in the Development config, not Beta/Nightly/Deployment, and this
-            // target never defines DEBUG): a turn that completes while
-            // an orchestration tool call is still parked is the bug we're
-            // chasing — the agent swaps in a fresh conversation on completion
-            // and the parked tool's eventual result resumes a dead controller.
-            // Log the result shape, the last message body kind, and how many
-            // tool calls are still parked so a reproduction pins the trigger.
-            do {
-                let kind: String
-                switch result {
-                case .success: kind = "success"
-                case .failure(let e):
-                    kind = (e is PendingCommandCanceled) ? "cancelled" : "failure(\(e))"
-                }
-                let lastBody: String
-                switch result.successValue?.messages.last?.body {
-                case .some(.functionCall(let call, _)): lastBody = "functionCall(\(call.name ?? "?"))"
-                case .some(.text(let t)): lastBody = "text(\(OrchestrationToolProvider.snippet(of: String(t.prefix(60)))))"
-                case .some(.multipart): lastBody = "multipart"
-                case .some(.functionOutput): lastBody = "functionOutput"
-                case .some(.attachment): lastBody = "attachment"
-                case .some(.uninitialized): lastBody = "uninitialized"
-                case .none: lastBody = "none"
-                }
-                NSFuckingLog("ChatAgent.complete done: result=\(kind) lastBody=\(lastBody) parkedToolCalls=\(self.pendingRemoteCommands.count) needsRenaming=\(needsRenaming)")
-            }
-            #endif
-            if result.failureValue is PendingCommandCanceled {
-                completion(nil)
-                return
-            }
-            if let updated = result.successValue {
-                self.conversation = updated
-                if needsRenaming {
-                    self.requestRenaming()
-                }
-            }
-            switch result {
-            case .success(let updated):
-                let fallback = updated.messages.last?.body.content ?? ""
-                self.consoleLogger.logAgentReply(fallbackText: fallback)
-            case .failure(let error):
-                self.consoleLogger.logAgentError(error.localizedDescription)
-            }
-            let message = Self.committedMessage(forResult: result,
-                                                userMessage: userMessage,
-                                                streamID: uuid)
-            completion(message)
+            // streamID is a LIVE accessor: the streaming callback mutates `uuid`, and
+            // a Phase-4 retry re-streams, so the committed message must read the
+            // post-retry id, not a snapshot.
+            self?.handleTurnResult(result,
+                                   userMessage: userMessage,
+                                   streamID: { uuid },
+                                   needsRenaming: needsRenaming,
+                                   captureAPI: captureAPI,
+                                   captureModelName: captureModelName,
+                                   captureHostedTools: captureHostedTools,
+                                   streaming: streamingCallback,
+                                   didRetryExpiry: false,
+                                   completion: completion)
         }
+    }
+
+    /// Finish (or fail) a turn, with a one-shot Phase-4 retry: an unusable Responses
+    /// `previous_response_id` (expired / `store` off / deleted) is not a real failure
+    /// - re-issue the SAME turn as a full stateless replay from blobs with the id
+    /// omitted. `systemMessageDirty` forces `complete()` to null `previousResponseID`
+    /// (otherwise it would re-derive the stale id from the last assistant message).
+    /// Only retried when we actually sent an id (delta mode); a full replay that
+    /// fails is a real failure. `didRetryExpiry` bounds it to a single retry.
+    private func handleTurnResult(_ result: Result<AIConversation, Error>,
+                                  userMessage: Message,
+                                  streamID: @escaping () -> UUID?,
+                                  needsRenaming: Bool,
+                                  captureAPI: iTermAIAPI?,
+                                  captureModelName: String?,
+                                  captureHostedTools: HostedTools,
+                                  streaming streamingCallback: ((LLM.StreamingUpdate, String?) -> ())?,
+                                  didRetryExpiry: Bool,
+                                  completion: @escaping (Message?) -> ()) {
+        // Read the turn's reported input tokens NOW, before the success branch swaps
+        // in the amended copy (which has a fresh controller with no usage recorded).
+        let turnPromptTokens = conversation.lastPromptTokens
+        if case .failure(let error) = result,
+           !didRetryExpiry,
+           conversation.controller.previousResponseID != nil,
+           Self.isUnusablePreviousResponseIDError(error) {
+            RLog("ChatAgent: previous_response_id unusable in \(chatID); retrying as full stateless replay: \(error)")
+            conversation.systemMessageDirty = true
+            conversation.complete(streaming: streamingCallback) { [weak self] result in
+                self?.handleTurnResult(result,
+                                       userMessage: userMessage,
+                                       streamID: streamID,
+                                       needsRenaming: needsRenaming,
+                                       captureAPI: captureAPI,
+                                       captureModelName: captureModelName,
+                                       captureHostedTools: captureHostedTools,
+                                       streaming: streamingCallback,
+                                       didRetryExpiry: true,
+                                       completion: completion)
+            }
+            return
+        }
+        #if ITERM_DEBUG
+        // TEMPORARY probe (Development builds only — ITERM_DEBUG is set only
+        // in the Development config, not Beta/Nightly/Deployment, and this
+        // target never defines DEBUG): a turn that completes while
+        // an orchestration tool call is still parked is the bug we're
+        // chasing — the agent swaps in a fresh conversation on completion
+        // and the parked tool's eventual result resumes a dead controller.
+        // Log the result shape, the last message body kind, and how many
+        // tool calls are still parked so a reproduction pins the trigger.
+        do {
+            let kind: String
+            switch result {
+            case .success: kind = "success"
+            case .failure(let e):
+                kind = (e is PendingCommandCanceled) ? "cancelled" : "failure(\(e))"
+            }
+            let lastBody: String
+            switch result.successValue?.messages.last?.body {
+            case .some(.functionCall(let call, _)): lastBody = "functionCall(\(call.name ?? "?"))"
+            case .some(.text(let t)): lastBody = "text(\(OrchestrationToolProvider.snippet(of: String(t.prefix(60)))))"
+            case .some(.multipart): lastBody = "multipart"
+            case .some(.functionOutput): lastBody = "functionOutput"
+            case .some(.attachment): lastBody = "attachment"
+            case .some(.uninitialized): lastBody = "uninitialized"
+            case .none: lastBody = "none"
+            }
+            NSFuckingLog("ChatAgent.complete done: result=\(kind) lastBody=\(lastBody) parkedToolCalls=\(self.pendingRemoteCommands.count) needsRenaming=\(needsRenaming)")
+        }
+        #endif
+        if result.failureValue is PendingCommandCanceled {
+            completion(nil)
+            return
+        }
+        if let updated = result.successValue {
+            self.conversation = updated
+            if needsRenaming {
+                self.requestRenaming()
+            }
+        }
+        switch result {
+        case .success(let updated):
+            let fallback = updated.messages.last?.body.content ?? ""
+            self.consoleLogger.logAgentReply(fallbackText: fallback)
+        case .failure(let error):
+            self.consoleLogger.logAgentError(error.localizedDescription)
+        }
+        let message = Self.committedMessage(forResult: result,
+                                            userMessage: userMessage,
+                                            streamID: streamID())
+        completion(message)
+
+        // Freeze this completed round as wire-fragment blobs. Only on a
+        // successful turn with no tool call still parked (a parked turn never
+        // reaches here). completion(...) committed the reply synchronously via
+        // ChatService.finishTurn, so the chat's display messages now include
+        // the whole round.
+        if result.successValue != nil,
+           self.pendingRemoteCommands.isEmpty,
+           let captureAPI {
+            self.captureBlobsForCompletedTurn(api: captureAPI,
+                                              modelName: captureModelName,
+                                              hostedTools: captureHostedTools,
+                                              promptTokens: turnPromptTokens,
+                                              userMessageID: userMessage.uniqueID)
+        }
+    }
+
+    /// Freeze the just-completed round as wire-fragment blobs so future requests can
+    /// replay from them instead of re-running the reconstruction pipeline. Runs at
+    /// true turn end (success, no parked tool call, reply committed). Reconstructs
+    /// the whole chat as [LLM.Message] via the same translate() the reload path uses
+    /// and lets ChatBlobCapture freeze any round not yet stored -- incremental
+    /// per-turn, and the whole legacy history on first capture (migration), through
+    /// one path. On a protocol switch it re-freezes the whole history under the new
+    /// protocol first (blobs are not replayable cross-protocol).
+    private func captureBlobsForCompletedTurn(api: iTermAIAPI,
+                                              modelName: String?,
+                                              hostedTools: HostedTools,
+                                              promptTokens: Int?,
+                                              userMessageID: UUID) {
+        // Real per-round weight for THIS turn's round: the turn-over-turn input-token
+        // delta (this turn minus the last captured turn). The envelope (system, tools,
+        // volatile) cancels between adjacent turns, so the delta is the round's own
+        // contribution. nil (byte estimate at read time) when either turn reported no
+        // usage. max(0, ...) guards a shrinking prompt (an edit/truncation between
+        // turns). Advance the watermark whenever this turn reported usage.
+        let newRoundTokenCount = ChatBlobCapture.roundTokenWeight(
+            thisTurnPromptTokens: promptTokens,
+            previousTurnPromptTokens: previousTurnPromptTokens)
+        if let promptTokens {
+            previousTurnPromptTokens = promptTokens
+        }
+
+        // Use the broker's list model (and its database) so capture writes to the
+        // SAME store the turn used -- the real singleton in production, a temp DB
+        // under test -- rather than reaching for the ChatDatabase.instance singleton.
+        let listModel = broker.listModel
+        let database = listModel.chatDatabase
+        guard let displayMessages = listModel.messages(forChat: chatID, createIfNeeded: false) else {
+            return
+        }
+        let display = Array(displayMessages)
+        let appended = captureNewRoundsFrom(display: display, api: api, modelName: modelName,
+                                            hostedTools: hostedTools,
+                                            newRoundTokenCount: newRoundTokenCount,
+                                            database: database)
+        if appended > 0 {
+            try? listModel.setBlobProtocol(Int(api.rawValue), forChatID: chatID)
+        }
+        // Link this turn's user message to the round's blob for fork slicing. Only the
+        // incremental case (exactly one new round) has a clean 1:1 mapping between the
+        // just-frozen blob and this turn's user message; a multi-round migration
+        // capture leaves firstBlobRef nil (the fork falls back to re-migration for the
+        // un-linked prefix).
+        if appended == 1, let newestBlobID = database.lastBlobID(inChat: chatID) {
+            listModel.setFirstBlobRef(newestBlobID.uuidString, forMessageID: userMessageID, inChat: chatID)
+        }
+    }
+
+    /// Freeze the completed turn's new round(s), translating as little history as
+    /// possible. For an established same-protocol chat this translates ONLY the new
+    /// rounds' display messages (displayTailForNewRounds) instead of the whole,
+    /// already-frozen history -- the capture-side counterpart of the send-side
+    /// pre-reduce -- and appends them directly. It re-derives from the FULL history
+    /// (the original path) for migration (no blobs yet), a protocol switch (blobs
+    /// re-frozen wholesale under the new protocol), or if the translated tail does not
+    /// begin with a clean user turn (a boundary the fast path can't trust). Both paths
+    /// persist identical blobs; only the amount translated differs.
+    private func captureNewRoundsFrom(display: [Message],
+                                      api: iTermAIAPI,
+                                      modelName: String?,
+                                      hostedTools: HostedTools,
+                                      newRoundTokenCount: Int?,
+                                      database: ChatDatabase) -> Int {
+        let existing = database.blobCount(inChat: chatID)
+        let sameProtocol = existing == 0 || database.storedBlobProtocol(inChat: chatID) == Int(api.rawValue)
+        if existing > 0, sameProtocol, !Self.historyUsesExplainFeature(display),
+           let tail = Self.displayTailForNewRounds(display, existing: existing) {
+            let tailMessages = translate(messages: tail)
+            // The tail must begin at a clean round boundary (a user turn). It does by
+            // construction (displayTailForNewRounds starts at a user round start), so
+            // this only trips on an unexpected translate outcome; fall back to the
+            // full re-derive rather than freeze bytes from a misaligned tail.
+            if tailMessages.first?.role == .user {
+                return ChatBlobCapture.appendNewRounds(
+                    chatID: chatID, newRounds: ChatBlobCapture.rounds(from: tailMessages),
+                    api: api, modelName: modelName, hostedTools: hostedTools,
+                    newRoundTokenCount: newRoundTokenCount, database: database)
+            }
+        }
+        return ChatBlobCapture.captureTurn(chatID: chatID,
+                                           allMessages: translate(messages: display),
+                                           api: api, modelName: modelName,
+                                           hostedTools: hostedTools,
+                                           newRoundTokenCount: newRoundTokenCount,
+                                           database: database)
     }
 
     private func requestRenaming() {
@@ -1637,5 +2201,22 @@ extension ChatAgent {
     static func transcriptMessagesBeforeRepair(_ messages: [Message]) -> [AITermController.Message] {
         var stateMachine = MessageToPromptStateMachine()
         return aiMessagesForStructuredReplay(messages, stateMachine: &stateMachine)
+    }
+
+    /// Test-only seam: the FULL history-reload transform used on every turn
+    /// (`translate(messages:)`), with the session-guid resolver injected
+    /// instead of read from the live iTermController. `aiMessagesForReloadingTranscript`
+    /// already runs orphan-tool repair; the one step it omits is
+    /// `stabilizeSessionReferences`, which this seam adds (matching
+    /// production `translate`). The production `translate` resolves guids
+    /// against live sessions, so a guid-bearing historical turn's bytes
+    /// depend on which sessions exist at send time.
+    static func translateForTesting(_ messages: [Message],
+                                    resolve: (String) -> String?) -> [AITermController.Message] {
+        aiMessagesForReloadingTranscript(messages).map { message in
+            var message = message
+            message.body = stabilizeSessionReferences(in: message.body, resolve: resolve)
+            return message
+        }
     }
 }

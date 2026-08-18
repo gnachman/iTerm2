@@ -184,10 +184,10 @@
         DLog(@"git poller isLocalhost variable is %@", flag);
         return flag.boolValue;
     }
-    NSString *localhostName = [NSHost fullyQualifiedDomainName];
     NSString *currentHostname = self.scope.hostname;
-    DLog(@"git poller current hostname is %@, localhost is %@ (no locality flag)", currentHostname, localhostName);
-    return [localhostName isEqualToString:currentHostname];
+    const BOOL isLocal = [NSHost it_hostnameIsThisMachine:currentHostname];
+    DLog(@"git poller current hostname is %@, it_hostnameIsThisMachine=%@ (no locality flag)", currentHostname, @(isLocal));
+    return isLocal;
 }
 
 - (NSString *)branch {

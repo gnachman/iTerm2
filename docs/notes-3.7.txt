@@ -46,6 +46,59 @@ Major New Features:
   bitrate multiplier and the flow-control
   back-off thresholds.
 
+- A new setting in Settings > Appearance makes
+  the tab bar scrollable. When the tab bar has
+  more tabs than fit, instead of moving the
+  extras into the “More tabs” overflow menu they
+  stay in the bar and you scroll to reach them.
+  Works for top, bottom, left, and right tab
+  bars. A horizontal bar scrolls with a trackpad
+  swipe or shift + mouse wheel. Off by default.
+  The “Tab width when the tab bar is scrollable”
+  advanced setting sets the scrolled tab size.
+
+- iTerm2 now probes the local network on
+  every launch so macOS keeps it in the
+  Local Network privacy list. This recovers
+  the permission after a tccutil reset or an
+  OS upgrade, fixing commands like
+  “ping 10.0.0.1” failing with “no route to
+  host”.
+
+- Added a Zero Data Retention setting under
+  Settings > General > AI. Turn it on if your
+  OpenAI organization has Zero Data Retention
+  enabled. iTerm2 then stops sending
+  previous_response_id and sets store=false, so
+  chats no longer fail on the second message.
+
+- A new profile setting, “Use ANSI colors
+  for marks” (Settings > Profiles > Colors),
+  draws command-prompt mark indicators using
+  the color preset’s ANSI blue, red, and
+  yellow instead of the built-in colors, so
+  they harmonize with any theme. Off by
+  default.
+
+- Fixed a bug where the top-right session
+  indicators left a horizontal smear while
+  swiping between tabs with two fingers.
+
+- Fixed a bug where an SGR sequence or SGR
+  trigger with more parameters than fit
+  attached the extra parameters’
+  subparameters to the last parameter that
+  did fit, changing its meaning: underline
+  could turn into dashed underline. SGR
+  triggers also silently dropped their 16th
+  parameter.
+
+- Fixed a bug where toolbelt lists
+  (Command History, Recent Directories,
+  Captured Output) could stay blank until
+  the window was resized when a new window
+  was opened with the toolbelt showing.
+
 - There's a new kind of AI chat called
   "orchestration" which can view all your
   sessions and operate iTerm2 for you.
@@ -53,6 +106,21 @@ Major New Features:
 - AI chat can now restart a session for you.
   The “Type for You” permission was renamed
   “Control Terminal” and now also gates this.
+
+- AI chat linked to a terminal session can now
+  watch that session and tell you when it reaches
+  a state or a described condition, without
+  polling. Previously only orchestration chats
+  could set watches. If your phone is paired it
+  can also push you a notification when the watch
+  fires.
+
+- The manual AI model editor now offers presets
+  for OpenAI-compatible providers (Ollama,
+  OpenRouter, z.ai, Qwen, MiniMax) that fill in
+  the endpoint for you, plus a Test Connection
+  button that verifies your settings and API key
+  before you save.
 
 - Claude Code integration was added. It enables
   the new Session Status feature for claude code
@@ -102,21 +170,51 @@ Major New Features:
   The Claude Code integration uses Clippings to
   store code review comments so they can be shared
   between related sessions in a Workgroup.
+- Added support for the Kitty drag-and-drop
+  protocol (OSC 72). A program running in the
+  terminal can accept files, text, and images
+  dropped onto the window, and (when it has mouse
+  reporting on, e.g. a full-screen TUI) can offer
+  its own data to be dragged out to other apps.
+  For a program on a remote host, dropped files
+  are transferred to it over the connection. Hold
+  Option while dropping to use the old
+  paste/upload behavior instead.
 - A new tmux window opened with Command-T now
   picks up the profile’s custom tab title, if
   one is set.
+- Fixed a bug where modified function keys (such
+  as Shift-F5) lost their modifier in a tmux
+  integration session, sending the unmodified
+  sequence instead of the xterm form like
+  ^[[15;2~.
 - Fixed a bug where auto-sending code review
   results to the main session sometimes failed to
   submit because the Return arrived too soon after
   the paste. The Return now waits a moment (see
   the workgroupAutoSendSubmitDelay advanced
   setting).
+- Fixed a bug where a sixel image whose
+  terminator had a doubled escape (ESC ESC \
+  instead of ESC \) was discarded entirely,
+  leaving a stray backslash on the screen. The
+  image now renders.
+- Fixed a bug where a left- or right-of-screen
+  window could suddenly change width (growing or
+  shrinking to a second tab’s profile size) after
+  a display-configuration change, instead of
+  keeping its own width.
 - Security: the retrospective debug log (used by
   Save Retrospective Debug Logs) no longer retains
   typed characters, command lines, passwords,
   tokens, or AI chat content. These could
   previously accumulate in memory with debug
   logging off.
+- ⌘-click now linkifies very long URLs in
+  full. Previously only the first couple
+  thousand characters were clickable; the
+  linkifier now scans onward to the next
+  separator so the whole URL is detected.
 - In AI chat orchestration mode, references
   to a session or workgroup now appear as a
   clickable link, marked with a terminal
@@ -339,6 +437,11 @@ Major New Features:
   session’s scrollback in a new window.
 
 New Features in Terminal Sessions:
+- Right-to-left script support (bidi
+  reordering plus Arabic and Persian
+  cursive joining) is now enabled by
+  default. You can turn it off in
+  Settings > General > Experimental.
 - Double-width and double-height lines
   (DECDWL, DECDHL, DECSWL) are now supported
   via ESC #3, #4, #5, and #6.
@@ -382,6 +485,10 @@ New Features in Terminal Sessions:
   previously rounded to whole minutes.
 
 Tabs, Windows, and UI:
+- Left and right tabs in the Minimal theme are now
+  as tall as top tabs, giving subtitles room to
+  render legibly. The height follows the existing
+  Minimal tab bar height advanced setting.
 - Most window types support initial size as a
   percentage of the screen (used to be only number
   of rows and columns).
@@ -523,6 +630,12 @@ AI Improvements:
   name. Values are stored unencrypted in
   iTerm2’s preferences.
 - PDF chat attachments now work on Anthropic.
+- When AI chat types into a terminal, a newline
+  is now sent as Return (carriage return) so it
+  submits the line in programs like Claude Code
+  instead of inserting a literal newline. The
+  tool also reports how many characters were
+  inserted.
 
 Python API Improvements:
 - Move sessions to new tabs or windows via the
@@ -546,10 +659,16 @@ Python API Improvements:
   having its pongs buffered without limit. The it2
   command-line client handles a flood of ping
   frames iteratively instead of recursively.
+  Credit to NSEcho for the find
 - The Script Console has a Clear Terminated
   button that removes stopped sessions from the
   list, so it no longer grows without bound when
   you repeatedly restart a script.
+- The warning that a script’s pinned Python
+  version will be bumped for the new uv runtime
+  now has an Upgrade Now button that migrates
+  those scripts immediately, instead of only
+  when each one next runs.
 
 Password Manager Improvements:
 - Bitwarden is now a supported password manager.
@@ -670,6 +789,9 @@ Search and Selection Improvements:
 - New pointer action to copy link address.
 
 Menus and Miscellaneous:
+- Heads up: future betas will require macOS 13
+  (Ventura) or later. This is the last version to
+  support macOS 12. Sorry for the inconvenience!
 - New menu item to open new tabs next to the
   current tab or at the end (opposite of the
   default).
@@ -718,6 +840,10 @@ Core Improvements:
 - Significant Metal rendering speedups for
   non-ASCII text should result in higher frame
   rates.
+- Faster rendering of text with many colors (e.g.
+  syntax-highlighted code) by reusing attribute
+  dictionaries across runs instead of rebuilding
+  one per color span.
 - Framerate is capped at 30 fps in low-power mode.
 - Crash-log search was moved off the main thread
   so app launch does not hang when there are a
@@ -799,6 +925,58 @@ Settings Improvements:
   changes.
 
 Bug Fixes:
+- Companion Device Settings no longer prompts
+  for Touch ID on its own. Opening the window
+  or unpairing a device now shows a “Show QR
+  Code” button, and authentication happens only
+  after you click it.
+- Cmd-W now closes the Companion Device
+  Settings window instead of beeping.
+- Fixed a beachball that could occur when the
+  tab style preference changed: every session’s
+  announcement view was re-fitted synchronously,
+  each fit re-running an expensive text-layout
+  search. Measurements are now cached and reused,
+  and a resize to the same size no longer
+  re-fits.
+- Fixed a multi-second hang that could occur
+  when a window changed appearance (for example
+  when another app or a second iTerm2 instance
+  stole focus) while in traditional fullscreen.
+  Setting a window to its current appearance no
+  longer re-triggers a refresh loop.
+- On macOS Tahoe, dark-theme selected tabs no
+  longer draw their chrome at a fixed image
+  height while the tab cell uses a different
+  height (for example left tabs with a custom
+  Default tab bar height). Cap images scale to
+  the pill so the dual-layer look goes away
+  without needing a custom tab color.
+- Toggling Caps Lock no longer inserts an “A”
+  in programs that use the Kitty keyboard
+  protocol with “report all keys as escape
+  codes.” Now it reports the key’s own code
+  (57358) instead of a stray modifier value
+  that got read as an “A.” Issue 12922.
+- Split-pane dividers in different rows or columns
+  can now be dragged into alignment: a divider
+  snaps to a matching divider elsewhere in the tab
+  when it comes within half a cell, fixing a
+  sub-cell misalignment that whole-cell steps
+  could not correct. Double-clicking a horizontal
+  divider to equalize the two panes also no
+  longer computes the wrong size.
+- The Centered window style now looks and behaves
+  just like a normal window (title bar,
+  close/minimize/zoom buttons, and the same chrome
+  in the Minimal and Compact themes), except that
+  it stays centered. It also no longer changes
+  size when you minimize and restore it.
+- In tmux -CC sessions with pane-border-status set
+  to top or bottom, the pane no longer ends up a
+  row too tall. Previously the bottom line went
+  unused and the cursor landed a row high after
+  reattaching.
 - Retrospective debug logging no longer fills its
   in-memory ring so quickly on busy hosts. Several
   high-frequency sites that logged large payloads
@@ -1360,6 +1538,11 @@ Bug Fixes:
   a backslash instead of ¥ on non-JIS
   keyboards. Restore ⌥+¥ sending ESC+\
   (with Option=Esc+) on JIS keyboards.
+- Fix a bug where a restored session whose
+  working directory was on an unmounted drive
+  could fail to relaunch, closing the tab. The
+  session now starts in your home directory and
+  shows a notice. Issue 12955.
 - Fix various crashes.
 - Fix wrong terminal size after exiting
   fullscreen with multiple tabs.
@@ -2322,3 +2505,219 @@ Bug Fixes:
   instead of a terminal, unless you’ve
   bound the scheme to a specific profile.
   Issue 12431.
+- Fixed the iPhone companion connection
+  getting stuck after the relay dropped an
+  idle socket. A keepalive ping that never
+  got a reply could hang forever, so the Mac
+  kept believing it was connected and never
+  reconnected. The ping now times out and
+  forces a reconnect.
+- AI chats that control or coordinate your
+  terminal sessions now use far fewer tokens
+  on long conversations. The live snapshot of
+  session state sent each turn is no longer
+  part of the cached prompt prefix, so the
+  conversation history is reused from cache
+  instead of being reprocessed every turn.
+- Fixed a bug where a tab reshaped by the
+  Python API’s apply_layout could end up with
+  no focused pane, so typing went nowhere until
+  you clicked a pane. Focus is now restored
+  after the layout is applied.
+- AI chat history is now replayed to the model
+  from the exact bytes previously sent rather
+  than rebuilt each turn, so the prompt cache
+  stays valid across turns (including turns
+  that ran a tool) and long conversations keep
+  getting cheaper and faster.
+- Sending a message in a long AI chat is now
+  faster: when the whole history is already
+  stored as sent-bytes, it is no longer
+  reprocessed to build each request, so the
+  per-message work stays small no matter how
+  long the conversation gets.
+- Fix “Save contents…” suggesting a
+  filename containing colons/slashes in
+  the timestamp, which macOS shows as “/”
+  and disallows. Issue 12931.
+- The command info popover’s “Started at”
+  time now honors the system 24-Hour Time
+  setting instead of always using a
+  12-hour clock. Issue 12929.
+- A new advanced setting,
+  CompactTabBarStoplightButtonsWidth, lets
+  you adjust the width reserved for the
+  window buttons before the inline tab bar
+  in the Compact and Minimal themes.
+- Fixed a bug where Undo Close (⌘Z) could
+  leave behind an invisible empty window when
+  the closed session could not be restored.
+  Besides being a leak, these phantom windows
+  crashed Python API scripts with a
+  RecursionError. Empty windows are now closed,
+  and the Python API no longer reports a
+  selected tab for a window that has none.
+- Fixed a bug where a Python API script
+  launched from the Scripts menu of a
+  secondary iTerm2 instance (one started with
+  -suite) connected to the main instance's API
+  server instead of its own, controlling the
+  wrong app.
+- Fixed a bug where Make Screenshot did not
+  render ASCII ligatures (like -> or =>) even
+  when the profile enabled them and the font
+  supported them. Screenshots now ligate the
+  same way the terminal does.
+- Fixed a bug where tmux panes received stray
+  focus-report escape sequences on focus
+  changes even when no program in the pane had
+  turned on focus reporting. Reports now go
+  only to panes whose app requested them (by
+  emitting DECSET 1004), matching how non-tmux
+  sessions behave.
+- Fixed Semantic History (Cmd-Click) failing
+  to open files in JetBrains IDEs such as
+  IntelliJ IDEA, WebStorm, and Rider. iTerm2
+  now runs the IDE’s command-line launcher
+  directly (forwarding to the already-running
+  instance) and passes the path before the
+  --line option, which the current launcher
+  requires. Issue 12958.
+- Fixed a bug where the OSC 9;4 progress
+  bar was hidden by the border around the
+  active pane. The bar now draws on top of
+  the border's top edge. Issue 12960.
+- Fixed a bug where some profile settings
+  that apply to all profile types (such as
+  “Border around active pane”, “Use custom
+  tab color”, and Color Presets) could not
+  be found with the preferences search box
+  while editing a profile.
+- Added iTerm2 > Suppressed Alerts, which lists
+  warnings that are being answered automatically
+  because you chose to remember your response
+  (for example, declining terminal-initiated
+  image display, which silently stops inline
+  images from appearing). You can select an
+  alert and un-suppress it so it will be shown
+  again. The old View > Always Show Alerts with
+  Remembered Selections command now lives in
+  this panel as a checkbox.
+- Scripts > Manage can install and update
+  the uv-based Python runtime when the uv
+  advanced setting is enabled.
+- On macOS 27, which removes Rosetta, no
+  longer prompt to install Rosetta for
+  Python scripts, and rebuild or replace
+  Intel-only Python environments for
+  Apple Silicon instead of failing.
+- Fix a full-environment Python script run
+  from Open Quickly (or before its
+  environment finished installing) launching
+  on the shared runtime and failing to
+  import its own dependencies.
+- Fix the Script Dependency Editor showing
+  [Error] for a package’s installed version
+  when its dependency has a version
+  constraint (e.g. aiohttp>=3.14.3).
+- The Script Dependency Editor can now
+  change a uv script’s Python version to any
+  version uv provides, rebuilding its
+  environment, not just the installed one.
+- A failed Python version change (e.g. to a
+  version where a pinned dependency has no
+  wheel) no longer destroys a uv script’s
+  working environment; the new one is built
+  aside and swapped in only if it succeeds.
+- Replacing an installed script during import
+  no longer deletes the existing script if you
+  cancel the Python download; the original is
+  kept and the cancellation is reported.
+- uv runtime updates no longer fail on slow
+  connections (the download is no longer capped
+  at a fixed total time).
+- Legacy scripts whose setup.cfg has no exact
+  Python pin now get the same version-change
+  warning as pinned ones when migrating to uv.
+- On macOS without Rosetta, iTerm2 now asks
+  before replacing an Intel-only Python runtime
+  with the Apple Silicon build, and stays quiet
+  if you decline.
+- A script whose replacement is interrupted by
+  a crash mid-install is now restored on the
+  next launch instead of being lost.
+- The Scripts menu no longer lists files or
+  folders whose names begin with a dot.
+- Migrating a script to the new Python runtime
+  no longer runs Intel Python interpreters
+  found on your PATH, which could trigger a
+  macOS “Intel-only binary” warning.
+- When a keyboard shortcut stops matching
+  because your input method changed the
+  character a key produces, iTerm2 now offers
+  to interpret key bindings by physical key.
+- Fixed a bug where decomposed Hangul, such
+  as Korean filenames stored by HFS+, was
+  drawn as separate jamo letters with the
+  wrong width, which corrupted cursor
+  movement. Conjoining jamo now compose
+  into a single syllable cell.
+- OSC 9;4;4, the ConEmu progress protocol’s
+  paused state, now works when the percentage
+  is left out, which the protocol allows. The
+  bar keeps the percentage it was showing and
+  changes color instead of doing nothing. If
+  there was none, it shows a small one so the
+  paused state is visible.
+- Advanced Paste with bracketed paste on but
+  “Wait for shell prompt” off now pastes a
+  multi-line block as one editable buffer on
+  zsh, bash, and fish, so you can review it and
+  press Return once, instead of running each
+  line as it arrives.
+- When a paste is paused waiting for a shell
+  prompt, the paste indicator now has a keyboard
+  button that sends your typing straight to the
+  terminal instead of queueing it, so you can
+  answer a prompt the paste is stuck on (such as
+  a password or zsh’s spelling correction).
+- Exiting a workgroup, or closing one of its
+  tabs, no longer leaves the main session’s tab
+  showing a blank pane when a non-main peer was
+  the visible one.
+- Fixed a workgroup whose tab (or split) hosts
+  its own peer group coming up with no toolbar
+  and no peer switcher.
+- Workgroup peers nested inside a tab or split
+  now inherit their profile and directory from
+  the session the workgroup was opened on, so a
+  workgroup opened on a remote host keeps every
+  peer on that host.
+- Closing a workgroup session that would exit the
+  whole workgroup now warns you that its other
+  sessions will close too, naming the workgroup
+  and how many more sessions will end.
+- Added tab groups: right-click a tab and choose
+  Add Tab to Group to group Chrome/Firefox-style
+  tabs. A named, colored chip heads each group;
+  right-click it to rename, recolor, duplicate,
+  move to a new window, ungroup, or close the
+  group. Drag the chip to move the whole group,
+  within a window or into another one; drag
+  single tabs into, around, or out of a group.
+  Groups persist their name and color with the
+  member tabs.
+- Tab groups can be collapsed: click a group's
+  chip (or use its menu) to hide its tabs behind
+  the chip, which shows a member count. Selecting
+  a hidden tab reveals the group. Collapsed state
+  persists across restarts.
+- Collapsing and expanding a tab group now
+  animates: the member tabs slide shut and open.
+  Works on horizontal and vertical tab bars in
+  every theme.
+- Dropping a file on a local terminal no longer
+  offers to upload it when the machine answers to
+  more than one name (for example .local versus a
+  DHCP-assigned name). Localhost is now recognized
+  by any of the machine's names.

@@ -276,6 +276,7 @@ extern NSString *const iTermProgressBarColorSchemeOrange;
 #define KEY_USE_CANONICAL_PARSER              @"Use Canonical Parser"  // Deprecated
 #define KEY_PLACE_PROMPT_AT_FIRST_COLUMN      @"Place Prompt at First Column"
 #define KEY_SHOW_MARK_INDICATORS              @"Show Mark Indicators"
+#define KEY_USE_THEME_MARK_COLORS             @"Use Theme Mark Colors"
 #define KEY_SHOW_OFFSCREEN_COMMANDLINE        @"Show Offscreen Command line"
 #define KEY_SHOW_OFFSCREEN_COMMANDLINE_FOR_CURRENT_COMMAND @"Show Offscreen Command line for Current Command"
 #define KEY_TMUX_NEWLINE                      @"Tmux Newline"
@@ -461,7 +462,8 @@ typedef NS_ENUM(int, iTermWindowType) {
     WINDOW_TYPE_MAXIMIZED = 15,
     WINDOW_TYPE_COMPACT_MAXIMIZED = 16,
     
-    WINDOW_TYPE_CENTERED = 17,
+    WINDOW_TYPE_CENTERED = 17,  // May be converted to compact-centered depending on theme
+    WINDOW_TYPE_COMPACT_CENTERED = 18,
 };
 
 iTermWindowType iTermWindowDefaultType(void);

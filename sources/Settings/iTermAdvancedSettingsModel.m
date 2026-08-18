@@ -305,6 +305,7 @@ DEFINE_BOOL(useUnevenTabs, NO, SECTION_TABS @"Uneven tab widths allowed.");
 DEFINE_INT(minTabWidth, 75, SECTION_TABS @"Minimum tab width when using uneven tab widths.");
 DEFINE_INT(minCompactTabWidth, 60, SECTION_TABS @"Minimum tab width when using uneven tab widths for compact tabs.");
 DEFINE_INT(optimumTabWidth, 175, SECTION_TABS @"Preferred tab width when tabs are equally sized.");
+DEFINE_INT(scrollableTabWidth, 120, SECTION_TABS @"Tab width when the tab bar is scrollable.\nUsed as the fixed width when tabs are equally sized, and as the minimum width when uneven tab widths are allowed.");
 DEFINE_BOOL(moveLeftAfterClosingTab, NO, SECTION_TABS @"Select the tab to the left when closing a tab?\nIf disabled, the tab to the right of the closing tab will be selected.");
 DEFINE_BOOL(navigatePanesInReadingOrder, YES, SECTION_TABS @"Next Pane and Previous Pane commands use reading order, not the time of last use.");
 DEFINE_FLOAT(tabAutoShowHoldTime, 1.0, SECTION_TABS @"How long in seconds to show tabs in fullscreen.\nThe tab bar appears briefly in fullscreen when the number of tabs changes or you switch tabs. This setting gives the time in seconds for it to remain visible.");
@@ -325,7 +326,7 @@ DEFINE_FLOAT(coloredUnselectedTabTextProminence, 0.5, SECTION_TABS @"How promine
 DEFINE_FLOAT(minimalTextLegibilityAdjustment, 1.0, SECTION_TABS @"How much should contrast be increased for text in tabs in the Minimal theme?\nChoose a value larger than 1 to increase contrast. Values between 0 and 1 have less contrast than the default.");
 DEFINE_BOOL(minimalTabStyleTreatLeftInsetAsPartOfFirstTab, NO, SECTION_TABS @"In the Minimal theme, should the area left of the tab bar be treated as part of the first tab?");
 DEFINE_FLOAT(compactMinimalTabBarHeight, 38, SECTION_TABS @"Tab bar height (points) for the Minimal theme.\nThe default is 38. Use 22 to match the compact theme's height.");
-DEFINE_SETTABLE_FLOAT(defaultTabBarHeight, DefaultTabBarHeight, 24, SECTION_TABS @"Default tab bar height\nThis does not affect the minimal or compact themes. In macOS 26, the system standard height is used instead and this setting is ignored.")
+DEFINE_SETTABLE_FLOAT(defaultTabBarHeight, DefaultTabBarHeight, 24, SECTION_TABS @"Default tab bar height\nThis does not affect the minimal or compact themes. On macOS 26 Tahoe-style tabs, the top (horizontal) tab bar uses the system height and ignores this setting; left/right (vertical) tabs use max(26, this value) for each tab’s height.")
 DEFINE_BOOL(doubleClickTabToEdit, YES, SECTION_TABS @"Should double-clicking a tab open a window to edit its title?");
 DEFINE_FLOAT(minimumTabLabelWidth, 35, SECTION_TABS @"Minimum width for tab labels.\nThe activity/bell icon will be hidden when the space for the label drops below this size (in points)");
 DEFINE_BOOL(disregardDockSettingToOpenTabsInsteadOfWindows, YES, SECTION_TABS @"Ignore System Settings > Dock > Prefer tabs when opening documents?\nWhen set to No, asking to open a window will open a tab instead when system settings is configured to prefer tabs over windows. When set to Yes, asking to open a window may open a tab instead.");
@@ -632,7 +633,7 @@ DEFINE_BOOL(disableSmartSelectionActionsOnClick, NO, SECTION_SEMANTIC_HISTORY @"
 DEFINE_BOOL(startDebugLoggingAutomatically, NO, SECTION_DEBUGGING @"Start debug logging automatically when iTerm2 is launched.");
 DEFINE_BOOL(appendToExistingDebugLog, NO, SECTION_DEBUGGING @"Append to existing debug log rather than replacing it.");
 DEFINE_BOOL(logDrawingPerformance, NO, SECTION_DEBUGGING @"Log stats about text drawing performance to console.\nUsed for performance testing.");
-DEFINE_BOOL(showDirtyRectsInLegacyRenderer, NO, SECTION_DEBUGGING @"Outline dirty rects in the legacy renderer with random colors.\nUseful for visually verifying which regions of the text view are being repainted each frame. Only affects the legacy (non-Metal) renderer.");
+DEFINE_BOOL(showDirtyRectsInLegacyRenderer, NO, SECTION_DEBUGGING @"Outline dirty rects in the legacy renderer with random colors.\nUseful for visually verifying which regions of the text view are being repainted each frame. This affects only the legacy (non-GPU) renderer and does nothing when the GPU (Metal) renderer is active, so it is not a way to tell whether the GPU renderer is engaged. To use it, first turn off the GPU renderer in Settings → General → Magic.");
 DEFINE_BOOL(logRestorableStateSize, NO, SECTION_DEBUGGING @"Log restorable state size info to /tmp/statesize.*.txt.");
 DEFINE_BOOL(showBlockBoundaries, NO, SECTION_DEBUGGING @"Show line buffer block boundaries (issue 6207)");
 DEFINE_BOOL(logToSyslog, NO, SECTION_DEBUGGING @"Debug logs also write to the system log.");
@@ -693,6 +694,7 @@ DEFINE_BOOL(disableWindowShadowWhenTransparencyOnMojave, YES, SECTION_WINDOWS @"
 DEFINE_BOOL(disableWindowShadowWhenTransparencyPreMojave, YES, SECTION_WINDOWS @"Disable the window shadow on High Sierra and earlier when the window has a transparent session to prevent text shadows.");
 DEFINE_BOOL(restoreWindowsWithinScreens, YES, SECTION_WINDOWS @"When restoring a window arrangement, ensure windows are entirely within the bounds of the current displays.")
 DEFINE_FLOAT(extraSpaceBeforeCompactTopTabBar, 0, SECTION_WINDOWS @"Amount of extra space (in points) between stoplight buttons and inline tab bar.\nThis only takes effect for the Compact and Minimal themes when the tab bar is visible and located at the top of the window.");
+DEFINE_FLOAT(compactTabBarStoplightButtonsWidth, 75, SECTION_WINDOWS @"Width (in points) reserved for the window buttons (close/minimize/zoom) before the inline tab bar.\nThe default is 75. Reduce it to move tab content closer to the buttons, or increase it for more breathing room. This only takes effect for the Compact and Minimal themes when the tab bar is visible and located at the top of the window. Setting it smaller than the buttons themselves will let tabs overlap them.");
 DEFINE_BOOL(workAroundMultiDisplayOSBug, YES, SECTION_WINDOWS @"Work around a macOS bug where the OS moves windows to the first display for no good reason.");
 DEFINE_BOOL(disableDocumentedEditedIndicator, NO, SECTION_WINDOWS @"Disable documented edited indicator (black dot in close button)");
 DEFINE_BOOL(showWindowTitleWhenTabBarInvisible, YES, SECTION_WINDOWS @"Show window title when the tab bar is not visible?\nWhen disabled, the tab's title will be shown where the window title would normally go.");
@@ -945,8 +947,10 @@ static NSString *iTermDefaultPythonRuntimeDownloadURL(void) {
 }
 
 DEFINE_STRING(pythonRuntimeDownloadURL, iTermDefaultPythonRuntimeDownloadURL(), SECTION_SCRIPTING @"URL to check for new versions of the Python scripting runtime.");
+DEFINE_STRING(uvManifestDownloadURL, @"https://iterm2.com/downloads/uv/manifest.json", SECTION_SCRIPTING @"URL of the uv download manifest (used when the Python runtime is provisioned with uv).");
 DEFINE_STRING(pythonRuntimeBetaDownloadURL, @"https://iterm2.com/downloads/pyenv/betamanifest.json", SECTION_SCRIPTING @"URL to check for new Beta versions of the Python scripting runtime.");
 DEFINE_BOOL(laxNilPolicyInInterpolatedStrings, YES, SECTION_SCRIPTING @"Should references to undefined variables in interpolated strings be converted to empty string?\nWhen enabled, an expression in an interpolated string that references an undefined variable will be treated as an empty string. For example, “\\(bogus)”. References to undefined variables as arguments to function calls, such as “\\(f(bogus))”, are still errors.");
+DEFINE_BOOL(pythonRuntimeUsesUV, YES, SECTION_SCRIPTING @"Use uv to provision the Python runtime for API scripts?\nWhen enabled, iTerm2 uses uv to download Python and build per-script environments instead of the bundled Python runtime. Scripts already provisioned continue to run regardless of this setting; it only affects creating, importing, and migrating scripts.");
 DEFINE_SETTABLE_BOOL(setCookie, SetCookie, NO, SECTION_SCRIPTING @"Set ITERM2_COOKIE environment variable, allowing Python scripts to be launched without confirmation?\nThis will only affect sessions created after changing this setting.");
 DEFINE_SETTABLE_BOOL(setIT2AppPath, SetIT2AppPath, NO, SECTION_SCRIPTING @"Set IT2_APP_PATH environment variable on new sessions, pointing at this iTerm2 build’s app bundle?\nThis disambiguates the AppleScript target when multiple iTerm2 builds with the same bundle identifier are running, so that the “it2” CLI requests its cookie from this iTerm2 instance. Intended for iTerm2 developers. Only affects sessions created after changing this setting.");
 

@@ -17,30 +17,55 @@ fileprivate class MockDataSourceWithDividers: NSObject, iTermTextDataSource {
     private let gridHeight: Int32
 
     /// Creates a mock data source with the given lines of text.
-    /// Use "|" or "│" in your strings to represent dividers.
-    init(strings: [String], width: Int32 = 80) {
+    /// Use "|" or "│" in your strings to represent dividers. Lines whose index is in
+    /// `softWrappedLineIndices` end with EOL_SOFT (i.e. they wrap onto the next line);
+    /// all other lines end with a hard newline.
+    init(strings: [String], width: Int32 = 80, softWrappedLineIndices: Set<Int> = [],
+         imageColumnsByLine: [Int: Set<Int>] = [:],
+         complexColumnsByLine: [Int: [Int: [unichar]]] = [:]) {
         self.gridWidth = width
         self.gridHeight = Int32(strings.count)
         self.lines = []
         super.init()
 
-        for string in strings {
-            let sca = createScreenCharArray(from: string, width: width)
+        for (index, string) in strings.enumerated() {
+            let soft = softWrappedLineIndices.contains(index)
+            let sca = createScreenCharArray(from: string, width: width, softWrapped: soft,
+                                            imageColumns: imageColumnsByLine[index] ?? [],
+                                            complexColumns: complexColumnsByLine[index] ?? [:])
             lines.append(sca)
         }
     }
 
-    private func createScreenCharArray(from string: String, width: Int32) -> ScreenCharArray {
+    private func createScreenCharArray(from string: String, width: Int32, softWrapped: Bool,
+                                       imageColumns: Set<Int>,
+                                       complexColumns: [Int: [unichar]]) -> ScreenCharArray {
         var buffer = [screen_char_t](repeating: screen_char_t(), count: Int(width) + 1)
 
         for (index, char) in string.unicodeScalars.enumerated() {
             guard index < Int(width) else { break }
             buffer[index].code = unichar(char.value)
             buffer[index].complexChar = 0
+            if imageColumns.contains(index) {
+                // An image cell: code is a url-legal codepoint here, but image==1 must still
+                // terminate the URL run.
+                buffer[index].image = 1
+            }
+            if let codePoints = complexColumns[index], let base = codePoints.first {
+                // A complex (composed grapheme / non-BMP) cell: seed with the base code point, then
+                // append the rest so the cell decodes to the full grapheme via ScreenCharToStr.
+                var cell = buffer[index]
+                cell.code = base
+                cell.complexChar = 0
+                for codePoint in codePoints.dropFirst() {
+                    AppendToChar(&cell, codePoint)
+                }
+                buffer[index] = cell
+            }
         }
 
         var continuation = screen_char_t()
-        continuation.code = unichar(EOL_HARD)
+        continuation.code = unichar(softWrapped ? EOL_SOFT : EOL_HARD)
 
         return ScreenCharArray(
             copyOfLine: buffer,
@@ -218,5 +243,150 @@ class ExtendURLSearchResultsTests: XCTestCase {
         let dividerCoord = VT100GridCoord(x: 19, y: 4)
         XCTAssertTrue(extractor.character(atCoordIsColumnDivider: dividerCoord),
                       "Should detect pipe character as divider")
+    }
+}
+
+// MARK: - Forward-walk URL extension
+
+/// Tests for -[iTermTextExtractor locatedStringByWalkingForwardFrom:characterSet:maxChars:respectHardNewlines:],
+/// which extends a URL match past the fixed capture window so long URLs get fully linkified.
+/// Reuses MockDataSourceWithDividers above (plain strings, no dividers).
+class URLForwardWalkTests: XCTestCase {
+    // iTermTextExtractor holds its data source weakly, so keep the mocks alive for the test.
+    private var retainedSources: [MockDataSourceWithDividers] = []
+
+    private func urlLikeCharacterSet() -> CharacterSet {
+        var set = CharacterSet.alphanumerics
+        set.insert(charactersIn: "/:._-")
+        return set
+    }
+
+    private func extractor(_ lines: [String], width: Int32, softWrapped: Set<Int> = []) -> iTermTextExtractor {
+        let source = MockDataSourceWithDividers(strings: lines, width: width, softWrappedLineIndices: softWrapped)
+        retainedSources.append(source)
+        return iTermTextExtractor(dataSource: source)
+    }
+
+    // Walks from the end of a full (soft-wrapped) line onto the next line, stopping at a separator.
+    func testWalkAcrossSoftWrapStopsAtSeparator() {
+        let ex = extractor(["abcdefghij", "klmno pqr "], width: 10, softWrapped: [0])
+        let result = ex.locatedStringByWalkingForward(from: VT100GridCoord(x: 9, y: 0),
+                                                      characterSet: urlLikeCharacterSet(),
+                                                      maxChars: 10000,
+                                                      respectHardNewlines: true)
+        XCTAssertEqual(result.string, "klmno")
+    }
+
+    // The collected coordinates are 1:1 with the characters and land on the continuation line.
+    func testWalkRecordsCoordinates() {
+        let ex = extractor(["abcdefghij", "klmno pqr "], width: 10, softWrapped: [0])
+        let result = ex.locatedStringByWalkingForward(from: VT100GridCoord(x: 9, y: 0),
+                                                      characterSet: urlLikeCharacterSet(),
+                                                      maxChars: 10000,
+                                                      respectHardNewlines: true)
+        XCTAssertEqual(result.gridCoords.count, 5)
+        guard result.gridCoords.count == 5 else { return }
+        XCTAssertEqual(result.gridCoords.coord(at: 0).x, 0)
+        XCTAssertEqual(result.gridCoords.coord(at: 0).y, 1)
+        XCTAssertEqual(result.gridCoords.coord(at: 4).x, 4)
+    }
+
+    // maxChars caps the walk.
+    func testWalkStopsAtMaxChars() {
+        let ex = extractor(["abcdefghij", "klmnopqrst"], width: 10, softWrapped: [0])
+        let result = ex.locatedStringByWalkingForward(from: VT100GridCoord(x: 9, y: 0),
+                                                      characterSet: urlLikeCharacterSet(),
+                                                      maxChars: 3,
+                                                      respectHardNewlines: true)
+        XCTAssertEqual(result.string, "klm")
+    }
+
+    // A hard line break stops the walk when respectHardNewlines is on, but not when it is off:
+    // a URL that fills a hard-terminated line must not be joined to the next line's text.
+    func testWalkStopsAtHardNewline() {
+        let stops = extractor(["abcdefghij", "klmnopqrst"], width: 10)  // line 0 ends EOL_HARD
+            .locatedStringByWalkingForward(from: VT100GridCoord(x: 9, y: 0),
+                                           characterSet: urlLikeCharacterSet(),
+                                           maxChars: 10000,
+                                           respectHardNewlines: true)
+        XCTAssertEqual(stops.length, 0)
+
+        let crosses = extractor(["abcdefghij", "klmnopqrst"], width: 10)
+            .locatedStringByWalkingForward(from: VT100GridCoord(x: 9, y: 0),
+                                           characterSet: urlLikeCharacterSet(),
+                                           maxChars: 10000,
+                                           respectHardNewlines: false)
+        XCTAssertEqual(crosses.string, "klmnopqrst")
+    }
+
+    // An image cell terminates the walk even when its underlying code is a url-legal character,
+    // so an inline image is never linkified as part of a URL.
+    func testWalkStopsAtImageCell() {
+        // Line 1 is all url-legal letters, but column 2 ('m') is an image cell.
+        let source = MockDataSourceWithDividers(strings: ["abcdefghij", "klmnopqrst"], width: 10,
+                                                softWrappedLineIndices: [0],
+                                                imageColumnsByLine: [1: [2]])
+        retainedSources.append(source)
+        let ex = iTermTextExtractor(dataSource: source)
+        let result = ex.locatedStringByWalkingForward(from: VT100GridCoord(x: 9, y: 0),
+                                                      characterSet: urlLikeCharacterSet(),
+                                                      maxChars: 10000,
+                                                      respectHardNewlines: true)
+        XCTAssertEqual(result.string, "kl")
+    }
+
+    // A composed grapheme (e.g. an IDN host character) whose code points are all in the set is
+    // collected as its full decoded string, not truncated the way a blanket complex-char stop was.
+    // ('a' + combining acute are both members: .alphanumerics includes Letters and Marks.)
+    func testWalkIncludesComposedGraphemeInSet() {
+        // Line 1: 'k', a composed 'a'+combining-acute at column 1, 'l', then a space.
+        let source = MockDataSourceWithDividers(strings: ["abcdefghij", "k?l mnopqr"], width: 10,
+                                                softWrappedLineIndices: [0],
+                                                complexColumnsByLine: [1: [1: [0x0061, 0x0301]]])
+        retainedSources.append(source)
+        let ex = iTermTextExtractor(dataSource: source)
+        let result = ex.locatedStringByWalkingForward(from: VT100GridCoord(x: 9, y: 0),
+                                                      characterSet: urlLikeCharacterSet(),
+                                                      maxChars: 10000,
+                                                      respectHardNewlines: true)
+        // "k" + "a" + combining acute + "l", stopping at the space.
+        XCTAssertEqual(result.string, "k\u{0061}\u{0301}l")
+        // One grid coord per UTF-16 unit; the composed cell contributes two, both at (1, 1).
+        XCTAssertEqual(result.gridCoords.count, 4)
+        guard result.gridCoords.count == 4 else { return }
+        XCTAssertEqual(result.gridCoords.coord(at: 1).x, 1)
+        XCTAssertEqual(result.gridCoords.coord(at: 2).x, 1)
+        XCTAssertEqual(result.gridCoords.coord(at: 3).x, 2)
+    }
+
+    // A complex (here non-BMP) cell whose decoded character is outside the set stops the walk. An
+    // emoji is a surrogate pair (two UTF-16 units) and is not in a plain url-like set.
+    func testWalkStopsAtComplexCharOutsideSet() {
+        // Column 1 holds 😀 (U+1F600 = surrogate pair D83D DE00).
+        let source = MockDataSourceWithDividers(strings: ["abcdefghij", "k?l mnopqr"], width: 10,
+                                                softWrappedLineIndices: [0],
+                                                complexColumnsByLine: [1: [1: [0xD83D, 0xDE00]]])
+        retainedSources.append(source)
+        let ex = iTermTextExtractor(dataSource: source)
+        let result = ex.locatedStringByWalkingForward(from: VT100GridCoord(x: 9, y: 0),
+                                                      characterSet: urlLikeCharacterSet(),
+                                                      maxChars: 10000,
+                                                      respectHardNewlines: true)
+        XCTAssertEqual(result.string, "k")
+    }
+
+    // An immediate separator, and running off the end of the buffer, both yield empty results.
+    func testWalkEmptyCases() {
+        let atSeparator = extractor(["abcdefghij", " klmnopqr "], width: 10, softWrapped: [0])
+            .locatedStringByWalkingForward(from: VT100GridCoord(x: 9, y: 0),
+                                           characterSet: urlLikeCharacterSet(), maxChars: 10000,
+                                           respectHardNewlines: true)
+        XCTAssertEqual(atSeparator.length, 0)
+
+        let atBufferEnd = extractor(["abcdefghij"], width: 10)
+            .locatedStringByWalkingForward(from: VT100GridCoord(x: 9, y: 0),
+                                           characterSet: urlLikeCharacterSet(), maxChars: 10000,
+                                           respectHardNewlines: true)
+        XCTAssertEqual(atBufferEnd.length, 0)
     }
 }

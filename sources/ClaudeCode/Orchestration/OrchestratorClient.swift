@@ -252,6 +252,20 @@ final class OrchestratorClient {
         }
     }
 
+    // Drop a chat's watchers when it is unlinked from its terminal session (and
+    // stays session-bound). A live dispatcher tears down its pollers/timers and
+    // clears the persisted set; with no live dispatcher there are no running
+    // pollers, so just clear the persisted set directly. NOT called when a chat
+    // leaves its link by becoming an orchestration chat (that path keeps
+    // watchers) -- the caller (unlink action) enforces that distinction.
+    func cancelWatchers(forChatID chatID: String) {
+        if let existing = dispatchers[chatID] {
+            existing.cancelWatchersOnUnlink()
+        } else {
+            try? broker.listModel.setWatchers([], forChatID: chatID)
+        }
+    }
+
     // Internal (not private) so wiring tests can obtain two dispatchers for two
     // chatIDs and confirm they share this client's single typed-input store.
     func dispatcher(forChatID chatID: String) -> OrchestratorDispatcher {

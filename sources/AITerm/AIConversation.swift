@@ -187,6 +187,46 @@ struct AIConversation {
         }
     }
 
+    var trailingVolatileTextProvider: (() -> String?)? {
+        get {
+            controller.trailingVolatileTextProvider
+        }
+        set {
+            controller.trailingVolatileTextProvider = newValue
+        }
+    }
+
+    // Passthrough to the controller, like trailingVolatileTextProvider: the chat
+    // layer sets this each turn to opt into blob-native replay. See
+    // AITermController.blobReplayProvider and outgoingRequest below.
+    var blobReplayProvider: (([AITermController.Message]) -> (messages: [AITermController.Message], frozen: Data)?)? {
+        get {
+            controller.blobReplayProvider
+        }
+        set {
+            controller.blobReplayProvider = newValue
+        }
+    }
+
+    // Passthrough to the controller: the full-history reconstructor the chat layer
+    // sets when it pre-reduced conversation.messages for blob replay. See
+    // AITermController.fullHistoryProvider and outgoingRequest below.
+    var fullHistoryProvider: (() -> [AITermController.Message])? {
+        get {
+            controller.fullHistoryProvider
+        }
+        set {
+            controller.fullHistoryProvider = newValue
+        }
+    }
+
+    // The vendor's reported total input tokens for the turn just completed (nil if no
+    // usage). Read by the chat layer at turn end (before it swaps in the amended copy,
+    // which has a fresh controller) to derive the round's real token weight.
+    var lastPromptTokens: Int? {
+        controller.lastPromptTokens
+    }
+
     var systemMessageDirty = false
 
     var systemMessage: String? {
@@ -348,14 +388,62 @@ struct AIConversation {
         // vendor/model emits no reasoning would inherit the prior turn's text.
         delegate.pendingReasoning = nil
         let controller = self.controller
-        let messages = self.truncatedMessages
+        // Fresh per turn: a turn whose vendor reports no usage must not read a stale
+        // prior-turn token count when the chat layer captures the round at turn end.
+        controller.lastPromptTokens = nil
+
+        // Set providerOverride + previousResponseID BEFORE deciding what to send, so
+        // the delta-mode check, the blob-replay decision, and BOTH send sites below
+        // all see the correct previousResponseID. Previously the registration-
+        // deferred path captured truncatedMessages here with a STALE previousResponseID
+        // (it was assigned further down), so a turn that both needed registration and
+        // flipped delta mode could send the wrong message set. This block only reads
+        // self and sets controller state, so hoisting it is safe.
+        let lastAssistantMessage = self.messages.last { $0.role == .assistant }
+        if let modelOverride {
+            // Used verbatim: preserves the caller's url/api/auth (see the
+            // economy-model path in ScreenWatchPoller).
+            controller.providerOverride = LLMProvider(model: modelOverride)
+        } else if let modelName = model {
+            // Consult manually-configured models too: AIMetadata.instance.models
+            // is only the built-in catalog, so a chat pinned to a manual/custom
+            // model would otherwise fall through to the global default and be
+            // sent to a different model (and possibly vendor/URL) than the UI
+            // shows. A manual model WINS over a built-in that shares its name so
+            // a user proxying a known model (custom url/api under the same name)
+            // reaches their endpoint rather than the public one.
+            let pinnedModel = LLMMetadata.manualModels().first(where: { $0.name == modelName })
+                ?? AIMetadata.instance.models.first(where: { $0.name == modelName })
+            controller.providerOverride = pinnedModel.map { LLMProvider(model: $0) }
+        } else {
+            controller.providerOverride = nil
+        }
+        if systemMessageDirty {
+            // Force it to send the whole conversation over again.
+            controller.previousResponseID = nil
+            systemMessageDirty = false
+        } else {
+            // Fall back to the pre-reduce carry-forward when the (pre-reduced)
+            // message list has no assistant turn yet, so a blob-native Responses
+            // chat keeps delta mode on the turn's first request. Once the turn's
+            // own assistant reply is appended, lastAssistantMessage wins again.
+            controller.previousResponseID = lastAssistantMessage?.responseID
+                ?? controller.reducedHistoryPreviousResponseID
+        }
+
+        // Decide the outgoing message list + any frozen-history bytes ONCE, and stamp
+        // the controller so the tool loop re-splices the same frozen prefix on every
+        // sub-request of this turn (the frozen prefix does not change mid-turn).
+        let outgoing = outgoingRequest()
+        controller.frozenHistoryElements = outgoing.frozen
+
         prepare { error in
             if let error {
                 completion(.failure(error))
             } else {
                 // Called after registration completes.
                 controller.request(
-                    messages: messages,
+                    messages: outgoing.messages,
                     stream: streaming != nil && controller.supportsStreaming)
             }
         }
@@ -401,35 +489,38 @@ struct AIConversation {
             break
             }
         }
-        let lastAssistantMessage = self.messages.last { $0.role == .assistant }
-        if let modelOverride {
-            // Used verbatim: preserves the caller's url/api/auth (see the
-            // economy-model path in ScreenWatchPoller).
-            controller.providerOverride = LLMProvider(model: modelOverride)
-        } else if let modelName = model {
-            // Consult manually-configured models too: AIMetadata.instance.models
-            // is only the built-in catalog, so a chat pinned to a manual/custom
-            // model would otherwise fall through to the global default and be
-            // sent to a different model (and possibly vendor/URL) than the UI
-            // shows. A manual model WINS over a built-in that shares its name so
-            // a user proxying a known model (custom url/api under the same name)
-            // reaches their endpoint rather than the public one.
-            let pinnedModel = LLMMetadata.manualModels().first(where: { $0.name == modelName })
-                ?? AIMetadata.instance.models.first(where: { $0.name == modelName })
-            controller.providerOverride = pinnedModel.map { LLMProvider(model: $0) }
-        } else {
-            controller.providerOverride = nil
-        }
-        if systemMessageDirty {
-            // Force it to send the whole conversation over again.
-            controller.previousResponseID = nil
-            systemMessageDirty = false
-        } else {
-            controller.previousResponseID = lastAssistantMessage?.responseID
-        }
         // This won't do anything if registration is needed. See the completion callback to
         // prepare() above for that case.
-        controller.request(messages: truncatedMessages, stream: streaming != nil)
+        controller.request(messages: outgoing.messages, stream: streaming != nil)
+    }
+
+    // The message list to send this turn, plus any frozen-history bytes to splice.
+    // Blob-native replay engages only when NOT in Responses delta mode (there the
+    // server still holds the history, so we send just the new turn) and the chat
+    // layer's blobReplayProvider accepts this conversation; otherwise it falls back
+    // to truncatedMessages (which itself picks delta vs full) with no frozen bytes.
+    private func outgoingRequest() -> (messages: [AITermController.Message], frozen: Data?) {
+        let inDeltaMode = controller.supportsPreviousResponseID && controller.previousResponseID != nil
+        if !inDeltaMode {
+            if let provider = controller.blobReplayProvider,
+               let replay = provider(messages) {
+                return (replay.messages, replay.frozen)
+            }
+            // Blob replay declined (protocol switch needing a re-freeze, an oversized
+            // round the codec must elide, or corrupt/undecodable blobs) but the chat
+            // layer pre-reduced `messages` to just the current round for the blob path.
+            // fullHistoryProvider reconstructs the PRIOR rounds only (it is
+            // translate(history), and history excludes the current turn), so append
+            // `messages` -- the current round the pre-reduce grew (the new user turn
+            // plus any tool-loop items) -- or the fallback would resend the prior
+            // conversation with no new question (and mid-loop, no tool results). Then
+            // truncate the whole thing the normal way. Delta mode skips this: it needs
+            // only messages.last, which the pre-reduced list still carries.
+            if let full = controller.fullHistoryProvider?() {
+                return (truncate(messages: full + messages, maxTokens: maxTokens), nil)
+            }
+        }
+        return (truncatedMessages, nil)
     }
 
     private var truncatedMessages: [AITermController.Message] {
@@ -438,6 +529,12 @@ struct AIConversation {
             return truncate(messages: [lastMessage], maxTokens: maxTokens)
         }
         return truncate(messages: messages, maxTokens: maxTokens)
+    }
+
+    // Test seam: exposes the outgoing-message decision (blob replay vs pre-reduce
+    // bail vs delta/full) so the fallback can be pinned without driving a live request.
+    func outgoingRequestForTesting() -> (messages: [AITermController.Message], frozen: Data?) {
+        outgoingRequest()
     }
 }
 

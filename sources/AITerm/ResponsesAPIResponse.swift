@@ -1340,6 +1340,10 @@ struct ResponsesResponse: LLM.AnyResponse {
 
     var newlyCreatedResponseID: String? { body.id }
 
+    // OpenAI's input_tokens is the whole prompt (cached tokens are a subset detail
+    // in input_tokens_details), so no summing is needed as with Anthropic.
+    var promptTokens: Int? { body.usage.inputTokens }
+
     var choiceMessages: [LLM.Message] {
         // Responses API returns one logical assistant turn split across
         // several `output` items: an `.message` for any text/refusal content,

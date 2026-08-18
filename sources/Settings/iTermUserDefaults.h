@@ -64,6 +64,11 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 // performs Undo Close (it formerly toggled Show Tabs in Full Screen, which has
 // moved to ⌘⇧U). NoSync because it is migration state, not a synced setting.
 @property (class, nonatomic) BOOL haveWarnedAboutUndoCloseShortcutChange;
+
+// Set to YES after the one-time notice warning macOS 12 users that a future beta
+// will require macOS 13 (Phase 0 of the uv Python-runtime migration). NoSync
+// because it is local notice state, not a synced setting.
+@property (class, nonatomic) BOOL haveShownMacOS13RequirementNotice;
 @property (class, nonatomic) BOOL ignoreSystemWindowRestoration;
 @property (class, nonatomic) NSUInteger globalSearchMode;
 @property (class, nonatomic) BOOL addTriggerInstant;
@@ -102,6 +107,12 @@ typedef NS_ENUM(NSUInteger, iTermAppleWindowTabbingMode) {
 // When Idle toolbar item to the Claude Code workgroup's main (root)
 // session has run. NoSync for the same reason as workgroupShortcutsBackfilled.
 @property (class, nonatomic) BOOL claudeCodeAutoRequestReviewBackfilled;
+
+// Set when the user chooses “Don’t Ask Again” on the offer to interpret key
+// bindings by physical key (shown when a keystroke fails to match a binding but
+// would match on the same physical key, e.g. after an input-method change).
+// NoSync because it is a local dismissal, not a synced setting.
+@property (class, nonatomic) BOOL suppressPhysicalKeyBindingSuggestion;
 
 // Tri-state consent for the AI model catalog updater (AIModelCatalogUpdater) to
 // periodically download a refreshed, signed model list from the network.

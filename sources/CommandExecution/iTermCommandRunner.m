@@ -150,6 +150,31 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
     return rc;
 }
 
+- (int)blockingRunWithTimeout:(NSTimeInterval)timeout {
+    if (timeout <= 0) {
+        return [self blockingRun];
+    }
+    _callbackQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_group_enter(group);
+    __block int rc = -1;
+    self.completion = ^(int code){
+        rc = code;
+        dispatch_group_leave(group);
+    };
+    [self run];
+    const long timedOut = dispatch_group_wait(group,
+                                              dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)));
+    if (timedOut != 0) {
+        // The process is still running past the deadline. Kill it; its completion then fires
+        // and leaves the group. Wait for that so rc reflects the (nonzero) terminated exit.
+        RLog(@"command timed out after %@s; terminating", @(timeout));
+        [self terminate];
+        dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+    }
+    return rc;
+}
+
 - (void)runWithTimeout:(NSTimeInterval)timeout {
     if (![self launchTask]) {
         return;
@@ -187,7 +212,11 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
     }
     [_task setStandardInput:_inputPipe];
     [_task setStandardOutput:_pipe];
-    [_task setStandardError:_pipe];
+    if (self.discardStandardError) {
+        [_task setStandardError:[NSFileHandle fileHandleWithNullDevice]];
+    } else {
+        [_task setStandardError:_pipe];
+    }
     _task.launchPath = self.command;
     if (self.currentDirectoryPath) {
         _task.currentDirectoryPath = self.currentDirectoryPath;

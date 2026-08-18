@@ -129,10 +129,12 @@
     switch (windowType) {
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
             return iTermTitlebarStyleRegular;
 
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             return iTermTitlebarStyleCompact;
 
         default:

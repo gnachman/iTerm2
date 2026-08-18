@@ -625,7 +625,40 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
     return [possibleUrl substringWithRange:range];
 }
 
+// If the run of URL-legal characters around the click reaches the end of the captured suffix
+// window, the URL may have been cut off (the window is bounded by maxSemanticHistoryPrefixOrSuffix
+// and a ±10-line clamp). Rather than re-run matching on an ever-larger window, walk the grid
+// forward from the last captured character, consuming URL-legal characters until a separator (or the
+// 100 KB backstop), and append them to the located suffix so extraction below sees the whole URL.
+- (void)extendLocatedSuffixIfURLRunReachesWindowEnd {
+    NSCharacterSet *const urlCharacterSet = [NSCharacterSet urlCharacterSet];
+    NSString *joined = [self.locatedPrefix.string stringByAppendingString:self.locatedSuffix.string];
+    int prefixChars = 0;
+    NSString *possibleUrl = [joined substringIncludingOffset:self.locatedPrefix.string.length
+                                            fromCharacterSet:urlCharacterSet
+                                        charsTakenFromPrefix:&prefixChars];
+    const NSInteger suffixChars = (NSInteger)possibleUrl.length - prefixChars;
+    if (suffixChars <= 0 ||
+        suffixChars < (NSInteger)self.locatedSuffix.string.length ||
+        self.locatedSuffix.gridCoords.count == 0) {
+        return;
+    }
+    const int maxURLLength = 100 * 1024;
+    const VT100GridCoord lastCoord =
+        [self.locatedSuffix.gridCoords coordAt:self.locatedSuffix.gridCoords.count - 1];
+    iTermLocatedString *extension =
+        [self.extractor locatedStringByWalkingForwardFrom:lastCoord
+                                             characterSet:urlCharacterSet
+                                                 maxChars:maxURLLength
+                                      respectHardNewlines:self.respectHardNewlines];
+    if (extension.length > 0) {
+        DLog(@"URL ran to end of suffix window; extended by %@ chars", @(extension.length));
+        [self.locatedSuffix appendLocatedString:extension];
+    }
+}
+
 - (URLAction *)urlActionForURLLike {
+    [self extendLocatedSuffixIfURLRunReachesWindowEnd];
     NSString *joined = [self.locatedPrefix.string stringByAppendingString:self.locatedSuffix.string];
     DLog(@"Smart selection found nothing. Look for URL-like things in %@ around offset %d",
          joined, (int)[self.locatedPrefix.string length]);

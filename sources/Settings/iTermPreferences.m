@@ -123,6 +123,7 @@ NSString *const kPreferenceKeyShowPaneTitles = @"ShowPaneTitles";
 NSString *const kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane = @"ShowPaneTitlesEvenIfOnlyOnePane";
 NSString *const kPreferenceKeyPerPaneBackgroundImage = @"PerPaneBackgroundImage";
 NSString *const kPreferenceKeyStretchTabsToFillBar = @"StretchTabsToFillBar";
+NSString *const kPreferenceKeyScrollableSideTabBar = @"ScrollableSideTabBar";
 NSString *const kPreferenceKeyHideMenuBarInFullscreen = @"HideMenuBarInFullscreen";
 NSString *const kPreferenceKeyUIElement = @"HideFromDockAndAppSwitcher";
 NSString *const kPreferenceKeyUIElementRequiresHotkeys = @"UIElementRequiresHotkeys";
@@ -267,6 +268,7 @@ NSString *const kPreferenceKeyAISafetyCheckProviderMigrationDone = @"NoSyncAISaf
 NSString *const kPreferenceKeyAISafetyCheckNagComplete = @"NoSyncAISafetyCheckNagComplete";
 NSString *const kPreferenceKeyAICustomHeadersEnabled = @"AICustomHeadersEnabled";
 NSString *const kPreferenceKeyAICustomHeaders = @"AICustomHeaders";
+NSString *const kPreferenceKeyAIZeroDataRetention = @"AIZeroDataRetention";
 
 NSString *const kPreferenceKeyAIPermissionCheckTerminalState = @"AIPermissionCheckTerminalState";
 NSString *const kPreferenceKeyAIPermissionRunCommands = @"AIPermissionRunCommands";
@@ -736,7 +738,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
                   kPreferenceKeyEnableAPIServer: @NO,
                   kPreferenceKeyAPIAuthentication: @0,  // ignored — synthetic value
                   kPreferenceKeyEnableAI: @NO,  // ignored - synthetic value
-                  kPreferenceKeyBidi: @NO,
+                  kPreferenceKeyBidi: @YES,
                   kPreferenceKeySshIntegrationForURLs: @NO,
                   kPreferenceKeyOpenAIAPIKey: @"",
                   kPreferenceKeyAIAPIKey: @"",
@@ -774,6 +776,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
                   kPreferenceKeyAISafetyCheck: @NO,
                   kPreferenceKeyAICustomHeadersEnabled: @NO,
                   kPreferenceKeyAICustomHeaders: @[],
+                  kPreferenceKeyAIZeroDataRetention: @NO,
 
                   kPreferenceKeyAIPermissionCheckTerminalState: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionRunCommands: @(iTermAIPermissionAsk),
@@ -800,6 +803,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
                   kPreferenceKeyHideTabActivityIndicator: @NO,
                   kPreferenceKeyShowNewOutputIndicator: @YES,
                   kPreferenceKeyStretchTabsToFillBar: @YES,
+                  kPreferenceKeyScrollableSideTabBar: @NO,
 
                   kPreferenceKeyShowPaneTitles: @YES,
                   kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane: @NO,

@@ -61,7 +61,48 @@ struct WorkgroupWatcher: Codable, Equatable {
     // support existed.
     var notifyUser: Bool? = nil
 
+    // Set true when this (session-bound, screen-reading) watch was armed while
+    // View Contents was "Ask" and the user gave the one-time consent prompt.
+    // It records that repeated background screen reads are allowed to continue
+    // under Ask. nil means the watch never needed it -- it was armed under
+    // "Always" (or reads no screen), so it holds no standing Ask consent and
+    // must stop if View Contents is later downgraded to Ask. Absent in watchers
+    // persisted before the consent prompt existed (treated as no consent).
+    var screenReadConsented: Bool? = nil
+
     var effectiveMode: WatchMode { mode ?? .tabStatus }
+
+    // Which read categories this watch's mechanism uses, derived from its frozen
+    // shape via the single policy below so registration and runtime enforcement
+    // can't drift.
+    var readRequirement: (needsScreen: Bool, needsState: Bool) {
+        return Self.readRequirement(hasCondition: condition != nil,
+                                    hasTargetState: targetState != nil,
+                                    isScreenPoll: effectiveMode == .screenPoll)
+    }
+
+    // THE read-category policy, on booleans, so every site derives from one
+    // source: the registration gate (OrchestratorDispatcher.watchReadRequirement),
+    // the runtime instance property above, and the offer/guidance
+    // (watchFormSatisfiable). A screen-poll mechanism reads the screen (View
+    // Contents); condition watches always do. A target_state watch reports the
+    // session's state (Check Terminal State); a condition watch reports only a
+    // screen condition.
+    static func readRequirement(hasCondition: Bool,
+                                hasTargetState: Bool,
+                                isScreenPoll: Bool) -> (needsScreen: Bool, needsState: Bool) {
+        return (needsScreen: hasCondition || isScreenPoll,
+                needsState: hasTargetState)
+    }
+
+    // THE mode decision: a watch is judged by reading the screen (screen-poll)
+    // when a plain-English condition was supplied, or when the session reports no
+    // machine-readable status (so there is no tab-status transition to fire on).
+    // Shared by doRegisterWatch (which mode to create) and watchReadRequirement
+    // (which reads that mode implies) so the two can't disagree.
+    static func isScreenPollMode(hasCondition: Bool, sessionReportsStatus: Bool) -> Bool {
+        return hasCondition || !sessionReportsStatus
+    }
 
     // Human-readable goal for log lines and status_update details:
     // "state 'idle'" or "condition 'emacs has exited'".

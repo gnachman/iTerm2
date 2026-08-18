@@ -97,6 +97,10 @@ static NSString* TAB_ARRANGEMENT_COLOR = @"Tab color";  // DEPRECATED - Each PTY
 static NSString* TAB_ARRANGEMENT_TITLE_OVERRIDE = @"Title Override";
 static NSString* TAB_GUID = @"Tab GUID";
 static NSString* TAB_ARRANGEMENT_PINNED = @"Pinned";
+static NSString* TAB_ARRANGEMENT_GROUP_ID = @"Tab Group ID";
+static NSString* TAB_ARRANGEMENT_GROUP_NAME = @"Tab Group Name";
+static NSString* TAB_ARRANGEMENT_GROUP_COLOR = @"Tab Group Color";
+static NSString* TAB_ARRANGEMENT_GROUP_COLLAPSED = @"Tab Group Collapsed";
 
 static const BOOL USE_THIN_SPLITTERS = YES;
 
@@ -976,6 +980,19 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermCurrentSessionDidChange
                                                         object:activeSession_
                                                       userInfo:nil];
+}
+
+- (void)restoreActiveSessionFirstResponder {
+    if (!activeSession_) {
+        return;
+    }
+    if ([realParentWindow_ currentTab] != self) {
+        // Don't make a non-current tab's textview the first responder.
+        // See setActiveSession:updateActivityCounter: for the crash this
+        // avoids.
+        return;
+    }
+    [[realParentWindow_ window] makeFirstResponder:[activeSession_ mainResponder]];
 }
 
 - (void)sessionActivate:(PTYSession *)session {
@@ -3560,6 +3577,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                        options:options]];
     theTab.titleOverride = [arrangement[TAB_ARRANGEMENT_TITLE_OVERRIDE] nilIfNull];
     theTab->_pinned = [arrangement[TAB_ARRANGEMENT_PINNED] boolValue];
+    theTab.tabGroupID = [arrangement[TAB_ARRANGEMENT_GROUP_ID] nilIfNull];
+    theTab.tabGroupName = [arrangement[TAB_ARRANGEMENT_GROUP_NAME] nilIfNull];
+    NSDictionary *groupColorDict = [arrangement[TAB_ARRANGEMENT_GROUP_COLOR] nilIfNull];
+    if (groupColorDict) {
+        theTab.tabGroupColor = [groupColorDict colorValue];
+    }
+    theTab.tabGroupCollapsed = [arrangement[TAB_ARRANGEMENT_GROUP_COLLAPSED] boolValue];
     NSString *guid = arrangement[TAB_GUID];
     if (guid) {
         if ([[iTermController sharedInstance] tabWithGUID:guid] ||
@@ -3895,6 +3919,16 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
                    options:(NSDictionary *)options {
     DLog(@"Encode tab %@", self);
     encoder[TAB_ARRANGEMENT_PINNED] = @(self.isPinned);
+    if (self.tabGroupID) {
+        encoder[TAB_ARRANGEMENT_GROUP_ID] = self.tabGroupID;
+        if (self.tabGroupName) {
+            encoder[TAB_ARRANGEMENT_GROUP_NAME] = self.tabGroupName;
+        }
+        if (self.tabGroupColor) {
+            encoder[TAB_ARRANGEMENT_GROUP_COLOR] = self.tabGroupColor.dictionaryValue;
+        }
+        encoder[TAB_ARRANGEMENT_GROUP_COLLAPSED] = @(self.tabGroupCollapsed);
+    }
     // If in screenshot mode, encode the live session instead of the synthetic one
     PTYSession *sessionToEncode = self.activeSession;
     BOOL inScreenshotMode = (sessionToEncode.liveSession != nil);
@@ -4445,11 +4479,29 @@ typedef struct {
 
 
 - (NSSize)tmuxSize {
+    NSSize size;
     if (self.tmuxController.variableWindowSize) {
-        return [self variableTmuxSize];
+        size = [self variableTmuxSize];
     } else {
-        return [self fixedTmuxSize];
+        size = [self fixedTmuxSize];
     }
+    // pane-border-status makes tmux carve one row out of the window for the
+    // border, which it does not reflect in the layout it sends control clients.
+    // Report the window one row taller than the content fits so that after tmux
+    // takes its row the pane still matches our sessions. Without this the window
+    // would lose a row on every resize (issue 12925).
+    //
+    // Limitation: pane-border-status is per window, but in non-variable-window
+    // sessions -[PseudoTerminal tmuxCompatibleSize] takes the MIN of every tab's
+    // tmuxSize and sends one shared client size. A bordered window sharing a
+    // session with a shorter unbordered one can still be shrunk below its needed
+    // height. That is inherent to one client size across windows; variable window
+    // size (the default for modern tmux) does not have the problem.
+    if (size.height > 0 &&
+        [self.tmuxController paneBorderStatusForWindow:self.tmuxWindow] != iTermTmuxPaneBorderStatusOff) {
+        size.height += 1;
+    }
+    return size;
 }
 
 // Returns the size in characters of the window size that fits this tab's contents.
@@ -4901,6 +4953,9 @@ typedef struct {
 - (void)setTmuxSizesFromSplitTreeNode:(ITMSplitTreeNode *)node {
     iTermTmuxLayoutBuilderNode *root = [self layoutBuilderNodeForSplitTreeNode:node];
     iTermTmuxLayoutBuilder *builder = [[iTermTmuxLayoutBuilder alloc] initWithRootNode:root];
+    // Add back the row(s) tmux reserves for pane-border-status so the size and
+    // layout we report keep the window at its true height (issue 12925).
+    [builder adjustForPaneBorderStatus:[self.tmuxController paneBorderStatusForWindow:self.tmuxWindow]];
     if (!self.realParentWindow.anyFullScreen) {
         VT100GridSize clientSize = builder.clientSize;
         [self.tmuxController setSize:NSMakeSize(clientSize.width, clientSize.height)
@@ -5278,13 +5333,19 @@ typedef struct {
         kLayoutDictXOffsetKey: @0,
         kLayoutDictYOffsetKey: @0,
     } mutableCopy];
-    return [@{ kLayoutDictChildrenKey: @[ child ],
+    NSMutableDictionary *tree = [@{ kLayoutDictChildrenKey: @[ child ],
                kLayoutDictWidthKey: parseTree[kLayoutDictWidthKey],
                kLayoutDictHeightKey: parseTree[kLayoutDictHeightKey],
                kLayoutDictNodeType: @(kVSplitLayoutNode),
                kLayoutDictXOffsetKey: @0,
                kLayoutDictYOffsetKey: @0,
             } mutableCopy];
+    // This synthetic tree is built from the uncorrected root (window) height, so
+    // apply the same pane-border-status correction the normal leaf path gets;
+    // otherwise a zoomed pane is a row too tall (issue 12925).
+    return [[TmuxLayoutParser sharedInstance]
+        parseTree:tree
+        adjustedForPaneBorderStatus:[self.tmuxController paneBorderStatusForWindow:self.tmuxWindow]];
 }
 
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
@@ -5496,6 +5557,12 @@ typedef struct {
         } else {
             gridSize = VT100GridSizeMake([parseTree_[kLayoutDictWidthKey] intValue],
                                          [parseTree_[kLayoutDictHeightKey] intValue]);
+        }
+        // These are the root (window) height, but a zoomed pane fills the window
+        // and so loses the pane-border-status row like any edge pane (issue 12925).
+        if (gridSize.height > 1 &&
+            [self.tmuxController paneBorderStatusForWindow:self.tmuxWindow] != iTermTmuxPaneBorderStatusOff) {
+            gridSize.height -= 1;
         }
         [self resizeSession:self.activeSession toSize:gridSize];
 
@@ -6738,7 +6805,104 @@ typedef struct {
     if (proposedPosition < originalPosition) {
         allowedDiff *= -1;
     }
-    return originalPosition + allowedDiff;
+    const CGFloat quantizedPosition = originalPosition + allowedDiff;
+
+    // Whole-cell quantization moves the divider in integer character-cell steps
+    // relative to its current position. When two independent split views (e.g. the
+    // top and bottom rows of a 2x2 grid) have dividers that are misaligned by less
+    // than one cell, that sub-cell offset can never be reached by dragging, so the
+    // rows cannot be lined up. Allow the divider to snap to an aligned divider
+    // elsewhere in the tab so the user can correct the misalignment by hand. See
+    // issue 12932.
+    return [self positionForDivider:dividerIndex
+                        inSplitView:splitView
+                  quantizedPosition:quantizedPosition
+                   proposedPosition:proposedPosition
+                               step:step];
+}
+
+// Window-base coordinate of a with-grain axis position measured within a view's
+// own coordinate system. Using window coordinates makes positions comparable
+// across split views regardless of each view's flippedness.
+- (CGFloat)windowAxisPositionForLocalPosition:(CGFloat)local
+                                   isVertical:(BOOL)isVertical
+                                       inView:(NSView *)view {
+    const NSPoint p = isVertical ? NSMakePoint(local, 0) : NSMakePoint(0, local);
+    const NSPoint w = [view convertPoint:p toView:nil];
+    return isVertical ? w.x : w.y;
+}
+
+// Collect every split view in this tab whose orientation matches isVertical,
+// walking only the split tree (stopping at SessionViews).
+- (void)collectParallelSplitViewsUnder:(NSSplitView *)splitView
+                            isVertical:(BOOL)isVertical
+                                  into:(NSMutableArray<NSSplitView *> *)result {
+    if (splitView.isVertical == isVertical) {
+        [result addObject:splitView];
+    }
+    for (NSView *subview in splitView.subviews) {
+        if ([subview isKindOfClass:[NSSplitView class]]) {
+            [self collectParallelSplitViewsUnder:(NSSplitView *)subview
+                                      isVertical:isVertical
+                                            into:result];
+        }
+    }
+}
+
+// Given the cell-quantized position for a divider being dragged, return a snapped
+// position if the raw (continuous) drag brings it within half a cell of a divider
+// in some other split view of the tab. Otherwise return the quantized position.
+- (CGFloat)positionForDivider:(NSInteger)dividerIndex
+                  inSplitView:(NSSplitView *)splitView
+            quantizedPosition:(CGFloat)quantizedPosition
+             proposedPosition:(CGFloat)proposedPosition
+                         step:(CGFloat)step {
+    const BOOL isVertical = splitView.isVertical;
+    const CGFloat rawWindow = [self windowAxisPositionForLocalPosition:proposedPosition
+                                                            isVertical:isVertical
+                                                                inView:splitView];
+    CGFloat bestDelta = step / 2.0;
+    CGFloat bestWindow = 0;
+    BOOL found = NO;
+
+    NSMutableArray<NSSplitView *> *splitViews = [NSMutableArray array];
+    [self collectParallelSplitViewsUnder:root_ isVertical:isVertical into:splitViews];
+    for (NSSplitView *other in splitViews) {
+        if (other == splitView) {
+            // Snapping a divider to another divider in its own split view is
+            // meaningless; only line up with dividers in other split views.
+            continue;
+        }
+        const NSInteger count = other.subviews.count;
+        for (NSInteger i = 0; i + 1 < count; i++) {
+            const CGFloat otherLocal = [self _positionOfDivider:(int)i inSplitView:other];
+            const CGFloat otherWindow = [self windowAxisPositionForLocalPosition:otherLocal
+                                                                     isVertical:isVertical
+                                                                         inView:other];
+            const CGFloat delta = fabs(otherWindow - rawWindow);
+            if (delta < bestDelta) {
+                bestDelta = delta;
+                bestWindow = otherWindow;
+                found = YES;
+            }
+        }
+    }
+    if (!found) {
+        return quantizedPosition;
+    }
+
+    // Convert the sibling's window position back into this split view's coordinates.
+    const NSPoint w = isVertical ? NSMakePoint(bestWindow, 0) : NSMakePoint(0, bestWindow);
+    const NSPoint local = [splitView convertPoint:w fromView:nil];
+    const CGFloat snappedPosition = isVertical ? local.x : local.y;
+
+    // Don't let the snap push a session below its minimum size.
+    const CGFloat minCoord = [self splitView:splitView constrainMinCoordinate:0 ofSubviewAt:dividerIndex];
+    const CGFloat maxCoord = [self splitView:splitView constrainMaxCoordinate:CGFLOAT_MAX ofSubviewAt:dividerIndex];
+    if (snappedPosition < minCoord || snappedPosition > maxCoord) {
+        return quantizedPosition;
+    }
+    return snappedPosition;
 }
 
 - (BOOL)sessionIsActiveInTab:(PTYSession *)session {

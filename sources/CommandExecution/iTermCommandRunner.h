@@ -25,6 +25,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, nullable) void (^outputHandler)(NSData * _Nullable, void (^)(void));
 @property (nonatomic, copy, nullable) NSDictionary<NSString *, NSString *> *environment;
 @property (nonatomic, strong, nullable) dispatch_queue_t callbackQueue;
+// By default stderr is merged into the captured output. Set this to route stderr to
+// /dev/null instead, so `output` is stdout only. Use it when the output is machine
+// parsed (e.g. JSON or a version string) and a stray warning on stderr would corrupt
+// the parse.
+@property (nonatomic) BOOL discardStandardError;
 
 + (void)unzipURL:(NSURL *)zipURL
    withArguments:(NSArray<NSString *> *)arguments
@@ -47,6 +52,10 @@ callbackQueue:(dispatch_queue_t)callbackQueue
 - (void)run;
 - (void)runWithTimeout:(NSTimeInterval)timeout;
 - (int)blockingRun;
+// Like blockingRun, but if the process has not finished after `timeout` seconds it is
+// SIGKILLed and this returns its (nonzero) exit code, so a hung subprocess cannot block
+// the caller forever. A timeout <= 0 waits forever (same as blockingRun).
+- (int)blockingRunWithTimeout:(NSTimeInterval)timeout;
 - (void)write:(NSData *)data completion:(void (^ _Nullable)(size_t, int))completion;
 - (void)terminate;
 

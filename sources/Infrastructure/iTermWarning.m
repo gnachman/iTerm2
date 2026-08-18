@@ -8,6 +8,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermDisclosableView.h"
 #import "iTermUserDefaults.h"
+#import "iTerm2SharedARC-Swift.h"
 
 static const NSTimeInterval kTemporarySilenceTime = 600;
 static const NSTimeInterval kOneMonthTime = 30 * 24 * 60 * 60;
@@ -254,8 +255,12 @@ BOOL gShowRememberedAlerts = NO;
     [userDefaults removeObjectForKey:theKey];
 }
 
-+ (void)toggleShowRememberedAlerts {
-    gShowRememberedAlerts = !gShowRememberedAlerts;
++ (BOOL)showRememberedAlerts {
+    return gShowRememberedAlerts;
+}
+
++ (void)setShowRememberedAlerts:(BOOL)value {
+    gShowRememberedAlerts = value;
 }
 
 + (void)clearSavedSelectionForIdentifier:(NSString *)identifier {
@@ -319,10 +324,10 @@ BOOL gShowRememberedAlerts = NO;
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = _heading ?: @"Warning";
 
-    // If this warning is being shown due to "Always Show Alerts with Remembered Selections" mode,
-    // prepend explanatory text.
+    // If this warning is being shown due to the "always show alerts with remembered
+    // selections" mode, prepend explanatory text.
     if (_shownDueToRememberedAlertsMode && _savedSelectionLabel) {
-        alert.informativeText = [NSString stringWithFormat:@"%@\n\nThis alert had a saved selection of “%@”. It is being shown because “Always Show Alerts with Remembered Selections” is enabled.", _title, _savedSelectionLabel];
+        alert.informativeText = [NSString stringWithFormat:@"%@\n\nThis alert had a saved selection of “%@”. It is being shown because “Always show alerts with remembered selections” is turned on in iTerm2 > Suppressed Alerts.", _title, _savedSelectionLabel];
     } else {
         alert.informativeText = _title;
     }
@@ -447,7 +452,7 @@ BOOL gShowRememberedAlerts = NO;
             RLog(@"%@ has saved selection %@ but label %@ should not be remembered", self, @(selection), label);
             return NO;
         }
-        // When "Always Show Alerts with Remembered Selections" is enabled, show the dialog instead of preempting.
+        // When "always show alerts with remembered selections" is on (a checkbox in the Suppressed Alerts panel), show the dialog instead of preempting.
         if (gShowRememberedAlerts) {
             RLog(@"%@ would be silenced but gShowRememberedAlerts is YES", self);
             self.shownDueToRememberedAlertsMode = YES;
@@ -455,6 +460,10 @@ BOOL gShowRememberedAlerts = NO;
             return NO;  // Don't preempt - show the dialog
         }
         RLog(@"%@ is silenced with saved selection %@", self, @(selection));
+        [[iTermSuppressedAlerts sharedInstance] recordSuppressionWithIdentifier:_identifier
+                                                                          title:_title
+                                                                        heading:_heading
+                                                                 selectionLabel:label];
         *selectionPtr = selection;
         return YES;
     }
@@ -611,6 +620,23 @@ BOOL gShowRememberedAlerts = NO;
     }
 
     return NO;
+}
+
++ (NSString *)silenceEpisodeTokenForIdentifier:(NSString *)identifier {
+    if (!identifier) {
+        return nil;
+    }
+    NSUserDefaults *userDefaults = [iTermUserDefaults userDefaults];
+    if ([userDefaults boolForKey:[self permanentlySilenceKeyForIdentifier:identifier]]) {
+        return @"permanent";
+    }
+    const NSTimeInterval until = [userDefaults doubleForKey:[self temporarySilenceKeyForIdentifier:identifier]];
+    if (until > [NSDate timeIntervalSinceReferenceDate]) {
+        // A new temporary/monthly silence gets a new expiry, so this changes when
+        // a fresh silence episode begins after an earlier one lapsed.
+        return [NSString stringWithFormat:@"until:%@", @(until)];
+    }
+    return nil;
 }
 
 + (NSNumber *)conditionalSavedSelectionForIdentifier:(NSString *)identifier {

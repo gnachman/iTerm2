@@ -8,6 +8,7 @@
 #import "iTermScriptImporter.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermBuildingScriptWindowController.h"
 #import "iTermCommandRunner.h"
 #import "iTermScriptArchive.h"
@@ -19,6 +20,18 @@
 #import "SIGCertificate.h"
 
 static BOOL sInstallingScript;
+
+// The ".replacing-<name>-<UUID>" naming used to move a script aside during a replace and to
+// recover a leaked backup at launch. The UUID string is always 36 characters, so the
+// original name is everything between the prefix and that fixed-length suffix (names may
+// themselves contain hyphens).
+static NSString *const iTermReplaceBackupPrefix = @".replacing-";
+static const NSUInteger iTermReplaceBackupUUIDSuffixLength = 1 + 36;  // "-" + UUID
+
+// The dotted staging name iTermScriptArchive uses to rename a finished install into place
+// atomically. A leftover at launch is always an orphan (a completed install renames it
+// away), so the recovery sweep just deletes it.
+static NSString *const iTermInstallStagingPrefix = @".installing-";
 
 @implementation iTermScriptImporter
 
@@ -89,12 +102,21 @@ static BOOL sInstallingScript;
             return;
         }
 
-        iTermBuildingScriptWindowController *pleaseWait;
-        if (!reveal) {
+        // Do not show the please-wait window eagerly: a uv full-environment install first
+        // asks for download consent (and may prompt to replace an existing script), and a
+        // premature "Building Script…" window would float over those. Show it only once
+        // provisioning actually begins (after the download/consent), matching the
+        // create/Dependency-Editor progress sequencing. Unzip is effectively instant, and
+        // basic/legacy installs have their own UI or none.
+        // Create it hidden: newPleaseWaitWindowController would order the window front
+        // immediately, floating it over the intervening "Script Already Exists" and uv
+        // "Download Python Support?" prompts. Order it front for the first time only in
+        // provisioningDidBegin, after those prompts, when provisioning actually starts.
+        iTermBuildingScriptWindowController *pleaseWait = reveal ? nil : [iTermBuildingScriptWindowController newPleaseWaitWindowControllerOrderingFront:NO];
+        void (^provisioningDidBegin)(void) = ^{
             DLog(@"Open please wait window");
-            pleaseWait = [iTermBuildingScriptWindowController newPleaseWaitWindowController];
             [pleaseWait.window makeKeyAndOrderFront:nil];
-        }
+        };
         NSString *tempDir = [[NSFileManager defaultManager] it_temporaryDirectory];
 
         DLog(@"Unzip %@", url);
@@ -115,6 +137,7 @@ static BOOL sInstallingScript;
                          offerAutoLaunch:offerAutoLaunch
                                   reveal:reveal
                                  avoidUI:avoidUI
+                    provisioningDidBegin:provisioningDidBegin
                           withCompletion:
              ^(NSString *errorMessage, BOOL quiet, NSURL *location) {
                 RLog(@"All done! errorMessage=%@", errorMessage);
@@ -258,6 +281,30 @@ static BOOL sInstallingScript;
                offerAutoLaunch:(BOOL)offerAutoLaunch
                         reveal:(BOOL)reveal
                        avoidUI:(BOOL)avoidUI
+          provisioningDidBegin:(void (^)(void))provisioningDidBegin
+                withCompletion:(void (^)(NSString *errorMessage, BOOL, NSURL *location))completion {
+    [self didUnzipSuccessfullyTo:tempDir
+                         trusted:trusted
+                 offerAutoLaunch:offerAutoLaunch
+                          reveal:reveal
+                         avoidUI:avoidUI
+            provisioningDidBegin:provisioningDidBegin
+           replacedScriptBackup:nil
+                  withCompletion:completion];
+}
+
+// replacedScriptBackup, when non-nil, is a path the caller moved a same-named existing
+// script to before this (re)install. On success it is deleted; on failure or user
+// cancellation it is restored over the destination and the outcome is surfaced (never a
+// quiet "success"), so a replace whose install is canceled does not leave the user with
+// no script.
++ (void)didUnzipSuccessfullyTo:(NSString *)tempDir
+                       trusted:(BOOL)trusted
+               offerAutoLaunch:(BOOL)offerAutoLaunch
+                        reveal:(BOOL)reveal
+                       avoidUI:(BOOL)avoidUI
+          provisioningDidBegin:(void (^)(void))provisioningDidBegin
+          replacedScriptBackup:(NSString *)replacedScriptBackup
                 withCompletion:(void (^)(NSString *errorMessage, BOOL, NSURL *location))completion {
     DLog(@"didUnzipSuccessfullyTo:%@, trusted:%@, offerAutoLaunch:%@, reveal:%@, avoidUI:%@",
          tempDir,
@@ -304,13 +351,25 @@ static BOOL sInstallingScript;
                                                     window:nil];
         }
         if (selection == kiTermWarningSelection0) {
-            DLog(@"Remove and retry");
-            [self removeScriptNamed:archive.name];
+            DLog(@"Move aside and retry");
+            // Move the existing script aside rather than deleting it, so a failed or
+            // canceled (re)install can restore it. If the move-aside itself fails, do NOT
+            // fall back to deleting the original and proceeding: a later cancel would then
+            // report a quiet success with the script already gone (the very bug this
+            // move-aside flow fixed). Abort the replace and leave the script untouched.
+            NSString *backup = [self moveAsideScriptNamed:archive.name];
+            if (backup == nil) {
+                completion([NSString stringWithFormat:@"Could not replace “%@”: the existing script could not be moved aside, so it was left unchanged.", archive.name],
+                           NO, nil);
+                return;
+            }
             [self didUnzipSuccessfullyTo:tempDir
                                  trusted:trusted
                          offerAutoLaunch:offerAutoLaunch
                                   reveal:reveal
                                  avoidUI:avoidUI
+                    provisioningDidBegin:provisioningDidBegin
+                    replacedScriptBackup:backup
                           withCompletion:completion];
             return;
         }
@@ -322,9 +381,37 @@ static BOOL sInstallingScript;
     [archive installTrusted:trusted
             offerAutoLaunch:offerAutoLaunch
                     avoidUI:avoidUI
+       provisioningDidBegin:provisioningDidBegin
              withCompletion:^(NSError *error, NSURL *location) {
         RLog(@"Install finished with %@", error);
-        completion(error.localizedDescription, NO, location);
+        const BOOL canceled = (error != nil && [iTermUvProvisioner isCancelationError:error]);
+        if (error != nil) {
+            // Failure or cancellation: if we replaced an existing script, put it back so
+            // the user is not left with nothing, and surface the outcome rather than
+            // reporting a quiet success (which would hide that the replacement never
+            // happened and the original was gone).
+            if (replacedScriptBackup != nil) {
+                [self restoreReplacedScriptToPath:[[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:archive.name]
+                                       fromBackup:replacedScriptBackup];
+                NSString *message = canceled
+                    ? [NSString stringWithFormat:@"Replacing “%@” was canceled. The existing script was kept.", archive.name]
+                    : (error.localizedDescription ?: @"The script could not be installed.");
+                completion(message, NO, nil);
+                return;
+            }
+            if (canceled) {
+                // Fresh install the user declined: finish quietly with no error dialog.
+                completion(nil, YES, nil);
+                return;
+            }
+            completion(error.localizedDescription, NO, location);
+            return;
+        }
+        // Success: the replacement is in place, so discard the backup of the old script.
+        if (replacedScriptBackup != nil) {
+            [[NSFileManager defaultManager] removeItemAtPath:replacedScriptBackup error:nil];
+        }
+        completion(nil, NO, location);
     }];
 }
 
@@ -346,6 +433,95 @@ static BOOL sInstallingScript;
         [entry kill];
     }
     [fileManager removeItemAtPath:path error:nil];
+}
+
+// Kill a running instance and move the existing script aside (not delete), returning the
+// backup path, or nil if the move failed. The backup is a hidden sibling in the scripts
+// folder so the move stays on one volume (script environments can be multi-GB); the dot
+// prefix keeps the menu's tree walk from descending into it.
++ (NSString *)moveAsideScriptNamed:(NSString *)name {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *scriptsPath = [fileManager scriptsPath];
+    NSString *path = [scriptsPath stringByAppendingPathComponent:name];
+    iTermScriptHistoryEntry *entry = [[iTermScriptHistory sharedInstance] runningEntryWithFullPath:path];
+    if (entry) {
+        [entry kill];
+    }
+    NSString *backupName = [NSString stringWithFormat:@"%@%@-%@", iTermReplaceBackupPrefix, name, [[NSUUID UUID] UUIDString]];
+    NSString *backupPath = [scriptsPath stringByAppendingPathComponent:backupName];
+    NSError *error = nil;
+    if (![fileManager moveItemAtPath:path toPath:backupPath error:&error]) {
+        RLog(@"Could not move aside %@ to %@: %@", path, backupPath, error);
+        return nil;
+    }
+    return backupPath;
+}
+
+// Restore a script previously moved aside by moveAsideScriptNamed:, discarding whatever
+// partial install (or leftover symlink) now sits at targetPath.
++ (void)restoreReplacedScriptToPath:(NSString *)targetPath fromBackup:(NSString *)backupPath {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    [fileManager removeItemAtPath:targetPath error:nil];
+    NSError *error = nil;
+    if (![fileManager moveItemAtPath:backupPath toPath:targetPath error:&error]) {
+        RLog(@"Could not restore %@ from %@: %@", targetPath, backupPath, error);
+    }
+}
+
+// Recover backups left by an import that died between move-aside and restore/cleanup
+// (see moveAsideScriptNamed:). Called once at launch, mirroring the saved-iterm2env
+// reclamation. If the target script is present again the replacement completed and the
+// backup leaked, so delete it; otherwise the replace never finished, so restore the
+// user's original script rather than leave it as a hidden orphan.
++ (void)recoverStaleReplaceBackups {
+    [self recoverStaleReplaceBackupsInDirectory:[[NSFileManager defaultManager] scriptsPath]];
+}
+
++ (void)recoverStaleReplaceBackupsInDirectory:(NSString *)scriptsPath {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    for (NSString *entry in [fileManager contentsOfDirectoryAtPath:scriptsPath error:nil]) {
+        if ([entry hasPrefix:iTermInstallStagingPrefix]) {
+            // An orphaned atomic-install staging dir; a completed install renames it away.
+            NSString *stagingPath = [scriptsPath stringByAppendingPathComponent:entry];
+            RLog(@"Removing orphaned install staging dir %@", stagingPath);
+            [fileManager removeItemAtPath:stagingPath error:nil];
+            continue;
+        }
+        if (![entry hasPrefix:iTermReplaceBackupPrefix]) {
+            continue;
+        }
+        NSString *afterPrefix = [entry substringFromIndex:iTermReplaceBackupPrefix.length];
+        if (afterPrefix.length <= iTermReplaceBackupUUIDSuffixLength) {
+            continue;  // Too short to carry a name plus a UUID; not ours.
+        }
+        // Validate the fixed-length tail really is "-<UUID>" before treating this as our
+        // backup, so a user file coincidentally named ".replacing-…" is never renamed to a
+        // truncated garbage name.
+        NSString *tail = [afterPrefix substringFromIndex:afterPrefix.length - iTermReplaceBackupUUIDSuffixLength];
+        if (![tail hasPrefix:@"-"] ||
+            [[NSUUID alloc] initWithUUIDString:[tail substringFromIndex:1]] == nil) {
+            continue;
+        }
+        NSString *name = [afterPrefix substringToIndex:afterPrefix.length - iTermReplaceBackupUUIDSuffixLength];
+        NSString *backupPath = [scriptsPath stringByAppendingPathComponent:entry];
+        NSString *targetPath = [scriptsPath stringByAppendingPathComponent:name];
+        // Use lstat (attributesOfItemAtPath does NOT follow symlinks). During a
+        // full-environment replace the target is a symlink into a temp extraction dir that
+        // survives an app crash, and a plain fileExistsAtPath would follow it, conclude the
+        // replace succeeded, and delete the user's only backup. The replacement is complete
+        // only when the target is a REAL item; a symlink (or nothing) means it did not
+        // finish, so restore the original (restore removes the leftover link first).
+        NSDictionary *attributes = [fileManager attributesOfItemAtPath:targetPath error:nil];
+        const BOOL targetIsRealItem = (attributes != nil &&
+                                       ![attributes.fileType isEqualToString:NSFileTypeSymbolicLink]);
+        if (targetIsRealItem) {
+            RLog(@"Removing leaked replace-backup %@ (target %@ present)", backupPath, name);
+            [fileManager removeItemAtPath:backupPath error:nil];
+        } else {
+            RLog(@"Restoring replace-backup %@ to %@ after interrupted import", backupPath, name);
+            [self restoreReplacedScriptToPath:targetPath fromBackup:backupPath];
+        }
+    }
 }
 
 @end

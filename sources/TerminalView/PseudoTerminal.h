@@ -33,6 +33,7 @@
 @class iTermController;
 @class iTermTerminalWindowSizeHelper;
 @class PseudoTerminalState;
+@class PTYTab;
 @class TmuxController;
 @class WKWebViewConfiguration;
 
@@ -123,6 +124,14 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 // Tab whose color is being changed via the color picker.
 @property(nonatomic, weak) NSTabViewItem *tabViewItemForColorPicker;
+// Non-nil while the color picker is targeting a tab group (its members' color)
+// rather than a single tab. When set, color changes apply to the whole group.
+@property(nonatomic, copy) NSString *tabGroupIDForColorPicker;
+// Set the given color on every member of a tab group (the color rides the
+// tabs). A nil color clears it (the chip falls back to its default).
+- (void)setTabGroupColor:(NSColor *)color forGroupID:(NSString *)groupID;
+// Member tabs of the given group, in tab order.
+- (NSArray<PTYTab *> *)tabsInGroup:(NSString *)groupID;
 
 // Mutable state for the tab color picker (popover, debounce timer, etc.).
 @property(nonatomic, strong) TabColorPickerState *tabColorPickerState;
@@ -332,6 +341,10 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // All tabs in this window.
 - (NSArray<PTYTab *> *)tabs;
 
+// Call after changing the tab order (or a tab's pinned/group state) to repair the
+// tab-group contiguity invariant and re-push membership to the tab bar.
+- (void)tabsDidReorder;
+
 // Updates the window when screen parameters (number of screens, resolutions,
 // etc.) change.
 - (void)screenParametersDidChange;
@@ -435,7 +448,11 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (iTermRestorableSession *)restorableSessionForSession:(PTYSession *)session;
 
 - (void)addSessionInNewTab:(PTYSession *)object;
-- (void)didDonateTab:(PTYTab *)aTab toWindowController:(PseudoTerminal *)term;
+// `groupID` is the tab group the drop landed inside (the tab joins it), or
+// nil when the tab arrived outside any group (menu/API moves pass nil).
+- (void)didDonateTab:(PTYTab *)aTab
+    toWindowController:(PseudoTerminal *)term
+    joiningGroupWithID:(NSString *)groupID;
 - (void)moveTabAtIndex:(NSInteger)selectedIndex toIndex:(NSInteger)destinationIndex;
 
 - (PseudoTerminal *)it_moveTabToNewWindow:(PTYTab *)aTab;

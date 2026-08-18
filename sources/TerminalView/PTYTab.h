@@ -90,6 +90,23 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // Set to nil to use the default behavior. This is a swifty string.
 @property (nonatomic, copy) NSString *titleOverride;
 @property(nonatomic, getter=isPinned) BOOL pinned;
+// Identifier of the tab group this tab belongs to, or nil. Source of
+// truth for group membership (persisted in the tab arrangement); the
+// window controller pushes it to the tab bar via
+// -setTabGroupIdentifier:forTabViewItem:.
+@property (nonatomic, copy) NSString *tabGroupID;
+// The tab group's definition (its name and color) travels on every member
+// tab, so it persists and moves across windows with the tabs and there is no
+// separate registry to keep in sync. All tabs sharing a tabGroupID carry the
+// same name/color; membership mutations copy them and rename fans them out.
+// Meaningful only when tabGroupID is non-nil.
+@property (nonatomic, copy) NSString *tabGroupName;
+@property (nonatomic, copy) NSColor *tabGroupColor;
+// Whether this tab's group is collapsed (its members are hidden in the tab bar
+// but remain in the NSTabView). Like name/color it rides every member of the
+// group; the invariant "the active tab is never in a collapsed group" is
+// enforced by PseudoTerminal. Meaningful only when tabGroupID is non-nil.
+@property (nonatomic) BOOL tabGroupCollapsed;
 @property(nonatomic, readonly) NSString *title;  // the effective title
 @property (nonatomic, readonly) iTermVariableScope<iTermTabScope> *variablesScope;
 @property(nonatomic, readonly) iTermMetalUnavailableReason metalUnavailableReason;
@@ -171,6 +188,14 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
                     sessions:(NSMapTable<SessionView *, PTYSession *> *)sessions;
 
 - (void)setRoot:(NSSplitView *)newRoot;
+
+// Restore the window's first responder to the active session's main
+// responder. A view-hierarchy rebuild (e.g. apply_layout) reparents
+// SessionViews, which severs the responder chain even when the active
+// session pointer is unchanged; setActiveSession: only calls
+// makeFirstResponder: when the active session actually changes, so
+// callers that rebuild the tree must restore focus explicitly.
+- (void)restoreActiveSessionFirstResponder;
 
 // This is safe to call when there may be a maximized pane.
 - (void)setActiveSessionPreservingMaximization:(PTYSession *)session;

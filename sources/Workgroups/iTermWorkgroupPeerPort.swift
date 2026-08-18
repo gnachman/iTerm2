@@ -712,16 +712,22 @@ final class iTermWorkgroupPeerPort: PTYSessionPeerPort {
 
 extension iTermWorkgroupPeerPort: WorkgroupNavigationToolbarItemDelegate {
     func workgroupNavigationDidTapBack(ownerPeerID: String?) {
-        diffSelector(forPeerID: ownerPeerID)?.selectPreviousFile()
+        let selector = diffSelector(forPeerID: ownerPeerID)
+        RLog("iTermWorkgroupPeerPort: nav Back owner=\(ownerPeerID ?? "nil") selector=\(selector != nil)")
+        selector?.selectPreviousFile()
     }
 
     func workgroupNavigationDidTapForward(ownerPeerID: String?) {
-        diffSelector(forPeerID: ownerPeerID)?.selectNextFile()
+        let selector = diffSelector(forPeerID: ownerPeerID)
+        RLog("iTermWorkgroupPeerPort: nav Forward owner=\(ownerPeerID ?? "nil") selector=\(selector != nil)")
+        selector?.selectNextFile()
     }
 
     func workgroupNavigationDidTapReload(ownerPeerID: String?) {
+        RLog("iTermWorkgroupPeerPort: nav Reload owner=\(ownerPeerID ?? "nil")")
         guard let ownerPeerID,
               let session = session(forIdentifier: ownerPeerID) else {
+            RLog("iTermWorkgroupPeerPort: nav Reload aborted, no session for owner=\(ownerPeerID ?? "nil")")
             return
         }
         // Diff peers handle their own restartability: a waiting peer
@@ -730,23 +736,29 @@ extension iTermWorkgroupPeerPort: WorkgroupNavigationToolbarItemDelegate {
         // meaningful (poll-check + fire if ready). See
         // PTYSession.reloadDiffWithDeferralIfNeeded for state matrix.
         if session.workgroupSessionMode == .diff {
+            RLog("iTermWorkgroupPeerPort: nav Reload dispatching to diff-deferral path for owner=\(ownerPeerID)")
             session.reloadDiffWithDeferralIfNeeded(
                 resolveCommand: { [weak self] in
                     self?.resolvedDiffReloadCommand(forPeerID: ownerPeerID)
                 })
             return
         }
-        guard session.isRestartable() else { return }
+        guard session.isRestartable() else {
+            RLog("iTermWorkgroupPeerPort: nav Reload aborted, session not restartable owner=\(ownerPeerID) mode=\(session.workgroupSessionMode)")
+            return
+        }
         // Code-review peers re-show the prompt overlay so the user can
         // edit their prompt before the program is rerun.
         if session.workgroupSessionMode == .codeReview,
            session.codeReviewRawCommand != nil {
+            RLog("iTermWorkgroupPeerPort: nav Reload re-showing code-review overlay for owner=\(ownerPeerID)")
             session.reloadCodeReviewPromptOverlay()
             return
         }
         // Reload re-runs whatever the session is currently set to run
         // (its _program), not the original cfg.command. Same rationale
         // as the workgroup instance's reload path.
+        RLog("iTermWorkgroupPeerPort: nav Reload restarting session owner=\(ownerPeerID) mode=\(session.workgroupSessionMode)")
         session.restart()
     }
 }
@@ -756,7 +768,9 @@ extension iTermWorkgroupPeerPort: WorkgroupNavigationToolbarItemDelegate {
 extension iTermWorkgroupPeerPort: WorkgroupModeSwitcherItemDelegate {
     func workgroupModeSwitcher(_ item: WorkgroupModeSwitcherItem,
                                didSelect identifier: String) {
+        RLog("iTermWorkgroupPeerPort: mode switcher selected identifier=\(identifier)")
         if !activate(identifier: identifier) {
+            RLog("iTermWorkgroupPeerPort: mode switcher activation refused for identifier=\(identifier), resyncing to \(activeSessionIdentifier)")
             // The control tracks .selectOne, so AppKit already
             // highlighted the clicked segment before this delegate
             // ran. A refused activation (spawn already failed, no
@@ -779,6 +793,7 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
               }),
               !cfg.perFileCommand.isEmpty,
               let session = session(forIdentifier: ownerPeerID) else {
+            RLog("iTermWorkgroupPeerPort.diffDidSelect aborted, no config/session or empty perFileCommand for owner=\(sender.ownerPeerID ?? "nil")")
             return
         }
         // Substitute \(file) and \(gitBase) before sending so the
@@ -786,7 +801,10 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
         // backslash-paren shell parsing.
         let command = cfg.resolvedPerFileCommand(filename: filename,
                                                  gitBase: currentGitBase)
-        guard !command.isEmpty else { return }
+        guard !command.isEmpty else {
+            RLog("iTermWorkgroupPeerPort.diffDidSelect aborted, resolved per-file command is empty for owner=\(ownerPeerID)")
+            return
+        }
         let wrapped = ITAddressBookMgr.commandByWrapping(inLoginShell: command)
         session.restart(withCommand: wrapped)
     }
@@ -798,7 +816,10 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
     // — so the cluster reflects state immediately for both
     // synchronous user actions and asynchronous repo changes.
     func diffNavigationStateDidChange(sender: CCDiffSelectorItem) {
-        guard let nav = navigationItem(forPeerID: sender.ownerPeerID) else { return }
+        guard let nav = navigationItem(forPeerID: sender.ownerPeerID) else {
+            DLog("diffNavigationStateDidChange: no navigation item for owner=\(sender.ownerPeerID ?? "nil")")
+            return
+        }
         let position = sender.visibleFilePosition
         let progress = position > 0
             ? "\(position)/\(sender.navigableFileCount)"
@@ -824,6 +845,7 @@ extension iTermWorkgroupPeerPort: CCDiffSelectorItemDelegate {
               }),
               !cfg.command.isEmpty,
               let session = session(forIdentifier: ownerPeerID) else {
+            RLog("iTermWorkgroupPeerPort.diffDidSelectAllFiles aborted, no config/session or empty command for owner=\(sender.ownerPeerID ?? "nil")")
             return
         }
         let resolved = cfg.resolvedCommand(gitBase: currentGitBase)

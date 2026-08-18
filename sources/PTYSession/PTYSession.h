@@ -638,6 +638,12 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // symlinks resolved is returned.
 @property(nonatomic, readonly, nullable) NSString *currentLocalWorkingDirectory;
 
+// When the session's requested working directory did not exist at launch (for example, a restored
+// session whose directory was on a drive that is no longer mounted), the launch falls back to the
+// home directory and stashes the unavailable path here so a notice can be shown once the shell
+// starts. Cleared after the notice is displayed. Issue 12955.
+@property(nonatomic, nullable, copy) NSString *unavailableWorkingDirectory;
+
 // Async version of currentLocalWorkingDirectory.
 - (void)asyncCurrentLocalWorkingDirectory:(void (^)(NSString * _Nullable pwd))completion;
 
@@ -770,6 +776,13 @@ backgroundColor:(nullable NSColor *)backgroundColor;
                        profileMutator:(Profile *(^)(Profile *))profileMutator;
 
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
+
+// Considers offering to enable physical-key key-binding matching for a keyDown that
+// no binding claimed. Call once per keyDown from the app's key-event router. `session`
+// is the terminal session receiving the keystroke, or nil when a non-terminal
+// responder/window is focused (in which case a modal is used instead of a banner).
++ (void)maybeSuggestPhysicalKeyBindingsForKeyDownEvent:(NSEvent *)event
+                                             inSession:(nullable PTYSession *)session;
 + (void)selectMenuItem:(NSString*)theName;
 + (void)registerBuiltInFunctions;
 + (NSMapTable<NSString *, PTYSession *> *)sessionMap;

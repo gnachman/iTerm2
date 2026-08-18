@@ -861,6 +861,42 @@ extension ChatWindowController: ChatViewControllerDelegate {
             } catch {
                 RLog("Failed to copy icon to forked chat \(chatID): \(error)")
             }
+
+            // Inherit the source chat's blobs for the retained prefix so the fork
+            // keeps the prompt cache instead of re-migrating on its first turn. Only
+            // when the retained prefix is FULLY linked: the retained messages'
+            // firstBlobRefs must equal the source's blob prefix, in order. Any
+            // migration-era unlinked round makes it copy nothing and fall back to
+            // re-migration (safe) rather than risk a history that does not match the
+            // copied blobs. Blobs are copied with fresh blobIDs and the clones'
+            // firstBlobRefs are remapped to them (clone() cleared the stale source ref).
+            let sourceBlobs = listModel.chatDatabase.blobs(inChat: originalChatID)
+            let retainedRefs = sourceMessages.compactMap { $0.firstBlobRef }
+            if let retainedBlobs = ChatBlobAssembler.forkBlobPrefix(sourceBlobs: sourceBlobs,
+                                                                    retainedBlobRefs: retainedRefs) {
+                var blobIDMap = [String: String]()
+                for blob in retainedBlobs {
+                    let newBlobID = UUID()
+                    let copy = ChatBlob(blobID: newBlobID, chatID: chatID,
+                                        blobProtocol: blob.blobProtocol, role: blob.role,
+                                        payload: blob.payload, responseID: blob.responseID,
+                                        tokenCount: blob.tokenCount)
+                    if listModel.chatDatabase.appendBlob(copy) != nil {
+                        blobIDMap[blob.blobID.uuidString] = newBlobID.uuidString
+                    }
+                }
+                if let blobProtocol = chat.blobProtocol {
+                    try? listModel.setBlobProtocol(blobProtocol, forChatID: chatID)
+                }
+                for sourceMessage in sourceMessages {
+                    if let oldRef = sourceMessage.firstBlobRef,
+                       let newRef = blobIDMap[oldRef],
+                       let newMessageID = uuidMap[sourceMessage.uniqueID] {
+                        listModel.setFirstBlobRef(newRef, forMessageID: newMessageID, inChat: chatID)
+                    }
+                }
+            }
+
             chatViewController.load(chatID: chatID)
             chatListViewController.select(chatID: chatID)
 

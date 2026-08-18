@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermAPIConnectionIdentifierController.h"
 #import "iTermAPIHelper.h"
 #import "iTermController.h"
@@ -19,6 +20,7 @@
 #import "iTermScriptConsole.h"
 #import "iTermScriptHistory.h"
 #import "iTermSetupCfgParser.h"
+#import "iTermUserDefaults.h"
 #import "iTermWarning.h"
 #import "iTermWebSocketCookieJar.h"
 #import "NSArray+iTerm.h"
@@ -29,6 +31,10 @@
 #import "PTYTask.h"
 
 static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallbackNotification = @"iTermAPIScriptLauncherScriptDidFailUserNotificationCallbackNotification";
+
+@interface iTermAPIScriptLauncher ()
++ (NSString *)uvCertifiPathInVenv:(NSString *)venvDirectory;
+@end
 
 @implementation iTermAPIScriptLauncher
 
@@ -122,6 +128,30 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
 + (void)reallyUpgradeFullEnvironmentScriptAt:(NSString *)fullPath
                                 configParser:(iTermSetupCfgParser *)configParser
                                   completion:(void (^)(NSString *))completion {
+    // A rebuild hard-links the shared standard runtime into the script's iterm2env. On a
+    // Rosetta-less macOS (27+) that shared runtime may itself be Intel-only yet
+    // version-current, so no download was triggered; linking it would yield an Intel-only
+    // env whose pip cannot exec. Ensure the shared runtime is arm64 first (refetching it
+    // if needed), then rebuild. On macOS <=26, or when it is already native, this is an
+    // immediate no-op.
+    [self ensureArm64StandardRuntimeForPythonVersion:configParser.pythonVersion completion:^(BOOL ok, BOOL shouldAlert) {
+        if (ok) {
+            [self hardLinkRebuildFullEnvironmentScriptAt:fullPath configParser:configParser completion:completion];
+            return;
+        }
+        // Not usable. Only alert here when the download reported success yet is not arm64;
+        // on a download failure or user cancel the downloader already showed its own modal,
+        // so shouldAlert is NO and we stay silent to avoid stacking a second.
+        if (shouldAlert) {
+            [self showIntelOnlyUnrunnableErrorForScript:fullPath
+                                               recovery:@"The Apple Silicon runtime could not be downloaded. Check your network connection and try again."];
+        }
+    }];
+}
+
++ (void)hardLinkRebuildFullEnvironmentScriptAt:(NSString *)fullPath
+                                  configParser:(iTermSetupCfgParser *)configParser
+                                    completion:(void (^)(NSString *))completion {
     NSURL *url = [NSURL fileURLWithPath:fullPath];
     NSURL *existingEnv = [url URLByAppendingPathComponent:@"iterm2env"];
     NSURL *savedEnv = [url URLByAppendingPathComponent:@"saved-iterm2env"];
@@ -174,6 +204,102 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                     virtualEnv:(NSString *)originalVirtualenv
                                     completion:(void (^)(NSString *))completion {
     DLog(@"fullPath=%@ originalVirtualenv=%@", fullPath, originalVirtualenv);
+    // A uv-provisioned script has no legacy iterm2env version to check; the legacy
+    // runtime-upgrade path does not apply to it, so launch it directly.
+    if ([iTermScriptRuntime backendForScriptContainer:fullPath] == iTermScriptRuntimeBackendUv) {
+        // This container is authoritatively uv-backed (.venv + marker), so any legacy
+        // artifact beside it is a leftover no other code path would remove: a
+        // saved-iterm2env backup of a completed migration whose cleanup was interrupted, a
+        // stray iterm2env restored by an old-build downgrade round-trip (both potentially
+        // multi-GB), or a .venv.building temp orphaned by a crash mid-swap. Reclaim them.
+        [iTermUvMigration reclaimOrphanedArtifactsWithContainer:fullPath completion:nil];
+        completion(originalVirtualenv);
+        return;
+    }
+    if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+        // Gate on and this is still a legacy script: migrate it to uv (once), then
+        // launch under the new .venv. On failure the legacy env is restored and the
+        // script launches on it as before.
+        if (configParser == nil || configParser.dependenciesError != nil) {
+            // No parseable setup.cfg means we cannot know the script's dependencies.
+            // Migrating with an empty dependency list would silently produce a broken
+            // uv environment (missing packages), so leave the script on its working
+            // legacy environment and log loudly instead.
+            NSString *reason = configParser == nil ? @"setup.cfg is missing" : configParser.dependenciesError.localizedDescription ?: @"setup.cfg could not be parsed";
+            RLog(@"Not migrating %@ to uv: %@. Launching on the legacy environment.", fullPath, reason);
+            // Without a parseable setup.cfg we can neither migrate nor rebuild the env, so
+            // nothing downstream guards this early exit. On a Rosetta-less macOS an
+            // Intel-only legacy env must be reported as unrunnable rather than left to
+            // exec-fail with a cryptic bad-CPU-type error.
+            if ([self handleIntelOnlyUnrunnableLegacyInterpreter:originalVirtualenv
+                                                       forScript:fullPath
+                                                        recovery:@"Its setup.cfg could not be read, so it cannot be rebuilt automatically."]) {
+                return;
+            }
+            completion(originalVirtualenv);
+            return;
+        }
+        // When setup.cfg has no parseable pin (absent, or a range like ">=3.7"), fall back
+        // to the version the legacy env was actually built on, read from its
+        // iterm2env/versions tree, before the current default. Otherwise a 3.7-era script
+        // would migrate straight to the default with no forced-remap warning.
+        NSString *requestedVersion = configParser.pythonVersion
+            ?: [iTermScriptRuntime legacyEnvironmentPythonVersionForContainer:fullPath]
+            ?: [iTermScriptRuntime defaultPythonVersion];
+        __block iTermProvisioningProgressWindowController *progress = [[iTermProvisioningProgressWindowController alloc] init];
+        [[iTermUvProvisioner shared] migrateLegacyScriptToUvWithContainer:fullPath
+                                                  requestedPythonVersion:requestedVersion
+                                                            dependencies:configParser.dependencies ?: @[]
+                                                    provisioningDidBegin:^{
+            // Show progress only once the download phase is done and the venv build
+            // starts, so a launch-time migration is not a silent multi-second stall.
+            [progress showWithMessage:@"Migrating this script to the new Python runtime…"];
+        }
+                                                              completion:^(NSError *migrationError) {
+            [progress dismiss];
+            progress = nil;
+            if (migrationError != nil) {
+                RLog(@"uv migration of %@ failed; launching on the legacy environment: %@", fullPath, migrationError);
+                if (![iTermUvProvisioner isCancelationError:migrationError]) {
+                    // A real failure (not the user declining the download): the script
+                    // silently ran on its old runtime, so leave a Script Console record so
+                    // an opted-in user can discover why nothing changed. No modal.
+                    NSString *name = [[fullPath pathComponents] lastObject] ?: fullPath;
+                    NSString *line = [NSString stringWithFormat:@"Could not migrate “%@” to the uv Python runtime (%@). It launched on the existing runtime instead.\n",
+                                      name, migrationError.localizedDescription];
+                    [[iTermScriptHistoryEntry globalEntry] addOutput:line completion:^{}];
+                }
+                // Re-resolve after the rollback: restoreLegacyEnvironment relocated
+                // saved-iterm2env back to iterm2env, so originalVirtualenv (which points
+                // into saved-iterm2env when the container started in the saved-only state,
+                // e.g. the app was killed mid-migration) now dangles and would exec a
+                // nonexistent interpreter. Read the interpreter the restored env provides.
+                NSString *restored = [self environmentForScript:fullPath checkForMain:YES checkForSaved:NO] ?: originalVirtualenv;
+                // The restored env may be Intel-only and unrunnable on a Rosetta-less
+                // macOS. Show a clear error rather than exec-failing cryptically.
+                if ([self handleIntelOnlyUnrunnableLegacyInterpreter:restored
+                                                           forScript:fullPath
+                                                            recovery:@"Its environment is intact; turn off the uv advanced setting to rebuild it for Apple Silicon."]) {
+                    return;
+                }
+                // Enforce the same minimum-environment-version security gate the gate-off
+                // path applies below: a restored legacy env below the floor must be upgraded
+                // before launch, not run directly. Otherwise declining the uv download would
+                // run an environment the legacy path refuses to launch "for security reasons".
+                NSString *restoredEnv = [fullPath stringByAppendingPathComponent:@"iterm2env"];
+                if ([self environmentVersionAt:restoredEnv] < iTermMinimumPythonEnvironmentVersion) {
+                    [self upgradeFullEnvironmentScriptAt:fullPath
+                                            configParser:configParser
+                                              completion:completion];
+                    return;
+                }
+                completion(restored);
+                return;
+            }
+            completion([iTermScriptRuntime uvInterpreterPathForScriptContainer:fullPath]);
+        }];
+        return;
+    }
     NSString *virtualenv = originalVirtualenv;
     NSString *iterm2env = [fullPath stringByAppendingPathComponent:@"iterm2env"];
     NSString *saved = [fullPath stringByAppendingPathComponent:@"saved-iterm2env"];
@@ -199,6 +325,26 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                   completion:completion];
         return;
     }
+    // On a Rosetta-less macOS (27+), an Intel-only legacy interpreter cannot run. Rebuild
+    // the env from setup.cfg against the current (arm64) runtime via the same path
+    // version-based upgrades use, rather than exec-failing. Only read the binary's arch
+    // when Rosetta is actually unavailable, so macOS <= 26 launches are unchanged.
+    if (virtualenv != nil && ![iTermRosettaSupport canInstallRosetta]) {
+        const BOOL native = [iTermRosettaSupport binaryHasArm64SliceAtPath:virtualenv];
+        if ([iTermRosettaSupport legacyLaunchDispositionWithInterpreterHasNativeSlice:native
+                                                                    canInstallRosetta:NO
+                                                                               gateOn:NO] == iTermLegacyLaunchDispositionRebuild) {
+            NSString *line = [NSString stringWithFormat:@"“%@” has an Intel-only Python environment, which cannot run on this version of macOS. Rebuilding it for Apple Silicon…\n",
+                              fullPath.lastPathComponent];
+            [[iTermScriptHistoryEntry globalEntry] addOutput:line completion:^{}];
+            // reallyUpgradeFullEnvironmentScriptAt rebuilds from setup.cfg and calls
+            // completion with the new venv on success; on failure it shows its own error.
+            [self reallyUpgradeFullEnvironmentScriptAt:fullPath
+                                          configParser:configParser
+                                            completion:completion];
+            return;
+        }
+    }
     completion(virtualenv);
 }
 
@@ -218,7 +364,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
         return;
     }
-    [self installRosettaIfNeededThen:^{
+    void (^afterRosetta)(void) = ^{
         DLog(@"virtualenv=%@", virtualenv);
         if (virtualenv != nil) {
             // This is a full-environment script. Check if its environment version is supported and
@@ -233,6 +379,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                 fullPath:fullPath
                                arguments:arguments
                           withVirtualEnv:updatedVirtualEnv
+                       isFullEnvironment:YES
                            pythonVersion:pythonVersion
                       explicitUserAction:explicitUserAction];
             }];
@@ -240,6 +387,34 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         }
 
         NSString *pythonVersion = [self inferredPythonVersionFromScriptAt:filename];
+        if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+            // Basic scripts share a per-minor uv venv. Ensure it exists (downloading
+            // uv and provisioning on first use), then launch the script with it. Once
+            // provisioned this is offline; launch is a bare exec of the venv python.
+            [[iTermUvProvisioner shared] downloadAndProvisionSharedVenvWithRequestedPythonVersion:pythonVersion ?: [iTermScriptRuntime defaultPythonVersion]
+                                                                                      completion:^(NSError *uvError, NSString *sharedPython) {
+                if (uvError != nil && [iTermUvProvisioner isCancelationError:uvError]) {
+                    // The user declined the download; do not report a failure.
+                    return;
+                }
+                if (uvError != nil || sharedPython == nil) {
+                    NSAlert *alert = [[NSAlert alloc] init];
+                    alert.messageText = @"Python Environment Unavailable";
+                    alert.informativeText = [NSString stringWithFormat:@"Could not prepare the Python environment for this script: %@",
+                                             uvError.localizedDescription ?: @"unknown error"];
+                    [alert runModal];
+                    return;
+                }
+                [self reallyLaunchScript:filename
+                                fullPath:fullPath
+                               arguments:arguments
+                          withVirtualEnv:sharedPython
+                       isFullEnvironment:NO
+                           pythonVersion:pythonVersion
+                      explicitUserAction:explicitUserAction];
+            }];
+            return;
+        }
         [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                             pythonVersion:pythonVersion
                                                                                 minimumEnvironmentVersion:0
@@ -249,14 +424,30 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
             RLog(@"status=%@", @(status));
             switch (status) {
                 case iTermPythonRuntimeDownloaderStatusNotNeeded:
-                case iTermPythonRuntimeDownloaderStatusDownloaded:
+                case iTermPythonRuntimeDownloaderStatusDownloaded: {
+                    // On a Rosetta-less macOS (27+), a pre-existing Intel-only shared
+                    // runtime is current by version but cannot run. The version-based
+                    // download above will not refetch it, so replace it with the arm64
+                    // build (which the manifest now serves) before launching.
+                    NSString *stdPython = [[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
+                    if (![iTermRosettaSupport canInstallRosetta] && stdPython != nil &&
+                        ![iTermRosettaSupport binaryHasArm64SliceAtPath:stdPython]) {
+                        [self refetchArm64StandardRuntimeThenLaunch:filename
+                                                           fullPath:fullPath
+                                                          arguments:arguments
+                                                      pythonVersion:pythonVersion
+                                                 explicitUserAction:explicitUserAction];
+                        break;
+                    }
                     [self reallyLaunchScript:filename
                                     fullPath:fullPath
                                    arguments:arguments
                               withVirtualEnv:virtualenv
+                           isFullEnvironment:NO
                                pythonVersion:pythonVersion
                           explicitUserAction:explicitUserAction];
                     break;
+                }
                 case iTermPythonRuntimeDownloaderStatusError:
                 case iTermPythonRuntimeDownloaderStatusUnknown:
                 case iTermPythonRuntimeDownloaderStatusWorking:
@@ -265,7 +456,23 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                     break;
             }
         }];
-    }];
+    };
+    // uv interpreters are native (universal2); Rosetta is only needed for the legacy
+    // x86_64 runtime. Skip the Rosetta prompt/install only when this launch is CERTAIN
+    // to use uv: an already-uv-backed full-env script, or a basic script under the gate
+    // (which runs from a native shared venv). A legacy full-env script under the gate is
+    // NOT certain: if its migration fails or is canceled it falls back to the x86_64
+    // legacy env, which still needs Rosetta, so keep the check for that case (harmless
+    // if the migration then succeeds; the script becomes uv-backed and skips it next
+    // time). This also matters after macOS 27, which drops Rosetta entirely.
+    const BOOL scriptIsUvBacked =
+        (fullPath != nil && [iTermScriptRuntime backendForScriptContainer:fullPath] == iTermScriptRuntimeBackendUv);
+    const BOOL basicUnderUvGate = (virtualenv == nil) && [iTermAdvancedSettingsModel pythonRuntimeUsesUV];
+    if (scriptIsUvBacked || basicUnderUvGate) {
+        afterRosetta();
+    } else {
+        [self installRosettaIfNeededThen:afterRosetta];
+    }
 }
 
 + (BOOL)rosettaIsInstalled {
@@ -307,10 +514,159 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     return [NSProcessInfo it_hasARMProcessor];
 }
 
+// Show a clear error (alert + Script Console) when a legacy script's Python environment
+// is Intel-only and cannot run because Rosetta is unavailable (macOS 27+). recovery is a
+// caller-specific hint for what the user can do about it.
++ (void)showIntelOnlyUnrunnableErrorForScript:(NSString *)fullPath recovery:(NSString *)recovery {
+    NSString *name = [[fullPath pathComponents] lastObject] ?: fullPath;
+    NSString *base = [NSString stringWithFormat:@"“%@” uses an Intel-only Python environment, which cannot run on this version of macOS because Rosetta is not available.", name];
+    [[iTermScriptHistoryEntry globalEntry] addOutput:[NSString stringWithFormat:@"%@ %@\n", base, recovery] completion:^{}];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = @"Script Cannot Run";
+        alert.informativeText = [NSString stringWithFormat:@"%@ %@", base, recovery];
+        [alert runModal];
+    });
+}
+
+// On a Rosetta-less macOS, if the given legacy interpreter is Intel-only (so it cannot
+// run and, gate on, cannot be migrated), show the clear unrunnable error and return YES so
+// the caller does NOT exec it. Returns NO when it is safe to continue (macOS <=26, no
+// interpreter to check, or a native slice is present).
++ (BOOL)handleIntelOnlyUnrunnableLegacyInterpreter:(NSString *)interpreter
+                                         forScript:(NSString *)fullPath
+                                          recovery:(NSString *)recovery {
+    if ([iTermRosettaSupport canInstallRosetta] || interpreter == nil) {
+        return NO;
+    }
+    const BOOL native = [iTermRosettaSupport binaryHasArm64SliceAtPath:interpreter];
+    if ([iTermRosettaSupport legacyLaunchDispositionWithInterpreterHasNativeSlice:native
+                                                                canInstallRosetta:NO
+                                                                           gateOn:YES] == iTermLegacyLaunchDispositionUnrunnable) {
+        [self showIntelOnlyUnrunnableErrorForScript:fullPath recovery:recovery];
+        return YES;
+    }
+    return NO;
+}
+
+// Shared refetch of the Intel-only shared standard runtime with the arm64 build the
+// manifest now serves. Confirms with the user BEFORE the destructive delete (so declining
+// leaves the existing runtime in place rather than deleting it and then, on a canceled
+// download, leaving nothing), then deletes and downloads with confirmation:NO since consent
+// was already given. completion carries the downloader status so callers can stay silent on
+// cancel and distinguish it from a genuine download failure. Runs completion on the main
+// queue.
++ (void)refetchArm64StandardRuntimeForPythonVersion:(NSString *)pythonVersion
+                                         completion:(void (^)(iTermPythonRuntimeDownloaderStatus status))completion {
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:@"The shared Python runtime is Intel-only and cannot run on this version of macOS. Download the Apple Silicon version now?"
+                               actions:@[ @"Download", @"Cancel" ]
+                             accessory:nil
+                            identifier:@"NoSyncRefetchArm64Runtime"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Download Apple Silicon Runtime?"
+                                window:nil];
+    if (selection != kiTermWarningSelection0) {
+        completion(iTermPythonRuntimeDownloaderStatusCanceledByUser);
+        return;
+    }
+    iTermPythonRuntimeDownloader *downloader = [iTermPythonRuntimeDownloader sharedInstance];
+    NSString *pyenvDir = [downloader pathToStandardPyenvWithVersion:pythonVersion creatingSymlinkIfNeeded:NO];
+    if (pyenvDir.length > 0) {
+        NSError *error = nil;
+        [[NSFileManager defaultManager] removeItemAtPath:pyenvDir error:&error];
+        RLog(@"Removed Intel-only standard runtime at %@: %@", pyenvDir, error);
+    }
+    [[iTermScriptHistoryEntry globalEntry] addOutput:@"Downloading the Apple Silicon Python runtime…\n"
+                                          completion:^{}];
+    // confirmation:NO: we already obtained consent above; the delete makes it "needed".
+    [downloader downloadOptionalComponentsIfNeededWithConfirmation:NO
+                                                    pythonVersion:pythonVersion
+                                        minimumEnvironmentVersion:0
+                                               requiredToContinue:YES
+                                                   withCompletion:^(iTermPythonRuntimeDownloaderStatus status) {
+        completion(status);
+    }];
+}
+
+// Whether a downloader status is a clean success (it downloaded, or nothing was needed).
+// On any other status the downloader has already presented its own alert or the user
+// canceled, so a caller must not stack a second alert.
++ (BOOL)runtimeDownloadSucceeded:(iTermPythonRuntimeDownloaderStatus)status {
+    return (status == iTermPythonRuntimeDownloaderStatusDownloaded ||
+            status == iTermPythonRuntimeDownloaderStatusNotNeeded);
+}
+
+// Ensure the shared standard runtime for pythonVersion has an arm64 slice, so a caller
+// about to hard-link it into a script env does not produce an Intel-only, unrunnable env
+// on a Rosetta-less macOS. On macOS <=26, when there is no runtime yet (a later download
+// fetches the arm64 build), or when it is already native, completes (YES, NO) immediately
+// with no UI. Otherwise it refetches, completing (native, shouldAlert). shouldAlert is YES
+// only when the download reported success yet the binary is still not arm64 (an unexpected
+// case the downloader did not itself report); on a download failure or user cancel the
+// downloader already showed a modal, so shouldAlert is NO to avoid stacking a second.
+// completion runs on the main queue.
++ (void)ensureArm64StandardRuntimeForPythonVersion:(NSString *)pythonVersion
+                                        completion:(void (^)(BOOL ok, BOOL shouldAlert))completion {
+    iTermPythonRuntimeDownloader *downloader = [iTermPythonRuntimeDownloader sharedInstance];
+    NSString *stdPython = [downloader pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
+    if ([iTermRosettaSupport canInstallRosetta] || stdPython == nil ||
+        [iTermRosettaSupport binaryHasArm64SliceAtPath:stdPython]) {
+        completion(YES, NO);
+        return;
+    }
+    [self refetchArm64StandardRuntimeForPythonVersion:pythonVersion
+                                           completion:^(iTermPythonRuntimeDownloaderStatus status) {
+        NSString *refreshed = [downloader pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
+        if (refreshed != nil && [iTermRosettaSupport binaryHasArm64SliceAtPath:refreshed]) {
+            completion(YES, NO);
+            return;
+        }
+        completion(NO, [self runtimeDownloadSucceeded:status]);
+    }];
+}
+
+// A pre-existing Intel-only shared runtime is current by version but unrunnable on a
+// Rosetta-less macOS. Refetch the arm64 build (with consent), then launch. Stay silent if
+// the user cancels; show a clear error if the download fails or is still not native.
++ (void)refetchArm64StandardRuntimeThenLaunch:(NSString *)filename
+                                     fullPath:(NSString *)fullPath
+                                    arguments:(NSArray<NSString *> *)arguments
+                                pythonVersion:(NSString *)pythonVersion
+                           explicitUserAction:(BOOL)explicitUserAction {
+    [self refetchArm64StandardRuntimeForPythonVersion:pythonVersion
+                                           completion:^(iTermPythonRuntimeDownloaderStatus status) {
+        iTermPythonRuntimeDownloader *downloader = [iTermPythonRuntimeDownloader sharedInstance];
+        NSString *stdPython = [downloader pathToStandardPyenvPythonWithPythonVersion:pythonVersion];
+        if (stdPython != nil && [iTermRosettaSupport binaryHasArm64SliceAtPath:stdPython]) {
+            [self reallyLaunchScript:filename
+                            fullPath:fullPath
+                           arguments:arguments
+                      withVirtualEnv:nil
+                   isFullEnvironment:NO
+                       pythonVersion:pythonVersion
+                  explicitUserAction:explicitUserAction];
+            return;
+        }
+        // Not usable. Only alert when the download reported success yet is not arm64; on a
+        // download failure or user cancel the downloader already showed its own modal.
+        if ([self runtimeDownloadSucceeded:status]) {
+            [self showIntelOnlyUnrunnableErrorForScript:fullPath
+                                               recovery:@"The Apple Silicon runtime could not be downloaded. Check your network connection and try again."];
+        }
+    }];
+}
+
 + (void)installRosettaIfNeededThen:(void (^)(void))completion {
-    if ([self rosettaIsNeeded] && ![self rosettaIsInstalled]) {
+    const BOOL hasARM = [NSProcessInfo it_hasARMProcessor];
+    if (hasARM && ![self rosettaIsInstalled] &&
+        [iTermRosettaSupport shouldPromptForRosettaWithHasARM:hasARM
+                                            canInstallRosetta:[iTermRosettaSupport canInstallRosetta]]) {
         [self installRosettaIfUserConsentsWithCompletion:completion];
     } else {
+        // No ARM, Rosetta already present, or (macOS 27+) Rosetta cannot be installed:
+        // do not prompt or run `softwareupdate --install-rosetta` (it cannot succeed
+        // there). Continue; the x86-leftover handling deals with an unrunnable env.
         completion();
     }
 }
@@ -370,13 +726,15 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                   fullPath:(NSString *)fullPath
                  arguments:(NSArray<NSString *> *)arguments
             withVirtualEnv:(NSString *)virtualenv
+           isFullEnvironment:(BOOL)isFullEnvironment
              pythonVersion:(NSString *)pythonVersion
         explicitUserAction:(BOOL)explicitUserAction {
-     RLog(@"reallyLaunchScript:%@ fullPath:%@ arguments:%@ withVirtualEnv:%@ pythonVersion:%@ explicitUserAction:%@",
+     RLog(@"reallyLaunchScript:%@ fullPath:%@ arguments:%@ withVirtualEnv:%@ isFullEnvironment:%@ pythonVersion:%@ explicitUserAction:%@",
           filename,
           fullPath,
           RLogRedact(arguments, @(arguments.count)),
           virtualenv,
+          @(isFullEnvironment),
           pythonVersion,
           @(explicitUserAction));
 
@@ -393,8 +751,10 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     NSString *key = [[NSUUID UUID] UUIDString];
     NSString *identifier = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
     NSString *name = [[filename lastPathComponent] stringByDeletingPathExtension];
-    if (virtualenv) {
-        // Convert /foo/bar/Name/Name/main.py to Name
+    if (isFullEnvironment) {
+        // Convert /foo/bar/Name/Name/main.py to Name. A basic uv script also has a
+        // (shared) virtualenv, so full-environment status is passed explicitly rather
+        // than inferred from virtualenv != nil.
         name = [[[filename stringByDeletingLastPathComponent] pathComponents] lastObject];
     }
     iTermScriptHistoryEntry *entry = [[iTermScriptHistoryEntry alloc] initWithName:name
@@ -406,6 +766,7 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
                                                                             fullPath:fullPath
                                                                            arguments:arguments
                                                                       withVirtualEnv:virtualenv
+                                                                   isFullEnvironment:isFullEnvironment
                                                                        pythonVersion:pythonVersion
                                                                   explicitUserAction:explicitUserAction];
                                       }];
@@ -502,6 +863,21 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     environment[@"ITERM2_COOKIE"] = cookie;
     environment[@"ITERM2_KEY"] = key;
     environment[@"HOME"] = NSHomeDirectory();
+
+    // When this build runs under a custom -suite (e.g. a developer build launched
+    // alongside the user’s main iTerm2), the API server’s unix socket lives under
+    // ~/Library/Application Support/<suite>/private/socket. The iterm2 Python module
+    // reads IT2_SUITE to find that path; without it a menu-launched script would
+    // default to “iTerm2” and connect to the main instance’s socket instead. Mirror
+    // what PTYSession does for terminal sessions.
+    NSString *suiteName = [iTermUserDefaults customSuiteName];
+    if (suiteName) {
+        environment[@"IT2_SUITE"] = suiteName;
+    } else {
+        // Do not let a stale IT2_SUITE inherited from our own environment leak through
+        // to the script and point it at the wrong instance's socket.
+        [environment removeObjectForKey:@"IT2_SUITE"];
+    }
     if (shell) {
         environment[@"SHELL"] = shell;
     }
@@ -510,22 +886,52 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     // OpenSSL bakes in the directory where you compiled it so it can find root certs.
     // That works great if you happen to be me, but it seems that most people aren't.
     // Luckily it lets you set some environment variables to find cert stores.
-    NSString *version = [[virtualenv stringByDeletingLastPathComponent] stringByDeletingLastPathComponent];
-    environment[@"SSL_CERT_FILE"] = [version stringByAppendingPathComponents:@[
-        @"lib",
-        [NSString stringWithFormat:@"python%@", pythonVersion],
-        @"site-packages",
-        @"pip",
-        @"_vendor",
-        @"certifi",
-        @"cacert.pem"
-    ]];
-    environment[@"SSL_CERT_DIR"] = [version stringByAppendingPathComponents:@[
-        @"openssl",
-        @"ssl",
-        @"certs"
-    ]];
+    NSString *venvDirectory = [[virtualenv stringByDeletingLastPathComponent] stringByDeletingLastPathComponent];
+    NSString *pyvenvCfg = [venvDirectory stringByAppendingPathComponent:@"pyvenv.cfg"];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:pyvenvCfg]) {
+        // A uv-provisioned venv (a per-script .venv or a shared basic-script venv):
+        // certifi is an ordinary wheel and there is no baked-in openssl cert
+        // directory, so point at the venv's certifi and do not set SSL_CERT_DIR.
+        NSString *certifi = [self uvCertifiPathInVenv:venvDirectory];
+        if (certifi) {
+            environment[@"SSL_CERT_FILE"] = certifi;
+        }
+    } else {
+        environment[@"SSL_CERT_FILE"] = [venvDirectory stringByAppendingPathComponents:@[
+            @"lib",
+            [NSString stringWithFormat:@"python%@", pythonVersion],
+            @"site-packages",
+            @"pip",
+            @"_vendor",
+            @"certifi",
+            @"cacert.pem"
+        ]];
+        environment[@"SSL_CERT_DIR"] = [venvDirectory stringByAppendingPathComponents:@[
+            @"openssl",
+            @"ssl",
+            @"certs"
+        ]];
+    }
     return environment;
+}
+
+// The certifi cacert.pem inside a uv .venv, whose interpreter-relative lib path is
+// lib/python<X.Y>/site-packages/certifi/cacert.pem. The minor version is discovered
+// from the single python* directory so we do not depend on the requested version
+// (which may have been remapped during provisioning).
++ (NSString *)uvCertifiPathInVenv:(NSString *)venvDirectory {
+    NSString *lib = [venvDirectory stringByAppendingPathComponent:@"lib"];
+    NSArray<NSString *> *entries = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:lib error:nil];
+    for (NSString *entry in entries) {
+        if (![entry hasPrefix:@"python"]) {
+            continue;
+        }
+        NSString *candidate = [lib stringByAppendingPathComponents:@[ entry, @"site-packages", @"certifi", @"cacert.pem" ]];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:candidate]) {
+            return candidate;
+        }
+    }
+    return nil;
 }
 
 + (NSArray *)argumentsToRunScript:(NSString *)filename
@@ -641,6 +1047,26 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     return path;
 }
 
++ (NSString *)fullEnvironmentContainerForMainPyPath:(NSString *)path {
+    if (![[path pathExtension] isEqualToString:@"py"]) {
+        return nil;
+    }
+    // A full-environment script's main is at <container>/<name>/<name>.py.
+    NSString *container = [[path stringByDeletingLastPathComponent] stringByDeletingLastPathComponent];
+    NSString *name = container.lastPathComponent;
+    NSString *expectedMain = [[[container stringByAppendingPathComponent:name]
+                               stringByAppendingPathComponent:name] stringByAppendingPathExtension:@"py"];
+    if (![path isEqualToString:expectedMain]) {
+        return nil;
+    }
+    // Only redirect when the container actually has a runnable full environment; a plain
+    // folder of .py files must still launch as basic scripts.
+    if (![self environmentForScript:container checkForMain:YES checkForSaved:YES]) {
+        return nil;
+    }
+    return container;
+}
+
 + (NSString *)environmentForScript:(NSString *)path
                       checkForMain:(BOOL)checkForMain
                      checkForSaved:(BOOL)checkForSaved {
@@ -651,6 +1077,13 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
         if (![[NSFileManager defaultManager] fileExistsAtPath:expectedPath isDirectory:nil]) {
             return nil;
         }
+    }
+
+    // A uv-provisioned script is detected purely from what is on disk (a .venv plus
+    // the python-runtime.json marker), independent of the pythonRuntimeUsesUV gate,
+    // so toggling the gate never strands an already-provisioned script.
+    if ([iTermScriptRuntime backendForScriptContainer:path] == iTermScriptRuntimeBackendUv) {
+        return [iTermScriptRuntime uvInterpreterPathForScriptContainer:path];
     }
 
     // Does it have a pyenv?

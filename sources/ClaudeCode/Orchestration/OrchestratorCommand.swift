@@ -82,7 +82,11 @@ struct ScrollWheelArgs: Codable {
 }
 
 struct RegisterWatchArgs: Codable {
-    let sessionGuid: String
+    // Optional: orchestration chats copy an explicit session_guid from
+    // list_workgroups; a session-bound chat omits it and the dispatcher
+    // fills in the chat's one linked terminal session
+    // (OrchestratorDispatcher.resolveWatchTarget).
+    let sessionGuid: String?
     // Exactly one of targetState / condition must be supplied; the
     // dispatcher validates and rejects otherwise.
     let targetState: SessionState?
@@ -401,6 +405,10 @@ struct WatcherDescription: Codable {
     let targetState: SessionState?
     let condition: String?
     let registeredAt: String  // ISO 8601
+    // Optional advisory surfaced to the model at registration, e.g. a tab-status
+    // watch that has no screen-based backstop because View Contents isn't
+    // granted. Omitted from the JSON when nil (synthesized encodeIfPresent).
+    let note: String?
     enum CodingKeys: String, CodingKey {
         case watcherID = "watcher_id"
         case workgroupID = "workgroup_id"
@@ -410,6 +418,7 @@ struct WatcherDescription: Codable {
         case targetState = "target_state"
         case condition
         case registeredAt = "registered_at"
+        case note
     }
 }
 

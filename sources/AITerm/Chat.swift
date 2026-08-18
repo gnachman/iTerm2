@@ -36,6 +36,16 @@ struct Chat: Codable {
     // so a chat keeps its provider across restarts.
     var modelName: String?
 
+    // The protocol (iTermAIAPI raw value) this chat's wire-fragment blobs are
+    // frozen to, stamped on the first blob capture. nil means the chat has not
+    // been blob-migrated yet (a legacy chat, or one created before this feature):
+    // reconstruction falls back to the one-shot translate() codec, which then
+    // captures the initial blobs and stamps this. A change that crosses protocols
+    // (e.g. OpenAI chatCompletions <-> responses) triggers a re-freeze. Stored as
+    // a raw Int, not iTermAIAPI, so this struct stays Foundation-only for the iOS
+    // companion build (which never sends LLM requests and ignores the field).
+    var blobProtocol: Int?
+
     // Targets this chat is allowed to write to via the orchestrator
     // tools (send_text / interrupt / add_workgroup_clipping for
     // workgroup-shaped targets; session_execute_command and friends

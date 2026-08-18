@@ -314,6 +314,10 @@ extern const CGFloat iTermCursorGuideAlphaThreshold;
 // Draw mark indicators?
 @property(nonatomic, assign) BOOL drawMarkIndicators;
 
+// Derive mark indicator colors from the color theme's ANSI palette instead of
+// the built-in constants?
+@property(nonatomic, assign) BOOL useThemeMarkColors;
+
 // Use light font smoothing?
 @property(nonatomic, assign) iTermThinStrokesSetting thinStrokes;
 
@@ -366,6 +370,15 @@ extern const CGFloat iTermCursorGuideAlphaThreshold;
 @property (nonatomic, readonly, class) NSColor *successMarkColor;
 @property (nonatomic, readonly, class) NSColor *errorMarkColor;
 @property (nonatomic, readonly, class) NSColor *otherMarkColor;
+
+// Resolves the color for a mark type. When useThemeColors is YES and a color map
+// is provided, the color is taken from the theme's ANSI palette: success uses
+// blue (to match the built-in +successMarkColor), other uses yellow, and error
+// uses red, so it harmonizes with the current color preset. Otherwise the
+// built-in constants above are used.
++ (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type
+                     colorMap:(id<iTermColorMapReading>)colorMap
+               useThemeColors:(BOOL)useThemeColors;
 @property (nonatomic) BOOL useNativePowerlineGlyphs;
 @property (nonatomic) CGFloat badgeTopMargin;
 @property (nonatomic) CGFloat badgeRightMargin;
@@ -402,7 +415,10 @@ extern const CGFloat iTermCursorGuideAlphaThreshold;
 @property (nonatomic, readonly) NSColor *colorForMargins;
 
 + (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type;
-+ (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type backgroundColor:(NSColor *)bgColor;
++ (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type
+                   backgroundColor:(NSColor *)bgColor
+                          colorMap:(id<iTermColorMapReading>)colorMap
+                    useThemeColors:(BOOL)useThemeColors;
 
 + (NSRect)offscreenCommandLineFrameForVisibleRect:(NSRect)visibleRect
                                          cellSize:(NSSize)cellSize

@@ -87,3 +87,4 @@ None,"Type option-e, then shift-o",None,FALSE,US English,8,\e[57443;3u\e[57441;2
 c,"Hit",Control Option,FALSE,US English,8,\e[57448;5u\e[57443;7u\e[99;7u
 e,"Press apostrophe and then hit",None,NA,US International PC,9,\e[101u,"Test this manually",TRUE
 e,"Press apostrophe and then hit",None,NA,US International PC,25,\e[101;;233u,"Issue 12906: dead key composition with associated text (bit 16). é is reported as 233. Bug: sends \e[101;;101u. Test this manually",TRUE
+Capslock,"Toggle on",None,NA,US English,8,\e[57358;65u,"Issue 12922: caps lock key toggle. Should send \e[57358;65u but currently sends \e[65u because the flagsChanged path omits kVK_CapsLock, so the caps modifier value 65 lands in the keycode slot.",

@@ -11,6 +11,9 @@
     NSMutableData *_accumulator;
     NSArray<NSString *> *_parameters;
     BOOL _esc;
+    // Length of the ESC P [params] q header prefixed to _accumulator. Anything
+    // beyond this is actual sixel payload.
+    NSUInteger _headerLength;
 }
 
 - (instancetype)initWithParameters:(NSArray *)parameters {
@@ -24,9 +27,21 @@
             [_accumulator appendData:[joined dataUsingEncoding:NSUTF8StringEncoding]];
         }
         [_accumulator appendBytes:"q" length:1];
+        _headerLength = _accumulator.length;
         _parameters = [parameters copy];
     }
     return self;
+}
+
+// YES if any sixel payload bytes have been accumulated after the header.
+- (BOOL)hasBody {
+    return _accumulator.length > _headerLength;
+}
+
+// Populate a DCS_SIXEL token with the accumulated image data.
+- (void)fillSixelToken:(VT100Token *)result {
+    result->type = DCS_SIXEL;
+    result.savedData = [self combinedData];
 }
 
 - (NSString *)hookDescription {
@@ -50,7 +65,9 @@
         return VT100DCSParserHookResultCanReadAgain;
     }
     if (_esc) {
-        return [self handleInputAfterESC:context token:result] ? VT100DCSParserHookResultUnhook : VT100DCSParserHookResultCanReadAgain;
+        // The ESC was consumed in a prior read, so it is no longer in this context
+        // and cannot be backtracked over.
+        return [self handleInputAfterESC:context token:result escInContext:NO] ? VT100DCSParserHookResultUnhook : VT100DCSParserHookResultCanReadAgain;
     }
 
     while (iTermParserCanAdvance(context)) {
@@ -59,8 +76,7 @@
             case VT100CC_C1_ST:
                 if (support8BitControlCharacters) {
                     iTermParserConsume(context);
-                    result->type = DCS_SIXEL;
-                    result.savedData = [self combinedData];
+                    [self fillSixelToken:result];
                     return VT100DCSParserHookResultUnhook;
                 }
                 break;
@@ -69,6 +85,10 @@
         }
 
         // Search for next ESC or ST.
+        // TODO(issue 12259 follow-up): under 8-bit control characters this prefers a
+        // C1 ST anywhere in the buffer even when an ESC comes first, so an ESC
+        // terminator followed later by a stray 0x9c swallows the intervening bytes
+        // into the accumulator. Use the minimum of the two offsets instead.
         int n = -1;
         if (support8BitControlCharacters) {
             n = iTermParserNumberOfBytesUntilCharacter(context, VT100CC_C1_ST);
@@ -97,12 +117,16 @@
                               token:(VT100Token *)result {
     iTermParserConsume(context);
     _esc = YES;
-    return [self handleInputAfterESC:context token:result];
+    // The ESC was just consumed from this context, so it is available to backtrack
+    // over along with the byte that follows it.
+    return [self handleInputAfterESC:context token:result escInContext:YES];
 }
 
-// Return YES to leave sixel mode.
+// Return YES to leave sixel mode. |escInContext| is YES if the ESC that led here
+// was consumed from the current context (and can therefore be backtracked over).
 - (BOOL)handleInputAfterESC:(iTermParserContext *)context
-                      token:(VT100Token *)result {
+                      token:(VT100Token *)result
+               escInContext:(BOOL)escInContext {
     unsigned char c;
     const BOOL consumed = iTermParserTryConsume(context, &c);
     if (!consumed) {
@@ -110,14 +134,42 @@
         return NO;
     }
     _esc = NO;
-    if (c != '\\') {
-        // esc + something unexpected. Broken sequence.
-        result->type = VT100_NOTSUPPORT;
+    if (c == '\\') {
+        // A well-formed ST terminates the image.
+        [self fillSixelToken:result];
         return YES;
     }
 
-    result->type = DCS_SIXEL;
-    result.savedData = [self combinedData];
+    // ESC followed by something other than backslash. Rather than discard the whole
+    // image (as VT100_NOTSUPPORT would), render what we have and let the byte(s)
+    // reparse as a fresh sequence. This matches how real hardware and xterm behave:
+    // sixels are drawn incrementally, so an unexpected ESC just ends the string with
+    // the pixels already emitted, and the ESC begins a new sequence. Two shapes
+    // matter (see issue 12259):
+    //   * ESC ESC \ (a doubled-up terminator): put back only the second ESC so the
+    //     remaining ESC \ reparses as a harmless ST. Backtracking two would resurrect
+    //     the stray backslash the discard bug used to print.
+    //   * ESC <cseq> (an aborting escape sequence such as ESC [ 2 J): put back the
+    //     whole ESC <cseq> so it reparses and executes. We can only do this when the
+    //     leading ESC is still in this context; if it arrived in a prior read it is
+    //     already gone and we accept losing it (the byte still reparses on its own).
+    // This tolerance deliberately lives here rather than in VT100DCSParser's shared
+    // dcsEscapeState, which treats ESC ESC literally for tmux passthrough wrapping
+    // and must not be generalized.
+    if (c == VT100CC_ESC || !escInContext) {
+        iTermParserBacktrackBy(context, 1);
+    } else {
+        iTermParserBacktrackBy(context, 2);
+    }
+
+    if (self.hasBody) {
+        [self fillSixelToken:result];
+    } else {
+        // No pixels were accumulated (e.g. binary output that merely happens to
+        // contain ESC P ... q). Emit nothing rather than stamping a broken-image
+        // glyph and paying a synchronous decode per fragment.
+        result->type = VT100_NOTSUPPORT;
+    }
     return YES;
 }
 

@@ -40,9 +40,36 @@
 @property(nonatomic, assign) BOOL hasIcon;
 @property(nonatomic, assign) int count;
 @property(nonatomic, assign) BOOL isPlaceholder;
+// A tab-group chip cell: a first-class cell in the control's cell list
+// that heads a contiguous run of same-group tabs. Like a placeholder it
+// has no representedObject/tab (so it's inert to selection/close/drop),
+// but unlike a placeholder it is persistent. Its group is tabGroupIdentifier;
+// name/color come from the control's tabGroupDataSource at draw time.
+@property(nonatomic, assign) BOOL isTabGroupChip;
+// A real tab cell whose group is collapsed: it stays in the control's cell list
+// and in the NSTabView (so every select/close/move path keeps working), but is
+// given a zero-size frame, no intercell spacing, and is skipped by every
+// draw/count/hit-test/accessibility loop. Unlike isInOverflowMenu it never gets
+// an overflow "..." menu item, so a collapsed member is truly hidden.
+@property(nonatomic, assign) BOOL isCollapsedHidden;
 @property(nonatomic, assign) int currentStep;
 @property(nonatomic, copy) NSString *modifierString;
 @property(nonatomic, retain) NSColor *tabColor;
+// Identifier of the tab group this cell belongs to, or nil. The control
+// uses runs of equal identifiers to place group chips; attributes come
+// from the control's tabGroupDataSource, not from the cell. (No
+// nullability specifier: this header has no NS_ASSUME_NONNULL region and
+// annotating one pointer would force annotating them all.)
+@property(nonatomic, copy) NSString *tabGroupIdentifier;
+// For a drag drop-slot placeholder that sits just after a group's last member:
+// the id of the group a tab dropped here should join (its "end of group" slot).
+// nil on every non-slot cell and on slots that don't join a group.
+@property(nonatomic, copy) NSString *joinsTabGroupIdentifier;
+// The cell's width when drop-slot placeholders were distributed for the
+// current drag; 0 outside a drag. The drag animation shrinks real tabs
+// proportionally from this base when an expanding drop slot needs room in a
+// full (stretch-to-fit) bar, so repeated ticks never compound the shrink.
+@property(nonatomic, assign) CGFloat dragBaseWidth;
 @property(nonatomic, readonly) PSMProgressIndicator *indicator;
 @property(nonatomic, readonly) PSMCachedTitle *cachedTitle;
 @property(nonatomic, readonly) PSMCachedTitle *cachedSubtitle;

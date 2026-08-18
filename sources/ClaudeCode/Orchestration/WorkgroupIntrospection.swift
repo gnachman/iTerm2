@@ -59,6 +59,14 @@ enum WorkgroupIntrospection {
     // read by the nonisolated chat renderer (ChatViewController) too.
     nonisolated static let commandApprovalWorkgroupID = "command-approval"
 
+    // Sentinel workgroupID used by the one-time screen-read consent prompt for a
+    // session-bound watch whose View Contents is set to Ask
+    // (OrchestratorDispatcher.promptForWatchScreenRead). Same mechanism and
+    // two-site contract as commandApprovalWorkgroupID: the dispatcher emits it,
+    // the chat renderer keys off it to show the "Allow repeated screen reads?"
+    // bubble copy.
+    nonisolated static let watchApprovalWorkgroupID = "watch-approval"
+
     // MARK: - Listing
 
     // Returns every workgroup the orchestrator knows about. Real workgroups

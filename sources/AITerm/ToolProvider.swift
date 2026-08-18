@@ -26,24 +26,28 @@ protocol ToolProvider: AnyObject {
     @MainActor
     func registerTools(on conversation: inout AIConversation)
 
-    // Optional: transform the user-typed message body before the
-    // agent adds it to the conversation. Default returns the body
-    // unchanged. The orchestrator provider uses this to wrap the
-    // user's body with a <workgroups> snapshot so the LLM sees
-    // current workgroup state without round-tripping a
-    // list_workgroups tool call; for multipart bodies the snapshot
-    // is inserted as a leading text subpart.
+    // Optional: volatile per-turn context this provider wants the model
+    // to see, regenerated fresh every turn and NOT persisted into chat
+    // history. Default is nil. The orchestrator provider returns the
+    // current <workgroups> snapshot so the LLM sees live workgroup state
+    // without round-tripping a list_workgroups tool call. The agent routes
+    // this into AnthropicRequestBuilder.trailingVolatileText, which appends
+    // it AFTER the rolling cache breakpoint so it never invalidates the
+    // cached history prefix (see AIChatTrailingVolatileTests). It must NOT
+    // be baked into the user body: that lands it inside the cached prefix,
+    // and because it changes every turn it re-caches the whole history each
+    // turn (the bug documented in AIChatHistoryCacheStabilityTests).
     //
     // @MainActor: orchestration implementations read main-thread state
     // (workgroup snapshot via iTermWorkgroupController). The compiler
     // contract beats relying on every caller path to be main today.
     @MainActor
-    func transform(outgoingUserBody body: LLM.Message.Body) -> LLM.Message.Body
+    func volatileContext() -> String?
 }
 
 // Defaults that make the optional hooks truly optional for providers
 // that only care about tool registration.
 extension ToolProvider {
     @MainActor
-    func transform(outgoingUserBody body: LLM.Message.Body) -> LLM.Message.Body { body }
+    func volatileContext() -> String? { nil }
 }

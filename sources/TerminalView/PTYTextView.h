@@ -30,6 +30,7 @@
 
 @class CRunStorage;
 @class iTermAction;
+@class iTermKittyDnDBridge;
 @class iTermExpect;
 @class iTermFindCursorView;
 @class iTermFindOnPageHelper;
@@ -86,6 +87,9 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)xtermMouseReportingAllowMouseWheel;
 - (BOOL)xtermMouseReportingAllowClicksAndDrags;
 - (BOOL)isPasting;
+// YES when the user has asked, via the paste indicator, for keystrokes to go
+// straight to the terminal during a paste instead of being queued.
+- (BOOL)pasteKeystrokePassthroughEnabled;
 - (void)queueKeyDown:(NSEvent *)event;
 - (void)keyDown:(NSEvent *)event;
 - (void)keyUp:(NSEvent *)event;
@@ -213,6 +217,7 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)textViewSuppressingAllOutput;
 - (BOOL)textViewIsZoomedIn;
 - (BOOL)textViewShouldShowMarkIndicators;
+- (BOOL)textViewShouldUseThemeMarkColors;
 - (BOOL)textViewIsFiltered;
 - (BOOL)textViewInPinnedHotkeyWindow;
 - (BOOL)textViewSessionIsLinkedToAIChat;
@@ -330,6 +335,9 @@ extern const CGFloat PTYTextViewMarginClickGraceWidth;
 - (BOOL)textViewIsOnLocalhost;
 // Show the non-text paste dialog for dropped files, same as Cmd+V with files on the pasteboard.
 - (void)textViewShowPasteOptionsForDroppedFiles:(NSArray<NSString *> *)filenames;
+// The session's Kitty drag-and-drop bridge, or nil if the program has not used
+// the protocol. Used to route drags to a program that has opted in.
+- (iTermKittyDnDBridge *)textViewKittyDnDBridge;
 - (void)textViewPerformNaturalLanguageQuery;
 - (BOOL)textViewCanExplainOutputWithAI;
 - (void)textViewExplainOutputWithAI;
@@ -604,6 +612,10 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // Changes the document cursor, if needed. The event is used to get modifier flags.
 - (void)updateCursor:(NSEvent *)event;
+
+// A Kitty DnD program turned an offered drag gesture into a native OS drag.
+// Forwards to the mouse handler so it can synthesize the button-release report.
+- (void)kittyDragDidBegin;
 
 // Call this to process a mouse-down, bypassing 3-finger-tap-gesture-recognizer. Returns YES if the
 // superview's mouseDown: should be called.

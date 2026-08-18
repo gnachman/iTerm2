@@ -78,6 +78,9 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) vector_float4 blockHoverColor;
 @property (nonatomic, readonly) vector_float4 selectedBackgroundColor;
 @property (nonatomic, readonly) iTermLineStyleMarkColors lineStyleMarkColors;
+@property (nonatomic, readonly) NSColor *markSuccessColor;
+@property (nonatomic, readonly) NSColor *markOtherColor;
+@property (nonatomic, readonly) NSColor *markFailureColor;
 @property (nonatomic, readonly) NSImage *badgeImage;
 @property (nonatomic, readonly) CGRect badgeSourceRect;
 @property (nonatomic, readonly) CGRect badgeDestinationRect;

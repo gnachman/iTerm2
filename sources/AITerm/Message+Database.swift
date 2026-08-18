@@ -17,6 +17,7 @@ extension Message: iTermDatabaseElement {
         case chatID
         case responseID
         case agentReasoning
+        case firstBlobRef
         // A global, monotonic, delete-immune sequence the relay-push feature
         // uses as a watermark cursor. INTEGER PRIMARY KEY AUTOINCREMENT: SQLite
         // assigns it on every insert and (unlike bare rowid or a plain INTEGER
@@ -36,7 +37,8 @@ extension Message: iTermDatabaseElement {
              \(Columns.content.rawValue) text not null,
              \(Columns.sentDate.rawValue) integer not null,
              \(Columns.responseID.rawValue) text,
-             \(Columns.agentReasoning.rawValue) text)
+             \(Columns.agentReasoning.rawValue) text,
+             \(Columns.firstBlobRef.rawValue) text)
         """
     }
 
@@ -47,6 +49,9 @@ extension Message: iTermDatabaseElement {
         }
         if !existingColumns.contains(Columns.agentReasoning.rawValue) {
             result.append(.init(query: "ALTER TABLE Message ADD COLUMN \(Columns.agentReasoning.rawValue) text", args: []))
+        }
+        if !existingColumns.contains(Columns.firstBlobRef.rawValue) {
+            result.append(.init(query: "ALTER TABLE Message ADD COLUMN \(Columns.firstBlobRef.rawValue) text", args: []))
         }
         return result
     }
@@ -120,8 +125,9 @@ extension Message: iTermDatabaseElement {
                 \(Columns.content.rawValue),
                 \(Columns.sentDate.rawValue),
                 \(Columns.responseID.rawValue),
-                \(Columns.agentReasoning.rawValue))
-            values (?, ?, ?, ?, ?, ?, ?)
+                \(Columns.agentReasoning.rawValue),
+                \(Columns.firstBlobRef.rawValue))
+            values (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 uniqueID.uuidString,
@@ -130,7 +136,8 @@ extension Message: iTermDatabaseElement {
                 jsonString,
                 sentDate.timeIntervalSince1970,
                 responseID,
-                agentReasoning
+                agentReasoning,
+                firstBlobRef
             ]
         )
     }
@@ -150,7 +157,8 @@ extension Message: iTermDatabaseElement {
                                 \(Columns.content.rawValue) = ?,
                                 \(Columns.sentDate.rawValue) = ?,
                                 \(Columns.responseID.rawValue) = ?,
-                                \(Columns.agentReasoning.rawValue) = ?
+                                \(Columns.agentReasoning.rawValue) = ?,
+                                \(Columns.firstBlobRef.rawValue) = ?
             where \(Columns.uniqueID.rawValue) = ?
             """,
             [
@@ -160,6 +168,7 @@ extension Message: iTermDatabaseElement {
                 sentDate.timeIntervalSince1970,
                 responseID,
                 agentReasoning,
+                firstBlobRef,
                 uniqueID.uuidString,
             ]
         )
@@ -185,5 +194,6 @@ extension Message: iTermDatabaseElement {
         self.sentDate = sentDate
         self.responseID = result.string(forColumn: Columns.responseID.rawValue)
         self.agentReasoning = result.string(forColumn: Columns.agentReasoning.rawValue)
+        self.firstBlobRef = result.string(forColumn: Columns.firstBlobRef.rawValue)
     }
 }

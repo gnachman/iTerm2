@@ -193,6 +193,18 @@ struct RootView: View {
         } message: {
             Text("iTerm2 Buddy has moved to the new relay. For your iPhone and Mac to keep connecting, update iTerm2 on your Mac to the latest version.")
         }
+        // Settings is a sheet at the root, so it is reachable in every phase - connected
+        // or not (e.g. to email diagnostic logs before pairing).
+        .sheet(isPresented: $model.showSettings) {
+            NavigationStack {
+                SettingsView()
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { model.showSettings = false }
+                        }
+                    }
+            }
+        }
     }
 
     @ViewBuilder
@@ -203,9 +215,6 @@ struct RootView: View {
                 .reconnectingBanner(model)
         case .conversation(let chatID):
             ConversationView(chatID: chatID)
-                .reconnectingBanner(model)
-        case .settings:
-            SettingsView()
                 .reconnectingBanner(model)
         case .session(let guid, let title, let originatingChatID):
             SessionView(guid: guid, title: title, originatingChatID: originatingChatID)

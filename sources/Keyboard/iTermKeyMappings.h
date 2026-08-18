@@ -34,6 +34,14 @@ extern NSString *const iTermKeyMappingsLeaderDidChange;
 + (nullable iTermKeyBindingAction *)actionForKeystroke:(iTermKeystroke *)keystroke
                                            keyMappings:(nullable NSDictionary *)keyMappings;
 
+// YES if `keystroke` matches no binding by character but a binding exists for the
+// same physical key and modifiers, i.e. it would match were the “interpret key
+// bindings based on physical key” preference on. Always NO when that preference is
+// already enabled. Searches keyMappings then the global map, mirroring
+// actionForKeystroke:keyMappings:.
++ (BOOL)keystrokeWouldMatchOnlyByPhysicalKey:(iTermKeystroke *)keystroke
+                                 keyMappings:(nullable NSDictionary *)keyMappings;
+
 // Return the action for a given keycode and modifiers, searching only the
 // specified keymappings dictionary.
 + (iTermKeyBindingAction * _Nullable)localActionForKeystroke:(iTermKeystroke *)keystroke

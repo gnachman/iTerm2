@@ -37,6 +37,7 @@
 #import "PSMDarkTabStyle.h"
 #import "PSMLightHighContrastTabStyle.h"
 #import "PSMMinimalTabStyle.h"
+#import "PSMTabDragAssistant.h"
 #import "PSMTabStyle.h"
 #import "PSMYosemiteTabStyle.h"
 #import "PTYScrollView.h"
@@ -255,6 +256,16 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
 @property(nonatomic, assign) BOOL windowInitialized;
 
+// Tab-group contiguity enforcement + keyboard unit reordering (defined below).
+- (void)enforceTabGroupContiguityInvariant;
+- (void)applyTabOrder:(NSArray<PTYTab *> *)target;
+- (void)moveCurrentTabUnitByOffset:(NSInteger)offset;
+// Group drag helpers (defined below).
+- (void)moveTabGroup:(NSArray<PTYTab *> *)tabs toTerminal:(PseudoTerminal *)dest atIndex:(NSInteger)dropIndex;
+- (void)tearOffTabGroup:(NSArray<PTYTab *> *)tabs atScreenPoint:(NSPoint)screenPoint;
+- (PseudoTerminal *)terminalForTabBar:(PSMTabBarControl *)bar;
+- (void)reorderGroupTabs:(NSArray<PTYTab *> *)tabs beforeTabViewItem:(NSTabViewItem *)anchor;
+
 // Session ID of session that currently has an auto-command history window open
 @property(nonatomic, copy) NSString *autoCommandHistorySessionGuid;
 @property(nonatomic, assign) NSTimeInterval timeOfLastResize;
@@ -270,6 +281,19 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 @end
 
 @implementation PseudoTerminal {
+
+    // Reentrancy guard for -enforceTabGroupContiguityInvariant (it reorders
+    // tabs, which can funnel back through reorder plumbing).
+    BOOL _enforcingTabGroupContiguity;
+
+    // Nonzero while a batch operation (duplicate, whole-group move/tear-off,
+    // reorder) transiently selects tabs: auto-selecting a collapsed member would
+    // otherwise fire -tabView:didSelectTabViewItem: and spuriously expand its
+    // group mid-operation. Deferred here and enforced once when the operation
+    // settles. A counter (not a BOOL) so nested suppressions compose; manage it
+    // only via -performWithTabGroupAutoExpandSuppressed: so it is exception-safe.
+    NSInteger _tabGroupAutoExpandSuppressionCount;
+
     ////////////////////////////////////////////////////////////////////////////
     // Instant Replay
     iTermInstantReplayWindowController *_instantReplayWindowController;
@@ -447,6 +471,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 @synthesize variables = _variables;
 @synthesize windowTitleOverrideSwiftyString = _windowTitleOverrideSwiftyString;
 @synthesize tabViewItemForColorPicker = _tabViewItemForColorPicker;
+@synthesize tabGroupIDForColorPicker = _tabGroupIDForColorPicker;
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
     for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
@@ -632,6 +657,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
@@ -934,6 +960,9 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
             break;
         case WINDOW_TYPE_CENTERED:
             style = @"centered";
+            break;
+        case WINDOW_TYPE_COMPACT_CENTERED:
+            style = @"compact centered";
             break;
         case WINDOW_TYPE_TOP_CELLS:
             style = @"top";
@@ -1298,6 +1327,25 @@ ITERM_WEAKLY_REFERENCEABLE
     const BOOL begin = [notification.name isEqualToString:PSMTabDragDidBeginNotification];
     [iTermPreferences setHideTabBarSuppressedDuringDrag:begin];
     [self updateUseMetalInAllTabs];
+
+    // A group drag can leave the tab bar's collapsed-hidden cell flags out of
+    // sync with the model: dragging a collapsed group out of the bar lets the
+    // _cells<->tabView reconcile re-add its held members as fresh (non-collapsed)
+    // cells, and a drop path that skips the reorder (e.g. dropped back in place,
+    // or snapped back) never re-hides them. The per-tab tabGroupCollapsed flags
+    // stay correct throughout, so re-push them from the model when the drag ends.
+    if (!begin) {
+        for (PTYTab *aTab in [self tabs]) {
+            if (aTab.tabGroupCollapsed) {
+                // Auto-expand was suppressed during the drag (isDragging), so settle
+                // the invariant now and re-push the model's collapsed flags to the
+                // cells (the reconcile can have re-added held members as fresh,
+                // non-collapsed cells). Same settle every reorder/move/tear-off uses.
+                [self settleTabGroupCollapsedStateAfterReorder];
+                break;
+            }
+        }
+    }
 }
 
 - (void)rightExtraDidChange {
@@ -1482,6 +1530,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
@@ -1512,6 +1561,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
@@ -1567,6 +1617,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
@@ -1737,6 +1788,8 @@ ITERM_WEAKLY_REFERENCEABLE
             case WINDOW_TYPE_NORMAL:
             case WINDOW_TYPE_NO_TITLE_BAR:
             case WINDOW_TYPE_ACCESSORY:
+            case WINDOW_TYPE_CENTERED:
+            case WINDOW_TYPE_COMPACT_CENTERED:
                 RLog(@"Returning YES");
                 return YES;
             case WINDOW_TYPE_MAXIMIZED:
@@ -1745,7 +1798,6 @@ ITERM_WEAKLY_REFERENCEABLE
             case WINDOW_TYPE_LEFT_PERCENTAGE:
             case WINDOW_TYPE_RIGHT_PERCENTAGE:
             case WINDOW_TYPE_BOTTOM_PERCENTAGE:
-            case WINDOW_TYPE_CENTERED:
             case WINDOW_TYPE_TOP_CELLS:
             case WINDOW_TYPE_LEFT_CELLS:
             case WINDOW_TYPE_RIGHT_CELLS:
@@ -1982,6 +2034,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             return PTYWindowTitleBarFlavorOnePoint;
     }
 
@@ -2002,6 +2055,7 @@ ITERM_WEAKLY_REFERENCEABLE
         case WINDOW_TYPE_TOP_PERCENTAGE:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
@@ -2036,6 +2090,17 @@ ITERM_WEAKLY_REFERENCEABLE
                      identifier:(NSString*)identifier
                     genericName:(NSString *)genericName
 {
+    return [self confirmCloseForSessions:sessions
+                              identifier:identifier
+                             genericName:genericName
+                       additionalMessage:nil];
+}
+
+- (BOOL)confirmCloseForSessions:(NSArray *)sessions
+                     identifier:(NSString*)identifier
+                    genericName:(NSString *)genericName
+              additionalMessage:(NSString *)additionalMessage
+{
     NSArray *names = @[];
     for (PTYSession *aSession in sessions) {
         if (![aSession exited]) {
@@ -2061,6 +2126,9 @@ ITERM_WEAKLY_REFERENCEABLE
                    [sortedNames count] == 11 ? @"other" : @"others"];
     } else {
         message = [NSString stringWithFormat:@"%@ will be closed.", identifier];
+    }
+    if (additionalMessage.length > 0) {
+        message = [NSString stringWithFormat:@"%@\n\n%@", message, additionalMessage];
     }
     // The PseudoTerminal might close while the dialog is open so keep it around for now.
     [[self retain] autorelease];
@@ -2120,7 +2188,8 @@ ITERM_WEAKLY_REFERENCEABLE
         return [self confirmCloseForSessions:sessions
                                   identifier:identifier
                                  genericName:[NSString stringWithFormat:@"tab #%d",
-                                              [aTab tabNumber]]];
+                                              [aTab tabNumber]]
+                           additionalMessage:[iTermWorkgroupInstance closeCascadeWarningForSessions:sessions]];
     }
     return YES;
 }
@@ -2474,7 +2543,8 @@ ITERM_WEAKLY_REFERENCEABLE
       okToClose = [self confirmCloseForSessions:[NSArray arrayWithObject:aSession]
                                      identifier:aSession.locked ? @"This locked session" : @"This session"
                                     genericName:[NSString stringWithFormat:@"session \"%@\"",
-                                                    [[aSession name] removingHTMLFromTabTitleIfNeeded]]];
+                                                    [[aSession name] removingHTMLFromTabTitleIfNeeded]]
+                              additionalMessage:[iTermWorkgroupInstance closeCascadeWarningForSessions:@[aSession]]];
     }
     if (okToClose) {
         [self closeSessionWithoutConfirmation:aSession];
@@ -2922,6 +2992,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
                 case WINDOW_TYPE_LION_FULL_SCREEN:
                 case WINDOW_TYPE_CENTERED:
+                case WINDOW_TYPE_COMPACT_CENTERED:
                 case WINDOW_TYPE_BOTTOM_CELLS:
                 case WINDOW_TYPE_TOP_CELLS:
                 case WINDOW_TYPE_LEFT_CELLS:
@@ -3052,6 +3123,7 @@ ITERM_WEAKLY_REFERENCEABLE
             break;
 
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
             rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
             rect.origin.x = virtualScreenFrame.origin.x + (virtualScreenFrame.size.width - rect.size.width) / 2;
@@ -3359,6 +3431,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     break;
 
                 case WINDOW_TYPE_CENTERED:
+                case WINDOW_TYPE_COMPACT_CENTERED:
                 case WINDOW_TYPE_MAXIMIZED:
                 case WINDOW_TYPE_COMPACT_MAXIMIZED:
                 case WINDOW_TYPE_NORMAL:
@@ -3916,6 +3989,7 @@ ITERM_WEAKLY_REFERENCEABLE
             case WINDOW_TYPE_LEFT_CELLS:
             case WINDOW_TYPE_RIGHT_CELLS:
             case WINDOW_TYPE_CENTERED:
+            case WINDOW_TYPE_COMPACT_CENTERED:
                 RLog(@"No sanitization but width adjustment.");
                 // There's a good chance that sanitization would make sense here but I'm afraid of
                 // breaking things I don't understand by changing it.
@@ -3944,8 +4018,29 @@ ITERM_WEAKLY_REFERENCEABLE
 
     const int tabIndex = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] intValue];
     if (tabIndex >= 0 && tabIndex < [_contentView.tabView numberOfTabViewItems]) {
+        // This runs AFTER -restoreTabsFromArrangement: already cleared
+        // _restoringWindow, so keep the restore auto-expand suppression covering
+        // this final selection too (making the guard's comment at
+        // -tabView:didSelectTabViewItem: actually true). Otherwise selecting a tab
+        // that a malformed/legacy arrangement saved as a collapsed member would
+        // auto-expand its group here; -normalizeTabGroupCollapsedState
+        // below is the single authority that decides each group's collapsed state.
+        const BOOL savedRestoringWindow = _restoringWindow;
+        _restoringWindow = YES;
         [_contentView.tabView selectTabViewItemAtIndex:tabIndex];
+        _restoringWindow = savedRestoringWindow;
     }
+    // Restored tabs carry per-member collapsed flags. Normalize each group to a
+    // uniform state (and never collapsed while it holds the active tab) so a
+    // hand-edited or older arrangement can't leave a group with some members
+    // hidden and no chevron, then push the normalized flags to the tab bar.
+    [self normalizeTabGroupCollapsedState];
+    [self updateTabGroups];
+    // -updateTabGroups pushed the collapsed flags with an animated -update:YES; a
+    // restored collapsed group would otherwise show its members and then slide
+    // shut. Settle synchronously to final frames before the first display, like
+    // every other internal collapse caller.
+    [self relayoutTabGroupChipsSynchronously];
 
     Profile* addressbookEntry = [[[[[self tabs] objectAtIndex:0] sessions] objectAtIndex:0] profile];
     _spaceSetting = [addressbookEntry[KEY_SPACE] intValue];
@@ -4795,13 +4890,30 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             }
             break;
 
+        case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED: {
+            // Behave like a normal window: preserve the current size and only
+            // re-center. Using preserveSize:NO here (as the edge-attached and
+            // maximized types do) would snap the window back to the profile
+            // grid size on every screen change or miniaturize/restore, losing
+            // the user's manual resize (issue 12918). The initial grid size is
+            // established by fitWindowToTabs at creation, so we do not need the
+            // reset here.
+            NSRect desiredWindowFrame = [self canonicalFrameForScreen:screen
+                                                          windowFrame:self.window.frame
+                                                         preserveSize:YES];
+            if (desiredWindowFrame.size.width > 0 && desiredWindowFrame.size.height > 0) {
+                [[self window] setFrame:desiredWindowFrame display:YES];
+            }
+            break;
+        }
+
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_TOP_PERCENTAGE:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
-        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
@@ -4885,6 +4997,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             return [self visibleFrameForScreen:self.window.screen];
     }
 }
@@ -4989,7 +5102,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 
     iTermFrameCanonicalizer *canonicalizer =
-    [[iTermFrameCanonicalizer alloc] initPreservingSize:preserveSize
+    [[[iTermFrameCanonicalizer alloc] initPreservingSize:preserveSize
                                              windowType:windowType
                                      screenVisibleFrame:screenVisibleFrame
                    screenVisibleFrameIgnoringHiddenDock:screenVisibleFrameIgnoringHiddenDock
@@ -5001,7 +5114,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                                                    decorationSize.height)
                                        windowSizeHelper:_windowSizeHelper
                                                  screen:screen
-                                                 window:self.window];
+                                                 window:self.window] autorelease];
     return [canonicalizer canonicalized];
 }
 
@@ -5172,6 +5285,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             return NO;
     }
 }
@@ -5191,6 +5305,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             return NO;
 
         case WINDOW_TYPE_NORMAL:
@@ -5297,7 +5412,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (NSEdgeInsets)tabBarInsetsForCompactWindow NS_AVAILABLE_MAC(10_14) {
-    CGFloat stoplightButtonsWidth = 75;
+    CGFloat stoplightButtonsWidth = MAX(0, [iTermAdvancedSettingsModel compactTabBarStoplightButtonsWidth]);
     if (@available(macOS 26, *)) {
         stoplightButtonsWidth += 3;
     }
@@ -5347,6 +5462,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_TOP_PERCENTAGE:
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
@@ -5991,7 +6107,6 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
-        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
@@ -6000,12 +6115,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             return NO;
-            
+
         case WINDOW_TYPE_LION_FULL_SCREEN:
             return YES;
 
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_NORMAL:
             return YES;
@@ -6065,6 +6182,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             break;
     }
 
@@ -6135,6 +6253,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_MAXIMIZED:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
@@ -6223,7 +6342,6 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
-        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
@@ -6235,11 +6353,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             return [self rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar];
 
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
             return YES;
     }
 }
@@ -6254,6 +6374,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             case WINDOW_TYPE_LION_FULL_SCREEN:
             case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             case WINDOW_TYPE_CENTERED:
+            case WINDOW_TYPE_COMPACT_CENTERED:
             case WINDOW_TYPE_TOP_CELLS:
             case WINDOW_TYPE_LEFT_CELLS:
             case WINDOW_TYPE_NO_TITLE_BAR:
@@ -6477,7 +6598,6 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
-        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_BOTTOM_CELLS:
@@ -6488,7 +6608,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             RLog(@"NO - window type is %@", @(self.windowType));
             return NO;
-            
+
         case WINDOW_TYPE_LION_FULL_SCREEN:
             RLog(@"lion full screen. return %@", @(!exitingLionFullscreen_));
             return !exitingLionFullscreen_;
@@ -6501,6 +6621,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             // FALL THROUGH
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
             if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
                 return NO;
             }
@@ -6933,6 +7054,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         [self hideAutoCommandHistory];
     }
     PTYTab *tab = [tabViewItem identifier];
+    // Invariant: the active tab is never inside a collapsed group. Any path that
+    // selects a collapsed member (cmd-number, next/prev, close-forwarding, the
+    // scripting API) funnels through here, so expand its group synchronously
+    // before the bar's next display -- UNLESS a batch operation is deferring the
+    // enforcement (it selects tabs transiently and settles the invariant once at
+    // the end; see -tabGroupAutoExpandIsSuppressed).
+    if (tab.tabGroupID.length > 0 && tab.tabGroupCollapsed &&
+        ![self tabGroupAutoExpandIsSuppressed]) {
+        [self expandTabGroup:tab.tabGroupID];
+    }
     for (PTYSession *aSession in [tab sessions]) {
         RLog(@"Clear new-output flag in %@", aSession);
         [aSession setNewOutput:NO];
@@ -7054,7 +7185,6 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
-        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_BOTTOM_CELLS:
@@ -7062,6 +7192,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             return NO;
 
@@ -7069,6 +7200,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
             break;
     }
 
@@ -7304,19 +7436,243 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)tabView:(NSTabView*)aTabView
     didDropTabViewItem:(NSTabViewItem *)tabViewItem
-              inTabBar:(PSMTabBarControl *)aTabBarControl {
+              inTabBar:(PSMTabBarControl *)aTabBarControl
+    joiningGroupWithID:(NSString *)groupID {
     PTYTab *aTab = [tabViewItem identifier];
     PseudoTerminal *term = (PseudoTerminal *)[aTabBarControl delegate];
-    [self didDonateTab:aTab toWindowController:term];
+    [self didDonateTab:aTab toWindowController:term joiningGroupWithID:groupID];
 }
 
-- (void)didDonateTab:(PTYTab *)aTab toWindowController:(PseudoTerminal *)term {
+// The terminal whose tab bar is `bar`, or nil. The bar's delegate is its
+// window controller (see iTermRootTerminalView), same as the sibling
+// tabView:didDropTabViewItem:inTabBar:joiningGroupWithID: above.
+- (PseudoTerminal *)terminalForTabBar:(PSMTabBarControl *)bar {
+    return [PseudoTerminal castFrom:[bar delegate]];
+}
+
+// Reorder a group's tabs within this window so they land contiguously before
+// `anchor` (or at the end if nil). Membership is unchanged.
+- (void)reorderGroupTabs:(NSArray<PTYTab *> *)tabs beforeTabViewItem:(NSTabViewItem *)anchor {
+    if (tabs.count == 0) {
+        return;
+    }
+    // Build the desired tab order: the current order with the group's tabs
+    // pulled out and reinserted as a contiguous block right before `anchor`
+    // (or appended when anchor is nil), then apply it with -applyTabOrder:.
+    // That reorders through -[PSMTabBarControl moveTabAtIndex:toIndex:], which
+    // moves the tab view item AND its cell together, so the tab bar's cell list
+    // stays in sync with the tab order. Reordering the tab view items by hand
+    // (with the delegate detached) leaves the cells in their old order, so the
+    // group renders back at its original slot -- it snaps back.
+    PTYTab *anchorTab = (PTYTab *)anchor.identifier;
+    NSSet<PTYTab *> *moving = [NSSet setWithArray:tabs];
+    NSMutableArray<PTYTab *> *order = [NSMutableArray arrayWithCapacity:self.tabs.count];
+    BOOL inserted = NO;
+    for (PTYTab *tab in self.tabs) {
+        if ([moving containsObject:tab]) {
+            continue;  // pulled out; reinserted at the anchor below
+        }
+        if (anchorTab && tab == anchorTab) {
+            [order addObjectsFromArray:tabs];
+            inserted = YES;
+        }
+        [order addObject:tab];
+    }
+    if (!inserted) {
+        [order addObjectsFromArray:tabs];  // anchor nil or not found: append
+    }
+    // A collapsed group dragged within its window stays collapsed: the flag rides
+    // each tab, so suppress auto-expand across the reorder (which transiently
+    // selects tabs) to keep the model correct, then settle from the model.
+    [self performWithTabGroupAutoExpandSuppressed:^{
+        [self applyTabOrder:order];
+        [self tabsDidReorder];
+        // -applyTabOrder: moves each tab via -moveTabAtIndex:toIndex:, whose
+        // animated -update:YES starts the slide from the cells' current positions
+        // -- which -restoreDraggedGroupToSource had just reset to the group's
+        // ORIGINAL slot. That makes the group visibly flip back to where it
+        // started and then animate to the drop location. Cancel the animation and
+        // lay out the final order in one shot so it simply appears where dropped.
+        [self->_contentView.tabBarControl updateWithoutAnimation];
+    }];
+    // Re-establish the invariant and re-push the model's collapsed flags to the
+    // cells (relaid out during the drag).
+    [self settleTabGroupCollapsedStateAfterReorder];
+}
+
+- (void)tabView:(NSTabView*)aTabView
+    dropGroupWithID:(NSString *)groupID
+            members:(NSArray<NSTabViewItem *> *)members
+           inTabBar:(PSMTabBarControl *)destTabBar
+  beforeTabViewItem:(NSTabViewItem *)anchor {
+    if (_layoutLocked || members.count == 0) {
+        return;
+    }
+    NSMutableArray<PTYTab *> *tabs = [NSMutableArray arrayWithCapacity:members.count];
+    for (NSTabViewItem *item in members) {
+        PTYTab *tab = [item identifier];
+        if (tab) {
+            [tabs addObject:tab];
+        }
+    }
+    if (tabs.count == 0) {
+        return;
+    }
+    PseudoTerminal *dest = [self terminalForTabBar:destTabBar];
+    if (!dest) {
+        return;
+    }
+    if (dest == self) {
+        [self reorderGroupTabs:tabs beforeTabViewItem:anchor];
+        return;
+    }
+    NSInteger index = anchor ? [dest->_contentView.tabView indexOfTabViewItem:anchor] : [dest numberOfTabs];
+    if (index == NSNotFound) {
+        index = [dest numberOfTabs];
+    }
+    [self moveTabGroup:tabs toTerminal:dest atIndex:index];
+}
+
+- (void)tabView:(NSTabView*)aTabView
+    tearOffGroupWithID:(NSString *)groupID
+               members:(NSArray<NSTabViewItem *> *)members
+         atScreenPoint:(NSPoint)screenPoint {
+    if (_layoutLocked || members.count == 0) {
+        return;
+    }
+    NSMutableArray<PTYTab *> *tabs = [NSMutableArray arrayWithCapacity:members.count];
+    for (NSTabViewItem *item in members) {
+        PTYTab *tab = [item identifier];
+        if (tab) {
+            [tabs addObject:tab];
+        }
+    }
+    if (tabs.count == 0) {
+        return;
+    }
+    [self tearOffTabGroup:tabs atScreenPoint:screenPoint];
+}
+
+- (void)moveTabGroup:(NSArray<PTYTab *> *)tabs
+          toTerminal:(PseudoTerminal *)dest
+             atIndex:(NSInteger)dropIndex {
+    if (dest == self || dest == nil) {
+        return;
+    }
+    // The group's definition (name/color/collapsed) rides each member tab, so it
+    // travels to `dest` automatically; dest derives its group chip from the moved
+    // tabs. The collapsed flag rides the tabs too, so suppress auto-expand across
+    // the inserts (which auto-select each member) to keep the model correct, then
+    // settle from the model on `dest`.
+    const BOOL wasCollapsed = tabs.firstObject.tabGroupCollapsed;
+    // -insertTab: auto-selects each inserted member, so after the loop dest's
+    // active tab is the last moved member. For a COLLAPSED group that violates the
+    // invariant (the active tab would be a hidden member), so remember dest's real
+    // selection and restore it, keeping that window's focus and the group collapsed.
+    // For an EXPANDED group we WANT the drop to take focus, so leave the moved
+    // member selected (restoring dest's old selection would deny the group focus).
+    NSTabViewItem *destSelectedItem = dest.tabView.selectedTabViewItem;
+    const int startIndex = (dropIndex >= 0 && dropIndex <= [dest numberOfTabs]) ? (int)dropIndex : [dest numberOfTabs];
+    // Suppress on `dest`: it is dest's -didSelectTabViewItem: that fires as each
+    // member is inserted and selected there.
+    [dest performWithTabGroupAutoExpandSuppressed:^{
+        int index = startIndex;
+        for (PTYTab *tab in tabs) {
+            NSTabViewItem *item = tab.tabViewItem;
+            [item retain];
+            [self->_contentView.tabView removeTabViewItem:item];
+            [dest insertTab:tab atIndex:index++];
+            [item release];
+        }
+    }];
+    if (wasCollapsed && destSelectedItem && [dest.tabView.tabViewItems containsObject:destSelectedItem]) {
+        [dest.tabView selectTabViewItem:destSelectedItem];
+    }
+    [dest fitWindowToTabs];
+    [[dest window] makeKeyAndOrderFront:nil];
+    [dest tabsDidReorder];
+    // Re-establish the invariant and re-push the model's collapsed flags on dest.
+    // With dest's own selection restored above, a collapsed group stays collapsed.
+    [dest settleTabGroupCollapsedStateAfterReorder];
+    // Inserting the members one at a time animated the destination through each
+    // intermediate tab count (existing tab ballooning, group tabs popping in).
+    // Snap straight to the final layout so the group simply fills the drop gap.
+    [dest->_contentView.tabBarControl updateWithoutAnimation];
+    // Moving the whole group out can empty this window; close it rather than
+    // leaving a tabless window behind.
+    if ([self numberOfTabs] == 0) {
+        [[self window] close];
+        return;
+    }
+    [self tabsDidReorder];
+}
+
+- (void)tearOffTabGroup:(NSArray<PTYTab *> *)tabs
+          atScreenPoint:(NSPoint)screenPoint {
+    PTYTab *first = tabs.firstObject;
+    // -it_moveTabToNewWindow:ungroup: creates the window and moves the first
+    // tab; it refuses when this window has fewer than two tabs (nothing to
+    // tear off). ungroup:NO because this IS a whole-group move: the definition
+    // rides each tab, so it comes along with `first` and the rest; the new
+    // window derives the chip from them, no registry copy.
+    PseudoTerminal *dest = [self it_moveTabToNewWindow:first ungroup:NO];
+    if (!dest) {
+        return;
+    }
+    // Suppress auto-expand on `dest` across the inserts (each auto-selects there);
+    // the torn-off group is the whole new window, so it settles expanded anyway,
+    // but this keeps the model consistent through the batch.
+    [dest performWithTabGroupAutoExpandSuppressed:^{
+        int index = 1;
+        for (NSInteger i = 1; i < (NSInteger)tabs.count; i++) {
+            PTYTab *tab = tabs[i];
+            NSTabViewItem *item = tab.tabViewItem;
+            [item retain];
+            [self->_contentView.tabView removeTabViewItem:item];
+            [dest insertTab:tab atIndex:index++];
+            [item release];
+        }
+    }];
+    [dest fitWindowToTabs];
+    // Place the new window at the drop location (it_moveTabToNewWindow puts it at
+    // a fixed offset, which is the menu-action behavior, not a drag's).
+    [[dest window] setFrameTopLeftPoint:screenPoint];
+    [dest tabsDidReorder];
+    // The torn-off group is the whole new window, so the invariant forces it
+    // expanded (its members hold the active tab); this settle also re-derives the
+    // chip and cancels the per-insert add animation, so the window's first drawn
+    // frame is the final group (chip + all members) rather than a single wide tab.
+    [dest settleTabGroupCollapsedStateAfterReorder];
+    // Tearing off the whole group can empty this window; close it rather than
+    // leaving a tabless window behind.
+    if ([self numberOfTabs] == 0) {
+        [[self window] close];
+        return;
+    }
+    [self tabsDidReorder];
+}
+
+- (void)didDonateTab:(PTYTab *)aTab
+    toWindowController:(PseudoTerminal *)term
+    joiningGroupWithID:(NSString *)groupID {
     if ([term numberOfTabs] == 1) {
         [term fitWindowToTabs];
     } else {
         [term fitTabToWindow:aTab];
     }
     [self setNeedsUpdateTabObjectCounts:YES];
+
+    // The tab now lives in `term`; resolve its group membership from where it
+    // landed and push it (which re-derives the group chips) BEFORE the
+    // synchronous -display below. The drag stripped chips for its index math, so
+    // drawing before this re-derivation would flash the chip away. A single
+    // tab dragged to another window keeps membership only when it lands inside
+    // a group's bracket there; otherwise the resolver clears it (so a member
+    // leaves its group behind, and a one-tab group's sole member dissolves its
+    // group). Only whole-group (chip) drags move a group between windows.
+    [term resolveDroppedTabGroupMembership:aTab insideGroupWithID:groupID];
+    [term updateTabGroups];
+    [term relayoutTabGroupChipsSynchronously];
 
     // In fullscreen mode reordering the tabs causes the tabview not to be displayed properly.
     // This seems to fix it.
@@ -7544,6 +7900,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                 case WINDOW_TYPE_LEFT_CELLS:
                 case WINDOW_TYPE_TOP_CELLS:
                 case WINDOW_TYPE_CENTERED:
+                case WINDOW_TYPE_COMPACT_CENTERED:
                 case WINDOW_TYPE_BOTTOM_PERCENTAGE:
                 case WINDOW_TYPE_RIGHT_PERCENTAGE:
                 case WINDOW_TYPE_LEFT_PERCENTAGE:
@@ -7663,6 +8020,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [item setRepresentedObject:tabViewItem];
     [rootMenu addItem:item];
 
+    [self addTabGroupMenuItemsToMenu:rootMenu forTabViewItem:tabViewItem];
+
     PTYTab *theTab = [tabViewItem identifier];
     if (![theTab isTmuxTab]) {
         item = [[[NSMenuItem alloc] initWithTitle:@"Duplicate Tab"
@@ -7752,7 +8111,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                 keyEquivalent:@""] autorelease];
     [item setView:labelTrackView];
     [item setRepresentedObject:tabViewItem];
-    _tabViewItemForColorPicker = tabViewItem;
+    // The picker's target (tab vs group) is captured when the picker actually
+    // opens -- see colorsMenuItemViewDidRequestColorPicker -- not at menu build,
+    // so an open color panel can't be retargeted by merely showing a menu.
     [rootMenu addItem:item];
     rootMenu.minimumWidth = tabColorViewSize.width;
 
@@ -7770,6 +8131,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     PTYTab *aTab = [tabViewItem identifier];
     if (aTab == nil) {
         return nil;
+    }
+
+    // A single tab dragged out of the tab bar becomes an ungrouped tab in its new
+    // window. Only a whole-group tear-off (handled by tearOffGroupWithID:) preserves
+    // group membership.
+    if (aTab.tabGroupID != nil) {
+        RLog(@"tabGroup: clearing group %@ from tab %@ torn off into a new window",
+             aTab.tabGroupID, [tabViewItem label]);
+        aTab.tabGroupID = nil;
+        [self reconcileTabGroupDefinitionForTab:aTab];
     }
 
     NSWindowController<iTermWindowController> * term =
@@ -7804,6 +8175,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                 case WINDOW_TYPE_RIGHT_PERCENTAGE:
                 case WINDOW_TYPE_BOTTOM_PERCENTAGE:
                 case WINDOW_TYPE_CENTERED:
+                case WINDOW_TYPE_COMPACT_CENTERED:
                 case WINDOW_TYPE_TOP_CELLS:
                 case WINDOW_TYPE_LEFT_CELLS:
                 case WINDOW_TYPE_RIGHT_CELLS:
@@ -7832,6 +8204,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                 case WINDOW_TYPE_RIGHT_PERCENTAGE:
                 case WINDOW_TYPE_BOTTOM_PERCENTAGE:
                 case WINDOW_TYPE_CENTERED:
+                case WINDOW_TYPE_COMPACT_CENTERED:
                 case WINDOW_TYPE_TOP_CELLS:
                 case WINDOW_TYPE_LEFT_CELLS:
                 case WINDOW_TYPE_RIGHT_CELLS:
@@ -7866,6 +8239,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                 case WINDOW_TYPE_RIGHT_PERCENTAGE:
                 case WINDOW_TYPE_BOTTOM_PERCENTAGE:
                 case WINDOW_TYPE_CENTERED:
+                case WINDOW_TYPE_COMPACT_CENTERED:
                 case WINDOW_TYPE_TOP_CELLS:
                 case WINDOW_TYPE_LEFT_CELLS:
                 case WINDOW_TYPE_RIGHT_CELLS:
@@ -8067,6 +8441,244 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         }
     }
     [_contentView updateTitleAndBorderViews];
+    [self updateTabGroups];
+}
+
+// PSMTabGroupDataSource: the tab bar asks for a group's name/color by id at
+// draw time. The definition lives on the member tabs (there is no registry),
+// so answer from the first live tab carrying that id. Returns nil -- no chip --
+// when no tab references it, so a group with no members is simply gone.
+- (id<PSMTabGroup>)tabGroupWithIdentifier:(NSString *)identifier {
+    if (identifier.length == 0) {
+        return nil;
+    }
+    for (PTYTab *aTab in [self tabs]) {
+        if ([aTab.tabGroupID isEqualToString:identifier]) {
+            return [[[iTermTabGroup alloc] initWithUniqueIdentifier:identifier
+                                                               name:(aTab.tabGroupName ?: @"")
+                                                              color:(aTab.tabGroupColor ?: [NSColor systemBlueColor])] autorelease];
+        }
+    }
+    return nil;
+}
+
+// Push each tab's group membership to the tab bar. The window controller is
+// itself the group data source; name/color come from the member tabs on
+// demand (see -tabGroupWithIdentifier:), so there is nothing else to sync and
+// nothing to prune -- a group with no members has no source tab and vanishes.
+// Piggybacks on updateTabColors, which already runs wherever membership/order
+// can change.
+- (void)updateTabGroups {
+    PSMTabBarControl *control = _contentView.tabBarControl;
+    if (!control) {
+        return;
+    }
+    if (control.tabGroupDataSource != (id<PSMTabGroupDataSource>)self) {
+        control.tabGroupDataSource = (id<PSMTabGroupDataSource>)self;
+    }
+    NSArray<PTYTab *> *tabs = [self tabs];
+    NSMutableArray *identifiers = [NSMutableArray arrayWithCapacity:tabs.count];
+    NSMutableArray<NSNumber *> *collapsedFlags = [NSMutableArray arrayWithCapacity:tabs.count];
+    NSMutableArray<NSTabViewItem *> *items = [NSMutableArray arrayWithCapacity:tabs.count];
+    for (PTYTab *aTab in tabs) {
+        NSTabViewItem *item = aTab.tabViewItem;
+        if (!item) {
+            continue;
+        }
+        [identifiers addObject:(aTab.tabGroupID ?: (id)[NSNull null])];
+        [collapsedFlags addObject:@(aTab.tabGroupCollapsed)];
+        [items addObject:item];
+    }
+    [control setTabGroupIdentifiers:identifiers forTabViewItems:items];
+    [control setTabGroupCollapsedFlags:collapsedFlags forTabViewItems:items];
+}
+
+// Re-derive the group chips and lay the tab bar out synchronously. The drag
+// strips chips for its index math and restores them only in -finishDrag, which
+// runs after the drop delegate's synchronous -display; and -setTabGroupIdentifier
+// relays out with animation, which defers frame-setting to a timer. Either way a
+// -display before this would draw a chip that is missing or at a zero frame,
+// blinking it. Call this right before that -display.
+- (void)relayoutTabGroupChipsSynchronously {
+    PSMTabBarControl *control = _contentView.tabBarControl;
+    [control normalizeTabGroupChipCells];
+    // Cancel any in-flight animation so this lays out for real (a plain -update
+    // would defer to the running timer, leaving the chip mid-animation for the
+    // first drawn frame -- it jumps into place).
+    [control updateWithoutAnimation];
+}
+
+// Firefox-style "Add Tab to Group" submenu: New Group, then existing
+// groups (checkmarked if this tab is already in one), and a Remove item
+// when the tab is grouped.
+- (void)addTabGroupMenuItemsToMenu:(NSMenu *)rootMenu forTabViewItem:(NSTabViewItem *)tabViewItem {
+    PTYTab *theTab = [tabViewItem identifier];
+    if (!theTab) {
+        return;
+    }
+    NSMenu *groupMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
+
+    NSMenuItem *newGroupItem = [[[NSMenuItem alloc] initWithTitle:@"New Group…"
+                                                           action:@selector(addTabToNewGroup:)
+                                                    keyEquivalent:@""] autorelease];
+    newGroupItem.representedObject = tabViewItem;
+    newGroupItem.target = self;
+    [groupMenu addItem:newGroupItem];
+
+    NSArray<iTermTabGroup *> *groups = [self tabGroupsInWindow];
+    if (groups.count > 0) {
+        [groupMenu addItem:[NSMenuItem separatorItem]];
+        for (iTermTabGroup *group in groups) {
+            NSString *title = group.name.length > 0 ? group.name : @"Untitled";
+            NSMenuItem *gi = [[[NSMenuItem alloc] initWithTitle:title
+                                                         action:@selector(addTabToExistingGroup:)
+                                                  keyEquivalent:@""] autorelease];
+            gi.representedObject = @{ @"tab": tabViewItem, @"group": group.uniqueIdentifier };
+            gi.target = self;
+            gi.state = [group.uniqueIdentifier isEqualToString:theTab.tabGroupID] ? NSControlStateValueOn
+                                                                                  : NSControlStateValueOff;
+            [groupMenu addItem:gi];
+        }
+    }
+
+    NSMenuItem *groupRoot = [[[NSMenuItem alloc] initWithTitle:@"Add Tab to Group"
+                                                        action:nil
+                                                 keyEquivalent:@""] autorelease];
+    [rootMenu addItem:groupRoot];
+    [rootMenu setSubmenu:groupMenu forItem:groupRoot];
+
+    if (theTab.tabGroupID) {
+        NSMenuItem *renameItem = [[[NSMenuItem alloc] initWithTitle:@"Rename Group…"
+                                                            action:@selector(renameTabGroup:)
+                                                     keyEquivalent:@""] autorelease];
+        renameItem.representedObject = tabViewItem;
+        renameItem.target = self;
+        [rootMenu addItem:renameItem];
+
+        NSMenuItem *removeItem = [[[NSMenuItem alloc] initWithTitle:@"Remove Tab from Group"
+                                                             action:@selector(removeTabFromGroup:)
+                                                      keyEquivalent:@""] autorelease];
+        removeItem.representedObject = tabViewItem;
+        removeItem.target = self;
+        [rootMenu addItem:removeItem];
+    }
+}
+
+- (void)addTabToNewGroup:(id)sender {
+    NSTabViewItem *tabViewItem = [sender representedObject];
+    PTYTab *theTab = [tabViewItem identifier];
+    if (!theTab) {
+        return;
+    }
+    NSString *defaultName = [tabViewItem label].length > 0 ? [tabViewItem label] : @"Group";
+    NSString *name = [self promptForTabGroupName:defaultName title:@"New Tab Group"];
+    if (!name) {
+        return;  // user cancelled
+    }
+    theTab.tabGroupID = [[NSUUID UUID] UUIDString];
+    theTab.tabGroupName = name;
+    theTab.tabGroupColor = [self nextTabGroupColor];
+    RLog(@"tabGroup: New Group %@ (%@) from tab %@", theTab.tabGroupID, name, [tabViewItem label]);
+    [self updateTabColors];
+}
+
+- (void)addTabToExistingGroup:(id)sender {
+    NSDictionary *rep = [sender representedObject];
+    NSTabViewItem *tabViewItem = rep[@"tab"];
+    NSString *groupID = rep[@"group"];
+    PTYTab *theTab = [tabViewItem identifier];
+    if (!theTab || !groupID) {
+        return;
+    }
+    theTab.tabGroupID = groupID;
+    // The definition has no separate store, so copy it from an existing member
+    // (name/color, and the collapsed flag) to keep the new member self-sufficient.
+    [self reconcileTabGroupDefinitionForTab:theTab];
+    RLog(@"tabGroup: added tab %@ to existing group %@", [tabViewItem label], groupID);
+    [self updateTabColors];
+    // The added tab may be far from the group's other members; repair the
+    // contiguity invariant so they become one block.
+    [self tabsDidReorder];
+    // If the added tab is the active one and it just joined a collapsed group,
+    // expand it so the active tab is never hidden.
+    [self expandTabGroupIfSelectedTabIsCollapsed];
+}
+
+// Rename every tab in the group, since the name is carried per-member.
+- (void)renameTabGroup:(id)sender {
+    PTYTab *theTab = [[sender representedObject] identifier];
+    [self renameTabGroupWithID:theTab.tabGroupID];
+}
+
+// Modal name prompt for creating/renaming a group. Returns the entered string
+// (may be empty -- names need not be unique or non-empty), or nil if cancelled.
+- (NSString *)promptForTabGroupName:(NSString *)initialValue title:(NSString *)title {
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = title;
+    alert.informativeText = @"Enter a name for this tab group.";
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+    NSTextField *field = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 240, 24)] autorelease];
+    // Tab labels come with a trailing newline; trim so it doesn't seed the field
+    // (or the resulting group name) with stray whitespace.
+    NSCharacterSet *trim = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    field.stringValue = [(initialValue ?: @"") stringByTrimmingCharactersInSet:trim];
+    [field selectText:nil];
+    alert.accessoryView = field;
+    alert.window.initialFirstResponder = field;
+    const NSModalResponse response = [alert runModal];
+    if (response != NSAlertFirstButtonReturn) {
+        return nil;
+    }
+    return [field.stringValue stringByTrimmingCharactersInSet:trim];
+}
+
+// Distinct tab groups in this window, derived from the member tabs (there is
+// no registry). The first tab carrying each id supplies the name/color, and
+// order follows first appearance in the tab order.
+- (NSArray<iTermTabGroup *> *)tabGroupsInWindow {
+    NSMutableArray<iTermTabGroup *> *result = [NSMutableArray array];
+    NSMutableSet<NSString *> *seen = [NSMutableSet set];
+    for (PTYTab *aTab in [self tabs]) {
+        NSString *gid = aTab.tabGroupID;
+        if (gid.length == 0 || [seen containsObject:gid]) {
+            continue;
+        }
+        [seen addObject:gid];
+        [result addObject:[[[iTermTabGroup alloc] initWithUniqueIdentifier:gid
+                                                                      name:(aTab.tabGroupName ?: @"")
+                                                                     color:(aTab.tabGroupColor ?: [NSColor systemBlueColor])] autorelease]];
+    }
+    return result;
+}
+
+- (void)removeTabFromGroup:(id)sender {
+    NSTabViewItem *tabViewItem = [sender representedObject];
+    PTYTab *theTab = [tabViewItem identifier];
+    RLog(@"tabGroup: removed tab %@ from group %@", [tabViewItem label], theTab.tabGroupID);
+    theTab.tabGroupID = nil;
+    [self reconcileTabGroupDefinitionForTab:theTab];
+    [self updateTabColors];
+}
+
+// Cycle a small system palette so consecutive new groups look distinct.
+- (NSColor *)nextTabGroupColor {
+    static NSArray<NSColor *> *palette;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        palette = [@[
+            [NSColor systemBlueColor], [NSColor systemGreenColor],
+            [NSColor systemOrangeColor], [NSColor systemPurpleColor],
+            [NSColor systemRedColor], [NSColor colorFromHexString:@"#50afbc"],
+            [NSColor systemPinkColor],
+        ] retain];
+    });
+    NSUInteger index = [self tabGroupsInWindow].count % palette.count;
+    // System colors (systemBlueColor, ...) are catalog colors with no direct
+    // -colorSpace; the tab color swatch view calls -colorSpace when comparing,
+    // which throws for catalog colors. Store the group color in a concrete color
+    // space like tab colors are, so the picker can use it safely.
+    return [palette[index] it_colorInDefaultColorSpace];
 }
 
 - (BOOL)tabBarProvidesProgressVisibility {
@@ -8088,10 +8700,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     const BOOL hasSingleTab = (self.numberOfTabs == 1);
     const BOOL hasSplitPanes = (tab.sessions.count > 1);
-    const BOOL isInOverflow = [_contentView.tabBarControl isInOverflowMenuForTabWithIdentifier:tab];
-    const BOOL result = (hasSingleTab || hasSplitPanes || isInOverflow || !tabBarVisible);
-    DLog(@"shouldShowInlineProgressBarForSession: hasSingleTab=%d hasSplitPanes=%d isInOverflow=%d tabBarVisible=%d -> %d",
-         hasSingleTab, hasSplitPanes, isInOverflow, tabBarVisible, result);
+    const BOOL isHiddenInBar = [_contentView.tabBarControl tabIsHiddenInBarWithIdentifier:tab];
+    const BOOL result = (hasSingleTab || hasSplitPanes || isHiddenInBar || !tabBarVisible);
+    DLog(@"shouldShowInlineProgressBarForSession: hasSingleTab=%d hasSplitPanes=%d isHiddenInBar=%d tabBarVisible=%d -> %d",
+         hasSingleTab, hasSplitPanes, isHiddenInBar, tabBarVisible, result);
     return result;
 }
 
@@ -8143,6 +8755,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         _desiredAppearance = [appearance retain];
         return;
     }
+    NSAppearance *current = self.window.appearance;
+    if (current == appearance || [current.name isEqual:appearance.name]) {
+        // Setting the window's appearance to its current value still causes AppKit to
+        // recompute effective appearance and fire -viewDidChangeEffectiveAppearance, which
+        // calls back into -refreshTerminal: and can spin for many seconds (especially in
+        // traditional fullscreen, where each pass does a full-window setFrame:display:YES).
+        // Skip the redundant assignment to break that feedback loop.
+        RLog(@"Appearance already %@; skip redundant set", appearance.name);
+        return;
+    }
     RLog(@"Immediately set appearance to %@", appearance.name);
     self.window.appearance = appearance;
 }
@@ -8181,6 +8803,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
@@ -8199,12 +8822,12 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     switch (iTermThemedWindowType(windowType)) {
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             break;
 
-        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
@@ -8216,13 +8839,657 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             return YES;
     }
     return NO;
 }
 
 
+// Resolve a just-dropped tab's group membership from where it landed so that a
+// group's tabs stay consecutive. Only the dropped tab changes: dropping it
+// strictly between two members of a group joins that group; dragging a member to
+// the group's edge (or elsewhere) removes it; a lone one-tab group survives.
+// Neighbors are never touched, so an innocent bystander isn't absorbed.
+- (void)resolveDroppedTabGroupMembership:(PTYTab *)droppedTab
+                       insideGroupWithID:(NSString *)insideGroup {
+    NSArray<PTYTab *> *tabs = [self tabs];
+    const NSInteger index = [tabs indexOfObject:droppedTab];
+    if (index == NSNotFound) {
+        return;
+    }
+    NSString *resolved;
+    // The drop path, which can see the group chips, passes the group whose
+    // bracket the tab landed inside (the reliable signal for joining a group,
+    // including a one-tab group that has no between-members gap). Outside every
+    // bracket, fall back to the order-only rule, which handles leaving a group,
+    // reordering within one, and keeping a lone one-tab group.
+    if (insideGroup.length > 0) {
+        resolved = insideGroup;
+    } else {
+        NSMutableArray *order = [NSMutableArray arrayWithCapacity:tabs.count];
+        for (PTYTab *tab in tabs) {
+            [order addObject:(tab.tabGroupID ?: (id)[NSNull null])];
+        }
+        resolved = [iTermTabGroupContiguity resolvedGroupForTabAt:index order:order];
+    }
+    if (resolved == droppedTab.tabGroupID || [resolved isEqualToString:droppedTab.tabGroupID]) {
+        return;
+    }
+    RLog(@"tabGroup: dropped tab %@ membership %@ -> %@",
+         [droppedTab.tabViewItem label],
+         droppedTab.tabGroupID ?: @"(none)",
+         resolved ?: @"(none)");
+    droppedTab.tabGroupID = resolved;
+    // The definition rides each member tab, so a tab that just joined a group
+    // must adopt that group's name/color; otherwise it keeps its previous
+    // group's, and if it becomes the group's first tab the whole chip derives
+    // the wrong definition.
+    [self reconcileTabGroupDefinitionForTab:droppedTab];
+}
+
+// Make `tab`'s carried group name/color match the group it now belongs to,
+// copying from any existing member. Clears them when the tab belongs to no
+// group. A tab that is the sole member of its id keeps what it has (it is the
+// group's definer). Call after any change to a tab's tabGroupID.
+- (void)reconcileTabGroupDefinitionForTab:(PTYTab *)tab {
+    NSString *gid = tab.tabGroupID;
+    if (gid.length == 0) {
+        tab.tabGroupName = nil;
+        tab.tabGroupColor = nil;
+        tab.tabGroupCollapsed = NO;
+        return;
+    }
+    for (PTYTab *member in [self tabs]) {
+        if (member != tab && [member.tabGroupID isEqualToString:gid]) {
+            tab.tabGroupName = member.tabGroupName;
+            tab.tabGroupColor = member.tabGroupColor;
+            // Adopt the group's collapsed state so a tab joining a collapsed
+            // group matches its siblings. The invariant is restored afterward:
+            // if the joining tab is the active one, PseudoTerminal expands it.
+            tab.tabGroupCollapsed = member.tabGroupCollapsed;
+            // A group must be entirely pinned or entirely unpinned, or it would
+            // straddle the pinned/unpinned boundary and become non-contiguous
+            // (pinned tabs live in the front zone). Match the joining tab's pinned
+            // state to the group's before the caller reorders; the setter moves it
+            // to the correct zone and the contiguity pass then blocks the group.
+            if (tab.isPinned != member.isPinned) {
+                tab.pinned = member.isPinned;
+            }
+            return;
+        }
+    }
+}
+
+#pragma mark - Tab group context menu
+
+// Member tabs of `groupID`, in tab order.
+- (NSArray<PTYTab *> *)tabsInGroup:(NSString *)groupID {
+    if (groupID.length == 0) {
+        return @[];
+    }
+    NSMutableArray<PTYTab *> *result = [NSMutableArray array];
+    for (PTYTab *aTab in [self tabs]) {
+        if ([aTab.tabGroupID isEqualToString:groupID]) {
+            [result addObject:aTab];
+        }
+    }
+    return result;
+}
+
+// PSMTabViewDelegate: right-click on a group chip.
+- (NSMenu *)tabView:(NSTabView *)aTabView menuForTabGroup:(NSString *)groupID {
+    if ([self tabsInGroup:groupID].count == 0) {
+        return nil;
+    }
+    NSMenu *menu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
+    menu.autoenablesItems = NO;  // contextual actions are always applicable
+    const BOOL collapsed = [self tabsInGroup:groupID].firstObject.tabGroupCollapsed;
+    NSArray<NSArray<NSString *> *> *specs = @[
+        collapsed ? @[@"Expand Group", @"expandTabGroupFromMenu:"]
+                  : @[@"Collapse Group", @"collapseTabGroupFromMenu:"],
+        @[@"-", @""],
+        @[@"Rename Group…", @"renameTabGroupFromMenu:"],
+        @[@"-", @""],
+        @[@"Duplicate Group", @"duplicateTabGroup:"],
+        @[@"Move Group to New Window", @"moveTabGroupToNewWindow:"],
+        @[@"Save Group as Window Arrangement…", @"saveTabGroupAsWindowArrangement:"],
+        @[@"-", @""],
+        @[@"Remove All Tabs from Group", @"ungroupTabGroup:"],
+        @[@"-", @""],
+        @[@"Close Group", @"closeTabGroup:"],
+        @[@"Close Other Tabs", @"closeTabsOutsideGroup:"],
+        @[@"Close Tabs to the Right", @"closeTabsRightOfGroup:"],
+    ];
+    for (NSArray<NSString *> *spec in specs) {
+        if ([spec[0] isEqualToString:@"-"]) {
+            [menu addItem:[NSMenuItem separatorItem]];
+            continue;
+        }
+        NSMenuItem *mi = [[[NSMenuItem alloc] initWithTitle:spec[0]
+                                                     action:NSSelectorFromString(spec[1])
+                                              keyEquivalent:@""] autorelease];
+        mi.representedObject = groupID;
+        mi.target = self;
+        // Collapsing is impossible when the group is the whole window (no tab to
+        // move the active selection to), so disable the item there.
+        if ([spec[1] isEqualToString:@"collapseTabGroupFromMenu:"] &&
+            [self tabGroupIsWholeWindow:groupID]) {
+            mi.enabled = NO;
+        }
+        [menu addItem:mi];
+
+        // The color swatch picker (same control as Tab Color) goes right after
+        // Rename, before the first separator.
+        if ([spec[1] isEqualToString:@"renameTabGroupFromMenu:"]) {
+            [self addTabGroupColorItemToMenu:menu forGroupID:groupID];
+        }
+    }
+    return menu;
+}
+
+- (void)addTabGroupColorItemToMenu:(NSMenu *)menu forGroupID:(NSString *)groupID {
+    NSArray<PTYTab *> *members = [self tabsInGroup:groupID];
+    const NSSize size = [ColorsMenuItemView preferredSize];
+    ColorsMenuItemView *colorView =
+        [[[ColorsMenuItemView alloc] initWithFrame:NSMakeRect(0, 0, size.width, size.height)] autorelease];
+    // Convert to a concrete color space: a catalog color (e.g. a legacy group
+    // created before this fix) makes the swatch view throw in -colorSpace.
+    colorView.currentColor = [members.firstObject.tabGroupColor it_colorInDefaultColorSpace];
+    colorView.delegate = self;
+    NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:@"Group Color"
+                                                  action:@selector(changeTabGroupColorToMenuAction:)
+                                           keyEquivalent:@""] autorelease];
+    item.view = colorView;
+    item.representedObject = groupID;
+    item.target = self;
+    // The "more colors" picker resolves its target (this group) from the menu
+    // item when it opens -- see colorsMenuItemViewDidRequestColorPicker.
+    [menu addItem:item];
+    if (menu.minimumWidth < size.width) {
+        menu.minimumWidth = size.width;
+    }
+}
+
+// Preset/reset swatch chosen from the group's color picker.
+- (void)changeTabGroupColorToMenuAction:(id)sender {
+    NSColor *color = [(ColorsMenuItemView *)[sender view] color];
+    [self setTabGroupColor:color forGroupID:[sender representedObject]];
+}
+
+// Set the color on every member of the group (the definition rides the tabs).
+- (void)setTabGroupColor:(NSColor *)color forGroupID:(NSString *)groupID {
+    if (groupID.length == 0) {
+        return;
+    }
+    for (PTYTab *member in [self tabsInGroup:groupID]) {
+        member.tabGroupColor = color;
+    }
+    if (color) {
+        [[iTermRecentTabColors shared] addColor:color];
+    }
+    [self updateTabColors];
+    [self relayoutTabGroupChipsSynchronously];
+}
+
+#pragma mark - Tab group collapse
+
+// Collapse a group: its members stay in the tab view but are hidden in the bar.
+// The invariant "the active tab is never in a collapsed group" is enforced by
+// first moving selection to the nearest tab outside the group. If there is no
+// tab outside (the group is the whole window) collapse is refused.
+- (void)collapseTabGroup:(NSString *)groupID {
+    [self collapseTabGroup:groupID animated:NO];
+}
+
+// `animated`: user-initiated toggles animate the member tabs sliding shut;
+// internal/invariant-enforcing callers pass NO so the layout settles
+// synchronously (before a drag's or restore's next -display).
+- (void)collapseTabGroup:(NSString *)groupID animated:(BOOL)animated {
+    NSArray<PTYTab *> *members = [self tabsInGroup:groupID];
+    if (members.count == 0) {
+        return;
+    }
+    if ([members containsObject:self.currentTab]) {
+        NSArray<PTYTab *> *tabs = [self tabs];
+        NSMutableArray *order = [NSMutableArray arrayWithCapacity:tabs.count];
+        NSMutableArray<NSNumber *> *collapsedFlags = [NSMutableArray arrayWithCapacity:tabs.count];
+        for (PTYTab *aTab in tabs) {
+            [order addObject:(aTab.tabGroupID ?: (id)[NSNull null])];
+            [collapsedFlags addObject:@(aTab.tabGroupCollapsed)];
+        }
+        NSNumber *outside = [iTermTabGroupOrdering indexOfNearestTabOutsideGroupInOrder:order
+                                                                              collapsed:collapsedFlags
+                                                                                 group:groupID];
+        if (!outside) {
+            if ([self tabGroupIsWholeWindow:groupID]) {
+                // The group is the whole window: there is genuinely nowhere to move
+                // the active tab, so collapse is impossible. Return silently (the
+                // menu item is disabled for this and a chip click is a no-op via
+                // -toggleTabGroupCollapsed), rather than beeping.
+                return;
+            }
+            // There ARE tabs outside this group, but every one is a hidden member of
+            // ANOTHER collapsed group, so the invariant-preserving move (land on a
+            // visible tab) has no target. Rather than dead-end with a bare beep,
+            // land on the nearest such tab and expand ITS group so the active tab
+            // becomes visible; then this group can collapse. Re-run the search with
+            // no collapsed tabs skipped to find that tab.
+            NSNumber *hidden = [iTermTabGroupOrdering indexOfNearestTabOutsideGroupInOrder:order
+                                                                                 collapsed:@[]
+                                                                                     group:groupID];
+            if (!hidden) {
+                return;  // defensive: nothing outside at all (whole-window handled above)
+            }
+            PTYTab *target = tabs[hidden.integerValue];
+            if (target.tabGroupID.length > 0) {
+                [self expandTabGroup:target.tabGroupID];  // non-animated snap
+            }
+            [_contentView.tabView selectTabViewItem:target.tabViewItem];
+        } else {
+            [_contentView.tabView selectTabViewItem:tabs[outside.integerValue].tabViewItem];
+        }
+    }
+    for (PTYTab *member in members) {
+        member.tabGroupCollapsed = YES;
+    }
+    RLog(@"tabGroup: collapsed group %@ animated=%d", groupID, animated);
+    [self updateTabColors];  // pushes the collapsed flags via -updateTabGroups
+    if (!animated) {
+        // -updateTabGroups pushed the flags with an animated -update:YES; snap
+        // to the final layout instead.
+        [self relayoutTabGroupChipsSynchronously];
+    }
+}
+
+- (void)expandTabGroup:(NSString *)groupID {
+    [self expandTabGroup:groupID animated:NO];
+}
+
+- (void)expandTabGroup:(NSString *)groupID animated:(BOOL)animated {
+    NSArray<PTYTab *> *members = [self tabsInGroup:groupID];
+    if (members.count == 0) {
+        return;
+    }
+    BOOL changed = NO;
+    for (PTYTab *member in members) {
+        if (member.tabGroupCollapsed) {
+            member.tabGroupCollapsed = NO;
+            changed = YES;
+        }
+    }
+    if (!changed) {
+        return;  // already expanded; idempotent
+    }
+    RLog(@"tabGroup: expanded group %@ animated=%d", groupID, animated);
+    [self updateTabColors];
+    if (!animated) {
+        [self relayoutTabGroupChipsSynchronously];
+    }
+}
+
+- (void)toggleTabGroupCollapsed:(NSString *)groupID {
+    NSArray<PTYTab *> *members = [self tabsInGroup:groupID];
+    if (members.count == 0) {
+        return;
+    }
+    // User-initiated: animate.
+    if (members.firstObject.tabGroupCollapsed) {
+        [self expandTabGroup:groupID animated:YES];
+    } else if ([self tabGroupIsWholeWindow:groupID]) {
+        // Collapse is impossible when the group is the whole window (nowhere to
+        // move the active tab). The menu item is disabled for this; make a chip
+        // click do nothing too, rather than beep, so the two entry points match.
+        return;
+    } else {
+        [self collapseTabGroup:groupID animated:YES];
+    }
+}
+
+// YES if tab-group auto-expand is currently deferred: a batch operation is
+// transiently selecting tabs (duplicate/move/tear-off/reorder, via
+// -performWithTabGroupAutoExpandSuppressed:), a window is being restored, or a
+// live drag is in flight. The single owner of the "don't auto-expand right now"
+// decision, so a new batch path suppresses via the helper below instead of adding
+// another negative flag to the -didSelectTabViewItem: guard.
+- (BOOL)tabGroupAutoExpandIsSuppressed {
+    return _tabGroupAutoExpandSuppressionCount > 0 ||
+           _restoringWindow ||
+           [[PSMTabDragAssistant sharedDragAssistant] isDragging];
+}
+
+// Run `block` with tab-group auto-expand deferred. Nestable (a counter) and
+// exception-safe (@finally), so an early return or throw inside the block cannot
+// leave auto-expand disabled window-wide. Callers settle the invariant afterward
+// with -settleTabGroupCollapsedStateAfterReorder.
+- (void)performWithTabGroupAutoExpandSuppressed:(void (NS_NOESCAPE ^)(void))block {
+    _tabGroupAutoExpandSuppressionCount++;
+    @try {
+        block();
+    } @finally {
+        _tabGroupAutoExpandSuppressionCount--;
+    }
+}
+
+// Restore the invariant after a selection or membership change may have left the
+// active tab inside a collapsed group. Called from the tear-off/move/restore
+// sites where AppKit's per-item auto-select can't be relied on.
+- (void)expandTabGroupIfSelectedTabIsCollapsed {
+    PTYTab *current = self.currentTab;
+    if (current.tabGroupID.length > 0 && current.tabGroupCollapsed) {
+        [self expandTabGroup:current.tabGroupID];
+    }
+}
+
+// The one settle point after a whole-group reorder/move/tear-off. The collapsed
+// state rides each member tab, so with auto-expand suppressed during the mutation
+// (via -performWithTabGroupAutoExpandSuppressed:) the model stays correct; this
+// normalizes each group to a uniform state honoring the invariant (which also
+// heals the mixed state a menu tear-off's first-tab auto-select can leave, since
+// that select happens before the suppression window), then re-pushes the model's
+// per-tab flags to the tab bar. This replaces the wasCollapsed snapshot +
+// per-caller re-apply ritual; it is the work -draggingDidBeginOrEnd: also does.
+- (void)settleTabGroupCollapsedStateAfterReorder {
+    [self normalizeTabGroupCollapsedState];
+    [self updateTabColors];
+    [self updateTabGroups];
+    [self relayoutTabGroupChipsSynchronously];
+}
+
+// Force each group to a uniform collapsed state and honor the invariant. A group
+// is collapsed only if every member is collapsed AND it does not hold the active
+// tab; otherwise it is fully expanded. Heals an inconsistent (mixed) group, e.g.
+// on restore, or after a whole-group move/tear-off where an early per-insert
+// auto-select expanded one member; it is the model-driven authority both
+// -normalize... callers and -settleTabGroupCollapsedStateAfterReorder rely on.
+- (void)normalizeTabGroupCollapsedState {
+    PTYTab *current = self.currentTab;
+    NSMutableSet<NSString *> *processed = [NSMutableSet set];
+    for (PTYTab *tab in [self tabs]) {
+        NSString *gid = tab.tabGroupID;
+        if (gid.length == 0 || [processed containsObject:gid]) {
+            continue;
+        }
+        [processed addObject:gid];
+        NSArray<PTYTab *> *members = [self tabsInGroup:gid];
+        BOOL allCollapsed = YES;
+        for (PTYTab *member in members) {
+            if (!member.tabGroupCollapsed) {
+                allCollapsed = NO;
+                break;
+            }
+        }
+        const BOOL collapsed = allCollapsed && ![members containsObject:current];
+        for (PTYTab *member in members) {
+            member.tabGroupCollapsed = collapsed;
+        }
+    }
+}
+
+// YES if collapsing `groupID` is impossible because it is the whole window.
+- (BOOL)tabGroupIsWholeWindow:(NSString *)groupID {
+    NSArray<PTYTab *> *members = [self tabsInGroup:groupID];
+    return members.count > 0 && members.count == [self tabs].count;
+}
+
+- (void)collapseTabGroupFromMenu:(id)sender {
+    [self collapseTabGroup:[sender representedObject] animated:YES];
+}
+
+- (void)expandTabGroupFromMenu:(id)sender {
+    [self expandTabGroup:[sender representedObject] animated:YES];
+}
+
+// PSMTabBarControlDelegate: a plain click on a group chip toggles its collapse.
+- (void)tabView:(NSTabView *)aTabView toggleCollapseOfTabGroup:(NSString *)groupID {
+    [self toggleTabGroupCollapsed:groupID];
+}
+
+- (void)renameTabGroupFromMenu:(id)sender {
+    [self renameTabGroupWithID:[sender representedObject]];
+}
+
+- (void)renameTabGroupWithID:(NSString *)groupID {
+    NSArray<PTYTab *> *members = [self tabsInGroup:groupID];
+    if (members.count == 0) {
+        return;
+    }
+    NSString *name = [self promptForTabGroupName:(members.firstObject.tabGroupName ?: @"") title:@"Rename Tab Group"];
+    if (!name) {
+        return;  // cancelled
+    }
+    for (PTYTab *member in members) {
+        member.tabGroupName = name;
+    }
+    RLog(@"tabGroup: renamed group %@ to %@", groupID, name);
+    [self updateTabColors];
+    // The chip's width is derived from the name, so re-derive and relay out the
+    // chips now; otherwise the chip keeps its old width until some later relayout
+    // (e.g. switching away and back to the app).
+    [self relayoutTabGroupChipsSynchronously];
+}
+
+- (void)ungroupTabGroup:(id)sender {
+    for (PTYTab *member in [self tabsInGroup:[sender representedObject]]) {
+        member.tabGroupID = nil;
+        [self reconcileTabGroupDefinitionForTab:member];
+    }
+    [self updateTabColors];
+    [self tabsDidReorder];
+}
+
+- (void)moveTabGroupToNewWindow:(id)sender {
+    NSArray<PTYTab *> *members = [self tabsInGroup:[sender representedObject]];
+    if (members.count == 0) {
+        return;
+    }
+    // Reuse the drag tear-off, positioned just off this window's top-left. It
+    // no-ops if the group is the whole window (nothing to tear off).
+    NSRect frame = self.window.frame;
+    [self tearOffTabGroup:members atScreenPoint:NSMakePoint(NSMinX(frame) + 20, NSMaxY(frame) - 20)];
+}
+
+- (void)saveTabGroupAsWindowArrangement:(id)sender {
+    NSArray<PTYTab *> *members = [self tabsInGroup:[sender representedObject]];
+    if (members.count == 0) {
+        return;
+    }
+    NSDictionary *arrangement = [self arrangementWithTabs:members includingContents:NO];
+    if (!arrangement) {
+        return;
+    }
+    [WindowArrangements nameForNewArrangement:^(NSString *name) {
+        if (name) {
+            [WindowArrangements setArrangement:@[ arrangement ] withName:name];
+        }
+    }];
+}
+
+- (void)duplicateTabGroup:(id)sender {
+    if (_layoutLocked) {
+        RLog(@"Layout is locked, refusing to duplicate group");
+        return;
+    }
+    NSArray<PTYTab *> *members = [self tabsInGroup:[sender representedObject]];
+    if (members.count == 0) {
+        return;
+    }
+    NSString *newID = [[NSUUID UUID] UUIDString];
+    NSString *newName = [(members.firstObject.tabGroupName ?: @"Group") stringByAppendingString:@" copy"];
+    NSColor *newColor = members.firstObject.tabGroupColor;
+    // Duplicate each member (new sessions), then group the freshly created tabs.
+    // Each copy is restored carrying the SOURCE group id with collapsed=YES and is
+    // auto-selected. Suppress the auto-expand (they share the source id, so it
+    // would expand the source group), and reassign each copy to its own (expanded)
+    // group as soon as it is created -- before the next copy is made -- so a copy
+    // never lingers as a hidden member of the collapsed source group (which would
+    // transiently violate "active tab is never in a collapsed group").
+    NSMutableSet<PTYTab *> *before = [NSMutableSet setWithArray:[self tabs]];
+    [self performWithTabGroupAutoExpandSuppressed:^{
+        for (PTYTab *member in members) {
+            [self createDuplicateOfTab:member inTerminal:self];
+            for (PTYTab *aTab in [self tabs]) {
+                if ([before containsObject:aTab]) {
+                    continue;
+                }
+                // The copies append to the end of the bar, but pinned tabs must
+                // live in the front pinned zone. A duplicated group therefore
+                // starts unpinned rather than becoming a mix of pinned/unpinned
+                // members stranded at the end (which is an invalid state).
+                [aTab setPinned:NO];
+                aTab.tabGroupID = newID;
+                aTab.tabGroupName = newName;
+                aTab.tabGroupColor = newColor;
+                // Start expanded (the copy inherited the source's collapsed flag)
+                // so the freshly-selected copy never sits inside a collapsed group.
+                aTab.tabGroupCollapsed = NO;
+                [before addObject:aTab];
+            }
+        }
+    }];
+    [self updateTabColors];
+    [self tabsDidReorder];  // enforce contiguity so the copies form one block
+}
+
+- (void)closeTabGroup:(id)sender {
+    // Close every member, including pinned ones -- the pinned tabs are the group.
+    [self closeTabs:[self tabsInGroup:[sender representedObject]]
+        confirmWith:@"Close this tab group?"
+      skippingPinned:NO];
+}
+
+- (void)closeTabsOutsideGroup:(id)sender {
+    NSString *groupID = [sender representedObject];
+    NSMutableArray<PTYTab *> *others = [NSMutableArray array];
+    for (PTYTab *aTab in [self tabs]) {
+        if (![aTab.tabGroupID isEqualToString:groupID]) {
+            [others addObject:aTab];
+        }
+    }
+    [self closeTabs:others confirmWith:@"Close all tabs outside this group?" skippingPinned:YES];
+}
+
+- (void)closeTabsRightOfGroup:(id)sender {
+    NSArray<PTYTab *> *members = [self tabsInGroup:[sender representedObject]];
+    PTYTab *last = members.lastObject;
+    if (!last) {
+        return;
+    }
+    NSArray<PTYTab *> *tabs = [self tabs];
+    const NSInteger lastIndex = [tabs indexOfObject:last];
+    if (lastIndex == NSNotFound || lastIndex + 1 >= (NSInteger)tabs.count) {
+        return;
+    }
+    NSArray<PTYTab *> *toRight = [tabs subarrayWithRange:NSMakeRange(lastIndex + 1, tabs.count - lastIndex - 1)];
+    [self closeTabs:toRight confirmWith:@"Close all tabs to the right of this group?" skippingPinned:YES];
+}
+
+// Close a batch of tabs with a single confirmation. `skipPinned` protects
+// pinned tabs when closing things *around* a group (Close Other / to the
+// Right); Close Group passes NO so it can close its own pinned members.
+- (void)closeTabs:(NSArray<PTYTab *> *)tabsToClose
+      confirmWith:(NSString *)question
+   skippingPinned:(BOOL)skipPinned {
+    if (_layoutLocked) {
+        RLog(@"Layout is locked, refusing to close tabs");
+        return;
+    }
+    NSMutableArray<PTYTab *> *closable = [NSMutableArray array];
+    for (PTYTab *aTab in tabsToClose) {
+        if (!skipPinned || !aTab.isPinned) {
+            [closable addObject:aTab];
+        }
+    }
+    if (closable.count == 0) {
+        return;
+    }
+    NSString *count = (closable.count == 1) ? @"1 tab"
+                                            : [NSString stringWithFormat:@"%lu tabs", (unsigned long)closable.count];
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"%@ (%@)", question, count]
+                                   actions:@[ @"Close", @"Cancel" ]
+                                 accessory:nil
+                                identifier:@"NoSyncCloseTabGroup"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Close Tabs"
+                                    window:self.window];
+    if (selection != kiTermWarningSelection0) {
+        return;
+    }
+    for (PTYTab *aTab in closable) {
+        [self closeTab:aTab];
+    }
+}
+
+// Reorder the tab view so `target` (a permutation of the current tabs) becomes
+// the on-screen order. The target is first canonicalized (pinned prefix, then
+// group contiguity within each class) so no caller can violate the tab-bar
+// invariants -- e.g. a wrapped Move Tab Left/Right or a group dropped before a
+// pinned tab gets clamped rather than applied verbatim. Applied as a sequence
+// of single moves through the tab bar so tabView, cells, and chips stay in
+// sync each step.
+- (void)applyTabOrder:(NSArray<PTYTab *> *)target {
+    target = [self canonicalTabOrderFor:target];
+    for (NSInteger i = 0; i < (NSInteger)target.count; i++) {
+        const NSInteger cur = [self indexOfTab:target[i]];
+        if (cur != NSNotFound && cur != i) {
+            [_contentView.tabBarControl moveTabAtIndex:cur toIndex:i];
+        }
+    }
+}
+
+// `proposed` reordered by iTermTabGroupOrdering's canonical permutation:
+// pinned tabs keep a stable prefix, and each group's members are compacted
+// within the pinned/unpinned class of their first member.
+- (NSArray<PTYTab *> *)canonicalTabOrderFor:(NSArray<PTYTab *> *)proposed {
+    NSMutableArray *groupIDs = [NSMutableArray arrayWithCapacity:proposed.count];
+    NSMutableArray<NSNumber *> *pinned = [NSMutableArray arrayWithCapacity:proposed.count];
+    for (PTYTab *tab in proposed) {
+        [groupIDs addObject:(tab.tabGroupID ?: (id)[NSNull null])];
+        [pinned addObject:@(tab.isPinned)];
+    }
+    NSArray<NSNumber *> *order = [iTermTabGroupOrdering canonicalOrderForGroupIDs:groupIDs
+                                                                           pinned:pinned];
+    NSMutableArray<PTYTab *> *result = [NSMutableArray arrayWithCapacity:proposed.count];
+    for (NSNumber *index in order) {
+        [result addObject:proposed[index.integerValue]];
+    }
+    return result;
+}
+
+// The invariants: pinned tabs form a prefix, and all tabs sharing a group id
+// are contiguous (within their pinned class -- pinning wins when the two
+// conflict). Any reorder path (keyboard, drag, Python API, ...) that funnels
+// through -tabsDidReorder is made safe here: the canonical order preserves
+// membership and pinning and only repairs order, and it is idempotent, so
+// this is a no-op for any order that already satisfies both invariants.
+- (void)enforceTabGroupContiguityInvariant {
+    if (_enforcingTabGroupContiguity) {
+        return;
+    }
+    NSArray<PTYTab *> *tabs = self.tabs;
+    NSArray<PTYTab *> *target = [self canonicalTabOrderFor:tabs];
+    // Identity compare: if order is unchanged there was nothing to repair.
+    BOOL changed = (target.count != tabs.count);
+    for (NSInteger i = 0; !changed && i < (NSInteger)tabs.count; i++) {
+        if (target[i] != tabs[i]) {
+            changed = YES;
+        }
+    }
+    if (!changed) {
+        return;
+    }
+    _enforcingTabGroupContiguity = YES;
+    [self applyTabOrder:target];
+    _enforcingTabGroupContiguity = NO;
+}
+
 - (void)tabsDidReorder {
+    // Repair the group-contiguity invariant first so everything below (and the
+    // persisted arrangement) sees a valid order regardless of how the reorder
+    // happened.
+    [self enforceTabGroupContiguityInvariant];
+
     TmuxController *controller = nil;
     NSMutableArray *windowIds = [NSMutableArray array];
 
@@ -8238,6 +9505,29 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     for (PTYSession *session in self.allSessions) {
         [session didMoveSession];
     }
+    BOOL anyGrouped = NO;
+    for (PTYTab *tab in [self tabs]) {
+        if (tab.tabGroupID) {
+            anyGrouped = YES;
+            break;
+        }
+    }
+    if (anyGrouped) {
+        // The reorder changed tab order; membership (source of truth) is on
+        // the PTYTabs. This logs it so a stale-cell mismatch is visible.
+        // RLog always evaluates its arguments, so only build the string dump
+        // in windows that actually have groups.
+        NSMutableArray<NSString *> *groupOrder = [NSMutableArray array];
+        for (PTYTab *tab in [self tabs]) {
+            NSString *gid = tab.tabGroupID;
+            [groupOrder addObject:(gid ? [gid substringToIndex:MIN(4u, gid.length)] : @"-")];
+        }
+        RLog(@"tabGroup: tabsDidReorder tabGroupOrder=[%@]", [groupOrder componentsJoinedByString:@","]);
+    }
+    // Re-push membership so the tab bar's per-cell group ids track the new
+    // order; the reorder path doesn't otherwise run updateTabColors, which
+    // would leave cell group ids stale and gaps/chips at the wrong tabs.
+    [self updateTabGroups];
 }
 
 - (PTYTabView *)tabView
@@ -8575,6 +9865,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_RIGHT_CELLS:
         case WINDOW_TYPE_COMPACT:
@@ -10438,9 +11729,84 @@ typedef struct {
 }
 
 - (IBAction)moveTabLeft:(id)sender {
-    NSInteger selectedIndex = [_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]];
-    NSInteger destinationIndex = selectedIndex - 1;
-    [self moveTabAtIndex:selectedIndex toIndex:destinationIndex];
+    [self moveCurrentTabUnitByOffset:-1];
+}
+
+// Keyboard tab reordering treats each tab group as one indivisible unit so it
+// can never split a group: moving toward a group jumps the whole group, and
+// selecting a group member moves the entire group. An ungrouped tab is its own
+// unit, so with no groups this behaves exactly like the old single-tab swap.
+- (void)moveCurrentTabUnitByOffset:(NSInteger)offset {
+    if (_layoutLocked) {
+        RLog(@"Layout is locked, refusing to move tab");
+        return;
+    }
+    NSArray<PTYTab *> *tabs = self.tabs;
+    if (tabs.count < 2) {
+        return;
+    }
+    const NSInteger sel = [_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]];
+    if (sel < 0 || sel >= (NSInteger)tabs.count) {
+        return;
+    }
+
+    // Units: a contiguous same-group run, or a single ungrouped tab.
+    NSMutableArray<NSValue *> *units = [NSMutableArray array];
+    NSInteger i = 0;
+    while (i < (NSInteger)tabs.count) {
+        NSString *gid = tabs[i].tabGroupID;
+        NSInteger j = i + 1;
+        if (gid != nil) {
+            while (j < (NSInteger)tabs.count && [tabs[j].tabGroupID isEqualToString:gid]) {
+                j++;
+            }
+        }
+        [units addObject:[NSValue valueWithRange:NSMakeRange(i, j - i)]];
+        i = j;
+    }
+    const NSInteger unitCount = (NSInteger)units.count;
+
+    NSInteger u = NSNotFound;
+    for (NSInteger k = 0; k < unitCount; k++) {
+        const NSRange r = units[k].rangeValue;
+        if (sel >= (NSInteger)r.location && sel < (NSInteger)(r.location + r.length)) {
+            u = k;
+            break;
+        }
+    }
+    if (u == NSNotFound || unitCount < 2) {
+        return;
+    }
+
+    // New unit sequence: remove unit u, reinsert it one unit over (wrapping).
+    NSMutableArray<NSNumber *> *seq = [NSMutableArray arrayWithCapacity:unitCount];
+    for (NSInteger k = 0; k < unitCount; k++) {
+        [seq addObject:@(k)];
+    }
+    [seq removeObjectAtIndex:u];
+    NSInteger insertAt;
+    if (offset > 0) {
+        insertAt = (u == unitCount - 1) ? 0 : (u + 1);
+    } else {
+        insertAt = (u == 0) ? (NSInteger)seq.count : (u - 1);
+    }
+    [seq insertObject:@(u) atIndex:insertAt];
+
+    // Expand to a tab order.
+    NSMutableArray<PTYTab *> *target = [NSMutableArray arrayWithCapacity:tabs.count];
+    for (NSNumber *unitIndex in seq) {
+        const NSRange r = units[unitIndex.integerValue].rangeValue;
+        for (NSInteger k = (NSInteger)r.location; k < (NSInteger)(r.location + r.length); k++) {
+            [target addObject:tabs[k]];
+        }
+    }
+
+    // -applyTabOrder: canonicalizes the target, so a wrapped move that would
+    // break the pinned-left invariant is clamped into the legal zone (matching
+    // the old moveTabLeft:/moveTabRight: clamping) instead of aborting.
+    [self applyTabOrder:target];
+    [self setNeedsUpdateTabObjectCounts:YES];
+    [self tabsDidReorder];
 }
 
 - (void)moveTabAtIndex:(NSInteger)selectedIndex toIndex:(NSInteger)destinationIndex {
@@ -10487,9 +11853,7 @@ typedef struct {
 }
 
 - (IBAction)moveTabRight:(id)sender {
-    NSInteger selectedIndex = [_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]];
-    NSInteger destinationIndex = (selectedIndex + 1) % [_contentView.tabView numberOfTabViewItems];
-    [self moveTabAtIndex:selectedIndex toIndex:destinationIndex];
+    [self moveCurrentTabUnitByOffset:1];
 }
 
 - (IBAction)increaseHeight:(id)sender {
@@ -10658,6 +12022,12 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (void)refreshTerminal:(NSNotification *)aNotification {
+    RLog(@"refreshTerminal: trigger=%@ effective=%@ desiredAppearance=%@ fullScreen=%@ lionFullScreen=%@ key=%@ main=%@ appActive=%@",
+         aNotification ? aNotification.name : @"(nil/internal)",
+         self.window.effectiveAppearance.name,
+         self.window.appearance.name,
+         @(self.fullScreen), @(self.lionFullScreen),
+         @(self.window.isKeyWindow), @(self.window.isMainWindow), @(NSApp.isActive));
     PtyLog(@"refreshTerminal - calling fitWindowToTabs");
     if (_settingStyleMask) {
         RLog(@"Prevent re-entrant style mask setting");
@@ -10824,6 +12194,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (void)rootTerminalViewDidChangeEffectiveAppearance {
+    RLog(@"rootTerminalViewDidChangeEffectiveAppearance -> refreshTerminal: (effective=%@)",
+         self.window.effectiveAppearance.name);
     [self refreshTerminal:nil];
 }
 
@@ -10853,7 +12225,23 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 - (CGFloat)_desiredTabBarHeight {
     if ([self shouldHaveTallTabBar]) {
         return [iTermAdvancedSettingsModel compactMinimalTabBarHeight];
-    } else {
+    }
+    // For left/right tab bars in the Minimal theme, grow each tab to the same
+    // height as a top Minimal tab bar. For a vertical tab bar this value is
+    // used as the per-tab height, and the standard height is too short to hold
+    // a subtitle without looking cramped. We intentionally do not go through
+    // shouldHaveTallTabBar here: that path is about making room for the window
+    // title and stoplights in a compact top bar (and drives stoplight
+    // positioning), neither of which applies to a side tab bar.
+    {
+        const PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
+        const iTermPreferencesTabStyle tabStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+        if (tabStyle == TAB_STYLE_MINIMAL &&
+            (tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab)) {
+            return [iTermAdvancedSettingsModel compactMinimalTabBarHeight];
+        }
+    }
+    {
         if (iTermWindowTypeIsCompact(self.windowType) ||
             iTermWindowTypeIsCompact(self.savedWindowType)) {
             return [iTermAdvancedSettingsModel defaultTabBarHeight];
@@ -10888,6 +12276,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     switch (windowType) {
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             return nil;
 
         case WINDOW_TYPE_TOP_PERCENTAGE:
@@ -10933,7 +12322,6 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
-        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
         case WINDOW_TYPE_NO_TITLE_BAR:
@@ -10941,10 +12329,12 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_COMPACT:
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
             return NO;
 
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_MAXIMIZED:
+        case WINDOW_TYPE_CENTERED:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -10989,6 +12379,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                         return NO;
                     case WINDOW_TYPE_COMPACT:
                     case WINDOW_TYPE_COMPACT_MAXIMIZED:
+                    case WINDOW_TYPE_COMPACT_CENTERED:
                         return YES;
                 }
             case PSMTab_BottomTab:
@@ -11126,6 +12517,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_BOTTOM_CELLS:
         case WINDOW_TYPE_TOP_CELLS:
         case WINDOW_TYPE_LEFT_CELLS:
@@ -11872,6 +13264,13 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     NSString *suggestedFilename = [NSString stringWithFormat:@"iTerm2 Session %@ at %@.txt",
                                    [dateFormatter stringFromDate:now],
                                    [timeFormatter stringFromDate:now]];
+    // The localized time format uses colons as separators (e.g. “1:49:43 PM”)
+    // regardless of the dot-separated template above. Colons and slashes are
+    // both problematic in filenames on macOS (a colon is the legacy path
+    // separator and is shown as “/” by the save panel and Finder), so replace
+    // them with filename-safe characters.
+    suggestedFilename = [[suggestedFilename stringByReplacingOccurrencesOfString:@":" withString:@"."]
+                         stringByReplacingOccurrencesOfString:@"/" withString:@"-"];
 
     __weak __typeof(self) weakSelf = self;
     [iTermSavePanel asyncShowWithOptions:kSavePanelOptionFileFormatAccessory | kSavePanelOptionIncludeTimestampsAccessory | kSavePanelOptionDefaultToLocalhost
@@ -12594,6 +13993,17 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 }
 
 - (PseudoTerminal *)it_moveTabToNewWindow:(PTYTab *)aTab {
+    // A single tab moved to a new window becomes ungrouped, exactly like the
+    // drag tear-off path: only a whole-group move preserves membership.
+    // Without this, the menu/Python paths clone the group (same UUID live in
+    // two windows, names and colors silently diverging).
+    return [self it_moveTabToNewWindow:aTab ungroup:YES];
+}
+
+// `ungroup:NO` is for -tearOffTabGroup:atScreenPoint: only, which moves the
+// FIRST member this way and needs the id preserved so the rest of the group
+// can follow it into the new window.
+- (PseudoTerminal *)it_moveTabToNewWindow:(PTYTab *)aTab ungroup:(BOOL)ungroup {
     if (_layoutLocked) {
         RLog(@"Layout is locked, refusing to move tab to a new window");
         return nil;
@@ -12605,6 +14015,12 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         return nil;
     }
     ITAssertWithMessage([self.tabs containsObject:aTab], @"Called on wrong window");
+    if (ungroup && aTab.tabGroupID != nil) {
+        RLog(@"tabGroup: clearing group %@ from tab %@ moved to a new window",
+             aTab.tabGroupID, [aTab.tabViewItem label]);
+        aTab.tabGroupID = nil;
+        [self reconcileTabGroupDefinitionForTab:aTab];
+    }
     NSTabViewItem *aTabViewItem = aTab.tabViewItem;
     NSPoint point = [[self window] frame].origin;
     point.x += 10;
@@ -14161,6 +15577,7 @@ backgroundColor:(NSColor *)backgroundColor {
             return rect;
             
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
         case WINDOW_TYPE_RIGHT_PERCENTAGE:

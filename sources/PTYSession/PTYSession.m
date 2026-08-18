@@ -276,7 +276,6 @@ static NSString *const SESSION_ARRANGEMENT_TMUX_DCS_ID = @"Tmux DCS ID";
 static NSString *const SESSION_ARRANGEMENT_CONDUCTOR_DCS_ID = @"Conductor DCS ID";
 static NSString *const SESSION_ARRANGEMENT_CONDUCTOR_TREE = @"Conductor Parser Tree";
 static NSString *const SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID = @"Tmux Gateway Session ID";
-static NSString *const SESSION_ARRANGEMENT_TMUX_FOCUS_REPORTING = @"Tmux Focus Reporting";
 static NSString *const SESSION_ARRANGEMENT_NAME_CONTROLLER_STATE = @"Name Controller State";
 static NSString *const __attribute__((unused)) DEPRECATED_SESSION_ARRANGEMENT_DEFAULT_NAME_DEPRECATED = @"Session Default Name";  // manually set name
 static NSString *const __attribute__((unused)) DEPRECATED_SESSION_ARRANGEMENT_WINDOW_TITLE_DEPRECATED = @"Session Window Title";  // server-set window name
@@ -403,6 +402,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 };
 
 @interface PTYSession(AppSwitching)<iTermAppSwitchingPreventionDetectorDelegate>
+@end
+
+@interface PTYSession () <iTermKittyDnDBridgeDataSource>
 @end
 
 // Background-drawing delegate used when rendering a screenshot. It forwards to the
@@ -661,6 +663,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     id<iTermKeyMapper> _keyMapper;
     iTermKeyMappingMode _keyMappingMode;
+
+    // Kitty drag-and-drop protocol (OSC 72). Created lazily on the first OSC 72
+    // sequence.
+    iTermKittyDnDBridge *_kittyDnDBridge;
 
     NSString *_badgeFontName;
     iTermVariableScope *_variablesScope;
@@ -1104,6 +1110,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_nameController release];
     [_tailFindController stopTailFind];  // This frees the substring in the tail find context, if needed.
     _shell.delegate = nil;
+    [_kittyDnDBridge release];
     [_pasteboard release];
     [_pbtext release];
     [_creationDate release];
@@ -2016,13 +2023,11 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [aSession setScreenSize:[sessionView frame].size parent:[delegate realParentWindow]];
 
-    if ([arrangement[SESSION_ARRANGEMENT_TMUX_FOCUS_REPORTING] boolValue]) {
-        // This has to be done after setScreenSize:parent: because it has a side-effect of enabling
-        // the terminal.
-        [aSession.screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-            terminal.reportFocus = [iTermAdvancedSettingsModel focusReportingEnabled];
-        }];
-    }
+    // Note: tmux panes are deliberately not seeded with focus reporting here. Each pane's
+    // emulator enables focus reporting only when its foreground app emits DECSET 1004 (which
+    // tmux forwards in %output), matching non-tmux sessions. Previously we force-enabled focus
+    // reporting on every pane whenever the tmux server had focus-events on, which injected stray
+    // focus reports into panes whose apps never asked for them (issue 12933).
 
     NSDictionary *state = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_STATE];
     if (state) {
@@ -3428,12 +3433,31 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                         DLog(@"Sending initial text immediately");
                         [self sendInitialText];
                     }
+                    [self showUnavailableWorkingDirectoryNoticeIfNeeded];
                     if (completion) {
                         completion(YES);
                     }
                 }];
             }];
         }];
+    }];
+}
+
+// If the requested working directory didn't exist at launch, iTermSessionFactory fell back to the
+// home directory and stashed the original path. Tell the user why we're not where they expected.
+// Issue 12955.
+- (void)showUnavailableWorkingDirectoryNoticeIfNeeded {
+    NSString *unavailable = self.unavailableWorkingDirectory;
+    if (!unavailable.length) {
+        return;
+    }
+    self.unavailableWorkingDirectory = nil;
+    NSString *message = [NSString stringWithFormat:@"The directory “%@” is unavailable. Started in home directory instead.",
+                         unavailable];
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal,
+                                    VT100ScreenMutableState *mutableState,
+                                    id<VT100ScreenDelegate> delegate) {
+        [mutableState appendBannerMessage:message];
     }];
 }
 
@@ -3638,6 +3662,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     // session into an inconsistent restartable-but-never-launched
     // state, so the early return covers both halves.
     if (!self.isRestartable) {
+        DLog(@"restartSessionWithCommand: session %@ is not restartable, ignoring", self);
         return;
     }
     if (command.length > 0) {
@@ -4645,6 +4670,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_shell.winSizeController setGridSize:_screen.size
                                  viewSize:_screen.viewSize
                               scaleFactor:self.backingScaleFactor];
+    // The old program's Kitty drag-and-drop registration must not survive a shell
+    // restart (the bridge is reused).
+    [_kittyDnDBridge reset];
     [self resetForRelaunch];
     __weak __typeof(self) weakSelf = self;
     [self startProgram:_program
@@ -4796,6 +4824,113 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         return NO;
     }
     return [PTYSession performKeyBindingAction:action event:event];
+}
+
+// Single detection point for the "your shortcut didn't fire because this key's
+// character changed; match by physical key?" offer. Called once per keyDown from
+// iTermApplication's -handleKeyDownEvent: only when no binding claimed the event, so
+// there is exactly one decision and one presentation per event. `session` is the
+// terminal session receiving the keystroke (for the in-session announcement) or nil
+// when a non-terminal responder / non-terminal window is focused (modal instead).
++ (void)maybeSuggestPhysicalKeyBindingsForKeyDownEvent:(NSEvent *)event
+                                             inSession:(nullable PTYSession *)session {
+    if (event.type != NSEventTypeKeyDown) {
+        return;
+    }
+    // Auto-repeat adds nothing to a one-time offer, and repeating this scan while a key
+    // is held would be wasted work before the first offer fires, so ignore repeats.
+    if (event.isARepeat) {
+        return;
+    }
+    // Offer at most once per launch. Once an offer fires this bails cheaply; combined
+    // with the repeat check above, holding a key never re-runs the scan. "Don't Ask
+    // Again" makes it permanent across launches and enabling the preference likewise
+    // stops it.
+    static BOOL didOfferThisLaunch = NO;
+    if (didOfferThisLaunch) {
+        return;
+    }
+    // Cheap in-memory gates before the user-defaults read and the keymap scan. Only
+    // Cmd/Ctrl/Opt shortcuts are considered. Plain typing stays off this hot path;
+    // Shift-only bindings are intentionally out of scope (including Shift would put
+    // capital-letter and shifted-punctuation typing on the scan path for a rare
+    // binding class, which can still enable the preference manually); and bare special
+    // keys (arrows, function keys) are layout-stable so they don't suffer this drift.
+    const NSEventModifierFlags mask = (NSEventModifierFlagCommand |
+                                       NSEventModifierFlagControl |
+                                       NSEventModifierFlagOption);
+    if ((event.it_modifierFlags & mask) == 0) {
+        return;
+    }
+    if ([iTermPreferences boolForKey:kPreferenceKeyLanguageAgnosticKeyBindings]) {
+        return;
+    }
+    if (iTermUserDefaults.suppressPhysicalKeyBindingSuggestion) {
+        return;
+    }
+    iTermKeystroke *keystroke = [iTermKeystroke withEvent:event];
+    // nil profile map means the coordinator searches the global map only.
+    NSDictionary *keyMappings = session.profile[KEY_KEYBOARD_MAP];
+    if (![iTermKeyMappings keystrokeWouldMatchOnlyByPhysicalKey:keystroke keyMappings:keyMappings]) {
+        return;
+    }
+    didOfferThisLaunch = YES;
+    DLog(@"Offer physical-key binding for %@ (session=%@)", keystroke.serialized, session);
+    if (session) {
+        [session suggestEnablingPhysicalKeyBindings];
+    } else {
+        // No terminal session is receiving the keystroke, so there is nothing to
+        // attach a session announcement to; present a modal instead. Defer so we
+        // don't run a modal run loop inside event dispatch.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self explainAndOfferPhysicalKeyBindings];
+        });
+    }
+}
+
++ (void)enablePhysicalKeyBindings {
+    DLog(@"User accepted: enabling language-agnostic key bindings");
+    [iTermPreferences setBool:YES forKey:kPreferenceKeyLanguageAgnosticKeyBindings];
+}
+
++ (void)suppressPhysicalKeyBindingSuggestion {
+    DLog(@"User chose Don't Ask Again for physical-key binding suggestion");
+    iTermUserDefaults.suppressPhysicalKeyBindingSuggestion = YES;
+}
+
+// Shows the detailed explanation as a modal (which has room to wrap, unlike the
+// one-line announcement) and applies the user's choice. Reused by the no-session
+// path above and by the in-session announcement's “Learn More” action. Guards
+// against overlapping presentations and re-checks that the offer still applies.
++ (void)explainAndOfferPhysicalKeyBindings {
+    static BOOL showing = NO;
+    if (showing) {
+        return;
+    }
+    if ([iTermPreferences boolForKey:kPreferenceKeyLanguageAgnosticKeyBindings] ||
+        iTermUserDefaults.suppressPhysicalKeyBindingSuggestion) {
+        return;
+    }
+    showing = YES;
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:@"A keyboard shortcut didn’t run because this physical key now produces a different character than it did when the shortcut was created, usually after switching keyboard layout or input method. Matching key bindings by physical key makes shortcuts work regardless of the character a key produces. This affects all key bindings; you can change it later in Settings > Keys."
+                                   actions:@[ @"Use Physical Key", @"Not Now", @"Don’t Ask Again" ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Match key bindings by physical key?"
+                                    window:nil];
+    showing = NO;
+    switch (selection) {
+        case kiTermWarningSelection0:
+            [self enablePhysicalKeyBindings];
+            break;
+        case kiTermWarningSelection2:
+            [self suppressPhysicalKeyBindingSuggestion];
+            break;
+        default:
+            break;
+    }
 }
 
 + (void)selectMenuItemWithSelector:(SEL)theSelector {
@@ -5879,6 +6014,17 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self.delegate sessionUpdateMetalAllowed];
     [self profileNameDidChangeTo:self.profile[KEY_NAME]];
     [_view.title updateLockButton];
+
+    // Repaint so display-only settings that don't change the color map, font, or
+    // geometry (e.g. mark indicator visibility and theme mark colors) take effect
+    // immediately instead of waiting for the next frame triggered by user activity.
+    [_textview requestDelegateRedraw];
+
+    // The auto-composer separator color is derived from the mark colors, which
+    // depend on KEY_USE_THEME_MARK_COLORS and the theme's ANSI palette. Refresh it
+    // here so toggling the setting or editing an ANSI color (which leaves the
+    // background unchanged) doesn't leave the separator showing a stale color.
+    [self updateAutoComposerSeparatorVisibility];
 }
 
 - (void)removeBindings {
@@ -7030,7 +7176,6 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [result setObject:bookmark forKey:SESSION_ARRANGEMENT_BOOKMARK];
     [result setObject:@"" forKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY];
     [result setObject:[parseNode objectForKey:kLayoutDictWindowPaneKey] forKey:SESSION_ARRANGEMENT_TMUX_PANE];
-    result[SESSION_ARRANGEMENT_TMUX_FOCUS_REPORTING] = parseNode[kLayoutDictFocusReportingKey] ?: @NO;
     NSDictionary *hotkey = parseNode[kLayoutDictHotkeyKey];
     if (hotkey) {
         [result setObject:hotkey forKey:SESSION_ARRANGEMENT_HOTKEY];
@@ -10706,6 +10851,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return _pasteHelper.isPasting;
 }
 
+- (BOOL)pasteKeystrokePassthroughEnabled {
+    return _pasteHelper.keystrokePassthrough;
+}
+
 - (void)queueKeyDown:(NSEvent *)event {
     [_pasteHelper enqueueEvent:event];
 }
@@ -11089,6 +11238,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (BOOL)eventAbortsPasteWaitingForPrompt:(NSEvent *)event {
     if (!_pasteHelper.isWaitingForPrompt) {
+        return NO;
+    }
+    if (_pasteHelper.keystrokePassthrough) {
+        // The user chose to type directly to the terminal, so Esc and ^C should
+        // reach the shell (to answer/interrupt the prompt) rather than aborting
+        // the paste. The paste indicator's Cancel button remains the way to abort.
         return NO;
     }
     if (event.keyCode == kVK_Escape) {
@@ -12275,6 +12430,39 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
     DLog(@"Special handler: KEY BINDING ACTION");
     return YES;
+}
+
+- (void)suggestEnablingPhysicalKeyBindings {
+    NSString *const identifier = @"NoSyncPhysicalKeyBindingSuggestion";
+    if ([self announcementWithIdentifier:identifier]) {
+        return;
+    }
+    // The banner shows only two buttons before overflowing into a "More Actions…"
+    // pull-down, so "Use Physical Key" is the button and Learn More / Don't Ask Again
+    // land in the overflow. All three are reachable; the coordinator's once-per-launch
+    // guard is what prevents nagging.
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:@"This key now types a different character. Match key bindings by physical key?"
+                                                         style:kiTermAnnouncementViewStyleQuestion
+                                                   withActions:@[ @"Use Physical Key", @"Learn More", @"Don’t Ask Again" ]
+                                                    completion:^(int selection) {
+        switch (selection) {
+            case 0:
+                [PTYSession enablePhysicalKeyBindings];
+                break;
+            case 1:
+                // Learn More: the detailed modal carries the full explanation and its
+                // own Don't Ask Again.
+                [PTYSession explainAndOfferPhysicalKeyBindings];
+                break;
+            case 2:
+                [PTYSession suppressPhysicalKeyBindingSuggestion];
+                break;
+            default:
+                break;
+        }
+    }];
+    [self queueAnnouncement:announcement identifier:identifier];
 }
 
 - (void)handleKeypressInInstantReplay:(NSEvent *)event {
@@ -13732,6 +13920,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return [iTermProfilePreferences boolForKey:KEY_SHOW_MARK_INDICATORS inProfile:_profile];
 }
 
+- (BOOL)textViewShouldUseThemeMarkColors {
+    return [iTermProfilePreferences boolForKey:KEY_USE_THEME_MARK_COLORS inProfile:_profile];
+}
+
 - (void)textViewThinksUserIsTryingToSendArrowKeysWithScrollWheel:(BOOL)isTrying {
     [self.naggingController tryingToSendArrowKeysWithScrollWheel:isTrying];
 }
@@ -14940,6 +15132,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_textview requestDelegateRedraw];
     [self restoreColorsFromProfile];
     _screen.trackCursorLineMovement = NO;
+    // A terminal reset (RIS / the Reset menu) clears Kitty drag-and-drop state too,
+    // so a program that registered t=a/t=o and then exited does not leave the
+    // protocol enabled in sessions without shell integration (which never emit the
+    // OSC 133 prompt mark that otherwise resets it).
+    [_kittyDnDBridge reset];
 }
 
 - (void)restoreColorsFromProfile {
@@ -15193,6 +15390,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_ACCESSORY:
         case WINDOW_TYPE_CENTERED:
+        case WINDOW_TYPE_COMPACT_CENTERED:
         case WINDOW_TYPE_TOP_PERCENTAGE:
         case WINDOW_TYPE_BOTTOM_PERCENTAGE:
         case WINDOW_TYPE_LEFT_PERCENTAGE:
@@ -16016,6 +16214,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         [self clearTabStatus];
     });
     [_pasteHelper unblock];
+    // A program that used the Kitty drag-and-drop protocol has exited (the shell
+    // is back at a prompt), so clear its offer/accept state rather than let it
+    // linger, the same way other modes are reset at a prompt.
+    [_kittyDnDBridge reset];
 }
 
 - (void)screenPromptOfNonInitialKindDidStart:(VT100PromptKind)kind {
@@ -17545,6 +17747,33 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (VT100GridRange)screenRangeOfVisibleLines {
     return [_textview rangeOfVisibleLines];
+}
+
+- (void)screenDidReceiveKittyDragAndDrop:(NSString *)content {
+    if (!_kittyDnDBridge) {
+        __weak __typeof(self) weakSelf = self;
+        _kittyDnDBridge = [[iTermKittyDnDBridge alloc] initWithDataSource:self
+                                                                  report:^(NSData *data) {
+            [weakSelf screenSendReportData:data];
+        }];
+    }
+    [_kittyDnDBridge handleInboundSequence:content];
+}
+
+- (iTermConductor *)kittyDnDConductor {
+    return _conductor;
+}
+
+- (NSView *)kittyDnDView {
+    return _textview;
+}
+
+- (void)kittyDnDDragDidBegin {
+    [_textview kittyDragDidBegin];
+}
+
+- (iTermKittyDnDBridge *)textViewKittyDnDBridge {
+    return _kittyDnDBridge;
 }
 
 - (void)screenSetPointerShape:(NSString *)pointerShape {
@@ -23646,7 +23875,9 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
 - (void)updateAutoComposerSeparatorVisibility {
     _composerManager.isSeparatorVisible = [self shouldShowAutoComposerSeparator];
     _composerManager.separatorColor = [iTermTextDrawingHelper colorForLineStyleMark:iTermMarkIndicatorTypeSuccess
-                                                                    backgroundColor:[_screen.colorMap colorForKey:kColorMapBackground]];
+                                                                    backgroundColor:[_screen.colorMap colorForKey:kColorMapBackground]
+                                                                           colorMap:_screen.colorMap
+                                                                     useThemeColors:[iTermProfilePreferences boolForKey:KEY_USE_THEME_MARK_COLORS inProfile:_profile]];
 }
 
 - (BOOL)shouldShowAutoComposerSeparator {

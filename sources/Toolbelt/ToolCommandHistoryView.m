@@ -192,9 +192,18 @@ static const CGFloat kHelpMargin = 5;
     if (@available(macOS 10.16, *)) {
         fudgeFactor = 32;
     }
-    column.minWidth = contentSize.width - fudgeFactor;
-    column.maxWidth = contentSize.width - fudgeFactor;
-    [_tableView sizeToFit];
+    // When the tool is first constructed during new-window creation the toolbelt can have zero
+    // width, making contentSize.width - fudgeFactor negative. Pinning min/maxWidth to that poisons
+    // the column (maxWidth clamps to 0), and later relayouts at the real width can't recover because
+    // minWidth gets clamped back down to maxWidth. That leaves freshly reloaded cells at zero width
+    // so their text is invisible until a manual resize. Only pin the column when the width is sane.
+    const CGFloat targetWidth = contentSize.width - fudgeFactor;
+    if (targetWidth > 0) {
+        // Raise the ceiling before the floor so a previously-poisoned maxWidth can't clamp minWidth.
+        column.maxWidth = targetWidth;
+        column.minWidth = targetWidth;
+        [_tableView sizeToFit];
+    }
     [_tableView reloadData];
 }
 

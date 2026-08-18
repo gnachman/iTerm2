@@ -98,6 +98,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet NSButton *_useTabColor;
     IBOutlet NSButton *_useUnderlineColor;
     IBOutlet NSButton *_useSmartCursorColor;
+    IBOutlet NSButton *_useThemeMarkColors;
     IBOutlet NSButton *_useActivePaneBorder;
     IBOutlet iTermSettingsColorWell *_activePaneBorderColor;
 
@@ -269,6 +270,11 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() { [weakSelf updateColorControlsEnabled]; };
 
+    [self defineControl:_useThemeMarkColors
+                    key:KEY_USE_THEME_MARK_COLORS
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
     info = [self defineControl:_useActivePaneBorder
                            key:KEY_USE_ACTIVE_PANE_BORDER
                    relatedView:nil
@@ -388,7 +394,12 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     RLog(@"-- begin copying colors --");
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     for (NSString *baseKey in [self keysForBulkCopy]) {
-        if ([baseKey isEqualToString:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE]) {
+        if ([baseKey isEqualToString:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE] ||
+            [baseKey isEqualToString:KEY_USE_THEME_MARK_COLORS]) {
+            // These are not per-appearance color values, so they have no (Light)/
+            // (Dark) variants. Don't snapshot them into suffixed copies, or the
+            // stale copy would later clobber the base value in
+            // copyCurrentModeColorsToShared.
             DLog(@"Ignore %@", baseKey);
             continue;
         }
@@ -414,6 +425,11 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     RLog(@"-- begin copying colors to shared --");
     NSString *suffix = _mode.selectedTag == 1 ? COLORS_DARK_MODE_SUFFIX : COLORS_LIGHT_MODE_SUFFIX;
     for (NSString *baseKey in [self keysForBulkCopy]) {
+        if ([baseKey isEqualToString:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE] ||
+            [baseKey isEqualToString:KEY_USE_THEME_MARK_COLORS]) {
+            // Not per-appearance; never collapse a suffixed copy back onto the base.
+            continue;
+        }
         NSString *key = [baseKey stringByAppendingString:suffix];
         id newValue = [super objectForKey:key];
         if (!newValue) {
@@ -1004,6 +1020,13 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         return NO;
     }
     if ([key isEqualToString:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE]) {
+        return NO;
+    }
+    if ([key isEqualToString:KEY_USE_THEME_MARK_COLORS]) {
+        // This is a mode-independent behavior toggle, not a per-appearance color
+        // value. (The resolved ANSI mark colors already adapt to light/dark on
+        // their own.) So it must not get a (Light)/(Dark) suffix, or the session
+        // would read the unsuffixed key and never see the change.
         return NO;
     }
     if (![super boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE]) {

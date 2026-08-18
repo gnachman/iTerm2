@@ -182,7 +182,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
     if (flag != nil) {
         return flag.boolValue;
     }
-    return [[NSHost fullyQualifiedDomainName] isEqualToString:self.cached];
+    return [NSHost it_hostnameIsThisMachine:self.cached];
 }
 
 - (nullable NSString *)stringByCompressingString:(NSString *)source {

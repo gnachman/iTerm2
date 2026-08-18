@@ -179,6 +179,11 @@ export function createPushRelay(options = {}) {
     try {
       response = await worker.fetch(request, workerEnv);
     } catch (e) {
+      // Reaches here when the APNs transport itself fails (request timeout, a
+      // dead/GOAWAY h2 session — see host/apns.js) or any other worker throw.
+      // Log it: this is otherwise invisible, and it's the failure mode a bad
+      // .p8 / APNs outage takes. No device token or secret is in the message.
+      console.error(`push-relay: ${req.method} ${path} failed before response: ${e?.stack || e}`);
       metrics.inc("http_requests_total");
       metrics.inc("http_errors_total");
       res.writeHead(500, { "content-type": "application/json" });
@@ -190,6 +195,15 @@ export function createPushRelay(options = {}) {
     for (const [k, v] of response.headers) headers[k] = v;
     const text = await response.text();
     countRequest(metrics, path, response.status, text);
+    // Surface push delivery failures in the process log. When APNs returns a
+    // non-2xx the worker maps it to a 502 whose body carries Apple's status and
+    // reason (e.g. `APNs 400: {"reason":"BadDeviceToken"}`) — but that body is
+    // the ONLY record of the reason, and Cloudflare replaces an origin 502 with
+    // its own page before the client ever sees it. The body holds Apple's error,
+    // never a device token or secret, so it is safe to log verbatim.
+    if ((path === "/push" || path === "/push/mutable") && response.status === 502) {
+      console.error(`push-relay: APNs delivery failed: ${path} -> ${text}`);
+    }
     res.writeHead(response.status, headers);
     res.end(text);
   }

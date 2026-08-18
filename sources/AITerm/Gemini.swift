@@ -9,6 +9,13 @@ struct GeminiRequestBuilder: Codable {
     let system_instruction: SystemInstructions?
     let contents: [Content]
     let tools: [Tool]?
+    // Blob-native replay; spliced into "contents" in body(), NOT part of the wire
+    // body (excluded from Codable via CodingKeys). See LLMRequestBuilder.
+    var frozenHistoryElements: Data? = nil
+
+    private enum CodingKeys: String, CodingKey {
+        case system_instruction, contents, tools
+    }
 
     struct SystemInstructions: Codable {
         var parts: [Part]
@@ -170,7 +177,9 @@ struct GeminiRequestBuilder: Codable {
     init(messages: [LLM.Message],
          functions: [LLM.AnyFunction],
          hostedTools: HostedTools,
-         modelName: String? = nil) {
+         modelName: String? = nil,
+         frozenHistoryElements: Data? = nil) {
+        self.frozenHistoryElements = frozenHistoryElements
         // Only signature-requiring generations (3-series and later) get the
         // bypass token for signature-less calls; older Gemini never emits
         // signatures and must keep receiving none, both on reload and on the
@@ -335,7 +344,11 @@ struct GeminiRequestBuilder: Codable {
     }
 
     func body() throws -> Data {
-        return try! JSONEncoder().encode(self)
+        let data = try! JSONEncoder().encode(self)
+        // Gemini carries system separately (system_instruction), so the history
+        // splices at the start of "contents", before this turn's new content.
+        return try ChatBlobAssembler.spliceFrozenHistory(
+            frozenHistoryElements, into: data, arrayKey: "contents", afterCount: 0)
     }
 }
 
@@ -398,6 +411,15 @@ struct LLMGeminiResponseParser: LLMResponseParser {
         }
 
         let candidates: [Candidate]
+        // Gemini reports token usage in usageMetadata; promptTokenCount is the whole
+        // input. Optional: some error/streaming chunks omit it.
+        var usageMetadata: UsageMetadata?
+
+        struct UsageMetadata: Codable {
+            var promptTokenCount: Int?
+        }
+
+        var promptTokens: Int? { usageMetadata?.promptTokenCount }
 
         struct Candidate: Codable {
             var content: Content?
@@ -440,6 +462,8 @@ struct LLMGeminiStreamingResponseParser: LLMStreamingResponseParser {
         var choiceMessages: [LLM.Message] {
             responseObject.choiceMessages
         }
+        // usageMetadata rides the final Gemini stream chunk; nil on earlier ones.
+        var promptTokens: Int? { responseObject.promptTokens }
     }
     mutating func parse(data: Data) throws -> LLM.AnyStreamingResponse? {
         let decoder = JSONDecoder()

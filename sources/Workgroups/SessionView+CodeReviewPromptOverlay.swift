@@ -13,6 +13,7 @@ extension SessionView {
     @objc(presentCodeReviewPromptOverlayWithDefaultPrompt:onStart:)
     func presentCodeReviewPromptOverlay(defaultPrompt: String?,
                                          onStart: @escaping (String) -> Void) {
+        RLog("SessionView.presentCodeReviewPromptOverlay: window=\(window != nil) hidden=\(isHidden) replacingExisting=\(codeReviewPromptOverlay != nil)")
         // Drop any existing overlay so a rapid reload-on-reload doesn't
         // stack two prompt views.
         codeReviewPromptOverlay?.removeFromSuperview()

@@ -88,3 +88,9 @@ emoji-sequences.txt
 
 # Throwaway venv created by tests/run_ping_flood_dos_test.sh.
 tests/.venv-ping-flood/
+
+# Build output of tools/build_uv.sh (OUTPUT_DIR defaults to the repo root). The uv
+# tarball is hosted on iterm2.com and signed into the manifest; it must never be
+# committed to the repo.
+/uv-*-apple-darwin.tar.gz
+/uv-*-apple-darwin.tar.gz.sha256

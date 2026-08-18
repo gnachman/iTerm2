@@ -824,6 +824,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
     [self updateCursorGuideRendererForFrameData:frameData];
     [self updateIndicatorRendererForFrameData:frameData];
     [self updateTimestampsRendererForFrameData:frameData];
+    [self updateArrowStyleMarkRendererForFrameData:frameData];
 
     [self.cellRenderers enumerateObjectsUsingBlock:^(id<iTermMetalCellRenderer>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if (!obj.rendererDisabled) {
@@ -1340,6 +1341,16 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
                                                       size:glyphSize
                                                      scale:scale
                                                      emoji:&emoji];
+}
+
+- (void)updateArrowStyleMarkRendererForFrameData:(iTermMetalFrameData *)frameData {
+    if (_arrowStyleMarkRenderer.rendererDisabled) {
+        return;
+    }
+    [_arrowStyleMarkRenderer updateForCellConfiguration:frameData.cellConfiguration
+                                          successColor:frameData.perFrameState.markSuccessColor
+                                            otherColor:frameData.perFrameState.markOtherColor
+                                          failureColor:frameData.perFrameState.markFailureColor];
 }
 
 - (void)updateBackgroundImageRendererForFrameData:(iTermMetalFrameData *)frameData {

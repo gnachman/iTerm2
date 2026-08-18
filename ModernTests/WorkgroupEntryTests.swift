@@ -312,6 +312,85 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
                        "Nested port's leader should be the host")
     }
 
+    // §4.2b — a .tab child that hosts its own peer group wires up a
+    // nested port and a resolvable toolbar, exactly like the split-host
+    // case. Guards the shape behind the "second tab had no peers or
+    // toolbar" bug: the tab host must resolve to its nested port's
+    // toolbar items (from which the peer switcher is drawn), not to an
+    // empty list. The missing-refresh half of that bug (nothing pushed
+    // these items to the SessionView after the port was built) is a UI
+    // timing issue that needs a live delegate and is verified manually;
+    // this locks in the data-model wiring the refresh depends on.
+    func test_4_2b_nestedPortForTabHost() {
+        let wg = WGFix.wgTwoTabsEachWithPeers(peerCount: 2)
+        enterWorkgroup(wg)
+        let tabHost = wg.sessions.first(where: {
+            if case .tab = $0.kind { return true }
+            return false
+        })!
+        let hostLive = liveSession(forConfigID: tabHost.uniqueIdentifier)!
+        guard let port = hostLive.peerPort as? iTermWorkgroupPeerPort else {
+            XCTFail("Tab peer-host should have a nested peer port assigned")
+            return
+        }
+        let peerKidIDs = wg.sessions
+            .filter { $0.parentID == tabHost.uniqueIdentifier }
+            .filter { if case .peer = $0.kind { return true }; return false }
+            .map { $0.uniqueIdentifier }
+        let expected = Set([tabHost.uniqueIdentifier] + peerKidIDs)
+        for id in expected {
+            let live = liveSession(forConfigID: id)!
+            XCTAssertEqual(port.identifier(for: live), id)
+        }
+        XCTAssertEqual(port.activeSessionIdentifier, tabHost.uniqueIdentifier,
+                       "Nested port's leader should be the tab host")
+        // The host must resolve through the nested port to a non-empty
+        // toolbar (this is what the SessionView refresh applies).
+        XCTAssertFalse(instance!.toolbarItems(for: hostLive).isEmpty,
+                       "Tab peer-host returned an empty toolbar; its peer switcher would be missing")
+    }
+
+    // §4.2c — a peer group nested two levels deep spawns its peers from
+    // the entry (main) session, not the intermediate host. Peers inherit
+    // their profile / working directory / size from the session that
+    // existed before the workgroup was entered (e.g. so a workgroup
+    // opened on a remote host puts every peer on that host), so the
+    // spawn basis must be mainSession regardless of nesting depth. At
+    // depth 1 the host's config-parent already IS mainSession; this
+    // covers the depth >= 2 case, where `parent` would otherwise be an
+    // intermediate spawned pane.
+    func test_4_2c_deeplyNestedPeersSpawnFromMainSession() {
+        let root = WGFix.makeRoot()
+        let outerTab = WGFix.makeTab(parentID: root.uniqueIdentifier,
+                                     displayName: "Outer")
+        let innerTab = WGFix.makeTab(parentID: outerTab.uniqueIdentifier,
+                                     items: [.modeSwitcher],
+                                     displayName: "Inner")
+        let peerA = WGFix.makePeer(parentID: innerTab.uniqueIdentifier,
+                                   displayName: "InnerPeerA")
+        let peerB = WGFix.makePeer(parentID: innerTab.uniqueIdentifier,
+                                   displayName: "InnerPeerB")
+        let wg = WGFix.wrap(name: "deepNestedPeers",
+                            sessions: [root, outerTab, innerTab, peerA, peerB])
+        enterWorkgroup(wg)
+
+        // The intermediate host (outer tab) is a spawned pane, not the
+        // entry session.
+        let outerLive = liveSession(forConfigID: outerTab.uniqueIdentifier)!
+        XCTAssertTrue(outerLive !== leader)
+
+        for peerID in [peerA.uniqueIdentifier, peerB.uniqueIdentifier] {
+            let record = spawner.records.first {
+                $0.kind == .peer && $0.config.uniqueIdentifier == peerID
+            }
+            XCTAssertNotNil(record, "Peer \(peerID) was never spawned")
+            XCTAssertTrue(record?.parent === leader,
+                          "Deeply-nested peer must inherit from the entry (main) session")
+            XCTAssertTrue(record?.parent !== outerLive,
+                          "Deeply-nested peer must not inherit from the intermediate host")
+        }
+    }
+
     // §4.3 — non-peer host with no peer children does NOT get a port.
     func test_4_3_noNestedPortForLeafSplit() {
         let wg = WGFix.wgRootWithSplits(n: 1, splitItems: [.reload(nil)])
@@ -674,6 +753,136 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
         XCTAssertNil(
             iTermWorkgroupController.instance.workgroupInstance(on: leader),
             "Child termination should drive the workgroup out")
+    }
+
+    // MARK: - §9.3 Leader restored to shared pane on teardown (issue 12967)
+
+    // The main peer group shares one tab pane; only the active member's
+    // view is installed, the rest are buried. When the pane is showing a
+    // NON-leader peer and the workgroup tears down (here: a sibling
+    // non-peer tab is closed), invalidate() terminates that visible peer.
+    // Without the fix its dead view is left in the tab — the blank pane
+    // in the bug report. teardown must first swap the surviving leader
+    // back into the pane.
+    func test_9_3_teardownRestoresLeaderWhenNonLeaderPeerIsVisible() {
+        leader = RevealSpyPTYSession(synthetic: false)!
+        let spyLeader = leader as! RevealSpyPTYSession
+
+        let root = WGFix.makeRoot()
+        let peer = WGFix.makePeer(parentID: root.uniqueIdentifier)
+        let tab = WGFix.makeTab(parentID: root.uniqueIdentifier)
+        let wg = WGFix.wrap(name: "rootPeerTab",
+                            sessions: [root, peer, tab])
+        enterWorkgroup(wg)
+        XCTAssertNotNil(instance)
+
+        // Simulate the user switching the shared pane to the peer.
+        instance!.peerPort.activeSessionIdentifier = peer.uniqueIdentifier
+        XCTAssertTrue(instance!.peerPort.activeSession !== spyLeader,
+                      "Precondition: a non-leader peer occupies the pane")
+
+        // Close the separate non-peer tab: its termination drives the
+        // whole workgroup through teardown.
+        let tabSession = spawner.session(forConfigID: tab.uniqueIdentifier)!
+        NotificationCenter.default.post(
+            name: NSNotification.Name.iTermSessionWillTerminate,
+            object: tabSession)
+
+        XCTAssertNil(
+            iTermWorkgroupController.instance.workgroupInstance(on: leader),
+            "Sibling-tab termination should drive the workgroup out")
+        XCTAssertEqual(spyLeader.spy_revealAsPeerCount, 1,
+                       "Leader must be swapped back into the shared pane so the tab isn't left showing a terminated peer")
+    }
+
+    // Inverse guard: when the terminating session IS the member holding
+    // the shared pane, that pane's own tab is the one closing. Restoring
+    // the leader into a closing tab would be wrong, so teardown must
+    // leave it alone.
+    func test_9_3_teardownDoesNotRestoreLeaderWhenVisiblePeerIsClosing() {
+        leader = RevealSpyPTYSession(synthetic: false)!
+        let spyLeader = leader as! RevealSpyPTYSession
+
+        let root = WGFix.makeRoot()
+        let peer = WGFix.makePeer(parentID: root.uniqueIdentifier)
+        let wg = WGFix.wrap(name: "rootPeer", sessions: [root, peer])
+        enterWorkgroup(wg)
+        XCTAssertNotNil(instance)
+
+        instance!.peerPort.activeSessionIdentifier = peer.uniqueIdentifier
+        let peerSession = spawner.session(forConfigID: peer.uniqueIdentifier)!
+        XCTAssertTrue(instance!.peerPort.activeSession === peerSession,
+                      "Precondition: the peer occupies the pane")
+
+        // Close the pane's own visible peer.
+        NotificationCenter.default.post(
+            name: NSNotification.Name.iTermSessionWillTerminate,
+            object: peerSession)
+
+        XCTAssertNil(
+            iTermWorkgroupController.instance.workgroupInstance(on: leader))
+        XCTAssertEqual(spyLeader.spy_revealAsPeerCount, 0,
+                       "Closing the pane's own visible peer must not reveal the leader into a closing tab")
+    }
+
+    // MARK: - §9.4 Close-cascade warning (workgroup-aware close confirm)
+
+    // Closing one member of a workgroup tears the whole thing down, so
+    // the close confirmation must warn that the workgroup's other
+    // sessions will close too. Closing just the tab child of a
+    // root+2-peers+tab workgroup should report the workgroup name and
+    // the three other live sessions (main + two peers).
+    func test_9_4_closeCascadeWarning_namesWorkgroupAndCountsOthers() {
+        let root = WGFix.makeRoot()
+        let peer0 = WGFix.makePeer(parentID: root.uniqueIdentifier)
+        let peer1 = WGFix.makePeer(parentID: root.uniqueIdentifier)
+        let tab = WGFix.makeTab(parentID: root.uniqueIdentifier)
+        let wg = WGFix.wrap(name: "Deploy",
+                            sessions: [root, peer0, peer1, tab])
+        enterWorkgroup(wg)
+
+        let tabSession = spawner.session(forConfigID: tab.uniqueIdentifier)!
+        let warning = iTermWorkgroupInstance.closeCascadeWarning(
+            forSessions: [tabSession])
+        XCTAssertNotNil(warning)
+        XCTAssertTrue(warning!.contains("“Deploy”"),
+                      "Warning should name the workgroup: \(warning ?? "nil")")
+        XCTAssertTrue(warning!.contains("3 other sessions"),
+                      "Warning should count the main session + two peers: \(warning ?? "nil")")
+    }
+
+    // No warning when the closing set already covers every live member
+    // (e.g. closing the whole workgroup at once) — nothing extra dies.
+    func test_9_4_closeCascadeWarning_nilWhenClosingWholeWorkgroup() {
+        let root = WGFix.makeRoot()
+        let peer0 = WGFix.makePeer(parentID: root.uniqueIdentifier)
+        let wg = WGFix.wrap(name: "Deploy", sessions: [root, peer0])
+        enterWorkgroup(wg)
+        let all = instance!.liveMemberSessions
+        XCTAssertEqual(all.count, 2)
+        XCTAssertNil(iTermWorkgroupInstance.closeCascadeWarning(forSessions: all))
+    }
+
+    // No warning for a session that isn't in any workgroup.
+    func test_9_4_closeCascadeWarning_nilForNonWorkgroupSession() {
+        let loner = PTYSession(synthetic: false)!
+        XCTAssertNil(
+            iTermWorkgroupInstance.closeCascadeWarning(forSessions: [loner]))
+    }
+
+    // Singular wording when exactly one other session would close.
+    func test_9_4_closeCascadeWarning_singularForOneOther() {
+        let root = WGFix.makeRoot()
+        let peer0 = WGFix.makePeer(parentID: root.uniqueIdentifier)
+        let wg = WGFix.wrap(name: "Deploy", sessions: [root, peer0])
+        enterWorkgroup(wg)
+        // Close the peer; only the main session remains.
+        let peerSession = spawner.session(forConfigID: peer0.uniqueIdentifier)!
+        let warning = iTermWorkgroupInstance.closeCascadeWarning(
+            forSessions: [peerSession])
+        XCTAssertNotNil(warning)
+        XCTAssertTrue(warning!.contains("1 other session."),
+                      "Expected singular wording: \(warning ?? "nil")")
     }
 
     // MARK: - §10 Tree shape

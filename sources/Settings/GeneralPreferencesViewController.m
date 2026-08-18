@@ -62,6 +62,11 @@ static NSString *const kAIManualModelsEndpointColumn = @"endpoint";
 static NSString *const kAIDefaultModelProviderPrefix = @"provider:";
 static NSString *const kAIDefaultModelManualPrefix = @"manual:";
 
+// Preset-popup tag scheme for the manual model editor: Custom is -1, catalog
+// model presets use their index (0..n-1), and provider presets (OpenAI-compatible
+// gateways) use their index plus this base so the two lists never collide.
+static const NSInteger kAIProviderPresetTagBase = 100000;
+
 typedef NS_ENUM(NSInteger, iTermManualAIModelManagerResponse) {
     iTermManualAIModelManagerResponseAdd = 1001,
     iTermManualAIModelManagerResponseEdit,
@@ -490,6 +495,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     BOOL _isEditing;
     NSPopUpButton *_presetPopup;
     NSArray<iTermAIModel *> *_presets;
+    NSArray<iTermAIProviderPreset *> *_providerPresets;
     NSTextField *_nameField;
     NSTextField *_urlField;
     NSPopUpButton *_apiPopup;
@@ -499,6 +505,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSButton *_supportsTemperatureButton;
     NSButton *_configurableThinkingButton;
     NSMutableDictionary<NSString *, NSButton *> *_featureButtons;
+    NSButton *_testButton;
+    NSProgressIndicator *_testSpinner;
     NSDictionary *_result;
     BOOL (^_nameIsTaken)(NSString *name);
 }
@@ -589,6 +597,16 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     for (NSInteger i = 0; i < (NSInteger)_presets.count; i++) {
         [_presetPopup addItemWithTitle:_presets[(NSUInteger)i].name];
         _presetPopup.lastItem.tag = i;
+    }
+    // Third-party OpenAI-compatible gateways. Unlike the catalog presets above,
+    // these fill in the endpoint and API but leave the model name for the user.
+    _providerPresets = [[AIMetadata instance] providerPresets];
+    if (_providerPresets.count > 0) {
+        [_presetPopup.menu addItem:[NSMenuItem separatorItem]];
+        for (NSInteger i = 0; i < (NSInteger)_providerPresets.count; i++) {
+            [_presetPopup addItemWithTitle:_providerPresets[(NSUInteger)i].name];
+            _presetPopup.lastItem.tag = kAIProviderPresetTagBase + i;
+        }
     }
     [_presetPopup selectItemWithTag:-1];
     _presetPopup.target = self;
@@ -704,6 +722,32 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     cancel.frame = NSMakeRect(width - margin - 100 - 8 - 100, 16, 100, 30);
     [content addSubview:cancel];
 
+    // Sends a live probe with the current form values so the user can confirm the
+    // endpoint and API key work before saving. Sits on the far left of the button
+    // row, away from Save/Cancel.
+    _testButton = [NSButton buttonWithTitle:@"Test Connection"
+                                     target:self
+                                     action:@selector(testClicked:)];
+    _testButton.bezelStyle = NSBezelStyleRounded;
+    _testButton.frame = NSMakeRect(margin, 16, 150, 30);
+    [content addSubview:_testButton];
+
+    // Spinner just to the right of the Test button so a slow endpoint (a cold
+    // local Ollama can take tens of seconds) visibly reads as in-progress rather
+    // than hung. Hidden while stopped. Let it take its natural size, then center
+    // it vertically against the button so it doesn't look squashed.
+    _testSpinner = [[NSProgressIndicator alloc] initWithFrame:NSZeroRect];
+    _testSpinner.style = NSProgressIndicatorStyleSpinning;
+    _testSpinner.controlSize = NSControlSizeSmall;
+    _testSpinner.displayedWhenStopped = NO;
+    [_testSpinner sizeToFit];
+    const CGFloat testButtonMidY = 16 + 30.0 / 2.0;
+    NSRect spinnerFrame = _testSpinner.frame;
+    spinnerFrame.origin.x = margin + 150 + 8;
+    spinnerFrame.origin.y = testButtonMidY - spinnerFrame.size.height / 2.0;
+    _testSpinner.frame = spinnerFrame;
+    [content addSubview:_testSpinner];
+
     _window.initialFirstResponder = _nameField;
     _window.defaultButtonCell = save.cell;
 }
@@ -728,6 +772,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 - (void)presetSelected:(NSPopUpButton *)sender {
     const NSInteger index = sender.selectedItem.tag;
+    if (index >= kAIProviderPresetTagBase) {
+        [self providerPresetSelected:index - kAIProviderPresetTagBase];
+        return;
+    }
     if (index < 0 || index >= (NSInteger)_presets.count) {
         return;
     }
@@ -756,6 +804,85 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         preset.configurableThinkingFeatureEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     _supportsTemperatureButton.state =
         preset.supportsTemperature ? NSControlStateValueOn : NSControlStateValueOff;
+}
+
+// A provider preset configures an OpenAI-compatible gateway: it fills in the
+// endpoint, API, token limits, and capability checkboxes, but deliberately
+// clears the model name (offering the host's example as placeholder text) so the
+// user picks the specific model the gateway should serve.
+- (void)providerPresetSelected:(NSInteger)index {
+    if (index < 0 || index >= (NSInteger)_providerPresets.count) {
+        return;
+    }
+    iTermAIProviderPreset *preset = _providerPresets[(NSUInteger)index];
+    _nameField.stringValue = @"";
+    _nameField.placeholderString = preset.placeholderModelName ?: @"";
+    _urlField.stringValue = preset.url ?: @"";
+    [_apiPopup selectItemWithTag:(NSInteger)preset.api];
+    _contextField.stringValue = [NSString stringWithFormat:@"%ld", (long)preset.contextWindowTokens];
+    _responseField.stringValue = [NSString stringWithFormat:@"%ld", (long)preset.maxResponseTokens];
+    [_vectorStorePopup selectItemWithTag:0];
+    _featureButtons[kAIManualModelFunctionCallingKey].state =
+        preset.functionCalling ? NSControlStateValueOn : NSControlStateValueOff;
+    _featureButtons[kAIManualModelStreamingKey].state =
+        preset.streaming ? NSControlStateValueOn : NSControlStateValueOff;
+    _featureButtons[kAIManualModelHostedWebSearchKey].state = NSControlStateValueOff;
+    _featureButtons[kAIManualModelHostedFileSearchKey].state = NSControlStateValueOff;
+    _featureButtons[kAIManualModelHostedCodeInterpreterKey].state = NSControlStateValueOff;
+    _configurableThinkingButton.state = NSControlStateValueOff;
+    _supportsTemperatureButton.state = NSControlStateValueOn;
+    // The model name is required to save; nudge the user straight to it.
+    [_window makeFirstResponder:_nameField];
+}
+
+- (void)testClicked:(id)sender {
+    NSString *name =
+        [_nameField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+    NSString *url =
+        [_urlField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+    if (name.length == 0 || url.length == 0) {
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = @"Missing Information";
+        alert.informativeText = @"Enter a model name and URL before testing the connection.";
+        [alert beginSheetModalForWindow:_window completionHandler:^(NSModalResponse returnCode) {}];
+        return;
+    }
+    const iTermAIAPI api = (iTermAIAPI)_apiPopup.selectedItem.tag;
+    const BOOL functionCalling =
+        _featureButtons[kAIManualModelFunctionCallingKey].state == NSControlStateValueOn;
+
+    NSString *savedTitle = _testButton.title;
+    _testButton.enabled = NO;
+    _testButton.title = @"Testing…";
+    [_testSpinner startAnimation:nil];
+    __weak __typeof(self) weakSelf = self;
+    [iTermAIConnectionTester testModelName:name
+                                       url:url
+                                       api:api
+                           functionCalling:functionCalling
+                                  inWindow:_window
+                                completion:^(iTermAIConnectionTestOutcome outcome, NSString *message) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        [strongSelf->_testSpinner stopAnimation:nil];
+        strongSelf->_testButton.enabled = YES;
+        strongSelf->_testButton.title = savedTitle;
+        if (outcome == iTermAIConnectionTestOutcomeCancelled) {
+            return;
+        }
+        NSAlert *alert = [[NSAlert alloc] init];
+        if (outcome == iTermAIConnectionTestOutcomeSuccess) {
+            alert.alertStyle = NSAlertStyleInformational;
+            alert.messageText = @"Connection Succeeded";
+        } else {
+            alert.alertStyle = NSAlertStyleWarning;
+            alert.messageText = @"Connection Failed";
+        }
+        alert.informativeText = message ?: @"";
+        [alert beginSheetModalForWindow:strongSelf->_window completionHandler:^(NSModalResponse returnCode) {}];
+    }];
 }
 
 - (void)cancelClicked:(id)sender {
@@ -994,6 +1121,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     IBOutlet NSButton *_manualAIConfiguration;
     IBOutlet NSPopUpButton *_aiVendor;
     IBOutlet NSButton *_aiSafetyCheck;
+    IBOutlet NSButton *_aiZeroDataRetention;
 
     IBOutlet NSTextField *_checkTerminalStateLabel; // Check Terminal State
     IBOutlet NSPopUpButton *_checkTerminalStateButton;
@@ -1785,6 +1913,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     [self defineControl:_aiSafetyCheck
                     key:kPreferenceKeyAISafetyCheck
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_aiZeroDataRetention
+                    key:kPreferenceKeyAIZeroDataRetention
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 

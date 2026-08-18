@@ -166,7 +166,6 @@ static NSString *const kAggressiveResize = @"aggressive-resize";
     // Maps the window ID of an about to be opened window to a completion block to invoke when it opens.
     NSMutableDictionary<NSNumber *, iTermTmuxPendingWindow *> *_pendingWindows;
     BOOL _hasStatusBar;
-    BOOL _focusEvents;
     int _currentWindowID;  // -1 if undefined
     // Pane -> (Key -> Value)
     NSMutableDictionary<NSNumber *, NSMutableDictionary<NSString *, NSString *> *> *_userVars;
@@ -176,6 +175,12 @@ static NSString *const kAggressiveResize = @"aggressive-resize";
     int _paneToActivateWhenCreated;
     iTermTmuxBufferSizeMonitor *_tmuxBufferMonitor;
     NSMutableDictionary<NSNumber *, NSValue *> *_windowSizes;  // window -> NSValue cell size
+    // window id -> iTermTmuxPaneBorderStatus boxed as NSNumber. Absent means off. See issue 12925.
+    // Refreshed from list-windows (attach, reconnect, and runtime relists). tmux sends no
+    // notification when pane-border-status is toggled mid-session, so a change is not reflected
+    // until the next relist; until then the geometry correction can be a row off in either
+    // direction. A per-window option subscription would close that gap.
+    NSMutableDictionary<NSNumber *, NSNumber *> *_paneBorderStatusByWindow;
     BOOL _versionDetected;
     // terminal guid -> [(tmux window id, tab index), ...]
     NSMutableDictionary<NSString *, NSMutableArray<iTermTuple<NSNumber *, NSNumber *> *> *> *_buriedWindows;
@@ -291,9 +296,22 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                                    object:nil];
 
         _windowSizes = [[NSMutableDictionary alloc] init];
+        _paneBorderStatusByWindow = [[NSMutableDictionary alloc] init];
         RLog(@"Create %@ with gateway=%@", self, gateway_);
     }
     return self;
+}
+
+- (iTermTmuxPaneBorderStatus)paneBorderStatusForWindow:(int)window {
+    return (iTermTmuxPaneBorderStatus)[_paneBorderStatusByWindow[@(window)] integerValue];
+}
+
+- (void)setPaneBorderStatus:(iTermTmuxPaneBorderStatus)status forWindow:(int)window {
+    if (status == iTermTmuxPaneBorderStatusOff) {
+        [_paneBorderStatusByWindow removeObjectForKey:@(window)];
+        return;
+    }
+    _paneBorderStatusByWindow[@(window)] = @(status);
 }
 
 - (Profile *)profileForWindow:(int)window {
@@ -383,7 +401,6 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     windowOpener.manuallyOpened = _manualOpenRequested;
     windowOpener.allInitialWindowsAdded = _allInitialWindowsAdded;
     windowOpener.tabColors = _tabColors;
-    windowOpener.focusReporting = _focusEvents && [iTermAdvancedSettingsModel focusReportingEnabled];
     windowOpener.profile = profile;
     windowOpener.initial = initial;
     windowOpener.anonymous = (_pendingWindows[@(windowIndex)] == nil);
@@ -455,7 +472,6 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     windowOpener.windowOptions = _windowOpenerOptions;
     windowOpener.zoomed = zoomed;
     windowOpener.tabColors = _tabColors;
-    windowOpener.focusReporting = _focusEvents && [iTermAdvancedSettingsModel focusReportingEnabled];
     windowOpener.profile = [self profileForWindow:tab.tmuxWindow];
     windowOpener.minimumServerVersion = self.gateway.minimumServerVersion;
     windowOpener.shouldWorkAroundTabBug = _shouldWorkAroundTabBug;
@@ -544,7 +560,27 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (![self versionAtLeastDecimalNumberWithString:@"2.2"]) {
         return basic;
     }
-    return [basic arrayByAddingObject:@"window_visible_layout"];
+    NSArray<NSString *> *result = [basic arrayByAddingObject:@"window_visible_layout"];
+    // The pane-border-status option exists since tmux 2.3, but #{pane-border-status}
+    // only expands to the keyword (top/bottom/off) from 2.4, when formats gained
+    // option-name lookup. Gate on 2.4 so we never send a token older tmux ignores.
+    // See issue 12925.
+    if ([self versionAtLeastDecimalNumberWithString:@"2.4"]) {
+        result = [result arrayByAddingObject:@"pane_border_status"];
+    }
+    return result;
+}
+
+// Records the pane-border-status option for a window from a list-windows record,
+// if the field is present (tmux >= 2.3). See issue 12925.
+- (void)cachePaneBorderStatusFromDoc:(TSVDocument *)doc
+                              record:(NSArray *)record
+                            windowId:(int)wid {
+    NSString *value = [doc valueInRecord:record forField:@"pane_border_status"];
+    if (!value) {
+        return;
+    }
+    [self setPaneBorderStatus:iTermTmuxPaneBorderStatusFromString(value) forWindow:wid];
 }
 
 - (NSSet<NSObject<NSCopying> *> *)savedAffinitiesForWindow:(NSString *)value {
@@ -610,6 +646,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     for (NSArray *record in windowsToOpen) {
         DLog(@"Open window %@", record);
         int wid = [self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]];
+        [self cachePaneBorderStatusFromDoc:doc record:record windowId:wid];
         [self openWindowWithIndex:wid
                              name:[[doc valueInRecord:record forField:@"window_name"] it_unescapedTmuxWindowName]
                              size:NSMakeSize([[doc valueInRecord:record forField:@"window_width"] intValue],
@@ -1245,17 +1282,10 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [gateway_ sendCommand:@"show-option -g -v status"
            responseTarget:self
          responseSelector:@selector(handleStatusResponse:)];
-    [gateway_ sendCommand:@"show-option -q -g -v focus-events"
-           responseTarget:self
-         responseSelector:@selector(handleFocusEventsResponse:)];
 }
 
 - (void)handleStatusResponse:(NSString *)string {
     _hasStatusBar = [string isEqualToString:@"on"];
-}
-
-- (void)handleFocusEventsResponse:(NSString *)string {
-    _focusEvents = [string isEqualToString:@"on"];
 }
 
 - (void)checkForUTF8 {
@@ -2831,11 +2861,25 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if ([self versionAtLeastDecimalNumberWithString:@"2.2"]) {
         parts = [parts arrayByAddingObject:@"#{window_visible_layout}"];
     }
+    if ([self versionAtLeastDecimalNumberWithString:@"2.4"]) {
+        // Keep in sync with -listWindowFields. #{pane-border-status} expands to the
+        // option keyword only from 2.4 (formats gained option-name lookup then);
+        // #{E:...} came later still. See issue 12925.
+        parts = [parts arrayByAddingObject:@"#{pane-border-status}"];
+    }
     return [NSString stringWithFormat:@"\"%@\"", [parts componentsJoinedByString:@"\t"]];
 }
 
 - (NSString *)commandToListWindows {
-    if ([self versionAtLeastDecimalNumberWithString:@"2.2"]) {
+    // pane-border-status is appended as a trailing positional field parsed by
+    // -parseListWindowsResponseAndUpdateLayouts:. Its own value has no spaces, but
+    // note the parse still depends on that method's regex tolerating an empty
+    // window_flags field (background windows), or the trailing fields are dropped.
+    // The authoritative cache is seeded from the tab-separated detailed format on
+    // attach/reconnect; this path is a secondary refresh. See issue 12925.
+    if ([self versionAtLeastDecimalNumberWithString:@"2.4"]) {
+        return @"list-windows -F \"#{window_id} #{window_layout} #{window_flags} #{window_visible_layout} #{pane-border-status}\"";
+    } else if ([self versionAtLeastDecimalNumberWithString:@"2.2"]) {
         return @"list-windows -F \"#{window_id} #{window_layout} #{window_flags} #{window_visible_layout}\"";
     } else {
         return @"list-windows -F \"#{window_id} #{window_layout} #{window_flags}\"";
@@ -3330,6 +3374,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     for (NSArray *record in doc.records) {
         NSString *recordWindowId = [doc valueInRecord:record forField:@"window_id"];
         if ([self windowIdFromString:recordWindowId] == [windowId intValue]) {
+            [self cachePaneBorderStatusFromDoc:doc record:record windowId:[windowId intValue]];
             [self openWindowWithIndex:[self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]]
                                  name:[[doc valueInRecord:record forField:@"window_name"] it_unescapedTmuxWindowName]
                                  size:NSMakeSize([[doc valueInRecord:record forField:@"window_width"] intValue],
@@ -3365,14 +3410,24 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     DLog(@"Begin handling list-windows response\n%@", response);
     for (NSString *layoutString in layoutStrings) {
         // Capture groups are:
-        // <entire match> <window number> [<layout> [<visible layout]]
-        NSArray *components = [layoutString captureComponentsMatchedByRegex:@"^@([0-9]+) ([^ ]+)(?: ([^ ]+)(?: ([^ ]+))?)?"];
+        // <entire match> <window number> [<layout> [<flags> [<visible layout> [<pane-border-status>]]]]
+        // The flags group is ([^ ]*), not ([^ ]+), because tmux reports empty
+        // window_flags for any window that is neither current (*) nor last (-),
+        // yielding a double space; ([^ ]+) would fail to match there and drop the
+        // visible layout and pane-border-status for every background window.
+        NSArray *components = [layoutString captureComponentsMatchedByRegex:@"^@([0-9]+) ([^ ]+)(?: ([^ ]*)(?: ([^ ]+)(?: ([^ ]+))?)?)?"];
         if ([components count] < 3) {
             DLog(@"Bogus layout string: \"%@\"", layoutString);
         } else {
             int window = [[components objectAtIndex:1] intValue];
             NSString *layout = [components objectAtIndex:2];
             NSString *visibleLayout = components.count > 4 ? components[4] : nil;
+            if (components.count > 5 && [components[5] length] > 0) {
+                // Refresh the cache so a runtime pane-border-status change is
+                // picked up on the next relist. See issue 12925.
+                [self setPaneBorderStatus:iTermTmuxPaneBorderStatusFromString(components[5])
+                                forWindow:window];
+            }
             PTYTab *tab = [self window:window];
             if (tab) {
                 [tabs addObject:tab];

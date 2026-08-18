@@ -133,6 +133,13 @@ struct LLMProvider {
     }
 
     var supportsPreviousResponseID: Bool {
+        // Zero Data Retention orgs cannot retain responses server-side, so
+        // previous_response_id is rejected (unsupported_parameter) and delta
+        // mode is impossible. Force full stateless replay instead. Global
+        // because ZDR is an org-wide property; see kPreferenceKeyAIZeroDataRetention.
+        if iTermPreferences.bool(forKey: kPreferenceKeyAIZeroDataRetention) {
+            return false
+        }
         return model.api == .responses
     }
 

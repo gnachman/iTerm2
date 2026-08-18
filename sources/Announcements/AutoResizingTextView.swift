@@ -115,8 +115,18 @@ class AutoResizingTextView: NSTextView {
     }
 
     override func setFrameSize(_ newSize: NSSize) {
+        // AppKit calls setFrameSize during layout even when the size is
+        // unchanged (e.g. a tab-style preference change fans out to a full
+        // refreshTerminal across every window). Refitting fonts on a no-op
+        // resize re-runs an expensive font-fitting search for nothing, which
+        // is what produced a main-thread beachball. Only refit on a real
+        // size change; content changes drive adjustFontSizes through the
+        // string/font/textContainerInset observers instead.
+        let sizeChanged = newSize != frame.size
         super.setFrameSize(newSize)
-        adjustFontSizes()
+        if sizeChanged {
+            adjustFontSizes()
+        }
         window?.invalidateCursorRects(for: self)
     }
 
@@ -141,8 +151,13 @@ class AutoResizingTextView: NSTextView {
         }
     }
 
+    // Test instrumentation: counts every entry into adjustFontSizes so tests
+    // can verify that no-op resizes don't trigger a refit.
+    var adjustFontSizesCount = 0
+
     @objc
     func adjustFontSizes() {
+        adjustFontSizesCount += 1
         if truncating {
             return
         }
@@ -195,20 +210,62 @@ class AutoResizingTextView: NSTextView {
         window?.invalidateCursorRects(for: self)
     }
 
+    // A single layout stack reused across every measurement. Allocating a
+    // fresh NSLayoutManager/NSTextContainer/NSTextStorage on every call (as
+    // this used to) dominated the announcement-resize hot path, because
+    // adjustFontSizes and truncateTextIfNeeded call sizeThatFits many times.
+    private lazy var measuringLayoutManager = NSLayoutManager()
+    private lazy var measuringTextContainer: NSTextContainer = {
+        let container = NSTextContainer(containerSize: CGSize(width: 0,
+                                                              height: CGFloat.greatestFiniteMagnitude))
+        measuringLayoutManager.addTextContainer(container)
+        return container
+    }()
+    private lazy var measuringTextStorage: NSTextStorage = {
+        let storage = NSTextStorage()
+        storage.addLayoutManager(measuringLayoutManager)
+        return storage
+    }()
+
+    // Small most-recently-used cache of (content, width) -> size. The
+    // font-fitting search, the truncation binary search, and every
+    // refreshTerminal-driven relayout re-measure identical inputs, so a tiny
+    // cache eliminates most redundant CoreText layouts.
+    private struct MeasurementCacheEntry {
+        let string: NSAttributedString
+        let width: CGFloat
+        let size: CGSize
+    }
+    private var measurementCache: [MeasurementCacheEntry] = []
+    private static let measurementCacheLimit = 16
+
+    // Test instrumentation: counts cache misses (i.e. actual layouts) so tests
+    // can verify caching behavior.
+    var sizeThatFitsMeasurementCount = 0
+
     func sizeThatFits(_ attributedString: NSAttributedString,
                       width: CGFloat) -> CGSize {
-        let layoutManager = NSLayoutManager()
-        let textContainer = NSTextContainer(containerSize: CGSize(width: width, height: .greatestFiniteMagnitude))
-        textContainer.size = CGSize(width: width, height: CGFloat.greatestFiniteMagnitude)
-        layoutManager.addTextContainer(textContainer)
+        for entry in measurementCache {
+            if entry.width == width && entry.string.isEqual(to: attributedString) {
+                return entry.size
+            }
+        }
 
-        let textStorage = NSTextStorage(attributedString: attributedString.mutableCopy() as! NSMutableAttributedString)
-        textStorage.addLayoutManager(layoutManager)
-        layoutManager.addTextContainer(textContainer)
-        layoutManager.ensureLayout(for: textContainer)
-        let size = layoutManager.usedRect(for: textContainer).size
-        layoutManager.removeTextContainer(at: layoutManager.textContainers.firstIndex(of: textContainer)!)
-        textStorage.removeLayoutManager(layoutManager)
+        sizeThatFitsMeasurementCount += 1
+        measuringTextStorage.setAttributedString(attributedString)
+        measuringTextContainer.size = CGSize(width: width,
+                                             height: CGFloat.greatestFiniteMagnitude)
+        measuringLayoutManager.ensureLayout(for: measuringTextContainer)
+        let size = measuringLayoutManager.usedRect(for: measuringTextContainer).size
+
+        // Copy the key so a later mutation of the caller's string (e.g.
+        // truncateTextIfNeeded mutates the view's textStorage in place) can't
+        // corrupt a cached measurement.
+        let key = attributedString.copy() as! NSAttributedString
+        measurementCache.append(MeasurementCacheEntry(string: key, width: width, size: size))
+        if measurementCache.count > Self.measurementCacheLimit {
+            measurementCache.removeFirst()
+        }
         return size
     }
 

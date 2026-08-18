@@ -2511,17 +2511,30 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
         case VT100CSI_SET_KEY_REPORTING_MODE:
             self.dirty = YES;
-            [self.currentKeyReportingModeStack removeAllObjects];
-            switch (token.csi->p[1]) {
-                case 1:  // all set bits are set and all unset bits are reset
-                    _keyReportingFlags = token.csi->p[0];
-                    break;
-                case 2:  // all set bits are set, unset bits are left unchanged
-                    _keyReportingFlags |= token.csi->p[0];
-                    break;
-                case 3:  // all set bits are reset, unset bits are left unchanged
-                    _keyReportingFlags &= ~token.csi->p[0];
-                    break;
+            {
+                VT100TerminalKeyReportingFlags effective;
+                if (self.currentKeyReportingModeStack.count) {
+                    effective = self.currentKeyReportingModeStack.lastObject.intValue;
+                } else {
+                    effective = _keyReportingFlags;
+                }
+                switch (token.csi->p[1]) {
+                    case 1:  // all set bits are set and all unset bits are reset
+                        effective = token.csi->p[0];
+                        break;
+                    case 2:  // all set bits are set, unset bits are left unchanged
+                        effective |= token.csi->p[0];
+                        break;
+                    case 3:  // all set bits are reset, unset bits are left unchanged
+                        effective &= ~token.csi->p[0];
+                        break;
+                }
+                if (self.currentKeyReportingModeStack.count) {
+                    [self.currentKeyReportingModeStack removeLastObject];
+                    [self.currentKeyReportingModeStack addObject:@(effective)];
+                } else {
+                    _keyReportingFlags = effective;
+                }
             }
             [self.delegate terminalKeyReportingFlagsDidChange];
             break;
@@ -2629,6 +2642,22 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             }
             break;
         }
+        case XTERMCC_KITTY_DND:
+            // OSC 72: one escape sequence of the Kitty drag-and-drop protocol.
+            // token.string is the content after "72;" (metadata plus optional
+            // base64 payload). Chunk reassembly and interpretation happen in the
+            // per-session controller; here we just forward the raw content.
+            if (token.string) {
+                [_delegate terminalDidReceiveKittyDragAndDrop:token.string];
+            } else {
+                // The accumulated OSC bytes were not decodable in the session
+                // encoding (a corrupted or non-ASCII stream; conforming senders use
+                // ASCII metadata/base64). Log rather than silently drop, since a
+                // dropped chunk can leave the reassembler pending until the next
+                // prompt reset. See docs/kitty-dnd-design.md section 8.
+                DLog(@"Dropping undecodable OSC 72 (Kitty DnD) sequence");
+            }
+            break;
         case XTERMCC_RESET_COLOR:
             [self resetColors:token.string];
             break;

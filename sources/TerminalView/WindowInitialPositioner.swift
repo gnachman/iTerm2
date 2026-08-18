@@ -329,6 +329,7 @@ class WindowInitialPositioner: NSObject {
              .WINDOW_TYPE_RIGHT_PERCENTAGE,
              .WINDOW_TYPE_BOTTOM_CELLS,
              .WINDOW_TYPE_CENTERED,
+             .WINDOW_TYPE_COMPACT_CENTERED,
              .WINDOW_TYPE_TOP_CELLS,
              .WINDOW_TYPE_LEFT_CELLS,
              .WINDOW_TYPE_RIGHT_CELLS,

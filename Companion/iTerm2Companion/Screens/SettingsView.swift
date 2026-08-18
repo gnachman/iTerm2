@@ -28,6 +28,9 @@ struct SettingsView: View {
     var body: some View {
         @Bindable var manager = model.whisperManager
         Form {
+            // Only relevant when there is a pairing to drop; Settings is now reachable
+            // before pairing too (for the diagnostic logs below).
+            if model.pairedRoomNameHex != nil {
             Section {
                 Button("Disconnect from This Mac", role: .destructive) {
                     confirmingDisconnect = true
@@ -46,6 +49,7 @@ struct SettingsView: View {
                 }
             } footer: {
                 Text("Disconnecting deletes the pairing keys on this device and on your Mac. Pair again by scanning a new QR code.")
+            }
             }
 
             if let room = model.pairedRoomNameHex {

@@ -102,6 +102,76 @@ final class iTermWorkgroupInstance: NSObject {
         return [peerPort] + nestedPeerPorts
     }
 
+    // Human-readable workgroup name for user-facing messages, with the
+    // same empty-name fallback the Workgroups menu uses.
+    @objc var workgroupDisplayName: String {
+        return workgroup.name.isEmpty ? "Untitled" : workgroup.name
+    }
+
+    // Every live session teardown would terminate: the main session,
+    // every realized peer (main + nested ports), and every non-peer
+    // split/tab child. Deduped by identity (the main session and each
+    // nested host appear in both a peer port and, for hosts, the
+    // non-peer entries) and excludes already-exited sessions. Used to
+    // warn the user how much closing one member will take down with it.
+    @objc var liveMemberSessions: [PTYSession] {
+        var seen = Set<ObjectIdentifier>()
+        var result: [PTYSession] = []
+        func add(_ session: PTYSession?) {
+            guard let session, !session.exited else { return }
+            if seen.insert(ObjectIdentifier(session)).inserted {
+                result.append(session)
+            }
+        }
+        add(mainSession)
+        for port in allPeerPorts {
+            for session in port.realizedPeerSessions {
+                add(session)
+            }
+        }
+        for entry in nonPeerEntriesByConfigID.values {
+            add(entry.session)
+        }
+        return result
+    }
+
+    // Warning text to append to a close confirmation when closing
+    // `closingSessions` would tear a workgroup down and take other
+    // sessions with it. Any workgroup member's termination drives the
+    // whole instance through teardown (see sessionWillTerminate), so if
+    // a closing session belongs to a workgroup that has live members
+    // beyond the ones already closing, tell the user those will close
+    // too. Returns nil when nothing extra would close (e.g. the closing
+    // set already covers the whole workgroup, or no member is a
+    // workgroup session).
+    @objc(closeCascadeWarningForSessions:)
+    static func closeCascadeWarning(forSessions closingSessions: [PTYSession]) -> String? {
+        let closingIDs = Set(closingSessions.map { ObjectIdentifier($0) })
+        var instancesByID: [ObjectIdentifier: iTermWorkgroupInstance] = [:]
+        for session in closingSessions {
+            if let instance = session.workgroupInstance {
+                instancesByID[ObjectIdentifier(instance)] = instance
+            }
+        }
+        guard !instancesByID.isEmpty else { return nil }
+        var names: [String] = []
+        var extraCount = 0
+        for instance in instancesByID.values {
+            let extras = instance.liveMemberSessions.filter {
+                !closingIDs.contains(ObjectIdentifier($0))
+            }
+            guard !extras.isEmpty else { continue }
+            extraCount += extras.count
+            names.append(instance.workgroupDisplayName)
+        }
+        guard extraCount > 0 else { return nil }
+        let sessionWord = extraCount == 1 ? "session" : "sessions"
+        if names.count == 1 {
+            return "This will also exit the workgroup “\(names[0])” and close \(extraCount) other \(sessionWord)."
+        }
+        return "This will also exit \(names.count) workgroups and close \(extraCount) other \(sessionWord)."
+    }
+
     // Workgroup-wide git poller, shared across every gitStatus and
     // changedFileSelector view in every peer group AND every non-peer
     // host. Built once at instance creation if any session in the
@@ -193,7 +263,8 @@ final class iTermWorkgroupInstance: NSObject {
         // instanceUniqueIdentifier, so this works no matter which
         // member is terminating or whether the leader still exists.
         let leader = mainSession
-        iTermWorkgroupController.instance.exit(instance: self)
+        iTermWorkgroupController.instance.exit(instance: self,
+                                               becauseSessionTerminated: session)
         // The leader usually survives (e.g. the user closed a child
         // pane); refresh its toolbar so the workgroup items disappear.
         if let leader {
@@ -452,13 +523,22 @@ final class iTermWorkgroupInstance: NSObject {
     // enter() can install a fresh port — PTYSession.set(peerPort:)
     // asserts the previous port is gone.
     @objc
-    func teardown() {
+    // `terminatingSession`, when non-nil, is the member whose
+    // iTermSessionWillTerminate drove this teardown. It's used to leave
+    // the leader-restore below alone for the peer group whose own pane
+    // is the one going away (see restoreMainLeaderToPaneIfNeeded).
+    func teardown(becauseSessionTerminated terminatingSession: PTYSession? = nil) {
         if didTeardown {
             RLog("iTermWorkgroupInstance.teardown: reentered for instance=\(instanceUniqueIdentifier); ignoring")
             return
         }
         didTeardown = true
         RLog("iTermWorkgroupInstance.teardown: workgroup=\(workgroupUniqueIdentifier) instance=\(instanceUniqueIdentifier) mainSession=\((mainSession?.guid).d) peerPort members=[\(peerPort.membersDebugDescription)] nestedPorts=\(nestedPeerPorts.count) nonPeerConfigIDs=\(nonPeerOrderedConfigIDs)")
+        // Do this before invalidate() terminates the non-leader peers:
+        // if the shared pane is currently showing a doomed non-leader
+        // peer, swap the surviving leader back in so the tab isn't left
+        // rendering a terminated peer's empty view (issue 12967).
+        restoreMainLeaderToPaneIfNeeded(terminating: terminatingSession)
         // Captured before invalidate() empties the ports. Their
         // back-pointers are cleared at the end of teardown so a peer
         // that outlives the workgroup (terminated peers aren't
@@ -505,6 +585,42 @@ final class iTermWorkgroupInstance: NSObject {
         }
         mainSession?.workgroupInstance = nil
         mainSession?.peerPort = nil
+    }
+
+    // The main peer group shares a single tab pane among the leader
+    // (the main session) and its peers; only the active member's view
+    // occupies the pane at a time, the rest are buried. teardown()
+    // terminates every non-leader peer via peerPort.invalidate(). If a
+    // non-leader peer happened to be the one showing in the pane, that
+    // terminated peer's empty view would be left in the tab — the
+    // blank-pane symptom in issue 12967, reachable both by closing a
+    // sibling tab (any member's termination drives the whole workgroup
+    // through teardown) and by "Exit Workgroup" while a peer is shown.
+    //
+    // The leader (main session) always survives teardown, so swap it
+    // back into the shared pane before the peers are terminated. Uses
+    // the peer-swap-only reveal so we don't yank the user's window, tab,
+    // or app focus; it no-ops when the leader is already the active
+    // member.
+    //
+    // `terminating` is the member whose termination drove teardown (nil
+    // for the graceful "Exit Workgroup" path). When it's the pane's
+    // active member, that pane's own tab is the one closing — there is
+    // no surviving tab to restore the leader into, and revealing it into
+    // a closing tab would be wrong — so leave it alone.
+    //
+    // Only the main peer group needs this: nested peer ports' hosts are
+    // themselves torn down (defer-closed as non-peer entries) with the
+    // group, so their panes go away rather than lingering blank.
+    private func restoreMainLeaderToPaneIfNeeded(terminating: PTYSession?) {
+        guard let leaderSession = peerPort.leaderSession,
+              !leaderSession.exited,
+              peerPort.activeSession !== leaderSession,
+              peerPort.activeSession !== terminating else {
+            return
+        }
+        RLog("iTermWorkgroupInstance.restoreMainLeaderToPaneIfNeeded: swapping leader \(leaderSession.guid) back into the shared pane before invalidating peers")
+        leaderSession.revealAsPeerWithoutActivatingWindow()
     }
 
     // MARK: - Entry
@@ -1057,15 +1173,20 @@ extension iTermWorkgroupInstance: iTermGitPollerDelegate {
 extension iTermWorkgroupInstance: WorkgroupNavigationToolbarItemDelegate {
     func workgroupNavigationDidTapBack(ownerPeerID: String?) {
         guard let configID = ownerPeerID else { return }
-        diffSelector(forNonPeerConfigID: configID)?.selectPreviousFile()
+        let selector = diffSelector(forNonPeerConfigID: configID)
+        RLog("iTermWorkgroupInstance: nav Back config=\(configID) selector=\(selector != nil)")
+        selector?.selectPreviousFile()
     }
 
     func workgroupNavigationDidTapForward(ownerPeerID: String?) {
         guard let configID = ownerPeerID else { return }
-        diffSelector(forNonPeerConfigID: configID)?.selectNextFile()
+        let selector = diffSelector(forNonPeerConfigID: configID)
+        RLog("iTermWorkgroupInstance: nav Forward config=\(configID) selector=\(selector != nil)")
+        selector?.selectNextFile()
     }
 
     func workgroupNavigationDidTapReload(ownerPeerID: String?) {
+        RLog("iTermWorkgroupInstance: nav Reload config=\(ownerPeerID ?? "nil")")
         guard let configID = ownerPeerID else { return }
         // "Reload" means redo what's currently running, i.e.
         // re-execute the session's program. After a per-file pick
@@ -1074,27 +1195,36 @@ extension iTermWorkgroupInstance: WorkgroupNavigationToolbarItemDelegate {
         // pull cfg.command here because that would always reset to
         // the original entry command, which is not what users
         // expect from a reload button (cf. browser reload).
-        guard let session = liveSession(forConfigID: configID) else { return }
+        guard let session = liveSession(forConfigID: configID) else {
+            RLog("iTermWorkgroupInstance: nav Reload aborted, no live session for config=\(configID)")
+            return
+        }
         // Diff hosts handle their own restartability: a waiting host
         // (pendingDiffLaunch != nil, _program nil) reports
         // isRestartable() == false, but Reload there is still
         // meaningful (poll-check + fire if ready). See
         // PTYSession.reloadDiffWithDeferralIfNeeded for state matrix.
         if session.workgroupSessionMode == .diff {
+            RLog("iTermWorkgroupInstance: nav Reload dispatching to diff-deferral path for config=\(configID)")
             session.reloadDiffWithDeferralIfNeeded(
                 resolveCommand: { [weak self] in
                     self?.resolvedDiffReloadCommand(forConfigID: configID)
                 })
             return
         }
-        guard session.isRestartable() else { return }
+        guard session.isRestartable() else {
+            RLog("iTermWorkgroupInstance: nav Reload aborted, session not restartable config=\(configID) mode=\(session.workgroupSessionMode)")
+            return
+        }
         // Code-review hosts re-show the prompt overlay so the user
         // can edit their prompt before the program is rerun.
         if session.workgroupSessionMode == .codeReview,
            session.codeReviewRawCommand != nil {
+            RLog("iTermWorkgroupInstance: nav Reload re-showing code-review overlay for config=\(configID)")
             session.reloadCodeReviewPromptOverlay()
             return
         }
+        RLog("iTermWorkgroupInstance: nav Reload restarting session config=\(configID) mode=\(session.workgroupSessionMode)")
         session.restart()
     }
 
@@ -1145,10 +1275,12 @@ extension iTermWorkgroupInstance: WorkgroupNavigationToolbarItemDelegate {
 // here (the peer-toolbar version goes through iTermWorkgroupPeerPort).
 extension iTermWorkgroupInstance: CCDiffSelectorItemDelegate {
     func diffDidSelect(filename: String, sender: CCDiffSelectorItem) {
+        RLog("iTermWorkgroupInstance.diffDidSelect owner=\(sender.ownerPeerID ?? "nil")")
         guard let configID = sender.ownerPeerID,
               let cfg = config(forConfigID: configID),
               !cfg.perFileCommand.isEmpty,
               let session = liveSession(forConfigID: configID) else {
+            RLog("iTermWorkgroupInstance.diffDidSelect aborted, no config/session or empty perFileCommand for owner=\(sender.ownerPeerID ?? "nil")")
             return
         }
         let command = cfg.resolvedPerFileCommand(filename: filename,
@@ -1158,12 +1290,14 @@ extension iTermWorkgroupInstance: CCDiffSelectorItemDelegate {
     }
 
     func diffDidSelectAllFiles(sender: CCDiffSelectorItem) {
+        RLog("iTermWorkgroupInstance.diffDidSelectAllFiles owner=\(sender.ownerPeerID ?? "nil")")
         // See iTermWorkgroupPeerPort.diffDidSelectAllFiles for why
         // there's no isRestartable gate here.
         guard let configID = sender.ownerPeerID,
               let cfg = config(forConfigID: configID),
               !cfg.command.isEmpty,
               let session = liveSession(forConfigID: configID) else {
+            RLog("iTermWorkgroupInstance.diffDidSelectAllFiles aborted, no config/session or empty command for owner=\(sender.ownerPeerID ?? "nil")")
             return
         }
         let resolved = cfg.resolvedCommand(gitBase: currentGitBase)
@@ -1179,6 +1313,7 @@ extension iTermWorkgroupInstance: CCDiffSelectorItemDelegate {
     func diffNavigationStateDidChange(sender: CCDiffSelectorItem) {
         guard let configID = sender.ownerPeerID,
               let nav = navigationItem(forNonPeerConfigID: configID) else {
+            DLog("diffNavigationStateDidChange: no navigation item for owner=\(sender.ownerPeerID ?? "nil")")
             return
         }
         let position = sender.visibleFilePosition
@@ -1362,19 +1497,23 @@ extension iTermWorkgroupInstance {
             switch item {
             case .navigation(let shortcuts):
                 if Self.shortcutMatches(shortcuts.back, keystroke: keystroke) {
+                    RLog("iTermWorkgroupInstance: keyboard shortcut matched Back config=\(configID) delegate=\(delegate != nil)")
                     delegate?.workgroupNavigationDidTapBack(ownerPeerID: configID)
                     return true
                 }
                 if Self.shortcutMatches(shortcuts.forward, keystroke: keystroke) {
+                    RLog("iTermWorkgroupInstance: keyboard shortcut matched Forward config=\(configID) delegate=\(delegate != nil)")
                     delegate?.workgroupNavigationDidTapForward(ownerPeerID: configID)
                     return true
                 }
                 if Self.shortcutMatches(shortcuts.reload, keystroke: keystroke) {
+                    RLog("iTermWorkgroupInstance: keyboard shortcut matched Reload (navigation) config=\(configID) delegate=\(delegate != nil)")
                     delegate?.workgroupNavigationDidTapReload(ownerPeerID: configID)
                     return true
                 }
             case .reload(let shortcut):
                 if Self.shortcutMatches(shortcut, keystroke: keystroke) {
+                    RLog("iTermWorkgroupInstance: keyboard shortcut matched Reload config=\(configID) delegate=\(delegate != nil)")
                     delegate?.workgroupNavigationDidTapReload(ownerPeerID: configID)
                     return true
                 }

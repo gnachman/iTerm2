@@ -612,7 +612,7 @@ class Session:
         Changes this session's profile.
 
         The profile may be an existing profile, an existing
-        profile with modifications, or a previously uknown
+        profile with modifications, or a previously unknown
         profile with a unique GUID.
 
         :param profile: The `~iterm2.profile.Profile` to use.

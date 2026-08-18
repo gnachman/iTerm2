@@ -611,6 +611,12 @@ typedef NS_ENUM(NSUInteger, iTermUpdateBlockAction) {
 - (void)terminalInvalidateCustomButtons;
 - (void)terminalSetPointerShape:(nullable NSString *)pointerShape;
 - (void)terminalDidReceiveKittyImageCommand:(iTermKittyImageCommand *)kittyImageCommand;
+
+// OSC 72: one escape sequence of the Kitty drag-and-drop protocol. `content` is
+// the raw content after "72;" (colon-separated metadata plus an optional base64
+// payload).
+- (void)terminalDidReceiveKittyDragAndDrop:(NSString *)content;
+
 - (void)terminalStartWrappedCommand:(NSString *)command channel:(NSString *)uid;
 - (void)terminalExecDidFail;
 - (BOOL)terminalIsInDarkMode;

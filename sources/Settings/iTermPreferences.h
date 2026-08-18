@@ -243,6 +243,11 @@ extern NSString *const kPreferenceKeyAISafetyCheckProviderMigrationDone;  // boo
 extern NSString *const kPreferenceKeyAISafetyCheckNagComplete;  // boolean: opt-in nag already shown
 extern NSString *const kPreferenceKeyAICustomHeadersEnabled;  // boolean
 extern NSString *const kPreferenceKeyAICustomHeaders;  // NSArray of NSDictionary with "name"/"value" NSString entries
+// boolean: the configured OpenAI org has Zero Data Retention enabled, so the
+// Responses API must never send previous_response_id or rely on server-side
+// stored state (store=false). Global because ZDR is an org-wide property, not
+// something a user would want to configure per manually managed model.
+extern NSString *const kPreferenceKeyAIZeroDataRetention;
 extern NSString *const kPreferenceKeyOpenTmuxWindowsAsTabsInAttachingWindow;  // PHONY
 extern NSString *const kPreferenceKeyOpenUnrecognizedTmuxWindowsIn;  // PHONY
 
@@ -276,6 +281,7 @@ extern NSString *const kPreferenceKeyUIElement;
 extern NSString *const kPreferenceKeyUIElementRequiresHotkeys;
 extern NSString *const kPreferenceKeyFlashTabBarInFullscreen;
 extern NSString *const kPreferenceKeyStretchTabsToFillBar;
+extern NSString *const kPreferenceKeyScrollableSideTabBar;
 extern NSString *const kPreferenceKeyShowWindowNumber;
 extern NSString *const kPreferenceKeyShowJobName_Deprecated;  // DEPRECATED
 extern NSString *const kPreferenceKeyShowProfileName_Deprecated;  // DEPRECATED

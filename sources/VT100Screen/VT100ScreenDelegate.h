@@ -491,6 +491,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (void)screenReportIconTitle;
 - (void)screenReportWindowTitle;
 - (void)screenSetPointerShape:(NSString * _Nonnull)pointerShape;
+
+// OSC 72: one escape sequence of the Kitty drag-and-drop protocol. `content` is
+// the raw content after "72;" (colon-separated metadata plus an optional base64
+// payload). Delivered on the main thread.
+- (void)screenDidReceiveKittyDragAndDrop:(NSString * _Nonnull)content;
+
 - (void)screenFoldRange:(NSRange)range;
 // Called when lines are inserted or removed (fold/unfold/porthole resize).
 // delta is positive when lines are inserted, negative when removed.

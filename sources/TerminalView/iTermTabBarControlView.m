@@ -309,9 +309,14 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 }
 
 - (BOOL)cellShouldShowTabProgressBar:(PSMTabBarCell *)cell {
+    // Not drawn in the bar (scrolled into the overflow menu OR hidden inside a
+    // collapsed group) means there is nowhere to put the in-bar progress bar; the
+    // inline (in-session) fallback covers those. Gating only on isInOverflowMenu
+    // used to leave a horizontal collapsed member (zero frame, isInOverflowMenu==NO)
+    // returning YES, instantiating a phantom zero-size progress view.
     if (self.tabView.numberOfTabViewItems <= 1 ||
         cell.isPlaceholder ||
-        cell.isInOverflowMenu ||
+        ![self cellIsDrawnInBar:cell] ||
         ![self cellAllowsTabProgressBar:cell]) {
         return NO;
     }

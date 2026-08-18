@@ -16,6 +16,34 @@ struct LLMRequestBuilder {
     var shouldThink: Bool?
     var reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort?
     var serviceTier: ResponsesRequestBody.ServiceTier?
+    // Volatile per-turn context that the model must see (the orchestration
+    // <workgroups> snapshot, the session-bound auto-provided terminal/screen
+    // block). Only the PLACEMENT is vendor-specific: Anthropic appends it after
+    // the prompt-cache breakpoint (via AnthropicRequestBuilder.trailingVolatileText)
+    // so it doesn't invalidate the cached history prefix; every other vendor has
+    // no cache-prefix concern and just gets it folded in as a trailing user
+    // message (messagesWithVolatile). Dropping it for non-Anthropic vendors is a
+    // functional regression, since the terminal-state/screen block is gated on a
+    // user permission. See LLMRequestBuilderVolatileContextTests.
+    var trailingVolatileText: String?
+
+    // Blob-native replay: the chat's verbatim frozen-history wire messages (the
+    // comma-joined inner element bytes of the stored blobs, no surrounding
+    // brackets) that the per-vendor builder splices into its message array after
+    // the system message(s). nil for the normal path, where `messages` carries the
+    // whole conversation. Only the protocols whose builder supports it consume it.
+    // Declared last so it is an optional trailing argument on the memberwise init.
+    var frozenHistoryElements: Data? = nil
+
+    // The message list with the volatile per-turn context folded in as a
+    // trailing user message. Used by every builder EXCEPT Anthropic, which
+    // places it itself so it lands after the cache breakpoint.
+    private var messagesWithVolatile: [LLM.Message] {
+        guard let trailingVolatileText, !trailingVolatileText.isEmpty else {
+            return messages
+        }
+        return messages + [LLM.Message(role: .user, content: trailingVolatileText)]
+    }
 
     var headers: [String: String] {
         var result = LLMAuthorizationProvider(provider: provider, apiKey: apiKey).headers
@@ -32,17 +60,20 @@ struct LLMRequestBuilder {
             try AnthropicRequestBuilder(messages: messages,
                                         provider: provider,
                                         functions: functions,
-                                        stream: stream).body()
+                                        stream: stream,
+                                        trailingVolatileText: trailingVolatileText,
+                                        frozenHistoryElements: frozenHistoryElements).body()
         case .completions:
-            try LegacyBodyRequestBuilder(messages: messages,
+            try LegacyBodyRequestBuilder(messages: messagesWithVolatile,
                                          provider: provider).body()
         case .chatCompletions:
-            try ModernBodyRequestBuilder(messages: messages,
+            try ModernBodyRequestBuilder(messages: messagesWithVolatile,
                                          provider: provider,
                                          functions: functions,
-                                         stream: stream).body()
+                                         stream: stream,
+                                         frozenHistoryElements: frozenHistoryElements).body()
         case .responses:
-            try ResponsesBodyRequestBuilder(messages: messages,
+            try ResponsesBodyRequestBuilder(messages: messagesWithVolatile,
                                             provider: provider,
                                             functions: functions,
                                             stream: stream,
@@ -50,28 +81,33 @@ struct LLMRequestBuilder {
                                             previousResponseID: previousResponseID,
                                             shouldThink: shouldThink,
                                             reasoningEffort: reasoningEffort,
-                                            serviceTier: serviceTier).body()
+                                            serviceTier: serviceTier,
+                                            frozenHistoryElements: frozenHistoryElements).body()
         case .earlyO1:
-            try O1BodyRequestBuilder(messages: messages,
-                                     provider: provider).body()
+            try O1BodyRequestBuilder(messages: messagesWithVolatile,
+                                     provider: provider,
+                                     frozenHistoryElements: frozenHistoryElements).body()
 
         case .gemini:
-            try GeminiRequestBuilder(messages: messages,
+            try GeminiRequestBuilder(messages: messagesWithVolatile,
                                      functions: functions,
                                      hostedTools: hostedTools,
-                                     modelName: provider.model.name).body()
+                                     modelName: provider.model.name,
+                                     frozenHistoryElements: frozenHistoryElements).body()
 
         case .llama:
-            try LlamaBodyRequestBuilder(messages: messages,
+            try LlamaBodyRequestBuilder(messages: messagesWithVolatile,
                                         provider: provider,
                                         functions: functions,
-                                        stream: stream).body()
+                                        stream: stream,
+                                        frozenHistoryElements: frozenHistoryElements).body()
         case .deepSeek:
-            try DeepSeekRequestBuilder(messages: messages,
+            try DeepSeekRequestBuilder(messages: messagesWithVolatile,
                                        provider: provider,
                                        functions: functions,
                                        stream: stream,
-                                       shouldThink: shouldThink).body()
+                                       shouldThink: shouldThink,
+                                       frozenHistoryElements: frozenHistoryElements).body()
         case .appleIntelligence:
             // Apple Intelligence runs on-device via FoundationModels and never
             // builds an HTTP request. AITermController intercepts this provider

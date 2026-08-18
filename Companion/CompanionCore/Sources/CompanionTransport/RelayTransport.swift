@@ -24,30 +24,92 @@ import CompanionProtocol
 /// it can be the default for RelayTransportListener's public init.
 public let relayKeepaliveDefaultIntervalNanos: UInt64 = 15_000_000_000
 
+/// How long a single keepalive ping may run before it is treated as a failure.
+/// A black-holed half-open can leave `sendPing()` awaiting a pong that never
+/// arrives: URLSession never fires its ping completion, and the plugin's JS ping
+/// promise never settles, so the await blocks with no error and no cancellation
+/// signal. Left unbounded, that wedges the keepalive loop on a single ping forever
+/// - no success, no failure, and therefore no teardown and no reconnect (observed:
+/// a mac reporting "connected" for 45h over a socket the relay had already dropped,
+/// its ping loop silent the whole time). Bounding the ping converts the hang into a
+/// failed ping, which drives the cancel/reconnect path below. Chosen comfortably
+/// above a healthy RTT (tens of ms) and below the ping interval, so a stuck ping is
+/// caught within roughly one cycle without false-positiving a merely slow network.
+public let relayKeepalivePingTimeoutNanos: UInt64 = 10_000_000_000
+
 /// A keepalive that pings the socket so a parked or quiet relay socket is not
-/// reaped by the edge. CRUCIALLY, when a ping fails it CANCELS the socket: a
-/// half-open connection (after sleep/wake, a Wi-Fi change, or the edge reaping
-/// the socket without a close frame) leaves a parked `receive()` blocked
-/// forever with no error, so without this teardown the mac's accept() never
-/// throws and the error-driven reconnect path never engages - the documented
-/// "the normal receive()/accept() path surfaces the failure" contract.
+/// reaped by the edge. CRUCIALLY, when a ping fails OR hangs past the timeout it
+/// CANCELS the socket: a half-open connection (after sleep/wake, a Wi-Fi change,
+/// or the edge reaping the socket without a close frame) leaves a parked
+/// `receive()` blocked forever with no error, so without this teardown the mac's
+/// accept() never throws and the error-driven reconnect path never engages - the
+/// documented "the normal receive()/accept() path surfaces the failure" contract.
 /// Cancelling only a confirmed-dead socket never displaces a live bridge.
 private func relayKeepalive(for ws: RelayWebSocket,
-                            intervalNanos: UInt64 = relayKeepaliveDefaultIntervalNanos) -> RelayKeepalive {
+                            intervalNanos: UInt64 = relayKeepaliveDefaultIntervalNanos,
+                            pingTimeoutNanos: UInt64 = relayKeepalivePingTimeoutNanos) -> RelayKeepalive {
     RelayKeepalive(intervalNanos: intervalNanos) { [weak ws] in
         guard let ws else { return false }
-        if await ws.sendPing() {
+        // Bound the ping so a black-holed socket cannot wedge the loop forever (see
+        // relayKeepalivePingTimeoutNanos). `nil` means the ping never returned; the
+        // captured `ws` is weak so an abandoned hung ping cannot pin the socket.
+        let pinged = await withPingTimeout(nanos: pingTimeoutNanos) { [weak ws] in
+            guard let ws else { return false }
+            return await ws.sendPing()
+        }
+        if pinged == true {
             // sendPing() logs the richer "Relay WS ping ok rtt=… (parked …)" line
             // (with the data-idle timing needed to attribute a drop). If that keeps
             // logging while the relay reports "mac offline", the splice/park died but
             // the socket did not -- the half-open-at-the-app-layer wedge.
             return true
         }
-        // Ping failed -> the socket is dead. Tear it down so the parked
-        // receive()/accept() throws and the caller's retry path engages.
-        CompanionLog.log("relay keepalive ping FAILED -> cancelling socket")
+        // Ping failed or timed out -> the socket is dead. Tear it down so the parked
+        // receive()/accept() throws and the caller's retry path engages. cancel()
+        // also fires URLSession's pending ping completion, which unblocks the
+        // abandoned ping task left behind by a timed-out race.
+        CompanionLog.log(pinged == nil
+            ? "relay keepalive ping TIMED OUT after \(pingTimeoutNanos / 1_000_000_000)s -> cancelling socket"
+            : "relay keepalive ping FAILED -> cancelling socket")
         ws.cancel()
         return false
+    }
+}
+
+/// Runs `ping`, returning its result, or `nil` if `nanos` elapse first.
+/// Deliberately UNSTRUCTURED: a hung ping (a black-holed socket whose pong never
+/// comes, and whose underlying await is not cancellation-responsive) must not
+/// block this race. A task group would join the hung child before returning and
+/// so reintroduce the very hang being bounded; instead the ping runs in a detached
+/// task that is simply abandoned on timeout. That task unblocks on its own once the
+/// caller cancels the socket (URLSession then fires the pending ping completion).
+func withPingTimeout(nanos: UInt64, _ ping: @escaping @Sendable () async -> Bool) async -> Bool? {
+    let race = PingRace()
+    Task { await race.settle(await ping()) }
+    Task { try? await Task.sleep(nanoseconds: nanos); await race.settle(nil) }
+    return await race.result()
+}
+
+/// One-shot rendezvous for `withPingTimeout`: whichever of the ping / timeout tasks
+/// settles first wins and the loser is a no-op. Actor-confined so the continuation
+/// is never captured across tasks (no Sendable hazard) and the settle/await race is
+/// serialized.
+private actor PingRace {
+    private var settled = false
+    private var value: Bool?
+    private var waiter: CheckedContinuation<Bool?, Never>?
+
+    func settle(_ v: Bool?) {
+        guard !settled else { return }
+        settled = true
+        value = v
+        waiter?.resume(returning: v)
+        waiter = nil
+    }
+
+    func result() async -> Bool? {
+        if settled { return value }
+        return await withCheckedContinuation { waiter = $0 }
     }
 }
 

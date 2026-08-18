@@ -20,6 +20,7 @@
 #import "iTermScriptImporter.h"
 #import "iTermScriptTemplatePickerWindowController.h"
 #import "iTermTuple.h"
+#import "iTermSetupCfgParser.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
 #import "NSFileManager+iTerm.h"
@@ -113,12 +114,14 @@ NS_ASSUME_NONNULL_BEGIN
     SCEvents *_events;
     NSArray<NSString *> *_allScripts;
     BOOL _disableEnumeration;
+    BOOL _uvGateLastSeen;
 }
 
 - (instancetype)initWithMenu:(NSMenu *)menu {
     self = [super init];
     if (self) {
         _allScripts = [NSMutableArray array];
+        _uvGateLastSeen = [iTermAdvancedSettingsModel pythonRuntimeUsesUV];
         _scriptsMenu = menu;
         _events = [[SCEvents alloc] init];
         _events.delegate = self;
@@ -128,13 +131,38 @@ NS_ASSUME_NONNULL_BEGIN
                                                    object:nil];
         NSString *path = [[NSFileManager defaultManager] scriptsPath];
         [[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:nil];
+        // Reclaim/restore any backup left by an import interrupted mid-replace (crash
+        // between move-aside and cleanup), before enumerating the folder for the menu.
+        [iTermScriptImporter recoverStaleReplaceBackups];
         [_events startWatchingPaths:@[ path ]];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(didInstallPythonRuntime:)
                                                      name:iTermPythonRuntimeDownloaderDidInstallRuntimeNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(advancedSettingsDidChange:)
+                                                     name:iTermAdvancedSettingsDidChange
+                                                   object:nil];
     }
     return self;
+}
+
+- (void)advancedSettingsDidChange:(NSNotification *)notification {
+    // The notification carries no key, and it fires for every advanced setting. Only
+    // act when the uv gate itself changed to ON, so an unrelated setting change does
+    // not re-walk the scripts tree on the main thread. Enabling the gate mid-session
+    // still shows the one-time version-bump heads-up even though -build ran at launch
+    // with the gate off.
+    const BOOL gate = [iTermAdvancedSettingsModel pythonRuntimeUsesUV];
+    if (gate == _uvGateLastSeen) {
+        return;
+    }
+    _uvGateLastSeen = gate;
+    // The gate flip changes which runtime the Manage menu item installs/updates.
+    [self updateInstallRuntimeMenuItem];
+    if (gate) {
+        [self maybeWarnAboutUvVersionBumps];
+    }
 }
 
 - (void)dealloc {
@@ -157,7 +185,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)didInstallPythonRuntime:(NSNotification *)notification {
-    [self changeInstallToUpdate];
+    [self updateInstallRuntimeMenuItem];
 }
 
 - (NSInteger)separatorIndex {
@@ -200,6 +228,226 @@ NS_ASSUME_NONNULL_BEGIN
     [self removeMenuItemsAfterSeparator];
     [self addMenuItemsTo:_scriptsMenu];
     _allScripts = [self allScriptsFromMenu];
+    [self maybeWarnAboutUvVersionBumps];
+}
+
+// When uv is enabled, warn once (across launch, and permanently silenceable) that
+// migrating existing legacy scripts will bump some pinned Python versions that
+// python-build-standalone cannot provide (in practice 3.7 -> 3.9). Scripts are
+// migrated lazily on launch; this is the up-front heads-up.
+- (void)maybeWarnAboutUvVersionBumps {
+    // Latch AFTER the gate check but BEFORE the scan, and regardless of whether the scan
+    // produces a warning. -build runs on every launch, every SCEvents file event under
+    // the Scripts tree, every install, and scriptsFolderDidChange; the tree walk below is
+    // a synchronous main-thread recursive scan with a per-entry stat and a setup.cfg
+    // parse. Latching only after a non-nil warning (the old behavior) meant the common
+    // case (gate on, no pending bumps) re-walked the whole tree on every one of those
+    // events. Leaving the gate-off case unlatched preserves the one scan if the user
+    // enables uv later in the session.
+    static BOOL checkedThisLaunch = NO;
+    if (checkedThisLaunch) {
+        return;
+    }
+    if (![iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+        return;
+    }
+    checkedThisLaunch = YES;
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *scriptsPath = [fm scriptsPathWithoutSpaces];
+    // Walk the whole scripts tree (AutoLaunch and any nested folders). Each record keeps
+    // the container's path relative to the scripts folder (so Scripts/foo and
+    // AutoLaunch/foo do not collide) plus the absolute path and dependencies the
+    // eager-upgrade button needs to migrate it.
+    NSMutableArray<iTermUvLegacyScript *> *scripts = [NSMutableArray array];
+    [self collectLegacyFullEnvironmentScriptsUnder:scriptsPath
+                                        scriptsRoot:scriptsPath
+                                               into:scripts];
+    NSMutableDictionary<NSString *, NSString *> *requested = [NSMutableDictionary dictionary];
+    for (iTermUvLegacyScript *script in scripts) {
+        requested[script.relativeName] = script.requestedVersion;
+    }
+    NSString *text = [iTermUvMigration pendingVersionBumpWarningWithRequestedVersionsByScript:requested];
+    if (!text) {
+        return;
+    }
+    // A fresh identifier (not the old OK-only NoSyncUvVersionBumpWarning): the action list
+    // grew, and iTermWarning stores a silenced choice by index, so reusing the old id would
+    // remap a prior "OK" silence onto the new selection 0 ("Upgrade Now") and silently
+    // migrate at launch. A new id shows the upgraded dialog once to previously-silenced users.
+    //
+    // "Upgrade Now" (selection 0) is a one-shot action, not a standing preference. But the
+    // silence checkbox remembers whichever action was chosen, so a user who ticks it while
+    // clicking "Upgrade Now" would otherwise re-run the migration silently on every launch
+    // (and, for scripts that can't migrate, resurface "Upgrade Incomplete" forever). Clear
+    // any remembered "Upgrade Now" up front so only a "Not Now" silence persists; the dialog
+    // then always reappears for scripts that stayed legacy rather than auto-migrating.
+    NSString *const warningIdentifier = @"NoSyncUvVersionBumpWarningV2";
+    [iTermWarning unsilenceIdentifier:warningIdentifier ifSelectionEquals:kiTermWarningSelection0];
+    const iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:text
+                                   actions:@[ @"Upgrade Now", @"Not Now" ]
+                                 accessory:nil
+                                identifier:warningIdentifier
+                               silenceable:kiTermWarningTypePermanentlySilenceable
+                                   heading:@"Python Version Changes"
+                                    window:nil];
+    if (selection == kiTermWarningSelection0) {
+        [self upgradeBumpedScripts:[iTermUvMigration scriptsNeedingBump:scripts]];
+    }
+}
+
+// Eagerly migrate the force-bumped legacy scripts to uv, instead of waiting for each to
+// be launched. Scripts are migrated one at a time (a shared runtime download the first
+// needs is reused by the rest) behind one progress window; each failure rolls back to its
+// working legacy env and is collected for a single summary at the end.
+- (void)upgradeBumpedScripts:(NSArray<iTermUvLegacyScript *> *)scripts {
+    if (scripts.count == 0) {
+        return;
+    }
+    iTermProvisioningProgressWindowController *progress =
+        [[iTermProvisioningProgressWindowController alloc] init];
+    [self migrateBumpedScripts:scripts
+                         index:0
+                      progress:progress
+                      failures:[NSMutableArray array]];
+}
+
+- (void)migrateBumpedScripts:(NSArray<iTermUvLegacyScript *> *)scripts
+                       index:(NSUInteger)index
+                    progress:(iTermProvisioningProgressWindowController *)progress
+                    failures:(NSMutableArray<NSString *> *)failures {
+    if (index >= scripts.count) {
+        [progress dismiss];
+        [self reportBumpUpgradeFailures:failures];
+        return;
+    }
+    iTermUvLegacyScript *script = scripts[index];
+    void (^next)(void) = ^{
+        [self migrateBumpedScripts:scripts index:index + 1 progress:progress failures:failures];
+    };
+    if (script.dependencies == nil) {
+        // Its setup.cfg dependencies could not be parsed, so migrating would build a
+        // broken env (missing packages). Leave it on its legacy runtime, as the launcher
+        // does, and report it.
+        [failures addObject:script.relativeName];
+        next();
+        return;
+    }
+    [[iTermUvProvisioner shared] migrateLegacyScriptToUvWithContainer:script.containerPath
+                                              requestedPythonVersion:script.requestedVersion
+                                                        dependencies:script.dependencies
+                                                provisioningDidBegin:^{
+        [progress showWithMessage:[NSString stringWithFormat:@"Upgrading “%@”…", script.relativeName]];
+    }
+                                                          completion:^(NSError *error) {
+        if (error != nil) {
+            if ([iTermUvProvisioner isCancelationError:error]) {
+                // The user declined the one-time runtime download. Nothing was migrated and
+                // the rest would prompt again, so stop the batch quietly.
+                [progress dismiss];
+                return;
+            }
+            // A real failure. migrateLegacyScriptToUv already restored the legacy env, so the
+            // script still runs; record it and keep going.
+            [failures addObject:script.relativeName];
+        }
+        next();
+    }];
+}
+
+- (void)reportBumpUpgradeFailures:(NSArray<NSString *> *)failures {
+    if (failures.count == 0) {
+        // Silent success: the nag is resolved and the progress window already dismissed.
+        return;
+    }
+    NSString *list = [failures componentsJoinedByString:@"\n• "];
+    NSString *body = [NSString stringWithFormat:
+                      @"%@ could not be upgraded and still use the previous Python runtime. "
+                      @"Each will be upgraded automatically the next time it runs.\n\n• %@",
+                      failures.count == 1 ? @"One script" : @"Some scripts", list];
+    [iTermWarning showWarningWithTitle:body
+                               actions:@[ @"OK" ]
+                             accessory:nil
+                            identifier:@"NoSyncUvBumpUpgradeIncomplete"
+                           silenceable:kiTermWarningTypePermanentlySilenceable
+                               heading:@"Upgrade Incomplete"
+                                window:nil];
+}
+
+// Recursively collect legacy full-environment script containers under `root`, recording
+// for each its path relative to `scriptsRoot`, its absolute path, its pinned Python
+// version, and its dependencies. A directory with a setup.cfg is a container: it is
+// recorded (if legacy) and not descended into, so we never walk into .venv/iterm2env or
+// a package's own setup.cfg.
+- (void)collectLegacyFullEnvironmentScriptsUnder:(NSString *)root
+                                     scriptsRoot:(NSString *)scriptsRoot
+                                            into:(NSMutableArray<iTermUvLegacyScript *> *)scripts {
+    [self collectLegacyFullEnvironmentScriptsUnder:root scriptsRoot:scriptsRoot depth:0 into:scripts];
+}
+
+- (void)collectLegacyFullEnvironmentScriptsUnder:(NSString *)root
+                                     scriptsRoot:(NSString *)scriptsRoot
+                                           depth:(int)depth
+                                            into:(NSMutableArray<iTermUvLegacyScript *> *)scripts {
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *setupCfg = [root stringByAppendingPathComponent:@"setup.cfg"];
+    if ([fm fileExistsAtPath:setupCfg]) {
+        // A real script container has setup.cfg AND an environment: iterm2env (legacy),
+        // .venv+marker (uv), or saved-iterm2env (a migration killed midway, which the next
+        // launch restores and migrates). A bare setup.cfg with no env is NOT a container
+        // (e.g. one dropped in the Scripts root, or a package's own setup.cfg); treating it
+        // as one used to stop the walk and silently suppress every version-bump warning.
+        const iTermScriptRuntimeBackend backend = [iTermScriptRuntime backendForScriptContainer:root];
+        const BOOL savedOnly = [fm fileExistsAtPath:[root stringByAppendingPathComponent:@"saved-iterm2env"]];
+        const BOOL isContainer = (backend != iTermScriptRuntimeBackendNone) || savedOnly;
+        if (isContainer) {
+            // Legacy, or saved-only (which restores to legacy and then migrates): both will
+            // migrate and possibly force-bump, so both belong in the predictive warning.
+            if (backend == iTermScriptRuntimeBackendLegacy || savedOnly) {
+                iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:setupCfg];
+                // Fall back to the version the env was actually built on when setup.cfg has
+                // no parseable pin (absent, or a range like ">=3.7"). legacyEnvironment...
+                // reads saved-iterm2env too, so a saved-only container still resolves.
+                NSString *version = parser.pythonVersion ?: [iTermScriptRuntime legacyEnvironmentPythonVersionForContainer:root];
+                if (version) {
+                    NSString *relative = [root substringFromIndex:scriptsRoot.length];
+                    relative = [relative stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
+                    NSString *name = relative.length ? relative : root.lastPathComponent;
+                    // nil dependencies (an unparseable setup.cfg) marks the script as
+                    // migratable-only-lazily; the eager-upgrade button skips and reports it.
+                    NSArray<NSString *> *dependencies = parser.dependenciesError ? nil : parser.dependencies;
+                    [scripts addObject:[[iTermUvLegacyScript alloc] initWithRelativeName:name
+                                                                          containerPath:root
+                                                                       requestedVersion:version
+                                                                           dependencies:dependencies]];
+                }
+            }
+            return;
+        }
+        // Stray setup.cfg with no environment: fall through and keep recursing.
+    }
+    // Bound the recursion. Script containers live at most a couple of levels below the
+    // Scripts folder; a deeper tree is not ours and not worth walking on the main thread.
+    if (depth >= 8) {
+        return;
+    }
+    for (NSString *name in [fm contentsOfDirectoryAtPath:root error:nil]) {
+        if ([name hasPrefix:@"."]) {
+            continue;
+        }
+        NSString *child = [root stringByAppendingPathComponent:name];
+        // lstat (does not resolve the final symlink) so we can skip symlinked entries:
+        // following them risks a cycle (infinite recursion / stack overflow at every
+        // launch) or walking an arbitrarily large tree. Real script folders are not
+        // symlinks.
+        NSDictionary *attributes = [fm attributesOfItemAtPath:child error:nil];
+        if ([attributes.fileType isEqualToString:NSFileTypeDirectory]) {
+            [self collectLegacyFullEnvironmentScriptsUnder:child
+                                               scriptsRoot:scriptsRoot
+                                                     depth:depth + 1
+                                                      into:scripts];
+        }
+    }
 }
 
 - (NSArray<iTermScriptItem *> *)scriptItems {
@@ -258,7 +506,11 @@ NS_ASSUME_NONNULL_BEGIN
                 clockWatcher.maxTime = clockWatcher.elapsedTime + 5.0;
             }
         }
-        if ([file caseInsensitiveCompare:@".DS_Store"] == NSOrderedSame) {
+        if ([file.lastPathComponent hasPrefix:@"."]) {
+            // Skip hidden entries (.DS_Store, and the transient .replacing-* backups the
+            // importer creates while replacing a script) so they never appear as broken
+            // menu items, and do not descend into hidden directories.
+            [directoryEnumerator skipDescendants];
             continue;
         }
 
@@ -395,15 +647,33 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setInstallRuntimeMenuItem:(NSMenuItem *)installRuntimeMenuItem {
     _installRuntimeMenuItem = installRuntimeMenuItem;
-    if ([[iTermPythonRuntimeDownloader sharedInstance] isPythonRuntimeInstalled]) {
-        [self changeInstallToUpdate];
-    }
+    [self updateInstallRuntimeMenuItem];
 }
 
-- (void)changeInstallToUpdate {
-    _installRuntimeMenuItem.title = @"Check for Updated Runtime";
-    _installRuntimeMenuItem.action = @selector(userRequestedCheckForUpdate);
-    _installRuntimeMenuItem.target = [iTermPythonRuntimeDownloader sharedInstance];
+// The one place that titles/targets the Scripts > Manage runtime menu item, routed
+// through the gate so it never updates the wrong runtime. Called when the outlet is set,
+// after a uv/legacy install, and when the gate flips.
+- (void)updateInstallRuntimeMenuItem {
+    if (!_installRuntimeMenuItem) {
+        return;
+    }
+    const iTermPythonRuntimeMenuAction action =
+        [iTermScriptRuntime pythonRuntimeMenuActionWithUvGateEnabled:[iTermAdvancedSettingsModel pythonRuntimeUsesUV]
+                                                         uvInstalled:[iTermUvProvisioner isInstalled]
+                                                     legacyInstalled:[[iTermPythonRuntimeDownloader sharedInstance] isPythonRuntimeInstalled]];
+    _installRuntimeMenuItem.title = [iTermScriptRuntime pythonRuntimeMenuItemTitleFor:action];
+    if (action == iTermPythonRuntimeMenuActionLegacyCheckForUpdate) {
+        // Only the legacy check-for-update targets the legacy downloader directly.
+        _installRuntimeMenuItem.action = @selector(userRequestedCheckForUpdate);
+        _installRuntimeMenuItem.target = [iTermPythonRuntimeDownloader sharedInstance];
+    } else {
+        // uv install, uv check-for-update, and legacy install all route to the app
+        // delegate's installPythonRuntime: (a XIB-wired IBAction with no header, so
+        // resolve the selector at runtime), with a nil target so it goes up the
+        // responder chain to the app delegate.
+        _installRuntimeMenuItem.action = NSSelectorFromString(@"installPythonRuntime:");
+        _installRuntimeMenuItem.target = nil;
+    }
 }
 
 - (void)chooseAndExportScript {
@@ -594,6 +864,17 @@ NS_ASSUME_NONNULL_BEGIN
                            arguments:(NSArray<NSString *> *)arguments
                   explicitUserAction:(BOOL)explicitUserAction {
     RLog(@"launch path=%@ args=%@", fullPath, RLogRedact(arguments, @(arguments.count)));
+    // If handed the inner main.py of a full-environment script (Foo/Foo/Foo.py) rather
+    // than its container (Foo), resolve to the container. This happens when the script is
+    // launched from a stale index (e.g. Open Quickly built before the environment was
+    // provisioned) or by its .py path directly; without this it would launch as a basic
+    // script on the shared standard runtime and miss its own dependencies. Issue: a full
+    // env script imported and then launched too soon showed ModuleNotFoundError.
+    NSString *fullEnvContainer = [iTermAPIScriptLauncher fullEnvironmentContainerForMainPyPath:fullPath];
+    if (fullEnvContainer) {
+        RLog(@"Redirecting main.py launch to full-environment container %@", fullEnvContainer);
+        fullPath = fullEnvContainer;
+    }
     NSString *venv = [iTermAPIScriptLauncher environmentForScript:fullPath
                                                      checkForMain:YES
                                                     checkForSaved:YES];
@@ -613,6 +894,26 @@ NS_ASSUME_NONNULL_BEGIN
                               withVirtualEnv:venv
                                 setupCfgPath:[fullPath stringByAppendingPathComponent:@"setup.cfg"]
                           explicitUserAction:explicitUserAction];
+        return;
+    }
+
+    // A uv script whose interpreter is gone (the shared uv runtime was deleted to reclaim
+    // disk, or the home dir was renamed): the marker + setup.cfg are intact but
+    // .venv/bin/python no longer resolves, so environmentForScript returned nil. The
+    // script is NOT malformed; its runtime went missing, and setup.cfg can rebuild it.
+    if ([self uvScriptContainerNeedsReprovision:fullPath]) {
+        if (explicitUserAction) {
+            // An explicit launch offers to rebuild, then runs it.
+            [self offerToReprovisionUvScript:fullPath arguments:arguments explicitUserAction:explicitUserAction];
+        } else {
+            // AutoLaunch / non-explicit at startup: do not pop a consent dialog + progress
+            // window (there could be several such scripts). Log the real cause and the
+            // recovery gesture to the Script Console instead of the generic malformed modal.
+            NSString *line = [NSString stringWithFormat:@"The Python environment for “%@” is missing (the shared runtime may have been deleted). Launch it from the Scripts menu to rebuild it.\n",
+                              fullPath.lastPathComponent];
+            [[iTermScriptHistoryEntry globalEntry] addOutput:line completion:^{}];
+            RLog(@"uv script %@ needs reprovision; not offering at non-explicit launch", fullPath);
+        }
         return;
     }
 
@@ -670,6 +971,72 @@ NS_ASSUME_NONNULL_BEGIN
                                       completionHandler:nil];
 }
 
+// A uv full-environment script that has lost its interpreter: the python-runtime.json
+// marker and setup.cfg are present, but .venv/bin/python (a symlink into the shared uv
+// python dir) no longer resolves. This happens if the shared uv directory was deleted, the
+// home dir was renamed, or the Scripts folder was restored onto another machine.
+- (BOOL)uvScriptContainerNeedsReprovision:(NSString *)container {
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *marker = [container stringByAppendingPathComponent:[iTermScriptRuntime markerFileName]];
+    NSString *setupCfg = [container stringByAppendingPathComponent:@"setup.cfg"];
+    NSString *interpreter = [[container stringByAppendingPathComponent:[iTermScriptRuntime venvDirectoryName]]
+                             stringByAppendingPathComponent:@"bin/python"];
+    return [fm fileExistsAtPath:marker] &&
+           [fm fileExistsAtPath:setupCfg] &&
+           ![fm fileExistsAtPath:interpreter];  // follows the symlink: false if it dangles
+}
+
+- (void)offerToReprovisionUvScript:(NSString *)container
+                         arguments:(NSArray<NSString *> *)arguments
+                explicitUserAction:(BOOL)explicitUserAction {
+    NSString *name = container.lastPathComponent;
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The Python environment for “%@” is missing (the shared runtime may have been deleted). Rebuild it from its saved requirements now?", name]
+                               actions:@[ @"Rebuild", @"Cancel" ]
+                             accessory:nil
+                            identifier:@"NoSyncRebuildMissingUvEnv"
+                           silenceable:kiTermWarningTypePersistent
+                               heading:@"Rebuild Python Environment?"
+                                window:nil];
+    if (selection != kiTermWarningSelection0) {
+        return;
+    }
+    NSString *setupCfgPath = [container stringByAppendingPathComponent:@"setup.cfg"];
+    iTermSetupCfgParser *parser = [[iTermSetupCfgParser alloc] initWithPath:setupCfgPath];
+    NSArray<NSString *> *dependencies = parser.dependencies ?: @[];
+    // Prefer the version the marker recorded (what it actually ran), then the setup.cfg pin,
+    // then the default. createSetupCfg:NO so the existing setup.cfg is preserved.
+    NSString *version = [iTermScriptRuntime pythonVersionForScriptContainer:container]
+        ?: parser.pythonVersion
+        ?: [iTermScriptRuntime defaultPythonVersion];
+    __block iTermProvisioningProgressWindowController *progress = [[iTermProvisioningProgressWindowController alloc] init];
+    __weak __typeof(self) weakSelf = self;
+    [[iTermUvProvisioner shared] downloadAndProvisionFullEnvironmentWithContainer:container
+                                                          requestedPythonVersion:version
+                                                                    dependencies:dependencies
+                                                                  createSetupCfg:NO
+                                                            provisioningDidBegin:^{
+        [progress showWithMessage:@"Rebuilding the Python environment…"];
+    }
+                                                                      completion:^(NSError *error) {
+        [progress dismiss];
+        progress = nil;
+        if (error != nil) {
+            if (![iTermUvProvisioner isCancelationError:error]) {
+                NSAlert *alert = [[NSAlert alloc] init];
+                alert.messageText = @"Could Not Rebuild Environment";
+                alert.informativeText = error.localizedDescription ?: @"Unknown error";
+                [alert runModal];
+            }
+            return;
+        }
+        // Rebuilt: launch it now.
+        [weakSelf launchScriptWithAbsolutePath:container
+                                     arguments:arguments
+                            explicitUserAction:explicitUserAction];
+    }];
+}
+
 // NOTE: This logic needs to be kept in sync with -launchScriptWithAbsolutePath
 - (BOOL)couldLaunchScriptWithAbsolutePath:(NSString *)fullPath {
     if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
@@ -679,6 +1046,12 @@ NS_ASSUME_NONNULL_BEGIN
                                                      checkForMain:YES
                                                     checkForSaved:YES];
     if (venv) {
+        return YES;
+    }
+    // A uv script whose interpreter went missing has no resolvable venv, but an explicit
+    // launch (e.g. the status bar component's "Launch Script" recovery button) offers to
+    // rebuild it, so it IS launchable. Keep this in sync with launchScriptWithAbsolutePath.
+    if ([self uvScriptContainerNeedsReprovision:fullPath]) {
         return YES;
     }
 
@@ -712,6 +1085,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)newPythonScript {
     DLog(@"begin");
+    if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+        // With uv there is no shared runtime to pre-download; a full-environment
+        // script is provisioned per-script during creation, and a basic script needs
+        // nothing at creation time.
+        [self reallyCreateNewPythonScript];
+        return;
+    }
     __weak __typeof(self) weakSelf = self;
     iTermPythonRuntimeDownloader *downloader = [iTermPythonRuntimeDownloader sharedInstance];
     [downloader downloadOptionalComponentsIfNeededWithConfirmation:YES
@@ -751,7 +1131,15 @@ NS_ASSUME_NONNULL_BEGIN
     NSString *pythonVersion = nil;
     NSURL *url = [self runSavePanelForNewScriptWithPicker:picker dependencies:&dependencies pythonVersion:&pythonVersion];
     DLog(@"%@", url);
-    if (url) {
+    if (!url) {
+        return;
+    }
+    if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+        // No legacy runtime download under uv; provisioning happens per-script below.
+        [self reallyCreateNewPythonScriptAtURL:url picker:picker dependencies:dependencies pythonVersion:pythonVersion];
+        return;
+    }
+    {
         [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
                                                                                             pythonVersion:pythonVersion
                                                                                 minimumEnvironmentVersion:0
@@ -784,22 +1172,49 @@ NS_ASSUME_NONNULL_BEGIN
     RLog(@"url=%@ deps=%@ pythonVersion=%@ selectedEnvironment=%@", url, dependencies, pythonVersion, @(picker.selectedEnvironment));
     if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
         NSURL *folder = [NSURL fileURLWithPath:[self folderForFullEnvironmentSavePanelURL:url]];
-        NSURL *existingEnv = [folder URLByAppendingPathComponent:@"iterm2env"];
-        [[NSFileManager defaultManager] removeItemAtURL:existingEnv error:nil];
-        [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder
-                                                                     dependencies:dependencies
-                                                                    pythonVersion:pythonVersion
-                                                                       completion:^(NSError *errorStatus) {
+        __block iTermProvisioningProgressWindowController *progress = nil;
+        void (^installCompletion)(NSError *) = ^(NSError *errorStatus) {
+            [progress dismiss];
+            progress = nil;
             if (errorStatus != nil) {
+                 if ([iTermUvProvisioner isCancelationError:errorStatus]) {
+                     // The user declined the download; do not report a failure.
+                     return;
+                 }
                  NSAlert *alert = [[NSAlert alloc] init];
                  alert.messageText = @"Installation Failed";
-                 alert.informativeText = [NSString stringWithFormat:@"An error ocurred while installing the Python runtime. Remove ~/Library/Application Support/iTerm2/iterm2env and try again. The error was: %@", errorStatus.localizedDescription];
+                 if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+                     alert.informativeText = [NSString stringWithFormat:@"An error occurred while creating the Python environment. The error was: %@", errorStatus.localizedDescription];
+                 } else {
+                     alert.informativeText = [NSString stringWithFormat:@"An error ocurred while installing the Python runtime. Remove ~/Library/Application Support/iTerm2/iterm2env and try again. The error was: %@", errorStatus.localizedDescription];
+                 }
                  [alert runModal];
                  return;
              }
              [self finishInstallingNewPythonScriptForPicker:picker url:url];
              [self build];
-         }];
+        };
+        if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+            progress = [[iTermProvisioningProgressWindowController alloc] init];
+            // Show progress only once the download phase is done and the venv build
+            // starts, so it does not float over the download confirmation and progress
+            // window.
+            [[iTermUvProvisioner shared] downloadAndProvisionFullEnvironmentWithContainer:folder.path
+                                                                  requestedPythonVersion:pythonVersion ?: [iTermScriptRuntime defaultPythonVersion]
+                                                                            dependencies:dependencies ?: @[]
+                                                                          createSetupCfg:YES
+                                                                    provisioningDidBegin:^{
+                [progress showWithMessage:@"Setting up the Python environment…"];
+            }
+                                                                              completion:installCompletion];
+        } else {
+            NSURL *existingEnv = [folder URLByAppendingPathComponent:@"iterm2env"];
+            [[NSFileManager defaultManager] removeItemAtURL:existingEnv error:nil];
+            [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentTo:folder
+                                                                         dependencies:dependencies
+                                                                        pythonVersion:pythonVersion
+                                                                           completion:installCompletion];
+        }
     } else {
         [self finishInstallingNewPythonScriptForPicker:picker url:url];
     }
@@ -844,6 +1259,35 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSPopUpButton *)newPythonVersionPopup {
     NSPopUpButton *popUpButton = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(10, 0, 50, 50)];
+
+    if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+        // Offer exactly what the INSTALLED uv can provide (uv python list), never a
+        // hardcoded set that an older installed uv might not support. Show the default as
+        // a placeholder immediately (the popup must be non-empty when returned), then
+        // fill the real list asynchronously. If uv is not installed yet, the default is
+        // the only choice and the first provision downloads uv and resolves it.
+        NSString *best = [iTermScriptRuntime defaultPythonVersion];
+        [popUpButton addItemWithTitle:best];
+        [popUpButton selectItemAtIndex:0];
+        [[iTermUvProvisioner shared] availableMinorsWithCompletion:^(NSArray<NSString *> *minors) {
+            if (minors.count == 0) {
+                return;  // uv not installed / query failed: keep the default placeholder.
+            }
+            NSArray<NSString *> *versions = [minors sortedArrayUsingComparator:^NSComparisonResult(NSString *a, NSString *b) {
+                return [a compare:b options:NSNumericSearch];
+            }];
+            [popUpButton.menu removeAllItems];
+            for (NSString *version in versions) {
+                [popUpButton addItemWithTitle:version];
+            }
+            // Prefer the default if this uv provides it, else the newest available.
+            [popUpButton selectItemWithTitle:best];
+            if (popUpButton.indexOfSelectedItem < 0 && popUpButton.numberOfItems > 0) {
+                [popUpButton selectItemAtIndex:popUpButton.numberOfItems - 1];
+            }
+        }];
+        return popUpButton;
+    }
 
     NSArray<NSString *> *components = @[ @"iterm2env", @"versions" ];
     NSString *path = [[NSFileManager defaultManager] spacelessAppSupportCreatingLink];
@@ -1217,7 +1661,10 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - SCEventListenerProtocol
 
 - (void)pathWatcher:(SCEvents *)pathWatcher eventOccurred:(SCEvent *)event {
-    if ([[iTermPythonRuntimeDownloader sharedInstance] busy]) {
+    if ([[iTermPythonRuntimeDownloader sharedInstance] busy] ||
+        [iTermUvProvisioner isProvisioningFullEnvironment]) {
+        // A uv .venv build under Scripts/<name>/ emits thousands of file events; do not
+        // rebuild the menu for each. build runs once at the provision's completion.
         return;
     }
     DLog(@"Path watcher noticed a change to scripts directory");

@@ -936,6 +936,27 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 #endif
     }
 }
+
+// Keep the active-pane border directly behind the progress bar so the border's
+// top stroke does not paint over the bar. The two coincide: both hug the top
+// edge and are ~2pt tall, so a border drawn on top hides the bar entirely
+// (issue 12960). Both views are created lazily exactly once and neither is ever
+// removed, so whichever is created second calls this to establish the order for
+// good. Safe to call whenever either is (re)added: a no-op unless both exist
+// and the border is currently in front of the bar.
+- (void)keepActivePaneBorderBelowProgressBar {
+    if (!_progressBar || !_activePaneBorderView) {
+        return;
+    }
+    const NSUInteger progressIndex = [self.subviews indexOfObjectIdenticalTo:_progressBar];
+    const NSUInteger borderIndex = [self.subviews indexOfObjectIdenticalTo:_activePaneBorderView];
+    if (progressIndex == NSNotFound || borderIndex == NSNotFound) {
+        return;
+    }
+    if (borderIndex > progressIndex) {
+        [self addSubview:_activePaneBorderView positioned:NSWindowBelow relativeTo:_progressBar];
+    }
+}
 - (void)installMetalViewWithDataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
     if (_metalView) {
         [self removeMetalView];
@@ -1968,7 +1989,17 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
 #pragma mark NSDraggingDestination protocol
 
+// Dropping a whole tab group onto a session pane has no sensible meaning (it
+// would split off just the first member), so refuse it. A single-tab drop is
+// still fine. Whole-group drags carry a marker on their pasteboard.
+- (BOOL)draggingIsWholeTabGroup:(id<NSDraggingInfo>)sender {
+    return [[sender draggingPasteboard] availableTypeFromArray:@[ PSMTabDragIsGroupPasteboardType ]] != nil;
+}
+
 - (NSDragOperation)draggingEntered:(id < NSDraggingInfo >)sender {
+    if ([self draggingIsWholeTabGroup:sender]) {
+        return NSDragOperationNone;
+    }
     return [_delegate sessionViewDraggingEntered:sender];
 }
 
@@ -1979,6 +2010,9 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 }
 
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
+    if ([self draggingIsWholeTabGroup:sender]) {
+        return NSDragOperationNone;
+    }
     if ([_delegate sessionViewShouldSplitSelectionAfterDragUpdate:sender]) {
         // draggingUpdated:'s draggingLocation can be stale during tab drags (see PSMTabDragAssistant).
         const NSPoint mouseLocationInWindow = [self.window convertPointFromScreen:[NSEvent mouseLocation]];
@@ -1992,13 +2026,16 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
 
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
     RLog(@"performDragOperation: %@", sender);
+    if ([self draggingIsWholeTabGroup:sender]) {
+        return NO;
+    }
     BOOL result = [_delegate sessionViewPerformDragOperation:sender];
     [_delegate sessionViewDraggingExited:sender];
     return result;
 }
 
 - (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender {
-    return YES;
+    return ![self draggingIsWholeTabGroup:sender];
 }
 
 - (BOOL)wantsPeriodicDraggingUpdates {
@@ -2071,6 +2108,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
         _progressBar.heightValue = _progressBarHeight;
         _progressBar.colorScheme = _progressBarColorScheme;
         [self addSubviewBelowFindView:_progressBar];
+        [self keepActivePaneBorderBelowProgressBar];
         [self updateLayout];
     }
     _progressBar.heightValue = _progressBarHeight;
@@ -2514,6 +2552,7 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
     if (!_activePaneBorderView) {
         _activePaneBorderView = [[iTermActivePaneBorderView alloc] initWithFrame:self.bounds];
         [self addSubview:_activePaneBorderView positioned:NSWindowAbove relativeTo:nil];
+        [self keepActivePaneBorderBelowProgressBar];
     }
 
     NSColor *borderColor = [_delegate sessionViewActivePaneBorderColor];

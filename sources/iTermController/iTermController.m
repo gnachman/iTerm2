@@ -1070,6 +1070,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
             case WINDOW_TYPE_MAXIMIZED:
             case WINDOW_TYPE_COMPACT_MAXIMIZED:
             case WINDOW_TYPE_CENTERED:
+            case WINDOW_TYPE_COMPACT_CENTERED:
                 *percentage = (iTermPercentage){ .width = -1, .height = -1 };
                 break;
 

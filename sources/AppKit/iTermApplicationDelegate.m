@@ -37,6 +37,7 @@
 #import "NSArray+iTerm.h"
 #import "NSBundle+iTerm.h"
 #import "NSData+GZIP.h"
+#import "NSDateFormatterExtras.h"
 #import "NSFileManager+iTerm.h"
 #import "NSFont+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -434,6 +435,15 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
             return NO;
         }
     }
+    if (action == @selector(installAlreadyDownloadedPythonRuntime:)) {
+        // Installing a hand-downloaded LEGACY runtime zip is meaningless under the uv
+        // backend. (installPythonRuntime: is not disabled here: under the gate it routes
+        // to the uv install / check-for-update flow instead, decided in one place in
+        // iTermScriptsMenuController updateInstallRuntimeMenuItem.)
+        if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+            return NO;
+        }
+    }
     if ([menuItem action] == @selector(toggleUseBackgroundPatternIndicator:)) {
       [menuItem setState:[self useBackgroundPatternIndicator]];
       return YES;
@@ -523,8 +533,23 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     } else if (menuItem.action == @selector(debugLogging:)) {
         menuItem.state = gDebugLogging ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
-    } else if (menuItem.action == @selector(toggleShowAlertsWithRememberedSelections:)) {
-        menuItem.state = gShowRememberedAlerts ? NSControlStateValueOn : NSControlStateValueOff;
+    } else if (menuItem.action == @selector(showSuppressedAlerts:)) {
+        // Always enabled: even with nothing suppressed, the panel hosts the
+        // "always show alerts with remembered selections" toggle.
+        NSArray<iTermSuppressedAlert *> *suppressed = [[iTermSuppressedAlerts sharedInstance] currentlySuppressedAlerts];
+        const NSInteger n = suppressed.count;
+        if (n == 0) {
+            menuItem.title = @"Suppressed Alerts…";
+            return YES;
+        }
+        NSString *countPart = (n == 1) ? @"1 Alert Suppressed" : [NSString stringWithFormat:@"%@ Alerts Suppressed", @(n)];
+        NSDate *recent = suppressed.firstObject.lastSuppressed;
+        if (recent) {
+            NSString *rel = [NSDateFormatter compactDateDifferenceStringFromDate:recent];
+            menuItem.title = [NSString stringWithFormat:@"%@ (%@ ago)…", countPart, rel];
+        } else {
+            menuItem.title = [NSString stringWithFormat:@"%@…", countPart];
+        }
         return YES;
     } else if (menuItem.action == @selector(arrangeSplitPanesEvenly:)) {
         PTYTab *tab = [[[iTermController sharedInstance] currentTerminal] currentTab];
@@ -1359,12 +1384,14 @@ void TurnOnDebugLoggingAutomatically(void) {
     DLog(@"Make ITAddressBookMgr");
     [ITAddressBookMgr sharedInstance];
 
-    // Prompt for local network permission if this is a new version.
-    // This is needed because macOS doesn't show the permission prompt until the app
-    // actually accesses the local network. Without this, users may find that commands
-    // like `ping 10.0.0.1` fail with "No route to host" until they reboot.
+    // Probe the local network to surface the permission prompt if macOS hasn't recorded a
+    // decision yet. This is needed because macOS doesn't show the permission prompt until the
+    // app actually accesses the local network. Without this, users may find that commands like
+    // `ping 10.0.0.1` fail with "No route to host" until they reboot. Probing every launch is
+    // silent once a decision exists and lets us recover after a TCC reset or OS upgrade (issue
+    // 12956).
     DLog(@"Prompt for local network permission");
-    [[iTermLocalNetworkPermissionPrompter shared] promptIfNeeded];
+    [[iTermLocalNetworkPermissionPrompter shared] prompt];
 
     // Bookmarks must be loaded for this to work since it needs to know if the hotkey's profile
     // exists.
@@ -1489,6 +1516,7 @@ void TurnOnDebugLoggingAutomatically(void) {
                                    heading:@"Deprecation Notice"
                                     window:nil];
     }
+    [iTermMacOS13RequirementNotice maybeShow];
     DLog(@"didFinishLaunching");
 
     // Test-only: if launched with the purge flag, wipe the app's data-protection
@@ -1501,6 +1529,14 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     [iTermLaunchExperienceController applicationDidFinishLaunching];
     [[iTermLaunchServices sharedInstance] registerForiTerm2Scheme];
+    // Once a day at most, check for a newer uv (silently replace it) and refresh the
+    // iterm2 module in provisioned basic-script venvs. A no-op until uv is installed.
+    // Skipped under unit tests to avoid network access.
+    if (![NSApp isRunningUnitTests]) {
+        [[iTermUvProvisioner shared] performPeriodicUpgradeCheck];
+        // Reclaim orphaned ~90 MB uv install temps left by a crash mid-install.
+        [[iTermUvProvisioner shared] sweepOrphanedInstallTemps];
+    }
     // Skip the Companion launch hooks under unit tests. They read
     // keychain-backed pairing material at launch, and a locked login keychain
     // turns that read into a modal unlock prompt that hangs an unattended test
@@ -3049,6 +3085,19 @@ static iTermKeyEventReplayer *gReplayer;
                 term.terminalGuid = restorableSession.terminalGuid;
                 break;
         }
+
+        // Every branch above registers its window with the controller before
+        // populating it. If the restore failed to add any tab (for example the
+        // session could not be revived), don't leave an empty window behind: it
+        // would be invisible, never torn down, and would linger in the
+        // controller's terminal list. Besides being a leak, such a phantom
+        // confuses consumers that enumerate windows, notably the Python API's
+        // focus reporting, which would advertise a selected tab that exists in
+        // no window. Closing it here is the only way to deregister it, since
+        // removal is driven exclusively by the window close notification.
+        if (term && term.numberOfTabs == 0) {
+            [[term window] close];
+        }
     }
 
     [iTermUndoCloseShortcutChangeWarning maybeShowForTriggeringEvent:triggeringEvent
@@ -3118,8 +3167,8 @@ static iTermKeyEventReplayer *gReplayer;
     }
 }
 
-- (IBAction)toggleShowAlertsWithRememberedSelections:(id)sender {
-    [iTermWarning toggleShowRememberedAlerts];
+- (IBAction)showSuppressedAlerts:(id)sender {
+    [[iTermSuppressedAlertsWindowController sharedInstance] showWindow:sender];
 }
 
 - (IBAction)openQuickly:(id)sender {
@@ -3159,6 +3208,10 @@ static iTermKeyEventReplayer *gReplayer;
         DLog(@"Not homeDirectoryDotDir");
         return;
     }
+    if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+        [self installOrCheckUvRuntime];
+        return;
+    }
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:NO
                                                                                         pythonVersion:nil
                                                                             minimumEnvironmentVersion:0
@@ -3175,6 +3228,41 @@ static iTermKeyEventReplayer *gReplayer;
                                          window:nil];
          }
      }];
+}
+
+// Under the uv gate, the "Install Python Runtime" / "Check for Updated Runtime" menu
+// item routes here. If uv is not yet installed, download it (with the existing consent +
+// progress UI) and eagerly provision the default-minor shared venv so basic scripts
+// later launch offline, mirroring the legacy pre-install. If uv is installed, run a
+// user-invoked upgrade check that bypasses the daily throttle and reports the result.
+- (void)installOrCheckUvRuntime {
+    if ([iTermUvProvisioner isInstalled]) {
+        [[iTermUvProvisioner shared] userRequestedUpgradeCheckWithCompletion:^(BOOL ok, NSString *message) {
+            [[iTermScriptHistoryEntry globalEntry] addOutput:[message stringByAppendingString:@"\n"] completion:^{}];
+            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            alert.messageText = ok ? @"Python Runtime" : @"Update Failed";
+            alert.informativeText = message;
+            [alert runModal];
+        }];
+        return;
+    }
+    [[iTermUvProvisioner shared] downloadAndProvisionSharedVenvWithRequestedPythonVersion:[iTermScriptRuntime defaultPythonVersion]
+                                                                              completion:^(NSError *error, NSString *python) {
+        if (error != nil && [iTermUvProvisioner isCancelationError:error]) {
+            // The user declined the download; stay silent.
+            return;
+        }
+        if (error != nil || python == nil) {
+            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+            alert.messageText = @"Installation Failed";
+            alert.informativeText = [NSString stringWithFormat:@"Could not install the Python runtime: %@",
+                                     error.localizedDescription ?: @"unknown error"];
+            [alert runModal];
+            return;
+        }
+        // uv is now installed; retitle the menu item to "Check for Updated Runtime".
+        [self.scriptsMenuController updateInstallRuntimeMenuItem];
+    }];
 }
 
 - (IBAction)installAlreadyDownloadedPythonRuntime:(id)sender {
@@ -3213,10 +3301,66 @@ static iTermKeyEventReplayer *gReplayer;
     [self.scriptsMenuController build];
 }
 
+- (void)launchREPLWithCommand:(NSString *)command arguments:(NSArray<NSString *> *)arguments {
+    NSURL *bannerURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
+    NSString *bannerText = [NSString stringWithContentsOfURL:bannerURL encoding:NSUTF8StringEncoding error:nil];
+    NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCookie];
+    NSString *key = [[NSUUID UUID] UUIDString];
+    NSString *identifier = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
+    iTermScriptHistoryEntry *entry = [[[iTermScriptHistoryEntry alloc] initWithName:@"REPL"
+                                                                           fullPath:nil
+                                                                         identifier:identifier
+                                                                          relaunch:nil] autorelease];
+    [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
+    NSDictionary *environment = @{ @"ITERM2_COOKIE": cookie,
+                                   @"ITERM2_KEY": key };
+
+    [[iTermController sharedInstance] openSingleUseWindowWithCommand:command
+                                                           arguments:arguments
+                                                              inject:[bannerText dataUsingEncoding:NSUTF8StringEncoding]
+                                                         environment:environment
+                                                                 pwd:nil
+                                                             options:iTermSingleUseWindowOptionsDoNotEscapeArguments
+                                                      didMakeSession:nil
+                                                          completion:nil];
+}
+
 - (IBAction)openREPL:(id)sender {
     DLog(@"%@", sender);
     if (![[NSFileManager defaultManager] homeDirectoryDotDir]) {
         DLog(@"Not homeDirectoryDotDir");
+        return;
+    }
+    if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
+        [[iTermUvProvisioner shared] downloadAndProvisionSharedVenvWithRequestedPythonVersion:[iTermScriptRuntime defaultPythonVersion]
+                                                                                  completion:^(NSError *uvError, NSString *sharedPython) {
+            if (uvError != nil && [iTermUvProvisioner isCancelationError:uvError]) {
+                // The user declined the download; stay silent.
+                return;
+            }
+            NSString *interpreter = sharedPython;
+            if (uvError != nil || interpreter == nil) {
+                // The default version could not be provisioned (commonly offline). Fall back
+                // to any already-provisioned shared venv (they all carry iterm2) rather than
+                // failing outright, matching how legacy apython used whatever was installed.
+                interpreter = [[iTermUvProvisioner shared] newestProvisionedSharedVenvInterpreter];
+            }
+            if (interpreter == nil) {
+                NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+                alert.messageText = @"Python Environment Unavailable";
+                alert.informativeText = [NSString stringWithFormat:@"Could not prepare the Python environment for the REPL: %@",
+                                         uvError.localizedDescription ?: @"unknown error"];
+                [alert runModal];
+                return;
+            }
+            if (![iTermAPIHelper sharedInstanceFromExplicitUserAction]) {
+                return;
+            }
+            // A uv venv has no apython shim; the stdlib asyncio REPL provides
+            // top-level await.
+            [self launchREPLWithCommand:[interpreter stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]
+                              arguments:[iTermReplLauncher argumentsWithUsesUV:YES]];
+        }];
         return;
     }
     [[iTermPythonRuntimeDownloader sharedInstance] downloadOptionalComponentsIfNeededWithConfirmation:YES
@@ -3240,27 +3384,7 @@ static iTermKeyEventReplayer *gReplayer;
             return;
         }
         NSString *apython = [[[[[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPythonWithPythonVersion:nil] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"apython"] stringWithBackslashEscapedShellCharactersIncludingNewlines:YES];
-        NSURL *bannerURL = [[NSBundle mainBundle] URLForResource:@"repl_banner" withExtension:@"txt"];
-        NSString *bannerText = [NSString stringWithContentsOfURL:bannerURL encoding:NSUTF8StringEncoding error:nil];
-        NSString *cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCookie];
-        NSString *key = [[NSUUID UUID] UUIDString];
-        NSString *identifier = [[iTermAPIConnectionIdentifierController sharedInstance] identifierForKey:key];
-        iTermScriptHistoryEntry *entry = [[[iTermScriptHistoryEntry alloc] initWithName:@"REPL"
-                                                                               fullPath:nil
-                                                                             identifier:identifier
-                                                                              relaunch:nil] autorelease];
-        [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
-        NSDictionary *environment = @{ @"ITERM2_COOKIE": cookie,
-                                       @"ITERM2_KEY": key };
-
-        [[iTermController sharedInstance] openSingleUseWindowWithCommand:apython
-                                                               arguments:@[ @"--banner=\\\"\\\"" ]
-                                                                  inject:[bannerText dataUsingEncoding:NSUTF8StringEncoding]
-                                                             environment:environment
-                                                                     pwd:nil
-                                                                 options:iTermSingleUseWindowOptionsDoNotEscapeArguments
-                                                          didMakeSession:nil
-                                                              completion:nil];
+        [self launchREPLWithCommand:apython arguments:[iTermReplLauncher argumentsWithUsesUV:NO]];
     }];
 }
 

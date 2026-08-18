@@ -26,6 +26,15 @@ NS_CLASS_AVAILABLE(10_11, NA)
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
+// Called during the driver's per-frame update phase (before transient states are
+// created). Recomputes the mark geometry and rebuilds the texture atlas if the
+// cell configuration, colorspace, or resolved mark colors have changed since the
+// last frame.
+- (void)updateForCellConfiguration:(iTermCellRenderConfiguration *)cellConfiguration
+                      successColor:(NSColor *)successColor
+                        otherColor:(NSColor *)otherColor
+                      failureColor:(NSColor *)failureColor;
+
 @end
 
 NS_ASSUME_NONNULL_END

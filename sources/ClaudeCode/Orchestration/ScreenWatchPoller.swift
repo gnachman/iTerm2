@@ -34,8 +34,22 @@ final class ScreenWatchPoller {
 
     private let watcher: WorkgroupWatcher
     private let sessionProvider: () -> PTYSession?
+    // Re-checked before every screen read so a permission revoked mid-watch
+    // (e.g. the user turns View Contents to never on a session-bound chat) stops
+    // the reads immediately, not just at the next registration. The dispatcher
+    // also tears the poller down on a permission-change message; this is the
+    // belt-and-suspenders path for changes that don't route through it (e.g. a
+    // global default-permission change). Defaults to always-allowed so existing
+    // callers and orchestration watches are unaffected.
+    private let mayRead: @MainActor () -> Bool
     private let onReached: () -> Void
     private let onTimedOut: () -> Void
+    // Invoked when `mayRead` goes false mid-run: the chat lost screen-read
+    // permission, so this poller (whose only job is reading the screen) can't
+    // continue. Routed back to the dispatcher to drop the watcher and tell the
+    // agent, preserving the "every drop tells the agent" invariant on the
+    // non-routed revoke path (a global default flip that posts no .setPermissions).
+    private let onPermissionLost: () -> Void
 
     private var task: Task<Void, Never>?
     // Held only for its lifetime so cancel() can abort an in-flight model
@@ -102,12 +116,16 @@ final class ScreenWatchPoller {
 
     init(watcher: WorkgroupWatcher,
          sessionProvider: @escaping () -> PTYSession?,
+         mayRead: @escaping @MainActor () -> Bool = { true },
          onReached: @escaping () -> Void = {},
-         onTimedOut: @escaping () -> Void = {}) {
+         onTimedOut: @escaping () -> Void = {},
+         onPermissionLost: @escaping () -> Void = {}) {
         self.watcher = watcher
         self.sessionProvider = sessionProvider
+        self.mayRead = mayRead
         self.onReached = onReached
         self.onTimedOut = onTimedOut
+        self.onPermissionLost = onPermissionLost
     }
 
     // One screen read + model judgement, with no run loop, deadline, or
@@ -120,6 +138,8 @@ final class ScreenWatchPoller {
     // unreadable or cancelled judgement returns false (treated as not-yet,
     // same as the run loop treats `unknown`).
     func checkOnce() async -> Bool {
+        // Don't read the screen if the chat's permission to do so was revoked.
+        guard mayRead() else { return false }
         guard let session = sessionProvider() else { return false }
         let contents = WorkgroupIntrospection.screenContents(
             forSession: session, requestedLines: 150)
@@ -177,6 +197,17 @@ final class ScreenWatchPoller {
                 log("Timed out after \(Int(elapsed))s without reaching "
                     + watcher.goalDescription + ".")
                 onTimedOut()
+                return
+            }
+            // Stop reading if the chat's permission to read the screen was
+            // revoked mid-watch. Route the stop back to the dispatcher via
+            // onPermissionLost so it drops the watcher and tells the agent (a
+            // fired/timed-out callback would be misleading). This unifies the
+            // non-routed revoke path (a global default flip that posts no
+            // .setPermissions) with the reconcile/regate drops.
+            guard mayRead() else {
+                log("Screen reads no longer permitted; stopping.")
+                onPermissionLost()
                 return
             }
             guard let session = sessionProvider() else {

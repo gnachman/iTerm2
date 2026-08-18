@@ -16,6 +16,8 @@
 #import <CoreVideo/CoreVideo.h>
 #import <sys/time.h>
 
+NSString *const PSMTabDragIsGroupPasteboardType = @"com.iterm2.psm.tabgroup";
+
 #if PSM_DEBUG_DRAG_PERFORMANCE
 static os_log_t PSMTabDragLog(void) {
     static os_log_t log;
@@ -45,6 +47,16 @@ static os_log_t PSMTabDragLog(void) {
 @property (nonatomic, retain) NSWindow *temporarilyHiddenWindow;
 
 - (void)displayLinkDidFire;
+
+// Mid-drag group-chip helpers (defined below; declared here so the earlier
+// -calculateDragAnimationForTabBar: can call them without an implicit warning).
+- (void)reinsertDragChipsInTabBar:(PSMTabBarControl *)control;
+- (PSMTabBarCell *)nonChipNeighborInCells:(NSArray *)cells
+                                  atIndex:(NSInteger)index
+                                direction:(NSInteger)direction;
+- (PSMTabBarCell *)dropTargetForUnhitPoint:(NSPoint)point
+                                 inControl:(PSMTabBarControl *)control
+                                     cells:(NSArray *)cells;
 @end
 
 // CVDisplayLink callback - runs on a background thread, so we need to get to main thread
@@ -83,6 +95,25 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     NSPoint _currentMouseLoc;
     PSMTabBarCell *_targetCell;
     NSSize _dragTabOffset;
+
+    // Group drag: when a whole tab group is dragged by its chip, the drag runs
+    // through the same placeholder/animation/session path as a single tab, but
+    // the dragged unit is the group's block: one wide placeholder stands in for
+    // the chip + member cells. _draggedGroupID is nil for a normal single-tab
+    // drag. _draggedGroupMembers are the group's member tab cells (draggedCell is
+    // members.firstObject); held so the drop can restore them to the source bar.
+    NSString *_draggedGroupID;
+    NSArray<PSMTabBarCell *> *_draggedGroupMembers;
+
+    // Drag auto-scroll for a SCROLLABLE destination bar: when the targeted
+    // drop slot opens past the visible viewport, the animation walk shifts
+    // this bar's cells left by _dragScrollNudge so the slot is revealed
+    // (grown until the slot's trailing edge is inside the viewport; sticky
+    // for the rest of the hover; reset when the bar stops being a drag
+    // destination). Purely drag-transient: the bar's real _scrollOffset is
+    // never touched. Unretained; the participating set retains the bar.
+    PSMTabBarControl *_dragScrollBar;
+    CGFloat _dragScrollNudge;
 
     // The drag window stays at its initial position along the cross-axis
     // (Y for horizontal tab bars, X for vertical) until movement exceeds a threshold.
@@ -144,11 +175,31 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [_animationTimer release];
     [_sineCurveWidths release];
     [_targetCell release];
+    [_draggedGroupID release];
+    [_draggedGroupMembers release];
     [_temporarilyHiddenWindow release];
 #if PSM_DEBUG_DRAG_PERFORMANCE
     [_timerFireTimes release];
 #endif
     [super dealloc];
+}
+
+// YES if `item` is the tab currently being dragged out, or (for a group drag)
+// one of the group's members. Used to decide whether a drag's source window
+// needs to move its selection off a leaving tab.
+- (BOOL)isDraggingTabViewItem:(NSTabViewItem *)item {
+    if (item == nil) {
+        return NO;
+    }
+    if ([[self draggedCell] representedObject] == item) {
+        return YES;
+    }
+    for (PSMTabBarCell *member in _draggedGroupMembers) {
+        if ([member representedObject] == item) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 #pragma mark -
@@ -169,16 +220,61 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     }
 }
 
+- (CGFloat)dragScrollNudgeForTabBar:(PSMTabBarControl *)tabBar {
+    return (tabBar == _dragScrollBar) ? _dragScrollNudge : 0;
+}
+
+// Ratio between the dragged unit's on-drop extent in `control` and its extent
+// in the source bar (which sized the sine animation table). A FOREIGN bar's
+// drop slots open at the size the unit will actually occupy there: dragging a
+// group from a wide window to a narrow stretch-to-fit one must not punch a
+// wide-window-sized hole in the narrow bar. The source bar keeps 1.0 (the
+// unit returns there at its own size on cancel).
+- (CGFloat)dropSlotScaleForTabBar:(PSMTabBarControl *)control {
+    if (control == [self sourceTabBar] ||
+        [control orientation] != PSMTabBarHorizontalOrientation) {
+        return 1.0;
+    }
+    const CGFloat sourceExtent =
+        (_sineCurveWidths.count > 0) ? [[_sineCurveWidths lastObject] floatValue] : 0;
+    if (sourceExtent <= 0) {
+        return 1.0;
+    }
+    const NSInteger tabCount = (_draggedGroupMembers.count > 0)
+        ? (NSInteger)_draggedGroupMembers.count
+        : 1;
+    CGFloat chipWidth = 0;
+    if (_draggedGroupID.length > 0) {
+        NSString *name =
+            [[[[self sourceTabBar] tabGroupDataSource] tabGroupWithIdentifier:_draggedGroupID] name] ?: @"";
+        chipWidth = [control chipCellWidthForGroupName:name];
+    }
+    const CGFloat destExtent = [control expectedDropExtentForIncomingTabCount:tabCount
+                                                                    chipWidth:chipWidth];
+    if (destExtent <= 0) {
+        return 1.0;
+    }
+    return destExtent / sourceExtent;
+}
+
 - (void)startAnimation {
 #if PSM_DEBUG_DRAG_PERFORMANCE
     NSLog(@"[PSMTabDrag] Starting animation timer at 30 FPS");
     [_timerFireTimes removeAllObjects];
 #endif
-    _animationTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 30.0
-                                                       target:self
-                                                     selector:@selector(animateDrag:)
-                                                     userInfo:nil
-                                                      repeats:YES];
+    // The timer must run in the event-tracking mode: during an active
+    // NSDraggingSession the main run loop sits in that mode, and a timer
+    // scheduled only for the default mode starves. Drop slots then advance
+    // only during stray default-mode excursions (a short burst right after
+    // entering a bar) and freeze while the user aims -- the gap in another
+    // window's bar never visibly opens even though the target is correct.
+    _animationTimer = [NSTimer timerWithTimeInterval:1.0 / 30.0
+                                              target:self
+                                            selector:@selector(animateDrag:)
+                                            userInfo:nil
+                                             repeats:YES];
+    [[NSRunLoop currentRunLoop] addTimer:_animationTimer forMode:NSRunLoopCommonModes];
+    [[NSRunLoop currentRunLoop] addTimer:_animationTimer forMode:NSEventTrackingRunLoopMode];
 }
 
 - (CGFloat)height {
@@ -207,7 +303,17 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [self setDestinationTabBar:control];
     [_participatingTabBars addObject:control];
     [self setDraggedCell:cell];
-    [self setDraggedCellIndex:[[control cells] indexOfObject:cell]];
+    // _draggedCellIndex and everything downstream run in a pure tab-cell world
+    // (chips are re-derived in -finishDrag). Compute that index as the cell's
+    // position among the non-chip cells WITHOUT stripping chips from _cells
+    // here: stripping now and reinserting later in -distributePlaceholders...
+    // leaves a window where a synchronous redraw (e.g. -dragImage's
+    // cacheDisplayInRect:) draws the bar with the chip missing, flickering it.
+    // -distributePlaceholders... strips and re-derives chips atomically.
+    NSArray *startCells = [control cells];
+    const NSInteger rawIndex = [startCells indexOfObject:cell];
+    [self setDraggedCellIndex:(int)[PSMTabBarControl tabIndexForCellIndex:rawIndex
+                                                                  inCells:startCells]];
 
     NSRect cellFrame = [cell frame];
     // list of widths for animation
@@ -219,7 +325,13 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 
     [[NSCursor closedHandCursor] set];
 
+    // The plain-tab drag image must not include the group run decoration (chip +
+    // enclosing outline) the bar draws over grouped tabs. Suppress it just for the
+    // offscreen capture; the live bar keeps its decoration so groups stay visible
+    // as drop targets during the drag.
+    [control setSuppressTabGroupRunDecoration:YES];
     NSImage *dragImage = [cell dragImage];
+    [control setSuppressTabGroupRunDecoration:NO];
     [[cell indicator] removeFromSuperview];
     [self distributePlaceholdersInTabBar:control withDraggedCell:cell];
 
@@ -231,17 +343,45 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         cellFrame.origin.y += cellFrame.size.height;
     }
     [cell setHighlighted:NO];
+    // Lay the cells out once synchronously before the first draw. The animation
+    // timer's first tick is ~1/30s away, and until then the bar would draw the
+    // reinserted chip at the stale origin it inherited from its neighbor, making
+    // it appear to jump/blink at drag start. Doing it now positions the chip
+    // (and everything else) correctly for the very first frame.
+    [self calculateDragAnimationForTabBar:control];
+    [control setNeedsDisplay:YES];
     [self startAnimation];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:PSMTabDragDidBeginNotification
                                                         object:nil];
 
+    [self beginDragSessionForControl:control
+                                cell:cell
+                               image:dragImage
+                      mouseDownEvent:event
+                           cellFrame:cellFrame];
+}
+
+// Shared tail of a drag start (single tab or whole group): builds the floating
+// drag window, computes _dragTabOffset, begins the AppKit dragging session, and
+// starts the CVDisplayLink mouse polling. `cellFrame` is the dragged unit's frame
+// already adjusted for a flipped bar.
+- (void)beginDragSessionForControl:(PSMTabBarControl *)control
+                              cell:(PSMTabBarCell *)cell
+                             image:(NSImage *)dragImage
+                    mouseDownEvent:(NSEvent *)event
+                         cellFrame:(NSRect)cellFrame {
     // Retain the control in case the drag operation causes the control to be released
     [control retain];
 
     NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
     [pbItem setString:[@([[control cells] indexOfObject:cell]) stringValue]
               forType:@"com.iterm2.psm.controlitem"];
+    // Mark whole-group drags so a drop target can tell them apart from a single
+    // tab by inspecting the pasteboard, without reaching into this assistant.
+    if (_draggedGroupID != nil) {
+        [pbItem setString:_draggedGroupID forType:PSMTabDragIsGroupPasteboardType];
+    }
 
     NSImage *imageToDrag;
     NSRect draggingRect;
@@ -298,6 +438,101 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [control release];
 }
 
+// Start dragging a whole tab group by its chip. Runs through the same
+// placeholder/animation/session path as -startDraggingCell:, but the dragged
+// unit is the group's block (chip + members): one wide placeholder (group width)
+// stands in for the run, the drag image is a snapshot of the run, and the drop is
+// handled by the group branches in -reallyPerformDragOperation:/-draggedImageEndedAt:.
+- (void)startDraggingGroupWithChip:(PSMTabBarCell *)chip
+                           members:(NSArray<PSMTabBarCell *> *)members
+                        fromTabBar:(PSMTabBarControl *)control
+                withMouseDownEvent:(NSEvent *)event {
+    if (members.count == 0) {
+        return;
+    }
+    PSMTabBarCell *first = members.firstObject;
+    [self setIsDragging:YES];
+    [self setSourceTabBar:control];
+    [self setDestinationTabBar:control];
+    [_participatingTabBars addObject:control];
+    [self setDraggedCell:first];
+    [_draggedGroupID release];
+    _draggedGroupID = [[chip tabGroupIdentifier] copy];
+    [_draggedGroupMembers release];
+    _draggedGroupMembers = [members copy];
+
+    // draggedCellIndex = first member's position among non-chip cells.
+    NSArray *startCells = [control cells];
+    const NSInteger rawIndex = [startCells indexOfObject:first];
+    [self setDraggedCellIndex:(int)[PSMTabBarControl tabIndexForCellIndex:rawIndex
+                                                                  inCells:startCells]];
+
+    // The dragged unit is the whole run: chip + members. Its frame drives the
+    // placeholder width (via the sine curve) so every drop slot opens to group
+    // width, and it is the drag image.
+    NSRect runFrame = [chip frame];
+    for (PSMTabBarCell *c in members) {
+        runFrame = NSUnionRect(runFrame, [c frame]);
+    }
+    [self addSineCurveWidthsWithOrientation:[control orientation] size:runFrame.size];
+
+    [[control overflowPopUpButton] setHidden:YES];
+    [[control addTabButton] setHidden:YES];
+    [[NSCursor closedHandCursor] set];
+
+    // Drag image = snapshot of the run WITH its decoration (chip + outline), so
+    // the floating image looks like the group. The group pill's outline is outset
+    // past the run frame on BOTH horizontal edges (see -drawTabGroupRun /
+    // -drawCollapsedTabGroupChip), so the capture must grow by the outset on each
+    // side or the floating image clips the outline. The right outset is the style
+    // constant; the left is neighbor-aware (0 when the preceding cell already
+    // covers the shared inter-group gap, which also avoids grabbing that neighbor's
+    // outline). Both collapsed and expanded runs outset identically. Growing the
+    // LEFT moves the capture origin, so the drag anchor (cellFrame, below) shifts
+    // by the same amount to keep the group under the cursor. Round out and clamp.
+    id<PSMTabStyle> dragStyle = [control style];
+    CGFloat leftOut = 0;
+    if ([dragStyle respondsToSelector:@selector(tabGroupChipLeftOutsetForChip:bar:)]) {
+        leftOut = ceil([dragStyle tabGroupChipLeftOutsetForChip:chip bar:control]);
+    }
+    const CGFloat rightOut = ceil([control effectiveTabGroupRunOutset]) + 1;  // +1 px round-up slack
+    NSRect capture = NSIntegralRect(runFrame);
+    capture.origin.x -= leftOut;
+    capture.size.width += leftOut + rightOut;
+    capture.size.height += 1;
+    capture = NSIntersectionRect(capture, [control bounds]);
+    NSBitmapImageRep *rep = [control bitmapImageRepForCachingDisplayInRect:capture];
+    [control cacheDisplayInRect:capture toBitmapImageRep:rep];
+    NSImage *dragImage = [[[NSImage alloc] initWithSize:capture.size] autorelease];
+    [dragImage addRepresentation:rep];
+
+    [[first indicator] removeFromSuperview];
+    [self distributePlaceholdersInTabBar:control withDraggedGroupMembers:members chip:chip];
+
+    [self setCurrentMouseLoc:[control convertPoint:[event locationInWindow] fromView:nil]];
+
+    NSRect cellFrame = runFrame;
+    // The drag anchor must sit at the captured image's left edge, which the left
+    // outset moved leftward (and bounds-clamping may have pulled back). Match it so
+    // the floating image stays aligned under the cursor.
+    cellFrame.origin.x = capture.origin.x;
+    if ([control isFlipped]) {
+        cellFrame.origin.y += cellFrame.size.height;
+    }
+    [self calculateDragAnimationForTabBar:control];
+    [control setNeedsDisplay:YES];
+    [self startAnimation];
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:PSMTabDragDidBeginNotification
+                                                        object:nil];
+
+    [self beginDragSessionForControl:control
+                                cell:first
+                               image:dragImage
+                      mouseDownEvent:event
+                           cellFrame:cellFrame];
+}
+
 - (void)draggingEnteredTabBar:(PSMTabBarControl *)control atPoint:(NSPoint)mouseLoc {
     if (!_animationTimer) {
         [self startAnimation];
@@ -307,8 +542,20 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     // hide UI buttons
     [[control overflowPopUpButton] setHidden:YES];
     [[control addTabButton] setHidden:YES];
-    if ([[control cells] count] == 0 || ![[[control cells] objectAtIndex:0] isPlaceholder]) {
+    // Distribute drop slots on the first entry of this drag. Key on actual
+    // participation, not on cells[0] being a placeholder: a stale placeholder
+    // left behind by an earlier aborted drag would make that check skip
+    // distribution, leaving the bar with no slots -- no gap ever opens and the
+    // drop falls back to appending at the end.
+    if (![_participatingTabBars containsObject:control]) {
+        [self removeAllPlaceholdersFromTabBar:control];
         [self distributePlaceholdersInTabBar:control];
+        // Keep this bar's own chips visible while a foreign tab is dragged in.
+        [self reinsertDragChipsInTabBar:control];
+        RLog(@"tabGroup: dragEntered %p distributed slots (group=%@) cells=%d barW=%.0f scrollable=%d avail=%.0f",
+             control, _draggedGroupID ?: @"-", (int)[[control cells] count],
+             control.frame.size.width, (int)[control tabBarIsScrollable],
+             [control availableCellWidthWithOverflow:NO]);
     }
     [_participatingTabBars addObject:control];
 
@@ -396,7 +643,12 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
                         case PSMTab_TopTab:
                         case PSMTab_LeftTab:
                         case PSMTab_RightTab:
-                            drawPoint.y = viewImage.size.height - self.draggedCell.frame.size.height;
+                            // Use the dragged image's own height, not the dragged
+                            // cell's: a collapsed group's dragged cell is its first
+                            // member, which is a zero-height hidden cell, so using
+                            // its height would draw the chip entirely off the top of
+                            // the tear-off preview (nothing shows for the group).
+                            drawPoint.y = viewImage.size.height - [tabImage size].height;
                             break;
                         case PSMTab_BottomTab:
                             drawPoint.y = 0;
@@ -481,9 +733,112 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     _dropping = NO;
 }
 
+// Put the dragged group's member cells back into the source bar at their
+// original position, undoing the wide-placeholder swap, so the source's cells
+// match its tabViewItems before the delegate performs the real (tabViewItem
+// level) move. Runs in the pure tab-cell world (chips stripped, then re-derived).
+- (void)restoreDraggedGroupToSource {
+    PSMTabBarControl *source = [self sourceTabBar];
+    if (!source || _draggedGroupMembers.count == 0) {
+        return;
+    }
+    [self removeAllPlaceholdersFromTabBar:source];
+    [source removeAllTabGroupChipCells];
+    NSMutableArray *cells = [source cells];
+    NSInteger idx = [self draggedCellIndex];
+    if (idx < 0) {
+        idx = 0;
+    }
+    if (idx > (NSInteger)cells.count) {
+        idx = (NSInteger)cells.count;
+    }
+    for (NSInteger i = 0; i < (NSInteger)_draggedGroupMembers.count; i++) {
+        [cells insertObject:_draggedGroupMembers[i] atIndex:(idx + i)];
+    }
+    [source normalizeTabGroupChipCells];
+}
+
+// A group was dropped onto a tab bar (this window's or another's). Find the tab
+// the group should land before (the drop anchor), restore the source, and let the
+// delegate do the actual move (which handles same-window reorder, cross-window
+// move + group-def transfer).
+- (void)performGroupDropOntoBar {
+    PSMTabBarControl *destination = [self destinationTabBar];
+    NSTabViewItem *anchor = nil;
+    if (destination) {
+        NSArray *dcells = [destination cells];
+        NSInteger tIdx = [dcells indexOfObject:[self targetCell]];
+        if (tIdx == NSNotFound) {
+            // No live target slot (the drop can race a relayout that removed
+            // it). Fall past the end so the group appends, rather than
+            // snapping to the front of the bar.
+            tIdx = (NSInteger)dcells.count;
+        }
+        for (NSInteger i = tIdx; i < (NSInteger)dcells.count; i++) {
+            PSMTabBarCell *c = dcells[i];
+            if ([c isTabGroupChip] || [c isPlaceholder] || [_draggedGroupMembers containsObject:c]) {
+                continue;
+            }
+            if ([c representedObject]) {
+                anchor = [c representedObject];
+                break;
+            }
+        }
+    }
+    NSMutableArray<NSTabViewItem *> *items = [NSMutableArray array];
+    for (PSMTabBarCell *c in _draggedGroupMembers) {
+        if ([c representedObject]) {
+            [items addObject:[c representedObject]];
+        }
+    }
+    RLog(@"tabGroup: groupDrop dest=%p target=%p tIdx=%ld anchor=%@",
+         destination, [self targetCell],
+         (long)(destination ? (NSInteger)[[destination cells] indexOfObject:[self targetCell]] : -1),
+         anchor ? [anchor label] : @"(end)");
+    NSString *gid = [[_draggedGroupID retain] autorelease];
+    [self restoreDraggedGroupToSource];
+
+    id delegate = [[self sourceTabBar] delegate];
+    if (items.count > 0 && destination &&
+        [delegate respondsToSelector:@selector(tabView:dropGroupWithID:members:inTabBar:beforeTabViewItem:)]) {
+        [delegate tabView:[[self sourceTabBar] tabView]
+          dropGroupWithID:gid
+                  members:items
+                 inTabBar:destination
+        beforeTabViewItem:anchor];
+    }
+    [self finishDrag];
+}
+
 - (void)reallyPerformDragOperation:(id<NSDraggingInfo>)sender {
+    // A group drag moves the whole block, not a single cell: hand it off.
+    if (_draggedGroupID) {
+        [self performGroupDropOntoBar];
+        return;
+    }
+    // With chips still present, decide whether the dragged tab landed inside a
+    // group's bracket (right after its chip, or between/among members) so the
+    // drop handler can join it -- including a one-tab group, which has no
+    // "between two members" gap. Must run before the chips are stripped below.
+    // Passed to the delegate explicitly with didDrop, never stored.
+    NSString *droppedInsideGroupID =
+        [self groupContainingDropOfCell:[self draggedCell]
+                               inTabBar:[self destinationTabBar]];
+
+    // The chips were reinserted only so they'd stay visible mid-drag. Strip
+    // them so all the index math below runs in the pure tab/placeholder world it
+    // was written for; -finishDrag re-derives chips from the settled tab order.
+    [[self sourceTabBar] removeAllTabGroupChipCells];
+    [[self destinationTabBar] removeAllTabGroupChipCells];
+
     // Move cell.
     int destinationIndex = [[[self destinationTabBar] cells] indexOfObject:[self targetCell]];
+    RLog(@"tabGroup: drop draggedCell=%@ destinationIndex=%d (draggedGroup=%@ targetGroup=%@ sameBar=%d)",
+         [[self draggedCell] representedObject] ? [(NSTabViewItem *)[[self draggedCell] representedObject] label] : @"?",
+         destinationIndex,
+         [[self draggedCell] tabGroupIdentifier],
+         [[self targetCell] tabGroupIdentifier],
+         [self sourceTabBar] == [self destinationTabBar]);
 
     //there is the slight possibility of the targetCell now being set properly, so avoid errors
     if (destinationIndex >= [[[self destinationTabBar] cells] count])  {
@@ -647,13 +1002,26 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
             [tabView setDelegate:tempDelegate];
         }
 
+        // Fire didDrop when the position changed OR when group membership will
+        // change (even at an unchanged tab index): joining a group (ungrouped
+        // tab dropped inside a bracket) or leaving one (grouped tab dropped
+        // outside its group, e.g. a group's first member dropped just before
+        // the chip). A no-move drop that also keeps its membership (dropping a
+        // grouped tab back onto its own slot) fires nothing, matching the
+        // pre-group behavior for ungrouped tabs.
+        NSString *draggedGid = [[self draggedCell] tabGroupIdentifier];
+        NSString *droppedGid = droppedInsideGroupID;
+        const BOOL membershipChanged = !((draggedGid.length == 0 && droppedGid.length == 0) ||
+                                         (droppedGid != nil && [draggedGid isEqualToString:droppedGid]));
         if (([self sourceTabBar] != [self destinationTabBar] ||
-             [[[self sourceTabBar] cells] indexOfObject:[self draggedCell]] != _draggedCellIndex) &&
-            [[[self sourceTabBar] delegate] respondsToSelector:@selector(tabView:didDropTabViewItem:inTabBar:)]) {
+             [[[self sourceTabBar] cells] indexOfObject:[self draggedCell]] != _draggedCellIndex ||
+             membershipChanged) &&
+            [[[self sourceTabBar] delegate] respondsToSelector:@selector(tabView:didDropTabViewItem:inTabBar:joiningGroupWithID:)]) {
 
             [[[self sourceTabBar] delegate] tabView:[[self sourceTabBar] tabView]
                                  didDropTabViewItem:[[self draggedCell] representedObject]
-                                           inTabBar:[self destinationTabBar]];
+                                           inTabBar:[self destinationTabBar]
+                                 joiningGroupWithID:droppedGid];
         }
     }
 
@@ -743,19 +1111,50 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 
     [[control window] makeKeyAndOrderFront:nil];
 
-    if ([sourceDelegate respondsToSelector:@selector(tabView:didDropTabViewItem:inTabBar:)]) {
+    if ([sourceDelegate respondsToSelector:@selector(tabView:didDropTabViewItem:inTabBar:joiningGroupWithID:)]) {
         [sourceDelegate tabView:[[self sourceTabBar] tabView]
              didDropTabViewItem:[[self draggedCell] representedObject]
-                       inTabBar:control];
+                       inTabBar:control
+             joiningGroupWithID:nil];
     }
     [control sanityCheck:@"add dragged tab to new window"];
 }
 
 - (void)cancelDrag {
-    [[[self sourceTabBar] cells] insertObject:[self draggedCell] atIndex:[self draggedCellIndex]];
+    if (_draggedGroupMembers.count > 0) {
+        // Group snap-back: restore the whole block to the source.
+        [self restoreDraggedGroupToSource];
+    } else {
+        // _draggedCellIndex was captured in the chip-free world at drag start;
+        // strip the mid-drag chips so the snap-back insert lands at that same
+        // index. -finishDrag re-derives chips afterward.
+        [[self sourceTabBar] removeAllTabGroupChipCells];
+        [[[self sourceTabBar] cells] insertObject:[self draggedCell] atIndex:[self draggedCellIndex]];
+    }
     [[[self sourceTabBar] window] setAlphaValue:1];  // Make the window visible again.
     [[[self sourceTabBar] window] orderFront:nil];
     [[self sourceTabBar] dragDidFinish];
+}
+
+// A group was dropped outside any tab bar: tear it off into a new window at the
+// drop origin (or snap back if a new window isn't warranted).
+- (void)performGroupTearOffAtScreenPoint:(NSPoint)origin {
+    NSMutableArray<NSTabViewItem *> *items = [NSMutableArray array];
+    for (PSMTabBarCell *c in _draggedGroupMembers) {
+        if ([c representedObject]) {
+            [items addObject:[c representedObject]];
+        }
+    }
+    NSString *gid = [[_draggedGroupID retain] autorelease];
+    [self restoreDraggedGroupToSource];
+    id delegate = [[self sourceTabBar] delegate];
+    if (items.count > 0 &&
+        [delegate respondsToSelector:@selector(tabView:tearOffGroupWithID:members:atScreenPoint:)]) {
+        [delegate tabView:[[self sourceTabBar] tabView]
+       tearOffGroupWithID:gid
+                  members:items
+            atScreenPoint:origin];
+    }
 }
 
 - (void)draggedImageEndedAt:(NSPoint)aPoint operation:(NSDragOperation)operation {
@@ -769,6 +1168,19 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 
     const NSPoint origin = [self topLeftPointOfDragViewWindowForMouseLocation:aPoint];
     BOOL moveSourceWindow = NO;
+    if (_draggedGroupID) {
+        // A group dropped outside any bar: tear off the whole group, else snap back.
+        if ([self shouldCreateNewWindowOnDrop:&moveSourceWindow]) {
+            [self performGroupTearOffAtScreenPoint:origin];
+        } else {
+            [self cancelDrag];
+        }
+        [[NSNotificationCenter defaultCenter] postNotificationName:PSMTabDragDidEndNotification object:nil];
+        [self finishDrag];
+        [source sanityCheck:@"draggedImageEndedAt - group source"];
+        [destination sanityCheck:@"draggedImageEndedAt - group destination"];
+        return;
+    }
     if ([self shouldCreateNewWindowOnDrop:&moveSourceWindow]) {
         const CGFloat height = _dragViewWindow.frame.size.height;
         PSMTabBarControl *control = [sourceDelegate tabView:[[self sourceTabBar] tabView]
@@ -815,6 +1227,8 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 
 - (void)finishDrag {
     ILog(@"Drag of %p finished from\n%@", [self sourceTabBar], [NSThread callStackSymbols]);
+    _dragScrollBar = nil;
+    _dragScrollNudge = 0;
 
 #if PSM_DEBUG_DRAG_PERFORMANCE
     // Close timestamp overlay
@@ -857,13 +1271,24 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [self setIsDragging:NO];
     _dragWindowOriginInitialized = NO;
     [self removeAllPlaceholdersFromTabBar:[self sourceTabBar]];
+    // The drag ran chip-free (see distributePlaceholdersInTabBar:); now
+    // that the reorder is committed, re-derive chip cells from the new tab
+    // order and relayout.
+    [[self sourceTabBar] normalizeTabGroupChipCells];
+    [[self sourceTabBar] update];
     [self setSourceTabBar:nil];
     [self setDestinationTabBar:nil];
     for (PSMTabBarControl *tabBar in _participatingTabBars) {
         [self removeAllPlaceholdersFromTabBar:tabBar];
+        [tabBar normalizeTabGroupChipCells];
+        [tabBar update];
     }
     [_participatingTabBars removeAllObjects];
     [self setDraggedCell:nil];
+    [_draggedGroupID release];
+    _draggedGroupID = nil;
+    [_draggedGroupMembers release];
+    _draggedGroupMembers = nil;
 #if PSM_DEBUG_DRAG_PERFORMANCE
     NSLog(@"[PSMTabDrag] Stopping animation timer. Final FPS stats: %d frames recorded", (int)_timerFireTimes.count);
 #endif
@@ -1161,6 +1586,15 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     }
 #endif
 
+    // Heartbeat: proves the animation is actually ticking during a live drag
+    // (the timer starves if it is not registered for the tracking run-loop
+    // mode). Sampled to stay cheap; RLog always records.
+    static int animTickCount = 0;
+    if ((++animTickCount % 30) == 1) {
+        RLog(@"tabGroup: animTick #%d participating=%lu dest=%p src=%p",
+             animTickCount, (unsigned long)_participatingTabBars.count,
+             [self destinationTabBar], [self sourceTabBar]);
+    }
     NSArray* objects = [_participatingTabBars allObjects];
     for (int i = 0; i < [objects count]; ++i) {
         PSMTabBarControl* tabBar = [objects objectAtIndex:i];
@@ -1203,7 +1637,17 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     BOOL removeFlag = YES;
     NSArray *cells = [control cells];
     int i, cellCount = [cells count];
-    float position = [control orientation] == PSMTabBarHorizontalOrientation ? [[control style] leftMarginForTabBarControl] : [[control style] topMarginForTabBarControl];
+    // A scrollable bar starts its layout shifted by the scroll offset (up for a vertical bar, left for
+    // a horizontal one), so the dragged cells line up with the scrolled positions reallyUpdate: gave
+    // the rest. scrollOffset is 0 when scrolling is off, so this is a no-op there.
+    const float leadingMargin = ([control orientation] == PSMTabBarHorizontalOrientation
+                                 ? [[control style] leftMarginForTabBarControl]
+                                 : [[control style] topMarginForTabBarControl]);
+    float position = leadingMargin - [control scrollOffset];
+    if (control == _dragScrollBar) {
+        // Auto-scroll: shift the walk so the targeted drop slot is revealed.
+        position -= _dragScrollNudge;
+    }
 
     // identify target cell
     // mouse at beginning of tabs
@@ -1214,43 +1658,77 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 
     if ([self destinationTabBar] == control) {
         removeFlag = NO;
-        if (mouseLoc.x < [[control style] leftMarginForTabBarControl]) {
+        // A group chip has a drop slot on each side: the one to its left drops
+        // before the group, the one to its right (between chip and first member)
+        // joins the group at its front. -cellForPoint: skips chips, so handle a
+        // chip hover explicitly and pick the side by the chip's midpoint, so both
+        // slots are reachable from either direction.
+        const BOOL horizontalAxis = ([control orientation] == PSMTabBarHorizontalOrientation);
+        PSMTabBarCell *chipUnderMouse = nil;
+        for (PSMTabBarCell *c in cells) {
+            if ([c isTabGroupChip] && NSPointInRect(mouseLoc, [c frame])) {
+                chipUnderMouse = c;
+                break;
+            }
+        }
+        if (chipUnderMouse) {
+            const NSInteger ci = [cells indexOfObject:chipUnderMouse];
+            const CGFloat mid = horizontalAxis ? NSMidX([chipUnderMouse frame]) : NSMidY([chipUnderMouse frame]);
+            const CGFloat along = horizontalAxis ? mouseLoc.x : mouseLoc.y;
+            if (along < mid) {
+                proposedTarget = [self nonChipNeighborInCells:cells atIndex:ci direction:-1];
+            } else if (ci + 1 < (NSInteger)cells.count && [cells[ci + 1] isPlaceholder]) {
+                proposedTarget = cells[ci + 1];
+            } else {
+                proposedTarget = [self nonChipNeighborInCells:cells atIndex:ci direction:1];
+            }
+        } else if (mouseLoc.x < [[control style] leftMarginForTabBarControl]) {
             proposedTarget = [cells objectAtIndex:0];
         } else {
             overCell = [control cellForPoint:mouseLoc cellFrame:&overCellRect];
             if (overCell) {
-                // mouse among cells - placeholder
+                const NSInteger overIndex = [cells indexOfObject:overCell];
                 if ([overCell isPlaceholder]) {
+                    // mouse among cells - placeholder
                     proposedTarget = overCell;
-                } else if ([control orientation] == PSMTabBarHorizontalOrientation) {
-                    // non-placeholders - horizontal orientation
-                    if (mouseLoc.x < (overCellRect.origin.x + (overCellRect.size.width / 2.0))) {
-                        // mouse on left side of cell
-                        proposedTarget = [cells objectAtIndex:([cells indexOfObject:overCell] - 1)];
-                    } else {
-                        // mouse on right side of cell
-                        proposedTarget = [cells objectAtIndex:([cells indexOfObject:overCell] + 1)];
-                    }
+                } else if ([overCell isTabGroupChip]) {
+                    // Over the group chip: aim for the drop slot just before the
+                    // group. Chips are inert, never a drop target themselves.
+                    proposedTarget = [self nonChipNeighborInCells:cells atIndex:overIndex direction:-1];
                 } else {
-                    // non-placeholders - vertical orientation
-                    if (mouseLoc.y < (overCellRect.origin.y + (overCellRect.size.height / 2.0))) {
-                        // mouse on top of cell
-                        proposedTarget = [cells objectAtIndex:([cells indexOfObject:overCell] - 1)];
-                    } else {
-                        // mouse on bottom of cell
-                        proposedTarget = [cells objectAtIndex:([cells indexOfObject:overCell] + 1)];
-                    }
+                    // Over a real tab: pick the collapsed placeholder on the side
+                    // the mouse favors, skipping any chip glued to the tab.
+                    const BOOL horizontal = ([control orientation] == PSMTabBarHorizontalOrientation);
+                    const CGFloat midpoint = (horizontal
+                                              ? overCellRect.origin.x + overCellRect.size.width / 2.0
+                                              : overCellRect.origin.y + overCellRect.size.height / 2.0);
+                    const CGFloat mouseAlong = horizontal ? mouseLoc.x : mouseLoc.y;
+                    const NSInteger direction = (mouseAlong < midpoint) ? -1 : 1;
+                    proposedTarget = [self nonChipNeighborInCells:cells atIndex:overIndex direction:direction];
+                }
+                if (proposedTarget == nil) {
+                    proposedTarget = overCell;
                 }
             } else {
-                // out at end - must find proper cell (could be more in overflow menu)
-                proposedTarget = [control lastVisibleTab];
+                // cellForPoint returns nil not just past the last tab but also
+                // over a chip or the intercell gap around one (neither is
+                // hit-tested). Treating any of those as "past the end" flings the
+                // target to the last placeholder, which slides the chip back
+                // under the mouse -> a jitter loop. Resolve positionally instead.
+                proposedTarget = [self dropTargetForUnhitPoint:mouseLoc inControl:control cells:cells];
             }
         }
 
         // Apply hysteresis around the real tab's midpoint, not the collapsed placeholder edge.
+        // Exempt an "end of group" join slot: it shares the gap past the last
+        // member with the after-group slot, and hysteresis toward the after-group
+        // slot would otherwise keep the join slot from ever opening when the group
+        // is approached from the right (the last member's leading half jumps
+        // straight to the between-members slot, skipping it). Let it open eagerly.
         PSMTabBarCell *currentTarget = [self targetCell];
         if (proposedTarget != currentTarget && currentTarget != nil && proposedTarget != nil &&
-            overCell != nil && ![overCell isPlaceholder]) {
+            overCell != nil && ![overCell isPlaceholder] &&
+            proposedTarget.joinsTabGroupIdentifier.length == 0) {
             const CGFloat hysteresis = 8.0; // pixels of dead zone around the tab center
             const NSInteger proposedIndex = [cells indexOfObject:proposedTarget];
             const NSInteger currentIndex = [cells indexOfObject:currentTarget];
@@ -1296,6 +1774,31 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
                 }
             }
         }
+
+        // A chip is inert and must never be the drop target (e.g. if a clamp or
+        // lastVisibleTab landed on one); fall back to the slot just before it.
+        if ([proposedTarget isTabGroupChip]) {
+            proposedTarget = [self nonChipNeighborInCells:cells
+                                                  atIndex:[cells indexOfObject:proposedTarget]
+                                                direction:-1];
+        }
+
+        // A whole group can't be dropped inside another group, so never offer a
+        // slot in another group's interior; snap it to that group's near edge.
+        if (_draggedGroupID.length > 0 && proposedTarget) {
+            proposedTarget = [self groupDropTargetAvoidingOtherGroups:proposedTarget
+                                                              inCells:cells
+                                                              atMouse:mouseLoc
+                                                           horizontal:([control orientation] == PSMTabBarHorizontalOrientation)];
+        }
+
+        if (proposedTarget != [self targetCell]) {
+            RLog(@"tabGroup: target -> %@ idx=%ld ph=%d in bar=%p (group=%@ mouse=%d,%d)",
+                 proposedTarget ? NSStringFromClass([proposedTarget class]) : @"nil",
+                 (long)(proposedTarget ? [cells indexOfObject:proposedTarget] : -1),
+                 (int)[proposedTarget isPlaceholder], control, _draggedGroupID ?: @"-",
+                 (int)mouseLoc.x, (int)mouseLoc.y);
+        }
         [self setTargetCell:proposedTarget];
     } else {
         [self setTargetCell:nil];
@@ -1306,6 +1809,55 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     CFAbsoluteTime cellLoopStart = CFAbsoluteTimeGetCurrent();
     int cellsProcessed = 0;
 #endif
+
+    const CGFloat intercellSpacing = [[control style] intercellSpacing];
+    // A placeholder stands in for a tab slot, so it should carry trailing
+    // spacing scaled by how expanded it is: a full-width drop slot contributes
+    // the same spacing the real tab did (so cells to the right don't shift left
+    // by one spacing when the drag begins), while a collapsed one contributes
+    // ~none (so there's no 1-point jump as it grows). fullExtent is the fully
+    // expanded placeholder size along the layout axis.
+    // Drop slots in a foreign bar open at the size the dragged unit will have
+    // THERE, not at its source size; the sine table (sized for the source) is
+    // scaled per bar.
+    const CGFloat slotScale = [self dropSlotScaleForTabBar:control];
+    const CGFloat fullExtent = ((_sineCurveWidths.count > 0)
+                                ? [[_sineCurveWidths lastObject] floatValue]
+                                : 0) * slotScale;
+
+    // A full (stretch-to-fit) bar has no slack: its tabs occupy the whole
+    // width, so an expanding drop slot would grow past the trailing edge where
+    // it is invisible. Shrink the real tabs proportionally from their
+    // snapshotted base widths (see -distributePlaceholdersInTabBar:) so the
+    // slot carves a visible gap instead. Placeholder widths use the previous
+    // tick's frames (one tick of lag, converges). Horizontal non-scrollable
+    // bars only: a scrollable bar scrolls instead of squeezing.
+    CGFloat squeeze = 1.0;
+    if ([control orientation] == PSMTabBarHorizontalOrientation &&
+        ![control tabBarIsScrollable]) {
+        CGFloat phTotal = 0, baseTotal = 0, fixedTotal = 0, spacingTotal = 0;
+        for (PSMTabBarCell *c in cells) {
+            if ([c isInOverflowMenu]) {
+                break;
+            }
+            if ([c isPlaceholder]) {
+                phTotal += c.frame.size.width;
+                if (fullExtent > 0) {
+                    spacingTotal += intercellSpacing * MIN(1.0, c.frame.size.width / fullExtent);
+                }
+            } else if ([c isTabGroupChip]) {
+                fixedTotal += c.frame.size.width;
+                spacingTotal += intercellSpacing;
+            } else {
+                baseTotal += (c.dragBaseWidth > 0 ? c.dragBaseWidth : c.frame.size.width);
+                spacingTotal += intercellSpacing;
+            }
+        }
+        const CGFloat available = [control availableCellWidthWithOverflow:NO];
+        if (baseTotal > 0 && baseTotal + fixedTotal + phTotal + spacingTotal > available) {
+            squeeze = MAX(0.3, (available - fixedTotal - phTotal - spacingTotal) / baseTotal);
+        }
+    }
 
     for (i = 0; i < cellCount; i++) {
         PSMTabBarCell *cell = [cells objectAtIndex:i];
@@ -1333,10 +1885,16 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
                 }
 
                 if ([control orientation] == PSMTabBarHorizontalOrientation) {
-                    newRect.size.width = [[_sineCurveWidths objectAtIndex:[cell currentStep]] intValue];
+                    newRect.size.width = round([[_sineCurveWidths objectAtIndex:[cell currentStep]] intValue] * slotScale);
                 } else {
                     newRect.size.height = [[_sineCurveWidths objectAtIndex:[cell currentStep]] intValue];
                 }
+            } else if (![cell isTabGroupChip] && cell.dragBaseWidth > 0 &&
+                       [control orientation] == PSMTabBarHorizontalOrientation &&
+                       ![control tabBarIsScrollable]) {
+                // Real tab mid-drag: width derives from the snapshotted base
+                // and the current squeeze (1.0 restores the base exactly).
+                newRect.size.width = round(cell.dragBaseWidth * squeeze);
             }
         } else {
             break;
@@ -1345,19 +1903,18 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         if ([control orientation] == PSMTabBarHorizontalOrientation) {
             newRect.origin.x = position;
             position += newRect.size.width;
-            // Only add intercell spacing after non-placeholder cells (real tabs).
-            // Placeholders only contribute their width, not additional spacing.
-            // This prevents a 1-point shift when placeholders transition from
-            // width 0 to width > 0.
             if (![cell isPlaceholder]) {
-                position += [[control style] intercellSpacing];
+                position += intercellSpacing;
+            } else if (fullExtent > 0) {
+                position += intercellSpacing * MIN(1.0, newRect.size.width / fullExtent);
             }
         } else {
             newRect.origin.y = position;
             position += newRect.size.height;
-            // Only add intercell spacing after non-placeholder cells (real tabs).
             if (![cell isPlaceholder]) {
-                position += [[control style] intercellSpacing];
+                position += intercellSpacing;
+            } else if (fullExtent > 0) {
+                position += intercellSpacing * MIN(1.0, newRect.size.height / fullExtent);
             }
         }
         [cell setFrame:newRect];
@@ -1373,7 +1930,63 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
           cellsProcessed);
 #endif
 
+    // Auto-scroll a SCROLLABLE destination bar to reveal the targeted drop
+    // slot: a scrollable bar never squeezes its tabs, so a slot opening past
+    // the last tab lies beyond the visible viewport and would be invisible.
+    // Target-driven and bidirectional: grow the nudge by the target's overhang
+    // past the trailing edge, and give it back when the target sits before the
+    // leading edge (hovering the trailing slot scrolls left; retargeting the
+    // leading slot scrolls back right). Each correction is exactly the
+    // target's overhang, so this converges per target instead of drifting.
+    if ([self destinationTabBar] == control &&
+        [control orientation] == PSMTabBarHorizontalOrientation &&
+        [control tabBarIsScrollable]) {
+        PSMTabBarCell *tgt = [self targetCell];
+        if ([tgt isPlaceholder] && [cells containsObject:tgt]) {
+            const CGFloat over = NSMaxX([tgt frame]) - [control scrollViewportLength];
+            const CGFloat under = [[control style] leftMarginForTabBarControl] - NSMinX([tgt frame]);
+            if (over > 0.5) {
+                if (_dragScrollBar != control) {
+                    _dragScrollBar = control;
+                    _dragScrollNudge = 0;
+                }
+                _dragScrollNudge += over;
+                RLog(@"tabGroup: dragScroll nudge=%.0f bar=%p (slot maxX=%.0f viewport=%.0f)",
+                     _dragScrollNudge, control, NSMaxX([tgt frame]),
+                     [control scrollViewportLength]);
+                [control setNeedsDisplay:YES];
+            } else if (under > 0.5 && control == _dragScrollBar && _dragScrollNudge > 0) {
+                _dragScrollNudge = MAX(0, _dragScrollNudge - under);
+                RLog(@"tabGroup: dragScroll nudge=%.0f bar=%p (reveal leading; slot minX=%.0f)",
+                     _dragScrollNudge, control, NSMinX([tgt frame]));
+                [control setNeedsDisplay:YES];
+            }
+        }
+    }
+
+    // Per-tick telemetry for the destination bar, sampled: target slot
+    // geometry, squeeze, and layout mode. With the animTick heartbeat and the
+    // draw-side slotIndicator log this pins down exactly where a missing drop
+    // gap dies: not ticking, not expanding, not squeezing, or not drawing.
+    if ([self destinationTabBar] == control) {
+        static int calcSampleCount = 0;
+        if ((++calcSampleCount % 30) == 1) {
+            PSMTabBarCell *tgt = [self targetCell];
+            RLog(@"tabGroup: calc bar=%p scrollable=%d barW=%.0f avail=%.0f squeeze=%.2f slotScale=%.2f tgtStep=%d tgtFrame=%@ cells=%d",
+                 control, (int)[control tabBarIsScrollable], control.frame.size.width,
+                 [control availableCellWidthWithOverflow:NO], squeeze, slotScale,
+                 tgt ? [tgt currentStep] : -1,
+                 tgt ? NSStringFromRect([tgt frame]) : @"(none)",
+                 (int)cells.count);
+        }
+    }
+
     if (removeFlag) {
+        RLog(@"tabGroup: strip placeholders bar=%p (no longer a drag destination)", control);
+        if (control == _dragScrollBar) {
+            _dragScrollBar = nil;
+            _dragScrollNudge = 0;
+        }
         [_participatingTabBars removeObject:control];
         [self removeAllPlaceholdersFromTabBar:control];
     }
@@ -1385,6 +1998,330 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 #pragma mark -
 #pragma mark Placeholders
 
+// Re-derive group-chip cells into a placeholder-laden cell list so the chip
+// stays visible during the drag. Runs after the pure placeholder/index math is
+// set up; the chips are stripped again before any drop/cancel index math (and
+// re-normalized in -finishDrag), so this only affects what's drawn mid-drag.
+- (void)reinsertDragChipsInTabBar:(PSMTabBarControl *)control {
+    NSMutableArray *cells = [control cells];
+    NSArray *withChips = [PSMTabBarControl cellsByInsertingDragChipsInto:cells controlView:control];
+    [cells setArray:withChips];
+    const BOOL horizontal = ([control orientation] == PSMTabBarHorizontalOrientation);
+    // A reference cell for the cross-axis (y/height for a horizontal bar): every
+    // real tab shares the bar's cell height. A COLLAPSED group's members are
+    // zero-frame, so seeding a chip from such a member would give it a zero-size
+    // cross-axis and draw it shifted. Use any non-chip cell with a real size:
+    // an ordinary tab, or (when every group in the bar is collapsed, so there is
+    // no full-size tab) the dragged unit's own wide placeholder, which carries
+    // the bar's cell height. Chips are excluded since they are what we're sizing.
+    NSRect reference = [PSMTabBarControl firstFullSizeTabCellFrameInCells:cells];
+    for (NSInteger i = 0; i < (NSInteger)cells.count; i++) {
+        PSMTabBarCell *chip = cells[i];
+        if (![chip isTabGroupChip]) {
+            continue;
+        }
+        // Size the chip from its run's first tab (the next non-chip cell); the
+        // animation loop fixes the origin, so only the size matters here. Tally the
+        // run's members and whether they are all collapsed so the chip is sized at
+        // its COLLAPSED width when appropriate: this chip is freshly synthesized and
+        // is NOT in the control's cells, so the index-based width query cannot find
+        // it (it would fall back to the narrower name-only width, and the group
+        // would jump wider on drop). The local index is in hand, so this also avoids
+        // the O(cells^2) -indexOfObject: rescan.
+        NSRect frame = NSZeroRect;
+        NSInteger memberCount = 0;
+        BOOL allCollapsed = YES;
+        for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
+            PSMTabBarCell *c = cells[j];
+            if (c.isPlaceholder) {
+                continue;  // a drop slot is transparent to the run (as elsewhere)
+            }
+            if ([c isTabGroupChip] ||
+                ![c.tabGroupIdentifier isEqualToString:chip.tabGroupIdentifier]) {
+                break;
+            }
+            if (memberCount == 0) {
+                frame = [c frame];
+            }
+            memberCount++;
+            if (!c.isCollapsedHidden) {
+                allCollapsed = NO;
+            }
+        }
+        const BOOL collapsedRun = (memberCount > 0 && allCollapsed);
+        if (horizontal) {
+            // The first member may be a zero-height collapsed cell; take the
+            // cross-axis (y + height) from the reference so the chip is full height.
+            if (!NSIsEmptyRect(reference)) {
+                frame.origin.y = reference.origin.y;
+                frame.size.height = reference.size.height;
+            }
+            frame.size.width = [control widthOfTabGroupChipCellForIdentifier:chip.tabGroupIdentifier
+                                                                   collapsed:collapsedRun
+                                                                 memberCount:memberCount];
+        } else {
+            if (!NSIsEmptyRect(reference)) {
+                frame.origin.x = reference.origin.x;
+                frame.size.width = reference.size.width;
+            }
+            frame.size.height = [control heightOfTabGroupChipCell:chip];
+        }
+        [chip setFrame:frame];
+    }
+
+    // Add a persistent drop slot BETWEEN each chip and its first member -- the
+    // "drop into the group at its front" target. It coexists with the slot to
+    // the left of the chip (drop before the group), and animates like any other
+    // placeholder (targeted when the mouse is over the first member's leading
+    // half; -nonChipNeighborInCells:atIndex:direction: naturally returns it since
+    // it sits immediately before the member). Collapsed by default so it adds no
+    // width until targeted.
+    NSMutableArray *withSlots = [NSMutableArray arrayWithCapacity:cells.count];
+    for (NSInteger i = 0; i < (NSInteger)cells.count; i++) {
+        PSMTabBarCell *c = cells[i];
+        [withSlots addObject:c];
+        // The front-of-group and end-of-group slots are "join this group"
+        // affordances that only make sense for a single-tab drag. A whole-group
+        // drag is never allowed to land inside another group, so add neither.
+        const BOOL draggingGroup = (_draggedGroupID.length > 0);
+        if ([c isTabGroupChip]) {
+            if (!draggingGroup) {
+                // Front-of-group slot, sized to the first member.
+                NSRect slotFrame = [c frame];
+                for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
+                    if (![cells[j] isTabGroupChip]) {
+                        slotFrame = [cells[j] frame];
+                        break;
+                    }
+                }
+                PSMTabBarCell *slot = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:slotFrame
+                                                                             expanded:NO
+                                                                        inControlView:control] autorelease];
+                [withSlots addObject:slot];
+            }
+            continue;
+        }
+        if (draggingGroup) {
+            continue;
+        }
+        // Only real member tabs end a run. The dragged cell's own drop slot is
+        // a placeholder that carries the group id (to anchor the chip); giving
+        // it an end slot too would put two adjacent join slots with conflicting
+        // semantics at the group's trailing edge.
+        if ([c isPlaceholder]) {
+            continue;
+        }
+        // End-of-group slot: after a group's LAST member add a slot tagged to
+        // join that group. It shares the gap with the ordinary slot to its right
+        // (drop after the group); the two are distinguished visually because
+        // -drawTabGroupRunDecorations... grows the group outline over this one.
+        // Over the last member's trailing half the cursor picks this slot (join);
+        // over the next tab's leading half it picks the one after (drop after).
+        NSString *gid = c.tabGroupIdentifier;
+        if (gid.length == 0) {
+            continue;
+        }
+        BOOL isLastMember = YES;
+        for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
+            if ([cells[j] isPlaceholder]) {
+                continue;
+            }
+            isLastMember = ([cells[j] isTabGroupChip] ||
+                            ![[cells[j] tabGroupIdentifier] isEqualToString:gid]);
+            break;
+        }
+        if (isLastMember) {
+            PSMTabBarCell *endSlot = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:[c frame]
+                                                                            expanded:NO
+                                                                       inControlView:control] autorelease];
+            endSlot.joinsTabGroupIdentifier = gid;
+            [withSlots addObject:endSlot];
+        }
+    }
+    [cells setArray:withSlots];
+}
+
+// With chips still present in `control`, return the group id whose bracket the
+// just-dropped `cell` fell inside, or nil if it landed outside every group. The
+// group's run of cells is [chip, member1..memberK]; the "inside" gaps are those
+// strictly within it: right after the chip, and between adjacent members. So the
+// drop is inside group G iff the dragged cell's left neighbor is in G's run (its
+// chip or a member) AND its right neighbor is a member of G. Dropping after the
+// last member (left is a member, right is not) or before the chip (right is the
+// chip, not a member) is outside. Placeholders are skipped.
+- (NSString *)groupContainingDropOfCell:(PSMTabBarCell *)cell
+                               inTabBar:(PSMTabBarControl *)control {
+    // The tab lands at the target slot, so the first real (non-placeholder,
+    // non-dragged) cell at/after it is the drop's right neighbor and the first
+    // one before it is the left neighbor. There is no drop slot between a chip
+    // and its first member, so a "front of group" drop lands right before the
+    // chip; joining sets the membership and -normalizeTabGroupChipCells then
+    // re-derives the chip to the left of the new member, giving [chip, X, m1].
+    PSMTabBarCell *target = [self targetCell];
+    // An "end of group" slot names the group to join outright: a tab dropped
+    // there lands in the group at its end (its right neighbor is not a member,
+    // so the bracket test below would otherwise call it "outside").
+    if (target.joinsTabGroupIdentifier.length > 0) {
+        return target.joinsTabGroupIdentifier;
+    }
+    // The dragged cell's own drop slot carries its group id (set in
+    // -distributePlaceholdersInTabBar:withDraggedCell: to keep the chip
+    // anchored). Dropping back onto it returns the tab to the spot it came
+    // from, so membership is unchanged: report the original group. Without
+    // this, a no-move drop of a group's LAST member falls through to the
+    // bracket test, which sees the ungrouped right neighbor and silently
+    // ejects the tab from its group.
+    if (target.isPlaceholder && target.tabGroupIdentifier.length > 0) {
+        return target.tabGroupIdentifier;
+    }
+    NSArray *cells = [control cells];
+    const NSInteger idx = target ? [cells indexOfObject:target] : NSNotFound;
+    if (idx == NSNotFound) {
+        return nil;
+    }
+    PSMTabBarCell *afterReal = nil;
+    for (NSInteger k = idx; k < (NSInteger)cells.count; k++) {
+        PSMTabBarCell *c = cells[k];
+        if (c != [self draggedCell] && ![c isPlaceholder]) {
+            afterReal = c;
+            break;
+        }
+    }
+    PSMTabBarCell *beforeReal = nil;
+    for (NSInteger k = idx - 1; k >= 0; k--) {
+        PSMTabBarCell *c = cells[k];
+        if (c != [self draggedCell] && ![c isPlaceholder]) {
+            beforeReal = c;
+            break;
+        }
+    }
+    RLog(@"tabGroup: dropCtx targetIdx=%ld targetPH=%d afterChip=%d afterGid=%@ beforeChip=%d beforeGid=%@",
+         (long)idx, (int)target.isPlaceholder,
+         (int)afterReal.isTabGroupChip, afterReal.tabGroupIdentifier ?: @"-",
+         (int)beforeReal.isTabGroupChip, beforeReal.tabGroupIdentifier ?: @"-");
+    // The per-cell dump allocates a string per cell; RLog always evaluates its
+    // arguments, so only build it when debug logging is on.
+    if (gDebugLogging) {
+        NSMutableString *dump = [NSMutableString string];
+        for (NSInteger k = 0; k < (NSInteger)cells.count; k++) {
+            PSMTabBarCell *c = cells[k];
+            NSString *tg = c.isTabGroupChip ? @"CHIP" : (c.isPlaceholder ? @"ph" : @"tab");
+            NSString *gid = c.tabGroupIdentifier;
+            NSString *gidPrefix = gid ? [gid substringToIndex:MIN(2, gid.length)] : @"-";
+            [dump appendFormat:@"%ld%@%@%@ ", (long)k, (c == target ? @"*" : @":"), tg, gidPrefix];
+        }
+        RLog(@"tabGroup: dropCells %@", dump);
+    }
+
+    // Join iff the drop lands inside a group's bracket: the next real cell is a
+    // member of G and the previous real cell is in G's run (its chip -- the front
+    // slot -- or another member -- between members). Landing before the chip
+    // (next real cell is the chip) is outside, so the "drop before the group"
+    // slot doesn't join.
+    if (!afterReal || afterReal.isTabGroupChip || afterReal.tabGroupIdentifier.length == 0) {
+        return nil;
+    }
+    NSString *gid = afterReal.tabGroupIdentifier;
+    if (beforeReal && [beforeReal.tabGroupIdentifier isEqualToString:gid]) {
+        return gid;
+    }
+    return nil;
+}
+
+// The nearest cell to one side of the given index that is not a group chip
+// (chips are inert mid-drag: never a drop target, transparent to neighbor
+// lookups). Returns nil if the edge is reached first.
+- (PSMTabBarCell *)nonChipNeighborInCells:(NSArray *)cells
+                                  atIndex:(NSInteger)index
+                                direction:(NSInteger)direction {
+    NSInteger i = index + direction;
+    while (i >= 0 && i < (NSInteger)cells.count && [cells[i] isTabGroupChip]) {
+        i += direction;
+    }
+    if (i < 0 || i >= (NSInteger)cells.count) {
+        return nil;
+    }
+    return cells[i];
+}
+
+// A whole-group drag must not land inside another group. If `proposed` (a drop-
+// slot placeholder) sits in another group's interior -- strictly between its
+// chip and its last member -- snap it to that group's near edge instead: the
+// slot before the chip when the mouse is in the group's leading half, else the
+// slot after the last member. Slots at a run's edges, and everywhere outside a
+// run, are returned unchanged.
+- (PSMTabBarCell *)groupDropTargetAvoidingOtherGroups:(PSMTabBarCell *)proposed
+                                              inCells:(NSArray<PSMTabBarCell *> *)cells
+                                              atMouse:(NSPoint)mouseLoc
+                                           horizontal:(BOOL)horizontal {
+    const NSInteger p = [cells indexOfObject:proposed];
+    if (p == NSNotFound) {
+        return proposed;
+    }
+    for (NSInteger c = 0; c < (NSInteger)cells.count; c++) {
+        if (![cells[c] isTabGroupChip]) {
+            continue;
+        }
+        NSString *gid = cells[c].tabGroupIdentifier;
+        NSInteger last = c;
+        for (NSInteger j = c + 1; j < (NSInteger)cells.count; j++) {
+            if ([cells[j] isPlaceholder]) {
+                continue;
+            }
+            if ([cells[j] isTabGroupChip] || ![cells[j].tabGroupIdentifier isEqualToString:gid]) {
+                break;
+            }
+            last = j;
+        }
+        // Interior slots are those strictly inside the run: c < p <= last (the
+        // slot after the last member, at last+1, is the run's trailing edge).
+        if (c < p && p <= last) {
+            const NSRect runRect = NSUnionRect([cells[c] frame], [cells[last] frame]);
+            const CGFloat mid = horizontal ? NSMidX(runRect) : NSMidY(runRect);
+            const CGFloat along = horizontal ? mouseLoc.x : mouseLoc.y;
+            if (along < mid && c - 1 >= 0 && [cells[c - 1] isPlaceholder]) {
+                return cells[c - 1];
+            }
+            if (last + 1 < (NSInteger)cells.count && [cells[last + 1] isPlaceholder]) {
+                return cells[last + 1];
+            }
+            return proposed;
+        }
+    }
+    return proposed;
+}
+
+// Resolve a drop target for a point that -cellForPoint: didn't hit. That
+// happens both past the last tab and over a chip / the intercell gap around one
+// (chips and gaps aren't hit-tested). Only a point outside the bar or right of
+// every tab is "past the end"; otherwise map it to the collapsed placeholder
+// just before the next tab (skipping the chip glued to it) so the target stays
+// put instead of flinging to the last placeholder.
+- (PSMTabBarCell *)dropTargetForUnhitPoint:(NSPoint)point
+                                 inControl:(PSMTabBarControl *)control
+                                     cells:(NSArray *)cells {
+    if (!NSPointInRect(point, [control bounds])) {
+        return [control lastVisibleTab];
+    }
+    const BOOL horizontal = ([control orientation] == PSMTabBarHorizontalOrientation);
+    const CGFloat along = horizontal ? point.x : point.y;
+    for (NSInteger i = 0; i < (NSInteger)cells.count; i++) {
+        PSMTabBarCell *cell = cells[i];
+        if ([cell isInOverflowMenu]) {
+            break;
+        }
+        if ([cell isPlaceholder] || [cell isTabGroupChip]) {
+            continue;
+        }
+        const CGFloat start = horizontal ? cell.frame.origin.x : cell.frame.origin.y;
+        if (start >= along) {
+            PSMTabBarCell *slot = [self nonChipNeighborInCells:cells atIndex:i direction:-1];
+            return slot ?: cell;
+        }
+    }
+    return [control lastVisibleTab];
+}
+
 - (void)distributePlaceholdersInTabBar:(PSMTabBarControl *)control
                        withDraggedCell:(PSMTabBarCell *)cell {
     // called upon first drag - must distribute placeholders
@@ -1393,18 +2330,113 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     int cellIndex = [[control cells] indexOfObject:cell];
     PSMTabBarCell *pc = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:[[self draggedCell] frame] expanded:YES inControlView:control] autorelease];
     pc.truncationStyle = cell.truncationStyle;
+    // Carry the dragged cell's group id on its drop-slot placeholder so run
+    // detection keeps the group's chip anchored before this slot. Without it,
+    // dragging a group's FIRST member turns its slot into a group-less
+    // placeholder, the chip re-derives before the second member, and the slot
+    // jumps from right of the chip to left of it with no animation.
+    pc.tabGroupIdentifier = cell.tabGroupIdentifier;
+    // A group's edge member keeps the flanking placeholder on its outward side:
+    // the chip anchors before pc (above), so that placeholder becomes the "drop
+    // before/after the group" slot. Removing it, as for every other cell, would
+    // leave nothing outside the group to target from that side, so the first
+    // member could only be dropped out in front (and the last member out behind)
+    // by overshooting past the group.
+    NSString *draggedGid = cell.tabGroupIdentifier;
+    BOOL keepLeadingPlaceholder = NO;
+    BOOL keepTrailingPlaceholder = NO;
+    if (draggedGid.length > 0) {
+        NSArray *baseCells = [control cells];
+        const NSInteger prev = cellIndex - 2;  // previous tab cell (skip the flanking placeholder)
+        keepLeadingPlaceholder =
+            (prev < 0 ||
+             ![[[baseCells objectAtIndex:prev] tabGroupIdentifier] isEqualToString:draggedGid]);
+        const NSInteger next = cellIndex + 2;  // next tab cell (skip the flanking placeholder)
+        keepTrailingPlaceholder =
+            (next >= (NSInteger)baseCells.count ||
+             ![[[baseCells objectAtIndex:next] tabGroupIdentifier] isEqualToString:draggedGid]);
+    }
     [[control cells] replaceObjectAtIndex:cellIndex withObject:pc];
-    [[control cells] removeObjectAtIndex:(cellIndex + 1)];
-    [[control cells] removeObjectAtIndex:(cellIndex - 1)];
+    if (!keepTrailingPlaceholder) {
+        [[control cells] removeObjectAtIndex:(cellIndex + 1)];
+    }
+    if (!keepLeadingPlaceholder) {
+        [[control cells] removeObjectAtIndex:(cellIndex - 1)];
+    }
     // Set the expanded placeholder as the initial target to prevent the first
     // animation frame from picking the wrong target when currentMouseLoc hasn't
     // been set yet.
     [self setTargetCell:pc];
+    // Now that the pure placeholder math is done, put the chips back so they
+    // stay visible during the drag.
+    [self reinsertDragChipsInTabBar:control];
     ILog(@"distributePlaceholdersInTabBar:withDraggedCell:%@", cell);
     return;
 }
 
+// Group variant of -distributePlaceholdersInTabBar:withDraggedCell:. After the
+// base 2*i stride (chips stripped), replace the whole contiguous run of `members`
+// with ONE expanded placeholder sized to the group, and collapse the run's
+// interior + flanking stride placeholders into it -- the block analogue of the
+// single-cell cellIndex±1 removal. This yields one drop slot for the group plus
+// one before each remaining tab, exactly like a single tab drag.
+- (void)distributePlaceholdersInTabBar:(PSMTabBarControl *)control
+               withDraggedGroupMembers:(NSArray<PSMTabBarCell *> *)members
+                                  chip:(PSMTabBarCell *)chip {
+    // Snapshot the run's frame BEFORE stripping chips. -distributePlaceholdersInTabBar:
+    // calls -removeAllTabGroupChipCells, which drops the control's only strong
+    // reference to `chip` -- PSMTabBarCell is ARC, and the MRR drag callers hold
+    // `chip` unretained, so it is deallocated by the strip. Reading [chip frame]
+    // afterward is a use-after-free. Members are tab cells, not chips, so they
+    // survive the strip and stay valid below.
+    NSRect runFrame = [chip frame];
+    for (PSMTabBarCell *c in members) {
+        runFrame = NSUnionRect(runFrame, [c frame]);
+    }
+    [self distributePlaceholdersInTabBar:control];
+    NSMutableArray *cells = [control cells];
+    const NSInteger cA = [cells indexOfObject:members.firstObject];
+    const NSInteger cB = [cells indexOfObject:members.lastObject];
+    // The members collapse into one wide placeholder, which requires them to be a
+    // single contiguous run in the (chip-stripped, placeholder-strided) cell list:
+    // positions cA, cA+2, ... cB, i.e. cB - cA == 2*(count-1). A group that isn't
+    // contiguous -- e.g. a mix of pinned and unpinned tabs, which the layout
+    // segregates to opposite ends -- can't be one block, so bail rather than run
+    // the removal off the end of the array.
+    if (cA == NSNotFound || cB == NSNotFound || cB < cA ||
+        (cB - cA) != 2 * ((NSInteger)members.count - 1)) {
+        [self reinsertDragChipsInTabBar:control];
+        return;
+    }
+    PSMTabBarCell *pc = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:runFrame
+                                                               expanded:YES
+                                                          inControlView:control] autorelease];
+    pc.truncationStyle = members.firstObject.truncationStyle;
+    [cells replaceObjectAtIndex:cA withObject:pc];
+    // Remove the members' interior + the placeholder after the last member.
+    for (NSInteger i = cB + 1; i >= cA + 1; i--) {
+        [cells removeObjectAtIndex:i];
+    }
+    // Remove the placeholder before the first member.
+    if (cA - 1 >= 0) {
+        [cells removeObjectAtIndex:(cA - 1)];
+    }
+    [self setTargetCell:pc];
+    [self reinsertDragChipsInTabBar:control];
+}
+
 - (void)distributePlaceholdersInTabBar:(PSMTabBarControl *)control {
+    // Run the whole drag in a pure tab-cell world: strip group chip cells
+    // so the placeholder stride (2*i) and every cell<->tab index below
+    // aren't thrown off by non-tab cells. Chips are re-derived in
+    // -finishDrag. (Cross-window add/remove re-derives via the reconciler.)
+    [control removeAllTabGroupChipCells];
+    // Snapshot every real cell's width so the drag animation can shrink tabs
+    // proportionally (and restore them) when an expanding drop slot needs room
+    // in a full bar; see -calculateDragAnimationForTabBar:.
+    for (PSMTabBarCell *baseCell in [control cells]) {
+        baseCell.dragBaseWidth = baseCell.frame.size.width;
+    }
     int i;
     int numVisibleTabs = [control numberOfVisibleTabs];
     PSMTabBarCell *draggedCell = [self draggedCell];
@@ -1439,6 +2471,8 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         PSMTabBarCell *cell = [[control cells] objectAtIndex:i];
         if ([cell isPlaceholder]) {
             [control removeCell:cell];
+        } else {
+            cell.dragBaseWidth = 0;  // out of the drag: the real layout owns widths again
         }
     }
     // redraw

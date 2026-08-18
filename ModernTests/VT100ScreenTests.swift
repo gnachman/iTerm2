@@ -1616,6 +1616,116 @@ class VT100ScreenTests: XCTestCase {
                        ".....!")
     }
 
+    // MARK: - ConEmu progress protocol (OSC 9;4)
+
+    private func screenProgress(_ screen: VT100Screen) -> Int {
+        var result = 0
+        screen.performBlock(joinedThreads: { _, mutableState, _ in
+            result = mutableState.progress.rawValue
+        })
+        return result
+    }
+
+    // Mirrors kMinimumVisibleProgressPercentage in
+    // VT100ScreenMutableState+TerminalDelegate.m.
+    private let minimumVisibleProgressPercentage = 10
+
+    // The percentage is optional for the paused state, so pausing without one keeps
+    // the percentage that is already showing and only changes its color.
+    func testProgressPauseWithoutPercentageKeepsCurrentPercentage() {
+        let screen = screen(width: 80, height: 24)
+        feed(screen, "\u{1b}]9;4;1;60\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.successBase.rawValue + 60)
+
+        feed(screen, "\u{1b}]9;4;4\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.warningBase.rawValue + 60)
+    }
+
+    // The percentage is preserved no matter which base it was in.
+    func testProgressPauseWithoutPercentageKeepsErrorPercentage() {
+        let screen = screen(width: 80, height: 24)
+        feed(screen, "\u{1b}]9;4;2;25\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.errorBase.rawValue + 25)
+
+        feed(screen, "\u{1b}]9;4;4\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.warningBase.rawValue + 25)
+    }
+
+    // With no percentage to keep, show the minimum visible one rather than 0, which
+    // would draw a zero-width bar.
+    func testProgressPauseWithoutPercentageAndNothingShowingUsesMinimum() {
+        let screen = screen(width: 80, height: 24)
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.stopped.rawValue)
+
+        feed(screen, "\u{1b}]9;4;4\u{07}")
+        XCTAssertEqual(screenProgress(screen),
+                       VT100ScreenProgress.warningBase.rawValue + minimumVisibleProgressPercentage)
+    }
+
+    // A percentage of 0 is showing but would be invisible, so it gets the minimum too.
+    func testProgressPauseWithoutPercentageFromZeroUsesMinimum() {
+        let screen = screen(width: 80, height: 24)
+        feed(screen, "\u{1b}]9;4;1;0\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.successBase.rawValue)
+
+        feed(screen, "\u{1b}]9;4;4\u{07}")
+        XCTAssertEqual(screenProgress(screen),
+                       VT100ScreenProgress.warningBase.rawValue + minimumVisibleProgressPercentage)
+    }
+
+    // An explicitly invalid percentage is ignored: an out-of-range value must not
+    // change the state the way an absent one does.
+    func testProgressPauseWithInvalidPercentageIsIgnored() {
+        let screen = screen(width: 80, height: 24)
+        feed(screen, "\u{1b}]9;4;1;60\u{07}")
+
+        feed(screen, "\u{1b}]9;4;4;101\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.successBase.rawValue + 60)
+
+        feed(screen, "\u{1b}]9;4;4;-1\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.successBase.rawValue + 60)
+    }
+
+    // An explicit percentage is always honored, including 0.
+    func testProgressPauseWithExplicitPercentage() {
+        let screen = screen(width: 80, height: 24)
+        feed(screen, "\u{1b}]9;4;1;60\u{07}")
+
+        feed(screen, "\u{1b}]9;4;4;30\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.warningBase.rawValue + 30)
+
+        feed(screen, "\u{1b}]9;4;4;0\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.warningBase.rawValue)
+
+        feed(screen, "\u{1b}]9;4;4;100\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.warningBase.rawValue + 100)
+    }
+
+    // The other states are unaffected by how the paused state treats a missing
+    // percentage.
+    func testProgressOtherStatesAreUnchanged() {
+        let screen = screen(width: 80, height: 24)
+
+        feed(screen, "\u{1b}]9;4;1;40\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.successBase.rawValue + 40)
+
+        // st=1 requires a percentage and ignores an invalid one.
+        feed(screen, "\u{1b}]9;4;1;101\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.successBase.rawValue + 40)
+        feed(screen, "\u{1b}]9;4;1\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.successBase.rawValue + 40)
+
+        // st=2 without a percentage falls back to its own sentinel.
+        feed(screen, "\u{1b}]9;4;2\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.error.rawValue)
+
+        feed(screen, "\u{1b}]9;4;3\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.indeterminate.rawValue)
+
+        feed(screen, "\u{1b}]9;4;0\u{07}")
+        XCTAssertEqual(screenProgress(screen), VT100ScreenProgress.stopped.rawValue)
+    }
+
 }
 
 // a very simple LCG-based RNG
@@ -1646,8 +1756,16 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     var configuration = VT100MutableScreenConfiguration()
     var selection = iTermSelection()
 
+    /// Raw OSC 72 content strings delivered via screenDidReceiveKittyDragAndDrop,
+    /// in order. Used by KittyDnDParsingTests.
+    var kittyDragAndDropContents = [String]()
+
     func screenConvertAbsoluteRange(_ range: VT100GridAbsCoordRange, toTextDocumentOfType type: String?, filename: String?, forceWide: Bool) {
 
+    }
+
+    func screenDidReceiveKittyDragAndDrop(_ content: String) {
+        kittyDragAndDropContents.append(content)
     }
     
     func screenDidHookSSHConductor(withToken token: String, uniqueID: String, boolArgs: String, sshargs: String, dcsID: String, savedState: [AnyHashable : Any]) {
