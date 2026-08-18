@@ -1,0 +1,78 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "AWP-wp-FTJ.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Export…\"; ObjectID = \"AWP-wp-FTJ\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Export…"
+          }
+        }
+      }
+    },
+    "Hau-2E-Qk8.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Now\"; ObjectID = \"Hau-2E-Qk8\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Now"
+          }
+        }
+      }
+    },
+    "UYp-FA-gZP.title": {
+      "comment": "Class = \"NSWindow\"; title = \"Instant Replay Control\"; ObjectID = \"UYp-FA-gZP\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Instant Replay Control"
+          }
+        }
+      }
+    },
+    "Wj9-c2-bSB.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"Wj9-c2-bSB\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "gh2-Nt-9U7.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Live View\"; ObjectID = \"gh2-Nt-9U7\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Live View"
+          }
+        }
+      }
+    },
+    "vJo-pj-XsO.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Time\"; ObjectID = \"vJo-pj-XsO\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Time"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

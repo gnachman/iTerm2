@@ -1,0 +1,146 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "NSAppleEventsUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "An application in iTerm2 wants to use AppleScript."
+          }
+        }
+      }
+    },
+    "NSBluetoothAlwaysUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "An application in iTerm2 wants to use Bluetooth."
+          }
+        }
+      }
+    },
+    "NSCalendarsUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "An application in iTerm2 wants to use Calendar data."
+          }
+        }
+      }
+    },
+    "NSCameraUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "An application in iTerm2 wants to use the camera."
+          }
+        }
+      }
+    },
+    "NSContactsUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "An application in iTerm2 wants to use your contacts."
+          }
+        }
+      }
+    },
+    "NSLocalNetworkUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "An application in iTerm2 wants to access the local network."
+          }
+        }
+      }
+    },
+    "NSLocationAlwaysUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "An application in iTerm2 wants to use your location information, even in the background."
+          }
+        }
+      }
+    },
+    "NSLocationUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "An application in iTerm2 wants to use your location information."
+          }
+        }
+      }
+    },
+    "NSLocationWhenInUseUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "An application in iTerm2 wants to use your location information while active."
+          }
+        }
+      }
+    },
+    "NSMicrophoneUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "An application in iTerm2 wants to use your microphone."
+          }
+        }
+      }
+    },
+    "NSPhotoLibraryUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "An application in iTerm2 wants to use the photo library."
+          }
+        }
+      }
+    },
+    "NSRemindersUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "An application in iTerm2 wants to use your reminders."
+          }
+        }
+      }
+    },
+    "NSSpeechRecognitionUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "An application in iTerm2 wants to use speech recognition."
+          }
+        }
+      }
+    },
+    "NSSystemAdministrationUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "The operation being performed by a program in iTerm2 requires elevated permission."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
