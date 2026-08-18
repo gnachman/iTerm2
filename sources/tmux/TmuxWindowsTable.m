@@ -88,7 +88,7 @@ NSString *kWindowPasteboardType = @"com.googlecode.iterm2.kWindowPasteboardType"
 {
     [addWindowButton_ setEnabled:[delegate_ haveSelectedSession] && [self filteredModel].count > 0];
     [removeWindowButton_ setEnabled:[delegate_ haveSelectedSession] && [tableView_ numberOfSelectedRows] > 0];
-    [openInTabsButton_ setEnabled:[delegate_ currentSessionSelected] && [tableView_ numberOfSelectedRows] > 1 && ![self anySelectedWindowIsOpen]];
+    [openInTabsButton_ setEnabled:[delegate_ currentSessionSelected] && [tableView_ numberOfSelectedRows] > 0 && ![self anySelectedWindowIsOpen]];
     [openInWindowsButton_ setEnabled:[delegate_ currentSessionSelected] && [tableView_ numberOfSelectedRows] > 0 && ![self anySelectedWindowIsOpen]];
     if ([openInWindowsButton_ isEnabled] && [tableView_ numberOfSelectedRows] == 1) {
         [openInWindowsButton_ setTitle:@"Open in Window"];

@@ -912,6 +912,10 @@ Settings Improvements:
   changes.
 
 Bug Fixes:
+- In the tmux Dashboard, “Open in Tabs” is now
+  enabled when a single hidden window is
+  selected, matching “Open in Window.” Issue
+  12994.
 - Companion Device Settings no longer prompts
   for Touch ID on its own. Opening the window
   or unpairing a device now shows a “Show QR
