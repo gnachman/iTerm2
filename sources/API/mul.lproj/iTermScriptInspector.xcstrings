@@ -1,0 +1,318 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "28l-AU-yFl.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Reveal\"; ObjectID = \"28l-AU-yFl\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Reveal"
+          }
+        }
+      }
+    },
+    "4kZ-xL-XWK.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Text Cell\"; ObjectID = \"4kZ-xL-XWK\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Text Cell"
+          }
+        }
+      }
+    },
+    "7cU-N4-WkN.headerCell.title": {
+      "comment": "Class = \"NSTableColumn\"; headerCell.title = \"Path\"; ObjectID = \"7cU-N4-WkN\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Path"
+          }
+        }
+      }
+    },
+    "Chg-vY-InI.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Text Cell\"; ObjectID = \"Chg-vY-InI\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Text Cell"
+          }
+        }
+      }
+    },
+    "F0z-JX-Cv5.title": {
+      "comment": "Class = \"NSWindow\"; title = \"Scripting Inspector\"; ObjectID = \"F0z-JX-Cv5\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Scripting Inspector"
+          }
+        }
+      }
+    },
+    "JtV-c8-grt.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Variables\"; ObjectID = \"JtV-c8-grt\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Variables"
+          }
+        }
+      }
+    },
+    "Ky4-re-4k0.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Text Cell\"; ObjectID = \"Ky4-re-4k0\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Text Cell"
+          }
+        }
+      }
+    },
+    "MJL-Ks-9nr.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Copy Path\"; ObjectID = \"MJL-Ks-9nr\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Copy Path"
+          }
+        }
+      }
+    },
+    "MVx-5l-zL2.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Registered Functions\"; ObjectID = \"MVx-5l-zL2\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Registered Functions"
+          }
+        }
+      }
+    },
+    "Npb-X7-GRK.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Table View Cell\"; ObjectID = \"Npb-X7-GRK\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Table View Cell"
+          }
+        }
+      }
+    },
+    "QWy-lN-Bvo.headerCell.title": {
+      "comment": "Class = \"NSTableColumn\"; headerCell.title = \"Object Name (ID)\"; ObjectID = \"QWy-lN-Bvo\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Object Name (ID)"
+          }
+        }
+      }
+    },
+    "TE5-Lb-pFb.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Table View Cell\"; ObjectID = \"TE5-Lb-pFb\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Table View Cell"
+          }
+        }
+      }
+    },
+    "UR4-22-8xy.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"⨁\"; ObjectID = \"UR4-22-8xy\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "⨁"
+          }
+        }
+      }
+    },
+    "UYv-fx-BVO.headerCell.title": {
+      "comment": "Class = \"NSTableColumn\"; headerCell.title = \"Script\"; ObjectID = \"UYv-fx-BVO\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Script"
+          }
+        }
+      }
+    },
+    "XSZ-1k-tzU.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Text Cell\"; ObjectID = \"XSZ-1k-tzU\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Text Cell"
+          }
+        }
+      }
+    },
+    "YVQ-Gm-rQT.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Table View Cell\"; ObjectID = \"YVQ-Gm-rQT\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Table View Cell"
+          }
+        }
+      }
+    },
+    "dey-iS-DiC.headerCell.title": {
+      "comment": "Class = \"NSTableColumn\"; headerCell.title = \"Signature\"; ObjectID = \"dey-iS-DiC\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Signature"
+          }
+        }
+      }
+    },
+    "e4w-Qo-WSh.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Text Cell\"; ObjectID = \"e4w-Qo-WSh\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Text Cell"
+          }
+        }
+      }
+    },
+    "eP2-4q-ZDd.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Text Cell\"; ObjectID = \"eP2-4q-ZDd\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Text Cell"
+          }
+        }
+      }
+    },
+    "iOp-Uy-0Oi.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Sessions, Tabs, and Windows\"; ObjectID = \"iOp-Uy-0Oi\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Sessions, Tabs, and Windows"
+          }
+        }
+      }
+    },
+    "l5i-1A-HmI.headerCell.title": {
+      "comment": "Class = \"NSTableColumn\"; headerCell.title = \"Role\"; ObjectID = \"l5i-1A-HmI\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Role"
+          }
+        }
+      }
+    },
+    "oVR-Kb-byH.headerCell.title": {
+      "comment": "Class = \"NSTableColumn\"; headerCell.title = \"Value\"; ObjectID = \"oVR-Kb-byH\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Value"
+          }
+        }
+      }
+    },
+    "pXH-vy-Cey.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Table View Cell\"; ObjectID = \"pXH-vy-Cey\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Table View Cell"
+          }
+        }
+      }
+    },
+    "qAy-Iv-DBZ.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Copy ID\"; ObjectID = \"qAy-Iv-DBZ\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Copy ID"
+          }
+        }
+      }
+    },
+    "vbZ-sk-erj.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Copy Value\"; ObjectID = \"vbZ-sk-erj\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Copy Value"
+          }
+        }
+      }
+    },
+    "zzD-i1-39n.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Table View Cell\"; ObjectID = \"zzD-i1-39n\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Table View Cell"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

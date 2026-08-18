@@ -1,0 +1,378 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "3ik-Ec-g95.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Downloads the latest version. Runs curl | bash\"; ObjectID = \"3ik-Ec-g95\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Downloads the latest version. Runs curl | bash"
+          }
+        }
+      }
+    },
+    "A3D-QU-2Cx.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Continue\"; ObjectID = \"A3D-QU-2Cx\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Continue"
+          }
+        }
+      }
+    },
+    "BbS-EU-hMu.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"BbS-EU-hMu\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "E0t-ip-Qv2.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Continue\"; ObjectID = \"E0t-ip-Qv2\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Continue"
+          }
+        }
+      }
+    },
+    "F0z-JX-Cv5.title": {
+      "comment": "Class = \"NSWindow\"; title = \"Window\"; ObjectID = \"F0z-JX-Cv5\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Window"
+          }
+        }
+      }
+    },
+    "GW7-My-Ydm.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Skip\"; ObjectID = \"GW7-My-Ydm\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Skip"
+          }
+        }
+      }
+    },
+    "Ghw-SZ-fwQ.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"Ghw-SZ-fwQ\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "H9m-Oh-rVp.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"H9m-Oh-rVp\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "K0a-WG-CVu.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Preview Command\"; ObjectID = \"K0a-WG-CVu\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Preview Command"
+          }
+        }
+      }
+    },
+    "OOc-Is-r4d.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Preview Command\"; ObjectID = \"OOc-Is-r4d\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Preview Command"
+          }
+        }
+      }
+    },
+    "UYA-J9-ck1.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"How would you like to install Shell Integration?\\n\\nIn this process, your shell’s startup scripts will be modified. This installer will enter commands in the terminal window for you.\"; ObjectID = \"UYA-J9-ck1\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "How would you like to install Shell Integration?\\n\\nIn this process, your shell’s startup scripts will be modified. This installer will enter commands in the terminal window for you."
+          }
+        }
+      }
+    },
+    "WeK-Fh-3OJ.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Create a new tab to try it out.\\n\\nFor best results, install shell integration on all hosts you ssh in to.\"; ObjectID = \"WeK-Fh-3OJ\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Create a new tab to try it out.\\n\\nFor best results, install shell integration on all hosts you ssh in to."
+          }
+        }
+      }
+    },
+    "Zbw-qG-h4I.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"Zbw-qG-h4I\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "b2l-Qa-QNL.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"b2l-Qa-QNL\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "bFR-qd-VRH.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"1. Discover which shell you use.\\n2. Add script files under your home directory.\\n3. Install utility scripts.\\n4. Modify your shell’s startup scripts.\"; ObjectID = \"bFR-qd-VRH\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "1. Discover which shell you use.\\n2. Add script files under your home directory.\\n3. Install utility scripts.\\n4. Modify your shell’s startup scripts."
+          }
+        }
+      }
+    },
+    "cmu-UF-19Z.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Go Back\"; ObjectID = \"cmu-UF-19Z\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Go Back"
+          }
+        }
+      }
+    },
+    "cyF-wg-XYY.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Utilities include scripts to download files, display images inline, and more. \"; ObjectID = \"cyF-wg-XYY\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Utilities include scripts to download files, display images inline, and more. "
+          }
+        }
+      }
+    },
+    "dEn-49-J38.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Go Back\"; ObjectID = \"dEn-49-J38\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Go Back"
+          }
+        }
+      }
+    },
+    "naS-Ve-VEB.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Internet-Free Install\"; ObjectID = \"naS-Ve-VEB\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Internet-Free Install"
+          }
+        }
+      }
+    },
+    "ncg-Is-RuU.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Download and Run Installer\"; ObjectID = \"ncg-Is-RuU\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Download and Run Installer"
+          }
+        }
+      }
+    },
+    "ntQ-Ku-Hh9.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Also install iTerm2 Utilities\"; ObjectID = \"ntQ-Ku-Hh9\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Also install iTerm2 Utilities"
+          }
+        }
+      }
+    },
+    "oFz-OK-xmV.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Guided manual installation. No download required.\"; ObjectID = \"oFz-OK-xmV\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Guided manual installation. No download required."
+          }
+        }
+      }
+    },
+    "pUe-5J-qNa.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Continue\"; ObjectID = \"pUe-5J-qNa\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Continue"
+          }
+        }
+      }
+    },
+    "ra4-BC-EG1.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"🎉\"; ObjectID = \"ra4-BC-EG1\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "🎉"
+          }
+        }
+      }
+    },
+    "srv-Ew-0Pt.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Preview Command\"; ObjectID = \"srv-Ew-0Pt\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Preview Command"
+          }
+        }
+      }
+    },
+    "u02-01-Bxc.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Go Back\"; ObjectID = \"u02-01-Bxc\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Go Back"
+          }
+        }
+      }
+    },
+    "vFx-5X-71f.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Preview Command\"; ObjectID = \"vFx-5X-71f\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Preview Command"
+          }
+        }
+      }
+    },
+    "vT8-og-7pl.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Installation complete!\"; ObjectID = \"vT8-og-7pl\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Installation complete!"
+          }
+        }
+      }
+    },
+    "w9k-Lv-5eU.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"This will run the following command:\\n\\ncurl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash\"; ObjectID = \"w9k-Lv-5eU\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "This will run the following command:\\n\\ncurl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash"
+          }
+        }
+      }
+    },
+    "wl0-hO-Vi5.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Shell Integration consists of scripts that help your shell communicate with iTerm2 so it can track the commands you’re running, your current directory, and other state. \"; ObjectID = \"wl0-hO-Vi5\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Shell Integration consists of scripts that help your shell communicate with iTerm2 so it can track the commands you’re running, your current directory, and other state. "
+          }
+        }
+      }
+    },
+    "ypn-Vl-A1e.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Install Shell Integration\"; ObjectID = \"ypn-Vl-A1e\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Install Shell Integration"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

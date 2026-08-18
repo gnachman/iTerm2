@@ -1,0 +1,66 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "BK3-mM-GDU.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Set Up Artificial Intelligence\"; ObjectID = \"BK3-mM-GDU\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Set Up Artificial Intelligence"
+          }
+        }
+      }
+    },
+    "fuh-hu-cy4.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"You may be charged by your AI provider for each token sent or received.\"; ObjectID = \"fuh-hu-cy4\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "You may be charged by your AI provider for each token sent or received."
+          }
+        }
+      }
+    },
+    "v5X-g1-1qy.title": {
+      "comment": "Class = \"NSWindow\"; title = \"Window\"; ObjectID = \"v5X-g1-1qy\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Window"
+          }
+        }
+      }
+    },
+    "vwS-Bq-W9L.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"vwS-Bq-W9L\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "z2s-SU-haO.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"z2s-SU-haO\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "OK"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

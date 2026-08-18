@@ -1,0 +1,66 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "9a5-fE-FWY.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Case-Sensitive Substring\"; ObjectID = \"9a5-fE-FWY\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Case-Sensitive Substring"
+          }
+        }
+      }
+    },
+    "9vm-lJ-Kqt.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Smart Case Substring\"; ObjectID = \"9vm-lJ-Kqt\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Smart Case Substring"
+          }
+        }
+      }
+    },
+    "Gve-ot-1QH.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Case-Insensitive Substring\"; ObjectID = \"Gve-ot-1QH\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Case-Insensitive Substring"
+          }
+        }
+      }
+    },
+    "a2M-Nc-Alm.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Case-Sensitive Regex\"; ObjectID = \"a2M-Nc-Alm\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Case-Sensitive Regex"
+          }
+        }
+      }
+    },
+    "elJ-Qs-6bJ.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Case-Insensitive Regex\"; ObjectID = \"elJ-Qs-6bJ\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Case-Insensitive Regex"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

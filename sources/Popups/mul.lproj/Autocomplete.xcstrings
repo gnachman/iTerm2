@@ -1,0 +1,42 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "1.title": {
+      "comment": "Class = \"NSWindow\"; title = \"Window\"; ObjectID = \"1\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Window"
+          }
+        }
+      }
+    },
+    "9.headerCell.title": {
+      "comment": "Class = \"NSTableColumn\"; headerCell.title = \"Autocomplete\"; ObjectID = \"9\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Autocomplete"
+          }
+        }
+      }
+    },
+    "10.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Text Cell\"; ObjectID = \"10\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Text Cell"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

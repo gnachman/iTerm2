@@ -1,0 +1,42 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "QvC-M9-y7g.title": {
+      "comment": "Class = \"NSWindow\"; title = \"Cockpit\"; ObjectID = \"QvC-M9-y7g\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Cockpit"
+          }
+        }
+      }
+    },
+    "oJo-mq-f5u.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Text Cell\"; ObjectID = \"oJo-mq-f5u\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Text Cell"
+          }
+        }
+      }
+    },
+    "pQf-uT-gG7.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Table View Cell\"; ObjectID = \"pQf-uT-gG7\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Table View Cell"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

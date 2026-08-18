@@ -1,0 +1,246 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "0PH-7V-7pR.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"A simple script that doesn't have any dependencies besides the iterm2 library.\"; ObjectID = \"0PH-7V-7pR\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "A simple script that doesn't have any dependencies besides the iterm2 library."
+          }
+        }
+      }
+    },
+    "2sA-HX-RoK.title": {
+      "comment": "Class = \"NSBox\"; title = \"Box\"; ObjectID = \"2sA-HX-RoK\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Box"
+          }
+        }
+      }
+    },
+    "3cc-Nd-Tie.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"😈\"; ObjectID = \"3cc-Nd-Tie\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "😈"
+          }
+        }
+      }
+    },
+    "4Ao-3N-cjn.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Basic\"; ObjectID = \"4Ao-3N-cjn\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Basic"
+          }
+        }
+      }
+    },
+    "8LH-HR-XoS.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"😊\"; ObjectID = \"8LH-HR-XoS\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "😊"
+          }
+        }
+      }
+    },
+    "Bvi-lb-MnN.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Long-Running Daemon\"; ObjectID = \"Bvi-lb-MnN\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Long-Running Daemon"
+          }
+        }
+      }
+    },
+    "F0z-JX-Cv5.title": {
+      "comment": "Class = \"NSWindow\"; title = \"Window\"; ObjectID = \"F0z-JX-Cv5\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Window"
+          }
+        }
+      }
+    },
+    "JSO-Dq-LjB.title": {
+      "comment": "Class = \"NSBox\"; title = \"Box\"; ObjectID = \"JSO-Dq-LjB\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Box"
+          }
+        }
+      }
+    },
+    "Qv1-jV-kL5.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Choose a script template:\"; ObjectID = \"Qv1-jV-kL5\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Choose a script template:"
+          }
+        }
+      }
+    },
+    "erL-4L-rkl.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Simple\"; ObjectID = \"erL-4L-rkl\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Simple"
+          }
+        }
+      }
+    },
+    "hm4-4H-MvX.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"hm4-4H-MvX\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "keb-oF-eRS.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Choose this template for a simple script that performs actions and terminates.\"; ObjectID = \"keb-oF-eRS\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Choose this template for a simple script that performs actions and terminates."
+          }
+        }
+      }
+    },
+    "mIg-Ye-rwA.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"A script that depends on PyPI packages other than the iterm2 library. A private pyenv will be created for this script.\"; ObjectID = \"mIg-Ye-rwA\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "A script that depends on PyPI packages other than the iterm2 library. A private pyenv will be created for this script."
+          }
+        }
+      }
+    },
+    "nKj-9L-NfW.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"🔗\"; ObjectID = \"nKj-9L-NfW\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "🔗"
+          }
+        }
+      }
+    },
+    "tXz-uS-5p0.title": {
+      "comment": "Class = \"NSBox\"; title = \"Box\"; ObjectID = \"tXz-uS-5p0\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Box"
+          }
+        }
+      }
+    },
+    "vJf-M0-oyN.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Full Environment\"; ObjectID = \"vJf-M0-oyN\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Full Environment"
+          }
+        }
+      }
+    },
+    "vRx-t4-Url.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Choose this template for a script that stays running and responds to notifications.\"; ObjectID = \"vRx-t4-Url\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Choose this template for a script that stays running and responds to notifications."
+          }
+        }
+      }
+    },
+    "y6b-6d-y5d.title": {
+      "comment": "Class = \"NSBox\"; title = \"Box\"; ObjectID = \"y6b-6d-y5d\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Box"
+          }
+        }
+      }
+    },
+    "yaQ-52-C21.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"🛠️\"; ObjectID = \"yaQ-52-C21\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "🛠️"
+          }
+        }
+      }
+    },
+    "zMT-9q-c4b.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Choose a Python environment:\"; ObjectID = \"zMT-9q-c4b\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Choose a Python environment:"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
