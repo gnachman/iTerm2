@@ -1,5 +1,13 @@
 iTerm2 Buddy (Companion App) Release Notes
 
+New Features:
+- You can now turn on push notifications from
+  your phone. After pairing, iTerm2 Buddy asks
+  whether you want to receive notifications, and
+  you can turn them on later under Settings while
+  paired. Previously this was only reachable by
+  enabling alerts on the Mac.
+
 Bug Fixes:
 - Opening a session that has already closed now
   shows a “Stream Ended” message explaining the

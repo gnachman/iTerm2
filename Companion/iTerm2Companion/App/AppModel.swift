@@ -1232,6 +1232,8 @@ final class AppModel {
             // is delivered only if the phone is connected at unpair time, so an
             // offline phone would otherwise keep stale state forever.
             resetForFreshPairing()
+            // Offer the notification opt-in once this fresh pairing reaches home.
+            pendingFreshPairOptIn = true
         }
         activePairingCode = code
         activeIsReconnect = isReconnect
@@ -1814,7 +1816,16 @@ final class AppModel {
         // permission if we haven't yet (deferring to foreground if backgrounded).
         if handshake.wantsNotificationPermission {
             ensureNotificationPermission(replyTo: nil)
+        } else if pendingFreshPairOptIn {
+            // No Mac-side alerts opt-in: after a FRESH pairing, offer notifications with
+            // an in-app soft prompt (before the iOS system prompt) when the user has not
+            // decided, so notifications are reachable from the phone alone.
+            await refreshPushAuthorization()
+            if pushAuthorization == .notDetermined {
+                showNotificationOptIn = true
+            }
         }
+        pendingFreshPairOptIn = false
         try await refreshLists()
         navigationPath = []
         if phase != .home {
@@ -3557,6 +3568,35 @@ final class AppModel {
     ///    request): DEFER and show it the next time the app becomes active, so the
     ///    prompt never depends on the request happening to land while foreground.
     /// `replyTo` answers the orchestrator's request-id flow; nil for the hello flow.
+    // MARK: Notification opt-in
+
+    /// Drives the post-pairing soft prompt ("Receive Notifications?"). Set after a fresh
+    /// pairing when the user has not yet decided; Enable leads to the iOS system prompt,
+    /// Not Now defers (they can still enable later in Settings).
+    var showNotificationOptIn = false
+
+    /// Set at the start of a fresh (non-reconnect) pairing and consumed by loadHome, so
+    /// the soft prompt appears only after a fresh pairing, not on every launch reconnect.
+    private var pendingFreshPairOptIn = false
+
+    /// The phone's iOS notification authorization, refreshed on demand so the Settings
+    /// notifications control can reflect and act on it. Kept in sync by the permission flow.
+    var pushAuthorization: CompanionPushAuthorization = .notDetermined
+
+    /// The user asked to receive notifications (from the post-pairing prompt or Settings).
+    /// Runs the same flow as the Mac-driven path: shows the iOS system prompt if
+    /// undecided, registers for remote notifications, and reports status to the Mac.
+    func enableNotifications() {
+        ensureNotificationPermission(replyTo: nil)
+    }
+
+    /// Refresh `pushAuthorization` from the system (e.g. when Settings appears, or after
+    /// returning from iOS Settings where the user may have toggled it).
+    func refreshPushAuthorization() async {
+        let status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+        pushAuthorization = Self.authorization(from: status)
+    }
+
     private func ensureNotificationPermission(replyTo requestID: UInt64?) {
         Task { await ensureNotificationPermissionImpl(replyTo: requestID) }
     }
@@ -3566,6 +3606,7 @@ final class AppModel {
         var authorization = Self.authorization(from: await center.notificationSettings().authorizationStatus)
         companionLog("ensureNotificationPermission: status=\(authorization.rawValue), "
             + "appState=\(UIApplication.shared.applicationState.rawValue)")
+        pushAuthorization = authorization
         if authorization == .notDetermined {
             guard UIApplication.shared.applicationState == .active else {
                 companionLog("App not active; deferring notification prompt to next foreground")
@@ -3580,6 +3621,7 @@ final class AppModel {
             authorization = granted ? .authorized : .denied
             companionLog("Notification permission prompt answered: \(authorization.rawValue)")
         }
+        pushAuthorization = authorization
         if authorization == .authorized {
             UIApplication.shared.registerForRemoteNotifications()
         }

@@ -8,9 +8,11 @@
 
 import SwiftUI
 import MessageUI
+import UIKit
 
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.openURL) private var openURL
     @State private var confirmingDisconnect = false
     @State private var loggingEnabled = CompanionFileLog.shared.isEnabled
     @State private var confirmingDisableLogs = false
@@ -24,6 +26,17 @@ struct SettingsView: View {
     @State private var airdropURL: URL?
     @State private var noLogsToAirdrop = false
     #endif
+
+    private var notificationsFooter: String {
+        switch model.pushAuthorization {
+        case .authorized:
+            return "You’ll be notified when your agent replies or needs your approval."
+        case .notDetermined:
+            return "Get notified when your agent replies or needs your approval, even when iTerm2 Buddy isn’t open."
+        case .denied:
+            return "Notifications are turned off for iTerm2 Buddy. Turn them on in iOS Settings."
+        }
+    }
 
     var body: some View {
         @Bindable var manager = model.whisperManager
@@ -63,6 +76,31 @@ struct SettingsView: View {
                     Text("Relay Room")
                 } footer: {
                     Text("The name your Mac and this phone use to find each other through the relay. Useful when reporting a problem.")
+                }
+            }
+
+            // Notifications control, only while paired (Settings is also reachable
+            // before pairing, where this would have nothing to act on).
+            if model.pairedRoomNameHex != nil {
+                Section {
+                    switch model.pushAuthorization {
+                    case .authorized:
+                        LabeledContent("Notifications", value: "On")
+                    case .notDetermined:
+                        Button("Turn On Notifications") {
+                            model.enableNotifications()
+                        }
+                    case .denied:
+                        Button("Turn On Notifications in Settings") {
+                            if let url = URL(string: UIApplication.openSettingsURLString) {
+                                openURL(url)
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Notifications")
+                } footer: {
+                    Text(notificationsFooter)
                 }
             }
 
@@ -181,6 +219,10 @@ struct SettingsView: View {
             // device-tiered remote recommendation (best effort; offline keeps
             // the fallback).
             await model.whisperManager.refreshRecommendation()
+        }
+        .task {
+            // Reflect the live notification authorization in the control above.
+            await model.refreshPushAuthorization()
         }
         .sheet(isPresented: $showingMail) {
             MailComposeView(to: ["gnachman@gmail.com"],
