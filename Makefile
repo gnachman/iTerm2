@@ -61,7 +61,7 @@ else
   RUST_NATIVE_TARGET = x86_64-apple-darwin
 endif
 
-.PHONY: clean all backup-old-iterm restart setup dangerous-setup _setup-main help doctor companion-bump-build
+.PHONY: clean all backup-old-iterm restart setup dangerous-setup _setup-main help doctor companion-bump-build companion-bump-build-upload
 
 help:
 	@echo "iTerm2 — $(VERSION) ($(NATIVE_ARCH))"
@@ -93,8 +93,10 @@ help:
 	@echo "  make Deployment   Build Deployment configuration"
 	@echo ""
 	@echo "Companion (iOS):"
-	@echo "  make companion-bump-build   Bump app + PushService build # and regenerate"
-	@echo "                              (N=123 to set an explicit number)"
+	@echo "  make companion-bump-build          Bump app + PushService build # and regenerate"
+	@echo "                                     (N=123 to set an explicit number)"
+	@echo "  make companion-bump-build-upload   Bump #, then archive + upload to TestFlight"
+	@echo "                                     via fastlane (needs ASC_* env vars set)"
 	@echo ""
 	@echo "Diagnose:"
 	@echo "  make doctor       Check all build dependencies"
@@ -118,6 +120,12 @@ prod: Deployment
 companion-bump-build:
 	ruby Companion/tools/bump_build_number.rb $(N)
 	ruby Companion/tools/generate_companion_project.rb
+
+# Bump the build number and regenerate, then archive and upload to TestFlight
+# via fastlane, no Xcode. Needs ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_PATH set in
+# the environment. Pass N=<number> to set an explicit build number.
+companion-bump-build-upload: companion-bump-build
+	cd Companion && bundle exec fastlane release
 
 setup:
 	@BREW_BIN=$$(PATH="/opt/homebrew/bin:/usr/local/bin:$(ORIG_PATH)" command -v brew 2>/dev/null); \

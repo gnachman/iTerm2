@@ -20,6 +20,8 @@
 # inferred from each image's pixel size and order follows the numeric filename
 # prefix.
 
+require "shellwords"
+
 default_platform(:ios)
 
 # The App Store Connect API key from ASC_* env vars, or nil to fall back to
@@ -58,6 +60,32 @@ platform :ios do
       overwrite_screenshots: true,
       force: true,
       run_precheck_before_submit: false,
+    )
+  end
+
+  desc "Archive for the App Store and upload to TestFlight, no Xcode UI (make companion-bump-build-upload)"
+  lane :release do
+    key = asc_api_key
+    UI.user_error!("Set ASC_KEY_ID, ASC_ISSUER_ID, and ASC_KEY_PATH first; they are needed to sign and upload headlessly.") unless key
+    build_app(
+      project: "iTerm2Companion.xcodeproj",
+      scheme: "iTerm2Companion",
+      output_directory: "build/fastlane",
+      export_options: "ExportOptions.plist",
+      # Create/update the distribution provisioning profiles headlessly with the
+      # App Store Connect API key, so no Xcode UI is needed. ExportOptions.plist
+      # selects automatic signing; the distribution certificate must already be
+      # in the login keychain (it is, from prior Xcode archives).
+      xcargs: [
+        "-allowProvisioningUpdates",
+        "-authenticationKeyPath #{ENV.fetch('ASC_KEY_PATH').shellescape}",
+        "-authenticationKeyID #{ENV.fetch('ASC_KEY_ID').shellescape}",
+        "-authenticationKeyIssuerID #{ENV.fetch('ASC_ISSUER_ID').shellescape}",
+      ].join(" "),
+    )
+    upload_to_testflight(
+      api_key: key,
+      skip_waiting_for_build_processing: true,
     )
   end
 end
