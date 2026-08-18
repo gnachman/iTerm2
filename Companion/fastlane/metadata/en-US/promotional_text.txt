@@ -1,0 +1,1 @@
+Watch and control your iTerm2 sessions from your iPhone. See live output, type commands, and chat with an AI agent that runs your terminal, all end-to-end encrypted.
