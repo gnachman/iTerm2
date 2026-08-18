@@ -786,7 +786,6 @@ private struct LiveSessionView: View {
     let guid: String
 
     @State private var holder = LiveVideoHolder()
-    @State private var resolution: String?
     @State private var endedReason: CompanionStreamEndReason?
     /// The live canvas area in points, used to compute a legible grid size for the
     /// resize button. Captured from a background GeometryReader so reading it does
@@ -932,7 +931,7 @@ private struct LiveSessionView: View {
         if endedReason == nil {
             HStack(spacing: 6) {
                 Circle().fill(.red).frame(width: 8, height: 8)
-                Text(resolution.map { "LIVE  \($0)" } ?? "LIVE")
+                Text("LIVE")
                     .font(.caption2.monospaced())
             }
             .padding(.horizontal, 8)
@@ -948,7 +947,6 @@ private struct LiveSessionView: View {
         model.watchSessionLive(
             guid: guid,
             onConfig: { config in
-                resolution = "\(config.pixelWidth)×\(config.pixelHeight)"
                 if let parameterSets = try? CompanionHEVCFraming.decodeParameterSets(config.codecExtradata) {
                     companionLog("LiveSessionView onConfig: stream=\(config.streamID) gen=\(config.generationId) \(config.pixelWidth)x\(config.pixelHeight) grid=\(config.columns)x\(config.rows) -> configuring decoder")
                     holder.view.configure(parameterSets: parameterSets)
