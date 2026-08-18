@@ -444,7 +444,8 @@ private func validatedRecordUID(_ recordUid: String) throws -> String {
     return uid
 }
 
-private let keeperEmbeddedRecordUIDRegex = try! NSRegularExpression(pattern: "[A-Za-z0-9_-]{15,}")
+private let keeperEmbeddedRecordUIDRegex = try! NSRegularExpression(
+    pattern: "(?<![A-Za-z0-9_-])[A-Za-z0-9_-]{22}(?![A-Za-z0-9_-])")
 
 private func extractRecordUID(from text: String) throws -> String {
     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -466,6 +467,15 @@ private struct KeeperMutationAttempt {
     let run: () throws -> Data
 }
 
+/// Read Commander `status` without decoding `message` (string or array both exist).
+private func keeperCommandStatusIsSuccess(_ data: Data) -> Bool {
+    guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+          let status = obj["status"] as? String else {
+        return false
+    }
+    return status.lowercased() == "success"
+}
+
 /// Tries each attempt until one returns Commander `status == "success"`.
 /// Continues after thrown errors so classic/nested fallback can still run.
 /// Prefers a network/timeout error over a later verb's body failure.
@@ -477,7 +487,7 @@ private func runKeeperMutationAttempts(logPrefix: String,
         KeeperAdapterLog.write("\(logPrefix): trying verb=\(step.label) uid=\(uid)")
         let data = try step.run()
         KeeperAdapterLog.write("\(logPrefix): \(step.label) response bytes=\(data.count)")
-        let success = (try? JSONDecoder().decode(KeeperExecuteResponse.self, from: data))?.status == "success"
+        let success = keeperCommandStatusIsSuccess(data)
         return (success, data)
     }
 
@@ -642,8 +652,12 @@ func listAccountsRecords(apiKey: String,
         nsfRecords = taggedAsNested(parseListingPayload(nsfData))
         KeeperAdapterLog.write("listAccountsRecords: nsf-list returned \(nsfRecords.count) records")
     } catch {
-        warning = "Nested Shared Folder listing failed (\(error.localizedDescription)). Showing classic vault accounts only; Nested accounts may be missing until you retry or run Sync Down."
-        KeeperAdapterLog.write("listAccountsRecords: nsf-list call failed: \(error.localizedDescription)")
+        if isNsfUnavailableError(error) {
+            KeeperAdapterLog.write("listAccountsRecords: nsf-list unavailable (expected for non-NSF accounts); omitting warning")
+        } else {
+            warning = "Nested Shared Folder listing failed (\(error.localizedDescription)). Showing classic vault accounts only; Nested accounts may be missing until you retry or run Sync Down."
+            KeeperAdapterLog.write("listAccountsRecords: nsf-list call failed: \(error.localizedDescription)")
+        }
     }
 
     // Prefer classic `list` over `nsf-list` when the same UID appears in both, so a
@@ -920,7 +934,13 @@ private func addRecordOnce(apiKey: String,
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             status = try container.decodeIfPresent(String.self, forKey: .status)
-            message = try container.decodeIfPresent(String.self, forKey: .message)
+            if let str = try? container.decodeIfPresent(String.self, forKey: .message) {
+                message = str
+            } else if let arr = try? container.decodeIfPresent([String].self, forKey: .message) {
+                message = arr.joined(separator: " ")
+            } else {
+                message = nil
+            }
             if let obj = try? container.decodeIfPresent(RecordAddData.self, forKey: .data) {
                 dataObject = obj
                 dataString = nil

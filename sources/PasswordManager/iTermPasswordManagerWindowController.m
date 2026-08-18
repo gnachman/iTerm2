@@ -1884,8 +1884,11 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
                         [weakSelf decrBusy];  // (2)
                         // Preserve vault on delete-then-re-add (Classic vs Nested).
                         NSDictionary *readdFlags = nil;
+                        NSString *source = nil;
                         if ([(id)entry respondsToSelector:@selector(sourceLabel)]) {
-                            NSString *source = entry.sourceLabel;
+                            source = entry.sourceLabel;
+                        }
+                        if (source.length > 0) {
                             if ([source caseInsensitiveCompare:@"Classic"] == NSOrderedSame) {
                                 readdFlags = @{ @"useClassicPermission": @YES };
                             } else if ([source caseInsensitiveCompare:@"Nested"] == NSOrderedSame) {
