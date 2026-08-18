@@ -59,6 +59,12 @@ class AIConnectionTester: NSObject {
                              apiKey: String,
                              vendor: iTermAIVendor,
                              completion: @escaping (AIConnectionTestOutcome, String) -> Void) {
+        // The reviewer placeholder key contacts no service, so a live probe would
+        // fail. Report success and explain, matching the runtime short-circuit.
+        if apiKey == AITermController.reviewPlaceholderAPIKey {
+            completion(.success, "Placeholder key in use: AI responses are simulated for App Review and no external service is contacted.")
+            return
+        }
         var features = Set<AIMetadata.Model.Feature>()
         if functionCalling {
             features.insert(.functionCalling)

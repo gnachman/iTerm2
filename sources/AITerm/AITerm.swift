@@ -556,6 +556,18 @@ class AITermController {
     private let client = iTermAIClient()
     private var cancellation: Cancellation?
 
+    // When the configured AI API key is exactly this value, iTerm2 does not
+    // contact any AI provider: it returns `reviewPlaceholderResponse` instead.
+    // This lets App Store review exercise the AI chat (including through the iOS
+    // companion app) with no real key and no cost. No genuine provider key is
+    // ever this string.
+    static let reviewPlaceholderAPIKey = "placeholder"
+    static let reviewPlaceholderResponse =
+        "This is a demonstration response from the iTerm2 AI assistant. " +
+        "iTerm2 is configured with a placeholder key for App Review, so no " +
+        "external AI service is contacted and no data leaves your Mac. To get " +
+        "real answers, set your AI provider's API key in iTerm2 Settings > AI."
+
     static var provider: LLMProvider? {
         if let model = LLMMetadata.model() {
             return LLMProvider(model: model)
@@ -580,6 +592,10 @@ class AITermController {
         }
         if llmProvider.model.api == .appleIntelligence {
             requestAppleIntelligenceCompletion(messages: messages)
+            return
+        }
+        if registration.apiKey == Self.reviewPlaceholderAPIKey {
+            respondWithReviewPlaceholder(messages: messages)
             return
         }
         var builder = LLMRequestBuilder(provider: llmProvider,
@@ -1244,6 +1260,25 @@ class AITermController {
             }
         }
         cancellation.impl = { task.cancel() }
+    }
+
+    // The reviewer-only shortcut for `reviewPlaceholderAPIKey`. Like
+    // requestAppleIntelligenceCompletion it has no wire format: it delivers a
+    // canned reply on the main queue through the same offerChoice path, guarded
+    // on still-outstanding state so a cancel can't double-fire a callback.
+    private func respondWithReviewPlaceholder(messages: [Message]) {
+        let text = Self.reviewPlaceholderResponse
+        let cancellation = Cancellation()
+        self.cancellation = cancellation
+        state = .querySent(messages: messages, streamParserState: nil)
+        DispatchQueue.main.async { [weak self] in
+            guard let self, case .querySent = self.state else {
+                return
+            }
+            self.consecutiveToolFailures = 0
+            self.state = .ground
+            self.delegate?.aitermController(self, offerChoice: text)
+        }
     }
 
     private func doFunctionCall(_ message: Message, call functionCall: LLM.FunctionCall) {
