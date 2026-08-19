@@ -645,27 +645,37 @@ private class TokenExecutorImpl {
                 DLog("continuing to next token")
             }
             if let token = group.peek {
-                executeHighPriorityTasks()
-                commit = true
-                var consume = true
-                if execute(token: token,
-                           priority: priority,
-                           delegate: delegate) {
-                    if gDebugLogging.boolValue {
-                        DLog("quit early")
+                // Drain per token: executing a token can spray autoreleased
+                // temporaries (e.g. OSC 133 handling calls -lastCommandMark,
+                // which walks the interval tree via reverseLimitEnumerator and
+                // allocates an NSMutableArray per step). Under a repaint firehose
+                // one execute() call can process tens of thousands of tokens
+                // before its GCD block's pool drains, so those temporaries pile
+                // up into multi-GB of live NSMutableArray/CFString. Scoping a
+                // pool to each token bounds that to one token's worth. See #12992.
+                autoreleasepool {
+                    executeHighPriorityTasks()
+                    commit = true
+                    var consume = true
+                    if execute(token: token,
+                               priority: priority,
+                               delegate: delegate) {
+                        if gDebugLogging.boolValue {
+                            DLog("quit early")
+                        }
+                        quitVectorEarly = true
+                        consume = true
+                    } else {
+                        consume = commit
                     }
-                    quitVectorEarly = true
-                    consume = true
-                } else {
-                    consume = commit
-                }
-                if consume {
-                    vectorHasNext = group.consume()
-                } else {
-                    vectorHasNext = false
-                }
-                if gDebugLogging.boolValue {
-                    DLog("commit=\(commit) consume=\(consume) remaining=\(group.arrays.map(\.numberRemaining))")
+                    if consume {
+                        vectorHasNext = group.consume()
+                    } else {
+                        vectorHasNext = false
+                    }
+                    if gDebugLogging.boolValue {
+                        DLog("commit=\(commit) consume=\(consume) remaining=\(group.arrays.map(\.numberRemaining))")
+                    }
                 }
             }
             if isBackgroundSession && !Self.activeSessionsWithTokens.value.isEmpty {
