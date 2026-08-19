@@ -149,7 +149,8 @@ Major New Features:
 - You can now run multiple concurrent
   instances of iTerm2 side by side with
   independent settings. Launch with
-  --suite=com.iterm2.unique-id-of-your-choice.
+  arguments:
+  -suite com.iterm2.unique-id-of-your-choice.
 
 - The new Workgroups feature let you define how to
   transform a session into a cluster of related
@@ -188,12 +189,6 @@ Major New Features:
   integration session, sending the unmodified
   sequence instead of the xterm form like
   ^[[15;2~.
-- Fixed a bug where auto-sending code review
-  results to the main session sometimes failed to
-  submit because the Return arrived too soon after
-  the paste. The Return now waits a moment (see
-  the workgroupAutoSendSubmitDelay advanced
-  setting).
 - Fixed a bug where a sixel image whose
   terminator had a doubled escape (ESC ESC \
   instead of ESC \) was discarded entirely,
@@ -204,205 +199,19 @@ Major New Features:
   shrinking to a second tab’s profile size) after
   a display-configuration change, instead of
   keeping its own width.
-- Security: the retrospective debug log (used by
-  Save Retrospective Debug Logs) no longer retains
-  typed characters, command lines, passwords,
-  tokens, or AI chat content. These could
-  previously accumulate in memory with debug
-  logging off.
 - ⌘-click now linkifies very long URLs in
   full. Previously only the first couple
   thousand characters were clickable; the
   linkifier now scans onward to the next
   separator so the whole URL is detected.
-- In AI chat orchestration mode, references
-  to a session or workgroup now appear as a
-  clickable link, marked with a terminal
-  icon, showing its current name instead of
-  a raw identifier. Clicking the link
-  reveals that session. The tool-call
-  activity lines (e.g. “Reading screen of
-  …”) now use these same links, and show a
-  grayed-out, non-clickable “[defunct
-  session]” link once the target is gone
-  instead of leaking a raw GUID.
-
-- AI chat orchestration is now much less
-  chatty. While it runs a loop (for example,
-  waiting for a Code Review to finish and
-  then telling a session to continue), it
-  acts on each event and reports one line per
-  real outcome instead of narrating every
-  step and asking what to do next each time.
-
-- A screen-watched condition in orchestration
-  mode now checks less often the longer it
-  runs, and no longer interrupts the chat with
-  a “watch timed out” note every few minutes.
-  The watch keeps running on its own and only
-  gives up after several hours.
-
-- An orchestration watch now follows a Code
-  Review (or any peer) that restarts in place.
-  A reload gives the session a new internal id;
-  the watch used to lose track of it and stall
-  silently, but it now tracks the session across
-  the reload and keeps going.
-
-- In AI chat orchestration mode, pressing Stop
-  now halts the whole pipeline: it cancels the
-  in-flight reply, drops any queued turns, and
-  cancels the chat’s registered watchers, so a
-  session going idle can no longer restart the
-  loop after you asked it to stop. A message you
-  type also jumps ahead of pending status
-  updates instead of waiting behind them.
-
-- A new AI chat created without a session to
-  link to now offers to enable orchestration
-  mode, mirroring the link offer shown when a
-  session is available.
-
-- AI chat now asks before it starts including
-  your terminal’s visible screen and state with
-  messages automatically. A permission left at
-  “Always” from an earlier version no longer
-  shares your screen until you confirm once.
-
 - AI chat history entries can now be deleted
   from the chat list.
-
-- AI chat tool activity is now rendered as
-  compact, code-formatted output instead of
-  prominent centered status panels.
-
-- AI chat no longer sends unsupported
-  additionalProperties fields in Gemini tool
-  schemas.
-
-- AI chat no longer offers deprecated
-  Gemini 2.0 models in the model picker.
-
-- AI chat no longer offers the shut-down
-  Gemini 3 Pro Preview model or the
-  deprecated Claude 4.0 Opus and Sonnet
-  models in the picker.
-
-- AI settings now let you manage API keys
-  for OpenAI, Anthropic, Gemini, and
-  DeepSeek in one sheet.
 
 - AI chats now keep the provider chosen at
   creation time. Settings choose the default
   provider for new chats, while existing
   chats only offer models from their saved
   provider.
-
-- Workgroups let you configure a session
-  to be transformed into a group of related
-  sessions — peers, split panes, or tabs —
-  each with its own toolbar. Configure
-  them in Settings > Shortcuts >
-  Workgroups. Still a work in progress.
-
-- Enter Workgroup and Exit Workgroup are
-  also available as URL-regex triggers on
-  browser profiles, so a navigation event
-  can change the active workgroup.
-
-- Workgroup sessions now have a Mode
-  setting. The new Code Review mode shows
-  an in-session prompt overlay with a Start
-  button before the program runs; the
-  entered text is exposed as the variable
-  codeReviewPrompt for swifty interpolation
-  in the command. The Claude Code
-  workgroup’s review peer uses this mode
-  by default.
-
-- The Code Review prompt overlay can save
-  multiple named prompts. A pulldown menu
-  on the overlay loads any saved prompt;
-  a dedicated Manage Prompts… window
-  handles add/rename/edit/reorder/delete.
-  The single Code Review prompt previously
-  managed in Settings > General > AI >
-  Prompts is migrated to a Default entry
-  on first launch and the entry has been
-  removed from Settings.
-
-- The Code Review system prompt is now
-  editable in Settings > General > AI >
-  Prompts. It defaults to the bundled
-  prompt and is passed to Claude Code at
-  launch.
-
-- Code Review peers have an Auto-Send
-  Clippings When Idle toolbar toggle. When
-  on, the review session’s clippings are
-  pasted into the workgroup’s main session
-  each time the review finishes. The
-  Claude Code workgroup’s review peer
-  includes it by default; the toggle itself
-  starts off.
-
-- The main session has a companion
-  Auto-Request Review When Idle toolbar
-  toggle. When on, a code review is
-  requested from the workgroup’s sole
-  code-review session each time the main
-  session goes idle. It is disabled unless
-  the workgroup has exactly one code-review
-  session. The Claude Code workgroup’s main
-  session includes it by default; the toggle
-  starts off.
-
-- Switching to a Code Review peer that is
-  still showing its prompt overlay now
-  focuses the prompt text field so you can
-  start typing immediately.
-
-- A Diff session now waits to run its diff
-  until you first switch to it, so the diff
-  reflects your changes at that moment
-  instead of from whenever they first began.
-  It is not re-run when you switch away and
-  back.
-
-- Switching to a Diff peer for the first
-  time now keeps the terminal focused once
-  its command starts. Previously keystrokes
-  went nowhere (and beeped) until you
-  clicked the terminal.
-
-- Workgroups now survive a restart. When
-  the app relaunches (for example after a
-  Sparkle upgrade), an active workgroup is
-  rebuilt: its Diff and Code Review peers,
-  split/tab children, toolbar, and peer
-  switching all come back with their
-  content intact.
-
-- Clippings now keep history. An archive
-  button in the clippings panel snapshots
-  the current list and clears it; back and
-  forward buttons walk the history. The
-  new `it2 session archive-clippings`
-  command and matching `iterm2.archive_
-  clippings` API call do the same. Claude
-  Code reviews now automatically archive
-  before each pass, so each review starts
-  with a clean list while old findings
-  remain reachable.
-
-- The clippings and inline AI chat panels
-  can now be resized by dragging their left
-  edge. The chosen width is remembered per
-  machine.
-
-- The Shell > Workgroups submenu now has
-  an Exit Workgroup item to leave the
-  current session’s workgroup.
 
 - The new Fold All menu item folds everything
   (aside from folds at the very top of history).
@@ -412,20 +221,6 @@ Major New Features:
 - You can now create screenshots including
   highlights and redactions using the Make
   Screenshot menu item.
-
-- The screenshot window adds a Save As… button
-  to choose where the file goes. The Save button
-  writes to the folder set by the
-  screenshotSaveLocation advanced setting, or
-  the Desktop if unset.
-
-- The screenshot window’s Copy to Clipboard
-  button now flashes a “Copied!” confirmation
-  so you get feedback that the image was copied.
-
-- The Python API can now capture a session
-  screenshot with session.async_screenshot(),
-  which returns PNG data.
 
 - Session archives were added. The new Session >
   Archives menu has “Save Archive of Current
@@ -557,7 +352,6 @@ Tabs, Windows, and UI:
   slots near tab midpoints, and stabilize
   split-pane target highlights.
 
-
 Triggers Improvements:
 - Event-based triggers can fire on events such as
   a session ending or a hostname change.
@@ -574,7 +368,6 @@ Triggers Improvements:
   is running. This makes it possible, for example,
   to write triggers that are only active while
   Claude Code is running.
-
 
 AI Improvements:
 - Fixed AI chat failing on OpenAI models with an
