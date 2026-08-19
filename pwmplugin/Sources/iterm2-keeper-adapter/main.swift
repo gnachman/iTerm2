@@ -90,6 +90,11 @@ private func handleHandshake() {
                     label: "Use classic permission model",
                     note: "Limits sharing to basic access levels. Recommended only for compatibility with older workflows.",
                     defaultValue: false),
+            ],
+            // Pre-round-3 builds stored the API key under settings account "apiKey".
+            // Let the host migrate it into the master-password slot once.
+            legacyCredentialMigrations: [
+                PasswordManagerProtocol.LegacyCredentialMigration(fromKeychainAccount: "apiKey"),
             ])
         writeOutput(response)
     } catch {

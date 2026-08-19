@@ -47,6 +47,21 @@ public enum PasswordManagerProtocol {
         }
     }
 
+    // Declares a pre-existing keychain entry whose value should be migrated into
+    // the adapter's master-password slot. The host runs this once, adapter-agnostically:
+    // if the master-password slot is empty it copies the value up, then deletes the
+    // orphaned entry only after the copy is confirmed. Lets an adapter retire an old
+    // credential-storage location without baking adapter specifics into the host.
+    public struct LegacyCredentialMigration: Codable {
+        // The keychain account name of the legacy entry, stored under the adapter's
+        // own service name.
+        public var fromKeychainAccount: String
+
+        public init(fromKeychainAccount: String) {
+            self.fromKeychainAccount = fromKeychainAccount
+        }
+    }
+
     // A custom setting for your adapter.
     public struct SettingsField: Codable {
         public var key: String
@@ -94,9 +109,10 @@ public enum PasswordManagerProtocol {
         public var customCommands: [CustomCommand]?
         public var settingsFields: [SettingsField]?
         public var addAccountToggles: [AddAccountToggle]?
+        public var legacyCredentialMigrations: [LegacyCredentialMigration]?
 
         public init(protocolVersion: Int, name: String, requiresMasterPassword: Bool, canSetPasswords: Bool, userAccounts: [UserAccount]?, needsPathToDatabase: Bool, databaseExtension: String?, needsPathToExecutable: String?,
-                    pathToDatabaseKind: PathKind? = nil, pathToDatabasePrompt: String? = nil, pathToDatabasePlaceholder: String? = nil, masterPasswordLabel: String? = nil, persistsCredentials: Bool? = nil, customCommands: [CustomCommand]? = nil, settingsFields: [SettingsField]? = nil, addAccountToggles: [AddAccountToggle]? = nil) {
+                    pathToDatabaseKind: PathKind? = nil, pathToDatabasePrompt: String? = nil, pathToDatabasePlaceholder: String? = nil, masterPasswordLabel: String? = nil, persistsCredentials: Bool? = nil, customCommands: [CustomCommand]? = nil, settingsFields: [SettingsField]? = nil, addAccountToggles: [AddAccountToggle]? = nil, legacyCredentialMigrations: [LegacyCredentialMigration]? = nil) {
             self.protocolVersion = protocolVersion
             self.name = name
             self.requiresMasterPassword = requiresMasterPassword
@@ -113,6 +129,7 @@ public enum PasswordManagerProtocol {
             self.customCommands = customCommands
             self.settingsFields = settingsFields
             self.addAccountToggles = addAccountToggles
+            self.legacyCredentialMigrations = legacyCredentialMigrations
         }
     }
 
