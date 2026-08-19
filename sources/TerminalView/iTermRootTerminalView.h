@@ -113,9 +113,9 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 @property(nonatomic, readonly) CGFloat leftTabBarPreferredWidth;
 
 @property(nonatomic) BOOL useMetal;
-@property(nonatomic, readonly) BOOL tabBarControlOnLoan NS_AVAILABLE_MAC(10_14);
+@property(nonatomic, readonly) BOOL tabBarControlOnLoan;
 @property(nonatomic, strong, readonly) iTermStatusBarViewController *statusBarViewController;
-@property(nonatomic, readonly) iTermImageView *backgroundImage NS_AVAILABLE_MAC(10_14);
+@property(nonatomic, readonly) iTermImageView *backgroundImage;
 // Excludes the window number
 @property(nonatomic, readonly) NSString *windowTitle;
 
@@ -148,16 +148,16 @@ extern const NSInteger iTermRootTerminalViewWindowNumberLabelWidth;
 - (void)windowTitleDidChangeTo:(NSString *)title;
 - (void)windowNumberDidChangeTo:(NSNumber *)number;
 - (void)setWindowTitleIcon:(NSImage *)icon;
-- (iTermTabBarControlView *)borrowTabBarControl NS_AVAILABLE_MAC(10_14);
-- (void)returnTabBarControlView:(iTermTabBarControlView *)tabBarControl NS_AVAILABLE_MAC(10_14);
+- (iTermTabBarControlView *)borrowTabBarControl;
+- (void)returnTabBarControlView:(iTermTabBarControlView *)tabBarControl;
 - (CGFloat)maximumToolbeltWidthForViewWidth:(CGFloat)viewWidth;
 - (void)updateToolbeltProportionsIfNeeded;
 - (void)setToolbeltProportions:(NSDictionary *)proportions;
 - (void)invalidateAutomaticTabBarBackingHiding;
-- (void)setShowsWindowSize:(BOOL)showsWindowSize NS_AVAILABLE_MAC(10_14);
+- (void)setShowsWindowSize:(BOOL)showsWindowSize;
 - (void)windowDidResize;
 - (CGFloat)leftTabBarWidthForPreferredWidth:(CGFloat)preferredWidth contentWidth:(CGFloat)contentWidth;
-- (void)updateTitleAndBorderViews NS_AVAILABLE_MAC(10_14);
+- (void)updateTitleAndBorderViews;
 - (void)setSubtitle:(NSString *)subtitle;
 - (void)setCurrentSessionAlpha:(CGFloat)alpha;
 - (void)updateProxyIcon;

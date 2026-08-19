@@ -49,7 +49,6 @@ NSString *const iTermToolbeltDidRegisterDynamicToolNotification = @"iTermToolbel
 
 static NSString *const iTermToolbeltProportionsUserDefaultsKey = @"NoSyncToolbeltProportions";
 
-NS_CLASS_AVAILABLE_MAC(10_14)
 @interface iTermToolbeltVibrantVisualEffectView : NSVisualEffectView
 @end
 
@@ -65,7 +64,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     // Tool name to wrapper
     NSMutableDictionary<NSString *, iTermToolWrapper *> *_tools;
     NSDictionary *_proportions;
-    iTermToolbeltVibrantVisualEffectView *_vev NS_AVAILABLE_MAC(10_14);
+    iTermToolbeltVibrantVisualEffectView *_vev;
     iTermHamburgerButton *_menuButton;
     BOOL _inSplitViewDidResizeSubviews;
     NSTextField *_noToolsMessage;
@@ -355,7 +354,7 @@ static NSString *const kDynamicToolURL = @"URL";
     [self updateColors];
 }
 
-- (void)updateColors NS_AVAILABLE_MAC(10_14) {
+- (void)updateColors {
     if (@available(macOS 10.16, *)) {
         _vev.blendingMode = NSVisualEffectBlendingModeBehindWindow;
     } else {

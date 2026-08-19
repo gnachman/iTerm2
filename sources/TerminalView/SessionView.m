@@ -67,7 +67,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 @end
 
 @implementation iTermHoverContainerView {
-    NSVisualEffectView *_vev NS_AVAILABLE_MAC(10_14);
+    NSVisualEffectView *_vev;
 }
 
 - (instancetype)initWithFrame:(NSRect)frame {
@@ -149,7 +149,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     iTermFindDriver *_permanentStatusBarFindDriver;
     iTermFindDriver *_temporaryStatusBarFindDriver;
     iTermGenericStatusBarContainer *_genericStatusBarContainer;
-    iTermImageView *_imageView NS_AVAILABLE_MAC(10_14);
+    iTermImageView *_imageView;
     NSColor *_terminalBackgroundColor;
 
     // For macOS 10.14+ when subpixel AA is turned on and the scroller style is legacy, this draws
@@ -555,7 +555,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [CATransaction commit];
 }
 
-- (NSRect)frameForScroller NS_AVAILABLE_MAC(10_14) {
+- (NSRect)frameForScroller {
     [_scrollview.verticalScroller sizeToFit];
     NSSize size = _scrollview.verticalScroller.frame.size;
     NSSize mySize = self.bounds.size;
@@ -838,7 +838,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return _useMetal;
 }
 
-- (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
+- (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource {
     if (useMetal != _useMetal) {
         _useMetal = useMetal;
         RLog(@"setUseMetal:%@ dataSource:%@", @(useMetal), dataSource);
@@ -858,7 +858,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     }
 }
 
-- (void)preferredMetalDeviceDidChange:(NSNotification *)notification NS_AVAILABLE_MAC(10_11) {
+- (void)preferredMetalDeviceDidChange:(NSNotification *)notification {
     if (_metalView) {
         [self.delegate sessionViewRecreateMetalView];
     }
@@ -957,7 +957,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         [self addSubview:_activePaneBorderView positioned:NSWindowBelow relativeTo:_progressBar];
     }
 }
-- (void)installMetalViewWithDataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
+- (void)installMetalViewWithDataSource:(id<iTermMetalDriverDataSource>)dataSource {
     if (_metalView) {
         [self removeMetalView];
     }
@@ -1002,7 +1002,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [self metalViewVisibilityDidChange];
 }
 
-- (void)removeMetalView NS_AVAILABLE_MAC(10_11) {
+- (void)removeMetalView {
     _metalView.delegate = nil;
     [_metalView removeFromSuperview];
     _metalView = nil;
@@ -2606,13 +2606,11 @@ typedef NS_OPTIONS(NSUInteger, iTermCornerFlags) {
         frame.origin.x += 5;
     }
     frame = NSInsetRect(frame, 0, 2);
-    if (@available(macOS 10.15, *)) {
-        if ([[NSApp effectiveAppearance] it_isDark]) {
-            // Avoid overlapping the border on the right. It looks ugly
-            // when the window's dark because the part that overlaps the
-            // border is extra bright.
-            frame.size.width -= 1;
-        }
+    if ([[NSApp effectiveAppearance] it_isDark]) {
+        // Avoid overlapping the border on the right. It looks ugly
+        // when the window's dark because the part that overlaps the
+        // border is extra bright.
+        frame.size.width -= 1;
     }
     if (animated) {
         [NSView animateWithDuration:5.0 / 60.0
@@ -2992,7 +2990,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     return [self backgroundColorForDecorativeSubviews];
 }
 
-- (NSScrollView *)ptyScrollerScrollView NS_AVAILABLE_MAC(10_14) {
+- (NSScrollView *)ptyScrollerScrollView {
     return _scrollview;
 }
 
@@ -3004,11 +3002,11 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 
 #pragma mark - iTermSearchResultsMinimapViewDelegate
 
-- (NSIndexSet *)searchResultsMinimapViewLocations:(iTermSearchResultsMinimapView *)view NS_AVAILABLE_MAC(10_14) {
+- (NSIndexSet *)searchResultsMinimapViewLocations:(iTermSearchResultsMinimapView *)view {
     return [self.searchResultsMinimapViewDelegate searchResultsMinimapViewLocations:view];
 }
 
-- (NSRange)searchResultsMinimapViewRangeOfVisibleLines:(iTermSearchResultsMinimapView *)view NS_AVAILABLE_MAC(10_14) {
+- (NSRange)searchResultsMinimapViewRangeOfVisibleLines:(iTermSearchResultsMinimapView *)view {
     return [self.searchResultsMinimapViewDelegate searchResultsMinimapViewRangeOfVisibleLines:view];
 }
 

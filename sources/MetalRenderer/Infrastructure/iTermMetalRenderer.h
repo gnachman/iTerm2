@@ -18,7 +18,6 @@ extern const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight;
 @class iTermImageWrapper;
 @class iTermMetalRendererTransientState;
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermRenderConfiguration : NSObject
 @property (nonatomic, readonly) vector_uint2 viewportSize;
 @property (nonatomic, readonly) vector_uint2 viewportSizeExcludingLegacyScrollbars;
@@ -47,7 +46,6 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
               panelReservationPixels:(CGFloat)panelReservationPixels NS_DESIGNATED_INITIALIZER;
 @end
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalRenderer<NSObject>
 @property (nonatomic, readonly) BOOL rendererDisabled;
 
@@ -60,7 +58,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @end
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalRendererTransientState : NSObject
 @property (nonatomic, strong, readonly) __kindof iTermRenderConfiguration *configuration;
 @property (nonatomic, strong) id<MTLBuffer> vertexBuffer;
@@ -94,7 +91,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @class iTermMetalBufferPoolContext;
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalBlending : NSObject
 @property (nonatomic) MTLBlendOperation rgbBlendOperation;
 @property (nonatomic) MTLBlendOperation alphaBlendOperation;
@@ -114,7 +110,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @end
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalRenderer : NSObject <iTermMetalDebugInfoFormatter>
 
 @property (nonatomic, readonly) id<MTLDevice> device;

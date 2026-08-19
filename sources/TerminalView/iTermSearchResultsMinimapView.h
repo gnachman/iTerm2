@@ -12,7 +12,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class iTermSearchResultsMinimapView;
 
-NS_CLASS_AVAILABLE_MAC(10_14)
 @protocol iTermSearchResultsMinimapViewDelegate<NSObject>
 - (NSIndexSet *)searchResultsMinimapViewLocations:(iTermSearchResultsMinimapView *)view;
 - (NSRange)searchResultsMinimapViewRangeOfVisibleLines:(iTermSearchResultsMinimapView *)view;
@@ -26,7 +25,6 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 - (void)invalidate;
 @end
 
-NS_CLASS_AVAILABLE_MAC(10_14)
 @interface iTermSearchResultsMinimapView : iTermBaseMinimapView
 @property (nonatomic, weak) id<iTermSearchResultsMinimapViewDelegate> delegate;
 @end

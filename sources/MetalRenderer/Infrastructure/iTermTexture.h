@@ -8,7 +8,6 @@
 #import <Foundation/Foundation.h>
 #import <MetalKit/MetalKit.h>
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermTexture : NSObject
 
 + (void)setBytesPerRow:(int)bytesPerRow

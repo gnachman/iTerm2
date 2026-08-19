@@ -18,11 +18,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL dark;
 @end
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermIndicatorRendererTransientState : iTermMetalRendererTransientState
 @end
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermIndicatorRenderer : NSObject<iTermMetalRenderer>
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;

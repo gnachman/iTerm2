@@ -1248,8 +1248,8 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 
 - (void)jumpToLocationWhereCurrentStatusChanged;
 - (void)updateMetalDriver;
-- (id)temporarilyDisableMetal NS_AVAILABLE_MAC(10_11);
-- (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(nullable id)token NS_AVAILABLE_MAC(10_11);
+- (id)temporarilyDisableMetal;
+- (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(nullable id)token;
 
 - (BOOL)willEnableMetal;
 - (BOOL)metalAllowed:(out nullable iTermMetalUnavailableReason *)reason;

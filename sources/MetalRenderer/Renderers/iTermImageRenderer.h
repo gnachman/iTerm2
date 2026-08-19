@@ -8,7 +8,6 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermImageInfoReading;
 
 // Describes a horizontal run of image cells for the same image.
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalImageRun : NSObject
 @property (nonatomic) VT100GridCoord startingCoordInImage;
 @property (nonatomic) VT100GridCoord startingCoordOnScreen;
@@ -18,7 +17,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @end
 
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermImageRendererTransientState : iTermMetalCellRendererTransientState
 
 @property (nonatomic, readonly) NSSet<NSString *> *missingImageUniqueIdentifiers;
@@ -32,7 +30,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @end
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermImageRenderer : NSObject<iTermMetalCellRenderer>
 
 - (instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;

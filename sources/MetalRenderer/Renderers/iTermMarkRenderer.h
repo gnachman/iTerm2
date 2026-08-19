@@ -16,7 +16,6 @@ typedef NS_ENUM(int, iTermMarkStyle) {
 
 NS_ASSUME_NONNULL_BEGIN
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMarkRendererTransientState : iTermMetalCellRendererTransientState
 - (void)setMarkStyle:(iTermMarkStyle)markStyle row:(int)row;
 @end

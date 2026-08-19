@@ -63,20 +63,16 @@ static NSString *iTermSyntheticDirectoryStringByPrependingSlashIfNotPresent(NSSt
 }
 
 + (NSString *)contents {
-    if (@available(macOS 10.15, *)) {
-        NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
 
-        if (![fileManager fileExistsAtPath:@"/etc/synthetic.conf"]) {
-            return @"";
-        }
-
-        NSString *contents = [NSString stringWithContentsOfFile:@"/etc/synthetic.conf"
-                                                       encoding:NSUTF8StringEncoding
-                                                          error:nil];
-        return contents;
+    if (![fileManager fileExistsAtPath:@"/etc/synthetic.conf"]) {
+        return @"";
     }
 
-    return @"";
+    NSString *contents = [NSString stringWithContentsOfFile:@"/etc/synthetic.conf"
+                                                   encoding:NSUTF8StringEncoding
+                                                      error:nil];
+    return contents;
 }
 
 + (void)enumerateLinesInContent:(NSString *)contents block:(void (^)(NSString *))block {
