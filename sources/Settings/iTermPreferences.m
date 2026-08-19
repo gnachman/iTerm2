@@ -803,7 +803,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
                   kPreferenceKeyHideTabActivityIndicator: @NO,
                   kPreferenceKeyShowNewOutputIndicator: @YES,
                   kPreferenceKeyStretchTabsToFillBar: @YES,
-                  kPreferenceKeyScrollableSideTabBar: @NO,
+                  kPreferenceKeyScrollableSideTabBar: @YES,
 
                   kPreferenceKeyShowPaneTitles: @YES,
                   kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane: @NO,

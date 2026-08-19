@@ -53,7 +53,8 @@ Major New Features:
   stay in the bar and you scroll to reach them.
   Works for top, bottom, left, and right tab
   bars. A horizontal bar scrolls with a trackpad
-  swipe or shift + mouse wheel. Off by default.
+  swipe or shift + mouse wheel. On by default;
+  turn it off to restore the overflow menu.
   The “Tab width when the tab bar is scrollable”
   advanced setting sets the scrolled tab size.
 
