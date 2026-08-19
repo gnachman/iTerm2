@@ -2515,3 +2515,7 @@ Bug Fixes:
   more than one name (for example .local versus a
   DHCP-assigned name). Localhost is now recognized
   by any of the machine's names.
+- Fixed a bug on macOS 26 (Tahoe) where the tab
+  bar's overflow menu left out the first hidden
+  tab, so clicking the chevron with a single
+  overflowed tab opened an empty menu.

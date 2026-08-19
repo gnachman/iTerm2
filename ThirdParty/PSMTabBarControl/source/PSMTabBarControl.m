@@ -3181,10 +3181,17 @@ typedef struct {
             NSMenuItem *menuItem;
             if (overflowMenu == nil) {
                 overflowMenu = [[[NSMenu alloc] initWithTitle:@"TITLE"] autorelease];
-                if (@available(macOS 26, *)) {
-                    // It's not a pulldown menu in 26
-                } else {
-                    [overflowMenu insertItemWithTitle:@"FIRST" action:nil keyEquivalent:@"" atIndex:0]; // Because the overflowPupUpButton is a pull down menu
+                // A pull-down NSPopUpButton uses the item at index 0 as its
+                // (hidden) label rather than showing it in the popped menu, so
+                // insert a throwaway placeholder there to keep the first real
+                // tab from being swallowed. Gate on the button's actual state
+                // rather than the OS version: a macOS 26 special-case here used
+                // to skip this on the false assumption that the Tahoe overflow
+                // button was not a pull-down, which dropped the first overflowed
+                // tab from the menu.
+                if ([_overflowPopUpButton isKindOfClass:[NSPopUpButton class]] &&
+                    [(NSPopUpButton *)_overflowPopUpButton pullsDown]) {
+                    [overflowMenu insertItemWithTitle:@"FIRST" action:nil keyEquivalent:@"" atIndex:0];
                 }
             }
             NSString *title = [[cell attributedStringValue] string] ?: @"";
