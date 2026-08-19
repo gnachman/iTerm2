@@ -600,16 +600,20 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
     let containerBottomInset = CGFloat(0)
     
-    private func clippingPath(rect: NSRect) -> NSBezierPath {
+    // The bar's rounded container shape. `insetX`/`insetY` shrink it on each side;
+    // both default to 0 so the background fill uses the full shape. A scrollable
+    // bar insets the *cell* clip (see -drawTabBar:) so scrolled cells can't paint
+    // over the rounded border.
+    private func clippingPath(rect: NSRect, insetX: CGFloat = 0, insetY: CGFloat = 0) -> NSBezierPath {
         if orientation == .horizontalOrientation {
-            return NSBezierPath(roundedRect: NSRect(x: containerSideInset - 0.5,
-                                                    y: containerTopInset,
-                                                    width: rect.width - containerSideInset * 2 + 1,
-                                                    height: barHeight),
-                                xRadius: barRadius,
-                                yRadius: barRadius)
+            let container = NSRect(x: containerSideInset - 0.5,
+                                   y: containerTopInset,
+                                   width: rect.width - containerSideInset * 2 + 1,
+                                   height: barHeight).insetBy(dx: insetX, dy: insetY)
+            let radius = max(0, container.height / 2.0)
+            return NSBezierPath(roundedRect: container, xRadius: radius, yRadius: radius)
         } else {
-            return NSBezierPath(rect: rect)
+            return NSBezierPath(rect: rect.insetBy(dx: 0, dy: insetY))
         }
     }
     
@@ -654,8 +658,19 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         defer {
             NSGraphicsContext.current?.restoreGraphicsState()
         }
-        clippingPath(rect: backgroundRect).addClip()
-        
+        // When the bar is scrollable, tabs can scroll all the way to the rounded
+        // ends. The selected tab's opaque pill would then paint over the bar's
+        // rounded border, since a non-scrollable bar only keeps tabs off the ends
+        // via its left/right margins. Inset the cell clip so a ring of bar
+        // background survives around the rounded ends. The inset matches the pill's
+        // own top/bottom margin (see -backgroundRect(for:), which insets 2 top / 1
+        // bottom) so the pill itself is never clipped.
+        if bar.tabBarIsScrollable() {
+            clippingPath(rect: backgroundRect, insetX: 2, insetY: 1).addClip()
+        } else {
+            clippingPath(rect: backgroundRect).addClip()
+        }
+
         // no tab view == not connected
         guard let _ = bar.tabView else {
             var labelRect = rect
