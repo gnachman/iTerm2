@@ -426,11 +426,16 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
         }
     }
 
+    var addAccountToggleDescriptions: [[String: Any]]? { nil }
+
+    @objc(addUserName:accountName:password:flags:context:completion:)
     func add(userName: String,
              accountName: String,
              password: String,
+             flags: [String: Bool],
              context: RecipeExecutionContext,
              completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
+        // 1Password has no Add Account toggles, so flags is ignored.
         do {
             try OnePasswordUtils.throwIfUnusable()
             standardAdd(configuration,

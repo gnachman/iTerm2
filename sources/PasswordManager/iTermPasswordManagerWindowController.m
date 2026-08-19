@@ -46,16 +46,9 @@ static void iTermSetNewAccountPanelContentHeight(NSPanel *panel, CGFloat height)
     contentRect.size.width = kNewAccountPanelWidth;
     contentRect.size.height = height;
     frame = [panel frameRectForContentRect:contentRect];
+    // AppKit resizes the content view to fill the content area, so there is no
+    // need to set contentView.frame ourselves.
     [panel setFrame:frame display:NO];
-    NSView *contentView = panel.contentView;
-    if (contentView != nil) {
-        NSRect cvFrame = contentView.frame;
-        cvFrame.size.width = kNewAccountPanelWidth;
-        cvFrame.size.height = height;
-        cvFrame.origin = NSZeroPoint;
-        contentView.frame = cvFrame;
-        [contentView layoutSubtreeIfNeeded];
-    }
 }
 
 typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
@@ -666,9 +659,6 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 
 - (NSDictionary *)firstAddAccountToggleDescription {
     id<PasswordManagerDataSource> ds = self.currentDataSource;
-    if (![(id)ds respondsToSelector:@selector(addAccountToggleDescriptions)]) {
-        return nil;
-    }
     NSArray<NSDictionary *> *toggles = ds.addAccountToggleDescriptions;
     if (toggles.count == 0) {
         return nil;
@@ -777,22 +767,13 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
         }];
     };
     id<PasswordManagerDataSource> currentDataSource = self.currentDataSource;
-    NSDictionary *flags = [self collectAddAccountFlags];
-    SEL flagsSel = @selector(addUserName:accountName:password:flags:context:completion:);
-    if (flags != nil && [(id)currentDataSource respondsToSelector:flagsSel]) {
-        [currentDataSource addUserName:userName
-                           accountName:accountName
-                              password:password
-                                 flags:flags
-                               context:self.recipeExecutionContext
-                            completion:onComplete];
-    } else {
-        [currentDataSource addUserName:userName
-                           accountName:accountName
-                              password:password
-                               context:self.recipeExecutionContext
-                            completion:onComplete];
-    }
+    NSDictionary *flags = [self collectAddAccountFlags] ?: @{};
+    [currentDataSource addUserName:userName
+                       accountName:accountName
+                          password:password
+                             flags:flags
+                           context:self.recipeExecutionContext
+                        completion:onComplete];
     _newPassword.stringValue = @"";
     _newUserName.stringValue = @"";
     _newAccount.stringValue = @"";
@@ -1002,10 +983,38 @@ static NSArray<NSString *> *gTerminalCachedCombinedAccountNames;
 
 - (IBAction)editAccountName:(id)sender {
     const NSInteger row = _tableView.clickedRow;
-    if (row < 0) {
+    if (row < 0 || row >= _entries.count) {
         return;
     }
-    [_tableView editColumn:0 row:row withEvent:nil select:YES];
+    if (!self.dataSourceProvider.authenticated) {
+        return;
+    }
+    id<PasswordManagerAccount> entry = _entries[row];
+
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Edit account name:";
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+
+    NSTextField *field = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 240, 24)];
+    field.stringValue = entry.accountName ?: @"";
+    field.editable = YES;
+    field.selectable = YES;
+    alert.accessoryView = field;
+    [alert layout];
+    [[alert window] makeFirstResponder:field];
+
+    __weak __typeof(self) weakSelf = self;
+    [self runModal:alert completion:^(NSModalResponse response) {
+        if (response != NSAlertFirstButtonReturn) {
+            return;
+        }
+        NSString *newName = [field.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        if (newName.length == 0 || [newName isEqualToString:entry.accountName]) {
+            return;
+        }
+        [weakSelf renameEntry:entry toAccountName:newName userName:entry.userName];
+    }];
 }
 
 // MARK: - Generic Adapter Settings Sheet
@@ -1706,30 +1715,7 @@ static NSInteger const kDynamicMenuItemTag = 9999;
     }
     id<PasswordManagerAccount> entry = _entries[rowIndex];
     NSString *name = entry.accountName;
-    NSString *source = nil;
-    if ([(id)entry respondsToSelector:@selector(sourceLabel)]) {
-        source = entry.sourceLabel;
-    }
-    return [iTermPasswordManagerAccountFormatting displayNameForAccountName:name sourceLabel:source];
-}
-
-- (NSString *)accountNameByStrippingSourceSuffix:(NSString *)name
-                                    fromAccount:(id<PasswordManagerAccount>)account {
-    if (name.length == 0) {
-        return name;
-    }
-    NSString *source = nil;
-    if ([(id)account respondsToSelector:@selector(sourceLabel)]) {
-        source = account.sourceLabel;
-    }
-    if (source.length == 0) {
-        return name;
-    }
-    NSString *suffix = [NSString stringWithFormat:@" (%@)", source];
-    if ([name hasSuffix:suffix]) {
-        return [name substringToIndex:name.length - suffix.length];
-    }
-    return name;
+    return [iTermPasswordManagerAccountFormatting displayNameForAccountName:name sourceLabel:entry.sourceLabel];
 }
 
 - (NSString *)userNameForRow:(NSInteger)rowIndex {
@@ -1851,87 +1837,79 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
     }
     if (rowIndex < 0 || rowIndex >= _entries.count) {
         ITCriticalError(NO, @"Row index %@ out of bounds [0, %@)", @(rowIndex), @(_entries.count));
+        return;
     }
-    if (aTableColumn == _accountNameColumn || aTableColumn == _userNameColumn) {
-        RecipeExecutionContext *context = self.recipeExecutionContext;
-        id<PasswordManagerAccount> entry = _entries[rowIndex];
-        NSString *userName = entry.userName;
-        NSString *accountName = entry.accountName;
-        if (aTableColumn == _accountNameColumn) {
-            accountName = [self accountNameByStrippingSourceSuffix:anObject fromAccount:entry];
-        } else if (aTableColumn == _userNameColumn) {
-            userName = anObject;
-        }
+    // The account name is edited via a modal (editAccountName:); only the user name is
+    // editable inline. See renameEntry:toAccountName:userName:.
+    if (aTableColumn != _userNameColumn) {
+        return;
+    }
+    id<PasswordManagerAccount> entry = _entries[rowIndex];
+    [self renameEntry:entry toAccountName:entry.accountName userName:anObject];
+}
 
-        __weak __typeof(self) weakSelf = self;
-        const NSInteger cancelCount = [self incrBusy]; // 1
-        [entry fetchPasswordWithContext:context
-                             completion:^(NSString *maybePassword,
-                                          NSString *maybeOTP,
-                                          NSError *error) {
-            [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
-                if (error) {
-                    [weakSelf decrBusy]; // (1)
-                    return;
-                }
-                NSString *password = maybePassword ?: @"";
-                const NSInteger cancelCount = [weakSelf incrBusy]; // 2
-                [weakSelf decrBusy];  // (1)
-                [entry deleteWithContext:context
-                              completion:^(NSError * _Nullable error) {
-                    [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
-                        const NSInteger cancelCount = [weakSelf incrBusy]; // 3
-                        [weakSelf decrBusy];  // (2)
-                        // Preserve vault on delete-then-re-add (Classic vs Nested).
-                        NSDictionary *readdFlags = nil;
-                        NSString *source = nil;
-                        if ([(id)entry respondsToSelector:@selector(sourceLabel)]) {
-                            source = entry.sourceLabel;
+// Renames by re-creating: fetch the password, delete the old record, then re-add with the
+// new name/user, preserving the vault (Classic vs Nested) so the record stays put.
+- (void)renameEntry:(id<PasswordManagerAccount>)entry
+      toAccountName:(NSString *)accountName
+           userName:(NSString *)userName {
+    RecipeExecutionContext *context = self.recipeExecutionContext;
+    __weak __typeof(self) weakSelf = self;
+    const NSInteger cancelCount = [self incrBusy]; // 1
+    [entry fetchPasswordWithContext:context
+                         completion:^(NSString *maybePassword,
+                                      NSString *maybeOTP,
+                                      NSError *error) {
+        [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+            if (error) {
+                [weakSelf decrBusy]; // (1)
+                return;
+            }
+            NSString *password = maybePassword ?: @"";
+            const NSInteger cancelCount = [weakSelf incrBusy]; // 2
+            [weakSelf decrBusy];  // (1)
+            [entry deleteWithContext:context
+                          completion:^(NSError * _Nullable error) {
+                [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+                    const NSInteger cancelCount = [weakSelf incrBusy]; // 3
+                    [weakSelf decrBusy];  // (2)
+                    // Preserve vault on delete-then-re-add (Classic vs Nested).
+                    NSDictionary *readdFlags = @{};
+                    NSString *source = entry.sourceLabel;
+                    if (source.length > 0) {
+                        if ([source caseInsensitiveCompare:@"Classic"] == NSOrderedSame) {
+                            readdFlags = @{ @"useClassicPermission": @YES };
+                        } else if ([source caseInsensitiveCompare:@"Nested"] == NSOrderedSame) {
+                            readdFlags = @{ @"useClassicPermission": @NO };
                         }
-                        if (source.length > 0) {
-                            if ([source caseInsensitiveCompare:@"Classic"] == NSOrderedSame) {
-                                readdFlags = @{ @"useClassicPermission": @YES };
-                            } else if ([source caseInsensitiveCompare:@"Nested"] == NSOrderedSame) {
-                                readdFlags = @{ @"useClassicPermission": @NO };
-                            }
-                        }
-                        void (^onReaddComplete)(id<PasswordManagerAccount>, NSError *) =
-                            ^(id<PasswordManagerAccount> _Nullable replacement, NSError * _Nullable error) {
-                            [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
-                                DLog(@"%@", error);
-                                const NSInteger cancelCount = [weakSelf incrBusy]; // 4
-                                [weakSelf decrBusy];  // (3)
-                                [weakSelf reloadAccounts:^{
-                                    [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
-                                        if (replacement) {
-                                            [weakSelf didUpdateAccount:replacement userName:userName];
-                                        }
-                                        [weakSelf decrBusy]; // (4)
-                                    }];
+                    }
+                    void (^onReaddComplete)(id<PasswordManagerAccount>, NSError *) =
+                        ^(id<PasswordManagerAccount> _Nullable replacement, NSError * _Nullable error) {
+                        [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+                            DLog(@"%@", error);
+                            const NSInteger cancelCount = [weakSelf incrBusy]; // 4
+                            [weakSelf decrBusy];  // (3)
+                            [weakSelf reloadAccounts:^{
+                                [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+                                    if (replacement) {
+                                        [weakSelf didUpdateAccount:replacement userName:userName];
+                                    }
+                                    [weakSelf decrBusy]; // (4)
                                 }];
                             }];
-                        };
-                        id<PasswordManagerDataSource> ds = [weakSelf currentDataSource];
-                        SEL flagsSel = @selector(addUserName:accountName:password:flags:context:completion:);
-                        if (readdFlags != nil && [(id)ds respondsToSelector:flagsSel]) {
-                            [ds addUserName:userName
-                                accountName:accountName
-                                password:password
-                                    flags:readdFlags
-                                    context:context
-                                completion:onReaddComplete];
-                        } else {
-                            [ds addUserName:userName
-                                accountName:accountName
-                                password:password
-                                    context:context
-                                completion:onReaddComplete];
-                        }
-                    }];
+                        }];
+                    };
+                    id<PasswordManagerDataSource> ds = [weakSelf currentDataSource];
+                    [ds addUserName:userName
+                        accountName:accountName
+                           password:password
+                              flags:readdFlags
+                            context:context
+                         completion:onReaddComplete];
                 }];
             }];
         }];
-    }
+    }];
     [self passwordsDidChange];
 }
 
@@ -1954,11 +1932,8 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
 - (BOOL)tableView:(NSTableView *)aTableView
 shouldEditTableColumn:(NSTableColumn *)aTableColumn
               row:(NSInteger)rowIndex {
-    if (aTableColumn == _accountNameColumn || aTableColumn == _userNameColumn) {
-        return YES;
-    } else {
-        return NO;
-    }
+    // The account name is edited via a modal (editAccountName:), not inline.
+    return aTableColumn == _userNameColumn;
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {

@@ -12,6 +12,7 @@ import AppKit
 fileprivate class ModernKeychainAccount: NSObject, PasswordManagerAccount {
     var hasOTP: Bool { false }
     var sendOTP: Bool { false }
+    var sourceLabel: String? { nil }
     private let accountNameUserNameSeparator = "\u{2002}—\u{2002}"
     let accountName: String
     let userName: String
@@ -133,6 +134,7 @@ fileprivate class LegacyKeychainAccount: NSObject, PasswordManagerAccount {
     private let accountNameUserNameSeparator = "\u{2002}—\u{2002}"
     var hasOTP: Bool { false }
     var sendOTP: Bool { false }
+    var sourceLabel: String? { nil }
 
     let accountName: String
     let userName: String
@@ -242,11 +244,16 @@ class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
         it_fatalError()
     }
 
+    var addAccountToggleDescriptions: [[String: Any]]? { nil }
+
+    @objc(addUserName:accountName:password:flags:context:completion:)
     func add(userName: String,
              accountName: String,
              password: String,
+             flags: [String: Bool],
              context: RecipeExecutionContext,
              completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
+        // Keychain has no Add Account toggles, so flags is ignored.
         let account = ModernKeychainAccount(serviceName: serviceName,
                                             accountName: accountName,
                                             userName: userName)

@@ -315,10 +315,11 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         "iTerm2-Adapter-\(identifier)"
     }
 
-    private func persistCredentialsToKeychain(_ password: String) {
-        _ = SSKeychain.setPassword(password,
-                                   forService: keychainCredentialServiceName,
-                                   account: identifier)
+    @discardableResult
+    private func persistCredentialsToKeychain(_ password: String) -> Bool {
+        return SSKeychain.setPassword(password,
+                                      forService: keychainCredentialServiceName,
+                                      account: identifier)
     }
 
     private func loadPersistedCredentials() -> String? {
@@ -333,7 +334,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
 
     private func hydratePersistedCredentialsIfNeeded() {
         guard handshakeInfo?.persistsCredentials == true else { return }
-        migrateLegacyApiKeyIfNeeded()
+        migrateLegacyCredentialsIfNeeded()
         if pathToDatabase == nil {
             if let u = iTermUserDefaults.userDefaults().string(forKey: "PathToDatabase_\(identifier)"), !u.isEmpty {
                 pathToDatabase = u
@@ -388,12 +389,19 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 }
             }
         }
-        deleteOrphanedLegacyApiKeySettings()
+        deleteOrphanedLegacyCredentials()
     }
 
-    /// Pre-round-3 builds stored the API key under settings account "apiKey".
-    /// Migrate into the master-password keychain slot once, then delete the orphan.
-    private func migrateLegacyApiKeyIfNeeded() {
+    /// Migrate any adapter-declared legacy credential entries into the master-password
+    /// slot once. Adapter-agnostic: the adapter names the legacy keychain account in its
+    /// handshake (`legacyCredentialMigrations`), so no adapter specifics live here.
+    ///
+    /// The keychain slot itself is the check: if it already holds a value, nothing is
+    /// copied. Otherwise the first available legacy entry is copied up, and the orphan is
+    /// deleted only after the copy is confirmed. A failed or momentarily-locked keychain
+    /// read or write can never destroy the only copy, and migration retries on the next
+    /// hydrate.
+    private func migrateLegacyCredentialsIfNeeded() {
         let current = loadPersistedCredentials()
         if let current, !current.isEmpty {
             if masterPassword == nil || masterPassword!.isEmpty {
@@ -401,20 +409,33 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             }
             return
         }
-        guard let legacy = try? SSKeychain.password(forService: keychainCredentialServiceName, account: "apiKey"),
-            !legacy.isEmpty else {
+        for migration in handshakeInfo?.legacyCredentialMigrations ?? [] {
+            let account = migration.fromKeychainAccount
+            guard !account.isEmpty,
+                  let legacy = try? SSKeychain.password(forService: keychainCredentialServiceName,
+                                                        account: account),
+                  !legacy.isEmpty else {
+                continue
+            }
+            guard persistCredentialsToKeychain(legacy) else {
+                // Keep the legacy entry so migration retries on the next hydrate.
+                continue
+            }
+            if masterPassword == nil || masterPassword!.isEmpty {
+                masterPassword = legacy
+            }
+            _ = SSKeychain.deletePassword(forService: keychainCredentialServiceName, account: account)
             return
         }
-        persistCredentialsToKeychain(legacy)
-        if masterPassword == nil || masterPassword!.isEmpty {
-            masterPassword = legacy
-        }
-        _ = SSKeychain.deletePassword(forService: keychainCredentialServiceName, account: "apiKey")
     }
 
-    /// Purge orphan settings apiKey (reset path). Does not migrate.
-    private func deleteOrphanedLegacyApiKeySettings() {
-        _ = SSKeychain.deletePassword(forService: keychainCredentialServiceName, account: "apiKey")
+    /// Purge orphaned legacy credential entries (reset path). Does not migrate.
+    private func deleteOrphanedLegacyCredentials() {
+        for migration in handshakeInfo?.legacyCredentialMigrations ?? [] {
+            guard !migration.fromKeychainAccount.isEmpty else { continue }
+            _ = SSKeychain.deletePassword(forService: keychainCredentialServiceName,
+                                          account: migration.fromKeychainAccount)
+        }
     }
 
     private func ensureAuthentication(window: NSWindow?, _ completion: @escaping (Error?) -> ()) {
@@ -557,6 +578,8 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
     // MARK: - Recipe Builders
 
     private func makeListAccountsRecipe() -> AnyRecipe<Void, [CommandLinePasswordDataSource.Account]> {
+        // Per-adapter so silencing one adapter's list warning does not silence every adapter's.
+        let listWarningIdentifier = "NoSyncAdapterListWarning_\(identifier)"
         return AnyRecipe(AsyncCommandRecipe<Void, [CommandLinePasswordDataSource.Account]>(
             inputTransformer: { [weak self] context, _, completion in
                 guard let self = self else {
@@ -629,7 +652,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         iTermWarning.show(withTitle: warning,
                                             actions: ["OK"],
                                             accessory: nil,
-                                            identifier: "NoSyncKeeperListPartialFailure",
+                                            identifier: listWarningIdentifier,
                                             silenceable: .kiTermWarningTypePermanentlySilenceable,
                                             heading: "Password Manager",
                                             window: nil)
@@ -982,19 +1005,6 @@ extension AdapterPasswordDataSource {
             if let note = toggle.note { dict["note"] = note }
             return dict
         }
-    }
-
-    func add(userName: String,
-             accountName: String,
-             password: String,
-             context: RecipeExecutionContext,
-             completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
-        standardAdd(configuration,
-                    userName: userName,
-                    accountName: accountName,
-                    password: password,
-                    context: context,
-                    completion: completion)
     }
 
     @objc(addUserName:accountName:password:flags:context:completion:)
