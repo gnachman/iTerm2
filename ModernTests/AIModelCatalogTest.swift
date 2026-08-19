@@ -28,19 +28,19 @@ final class AIModelCatalogTest: XCTestCase {
         let models = try bundledModels()
         XCTAssertFalse(models.isEmpty,
                        "AI model catalog decoded to zero models")
-        XCTAssertEqual(models.count, 38,
+        XCTAssertEqual(models.count, 42,
                        "Unexpected catalog size; update this test if you intentionally changed ai-models.json")
     }
 
     func testDefaultIsFirstEntry() throws {
         let models = try bundledModels()
-        XCTAssertEqual(models.first?.name, "gpt-5.5")
+        XCTAssertEqual(models.first?.name, "gpt-5.6-sol")
     }
 
     func testRecommendedModelPerVendor() throws {
         let models = try bundledModels()
-        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .openAI, in: models)?.name, "gpt-5.5")
-        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .gemini, in: models)?.name, "gemini-3.5-flash")
+        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .openAI, in: models)?.name, "gpt-5.6-sol")
+        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .gemini, in: models)?.name, "gemini-3.7-flash")
         XCTAssertEqual(AIModelCatalog.recommendedModel(for: .deepSeek, in: models)?.name, "deepseek-v4-flash")
         XCTAssertEqual(AIModelCatalog.recommendedModel(for: .anthropic, in: models)?.name, "claude-opus-4-8")
         XCTAssertEqual(AIModelCatalog.recommendedModel(for: .llama, in: models)?.name, "llama4:latest")
