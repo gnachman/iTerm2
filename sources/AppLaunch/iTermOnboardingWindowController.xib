@@ -14,15 +14,18 @@
                 <outlet property="_pageIndicator2" destination="GnW-FQ-AUA" id="9aH-rh-MPE"/>
                 <outlet property="_pageIndicator3" destination="Y7m-qf-MNv" id="6Q0-gt-XMx"/>
                 <outlet property="_pageIndicator4" destination="1qs-yK-5FQ" id="mbh-U3-pmw"/>
+                <outlet property="_pageIndicator5" destination="3ch-CP-Rs5" id="vig-RT-kyk"/>
                 <outlet property="_previousPageButton" destination="x6w-fs-8dH" id="mAZ-mO-pvT"/>
                 <outlet property="_textField1" destination="bGK-Us-rSz" id="LtO-se-QXT"/>
                 <outlet property="_textField2" destination="jYX-nH-O5u" id="T09-9Z-qSE"/>
                 <outlet property="_textField3" destination="S6M-1Y-bvP" id="m4x-Ka-rFy"/>
                 <outlet property="_textField4" destination="Gmu-pM-bKu" id="grm-WZ-i9B"/>
+                <outlet property="_textField5" destination="WF9-h6-Kp1" id="OtD-Cy-M9J"/>
                 <outlet property="_view1" destination="uKS-OK-cAN" id="yUS-DH-7Z4"/>
                 <outlet property="_view2" destination="Cc0-Vj-shB" id="ETf-Vr-guH"/>
                 <outlet property="_view3" destination="U46-lc-cJw" id="qVb-k2-swu"/>
                 <outlet property="_view4" destination="olY-Zn-0Bl" id="70J-C4-EE3"/>
+                <outlet property="_view5" destination="OdX-63-3hb" id="77W-BY-kcj"/>
                 <outlet property="window" destination="F0z-JX-Cv5" id="gIp-Ho-8D9"/>
             </connections>
         </customObject>
@@ -67,7 +70,7 @@
                         </connections>
                     </button>
                     <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LCh-T0-GyK">
-                        <rect key="frame" x="298" y="4" width="16" height="21"/>
+                        <rect key="frame" x="289" y="4" width="16" height="21"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="bevel" title="●" bezelStyle="rounded" alignment="center" refusesFirstResponder="YES" focusRingType="none" imageScaling="proportionallyDown" inset="2" id="IHu-13-I9y">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -78,7 +81,7 @@
                         </connections>
                     </button>
                     <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GnW-FQ-AUA">
-                        <rect key="frame" x="316" y="4" width="16" height="21"/>
+                        <rect key="frame" x="307" y="4" width="16" height="21"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="bevel" title="●" bezelStyle="rounded" alignment="center" refusesFirstResponder="YES" focusRingType="none" imageScaling="proportionallyDown" inset="2" id="fum-rI-3gd">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -89,7 +92,7 @@
                         </connections>
                     </button>
                     <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Y7m-qf-MNv">
-                        <rect key="frame" x="333" y="4" width="16" height="21"/>
+                        <rect key="frame" x="324" y="4" width="16" height="21"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="bevel" title="●" bezelStyle="rounded" alignment="center" refusesFirstResponder="YES" focusRingType="none" imageScaling="proportionallyDown" inset="2" id="N2h-T9-zrt">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -100,7 +103,7 @@
                         </connections>
                     </button>
                     <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1qs-yK-5FQ">
-                        <rect key="frame" x="351" y="4" width="16" height="21"/>
+                        <rect key="frame" x="342" y="4" width="16" height="21"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="bevel" title="●" bezelStyle="rounded" alignment="center" refusesFirstResponder="YES" focusRingType="none" imageScaling="proportionallyDown" inset="2" id="7s1-aT-qfO">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -108,6 +111,17 @@
                         </buttonCell>
                         <connections>
                             <action selector="pageIndicator:" target="-2" id="wIO-Xd-Fz7"/>
+                        </connections>
+                    </button>
+                    <button focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3ch-CP-Rs5">
+                        <rect key="frame" x="360" y="4" width="16" height="21"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="bevel" title="●" bezelStyle="rounded" alignment="center" refusesFirstResponder="YES" focusRingType="none" imageScaling="proportionallyDown" inset="2" id="a3u-gh-khi">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="pageIndicator:" target="-2" id="n5Y-H0-aqR"/>
                         </connections>
                     </button>
                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="57P-Xf-65n">
@@ -268,11 +282,46 @@
             </subviews>
             <point key="canvasLocation" x="1866.5" y="-385.5"/>
         </customView>
+        <customView id="OdX-63-3hb" userLabel="Orchestration" customClass="iTermOnboardingView">
+            <rect key="frame" x="0.0" y="0.0" width="625" height="343"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rGm-6z-hBd" userLabel="Title">
+                    <rect key="frame" x="18" y="289" width="589" height="34"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Tab Groups" id="Qva-A1-Vbd" userLabel="tmux Flow Control">
+                        <font key="font" metaFont="systemUltraLight" size="28"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="WF9-h6-Kp1" customClass="iTermOnboardingTextField">
+                    <rect key="frame" x="30" y="12" width="577" height="48"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                    <textFieldCell key="cell" alignment="center" id="HuW-TG-xrj">
+                        <font key="font" metaFont="system"/>
+                        <string key="title">To help manage a large number of tabs, you can now combine tabs into collapsible groups. The tab bar now scrolls instead of showing an overflow menu, too.</string>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                    <connections>
+                        <outlet property="delegate" destination="-2" id="hLj-ap-Ijp"/>
+                    </connections>
+                </textField>
+                <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="G0y-5a-Dpo">
+                    <rect key="frame" x="53" y="136" width="530" height="72"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="Onboarding-TabGroups" id="09v-hg-ixI"/>
+                </imageView>
+            </subviews>
+            <point key="canvasLocation" x="2581.5" y="-387.5"/>
+        </customView>
     </objects>
     <resources>
         <image name="Onboarding-ClaudeCode" width="720" height="507"/>
         <image name="Onboarding-Companion" width="472" height="664"/>
         <image name="Onboarding-Orchestration" width="794" height="520"/>
         <image name="Onboarding-Screenshot" width="658" height="754"/>
+        <image name="Onboarding-TabGroups" width="1364" height="157"/>
     </resources>
 </document>

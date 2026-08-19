@@ -137,11 +137,13 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
     IBOutlet NSView *_view2;
     IBOutlet NSView *_view3;
     IBOutlet NSView *_view4;
+    IBOutlet NSView *_view5;
 
     IBOutlet NSButton *_pageIndicator1;
     IBOutlet NSButton *_pageIndicator2;
     IBOutlet NSButton *_pageIndicator3;
     IBOutlet NSButton *_pageIndicator4;
+    IBOutlet NSButton *_pageIndicator5;
 
     NSArray<NSView *> *_views;
     NSArray<NSView *> *_pageIndicators;
@@ -152,6 +154,7 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
     IBOutlet NSTextField *_textField2;
     IBOutlet NSTextField *_textField3;
     IBOutlet NSTextField *_textField4;
+    IBOutlet NSTextField *_textField5;
 }
 
 + (BOOL)hasBeenShown {
@@ -191,9 +194,9 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
     // or to add hyperlinks. None needed in 3.4, but maybe the next version will want them.
     // Also look at the commit history to see how it was done for 3.3.
 
-    _views = @[ [self wrap:_view1], [self wrap:_view2], [self wrap:_view3], [self wrap:_view4] ];
-    _pageIndicators = @[ _pageIndicator1, _pageIndicator2, _pageIndicator3, _pageIndicator4 ];
-    _pageController.arrangedObjects = @[ @0, @1, @2, @3 ];
+    _views = @[ [self wrap:_view1], [self wrap:_view2], [self wrap:_view3], [self wrap:_view4], [self wrap:_view5] ];
+    _pageIndicators = @[ _pageIndicator1, _pageIndicator2, _pageIndicator3, _pageIndicator4, _pageIndicator5 ];
+    _pageController.arrangedObjects = @[ @0, @1, @2, @3, @4 ];
     _pageController.transitionStyle = NSPageControllerTransitionStyleStackBook;
     _previousPageButton.alphaValue = 0;
     _nextPageButton.alphaValue = 0;

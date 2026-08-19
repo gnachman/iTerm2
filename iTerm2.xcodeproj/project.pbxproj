@@ -5126,6 +5126,9 @@
 		A6F3DA98245647E4001D50C9 /* iTermSwipeTracker.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F3DA96245647E4001D50C9 /* iTermSwipeTracker.m */; };
 		A6F3E96E1D60E4F0000E97C4 /* iTermInitialDirectory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F3E96C1D60E4F0000E97C4 /* iTermInitialDirectory.h */; };
 		A6F3EB4F2D32EC5B00612173 /* TailFindController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F3EB4E2D32EC5500612173 /* TailFindController.swift */; };
+		A6F45AA8303554F300A5A91D /* Onboarding-TabGroups.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F45AA7303554F300A5A91D /* Onboarding-TabGroups.png */; };
+		A6F45AA9303554F300A5A91D /* Onboarding-TabGroups.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F45AA7303554F300A5A91D /* Onboarding-TabGroups.png */; };
+		A6F45AAA303554F300A5A91D /* Onboarding-TabGroups.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F45AA7303554F300A5A91D /* Onboarding-TabGroups.png */; };
 		A6F66B8F2C2E2B7600DC3569 /* BTreeIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F66B7C2C2E2B7200DC3569 /* BTreeIndex.swift */; };
 		A6F66B902C2E2B7600DC3569 /* BTreeIterator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F66B792C2E2B7100DC3569 /* BTreeIterator.swift */; };
 		A6F66B912C2E2B7600DC3569 /* BTreeBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F66B712C2E2B7000DC3569 /* BTreeBuilder.swift */; };
@@ -9607,6 +9610,7 @@
 		A6F3E96C1D60E4F0000E97C4 /* iTermInitialDirectory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermInitialDirectory.h; sourceTree = "<group>"; };
 		A6F3E96D1D60E4F0000E97C4 /* iTermInitialDirectory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermInitialDirectory.m; sourceTree = "<group>"; };
 		A6F3EB4E2D32EC5500612173 /* TailFindController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TailFindController.swift; sourceTree = "<group>"; };
+		A6F45AA7303554F300A5A91D /* Onboarding-TabGroups.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Onboarding-TabGroups.png"; path = "images/Onboarding/Onboarding-TabGroups.png"; sourceTree = "<group>"; };
 		A6F66B6F2C2E2B6F00DC3569 /* Map.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Map.swift; path = BTree/Map.swift; sourceTree = "<group>"; };
 		A6F66B702C2E2B6F00DC3569 /* BridgedList.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BridgedList.swift; path = BTree/BridgedList.swift; sourceTree = "<group>"; };
 		A6F66B712C2E2B7000DC3569 /* BTreeBuilder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = BTreeBuilder.swift; path = BTree/BTreeBuilder.swift; sourceTree = "<group>"; };
@@ -10528,6 +10532,7 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A6F45AA7303554F300A5A91D /* Onboarding-TabGroups.png */,
 				A64C56AA2FE323F7003EA5FE /* Onboarding-Screenshot.png */,
 				A64C56A62FE323E4003EA5FE /* Onboarding-Orchestration.png */,
 				A64C569E2FE3211C003EA5FE /* Onboarding-ClaudeCode.png */,
@@ -18546,6 +18551,7 @@
 				A60BB38B1EB54BD900D76C09 /* CopyMode@2x.png in Resources */,
 				A6F18B5B2AE2F39C006C08EE /* uniE0CF_lego_separator_thin.pdf in Resources */,
 				A69A2FA82E5A3B6F00803E66 /* TahoeTabBarShadow.png in Resources */,
+				A6F45AA9303554F300A5A91D /* Onboarding-TabGroups.png in Resources */,
 				A67F619D214395B70093940A /* graphic_php@2x.png in Resources */,
 				A6109B632B969B4100D8E4E9 /* graphic_neovim.png in Resources */,
 				A62A78282F987C8F007CAA0B /* iTermPrintAccessoryViewController.xib in Resources */,
@@ -19344,6 +19350,7 @@
 				A67F619C214395B70093940A /* graphic_php@2x.png in Resources */,
 				A6E7432F2F98373A001349AE /* clock.png in Resources */,
 				A6C838B42CB9ACF90062BE68 /* success-sound.mp3 in Resources */,
+				A6F45AA8303554F300A5A91D /* Onboarding-TabGroups.png in Resources */,
 				A6C838B52CB9ACF90062BE68 /* error-sound.mp3 in Resources */,
 				A6CCDF002D0E000000000003 /* install-touchid-sudo.sh in Resources */,
 				A6FE7A9E2E0E6BA000BEBCE4 /* autofill-write.js in Resources */,
@@ -19807,6 +19814,7 @@
 				1D6A5FDF140D7AA000DE19F8 /* IBarCursorXMR.png in Resources */,
 				1D9DDE9E142E855D00275650 /* Coprocess.png in Resources */,
 				A6F18B472AE2F39C006C08EE /* uniE0C0_flame-thick.pdf in Resources */,
+				A6F45AAA303554F300A5A91D /* Onboarding-TabGroups.png in Resources */,
 				A63821EF229E50CD005D74BE /* Warning@2x.png in Resources */,
 				A6CBB8EC2E0A6C5D00B2CCCB /* exit-reader-mode.js in Resources */,
 				A6F2F21B250757FE00FC227F /* PrefsShortcuts.png in Resources */,
