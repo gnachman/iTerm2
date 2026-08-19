@@ -269,6 +269,7 @@ NSString *const kPreferenceKeyAISafetyCheckNagComplete = @"NoSyncAISafetyCheckNa
 NSString *const kPreferenceKeyAICustomHeadersEnabled = @"AICustomHeadersEnabled";
 NSString *const kPreferenceKeyAICustomHeaders = @"AICustomHeaders";
 NSString *const kPreferenceKeyAIZeroDataRetention = @"AIZeroDataRetention";
+NSString *const kPreferenceKeyAIModelUpdatesEnabled = @"AIModelUpdatesEnabled";
 
 NSString *const kPreferenceKeyAIPermissionCheckTerminalState = @"AIPermissionCheckTerminalState";
 NSString *const kPreferenceKeyAIPermissionRunCommands = @"AIPermissionRunCommands";
@@ -777,6 +778,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
                   kPreferenceKeyAICustomHeadersEnabled: @NO,
                   kPreferenceKeyAICustomHeaders: @[],
                   kPreferenceKeyAIZeroDataRetention: @NO,
+                  kPreferenceKeyAIModelUpdatesEnabled: @NO,
 
                   kPreferenceKeyAIPermissionCheckTerminalState: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionRunCommands: @(iTermAIPermissionAsk),
