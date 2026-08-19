@@ -1,0 +1,59 @@
+Version 3.7.0beta11 was built on August 19, 2026.
+
+Changes since 3.7.0beta10:
+
+Improvements:
+- Scrollable tab bars are now on by default. Tabs
+  that don't fit stay in the bar and are reached
+  by scrolling instead of the "More tabs" overflow
+  menu. You can turn this off in Settings.
+- The built-in AI model list now includes Claude
+  Sonnet 5, GPT-5.6, and the Gemini 3.x flash
+  models, and the recommended defaults move to
+  GPT-5.6 for OpenAI and Gemini 3.7 Flash for
+  Gemini. Retired models (Opus 4.1, Gemini 2.0
+  flash) are removed.
+- Settings > General > AI has a new "Automatically
+  update available AI models" checkbox and an
+  Update Now button. The model catalog can refresh
+  itself from iterm2.com so new models appear
+  without updating iTerm2; these controls let you
+  turn the automatic check on or off and run a
+  check on demand.
+- The startup warning that a legacy script's
+  pinned Python version will be bumped for the uv
+  runtime now has an Upgrade Now button that
+  migrates the affected scripts immediately, so a
+  script you never launch no longer re-nags every
+  launch.
+- The tmux Dashboard's Open in Tabs button now
+  works with a single selected window, matching
+  Open in Window. Issue 12994.
+- Dropping a local file on the terminal no longer
+  offers to upload it over scp when your machine
+  answers to more than one name (for example a
+  .local name versus a DHCP-assigned name).
+
+Bug Fixes:
+- Fixed several AI chat request bugs on the
+  OpenAI Responses API: every turn after the
+  first could reach the model as bare context
+  with the user's newest message dropped; some
+  tool schemas were rejected with an HTTP 400
+  under strict mode; and a JSON null inside an
+  array could crash the response parser.
+- A selected tab in a scrollable tab bar no
+  longer paints over the tab bar's rounded
+  border.
+- On macOS Tahoe, the tab bar overflow menu no
+  longer drops the first hidden tab: with one
+  hidden tab the chevron opened an empty menu,
+  and with more the first was missing.
+- Cmd-W now closes the Companion Device Settings
+  window instead of beeping.
+- The Companion Device Settings window no longer
+  fires the Touch ID / password prompt on its
+  own when opened or after unpairing. It shows a
+  "Show QR Code" button and authenticates only
+  after you click it.
+- Fixed various crashes.
