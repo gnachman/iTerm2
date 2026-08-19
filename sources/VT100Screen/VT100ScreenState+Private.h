@@ -26,4 +26,10 @@ extern NSString *VT100ScreenTerminalStateKeyPath;
                            predecessor:(VT100ScreenState * _Nullable)predecessor;
 - (NSArray<iTermFoldMark *> *)foldMarksInRange:(NSRange)absLineRange max:(NSUInteger)maxCount;
 
+// Returns the cached last-command mark, or nil if the cache is empty. Unlike
+// -lastCommandMark, this never triggers the O(n) reverseLimitEnumerator walk
+// that repopulates the cache; use it when you only want to test against the
+// current cached value.
+- (id<VT100ScreenMarkReading> _Nullable)cachedLastCommandMark;
+
 @end

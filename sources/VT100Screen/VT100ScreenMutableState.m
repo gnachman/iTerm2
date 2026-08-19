@@ -2980,7 +2980,20 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
     [self.mutableMarkCache removeMarks:objects onLines:keys];
     [objects enumerateObjectsUsingBlock:^(VT100ScreenMark * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        self.lastCommandMark = nil;
+        // Only invalidate the cache when the mark being removed IS the cached
+        // last-command mark. Removing any other mark can't change which command
+        // mark is last, so nilling it unconditionally just forces the next
+        // -lastCommandMark (assignCurrentCommandEndDate calls it on every OSC
+        // 133 prompt) to re-walk the whole interval tree via
+        // reverseLimitEnumerator. Under a redraw firehose that churns marks
+        // every frame, that made every prompt pay for a full walk. Compare
+        // against the raw cache, not -lastCommandMark, so the test itself
+        // doesn't trigger the walk. This is one of several per-prompt tree
+        // walks (see also -lastRemoteHost); the runaway memory it fed is bounded
+        // separately by the per-token autoreleasepool. See issue #12992.
+        if (obj == self.cachedLastCommandMark) {
+            self.lastCommandMark = nil;
+        }
         VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:obj];
         if (screenMark.name) {
             [self.namedMarks removeObjectsPassingTest:^BOOL(id  _Nullable obj) {
