@@ -747,12 +747,10 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
 }
 
 - (void)updateBlurRadiusWarning {
-    if (@available(macOS 10.15, *)) {
-        // It seems to get slow around this point on some machines circa 2017.
-        if ([self boolForKey:KEY_BLUR] && [self floatForKey:KEY_BLUR_RADIUS] > 26) {
-            _largeBlurRadiusWarning.hidden = NO;
-            return;
-        }
+    // It seems to get slow around this point on some machines circa 2017.
+    if ([self boolForKey:KEY_BLUR] && [self floatForKey:KEY_BLUR_RADIUS] > 26) {
+        _largeBlurRadiusWarning.hidden = NO;
+        return;
     }
     _largeBlurRadiusWarning.hidden = YES;
 }

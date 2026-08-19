@@ -371,7 +371,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     // the window's frame.
     BOOL hidingToolbeltShouldResizeWindowInitialized_;
 
-    iTermTabBarAccessoryViewController *_titleBarAccessoryTabBarViewController NS_AVAILABLE_MAC(10_14);
+    iTermTabBarAccessoryViewController *_titleBarAccessoryTabBarViewController;
 
     // Number of tabs since last change.
     NSInteger _previousNumberOfTabs;
@@ -5411,7 +5411,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     return [self tabBarInsetsForCompactWindow];
 }
 
-- (NSEdgeInsets)tabBarInsetsForCompactWindow NS_AVAILABLE_MAC(10_14) {
+- (NSEdgeInsets)tabBarInsetsForCompactWindow {
     CGFloat stoplightButtonsWidth = MAX(0, [iTermAdvancedSettingsModel compactTabBarStoplightButtonsWidth]);
     if (@available(macOS 26, *)) {
         stoplightButtonsWidth += 3;
@@ -6480,7 +6480,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [self updateUseMetalInAllTabs];
 }
 
-- (NSTitlebarAccessoryViewController *)titleBarAccessoryTabBarViewController NS_AVAILABLE_MAC(10_14) {
+- (NSTitlebarAccessoryViewController *)titleBarAccessoryTabBarViewController {
     if (!_titleBarAccessoryTabBarViewController) {
         _titleBarAccessoryTabBarViewController = [[iTermTabBarAccessoryViewController alloc] initWithView:[_contentView borrowTabBarControl]];
         _titleBarAccessoryTabBarViewController.layoutAttribute = NSLayoutAttributeBottom;
@@ -8769,7 +8769,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     self.window.appearance = appearance;
 }
 
-- (void)setMojaveBackgroundColor:(nullable NSColor *)backgroundColor NS_AVAILABLE_MAC(10_14) {
+- (void)setMojaveBackgroundColor:(nullable NSColor *)backgroundColor {
     switch ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
         case TAB_STYLE_AUTOMATIC:
         case TAB_STYLE_COMPACT:
@@ -15223,7 +15223,7 @@ backgroundColor:(NSColor *)backgroundColor {
 
 - (void)setSharedBackgroundImage:(iTermImageWrapper *)image
                             mode:(iTermBackgroundImageMode)imageMode
-                 backgroundColor:(NSColor *)backgroundColor NS_AVAILABLE_MAC(10_14) {
+                 backgroundColor:(NSColor *)backgroundColor {
     RLog(@"setSharedBackgroundImage:%@", image);
     _contentView.backgroundImage.image = image;
     _contentView.backgroundImage.contentMode = imageMode;

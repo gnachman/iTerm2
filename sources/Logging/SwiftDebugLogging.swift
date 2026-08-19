@@ -307,7 +307,6 @@ public extension Data {
     }
 }
 
-@available(macOS 10.15, *)
 public func logging<T>(_ prefix: String, closure: () async throws -> T) async rethrows -> T {
     return try await LogContext.$logContexts.withValue(LogContext.logContexts + [prefix]) {
         log("begin")

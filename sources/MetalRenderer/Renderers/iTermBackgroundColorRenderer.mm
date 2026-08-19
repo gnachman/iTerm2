@@ -55,12 +55,12 @@
 
 @implementation iTermBackgroundColorRenderer {
     iTermMetalCellRenderer *_blendingRenderer;
-    iTermMetalCellRenderer *_nonblendingRenderer NS_AVAILABLE_MAC(10_14);
+    iTermMetalCellRenderer *_nonblendingRenderer;
     iTermMetalBufferPool *_infoPool;
     iTermMetalBufferPool *_suppressedRegionVertexBufferPool;
 
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
-    iTermMetalCellRenderer *_compositeOverRenderer NS_AVAILABLE_MAC(10_14);
+    iTermMetalCellRenderer *_compositeOverRenderer;
 #endif
     iTermMetalMixedSizeBufferPool *_piuPool;
 }

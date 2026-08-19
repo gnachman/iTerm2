@@ -126,7 +126,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     BOOL _fakeItalic;
 
     // Large enough to hold glyphSize * maxParts in both horizontal and vertical direction.
-    BOOL _postprocessed NS_AVAILABLE_MAC(10_14);
+    BOOL _postprocessed;
 
     // These have size _bytesPerRow * _numberOfRows.
     NSMutableArray<NSMutableData *> *_datas;

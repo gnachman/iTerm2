@@ -3,7 +3,6 @@
 #import "iTermCharacterBitmap.h"
 #import "iTermCharacterParts.h"
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermTextureArray : NSObject {
 @public
     uint32_t _width;
@@ -41,7 +40,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @end
 
-NS_CLASS_AVAILABLE(10_11, NA)
 NS_INLINE MTLOrigin iTermTextureArrayOffsetForIndex(iTermTextureArray *self, const NSInteger index) {
     return MTLOriginMake(self->_width * (index % self->_cellsPerRow),
                          self->_height * (index / self->_cellsPerRow),
