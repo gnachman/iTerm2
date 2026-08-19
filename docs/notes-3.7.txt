@@ -2519,3 +2519,8 @@ Bug Fixes:
   bar's overflow menu left out the first hidden
   tab, so clicking the chevron with a single
   overflowed tab opened an empty menu.
+- Refreshed the built-in AI model list: added
+  Claude Sonnet 5, GPT-5.6 (Sol/Terra/Luna),
+  and Gemini 3.7/3.6 Flash and 3.5/3.1
+  Flash-Lite. Removed retired Claude Opus
+  4.1 and older Gemini models.
