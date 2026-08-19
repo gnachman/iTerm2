@@ -2524,3 +2524,7 @@ Bug Fixes:
   and Gemini 3.7/3.6 Flash and 3.5/3.1
   Flash-Lite. Removed retired Claude Opus
   4.1 and older Gemini models.
+- AI Settings can now automatically update the
+  built-in model list from iterm2.com (off by
+  default), with an Update Now button to check
+  on demand.
