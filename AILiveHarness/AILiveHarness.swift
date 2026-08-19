@@ -133,6 +133,10 @@ final class AILiveHarness: XCTestCase {
         "gemini-2.0-flash-lite",
         // Retired by Google: returns 404 "no longer available" for all keys.
         "gemini-3-pro-preview",
+        // Retired by Anthropic now that Opus 4.8 ships: every request returns
+        // HTTP 404 "model: claude-opus-4-1" for all keys, so any vendor sweep
+        // that iterates Anthropic models chokes on it.
+        "claude-opus-4-1",
     ]
 
     // Models that block the refusal-scenario prompt at the API layer instead
