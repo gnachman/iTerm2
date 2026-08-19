@@ -990,10 +990,23 @@ extension AILiveHarness {
         // then persist and break normal chats. Never restore something that small.
         let savedLimit = max(iTermPreferences.int(forKey: kPreferenceKeyAITokenLimit), 128000)
         let savedResponseLimit = max(iTermPreferences.int(forKey: kPreferenceKeyAIResponseTokenLimit), 8000)
-        // Big enough that turn 1 (system prompt + one round) fits, small enough that a
-        // handful of ~1000-token rounds exceed it and force head-drops.
-        iTermPreferences.setObject(NSNumber(value: 8000), forKey: kPreferenceKeyAITokenLimit)
-        iTermPreferences.setObject(NSNumber(value: 1000), forKey: kPreferenceKeyAIResponseTokenLimit)
+        // Budget notes (these are deliberately entangled):
+        //  - A terminal-linked chat registers ~25 tool schemas that cost ~5,500
+        //    tokens. maxTokens (the requestTooLarge gate) subtracts BOTH the
+        //    conversation and the tool schemas from AITokenLimit, so the total
+        //    budget must clear that ~5,500-token floor plus the system prompt
+        //    before even turn 1 fits. (An 8,000 limit left no room and every
+        //    turn failed pre-send with requestTooLarge.)
+        //  - truncate() targets maxTotalTokens - maxResponseTokens and counts
+        //    ONLY the conversation, not the tool schemas. For truncation to
+        //    activate BEFORE requestTooLarge rejects the request, maxResponseTokens
+        //    must exceed the tool-schema floor, so AIResponseTokenLimit is raised
+        //    above it here. Otherwise the request is rejected while truncate still
+        //    thinks there is room, and no head-drop ever happens.
+        // With these values turn 1 fits, and the accumulated ~2,000-token rounds
+        // cross the truncate threshold by the last turns, dropping head rounds.
+        iTermPreferences.setObject(NSNumber(value: 16000), forKey: kPreferenceKeyAITokenLimit)
+        iTermPreferences.setObject(NSNumber(value: 7000), forKey: kPreferenceKeyAIResponseTokenLimit)
         addTeardownBlock {
             iTermPreferences.setObject(NSNumber(value: savedLimit), forKey: kPreferenceKeyAITokenLimit)
             iTermPreferences.setObject(NSNumber(value: savedResponseLimit), forKey: kPreferenceKeyAIResponseTokenLimit)
