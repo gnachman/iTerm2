@@ -504,6 +504,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)startDebugLoggingAutomatically;
 + (double)statusBarHeight;
 + (BOOL)statusBarIcon;
++ (BOOL)showMenuBarItem;
 + (BOOL)stealKeyFocus;
 + (BOOL)storeStateInSqlite;
 + (NSString *)successSound;
