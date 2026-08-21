@@ -840,11 +840,31 @@ func deleteRecord(apiKey: String,
         formatFailure: { keeperHumanReadableError(fromResponseData: $0) ?? "Delete failed" })
 }
 
-/// Only treat clear “NSF not available” as a reason to use classic record-add.
+/// True when Nested Shared Folder commands are missing or not enabled.
+/// Stock/trial Commander without the NSF feature flag never registers `nsf-*`;
+/// Service Mode then returns e.g. "Invalid JSON response" for unknown commands.
+/// That is expected absence, not a transient listing/add failure.
 private func isNsfUnavailableError(_ error: Error) -> Bool {
     let s = error.localizedDescription.lowercased()
-    return s.contains("nested shared folder")
-        && (s.contains("not available") || s.contains("unavailable") || s.contains("not enabled"))
+    if s.contains("nested shared folder")
+        && (s.contains("not available") || s.contains("unavailable") || s.contains("not enabled")) {
+        return true
+    }
+    // Unknown / unregistered `nsf-*` (George's stock Commander 18.1.1 repro).
+    if s.contains("invalid json response") {
+        return true
+    }
+    if s.contains("unknown command") || s.contains("unrecognized command") || s.contains("invalid command") {
+        return true
+    }
+    if s.contains("not allowed") && (s.contains("nsf") || s.contains("command")) {
+        return true
+    }
+    // Unknown command: Commander prints the full help catalog (stock / no NSF flag).
+    if s.contains("available commands") || s.contains("type help <command>") {
+        return true
+    }
+    return false
 }
 
 func addRecord(apiKey: String,

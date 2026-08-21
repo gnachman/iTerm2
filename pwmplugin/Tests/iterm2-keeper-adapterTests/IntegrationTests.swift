@@ -74,6 +74,11 @@ class H(BaseHTTPRequestHandler):
                 if SCENARIO == "nsf_list_not_available":
                     _send(self, 200, {"error": "Nested Shared Folder not available", "status": "error"})
                     return
+                # Stock Commander without NSF: Service Mode HTTP 400 + Invalid JSON response.
+                if SCENARIO == "nsf_list_invalid_json":
+                    _send(self, 400, {"command": "nsf-list --records", "data": None,
+                                    "error": "Invalid JSON response", "status": "error"})
+                    return
                 nsf_data = [
                     {"Item Type": "Folder", "Parent/Folder": "",
                      "Title": "NewDemoFolder", "Type": "folder",
@@ -138,6 +143,10 @@ class H(BaseHTTPRequestHandler):
                     return
                 if SCENARIO == "nsf_add_generic_fail":
                     _send(self, 200, {"error": "temporary server error", "status": "error"})
+                    return
+                if SCENARIO == "nsf_add_invalid_json":
+                    _send(self, 400, {"command": "nsf-record-add", "data": None,
+                                    "error": "Invalid JSON response", "status": "error"})
                     return
                 _send(self, 200, {
                     "command": "nsf-record-add",
@@ -463,6 +472,27 @@ server.serve_forever()
         XCTAssertEqual(result.status, 0, result.output)
         let json = try decodeJSON(result.output)
         XCTAssertNil(json["warning"] as? String)
+    }
+
+    func testListAccountsOmitsWarningWhenNsfReturnsInvalidJSON() throws {
+        let server = try MockKeeperServer(scenario: "nsf_list_invalid_json")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())"}"#
+        let result = try run("list-accounts", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let accounts = try XCTUnwrap(json["accounts"] as? [[String: Any]])
+        XCTAssertEqual(accounts.count, 2)
+        XCTAssertNil(json["warning"] as? String)
+    }
+
+    func testAddAccountFallsBackToClassicWhenNsfReturnsInvalidJSON() throws {
+        let server = try MockKeeperServer(scenario: "nsf_add_invalid_json")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","userName":"user@example.com","accountName":"Example","password":"new-pass"}"#
+        let result = try run("add-account", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let accountIdentifier = try XCTUnwrap(json["accountIdentifier"] as? [String: Any])
+        XCTAssertEqual(accountIdentifier["accountID"] as? String, "NEWUID1234567890")
     }
 
     func testKeeperSyncDownSuccess() throws {
