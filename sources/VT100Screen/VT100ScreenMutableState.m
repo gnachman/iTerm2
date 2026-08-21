@@ -2980,7 +2980,20 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
     [self.mutableMarkCache removeMarks:objects onLines:keys];
     [objects enumerateObjectsUsingBlock:^(VT100ScreenMark * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        self.lastCommandMark = nil;
+        // Only invalidate the cache when the mark being removed IS the cached
+        // last-command mark. Removing any other mark can't change which command
+        // mark is last, so nilling it unconditionally just forces the next
+        // -lastCommandMark (assignCurrentCommandEndDate calls it on every OSC
+        // 133 prompt) to re-walk the whole interval tree via
+        // reverseLimitEnumerator. Under a redraw firehose that churns marks
+        // every frame, that made every prompt pay for a full walk. Compare
+        // against the raw cache, not -lastCommandMark, so the test itself
+        // doesn't trigger the walk. This is one of several per-prompt tree
+        // walks (see also -lastRemoteHost); the runaway memory it fed is bounded
+        // separately by the per-token autoreleasepool. See issue #12992.
+        if (obj == self.cachedLastCommandMark) {
+            self.lastCommandMark = nil;
+        }
         VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:obj];
         if (screenMark.name) {
             [self.namedMarks removeObjectsPassingTest:^BOOL(id  _Nullable obj) {
@@ -3871,6 +3884,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"setRemoteHost:%@", remoteHostObj);
     [self.mutableIntervalTree addObject:remoteHostObj
                            withInterval:[self intervalForGridCoordRange:range]];
+    // A remote-host mark changes what -lastRemoteHost returns. Invalidate the
+    // cache rather than assume this mark is the latest, so an out-of-order add
+    // still recomputes correctly. Host changes are rare, so the one rescan is
+    // cheap; the point is that unrelated (prompt) mark churn no longer does.
+    // See issue 12992.
+    _lastRemoteHostCacheValid = NO;
     return remoteHostObj;
 }
 
@@ -3985,6 +4004,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"  moveNotes: looking in range %@", VT100GridCoordRangeDescription(screenRange));
     Interval *sourceInterval = [self intervalForGridCoordRange:screenRange];
     self.lastCommandMark = nil;
+    // Moving on-screen marks between the primary and saved trees (alt-screen
+    // swap) re-homes a VT100RemoteHost mark's entry into the destination tree, so
+    // the -lastRemoteHost read-path staleness check (entry == nil) never fires.
+    // Invalidate here alongside the command-mark cache, or the cache can keep
+    // reporting a stale host across a showAltBuffer/showPrimaryBuffer. See #12992.
+    _lastRemoteHostCacheValid = NO;
     NSMutableArray<id<IntervalTreeObject>> *objectsMoved = [NSMutableArray array];
     for (id<IntervalTreeObject> obj in [source mutableObjectsInInterval:sourceInterval]) {
         Interval *interval = obj.entry.interval;
@@ -4011,6 +4036,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"  removeNotes: looking in range %@", VT100GridCoordRangeDescription(screenRange));
     Interval *sourceInterval = [self intervalForGridCoordRange:screenRange];
     self.lastCommandMark = nil;
+    // See moveNotesOnScreenFrom: a swap re-homes a VT100RemoteHost mark's entry
+    // into the other tree, defeating the -lastRemoteHost staleness check, so
+    // invalidate the cache here too. See #12992.
+    _lastRemoteHostCacheValid = NO;
     NSMutableArray<iTermTuple<id<IntervalTreeObject>, Interval *> *> *objects = [NSMutableArray array];
     for (id<IntervalTreeObject> obj in [source objectsInInterval:sourceInterval]) {
         Interval *interval = obj.entry.interval;
@@ -4782,6 +4811,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)addSavedIntervalTreeObjects:(NSArray<iTermSavedIntervalTreeObject *> *)savedITOs
                            baseLine:(long long)baseLine {
+    // Re-homing stashed objects into the tree can re-add a VT100RemoteHost mark
+    // (e.g. -unfoldMark: restoring a fold that contained the current host, or a
+    // porthole-removal replace). The -lastRemoteHost read-path staleness check
+    // only notices a *removed* cached mark (entry == nil); it cannot notice a
+    // newly re-added mark that should become the answer, so invalidate here just
+    // like the moveNotes/removeNotes swap paths do. See issue 12992.
+    _lastRemoteHostCacheValid = NO;
     iTermTextExtractor *extractor = [[iTermTextExtractor alloc] initWithDataSource:self];
     [savedITOs enumerateObjectsUsingBlock:^(iTermSavedIntervalTreeObject * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         PTYAnnotation *annotation = [PTYAnnotation castFrom:obj.object];
@@ -6152,6 +6188,10 @@ lengthExcludingInBandSignaling:data.length
                       guidOfLastCommandMark:guidOfLastCommandMark
                     progenitorRCDataSource:(id<iTermResilientCoordinateDataSource>)self
                           mainRCDataSource:(id<iTermResilientCoordinateDataSource>)self.mainThreadCopy];
+        // Restore populates the tree with VT100RemoteHost marks generically (not
+        // via -setRemoteHost:), so drop any cached -lastRemoteHost. Cold path, but
+        // cheap insurance if something reads the host on this instance post-restore.
+        _lastRemoteHostCacheValid = NO;
 
         NSDictionary *savedIntervalTreeDict = screenState[kScreenStateSavedIntervalTreeKey];
         if (![self.mutableSavedIntervalTree restoreFromGraphRecord:savedIntervalTreeDict
