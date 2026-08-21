@@ -6674,6 +6674,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             __weak __typeof(self) weakSelf = self;
             dispatch_async(dispatch_get_main_queue(), ^{
                 [weakSelf repositionWidgets];
+                [weakSelf notifyTmuxOfWindowResize];
             });
         }
     } else if (_contentView.tabBarControlOnLoan) {
@@ -7883,6 +7884,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         DLog(@"View hierarchy after tab count change:\n%@", [_contentView.tabBarControl.window.contentView iterm_recursiveDescription]);
 
         [self repositionWidgets];
+        // In full screen the window frame doesn't change when the tab bar
+        // hides or shows, so -windowDidResize: never runs. Tell tmux the
+        // available size changed, as -windowDidResize: would.
+        [self notifyTmuxOfWindowResize];
         if (wasDraggedFromAnotherWindow_) {
             wasDraggedFromAnotherWindow_ = NO;
             [firstTab setReportIdealSizeAsCurrent:NO];
