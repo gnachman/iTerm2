@@ -49,6 +49,27 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         var errorDescription: String? {
             reason ?? "Unknown error"
         }
+
+        // Classifies an adapter error response. A response flagged needsAuthentication becomes
+        // .needsAuthentication so the recipe recovery clears the token and re-logs in; every
+        // other response is an ordinary .runtime error. Adapters that never set the flag behave
+        // as before (all errors are .runtime).
+        static func from(_ response: PasswordManagerProtocol.ErrorResponse) -> AdapterError {
+            if response.needsAuthentication == true {
+                return .needsAuthentication
+            }
+            return .runtime(response.error)
+        }
+
+        // Decodes and classifies an adapter error response from raw stdout, or nil when the
+        // output is not an error response. Centralizes the preamble every recipe
+        // outputTransformer would otherwise repeat, so error classification lives in one place.
+        static func decoded(fromAdapterOutput data: Data) -> AdapterError? {
+            guard let response = try? JSONDecoder().decode(PasswordManagerProtocol.ErrorResponse.self, from: data) else {
+                return nil
+            }
+            return AdapterError.from(response)
+        }
     }
 
     // Type aliases for protocol types
@@ -131,8 +152,8 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
 
                 // Try to decode as error response first
                 let decoder = JSONDecoder()
-                if let errorResponse = try? decoder.decode(ErrorResponse.self, from: output.stdout) {
-                    completion(.failure(AdapterError.runtime(errorResponse.error)))
+                if let error = AdapterError.decoded(fromAdapterOutput: output.stdout) {
+                    completion(.failure(error))
                     return
                 }
 
@@ -334,17 +355,14 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
 
     private func hydratePersistedCredentialsIfNeeded() {
         guard handshakeInfo?.persistsCredentials == true else { return }
+        // migrateLegacyCredentialsIfNeeded is the single reader of the credential slot: it
+        // reads the keychain and copies a persisted value into masterPassword (migrating a
+        // legacy entry first if the slot is empty). No second read is needed here.
         migrateLegacyCredentialsIfNeeded()
         if pathToDatabase == nil {
             if let u = iTermUserDefaults.userDefaults().string(forKey: "PathToDatabase_\(identifier)"), !u.isEmpty {
                 pathToDatabase = u
             }
-        }
-        guard masterPassword == nil else { return }
-
-        if let persisted = loadPersistedCredentials(),
-        !persisted.isEmpty {
-            masterPassword = persisted
         }
     }
 
@@ -529,6 +547,23 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             }
     }
 
+    // True when a login failure reflects the service being unreachable/slow/wedged rather than a
+    // rejected credential, so the caller keeps the saved key instead of discarding it. Until
+    // adapters flag auth rejections structurally (ErrorResponse.needsAuthentication), this keys
+    // off the adapter's connectivity/timeout/wedged-worker messages.
+    private static func errorIsServiceUnavailable(_ error: Error) -> Bool {
+        // A structurally-classified auth rejection is definitely NOT a service problem.
+        if case AdapterError.needsAuthentication = error { return false }
+        let s = ((error as? AdapterError)?.reason ?? error.localizedDescription).lowercased()
+        let markers = [
+            "timed out", "timeout", "never started processing", "worker appears",
+            "restart your keeper commander", "could not connect", "connection refused",
+            "cannot connect", "could not reach", "unreachable", "offline",
+            "not running", "network connection", "did not complete the request in time",
+        ]
+        return markers.contains { s.contains($0) }
+    }
+
     private func completeEnsureAuthentication(masterPassword: String?, loginInputs: LoginInputs) {
         // Perform login
         let loginRequest = LoginRequest(
@@ -548,9 +583,14 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 }
                 loginInputs.completion(nil)
             case .failure(let error):
-                // Clear stale persisted credentials so retries prompt the user.
-                self.masterPassword = nil
-                self.deletePersistedCredentials()
+                // Only forget the saved key on a genuine auth rejection. A connectivity/timeout/
+                // service failure (e.g. Commander wedged, down, or unreachable) leaves the key
+                // valid; deleting it would force the user to re-enter it every time the service
+                // hiccups. Keep it so auto-login retries once the service recovers.
+                if !Self.errorIsServiceUnavailable(error) {
+                    self.masterPassword = nil
+                    self.deletePersistedCredentials()
+                }
 
                 if case let .runtime(description) = error as? AdapterError {
                     let loginFailed = AdapterError.loginFailed(description)
@@ -626,8 +666,8 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 let decoder = JSONDecoder()
 
                 // Check for error response
-                if let errorResponse = try? decoder.decode(ErrorResponse.self, from: output.stdout) {
-                    completion(.failure(AdapterError.runtime(errorResponse.error)))
+                if let error = AdapterError.decoded(fromAdapterOutput: output.stdout) {
+                    completion(.failure(error))
                     return
                 }
 
@@ -709,8 +749,8 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             outputTransformer: { output, completion in
                 let decoder = JSONDecoder()
 
-                if let errorResponse = try? decoder.decode(ErrorResponse.self, from: output.stdout) {
-                    completion(.failure(AdapterError.runtime(errorResponse.error)))
+                if let error = AdapterError.decoded(fromAdapterOutput: output.stdout) {
+                    completion(.failure(error))
                     return
                 }
 
@@ -753,7 +793,9 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                         token: self.authToken,
                         accountIdentifier: AccountIdentifierEntry(accountID: setPasswordRequest.accountIdentifier.value),
                         newPassword: setPasswordRequest.newPassword,
-                        sourceLabel: setPasswordRequest.accountIdentifier.sourceLabel)
+                        sourceLabel: setPasswordRequest.accountIdentifier.sourceLabel,
+                        newAccountName: setPasswordRequest.newAccountName,
+                        newUserName: setPasswordRequest.newUserName)
 
                     let encoder = JSONEncoder()
                     guard let inputData = try? encoder.encode(request) else {
@@ -781,8 +823,8 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             outputTransformer: { output, completion in
                 let decoder = JSONDecoder()
 
-                if let errorResponse = try? decoder.decode(ErrorResponse.self, from: output.stdout) {
-                    completion(.failure(AdapterError.runtime(errorResponse.error)))
+                if let error = AdapterError.decoded(fromAdapterOutput: output.stdout) {
+                    completion(.failure(error))
                     return
                 }
 
@@ -840,11 +882,11 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                     completion(error)
                 }
             },
-            outputTransformer: { [weak self] output, completion in
+            outputTransformer: { output, completion in
                 let decoder = JSONDecoder()
 
-                if let errorResponse = try? decoder.decode(ErrorResponse.self, from: output.stdout) {
-                    completion(.failure(AdapterError.runtime(errorResponse.error)))
+                if let error = AdapterError.decoded(fromAdapterOutput: output.stdout) {
+                    completion(.failure(error))
                     return
                 }
 
@@ -853,7 +895,8 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                     return
                 }
 
-                self?.invalidateListAccountsCache()
+                // The list cache is invalidated by the shared CommandLineProvidedAccount.delete
+                // completion, which owns invalidation for every data source.
                 completion(.success(()))
             }))
     }
@@ -904,11 +947,11 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                     completion(error)
                 }
             },
-            outputTransformer: { [weak self] output, completion in
+            outputTransformer: { output, completion in
                 let decoder = JSONDecoder()
 
-                if let errorResponse = try? decoder.decode(ErrorResponse.self, from: output.stdout) {
-                    completion(.failure(AdapterError.runtime(errorResponse.error)))
+                if let error = AdapterError.decoded(fromAdapterOutput: output.stdout) {
+                    completion(.failure(error))
                     return
                 }
 
@@ -917,7 +960,8 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                     return
                 }
 
-                self?.invalidateListAccountsCache()
+                // The list cache is invalidated by standardAdd's completion, which owns
+                // invalidation for every data source.
                 completion(.success(CommandLinePasswordDataSource.AccountIdentifier(value: response.accountIdentifier.accountID)))
             }))
     }
@@ -1006,6 +1050,23 @@ extension AdapterPasswordDataSource {
             return dict
         }
     }
+
+    @objc var supportsInPlaceEdit: Bool {
+        handshakeInfo?.canEditInPlace ?? false
+    }
+
+    @objc var canEditPassword: Bool {
+        handshakeInfo?.canSetPasswords ?? false
+    }
+
+    // Each adapter declares this in its handshake. Adapters that store the password verbatim
+    // (so a blank field would persist an empty password) return true; those that omit an empty
+    // password when adding (e.g. Keeper) leave it false.
+    @objc var requiresPasswordForAdd: Bool {
+        handshakeInfo?.requiresPasswordForAdd ?? false
+    }
+
+    @objc func prepareAvailability(_ completion: @escaping () -> ()) { completion() }
 
     @objc(addUserName:accountName:password:flags:context:completion:)
     func add(userName: String,
@@ -1128,8 +1189,17 @@ extension AdapterPasswordDataSource: AdapterCapabilities {
 
     @objc func setSettingsValue(_ value: String, forKey key: String) {
         guard handshakeInfo?.settingsFields?.contains(where: { $0.key == key }) == true else { return }
+        // storeSettingsValue trims before persisting, so storedSettingsValue returns a trimmed
+        // string; compare against the trimmed input too, or a re-save that only differs in
+        // surrounding whitespace would look like a change.
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        let previous = storedSettingsValue(forKey: key)
         storeSettingsValue(value, forKey: key)
-        // Non-secret settings (e.g. service URL) can change reachability; clear the session.
-        authToken = nil
+        // A changed setting (e.g. service URL) can change reachability; clear the session so it
+        // re-logs in. Do this only on an actual change: the settings sheet re-saves every field
+        // on OK, and clearing the live token for an unchanged value forces a needless re-login.
+        if previous != trimmed {
+            authToken = nil
+        }
     }
 }

@@ -108,7 +108,15 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
             switch result {
             case .failure(OPError.needsAuthentication):
                 self.asyncGetToken(completion)
-            case .success, .failure:
+            case .success(let acquired):
+                // Cache the token so later stages/operations reuse it instead of re-prompting.
+                // The setPasswordRecipe is a two-stage SequenceRecipe (op item get, then op item
+                // edit); without caching, a non-biometric setup would pop the master-password
+                // modal once per stage. An expired token surfaces as needsAuthentication, whose
+                // recovery clears this and re-auths.
+                self.auth = acquired
+                completion(result)
+            case .failure:
                 completion(result)
             }
         }
@@ -342,8 +350,82 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
         })
     }
 
+    // Patches the changed fields into a full `op item get --format=json` payload, leaving
+    // every other field (empty notes, OTP, custom) exactly as op returned it. op item edit
+    // applies the whole template, so the round-trip is lossless.
+    private static func patchedItemJSON(_ original: Data, request: SetPasswordRequest) throws -> Data {
+        guard var obj = try JSONSerialization.jsonObject(with: original) as? [String: Any] else {
+            throw OPError.badOutput
+        }
+        if let title = request.newAccountName {
+            obj["title"] = title
+        }
+        var fields = obj["fields"] as? [[String: Any]] ?? []
+        var patchedUserName = false
+        var patchedPassword = false
+        for i in fields.indices {
+            let purpose = (fields[i]["purpose"] as? String)?.uppercased()
+            let id = (fields[i]["id"] as? String)?.lowercased()
+            if (purpose == "USERNAME" || id == "username"), let userName = request.newUserName {
+                fields[i]["value"] = userName
+                patchedUserName = true
+            } else if (purpose == "PASSWORD" || id == "password"), let password = request.newPassword {
+                fields[i]["value"] = password
+                patchedPassword = true
+            }
+        }
+        // If the item has no field of the needed kind (e.g. a login created in the UI with no
+        // username field, or an item whose `fields` array is absent), op item edit would apply
+        // the template and silently ignore the change. Append a properly-typed field so the new
+        // value is actually written instead of a success-with-no-op.
+        if let userName = request.newUserName, !patchedUserName {
+            fields.append(["id": "username", "type": "STRING", "purpose": "USERNAME", "label": "username", "value": userName])
+        }
+        if let password = request.newPassword, !patchedPassword {
+            fields.append(["id": "password", "type": "CONCEALED", "purpose": "PASSWORD", "label": "password", "value": password])
+        }
+        if !fields.isEmpty {
+            obj["fields"] = fields
+        }
+        return try JSONSerialization.data(withJSONObject: obj)
+    }
+
     private var setPasswordRecipe: AnyRecipe<SetPasswordRequest, Void> {
-        return AnyRecipe(UnsupportedRecipe<SetPasswordRequest, Void>(reason: "1Password's CLI has no secure way to change a password."))
+        // Edit in place by round-tripping the item's JSON: `op item get <id> --format=json`,
+        // patch the changed fields, then pipe the template to `op item edit <id>` over stdin.
+        // The password never appears on the command line. Requires a modern op (see
+        // pathToCLI, which selects the newest installed CLI); op 2.5.x ignores piped edits.
+        let getRecipe = OnePasswordDynamicCommandRecipe(dataSource: self) { (request: SetPasswordRequest, token) in
+            // --reveal so concealed fields (the password) carry their real value in the JSON.
+            // The template is re-submitted whole, so an unchanged password must round-trip as
+            // its actual value; without --reveal a title-only edit could blank it.
+            InteractiveCommandRequest(
+                command: OnePasswordUtils.pathToCLI,
+                args: ["item", "get", request.accountIdentifier.value, "--reveal", "--format=json"],
+                env: OnePasswordUtils.standardEnvironment(token: token))
+        } outputTransformer: { output -> Data in
+            output.stdout
+        }
+        let editRecipe = OnePasswordDynamicCommandRecipe(dataSource: self) { (input: (SetPasswordRequest, Data), token) in
+            let (request, itemJSON) = input
+            let patched = try Self.patchedItemJSON(itemJSON, request: request)
+            var command = InteractiveCommandRequest(
+                command: OnePasswordUtils.pathToCLI,
+                args: ["item", "edit", request.accountIdentifier.value],
+                env: OnePasswordUtils.standardEnvironment(token: token))
+            command.callbacks = InteractiveCommandRequest.Callbacks(
+                callbackQueue: InteractiveCommandRequest.ioQueue,
+                handleStdout: nil,
+                handleStderr: nil,
+                handleTermination: nil,
+                didLaunch: { writing in
+                    writing.write(patched) {
+                        writing.closeForWriting()
+                    }
+                })
+            return command
+        } outputTransformer: { _ in }
+        return AnyRecipe(SequenceRecipe(getRecipe, editRecipe))
     }
 
     private var deleteRecipe: AnyRecipe<AccountIdentifier, Void> {
@@ -357,26 +439,37 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
 
     private var addAccountRecipe: AnyRecipe<AddRequest, AccountIdentifier> {
         let tag = self.tag
-        return AnyRecipe(OnePasswordDynamicCommandRecipe(dataSource: self) { addRequest, token in
-            let tagArgs: [String] = if let tag {
-                ["--tags=\(tag)"]
-            } else {
-                []
+        // Create from a JSON template piped over stdin so the user-supplied password stays
+        // off the command line (secure), instead of `--generate-password`.
+        return AnyRecipe(OnePasswordDynamicCommandRecipe(dataSource: self) { (addRequest: AddRequest, token) in
+            let template: [String: Any] = [
+                "title": addRequest.accountName,
+                "category": "LOGIN",
+                "fields": [
+                    ["id": "username", "type": "STRING", "purpose": "USERNAME", "label": "username", "value": addRequest.userName],
+                    ["id": "password", "type": "CONCEALED", "purpose": "PASSWORD", "label": "password", "value": addRequest.password],
+                ],
+            ]
+            let templateData = try JSONSerialization.data(withJSONObject: template)
+            var args = ["item", "create", "--format=json"]
+            if let tag {
+                args.append("--tags=\(tag)")
             }
-            let args = [
-                "item",
-                "create",
-                "--category=login",
-                "--title=\(addRequest.accountName)"
-            ] + tagArgs + [
-                "--generate-password",
-                "--format=json",
-                "username=\(addRequest.userName)"]
+            args.append("-")  // read the template from stdin
             var request = InteractiveCommandRequest(
                 command: OnePasswordUtils.pathToCLI,
                 args: args,
                 env: OnePasswordUtils.standardEnvironment(token: token))
-            request.useTTY = true
+            request.callbacks = InteractiveCommandRequest.Callbacks(
+                callbackQueue: InteractiveCommandRequest.ioQueue,
+                handleStdout: nil,
+                handleStderr: nil,
+                handleTermination: nil,
+                didLaunch: { writing in
+                    writing.write(templateData) {
+                        writing.closeForWriting()
+                    }
+                })
             return request
         } outputTransformer: { output in
             struct Response: Codable {
@@ -405,7 +498,8 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
     @objc func resetConfiguration() { }
 
     var autogeneratedPasswordsOnly: Bool {
-        return true
+        // Add and edit now accept a user-supplied password via a stdin JSON template.
+        return false
     }
 
     func checkAvailability() -> Bool {
@@ -419,6 +513,12 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
         return value
     }
 
+    // Resolve the op CLI versions off the main thread so the synchronous checkAvailability that
+    // follows reads the warm cache instead of spawning `op -v` on the run loop.
+    func prepareAvailability(_ completion: @escaping () -> ()) {
+        OnePasswordUtils.resolveVersionsInBackground(completion)
+    }
+
     func fetchAccounts(context: RecipeExecutionContext, completion: @escaping ([any PasswordManagerAccount]) -> ()) {
         return standardAccounts(context: context,
                                 configuration: configuration) { maybeAccount, maybeError in
@@ -427,6 +527,13 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
     }
 
     var addAccountToggleDescriptions: [[String: Any]]? { nil }
+    // `op item edit` renames title/username in place.
+    var supportsInPlaceEdit: Bool { true }
+    // A modern op edits the password securely via a stdin template (see setPasswordRecipe).
+    var canEditPassword: Bool { true }
+    // The create template writes the password field verbatim, so a blank field would store an
+    // empty password. Require one (previously guaranteed by --generate-password).
+    var requiresPasswordForAdd: Bool { true }
 
     @objc(addUserName:accountName:password:flags:context:completion:)
     func add(userName: String,

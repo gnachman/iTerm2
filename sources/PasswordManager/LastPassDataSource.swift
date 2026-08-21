@@ -202,7 +202,14 @@ class LastPassDataSource: CommandLinePasswordDataSource {
                 command: LastPassUtils.pathToCLI,
                 args: args,
                 env: LastPassUtils.basicEnvironment)
-            let dataToWrite = ($0.newPassword + "\n").data(using: .utf8)!
+            // A nil password means "leave unchanged" (name/user-only edit). LastPass cannot edit
+            // in place and this command only sets the password, so writing "" here would blank
+            // the stored secret. Fail loudly at the data layer instead of relying on the UI
+            // guard (supportsInPlaceEdit) to keep this path unreached.
+            guard let newPassword = $0.newPassword else {
+                throw LPError.runtime
+            }
+            let dataToWrite = (newPassword + "\n").data(using: .utf8)!
             commandRequest.callbacks = InteractiveCommandRequest.Callbacks(
                 callbackQueue: InteractiveCommandRequest.ioQueue,
                 handleStdout: nil,
@@ -346,6 +353,10 @@ extension LastPassDataSource: PasswordManagerDataSource {
     }
 
     var addAccountToggleDescriptions: [[String: Any]]? { nil }
+    var supportsInPlaceEdit: Bool { false }
+    var canEditPassword: Bool { true }
+    var requiresPasswordForAdd: Bool { false }
+    func prepareAvailability(_ completion: @escaping () -> ()) { completion() }
 
     @objc(addUserName:accountName:password:flags:context:completion:)
     func add(userName: String,
