@@ -60,6 +60,26 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
             }
     }
 
+    func editInPlace(accountName: String?,
+                     userName: String?,
+                     password: String?,
+                     context: RecipeExecutionContext,
+                     completion: @escaping (Error?) -> ()) {
+        let accountIdentifier = CommandLinePasswordDataSource.AccountIdentifier(value: identifier, sourceLabel: sourceLabel)
+        let request = CommandLinePasswordDataSource.SetPasswordRequest(accountIdentifier: accountIdentifier,
+                                                                       newPassword: password,
+                                                                       newAccountName: accountName,
+                                                                       newUserName: userName)
+        configuration.setPasswordRecipe.transformAsync(
+            context: context,
+            inputs: request) { _, error in
+                if error == nil {
+                    self.configuration.listAccountsRecipe.invalidateRecipe()
+                }
+                completion(error)
+            }
+    }
+
     func matches(filter: String) -> Bool {
         return accountName.containsCaseInsensitive(filter)
             || userName.containsCaseInsensitive(filter)
@@ -939,7 +959,20 @@ class CommandLinePasswordDataSource: NSObject {
 
     struct SetPasswordRequest {
         let accountIdentifier: AccountIdentifier
-        let newPassword: String
+        let newPassword: String?
+        // In-place field edits. nil leaves that field unchanged.
+        let newAccountName: String?
+        let newUserName: String?
+
+        init(accountIdentifier: AccountIdentifier,
+             newPassword: String? = nil,
+             newAccountName: String? = nil,
+             newUserName: String? = nil) {
+            self.accountIdentifier = accountIdentifier
+            self.newPassword = newPassword
+            self.newAccountName = newAccountName
+            self.newUserName = newUserName
+        }
     }
 
     struct AddRequest {
