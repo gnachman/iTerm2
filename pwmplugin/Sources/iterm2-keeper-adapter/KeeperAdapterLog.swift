@@ -27,12 +27,17 @@ enum KeeperAdapterLog {
     private static let lock = NSLock()
 
     static func write(_ message: String) {
-        guard isEnabled else { return }
         let stamp = formatter.string(from: Date())
         let line = "[\(stamp)] [\(getpid())] \(message)\n"
         guard let data = line.data(using: .utf8) else { return }
         lock.lock()
         defer { lock.unlock() }
+        // Always emit to stderr. The host reads the adapter's stderr and DLogs each chunk as it
+        // arrives, so a debug log captures the adapter's live progress (commands, poll status)
+        // even mid-hang, without enabling the file log. stderr is separate from the JSON on
+        // stdout and is never parsed for success, and these lines never contain secrets.
+        try? FileHandle.standardError.write(contentsOf: data)
+        guard isEnabled else { return }
         if let handle = try? FileHandle(forWritingTo: defaultURL) {
             defer { try? handle.close() }
             _ = try? handle.seekToEnd()

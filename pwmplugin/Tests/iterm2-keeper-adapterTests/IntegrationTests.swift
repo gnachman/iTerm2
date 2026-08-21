@@ -108,6 +108,10 @@ class H(BaseHTTPRequestHandler):
                      "record_category": "Classic", "record_uid": "UID1234567890123",
                      "shared": True, "title": "Mysql", "type": "login"},
                 ]
+                if SCENARIO == "unknown_category":
+                    # A record_category outside {classic,nested,...}; the adapter must fall back
+                    # to list-based tagging (Classic here) so the record stays routable.
+                    list_data[1]["record_category"] = "shared"
                 if SCENARIO == "duplicate_uid":
                     list_data.append(
                         {"description": "dup@example.com",
@@ -121,14 +125,42 @@ class H(BaseHTTPRequestHandler):
                 _send(self, 200, {"status": "success", "result": json.dumps(result)})
                 return
             if " --format=json" in cmd and cmd.startswith("get "):
+                if SCENARIO == "get_error_body":
+                    # No password field in either format; the raw fallback must not return the
+                    # error text as the secret.
+                    _send(self, 200, {"message": ["Record not found"]})
+                    return
+                if SCENARIO == "password_via_message":
+                    # No password in json; fall back to format=password (message delivery).
+                    _send(self, 200, {"record": {"login": "user@example.com"}})
+                    return
                 _send(self, 200, {"record": {"password": "pw-123", "login": "user@example.com"}})
                 return
             if " --format=password" in cmd and cmd.startswith("get "):
+                if SCENARIO == "get_error_body":
+                    _send(self, 200, {"message": ["Record not found"]})
+                    return
+                if SCENARIO == "password_via_message":
+                    # Secret delivered via message under an explicit success; a real password
+                    # containing "error" must be kept, not skipped.
+                    _send(self, 200, {"status": "success", "message": ["MyError2024"]})
+                    return
                 _send(self, 200, "pw-123")
                 return
             if cmd.startswith("record-update ") or cmd.startswith("nsf-record-update "):
                 if SCENARIO == "set_password_error":
                     _send(self, 200, {"error": "password invalid"})
+                elif SCENARIO == "require_equals_title":
+                    # The title must use the equals form so a "-" prefixed value binds as the
+                    # value; the space form would misparse "-staging" as an option token.
+                    if '--title="-staging"' in cmd:
+                        _send(self, 200, {"status": "success"})
+                    else:
+                        _send(self, 200, {"error": "title misparsed as option", "status": "error"})
+                elif SCENARIO == "wrapped_update_failure":
+                    # Outer envelope says the async command ran; the real failure is inside.
+                    inner = json.dumps({"status": "failure", "message": "update denied"})
+                    _send(self, 200, {"status": "success", "result": inner})
                 elif SCENARIO == "classic_update_false_success" and cmd.startswith("record-update "):
                     # Mimic live Commander: classic update returns success for NSF UIDs without effect.
                     _send(self, 200, {"status": "success", "message": ["no-op"]})
@@ -220,14 +252,20 @@ server.serve_forever()
 
         let stdin = Pipe()
         let output = Pipe()
+        // stderr carries the adapter's diagnostic log (KeeperAdapterLog also emits there); keep
+        // it on a separate pipe so it does not pollute the JSON on stdout. Drain it concurrently
+        // to avoid a full-pipe deadlock.
+        let errPipe = Pipe()
         process.standardInput = stdin
         process.standardOutput = output
-        process.standardError = output
+        process.standardError = errPipe
         try process.run()
         stdin.fileHandleForWriting.write(Data(input.utf8))
         try stdin.fileHandleForWriting.close()
-        process.waitUntilExit()
+        let errHandle = errPipe.fileHandleForReading
+        DispatchQueue.global().async { _ = errHandle.readDataToEndOfFile() }
         let data = output.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
         return (process.terminationStatus, String(data: data, encoding: .utf8) ?? "")
     }
 
@@ -321,6 +359,19 @@ server.serve_forever()
                        "UIDNSF1234567890")
     }
 
+    func testListAccountsUnknownCategoryStaysRoutable() throws {
+        // A record whose record_category is unrecognized ("shared") must still get a routable
+        // Classic/Nested sourceLabel from the command that listed it, not the raw category.
+        let server = try MockKeeperServer(scenario: "unknown_category")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())"}"#
+        let result = try run("list-accounts", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let accounts = try XCTUnwrap(json["accounts"] as? [[String: Any]])
+        XCTAssertEqual(accounts[1]["accountName"] as? String, "Mysql")
+        XCTAssertEqual(accounts[1]["sourceLabel"] as? String, "Classic")
+    }
+
     func testListAccountsExcludesNsfFolders() throws {
         let server = try MockKeeperServer()
         let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())"}"#
@@ -355,6 +406,28 @@ server.serve_forever()
         XCTAssertEqual(json["password"] as? String, "pw-123")
     }
 
+    func testGetPasswordRejectsErrorBodyAsSecret() throws {
+        // Neither format returns a password field; the raw fallback must not hand the error
+        // text ("Record not found") back as the secret. get-password must fail instead.
+        let server = try MockKeeperServer(scenario: "get_error_body")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"}}"#
+        let result = try run("get-password", input: input)
+        XCTAssertNotEqual(result.status, 0, result.output)
+        XCTAssertFalse(result.output.contains("Record not found") && result.output.contains("\"password\""),
+                       "error text must not be returned as a password: \(result.output)")
+    }
+
+    func testGetPasswordViaMessageKeepsErrorLikeSecret() throws {
+        // A real password delivered via message[0] under an explicit success status must be
+        // returned even when it contains a word like "error"; the old substring skip dropped it.
+        let server = try MockKeeperServer(scenario: "password_via_message")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"}}"#
+        let result = try run("get-password", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        XCTAssertEqual(json["password"] as? String, "MyError2024")
+    }
+
     func testSetPasswordSuccess() throws {
         let server = try MockKeeperServer()
         let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"sourceLabel":"Classic","newPassword":"new-pass"}"#
@@ -365,6 +438,21 @@ server.serve_forever()
     func testSetPasswordFailsWhenSourceLabelMissing() throws {
         let server = try MockKeeperServer()
         let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"newPassword":"new-pass"}"#
+        let result = try run("set-password", input: input)
+        XCTAssertNotEqual(result.status, 0, result.output)
+    }
+
+    func testEditNameAndUserNameWithoutPasswordSucceeds() throws {
+        // In-place field edit: renaming does not require a new password.
+        let server = try MockKeeperServer()
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"sourceLabel":"Classic","newAccountName":"Renamed","newUserName":"new@example.com"}"#
+        let result = try run("set-password", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+    }
+
+    func testEditWithNoFieldsFails() throws {
+        let server = try MockKeeperServer()
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"sourceLabel":"Classic"}"#
         let result = try run("set-password", input: input)
         XCTAssertNotEqual(result.status, 0, result.output)
     }
@@ -413,6 +501,24 @@ server.serve_forever()
         let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"sourceLabel":"Classic","newPassword":"new-pass"}"#
         let result = try run("set-password", input: input)
         XCTAssertEqual(result.status, 0, result.output)
+    }
+
+    func testRenameUsesEqualsTitleForDashPrefixedName() throws {
+        // The mock accepts record-update only when the title uses the equals form; the space
+        // form would leave a "-staging" title misparsed as an option.
+        let server = try MockKeeperServer(scenario: "require_equals_title")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"sourceLabel":"Classic","newAccountName":"-staging"}"#
+        let result = try run("set-password", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+    }
+
+    func testSetPasswordFailsOnWrappedInnerFailure() throws {
+        // Outer envelope status is "success" (async command ran) but the wrapped inner result
+        // reports failure; the mutation must be treated as failed.
+        let server = try MockKeeperServer(scenario: "wrapped_update_failure")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"sourceLabel":"Classic","newPassword":"new-pass"}"#
+        let result = try run("set-password", input: input)
+        XCTAssertNotEqual(result.status, 0, result.output)
     }
 
     func testDeleteAccountSuccess() throws {
