@@ -110,9 +110,17 @@ public enum PasswordManagerProtocol {
         public var settingsFields: [SettingsField]?
         public var addAccountToggles: [AddAccountToggle]?
         public var legacyCredentialMigrations: [LegacyCredentialMigration]?
+        /// When true, the adapter can edit a record's fields (title/login/password) in
+        /// place, preserving OTP and custom fields. The host then renames via an in-place
+        /// update instead of delete-then-re-add. nil means false.
+        public var canEditInPlace: Bool?
+        /// When true, Add must be given a non-empty password because the adapter stores the
+        /// password field verbatim (a blank field would persist an empty password). Adapters
+        /// that omit an empty password when adding leave this nil/false.
+        public var requiresPasswordForAdd: Bool?
 
         public init(protocolVersion: Int, name: String, requiresMasterPassword: Bool, canSetPasswords: Bool, userAccounts: [UserAccount]?, needsPathToDatabase: Bool, databaseExtension: String?, needsPathToExecutable: String?,
-                    pathToDatabaseKind: PathKind? = nil, pathToDatabasePrompt: String? = nil, pathToDatabasePlaceholder: String? = nil, masterPasswordLabel: String? = nil, persistsCredentials: Bool? = nil, customCommands: [CustomCommand]? = nil, settingsFields: [SettingsField]? = nil, addAccountToggles: [AddAccountToggle]? = nil, legacyCredentialMigrations: [LegacyCredentialMigration]? = nil) {
+                    pathToDatabaseKind: PathKind? = nil, pathToDatabasePrompt: String? = nil, pathToDatabasePlaceholder: String? = nil, masterPasswordLabel: String? = nil, persistsCredentials: Bool? = nil, customCommands: [CustomCommand]? = nil, settingsFields: [SettingsField]? = nil, addAccountToggles: [AddAccountToggle]? = nil, legacyCredentialMigrations: [LegacyCredentialMigration]? = nil, canEditInPlace: Bool? = nil, requiresPasswordForAdd: Bool? = nil) {
             self.protocolVersion = protocolVersion
             self.name = name
             self.requiresMasterPassword = requiresMasterPassword
@@ -130,6 +138,8 @@ public enum PasswordManagerProtocol {
             self.settingsFields = settingsFields
             self.addAccountToggles = addAccountToggles
             self.legacyCredentialMigrations = legacyCredentialMigrations
+            self.canEditInPlace = canEditInPlace
+            self.requiresPasswordForAdd = requiresPasswordForAdd
         }
     }
 
@@ -248,6 +258,11 @@ public enum PasswordManagerProtocol {
         public var newPassword: String?
         /// Optional vault hint from list (`Classic` / `Nested`). Opaque to the host.
         public var sourceLabel: String?
+        /// Optional in-place field edits. When set, the adapter updates the record's
+        /// title/login on the same record (preserving OTP and other fields) instead of
+        /// only the password. nil means leave that field unchanged.
+        public var newAccountName: String?
+        public var newUserName: String?
     }
 
     public struct SetPasswordResponse: Codable {
@@ -313,9 +328,16 @@ public enum PasswordManagerProtocol {
 
     public struct ErrorResponse: Codable {
         public var error: String
+        /// When true, the failure is an expired/invalid session (not a generic error). The host
+        /// maps it to a re-authentication that clears the token and logs in again (silently when
+        /// credentials are persisted). Adapters should set this on auth-rejection responses;
+        /// nil/false is treated as an ordinary error. Backward-compatible: older adapters that
+        /// never set it keep the previous behavior.
+        public var needsAuthentication: Bool?
 
-        public init(error: String) {
+        public init(error: String, needsAuthentication: Bool? = nil) {
             self.error = error
+            self.needsAuthentication = needsAuthentication
         }
     }
 }

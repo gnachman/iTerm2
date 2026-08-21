@@ -95,7 +95,9 @@ private func handleHandshake() {
             // Let the host migrate it into the master-password slot once.
             legacyCredentialMigrations: [
                 PasswordManagerProtocol.LegacyCredentialMigration(fromKeychainAccount: "apiKey"),
-            ])
+            ],
+            // record-update edits title/login/password in place, preserving OTP and custom fields.
+            canEditInPlace: true)
         writeOutput(response)
     } catch {
         writeError("Failed to decode handshake: \(error.localizedDescription)")
@@ -184,10 +186,12 @@ private func handleSetPassword() {
         let apiKey = try apiKey(fromHeader: request.header, token: request.token, masterPassword: nil)
         let client = KeeperCommanderClient(baseURL: baseURL)
         let uid = request.accountIdentifier.accountID
-        KeeperAdapterLog.write("handleSetPassword: uid=\(uid), sourceLabel=\(request.sourceLabel ?? "nil"), newPassword.length=\(request.newPassword?.count ?? 0)")
+        KeeperAdapterLog.write("handleSetPassword: uid=\(uid), sourceLabel=\(request.sourceLabel ?? "nil"), newPassword.length=\(request.newPassword?.count ?? 0), editName=\(request.newAccountName != nil), editUser=\(request.newUserName != nil)")
         try setPassword(apiKey: apiKey,
                         recordUid: uid,
                         newPassword: request.newPassword,
+                        newAccountName: request.newAccountName,
+                        newUserName: request.newUserName,
                         sourceLabel: request.sourceLabel,
                         client: client)
         KeeperAdapterLog.write("handleSetPassword: success uid=\(uid)")
