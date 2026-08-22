@@ -1465,11 +1465,19 @@ void TurnOnDebugLoggingAutomatically(void) {
     }];
 }
 
++ (NSArray<NSString *> *)monitoredAgentJobNames {
+    return @[ @"claude", @"codex", @"opencode", @"cline", @"pi" ];
+}
+
 - (void)agentRunningDidChange:(NSNotification *)notification {
-    NSSet<NSString *> *claudeSessions = [[iTermGlobalJobMonitor instance] sessionGUIDsWithRunningJob:@"claude"];
-    BOOL agentActive = claudeSessions.count > 0;
-    DLog(@"agentRunningDidChange: %lu claude session(s); assertion held=%@",
-         (unsigned long)claudeSessions.count, _agentRunningActivity ? @"YES" : @"NO");
+    iTermGlobalJobMonitor *monitor = [iTermGlobalJobMonitor instance];
+    NSUInteger totalSessions = 0;
+    for (NSString *job in [iTermApplicationDelegate monitoredAgentJobNames]) {
+        totalSessions += [[monitor sessionGUIDsWithRunningJob:job] count];
+    }
+    BOOL agentActive = totalSessions > 0;
+    DLog(@"agentRunningDidChange: %lu agent session(s); assertion held=%@",
+         (unsigned long)totalSessions, _agentRunningActivity ? @"YES" : @"NO");
 
     // Build the options mask from whichever toggles are on.
     NSActivityOptions options = 0;
@@ -1482,10 +1490,10 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     if (agentActive && options != 0 && !_agentRunningActivity) {
         RLog(@"keepAwakeWhileAgentRunning: taking assertion (options=%lu, %lu session(s))",
-             (unsigned long)options, (unsigned long)claudeSessions.count);
+             (unsigned long)options, (unsigned long)totalSessions);
         _agentRunningActivity =
             [[[NSProcessInfo processInfo] beginActivityWithOptions:options
-                                                            reason:@"Claude Code agent running"] retain];
+                                                            reason:@"AI coding agent running"] retain];
     } else if ((!agentActive || options == 0) && _agentRunningActivity) {
         RLog(@"keepAwakeWhileAgentRunning: releasing assertion");
         [_agentRunningActivity release];
@@ -1496,7 +1504,7 @@ void TurnOnDebugLoggingAutomatically(void) {
                  (unsigned long)options);
             _agentRunningActivity =
                 [[[NSProcessInfo processInfo] beginActivityWithOptions:options
-                                                                reason:@"Claude Code agent running"] retain];
+                                                                reason:@"AI coding agent running"] retain];
         }
     }
 }
