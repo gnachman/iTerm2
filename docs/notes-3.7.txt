@@ -721,6 +721,11 @@ Settings Improvements:
   changes.
 
 Bug Fixes:
+- Fix tmux integration sessions not resizing
+  when the tab bar hides or shows in full
+  screen with “Hide tab bar when there is only
+  one tab” enabled, which left an unused strip
+  at the bottom of the window.
 - In the tmux Dashboard, “Open in Tabs” is now
   enabled when a single hidden window is
   selected, matching “Open in Window.” Issue
