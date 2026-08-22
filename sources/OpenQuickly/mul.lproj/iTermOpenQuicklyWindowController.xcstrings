@@ -1,0 +1,54 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "2dW-g3-Ja6.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Text Cell\"; ObjectID = \"2dW-g3-Ja6\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Text Cell"
+          }
+        }
+      }
+    },
+    "F0z-JX-Cv5.title": {
+      "comment": "Class = \"NSWindow\"; title = \"Open Quickly\"; ObjectID = \"F0z-JX-Cv5\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Open Quickly"
+          }
+        }
+      }
+    },
+    "LTe-QL-Nlc.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Table View Cell\"; ObjectID = \"LTe-QL-Nlc\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Table View Cell"
+          }
+        }
+      }
+    },
+    "NGu-Jc-J4f.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Detail\"; ObjectID = \"NGu-Jc-J4f\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Detail"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

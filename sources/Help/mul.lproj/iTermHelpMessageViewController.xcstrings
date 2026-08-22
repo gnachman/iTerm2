@@ -1,0 +1,18 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "IN3-yQ-Jj4.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Label\"; ObjectID = \"IN3-yQ-Jj4\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Label"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

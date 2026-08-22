@@ -1,0 +1,78 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "4me-Ls-hxI.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Erase Search History\"; ObjectID = \"4me-Ls-hxI\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Erase Search History"
+          }
+        }
+      }
+    },
+    "6Ko-6b-aFL.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Case-Sensitive Substring\"; ObjectID = \"6Ko-6b-aFL\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Case-Sensitive Substring"
+          }
+        }
+      }
+    },
+    "EuT-0X-vc4.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Case-Sensitive Regex\"; ObjectID = \"EuT-0X-vc4\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Case-Sensitive Regex"
+          }
+        }
+      }
+    },
+    "Q6W-kJ-cqr.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Smart Case Substring\"; ObjectID = \"Q6W-kJ-cqr\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Smart Case Substring"
+          }
+        }
+      }
+    },
+    "Rw9-Gj-Jr9.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Case-Insensitive Regex\"; ObjectID = \"Rw9-Gj-Jr9\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Case-Insensitive Regex"
+          }
+        }
+      }
+    },
+    "adQ-N9-EnU.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Case-Insensitive Substring\"; ObjectID = \"adQ-N9-EnU\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Case-Insensitive Substring"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

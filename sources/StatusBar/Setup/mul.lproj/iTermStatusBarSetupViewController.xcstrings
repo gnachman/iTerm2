@@ -1,0 +1,282 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "0yl-ll-bce.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Drag a component from the menu to Active Components to add it to your status bar.\"; ObjectID = \"0yl-ll-bce\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Drag a component from the menu to Active Components to add it to your status bar."
+          }
+        }
+      }
+    },
+    "5a8-iM-Enf.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Prefer tight packing to stable positioning\"; ObjectID = \"5a8-iM-Enf\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Prefer tight packing to stable positioning"
+          }
+        }
+      }
+    },
+    "AKH-fX-DaK.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"AKH-fX-DaK\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "CB2-6V-rAj.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Active Components\"; ObjectID = \"CB2-6V-rAj\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Active Components"
+          }
+        }
+      }
+    },
+    "E9x-dQ-Z2f.title": {
+      "comment": "Class = \"NSWindow\"; title = \"Window\"; ObjectID = \"E9x-dQ-Z2f\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Window"
+          }
+        }
+      }
+    },
+    "F1I-DI-vaO.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Draw separator between status bar and terminal\"; ObjectID = \"F1I-DI-vaO\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Draw separator between status bar and terminal"
+          }
+        }
+      }
+    },
+    "Fy4-yN-EYh.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Automatic\"; ObjectID = \"Fy4-yN-EYh\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Automatic"
+          }
+        }
+      }
+    },
+    "Gvg-gH-qBh.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Status Bar Component Menu\"; ObjectID = \"Gvg-gH-qBh\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Status Bar Component Menu"
+          }
+        }
+      }
+    },
+    "HTz-sS-eZA.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"🌈 Auto-Rainbow:\"; ObjectID = \"HTz-sS-eZA\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "🌈 Auto-Rainbow:"
+          }
+        }
+      }
+    },
+    "KIr-xD-7ke.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Configure Component\"; ObjectID = \"KIr-xD-7ke\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Configure Component"
+          }
+        }
+      }
+    },
+    "M3o-TT-tkC.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Separator Color:\"; ObjectID = \"M3o-TT-tkC\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Separator Color:"
+          }
+        }
+      }
+    },
+    "Mzu-7J-rGb.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Cancel\"; ObjectID = \"Mzu-7J-rGb\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "Rgf-Sg-NLL.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Font:\"; ObjectID = \"Rgf-Sg-NLL\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Font:"
+          }
+        }
+      }
+    },
+    "UMd-lv-UJj.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Background Color:\"; ObjectID = \"UMd-lv-UJj\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Background Color:"
+          }
+        }
+      }
+    },
+    "dl4-IN-dSo.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Disabled\"; ObjectID = \"dl4-IN-dSo\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Disabled"
+          }
+        }
+      }
+    },
+    "eaY-DS-MPQ.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Remove components with empty values\"; ObjectID = \"eaY-DS-MPQ\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Remove components with empty values"
+          }
+        }
+      }
+    },
+    "gwQ-ex-Mu1.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Advanced…\"; ObjectID = \"gwQ-ex-Mu1\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Advanced…"
+          }
+        }
+      }
+    },
+    "hYG-rt-3qI.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Font name goes here\"; ObjectID = \"hYG-rt-3qI\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Font name goes here"
+          }
+        }
+      }
+    },
+    "jOE-EE-nKA.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Change\"; ObjectID = \"jOE-EE-nKA\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Change"
+          }
+        }
+      }
+    },
+    "jgD-En-XDb.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Dark Colors\"; ObjectID = \"jgD-En-XDb\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Dark Colors"
+          }
+        }
+      }
+    },
+    "k1V-lZ-LEe.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Default Text Color:\"; ObjectID = \"k1V-lZ-LEe\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Default Text Color:"
+          }
+        }
+      }
+    },
+    "pjM-aG-lDH.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Light Colors\"; ObjectID = \"pjM-aG-lDH\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Light Colors"
+          }
+        }
+      }
+    },
+    "w0j-Sf-5ih.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"w0j-Sf-5ih\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "OK"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
