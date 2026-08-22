@@ -9,7 +9,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-NS_CLASS_AVAILABLE_MAC(10_14)
 @interface iTermTabBarAccessoryViewController : NSTitlebarAccessoryViewController
 @property (nonatomic, readonly) __kindof NSView *realView;
 

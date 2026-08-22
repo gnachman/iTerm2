@@ -204,26 +204,8 @@ private func sslErrorDescription(for status: Int) -> String? {
 
 /// Get human-friendly subject summaries for the chain.
 private func certificateSubjects(from trust: SecTrust) -> [String] {
-    if #available(macOS 10.15, *) {
-        guard let chain = SecTrustCopyCertificateChain(trust) as? [SecCertificate] else {
-            return []
-        }
-        return chain.compactMap { SecCertificateCopySubjectSummary($0) as String? }
-    } else {
-        var out: [String] = []
-        let count = SecTrustGetCertificateCount(trust)
-        if count <= 0 {
-            return out
-        }
-        for i in 0..<count {
-            if let cert = SecTrustGetCertificateAtIndex(trust, i) {
-                if let s = SecCertificateCopySubjectSummary(cert) as String? {
-                    out.append(s)
-                } else {
-                    out.append("(no subject summary)")
-                }
-            }
-        }
-        return out
+    guard let chain = SecTrustCopyCertificateChain(trust) as? [SecCertificate] else {
+        return []
     }
+    return chain.compactMap { SecCertificateCopySubjectSummary($0) as String? }
 }

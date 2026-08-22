@@ -9,7 +9,6 @@
 #import "NSTextField+iTerm.h"
 #import "NSView+iTerm.h"
 
-NS_CLASS_AVAILABLE_MAC(10_14)
 @implementation iTermUnobtrusiveMessage {
     NSVisualEffectView *_vev;
     NSTextField *_textField;

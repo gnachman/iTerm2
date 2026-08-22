@@ -19,7 +19,7 @@
 @end
 
 @implementation iTermGenericStatusBarContainer {
-    iTermStatusBarBacking *_backing NS_AVAILABLE_MAC(10_14);
+    iTermStatusBarBacking *_backing;
 }
 
 @synthesize statusBarViewController = _statusBarViewController;

@@ -351,7 +351,7 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 - (NSString *)tmuxPerTabSetting;
 - (void)setPerTabSettings:(NSString *)setting;
 
-- (void)updateUseMetal NS_AVAILABLE_MAC(10_11);
+- (void)updateUseMetal;
 - (ITMSplitTreeNode *)rootSplitTreeNode;
 
 - (void)setSizesFromSplitTreeNode:(ITMSplitTreeNode *)node;

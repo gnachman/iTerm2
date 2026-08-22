@@ -258,10 +258,7 @@ DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, NSString *, kiTermAdvancedSet
 #pragma mark - Custom Defaults
 
 BOOL UseSystemCursorWhenPossibleDefault(void) {
-    if (@available(macOS 10.15, *)) {
-        return YES;
-    }
-    return NO;
+    return YES;
 }
 
 #pragma mark - iTermAdvancedSettingsModel
