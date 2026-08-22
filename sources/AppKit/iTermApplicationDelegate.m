@@ -127,6 +127,7 @@
 #import "iTermTipController.h"
 #import "iTermTipWindowController.h"
 #import "iTermToolbeltView.h"
+#import "iTermPowerManager.h"
 #import "iTermURLStore.h"
 #import "iTermUntitledWindowStateMachine.h"
 #import "iTermUserDefaults.h"
@@ -240,10 +241,12 @@ static BOOL hasBecomeActive = NO;
     // NSProcessInfo-provided object to make the system think we're doing something important.
     id<NSObject> _appNapStoppingActivity;
 
-    // Held while at least one session has claude in its foreground-job ancestry and
-    // keepAwakeWhileAgentRunning is enabled. Prevents idle sleep without blocking
-    // user-initiated sleep (lid close, Apple menu → Sleep).
-    id<NSObject> _agentRunningActivity;
+    // Held while at least one session has a monitored agent in its foreground-job ancestry.
+    // _agentSystemActivity prevents idle system sleep; _agentDisplayActivity prevents display
+    // sleep. Each is taken/released independently based on the two keep-awake settings and
+    // the current power source. Both respect user-initiated sleep (lid close, Apple → Sleep).
+    id<NSObject> _agentSystemActivity;
+    id<NSObject> _agentDisplayActivity;
 
     BOOL _sparkleRestarting;  // Is Sparkle about to restart the app?
 
@@ -363,7 +366,8 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
     [_appNapStoppingActivity release];
-    [_agentRunningActivity release];
+    [_agentSystemActivity release];
+    [_agentDisplayActivity release];
     [_focusFollowsMouseController release];
     [_globalScopeController release];
     [_untitledWindowStateMachine release];
@@ -1465,48 +1469,87 @@ void TurnOnDebugLoggingAutomatically(void) {
     }];
 }
 
-+ (NSArray<NSString *> *)monitoredAgentJobNames {
+// 0 = Off, 1 = AC power only, 2 = Always
+typedef NS_ENUM(int, iTermKeepAwakeSetting) {
+    iTermKeepAwakeSettingOff = 0,
+    iTermKeepAwakeSettingACOnly = 1,
+    iTermKeepAwakeSettingAlways = 2,
+};
+
++ (NSArray<NSString *> *)builtInAgentJobNames {
     return @[ @"claude", @"codex", @"opencode", @"cline", @"pi" ];
 }
 
-- (void)agentRunningDidChange:(NSNotification *)notification {
-    iTermGlobalJobMonitor *monitor = [iTermGlobalJobMonitor instance];
-    NSUInteger totalSessions = 0;
-    for (NSString *job in [iTermApplicationDelegate monitoredAgentJobNames]) {
-        totalSessions += [[monitor sessionGUIDsWithRunningJob:job] count];
-    }
-    BOOL agentActive = totalSessions > 0;
-    DLog(@"agentRunningDidChange: %lu agent session(s); assertion held=%@",
-         (unsigned long)totalSessions, _agentRunningActivity ? @"YES" : @"NO");
-
-    // Build the options mask from whichever toggles are on.
-    NSActivityOptions options = 0;
-    if ([iTermAdvancedSettingsModel keepAwakeWhileAgentRunning]) {
-        options |= NSActivityIdleSystemSleepDisabled;
-    }
-    if ([iTermAdvancedSettingsModel keepDisplayAwakeWhileAgentRunning]) {
-        options |= NSActivityIdleDisplaySleepDisabled;
-    }
-
-    if (agentActive && options != 0 && !_agentRunningActivity) {
-        RLog(@"keepAwakeWhileAgentRunning: taking assertion (options=%lu, %lu session(s))",
-             (unsigned long)options, (unsigned long)totalSessions);
-        _agentRunningActivity =
-            [[[NSProcessInfo processInfo] beginActivityWithOptions:options
-                                                            reason:@"AI coding agent running"] retain];
-    } else if ((!agentActive || options == 0) && _agentRunningActivity) {
-        RLog(@"keepAwakeWhileAgentRunning: releasing assertion");
-        [_agentRunningActivity release];
-        _agentRunningActivity = nil;
-        // Re-take with updated options if agent is still active but options changed.
-        if (agentActive && options != 0) {
-            RLog(@"keepAwakeWhileAgentRunning: re-taking assertion with new options=%lu",
-                 (unsigned long)options);
-            _agentRunningActivity =
-                [[[NSProcessInfo processInfo] beginActivityWithOptions:options
-                                                                reason:@"AI coding agent running"] retain];
++ (NSArray<NSString *> *)allMonitoredAgentJobNames {
+    NSMutableArray<NSString *> *names = [[self builtInAgentJobNames] mutableCopy];
+    NSString *extra = [iTermAdvancedSettingsModel extraAgentJobNames];
+    if (extra.length > 0) {
+        for (NSString *raw in [extra componentsSeparatedByString:@","]) {
+            NSString *trimmed = [raw stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+            if (trimmed.length > 0) {
+                [names addObject:trimmed.lowercaseString];
+            }
         }
     }
+    return names;
+}
+
+- (BOOL)agentIsActive {
+    iTermGlobalJobMonitor *monitor = [iTermGlobalJobMonitor instance];
+    for (NSString *job in [iTermApplicationDelegate allMonitoredAgentJobNames]) {
+        if ([[monitor sessionGUIDsWithRunningJob:job] count] > 0) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (BOOL)keepAwakeSettingPermitsWithSetting:(iTermKeepAwakeSetting)setting {
+    if (setting == iTermKeepAwakeSettingOff) {
+        return NO;
+    }
+    if (setting == iTermKeepAwakeSettingAlways) {
+        return YES;
+    }
+    // AC power only.
+    return [[iTermPowerManager sharedInstance] connectedToPower];
+}
+
+- (void)updateAgentKeepAwakeAssertions {
+    BOOL agentActive = [self agentIsActive];
+    BOOL wantSystem = agentActive &&
+        [self keepAwakeSettingPermitsWithSetting:(iTermKeepAwakeSetting)[iTermAdvancedSettingsModel keepAwakeWhileAgentRunning]];
+    BOOL wantDisplay = agentActive &&
+        [self keepAwakeSettingPermitsWithSetting:(iTermKeepAwakeSetting)[iTermAdvancedSettingsModel keepDisplayAwakeWhileAgentRunning]];
+
+    DLog(@"updateAgentKeepAwakeAssertions: agentActive=%@ wantSystem=%@ wantDisplay=%@",
+         @(agentActive), @(wantSystem), @(wantDisplay));
+
+    if (wantSystem && !_agentSystemActivity) {
+        RLog(@"keepAwakeWhileAgentRunning: taking system sleep assertion");
+        _agentSystemActivity =
+            [[[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityIdleSystemSleepDisabled
+                                                            reason:@"AI coding agent running"] retain];
+    } else if (!wantSystem && _agentSystemActivity) {
+        RLog(@"keepAwakeWhileAgentRunning: releasing system sleep assertion");
+        [_agentSystemActivity release];
+        _agentSystemActivity = nil;
+    }
+
+    if (wantDisplay && !_agentDisplayActivity) {
+        RLog(@"keepAwakeWhileAgentRunning: taking display sleep assertion");
+        _agentDisplayActivity =
+            [[[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityIdleDisplaySleepDisabled
+                                                            reason:@"AI coding agent running"] retain];
+    } else if (!wantDisplay && _agentDisplayActivity) {
+        RLog(@"keepAwakeWhileAgentRunning: releasing display sleep assertion");
+        [_agentDisplayActivity release];
+        _agentDisplayActivity = nil;
+    }
+}
+
+- (void)agentRunningDidChange:(NSNotification *)notification {
+    [self updateAgentKeepAwakeAssertions];
 }
 
 - (void)turnOffMetalCaptureEnabledIfNeeded {
@@ -1623,13 +1666,16 @@ void TurnOnDebugLoggingAutomatically(void) {
                                                                 reason:@"User Preference"] retain];
     }
 
-    // Subscribe to agent-running changes so we can prevent idle sleep while
-    // claude is active in any session (when keepAwakeWhileAgentRunning is on).
+    // Re-evaluate keep-awake assertions when agent sessions start/stop or power source changes.
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(agentRunningDidChange:)
                                                  name:[iTermGlobalJobMonitor didChangeNotification]
                                                object:nil];
-    // Seed the assertion with current state in case sessions already exist.
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(agentRunningDidChange:)
+                                                 name:iTermPowerManagerStateDidChange
+                                               object:nil];
+    // Seed assertions with current state in case sessions already exist.
     [[iTermGlobalJobMonitor instance] replayCurrentState];
 
     [self turnOffMetalCaptureEnabledIfNeeded];
