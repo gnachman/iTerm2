@@ -2534,3 +2534,11 @@ Bug Fixes:
   built-in model list from iterm2.com (off by
   default), with an Update Now button to check
   on demand.
+- The window name can now appear beside the tabs
+  in the Compact and Minimal themes, which have
+  no title bar to show it in. By default it
+  appears only once you name a window with
+  Window > Edit Window Title, so windows you have
+  not named look exactly as before. The advanced
+  setting “Show the window name beside the
+  tabs” can turn it off or always show it.
