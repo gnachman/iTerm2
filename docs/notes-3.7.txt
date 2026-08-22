@@ -2534,3 +2534,6 @@ Bug Fixes:
   built-in model list from iterm2.com (off by
   default), with an Update Now button to check
   on demand.
+- In orchestration chats, a session reference
+  the AI writes without a leading @ now still
+  renders as a clickable session link.

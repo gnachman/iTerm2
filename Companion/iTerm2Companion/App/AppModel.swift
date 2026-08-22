@@ -3249,7 +3249,9 @@ final class AppModel {
     /// "🖥 name", not one bare and one prefixed) and there's a single copy of the
     /// parse-and-replace loop.
     private func renderMentionsPlainText(_ text: String) -> String {
-        MentionPlainTextRenderer.render(text) { mentionResolutions[$0]?.displayName }
+        // Only called for an agent reply body, where a stableID the model wrote
+        // without a leading "@" should still resolve.
+        MentionPlainTextRenderer.render(text, atSignOptional: true) { mentionResolutions[$0]?.displayName }
     }
 
     private func postReplyNotification(watched: SessionWatchState.Watch, body: String) {

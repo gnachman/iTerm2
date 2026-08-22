@@ -80,7 +80,10 @@ enum MessagesSinceResponder {
             let raw = Self.previewBody(for: message, maxLength: snippetLimit)
             // Render @-mentions to "🖥 name" before truncating, so the lock
             // screen shows the session name instead of a raw guid.
-            let rendered = MentionPlainTextRenderer.render(raw, resolve: resolveMention)
+            let rendered = MentionPlainTextRenderer.render(
+                raw,
+                atSignOptional: message.author == .agent,
+                resolve: resolveMention)
             return CompanionMessagePreview(
                 uniqueID: message.uniqueID,
                 author: message.author,
