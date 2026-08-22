@@ -240,6 +240,11 @@ static BOOL hasBecomeActive = NO;
     // NSProcessInfo-provided object to make the system think we're doing something important.
     id<NSObject> _appNapStoppingActivity;
 
+    // Held while at least one session has claude in its foreground-job ancestry and
+    // keepAwakeWhileAgentRunning is enabled. Prevents idle sleep without blocking
+    // user-initiated sleep (lid close, Apple menu → Sleep).
+    id<NSObject> _agentRunningActivity;
+
     BOOL _sparkleRestarting;  // Is Sparkle about to restart the app?
 
     BOOL _orphansAdopted;  // Have orphan servers been adopted?
@@ -358,6 +363,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
     [_appNapStoppingActivity release];
+    [_agentRunningActivity release];
     [_focusFollowsMouseController release];
     [_globalScopeController release];
     [_untitledWindowStateMachine release];
@@ -1459,6 +1465,35 @@ void TurnOnDebugLoggingAutomatically(void) {
     }];
 }
 
+- (void)agentRunningDidChange:(NSNotification *)notification {
+    if (![iTermAdvancedSettingsModel keepAwakeWhileAgentRunning]) {
+        // Setting is off — release any held assertion and return.
+        if (_agentRunningActivity) {
+            RLog(@"keepAwakeWhileAgentRunning disabled; releasing sleep assertion");
+            [_agentRunningActivity release];
+            _agentRunningActivity = nil;
+        }
+        return;
+    }
+
+    NSSet<NSString *> *claudeSessions = [[iTermGlobalJobMonitor instance] sessionGUIDsWithRunningJob:@"claude"];
+    BOOL agentActive = claudeSessions.count > 0;
+    DLog(@"agentRunningDidChange: %lu claude session(s); assertion held=%@",
+         (unsigned long)claudeSessions.count, _agentRunningActivity ? @"YES" : @"NO");
+
+    if (agentActive && !_agentRunningActivity) {
+        RLog(@"keepAwakeWhileAgentRunning: taking idle-sleep assertion (%lu session(s))",
+             (unsigned long)claudeSessions.count);
+        _agentRunningActivity =
+            [[[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityIdleSystemSleepDisabled
+                                                            reason:@"Claude Code agent running"] retain];
+    } else if (!agentActive && _agentRunningActivity) {
+        RLog(@"keepAwakeWhileAgentRunning: releasing idle-sleep assertion (no agent sessions)");
+        [_agentRunningActivity release];
+        _agentRunningActivity = nil;
+    }
+}
+
 - (void)turnOffMetalCaptureEnabledIfNeeded {
     NSString *key = @"MetalCaptureEnabledDate";
     NSNumber *n = [[iTermUserDefaults userDefaults] objectForKey:key];
@@ -1572,6 +1607,16 @@ void TurnOnDebugLoggingAutomatically(void) {
                 [[[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityUserInitiatedAllowingIdleSystemSleep
                                                                 reason:@"User Preference"] retain];
     }
+
+    // Subscribe to agent-running changes so we can prevent idle sleep while
+    // claude is active in any session (when keepAwakeWhileAgentRunning is on).
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(agentRunningDidChange:)
+                                                 name:[iTermGlobalJobMonitor didChangeNotification]
+                                               object:nil];
+    // Seed the assertion with current state in case sessions already exist.
+    [[iTermGlobalJobMonitor instance] replayCurrentState];
+
     [self turnOffMetalCaptureEnabledIfNeeded];
     [iTermFontPanel makeDefault];
 

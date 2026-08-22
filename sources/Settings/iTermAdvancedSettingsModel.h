@@ -170,6 +170,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)detectPasswordInputDebounce;
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;
 + (BOOL)disableAppNap;
++ (BOOL)keepAwakeWhileAgentRunning;
 + (BOOL)disableCustomBoxDrawing;
 + (BOOL)disableDECRQCRA;
 + (BOOL)disableDocumentedEditedIndicator;

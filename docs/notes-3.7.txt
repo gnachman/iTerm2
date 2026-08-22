@@ -2534,3 +2534,10 @@ Bug Fixes:
   built-in model list from iterm2.com (off by
   default), with an Update Now button to check
   on demand.
+- New advanced setting "Prevent idle sleep
+  while a Claude Code agent is running"
+  (on by default). iTerm2 holds a power
+  assertion while claude appears in any
+  session's process ancestry, preventing
+  the Mac from sleeping due to inactivity.
+  User-initiated sleep is unaffected.
