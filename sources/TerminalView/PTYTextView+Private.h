@@ -112,5 +112,9 @@ NSPopoverDelegate> {
 // Interactive features (cursor, selection, marks) are disabled.
 - (iTermTextDrawingHelper *)newDrawingHelperForOffscreenRendering;
 
+// Converts a visual grid coordinate to the logical one the selection model
+// uses. A no-op unless the line is bidi-reordered.
+- (VT100GridCoord)logicalCoordForVisualCoord:(VT100GridCoord)visualCoord;
+
 @end
 

@@ -3984,6 +3984,20 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 }
 
 // Returns YES if the selection changed.
+// The mouse reports the column it physically points at (visual). On a
+// bidi-reordered line that differs from the logical cell the selection model
+// stores, which is why a right-to-left selection used to highlight the wrong
+// cells. Returns the input unchanged when bidi is off or the line has no
+// reordering, so left-to-right text is untouched.
+- (VT100GridCoord)logicalCoordForVisualCoord:(VT100GridCoord)visualCoord {
+    if (![iTermPreferences bidiEnabled]) {
+        return visualCoord;
+    }
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+    extractor.supportBidi = YES;
+    return [extractor logicalCoordForVisualCoord:visualCoord];
+}
+
 - (BOOL)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView {
     if (!_selection.live) {
         return NO;
@@ -3992,15 +4006,32 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     DLog(@"Move selection endpoint to %d,%d, coord=%@",
          x, y, [NSValue valueWithPoint:locationInTextView]);
     int width = [_dataSource width];
+    BOOL completingPreviousLine = NO;
     if (locationInTextView.y == 0) {
         x = y = 0;
     } else if (locationInTextView.x < [iTermPreferences sideMargins] && _selection.liveRange.coordRange.start.y < y) {
         // complete selection of previous line
+        completingPreviousLine = YES;
         x = width;
         y--;
     }
-    if (y >= [_dataSource numberOfLines]) {
-        y = [_dataSource numberOfLines] - 1;
+    const int numberOfLines = [_dataSource numberOfLines];
+    if (y >= numberOfLines) {
+        y = numberOfLines - 1;
+    }
+    // The x above is a VISUAL coordinate. Character selections are VISUAL on
+    // bidi lines: the live range stores the columns the user dragged over,
+    // the highlight converts per line, and endLiveSelection decomposes into
+    // logical subselections, so x passes through untouched. Word and line
+    // modes expand from the logical cell, so convert for them; a no-op on
+    // left-to-right lines. Only convert for an on-screen line: selection
+    // auto-scroll can pass a y below the top (negative) or an empty buffer
+    // can leave y = -1, and fetching that line to read its bidi info would
+    // assert.
+    if (!completingPreviousLine && y >= 0 && y < numberOfLines &&
+        _selection.selectionMode != kiTermSelectionModeCharacter &&
+        x >= 0 && x < width) {
+        x = [self logicalCoordForVisualCoord:VT100GridCoordMake(x, y)].x;
     }
     const BOOL hasColumnWindow = (_selection.liveRange.columnWindow.location > 0 ||
                                   _selection.liveRange.columnWindow.length < width);
@@ -4045,7 +4076,13 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                     range:(VT100GridWindowedRange *)rangePtr
           respectDividers:(BOOL)respectDividers {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
-    extractor.supportBidi = [iTermPreferences bidiEnabled];
+    // The caller (word selection) passes a coordinate that has already been
+    // converted from visual to logical. Run the extractor in logical space
+    // (supportBidi off) so it neither re-converts the input (which would land on
+    // the mirror-image cell) nor converts the result back to visual. That keeps
+    // the returned word range logical, matching how the selection is stored,
+    // highlighted, and copied.
+    extractor.supportBidi = NO;
     VT100GridCoord coord = VT100GridCoordMake(x, y);
     if (respectDividers) {
         [extractor restrictToLogicalWindowIncludingCoord:coord];
@@ -6252,6 +6289,37 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     [self.delegate textViewLiveSelectionDidEnd];
 }
 
+- (NSIndexSet *)selectionLogicalIndexesForVisualRange:(NSRange)visualRange
+                                       onAbsoluteLine:(long long)absLine {
+    const long long line = absLine - _dataSource.totalScrollbackOverflow;
+    if (line < 0 || line > INT_MAX || ![iTermPreferences bidiEnabled]) {
+        return [NSIndexSet indexSetWithIndexesInRange:visualRange];
+    }
+    iTermBidiDisplayInfo *bidi = [_dataSource bidiInfoForLine:line];
+    if (!bidi) {
+        return [NSIndexSet indexSetWithIndexesInRange:visualRange];
+    }
+    NSMutableIndexSet *logical = [NSMutableIndexSet indexSet];
+    const NSUInteger count = bidi.numberOfCells;
+    for (NSUInteger v = visualRange.location; v < NSMaxRange(visualRange); v++) {
+        if (v < count) {
+            [logical addIndex:[bidi logicalForVisual:(int)v]];
+        } else {
+            // Beyond the mapped cells: identity, like a left-to-right line.
+            [logical addIndex:v];
+        }
+    }
+    return logical;
+}
+
+- (BOOL)selectionParagraphIsRTLOnAbsoluteLine:(long long)absLine {
+    const long long line = absLine - _dataSource.totalScrollbackOverflow;
+    if (line < 0 || line > INT_MAX || ![iTermPreferences bidiEnabled]) {
+        return NO;
+    }
+    return [_dataSource bidiInfoForLine:line].paragraphIsRTL;
+}
+
 - (VT100GridRange)selectionRangeOfTerminalNullsOnAbsoluteLine:(long long)absLineNumber {
     const long long lineNumber = absLineNumber - _dataSource.totalScrollbackOverflow;
     if (lineNumber < 0 || lineNumber > INT_MAX) {
@@ -8260,6 +8328,12 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
                                         Y:coord.y
                        locationInTextView:locationInTextView];
 }
+
+- (VT100GridCoord)mouseHandler:(PTYMouseHandler *)handler
+    logicalCoordForVisualCoord:(VT100GridCoord)visualCoord {
+    return [self logicalCoordForVisualCoord:visualCoord];
+}
+
 
 - (NSString *)mouseHandler:(PTYMouseHandler *)mouseHandler
         stringForUpOrRight:(BOOL)upOrRight  // if NO, then down/left

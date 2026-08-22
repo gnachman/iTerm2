@@ -88,7 +88,13 @@ class SelectionExtractorDelegate: NSObject, iTermSelectionDelegate {
         return realDelegate!.selectionIndexes(onAbsoluteLine: line, containingCharacter: c, in: range)
     }
 
+    func selectionLogicalIndexes(forVisualRange visualRange: NSRange, onAbsoluteLine line: Int64) -> IndexSet {
+        return realDelegate!.selectionLogicalIndexes(forVisualRange: visualRange, onAbsoluteLine: line)
+    }
 
+    func selectionParagraphIsRTL(onAbsoluteLine line: Int64) -> Bool {
+        return realDelegate!.selectionParagraphIsRTL(onAbsoluteLine: line)
+    }
 }
 @objc(iTermSelectionExtractor)
 class SelectionExtractor: NSObject {

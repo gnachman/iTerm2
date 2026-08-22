@@ -231,6 +231,7 @@
 #import "SCPPath.h"
 #import "ScreenChar.h"
 #import "ScreenCharArray.h"
+#import "iTermBackgroundColorRun.h"
 #import "SearchResult.h"
 #import "iTermDragHandleView.h"
 #import "iTermFindOnPageHelper.h"

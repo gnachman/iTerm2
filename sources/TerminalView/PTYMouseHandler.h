@@ -55,6 +55,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)mouseHandlerIsScrolledToBottom:(PTYMouseHandler *)handler;
 - (VT100GridCoord)mouseHandlerCoordForPointInWindow:(NSPoint)point;
 - (VT100GridCoord)mouseHandlerCoordForPointInView:(NSPoint)point;
+// Converts a visual grid coordinate (where the mouse physically is) to the
+// logical coordinate the selection model uses. A no-op unless the line is
+// bidi-reordered, so left-to-right text is unaffected.
+- (VT100GridCoord)mouseHandler:(PTYMouseHandler *)handler
+        logicalCoordForVisualCoord:(VT100GridCoord)visualCoord;
+
 - (NSPoint)mouseHandlerReportablePointForPointInView:(NSPoint)point;
 - (void)mouseHandlerMoveCursorToCoord:(VT100GridCoord)coord
                              forEvent:(NSEvent *)event;

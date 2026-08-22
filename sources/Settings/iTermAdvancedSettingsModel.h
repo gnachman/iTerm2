@@ -114,7 +114,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (int)badgeRightMargin;
 + (int)badgeTopMargin;
 + (double)bellRateLimit;
-+ (BOOL)alternateScreenBidi;
 + (BOOL)bordersOnlyInLightMode;
 + (BOOL)bounceOnInactiveBell;
 + (BOOL)bootstrapDaemon;
@@ -166,6 +165,9 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)defaultIconsUsingLetters;
 + (BOOL)defaultWideMode;
 + (BOOL)detectParagraphDirection;
++ (BOOL)isolateLatinRunsInRTL;
++ (int)rtlParagraphMinimumWords;
++ (BOOL)disableBidiInAlternateScreen;
 + (BOOL)detectPasswordInput;
 + (double)detectPasswordInputDebounce;
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;
@@ -600,6 +602,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)viewManPageCommand;
 + (BOOL)wrapFocus;
 + (BOOL)zeroWidthSpaceAdvancesCursor;
++ (BOOL)stripZeroWidthFormatCharactersOnPaste;
 + (BOOL)zippyTextDrawing;
 
 

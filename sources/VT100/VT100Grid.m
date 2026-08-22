@@ -1892,6 +1892,17 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             [self copyExternalAttributesFrom:VT100GridCoordMake(rect.origin.x, sourceIndex)
                                           to:VT100GridCoordMake(rect.origin.x, destIndex)
                                       length:length];
+            // Bidi analysis is gated on rtlFound, so it must travel with the
+            // content. A full-width move replaces the whole row; a partial move
+            // mixes moved and existing content, where a stale YES only costs a
+            // wasted analysis but a stale NO would leave RTL text drawn in
+            // logical order.
+            const BOOL sourceRTL = [self lineInfoAtLineNumber:sourceIndex].metadata.rtlFound;
+            if (rect.origin.x == 0 && rect.size.width == size_.width) {
+                [[self lineInfoAtLineNumber:destIndex] setRTLFound:sourceRTL];
+            } else if (sourceRTL) {
+                [[self lineInfoAtLineNumber:destIndex] setRTLFound:YES];
+            }
 
             sourceIndex -= direction;
             destIndex -= direction;

@@ -5800,7 +5800,7 @@ lengthExcludingInBandSignaling:data.length
 }
 
 - (BOOL)shouldPopulateRTLState {
-    if (self.terminal.softAlternateScreenMode && !iTermAdvancedSettingsModel.alternateScreenBidi) {
+    if (self.terminal.softAlternateScreenMode && iTermAdvancedSettingsModel.disableBidiInAlternateScreen) {
         return NO;
     }
     return self.linebuffer.lastRawLine.metadata.rtlFound || self.currentGrid.mayContainRTL;
@@ -5820,6 +5820,15 @@ lengthExcludingInBandSignaling:data.length
         [prefix makeSafe];
     }
     VT100Grid *grid = self.currentGrid;
+    if (grid == self.altGrid && [iTermAdvancedSettingsModel disableBidiInAlternateScreen]) {
+        // Full-screen apps (editors, some CLIs) position their own text and may
+        // already order it for display. Reordering it again fights their layout,
+        // so leave alternate-screen lines unreordered. Clear any stale bidi info.
+        for (int i = 0; i < grid.size.height; i++) {
+            [grid setBidiInfo:nil forLine:i];
+        }
+        return;
+    }
     const BOOL updateDirtyLinesOnly = ![grid eraseBidiInfoInDirtyLines];
     [grid enumerateParagraphs:^(int line, NSArray<MutableScreenCharArray *> *scas) {
         if (updateDirtyLinesOnly && ![grid anyLineDirtyInRange:NSMakeRange(line, scas.count)]) {
