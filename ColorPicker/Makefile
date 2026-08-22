@@ -13,4 +13,4 @@ endif
 all:
 	xcodebuild -parallelizeTargets -target ColorPicker -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)' $(SIGNING_FLAGS) $(ARCH_FLAGS)
 	rm -rf ColorPicker.framework
-	mv build/Release/ColorPicker.framework .
+	mv Build/Release/ColorPicker.framework .
