@@ -23,6 +23,16 @@ def _send(handler, code, obj):
     handler.end_headers()
     handler.wfile.write(payload)
 
+def _send_html(handler, code, body):
+    # Returns a tunnel/proxy-style HTML error page so the adapter's
+    # connectivity error formatter can be exercised from tests.
+    payload = body.encode("utf-8")
+    handler.send_response(code)
+    handler.send_header("Content-Type", "text/html; charset=utf-8")
+    handler.send_header("Content-Length", str(len(payload)))
+    handler.end_headers()
+    handler.wfile.write(payload)
+
 class H(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         return
@@ -35,6 +45,11 @@ class H(BaseHTTPRequestHandler):
             cmd = body.get("command", "")
             if SCENARIO == "async_error":
                 _send(self, 401, {"error": "bad api key"})
+                return
+            if SCENARIO == "html_error":
+                _send_html(self, 502,
+                           "<!DOCTYPE html><html><head><title>offline</title></head>"
+                           "<body><h1>Endpoint offline</h1><p>The tunnel is not running.</p></body></html>")
                 return
             req_id = str(len(REQUESTS) + 1)
             REQUESTS[req_id] = cmd
@@ -52,11 +67,57 @@ class H(BaseHTTPRequestHandler):
         if "/result/" in self.path:
             req_id = self.path.rsplit("/", 1)[-1]
             cmd = REQUESTS.get(req_id, "")
-            if cmd.startswith("ls "):
-                result = {"command": "ls", "data": {"records": [
-                    {"title": "1  UIDAAAAAAAAAAAAAA  login  Web  user@example.com @ https://testbook.com"},
-                    {"title": "2  UID1234567890123  login  Mysql  hborase@keepersecurity.com @ 127.0.0.1:3366"}
-                ]}}
+            if cmd.startswith("nsf-list"):
+                if SCENARIO == "nsf_list_fail":
+                    _send(self, 200, {"error": "nsf-list unavailable", "status": "error"})
+                    return
+                if SCENARIO == "nsf_list_not_available":
+                    _send(self, 200, {"error": "Nested Shared Folder not available", "status": "error"})
+                    return
+                # Stock Commander without NSF: Service Mode HTTP 400 + Invalid JSON response.
+                if SCENARIO == "nsf_list_invalid_json":
+                    _send(self, 400, {"command": "nsf-list --records", "data": None,
+                                    "error": "Invalid JSON response", "status": "error"})
+                    return
+                nsf_data = [
+                    {"Item Type": "Folder", "Parent/Folder": "",
+                     "Title": "NewDemoFolder", "Type": "folder",
+                     "UID": "FOLDERUID123456789"},
+                    {"Item Type": "Record", "Parent/Folder": "NewDemoFolder",
+                     "Title": "DemoNsfRecord", "Type": "login",
+                     "UID": "UIDNSF1234567890"},
+                ]
+                if SCENARIO == "duplicate_uid":
+                    nsf_data.append(
+                        {"Item Type": "Record", "Parent/Folder": "NewDemoFolder",
+                         "Title": "DupShared", "Type": "login",
+                         "UID": "UIDDUP12345678901"})
+                result = {
+                    "command": "nsf-list --records",
+                    "status": "success",
+                    "data": nsf_data,
+                }
+                _send(self, 200, {"status": "success", "result": json.dumps(result)})
+                return
+            if cmd.startswith("list "):
+                list_data = [
+                    {"description": "user@example.com @ https://testbook.com",
+                     "record_category": "Classic", "record_uid": "UIDAAAAAAAAAAAAAA",
+                     "shared": True, "title": "Web", "type": "login"},
+                    {"description": "hborase@keepersecurity.com @ 127.0.0.1:3366",
+                     "record_category": "Classic", "record_uid": "UID1234567890123",
+                     "shared": True, "title": "Mysql", "type": "login"},
+                ]
+                if SCENARIO == "duplicate_uid":
+                    list_data.append(
+                        {"description": "dup@example.com",
+                         "record_category": "Classic", "record_uid": "UIDDUP12345678901",
+                         "shared": True, "title": "DupShared", "type": "login"})
+                result = {
+                    "command": "list",
+                    "status": "success",
+                    "data": list_data,
+                }
                 _send(self, 200, {"status": "success", "result": json.dumps(result)})
                 return
             if " --format=json" in cmd and cmd.startswith("get "):
@@ -65,16 +126,42 @@ class H(BaseHTTPRequestHandler):
             if " --format=password" in cmd and cmd.startswith("get "):
                 _send(self, 200, "pw-123")
                 return
-            if cmd.startswith("record-update "):
+            if cmd.startswith("record-update ") or cmd.startswith("nsf-record-update "):
                 if SCENARIO == "set_password_error":
                     _send(self, 200, {"error": "password invalid"})
+                elif SCENARIO == "classic_update_false_success" and cmd.startswith("record-update "):
+                    # Mimic live Commander: classic update returns success for NSF UIDs without effect.
+                    _send(self, 200, {"status": "success", "message": ["no-op"]})
+                elif SCENARIO == "classic_update_false_success" and cmd.startswith("nsf-record-update "):
+                    _send(self, 200, {"status": "success", "message": "nested-updated"})
                 else:
                     _send(self, 200, {"status": "success"})
+                return
+            if cmd.startswith("nsf-record-add "):
+                if SCENARIO == "nsf_add_fail":
+                    _send(self, 200, {"error": "Nested Shared Folder not available", "status": "error"})
+                    return
+                if SCENARIO == "nsf_add_generic_fail":
+                    _send(self, 200, {"error": "temporary server error", "status": "error"})
+                    return
+                if SCENARIO == "nsf_add_invalid_json":
+                    _send(self, 400, {"command": "nsf-record-add", "data": None,
+                                    "error": "Invalid JSON response", "status": "error"})
+                    return
+                _send(self, 200, {
+                    "command": "nsf-record-add",
+                    "data": None,
+                    "message": "Record NSFUID1234567890123456 was added successfully.",
+                    "status": "success",
+                })
                 return
             if cmd.startswith("record-add "):
                 _send(self, 200, {"status": "success", "data": {"record_uid": "NEWUID1234567890"}})
                 return
-            if cmd.startswith("rm -f "):
+            if cmd.startswith("rm -f ") or cmd.startswith("nsf-rm "):
+                if SCENARIO == "classic_rm_nsf_error" and cmd.startswith("rm -f "):
+                    _send(self, 200, {"error": "out_of_sync: This object no longer exists.", "status": "error"})
+                    return
                 _send(self, 200, {"status": "success"})
                 return
             if cmd == "sync-down":
@@ -128,6 +215,8 @@ server.serve_forever()
         let process = Process()
         process.executableURL = adapterURL
         process.arguments = [subcommand]
+        let env = ProcessInfo.processInfo.environment
+        process.environment = env
 
         let stdin = Pipe()
         let output = Pipe()
@@ -165,6 +254,30 @@ server.serve_forever()
         XCTAssertEqual(json?["name"] as? String, "Keeper Security")
     }
 
+    func testHandshakeDeclaresClassicPermissionToggle() throws {
+        let input = #"{"iTermVersion":"3.5.0","minProtocolVersion":0,"maxProtocolVersion":0}"#
+        let result = try run("handshake", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let toggles = try XCTUnwrap(json["addAccountToggles"] as? [[String: Any]])
+        XCTAssertEqual(toggles.count, 1)
+        XCTAssertEqual(toggles[0]["key"] as? String, "useClassicPermission")
+        XCTAssertEqual(toggles[0]["label"] as? String, "Use classic permission model")
+        XCTAssertEqual(toggles[0]["defaultValue"] as? Bool, false)
+    }
+
+    func testHandshakeDeclaresServiceURLOnlyInSettings() throws {
+        let input = #"{"iTermVersion":"3.5.0","minProtocolVersion":0,"maxProtocolVersion":0}"#
+        let result = try run("handshake", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let fields = try XCTUnwrap(json["settingsFields"] as? [[String: Any]])
+        XCTAssertEqual(fields.count, 1)
+        XCTAssertEqual(fields[0]["key"] as? String, "serviceURL")
+        XCTAssertEqual(json["masterPasswordLabel"] as? String, "API key")
+        XCTAssertEqual(json["requiresMasterPassword"] as? Bool, true)
+    }
+
     func testHandshakeRejectsNegativeProtocol() throws {
         let input = #"{"iTermVersion":"3.5.0","minProtocolVersion":0,"maxProtocolVersion":-1}"#
         let result = try run("handshake", input: input)
@@ -190,9 +303,47 @@ server.serve_forever()
         XCTAssertEqual(result.status, 0, result.output)
         let json = try decodeJSON(result.output)
         let accounts = try XCTUnwrap(json["accounts"] as? [[String: Any]])
-        XCTAssertEqual(accounts.count, 2)
+        XCTAssertEqual(accounts.count, 3)
+        XCTAssertEqual(accounts[0]["accountName"] as? String, "Web")
+        XCTAssertEqual(accounts[0]["sourceLabel"] as? String, "Classic")
         XCTAssertEqual(accounts[0]["userName"] as? String, "user@example.com")
+        XCTAssertEqual((accounts[0]["identifier"] as? [String: Any])?["accountID"] as? String,
+                       "UIDAAAAAAAAAAAAAA")
+        XCTAssertEqual(accounts[1]["accountName"] as? String, "Mysql")
+        XCTAssertEqual(accounts[1]["sourceLabel"] as? String, "Classic")
         XCTAssertEqual(accounts[1]["userName"] as? String, "hborase@keepersecurity.com")
+        XCTAssertEqual((accounts[1]["identifier"] as? [String: Any])?["accountID"] as? String,
+                       "UID1234567890123")
+        XCTAssertEqual(accounts[2]["accountName"] as? String, "DemoNsfRecord")
+        XCTAssertEqual(accounts[2]["sourceLabel"] as? String, "Nested")
+        XCTAssertEqual(accounts[2]["userName"] as? String, "")
+        XCTAssertEqual((accounts[2]["identifier"] as? [String: Any])?["accountID"] as? String,
+                       "UIDNSF1234567890")
+    }
+
+    func testListAccountsExcludesNsfFolders() throws {
+        let server = try MockKeeperServer()
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())"}"#
+        let result = try run("list-accounts", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let accounts = try XCTUnwrap(json["accounts"] as? [[String: Any]])
+        XCTAssertEqual(accounts.count, 3)
+        XCTAssertFalse(accounts.contains { ($0["accountName"] as? String)?.contains("NewDemoFolder") == true })
+    }
+
+    func testListAccountsPrefersListForDuplicateUid() throws {
+        let server = try MockKeeperServer(scenario: "duplicate_uid")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())"}"#
+        let result = try run("list-accounts", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let accounts = try XCTUnwrap(json["accounts"] as? [[String: Any]])
+        let dup = try XCTUnwrap(accounts.first { account in
+            ((account["identifier"] as? [String: Any])?["accountID"] as? String) == "UIDDUP12345678901"
+        })
+        XCTAssertEqual(dup["accountName"] as? String, "DupShared")
+        XCTAssertEqual(dup["sourceLabel"] as? String, "Classic")
     }
 
     func testGetPasswordSuccess() throws {
@@ -206,13 +357,87 @@ server.serve_forever()
 
     func testSetPasswordSuccess() throws {
         let server = try MockKeeperServer()
-        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"newPassword":"new-pass"}"#
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"sourceLabel":"Classic","newPassword":"new-pass"}"#
         let result = try run("set-password", input: input)
         XCTAssertEqual(result.status, 0, result.output)
     }
 
-    func testAddAccountSuccess() throws {
+    func testSetPasswordFailsWhenSourceLabelMissing() throws {
         let server = try MockKeeperServer()
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"newPassword":"new-pass"}"#
+        let result = try run("set-password", input: input)
+        XCTAssertNotEqual(result.status, 0, result.output)
+    }
+
+    func testAddAccountClassicPermissionUsesRecordAdd() throws {
+        let server = try MockKeeperServer()
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","userName":"user@example.com","accountName":"Example","password":"new-pass","flags":{"useClassicPermission":true}}"#
+        let result = try run("add-account", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let accountIdentifier = try XCTUnwrap(json["accountIdentifier"] as? [String: Any])
+        XCTAssertEqual(accountIdentifier["accountID"] as? String, "NEWUID1234567890")
+    }
+
+    func testAddAccountNestedSharedFoldersUsesNsfRecordAdd() throws {
+        let server = try MockKeeperServer()
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","userName":"user@example.com","accountName":"Example","password":"new-pass","flags":{"useClassicPermission":false}}"#
+        let result = try run("add-account", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let accountIdentifier = try XCTUnwrap(json["accountIdentifier"] as? [String: Any])
+        XCTAssertEqual(accountIdentifier["accountID"] as? String, "NSFUID1234567890123456")
+    }
+
+    func testAddAccountDefaultsToNestedSharedFolders() throws {
+        let server = try MockKeeperServer()
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","userName":"user@example.com","accountName":"Example","password":"new-pass"}"#
+        let result = try run("add-account", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let accountIdentifier = try XCTUnwrap(json["accountIdentifier"] as? [String: Any])
+        XCTAssertEqual(accountIdentifier["accountID"] as? String, "NSFUID1234567890123456")
+    }
+
+    func testSetPasswordOnNestedRecordUsesNsfRecordUpdate() throws {
+        // Bare UID + sourceLabel (production shape). Classic would return false success;
+        // nested-only routing must still succeed via nsf-record-update.
+        let server = try MockKeeperServer(scenario: "classic_update_false_success")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UIDNSF1234567890"},"sourceLabel":"Nested","newPassword":"new-pass"}"#
+        let result = try run("set-password", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+    }
+
+    func testSetPasswordOnClassicRecordUsesRecordUpdate() throws {
+        let server = try MockKeeperServer()
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"sourceLabel":"Classic","newPassword":"new-pass"}"#
+        let result = try run("set-password", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+    }
+
+    func testDeleteAccountSuccess() throws {
+        let server = try MockKeeperServer()
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"sourceLabel":"Classic"}"#
+        let result = try run("delete-account", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+    }
+
+    func testDeleteAccountOnClassicRecordUsesRm() throws {
+        let server = try MockKeeperServer()
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"sourceLabel":"Classic"}"#
+        let result = try run("delete-account", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+    }
+
+    func testDeleteAccountOnNestedRecordUsesNsfRm() throws {
+        let server = try MockKeeperServer(scenario: "classic_rm_nsf_error")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UIDNSF1234567890"},"sourceLabel":"Nested"}"#
+        let result = try run("delete-account", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+    }
+
+    func testAddAccountFallsBackToClassicWhenNsfAddFails() throws {
+        let server = try MockKeeperServer(scenario: "nsf_add_fail")
         let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","userName":"user@example.com","accountName":"Example","password":"new-pass"}"#
         let result = try run("add-account", input: input)
         XCTAssertEqual(result.status, 0, result.output)
@@ -221,11 +446,53 @@ server.serve_forever()
         XCTAssertEqual(accountIdentifier["accountID"] as? String, "NEWUID1234567890")
     }
 
-    func testDeleteAccountSuccess() throws {
-        let server = try MockKeeperServer()
-        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"}}"#
-        let result = try run("delete-account", input: input)
+    func testAddAccountDoesNotFallBackOnGenericNsfError() throws {
+        let server = try MockKeeperServer(scenario: "nsf_add_generic_fail")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","userName":"user@example.com","accountName":"Example","password":"new-pass"}"#
+        let result = try run("add-account", input: input)
+        XCTAssertNotEqual(result.status, 0, result.output)
+    }
+
+    func testListAccountsWarnsWhenNsfListFails() throws {
+        let server = try MockKeeperServer(scenario: "nsf_list_fail")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())"}"#
+        let result = try run("list-accounts", input: input)
         XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let accounts = try XCTUnwrap(json["accounts"] as? [[String: Any]])
+        XCTAssertEqual(accounts.count, 2)
+        let warning = try XCTUnwrap(json["warning"] as? String)
+        XCTAssertTrue(warning.contains("Nested Shared Folder"), warning)
+    }
+
+    func testListAccountsOmitsWarningWhenNsfUnavailable() throws {
+        let server = try MockKeeperServer(scenario: "nsf_list_not_available")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())"}"#
+        let result = try run("list-accounts", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        XCTAssertNil(json["warning"] as? String)
+    }
+
+    func testListAccountsOmitsWarningWhenNsfReturnsInvalidJSON() throws {
+        let server = try MockKeeperServer(scenario: "nsf_list_invalid_json")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())"}"#
+        let result = try run("list-accounts", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let accounts = try XCTUnwrap(json["accounts"] as? [[String: Any]])
+        XCTAssertEqual(accounts.count, 2)
+        XCTAssertNil(json["warning"] as? String)
+    }
+
+    func testAddAccountFallsBackToClassicWhenNsfReturnsInvalidJSON() throws {
+        let server = try MockKeeperServer(scenario: "nsf_add_invalid_json")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","userName":"user@example.com","accountName":"Example","password":"new-pass"}"#
+        let result = try run("add-account", input: input)
+        XCTAssertEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let accountIdentifier = try XCTUnwrap(json["accountIdentifier"] as? [String: Any])
+        XCTAssertEqual(accountIdentifier["accountID"] as? String, "NEWUID1234567890")
     }
 
     func testKeeperSyncDownSuccess() throws {
@@ -253,9 +520,37 @@ server.serve_forever()
         XCTAssertEqual(json["error"] as? String, "bad api key")
     }
 
+    func testLoginHTMLErrorPageReturnsActionableMessage() throws {
+        let server = try MockKeeperServer(scenario: "html_error")
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"masterPassword":"api-key"}"#
+        let result = try run("login", input: input)
+        XCTAssertNotEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let err = (json["error"] as? String) ?? ""
+        XCTAssertTrue(err.contains("HTML error page"), "Expected HTML-detection prefix, got: \(err)")
+        XCTAssertTrue(err.contains("Update your Service URL and API key"), "Expected actionable advice, got: \(err)")
+        XCTAssertFalse(err.contains("<html"), "Raw HTML should not leak into the user-facing error: \(err)")
+    }
+
+    func testLoginUnreachableServerReturnsActionableMessage() throws {
+        let unreachableURL = "http://127.0.0.1:1"
+        let input = #"{"header":\#(header(unreachableURL)),"userAccountID":null,"masterPassword":"api-key"}"#
+        let started = Date()
+        let result = try run("login", input: input)
+        let elapsed = Date().timeIntervalSince(started)
+        XCTAssertNotEqual(result.status, 0, result.output)
+        let json = try decodeJSON(result.output)
+        let err = (json["error"] as? String) ?? ""
+        XCTAssertTrue(err.contains("Update your Service URL and API key"),
+                      "Expected actionable advice, got: \(err)")
+        XCTAssertFalse(err == "The request timed out.",
+                       "Raw NSURLError string should be replaced with an actionable message: \(err)")
+        XCTAssertLessThan(elapsed, 60, "Login against a dead server should fail fast, took \(elapsed)s")
+    }
+
     func testSetPasswordErrorMapsToUserFacingMessage() throws {
         let server = try MockKeeperServer(scenario: "set_password_error")
-        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"newPassword":"new-pass"}"#
+        let input = #"{"header":\#(header(server.baseURL)),"userAccountID":null,"token":"\#(token())","accountIdentifier":{"accountID":"UID1234567890123"},"sourceLabel":"Classic","newPassword":"new-pass"}"#
         let result = try run("set-password", input: input)
         XCTAssertNotEqual(result.status, 0, result.output)
         let json = try decodeJSON(result.output)
