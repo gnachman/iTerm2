@@ -53,7 +53,7 @@ This exploits a quirk of Python that functions are capable of having values
 attached to them in this way.
 
 Registered RPCs like this one exist in a single global name space. An RPC is
-identified by the combination of its name (`clear_all_sessions`, in thise case)
+identified by the combination of its name (`clear_all_sessions`, in this case)
 and its arguments' names, ignoring their order. Keep this in mind to avoid
 naming conflicts. Python's reflection features are used to determine the
 function's name and argument names.
