@@ -1466,31 +1466,38 @@ void TurnOnDebugLoggingAutomatically(void) {
 }
 
 - (void)agentRunningDidChange:(NSNotification *)notification {
-    if (![iTermAdvancedSettingsModel keepAwakeWhileAgentRunning]) {
-        // Setting is off — release any held assertion and return.
-        if (_agentRunningActivity) {
-            RLog(@"keepAwakeWhileAgentRunning disabled; releasing sleep assertion");
-            [_agentRunningActivity release];
-            _agentRunningActivity = nil;
-        }
-        return;
-    }
-
     NSSet<NSString *> *claudeSessions = [[iTermGlobalJobMonitor instance] sessionGUIDsWithRunningJob:@"claude"];
     BOOL agentActive = claudeSessions.count > 0;
     DLog(@"agentRunningDidChange: %lu claude session(s); assertion held=%@",
          (unsigned long)claudeSessions.count, _agentRunningActivity ? @"YES" : @"NO");
 
-    if (agentActive && !_agentRunningActivity) {
-        RLog(@"keepAwakeWhileAgentRunning: taking idle-sleep assertion (%lu session(s))",
-             (unsigned long)claudeSessions.count);
+    // Build the options mask from whichever toggles are on.
+    NSActivityOptions options = 0;
+    if ([iTermAdvancedSettingsModel keepAwakeWhileAgentRunning]) {
+        options |= NSActivityIdleSystemSleepDisabled;
+    }
+    if ([iTermAdvancedSettingsModel keepDisplayAwakeWhileAgentRunning]) {
+        options |= NSActivityIdleDisplaySleepDisabled;
+    }
+
+    if (agentActive && options != 0 && !_agentRunningActivity) {
+        RLog(@"keepAwakeWhileAgentRunning: taking assertion (options=%lu, %lu session(s))",
+             (unsigned long)options, (unsigned long)claudeSessions.count);
         _agentRunningActivity =
-            [[[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityIdleSystemSleepDisabled | NSActivityIdleDisplaySleepDisabled
+            [[[NSProcessInfo processInfo] beginActivityWithOptions:options
                                                             reason:@"Claude Code agent running"] retain];
-    } else if (!agentActive && _agentRunningActivity) {
-        RLog(@"keepAwakeWhileAgentRunning: releasing idle-sleep assertion (no agent sessions)");
+    } else if ((!agentActive || options == 0) && _agentRunningActivity) {
+        RLog(@"keepAwakeWhileAgentRunning: releasing assertion");
         [_agentRunningActivity release];
         _agentRunningActivity = nil;
+        // Re-take with updated options if agent is still active but options changed.
+        if (agentActive && options != 0) {
+            RLog(@"keepAwakeWhileAgentRunning: re-taking assertion with new options=%lu",
+                 (unsigned long)options);
+            _agentRunningActivity =
+                [[[NSProcessInfo processInfo] beginActivityWithOptions:options
+                                                                reason:@"Claude Code agent running"] retain];
+        }
     }
 }
 
