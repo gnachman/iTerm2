@@ -1485,7 +1485,7 @@ void TurnOnDebugLoggingAutomatically(void) {
         RLog(@"keepAwakeWhileAgentRunning: taking idle-sleep assertion (%lu session(s))",
              (unsigned long)claudeSessions.count);
         _agentRunningActivity =
-            [[[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityIdleSystemSleepDisabled
+            [[[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityIdleSystemSleepDisabled | NSActivityIdleDisplaySleepDisabled
                                                             reason:@"Claude Code agent running"] retain];
     } else if (!agentActive && _agentRunningActivity) {
         RLog(@"keepAwakeWhileAgentRunning: releasing idle-sleep assertion (no agent sessions)");

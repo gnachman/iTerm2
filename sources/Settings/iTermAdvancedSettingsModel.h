@@ -171,6 +171,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)disableAdaptiveFrameRateInInteractiveApps;
 + (BOOL)disableAppNap;
 + (BOOL)keepAwakeWhileAgentRunning;
++ (BOOL)keepDisplayAwakeWhileAgentRunning;
 + (BOOL)disableCustomBoxDrawing;
 + (BOOL)disableDECRQCRA;
 + (BOOL)disableDocumentedEditedIndicator;
