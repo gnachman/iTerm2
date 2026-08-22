@@ -2541,3 +2541,6 @@ Bug Fixes:
   session's process ancestry, preventing
   the Mac from sleeping due to inactivity.
   User-initiated sleep is unaffected.
+- In orchestration chats, a session reference
+  the AI writes without a leading @ now still
+  renders as a clickable session link.
