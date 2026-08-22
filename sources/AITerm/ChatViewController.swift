@@ -1208,9 +1208,14 @@ extension ChatViewController {
         try client.publishNotice(
             chatID: chatID,
             notice: "This chat has been linked to \(terminal ? "terminal" : "web browser") session “\(name?.escapedForMarkdownCode ?? "(Unnamed session)")”")
+        // Carry the reference (stableID), NOT the raw guid: the toggle handler
+        // and the button-label renderer both key permissions off
+        // model.terminalSessionGuid/browserSessionGuid, which store `reference`.
+        // Publishing the raw guid here would split the keyspace so the label
+        // read never sees what the toggle write stored.
         try? client.publishClientLocalMessage(
             chatID: chatID,
-            action: .permissions(terminal: terminal, guid: guid))
+            action: .permissions(terminal: terminal, guid: reference))
         try publishUpdatedPermissions()
     }
 

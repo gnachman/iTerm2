@@ -81,6 +81,12 @@ Major New Features:
   they harmonize with any theme. Off by
   default.
 
+- Fixed a bug where an AI chat permission
+  button (such as “Check terminal state”)
+  did not update its label after you changed
+  the setting, and re-clicking it appeared to
+  do nothing.
+
 - Fixed a bug where the top-right session
   indicators left a horizontal smear while
   swiping between tabs with two fingers.
