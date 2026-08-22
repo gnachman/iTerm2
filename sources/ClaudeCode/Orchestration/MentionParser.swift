@@ -29,6 +29,24 @@ enum MentionParser {
     private static let regex = try! NSRegularExpression(
         pattern: "@(session:|wg-)?(\(idPattern))(?![0-9A-Za-z-])",
         options: [.caseInsensitive])
+    // Same shape but with an optional "@". Used only when the caller opts in
+    // (a message authored by the AI, which sometimes drops the "@"). A bare
+    // match this admits is further gated below to the self-validating stableID
+    // form so a stray UUID in prose is never mistaken for a mention.
+    private static let regexOptionalAt = try! NSRegularExpression(
+        pattern: "@?(session:|wg-)?(\(idPattern))(?![0-9A-Za-z-])",
+        options: [.caseInsensitive])
+
+    private static let atSignChar = unichar(UInt8(ascii: "@"))
+
+    // A bare mention must not be glued to the preceding character (so a stableID
+    // embedded in a longer token isn't clipped out as a mention). "@"-signed
+    // mentions rely on the "@" as their own left boundary and skip this.
+    private static let boundaryExcluded: CharacterSet = {
+        var set = CharacterSet.alphanumerics
+        set.insert(charactersIn: "_-")
+        return set
+    }()
 
     struct Mention {
         /// The whole match including the "@", in the searched string's UTF-16
@@ -43,22 +61,52 @@ enum MentionParser {
         var identifier: String { (prefix ?? "") + token }
     }
 
-    static func mentions(in string: String) -> [Mention] {
+    /// Finds every mention in `string`.
+    ///
+    /// When `atSignOptional` is true (the message was authored by the AI, which
+    /// sometimes forgets the "@"), a mention may also appear with no leading
+    /// "@". To keep false positives out of ordinary prose, such a bare match is
+    /// admitted only when it is a self-validating stableID (the checksummed
+    /// `ptys_...` form) with no prefix and a clean left boundary; a bare UUID or
+    /// a bare "session:"/"wg-" form still requires the "@". An "@"-signed
+    /// mention behaves identically regardless of this flag.
+    static func mentions(in string: String, atSignOptional: Bool = false) -> [Mention] {
         let ns = string as NSString
         let fullRange = NSRange(location: 0, length: ns.length)
-        return regex.matches(in: string, range: fullRange).map { match in
+        let re = atSignOptional ? regexOptionalAt : regex
+        return re.matches(in: string, range: fullRange).compactMap { match -> Mention? in
             let prefixRange = match.range(at: 1)
+            let hasPrefix = prefixRange.location != NSNotFound
             let rawToken = ns.substring(with: match.range(at: 2))
             // A stableID matched case-insensitively (or with Crockford
             // confusables) is folded to canonical form so its identifier is
             // stable for claim-scope comparison; a UUID is left verbatim.
-            let token = StableSessionID.canonical(rawToken) ?? rawToken
+            let canonicalStableID = StableSessionID.canonical(rawToken)
+            let atSigned = ns.character(at: match.range.location) == atSignChar
+            if !atSigned {
+                // Bare match (only the optional-@ regex produces these). Accept
+                // only a prefix-less, checksum-valid stableID with a boundary
+                // before it so a UUID or an embedded id isn't picked up.
+                guard !hasPrefix,
+                      canonicalStableID != nil,
+                      hasLeftBoundary(before: match.range.location, in: ns) else {
+                    return nil
+                }
+            }
             return Mention(range: match.range,
-                           prefix: prefixRange.location == NSNotFound
-                               ? nil
-                               : ns.substring(with: prefixRange).lowercased(),
-                           token: token)
+                           prefix: hasPrefix
+                               ? ns.substring(with: prefixRange).lowercased()
+                               : nil,
+                           token: canonicalStableID ?? rawToken)
         }
+    }
+
+    private static func hasLeftBoundary(before location: Int, in ns: NSString) -> Bool {
+        guard location > 0 else { return true }
+        guard let scalar = Unicode.Scalar(ns.character(at: location - 1)) else {
+            return true
+        }
+        return !boundaryExcluded.contains(scalar)
     }
 
     /// Splits a bare identifier (a mention without its "@") into prefix and

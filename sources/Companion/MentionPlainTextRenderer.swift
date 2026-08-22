@@ -22,8 +22,12 @@ enum MentionPlainTextRenderer {
     /// terminal glyph), or "[defunct session]" when `resolve` returns nil for it.
     /// `resolve` takes a mention identifier (the text after "@", e.g. a bare
     /// session guid or "wg-<uuid>") and returns the entity's current name.
-    static func render(_ input: String, resolve: (_ identifier: String) -> String?) -> String {
-        let mentions = MentionParser.mentions(in: input)
+    /// Pass `atSignOptional: true` for AI-authored text, where a stableID the
+    /// model wrote without the leading "@" should still resolve.
+    static func render(_ input: String,
+                       atSignOptional: Bool = false,
+                       resolve: (_ identifier: String) -> String?) -> String {
+        let mentions = MentionParser.mentions(in: input, atSignOptional: atSignOptional)
         guard !mentions.isEmpty else { return input }
 
         let ns = input as NSString

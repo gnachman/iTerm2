@@ -2001,7 +2001,8 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                                 .attributedStringValue(
                                     linkColor: message.linkColor,
                                     textColor: message.textColor,
-                                    renderMentions: chatIsOrchestration))
+                                    renderMentions: chatIsOrchestration,
+                                    atSignOptional: message.author == .agent))
                     case .markdown(let text):
                         MessageRendition.SubpartContainer(
                             kind: .regular,
@@ -2009,13 +2010,14 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                                 .attributedStringValue(
                                     linkColor: message.linkColor,
                                     textColor: message.textColor,
-                                    renderMentions: chatIsOrchestration))
+                                    renderMentions: chatIsOrchestration,
+                                    atSignOptional: message.author == .agent))
                     case .context:
                         nil
                     }
                 })
         default:
-                .regular(.init(attributedString: message.attributedStringValue(renderMentions: chatIsOrchestration),
+                .regular(.init(attributedString: message.attributedStringValue(renderMentions: chatIsOrchestration, atSignOptional: message.author == .agent),
                                buttons: message.buttons,
                                enableButtons: enableButtons,
                                keepsButtonsEnabledAfterClick: message.isPermissionsClientLocal))
@@ -2399,7 +2401,10 @@ fileprivate enum PickSessionButtonIdentifier: String {
 extension Message.Content {
     func attributedStringValue(linkColor: NSColor,
                                textColor: NSColor,
-                               renderMentions: Bool = false) -> NSAttributedString {
+                               renderMentions: Bool = false,
+                               // True for AI-authored text, where the "@" on a
+                               // stableID mention is treated as optional.
+                               atSignOptional: Bool = false) -> NSAttributedString {
         switch self {
         case .multipart:
             it_fatalError()  // TODO: This will be hit. We need a different cell type for multipart messages.
@@ -2441,7 +2446,7 @@ extension Message.Content {
             guard renderMentions else {
                 return rendered
             }
-            return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor)
+            return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor, atSignOptional: atSignOptional)
         case .markdown(let string), .explanationResponse(_, _, let string):
             let rendered = AttributedStringForGPTMarkdown(
                 ChatViewController.trimLeadingWhitespaceForDisplay(string),
@@ -2454,7 +2459,7 @@ extension Message.Content {
             guard renderMentions else {
                 return rendered
             }
-            return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor)
+            return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor, atSignOptional: atSignOptional)
         case .explanationRequest(request: let request):
             let string =
             if let url = request.url {
@@ -2494,7 +2499,7 @@ extension Message.Content {
                 // carries become clickable links (or "[defunct session]"
                 // once the target is gone).
                 let rendered = AttributedStringForSystemMessageMarkdown(ext.markdownDescription) {}
-                return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor)
+                return OrchestrationMentionRenderer.link(rendered, linkColor: linkColor, atSignOptional: atSignOptional)
             }
         case .remoteCommandResponse(let response, _, _, _):
             switch response {
@@ -2739,10 +2744,11 @@ extension Message {
         }
     }
 
-    func attributedStringValue(renderMentions: Bool) -> NSAttributedString {
+    func attributedStringValue(renderMentions: Bool, atSignOptional: Bool = false) -> NSAttributedString {
         return content.attributedStringValue(linkColor: linkColor,
                                              textColor: textColor,
-                                             renderMentions: renderMentions)
+                                             renderMentions: renderMentions,
+                                             atSignOptional: atSignOptional)
     }
 }
 
