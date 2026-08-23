@@ -38,6 +38,7 @@ typedef struct {
     NSDictionary<NSString *, BOOL (^)(id)> *validationBlocks;
     NSDictionary<NSString *, id (^)(id)> *conversionBlocks;
     NSDictionary<NSString *, NSString *> *typeHelp;
+    NSSet<NSString *> *colorKeys;
 } iTermProfilePreferencesKeyFuncs;
 
 @implementation iTermProfilePreferences
@@ -218,6 +219,72 @@ typedef struct {
     return self.keyFuncs.typeHelp[key];
 }
 
++ (BOOL)colorKeyHonorsAlpha:(NSString *)key {
+    return ([key hasPrefix:KEY_BADGE_COLOR] || [key hasPrefix:KEY_CURSOR_GUIDE_COLOR]);
+}
+
++ (BOOL)keyIsColor:(NSString *)key {
+    return [self.keyFuncs.colorKeys containsObject:key];
+}
+
++ (NSString *)baseColorKeyForKey:(NSString *)key {
+    for (NSString *suffix in @[ COLORS_LIGHT_MODE_SUFFIX, COLORS_DARK_MODE_SUFFIX ]) {
+        if ([key hasSuffix:suffix]) {
+            return [key substringToIndex:key.length - suffix.length];
+        }
+    }
+    return key;
+}
+
++ (NSArray<NSString *> *)colorVariantKeysForBaseKey:(NSString *)baseKey {
+    return @[ baseKey,
+              [baseKey stringByAppendingString:COLORS_LIGHT_MODE_SUFFIX],
+              [baseKey stringByAppendingString:COLORS_DARK_MODE_SUFFIX] ];
+}
+
+// A KEY_BINDINGS value is either a plain expression string (user-authored) or a
+// dictionary { expression, owner } that this feature writes to record ownership,
+// so palette-created bindings can be told from user-created ones without guessing
+// from the expression text.
+static NSString *const iTermBindingExpressionKey = @"expression";
+static NSString *const iTermBindingOwnerKey = @"owner";
+static NSString *const iTermBindingOwnerPalette = @"palette";
+
++ (NSString *)expressionForBindingValue:(id)value {
+    if ([value isKindOfClass:[NSString class]]) {
+        return value;
+    }
+    if ([value isKindOfClass:[NSDictionary class]]) {
+        return [NSString castFrom:value[iTermBindingExpressionKey]];
+    }
+    return nil;
+}
+
++ (BOOL)bindingValueIsPaletteOwned:(id)value {
+    return ([value isKindOfClass:[NSDictionary class]] &&
+            [value[iTermBindingOwnerKey] isEqual:iTermBindingOwnerPalette]);
+}
+
++ (id)paletteBindingValueWithExpression:(NSString *)expression {
+    return @{ iTermBindingExpressionKey: expression,
+              iTermBindingOwnerKey: iTermBindingOwnerPalette };
+}
+
++ (NSDictionary *)bindings:(NSDictionary *)bindings byRemovingPaletteBindingsForBaseKey:(NSString *)baseKey {
+    NSMutableDictionary *updated = nil;
+    for (NSString *variant in [self colorVariantKeysForBaseKey:baseKey]) {
+        if ([self bindingValueIsPaletteOwned:bindings[variant]]) {
+            if (!updated) {
+                updated = [bindings mutableCopy];
+            }
+            [updated removeObjectForKey:variant];
+        }
+    }
+    // Returns a distinct object only when something changed, so callers can detect
+    // a real change with pointer identity.
+    return updated ?: bindings;
+}
+
 #pragma mark - Private
 
 + (iTermProfilePreferencesKeyFuncs)keyFuncs {
@@ -253,10 +320,9 @@ typedef struct {
                             KEY_CURSOR_GUIDE_COLOR, KEY_BADGE_COLOR, KEY_TAB_COLOR,
                             KEY_UNDERLINE_COLOR, KEY_ACTIVE_PANE_BORDER_COLOR ];
         color = [color flatMapWithBlock:^NSArray *(NSString *key) {
-            return @[ key,
-                      [key stringByAppendingString:COLORS_LIGHT_MODE_SUFFIX],
-                      [key stringByAppendingString:COLORS_DARK_MODE_SUFFIX]];
+            return [self colorVariantKeysForBaseKey:key];
         }];
+        funcs.colorKeys = [NSSet setWithArray:color];
 
         NSArray *booleans = @[
             KEY_USE_CURSOR_GUIDE COLORS_LIGHT_MODE_SUFFIX,
@@ -444,6 +510,12 @@ typedef struct {
                 return ([value isKindOfClass:[NSDictionary class]] &&
                         [value isColorValue]);
             };
+            // Only the badge and cursor guide render with alpha. For every other
+            // color we still accept an alpha-bearing value (for example a
+            // with_alpha binding) but drop the alpha so the RGB applies opaquely
+            // instead of the binding silently failing. Transparency thus never
+            // leaks into a color that renders opaque.
+            const BOOL allowsAlpha = [iTermProfilePreferences colorKeyHonorsAlpha:key];
             conversionBlocks[key] = ^id(id value) {
                 NSString *string = [NSString castFrom:value];
                 if (!string) {
@@ -458,7 +530,11 @@ typedef struct {
                     }
                     return nil;
                 }
-                return [[NSColor colorFromHexString:string] dictionaryValue];
+                NSColor *color = [NSColor colorFromHexString:string allowingAlpha:YES];
+                if (color && !allowsAlpha) {
+                    color = [color colorWithAlphaComponent:1.0];
+                }
+                return [color dictionaryValue];
             };
         }
         for (NSString *key in number) {

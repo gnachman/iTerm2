@@ -2229,7 +2229,10 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenSetColor(_ color: NSColor?, profileKey: String?) -> Bool {
         true
     }
-    
+
+    @objc func screenSetColorBinding(_ expression: String, forProfileKey profileKey: String) {
+    }
+
     func screenResetColor(withColorMapKey key: Int32, profileKey: String, dark: Bool) -> [NSNumber : Any] {
         [:]
     }

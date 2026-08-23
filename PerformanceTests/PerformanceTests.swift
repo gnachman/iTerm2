@@ -217,6 +217,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenSetTabColorGreenComponent(to color: CGFloat) {}
     func screenSetTabColorBlueComponent(to color: CGFloat) {}
     func screenSetColor(_ color: NSColor?, profileKey: String?) -> Bool { true }
+    func screenSetColorBinding(_ expression: String, forProfileKey profileKey: String) {}
     func screenResetColor(withColorMapKey key: Int32, profileKey: String, dark: Bool) -> [NSNumber : Any] { [:] }
     func screenSelectColorPresetNamed(_ name: String) {}
     func screenCurrentHostDidChange(_ host: any VT100RemoteHostReading, pwd workingDirectory: String?, ssh: Bool) {}

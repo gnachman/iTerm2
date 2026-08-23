@@ -780,6 +780,9 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenSetCurrentTabColor:(NSColor *)color {
 }
 
+- (void)screenSetColorBinding:(NSString *)expression forProfileKey:(NSString *)profileKey {
+}
+
 - (void)screenSetTabColorGreenComponentTo:(CGFloat)color {
 }
 

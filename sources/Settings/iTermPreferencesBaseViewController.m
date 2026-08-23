@@ -902,9 +902,9 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
 - (void)updateBoundExpressionForInfo:(PreferenceInfo *)info {
     if ([info.control conformsToProtocol:@protocol(iTermExpressionBindableView)]) {
         id<iTermExpressionBindableView> bindableView = (id<iTermExpressionBindableView>)info.control;
-        NSDictionary<NSString *, NSString *> *bindings = [NSDictionary castFrom:[self objectForKey:KEY_BINDINGS]];
+        NSDictionary *bindings = [NSDictionary castFrom:[self objectForKey:KEY_BINDINGS]];
         NSString *key = [self amendedKey:info.key];
-        bindableView.expression = bindings[key];
+        bindableView.expression = [iTermProfilePreferences expressionForBindingValue:bindings[key]];
     }
 }
 

@@ -1232,6 +1232,12 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // Set a value in the session's dictionary without affecting the backing profile.
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues;
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues reload:(BOOL)reload;
+// preserveColorBaselines:YES leaves _preEscapeSequenceColors intact for the keys
+// being written. Used by binding observers so applying a bound (i:N) color does
+// not clear the Edit-Session baseline a later reset restores.
+- (void)setSessionSpecificProfileValues:(NSDictionary *)newValues
+                                 reload:(BOOL)reload
+                  preserveColorBaselines:(BOOL)preserveColorBaselines;
 - (NSString *)amendedColorKey:(NSString *)baseKey;
 
 - (void)useTransparencyDidChange;
