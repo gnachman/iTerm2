@@ -741,6 +741,12 @@ Settings Improvements:
   this Mac and in the folder, it asks which
   copy to keep rather than overwriting your
   changes.
+- Added Window > Tab > Select Tab > Select
+  Next Tab Group (⌃⇧⌘]) and Select Previous
+  Tab Group (⌃⇧⌘[). When the current tab is
+  in a group, these skip over the rest of
+  that group. For an ungrouped tab they
+  behave like Select Next/Previous Tab.
 
 Bug Fixes:
 - Fixed a bug where ⌘-clicking a URL at the end

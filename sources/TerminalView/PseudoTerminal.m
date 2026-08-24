@@ -2688,6 +2688,40 @@ ITERM_WEAKLY_REFERENCEABLE
     [_contentView.tabView nextTab:sender];
 }
 
+- (IBAction)nextTabGroup:(id)sender {
+    [self selectTabGroupByOffset:1];
+}
+
+- (IBAction)previousTabGroup:(id)sender {
+    [self selectTabGroupByOffset:-1];
+}
+
+// Selects the next (offset > 0) or previous (offset < 0) tab, but if the current
+// tab belongs to a group it skips over all other members of that same group. When
+// the current tab is ungrouped this behaves exactly like nextTab:/previousTab:.
+// Wraps around, mirroring the wraparound of nextTab:/previousTab:.
+- (void)selectTabGroupByOffset:(NSInteger)offset {
+    NSArray<PTYTab *> *tabs = self.tabs;
+    const NSInteger count = (NSInteger)tabs.count;
+    if (count < 2) {
+        return;
+    }
+    const NSInteger sel = [_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]];
+    if (sel < 0 || sel >= count) {
+        return;
+    }
+    NSString *gid = tabs[sel].tabGroupID;
+    NSInteger target = (sel + offset + count) % count;
+    if (gid != nil) {
+        // Group members are kept contiguous, so stepping until we leave the
+        // group lands on the first tab outside it (wrapping if needed).
+        while (target != sel && [tabs[target].tabGroupID isEqualToString:gid]) {
+            target = (target + offset + count) % count;
+        }
+    }
+    [_contentView.tabView selectTabViewItem:tabs[target].tabViewItem];
+}
+
 - (IBAction)previousPane:(id)sender {
     [[self currentTab] previousSession];
 }
