@@ -1345,7 +1345,7 @@ static const int kMaxScreenRows = 4096;
                 }
                 break;
 
-            case 997:  // https://github.com/contour-terminal/contour/blob/master/docs/vt-extensions/color-palette-update-notifications.md
+            case 996:  // https://github.com/contour-terminal/contour/blob/master/docs/vt-extensions/color-palette-update-notifications.md
                 // Send CSI ? 996 n to the terminal to explicitly request the current color preference (dark mode or light mode) by the operating system.
                 // The terminal will reply back in either of the two ways:
                 // VT sequence      description
