@@ -114,6 +114,20 @@ class FakeWorkgroupSpawner: WorkgroupSessionSpawner {
         return session
     }
 
+    // Records groupTabs(containing:name:) calls (the real spawner would
+    // talk to PseudoTerminal, which synthetic sessions don't have) so
+    // tests can assert enter() gathers the right sessions under the right
+    // name. Overrides the protocol's default no-op.
+    struct GroupTabsCall {
+        let sessions: [PTYSession]
+        let name: String
+    }
+    private(set) var groupTabsCalls: [GroupTabsCall] = []
+
+    func groupTabs(containing sessions: [PTYSession], name: String) {
+        groupTabsCalls.append(GroupTabsCall(sessions: sessions, name: name))
+    }
+
     private func makeSession() -> PTYSession {
         // synthetic:false so the session behaves like a normal
         // workgroup peer/child as far as workgroupInstance/peerPort

@@ -5,6 +5,7 @@
 //  Created by George Nachman on 4/23/26.
 //
 
+import AppKit
 import Foundation
 
 // Runtime counterpart of an iTermWorkgroup config. One instance per
@@ -67,6 +68,13 @@ final class iTermWorkgroupInstance: NSObject {
 
     // Insertion order so teardown terminates in spawn order.
     private var nonPeerOrderedConfigIDs: [String] = []
+
+    // The leader's tab-title profile keys (KEY_NAME, KEY_TITLE_COMPONENTS)
+    // captured just before entry renamed it, so teardown can restore the
+    // user's pre-workgroup session. Only the leader needs restoring: spawned
+    // split/tab members are closed on exit, so their renames go away with
+    // them. nil when the root had no configured name (nothing was changed).
+    private var leaderTitleRestoreValues: [AnyHashable: Any]?
 
     // Whether teardown() started, used as a reentrancy guard:
     // peerPort.invalidate() synchronously terminates fulfilled peers,
@@ -381,8 +389,75 @@ final class iTermWorkgroupInstance: NSObject {
         // this also covers the restore/adopt path). See
         // PTYSession.forceDefaultEndAction.
         session.forceDefaultEndAction = true
+        // Give the member the name its config assigns so the tab title is
+        // recognizable instead of the default shell title (issue 12967:
+        // several spawned tabs otherwise all read "-zsh"). This is the
+        // shared registration point for both fresh entry and restore, so
+        // it also names members of workgroups saved before naming existed.
+        // Peers go through the peer port instead and are intentionally left
+        // unnamed: their names already show in the peer switcher, so
+        // repeating them in the tab titlebar would be redundant.
+        applyConfiguredName(config: config, to: session)
         // Refresh the new session's toolbar view to pick up its items.
         session.delegate?.sessionDidChangeDesiredToolbarItems(session)
+    }
+
+    // Route through the window controller's rename path (the same one the
+    // Edit Session menu uses), so the name is a durable KEY_NAME override
+    // that survives the async launch's name reset, profile syncs, and
+    // terminal title escapes. Resolving the window controller from the
+    // session's delegate means synthetic test sessions (no window) no-op,
+    // exactly like the tab-grouping seam.
+    private func applyConfiguredName(config: iTermWorkgroupSessionConfig,
+                                     to session: PTYSession) {
+        let name = config.displayName
+        guard !name.isEmpty else { return }
+        guard let windowController =
+                session.delegate?.realParentWindow() as? PseudoTerminal else {
+            return
+        }
+        windowController.setName(name, for: session)
+        // Setting KEY_NAME isn't enough on its own: if the profile's title
+        // shows only the job/process (a common setup), the assigned name is
+        // computed but never rendered. Turn on the session-name title
+        // component the same way a trigger-set title does, so the workgroup
+        // name actually appears in the tab bar.
+        session.enableNameTitleComponentIfPossible()
+    }
+
+    // Snapshot the leader's tab-title profile keys before entry renames it,
+    // so teardown can put the user's pre-workgroup session back. Captures
+    // only the keys actually present on the session; a key absent here was
+    // never set, so it is left out of the restore (nothing to put back, and
+    // the change we make to it goes away when we clear the whole override).
+    // Skips synthetic test sessions (no real profile), same as the rename.
+    private func captureLeaderTitleState(_ session: PTYSession) {
+        guard session.delegate?.realParentWindow() is PseudoTerminal else { return }
+        var values: [AnyHashable: Any] = [:]
+        if let profile = session.profile {
+            if let currentName = profile[KEY_NAME] {
+                values[KEY_NAME] = currentName
+            }
+            if let currentComponents = profile[KEY_TITLE_COMPONENTS] {
+                values[KEY_TITLE_COMPONENTS] = currentComponents
+            }
+        }
+        leaderTitleRestoreValues = values.isEmpty ? nil : values
+    }
+
+    // Put the leader's tab title back the way it was before entry (see
+    // captureLeaderTitleState). Called from teardown. No-op unless the
+    // leader survives: if the leader itself terminated, it is going away
+    // and there is nothing to restore.
+    private func restoreLeaderTitleState(terminating terminatingSession: PTYSession?) {
+        defer { leaderTitleRestoreValues = nil }
+        guard let restore = leaderTitleRestoreValues,
+              let session = mainSession,
+              session !== terminatingSession,
+              !session.exited else {
+            return
+        }
+        session.setSessionSpecificProfileValues(restore)
     }
 
     private func buildNonPeerToolbarItems(for config: iTermWorkgroupSessionConfig) -> [SessionToolbarGenericView] {
@@ -459,6 +534,15 @@ final class iTermWorkgroupInstance: NSObject {
             guard let entry = nonPeerEntriesByConfigID[id] else { return nil }
             guard entry.session.peerPort == nil else { return nil }
             return (id, entry.session)
+        }
+    }
+
+    // Every non-peer (split or tab) session spawned at entry, in spawn
+    // order. Splits share their parent's tab; tabs get their own. Used by
+    // enter() to gather the entry-time tabs into one tab group.
+    var nonPeerSessions: [PTYSession] {
+        return nonPeerOrderedConfigIDs.compactMap {
+            nonPeerEntriesByConfigID[$0]?.session
         }
     }
 
@@ -583,6 +667,10 @@ final class iTermWorkgroupInstance: NSObject {
             // lingering reference keeps the invalidated port alive.
             session.peerPort = nil
         }
+        // Put the leader's tab title back to its pre-workgroup state. The
+        // spawned tabs are closed above, so only the surviving leader needs
+        // reverting.
+        restoreLeaderTitleState(terminating: terminatingSession)
         mainSession?.workgroupInstance = nil
         mainSession?.peerPort = nil
     }
@@ -710,6 +798,22 @@ final class iTermWorkgroupInstance: NSObject {
         instance.spawnNonPeerChildren(of: mainSession,
                                       parentConfigID: root.uniqueIdentifier)
 
+        // Gather the initial tab plus every tab the workgroup just spawned
+        // into one tab group, so a multi-tab workgroup reads as a unit. The
+        // spawner no-ops when only splits/peers were added (a single tab) or
+        // in tests (synthetic sessions with no real tabs). If the initial tab
+        // already belonged to a group, this moves it into the new one. Skip
+        // when the instance tore down mid-spawn: its children are being
+        // closed, so there is nothing coherent to group.
+        if !instance.didTeardown {
+            spawner.groupTabs(containing: [mainSession] + instance.nonPeerSessions,
+                              name: instance.workgroupDisplayName)
+        }
+
+        // Name the entry tab, snapshotting its pre-workgroup title so exit
+        // can revert it.
+        instance.nameLeader(root: root, captureForRevert: true)
+
         return instance
     }
 
@@ -826,6 +930,39 @@ final class iTermWorkgroupInstance: NSObject {
         instance.attachBackPointers(toEach: Array(peers.values))
 
         return instance
+    }
+
+    // Name the entry (root/leader) session from its config so the initial
+    // tab shows the workgroup's root name too, matching the spawned split
+    // and tab tabs (issue 12967: the original tab kept its default title
+    // while the new tabs were named). Only the leader is named; the peer
+    // CHILDREN stay unnamed because their names already live in the peer
+    // switcher.
+    //
+    // `captureForRevert` snapshots the leader's pre-rename title so teardown
+    // can put it back. enter() passes true (the leader is the user's
+    // pre-existing session and its current title IS the pre-workgroup one).
+    // adopt() passes false: after a relaunch the leader has already been
+    // restored WITH the workgroup name baked into its saved profile, so its
+    // current title is not the original and must not be captured as such.
+    private func nameLeader(root: iTermWorkgroupSessionConfig,
+                            captureForRevert: Bool) {
+        // A non-peer child can terminate synchronously during
+        // spawnNonPeerChildren and drive teardown() before enter()/adopt()
+        // reach this call. teardown() already ran its one-shot
+        // restoreLeaderTitleState() (a no-op then, since nothing was
+        // captured yet) and set the reentrancy guard, so renaming the leader
+        // now would stick permanently with no exit to revert it. Same
+        // didTeardown guard as registerNonPeer.
+        guard !didTeardown else {
+            RLog("iTermWorkgroupInstance.nameLeader: skipping; instance already torn down")
+            return
+        }
+        guard let mainSession else { return }
+        if captureForRevert && !root.displayName.isEmpty {
+            captureLeaderTitleState(mainSession)
+        }
+        applyConfiguredName(config: root, to: mainSession)
     }
 
     // MARK: - Restore (adopt)
@@ -962,6 +1099,11 @@ final class iTermWorkgroupInstance: NSObject {
                 break
             }
         }
+
+        // Name the entry tab, matching enter(). No revert snapshot: the
+        // restored leader already carries the workgroup name in its saved
+        // profile, so its current title is not the pre-workgroup original.
+        instance.nameLeader(root: root, captureForRevert: false)
 
         return instance
     }

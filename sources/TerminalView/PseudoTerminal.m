@@ -8661,6 +8661,28 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [self updateTabColors];
 }
 
+- (void)groupTabs:(NSArray<PTYTab *> *)tabs withName:(NSString *)name {
+    if (tabs.count < 2) {
+        return;
+    }
+    // Assigning a fresh id overwrites any prior membership, so a tab already in
+    // a group is moved out of it and into the new one. The definition rides
+    // every member (there is no registry), so stamp name/color on all of them.
+    NSString *gid = [[NSUUID UUID] UUIDString];
+    NSColor *color = [self nextTabGroupColor];
+    for (PTYTab *tab in tabs) {
+        tab.tabGroupID = gid;
+        tab.tabGroupName = name;
+        tab.tabGroupColor = color;
+        tab.tabGroupCollapsed = NO;
+    }
+    RLog(@"tabGroup: grouped %@ tabs into new group %@ (%@)", @(tabs.count), gid, name);
+    [self updateTabColors];
+    // The members are likely scattered (the initial tab plus tabs appended at
+    // the end); repair the contiguity invariant so they become one block.
+    [self tabsDidReorder];
+}
+
 // Cycle a small system palette so consecutive new groups look distinct.
 - (NSColor *)nextTabGroupColor {
     static NSArray<NSColor *> *palette;

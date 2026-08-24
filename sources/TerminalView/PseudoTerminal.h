@@ -133,6 +133,13 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // Member tabs of the given group, in tab order.
 - (NSArray<PTYTab *> *)tabsInGroup:(NSString *)groupID;
 
+// Put every tab in `tabs` into one brand-new tab group named `name`. A tab
+// that already belonged to a group is moved out of it into the new group.
+// The members are brought together into one contiguous block. No-op for fewer
+// than two tabs. Used by workgroups to gather the initial tab plus every tab
+// spawned at entry into a single group.
+- (void)groupTabs:(NSArray<PTYTab *> *)tabs withName:(NSString *)name;
+
 // Mutable state for the tab color picker (popover, debounce timer, etc.).
 @property(nonatomic, strong) TabColorPickerState *tabColorPickerState;
 
