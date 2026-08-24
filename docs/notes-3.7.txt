@@ -81,6 +81,13 @@ Major New Features:
   they harmonize with any theme. Off by
   default.
 
+- Added support for light/dark color scheme
+  detection and reporting (DECSET 2031 and
+  DSR 996/997). Programs can query whether the
+  terminal is light or dark and ask to be
+  notified when it changes, so tools like vim
+  and delta can adapt automatically.
+
 - Fixed a bug where an AI chat permission
   button (such as “Check terminal state”)
   did not update its label after you changed
