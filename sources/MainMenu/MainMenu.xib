@@ -1703,7 +1703,20 @@ DQ
                                                             <action selector="previousTab:" target="-1" id="1187"/>
                                                         </connections>
                                                     </menuItem>
-                                                    <menuItem isSeparatorItem="YES" id="XR3-ga-Axh"/>
+                                                    <menuItem isSeparatorItem="YES" id="sTg-00-sep"/>
+                                                    <menuItem title="Select Next Tab Group" keyEquivalent="]" identifier="Select Next Tab Group" id="nTg-01-nxt">
+                                                        <modifierMask key="keyEquivalentModifierMask" control="YES" shift="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="nextTabGroup:" target="-1" id="nTg-02-act"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem title="Select Previous Tab Group" keyEquivalent="[" identifier="Select Previous Tab Group" id="pTg-01-prv">
+                                                        <modifierMask key="keyEquivalentModifierMask" control="YES" shift="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="previousTabGroup:" target="-1" id="pTg-02-act"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem isSeparatorItem="YES" identifier="SelectTabSessionListSeparator" id="XR3-ga-Axh"/>
                                                 </items>
                                             </menu>
                                         </menuItem>

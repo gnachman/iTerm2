@@ -2642,10 +2642,20 @@ static iTermKeyEventReplayer *gReplayer;
     NSArray *tabViewItemArray = [aTabView tabViewItems];
     int i=1;
 
-    // Remove menu items after the separator
-    const NSInteger separatorIndex = [selectTab.submenu.itemArray indexOfObjectPassingTest:^BOOL(NSMenuItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        return [obj isSeparatorItem];
+    // Remove menu items after the session-list separator. Match the separator by
+    // identifier rather than "first separator" so that static items (and their own
+    // separators) can precede it without being wiped when this submenu is rebuilt.
+    __block NSInteger separatorIndex = [selectTab.submenu.itemArray indexOfObjectPassingTest:^BOOL(NSMenuItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        return [obj.identifier isEqualToString:@"SelectTabSessionListSeparator"];
     }];
+    if (separatorIndex == NSNotFound) {
+        // Fall back to the last separator so previously-added static items survive.
+        [selectTab.submenu.itemArray enumerateObjectsUsingBlock:^(NSMenuItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            if ([obj isSeparatorItem]) {
+                separatorIndex = idx;
+            }
+        }];
+    }
     if (separatorIndex != NSNotFound) {
         while (selectTab.submenu.numberOfItems > separatorIndex + 1) {
             [selectTab.submenu removeItemAtIndex:selectTab.submenu.numberOfItems - 1];
