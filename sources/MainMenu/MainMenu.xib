@@ -1746,6 +1746,19 @@ DQ
                                                 </items>
                                             </menu>
                                         </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="tgA-00-sep"/>
+                                        <menuItem title="Add Tab to New Group…" identifier="Add Tab to New Group" id="tgA-01-new">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="addTabToNewGroupAction:" target="-1" id="tgA-02-act"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Remove Tab from Group" identifier="Remove Tab from Group" id="tgR-01-rem">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="removeTabFromGroupAction:" target="-1" id="tgR-02-act"/>
+                                            </connections>
+                                        </menuItem>
                                     </items>
                                 </menu>
                             </menuItem>

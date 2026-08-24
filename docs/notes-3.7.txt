@@ -735,6 +735,10 @@ Settings Improvements:
   in a group, these skip over the rest of
   that group. For an ungrouped tab they
   behave like Select Next/Previous Tab.
+- Added Window > Tab > Add Tab to New Group
+  and Remove Tab from Group, mirroring the
+  tab bar’s right-click menu but acting on
+  the current tab.
 
 Bug Fixes:
 - In the tmux Dashboard, “Open in Tabs” is now
