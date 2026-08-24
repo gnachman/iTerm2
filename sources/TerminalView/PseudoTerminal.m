@@ -2696,6 +2696,16 @@ ITERM_WEAKLY_REFERENCEABLE
     [self selectTabGroupByOffset:-1];
 }
 
+- (IBAction)addTabToNewGroupAction:(id)sender {
+    PTYTab *tab = [self currentTab];
+    [self addTab:tab toNewGroupWithDefaultName:[[tab tabViewItem] label]];
+}
+
+- (IBAction)removeTabFromGroupAction:(id)sender {
+    PTYTab *tab = [self currentTab];
+    [self removeTabFromGroup:tab label:[[tab tabViewItem] label]];
+}
+
 // Selects the next (offset > 0) or previous (offset < 0) tab, but if the current
 // tab belongs to a group it skips over all other members of that same group. When
 // the current tab is ungrouped this behaves exactly like nextTab:/previousTab:.
@@ -8600,11 +8610,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)addTabToNewGroup:(id)sender {
     NSTabViewItem *tabViewItem = [sender representedObject];
-    PTYTab *theTab = [tabViewItem identifier];
+    [self addTab:[tabViewItem identifier] toNewGroupWithDefaultName:[tabViewItem label]];
+}
+
+- (void)addTab:(PTYTab *)theTab toNewGroupWithDefaultName:(NSString *)label {
     if (!theTab) {
         return;
     }
-    NSString *defaultName = [tabViewItem label].length > 0 ? [tabViewItem label] : @"Group";
+    NSString *defaultName = label.length > 0 ? label : @"Group";
     NSString *name = [self promptForTabGroupName:defaultName title:@"New Tab Group"];
     if (!name) {
         return;  // user cancelled
@@ -8612,7 +8625,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     theTab.tabGroupID = [[NSUUID UUID] UUIDString];
     theTab.tabGroupName = name;
     theTab.tabGroupColor = [self nextTabGroupColor];
-    RLog(@"tabGroup: New Group %@ (%@) from tab %@", theTab.tabGroupID, name, [tabViewItem label]);
+    RLog(@"tabGroup: New Group %@ (%@) from tab %@", theTab.tabGroupID, name, defaultName);
     [self updateTabColors];
 }
 
@@ -8688,8 +8701,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)removeTabFromGroup:(id)sender {
     NSTabViewItem *tabViewItem = [sender representedObject];
-    PTYTab *theTab = [tabViewItem identifier];
-    RLog(@"tabGroup: removed tab %@ from group %@", [tabViewItem label], theTab.tabGroupID);
+    [self removeTabFromGroup:[tabViewItem identifier] label:[tabViewItem label]];
+}
+
+- (void)removeTabFromGroup:(PTYTab *)theTab label:(NSString *)label {
+    if (!theTab) {
+        return;
+    }
+    RLog(@"tabGroup: removed tab %@ from group %@", label, theTab.tabGroupID);
     theTab.tabGroupID = nil;
     [self reconcileTabGroupDefinitionForTab:theTab];
     [self updateTabColors];
@@ -13459,6 +13478,10 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         result = [_contentView.tabView numberOfTabViewItems] > 1;
     } else if ([item action] == @selector(moveTabRight:)) {
         result = [_contentView.tabView numberOfTabViewItems] > 1;
+    } else if ([item action] == @selector(addTabToNewGroupAction:)) {
+        result = [self currentTab] != nil;
+    } else if ([item action] == @selector(removeTabFromGroupAction:)) {
+        result = [self currentTab].tabGroupID != nil;
     } else if ([item action] == @selector(toggleBroadcastingToCurrentSession:)) {
         result = ![[self currentSession] exited];
     } else if (item.action == @selector(enableSendInputToAllTabs:)) {
