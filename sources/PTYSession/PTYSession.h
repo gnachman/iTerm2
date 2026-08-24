@@ -1258,6 +1258,10 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // Call this when a session moves to a different tab or window to update the session ID.
 - (void)didMoveSession;
 - (void)didInitializeSessionWithName:(NSString *)name;
+// Turn on the session-name title component (unless the profile uses a custom
+// title or already shows the name) so a programmatically assigned name becomes
+// visible in the tab title even when the profile's title shows only the job.
+- (void)enableSessionNameTitleComponentIfPossible;
 - (void)profileNameDidChangeTo:(NSString *)name;
 - (void)profileDidChangeToProfileWithName:(NSString *)name;
 - (void)updateStatusBarStyle;

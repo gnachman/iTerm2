@@ -41,6 +41,19 @@ protocol WorkgroupSessionSpawner: AnyObject {
     func spawnTab(parent: PTYSession,
                   config: iTermWorkgroupSessionConfig,
                   workgroupInstanceID: String) -> PTYSession?
+
+    // Gather the tabs containing `sessions` into a single brand-new tab
+    // group named `name`. Tabs already in a group are moved into the new
+    // one. No-op unless the sessions span at least two distinct tabs.
+    // Called once after entry-time spawning completes.
+    func groupTabs(containing sessions: [PTYSession], name: String)
+}
+
+extension WorkgroupSessionSpawner {
+    // Default no-op so test fakes (which produce synthetic sessions with
+    // no real tabs or window) don't have to implement tab grouping.
+    // DefaultWorkgroupSessionSpawner overrides this.
+    func groupTabs(containing sessions: [PTYSession], name: String) {}
 }
 
 final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
@@ -99,6 +112,24 @@ final class DefaultWorkgroupSessionSpawner: WorkgroupSessionSpawner {
                     parent: parent,
                     workgroupInstanceID: workgroupInstanceID)
         return newSession
+    }
+
+    func groupTabs(containing sessions: [PTYSession], name: String) {
+        guard let windowController =
+                sessions.first?.delegate?.realParentWindow() as? PseudoTerminal
+            else { return }
+        // Distinct tabs in encounter order: splits share their parent's tab,
+        // so several sessions can map to the same tab. tabForSession returns
+        // nil for anything not in this window, which we skip.
+        var tabs: [PTYTab] = []
+        var seen = Set<ObjectIdentifier>()
+        for session in sessions {
+            guard let tab = windowController.tab(for: session) else { continue }
+            if seen.insert(ObjectIdentifier(tab)).inserted {
+                tabs.append(tab)
+            }
+        }
+        windowController.groupTabs(tabs, withName: name)
     }
 
     // MARK: - Profile and split helpers

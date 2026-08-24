@@ -904,6 +904,61 @@ final class WorkgroupEntryTests: WorkgroupEntryTestBase {
         }
     }
 
+    // MARK: - §16 Entry-time tab grouping
+
+    // §16.1 — after spawning, enter() asks the spawner to gather the
+    // initial session plus every non-peer (split/tab) child into one tab
+    // group named after the workgroup. The distinct-tab dedup and the
+    // "fewer than two tabs" no-op live in the AppKit layer; here we assert
+    // the seam is driven with the right sessions and name.
+    func test_16_1_entryGroupsInitialTabWithSpawnedTabs() {
+        let wg = WGFix.wgRootWithTab()
+        enterWorkgroup(wg)
+        XCTAssertEqual(spawner.groupTabsCalls.count, 1,
+                       "enter() must drive tab grouping exactly once")
+        let call = spawner.groupTabsCalls[0]
+        XCTAssertEqual(call.name, instance!.workgroupDisplayName,
+                       "The group is named after the workgroup")
+        let tabConfig = wg.sessions.first(where: {
+            if case .tab = $0.kind { return true }
+            return false
+        })!
+        let tabSession = spawner.session(forConfigID: tabConfig.uniqueIdentifier)!
+        // The initial (leader) session leads the list, followed by the
+        // spawned tab child.
+        XCTAssertTrue(call.sessions.contains { $0 === leader },
+                      "The initial session must be included so it joins the group")
+        XCTAssertTrue(call.sessions.contains { $0 === tabSession },
+                      "The spawned tab must be included")
+    }
+
+    // §16.2 — peers are swapped within a tab, not given their own, so
+    // they must not be handed to the grouping seam; only the initial
+    // session and non-peer (split/tab) children are.
+    func test_16_2_entryGroupingExcludesPeers() {
+        let wg = WGFix.wgTwoTabsEachWithPeers(peerCount: 2)
+        enterWorkgroup(wg)
+        XCTAssertEqual(spawner.groupTabsCalls.count, 1)
+        let call = spawner.groupTabsCalls[0]
+        let peerIDs = Set(wg.sessions
+            .filter { if case .peer = $0.kind { return true }; return false }
+            .map { $0.uniqueIdentifier })
+        let peerSessions = peerIDs.compactMap { spawner.session(forConfigID: $0) }
+        XCTAssertFalse(peerSessions.isEmpty, "fixture should have peers")
+        for peer in peerSessions {
+            XCTAssertFalse(call.sessions.contains { $0 === peer },
+                           "Peer sessions must not be passed to tab grouping")
+        }
+        // The tab host (a non-peer child) and the leader are included.
+        let tabHost = wg.sessions.first(where: {
+            if case .tab = $0.kind { return true }
+            return false
+        })!
+        let tabHostSession = spawner.session(forConfigID: tabHost.uniqueIdentifier)!
+        XCTAssertTrue(call.sessions.contains { $0 === leader })
+        XCTAssertTrue(call.sessions.contains { $0 === tabHostSession })
+    }
+
     // MARK: - PTYSession.restartSessionWithCommand guard
 
     // Review-comment regression: -restartSessionWithCommand: forwards

@@ -171,6 +171,11 @@ Major New Features:
   even have custom behavior such as to drive AI
   code review or perform in-terminal diffs of a
   git repo.
+  When a Workgroup spawns extra tabs, they are
+  now collected into a tab group together with
+  the session you entered from, and each spawned
+  split or tab takes the name you gave it in the
+  Workgroup so its tab title is recognizable.
 
 - Clippings is a new side panel that contains a
   list of items formatted as markdown. They're a
