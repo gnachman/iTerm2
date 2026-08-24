@@ -850,6 +850,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     const iTermAIAPI api = (iTermAIAPI)_apiPopup.selectedItem.tag;
     const BOOL functionCalling =
         _featureButtons[kAIManualModelFunctionCallingKey].state == NSControlStateValueOn;
+    const BOOL supportsTemperature =
+        _supportsTemperatureButton.state == NSControlStateValueOn;
 
     NSString *savedTitle = _testButton.title;
     _testButton.enabled = NO;
@@ -860,6 +862,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                                        url:url
                                        api:api
                            functionCalling:functionCalling
+                       supportsTemperature:supportsTemperature
                                   inWindow:_window
                                 completion:^(iTermAIConnectionTestOutcome outcome, NSString *message) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;

@@ -26,11 +26,12 @@ enum AIConnectionTestOutcome: Int {
 @objc(iTermAIConnectionTester)
 class AIConnectionTester: NSObject {
     // Sends the probe. `completion` is always called on the main thread.
-    @objc(testModelName:url:api:functionCalling:inWindow:completion:)
+    @objc(testModelName:url:api:functionCalling:supportsTemperature:inWindow:completion:)
     static func test(modelName: String,
                      url: String,
                      api: iTermAIAPI,
                      functionCalling: Bool,
+                     supportsTemperature: Bool,
                      inWindow window: NSWindow,
                      completion: @escaping (AIConnectionTestOutcome, String) -> Void) {
         let vendor = LLMMetadata.objcManualVendor(api: api, url: url, modelName: modelName)
@@ -46,6 +47,7 @@ class AIConnectionTester: NSObject {
                  url: url,
                  api: api,
                  functionCalling: functionCalling,
+                 supportsTemperature: supportsTemperature,
                  apiKey: registration.apiKey,
                  vendor: vendor,
                  completion: completion)
@@ -56,6 +58,7 @@ class AIConnectionTester: NSObject {
                              url: String,
                              api: iTermAIAPI,
                              functionCalling: Bool,
+                             supportsTemperature: Bool,
                              apiKey: String,
                              vendor: iTermAIVendor,
                              completion: @escaping (AIConnectionTestOutcome, String) -> Void) {
@@ -71,7 +74,7 @@ class AIConnectionTester: NSObject {
         }
         // Probe non-streaming with a tiny response cap: the whole point is to
         // confirm auth + endpoint reachability, not to exercise streaming.
-        let model = AIMetadata.Model(name: modelName,
+        var model = AIMetadata.Model(name: modelName,
                                      contextWindowTokens: 8_192,
                                      maxResponseTokens: 64,
                                      url: url,
@@ -79,6 +82,10 @@ class AIConnectionTester: NSObject {
                                      features: features,
                                      vectorStoreConfig: .disabled,
                                      vendor: vendor)
+        // Honor the editor's "Supports temperature" toggle so the probe omits
+        // the temperature field for endpoints that 400 on it, matching what a
+        // real chat request does for the saved model.
+        model.supportsTemperature = supportsTemperature
         let provider = LLMProvider(model: model)
         guard provider.urlIsValid else {
             completion(.failure, "The URL is not valid.")
