@@ -1893,6 +1893,11 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     // intends. The run ends at the first cell that is not a member, and the eolBlock ends it at a
     // hard line break when we are respecting hard newlines.
     NSCharacterSet *const nonMembers = [characterSet invertedSet];
+    // Trailing cleared cells (U+0000) are skipped by the enumeration rather than passed to
+    // charBlock, so judge them the same way the set judges every other character: unless the caller
+    // opts nulls into its set, a run of trailing nulls ends the content on that line and the run
+    // stops there instead of jumping to whatever follows on the next line.
+    const BOOL characterSetIncludesNull = [characterSet characterIsMember:0];
     // In enumerateCharsInRange: a block returns YES to end the enumeration and NO to continue.
     const VT100GridWindowedRange range =
         VT100GridWindowedRangeMake(VT100GridCoordRangeMake(coord.x,
@@ -1939,7 +1944,17 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         return NO;
     }
                        eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
-        // Stop at a hard line break when respecting hard newlines.
+        // Stop where the line's content stopped short: trailing cleared cells mean the writer
+        // ended the line here, so the next line is unrelated text rather than a continuation of the
+        // run. Content that truly wraps fills the line completely, leaving no trailing nulls. This
+        // treats end-of-content nulls the same way the run already treats trailing spaces (an
+        // out-of-set character ends it via charBlock) and is independent of the EOL_HARD/EOL_SOFT
+        // flag, which a full-screen application does not set reliably. A caller that wants to walk
+        // across nulls opts them into its character set.
+        if (numPrecedingNulls > 0 && !characterSetIncludesNull) {
+            return YES;
+        }
+        // Otherwise stop at a hard line break when respecting hard newlines.
         return respectHardNewlines && code == EOL_HARD;
     }];
     return result;

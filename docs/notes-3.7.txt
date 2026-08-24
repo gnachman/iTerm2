@@ -766,6 +766,12 @@ Bug Fixes:
   gated behind a new “Allow HDR effects”
   advanced setting because forcing the
   display into HDR could hang some systems.
+- Fixed a bug where ⌘-clicking a URL at the end
+  of a line in a full-screen app (like irssi,
+  mutt, or tmux) could extend the link onto the
+  next line and open a URL with the following
+  line’s text appended. Issues 12970, 13011,
+  and 13020.
 - In the tmux Dashboard, “Open in Tabs” is now
   enabled when a single hidden window is
   selected, matching “Open in Window.” Issue

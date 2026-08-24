@@ -158,6 +158,7 @@
 #import "iTermTextViewContextMenuHelper.h"
 #import "iTermThroughputEstimator.h"
 #import "iTermTuple.h"
+#import "iTermURLActionFactory+Testing.h"
 #import "iTermURLStore.h"
 #import "iTermUserDefaults.h"
 #import "iTermUserDefaultsObserver.h"

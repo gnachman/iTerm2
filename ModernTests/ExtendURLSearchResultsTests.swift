@@ -390,3 +390,73 @@ class URLForwardWalkTests: XCTestCase {
         XCTAssertEqual(atBufferEnd.length, 0)
     }
 }
+
+// MARK: - ⌘-click URL detection across line boundaries (regression, issue 12970)
+
+/// End-to-end tests for the URL string ⌘-click detects at a coordinate, exercising the real capture
+/// + forward-window-extension + extraction path via +[iTermURLActionFactory urlLikeStringAtCoord:...].
+///
+/// Repro from issue 12970: in a TUI (irssi/mutt) a short URL is drawn at the end of a line and the
+/// rest of the line is cleared to nulls; an unrelated timestamped line is printed below. Interactive
+/// applications run with respectHardNewlines = NO (see -[PTYTextView urlActionHelperShouldIgnoreHardNewlines]),
+/// so the detector must still stop the URL at the end of its drawn content rather than walking onto
+/// the next line and swallowing the timestamp.
+class URLDetectionAcrossLinesTests: XCTestCase {
+    // iTermTextExtractor holds its data source weakly, so keep the mocks alive for the test.
+    private var retainedSources: [MockDataSourceWithDividers] = []
+
+    private func extractor(_ lines: [String], width: Int32, softWrapped: Set<Int> = []) -> iTermTextExtractor {
+        let source = MockDataSourceWithDividers(strings: lines, width: width, softWrappedLineIndices: softWrapped)
+        retainedSources.append(source)
+        return iTermTextExtractor(dataSource: source)
+    }
+
+    // The two irssi lines from the report. The URL ends mid-line (columns past it are nulls) and the
+    // next line begins with the "13:06" timestamp, whose digits and ':' are all URL-legal.
+    private let irssiLines = [
+        "13:06 -!- Irssi v1.4.5 - https://irssi.org",  // 'https' starts at column 25
+        "13:06 -!- a new line",
+    ]
+    // A coordinate inside the URL host ('i' of "irssi", column 33).
+    private let clickOnURL = VT100GridCoord(x: 33, y: 0)
+
+    // The bug: with hard newlines ignored (as in every interactive/full-screen app), the detected URL
+    // absorbs the next line's timestamp, becoming e.g. "https://irssi.org13:06".
+    func testShortURLInInteractiveAppDoesNotAbsorbNextLine() {
+        let ex = extractor(irssiLines, width: 80)
+        let detected = iTermURLActionFactory.urlLikeString(at: clickOnURL,
+                                                           respectHardNewlines: false,
+                                                           extractor: ex)
+        XCTAssertEqual(detected, "https://irssi.org")
+    }
+
+    // A TUI does not manage its EOL flags, so the same content can arrive as either a hard- or a
+    // soft-terminated line. With hard newlines ignored the detector crosses the boundary in both
+    // cases, so both must still stop at the end of the URL. (Marking line 0 EOL_SOFT models the case
+    // where we genuinely cannot rely on the newline type.)
+    func testShortURLIndependentOfEOLFlag() {
+        let hard = iTermURLActionFactory.urlLikeString(at: clickOnURL,
+                                                       respectHardNewlines: false,
+                                                       extractor: extractor(irssiLines, width: 80))
+        XCTAssertEqual(hard, "https://irssi.org", "hard-terminated URL line absorbed the next line")
+
+        let soft = iTermURLActionFactory.urlLikeString(at: clickOnURL,
+                                                       respectHardNewlines: false,
+                                                       extractor: extractor(irssiLines, width: 80, softWrapped: [0]))
+        XCTAssertEqual(soft, "https://irssi.org", "soft-terminated URL line absorbed the next line")
+    }
+
+    // Companion to the above: when the URL line is padded with spaces instead of cleared to nulls,
+    // the run already stops at the first space (whitespace is not URL-legal) and never reaches the
+    // line boundary. This case is correct even without the fix; the null cases must behave the same
+    // way, since in a TUI end-of-content nulls carry the same meaning as trailing whitespace. Keep
+    // this so a future change to the whitespace handling cannot silently diverge the two.
+    func testShortURLWithSpacePaddingDoesNotAbsorbNextLine() {
+        // Pad the URL line out to the full width with spaces so it has no trailing null cells.
+        let padded = irssiLines[0].padding(toLength: 80, withPad: " ", startingAt: 0)
+        let detected = iTermURLActionFactory.urlLikeString(at: clickOnURL,
+                                                           respectHardNewlines: false,
+                                                           extractor: extractor([padded, irssiLines[1]], width: 80))
+        XCTAssertEqual(detected, "https://irssi.org")
+    }
+}
