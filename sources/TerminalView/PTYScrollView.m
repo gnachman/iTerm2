@@ -84,7 +84,7 @@
 }
 
 // rdar://45295749/
-- (void)dismemberForScrollerStyle:(NSScrollerStyle)scrollerStyle NS_AVAILABLE_MAC(10_14) {
+- (void)dismemberForScrollerStyle:(NSScrollerStyle)scrollerStyle {
     DLog(@"Begin dismembering the scroll bar");
     NSView *reparent = nil;
     NSInteger index = NSNotFound;
@@ -204,7 +204,7 @@
     NSScroller *_scroller;
 }
 
-+ (BOOL)shouldDismember NS_AVAILABLE_MAC(10_14) {
++ (BOOL)shouldDismember {
     return [iTermAdvancedSettingsModel dismemberScrollView];
 }
 

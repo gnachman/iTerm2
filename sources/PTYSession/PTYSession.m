@@ -625,7 +625,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     iTermUpdateCadenceController *_cadenceController;
 
-    iTermMetalGlue *_metalGlue NS_AVAILABLE_MAC(10_11);
+    iTermMetalGlue *_metalGlue;
 
     int _updateCount;
     BOOL _metalFrameChangePending;
@@ -1108,9 +1108,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [_view release];
     [_logging stop];
-    if (@available(macOS 10.11, *)) {
-        [_metalGlue release];
-    }
+    [_metalGlue release];
     [_nameController release];
     [_tailFindController stopTailFind];  // This frees the substring in the tail find context, if needed.
     _shell.delegate = nil;
@@ -6382,10 +6380,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         _customIcon = [[iTermCacheableImage alloc] init];
     }
     NSString *path = [iTermProfilePreferences stringForKey:KEY_ICON_PATH inProfile:profile];
-    BOOL flipped = YES;
-    if (@available(macOS 10.15, *)) {
-        flipped = NO;
-    }
+    BOOL flipped = NO;
     return [_customIcon imageAtPath:path ofSize:NSMakeSize(16, 16) flipped:flipped];
 }
 
@@ -8850,7 +8845,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     return [self effectiveBlend];
 }
 
-- (void)metalGlueDidDrawFrameAndNeedsRedraw:(BOOL)redrawAsap NS_AVAILABLE_MAC(10_11) {
+- (void)metalGlueDidDrawFrameAndNeedsRedraw:(BOOL)redrawAsap {
     if (_view.useMetal) {
         if (redrawAsap) {
             [_textview requestDelegateRedraw];
@@ -9109,7 +9104,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     return _useMetal && _view.metalView.alphaValue == 1 && _wrapper.useMetal && _textview.suppressDrawing;
 }
 
-- (BOOL)metalViewSizeIsLegal NS_AVAILABLE_MAC(10_11) {
+- (BOOL)metalViewSizeIsLegal {
     NSSize size = _view.frame.size;
     // See "Maximum 2D texture width and height" in "Implementation Limits". Pick the smallest value
     // among the "Mac" columns.
@@ -9176,7 +9171,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     }
 }
 
-- (void)renderTwoMetalFramesAndShowMetalView NS_AVAILABLE_MAC(10_11) {
+- (void)renderTwoMetalFramesAndShowMetalView {
     // The first frame will be slow to draw. The second frame will be very
     // recent to minimize jitter. For reasons I haven't understood yet it seems
     // the first frame is sometimes transparent. I haven't seen that issue with
@@ -9244,7 +9239,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     _view.metalView.enableSetNeedsDisplay = YES;
 }
 
-- (void)showMetalAndStopDrawingTextView NS_AVAILABLE_MAC(10_11) {
+- (void)showMetalAndStopDrawingTextView {
     // If the legacy view had been visible, hide it. Hiding it before the
     // first frame is drawn causes a flash of gray.
     DLog(@"showMetalAndStopDrawingTextView");
@@ -9273,7 +9268,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     [self.delegate sessionDidChangeMetalViewAlphaValue:self to:alphaValue];
 }
 
-- (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
+- (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource {
     [_view setUseMetal:useMetal dataSource:dataSource];
     if (!useMetal) {
         _textview.suppressDrawing = NO;
@@ -9286,7 +9281,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     }
 }
 
-- (void)updateMetalDriver NS_AVAILABLE_MAC(10_11) {
+- (void)updateMetalDriver {
     DLog(@"%@", self);
     const CGSize cellSize = CGSizeMake(_textview.charWidth, _textview.lineHeight);
     CGSize glyphSize;
@@ -21324,7 +21319,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self.delegate sessionUpdateMetalAllowed];
 }
 
-- (id)temporarilyDisableMetal NS_AVAILABLE_MAC(10_11) {
+- (id)temporarilyDisableMetal {
     assert(_useMetal);
     _wrapper.useMetal = NO;
     _textview.suppressDrawing = NO;
@@ -21341,7 +21336,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return token;
 }
 
-- (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(id)token NS_AVAILABLE_MAC(10_11) {
+- (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(id)token {
     DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal %@", token);
     if (!_useMetal) {
         DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal returning early because useMetal is off");

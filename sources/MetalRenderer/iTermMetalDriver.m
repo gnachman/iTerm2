@@ -90,7 +90,7 @@ typedef struct {
 #if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
     NSInteger unfamiliarTextureCount;
 #endif
-    CGFloat maximumExtendedDynamicRangeColorComponentValue NS_AVAILABLE_MAC(10_15);
+    CGFloat maximumExtendedDynamicRangeColorComponentValue;
     CGFloat legacyScrollbarWidth;
     CGFloat rightExtraPixels;
     CGFloat panelReservationPixels;
@@ -488,7 +488,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
     });
 }
 
-- (MTLCaptureDescriptor *)triggerProgrammaticCapture:(id<MTLDevice>)device NS_AVAILABLE_MAC(10_15) {
+- (MTLCaptureDescriptor *)triggerProgrammaticCapture:(id<MTLDevice>)device {
     MTLCaptureManager* captureManager = [MTLCaptureManager sharedCaptureManager];
     MTLCaptureDescriptor* captureDescriptor = [[MTLCaptureDescriptor alloc] init];
     NSString *filename = [NSString stringWithFormat:@"/tmp/%@.gputrace", [[NSUUID UUID] UUIDString]];
@@ -517,9 +517,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
         [self scheduleDrawIfNeededInView:view];
         return NO;
     }
-    if (@available(macOS 10.15, *)) {
-        self.mainThreadState->maximumExtendedDynamicRangeColorComponentValue = view.window.screen.maximumPotentialExtendedDynamicRangeColorComponentValue;
-    }
+    self.mainThreadState->maximumExtendedDynamicRangeColorComponentValue = view.window.screen.maximumPotentialExtendedDynamicRangeColorComponentValue;
 
 #if ENABLE_FLAKY_METAL
 #warning DO NOT SUBMIT - FLAKY MODE ENABLED
@@ -568,9 +566,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
 
     if (self.captureDebugInfoForNextFrame) {
         frameData.debugInfo = [[iTermMetalDebugInfo alloc] init];
-        if (@available(macOS 10.15, *)) {
-            frameData.captureDescriptor = [self triggerProgrammaticCapture:frameData.device];
-        }
+        frameData.captureDescriptor = [self triggerProgrammaticCapture:frameData.device];
         self.captureDebugInfoForNextFrame = NO;
     }
     if (_total > 1) {
@@ -670,9 +666,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
                                                   pointInsets.bottom * scale,
                                                   pointInsets.right * scale);
         frameData.vmargin = [iTermPreferences topBottomMargins];
-        if (@available(macOS 10.15, *)) {
-            frameData.maximumExtendedDynamicRangeColorComponentValue = self.mainThreadState->maximumExtendedDynamicRangeColorComponentValue;
-        }
+        frameData.maximumExtendedDynamicRangeColorComponentValue = self.mainThreadState->maximumExtendedDynamicRangeColorComponentValue;
     }];
     return frameData;
 }
@@ -2598,12 +2592,10 @@ extraIdentifyingInfoForIcon:button.extraIdentifyingInfoForIcon];
         DLog(@"first time completed %@", frameData);
         if (frameData.debugInfo) {
             DLog(@"have debug info %@", frameData);
-            if (@available(macOS 10.15, *)) {
-                if (frameData.captureDescriptor) {
-                    MTLCaptureManager* captureManager = [MTLCaptureManager sharedCaptureManager];
-                    [captureManager stopCapture];
-                    [frameData.debugInfo addMetalCapture:frameData.captureDescriptor.outputURL];
-                }
+            if (frameData.captureDescriptor) {
+                MTLCaptureManager* captureManager = [MTLCaptureManager sharedCaptureManager];
+                [captureManager stopCapture];
+                [frameData.debugInfo addMetalCapture:frameData.captureDescriptor.outputURL];
             }
             NSData *archive = [frameData.debugInfo newArchive];
             dispatch_async(dispatch_get_main_queue(), ^{

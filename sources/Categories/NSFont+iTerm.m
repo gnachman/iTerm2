@@ -57,10 +57,7 @@
     if (font) {
         return font;
     }
-    if (@available(macOS 10.15, *)) {
-        return [NSFont monospacedSystemFontOfSize:points weight:NSFontWeightRegular];
-    }
-    return [NSFont fontWithName:@"Menlo" size:points];
+    return [NSFont monospacedSystemFontOfSize:points weight:NSFontWeightRegular];
 }
 
 - (BOOL)it_hasStylisticAlternatives {
