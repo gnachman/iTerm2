@@ -658,18 +658,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         defer {
             NSGraphicsContext.current?.restoreGraphicsState()
         }
-        // When the bar is scrollable, tabs can scroll all the way to the rounded
-        // ends. The selected tab's opaque pill would then paint over the bar's
-        // rounded border, since a non-scrollable bar only keeps tabs off the ends
-        // via its left/right margins. Inset the cell clip so a ring of bar
-        // background survives around the rounded ends. The inset matches the pill's
-        // own top/bottom margin (see -backgroundRect(for:), which insets 2 top / 1
-        // bottom) so the pill itself is never clipped.
-        if bar.tabBarIsScrollable() {
-            clippingPath(rect: backgroundRect, insetX: 2, insetY: 1).addClip()
-        } else {
-            clippingPath(rect: backgroundRect).addClip()
-        }
+        clippingPath(rect: backgroundRect).addClip()
 
         // no tab view == not connected
         guard let _ = bar.tabView else {
@@ -707,6 +696,20 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         }
 
         if drawableCells.count > 0 {
+            // When the bar is scrollable, tabs can scroll all the way to the
+            // rounded ends. The selected tab's opaque pill would then paint over
+            // the bar's rounded border, since a non-scrollable bar only keeps tabs
+            // off the ends via its left/right margins. Inset the cell clip so a
+            // ring of bar background survives around the rounded ends. The inset
+            // matches the pill's own top/bottom margin (see -backgroundRect(for:),
+            // which insets 2 top / 1 bottom) so the pill itself is never clipped.
+            // Scope this tighter clip to the cells only: the group-run outline
+            // (drawn below) is intentionally outset past the cells and must reach
+            // the pill edges, so it stays under the full clip set above.
+            NSGraphicsContext.current?.saveGraphicsState()
+            if bar.tabBarIsScrollable() {
+                clippingPath(rect: backgroundRect, insetX: 2, insetY: 1).addClip()
+            }
             if let i = drawableCells.firstIndex(where: { $0.state == .on }) {
                 let cell = drawableCells.remove(at: i)
                 drawableCells.append(cell)
@@ -753,6 +756,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             if let selectedCell = drawableCells.first, selectedCell.state == .on {
                 selectedCell.drawPostHocDecorations(onSelectedCell: selectedCell, tabBarControl: bar)
             }
+            NSGraphicsContext.current?.restoreGraphicsState()
         }
 
         drawTabGroupRunDecorations(forTabBar: bar, clipRect: clipRect)
