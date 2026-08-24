@@ -40,8 +40,9 @@
 // not carry a URL scheme the OS can open. This is the URL-detection portion of the
 // ⌘-click machinery without the asynchronous filesystem/Semantic History probing, so
 // it is suitable for populating a context menu synchronously.
-+ (NSURL * _Nullable)openableURLAtCoord:(VT100GridCoord)coord
-                    respectHardNewlines:(BOOL)respectHardNewlines
-                              extractor:(iTermTextExtractor *)extractor;
+// Returns nil if the text at `coord` does not carry a URL scheme the OS can open.
++ (NSURL *)openableURLAtCoord:(VT100GridCoord)coord
+          respectHardNewlines:(BOOL)respectHardNewlines
+                    extractor:(iTermTextExtractor *)extractor;
 
 @end

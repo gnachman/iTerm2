@@ -720,6 +720,7 @@
 		307E444E87AC1B58031A53B4 /* iTermWorkgroupModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DB9037425C749B5A0E7E089 /* iTermWorkgroupModel.swift */; };
 		30C67372CC4FB25FE6D138DD /* ToolProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F915C2AAA3C3B4331311DC06 /* ToolProvider.swift */; };
 		31533870CE8CA74AFBB1EF70 /* CompanionOnboardingRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B89EB9610266D0EF42285C2E /* CompanionOnboardingRouter.swift */; };
+		316BFEDC3EEC8367450DB7E2 /* iTermURLActionFactory+Testing.h in Sources */ = {isa = PBXBuildFile; fileRef = FDF6EB8657CCD10A7A568A61 /* iTermURLActionFactory+Testing.h */; };
 		32729FE01D7AC39C1BC0B1FF /* SafetyTranscriptProjection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 232A06BD577404F71FFBC0AF /* SafetyTranscriptProjection.swift */; };
 		329255FAF6BE419BCB700B39 /* CodeReviewPromptStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F0C4D86ED1181AF4DA5A4F /* CodeReviewPromptStore.swift */; };
 		355C6FC60EEF61A2C69E8D0E /* ArchiveClippingsBuiltInFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B084D285B6C1CDDE2932596 /* ArchiveClippingsBuiltInFunction.swift */; };
@@ -10013,6 +10014,7 @@
 		FC0E61E311DA6EA85EE80C3E /* iTermUvManifest.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermUvManifest.swift; sourceTree = "<group>"; };
 		FC3C8D1807D495D39ED10205 /* iTermWorkgroupsEditingViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWorkgroupsEditingViewController.swift; sourceTree = "<group>"; };
 		FD3AD5633442A7E32AF367B3 /* iTermGitFileStatus+Diffable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "iTermGitFileStatus+Diffable.swift"; sourceTree = "<group>"; };
+		FDF6EB8657CCD10A7A568A61 /* iTermURLActionFactory+Testing.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "iTermURLActionFactory+Testing.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -15616,6 +15618,7 @@
 				A6F718C92266DB380053488E /* iTermURLActionHelper.m */,
 				A6CFDAD0185D2587005DC94B /* URLAction.h */,
 				A6CFDAD1185D2587005DC94B /* URLAction.m */,
+				FDF6EB8657CCD10A7A568A61 /* iTermURLActionFactory+Testing.h */,
 			);
 			path = SemanticHistory;
 			sourceTree = "<group>";
@@ -22273,6 +22276,7 @@
 				A2663A4E2BC1C85588A6821A /* iTermTabGroupOrdering.swift in Sources */,
 				1C5952B8EE10C4F56EDE22CF /* iTermColorScopeVariables.swift in Sources */,
 				F4B48ACE64DE84CB54640D8E /* ColorAlphaBuiltInFunction.swift in Sources */,
+				316BFEDC3EEC8367450DB7E2 /* iTermURLActionFactory+Testing.h in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

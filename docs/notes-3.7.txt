@@ -732,6 +732,11 @@ Settings Improvements:
   changes.
 
 Bug Fixes:
+- Fixed a bug where ⌘-clicking a URL at the end
+  of a line in a full-screen app (like irssi or
+  mutt) could extend the link onto the next line
+  and open a URL with the following line’s text
+  appended. Issue 12970.
 - In the tmux Dashboard, “Open in Tabs” is now
   enabled when a single hidden window is
   selected, matching “Open in Window.” Issue
