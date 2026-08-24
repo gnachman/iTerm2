@@ -797,6 +797,11 @@ Bug Fixes:
   the front. The window now waits for the
   previously active app to come forward before
   ordering out.
+- A hotkey window set to appear on all spaces no
+  longer switches you to a different space when
+  revealed after reopening the laptop lid. It is
+  now revealed on the current space and rejoins
+  all spaces afterward.
 - Global search no longer shows blank snippets
   for results found on the main screen while an
   alternate-screen app (such as a full-screen TUI)
