@@ -2541,3 +2541,7 @@ Bug Fixes:
 - In orchestration chats, a session reference
   the AI writes without a leading @ now still
   renders as a clickable session link.
+- Settings search now reveals controls that live
+  on an inner sub-tab (such as AI > Features). It
+  switches to the correct nested tab before
+  highlighting, instead of dimming a bogus area.
