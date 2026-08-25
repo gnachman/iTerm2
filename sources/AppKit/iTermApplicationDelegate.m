@@ -1519,6 +1519,16 @@ void TurnOnDebugLoggingAutomatically(void) {
     [iTermMacOS13RequirementNotice maybeShow];
     DLog(@"didFinishLaunching");
 
+    // Record whether the previous shutdown ran to completion. +lastShutdownWasClean
+    // returns NO if the process was killed (e.g. SIGKILL by the logout/reboot
+    // watchdog) before +markShutdownAsClean ran at the end of
+    // applicationShouldTerminate:. This is the key data point for diagnosing lost
+    // windows after a reboot: an unclean shutdown means the terminate-time
+    // restorable-state save never finished, so restore falls back to an older
+    // snapshot. Logged via RLog so it lands in any debug log made on this launch,
+    // even without debug logging having been enabled during the prior session.
+    RLog(@"Previous shutdown was clean: %@", [iTermUserDefaults lastShutdownWasClean] ? @"YES" : @"NO");
+
     // Test-only: if launched with the purge flag, wipe the app's data-protection
     // keychain items and quit BEFORE any keychain read. Gated to Development builds via
     // ITERM_DEBUG (defined only in the Development configuration), so the call does not
