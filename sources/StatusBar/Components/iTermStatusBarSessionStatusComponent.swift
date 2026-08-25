@@ -287,6 +287,9 @@ class StatusBarSessionStatusComponent: iTermStatusBarTextComponent {
             self?.popover?.close()
             self?.popover = nil
         }
+        // Force the view to load so preferredContentSize reflects the table's
+        // measured height rather than the provisional set in init.
+        _ = viewController.view
         let popover = NSPopover()
         popover.contentViewController = viewController
         popover.behavior = .semitransient

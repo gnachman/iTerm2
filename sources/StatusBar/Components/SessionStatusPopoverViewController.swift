@@ -29,9 +29,10 @@ class SessionStatusPopoverViewController: NSViewController {
         self.entries = entries
         self.activeSessionGUID = activeSessionGUID
         super.init(nibName: nil, bundle: nil)
-        // Set here rather than in loadView: the caller reads
-        // preferredContentSize to size the popover, and reading it must not
-        // depend on the view having been loaded first.
+        // Provisional so a caller that reads preferredContentSize before the
+        // view loads gets a sane value. loadView() replaces it with the exact
+        // size once the table has tiled its frame (which includes the styled
+        // table's own row insets, unlike a hand-summed row total).
         preferredContentSize = NSSize(width: Self.width, height: contentHeight())
     }
 
@@ -40,8 +41,7 @@ class SessionStatusPopoverViewController: NSViewController {
     }
 
     override func loadView() {
-        let size = preferredContentSize
-        let container = NSView(frame: NSRect(origin: .zero, size: size))
+        let container = NSView(frame: NSRect(origin: .zero, size: preferredContentSize))
 
         let scrollView = NSScrollView(frame: container.bounds)
         scrollView.hasVerticalScroller = true
@@ -67,10 +67,24 @@ class SessionStatusPopoverViewController: NSViewController {
 
         self.tableView = tableView
         self.view = container
+
+        // Size to the table's real height. As the scroll view's document view
+        // the table tiles its own frame to fit all rows *plus* the styled
+        // NSTableView's built-in vertical inset, which a hand-summed row total
+        // omits; reading that frame height is what keeps the last row from
+        // being clipped (and avoids intrinsicContentSize / auto layout).
+        tableView.reloadData()
+        tableView.layoutSubtreeIfNeeded()
+        let height = min(Self.maxHeight, max(Self.minHeight, tableView.frame.height))
+        preferredContentSize = NSSize(width: Self.width, height: height)
+        container.setFrameSize(preferredContentSize)
     }
 
     // MARK: - Layout
 
+    /// A provisional height for before the table exists; loadView() supersedes
+    /// it with the table's tiled frame height. Undersizes by the table's inset,
+    /// so it is only a floor, never the final popover height.
     private func contentHeight() -> CGFloat {
         let total = entries.reduce(CGFloat(0)) { partial, entry in
             partial + height(of: entry)
@@ -154,6 +168,10 @@ extension SessionStatusPopoverViewController: NSTableViewDelegate {
         return cell
     }
 
+    // @objc is required: this is an optional NSTableViewDelegate method, and
+    // without the explicit selector the table never calls it and falls back to
+    // its default row height, clipping the multi-line rows.
+    @objc(tableView:heightOfRow:)
     func tableView(_ tableView: NSTableView, heightOfRow row: Int) -> CGFloat {
         guard row >= 0, row < entries.count else {
             return Self.minHeight
