@@ -2571,6 +2571,7 @@ ITERM_WEAKLY_REFERENCEABLE
     MutableProfile *profile = [[session.profile mutableCopy] autorelease];
     NSArray<iTermSSHReconnectionInfo *> *pendingJumps = nil;
     Profile *original = [[profile copy] autorelease];
+    BOOL forceOldCWD = NO;
     if (session.sshIdentity) {
         NSArray<iTermSSHReconnectionInfo *> *sequence = session.sshCommandLineSequence;
         if ([profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
@@ -2598,8 +2599,13 @@ ITERM_WEAKLY_REFERENCEABLE
             profile[KEY_WORKING_DIRECTORY] = pwd;
         }
     } else if (session.currentLocalWorkingDirectory) {
-        profile[KEY_CUSTOM_DIRECTORY] = @"Yes";
-        profile[KEY_WORKING_DIRECTORY] = session.currentLocalWorkingDirectory;
+        // Start the duplicate in the source session's current directory, but do it as a one-shot
+        // rather than by stamping a persistent Custom Directory override on the profile. A
+        // persistent override would divorce the session and be inherited by any split panes created
+        // from the duplicate, where it could go stale (e.g. point at an unmounted volume) and drop
+        // the shell into the wrong directory. See issue 12981. The saved working directory is
+        // already stored in the arrangement; forceOldCWD makes restoration honor it exactly once.
+        forceOldCWD = YES;
     }
     if (session.isDivorced || ![profile isEqual:original]) {
         if (!session.isDivorced && !profile[KEY_ORIGINAL_GUID]) {
@@ -2619,13 +2625,14 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                        profile:profile
                                                                    saveProgram:NO
                                                                   pendingJumps:pendingJumps];
+    NSDictionary *options = forceOldCWD ? @{ PTYSessionArrangementOptionsForceOldCWD: @YES } : nil;
     [self openTabWithArrangement:tabArrangement
                            named:@"Unnamed arrangement"
                  hasFlexibleView:NO
                          viewMap:nil
                       sessionMap:nil
               partialAttachments:nil
-                         options:nil];
+                         options:options];
 }
 
 - (void)restartSessionWithConfirmation:(PTYSession *)aSession {

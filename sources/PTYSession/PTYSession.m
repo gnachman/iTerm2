@@ -381,6 +381,7 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
     @"NoSyncTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier";
 
 NSString *const PTYSessionArrangementOptionsForDuplication = @"PTYSessionArrangementOptionsForDuplication";
+NSString *const PTYSessionArrangementOptionsForceOldCWD = @"PTYSessionArrangementOptionsForceOldCWD";
 NSString *const PTYSessionArrangementOptionsUnlimitedHistory = @"PTYSessionArrangementOptionsUnlimitedHistory";
 NSString *const PTYSessionArrangementOptionsArchive = @"PTYSessionArrangementOptionsArchive";
 NSString *const PTYSessionArrangementOptionsLargeContentProvider = @"PTYSessionArrangementOptionsLargeContentProvider";
@@ -2321,6 +2322,13 @@ ITERM_WEAKLY_REFERENCEABLE
             // profile.
             [aSession resetForRelaunch];
             NSString *oldCWD = arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY];
+            // Force the saved working directory when restoring contents, or when the caller asks for
+            // it at launch time (Duplicate Session, which has no contents but wants to start in the
+            // source session's directory without stamping a persistent Custom Directory override that
+            // split panes would then inherit; issue 12981). This is a transient launch option, not
+            // part of the serialized arrangement.
+            const BOOL forceOldCWD = (contents != nil ||
+                                      [options[PTYSessionArrangementOptionsForceOldCWD] boolValue]) && oldCWD.length;
             DLog(@"Running command...");
 
             NSDictionary *environmentArg = @{};
@@ -2357,7 +2365,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                 environment:environmentArg
                                                                 customShell:customShell
                                                                      oldCWD:oldCWD
-                                                             forceUseOldCWD:contents != nil && oldCWD.length
+                                                             forceUseOldCWD:forceOldCWD
                                                                     command:commandArg
                                                                      isUTF8:isUTF8Arg
                                                               substitutions:substitutionsArg

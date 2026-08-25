@@ -753,6 +753,11 @@ Settings Improvements:
   the current tab.
 
 Bug Fixes:
+- Duplicate Session no longer stamps a permanent
+  working-directory override on the new session.
+  Previously that override was inherited by split
+  panes and could go stale, dropping the shell in
+  the wrong directory. Issue 12981.
 - Fixed a bug where ⌘-clicking a URL at the end
   of a line in a full-screen app (like irssi or
   mutt) could extend the link onto the next line

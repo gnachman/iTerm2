@@ -61,6 +61,9 @@ extern NSString *const PTYCommandDidExitUserInfoKeyStartLine;
 extern NSString *const PTYCommandDidExitUserInfoKeyLineCount;
 extern NSString *const PTYCommandDidExitUserInfoKeyURL;
 extern NSString *const PTYSessionArrangementOptionsForDuplication;
+// Transient launch option (not serialized): when set, restoration starts the session in its saved
+// working directory exactly once, rather than via a persistent Custom Directory profile override.
+extern NSString *const PTYSessionArrangementOptionsForceOldCWD;
 extern NSString *const PTYSessionArrangementOptionsUnlimitedHistory;
 extern NSString *const PTYSessionArrangementOptionsArchive;
 extern NSString *const PTYSessionArrangementOptionsLargeContentProvider;
