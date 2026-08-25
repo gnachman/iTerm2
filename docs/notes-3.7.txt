@@ -760,6 +760,18 @@ Settings Improvements:
   tab bar’s right-click menu but acting on
   the current tab.
 
+Web browser improvements:
+- The built-in web browser can now remember
+  HTTP basic-auth user names and passwords.
+  Check “Remember this password” in the sign-in
+  dialog and it is saved in the browser password
+  manager (Keychain, 1Password, and the other
+  supported back ends) and offered automatically
+  next time. The dialog also has a Password
+  Manager button to pick an existing login.
+  View or remove saved passwords from the
+  password manager.
+
 Bug Fixes:
 - Duplicate Session no longer stamps a permanent
   working-directory override on the new session.
@@ -1727,14 +1739,12 @@ Bug Fixes:
   synthetic workgroup_id so the
   agent can immediately drive the
   new session with the other tools.
-
 - Dropping a file onto the AI chat
   text field now offers to attach it
   when the current backend supports
   that file type, instead of always
   inserting its path as text. The
   choice can be remembered.
-
 - AI chat can now attach images to
   OpenAI models (vision), and audio
   to OpenAI audio models on the
@@ -1814,7 +1824,6 @@ Bug Fixes:
   the Before You Start sheet has an
   always-visible link to a web page
   explaining the whole integration.
-
 - The orchestrator can now
   watch sessions that report no
   status (plain TUIs, coding agents

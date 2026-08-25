@@ -260,6 +260,7 @@
 #import "TmuxController.h"
 #import "charmaps.h"
 #import "SSKeychain.h"
+#import "iTermPasswordManagerWindowController.h"
 #import "ColorsMenuItemView.h"
 #import "librailroad_dsl/include/railroad_dsl.h"
 #import "iTermStreamingPNGWriter.h"

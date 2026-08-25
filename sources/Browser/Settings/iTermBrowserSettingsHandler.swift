@@ -16,6 +16,7 @@ protocol iTermBrowserSettingsHandlerDelegate: AnyObject {
     @MainActor func settingsHandlerDidRequestAdblockUpdate(_ handler: iTermBrowserSettingsHandler)
     @MainActor func settingsHandlerWebView(_ handler: iTermBrowserSettingsHandler) -> iTermBrowserWebView?
     @MainActor func settingsHandlerExtensionManager(_ handler: iTermBrowserSettingsHandler) -> iTermBrowserExtensionManagerProtocol?
+    @MainActor func settingsHandlerOpenPasswordManager(_ handler: iTermBrowserSettingsHandler)
 }
 
 @available(macOS 11.0, *)
@@ -178,6 +179,8 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
                 revealExtensionsDirectory(webView: webView)
             }
 #endif
+        case "openPasswordManager":
+            delegate?.settingsHandlerOpenPasswordManager(self)
         case "setLinkOpeningPreference":
             if let preference = message["value"] as? String {
                 setLinkOpeningPreference(preference, webView: webView)
