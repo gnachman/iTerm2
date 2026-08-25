@@ -1,0 +1,41 @@
+========================================================================
+ TEST 3: Cursive joining, combining marks, list markers
+ (needs: RTL support ON  +  profile "Use Ligatures" ON)
+========================================================================
+
+------------------------------------------------------------------------
+3a. Cursive joining baseline. Letters must CONNECT, not sit isolated.
+    NEW: سلام draws as one joined word.
+    OLD (fast-path bug): every letter drawn disconnected: س ل ا م
+    (This is the isalpha/isnumber fast-path fix; needs Use Ligatures ON.)
+------------------------------------------------------------------------
+سلام دنیا خوب
+
+------------------------------------------------------------------------
+3b. Combining mark merged into a ligature cell.
+    کاملاً ends in lam + alef + fathatan. The mark rides the lam-alef
+    ligature.
+    NEW: the word draws in correct RTL order.
+    OLD: the mark perturbed the cell position and the word scrambled.
+------------------------------------------------------------------------
+آیا این درست است؟ بله؛ کاملاً درست.
+
+------------------------------------------------------------------------
+3c. Numbered list markers (digit + paren) inside RTL lines.
+    A "8)" or "10)" marker is one LTR run the RTL line lays out reversed.
+    NEW: each marker renders in place, digit(s) then paren, before the word.
+    OLD: the "1" of "10)" printed over the next letter and the paren
+         detached to the line edge.
+------------------------------------------------------------------------
+۱) مورد اول
+۸) مورد هشتم
+۱۰) مورد دهم
+
+------------------------------------------------------------------------
+3d. A mid-word color change must not break joining.
+    Cat this, then SELECT part of the word (selection changes the
+    background/color). The letters must stay joined across the selection
+    boundary in BOTH the CoreGraphics and Metal renderers.
+    OLD: selecting part of کاملاً redrew letters in isolated forms.
+------------------------------------------------------------------------
+کاملاً متصل بماند

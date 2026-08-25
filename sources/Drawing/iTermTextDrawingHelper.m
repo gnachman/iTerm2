@@ -2573,6 +2573,14 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
     }
 
     NSData *drawInCellIndex = attributes[iTermDrawInCellIndexAttribute];
+    // Does the string carry more than one foreground color? Runs that differ
+    // only in color are merged into one string so Arabic shaping survives a
+    // selection or SGR boundary; those need per-span fills below. The CTLine
+    // can be a cached layout keyed only on string+font, so colors must come
+    // from this attributed string, never from the line's run attributes.
+    NSRange firstColorRange = NSMakeRange(0, attributedString.length);
+    [attributedString attribute:(NSString *)kCTForegroundColorAttributeName atIndex:0 effectiveRange:&firstColorRange];
+    const BOOL multicolor = NSMaxRange(firstColorRange) < attributedString.length;
     iTermCoreTextLineRenderingHelper *renderingHelper = [[iTermCoreTextLineRenderingHelper alloc] initWithLine:lineRef
                                                                                                         string:attributedString.string
                                                                                                drawInCellIndex:drawInCellIndex];
@@ -2614,17 +2622,42 @@ static BOOL NSRangesAdjacent(NSRange lhs, NSRange rhs) {
                                                                     origin.x, ty);
                 CGContextSetTextMatrix(cgContext, restored);
             } else {
-                CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
-
                 if (bold && !fakeBold) {
                     CTFontSymbolicTraits traits = CTFontGetSymbolicTraits(runFont);
                     fakeBold = !(traits & kCTFontTraitBold);
                 }
-
-                if (fakeBold && _boldAllowed) {
-                    CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
-                    CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
-                    CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+                const BOOL doubleStrike = fakeBold && _boldAllowed;
+                // Draw in same-color spans. A single-color string is one span;
+                // a merged multi-color string (shaping preserved across a
+                // selection boundary) sets the fill per span, reading the color
+                // from the attributed string by character index.
+                size_t spanStart = 0;
+                while (spanStart < length) {
+                    size_t spanLength = length - spanStart;
+                    if (multicolor) {
+                        NSRange colorRange = NSMakeRange(0, attributedString.length);
+                        CGColorRef spanColor =
+                        (__bridge CGColorRef)[attributedString attribute:(NSString *)kCTForegroundColorAttributeName
+                                                                 atIndex:glyphIndexToCharacterIndex[spanStart]
+                                                          effectiveRange:&colorRange];
+                        size_t spanEnd = spanStart + 1;
+                        while (spanEnd < length &&
+                               NSLocationInRange((NSUInteger)glyphIndexToCharacterIndex[spanEnd], colorRange)) {
+                            spanEnd += 1;
+                        }
+                        spanLength = spanEnd - spanStart;
+                        if (spanColor) {
+                            CGContextSetFillColorWithColor(cgContext, spanColor);
+                            CGContextSetStrokeColorWithColor(cgContext, spanColor);
+                        }
+                    }
+                    CTFontDrawGlyphs(runFont, buffer + spanStart, (NSPoint *)(positions + spanStart), spanLength, cgContext);
+                    if (doubleStrike) {
+                        CGContextTranslateCTM(cgContext, antiAlias ? _antiAliasedShift : 1, 0);
+                        CTFontDrawGlyphs(runFont, buffer + spanStart, (NSPoint *)(positions + spanStart), spanLength, cgContext);
+                        CGContextTranslateCTM(cgContext, antiAlias ? -_antiAliasedShift : -1, 0);
+                    }
+                    spanStart += spanLength;
                 }
             }
         } else {

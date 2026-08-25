@@ -47,7 +47,8 @@ typedef NS_ENUM(unsigned char, iTermCharacterAttributesUnderline) {
 };
 
 // IMPORTANT: If you add a field here also update the comparison function
-// shouldSegmentWithAttributes:imageAttributes:previousAttributes:previousImageAttributes:combinedAttributesChanged:
+// shouldSegmentWithAttributes:imageAttributes:previousAttributes:previousImageAttributes:mergeColorOnlyChanges:combinedAttributesChanged:
+// (both the changed check and the onlyColorDiffers check).
 typedef struct {
     BOOL initialized;
     BOOL shouldAntiAlias;
@@ -601,6 +602,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                               imageAttributes:imageAttributes
                            previousAttributes:&previousCharacterAttributes
                       previousImageAttributes:previousImageAttributes
+                        mergeColorOnlyChanges:(bidiInfo != nil)
                      combinedAttributesChanged:&combinedAttributesChanged]) {
             iTermPreciseTimerStatsStartTimer(_stats.buildMutableAttributedString);
             builder.endColumn = i;
@@ -821,6 +823,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                     imageAttributes:(NSDictionary *)imageAttributes
                  previousAttributes:(iTermCharacterAttributes *)previousAttributes
             previousImageAttributes:(NSDictionary *)previousImageAttributes
+              mergeColorOnlyChanges:(BOOL)mergeColorOnlyChanges
            combinedAttributesChanged:(BOOL *)combinedAttributesChanged {
     if (unlikely(!previousAttributes->initialized)) {
         // First char of first segment
@@ -850,6 +853,37 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                                           newAttributes->drawable != previousAttributes->drawable ||
                                           newAttributes->rtlStatus != previousAttributes->rtlStatus ||
                                           !iTermCharacterAttributesUnderlineColorEqual(newAttributes, previousAttributes));
+            if (*combinedAttributesChanged && mergeColorOnlyChanges) {
+                // A change in foreground color alone (a selection boundary, or an
+                // SGR color change mid-word) must not start a new attributed
+                // string on a bidi line: each string is shaped independently by
+                // CoreText, so splitting inside an Arabic word severs the cursive
+                // joining: selecting «کامل» out of «کاملاً» redrew the letters in
+                // their isolated forms. Instead the caller keeps appending to the
+                // same builder and just swaps its attributes, producing one shaped
+                // string with per-range colors. Underline/strikethrough/URL runs
+                // are excluded because iTermUnderlineLengthAttribute is applied
+                // per built string.
+                const BOOL onlyColorDiffers = (newAttributes->shouldAntiAlias == previousAttributes->shouldAntiAlias &&
+                                               newAttributes->boxDrawing == previousAttributes->boxDrawing &&
+                                               newAttributes->contrastIneligible == previousAttributes->contrastIneligible &&
+                                               [newAttributes->font isEqual:previousAttributes->font] &&
+                                               newAttributes->ligatureLevel == previousAttributes->ligatureLevel &&
+                                               newAttributes->bold == previousAttributes->bold &&
+                                               newAttributes->faint == previousAttributes->faint &&
+                                               newAttributes->fakeItalic == previousAttributes->fakeItalic &&
+                                               newAttributes->underlineType == iTermCharacterAttributesUnderlineNone &&
+                                               previousAttributes->underlineType == iTermCharacterAttributesUnderlineNone &&
+                                               !newAttributes->strikethrough &&
+                                               !previousAttributes->strikethrough &&
+                                               !newAttributes->isURL &&
+                                               !previousAttributes->isURL &&
+                                               newAttributes->drawable == previousAttributes->drawable &&
+                                               newAttributes->rtlStatus == previousAttributes->rtlStatus);
+                if (onlyColorDiffers) {
+                    return NO;
+                }
+            }
         }
         return *combinedAttributesChanged;
     } else if ((imageAttributes == nil) != (previousImageAttributes == nil)) {
