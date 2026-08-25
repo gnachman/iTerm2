@@ -133,6 +133,12 @@ Major New Features:
   The “Type for You” permission was renamed
   “Control Terminal” and now also gates this.
 
+- Right-clicking your own message in AI chat now
+  offers Delete, which removes that message and
+  everything after it. Edit, Fork, and Delete are
+  also available when right-clicking inside the
+  message text.
+
 - AI chat linked to a terminal session can now
   watch that session and tell you when it reaches
   a state or a described condition, without

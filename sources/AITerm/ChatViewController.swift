@@ -1484,6 +1484,13 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         delegate?.chatViewController(self, forkAtMessageID: messageID, ofChat: chatID)
     }
 
+    private func delete(_ messageID: UUID) {
+        guard let model, let i = model.index(ofMessageID: messageID) else {
+            return
+        }
+        model.deleteFrom(index: i)
+    }
+
     private func configure(cell: MultipartMessageCellView,
                                 for message: Message,
                                 isLast: Bool) {
@@ -1508,6 +1515,9 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         }
         cell.forkButtonClicked = { [weak self] messageID in
             self?.fork(messageID)
+        }
+        cell.deleteButtonClicked = { [weak self] messageID in
+            self?.delete(messageID)
         }
         let originalMessageID = message.uniqueID
         let chatID = self.chatID

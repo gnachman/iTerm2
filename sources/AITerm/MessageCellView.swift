@@ -13,6 +13,7 @@ class MessageCellView: NSView {
     // Callback for the edit button.
     var editButtonClicked: ((UUID) -> Void)?
     var forkButtonClicked: ((UUID) -> Void)?
+    var deleteButtonClicked: ((UUID) -> Void)?
 
     // Cached at configure-time so layout() and the static height helper
     // both see the same bubble width budget.
@@ -68,9 +69,7 @@ class MessageCellView: NSView {
             DLog("menu \(self)")
             let menu = NSMenu(title: "Context Menu")
             if editable {
-                let editItem = NSMenuItem(title: "Edit", action: #selector(editMenuItemClicked(_:)), keyEquivalent: "")
-                editItem.target = self
-                menu.addItem(editItem)
+                menu.addItem(makeEditItem())
             }
 
             let copyItem = NSMenuItem(title: "Copy", action: #selector(copyMenuItemClicked(_:)), keyEquivalent: "")
@@ -78,9 +77,8 @@ class MessageCellView: NSView {
             menu.addItem(copyItem)
 
             if editable {
-                let forkItem = NSMenuItem(title: "Fork", action: #selector(forkMenuItemClicked(_:)), keyEquivalent: "")
-                forkItem.target = self
-                menu.addItem(forkItem)
+                menu.addItem(makeForkItem())
+                menu.addItem(makeDeleteItem())
             }
 
             return menu
@@ -88,6 +86,37 @@ class MessageCellView: NSView {
         set {
             RLog("Unexpected call to set menu")
         }
+    }
+
+    // Appends the message-level actions (Edit, Fork, Delete) to a menu that
+    // already carries its own items, such as an NSTextView's default
+    // right-click menu. Does nothing when the message isn't editable.
+    func augmentTextViewMenu(_ menu: NSMenu) {
+        guard editable else {
+            return
+        }
+        menu.addItem(.separator())
+        menu.addItem(makeEditItem())
+        menu.addItem(makeForkItem())
+        menu.addItem(makeDeleteItem())
+    }
+
+    private func makeEditItem() -> NSMenuItem {
+        let item = NSMenuItem(title: "Edit", action: #selector(editMenuItemClicked(_:)), keyEquivalent: "")
+        item.target = self
+        return item
+    }
+
+    private func makeForkItem() -> NSMenuItem {
+        let item = NSMenuItem(title: "Fork", action: #selector(forkMenuItemClicked(_:)), keyEquivalent: "")
+        item.target = self
+        return item
+    }
+
+    private func makeDeleteItem() -> NSMenuItem {
+        let item = NSMenuItem(title: "Delete", action: #selector(deleteMenuItemClicked(_:)), keyEquivalent: "")
+        item.target = self
+        return item
     }
 
     @objc func copyMenuItemClicked(_ sender: Any) {
@@ -101,6 +130,11 @@ class MessageCellView: NSView {
     @objc func editMenuItemClicked(_ sender: Any) {
         if let id = messageUniqueID {
             editButtonClicked?(id)
+        }
+    }
+    @objc func deleteMenuItemClicked(_ sender: Any) {
+        if let id = messageUniqueID {
+            deleteButtonClicked?(id)
         }
     }
 

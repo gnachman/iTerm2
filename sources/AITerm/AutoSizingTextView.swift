@@ -56,5 +56,28 @@ class AutoSizingTextView: ClickableTextView {
         return NSSize(width: ceil(used.maxX) + inset.width * 2,
                       height: ceil(bounding.maxY) + inset.height * 2)
     }
+
+    // When the text is selectable the text view (not the cell) is the hit
+    // target for a right click, so AppKit shows NSTextView's default menu
+    // instead of the cell's Edit/Copy/Fork/Delete menu. Graft the
+    // message-level actions onto that default menu so they remain reachable.
+    override func menu(for event: NSEvent) -> NSMenu? {
+        let menu = super.menu(for: event)
+        if let menu, let cell = enclosingMessageCellView {
+            cell.augmentTextViewMenu(menu)
+        }
+        return menu
+    }
+
+    private var enclosingMessageCellView: MessageCellView? {
+        var view = superview
+        while let current = view {
+            if let cell = current as? MessageCellView {
+                return cell
+            }
+            view = current.superview
+        }
+        return nil
+    }
 }
 
