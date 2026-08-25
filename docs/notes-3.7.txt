@@ -2703,3 +2703,6 @@ Bug Fixes:
   the GPU renderer instead of fading
   directly to the background color. Issue
   12990.
+- The tab group rename and creation dialogs now
+  match the light/dark appearance of their
+  window in the minimal theme.

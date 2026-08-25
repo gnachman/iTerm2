@@ -8652,6 +8652,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [field selectText:nil];
     alert.accessoryView = field;
     alert.window.initialFirstResponder = field;
+    // In the minimal theme the effective light/dark mode is based on the
+    // terminal background color rather than the system appearance, so match the
+    // alert to the window it belongs to.
+    BOOL isDark;
+    if ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL) {
+        isDark = self.minimalTabStyleBackgroundColor.isDark;
+    } else {
+        isDark = [self.window.effectiveAppearance bestMatchFromAppearancesWithNames:@[NSAppearanceNameDarkAqua, NSAppearanceNameAqua]] == NSAppearanceNameDarkAqua;
+    }
+    alert.window.appearance = [NSAppearance appearanceNamed:isDark ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua];
     const NSModalResponse response = [alert runModal];
     if (response != NSAlertFirstButtonReturn) {
         return nil;
