@@ -46,6 +46,12 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
 // Parent controller. Always set. Equals one of realParent or fakeParent.
 @property(nonatomic, weak) id<WindowControllerInterface> parentWindow;
 
+// The real window controller (a PseudoTerminal), not the proxy that gets subbed
+// in during instant replay. Prefer this over -parentWindow when you need the
+// actual window controller rather than the proxy. `realParentWindow_` is weak and
+// non-nil only while the parent is a PseudoTerminal*, so callers must handle nil.
+- (NSWindowController<iTermWindowController> *)realParentWindow;
+
 // uniqueId lazily auto-assigns a unique id unless you assign it a value first. It is never 0.
 @property(nonatomic, assign) int uniqueId;
 @property(nonatomic, readonly) BOOL isMaximized;
