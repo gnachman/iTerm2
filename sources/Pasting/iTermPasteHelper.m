@@ -136,6 +136,21 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     return controlSet;
 }
 
+// Zero-width bidi/format characters that line editors render as a visible
+// <200c>-style escape: ZWSP, ZWNJ (Persian half-space), ZWJ, LRM, RLM, plus
+// soft hyphen, word joiner, and ZWNBSP/BOM.
++ (NSCharacterSet *)zeroWidthFormatCharacterSet {
+    static NSCharacterSet *set;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableCharacterSet *s = [[NSMutableCharacterSet alloc] init];
+        [s addCharactersInRange:NSMakeRange(0x200b, 5)];  // 200B ZWSP, 200C ZWNJ, 200D ZWJ, 200E LRM, 200F RLM
+        [s addCharactersInString:@"\u00ad\u2060\ufeff"];  // soft hyphen, word joiner, ZWNBSP/BOM
+        set = s;
+    });
+    return set;
+}
+
 + (BOOL)promptToConvertTabsToSpacesWhenPasting {
     return ![iTermWarning identifierIsSilenced:@"AboutToPasteTabsWithCancel"];
 }
@@ -239,6 +254,21 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         // that transformation might add ^Vs.
         theString =
         [[theString componentsSeparatedByCharactersInSet:[iTermPasteHelper unsafeControlCodeSet]]
+         componentsJoinedByString:@""];
+    }
+
+    if ([iTermPreferences bidiEnabled] &&
+        [iTermAdvancedSettingsModel stripZeroWidthFormatCharactersOnPaste]) {
+        // Line editors (zsh/readline, some TUIs) render zero-width bidi/format
+        // characters as a visible <200c> because macOS classifies them as
+        // control characters, so pasting Persian at a prompt fills up with
+        // <200c>. When enabled, strip them on paste so the command line stays
+        // clean. Gated on the right-to-left support preference so it is fully
+        // inert unless bidi is on, and OFF by default even then: these
+        // characters are meaningful (the Persian half-space ZWNJ, the LTR/RTL
+        // marks), so removing them changes the text; it is the user's explicit choice.
+        theString =
+        [[theString componentsSeparatedByCharactersInSet:[iTermPasteHelper zeroWidthFormatCharacterSet]]
          componentsJoinedByString:@""];
     }
 
