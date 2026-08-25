@@ -8645,17 +8645,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return;
     }
     theTab.tabGroupID = groupID;
-    // The definition has no separate store, so copy it from an existing member
-    // (name/color, and the collapsed flag) to keep the new member self-sufficient.
-    [self reconcileTabGroupDefinitionForTab:theTab];
     RLog(@"tabGroup: added tab %@ to existing group %@", [tabViewItem label], groupID);
-    [self updateTabColors];
-    // The added tab may be far from the group's other members; repair the
-    // contiguity invariant so they become one block.
-    [self tabsDidReorder];
-    // If the added tab is the active one and it just joined a collapsed group,
-    // expand it so the active tab is never hidden.
-    [self expandTabGroupIfSelectedTabIsCollapsed];
+    // Copy the definition from an existing member, repair contiguity (the added
+    // tab may be far from the group), and expand if the active tab just joined a
+    // collapsed group so it is never hidden.
+    [self finalizeTabGroupMembershipChangeForTab:theTab];
 }
 
 // Rename every tab in the group, since the name is carried per-member.
@@ -8741,6 +8735,69 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     // The members are likely scattered (the initial tab plus tabs appended at
     // the end); repair the contiguity invariant so they become one block.
     [self tabsDidReorder];
+}
+
+// Finalize a tab whose group membership just changed: reconcile its carried
+// definition against surviving members, refresh colors, repair the contiguity
+// invariant, and make sure the active tab isn't left inside a collapsed group.
+// Shared by every join/revert path (addTabToExistingGroup:, the new-tab-in-group
+// path, and the workgroup entry-tab revert) so a future change to how a joining
+// tab is finalized lands in one place instead of silently diverging.
+- (void)finalizeTabGroupMembershipChangeForTab:(PTYTab *)tab {
+    [self reconcileTabGroupDefinitionForTab:tab];
+    [self updateTabColors];
+    [self tabsDidReorder];
+    [self expandTabGroupIfSelectedTabIsCollapsed];
+}
+
+// Capture a tab's group membership so it can be restored later (e.g. a
+// workgroup grouping the entry tab, reverted on exit). "No group" is
+// represented explicitly so -restoreTabGroupSnapshot:forTab: can clear
+// membership. Keyed by tab (not session) so the snapshot survives even if the
+// tab's original session terminates while the tab lives on via another split.
+// The dictionary shape is private to this class; callers that need to compare
+// a snapshot against a tab's current group use
+// -tabGroupSnapshot:describesCurrentGroupOfTab: rather than reading keys.
+- (NSDictionary *)tabGroupSnapshotForTab:(PTYTab *)tab {
+    if (!tab) {
+        return nil;
+    }
+    return @{ @"id": tab.tabGroupID ?: [NSNull null],
+              @"name": tab.tabGroupName ?: [NSNull null],
+              @"color": tab.tabGroupColor ?: [NSNull null],
+              @"collapsed": @(tab.tabGroupCollapsed) };
+}
+
+// YES if `tab`'s current group is the one `snapshot` recorded (its group is
+// unchanged since the snapshot was taken). Keeps the snapshot representation
+// private to this class so callers don't hard-code its keys.
+- (BOOL)tabGroupSnapshot:(NSDictionary *)snapshot describesCurrentGroupOfTab:(PTYTab *)tab {
+    NSString *snapshotID = [snapshot[@"id"] nilIfNull];
+    NSString *currentID = tab.tabGroupID;
+    if (!snapshotID && !currentID) {
+        return YES;
+    }
+    return [snapshotID isEqualToString:currentID];
+}
+
+// Restore a tab's group membership captured by -tabGroupSnapshotForTab:.
+// A snapshot with a null id clears the tab's group, which dissolves a group it
+// was the last remaining member of (so no stray one-member chip is left).
+- (void)restoreTabGroupSnapshot:(NSDictionary *)snapshot forTab:(PTYTab *)tab {
+    if (!snapshot || !tab) {
+        return;
+    }
+    tab.tabGroupID = [snapshot[@"id"] nilIfNull];
+    // These three writes are load-bearing only in the narrow case where the
+    // group's other members all vanished (or we're clearing to "no group"):
+    // -reconcileTabGroupDefinitionForTab: below overwrites name/color/collapsed
+    // from a surviving member when one exists, but with none to copy from these
+    // preserve the captured definition (and a null id path clears them). Don't
+    // drop them as dead writes.
+    tab.tabGroupName = [snapshot[@"name"] nilIfNull];
+    tab.tabGroupColor = [snapshot[@"color"] nilIfNull];
+    tab.tabGroupCollapsed = [snapshot[@"collapsed"] boolValue];
+    [self finalizeTabGroupMembershipChangeForTab:tab];
 }
 
 // Cycle a small system palette so consecutive new groups look distinct.
@@ -13986,10 +14043,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     }
     RLog(@"tabGroup: new tab %@ joins group %@", tab, groupID);
     tab.tabGroupID = groupID;
-    [self reconcileTabGroupDefinitionForTab:tab];
-    [self updateTabColors];
-    [self tabsDidReorder];
-    [self expandTabGroupIfSelectedTabIsCollapsed];
+    [self finalizeTabGroupMembershipChangeForTab:tab];
 }
 
 - (NSUInteger)indexForNewTab {

@@ -76,6 +76,21 @@ final class iTermWorkgroupInstance: NSObject {
     // them. nil when the root had no configured name (nothing was changed).
     private var leaderTitleRestoreValues: [AnyHashable: Any]?
 
+    // The leader tab's group membership (opaque snapshot from PseudoTerminal)
+    // captured just before entry grouped the entry tab with the spawned tabs,
+    // so teardown can put it back: rejoin its prior group, or clear the
+    // workgroup group so no stray one-member chip is left. Enter-only, like the
+    // title snapshot; nil on adopt (the restored leader already carries the
+    // workgroup group in its saved arrangement, so there is no original state).
+    // Kept only when entry grouping actually changed the leader's group.
+    private var leaderGroupRestoreSnapshot: [AnyHashable: Any]?
+
+    // The entry tab whose group the snapshot above belongs to. Weak and keyed
+    // on the tab (not the session) so teardown can revert the group even when
+    // the leader SESSION terminated but its TAB lives on via another split, and
+    // so a tab that fully closed is simply skipped (weak goes nil).
+    private weak var leaderGroupRestoreTab: PTYTab?
+
     // Whether teardown() started, used as a reentrancy guard:
     // peerPort.invalidate() synchronously terminates fulfilled peers,
     // and terminate() synchronously posts iTermSessionWillTerminate,
@@ -460,6 +475,44 @@ final class iTermWorkgroupInstance: NSObject {
         session.setSessionSpecificProfileValues(restore)
     }
 
+    // Snapshot the leader tab's group membership before entry groups it, so
+    // teardown can revert it. Skips synthetic test sessions (no window), same
+    // as the rename and the grouping itself.
+    private func captureLeaderGroupState() {
+        guard let session = mainSession,
+              let windowController =
+                session.delegate?.realParentWindow() as? PseudoTerminal,
+              let tab = windowController.tab(for: session) else {
+            return
+        }
+        leaderGroupRestoreSnapshot = windowController.tabGroupSnapshot(for: tab)
+        leaderGroupRestoreTab = tab
+    }
+
+    // Drop the snapshot if entry grouping was a no-op (e.g. a splits-only or
+    // peers-only workgroup adds no new tab, so groupTabs' <2-distinct-tabs guard
+    // leaves the leader's group untouched). Without this, teardown would
+    // "restore" the leader's original group and clobber any rename/recolor/
+    // collapse/pin the user made to it while the workgroup was open. Called
+    // right after groupTabs; compares the leader tab's group id to the snapshot.
+    private func discardLeaderGroupSnapshotIfGroupingWasNoOp() {
+        guard let snapshot = leaderGroupRestoreSnapshot,
+              let tab = leaderGroupRestoreTab,
+              let windowController = tab.realParentWindow() as? PseudoTerminal else {
+            leaderGroupRestoreSnapshot = nil
+            leaderGroupRestoreTab = nil
+            return
+        }
+        // Ask the window controller (which owns the snapshot's shape) whether the
+        // leader's group is unchanged. If so, grouping didn't touch it and there
+        // is nothing to revert; keeping the snapshot would let teardown clobber
+        // any edits the user later made to that group.
+        if windowController.tabGroupSnapshot(snapshot, describesCurrentGroupOf: tab) {
+            leaderGroupRestoreSnapshot = nil
+            leaderGroupRestoreTab = nil
+        }
+    }
+
     private func buildNonPeerToolbarItems(for config: iTermWorkgroupSessionConfig) -> [SessionToolbarGenericView] {
         let context = WorkgroupToolbarContext(
             peerPort: nil,
@@ -671,6 +724,32 @@ final class iTermWorkgroupInstance: NSObject {
         // spawned tabs are closed above, so only the surviving leader needs
         // reverting.
         restoreLeaderTitleState(terminating: terminatingSession)
+
+        // Revert the entry tab's group membership (rejoin its prior group, or
+        // clear the workgroup group so no one-member chip is left). Deferred so
+        // it lands after the spawned tabs' deferredClose above have removed
+        // them: reverting on a clean tab set avoids a transient mixed-group
+        // state. Keyed on the TAB, not the session: the group lives on the tab,
+        // which can outlive the leader session that drove teardown (it may host
+        // another split). Captured weakly so a tab that fully closed with its
+        // session is simply skipped, and the block runs regardless of this
+        // instance's lifetime.
+        let groupSnapshot = leaderGroupRestoreSnapshot
+        let groupTab = leaderGroupRestoreTab
+        leaderGroupRestoreSnapshot = nil
+        leaderGroupRestoreTab = nil
+        if let groupSnapshot, groupTab != nil {
+            DispatchQueue.main.async { [weak groupTab] in
+                guard let groupTab,
+                      let windowController =
+                        groupTab.realParentWindow() as? PseudoTerminal else {
+                    return
+                }
+                windowController.restoreTabGroupSnapshot(groupSnapshot,
+                                                         for: groupTab)
+            }
+        }
+
         mainSession?.workgroupInstance = nil
         mainSession?.peerPort = nil
     }
@@ -806,8 +885,15 @@ final class iTermWorkgroupInstance: NSObject {
         // when the instance tore down mid-spawn: its children are being
         // closed, so there is nothing coherent to group.
         if !instance.didTeardown {
+            // Snapshot the entry tab's group membership BEFORE grouping
+            // overwrites it, so exit can put it back (rejoin its prior group,
+            // or clear the workgroup group so no one-member chip is left).
+            instance.captureLeaderGroupState()
             spawner.groupTabs(containing: [mainSession] + instance.nonPeerSessions,
                               name: instance.workgroupDisplayName)
+            // If grouping was a no-op (no new tab was added), drop the snapshot
+            // so teardown doesn't revert a group the workgroup never changed.
+            instance.discardLeaderGroupSnapshotIfGroupingWasNoOp()
         }
 
         // Name the entry tab, snapshotting its pre-workgroup title so exit
