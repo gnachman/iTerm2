@@ -1,0 +1,234 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "4vz-Hi-I7e.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Item 2\"; ObjectID = \"4vz-Hi-I7e\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Item 2"
+          }
+        }
+      }
+    },
+    "5dO-zM-mKW.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"This script must be upgraded to a “full environment“ to add dependencies. Doing so makes a copy of the Python runtime but will not use any additional disk space.\"; ObjectID = \"5dO-zM-mKW\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "This script must be upgraded to a “full environment“ to add dependencies. Doing so makes a copy of the Python runtime but will not use any additional disk space."
+          }
+        }
+      }
+    },
+    "Bbw-oV-sqL.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Remove\"; ObjectID = \"Bbw-oV-sqL\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Remove"
+          }
+        }
+      }
+    },
+    "C7L-Fa-1P1.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Item 3\"; ObjectID = \"C7L-Fa-1P1\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Item 3"
+          }
+        }
+      }
+    },
+    "E35-gf-neG.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Text Cell\"; ObjectID = \"E35-gf-neG\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Text Cell"
+          }
+        }
+      }
+    },
+    "F0z-JX-Cv5.title": {
+      "comment": "Class = \"NSWindow\"; title = \"Script Dependency Editor\"; ObjectID = \"F0z-JX-Cv5\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Script Dependency Editor"
+          }
+        }
+      }
+    },
+    "KFo-Ti-RPi.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Item 1\"; ObjectID = \"KFo-Ti-RPi\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Item 1"
+          }
+        }
+      }
+    },
+    "MM0-kC-jit.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Text Cell\"; ObjectID = \"MM0-kC-jit\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Text Cell"
+          }
+        }
+      }
+    },
+    "MOF-xv-VwK.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Item 3\"; ObjectID = \"MOF-xv-VwK\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Item 3"
+          }
+        }
+      }
+    },
+    "MaW-HJ-CZN.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Item 2\"; ObjectID = \"MaW-HJ-CZN\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Item 2"
+          }
+        }
+      }
+    },
+    "N2q-ka-O6q.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Check for Update\"; ObjectID = \"N2q-ka-O6q\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Check for Update"
+          }
+        }
+      }
+    },
+    "Q0o-Bt-Ls8.title": {
+      "comment": "Class = \"NSMenuItem\"; title = \"Item 1\"; ObjectID = \"Q0o-Bt-Ls8\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Item 1"
+          }
+        }
+      }
+    },
+    "Sum-p6-dXV.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"OK\"; ObjectID = \"Sum-p6-dXV\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "aZ5-bL-q1Z.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Python Version:\"; ObjectID = \"aZ5-bL-q1Z\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Python Version:"
+          }
+        }
+      }
+    },
+    "cqu-zb-kcO.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Upgrade\"; ObjectID = \"cqu-zb-kcO\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Upgrade"
+          }
+        }
+      }
+    },
+    "dO8-q4-9ap.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Script:\"; ObjectID = \"dO8-q4-9ap\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Script:"
+          }
+        }
+      }
+    },
+    "l3B-Fs-Mb7.headerCell.title": {
+      "comment": "Class = \"NSTableColumn\"; headerCell.title = \"Package Name\"; ObjectID = \"l3B-Fs-Mb7\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Package Name"
+          }
+        }
+      }
+    },
+    "oTM-1A-6Cy.headerCell.title": {
+      "comment": "Class = \"NSTableColumn\"; headerCell.title = \"Installed Version\"; ObjectID = \"oTM-1A-6Cy\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Installed Version"
+          }
+        }
+      }
+    },
+    "wIu-4M-jHf.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Add\"; ObjectID = \"wIu-4M-jHf\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Add"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

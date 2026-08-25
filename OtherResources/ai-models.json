@@ -1,6 +1,89 @@
 {
-  "version": 2,
+  "version": 3,
   "models": [
+    {
+      "name": "gpt-5.6-sol",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 1050000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "fixtureExempt": true,
+      "recommended": true,
+      "economyModel": "gpt-5.6-luna",
+      "thinkingOffEffort": "none",
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "serviceTiers": [
+        "auto",
+        "default",
+        "priority",
+        "flex"
+      ]
+    },
+    {
+      "name": "gpt-5.6-terra",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 1050000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "fixtureExempt": true,
+      "economyModel": "gpt-5.6-luna",
+      "thinkingOffEffort": "none",
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ]
+    },
+    {
+      "name": "gpt-5.6-luna",
+      "vendor": "openAI",
+      "api": "responses",
+      "url": "https://api.openai.com/v1/responses",
+      "contextWindowTokens": 1050000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "hostedFileSearch",
+        "hostedWebSearch",
+        "streaming",
+        "hostedCodeInterpreter",
+        "configurableThinking"
+      ],
+      "thinkingOffEffort": "none",
+      "reasoningEfforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ]
+    },
     {
       "name": "gpt-5.5",
       "vendor": "openAI",
@@ -16,7 +99,6 @@
         "hostedCodeInterpreter",
         "configurableThinking"
       ],
-      "recommended": true,
       "economyModel": "gpt-5-mini",
       "thinkingOffEffort": "none",
       "reasoningEfforts": [
@@ -398,6 +480,34 @@
       ]
     },
     {
+      "name": "gemini-3.7-flash",
+      "vendor": "gemini",
+      "api": "gemini",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+      "contextWindowTokens": 1048576,
+      "maxResponseTokens": 65536,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "fixtureExempt": true,
+      "recommended": true,
+      "economyModel": "gemini-2.5-flash-lite"
+    },
+    {
+      "name": "gemini-3.6-flash",
+      "vendor": "gemini",
+      "api": "gemini",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+      "contextWindowTokens": 1048576,
+      "maxResponseTokens": 65536,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "economyModel": "gemini-2.5-flash-lite"
+    },
+    {
       "name": "gemini-3.5-flash",
       "vendor": "gemini",
       "api": "gemini",
@@ -408,7 +518,6 @@
         "functionCalling",
         "streaming"
       ],
-      "recommended": true,
       "economyModel": "gemini-2.5-flash-lite"
     },
     {
@@ -425,7 +534,7 @@
       "economyModel": "gemini-2.5-flash-lite"
     },
     {
-      "name": "gemini-3-pro-preview",
+      "name": "gemini-3.5-flash-lite",
       "vendor": "gemini",
       "api": "gemini",
       "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
@@ -434,9 +543,19 @@
       "features": [
         "functionCalling",
         "streaming"
-      ],
-      "fixtureExempt": true,
-      "economyModel": "gemini-2.5-flash-lite"
+      ]
+    },
+    {
+      "name": "gemini-3.1-flash-lite",
+      "vendor": "gemini",
+      "api": "gemini",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
+      "contextWindowTokens": 1048576,
+      "maxResponseTokens": 65536,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ]
     },
     {
       "name": "gemini-3-flash-preview",
@@ -488,33 +607,6 @@
         "streaming"
       ],
       "economyModel": "gemini-2.5-flash-lite"
-    },
-    {
-      "name": "gemini-2.0-flash",
-      "vendor": "gemini",
-      "api": "gemini",
-      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
-      "contextWindowTokens": 1048576,
-      "maxResponseTokens": 8192,
-      "features": [
-        "functionCalling",
-        "streaming"
-      ],
-      "fixtureExempt": true,
-      "economyModel": "gemini-2.5-flash-lite"
-    },
-    {
-      "name": "gemini-2.0-flash-lite",
-      "vendor": "gemini",
-      "api": "gemini",
-      "url": "https://generativelanguage.googleapis.com/v1beta/models/{{MODEL}}",
-      "contextWindowTokens": 1048576,
-      "maxResponseTokens": 8192,
-      "features": [
-        "functionCalling",
-        "streaming"
-      ],
-      "fixtureExempt": true
     },
     {
       "name": "deepseek-v4-flash",
@@ -587,6 +679,20 @@
       "economyModel": "claude-haiku-4-5"
     },
     {
+      "name": "claude-sonnet-5",
+      "vendor": "anthropic",
+      "api": "anthropic",
+      "url": "https://api.anthropic.com/v1/messages",
+      "contextWindowTokens": 200000,
+      "maxResponseTokens": 64000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "supportsTemperature": false,
+      "economyModel": "claude-haiku-4-5"
+    },
+    {
       "name": "claude-sonnet-4-6",
       "vendor": "anthropic",
       "api": "anthropic",
@@ -623,19 +729,6 @@
         "functionCalling",
         "streaming"
       ]
-    },
-    {
-      "name": "claude-opus-4-1",
-      "vendor": "anthropic",
-      "api": "anthropic",
-      "url": "https://api.anthropic.com/v1/messages",
-      "contextWindowTokens": 200000,
-      "maxResponseTokens": 32000,
-      "features": [
-        "functionCalling",
-        "streaming"
-      ],
-      "economyModel": "claude-haiku-4-5"
     },
     {
       "name": "llama4:latest",

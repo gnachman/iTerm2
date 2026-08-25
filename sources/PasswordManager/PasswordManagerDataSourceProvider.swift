@@ -242,6 +242,10 @@ class PasswordManagerDataSourceProvider: NSObject {
         var error: NSError? = nil
         if !context.canEvaluatePolicy(policy, error: &error) {
             RLog("Can't evaluate \(policy): \(error?.localizedDescription ?? "(nil)")")
+            // Authentication is impossible here (no biometrics/passcode, MDM-restricted).
+            // Report failure so callers don't hang or silently drop the requested action
+            // waiting on a completion that would otherwise never fire.
+            completion(false)
             return
         }
         iTermApplication.shared().localAuthenticationDialogOpen = true

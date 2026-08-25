@@ -202,7 +202,14 @@ class LastPassDataSource: CommandLinePasswordDataSource {
                 command: LastPassUtils.pathToCLI,
                 args: args,
                 env: LastPassUtils.basicEnvironment)
-            let dataToWrite = ($0.newPassword + "\n").data(using: .utf8)!
+            // A nil password means "leave unchanged" (name/user-only edit). LastPass cannot edit
+            // in place and this command only sets the password, so writing "" here would blank
+            // the stored secret. Fail loudly at the data layer instead of relying on the UI
+            // guard (supportsInPlaceEdit) to keep this path unreached.
+            guard let newPassword = $0.newPassword else {
+                throw LPError.runtime
+            }
+            let dataToWrite = (newPassword + "\n").data(using: .utf8)!
             commandRequest.callbacks = InteractiveCommandRequest.Callbacks(
                 callbackQueue: InteractiveCommandRequest.ioQueue,
                 handleStdout: nil,
@@ -345,12 +352,20 @@ extension LastPassDataSource: PasswordManagerDataSource {
         }
     }
 
-    @objc(addUserName:accountName:password:context:completion:)
+    var addAccountToggleDescriptions: [[String: Any]]? { nil }
+    var supportsInPlaceEdit: Bool { false }
+    var canEditPassword: Bool { true }
+    var requiresPasswordForAdd: Bool { false }
+    func prepareAvailability(_ completion: @escaping () -> ()) { completion() }
+
+    @objc(addUserName:accountName:password:flags:context:completion:)
     func add(userName: String,
              accountName: String,
              password: String,
+             flags: [String: Bool],
              context: RecipeExecutionContext,
              completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
+        // LastPass has no Add Account toggles, so flags is ignored.
         standardAdd(configuration,
                     userName: userName,
                     accountName: accountName,

@@ -13,7 +13,7 @@ HOMEBREW_PREFIX ?= $(shell brew --prefix 2>/dev/null || echo /opt/homebrew)
 CMAKE ?= $(HOMEBREW_PREFIX)/bin/cmake
 PKG_CONFIG ?= $(HOMEBREW_PREFIX)/bin/pkg-config
 RUSTUP ?= $(shell PATH="$(ORIG_PATH):$(HOME)/.cargo/bin" which rustup 2>/dev/null)
-DEPLOYMENT_TARGET=12.0
+DEPLOYMENT_TARGET=13.0
 
 # Build product directory: defaults to xcodebuild's SYMROOT.
 # Override with BUILD_DIR=/path/to/dir on the command line.
@@ -61,7 +61,7 @@ else
   RUST_NATIVE_TARGET = x86_64-apple-darwin
 endif
 
-.PHONY: clean all backup-old-iterm restart setup dangerous-setup _setup-main help doctor
+.PHONY: clean all backup-old-iterm restart setup dangerous-setup _setup-main help doctor companion-bump-build companion-bump-build-upload
 
 help:
 	@echo "iTerm2 — $(VERSION) ($(NATIVE_ARCH))"
@@ -92,6 +92,12 @@ help:
 	@echo "  make Nightly      Build Nightly configuration"
 	@echo "  make Deployment   Build Deployment configuration"
 	@echo ""
+	@echo "Companion (iOS):"
+	@echo "  make companion-bump-build          Bump app + PushService build # and regenerate"
+	@echo "                                     (N=123 to set an explicit number)"
+	@echo "  make companion-bump-build-upload   Bump #, then archive + upload to TestFlight"
+	@echo "                                     via fastlane (needs ASC_* env vars set)"
+	@echo ""
 	@echo "Diagnose:"
 	@echo "  make doctor       Check all build dependencies"
 	@echo ""
@@ -105,6 +111,21 @@ help:
 all: Development
 dev: Development
 prod: Deployment
+
+# Bump the Companion app + PushService build number and regenerate the Xcode
+# project so it takes effect. CURRENT_PROJECT_VERSION lives once in the generator
+# (the source of truth for both targets), so this keeps them in lockstep and
+# survives regeneration. Pass N=<number> to set an explicit build number instead
+# of incrementing (use this to jump past builds already on App Store Connect).
+companion-bump-build:
+	ruby Companion/tools/bump_build_number.rb $(N)
+	ruby Companion/tools/generate_companion_project.rb
+
+# Bump the build number and regenerate, then archive and upload to TestFlight
+# via fastlane, no Xcode. Needs ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_PATH set in
+# the environment. Pass N=<number> to set an explicit build number.
+companion-bump-build-upload: companion-bump-build
+	cd Companion && bundle exec fastlane release
 
 setup:
 	@BREW_BIN=$$(PATH="/opt/homebrew/bin:/usr/local/bin:$(ORIG_PATH)" command -v brew 2>/dev/null); \

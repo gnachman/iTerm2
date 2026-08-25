@@ -10,7 +10,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermStatusBarSetupViewController : NSViewController
 @property (nonatomic, readonly) NSDictionary *layoutDictionary;
 @property (nonatomic, readonly) BOOL ok;

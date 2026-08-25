@@ -1756,8 +1756,16 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     var configuration = VT100MutableScreenConfiguration()
     var selection = iTermSelection()
 
+    /// Raw OSC 72 content strings delivered via screenDidReceiveKittyDragAndDrop,
+    /// in order. Used by KittyDnDParsingTests.
+    var kittyDragAndDropContents = [String]()
+
     func screenConvertAbsoluteRange(_ range: VT100GridAbsCoordRange, toTextDocumentOfType type: String?, filename: String?, forceWide: Bool) {
 
+    }
+
+    func screenDidReceiveKittyDragAndDrop(_ content: String) {
+        kittyDragAndDropContents.append(content)
     }
     
     func screenDidHookSSHConductor(withToken token: String, uniqueID: String, boolArgs: String, sshargs: String, dcsID: String, savedState: [AnyHashable : Any]) {
@@ -2221,7 +2229,10 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenSetColor(_ color: NSColor?, profileKey: String?) -> Bool {
         true
     }
-    
+
+    @objc func screenSetColorBinding(_ expression: String, forProfileKey profileKey: String) {
+    }
+
     func screenResetColor(withColorMapKey key: Int32, profileKey: String, dark: Bool) -> [NSNumber : Any] {
         [:]
     }

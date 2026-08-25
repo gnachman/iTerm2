@@ -968,10 +968,8 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
 #pragma mark - Janitorial
 
 - (void)deleteDisusedServerBinaries {
-    if (@available(macOS 10.15, *)) {
-        [iTermServerDeleter deleteDisusedServersIn:[self serverFolders]
-                                          provider:[iTermProcessCache newProcessCollection]];
-    }
+    [iTermServerDeleter deleteDisusedServersIn:[self serverFolders]
+                                      provider:[iTermProcessCache newProcessCollection]];
 }
 
 #pragma mark - Tear Down

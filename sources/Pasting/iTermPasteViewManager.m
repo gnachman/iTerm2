@@ -39,6 +39,18 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
+- (void)setWaitingForPrompt:(BOOL)waitingForPrompt {
+    // Exactly one of these is non-nil depending on the presentation; messaging
+    // the nil one is a harmless no-op.
+    [_dropDownViewController setWaitingForPrompt:waitingForPrompt];
+    [_component setWaitingForPrompt:waitingForPrompt];
+}
+
+- (void)showKeystrokeQueuedHint {
+    [_dropDownViewController showKeystrokeQueuedHint];
+    [_component showKeystrokeQueuedHint];
+}
+
 - (void)setRemainingLength:(int)remainingLength {
     if (_component) {
         _component.remainingLength = remainingLength;
@@ -110,10 +122,18 @@ NS_ASSUME_NONNULL_BEGIN
     [self.delegate pasteViewManagerUserDidCancel];
 }
 
+- (void)pasteViewControllerDidSetKeystrokePassthrough:(BOOL)on {
+    [self.delegate pasteViewManagerDidSetKeystrokePassthrough:on];
+}
+
 #pragma mark - iTermStatusBarProgressComponent
 
 - (void)statusBarProgressComponentDidCancel {
     [self.delegate pasteViewManagerUserDidCancel];
+}
+
+- (void)statusBarProgressComponentDidSetKeystrokePassthrough:(BOOL)on {
+    [self.delegate pasteViewManagerDidSetKeystrokePassthrough:on];
 }
 
 @end

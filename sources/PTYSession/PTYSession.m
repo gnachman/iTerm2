@@ -381,6 +381,7 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
     @"NoSyncTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier";
 
 NSString *const PTYSessionArrangementOptionsForDuplication = @"PTYSessionArrangementOptionsForDuplication";
+NSString *const PTYSessionArrangementOptionsForceOldCWD = @"PTYSessionArrangementOptionsForceOldCWD";
 NSString *const PTYSessionArrangementOptionsUnlimitedHistory = @"PTYSessionArrangementOptionsUnlimitedHistory";
 NSString *const PTYSessionArrangementOptionsArchive = @"PTYSessionArrangementOptionsArchive";
 NSString *const PTYSessionArrangementOptionsLargeContentProvider = @"PTYSessionArrangementOptionsLargeContentProvider";
@@ -402,6 +403,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 };
 
 @interface PTYSession(AppSwitching)<iTermAppSwitchingPreventionDetectorDelegate>
+@end
+
+@interface PTYSession () <iTermKittyDnDBridgeDataSource>
 @end
 
 // Background-drawing delegate used when rendering a screenshot. It forwards to the
@@ -622,7 +626,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     iTermUpdateCadenceController *_cadenceController;
 
-    iTermMetalGlue *_metalGlue NS_AVAILABLE_MAC(10_11);
+    iTermMetalGlue *_metalGlue;
 
     int _updateCount;
     BOOL _metalFrameChangePending;
@@ -661,8 +665,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     id<iTermKeyMapper> _keyMapper;
     iTermKeyMappingMode _keyMappingMode;
 
+    // Kitty drag-and-drop protocol (OSC 72). Created lazily on the first OSC 72
+    // sequence.
+    iTermKittyDnDBridge *_kittyDnDBridge;
+
     NSString *_badgeFontName;
     iTermVariableScope *_variablesScope;
+    iTermColorScopeVariables *_colorScopeVariables;
 
     BOOL _showingVisualIndicatorForEsc;
 
@@ -872,6 +881,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
         self.variablesScope.shell = [self bestGuessAtUserShellWithPath:NO];
         self.variablesScope.uname = [self bestGuessAtUName];
         self.variablesScope.isBroadcastSource = NO;
+
+        _colorScopeVariables = [[iTermColorScopeVariables alloc] initWithScope:self.variablesScope
+                                                                         owner:self];
 
         _variables.primaryKey = iTermVariableKeySessionID;
         _jobPidRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionJobPid
@@ -1097,12 +1109,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [_view release];
     [_logging stop];
-    if (@available(macOS 10.11, *)) {
-        [_metalGlue release];
-    }
+    [_metalGlue release];
     [_nameController release];
     [_tailFindController stopTailFind];  // This frees the substring in the tail find context, if needed.
     _shell.delegate = nil;
+    [_kittyDnDBridge release];
     [_pasteboard release];
     [_pbtext release];
     [_creationDate release];
@@ -1202,6 +1213,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_customIcon release];
     [_keyMapper release];
     [_badgeFontName release];
+    [_colorScopeVariables release];
     [_variablesScope release];
     [_printGuard release];
     [_methods release];
@@ -2310,6 +2322,13 @@ ITERM_WEAKLY_REFERENCEABLE
             // profile.
             [aSession resetForRelaunch];
             NSString *oldCWD = arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY];
+            // Force the saved working directory when restoring contents, or when the caller asks for
+            // it at launch time (Duplicate Session, which has no contents but wants to start in the
+            // source session's directory without stamping a persistent Custom Directory override that
+            // split panes would then inherit; issue 12981). This is a transient launch option, not
+            // part of the serialized arrangement.
+            const BOOL forceOldCWD = (contents != nil ||
+                                      [options[PTYSessionArrangementOptionsForceOldCWD] boolValue]) && oldCWD.length;
             DLog(@"Running command...");
 
             NSDictionary *environmentArg = @{};
@@ -2346,7 +2365,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                 environment:environmentArg
                                                                 customShell:customShell
                                                                      oldCWD:oldCWD
-                                                             forceUseOldCWD:contents != nil && oldCWD.length
+                                                             forceUseOldCWD:forceOldCWD
                                                                     command:commandArg
                                                                      isUTF8:isUTF8Arg
                                                               substitutions:substitutionsArg
@@ -4662,6 +4681,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [_shell.winSizeController setGridSize:_screen.size
                                  viewSize:_screen.viewSize
                               scaleFactor:self.backingScaleFactor];
+    // The old program's Kitty drag-and-drop registration must not survive a shell
+    // restart (the bridge is reused).
+    [_kittyDnDBridge reset];
     [self resetForRelaunch];
     __weak __typeof(self) weakSelf = self;
     [self startProgram:_program
@@ -5989,6 +6011,13 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
 
     NSDictionary *bindings = [NSDictionary castFrom:[iTermProfilePreferences objectForKey:KEY_BINDINGS inProfile:aDict]];
+
+    // Seed the colors.* scope from the live palette before (re)creating bindings so
+    // any colors.* binding, whether palette-owned (i:N) or a user-authored
+    // colors.ansi.yellow, resolves to a real color on its first evaluation rather
+    // than an empty string. didChange keeps it live afterward.
+    [_colorScopeVariables reloadFromColorMap:_screen.colorMap];
+
     DLog(@"bindings=%@", bindings);
     if (bindings) {
         [self removeBindings];
@@ -6027,7 +6056,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 - (void)makeBindings:(NSDictionary *)bindings {
     iTermVariableScope *myScope = [self variablesScope];
     __weak __typeof(self) weakSelf = self;
-    _bindings = [[bindings mapValuesWithBlock:^id(NSString *key, NSString *expression) {
+    _bindings = [[bindings mapValuesWithBlock:^id(NSString *key, id bindingValue) {
+        NSString *expression = [iTermProfilePreferences expressionForBindingValue:bindingValue];
+        if (!expression) {
+            return nil;
+        }
         DLog(@"Add expression observer for key %@ with expression %@", key, expression);
         iTermExpressionObserver *ss = [[[iTermExpressionObserver alloc] initWithString:expression
                                                                                  scope:myScope
@@ -6355,10 +6388,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         _customIcon = [[iTermCacheableImage alloc] init];
     }
     NSString *path = [iTermProfilePreferences stringForKey:KEY_ICON_PATH inProfile:profile];
-    BOOL flipped = YES;
-    if (@available(macOS 10.15, *)) {
-        flipped = NO;
-    }
+    BOOL flipped = NO;
     return [_customIcon imageAtPath:path ofSize:NSMakeSize(16, 16) flipped:flipped];
 }
 
@@ -7995,7 +8025,25 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
 }
 
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues reload:(BOOL)reload {
+    [self setSessionSpecificProfileValues:newValues reload:reload preserveColorBaselines:NO];
+}
+
+- (void)setSessionSpecificProfileValues:(NSDictionary *)newValues
+                                 reload:(BOOL)reload
+                  preserveColorBaselines:(BOOL)preserveColorBaselines {
     DLog(@"%@: setSessionSpecificProfilevalues:%@", self, newValues);
+
+    // Note: dropping an i:N palette binding when a color is overridden is NOT done
+    // here. A generic write goes through this method for many reasons (profile
+    // propagation, restore, refresh after a split), and unbinding on any of those
+    // is wrong. Instead, the specific override entry points clear the binding
+    // explicitly and unconditionally (screenSetColor:profileKey:, screenResetColor,
+    // the tab setters via mergeClearedTabColorBindingIntoValues:, and the settings
+    // panel), all funneling through +[iTermProfilePreferences
+    // bindings:byRemovingPaletteBindingsForBaseKey:]. Propagation writes here leave
+    // the binding in place, so an escape-set palette binding survives an unrelated
+    // profile edit.
+
     if (![self profileValuesDifferFromCurrentProfile:newValues]) {
         DLog(@"No changes to be made");
         return;
@@ -8053,8 +8101,15 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
     // When Edit Session changes a color, it becomes the new baseline for reset operations.
     // Note: screenSetColor:profileKey: will restore the baseline after calling this method
     // for escape-sequence-initiated changes.
-    for (NSString *key in newValues) {
-        [_preEscapeSequenceColors removeObjectForKey:key];
+    //
+    // Skip this when a binding observer is applying a bound (i:N) color: its
+    // ongoing writes track the palette and must not overwrite the Edit-Session
+    // baseline that screenSetColorBinding: captured, or a later OSC 110/111 reset
+    // would fall back to the original profile instead of the Edit-Session value.
+    if (!preserveColorBaselines) {
+        for (NSString *key in newValues) {
+            [_preEscapeSequenceColors removeObjectForKey:key];
+        }
     }
 
     DLog(@"Set bookmark and reload profile");
@@ -8798,7 +8853,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     return [self effectiveBlend];
 }
 
-- (void)metalGlueDidDrawFrameAndNeedsRedraw:(BOOL)redrawAsap NS_AVAILABLE_MAC(10_11) {
+- (void)metalGlueDidDrawFrameAndNeedsRedraw:(BOOL)redrawAsap {
     if (_view.useMetal) {
         if (redrawAsap) {
             [_textview requestDelegateRedraw];
@@ -9057,7 +9112,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     return _useMetal && _view.metalView.alphaValue == 1 && _wrapper.useMetal && _textview.suppressDrawing;
 }
 
-- (BOOL)metalViewSizeIsLegal NS_AVAILABLE_MAC(10_11) {
+- (BOOL)metalViewSizeIsLegal {
     NSSize size = _view.frame.size;
     // See "Maximum 2D texture width and height" in "Implementation Limits". Pick the smallest value
     // among the "Mac" columns.
@@ -9124,7 +9179,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     }
 }
 
-- (void)renderTwoMetalFramesAndShowMetalView NS_AVAILABLE_MAC(10_11) {
+- (void)renderTwoMetalFramesAndShowMetalView {
     // The first frame will be slow to draw. The second frame will be very
     // recent to minimize jitter. For reasons I haven't understood yet it seems
     // the first frame is sometimes transparent. I haven't seen that issue with
@@ -9192,7 +9247,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     _view.metalView.enableSetNeedsDisplay = YES;
 }
 
-- (void)showMetalAndStopDrawingTextView NS_AVAILABLE_MAC(10_11) {
+- (void)showMetalAndStopDrawingTextView {
     // If the legacy view had been visible, hide it. Hiding it before the
     // first frame is drawn causes a flash of gray.
     DLog(@"showMetalAndStopDrawingTextView");
@@ -9221,7 +9276,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     [self.delegate sessionDidChangeMetalViewAlphaValue:self to:alphaValue];
 }
 
-- (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
+- (void)setUseMetal:(BOOL)useMetal dataSource:(id<iTermMetalDriverDataSource>)dataSource {
     [_view setUseMetal:useMetal dataSource:dataSource];
     if (!useMetal) {
         _textview.suppressDrawing = NO;
@@ -9234,7 +9289,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     }
 }
 
-- (void)updateMetalDriver NS_AVAILABLE_MAC(10_11) {
+- (void)updateMetalDriver {
     DLog(@"%@", self);
     const CGSize cellSize = CGSizeMake(_textview.charWidth, _textview.lineHeight);
     CGSize glyphSize;
@@ -10840,6 +10895,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     return _pasteHelper.isPasting;
 }
 
+- (BOOL)pasteKeystrokePassthroughEnabled {
+    return _pasteHelper.keystrokePassthrough;
+}
+
 - (void)queueKeyDown:(NSEvent *)event {
     [_pasteHelper enqueueEvent:event];
 }
@@ -11223,6 +11282,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (BOOL)eventAbortsPasteWaitingForPrompt:(NSEvent *)event {
     if (!_pasteHelper.isWaitingForPrompt) {
+        return NO;
+    }
+    if (_pasteHelper.keystrokePassthrough) {
+        // The user chose to type directly to the terminal, so Esc and ^C should
+        // reach the shell (to answer/interrupt the prompt) rather than aborting
+        // the paste. The paste indicator's Cancel button remains the way to abort.
         return NO;
     }
     if (event.keyCode == kVK_Escape) {
@@ -15111,6 +15176,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_textview requestDelegateRedraw];
     [self restoreColorsFromProfile];
     _screen.trackCursorLineMovement = NO;
+    // A terminal reset (RIS / the Reset menu) clears Kitty drag-and-drop state too,
+    // so a program that registered t=a/t=o and then exited does not leave the
+    // protocol enabled in sessions without shell integration (which never emit the
+    // OSC 133 prompt mark that otherwise resets it).
+    [_kittyDnDBridge reset];
 }
 
 - (void)restoreColorsFromProfile {
@@ -16188,6 +16258,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         [self clearTabStatus];
     });
     [_pasteHelper unblock];
+    // A program that used the Kitty drag-and-drop protocol has exited (the shell
+    // is back at a prompt), so clear its offer/accept state rather than let it
+    // linger, the same way other modes are reset at a prompt.
+    [_kittyDnDBridge reset];
 }
 
 - (void)screenPromptOfNonInitialKindDidStart:(VT100PromptKind)kind {
@@ -16803,13 +16877,25 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 // If empty, reset all.
 // Returns the base color key by stripping any light/dark mode suffix.
 - (NSString *)baseColorKeyForProfileKey:(NSString *)profileKey {
-    if ([profileKey hasSuffix:COLORS_LIGHT_MODE_SUFFIX]) {
-        return [profileKey substringToIndex:profileKey.length - [COLORS_LIGHT_MODE_SUFFIX length]];
+    return [iTermProfilePreferences baseColorKeyForKey:profileKey];
+}
+
+// The base key plus its Light and Dark variants. A concrete color write and OSC
+// reset touch all three so an override survives an appearance switch or a toggle
+// of separate light/dark colors (issue 12870).
+- (NSArray<NSString *> *)colorVariantKeysForBaseKey:(NSString *)baseKey {
+    return [iTermProfilePreferences colorVariantKeysForBaseKey:baseKey];
+}
+
+// Merges a KEY_BINDINGS entry that drops the palette-owned tab-color binding into
+// `values`. The tab clear/reset paths write only boolean enable-bit keys, which
+// the centralized clear in setSessionSpecificProfileValues: ignores, so they call
+// this to drop the binding without duplicating the logic.
+- (void)mergeClearedTabColorBindingIntoValues:(NSMutableDictionary *)values {
+    NSDictionary *clearedBindings = [self profileBindingsByClearingForWrittenKeys:@[ KEY_TAB_COLOR ]];
+    if (clearedBindings) {
+        values[KEY_BINDINGS] = clearedBindings;
     }
-    if ([profileKey hasSuffix:COLORS_DARK_MODE_SUFFIX]) {
-        return [profileKey substringToIndex:profileKey.length - [COLORS_DARK_MODE_SUFFIX length]];
-    }
-    return profileKey;
 }
 
 // Returns YES if the given key is a color key (not KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE).
@@ -16835,6 +16921,20 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
     // Check for saved pre-escape-sequence color (Edit Session baseline)
     if (profileKey) {
+        // Drop any i:N palette binding for this key unconditionally, so the reset
+        // wins regardless of the path taken below: the baseline-restore write might
+        // be a no-op (restored value equals current), and the no-baseline fallback
+        // updates only the color map and never writes the profile at all. Neither
+        // would otherwise remove a persisted binding.
+        NSDictionary *existingBindings = [NSDictionary castFrom:[iTermProfilePreferences objectForKey:KEY_BINDINGS
+                                                                                            inProfile:self.profile]];
+        NSDictionary *clearedBindings =
+            [iTermProfilePreferences bindings:existingBindings
+          byRemovingPaletteBindingsForBaseKey:[self baseColorKeyForProfileKey:profileKey]];
+        if (clearedBindings != existingBindings) {
+            [self setSessionSpecificProfileValues:@{ KEY_BINDINGS: clearedBindings }];
+        }
+
         // Check if the mode setting has changed since baselines were saved.
         NSNumber *baselineModeSetting = _preEscapeSequenceColors[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE];
         const BOOL currentlyUsesModes = [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE
@@ -16923,6 +17023,33 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                               dark:dark];
 }
 
+// Writes newValues as an escape-sequence-initiated color change, capturing and
+// preserving pre-escape-sequence baselines for baselineKeys (plus the mode setting)
+// so a later OSC 110/111 reset restores the Edit-Session value. Centralizes the
+// capture -> (the setter strips the touched keys) -> re-add protocol shared by the
+// concrete-color and binding paths. A variant the profile lacks is baselined as
+// NSNull so reset can un-invent what we wrote.
+- (void)setEscapeSequenceProfileValues:(NSDictionary *)newValues
+                          baselineKeys:(NSArray<NSString *> *)baselineKeys {
+    NSMutableDictionary *baselinesToPreserve = [NSMutableDictionary dictionary];
+    for (NSString *key in baselineKeys) {
+        id existing = _preEscapeSequenceColors[key];
+        baselinesToPreserve[key] = existing ?: (_profile[key] ?: [NSNull null]);
+    }
+    const BOOL currentlyUsesModes =
+        [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE
+                                  inProfile:_profile];
+    baselinesToPreserve[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE] =
+        _preEscapeSequenceColors[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE] ?: @(currentlyUsesModes);
+
+    [self setSessionSpecificProfileValues:newValues];
+
+    if (!_preEscapeSequenceColors) {
+        _preEscapeSequenceColors = [[NSMutableDictionary alloc] init];
+    }
+    [_preEscapeSequenceColors addEntriesFromDictionary:baselinesToPreserve];
+}
+
 - (BOOL)screenSetColor:(NSColor *)color profileKey:(NSString *)profileKey {
     if (!color) {
         return NO;
@@ -16939,54 +17066,121 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     // of separate colors in either direction.
     // See https://gitlab.com/gnachman/iterm2/-/issues/12870.
     NSString *baseKey = [self baseColorKeyForProfileKey:profileKey];
-    NSArray<NSString *> *targetKeys = @[
-        baseKey,
-        [baseKey stringByAppendingString:COLORS_LIGHT_MODE_SUFFIX],
-        [baseKey stringByAppendingString:COLORS_DARK_MODE_SUFFIX]
-    ];
-
-    // Capture baselines BEFORE modifying. setSessionSpecificProfileValues
-    // removes the entries we're about to touch from _preEscapeSequenceColors,
-    // so we capture them in a local dictionary (whose insertion retains them)
-    // and re-add them afterward. For variants the profile does not currently
-    // contain, store NSNull as a sentinel so a later OSC 110/111 reset can
-    // un-invent the variants we wrote: setSessionSpecificProfileValues:
-    // interprets NSNull values as removeObjectForKey:.
-    NSMutableDictionary *baselinesToPreserve = [NSMutableDictionary dictionary];
-    for (NSString *key in targetKeys) {
-        id existing = _preEscapeSequenceColors[key];
-        if (existing) {
-            baselinesToPreserve[key] = existing;
-        } else {
-            baselinesToPreserve[key] = _profile[key] ?: [NSNull null];
-        }
-    }
-    // Seed the mode-setting baseline (preserving any existing one) so
-    // screenResetColor's mode-transition logic can find these baselines if the
-    // user toggles separate-light-and-dark-mode before the reset fires.
-    const BOOL currentlyUsesModes =
-        [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE
-                                  inProfile:_profile];
-    id existingModeBaseline = _preEscapeSequenceColors[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE];
-    baselinesToPreserve[KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE] =
-        existingModeBaseline ?: @(currentlyUsesModes);
-
-    DLog(@"screenSetColor: profileKey=%@ targetKeys=%@ baselines=%@",
-          profileKey, targetKeys, baselinesToPreserve);
+    NSArray<NSString *> *targetKeys = [self colorVariantKeysForBaseKey:baseKey];
 
     NSDictionary *encoded = [color dictionaryValue];
     NSMutableDictionary *newValues = [NSMutableDictionary dictionary];
     for (NSString *key in targetKeys) {
         newValues[key] = encoded;
     }
-    [self setSessionSpecificProfileValues:newValues];
-
-    if (!_preEscapeSequenceColors) {
-        _preEscapeSequenceColors = [[NSMutableDictionary alloc] init];
+    // A concrete escape-sequence write overrides an i:N binding unconditionally,
+    // even when the new color equals the current bound value (a live binding keeps
+    // the profile synced to that value). Clear it here rather than relying on the
+    // value-diff-gated central clear, which would misread the equal value as a
+    // no-op and leave the binding in place.
+    NSDictionary *clearedBindings = [self profileBindingsByClearingForWrittenKeys:targetKeys];
+    if (clearedBindings) {
+        newValues[KEY_BINDINGS] = clearedBindings;
     }
-    [_preEscapeSequenceColors addEntriesFromDictionary:baselinesToPreserve];
-    DLog(@"screenSetColor: after set, _preEscapeSequenceColors=%@", _preEscapeSequenceColors);
+    [self setEscapeSequenceProfileValues:newValues baselineKeys:targetKeys];
     return NO;
+}
+
+- (void)screenSetColorBinding:(NSString *)expression forProfileKey:(NSString *)profileKey {
+    DLog(@"screenSetColorBinding %@ for %@", expression, profileKey);
+    if (!expression.length || !profileKey.length) {
+        return;
+    }
+    // Bind the base key plus its Light and Dark variants so the color follows the
+    // palette whether or not the profile uses separate light and dark colors.
+    //
+    // Known limitation: the bound expression (for example colors.ansi.yellow)
+    // resolves to the CURRENT mode's palette color, so while in dark mode the
+    // observer writes the dark value into the (Light) variant too (and vice
+    // versa). The rendered color is always correct because a mode switch re-fires
+    // the observer for the now-active variant, but the stored inactive-mode value
+    // is stale until then. Bound colors intentionally collapse the two modes; a
+    // faithful per-mode binding would need mode-specific palette variables.
+    NSString *baseKey = [self baseColorKeyForProfileKey:profileKey];
+    const BOOL isTab = [baseKey isEqualToString:KEY_TAB_COLOR];
+    // For tab, the color-value variants and the enable-bit variants are mode-aware:
+    // allTabColorKeysForBaseKey: returns only the base key when separate light/dark
+    // colors are off, matching the concrete tab setter and the reset path, so the
+    // observer can't strand (Light)/(Dark) values or enable bits the mode-aware tab
+    // reset can't remove. Non-tab colors bind all three variants (their reset,
+    // screenResetColor, walks all three with NSNull sentinels).
+    NSArray<NSString *> *colorVariantKeys = isTab ? [self allTabColorKeysForBaseKey:KEY_TAB_COLOR]
+                                                  : [self colorVariantKeysForBaseKey:baseKey];
+    NSArray<NSString *> *useTabColorKeys = isTab ? [self allTabColorKeysForBaseKey:KEY_USE_TAB_COLOR] : @[];
+
+    // Respect an existing user-authored binding on this color: an i:N escape
+    // sequence must not clobber it, because the clear/reset paths only restore a
+    // concrete color, so a lost user binding is unrecoverable. (Overwriting our own
+    // palette binding is fine.)
+    NSDictionary *existingBindings = [NSDictionary castFrom:[iTermProfilePreferences objectForKey:KEY_BINDINGS
+                                                                                        inProfile:self.profile]];
+    for (NSString *key in [self colorVariantKeysForBaseKey:baseKey]) {
+        id existingValue = existingBindings[key];
+        if (existingValue && ![iTermProfilePreferences bindingValueIsPaletteOwned:existingValue]) {
+            DLog(@"Refusing i:N bind of %@: user binding present (%@)", key, existingValue);
+            return;
+        }
+    }
+
+    // Clear any prior palette bindings across the FULL base/Light/Dark triple before
+    // writing, so re-binding after separate light/dark colors was toggled off does
+    // not leave orphaned (Light)/(Dark) palette bindings (allTabColorKeysForBaseKey:
+    // returns only the base key then). Then write the new binding to the mode-aware
+    // colorVariantKeys so the observer doesn't strand inactive-mode tab values.
+    NSDictionary *clearedBindings = [iTermProfilePreferences bindings:existingBindings
+                                         byRemovingPaletteBindingsForBaseKey:baseKey];
+    NSMutableDictionary *bindings = [[clearedBindings mutableCopy] autorelease] ?: [NSMutableDictionary dictionary];
+    // Tag these entries as palette-owned so a later clear/reset can identify the
+    // bindings this feature created without inspecting the expression text.
+    id paletteValue = [iTermProfilePreferences paletteBindingValueWithExpression:expression];
+    for (NSString *key in colorVariantKeys) {
+        bindings[key] = paletteValue;
+    }
+
+    NSMutableDictionary *values = [NSMutableDictionary dictionary];
+    values[KEY_BINDINGS] = bindings;
+    // A tab color has no effect unless its enable bit is on. Turn it on for every
+    // variant so the binding is visible in whichever mode is active.
+    for (NSString *key in useTabColorKeys) {
+        values[key] = @YES;
+    }
+
+    // Preserve baselines for the color variants and (for tab) the enable-bit keys so
+    // a later reset restores the Edit-Session color and enable state rather than the
+    // original profile or a stuck-on bit.
+    NSMutableArray<NSString *> *baselineKeys = [[colorVariantKeys mutableCopy] autorelease];
+    [baselineKeys addObjectsFromArray:useTabColorKeys];
+    [self setEscapeSequenceProfileValues:values baselineKeys:baselineKeys];
+}
+
+// Returns KEY_BINDINGS with any color binding removed for the base/Light/Dark
+// variants of every key in writtenKeys, or nil if there was nothing to remove.
+// setSessionSpecificProfileValues: calls this so a concrete color write (or a
+// reset) drops the i:N binding for the same key in one place, instead of every
+// color-writing path having to remember to do it.
+- (NSDictionary *)profileBindingsByClearingForWrittenKeys:(NSArray<NSString *> *)writtenKeys {
+    NSDictionary *existing = [NSDictionary castFrom:[iTermProfilePreferences objectForKey:KEY_BINDINGS
+                                                                                 inProfile:self.profile]];
+    if (!existing.count) {
+        return nil;
+    }
+    NSDictionary *result = existing;
+    for (NSString *writtenKey in writtenKeys) {
+        // KEY_BINDINGS also holds user-created bindings on non-color settings, which
+        // a concrete write to that setting must not delete; the helper only removes
+        // palette-owned entries, but skip non-color keys anyway to avoid work.
+        if (![iTermProfilePreferences keyIsColor:writtenKey]) {
+            continue;
+        }
+        NSString *baseKey = [self baseColorKeyForProfileKey:writtenKey];
+        result = [iTermProfilePreferences bindings:result byRemovingPaletteBindingsForBaseKey:baseKey];
+    }
+    return (result != existing) ? result : nil;
 }
 
 - (void)screenSelectColorPresetNamed:(NSString *)name {
@@ -17114,6 +17308,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
             [_preEscapeSequenceColors removeObjectForKey:key];
         }
     }
+    // Drop any i:N tab-color binding explicitly, even when no concrete Tab Color
+    // value is being restored (e.g. the binding never resolved to a color), since
+    // the centralized clear only fires on a color-value write.
+    [self mergeClearedTabColorBindingIntoValues:valuesToRestore];
     if (valuesToRestore.count > 0) {
         [self setSessionSpecificProfileValues:valuesToRestore];
     }
@@ -17133,6 +17331,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     for (NSString *key in tabColorKeys) {
         dict[key] = encoded;
     }
+    // setSessionSpecificProfileValues: drops any i:N tab-color binding.
     [self setSessionSpecificProfileValues:dict];
 
     // Restore baselines after setSessionSpecificProfileValues clears them.
@@ -17175,7 +17374,22 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         for (NSString *key in useTabColorKeys) {
             dict[key] = @NO;
         }
+        // "No Color" writes no KEY_TAB_COLOR value, so setSessionSpecificProfileValues:
+        // won't drop the KEY_TAB_COLOR baselines. Remove only the NSNull sentinels an
+        // i:N bind captured when the profile had no tab color: a lingering NSNull
+        // keeps hasRemainingColorBaselines YES forever and suppresses the mode-setting
+        // restore on later resets. A concrete baseline (from a real OSC tab-color set)
+        // is retained so a later reset can still restore it.
+        for (NSString *key in tabColorKeys) {
+            if ([_preEscapeSequenceColors[key] isKindOfClass:[NSNull class]]) {
+                [_preEscapeSequenceColors removeObjectForKey:key];
+            }
+        }
     }
+    // Drop any i:N tab-color binding explicitly. The centralized clear only fires
+    // when a color VALUE key is written, but "No Color" writes only the boolean
+    // enable-bit keys, so it would otherwise leave an orphaned binding.
+    [self mergeClearedTabColorBindingIntoValues:dict];
     [self setSessionSpecificProfileValues:dict];
 }
 
@@ -17717,6 +17931,33 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (VT100GridRange)screenRangeOfVisibleLines {
     return [_textview rangeOfVisibleLines];
+}
+
+- (void)screenDidReceiveKittyDragAndDrop:(NSString *)content {
+    if (!_kittyDnDBridge) {
+        __weak __typeof(self) weakSelf = self;
+        _kittyDnDBridge = [[iTermKittyDnDBridge alloc] initWithDataSource:self
+                                                                  report:^(NSData *data) {
+            [weakSelf screenSendReportData:data];
+        }];
+    }
+    [_kittyDnDBridge handleInboundSequence:content];
+}
+
+- (iTermConductor *)kittyDnDConductor {
+    return _conductor;
+}
+
+- (NSView *)kittyDnDView {
+    return _textview;
+}
+
+- (void)kittyDnDDragDidBegin {
+    [_textview kittyDragDidBegin];
+}
+
+- (iTermKittyDnDBridge *)textViewKittyDnDBridge {
+    return _kittyDnDBridge;
 }
 
 - (void)screenSetPointerShape:(NSString *)pointerShape {
@@ -21086,7 +21327,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self.delegate sessionUpdateMetalAllowed];
 }
 
-- (id)temporarilyDisableMetal NS_AVAILABLE_MAC(10_11) {
+- (id)temporarilyDisableMetal {
     assert(_useMetal);
     _wrapper.useMetal = NO;
     _textview.suppressDrawing = NO;
@@ -21103,7 +21344,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return token;
 }
 
-- (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(id)token NS_AVAILABLE_MAC(10_11) {
+- (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(id)token {
     DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal %@", token);
     if (!_useMetal) {
         DLog(@"drawFrameAndRemoveTemporarilyDisablementOfMetal returning early because useMetal is off");
@@ -21923,18 +22164,31 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)boundVariableDidChange:(NSString *)key value:(id)value {
     DLog(@"key=%@ value=%@", key, value);
+    NSDictionary *allBindings = [NSDictionary castFrom:[iTermProfilePreferences objectForKey:KEY_BINDINGS
+                                                                                    inProfile:self.profile]];
+    // Ignore a stale callback: the observer's re-evaluation completes after a
+    // runloop spin, so the binding for this key may have been removed in between
+    // (e.g. the user picked a concrete color). Applying it now would revert that.
+    if (!allBindings[key]) {
+        DLog(@"Ignoring stale binding callback for %@ (no longer bound)", key);
+        return;
+    }
+    // Preserve color baselines only for a palette-owned binding: its ongoing writes
+    // must not clear the pre-escape-sequence baseline a later reset relies on. A
+    // user-authored binding keeps the prior behavior of clearing it.
+    const BOOL preserveBaselines = [iTermProfilePreferences bindingValueIsPaletteOwned:allBindings[key]];
     if (value) {
         id plistValue = [iTermProfilePreferences plistValueFromBoundVariableValue:value forKey:key];
         if (plistValue) {
             DLog(@"plistValue=%@", plistValue);
-            [self setSessionSpecificProfileValues:@{ key: plistValue }];
+            [self setSessionSpecificProfileValues:@{ key: plistValue } reload:YES preserveColorBaselines:preserveBaselines];
         }
         return;
     }
     id unboundValue = [iTermProfilePreferences objectForKey:key inProfile:self.profile];
     DLog(@"unboundValue=%@", unboundValue);
     if (unboundValue) {
-        [self setSessionSpecificProfileValues:@{ key: unboundValue }];
+        [self setSessionSpecificProfileValues:@{ key: unboundValue } reload:YES preserveColorBaselines:preserveBaselines];
     }
 }
 
@@ -24195,6 +24449,11 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 - (void)immutableColorMap:(id<iTermColorMapReading>)colorMap didChangeColorForKey:(iTermColorMapKey)theKey from:(NSColor *)before to:(NSColor *)after {
     [_textview immutableColorMap:colorMap didChangeColorForKey:theKey from:before to:after];
+    // Always keep colors.* live: didChange is cheap when nothing observes the
+    // scope (setValue with no references fires nothing), and it must stay current
+    // for consumers the reload gate does not track, like a title or status-bar
+    // interpolation that references colors.*.
+    [_colorScopeVariables didChangeColorForKey:theKey to:after];
     [self setNeedsComposerColorUpdate:YES];
 }
 

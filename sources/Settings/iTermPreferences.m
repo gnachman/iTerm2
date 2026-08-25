@@ -123,6 +123,7 @@ NSString *const kPreferenceKeyShowPaneTitles = @"ShowPaneTitles";
 NSString *const kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane = @"ShowPaneTitlesEvenIfOnlyOnePane";
 NSString *const kPreferenceKeyPerPaneBackgroundImage = @"PerPaneBackgroundImage";
 NSString *const kPreferenceKeyStretchTabsToFillBar = @"StretchTabsToFillBar";
+NSString *const kPreferenceKeyScrollableSideTabBar = @"ScrollableSideTabBar";
 NSString *const kPreferenceKeyHideMenuBarInFullscreen = @"HideMenuBarInFullscreen";
 NSString *const kPreferenceKeyUIElement = @"HideFromDockAndAppSwitcher";
 NSString *const kPreferenceKeyUIElementRequiresHotkeys = @"UIElementRequiresHotkeys";
@@ -268,6 +269,7 @@ NSString *const kPreferenceKeyAISafetyCheckNagComplete = @"NoSyncAISafetyCheckNa
 NSString *const kPreferenceKeyAICustomHeadersEnabled = @"AICustomHeadersEnabled";
 NSString *const kPreferenceKeyAICustomHeaders = @"AICustomHeaders";
 NSString *const kPreferenceKeyAIZeroDataRetention = @"AIZeroDataRetention";
+NSString *const kPreferenceKeyAIModelUpdatesEnabled = @"AIModelUpdatesEnabled";
 
 NSString *const kPreferenceKeyAIPermissionCheckTerminalState = @"AIPermissionCheckTerminalState";
 NSString *const kPreferenceKeyAIPermissionRunCommands = @"AIPermissionRunCommands";
@@ -776,6 +778,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
                   kPreferenceKeyAICustomHeadersEnabled: @NO,
                   kPreferenceKeyAICustomHeaders: @[],
                   kPreferenceKeyAIZeroDataRetention: @NO,
+                  kPreferenceKeyAIModelUpdatesEnabled: @NO,
 
                   kPreferenceKeyAIPermissionCheckTerminalState: @(iTermAIPermissionAsk),
                   kPreferenceKeyAIPermissionRunCommands: @(iTermAIPermissionAsk),
@@ -802,6 +805,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
                   kPreferenceKeyHideTabActivityIndicator: @NO,
                   kPreferenceKeyShowNewOutputIndicator: @YES,
                   kPreferenceKeyStretchTabsToFillBar: @YES,
+                  kPreferenceKeyScrollableSideTabBar: @YES,
 
                   kPreferenceKeyShowPaneTitles: @YES,
                   kPreferenceKeyShowPaneTitlesEvenIfOnlyOnePane: @NO,

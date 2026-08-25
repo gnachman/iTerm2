@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>BuildMachineOSBuild</key>
-	<string>25E246</string>
+	<string>25F80</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
@@ -17,7 +17,7 @@
 	<key>CFBundlePackageType</key>
 	<string>FMWK</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.22.0 9-g956d5b93</string>
+	<string>1.22.0 1352-g3a5e920</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleSupportedPlatforms</key>
@@ -43,6 +43,6 @@
 	<key>DTXcodeBuild</key>
 	<string>17F42</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.15</string>
+	<string>13.0</string>
 </dict>
 </plist>

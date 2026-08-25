@@ -3080,6 +3080,55 @@ typedef struct {
 }
 
 // fg=ff0080,bg=srgb:808080
+static NSCharacterSet *iTermNonASCIIDigitCharacterSet(void) {
+    static NSCharacterSet *set;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        set = [[NSCharacterSet characterSetWithCharactersInString:@"0123456789"] invertedSet];
+    });
+    return set;
+}
+
+static NSCharacterSet *iTermASCIIDigitCharacterSet(void) {
+    static NSCharacterSet *set;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        set = [NSCharacterSet characterSetWithCharactersInString:@"0123456789"];
+    });
+    return set;
+}
+
+static NSCharacterSet *iTermNonASCIIDecimalCharacterSet(void) {
+    static NSCharacterSet *set;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        set = [[NSCharacterSet characterSetWithCharactersInString:@"0123456789."] invertedSet];
+    });
+    return set;
+}
+
+// A non-empty string of only ASCII 0-9. Unlike -isNumeric (which uses
+// decimalDigitCharacterSet), this rejects non-ASCII digits that -integerValue
+// would parse as 0.
+static BOOL iTermStringIsASCIIDigits(NSString *string) {
+    if (string.length == 0) {
+        return NO;
+    }
+    return [string rangeOfCharacterFromSet:iTermNonASCIIDigitCharacterSet()].location == NSNotFound;
+}
+
+// An ASCII decimal: only 0-9 and at most one dot, with at least one digit. Lenient
+// about a leading or trailing dot (".5", "1.").
+static BOOL iTermStringIsASCIIDecimal(NSString *string) {
+    if (string.length == 0 || [string rangeOfCharacterFromSet:iTermNonASCIIDecimalCharacterSet()].location != NSNotFound) {
+        return NO;
+    }
+    if ([[string componentsSeparatedByString:@"."] count] > 2) {
+        return NO;
+    }
+    return [string rangeOfCharacterFromSet:iTermASCIIDigitCharacterSet()].location != NSNotFound;
+}
+
 - (void)terminalSetColorNamed:(NSString *)name to:(NSString *)colorString {
     DLog(@"begin name=%@ colorString=%@", name, colorString);
     if ([name isEqualToString:@"preset"]) {
@@ -3101,69 +3150,149 @@ typedef struct {
         return;
     }
 
-    NSInteger colon = [colorString rangeOfString:@":"].location;
-    NSString *cs;
-    NSString *hex;
-    if (colon != NSNotFound && colon + 1 != colorString.length && colon != 0) {
-        DLog(@"found color space");
-        cs = [colorString substringToIndex:colon];
-        hex = [colorString substringFromIndex:colon + 1];
-    } else {
-        DLog(@"use default color space");
-        if ([iTermAdvancedSettingsModel p3]) {
-            cs = @"p3";
-        } else {
-            cs = @"srgb";
-        }
-        hex = colorString;
-    }
-    NSDictionary *colorSpaces = @{ @"srgb": [NSColorSpace sRGBColorSpace],
-                                   @"rgb": [NSColorSpace genericRGBColorSpace],
-                                   @"p3": [NSColorSpace displayP3ColorSpace] };
-    NSColorSpace *colorSpace = colorSpaces[cs] ?: [NSColorSpace it_defaultColorSpace];
-    if (!colorSpace) {
-        DLog(@"failed to make colorspace from %@", cs);
-        return;
-    }
+    // Colors whose profile key is not in the color map. Resolved directly to a
+    // profile key, used both to decide alpha capability below and to write the
+    // value later.
+    NSDictionary *names2 = @{ @"badge": KEY_BADGE_COLOR };
 
-    DLog(@"hex=%@", hex);
-    CGFloat r, g, b;
-    if (hex.length == 6) {
-        NSScanner *scanner = [NSScanner scannerWithString:hex];
-        unsigned int rgb = 0;
-        if (![scanner scanHexInt:&rgb]) {
+    NSColor *color = nil;
+    NSString *bindingExpression = nil;
+    if ([colorString hasPrefix:@"i:"]) {
+        // Bind this color setting to palette index N so it tracks the live palette
+        // instead of freezing an RGB value. Indices 0-15 follow the loaded preset
+        // and dark mode; 16-255 are the fixed 6x6x6 cube and grayscale ramp. This
+        // writes an expression binding (see iTermColorScopeVariables) rather than
+        // a concrete color. An optional @A suffix (0-1) applies transparency, but
+        // only for colors that honor alpha (currently the badge).
+        NSString *rest = [colorString substringFromIndex:2];
+        NSString *indexString = rest;
+        NSString *alphaString = nil;
+        const NSInteger at = [rest rangeOfString:@"@"].location;
+        if (at != NSNotFound) {
+            indexString = [rest substringToIndex:at];
+            alphaString = [rest substringFromIndex:at + 1];
+        }
+        // Require ASCII digits only. -isNumeric uses decimalDigitCharacterSet,
+        // which matches non-ASCII digits (Arabic-Indic, fullwidth, ...) that
+        // -integerValue then parses as 0, so "i:٣" would silently bind to index 0.
+        if (!iTermStringIsASCIIDigits(indexString)) {
+            DLog(@"non-ASCII-numeric palette index %@", indexString);
             return;
         }
-        r = ((rgb >> 16) & 0xff);
-        g = ((rgb >> 8) & 0xff);
-        b = ((rgb >> 0) & 0xff);
-    } else if (hex.length == 3) {
-        NSScanner *scanner = [NSScanner scannerWithString:hex];
-        unsigned int rgb = 0;
-        if (![scanner scanHexInt:&rgb]) {
+        const NSInteger index = [indexString integerValue];
+        if (index < 0 || index > 255) {
+            DLog(@"palette index %@ out of range", @(index));
             return;
         }
-        r = ((rgb >> 8) & 0xf) | ((rgb >> 4) & 0xf0);
-        g = ((rgb >> 4) & 0xf) | ((rgb >> 0) & 0xf0);
-        b = ((rgb >> 0) & 0xf) | ((rgb << 4) & 0xf0);
+        NSString *paletteExpression = [iTermColorScopeVariables expressionForPaletteIndex:index];
+        // Gate alpha on the single source of truth,
+        // +[iTermProfilePreferences colorKeyHonorsAlpha:], applied to this name's
+        // resolved profile key rather than a hardcoded name. Today only the badge
+        // is both a SetColors target and alpha-honoring; the cursor guide honors
+        // alpha but is not a SetColors target, so it gets alpha via a settings-panel
+        // with_alpha binding. If a future alpha-honoring color becomes a SetColors
+        // target, adding it to the resolution below is enough.
+        // Only profile-only colors (names2) can honor alpha: colorKeyHonorsAlpha:
+        // is YES for badge and cursor guide, and tab is not alpha-honoring, so the
+        // color-map names never reach here.
+        NSString *targetBaseKeyForAlpha = names2[name];
+        const BOOL alphaCapable = (targetBaseKeyForAlpha != nil &&
+                                   [iTermProfilePreferences colorKeyHonorsAlpha:targetBaseKeyForAlpha]);
+        if (alphaString.length > 0 && alphaCapable) {
+            // Validate as an ASCII decimal in [0,1], so non-ASCII digits, which
+            // -doubleValue reads as 0 and would make an invisible badge, are
+            // rejected. Leading/trailing dots (".5", "1.") are accepted here and
+            // fixed by the %g canonicalization below, which also emits a leading
+            // digit the expression grammar requires and is not localized.
+            const double alphaValue = alphaString.doubleValue;
+            if (!iTermStringIsASCIIDecimal(alphaString) || alphaValue < 0.0 || alphaValue > 1.0) {
+                DLog(@"invalid alpha %@", alphaString);
+                return;
+            }
+            // Fixed-point (not %g, which can emit scientific notation like "5e-05"
+            // for a tiny alpha that the expression grammar would reject). Four
+            // decimals exceed 8-bit alpha precision and always parse.
+            NSString *canonicalAlpha = [NSString stringWithFormat:@"%.4f", alphaValue];
+            bindingExpression = [NSString stringWithFormat:@"iterm2.with_alpha(color: %@, alpha: %@)",
+                                 paletteExpression, canonicalAlpha];
+        } else {
+            if (alphaString.length > 0) {
+                DLog(@"alpha ignored: %@ does not honor alpha", name);
+            }
+            bindingExpression = paletteExpression;
+        }
     } else {
-        DLog(@"fail");
-        return;
+        NSInteger colon = [colorString rangeOfString:@":"].location;
+        NSString *cs;
+        NSString *hex;
+        if (colon != NSNotFound && colon + 1 != colorString.length && colon != 0) {
+            DLog(@"found color space");
+            cs = [colorString substringToIndex:colon];
+            hex = [colorString substringFromIndex:colon + 1];
+        } else {
+            DLog(@"use default color space");
+            if ([iTermAdvancedSettingsModel p3]) {
+                cs = @"p3";
+            } else {
+                cs = @"srgb";
+            }
+            hex = colorString;
+        }
+        NSDictionary *colorSpaces = @{ @"srgb": [NSColorSpace sRGBColorSpace],
+                                       @"rgb": [NSColorSpace genericRGBColorSpace],
+                                       @"p3": [NSColorSpace displayP3ColorSpace] };
+        NSColorSpace *colorSpace = colorSpaces[cs] ?: [NSColorSpace it_defaultColorSpace];
+        if (!colorSpace) {
+            DLog(@"failed to make colorspace from %@", cs);
+            return;
+        }
+
+        DLog(@"hex=%@", hex);
+        CGFloat r, g, b;
+        if (hex.length == 6) {
+            NSScanner *scanner = [NSScanner scannerWithString:hex];
+            unsigned int rgb = 0;
+            if (![scanner scanHexInt:&rgb]) {
+                return;
+            }
+            r = ((rgb >> 16) & 0xff);
+            g = ((rgb >> 8) & 0xff);
+            b = ((rgb >> 0) & 0xff);
+        } else if (hex.length == 3) {
+            NSScanner *scanner = [NSScanner scannerWithString:hex];
+            unsigned int rgb = 0;
+            if (![scanner scanHexInt:&rgb]) {
+                return;
+            }
+            r = ((rgb >> 8) & 0xf) | ((rgb >> 4) & 0xf0);
+            g = ((rgb >> 4) & 0xf) | ((rgb >> 0) & 0xf0);
+            b = ((rgb >> 0) & 0xf) | ((rgb << 4) & 0xf0);
+        } else {
+            DLog(@"fail");
+            return;
+        }
+        CGFloat components[4] = { r / 255.0, g / 255.0, b / 255.0, 1.0 };
+        color = [NSColor colorWithColorSpace:colorSpace
+                                  components:components
+                                       count:sizeof(components) / sizeof(*components)];
     }
-    CGFloat components[4] = { r / 255.0, g / 255.0, b / 255.0, 1.0 };
-    NSColor *color = [NSColor colorWithColorSpace:colorSpace
-                                       components:components
-                                            count:sizeof(components) / sizeof(*components)];
-    DLog(@"color=%@", color);
-    if (!color) {
-        return;
+    if (!bindingExpression) {
+        DLog(@"color=%@", color);
+        if (!color) {
+            return;
+        }
     }
 
     if ([name isEqualToString:@"tab"]) {
         [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
                                              iTermTokenExecutorUnpauser * _Nonnull unpauser) {
-            DLog(@"tab");
-            [delegate screenSetCurrentTabColor:color];
+            if (bindingExpression) {
+                DLog(@"tab binding %@", bindingExpression);
+                [delegate screenSetColorBinding:bindingExpression forProfileKey:KEY_TAB_COLOR];
+            } else {
+                DLog(@"tab");
+                [delegate screenSetCurrentTabColor:color];
+            }
             [unpauser unpause];
         } name:@"set color 3"];
         return;
@@ -3198,9 +3327,6 @@ typedef struct {
                              @"br_cyan": @(kColorMapAnsiCyan + kColorMapAnsiBrightModifier),
                              @"br_white": @(kColorMapAnsiWhite + kColorMapAnsiBrightModifier) };
 
-    // These are profile keys but they have no corresponding value in the color map.
-    NSDictionary *names2 = @{ @"badge": KEY_BADGE_COLOR };
-
     NSNumber *keyNumber = names[name];
     DLog(@"name=%@", name);
     if (!keyNumber && !names2[name]) {
@@ -3222,9 +3348,14 @@ typedef struct {
         } else {
             profileKey = [strongSelf.mainThreadCopy.colorMap profileKeyForBaseKey:names2[name]];
         }
-        DLog(@"set %@=%@", profileKey, color);
-        [delegate screenSetColor:color
-                      profileKey:profileKey];
+        if (bindingExpression) {
+            DLog(@"bind %@=%@", profileKey, bindingExpression);
+            [delegate screenSetColorBinding:bindingExpression forProfileKey:profileKey];
+        } else {
+            DLog(@"set %@=%@", profileKey, color);
+            [delegate screenSetColor:color
+                          profileKey:profileKey];
+        }
         [unpauser unpause];
     } name:@"set color 4"];
 }
@@ -3994,6 +4125,15 @@ willExecuteToken:(VT100Token *)token
 
 - (void)terminalDidReceiveKittyImageCommand:(iTermKittyImageCommand *)kittyImageCommand {
     [_kittyImageController executeCommand:kittyImageCommand];
+}
+
+- (void)terminalDidReceiveKittyDragAndDrop:(NSString *)content {
+    // The Kitty DnD controller lives on the main-thread session (it drives
+    // AppKit drag machinery and the @MainActor SSH endpoint), so hop out of the
+    // mutation thread to deliver the raw OSC 72 content.
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDidReceiveKittyDragAndDrop:content];
+    } name:@"kitty drag-and-drop"];
 }
 
 - (void)terminalStartWrappedCommand:(NSString *)command channel:(NSString *)uid {

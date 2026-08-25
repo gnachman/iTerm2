@@ -61,6 +61,9 @@ extern NSString *const PTYCommandDidExitUserInfoKeyStartLine;
 extern NSString *const PTYCommandDidExitUserInfoKeyLineCount;
 extern NSString *const PTYCommandDidExitUserInfoKeyURL;
 extern NSString *const PTYSessionArrangementOptionsForDuplication;
+// Transient launch option (not serialized): when set, restoration starts the session in its saved
+// working directory exactly once, rather than via a persistent Custom Directory profile override.
+extern NSString *const PTYSessionArrangementOptionsForceOldCWD;
 extern NSString *const PTYSessionArrangementOptionsUnlimitedHistory;
 extern NSString *const PTYSessionArrangementOptionsArchive;
 extern NSString *const PTYSessionArrangementOptionsLargeContentProvider;
@@ -1232,6 +1235,12 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // Set a value in the session's dictionary without affecting the backing profile.
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues;
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues reload:(BOOL)reload;
+// preserveColorBaselines:YES leaves _preEscapeSequenceColors intact for the keys
+// being written. Used by binding observers so applying a bound (i:N) color does
+// not clear the Edit-Session baseline a later reset restores.
+- (void)setSessionSpecificProfileValues:(NSDictionary *)newValues
+                                 reload:(BOOL)reload
+                  preserveColorBaselines:(BOOL)preserveColorBaselines;
 - (NSString *)amendedColorKey:(NSString *)baseKey;
 
 - (void)useTransparencyDidChange;
@@ -1248,8 +1257,8 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 
 - (void)jumpToLocationWhereCurrentStatusChanged;
 - (void)updateMetalDriver;
-- (id)temporarilyDisableMetal NS_AVAILABLE_MAC(10_11);
-- (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(nullable id)token NS_AVAILABLE_MAC(10_11);
+- (id)temporarilyDisableMetal;
+- (void)drawFrameAndRemoveTemporarilyDisablementOfMetalForToken:(nullable id)token;
 
 - (BOOL)willEnableMetal;
 - (BOOL)metalAllowed:(out nullable iTermMetalUnavailableReason *)reason;
@@ -1258,6 +1267,10 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // Call this when a session moves to a different tab or window to update the session ID.
 - (void)didMoveSession;
 - (void)didInitializeSessionWithName:(NSString *)name;
+// Turn on the session-name title component (unless the profile uses a custom
+// title or already shows the name) so a programmatically assigned name becomes
+// visible in the tab title even when the profile's title shows only the job.
+- (void)enableSessionNameTitleComponentIfPossible;
 - (void)profileNameDidChangeTo:(NSString *)name;
 - (void)profileDidChangeToProfileWithName:(NSString *)name;
 - (void)updateStatusBarStyle;

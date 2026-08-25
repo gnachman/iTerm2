@@ -1644,6 +1644,13 @@ struct ResponsesBodyRequestBuilder {
     var shouldThink: Bool?
     var reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort?
     var serviceTier: ResponsesRequestBody.ServiceTier?
+    // The volatile per-turn context (the orchestration <workgroups> snapshot,
+    // the session-bound terminal/screen block). It is appended as a trailing
+    // user message AFTER the previousResponseID truncation below, not folded
+    // into `messages` by the caller: folding it in ahead of time made it the
+    // last element, so suffix(1) kept the context and dropped the user's actual
+    // newest turn. See LLMRequestBuilder and the volatile-context tests.
+    var trailingVolatileText: String? = nil
     var frozenHistoryElements: Data? = nil  // blob-native replay; see LLMRequestBuilder
 
     // Static (depends only on its args, not builder state) so the blob wire-encoder
@@ -1889,9 +1896,18 @@ struct ResponsesBodyRequestBuilder {
         // (not by wire item) keeps multi-item expansions intact - a message
         // that fans out to [reasoning, function_call] must never lose its
         // reasoning half to truncation.
-        let effectiveMessages = (previousResponseID != nil && !messages.isEmpty)
+        // Truncate to the newest real message when the server holds the history
+        // (previousResponseID). The volatile context is appended AFTER this, so
+        // truncation can never drop the user's actual newest turn in its favor.
+        let baseMessages = (previousResponseID != nil && !messages.isEmpty)
             ? Array(messages.suffix(1))
             : messages
+        let effectiveMessages: [LLM.Message]
+        if let trailingVolatileText, !trailingVolatileText.isEmpty {
+            effectiveMessages = baseMessages + [LLM.Message(role: .user, content: trailingVolatileText)]
+        } else {
+            effectiveMessages = baseMessages
+        }
         let itemList = effectiveMessages.flatMap { Self.transform(message: $0, hostedTools: hostedTools) }
         let tools = functions.map { transform(function: $0) } + transformedHostedTools
         var body = ResponsesRequestBody(

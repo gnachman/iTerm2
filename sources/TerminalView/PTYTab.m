@@ -97,6 +97,10 @@ static NSString* TAB_ARRANGEMENT_COLOR = @"Tab color";  // DEPRECATED - Each PTY
 static NSString* TAB_ARRANGEMENT_TITLE_OVERRIDE = @"Title Override";
 static NSString* TAB_GUID = @"Tab GUID";
 static NSString* TAB_ARRANGEMENT_PINNED = @"Pinned";
+static NSString* TAB_ARRANGEMENT_GROUP_ID = @"Tab Group ID";
+static NSString* TAB_ARRANGEMENT_GROUP_NAME = @"Tab Group Name";
+static NSString* TAB_ARRANGEMENT_GROUP_COLOR = @"Tab Group Color";
+static NSString* TAB_ARRANGEMENT_GROUP_COLLAPSED = @"Tab Group Collapsed";
 
 static const BOOL USE_THIN_SPLITTERS = YES;
 
@@ -3573,6 +3577,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                        options:options]];
     theTab.titleOverride = [arrangement[TAB_ARRANGEMENT_TITLE_OVERRIDE] nilIfNull];
     theTab->_pinned = [arrangement[TAB_ARRANGEMENT_PINNED] boolValue];
+    theTab.tabGroupID = [arrangement[TAB_ARRANGEMENT_GROUP_ID] nilIfNull];
+    theTab.tabGroupName = [arrangement[TAB_ARRANGEMENT_GROUP_NAME] nilIfNull];
+    NSDictionary *groupColorDict = [arrangement[TAB_ARRANGEMENT_GROUP_COLOR] nilIfNull];
+    if (groupColorDict) {
+        theTab.tabGroupColor = [groupColorDict colorValue];
+    }
+    theTab.tabGroupCollapsed = [arrangement[TAB_ARRANGEMENT_GROUP_COLLAPSED] boolValue];
     NSString *guid = arrangement[TAB_GUID];
     if (guid) {
         if ([[iTermController sharedInstance] tabWithGUID:guid] ||
@@ -3908,6 +3919,16 @@ NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOption
                    options:(NSDictionary *)options {
     DLog(@"Encode tab %@", self);
     encoder[TAB_ARRANGEMENT_PINNED] = @(self.isPinned);
+    if (self.tabGroupID) {
+        encoder[TAB_ARRANGEMENT_GROUP_ID] = self.tabGroupID;
+        if (self.tabGroupName) {
+            encoder[TAB_ARRANGEMENT_GROUP_NAME] = self.tabGroupName;
+        }
+        if (self.tabGroupColor) {
+            encoder[TAB_ARRANGEMENT_GROUP_COLOR] = self.tabGroupColor.dictionaryValue;
+        }
+        encoder[TAB_ARRANGEMENT_GROUP_COLLAPSED] = @(self.tabGroupCollapsed);
+    }
     // If in screenshot mode, encode the live session instead of the synthetic one
     PTYSession *sessionToEncode = self.activeSession;
     BOOL inScreenshotMode = (sessionToEncode.liveSession != nil);
@@ -7038,7 +7059,7 @@ typedef struct {
 }
 
 // Note this is a notification handler
-- (void)updateUseMetal NS_AVAILABLE_MAC(10_11) {
+- (void)updateUseMetal {
     DLog(@"begin");
     const BOOL resizing = self.realParentWindow.windowIsResizing;
     const BOOL powerOK = [[iTermPowerManager sharedInstance] metalAllowed];

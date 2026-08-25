@@ -110,6 +110,13 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
     private let readerModeManager = iTermBrowserReaderModeManager()
     let autofillHandler = iTermBrowserAutofillHandler()
     let user: iTermBrowserUser
+    // All HTTP basic-auth handling for the built-in browser. This manager owns the state machine,
+    // the credential store, prompts, and the picker; iTermBrowserManager just forwards its
+    // navigation-delegate callbacks to it. Lazy so it is created after the webView exists (its
+    // hostWindow closure reads webView.window at use time).
+    private lazy var basicAuth = iTermBrowserBasicAuthManager(user: user) { [weak self] in
+        self?.webView?.window
+    }
     private var currentMainFrameHTTPMethod: String?
     let userState: iTermBrowserUserState
     private let handlerProxy = iTermBrowserWebViewHandlerProxy()
@@ -1231,45 +1238,16 @@ extension iTermBrowserManager: WKNavigationDelegate {
         case NSURLAuthenticationMethodHTTPBasic,
              NSURLAuthenticationMethodHTTPDigest,
              NSURLAuthenticationMethodNTLM:
-            promptForCredential(challenge: challenge, completionHandler: completionHandler)
+            basicAuth.handleChallenge(challenge, completionHandler: completionHandler)
         default:
             // Server trust and everything else falls back to system handling.
             completionHandler(.performDefaultHandling, nil)
         }
     }
 
-    private func promptForCredential(
-        challenge: URLAuthenticationChallenge,
-        completionHandler: @escaping @MainActor (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        // If we already offered a credential and it was rejected, cancel rather
-        // than looping forever on the same bad credential.
-        let protectionSpace = challenge.protectionSpace
-        let host = protectionSpace.host
-        let realm = protectionSpace.realm
-        let promptText: String
-        if let realm, !realm.isEmpty {
-            promptText = "The website “\(host)” requires a user name and password for “\(realm)”."
-        } else {
-            promptText = "The website “\(host)” requires a user name and password."
-        }
-
-        let alert = ModalPasswordAlert(promptText)
-        // A non-nil username makes ModalPasswordAlert show a user name field.
-        alert.username = challenge.proposedCredential?.user ?? ""
-        alert.runAsync(window: webView.window) { password in
-            guard let password else {
-                completionHandler(.cancelAuthenticationChallenge, nil)
-                return
-            }
-            let credential = URLCredential(user: alert.username ?? "",
-                                           password: password,
-                                           persistence: .forSession)
-            completionHandler(.useCredential, credential)
-        }
-    }
-
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         navigationCount += 1
+        basicAuth.didStartProvisionalNavigation(navigation)
         readerModeManager.resetForNavigation()
         delegate?.browserManager(self, didStartNavigation: navigation)
         copyModeHandler?.enabled = false
@@ -1279,7 +1257,13 @@ extension iTermBrowserManager: WKNavigationDelegate {
         self.webView.isEditingText = false
     }
 
+    func webView(_ webView: WKWebView, didReceiveServerRedirectForProvisionalNavigation navigation: WKNavigation!) {
+        basicAuth.didReceiveServerRedirect(navigation)
+    }
+
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+        basicAuth.didCommit(navigation)
+
         // URL is now committed, update UI
         notifyDelegateOfUpdates()
         
@@ -1298,6 +1282,9 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         it_assert(webView === self.webView)
+        // Basic-auth credentials are confirmed and persisted from the main-frame response
+        // (decidePolicyForNavigationResponse) and the context is cleared at didCommit, not here:
+        // a navigation can finish having rendered a 401 error body, which is not an acceptance.
         // Clear failed URL on successful navigation to a real page (not error pages)
         if webView.url != iTermBrowserErrorHandler.errorURL {
             lastFailedURL = nil
@@ -1338,6 +1325,11 @@ extension iTermBrowserManager: WKNavigationDelegate {
         RLog("🔌 didFailNavigation: domain=\(nsError.domain) code=\(nsError.code) — \(nsError.localizedDescription)")
         let failedURL = navigationState.lastRequestedURL
 
+        // This is the POST-commit failure path (the document already committed, then the load
+        // failed - TLS drop, reset, renderer error). The auth context was already cleared at
+        // didCommit and any credential confirmed/persisted from the main-frame response (which
+        // precedes commit), so there is nothing to do for auth here.
+
         navigationState.didCompleteLoading(error: error)
 
         // Don't show error page for download-related cancellations
@@ -1359,6 +1351,11 @@ extension iTermBrowserManager: WKNavigationDelegate {
         let nsError = error as NSError
         let failedURL = navigationState.lastRequestedURL
         NSLog("didFailProvisionalNavigation: url=\(failedURL.d) domain=\(nsError.domain) code=\(nsError.code) — \(nsError.localizedDescription)")
+
+        // The main-frame load failed before any response, so no main-frame response will arrive to
+        // confirm a credential supplied during it. Tell the manager to drop it (it guards on
+        // navigation identity so a late failure for a superseded load does not wipe the live state).
+        basicAuth.didFailProvisionalNavigation(navigation)
 
         navigationState.didCompleteLoading(error: error)
 
@@ -1399,6 +1396,8 @@ extension iTermBrowserManager: WKNavigationDelegate {
         // Track HTTP method for main frame navigations only
         if navigationAction.targetFrame?.isMainFrame == true {
             currentMainFrameHTTPMethod = navigationAction.request.httpMethod
+            // Record the main-frame target for basic-auth main-vs-subframe classification.
+            basicAuth.recordMainFrameNavigationAction(url: navigationAction.request.url)
         }
         
         if navigationAction.navigationType == .linkActivated {
@@ -1490,6 +1489,10 @@ extension iTermBrowserManager: WKNavigationDelegate {
     func webView(_ webView: WKWebView,
                  decidePolicyFor navigationResponse: WKNavigationResponse,
                  decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+
+        // The main-frame HTTP response is the authoritative signal for whether a basic-auth
+        // credential we supplied for the main document was accepted (2xx) or rejected (401).
+        basicAuth.handleNavigationResponse(navigationResponse)
 
         // Check if this should be downloaded instead of displayed
         guard let response = navigationResponse.response as? HTTPURLResponse else {
@@ -1793,7 +1796,14 @@ extension iTermBrowserManager: iTermBrowserLocalPageManagerDelegate {
     func localPageManagerExtensionManager(_ manager: iTermBrowserLocalPageManager) -> iTermBrowserExtensionManagerProtocol? {
         return userState.extensionManager
     }
-    
+
+    func localPageManagerOpenPasswordManager(_ manager: iTermBrowserLocalPageManager) {
+        delegate?.browserManager(self,
+                                 openPasswordManagerForHost: nil,
+                                 forUser: false,
+                                 didSendUserName: nil)
+    }
+
     func localPageManagerOnboardingEnableAdBlocker(_ manager: iTermBrowserLocalPageManager) {
         delegate?.browserManagerOnboardingEnableAdBlocker(self)
     }

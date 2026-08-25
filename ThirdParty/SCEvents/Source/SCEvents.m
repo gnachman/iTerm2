@@ -179,8 +179,15 @@ static CFStringRef _strip_trailing_slash_from_path(CFStringRef path);
     
         _eventStream = _create_events_stream(self, ((CFArrayRef)_watchedPaths), _notificationLatency, _resumeFromEventId);
     
-    // Schedule the event stream on the supplied run loop
+    // Schedule the event stream on the supplied run loop.
+    // FSEventStreamScheduleWithRunLoop is deprecated in macOS 13 in favor of
+    // FSEventStreamSetDispatchQueue, but that changes the thread the callback
+    // runs on (run loop -> dispatch queue) and no upstream SCEvents fork has made
+    // the switch, so we keep run-loop scheduling and silence the deprecation here.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     FSEventStreamScheduleWithRunLoop(_eventStream, _runLoop, kCFRunLoopDefaultMode);
+#pragma clang diagnostic pop
     
     // Start the event stream
     FSEventStreamStart(_eventStream);
@@ -211,7 +218,10 @@ static CFStringRef _strip_trailing_slash_from_path(CFStringRef path);
             
     FSEventStreamStop(_eventStream);
         
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         if (_runLoop) FSEventStreamUnscheduleFromRunLoop(_eventStream, _runLoop, kCFRunLoopDefaultMode);
+#pragma clang diagnostic pop
         
     FSEventStreamInvalidate(_eventStream);
         

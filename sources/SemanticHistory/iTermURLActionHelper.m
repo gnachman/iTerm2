@@ -446,7 +446,7 @@ workingDirectory:(NSString *)workingDirectory
                 if ([url.scheme isEqualToString:@"file"] &&
                     url.host.length > 0 &&
                     url.path.length > 0 &&
-                    ![url.host isEqualToString:[NSHost fullyQualifiedDomainName]]) {
+                    ![NSHost it_hostnameIsThisMachine:url.host]) {
                     SCPPath *path = [[SCPPath alloc] init];
                     path.path = url.path;
                     path.hostname = url.host;

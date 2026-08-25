@@ -1,0 +1,91 @@
+# Upload App Store text and screenshots for iTerm2 Buddy (no binary).
+#
+# One-time setup:
+#   1. cd Companion && bundle install
+#   2. Create an App Store Connect API key with the App Manager (or Admin) role:
+#      App Store Connect > Users and Access > Integrations > App Store Connect API.
+#      Download the .p8 once, and note the Key ID and Issuer ID. Then export:
+#        export ASC_KEY_ID=XXXXXXXXXX
+#        export ASC_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+#        export ASC_KEY_PATH=/absolute/path/to/AuthKey_XXXXXXXXXX.p8
+#      (Omit these to sign in with your Apple ID interactively instead.)
+#
+# Run:
+#   cd Companion && bundle exec fastlane metadata      # description, keywords, urls, ...
+#   cd Companion && bundle exec fastlane screenshots   # the 12 images
+#
+# Text lives in fastlane/metadata/ (copyright) and fastlane/metadata/en-US/
+# (description, keywords, promotional_text, support_url, marketing_url,
+# privacy_url). Screenshots live in fastlane/screenshots/en-US/; device is
+# inferred from each image's pixel size and order follows the numeric filename
+# prefix.
+
+require "shellwords"
+
+default_platform(:ios)
+
+# The App Store Connect API key from ASC_* env vars, or nil to fall back to
+# interactive Apple ID sign-in. Inlined per lane so each is self-contained.
+def asc_api_key
+  return nil unless ENV["ASC_KEY_ID"] && ENV["ASC_ISSUER_ID"] && ENV["ASC_KEY_PATH"]
+  app_store_connect_api_key(
+    key_id: ENV["ASC_KEY_ID"],
+    issuer_id: ENV["ASC_ISSUER_ID"],
+    key_filepath: ENV["ASC_KEY_PATH"],
+  )
+end
+
+platform :ios do
+  desc "Upload App Store text metadata only (no binary, no screenshots)"
+  lane :metadata do
+    deliver(
+      api_key: asc_api_key,
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      skip_app_version_update: true,
+      force: true,
+      # No review submission here, so skip the precheck step (it also cannot run
+      # with an API key, which would make the lane exit non-zero).
+      run_precheck_before_submit: false,
+    )
+  end
+
+  desc "Upload App Store screenshots only (no binary, no metadata)"
+  lane :screenshots do
+    deliver(
+      api_key: asc_api_key,
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_app_version_update: true,
+      overwrite_screenshots: true,
+      force: true,
+      run_precheck_before_submit: false,
+    )
+  end
+
+  desc "Archive for the App Store and upload to TestFlight, no Xcode UI (make companion-bump-build-upload)"
+  lane :release do
+    key = asc_api_key
+    UI.user_error!("Set ASC_KEY_ID, ASC_ISSUER_ID, and ASC_KEY_PATH first; they are needed to sign and upload headlessly.") unless key
+    build_app(
+      project: "iTerm2Companion.xcodeproj",
+      scheme: "iTerm2Companion",
+      output_directory: "build/fastlane",
+      export_options: "ExportOptions.plist",
+      # Create/update the distribution provisioning profiles headlessly with the
+      # App Store Connect API key, so no Xcode UI is needed. ExportOptions.plist
+      # selects automatic signing; the distribution certificate must already be
+      # in the login keychain (it is, from prior Xcode archives).
+      xcargs: [
+        "-allowProvisioningUpdates",
+        "-authenticationKeyPath #{ENV.fetch('ASC_KEY_PATH').shellescape}",
+        "-authenticationKeyID #{ENV.fetch('ASC_KEY_ID').shellescape}",
+        "-authenticationKeyIssuerID #{ENV.fetch('ASC_ISSUER_ID').shellescape}",
+      ].join(" "),
+    )
+    upload_to_testflight(
+      api_key: key,
+      skip_waiting_for_build_processing: true,
+    )
+  end
+end

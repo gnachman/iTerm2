@@ -258,22 +258,7 @@ DEFINE_SETTABLE_BOILERPLATE(name, capitalizedName, NSString *, kiTermAdvancedSet
 #pragma mark - Custom Defaults
 
 BOOL UseSystemCursorWhenPossibleDefault(void) {
-    if (@available(macOS 10.15, *)) {
-        return YES;
-    }
-    return NO;
-}
-
-// Default value of the pythonRuntimeUsesUV advanced setting. The uv runtime and its
-// python-build-standalone interpreters are built with a macOS 13 floor, so it is the
-// default only on macOS 13+; macOS 12 (the last version this app supports) stays on the
-// bundled runtime. Evaluated at settings-load time (the running OS is fixed), and users can
-// still override it. Changing this default is intentional (see the migration doc, Phase 4).
-static BOOL iTermPythonRuntimeUsesUVDefault(void) {
-    if (@available(macOS 13, *)) {
-        return YES;
-    }
-    return NO;
+    return YES;
 }
 
 #pragma mark - iTermAdvancedSettingsModel
@@ -317,6 +302,7 @@ DEFINE_BOOL(useUnevenTabs, NO, SECTION_TABS @"Uneven tab widths allowed.");
 DEFINE_INT(minTabWidth, 75, SECTION_TABS @"Minimum tab width when using uneven tab widths.");
 DEFINE_INT(minCompactTabWidth, 60, SECTION_TABS @"Minimum tab width when using uneven tab widths for compact tabs.");
 DEFINE_INT(optimumTabWidth, 175, SECTION_TABS @"Preferred tab width when tabs are equally sized.");
+DEFINE_INT(scrollableTabWidth, 120, SECTION_TABS @"Tab width when the tab bar is scrollable.\nUsed as the fixed width when tabs are equally sized, and as the minimum width when uneven tab widths are allowed.");
 DEFINE_BOOL(moveLeftAfterClosingTab, NO, SECTION_TABS @"Select the tab to the left when closing a tab?\nIf disabled, the tab to the right of the closing tab will be selected.");
 DEFINE_BOOL(navigatePanesInReadingOrder, YES, SECTION_TABS @"Next Pane and Previous Pane commands use reading order, not the time of last use.");
 DEFINE_FLOAT(tabAutoShowHoldTime, 1.0, SECTION_TABS @"How long in seconds to show tabs in fullscreen.\nThe tab bar appears briefly in fullscreen when the number of tabs changes or you switch tabs. This setting gives the time in seconds for it to remain visible.");
@@ -961,7 +947,7 @@ DEFINE_STRING(pythonRuntimeDownloadURL, iTermDefaultPythonRuntimeDownloadURL(), 
 DEFINE_STRING(uvManifestDownloadURL, @"https://iterm2.com/downloads/uv/manifest.json", SECTION_SCRIPTING @"URL of the uv download manifest (used when the Python runtime is provisioned with uv).");
 DEFINE_STRING(pythonRuntimeBetaDownloadURL, @"https://iterm2.com/downloads/pyenv/betamanifest.json", SECTION_SCRIPTING @"URL to check for new Beta versions of the Python scripting runtime.");
 DEFINE_BOOL(laxNilPolicyInInterpolatedStrings, YES, SECTION_SCRIPTING @"Should references to undefined variables in interpolated strings be converted to empty string?\nWhen enabled, an expression in an interpolated string that references an undefined variable will be treated as an empty string. For example, “\\(bogus)”. References to undefined variables as arguments to function calls, such as “\\(f(bogus))”, are still errors.");
-DEFINE_BOOL(pythonRuntimeUsesUV, iTermPythonRuntimeUsesUVDefault(), SECTION_SCRIPTING @"Use uv to provision the Python runtime for API scripts?\nWhen enabled, iTerm2 uses uv to download Python and build per-script environments instead of the bundled Python runtime. Defaults to on for macOS 13 and later. Scripts already provisioned continue to run regardless of this setting; it only affects creating, importing, and migrating scripts.");
+DEFINE_BOOL(pythonRuntimeUsesUV, YES, SECTION_SCRIPTING @"Use uv to provision the Python runtime for API scripts?\nWhen enabled, iTerm2 uses uv to download Python and build per-script environments instead of the bundled Python runtime. Scripts already provisioned continue to run regardless of this setting; it only affects creating, importing, and migrating scripts.");
 DEFINE_SETTABLE_BOOL(setCookie, SetCookie, NO, SECTION_SCRIPTING @"Set ITERM2_COOKIE environment variable, allowing Python scripts to be launched without confirmation?\nThis will only affect sessions created after changing this setting.");
 DEFINE_SETTABLE_BOOL(setIT2AppPath, SetIT2AppPath, NO, SECTION_SCRIPTING @"Set IT2_APP_PATH environment variable on new sessions, pointing at this iTerm2 build’s app bundle?\nThis disambiguates the AppleScript target when multiple iTerm2 builds with the same bundle identifier are running, so that the “it2” CLI requests its cookie from this iTerm2 instance. Intended for iTerm2 developers. Only affects sessions created after changing this setting.");
 

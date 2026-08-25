@@ -230,6 +230,7 @@ extern NSString *const kPreferenceKeyAIEconomyModelName;
 extern NSString *const kPreferenceKeyUseRecommendedAIModel;
 extern NSString *const kPreferenceKeyAIVendor;  // iTermAIVendor
 extern NSString *const kPreferenceKeyAISafetyCheck;  // boolean
+extern NSString *const kPreferenceKeyAIModelUpdatesEnabled;  // boolean: periodically download the AI model catalog from iterm2.com
 
 // Local (NoSync) flags that govern where the AI command-safety check runs.
 // These form a privacy boundary (on-device vs. configured provider), so they
@@ -281,6 +282,7 @@ extern NSString *const kPreferenceKeyUIElement;
 extern NSString *const kPreferenceKeyUIElementRequiresHotkeys;
 extern NSString *const kPreferenceKeyFlashTabBarInFullscreen;
 extern NSString *const kPreferenceKeyStretchTabsToFillBar;
+extern NSString *const kPreferenceKeyScrollableSideTabBar;
 extern NSString *const kPreferenceKeyShowWindowNumber;
 extern NSString *const kPreferenceKeyShowJobName_Deprecated;  // DEPRECATED
 extern NSString *const kPreferenceKeyShowProfileName_Deprecated;  // DEPRECATED

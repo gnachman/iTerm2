@@ -46,6 +46,18 @@ Major New Features:
   bitrate multiplier and the flow-control
   back-off thresholds.
 
+- A new setting in Settings > Appearance makes
+  the tab bar scrollable. When the tab bar has
+  more tabs than fit, instead of moving the
+  extras into the “More tabs” overflow menu they
+  stay in the bar and you scroll to reach them.
+  Works for top, bottom, left, and right tab
+  bars. A horizontal bar scrolls with a trackpad
+  swipe or shift + mouse wheel. On by default;
+  turn it off to restore the overflow menu.
+  The “Tab width when the tab bar is scrollable”
+  advanced setting sets the scrolled tab size.
+
 - iTerm2 now probes the local network on
   every launch so macOS keeps it in the
   Local Network privacy list. This recovers
@@ -68,6 +80,29 @@ Major New Features:
   yellow instead of the built-in colors, so
   they harmonize with any theme. Off by
   default.
+
+- Added support for light/dark color scheme
+  detection and reporting (DECSET 2031 and
+  DSR 996/997). Programs can query whether the
+  terminal is light or dark and ask to be
+  notified when it changes, so tools like vim
+  and delta can adapt automatically.
+
+- Fixed a bug where the manual AI model
+  editor’s Test Connection button ignored
+  the “Supports temperature” toggle and
+  always sent the temperature parameter,
+  failing against endpoints that reject it.
+
+- Fixed a bug where an AI chat permission
+  button (such as “Check terminal state”)
+  did not update its label after you changed
+  the setting, and re-clicking it appeared to
+  do nothing.
+
+- Fixed a bug where the top-right session
+  indicators left a horizontal smear while
+  swiping between tabs with two fingers.
 
 - Fixed a bug where a subparameter written
   after a full CSI parameter list was
@@ -140,7 +175,8 @@ Major New Features:
 - You can now run multiple concurrent
   instances of iTerm2 side by side with
   independent settings. Launch with
-  --suite=com.iterm2.unique-id-of-your-choice.
+  arguments:
+  -suite com.iterm2.unique-id-of-your-choice.
 
 - The new Workgroups feature let you define how to
   transform a session into a cluster of related
@@ -153,6 +189,19 @@ Major New Features:
   even have custom behavior such as to drive AI
   code review or perform in-terminal diffs of a
   git repo.
+  When a Workgroup spawns extra tabs, they are
+  now collected into a tab group together with
+  the session you entered from, and each spawned
+  split or tab takes the name you gave it in the
+  Workgroup so its tab title is recognizable.
+
+- A new tab created next to a tab that belongs to
+  a tab group now joins that group, so it stays
+  with the set you're working in. This covers New
+  Tab Next to Current Tab, and New Tab when it is
+  configured to open next to the current tab. The
+  tab group menu also gained a New Tab in Group
+  command.
 
 - Clippings is a new side panel that contains a
   list of items formatted as markdown. They're a
@@ -161,6 +210,16 @@ Major New Features:
   The Claude Code integration uses Clippings to
   store code review comments so they can be shared
   between related sessions in a Workgroup.
+- Added support for the Kitty drag-and-drop
+  protocol (OSC 72). A program running in the
+  terminal can accept files, text, and images
+  dropped onto the window, and (when it has mouse
+  reporting on, e.g. a full-screen TUI) can offer
+  its own data to be dragged out to other apps.
+  For a program on a remote host, dropped files
+  are transferred to it over the connection. Hold
+  Option while dropping to use the old
+  paste/upload behavior instead.
 - A new tmux window opened with Command-T now
   picks up the profile’s custom tab title, if
   one is set.
@@ -169,12 +228,6 @@ Major New Features:
   integration session, sending the unmodified
   sequence instead of the xterm form like
   ^[[15;2~.
-- Fixed a bug where auto-sending code review
-  results to the main session sometimes failed to
-  submit because the Return arrived too soon after
-  the paste. The Return now waits a moment (see
-  the workgroupAutoSendSubmitDelay advanced
-  setting).
 - Fixed a bug where a sixel image whose
   terminator had a doubled escape (ESC ESC \
   instead of ESC \) was discarded entirely,
@@ -185,205 +238,19 @@ Major New Features:
   shrinking to a second tab’s profile size) after
   a display-configuration change, instead of
   keeping its own width.
-- Security: the retrospective debug log (used by
-  Save Retrospective Debug Logs) no longer retains
-  typed characters, command lines, passwords,
-  tokens, or AI chat content. These could
-  previously accumulate in memory with debug
-  logging off.
 - ⌘-click now linkifies very long URLs in
   full. Previously only the first couple
   thousand characters were clickable; the
   linkifier now scans onward to the next
   separator so the whole URL is detected.
-- In AI chat orchestration mode, references
-  to a session or workgroup now appear as a
-  clickable link, marked with a terminal
-  icon, showing its current name instead of
-  a raw identifier. Clicking the link
-  reveals that session. The tool-call
-  activity lines (e.g. “Reading screen of
-  …”) now use these same links, and show a
-  grayed-out, non-clickable “[defunct
-  session]” link once the target is gone
-  instead of leaking a raw GUID.
-
-- AI chat orchestration is now much less
-  chatty. While it runs a loop (for example,
-  waiting for a Code Review to finish and
-  then telling a session to continue), it
-  acts on each event and reports one line per
-  real outcome instead of narrating every
-  step and asking what to do next each time.
-
-- A screen-watched condition in orchestration
-  mode now checks less often the longer it
-  runs, and no longer interrupts the chat with
-  a “watch timed out” note every few minutes.
-  The watch keeps running on its own and only
-  gives up after several hours.
-
-- An orchestration watch now follows a Code
-  Review (or any peer) that restarts in place.
-  A reload gives the session a new internal id;
-  the watch used to lose track of it and stall
-  silently, but it now tracks the session across
-  the reload and keeps going.
-
-- In AI chat orchestration mode, pressing Stop
-  now halts the whole pipeline: it cancels the
-  in-flight reply, drops any queued turns, and
-  cancels the chat’s registered watchers, so a
-  session going idle can no longer restart the
-  loop after you asked it to stop. A message you
-  type also jumps ahead of pending status
-  updates instead of waiting behind them.
-
-- A new AI chat created without a session to
-  link to now offers to enable orchestration
-  mode, mirroring the link offer shown when a
-  session is available.
-
-- AI chat now asks before it starts including
-  your terminal’s visible screen and state with
-  messages automatically. A permission left at
-  “Always” from an earlier version no longer
-  shares your screen until you confirm once.
-
 - AI chat history entries can now be deleted
   from the chat list.
-
-- AI chat tool activity is now rendered as
-  compact, code-formatted output instead of
-  prominent centered status panels.
-
-- AI chat no longer sends unsupported
-  additionalProperties fields in Gemini tool
-  schemas.
-
-- AI chat no longer offers deprecated
-  Gemini 2.0 models in the model picker.
-
-- AI chat no longer offers the shut-down
-  Gemini 3 Pro Preview model or the
-  deprecated Claude 4.0 Opus and Sonnet
-  models in the picker.
-
-- AI settings now let you manage API keys
-  for OpenAI, Anthropic, Gemini, and
-  DeepSeek in one sheet.
 
 - AI chats now keep the provider chosen at
   creation time. Settings choose the default
   provider for new chats, while existing
   chats only offer models from their saved
   provider.
-
-- Workgroups let you configure a session
-  to be transformed into a group of related
-  sessions — peers, split panes, or tabs —
-  each with its own toolbar. Configure
-  them in Settings > Shortcuts >
-  Workgroups. Still a work in progress.
-
-- Enter Workgroup and Exit Workgroup are
-  also available as URL-regex triggers on
-  browser profiles, so a navigation event
-  can change the active workgroup.
-
-- Workgroup sessions now have a Mode
-  setting. The new Code Review mode shows
-  an in-session prompt overlay with a Start
-  button before the program runs; the
-  entered text is exposed as the variable
-  codeReviewPrompt for swifty interpolation
-  in the command. The Claude Code
-  workgroup’s review peer uses this mode
-  by default.
-
-- The Code Review prompt overlay can save
-  multiple named prompts. A pulldown menu
-  on the overlay loads any saved prompt;
-  a dedicated Manage Prompts… window
-  handles add/rename/edit/reorder/delete.
-  The single Code Review prompt previously
-  managed in Settings > General > AI >
-  Prompts is migrated to a Default entry
-  on first launch and the entry has been
-  removed from Settings.
-
-- The Code Review system prompt is now
-  editable in Settings > General > AI >
-  Prompts. It defaults to the bundled
-  prompt and is passed to Claude Code at
-  launch.
-
-- Code Review peers have an Auto-Send
-  Clippings When Idle toolbar toggle. When
-  on, the review session’s clippings are
-  pasted into the workgroup’s main session
-  each time the review finishes. The
-  Claude Code workgroup’s review peer
-  includes it by default; the toggle itself
-  starts off.
-
-- The main session has a companion
-  Auto-Request Review When Idle toolbar
-  toggle. When on, a code review is
-  requested from the workgroup’s sole
-  code-review session each time the main
-  session goes idle. It is disabled unless
-  the workgroup has exactly one code-review
-  session. The Claude Code workgroup’s main
-  session includes it by default; the toggle
-  starts off.
-
-- Switching to a Code Review peer that is
-  still showing its prompt overlay now
-  focuses the prompt text field so you can
-  start typing immediately.
-
-- A Diff session now waits to run its diff
-  until you first switch to it, so the diff
-  reflects your changes at that moment
-  instead of from whenever they first began.
-  It is not re-run when you switch away and
-  back.
-
-- Switching to a Diff peer for the first
-  time now keeps the terminal focused once
-  its command starts. Previously keystrokes
-  went nowhere (and beeped) until you
-  clicked the terminal.
-
-- Workgroups now survive a restart. When
-  the app relaunches (for example after a
-  Sparkle upgrade), an active workgroup is
-  rebuilt: its Diff and Code Review peers,
-  split/tab children, toolbar, and peer
-  switching all come back with their
-  content intact.
-
-- Clippings now keep history. An archive
-  button in the clippings panel snapshots
-  the current list and clears it; back and
-  forward buttons walk the history. The
-  new `it2 session archive-clippings`
-  command and matching `iterm2.archive_
-  clippings` API call do the same. Claude
-  Code reviews now automatically archive
-  before each pass, so each review starts
-  with a clean list while old findings
-  remain reachable.
-
-- The clippings and inline AI chat panels
-  can now be resized by dragging their left
-  edge. The chosen width is remembered per
-  machine.
-
-- The Shell > Workgroups submenu now has
-  an Exit Workgroup item to leave the
-  current session’s workgroup.
 
 - The new Fold All menu item folds everything
   (aside from folds at the very top of history).
@@ -393,20 +260,6 @@ Major New Features:
 - You can now create screenshots including
   highlights and redactions using the Make
   Screenshot menu item.
-
-- The screenshot window adds a Save As… button
-  to choose where the file goes. The Save button
-  writes to the folder set by the
-  screenshotSaveLocation advanced setting, or
-  the Desktop if unset.
-
-- The screenshot window’s Copy to Clipboard
-  button now flashes a “Copied!” confirmation
-  so you get feedback that the image was copied.
-
-- The Python API can now capture a session
-  screenshot with session.async_screenshot(),
-  which returns PNG data.
 
 - Session archives were added. The new Session >
   Archives menu has “Save Archive of Current
@@ -466,6 +319,10 @@ New Features in Terminal Sessions:
   previously rounded to whole minutes.
 
 Tabs, Windows, and UI:
+- Left and right tabs in the Minimal theme are now
+  as tall as top tabs, giving subtitles room to
+  render legibly. The height follows the existing
+  Minimal tab bar height advanced setting.
 - Most window types support initial size as a
   percentage of the screen (used to be only number
   of rows and columns).
@@ -534,7 +391,6 @@ Tabs, Windows, and UI:
   slots near tab midpoints, and stabilize
   split-pane target highlights.
 
-
 Triggers Improvements:
 - Event-based triggers can fire on events such as
   a session ending or a hostname change.
@@ -552,8 +408,16 @@ Triggers Improvements:
   to write triggers that are only active while
   Claude Code is running.
 
-
 AI Improvements:
+- Fixed AI chat failing on OpenAI models with an
+  error about an invalid tool schema. Also fixed
+  a crash while parsing AI responses that
+  contained a null value inside an array.
+- Fixed a bug where, on OpenAI models, the second
+  and later messages in an orchestration or
+  terminal-linked AI chat were ignored: the model
+  received only the terminal/workgroups context
+  and replied as if you had said nothing.
 - The AI chat “View History” permission is now
   “View Contents”. When it is set to provide
   contents automatically, a session-bound chat
@@ -641,10 +505,19 @@ Python API Improvements:
   button that removes stopped sessions from the
   list, so it no longer grows without bound when
   you repeatedly restart a script.
+- The warning that a script’s pinned Python
+  version will be bumped for the new uv runtime
+  now has an Upgrade Now button that migrates
+  those scripts immediately, instead of only
+  when each one next runs.
 
 Password Manager Improvements:
 - Bitwarden is now a supported password manager.
 - Keeper Security is also supported.
+- Keeper now supports Nested Shared
+  Folders as well as the classic vault.
+  Both appear in one list, labeled (Classic)
+  or (Nested).
 
 Shell Integration Improvements:
 - xonsh is now a supported shell.
@@ -882,8 +755,64 @@ Settings Improvements:
   this Mac and in the folder, it asks which
   copy to keep rather than overwriting your
   changes.
+- Added Window > Tab > Select Tab > Select
+  Next Tab Group (⌃⇧⌘]) and Select Previous
+  Tab Group (⌃⇧⌘[). When the current tab is
+  in a group, these skip over the rest of
+  that group. For an ungrouped tab they
+  behave like Select Next/Previous Tab.
+- Added Window > Tab > Add Tab to New Group
+  and Remove Tab from Group, mirroring the
+  tab bar’s right-click menu but acting on
+  the current tab.
+
+Web browser improvements:
+- The built-in web browser can now remember
+  HTTP basic-auth user names and passwords.
+  Check “Remember this password” in the sign-in
+  dialog and it is saved in the browser password
+  manager (Keychain, 1Password, and the other
+  supported back ends) and offered automatically
+  next time. The dialog also has a Password
+  Manager button to pick an existing login.
+  View or remove saved passwords from the
+  password manager.
 
 Bug Fixes:
+- Duplicate Session no longer stamps a permanent
+  working-directory override on the new session.
+  Previously that override was inherited by split
+  panes and could go stale, dropping the shell in
+  the wrong directory. Issue 12981.
+- Fixed a bug where ⌘-clicking a URL at the end
+  of a line in a full-screen app (like irssi or
+  mutt) could extend the link onto the next line
+  and open a URL with the following line’s text
+  appended. Issue 12970.
+- In the tmux Dashboard, “Open in Tabs” is now
+  enabled when a single hidden window is
+  selected, matching “Open in Window.” Issue
+  12994.
+- Companion Device Settings no longer prompts
+  for Touch ID on its own. Opening the window
+  or unpairing a device now shows a “Show QR
+  Code” button, and authentication happens only
+  after you click it.
+- Cmd-W now closes the Companion Device
+  Settings window instead of beeping.
+- Fixed a beachball that could occur when the
+  tab style preference changed: every session’s
+  announcement view was re-fitted synchronously,
+  each fit re-running an expensive text-layout
+  search. Measurements are now cached and reused,
+  and a resize to the same size no longer
+  re-fits.
+- Fixed a multi-second hang that could occur
+  when a window changed appearance (for example
+  when another app or a second iTerm2 instance
+  stole focus) while in traditional fullscreen.
+  Setting a window to its current appearance no
+  longer re-triggers a refresh loop.
 - On macOS Tahoe, dark-theme selected tabs no
   longer draw their chrome at a fixed image
   height while the tab cell uses a different
@@ -1816,14 +1745,12 @@ Bug Fixes:
   synthetic workgroup_id so the
   agent can immediately drive the
   new session with the other tools.
-
 - Dropping a file onto the AI chat
   text field now offers to attach it
   when the current backend supports
   that file type, instead of always
   inserting its path as text. The
   choice can be remembered.
-
 - AI chat can now attach images to
   OpenAI models (vision), and audio
   to OpenAI audio models on the
@@ -1903,7 +1830,6 @@ Bug Fixes:
   the Before You Start sheet has an
   always-visible link to a web page
   explaining the whole integration.
-
 - The orchestrator can now
   watch sessions that report no
   status (plain TUIs, coding agents
@@ -2608,3 +2534,75 @@ Bug Fixes:
   changes color instead of doing nothing. If
   there was none, it shows a small one so the
   paused state is visible.
+- Advanced Paste with bracketed paste on but
+  “Wait for shell prompt” off now pastes a
+  multi-line block as one editable buffer on
+  zsh, bash, and fish, so you can review it and
+  press Return once, instead of running each
+  line as it arrives.
+- When a paste is paused waiting for a shell
+  prompt, the paste indicator now has a keyboard
+  button that sends your typing straight to the
+  terminal instead of queueing it, so you can
+  answer a prompt the paste is stuck on (such as
+  a password or zsh’s spelling correction).
+- Exiting a workgroup, or closing one of its
+  tabs, no longer leaves the main session’s tab
+  showing a blank pane when a non-main peer was
+  the visible one.
+- Fixed a workgroup whose tab (or split) hosts
+  its own peer group coming up with no toolbar
+  and no peer switcher.
+- Workgroup peers nested inside a tab or split
+  now inherit their profile and directory from
+  the session the workgroup was opened on, so a
+  workgroup opened on a remote host keeps every
+  peer on that host.
+- Closing a workgroup session that would exit the
+  whole workgroup now warns you that its other
+  sessions will close too, naming the workgroup
+  and how many more sessions will end.
+- Added tab groups: right-click a tab and choose
+  Add Tab to Group to group Chrome/Firefox-style
+  tabs. A named, colored chip heads each group;
+  right-click it to rename, recolor, duplicate,
+  move to a new window, ungroup, or close the
+  group. Drag the chip to move the whole group,
+  within a window or into another one; drag
+  single tabs into, around, or out of a group.
+  Groups persist their name and color with the
+  member tabs.
+- Tab groups can be collapsed: click a group's
+  chip (or use its menu) to hide its tabs behind
+  the chip, which shows a member count. Selecting
+  a hidden tab reveals the group. Collapsed state
+  persists across restarts.
+- Collapsing and expanding a tab group now
+  animates: the member tabs slide shut and open.
+  Works on horizontal and vertical tab bars in
+  every theme.
+- Dropping a file on a local terminal no longer
+  offers to upload it when the machine answers to
+  more than one name (for example .local versus a
+  DHCP-assigned name). Localhost is now recognized
+  by any of the machine's names.
+- Fixed a bug on macOS 26 (Tahoe) where the tab
+  bar's overflow menu left out the first hidden
+  tab, so clicking the chevron with a single
+  overflowed tab opened an empty menu.
+- Refreshed the built-in AI model list: added
+  Claude Sonnet 5, GPT-5.6 (Sol/Terra/Luna),
+  and Gemini 3.7/3.6 Flash and 3.5/3.1
+  Flash-Lite. Removed retired Claude Opus
+  4.1 and older Gemini models.
+- AI Settings can now automatically update the
+  built-in model list from iterm2.com (off by
+  default), with an Update Now button to check
+  on demand.
+- In orchestration chats, a session reference
+  the AI writes without a leading @ now still
+  renders as a clickable session link.
+- Settings search now reveals controls that live
+  on an inner sub-tab (such as AI > Features). It
+  switches to the correct nested tab before
+  highlighting, instead of dimming a bogus area.

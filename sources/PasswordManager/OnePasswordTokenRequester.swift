@@ -12,13 +12,28 @@ class OnePasswordUtils {
     static let basicEnvironment = ["HOME": NSHomeDirectory()]
     private static var _customPathToCLI: String? = nil
     private(set) static var usable: Bool? = nil
+    // Standard install locations, newest-preferred (see pathToCLI).
+    static let normalPaths = ["/usr/local/bin/op", "/opt/homebrew/bin/op"]
+
+    // Resolves each candidate CLI's version off the main thread and caches it, then calls
+    // completion on the main thread. `pathToCLI` (which spawns `op -v` on a cache miss and can
+    // show a modal alert, so it must stay on the main thread) then reads the warm cache instead
+    // of blocking the run loop. Idempotent: a second call just re-reads the cache.
+    static func resolveVersionsInBackground(_ completion: @escaping () -> ()) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            for path in normalPaths where FileManager.default.fileExists(atPath: path) {
+                _ = fullVersion(path)
+            }
+            DispatchQueue.main.async(execute: completion)
+        }
+    }
 
     static var pathToCLI: String {
         if let customPath = _customPathToCLI {
             return customPath
         }
-        let normalPaths = ["/usr/local/bin/op", "/opt/homebrew/bin/op"]
-        var defaultPath = normalPaths[0]
+        let normalPaths = Self.normalPaths
+        let defaultPath = normalPaths[0]
         lazy var anyNormalPathExists = {
             return normalPaths.anySatisfies {
                 FileManager.default.fileExists(atPath: $0)
@@ -26,21 +41,31 @@ class OnePasswordUtils {
         }()
         if anyNormalPathExists {
             DLog("normal path exists")
-            let goodPath = normalPaths.first {
+            // Prefer the newest installed CLI. An old op earlier on the path (e.g. 2.5.x at
+            // /usr/local/bin) silently ignores `op item edit` piped templates, which breaks
+            // secure in-place editing; a newer one (e.g. 2.39 from Homebrew) works.
+            let usablePaths = normalPaths.filter {
                 FileManager.default.fileExists(atPath: $0) && checkUsability($0)
             }
-            if let goodPath {
-                defaultPath = goodPath
+            let goodPath = usablePaths.max {
+                (fullVersion($0) ?? []).lexicographicallyPrecedes(fullVersion($1) ?? [])
             }
-            if usable == nil && goodPath == nil {
-                RLog("usability fail")
-                usable = false
-                showUnavailableMessage(normalPaths.joined(separator: " or "))
-            } else {
+            if let goodPath {
+                // A new-enough CLI exists: use it. This is the only branch that marks op
+                // usable, so the decision is based purely on whether such a path was found
+                // and stays consistent across repeated calls.
                 DLog("normal path ok")
                 usable = true
-                return goodPath ?? normalPaths[0]
+                return goodPath
             }
+            // A normal op exists but none meets the minimum version. Mark it unusable (so
+            // throwIfUnusable keeps throwing on every later call, not just the first) and warn
+            // once, then fall through to offer locating a newer CLI elsewhere.
+            RLog("usability fail")
+            if usable != false {
+                showUnavailableMessage(normalPaths.joined(separator: " or "))
+            }
+            usable = false
         }
         if showCannotFindCLIMessage() {
             _customPathToCLI = askUserToFindCLI()
@@ -66,23 +91,43 @@ class OnePasswordUtils {
             usable = nil
             _customPathToCLI = nil
         }
-        _majorVersion = nil
+        clearFullVersionCache()
     }
     static func checkUsability() -> Bool {
         return checkUsability(pathToCLI)
     }
 
+    // op item edit only applies piped item templates reliably from this version on. Older
+    // CLIs (e.g. 2.5.x) accept the input, report success, and silently change nothing, which
+    // breaks secure in-place editing. Enforce it as the minimum.
+    static let minimumSupportedVersion = [2, 23, 0]
+    // Derived so the user-facing "requires version X" alert can never drift from the array
+    // that actually gates usability.
+    static var minimumSupportedVersionString: String {
+        minimumSupportedVersion.prefix(2).map(String.init).joined(separator: ".")
+    }
+
     private static func checkUsability(_ path: String) -> Bool {
-        return majorVersionNumber(path) == 2
+        guard let version = fullVersion(path) else {
+            return false
+        }
+        // Pad missing trailing components with 0 so a two-component "2.23" ([2,23]) is not
+        // ranked below the minimum [2,23,0]: lexicographicallyPrecedes treats a proper prefix
+        // as earlier, which would wrongly reject an op that exactly meets the minimum.
+        var padded = version
+        while padded.count < minimumSupportedVersion.count {
+            padded.append(0)
+        }
+        return !padded.lexicographicallyPrecedes(minimumSupportedVersion)
     }
 
     static func showUnavailableMessage(_ path: String? = nil) {
         let alert = NSAlert()
         alert.messageText = "OnePassword Unavailable"
         if let path = path {
-            alert.informativeText = "The existing installation of the OnePassword CLI at \(path) is an incompatible. The iTerm2 integration requires version 2."
+            alert.informativeText = "The 1Password CLI at \(path) is too old. The iTerm2 integration requires version \(minimumSupportedVersionString) or later."
         } else {
-            alert.informativeText = "Version 2 of the OnePassword CLI could not be found. Check that \(OnePasswordUtils.pathToCLI) is installed and has version 2.x."
+            alert.informativeText = "The 1Password CLI could not be found, or is older than the required version \(minimumSupportedVersionString). Check that a current op is installed."
         }
         alert.addButton(withTitle: "OK")
         alert.runModal()
@@ -139,33 +184,65 @@ class OnePasswordUtils {
         return result
     }
 
-    static func majorVersionNumber() -> Int? {
-        return majorVersionNumber(pathToCLI)
+    // Guards _fullVersionCache, which is read/written from both the main thread (pathToCLI) and
+    // the background resolver (resolveVersionsInBackground).
+    private static let _fullVersionCacheLock = NSLock()
+    static var _fullVersionCache = [String: [Int]]()
+
+    private static func cachedFullVersion(_ path: String) -> [Int]? {
+        _fullVersionCacheLock.lock()
+        defer { _fullVersionCacheLock.unlock() }
+        return _fullVersionCache[path]
     }
 
-    static var _majorVersion: Int?
-    private static func majorVersionNumber(_ pathToCLI: String) -> Int? {
-        if let _majorVersion {
-            return _majorVersion
+    private static func cacheFullVersion(_ version: [Int], for path: String) {
+        _fullVersionCacheLock.lock()
+        _fullVersionCache[path] = version
+        _fullVersionCacheLock.unlock()
+    }
+
+    static func clearFullVersionCache() {
+        _fullVersionCacheLock.lock()
+        _fullVersionCache = [:]
+        _fullVersionCacheLock.unlock()
+    }
+
+    // Full version (e.g. [2, 39, 0]) for a specific CLI, used to pick the newest one and to
+    // enforce the minimum. Runs the process directly with a blocking read rather than the
+    // exec() helper: exec() posts its completion to the main queue, so calling it from the
+    // main thread would deadlock. Prefer warming the cache via resolveVersionsInBackground so
+    // the main-thread readers never spawn `op -v`; the process runs outside the cache lock.
+    private static func fullVersion(_ path: String) -> [Int]? {
+        if let cached = cachedFullVersion(path) {
+            return cached
         }
-        let maybeData = try? CommandLinePasswordDataSource.InteractiveCommandRequest(
-            command: pathToCLI,
-            args: ["-v"],
-            env: [:]).exec().stdout
-        if let data = maybeData, let string = String(data: data, encoding: .utf8) {
-            var value = 0
-            DLog("version string is \(string)")
-            if Scanner(string: string).scanInt(&value) {
-                DLog("scan returned \(value)")
-                _majorVersion = value
-                return value
-            }
-            DLog("scan failed")
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: path)
+        process.arguments = ["-v"]
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+        do {
+            try process.run()
+        } catch {
             return nil
         }
-        RLog("Didn't get a version number")
-        return nil
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        guard let string = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+        let components = string
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .split(separator: ".")
+            .compactMap { Int($0) }
+        guard !components.isEmpty else {
+            return nil
+        }
+        cacheFullVersion(components, for: path)
+        return components
     }
+
 }
 
 class OnePasswordAccountPicker {

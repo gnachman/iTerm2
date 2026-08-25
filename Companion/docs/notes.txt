@@ -1,5 +1,13 @@
 iTerm2 Buddy (Companion App) Release Notes
 
+New Features:
+- You can now turn on push notifications from
+  your phone. After pairing, iTerm2 Buddy asks
+  whether you want to receive notifications, and
+  you can turn them on later under Settings while
+  paired. Previously this was only reachable by
+  enabling alerts on the Mac.
+
 Bug Fixes:
 - Opening a session that has already closed now
   shows a “Stream Ended” message explaining the
@@ -33,6 +41,16 @@ Bug Fixes:
   an action you need to take, and a chat you
   reconnect to mid-reply still notifies you when
   the reply arrives.
+- When the keyboard is open over a live session,
+  the bottom lines (where you’re typing) can now
+  scroll up above it instead of hiding behind it,
+  and the key bar’s background fills the gap at
+  the keyboard’s rounded corners.
+- Settings is now reachable before you pair - a
+  gear on the launch screen opens it - so you can
+  email diagnostic logs even when not connected
+  to a Mac. It also moved off the chat list into
+  a sheet you can open from anywhere.
 
 New Features:
 - You can now type into a live session. Tap the
@@ -46,6 +64,19 @@ New Features:
   selection is showing, a single tap clears it
   instead of opening the keyboard. Requires an
   up-to-date Mac.
+- A composer for sending longer input to a live
+  session. Tap the compose button in the keyboard
+  bar to open a local editor above the keyboard,
+  write or edit your text, then Send types it to
+  the session all at once. Editing locally avoids
+  the round-trip lag of sending each keystroke.
+  Tapping the keyboard’s dictation mic opens the
+  composer too, so you can speak a command and
+  review it before it runs. The composer also has
+  its own on-device dictation mic that transcribes
+  entirely on your phone, with no cloud and no
+  cost. Send does not add a Return, so press the
+  Return key if you want one.
 - The live session view now fills the screen edge
   to edge, behind the translucent nav bar, tab
   bar, and the dynamic island in landscape.

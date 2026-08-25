@@ -1,0 +1,42 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "d6h-kf-O57.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"AI completion enabled: all text sent to AI\"; ObjectID = \"d6h-kf-O57\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "AI completion enabled: all text sent to AI"
+          }
+        }
+      }
+    },
+    "mjF-rO-FZ2.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Press ⇧↩ to send.\"; ObjectID = \"mjF-rO-FZ2\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Press ⇧↩ to send."
+          }
+        }
+      }
+    },
+    "zb3-gB-4Zi.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"AI\"; ObjectID = \"zb3-gB-4Zi\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "AI"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

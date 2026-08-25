@@ -22,7 +22,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalCursorInfo : NSObject
 @property (nonatomic) BOOL cursorVisible;
 @property (nonatomic) VT100GridCoord coord;
@@ -63,7 +62,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @end
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalDriverDataSourcePerFrameState<NSObject>
 @property (nonatomic, readonly) NSRect adjustedDocumentVisibleRect;
 @property (nonatomic, readonly) VT100GridSize gridSize;
@@ -182,7 +180,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @end
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalDriverDataSource<NSObject>
 
 - (BOOL)metalDriverShouldDrawFrame;
@@ -199,7 +196,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @end
 
 // Our platform independent render class
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalDriver : NSObject<iTermMetalViewDelegate>
 
 @property (nullable, nonatomic, weak) id<iTermMetalDriverDataSource> dataSource;

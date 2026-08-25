@@ -87,10 +87,22 @@ NS_ASSUME_NONNULL_BEGIN
     return _viewController.remainingLength;
 }
 
+- (void)setWaitingForPrompt:(BOOL)waitingForPrompt {
+    [_viewController setWaitingForPrompt:waitingForPrompt];
+}
+
+- (void)showKeystrokeQueuedHint {
+    [_viewController showKeystrokeQueuedHint];
+}
+
 #pragma mark - PasteViewControllerDelegate
 
 - (void)pasteViewControllerDidCancel {
     [self.progressDelegate statusBarProgressComponentDidCancel];
+}
+
+- (void)pasteViewControllerDidSetKeystrokePassthrough:(BOOL)on {
+    [self.progressDelegate statusBarProgressComponentDidSetKeystrokePassthrough:on];
 }
 
 @end

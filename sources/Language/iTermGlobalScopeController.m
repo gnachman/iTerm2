@@ -23,7 +23,6 @@ static char iTermGlobalScopeControllerKVOContext;
 - (NSString *)effectiveTheme;
 @end
 
-NS_CLASS_AVAILABLE_MAC(10_14)
 @interface iTermGlobalScopeControllerModernImpl: iTermGlobalScopeController
 @end
 

@@ -69,6 +69,38 @@ final class CompanionKeyInjectionTests: XCTestCase {
         XCTAssertEqual(bytes(for: event, mapper: mapper), [0x03])
     }
 
+    /// The REAL injection path: -[PTYSession injectSynthesizedKeyEvent:] runs the event
+    /// through -keyDown:, which reaches the mapper's POST-Cocoa data path
+    /// (dataForRegularKeypress) and does NOT consult the pre-Cocoa control string. That
+    /// path emits NSEvent.characters verbatim, so ^C only works if the synthesized event
+    /// carries the control byte in .characters. Regression: ^C typed a literal "c"
+    /// because .characters held the unmodified letter (the pre-Cocoa path in bytes(for:)
+    /// masked it).
+    private func postCocoaBytes(for event: CompanionKeyEvent, mapper: iTermStandardKeyMapper) -> [UInt8] {
+        guard let nsEvent = event.makeKeyDownEvents().first else { return [] }
+        return [UInt8](mapper.keyMapperData(forPostCocoaEvent: nsEvent) ?? Data())
+    }
+
+    func testControlCPostCocoaPath() {
+        let mapper = makeMapper(leftOption: .OPT_NORMAL, rightOption: .OPT_NORMAL)
+        let event = CompanionKeyEvent(key: .text("c"), modifiers: CompanionKeyModifiers(control: true))
+        XCTAssertEqual(postCocoaBytes(for: event, mapper: mapper), [0x03],
+                       "^C must send ETX on the post-Cocoa path that real injection uses")
+    }
+
+    // The synthesized control event must carry the true control byte in .characters,
+    // exactly like a hardware Ctrl+<key>, not the unmodified letter.
+    func testControlEventCarriesControlByteInCharacters() {
+        func characters(_ c: Character) -> String? {
+            CompanionKeyEvent(key: .text(String(c)), modifiers: CompanionKeyModifiers(control: true))
+                .makeKeyDownEvents().first?.characters
+        }
+        XCTAssertEqual(characters("c"), "\u{03}")
+        XCTAssertEqual(characters("a"), "\u{01}")
+        XCTAssertEqual(characters("d"), "\u{04}")
+        XCTAssertEqual(characters("["), "\u{1b}")
+    }
+
     // The software keyboard's Return arrives as "\n"; it must reach the terminal as
     // CR (0x0d), via a synthesized Return keypress, not a literal LF.
     func testReturnSendsCarriageReturn() {

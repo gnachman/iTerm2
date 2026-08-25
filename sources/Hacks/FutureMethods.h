@@ -45,7 +45,7 @@ MTActuatorCloseFunction *iTermGetMTActuatorCloseFunction(void);
 MTActuatorActuateFunction *iTermGetMTActuatorActuateFunction(void);
 MTActuatorIsOpenFunction *iTermGetMTActuatorIsOpenFunction(void);
 
-NS_INLINE BOOL iTermTextIsMonochromeOnMojave(void) NS_AVAILABLE_MAC(10_14) {
+NS_INLINE BOOL iTermTextIsMonochromeOnMojave(void) {
     if (@available(macOS 10.16, *)) {
         // Issue 9209
         return YES;

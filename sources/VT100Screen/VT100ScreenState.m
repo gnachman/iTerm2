@@ -232,6 +232,12 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     _lastPromptLine = source.lastPromptLine;
     _intervalTreeObserver = source.intervalTreeObserver;
     _lastCommandMark = [source.cachedLastCommandMark doppelganger];
+    // Let the read-only snapshot recompute -lastRemoteHost lazily rather than
+    // copy the mutation thread's cached mark across the doppelganger boundary
+    // (which would require reaching into another instance's protected ivars).
+    // The read-only side queries this cold (state encoding), so an occasional
+    // rescan is fine.
+    _lastRemoteHostCacheValid = NO;
     _shouldExpectPromptMarks = source.shouldExpectPromptMarks;
     _shouldExpectWorkingDirectoryUpdates = source.shouldExpectWorkingDirectoryUpdates;
     _echoProbeIsActive = source.echoProbe.isActive;
@@ -1369,7 +1375,22 @@ static NSRange NSRangeFromBounds(NSInteger lowerBound, NSInteger upperBound) {
 }
 
 - (id<VT100RemoteHostReading>)lastRemoteHost {
-    return (id<VT100RemoteHostReading>)[self lastMarkMustBePrompt:NO class:[VT100RemoteHost class]];
+    // -lastRemoteHost runs on every OSC 133 prompt (via addMarksForPathsInRange:).
+    // lastMarkMustBePrompt: scans the whole interval tree when no mark of the
+    // class is present, and on a local session there is never a VT100RemoteHost
+    // mark, so the uncached version walked every mark on every prompt. Cache the
+    // result, including the nil ("no host") case. Only adding or removing a
+    // VT100RemoteHost mark can change the answer, so the cache survives the
+    // prompt/screen-mark churn of a redrawing TUI; a removed cached mark is
+    // detected by its niled entry. See issue 12992.
+    if (_lastRemoteHostCacheValid &&
+        (_cachedLastRemoteHost == nil || _cachedLastRemoteHost.entry != nil)) {
+        return _cachedLastRemoteHost;
+    }
+    _cachedLastRemoteHost =
+        (id<VT100RemoteHostReading>)[self lastMarkMustBePrompt:NO class:[VT100RemoteHost class]];
+    _lastRemoteHostCacheValid = YES;
+    return _cachedLastRemoteHost;
 }
 
 - (id<VT100ScreenMarkReading>)lastPromptMark {

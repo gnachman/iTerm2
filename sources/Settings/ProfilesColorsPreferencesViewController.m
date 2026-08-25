@@ -221,8 +221,16 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
             [weakColorWell.window makeFirstResponder:nil];
         };
         __weak __typeof(self) weakSelf = self;
+        __weak iTermSettingsColorWell *weakBindableWell = colorWell;
         info.observer = ^{
             [weakSelf updateHueChromaVisualizationForKey:key];
+        };
+        // onChange fires only from settingChanged: (a user edit), not from the
+        // programmatic re-syncs that also drive info.observer, so the destructive
+        // palette-binding clear can't wipe a binding when an unrelated panel action
+        // re-syncs this well.
+        info.onChange = ^{
+            [weakSelf clearPaletteBindingForColorKey:key well:weakBindableWell];
         };
     }
 
@@ -536,6 +544,25 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
              KEY_ANSI_14_COLOR
              // skip light white (15)
     ];
+}
+
+// Picking a concrete color in a well must win over an i:N palette binding on that
+// color. That binding lives in KEY_BINDINGS as a palette-owned entry; unless it is
+// removed, the profile reload re-runs makeBindings and the observer overwrites the
+// color the user just chose. This write goes through the preferences model, not the
+// session's setSessionSpecificProfileValues:, so the centralized clear doesn't run.
+// Only palette-owned entries are dropped; a user-authored binding is left alone.
+- (void)clearPaletteBindingForColorKey:(NSString *)key well:(iTermSettingsColorWell *)well {
+    NSDictionary *bindings = [NSDictionary castFrom:[self objectForKey:KEY_BINDINGS]];
+    if (!bindings.count) {
+        return;
+    }
+    NSString *baseKey = [iTermProfilePreferences baseColorKeyForKey:key];
+    NSDictionary *updated = [iTermProfilePreferences bindings:bindings byRemovingPaletteBindingsForBaseKey:baseKey];
+    if (updated != bindings) {
+        [self setObject:updated forKey:KEY_BINDINGS];
+        well.expression = nil;
+    }
 }
 
 - (void)updateHueChromaVisualizationForKey:(NSString *)key {

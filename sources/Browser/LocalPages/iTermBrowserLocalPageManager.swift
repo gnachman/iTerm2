@@ -41,6 +41,7 @@ protocol iTermBrowserLocalPageManagerDelegate: AnyObject {
     func localPageManagerDidNavigateToURL(_ manager: iTermBrowserLocalPageManager, url: String)
     func localPageManagerWebView(_ manager: iTermBrowserLocalPageManager) -> iTermBrowserWebView?
     func localPageManagerExtensionManager(_ manager: iTermBrowserLocalPageManager) -> iTermBrowserExtensionManagerProtocol?
+    func localPageManagerOpenPasswordManager(_ manager: iTermBrowserLocalPageManager)
     
     // Onboarding delegate methods
     func localPageManagerOnboardingEnableAdBlocker(_ manager: iTermBrowserLocalPageManager)
@@ -429,6 +430,10 @@ extension iTermBrowserLocalPageManager: iTermBrowserSettingsHandlerDelegate {
     
     func settingsHandlerExtensionManager(_ handler: iTermBrowserSettingsHandler) -> iTermBrowserExtensionManagerProtocol? {
         return delegate?.localPageManagerExtensionManager(self)
+    }
+
+    func settingsHandlerOpenPasswordManager(_ handler: iTermBrowserSettingsHandler) {
+        delegate?.localPageManagerOpenPasswordManager(self)
     }
 }
 

@@ -1515,7 +1515,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 }
 
 - (NSMenuItem *)menuItemWithIdentifier:(NSString *)identifier
-                                inMenu:(NSMenu *)menu NS_AVAILABLE_MAC(10_12) {
+                                inMenu:(NSMenu *)menu {
     for (NSMenuItem *item in [menu itemArray]) {
         if ([item hasSubmenu]) {
             NSMenuItem *result = [self menuItemWithIdentifier:identifier inMenu:item.submenu];
@@ -2508,7 +2508,16 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     if (request.hasTabIndex) {
         NSInteger sourceIndex = [term indexOfTab:tab];
         if (term.numberOfTabs > request.tabIndex && sourceIndex != NSNotFound) {
-            [term.tabBarControl moveTabAtIndex:sourceIndex toIndex:request.tabIndex];
+            // Go through PseudoTerminal (not the control directly) so this resyncs
+            // order/persistence and repairs the group-contiguity invariant via
+            // -tabsDidReorder.
+            [term moveTabAtIndex:sourceIndex toIndex:request.tabIndex];
+            // The move can be refused (layout locked) or clamped (pinned zone,
+            // group contiguity). The tab exists either way, but don't claim the
+            // requested index was honored when it wasn't.
+            if ([term indexOfTab:tab] != request.tabIndex) {
+                status = ITMCreateTabResponse_Status_InvalidTabIndex;
+            }
         } else {
             status = ITMCreateTabResponse_Status_InvalidTabIndex;
         }
@@ -3694,7 +3703,7 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
             [source.tabView removeTabViewItem:tab.tabViewItem];
             
             [destination insertTab:tab atIndex:index];
-            [source didDonateTab:tab toWindowController:destination];
+            [source didDonateTab:tab toWindowController:destination joiningGroupWithID:nil];
             if (source.tabs.count == 0) {
                 [source.window close];
             }

@@ -11,7 +11,6 @@ extern const CGFloat BOTTOM_MARGIN;
 
 @class iTermMetalCellRendererTransientState;
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermCellRenderConfiguration : iTermRenderConfiguration
 // This is the size of a cell on screen--the distance from the beginning of one character to the next.
 @property (nonatomic, readonly) CGSize cellSize;
@@ -56,7 +55,6 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
 
 @end
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @protocol iTermMetalCellRenderer<NSObject>
 @property (nonatomic, readonly) BOOL rendererDisabled;
 
@@ -72,7 +70,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @end
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalCellRendererTransientState : iTermMetalRendererTransientState
 @property (nonatomic, readonly) __kindof iTermCellRenderConfiguration *cellConfiguration;
 @property (nonatomic, readonly) id<MTLBuffer> offsetBuffer;
@@ -88,7 +85,6 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 @end
 
-NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalCellRenderer : iTermMetalRenderer
 
 - (nullable instancetype)initWithDevice:(id<MTLDevice>)device NS_UNAVAILABLE;

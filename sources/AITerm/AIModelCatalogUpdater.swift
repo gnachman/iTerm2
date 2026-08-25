@@ -23,6 +23,19 @@
 
 import Foundation
 
+// Result of an update check, reported by the manual `checkNow` entry point so
+// the Settings "Update Now" button can tell the user what happened. The
+// periodic path ignores it.
+@objc enum AIModelCatalogUpdateOutcome: Int {
+    case notEnabled   // AI features are not fully set up
+    case disabled     // the catalog URL is cleared or invalid
+    case declined     // the user declined the network-consent modal
+    case busy         // a check is already in progress
+    case upToDate     // no newer compatible catalog is available
+    case updated      // a newer catalog was downloaded (takes effect next launch)
+    case failed       // a network, signature, or validation error occurred
+}
+
 @objc(iTermAIModelCatalogUpdater)
 class AIModelCatalogUpdater: NSObject {
     @objc static let instance = AIModelCatalogUpdater()
@@ -95,8 +108,32 @@ class AIModelCatalogUpdater: NSObject {
     }
 
     // Rate-limited entry point suitable for calling at every launch. Must run on
-    // the main thread: it may present the one-time consent prompt.
+    // the main thread: it may present the one-time consent prompt. Gated by the
+    // user's synced "automatically update AI models" preference (default off);
+    // the preference carries the cross-machine intent, and the consent modal
+    // below still confirms the network fetch per machine.
     @objc func performPeriodicCheck() {
+        guard iTermPreferences.bool(forKey: kPreferenceKeyAIModelUpdatesEnabled) else {
+            RLog("Automatic AI model updates are turned off; skipping periodic check")
+            return
+        }
+        runCheck(manual: false, completion: nil)
+    }
+
+    // Manual "Update Now" entry point. Unlike the periodic check it ignores the
+    // daily rate limit and the automatic-updates preference (an explicit click
+    // is its own opt-in for this one check), but it still honors the one-time
+    // network-consent modal. Call on the main thread; `completion` is delivered
+    // on the main thread so the caller can update UI directly.
+    @objc func checkNow(completion: @escaping (AIModelCatalogUpdateOutcome) -> Void) {
+        runCheck(manual: true) { outcome in
+            DispatchQueue.main.async { completion(outcome) }
+        }
+    }
+
+    // Shared gate + dispatch for the periodic and manual paths.
+    private func runCheck(manual: Bool,
+                          completion: ((AIModelCatalogUpdateOutcome) -> Void)?) {
         // Gate 1: never contact the network for AI model updates unless AI is
         // fully enabled: allowed in advanced settings AND enabled in the secure
         // setting (iTermAITermGatekeeper.allowed covers both) AND the plugin is
@@ -104,6 +141,7 @@ class AIModelCatalogUpdater: NSObject {
         // ask for consent.
         guard iTermAITermGatekeeper.allowed, iTermAITermGatekeeper.pluginInstalled() else {
             RLog("AI is not fully enabled; skipping AI model catalog update check")
+            completion?(.notEnabled)
             return
         }
         // Gate 2: a cleared or invalid URL disables checking entirely (as the
@@ -114,30 +152,50 @@ class AIModelCatalogUpdater: NSObject {
         let urlString = iTermAdvancedSettingsModel.aiModelCatalogURL() ?? ""
         guard !urlString.isEmpty, let manifestURL = URL(string: urlString) else {
             RLog("AI model catalog update disabled or URL invalid: \(urlString)")
+            completion?(.disabled)
             return
         }
         // Gate 3: downloading a refreshed catalog contacts the network, which is
         // a change to the privacy model, so it requires explicit one-time consent
-        // before the first download.
+        // before the first download. A manual click re-asks a machine that
+        // previously declined (the user just asked for a check); the periodic
+        // path honors the prior decline.
         switch iTermUserDefaults.aiModelCatalogUpdateConsent {
         case .granted:
             break
         case .denied:
-            RLog("User declined AI model catalog updates; skipping")
-            return
+            guard manual else {
+                RLog("User declined AI model catalog updates; skipping")
+                completion?(.declined)
+                return
+            }
+            guard !askingConsent else {
+                completion?(.busy)
+                return
+            }
+            guard requestConsent() else {
+                completion?(.declined)
+                return
+            }
         case .unknown:
             fallthrough
         @unknown default:
             // Don't stack a second consent modal if one is already up.
             guard !askingConsent else {
+                completion?(.busy)
                 return
             }
             guard requestConsent() else {
+                completion?(.declined)
                 return
             }
         }
-        rateLimit.performRateLimitedBlock { [weak self] in
-            self?.checkForUpdate(manifestURL: manifestURL)
+        if manual {
+            checkForUpdate(manifestURL: manifestURL, completion: completion)
+        } else {
+            rateLimit.performRateLimitedBlock { [weak self] in
+                self?.checkForUpdate(manifestURL: manifestURL, completion: completion)
+            }
         }
     }
 
@@ -171,8 +229,10 @@ class AIModelCatalogUpdater: NSObject {
         }
     }
 
-    private func checkForUpdate(manifestURL: URL) {
+    private func checkForUpdate(manifestURL: URL,
+                                completion: ((AIModelCatalogUpdateOutcome) -> Void)?) {
         guard !checking else {
+            completion?(.busy)
             return
         }
         // Held for the WHOLE pipeline (manifest + payload download + install),
@@ -188,18 +248,20 @@ class AIModelCatalogUpdater: NSObject {
             }
             guard let data, error == nil else {
                 RLog("AI catalog manifest download failed: \(error?.localizedDescription ?? "no data")")
-                self.finishCheck()
+                self.finish(.failed, completion)
                 return
             }
-            self.handleManifest(data)
+            self.handleManifest(data, completion: completion)
         }
         task.resume()
     }
 
-    // Releases the whole-pipeline lock. Every terminal path (success, failure,
-    // nothing-to-do) routes here exactly once.
-    private func finishCheck() {
+    // Releases the whole-pipeline lock and reports the outcome. Every terminal
+    // path (success, failure, nothing-to-do) routes here exactly once.
+    private func finish(_ outcome: AIModelCatalogUpdateOutcome,
+                        _ completion: ((AIModelCatalogUpdateOutcome) -> Void)?) {
         checking = false
+        completion?(outcome)
     }
 
     private struct ManifestEntry: Decodable {
@@ -214,10 +276,11 @@ class AIModelCatalogUpdater: NSObject {
         var maximum_ai_version: Int?
     }
 
-    private func handleManifest(_ data: Data) {
+    private func handleManifest(_ data: Data,
+                                completion: ((AIModelCatalogUpdateOutcome) -> Void)?) {
         guard let entries = try? JSONDecoder().decode([ManifestEntry].self, from: data) else {
             RLog("AI catalog manifest did not parse")
-            finishCheck()
+            finish(.failed, completion)
             return
         }
         // Every compatible entry newer than what we have, highest version first.
@@ -227,26 +290,27 @@ class AIModelCatalogUpdater: NSObject {
             .sorted { $0.version > $1.version }
         guard !candidates.isEmpty else {
             RLog("No compatible AI catalog manifest entries newer than \(installedVersion)")
-            finishCheck()
+            finish(.upToDate, completion)
             return
         }
-        tryCandidates(candidates, index: 0)
+        tryCandidates(candidates, index: 0, completion: completion)
     }
 
     // Try candidates highest-version-first, falling through to the next on any
     // download/verify/validate failure, so one broken top entry (dead URL, botched
     // signing) doesn't stall updates while an older-but-still-newer good entry
     // exists in the same manifest.
-    private func tryCandidates(_ candidates: [ManifestEntry], index: Int) {
+    private func tryCandidates(_ candidates: [ManifestEntry], index: Int,
+                               completion: ((AIModelCatalogUpdateOutcome) -> Void)?) {
         guard index < candidates.count else {
             RLog("All compatible AI catalog candidates failed; keeping current catalog")
-            finishCheck()
+            finish(.failed, completion)
             return
         }
         let entry = candidates[index]
         guard let payloadURL = URL(string: entry.url) else {
             RLog("AI catalog payload URL invalid: \(entry.url)")
-            tryCandidates(candidates, index: index + 1)
+            tryCandidates(candidates, index: index + 1, completion: completion)
             return
         }
         downloadPayload(payloadURL, signature: entry.signature, version: entry.version) { [weak self] installed in
@@ -254,9 +318,9 @@ class AIModelCatalogUpdater: NSObject {
                 return
             }
             if installed {
-                self.finishCheck()
+                self.finish(.updated, completion)
             } else {
-                self.tryCandidates(candidates, index: index + 1)
+                self.tryCandidates(candidates, index: index + 1, completion: completion)
             }
         }
     }

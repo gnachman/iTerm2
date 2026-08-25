@@ -786,7 +786,6 @@ private struct LiveSessionView: View {
     let guid: String
 
     @State private var holder = LiveVideoHolder()
-    @State private var resolution: String?
     @State private var endedReason: CompanionStreamEndReason?
     /// The live canvas area in points, used to compute a legible grid size for the
     /// resize button. Captured from a background GeometryReader so reading it does
@@ -932,7 +931,7 @@ private struct LiveSessionView: View {
         if endedReason == nil {
             HStack(spacing: 6) {
                 Circle().fill(.red).frame(width: 8, height: 8)
-                Text(resolution.map { "LIVE  \($0)" } ?? "LIVE")
+                Text("LIVE")
                     .font(.caption2.monospaced())
             }
             .padding(.horizontal, 8)
@@ -948,7 +947,6 @@ private struct LiveSessionView: View {
         model.watchSessionLive(
             guid: guid,
             onConfig: { config in
-                resolution = "\(config.pixelWidth)×\(config.pixelHeight)"
                 if let parameterSets = try? CompanionHEVCFraming.decodeParameterSets(config.codecExtradata) {
                     companionLog("LiveSessionView onConfig: stream=\(config.streamID) gen=\(config.generationId) \(config.pixelWidth)x\(config.pixelHeight) grid=\(config.columns)x\(config.rows) -> configuring decoder")
                     holder.view.configure(parameterSets: parameterSets)
@@ -1141,8 +1139,22 @@ private struct LiveCanvas: UIViewRepresentable {
         /// Whether the session is still live (refreshed from updateUIView). A tap only
         /// raises the keyboard while live, so keys can't be typed into an ended session.
         var isLive = true
-        /// The canvas root, a UIKeyInput first responder so a tap raises the keyboard.
-        private let container = CompanionKeyboardInputView()
+        /// The canvas root: the coordinate space that hosts the scroll view, selection
+        /// handles, edit menu, and loupe. Plain view; text entry lives on `keyInput`.
+        private let container = UIView()
+        /// A hidden, zero-size first responder that owns the keyboard. Separate from the
+        /// container so it can be a UITextView (which the system dictation key requires)
+        /// without the container itself becoming a text/scroll view.
+        private let keyInput = CompanionKeyboardInputView()
+        /// A Liquid Glass backing for the composer pane, rendered in SwiftUI with the same
+        /// `.glassEffect` the accessory bars use (the UIKit UIGlassEffect read as a flat,
+        /// non-translucent panel here). The text view rides on top with a clear background.
+        /// Drives the glass's vertical offset through SwiftUI (see ComposerGlassModel).
+        private let glassModel = ComposerGlassModel()
+        private lazy var composerGlassHost = UIHostingController(rootView: ComposerGlassBackground(model: glassModel))
+        /// Plain UIKit wrapper the glass host lives inside (kept clip-free so the SwiftUI
+        /// `.offset` can carry the glass down behind the keyboard).
+        private let composerGlass = UIView()
         /// Drives the on-screen keyboard: routes typed + accessory keys to the session.
         private let keyboardController = SessionKeyboardController()
         private let scrollView = LayoutObservingScrollView()
@@ -1163,6 +1175,26 @@ private struct LiveCanvas: UIViewRepresentable {
         /// Extra breathing room added below the safe-area bottom inset, so the last
         /// line sits a little above the tab bar rather than flush against it.
         static let bottomMargin: CGFloat = 16
+
+        // Composer presentation. The keyboard's top edge (in container coords) is
+        // tracked from keyboard-frame notifications so the composer can sit just above
+        // it; it starts off-screen at the container bottom.
+        private var keyboardTopInContainer: CGFloat = .greatestFiniteMagnitude
+        private static let composerHeight: CGFloat = 140
+        private static let composerMargin: CGFloat = 8
+
+        /// Identifies this composer's ownership of the shared on-device dictation cycle.
+        private let dictationToken = UUID()
+        /// True while an alert we presented over the composer is up. Presenting it hides
+        /// the keyboard, but that must NOT close the composer - we keep it open and
+        /// restore the keyboard when the alert is dismissed.
+        private var presentingComposerModal = false
+        /// Interactive swipe-down-to-dismiss gesture on the composer pane.
+        private weak var composerDismissPan: UIPanGestureRecognizer?
+        /// True during an open or close animation, so a routine layout pass (keyboard
+        /// reflow, the growth timer) does not snap the pane back to rest and cut the
+        /// animation short.
+        private var composerAnimating = false
 
         // History canvas layout (set from updateUIView).
         var layout: CompanionLiveCanvasLayout?
@@ -1250,12 +1282,373 @@ private struct LiveCanvas: UIViewRepresentable {
         func setLive(_ live: Bool) {
             isLive = live
             if !live {
-                container.resignFirstResponder()
+                // A dead session drops keys; stop any dictation and collapse the composer
+                // (keeping the draft) before the keyboard goes away.
+                cancelWhisperDictation()
+                keyInput.exitComposer(clearDraft: false)
+                keyInput.resignFirstResponder()
+            }
+        }
+
+        // MARK: Composer layout
+
+        /// Position the composer above the keyboard when open, or shrink it to nothing
+        /// when passing through. Driven by mode changes and keyboard-frame changes.
+        func layoutComposer() {
+            switch keyInput.mode {
+            case .passthrough:
+                // Not zero-size: a zero-size text view forces the system dictation key
+                // onto its degenerate insertText path (which we would forward to the
+                // terminal). A real (if invisible, behind the opaque canvas) frame lets
+                // dictation use its rich path, which deposits into the document so
+                // textViewDidChange can catch it and open the composer.
+                composerGlass.isHidden = true
+                container.sendSubviewToBack(keyInput)
+                keyInput.frame = CGRect(x: 0, y: 0, width: max(1, container.bounds.width), height: 44)
+            case .composer:
+                composerGlass.isHidden = false
+                container.bringSubviewToFront(composerGlass)
+                container.bringSubviewToFront(keyInput)
+                // Don't yank it back to rest mid-animation or mid-drag (a layout pass could
+                // call us during either, which would cancel the in-flight animation).
+                if !composerAnimating, composerDismissPan?.state != .changed {
+                    setComposerRestFrame()
+                    positionComposer(offsetY: 0)
+                }
+            }
+        }
+
+        /// The composer's mode flipped. Opening springs it in; closing hands off to the
+        /// plain reposition (which hides it).
+        private func composerModeDidChange() {
+            if keyInput.mode == .composer {
+                animateComposerEntrance()
+            } else {
+                layoutComposer()
+            }
+        }
+
+        /// Slide the pane up from behind the keyboard to rest.
+        private func animateComposerEntrance() {
+            composerGlass.isHidden = false
+            container.bringSubviewToFront(composerGlass)
+            container.bringSubviewToFront(keyInput)
+            setComposerRestFrame()
+            composerAnimating = true
+            positionComposer(offsetY: composerHiddenOffset)   // start off-screen + faded out
+            // Two channels, matched ease-out curves so text (UIKit) and glass (SwiftUI)
+            // stay in lockstep - sliding up and fading in together.
+            withAnimation(.easeOut(duration: 0.22)) {
+                glassModel.offsetY = 0
+                glassModel.opacity = 1
+            }
+            UIView.animate(withDuration: 0.22, delay: 0, options: [.curveEaseOut, .allowUserInteraction]) {
+                self.keyInput.transform = .identity
+                self.keyInput.alpha = 1
+            } completion: { _ in
+                self.composerAnimating = false
+                if self.keyInput.mode == .composer, self.composerDismissPan?.state != .changed {
+                    self.setComposerRestFrame()
+                }
+            }
+        }
+
+        /// The composer pane's resting frame (above the keyboard, inset by the margin).
+        private func composerBaseFrame() -> CGRect {
+            let width = max(0, container.bounds.width - Self.composerMargin * 2)
+            let top = keyboardTopInContainer - Self.composerHeight - Self.composerMargin
+            return CGRect(x: Self.composerMargin, y: max(0, top),
+                          width: width, height: Self.composerHeight)
+        }
+
+        /// Offset the pane `offsetY` points below rest, WITHOUT animating: the text view via
+        /// a layer transform, the glass via its SwiftUI model. Used for the finger-tracked
+        /// drag (both track instantly). Animated opens/closes drive these two channels
+        /// separately (UIView.animate for the text, withAnimation for the glass).
+        private func positionComposer(offsetY: CGFloat) {
+            keyInput.transform = offsetY == 0 ? .identity : CGAffineTransform(translationX: 0, y: offsetY)
+            glassModel.offsetY = offsetY
+            // Fade out over the visible band (roughly rest -> behind the keyboard) so a
+            // finger drag dims it as it goes.
+            let alpha = 1 - min(1, max(0, offsetY) / (Self.composerHeight + Self.composerMargin))
+            keyInput.alpha = alpha
+            glassModel.opacity = Double(alpha)
+        }
+
+        /// The downward offset that puts the pane's top right at the top of the keyboard
+        /// (so it is tucked just behind it). Slide from here on open, to here on close.
+        private var composerHiddenOffset: CGFloat { Self.composerHeight + Self.composerMargin }
+
+        /// Reset offsets and set the pane's rest frame. Only call at rest - setting a frame
+        /// while a transform is non-identity is undefined.
+        private func setComposerRestFrame() {
+            keyInput.transform = .identity
+            keyInput.alpha = 1
+            glassModel.offsetY = 0
+            glassModel.opacity = 1
+            let base = composerBaseFrame()
+            keyInput.frame = base
+            composerGlass.frame = base
+        }
+
+        @objc private func keyboardFrameWillChange(_ note: Notification) {
+            guard let end = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+            // The frame arrives in window coordinates; convert to the container.
+            keyboardTopInContainer = container.convert(end, from: nil).minY
+            // Re-flow the canvas so its bottom inset accounts for the keyboard (letting
+            // the last lines scroll above it), then reposition the composer.
+            applyLayout()
+            layoutComposer()
+        }
+
+        @objc private func keyboardWillHideNote(_ note: Notification) {
+            keyboardTopInContainer = container.bounds.height
+            applyLayout()   // drop the keyboard inset now that it is gone
+            // A modal we put up (e.g. the enable-dictation alert) hides the keyboard
+            // without meaning to close the composer: keep it open (it is behind the alert
+            // dimming) and just reposition; the keyboard returns when the alert dismisses.
+            if presentingComposerModal { layoutComposer(); return }
+            // Otherwise the keyboard is genuinely going away (dismiss / session end): stop
+            // any dictation and collapse the composer, keeping the draft for next time.
+            if keyInput.mode == .composer {
+                cancelWhisperDictation()
+                keyInput.exitComposer(clearDraft: false)
+            }
+        }
+
+        @objc private func dictationDidBegin(_ note: Notification) {
+            // The dictation key was tapped and recording is starting (before any word is
+            // recognized): open the composer now so it appears on the tap. Deferred a
+            // runloop tick so we do not swap input views from inside the notification
+            // while dictation is still spinning up.
+            guard keyInput.isFirstResponder, keyInput.mode == .passthrough else { return }
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.keyInput.mode == .passthrough else { return }
+                self.keyInput.enterComposer()
+            }
+        }
+
+        // MARK: Composer Send/Close/Mic (on-device Whisper dictation)
+
+        private func composerSendTapped() {
+            // Finalize any in-flight Whisper dictation first so its trailing words are in
+            // the draft, type it to the session, then animate the pane away.
+            Task {
+                if model.dictation.owns(dictationToken) {
+                    await finishWhisperDictation()
+                }
+                keyInput.sendComposerDraft()
+                animateComposerDismiss(initialVelocity: 0) { [weak self] in
+                    self?.keyInput.exitComposer(clearDraft: true)
+                }
+            }
+        }
+
+        private func composerCloseTapped() {
+            animateComposerDismiss(initialVelocity: 0) { [weak self] in
+                self?.collapseComposerKeepingDraft()
+            }
+        }
+
+        @objc private func handleComposerDismissPan(_ g: UIPanGestureRecognizer) {
+            guard keyInput.mode == .composer else { return }
+            let translation = max(0, g.translation(in: container).y)
+            switch g.state {
+            case .changed:
+                positionComposer(offsetY: translation)
+            case .ended:
+                let velocity = g.velocity(in: container).y
+                // Complete on a healthy flick or if dragged past ~40% of its height.
+                if velocity > 900 || translation > Self.composerHeight * 0.4 {
+                    animateComposerDismiss(initialVelocity: velocity) { [weak self] in
+                        self?.collapseComposerKeepingDraft()
+                    }
+                } else {
+                    snapComposerBackToRest(duration: 0.25)
+                }
+            case .cancelled, .failed:
+                snapComposerBackToRest(duration: 0.2)
+            default:
+                break
+            }
+        }
+
+        /// Animate the dragged pane back to rest (both channels, matched ease-out).
+        private func snapComposerBackToRest(duration: TimeInterval) {
+            withAnimation(.easeOut(duration: duration)) {
+                glassModel.offsetY = 0
+                glassModel.opacity = 1
+            }
+            UIView.animate(withDuration: duration, delay: 0, options: .curveEaseOut) {
+                self.keyInput.transform = .identity
+                self.keyInput.alpha = 1
+            }
+        }
+
+        /// Slide the pane the rest of the way off the bottom, then run `finish` (the actual
+        /// collapse). Shared by the Close button, Send, and the interactive swipe so they
+        /// all animate out identically. `initialVelocity` carries a flick's momentum.
+        /// Slide the pane straight down behind the keyboard (which clips it), then run the
+        /// collapse. Shared by Close, Send, and the interactive swipe. `initialVelocity`
+        /// (from a flick) makes it snappier.
+        private func animateComposerDismiss(initialVelocity: CGFloat, then finish: @escaping () -> Void) {
+            let currentOffset = max(0, keyInput.transform.ty)     // where a drag left it
+            let target = max(currentOffset, composerHiddenOffset) // at least fully behind the keyboard
+            let duration: TimeInterval = initialVelocity > 100 ? 0.15 : 0.22
+            composerAnimating = true
+            // Two channels, matched ease-out curves: text via UIKit transform, glass via
+            // its SwiftUI offset (a UIKit transform blanks the glass effect).
+            withAnimation(.easeOut(duration: duration)) {
+                glassModel.offsetY = target
+                glassModel.opacity = 0
+            }
+            UIView.animate(withDuration: duration, delay: 0, options: .curveEaseOut) {
+                self.keyInput.transform = CGAffineTransform(translationX: 0, y: target)
+                self.keyInput.alpha = 0
+            } completion: { _ in
+                self.composerAnimating = false
+                // Reset offset/alpha; the collapse (exitComposer -> layoutComposer) then
+                // repositions and hides the views.
+                self.keyInput.transform = .identity
+                self.keyInput.alpha = 1
+                self.glassModel.offsetY = 0
+                self.glassModel.opacity = 1
+                finish()
+            }
+        }
+
+        private func collapseComposerKeepingDraft() {
+            cancelWhisperDictation()
+            keyInput.exitComposer(clearDraft: false)
+        }
+
+        // Begin the interactive dismiss only on a mostly-downward drag that starts at the
+        // top of the (possibly scrolled) content; otherwise let the text view scroll.
+        func gestureRecognizerShouldBegin(_ g: UIGestureRecognizer) -> Bool {
+            guard g === composerDismissPan, let pan = g as? UIPanGestureRecognizer else { return true }
+            guard keyInput.mode == .composer else { return false }
+            let v = pan.velocity(in: container)
+            return v.y > 0 && v.y > abs(v.x) && keyInput.contentOffset.y <= 0
+        }
+
+        private func whisperMicTapped() {
+            let d = model.dictation
+            if d.owns(dictationToken), d.voice.state == .listening {
+                Task { await finishWhisperDictation() }
+                return
+            }
+            // Ignore taps while the recorder is busy (ours mid-finalize, or another bar's).
+            guard d.voice.state == .idle else { return }
+            switch model.whisperManager.status {
+            case .ready:
+                startWhisperDictation()
+            case .downloading, .preparing:
+                break   // the button shows a spinner
+            case .idle, .failed:
+                if model.whisperManager.isDownloaded {
+                    startWhisperDictation()   // start() loads the cached model, then records
+                } else {
+                    promptEnableDictation()
+                }
+            }
+        }
+
+        private func startWhisperDictation() {
+            let tab = model.selectedTab
+            Task {
+                switch await model.dictation.start(token: dictationToken, tab: tab) {
+                case .started:
+                    keyInput.beginLiveTranscript()
+                    observeWhisperLiveText()
+                case .alreadyActive, .busy, .superseded:
+                    break
+                case .failed(let message):
+                    presentComposerAlert(title: "Voice Input", message: message)
+                }
+            }
+        }
+
+        private func finishWhisperDictation() async {
+            let final = await model.dictation.finish(token: dictationToken)
+            keyInput.commitLiveTranscript(final ?? "")
+        }
+
+        private func cancelWhisperDictation() {
+            let owned = model.dictation.owns(dictationToken)
+            model.dictation.relinquish(dictationToken)
+            if owned { keyInput.commitLiveTranscript("") }
+        }
+
+        /// Feed the recorder's running transcript into the composer's live span. The
+        /// Observation onChange fires once, so we re-arm after each update; it stops
+        /// re-arming once we no longer own the cycle (finished / stolen / cancelled).
+        private func observeWhisperLiveText() {
+            withObservationTracking {
+                _ = model.dictation.voice.liveText
+            } onChange: { [weak self] in
+                Task { @MainActor in
+                    guard let self, self.model.dictation.owns(self.dictationToken) else { return }
+                    self.keyInput.updateLiveTranscript(self.model.dictation.voice.liveText)
+                    self.observeWhisperLiveText()
+                }
+            }
+        }
+
+        private func promptEnableDictation() {
+            let alert = UIAlertController(
+                title: "Enable Voice Dictation?",
+                message: "Dictation needs a speech model (about 240 MB) downloaded to this device. It runs entirely on your phone, with no cloud and no cost. You can change or remove it later in Settings.",
+                preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Download & Enable", style: .default) { [weak self] _ in
+                guard let self else { return }
+                self.restoreComposerKeyboard()
+                // Enable + start: the mic shows a spinner (whisperManager.status) while the
+                // model downloads and loads, then dictation records - composer stays open.
+                self.model.whisperManager.enableWithDefaultModel()
+                self.startWhisperDictation()
+            })
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
+                self?.restoreComposerKeyboard()
+            })
+            presentComposerModal(alert)
+        }
+
+        private func presentComposerAlert(title: String, message: String) {
+            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .cancel) { [weak self] _ in
+                self?.restoreComposerKeyboard()
+            })
+            presentComposerModal(alert)
+        }
+
+        /// Present from the nearest real view controller (not the keyboard/accessory
+        /// window) so the alert appears reliably over the session view, and mark that the
+        /// composer must survive the keyboard hide the presentation triggers.
+        private func presentComposerModal(_ vc: UIViewController) {
+            presentingComposerModal = true
+            var responder: UIResponder? = container
+            while let r = responder {
+                if let host = r as? UIViewController { host.present(vc, animated: true); return }
+                responder = r.next
+            }
+            container.window?.rootViewController?.present(vc, animated: true)
+        }
+
+        /// The composer alert was dismissed: clear the flag and bring the keyboard (and
+        /// thus the still-open composer) back. Deferred so the alert finishes dismissing
+        /// first.
+        private func restoreComposerKeyboard() {
+            presentingComposerModal = false
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.keyInput.mode == .composer else { return }
+                self.keyInput.becomeFirstResponder()
             }
         }
 
         func tearDown() {
-            container.resignFirstResponder()
+            NotificationCenter.default.removeObserver(self)
+            cancelWhisperDictation()
+            keyInput.resignFirstResponder()
             editMenu?.dismissMenu()
             growthTimer?.invalidate()
             growthTimer = nil
@@ -1287,9 +1680,71 @@ private struct LiveCanvas: UIViewRepresentable {
                 self.model.sendKey(event, toSessionGuid: self.guid)
             }
             keyboardController.dismiss = { [weak self] in
-                self?.container.resignFirstResponder()
+                self?.keyInput.resignFirstResponder()
             }
-            container.installAccessory(controller: keyboardController)
+            // The compose button (and dictation start) open the local composer - the
+            // key-input view's expanded state; its Send types the draft to the session.
+            keyboardController.openComposer = { [weak self] in self?.keyInput.enterComposer() }
+            keyInput.onSendComposerText = { [weak self] text in self?.keyboardController.sendLiteral(text) }
+            keyInput.onModeChanged = { [weak self] in self?.composerModeDidChange() }
+            keyInput.installAccessory(
+                controller: keyboardController,
+                model: model,
+                dictationToken: dictationToken,
+                onComposerSend: { [weak self] in self?.composerSendTapped() },
+                onComposerClose: { [weak self] in self?.composerCloseTapped() },
+                onComposerMic: { [weak self] in self?.whisperMicTapped() })
+            // Warm the speech model so the composer's mic starts instantly on first tap.
+            if model.whisperManager.isEnabled, model.whisperManager.isDownloaded,
+               case .idle = model.whisperManager.status {
+                Task { await model.whisperManager.prepare() }
+            }
+            // The keyboard host is a hidden, zero-size subview while passing through (it
+            // never draws or takes touches; the canvas gestures live on contentView/
+            // scrollView). When the composer opens it is sized above the keyboard by
+            // layoutComposer and brought to the front.
+            container.addSubview(keyInput)
+            // Interactive swipe-down-to-dismiss on the composer pane: it tracks the finger
+            // and completes on distance/velocity, like flicking a sheet away. It is gated
+            // (gestureRecognizerShouldBegin) to a downward drag from the top of the content,
+            // and the text view's own scroll waits for it to fail, so scrolling still works
+            // when there is more text than fits.
+            let dismissPan = UIPanGestureRecognizer(target: self, action: #selector(handleComposerDismissPan(_:)))
+            dismissPan.delegate = self
+            keyInput.addGestureRecognizer(dismissPan)
+            keyInput.panGestureRecognizer.require(toFail: dismissPan)
+            composerDismissPan = dismissPan
+            // Glass backing for the composer pane (positioned/shown by layoutComposer).
+            composerGlass.isHidden = true
+            composerGlass.isUserInteractionEnabled = false   // taps go to the text view
+            composerGlass.backgroundColor = .clear
+            composerGlass.clipsToBounds = false
+            // The SwiftUI glass fills the container; it slides via its own `.offset`
+            // (glassModel), so nothing here clips it as it moves behind the keyboard.
+            composerGlassHost.view.frame = composerGlass.bounds
+            composerGlassHost.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            composerGlassHost.view.backgroundColor = .clear
+            composerGlassHost.view.clipsToBounds = false
+            composerGlass.addSubview(composerGlassHost.view)
+            container.addSubview(composerGlass)
+            // Track the keyboard's top so the composer can sit just above it. The
+            // reported end frame includes the (swapped-in) composer accessory, so the
+            // composer's bottom lands right above that bar.
+            NotificationCenter.default.addObserver(
+                self, selector: #selector(keyboardFrameWillChange(_:)),
+                name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+            NotificationCenter.default.addObserver(
+                self, selector: #selector(keyboardWillHideNote(_:)),
+                name: UIResponder.keyboardWillHideNotification, object: nil)
+            // The system posts this the instant the dictation key is tapped, before any
+            // word is recognized - so we can open the composer on the tap rather than
+            // after the first word. It is an undocumented name (best effort): if it ever
+            // stops firing, the textViewDidChange path still opens the composer once
+            // dictation delivers its first text. It is dictation-specific, so it does not
+            // fire for a globe/keyboard switch.
+            NotificationCenter.default.addObserver(
+                self, selector: #selector(dictationDidBegin(_:)),
+                name: Notification.Name("UIKeyboardDidBeginDictationNotification"), object: nil)
             scrollView.frame = container.bounds
             scrollView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             scrollView.minimumZoomScale = 1
@@ -1353,7 +1808,10 @@ private struct LiveCanvas: UIViewRepresentable {
                 container.addSubview(handle)
             }
 
-            scrollView.onLayout = { [weak self] in self?.applyLayout() }
+            scrollView.onLayout = { [weak self] in
+                self?.applyLayout()
+                self?.layoutComposer()   // keep the (passthrough or composer) key-input sized
+            }
 
             // Grow the document as the live top advances (4 Hz; cheap no-op when the
             // extent is unchanged or the user is interacting).
@@ -1377,8 +1835,15 @@ private struct LiveCanvas: UIViewRepresentable {
         /// fills the full width, so without them those columns can never be cleared).
         private func desiredContentInsets() -> UIEdgeInsets {
             let safe = scrollView.safeAreaInsets
+            // When the keyboard is up it covers the bottom of the canvas - which is where
+            // the shell prompt is, and where the user is typing. Grow the bottom inset by
+            // how much the keyboard (including its accessory bar) overlaps the scroll view
+            // so the last lines can scroll up above it. Falls back to the tab-bar safe area
+            // when the keyboard is down.
+            let keyboardOverlap = max(0, container.bounds.height - keyboardTopInContainer)
+            let bottom = max(safe.bottom, keyboardOverlap) + Self.bottomMargin
             return UIEdgeInsets(top: safe.top, left: safe.left,
-                                bottom: safe.bottom + Self.bottomMargin, right: safe.right)
+                                bottom: bottom, right: safe.right)
         }
 
         /// Apply new content insets only when they change, so a no-op layout pass does
@@ -2014,7 +2479,7 @@ private struct LiveCanvas: UIViewRepresentable {
             // read isLive == true and raise the keyboard; the very next updateUIView
             // brings it back down. Self-correcting, so we don't re-read a per-guid ended
             // source of truth here.
-            if isLive && model.keyInputSupported && container.becomeFirstResponder() {
+            if isLive && model.keyInputSupported && keyInput.becomeFirstResponder() {
                 model.markSessionKeyboardRevealed()
             }
         }

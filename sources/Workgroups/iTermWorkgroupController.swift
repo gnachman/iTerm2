@@ -322,7 +322,12 @@ final class iTermWorkgroupController: NSObject {
     // still alive; iTermWorkgroupInstance's sessionWillTerminate
     // observer calls this so a member's termination always reaches
     // teardown even if the leader is already gone.
-    func exit(instance: iTermWorkgroupInstance) {
+    // `terminatingSession`, when non-nil, is the member whose
+    // termination drove this exit; forwarded to teardown so it can leave
+    // the closing pane's leader-restore alone (see
+    // iTermWorkgroupInstance.restoreMainLeaderToPaneIfNeeded).
+    func exit(instance: iTermWorkgroupInstance,
+              becauseSessionTerminated terminatingSession: PTYSession? = nil) {
         if instances[instance.instanceUniqueIdentifier] === instance {
             instances.removeValue(forKey: instance.instanceUniqueIdentifier)
         }
@@ -330,7 +335,7 @@ final class iTermWorkgroupController: NSObject {
         // dict's occupant: an alive-but-unregistered instance must not
         // skip teardown or its members leak. teardown() is idempotent
         // via didTeardown, so the already-exited case stays a no-op.
-        instance.teardown()
+        instance.teardown(becauseSessionTerminated: terminatingSession)
         checkConsistency()
     }
 

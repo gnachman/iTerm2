@@ -2090,9 +2090,12 @@ extension PTYSession {
                         .bookmark(withGuid: guid) {
                         profile = override
                     }
-                    // Peer sessions live on the same screen as the
-                    // main session and should never prompt on close —
-                    // they're torn down when the workgroup exits.
+                    // Workgroup-spawned sessions must not auto-close when
+                    // their command exits (a git-diff peer would vanish the
+                    // moment diff finishes), and closing one should prompt
+                    // on Cmd-W since it tears the whole workgroup down.
+                    // Matches WorkgroupSessionSpawner's split/tab behavior:
+                    // always prompt on close, never auto-close on exit.
                     profile[KEY_PROMPT_CLOSE] = PROMPT_ALWAYS
                     profile[KEY_SESSION_END_ACTION] =
                         iTermSessionEndAction.default.rawValue

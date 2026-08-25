@@ -33,6 +33,7 @@
 @class iTermController;
 @class iTermTerminalWindowSizeHelper;
 @class PseudoTerminalState;
+@class PTYTab;
 @class TmuxController;
 @class WKWebViewConfiguration;
 
@@ -123,6 +124,42 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 // Tab whose color is being changed via the color picker.
 @property(nonatomic, weak) NSTabViewItem *tabViewItemForColorPicker;
+// Non-nil while the color picker is targeting a tab group (its members' color)
+// rather than a single tab. When set, color changes apply to the whole group.
+@property(nonatomic, copy) NSString *tabGroupIDForColorPicker;
+// Set the given color on every member of a tab group (the color rides the
+// tabs). A nil color clears it (the chip falls back to its default).
+- (void)setTabGroupColor:(NSColor *)color forGroupID:(NSString *)groupID;
+// Member tabs of the given group, in tab order.
+- (NSArray<PTYTab *> *)tabsInGroup:(NSString *)groupID;
+
+// Put every tab in `tabs` into one brand-new tab group named `name`. A tab
+// that already belonged to a group is moved out of it into the new group.
+// The members are brought together into one contiguous block. No-op for fewer
+// than two tabs. Used by workgroups to gather the initial tab plus every tab
+// spawned at entry into a single group.
+- (void)groupTabs:(NSArray<PTYTab *> *)tabs withName:(NSString *)name;
+
+// Snapshot / restore a tab's group membership (id/name/color/collapsed).
+// Used to revert the entry tab's grouping when a workgroup exits. A snapshot
+// with a null id restores to "no group", dissolving a one-member leftover.
+// Keyed by tab so the snapshot survives the original session terminating.
+- (NSDictionary *)tabGroupSnapshotForTab:(PTYTab *)tab;
+- (void)restoreTabGroupSnapshot:(NSDictionary *)snapshot forTab:(PTYTab *)tab;
+// YES if the tab's current group is the one the snapshot recorded (unchanged
+// since capture). Lets callers test "did grouping touch this tab" without
+// depending on the snapshot's internal shape.
+- (BOOL)tabGroupSnapshot:(NSDictionary *)snapshot describesCurrentGroupOfTab:(PTYTab *)tab;
+
+// The group a plain "new tab" at `index` (nil for the default position) should
+// inherit: the current tab's group, but only when the new tab will land
+// immediately after it. Returns nil when there is nothing to inherit.
+- (NSString *)groupIDToInheritForNewTabAtIndex:(NSNumber *)index;
+
+// Add the just-created tab hosting `session` to the tab group `groupID`.
+// Intended to run from a new-tab creation completion. No-op for an empty
+// groupID or a session with no tab in this window.
+- (void)addTabForSession:(PTYSession *)session toGroupWithID:(NSString *)groupID;
 
 // Mutable state for the tab color picker (popover, debounce timer, etc.).
 @property(nonatomic, strong) TabColorPickerState *tabColorPickerState;
@@ -332,6 +369,10 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // All tabs in this window.
 - (NSArray<PTYTab *> *)tabs;
 
+// Call after changing the tab order (or a tab's pinned/group state) to repair the
+// tab-group contiguity invariant and re-push membership to the tab bar.
+- (void)tabsDidReorder;
+
 // Updates the window when screen parameters (number of screens, resolutions,
 // etc.) change.
 - (void)screenParametersDidChange;
@@ -435,7 +476,11 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (iTermRestorableSession *)restorableSessionForSession:(PTYSession *)session;
 
 - (void)addSessionInNewTab:(PTYSession *)object;
-- (void)didDonateTab:(PTYTab *)aTab toWindowController:(PseudoTerminal *)term;
+// `groupID` is the tab group the drop landed inside (the tab joins it), or
+// nil when the tab arrived outside any group (menu/API moves pass nil).
+- (void)didDonateTab:(PTYTab *)aTab
+    toWindowController:(PseudoTerminal *)term
+    joiningGroupWithID:(NSString *)groupID;
 - (void)moveTabAtIndex:(NSInteger)selectedIndex toIndex:(NSInteger)destinationIndex;
 
 - (PseudoTerminal *)it_moveTabToNewWindow:(PTYTab *)aTab;

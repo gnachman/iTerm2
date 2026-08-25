@@ -114,6 +114,20 @@ class FakeWorkgroupSpawner: WorkgroupSessionSpawner {
         return session
     }
 
+    // Records groupTabs(containing:name:) calls (the real spawner would
+    // talk to PseudoTerminal, which synthetic sessions don't have) so
+    // tests can assert enter() gathers the right sessions under the right
+    // name. Overrides the protocol's default no-op.
+    struct GroupTabsCall {
+        let sessions: [PTYSession]
+        let name: String
+    }
+    private(set) var groupTabsCalls: [GroupTabsCall] = []
+
+    func groupTabs(containing sessions: [PTYSession], name: String) {
+        groupTabsCalls.append(GroupTabsCall(sessions: sessions, name: name))
+    }
+
     private func makeSession() -> PTYSession {
         // synthetic:false so the session behaves like a normal
         // workgroup peer/child as far as workgroupInstance/peerPort
@@ -245,6 +259,21 @@ class SpyPTYSession: PTYSession {
         // willTerminate notification and tears down screen state,
         // which would re-enter the workgroup observer and crowd the
         // signal we're trying to measure.
+    }
+}
+
+// MARK: - RevealSpyPTYSession
+
+// Records calls to revealAsPeerWithoutActivatingWindow so teardown
+// tests can assert whether the surviving leader was swapped back into
+// the shared pane (the issue-12967 blank-pane fix). Doesn't call super:
+// there is no real port/tab in unit tests, and the swap itself is
+// covered by the production peer-port paths.
+class RevealSpyPTYSession: PTYSession {
+    var spy_revealAsPeerCount: Int = 0
+
+    override func revealAsPeerWithoutActivatingWindow() {
+        spy_revealAsPeerCount += 1
     }
 }
 
@@ -389,6 +418,32 @@ enum WGFix {
                                      displayName: "SplitPeer\(i)"))
         }
         return wrap(name: "wgRootSplitWithPeers", sessions: sessions)
+    }
+
+    // wgTwoTabsEachWithPeers — root (its own tab) hosts a peer group,
+    // plus a .tab child that itself hosts a peer group. Two tabs, each
+    // with peers. This is the issue-shape where the second (tab-hosted)
+    // nested peer group came up with no toolbar / no peer switcher.
+    static func wgTwoTabsEachWithPeers(
+        items: [iTermWorkgroupToolbarItem] = [.modeSwitcher, .reload(nil)],
+        peerCount: Int = 2) -> iTermWorkgroup {
+        let root = makeRoot(items: items)
+        var sessions = [root]
+        for i in 0..<peerCount {
+            sessions.append(makePeer(parentID: root.uniqueIdentifier,
+                                     items: items,
+                                     displayName: "RootPeer\(i)"))
+        }
+        let tab = makeTab(parentID: root.uniqueIdentifier,
+                          items: items,
+                          displayName: "TabHost")
+        sessions.append(tab)
+        for i in 0..<peerCount {
+            sessions.append(makePeer(parentID: tab.uniqueIdentifier,
+                                     items: items,
+                                     displayName: "TabPeer\(i)"))
+        }
+        return wrap(name: "wgTwoTabsEachWithPeers", sessions: sessions)
     }
 
     // wgRootPeersAndSplits — root has peer children AND split children.

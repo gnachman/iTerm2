@@ -1,0 +1,17 @@
+iTerm2 Buddy connects your iPhone or iPad to iTerm2, the popular terminal for macOS. Once paired with your Mac, it lets you keep an eye on your terminal and act on it from the couch or on the go.
+
+REQUIRES A MAC
+iTerm2 Buddy is a companion app. It works only after pairing with iTerm2 and the free companion plugin on your Mac. Pairing takes a few seconds: your Mac shows a QR code, you scan it, and confirm a short code on both devices.
+
+WHAT YOU CAN DO
+- Live terminal: watch a session update in real time, exactly as it looks on your Mac, including colors, inline images, and full-screen apps like vim, htop, and less.
+- Type and control: bring up a keyboard with the terminal keys you need (Esc, Control-C, Tab, arrows, function keys) and send input to a session. A composer lets you write longer commands and send them all at once.
+- Chat with an AI agent: message an assistant that runs on your Mac and can act on your sessions, open windows, run commands, review changes, and report back. Approve sensitive actions right from your phone.
+- Notifications: get a push when the agent replies or needs your approval, so you can step away and return when it matters.
+- Voice input: dictate messages with on-device transcription. Your audio never leaves your phone.
+
+PRIVACY AND SECURITY
+Terminal content shared between your Mac and your phone is end-to-end encrypted with the Noise protocol, so only your own devices can read it. There is no account and no advertising, and the app includes no third-party tracking.
+
+FREE
+iTerm2 and iTerm2 Buddy are free.

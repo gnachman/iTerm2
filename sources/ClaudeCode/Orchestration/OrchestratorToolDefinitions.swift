@@ -142,8 +142,8 @@ extension OrchestratorCommand {
             inputSchema: object([
                 ("session_guid", sessionGuidSchema),
                 ("lines", integer("Number of scroll-wheel notches to send. Each notch is one wheel event; how many text lines that moves depends on the app (often 1 or 3). Start small (e.g. 3) and re-read.")),
-                ("direction", string("\u{201C}up\u{201D} reveals OLDER content (the usual choice for paging back through history); \u{201C}down\u{201D} reveals NEWER content. Defaults to \u{201C}up\u{201D}.", enumValues: ["up", "down"])),
-            ], required: ["session_guid", "lines"])),
+                ("direction", nullableString("\u{201C}up\u{201D} reveals OLDER content (the usual choice for paging back through history); \u{201C}down\u{201D} reveals NEWER content. Use null for the default \u{201C}up\u{201D}.", enumValues: ["up", "down"])),
+            ], required: ["session_guid", "lines", "direction"])),
 
         ToolDefinition(
             name: ToolName.listWorkgroupClippings.rawValue,
@@ -221,11 +221,11 @@ extension OrchestratorCommand {
                 // get_state output), but it isn't a transition target;
                 // the dispatcher rejects watch registrations for
                 // "unknown" with a clear error.
-                ("target_state", string("State to watch for. Must be a transition target: \u{201C}idle\u{201D}, \u{201C}working\u{201D}, or \u{201C}waiting\u{201D}. \u{201C}unknown\u{201D} is shown by get_state when a session has no tab status yet, but it is not a watchable transition. Mutually exclusive with condition.", enumValues: ["idle", "working", "waiting", "unknown"])),
-                ("condition", string("Plain-English condition to watch for, judged by an AI reading the session's screen, e.g. \u{201C}emacs has exited and a shell prompt is showing\u{201D}. Describe what will be VISIBLE on screen when the condition holds. Mutually exclusive with target_state.")),
+                ("target_state", nullableString("State to watch for. Must be a transition target: \u{201C}idle\u{201D}, \u{201C}working\u{201D}, or \u{201C}waiting\u{201D}. \u{201C}unknown\u{201D} is shown by get_state when a session has no tab status yet, but it is not a watchable transition. Mutually exclusive with condition: set exactly one and null the other.", enumValues: ["idle", "working", "waiting", "unknown"])),
+                ("condition", nullableString("Plain-English condition to watch for, judged by an AI reading the session's screen, e.g. \u{201C}emacs has exited and a shell prompt is showing\u{201D}. Describe what will be VISIBLE on screen when the condition holds. Mutually exclusive with target_state: set exactly one and null the other.")),
             ] + (CompanionPushRegistry.devicePaired ? [
-                ("notify_user", boolean("Set true when the user asked to be told/alerted when this happens. iTerm2 sends a push notification to their iPhone automatically when the watch fires; you do not need to call notify yourself.")),
-            ] : []), required: ["session_guid"])),
+                ("notify_user", nullableBoolean("Set true when the user asked to be told/alerted when this happens. iTerm2 sends a push notification to their iPhone automatically when the watch fires; you do not need to call notify yourself. Use null when not requested.")),
+            ] : []), required: ["session_guid", "target_state", "condition"] + (CompanionPushRegistry.devicePaired ? ["notify_user"] : []))),
 
         // unregister_watch / list_watches are identical across the orchestration
         // and session-bound surfaces, so they live in one place and are reused by
@@ -291,11 +291,11 @@ extension OrchestratorCommand {
                 formChoice: "Choosing the form: use target_state (idle/working/waiting) to fire when the running program reports that transition. Use condition, a plain-English description an AI judge evaluates by periodically reading the session's screen, when what you're waiting for isn't an idle/working/waiting transition (e.g. \u{201C}emacs has exited and a shell prompt is showing\u{201D}, \u{201C}the build printed a success or failure line\u{201D}, \u{201C}a password prompt appeared\u{201D}); a specific condition is more accurate for those. Screen-judged watches keep watching on their own, polling less often the longer they run, and only time out (reason=\u{201C}watchTimedOut\u{201D}) after several hours; re-register then if you still need to wait.",
                 persistence: "Watchers are saved across iTerm2 restarts and resume when you next return to this chat (if the linked session no longer exists then, you get a status_update with reason=\u{201C}watcherDropped\u{201D}). Do NOT poll yourself."),
             inputSchema: object([
-                ("target_state", string("State to watch for. Must be a transition target: \u{201C}idle\u{201D}, \u{201C}working\u{201D}, or \u{201C}waiting\u{201D}. Mutually exclusive with condition.", enumValues: ["idle", "working", "waiting"])),
-                ("condition", string("Plain-English condition to watch for, judged by an AI reading the session's screen, e.g. \u{201C}emacs has exited and a shell prompt is showing\u{201D}. Describe what will be VISIBLE on screen when the condition holds. Mutually exclusive with target_state.")),
+                ("target_state", nullableString("State to watch for. Must be a transition target: \u{201C}idle\u{201D}, \u{201C}working\u{201D}, or \u{201C}waiting\u{201D}. Mutually exclusive with condition: set exactly one and null the other.", enumValues: ["idle", "working", "waiting"])),
+                ("condition", nullableString("Plain-English condition to watch for, judged by an AI reading the session's screen, e.g. \u{201C}emacs has exited and a shell prompt is showing\u{201D}. Describe what will be VISIBLE on screen when the condition holds. Mutually exclusive with target_state: set exactly one and null the other.")),
             ] + (CompanionPushRegistry.devicePaired ? [
-                ("notify_user", boolean("Set true when the user asked to be told/alerted when this happens. iTerm2 sends a push notification to their iPhone automatically when the watch fires; you do not need to call notify yourself.")),
-            ] : []), required: [])),
+                ("notify_user", nullableBoolean("Set true when the user asked to be told/alerted when this happens. iTerm2 sends a push notification to their iPhone automatically when the watch fires; you do not need to call notify yourself. Use null when not requested.")),
+            ] : []), required: ["target_state", "condition"] + (CompanionPushRegistry.devicePaired ? ["notify_user"] : []))),
 
         unregisterWatchDefinition,
         listWatchesDefinition,

@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "WebExtensionsFramework",
     platforms: [
-        .macOS(.v12) // Required for proxy support
+        .macOS(.v13) // Required for proxy support
     ],
     products: [
         .library(

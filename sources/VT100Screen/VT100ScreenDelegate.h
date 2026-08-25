@@ -333,6 +333,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (void)screenSetTabColorBlueComponentTo:(CGFloat)color;
 - (BOOL)screenSetColor:(NSColor * _Nullable)color
             profileKey:(NSString * _Nullable)profileKey;
+
+// Binds a color setting to an expression (for example "colors.ansi.yellow") so
+// it tracks the live palette. profileKey is the base color key (KEY_BADGE_COLOR,
+// KEY_TAB_COLOR, an ANSI key, etc.).
+- (void)screenSetColorBinding:(NSString * _Nonnull)expression
+                forProfileKey:(NSString * _Nonnull)profileKey;
 - (NSDictionary<NSNumber *, id> * _Nonnull)screenResetColorWithColorMapKey:(int)key
                                                                 profileKey:(NSString * _Nonnull)profileKey
                                                                       dark:(BOOL)dark;
@@ -491,6 +497,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 - (void)screenReportIconTitle;
 - (void)screenReportWindowTitle;
 - (void)screenSetPointerShape:(NSString * _Nonnull)pointerShape;
+
+// OSC 72: one escape sequence of the Kitty drag-and-drop protocol. `content` is
+// the raw content after "72;" (colon-separated metadata plus an optional base64
+// payload). Delivered on the main thread.
+- (void)screenDidReceiveKittyDragAndDrop:(NSString * _Nonnull)content;
+
 - (void)screenFoldRange:(NSRange)range;
 // Called when lines are inserted or removed (fold/unfold/porthole resize).
 // delta is positive when lines are inserted, negative when removed.

@@ -1,0 +1,66 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "111.title": {
+      "comment": "Class = \"NSWindow\"; title = \"Window\"; ObjectID = \"111\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Window"
+          }
+        }
+      }
+    },
+    "118.headerCell.title": {
+      "comment": "Class = \"NSTableColumn\"; headerCell.title = \"Time\"; ObjectID = \"118\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Time"
+          }
+        }
+      }
+    },
+    "119.headerCell.title": {
+      "comment": "Class = \"NSTableColumn\"; headerCell.title = \"Value\"; ObjectID = \"119\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Value"
+          }
+        }
+      }
+    },
+    "120.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Text Cell\"; ObjectID = \"120\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Text Cell"
+          }
+        }
+      }
+    },
+    "121.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Text Cell\"; ObjectID = \"121\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Text Cell"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

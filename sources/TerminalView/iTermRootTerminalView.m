@@ -75,7 +75,6 @@ typedef struct {
 
 @end
 
-NS_CLASS_AVAILABLE_MAC(10_14)
 @interface iTermTabBarBacking : NSView<iTermTabBarControlViewContainer>
 @property (nonatomic) BOOL hidesWhenTabBarHidden;
 @property (nonatomic, readonly) NSVisualEffectView *visualEffectView;
@@ -139,19 +138,18 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     NSNumber *_windowNumber;
     NSTextField *_windowNumberLabel;
     iTermFakeWindowTitleLabel *_windowTitleLabel;
-    iTermTabBarBacking *_tabBarBacking NS_AVAILABLE_MAC(10_14);
+    iTermTabBarBacking *_tabBarBacking;
     iTermGenericStatusBarContainer *_statusBarContainer;
     NSDictionary *_desiredToolbeltProportions;
-    iTermWindowSizeView *_windowSizeView NS_AVAILABLE_MAC(10_14);
+    iTermWindowSizeView *_windowSizeView;
 
-    iTermLayerBackedSolidColorView *_titleBackgroundView NS_AVAILABLE_MAC(10_14);
-    NSVisualEffectView *_titleBackgroundVEV NS_AVAILABLE_MAC(10_14);
+    iTermLayerBackedSolidColorView *_titleBackgroundView;
+    NSVisualEffectView *_titleBackgroundVEV;
 
-    iTermWindowBorderView *_windowBorderView NS_AVAILABLE_MAC(10_14);
-    BOOL _cornerRadiusDetectionFailed NS_AVAILABLE_MAC(10_14);
+    iTermWindowBorderView *_windowBorderView;
+    BOOL _cornerRadiusDetectionFailed;
 
-    iTermImageView *_backgroundImage NS_AVAILABLE_MAC(10_14);
-    NSView *_workaroundView;  // 10.14 only. See issue 8701.
+    iTermImageView *_backgroundImage;
     iTermLayerBackedSolidColorView *_notchMask NS_AVAILABLE_MAC(12_0);
     iTermCompactProxyIconView *_compactProxyIconView;
 }
@@ -279,11 +277,6 @@ NS_CLASS_AVAILABLE_MAC(10_14)
             [iTermAdvancedSettingsModel squareWindowCorners] ? 0 : [iTermWindowCornerRadiusDetector fallbackCornerRadius];
         [self addSubview:_windowBorderView];
 
-        if (@available(macOS 10.15, *)) {} else {
-            // 10.14 only
-            _workaroundView = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1) color:[NSColor clearColor]];
-            [self addSubview:_workaroundView];
-        }
         if (@available(macOS 12.0, *)) {
             _notchMask = [[iTermLayerBackedSolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0) color:[NSColor blackColor]];
             _notchMask.hidden = YES;
@@ -303,7 +296,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     _verticalTabBarDragHandle.delegate = nil;
 }
 
-- (void)advancedSettingsDidChange:(NSNotification *)notification NS_AVAILABLE_MAC(10_14) {
+- (void)advancedSettingsDidChange:(NSNotification *)notification {
     [self updateBorderViews];
 }
 
@@ -748,7 +741,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     return NSMakeRect(0, 0, self.bounds.size.width, 1);
 }
 
-- (void)updateTitleAndBorderViews NS_AVAILABLE_MAC(10_14) {
+- (void)updateTitleAndBorderViews {
     const BOOL wantsTitleBackgroundView = [_delegate rootTerminalViewShouldDrawWindowTitleInPlaceOfTabBar];
     if (wantsTitleBackgroundView) {
         if (!_titleBackgroundView) {
@@ -833,7 +826,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     return [color colorWithAlphaComponent:alpha];
 }
 
-- (NSColor *)resolvedWindowBorderColor NS_AVAILABLE_MAC(10_14) {
+- (NSColor *)resolvedWindowBorderColor {
     NSColor *focused = iTermWindowBorderColorFromSetting([iTermAdvancedSettingsModel windowBorderColor]);
     NSColor *unfocused = iTermWindowBorderColorFromSetting([iTermAdvancedSettingsModel windowBorderColorUnfocused]);
     NSColor *base = self.window.isKeyWindow ? (focused ?: unfocused) : (unfocused ?: focused);
@@ -847,7 +840,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 // The border is drawn fully inside the window, so updateBorderViews subtracts
 // half the border width to get the stroke's centerline radius. Updated on
 // cache miss by the early-return path in updateBorderViews.
-- (CGFloat)resolvedWindowBorderCornerRadius NS_AVAILABLE_MAC(10_14) {
+- (CGFloat)resolvedWindowBorderCornerRadius {
     if ([iTermAdvancedSettingsModel squareWindowCorners]) {
         return 0;
     }
@@ -859,7 +852,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     return MAX(0, cached.doubleValue);
 }
 
-- (void)updateBorderViews NS_AVAILABLE_MAC(10_14) {
+- (void)updateBorderViews {
     NSWindow *window = self.window;
 
     // Hide the border until the detector has cached a radius for this window
@@ -916,15 +909,6 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     }
     _useMetal = useMetal;
     self.tabView.drawsBackground = NO;
-    if (@available(macOS 10.15, *)) { } else {
-        if (useMetal) {
-            self.wantsLayer = YES;
-            self.layer = [[CALayer alloc] init];
-        } else {
-            self.wantsLayer = NO;
-            self.layer = nil;
-        }
-    }
     [self updateTitleAndBorderViews];
 
     [_divisionView removeFromSuperview];
@@ -933,9 +917,13 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     [self updateDivisionViewAndWindowNumberLabel];
 }
 
-- (void)viewDidChangeEffectiveAppearance NS_AVAILABLE_MAC(10_14) {
+- (void)viewDidChangeEffectiveAppearance {
+    RLog(@"iTermRootTerminalView viewDidChangeEffectiveAppearance -> %@ (window key=%@ main=%@ appActive=%@)",
+         self.effectiveAppearance.name,
+         @(self.window.isKeyWindow), @(self.window.isMainWindow), @(NSApp.isActive));
     // This can be called from within -[NSWindow setStyleMask:]
     dispatch_async(dispatch_get_main_queue(), ^{
+        RLog(@"iTermRootTerminalView appearance-change block -> rootTerminalViewDidChangeEffectiveAppearance");
         [self.delegate rootTerminalViewDidChangeEffectiveAppearance];
     });
     [self updateBorderViews];
@@ -1616,9 +1604,6 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     DLog(@"Before:\n%@", [self iterm_recursiveDescription]);
     [self.delegate rootTerminalViewWillLayoutSubviews];
 
-    if (@available(macOS 10.15, *)) { } else {
-        _workaroundView.frame = NSMakeRect(0, self.bounds.size.height - 1, 1, 1);
-    }
     const BOOL showToolbeltInline = self.shouldShowToolbelt;
     NSWindow *thisWindow = _delegate.window;
     if (!_tabBarControlOnLoan) {
@@ -1660,6 +1645,7 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     [self.tabBarControl setSizeCellsToFit:[iTermAdvancedSettingsModel useUnevenTabs]];
     [self.tabBarControl setStretchCellsToFit:[iTermPreferences boolForKey:kPreferenceKeyStretchTabsToFillBar]];
     [self.tabBarControl setCellOptimumWidth:[iTermAdvancedSettingsModel optimumTabWidth]];
+    [self.tabBarControl setScrollableTabWidth:[iTermAdvancedSettingsModel scrollableTabWidth]];
     [self.tabBarControl setPinnedTabWidth:[iTermAdvancedSettingsModel pinnedTabWidth]];
     self.tabBarControl.smartTruncation = [iTermAdvancedSettingsModel tabTitlesUseSmartTruncation];
 

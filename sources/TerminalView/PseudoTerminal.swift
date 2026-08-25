@@ -96,7 +96,41 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
 
     // MARK: - ColorsMenuItemViewDelegate
 
+    // What a color picker opened from a menu's swatch row should recolor: the
+    // menu item's representedObject is a group id (group context menu) or an
+    // NSTabViewItem (tab context menu). Pure so it can be unit tested.
+    enum TabColorPickerTarget: Equatable {
+        case group(String)
+        case tab(NSTabViewItem)
+    }
+
+    static func colorPickerTarget(for item: NSMenuItem?) -> TabColorPickerTarget? {
+        if let groupID = item?.representedObject as? String {
+            return .group(groupID)
+        }
+        if let tabViewItem = item?.representedObject as? NSTabViewItem {
+            return .tab(tabViewItem)
+        }
+        return nil
+    }
+
     public func colorsMenuItemViewDidRequestColorPicker(_ view: ColorsMenuItemView!) {
+        // Capture the picker's target from the menu item the swatch view lives
+        // in, at the moment the picker opens. The pickers (popover and shared
+        // NSColorPanel) outlive the menu, so binding the target when a menu was
+        // merely built would leave a stale target behind: a panel opened for a
+        // single tab would silently start recoloring whichever group's context
+        // menu was opened (and dismissed untouched) last.
+        switch PseudoTerminal.colorPickerTarget(for: view.enclosingMenuItem) {
+        case .group(let groupID):
+            tabGroupIDForColorPicker = groupID
+            tabViewItemForColorPicker = tabs(inGroup: groupID).first?.tabViewItem
+        case .tab(let tabViewItem):
+            tabGroupIDForColorPicker = nil
+            tabViewItemForColorPicker = tabViewItem
+        case nil:
+            break
+        }
         if UserDefaults.standard.bool(forKey: kUseSystemColorPickerKey) {
             showSystemTabColorPicker()
         } else {
@@ -258,6 +292,12 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
     }
 
     private func applyTabColor(_ color: NSColor) {
+        // When the picker was opened for a group (its members share one color),
+        // apply to the whole group instead of a single tab.
+        if let groupID = tabGroupIDForColorPicker, !groupID.isEmpty {
+            setTabGroupColor(color, forGroupID: groupID)
+            return
+        }
         guard let tab = targetTab() else { return }
         for session in tab.sessions() {
             session.tabColor = color
@@ -327,7 +367,32 @@ extension PseudoTerminal: ColorsMenuItemViewDelegate {
         if tab.tmuxController() != nil {
             return
         }
-        tab.isPinned = !tab.isPinned
+        let newPinned = !tab.isPinned
+        if let gid = tab.tabGroupID, !gid.isEmpty {
+            let members = tabs(inGroup: gid) ?? []
+            // Pin/unpin the whole group as a block so it stays entirely pinned or
+            // entirely unpinned. Pinning only one member would strand it across
+            // the pinned/unpinned boundary and split the group (non-contiguous).
+            // Pinning is unavailable for tmux tabs, so if any member is a tmux tab
+            // we cannot pin the block: refuse the whole toggle, mirroring the
+            // per-tab guard above and the context menu (disabled for tmux tabs).
+            if members.contains(where: { $0.tmuxController() != nil }) {
+                return
+            }
+            for member in members where member.isPinned != newPinned {
+                member.isPinned = newPinned
+            }
+            // Each isPinned change reorders that tab to the pinned/unpinned boundary
+            // and runs the contiguity pass as a side effect -- but only when the tab
+            // actually moves. The last member toggled can already sit at the
+            // boundary (no move -> no reorder -> no contiguity pass), which strands
+            // the group split across the boundary until some later reorder. Enforce
+            // contiguity once here, after the whole group's pin state is settled, so
+            // the members always end up contiguous.
+            tabsDidReorder()
+        } else {
+            tab.isPinned = newPinned
+        }
     }
 
     // Delegate method call forwarded from main class.

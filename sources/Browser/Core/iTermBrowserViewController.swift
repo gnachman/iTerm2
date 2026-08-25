@@ -228,7 +228,7 @@ extension iTermBrowserViewController {
     @objc
     func terminate() {
         browserManager.webView.stopLoading()
-        browserManager.webView.loadHTMLString("", baseURL: URL("about:empty"))
+        browserManager.webView.loadHTMLString("", baseURL: URL(string: "about:empty"))
         browserManager.webView.navigationDelegate = nil
         browserManager.webView.uiDelegate = nil
         browserManager.webView.removeFromSuperview()

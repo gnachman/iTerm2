@@ -1,0 +1,18 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "g3L-BT-A3R.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Label\"; ObjectID = \"g3L-BT-A3R\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Label"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

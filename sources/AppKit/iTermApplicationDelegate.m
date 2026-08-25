@@ -1519,6 +1519,16 @@ void TurnOnDebugLoggingAutomatically(void) {
     [iTermMacOS13RequirementNotice maybeShow];
     DLog(@"didFinishLaunching");
 
+    // Record whether the previous shutdown ran to completion. +lastShutdownWasClean
+    // returns NO if the process was killed (e.g. SIGKILL by the logout/reboot
+    // watchdog) before +markShutdownAsClean ran at the end of
+    // applicationShouldTerminate:. This is the key data point for diagnosing lost
+    // windows after a reboot: an unclean shutdown means the terminate-time
+    // restorable-state save never finished, so restore falls back to an older
+    // snapshot. Logged via RLog so it lands in any debug log made on this launch,
+    // even without debug logging having been enabled during the prior session.
+    RLog(@"Previous shutdown was clean: %@", [iTermUserDefaults lastShutdownWasClean] ? @"YES" : @"NO");
+
     // Test-only: if launched with the purge flag, wipe the app's data-protection
     // keychain items and quit BEFORE any keychain read. Gated to Development builds via
     // ITERM_DEBUG (defined only in the Development configuration), so the call does not
@@ -2642,10 +2652,20 @@ static iTermKeyEventReplayer *gReplayer;
     NSArray *tabViewItemArray = [aTabView tabViewItems];
     int i=1;
 
-    // Remove menu items after the separator
-    const NSInteger separatorIndex = [selectTab.submenu.itemArray indexOfObjectPassingTest:^BOOL(NSMenuItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        return [obj isSeparatorItem];
+    // Remove menu items after the session-list separator. Match the separator by
+    // identifier rather than "first separator" so that static items (and their own
+    // separators) can precede it without being wiped when this submenu is rebuilt.
+    __block NSInteger separatorIndex = [selectTab.submenu.itemArray indexOfObjectPassingTest:^BOOL(NSMenuItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        return [obj.identifier isEqualToString:@"SelectTabSessionListSeparator"];
     }];
+    if (separatorIndex == NSNotFound) {
+        // Fall back to the last separator so previously-added static items survive.
+        [selectTab.submenu.itemArray enumerateObjectsUsingBlock:^(NSMenuItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            if ([obj isSeparatorItem]) {
+                separatorIndex = idx;
+            }
+        }];
+    }
     if (separatorIndex != NSNotFound) {
         while (selectTab.submenu.numberOfItems > separatorIndex + 1) {
             [selectTab.submenu removeItemAtIndex:selectTab.submenu.numberOfItems - 1];
@@ -2816,6 +2836,23 @@ static iTermKeyEventReplayer *gReplayer;
 }
 
 - (void)newTabAtIndex:(NSNumber *)index {
+    // A plain new tab inherits the current tab's group when it lands right
+    // after it (see -groupIDToInheritForNewTabAtIndex:). The grouping runs on
+    // the exact new session in the creation completion.
+    PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+    NSString *groupID = [term groupIDToInheritForNewTabAtIndex:index];
+    void (^didMakeSession)(PTYSession *) = nil;
+    if (groupID.length > 0) {
+        __weak PseudoTerminal *weakTerm = term;
+        didMakeSession = ^(PTYSession *session) {
+            [weakTerm addTabForSession:session toGroupWithID:groupID];
+        };
+    }
+    [self newTabAtIndex:index didMakeSession:didMakeSession];
+}
+
+- (void)newTabAtIndex:(NSNumber *)index
+       didMakeSession:(void (^)(PTYSession *session))didMakeSession {
     DLog(@"iTermApplicationDelegate newSession:");
     BOOL cancel;
     BOOL tmux = [self possiblyTmuxValueForWindow:NO cancel:&cancel];
@@ -2823,7 +2860,10 @@ static iTermKeyEventReplayer *gReplayer;
         DLog(@"Cancel");
         return;
     }
-    [[iTermController sharedInstance] newSession:nil possiblyTmux:tmux index:index];
+    [[iTermController sharedInstance] newSession:nil
+                                   possiblyTmux:tmux
+                                          index:index
+                                 didMakeSession:didMakeSession];
 }
 
 - (IBAction)arrangeHorizontally:(id)sender

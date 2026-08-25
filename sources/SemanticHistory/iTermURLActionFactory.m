@@ -7,6 +7,7 @@
 //
 
 #import "iTermURLActionFactory.h"
+#import "iTermURLActionFactory+Testing.h"
 
 #import "ContextMenuActionPrefsController.h"
 #import "DebugLogging.h"
@@ -625,36 +626,80 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
     return [possibleUrl substringWithRange:range];
 }
 
+- (void)extendLocatedSuffixIfURLRunReachesWindowEnd {
+    [iTermURLActionFactory extendLocatedSuffix:self.locatedSuffix
+                                        prefix:self.locatedPrefix
+                           respectHardNewlines:self.respectHardNewlines
+                                     extractor:self.extractor];
+}
+
 // If the run of URL-legal characters around the click reaches the end of the captured suffix
 // window, the URL may have been cut off (the window is bounded by maxSemanticHistoryPrefixOrSuffix
 // and a ±10-line clamp). Rather than re-run matching on an ever-larger window, walk the grid
 // forward from the last captured character, consuming URL-legal characters until a separator (or the
 // 100 KB backstop), and append them to the located suffix so extraction below sees the whole URL.
-- (void)extendLocatedSuffixIfURLRunReachesWindowEnd {
++ (void)extendLocatedSuffix:(iTermLocatedString *)locatedSuffix
+                     prefix:(iTermLocatedString *)locatedPrefix
+        respectHardNewlines:(BOOL)respectHardNewlines
+                  extractor:(iTermTextExtractor *)extractor {
     NSCharacterSet *const urlCharacterSet = [NSCharacterSet urlCharacterSet];
-    NSString *joined = [self.locatedPrefix.string stringByAppendingString:self.locatedSuffix.string];
+    NSString *joined = [locatedPrefix.string stringByAppendingString:locatedSuffix.string];
     int prefixChars = 0;
-    NSString *possibleUrl = [joined substringIncludingOffset:self.locatedPrefix.string.length
+    NSString *possibleUrl = [joined substringIncludingOffset:locatedPrefix.string.length
                                             fromCharacterSet:urlCharacterSet
                                         charsTakenFromPrefix:&prefixChars];
     const NSInteger suffixChars = (NSInteger)possibleUrl.length - prefixChars;
     if (suffixChars <= 0 ||
-        suffixChars < (NSInteger)self.locatedSuffix.string.length ||
-        self.locatedSuffix.gridCoords.count == 0) {
+        suffixChars < (NSInteger)locatedSuffix.string.length ||
+        locatedSuffix.gridCoords.count == 0) {
         return;
     }
     const int maxURLLength = 100 * 1024;
     const VT100GridCoord lastCoord =
-        [self.locatedSuffix.gridCoords coordAt:self.locatedSuffix.gridCoords.count - 1];
+        [locatedSuffix.gridCoords coordAt:locatedSuffix.gridCoords.count - 1];
     iTermLocatedString *extension =
-        [self.extractor locatedStringByWalkingForwardFrom:lastCoord
-                                             characterSet:urlCharacterSet
-                                                 maxChars:maxURLLength
-                                      respectHardNewlines:self.respectHardNewlines];
+        [extractor locatedStringByWalkingForwardFrom:lastCoord
+                                        characterSet:urlCharacterSet
+                                            maxChars:maxURLLength
+                                 respectHardNewlines:respectHardNewlines];
     if (extension.length > 0) {
         DLog(@"URL ran to end of suffix window; extended by %@ chars", @(extension.length));
-        [self.locatedSuffix appendLocatedString:extension];
+        [locatedSuffix appendLocatedString:extension];
     }
+}
+
+// The URL-like string ⌘-click detects at `coord`, including the same forward-window extension the
+// asynchronous ⌘-click path applies. This is the synchronous heart of -urlActionForURLLike (capture
+// the prefix/suffix around the click, extend past the capture window if the run reaches its edge,
+// then pull the URL-like substring out of the joined text) with none of the scheme guessing or
+// openability probing that follows. Exposed for unit tests.
++ (NSString *)urlLikeStringAtCoord:(VT100GridCoord)coord
+                respectHardNewlines:(BOOL)respectHardNewlines
+                          extractor:(iTermTextExtractor *)extractor {
+    const NSInteger maxChars = [iTermAdvancedSettingsModel maxSemanticHistoryPrefixOrSuffix];
+    iTermLocatedString *locatedPrefix =
+        [extractor wrappedLocatedStringAt:coord
+                                  forward:NO
+                      respectHardNewlines:respectHardNewlines
+                                 maxChars:maxChars
+                        continuationChars:[NSMutableIndexSet indexSet]
+                      convertNullsToSpace:NO];
+    iTermLocatedString *locatedSuffix =
+        [extractor wrappedLocatedStringAt:coord
+                                  forward:YES
+                      respectHardNewlines:respectHardNewlines
+                                 maxChars:maxChars
+                        continuationChars:[NSMutableIndexSet indexSet]
+                      convertNullsToSpace:NO];
+    [self extendLocatedSuffix:locatedSuffix
+                       prefix:locatedPrefix
+          respectHardNewlines:respectHardNewlines
+                    extractor:extractor];
+    NSString *joined = [locatedPrefix.string stringByAppendingString:locatedSuffix.string];
+    return [self urlLikeStringInString:joined
+                         aroundOffset:locatedPrefix.string.length
+                                range:NULL
+                          prefixChars:NULL];
 }
 
 - (URLAction *)urlActionForURLLike {

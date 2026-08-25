@@ -850,6 +850,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     const iTermAIAPI api = (iTermAIAPI)_apiPopup.selectedItem.tag;
     const BOOL functionCalling =
         _featureButtons[kAIManualModelFunctionCallingKey].state == NSControlStateValueOn;
+    const BOOL supportsTemperature =
+        _supportsTemperatureButton.state == NSControlStateValueOn;
 
     NSString *savedTitle = _testButton.title;
     _testButton.enabled = NO;
@@ -860,6 +862,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                                        url:url
                                        api:api
                            functionCalling:functionCalling
+                       supportsTemperature:supportsTemperature
                                   inWindow:_window
                                 completion:^(iTermAIConnectionTestOutcome outcome, NSString *message) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -1098,6 +1101,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     IBOutlet NSTextField *_aiTokenLimitLabel;
     IBOutlet NSButton *_resetAIPrompt;
     IBOutlet NSTextField *_aiTimeout;
+    IBOutlet NSButton *_automaticallyUpdateAIModels;
+    IBOutlet NSButton *_updateAIModelsNowButton;
 
     IBOutlet NSTextField *_aiPluginLabel;
     IBOutlet NSButton *_enableAI;
@@ -1921,6 +1926,24 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
+    info = [self defineControl:_automaticallyUpdateAIModels
+                           key:kPreferenceKeyAIModelUpdatesEnabled
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        if ([iTermPreferences boolForKey:kPreferenceKeyAIModelUpdatesEnabled]) {
+            // Ticking the visible, labeled checkbox is itself consent to the
+            // network fetch on this machine, so record it and skip the one-time
+            // consent modal here. A different machine that syncs this preference
+            // on still confirms via the modal (the existing per-machine logic).
+            [iTermUserDefaults setAiModelCatalogUpdateConsent:iTermAIModelCatalogUpdateConsentGranted];
+        }
+    };
+
     info = [self defineControl:_aiCustomHeadersEnabled
                            key:kPreferenceKeyAICustomHeadersEnabled
                    relatedView:nil
@@ -2228,6 +2251,54 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     [self updateAIAfterDefaultModelChange];
 }
 
+- (IBAction)updateAIModels:(id)sender {
+    _updateAIModelsNowButton.enabled = NO;
+    __weak __typeof(self) weakSelf = self;
+    [[iTermAIModelCatalogUpdater instance] checkNowWithCompletion:^(AIModelCatalogUpdateOutcome outcome) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        // Recompute enabled state (this re-enables the button unless AI was
+        // turned off while the check was running).
+        [strongSelf updateAIEnabled];
+        [strongSelf presentAIModelUpdateOutcome:outcome];
+    }];
+}
+
+- (void)presentAIModelUpdateOutcome:(AIModelCatalogUpdateOutcome)outcome {
+    NSString *title;
+    switch (outcome) {
+        case AIModelCatalogUpdateOutcomeUpdated:
+            title = @"A newer AI model list was downloaded. It will take effect the next time you launch iTerm2.";
+            break;
+        case AIModelCatalogUpdateOutcomeUpToDate:
+            title = @"Your AI model list is already up to date.";
+            break;
+        case AIModelCatalogUpdateOutcomeFailed:
+            title = @"Couldn’t check for AI model updates. Please try again later.";
+            break;
+        case AIModelCatalogUpdateOutcomeDisabled:
+            title = @"AI model updates are turned off in Advanced Settings (the update URL is empty).";
+            break;
+        case AIModelCatalogUpdateOutcomeNotEnabled:
+            title = @"Turn on AI features before checking for model updates.";
+            break;
+        case AIModelCatalogUpdateOutcomeBusy:
+            title = @"A check for AI model updates is already in progress.";
+            break;
+        case AIModelCatalogUpdateOutcomeDeclined:
+            // The user just dismissed or declined the consent modal; a second
+            // alert would be redundant.
+            return;
+    }
+    [iTermWarning showWarningWithTitle:title
+                               actions:@[ @"OK" ]
+                            identifier:nil
+                           silenceable:kiTermWarningTypePersistent
+                                window:self.view.window];
+}
+
 - (IBAction)defaultAIModelPopupDidChange:(id)sender {
     NSString *identifier = _aiVendor.selectedItem.representedObject;
     NSNumber *providerNumber = [self providerFromDefaultAIModelIdentifier:identifier];
@@ -2396,6 +2467,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _aiFeatureStreamingResponses.enabled = allowed;
     _aiSafetyCheck.enabled = allowed;
     _vectorStore.enabled = allowed;
+    _automaticallyUpdateAIModels.enabled = allowed;
+    _updateAIModelsNowButton.enabled = allowed;
 
     [self updateCoarseAIModelSettingsEnabled];
 }

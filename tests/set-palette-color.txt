@@ -1,0 +1,6 @@
+Palette-index color binding demo (issue 12991).
+  Badge color is bound to ANSI 1 (red).
+  Tab color is bound to ANSI 2 (green).
+Now change your Color Preset or toggle Dark Mode:
+the badge and tab colors follow the palette live.
+]1337;SetBadgeFormat=UEFMRVRURQ==]1337;SetColors=badge=i:1]1337;SetColors=tab=i:2

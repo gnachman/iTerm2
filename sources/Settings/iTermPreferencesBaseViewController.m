@@ -902,9 +902,9 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
 - (void)updateBoundExpressionForInfo:(PreferenceInfo *)info {
     if ([info.control conformsToProtocol:@protocol(iTermExpressionBindableView)]) {
         id<iTermExpressionBindableView> bindableView = (id<iTermExpressionBindableView>)info.control;
-        NSDictionary<NSString *, NSString *> *bindings = [NSDictionary castFrom:[self objectForKey:KEY_BINDINGS]];
+        NSDictionary *bindings = [NSDictionary castFrom:[self objectForKey:KEY_BINDINGS]];
         NSString *key = [self amendedKey:info.key];
-        bindableView.expression = bindings[key];
+        bindableView.expression = [iTermProfilePreferences expressionForBindingValue:bindings[key]];
     }
 }
 
@@ -1330,16 +1330,62 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
 }
 
 - (BOOL)revealControl:(NSView *)control {
-    // Is there an inner tab container view?
-    for (NSTabViewItem *item in self.tabView.tabViewItems) {
-        NSView *view = item.view;
-        if ([view containsDescendant:control]) {
-            if (self.tabView.selectedTabViewItem != item) {
-                [self.tabView selectTabViewItem:item];
-                return YES;
-            } else {
-                return NO;
+    if (!self.tabView) {
+        return NO;
+    }
+    return [self revealControl:control inSubtreeOfView:self.tabView];
+}
+
+// Selects whatever tab items are necessary (across arbitrarily nested tab
+// views) so that `control` is laid into the visible hierarchy. Returns YES if
+// any tab selection changed. This descends into unselected tab items, which
+// containsDescendant: cannot do because an unselected NSTabViewItem's view is
+// detached from the live view hierarchy (its superview chain is nil).
+- (BOOL)revealControl:(NSView *)control inSubtreeOfView:(NSView *)view {
+    if (view == control) {
+        return NO;
+    }
+    if ([view isKindOfClass:[NSTabView class]]) {
+        NSTabView *tabView = (NSTabView *)view;
+        for (NSTabViewItem *item in tabView.tabViewItems) {
+            if (![self view:item.view structurallyContainsDescendant:control]) {
+                continue;
             }
+            BOOL changed = NO;
+            if (tabView.selectedTabViewItem != item) {
+                [tabView selectTabViewItem:item];
+                changed = YES;
+            }
+            const BOOL innerChanged = [self revealControl:control inSubtreeOfView:item.view];
+            return changed || innerChanged;
+        }
+        return NO;
+    }
+    for (NSView *subview in view.subviews) {
+        if ([self view:subview structurallyContainsDescendant:control]) {
+            return [self revealControl:control inSubtreeOfView:subview];
+        }
+    }
+    return NO;
+}
+
+// Like containsDescendant: but traverses top-down and treats every tab view
+// item's view as part of the subtree even when the item isn't selected.
+- (BOOL)view:(NSView *)view structurallyContainsDescendant:(NSView *)control {
+    if (view == control) {
+        return YES;
+    }
+    if ([view isKindOfClass:[NSTabView class]]) {
+        for (NSTabViewItem *item in ((NSTabView *)view).tabViewItems) {
+            if ([self view:item.view structurallyContainsDescendant:control]) {
+                return YES;
+            }
+        }
+        return NO;
+    }
+    for (NSView *subview in view.subviews) {
+        if ([self view:subview structurallyContainsDescendant:control]) {
+            return YES;
         }
     }
     return NO;

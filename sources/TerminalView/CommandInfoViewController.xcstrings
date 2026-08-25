@@ -1,0 +1,162 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "08U-bp-m38.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"12 bytes\"; ObjectID = \"08U-bp-m38\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "12 bytes"
+          }
+        }
+      }
+    },
+    "0w1-N3-vpN.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"/directory\"; ObjectID = \"0w1-N3-vpN\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "/directory"
+          }
+        }
+      }
+    },
+    "KCF-7e-H8C.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Started at %@\"; ObjectID = \"KCF-7e-H8C\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Started at %@"
+          }
+        }
+      }
+    },
+    "MHQ-ga-Xvf.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"command\"; ObjectID = \"MHQ-ga-Xvf\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "command"
+          }
+        }
+      }
+    },
+    "OEf-DH-Kf3.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Directory:\"; ObjectID = \"OEf-DH-Kf3\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Directory:"
+          }
+        }
+      }
+    },
+    "Oj2-Xr-SWy.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Return Code:\"; ObjectID = \"Oj2-Xr-SWy\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Return Code:"
+          }
+        }
+      }
+    },
+    "Xwa-Sy-XcB.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Command:\"; ObjectID = \"Xwa-Sy-XcB\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Command:"
+          }
+        }
+      }
+    },
+    "YLQ-rO-0Mh.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"127\"; ObjectID = \"YLQ-rO-0Mh\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "127"
+          }
+        }
+      }
+    },
+    "YSm-Mh-1SD.title": {
+      "comment": "Class = \"NSButtonCell\"; title = \"Disable showing offscreen command\"; ObjectID = \"YSm-Mh-1SD\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Disable showing offscreen command"
+          }
+        }
+      }
+    },
+    "b7D-W4-4dx.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"1h 35m\"; ObjectID = \"b7D-W4-4dx\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "1h 35m"
+          }
+        }
+      }
+    },
+    "cYx-Tz-ls5.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Output:\"; ObjectID = \"cYx-Tz-ls5\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Output:"
+          }
+        }
+      }
+    },
+    "eS6-Vw-gbd.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Copied\"; ObjectID = \"eS6-Vw-gbd\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Copied"
+          }
+        }
+      }
+    },
+    "ueU-pI-V9e.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Running Time:\"; ObjectID = \"ueU-pI-V9e\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Running Time:"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

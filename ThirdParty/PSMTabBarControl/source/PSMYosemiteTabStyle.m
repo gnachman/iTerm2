@@ -8,6 +8,7 @@
 
 #import "PSMYosemiteTabStyle.h"
 
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "PSMCachedTitle.h"
 #import "NSColor+PSM.h"
@@ -1290,7 +1291,13 @@ const void *PSMTabStyleDarkColorKey = "dark";
 
     // Background to the right of the rightmost tab and left of the leftmost tab.
     NSColor *marginColor = [self backgroundColorSelected:NO highlightAmount:0];
-    [self drawBackgroundInRect:clipRect color:marginColor horizontal:horizontal];
+    // A scroll-margin pass asks us to paint just the bar background into a strip: it clips the graphics
+    // context to the strip and passes an empty clipRect so no cells draw. Filling an empty rect would
+    // paint nothing and leave the margin bare, so fall back to the full inRect (already clipped to the
+    // strip by the caller) in that case.
+    [self drawBackgroundInRect:(NSIsEmptyRect(clipRect) ? rect : clipRect)
+                         color:marginColor
+                    horizontal:horizontal];
 
     // Draw line above tab bar.
     NSColor *topLineColor = [self topLineColorSelected:NO];
@@ -1323,9 +1330,27 @@ const void *PSMTabStyleDarkColorKey = "dark";
     for (int i = 0; i < 2; i++) {
         NSInteger stateToDraw = (i == 0 ? NSControlStateValueOn : NSControlStateValueOff);
         for (PSMTabBarCell *cell in [bar cells]) {
-            if (![cell isInOverflowMenu] && NSIntersectsRect(NSInsetRect([cell frame], -1, -1), clipRect)) {
+            // A collapsed member is normally skipped, but while a collapse/expand
+            // slide is shrinking/growing its width it must draw (width > 0
+            // mid-slide; exactly 0 when fully collapsed, skipped again then).
+            const BOOL hiddenByCollapse = (cell.isCollapsedHidden && NSWidth(cell.frame) <= 0);
+            if (![cell isInOverflowMenu] && !hiddenByCollapse &&
+                NSIntersectsRect(NSInsetRect([cell frame], -1, -1), clipRect)) {
                 if (cell.state == stateToDraw) {
-                    [cell drawWithFrame:[cell frame] inView:bar];
+                    // Mid-slide a shrinking member can be far shorter than its
+                    // title; clip it to its frame so the label cannot spill past
+                    // the group outline (its label rect can even go negative-width
+                    // in the final frames). Not the selected tab: it draws a shadow
+                    // and progress ring outside its frame and the invariant keeps it
+                    // out of the animating group, so it is always full size.
+                    if (bar.collapseAnimating && cell.state != NSControlStateValueOn) {
+                        [NSGraphicsContext saveGraphicsState];
+                        [[NSBezierPath bezierPathWithRect:cell.frame] addClip];
+                        [cell drawWithFrame:cell.frame inView:bar];
+                        [NSGraphicsContext restoreGraphicsState];
+                    } else {
+                        [cell drawWithFrame:[cell frame] inView:bar];
+                    }
                     if ([self shouldDrawTopLineSelected:(stateToDraw == NSControlStateValueOn) attached:attachedToTitleBar position:bar.tabLocation]) {
                         [topLineColor set];
                         NSRectFill(NSMakeRect(NSMinX(cell.frame), 0, NSWidth(cell.frame), 1));
@@ -1351,10 +1376,252 @@ const void *PSMTabStyleDarkColorKey = "dark";
     [self drawDividerBetweenTabBarAndContent:rect bar:bar];
 
     for (PSMTabBarCell *cell in [bar cells]) {
-        if (![cell isInOverflowMenu] && NSIntersectsRect([cell frame], clipRect) && cell.state == NSControlStateValueOn) {
+        const BOOL hiddenByCollapse = (cell.isCollapsedHidden && NSWidth(cell.frame) <= 0);
+        if (![cell isInOverflowMenu] && !hiddenByCollapse &&
+            NSIntersectsRect([cell frame], clipRect) && cell.state == NSControlStateValueOn) {
             [cell drawPostHocDecorationsOnSelectedCell:cell tabBarControl:bar];
         }
     }
+
+    [self drawTabGroupRunDecorationsForTabBar:bar clipRect:clipRect];
+}
+
+// Squared tab-group run decoration, shared by the non-Tahoe styles (Yosemite,
+// Dark, Compact, and Minimal, which subclasses this). Corners are squared and
+// the 1pt outline sits just outside the tabs (no inward inset). The name and the
+// colored area up to the first tab are a solid group-color block, with the name
+// in a contrasting color.
+static const CGFloat kPSMSquaredGroupNamePad = 10;   // horizontal padding in the name block
+static const CGFloat kPSMSquaredGroupNameVPad = 6;   // vertical padding (vertical bar)
+static const CGFloat kPSMSquaredGroupBArea = 6;      // colored area between the name and the first tab
+static const CGFloat kPSMSquaredGroupOutset = 1;     // outline sits this far outside the tabs
+static const CGFloat kPSMSquaredCollapsedChevron = 14;  // room for the collapse chevron on a collapsed chip
+
+- (BOOL)usesExternalTabGroupDecoration {
+    return YES;
+}
+
+- (NSFont *)squaredGroupNameFont {
+    return [NSFont boldSystemFontOfSize:[NSFont systemFontSize]];
+}
+
+- (CGFloat)tabGroupChipCellWidthForName:(NSString *)name {
+    const CGFloat textWidth = ceil([(name ?: @"") sizeWithAttributes:@{ NSFontAttributeName: [self squaredGroupNameFont] }].width);
+    return textWidth + kPSMSquaredGroupNamePad * 2 + kPSMSquaredGroupBArea;
+}
+
+- (CGFloat)tabGroupChipCellHeightForName:(NSString *)name {
+    NSFont *font = [self squaredGroupNameFont];
+    const CGFloat textHeight = ceil(font.ascender - font.descender);
+    return textHeight + kPSMSquaredGroupNameVPad * 2 + kPSMSquaredGroupBArea;
+}
+
+// Text color that contrasts with the group color (the name sits on the color).
+- (NSColor *)squaredGroupNameTextColorForColor:(NSColor *)color {
+    return [color psmContrastingTextColor];
+}
+
+- (void)drawTabGroupRunDecorationsForTabBar:(PSMTabBarControl *)bar clipRect:(NSRect)clipRect {
+    if (![self usesExternalTabGroupDecoration] || bar.suppressTabGroupRunDecoration) {
+        return;
+    }
+    // An empty clipRect is the "background only" signal used when repainting a
+    // scroll margin strip (the stoplight band, the add-button margin). The cell
+    // loop honors it; the run/chip decoration must too, or a chip or outline
+    // scrolled into that strip would draw under the window buttons.
+    if (NSIsEmptyRect(clipRect)) {
+        return;
+    }
+    const BOOL horizontal = (bar.orientation == PSMTabBarHorizontalOrientation);
+    // The bar owns run detection (placeholder transparency, join-slot union);
+    // this style only draws the geometry it is handed.
+    [bar enumerateTabGroupRunsWithRect:nil
+                                 block:^(PSMTabBarCell *chip,
+                                         NSRect tabsRect,
+                                         PSMTabBarCell *firstTab,
+                                         NSString *gid) {
+        [self drawSquaredTabGroupRunHorizontal:horizontal
+                                          chip:chip
+                                      tabsRect:tabsRect
+                                      firstTab:firstTab
+                                       groupID:gid
+                                         inBar:bar];
+    }];
+    // A fully collapsed run has no visible members, so the block above never
+    // fires for it; draw the collapsed chip's self-contained affordance.
+    [bar enumerateCollapsedTabGroupChipsWithBlock:^(PSMTabBarCell *chip,
+                                                    NSInteger memberCount,
+                                                    NSString *gid) {
+        [self drawSquaredCollapsedTabGroupChip:chip memberCount:memberCount groupID:gid inBar:bar];
+    }];
+}
+
+// The collapsed chip's label: "Name  N", or just "N" when the group is unnamed.
+- (NSString *)collapsedLabelForName:(NSString *)name count:(NSInteger)count {
+    if (name.length > 0) {
+        return [NSString stringWithFormat:@"%@  %@", name, @(count)];
+    }
+    return [@(count) stringValue];
+}
+
+- (CGFloat)tabGroupCollapsedChipCellWidthForName:(NSString *)name memberCount:(NSInteger)count {
+    NSString *label = [self collapsedLabelForName:name count:count];
+    const CGFloat textWidth = ceil([label sizeWithAttributes:@{ NSFontAttributeName: [self squaredGroupNameFont] }].width);
+    return textWidth + kPSMSquaredGroupNamePad * 2 + kPSMSquaredCollapsedChevron;
+}
+
+- (void)drawSquaredCollapsedTabGroupChip:(PSMTabBarCell *)chip
+                             memberCount:(NSInteger)count
+                                 groupID:(NSString *)gid
+                                   inBar:(PSMTabBarControl *)bar {
+    id<PSMTabGroup> group = [bar.tabGroupDataSource tabGroupWithIdentifier:gid];
+    NSColor *groupColor = group.color ?: [NSColor systemBlueColor];
+    NSString *name = group.name ?: @"";
+    NSColor *textColor = [self squaredGroupNameTextColorForColor:groupColor];
+    NSFont *font = [self squaredGroupNameFont];
+    const CGFloat outset = kPSMSquaredGroupOutset;
+
+    NSRect box = NSMakeRect(NSMinX(chip.frame), NSMinY(chip.frame) - outset,
+                            NSWidth(chip.frame), NSHeight(chip.frame) + 2 * outset);
+    box = NSIntersectionRect(box, bar.bounds);
+    // Leave the trailing divider (see drawSquaredTabGroupRunHorizontal): the
+    // bottom row on a horizontal bar, the right column on a vertical bar.
+    // Reducing height on a vertical bar would drop the name band's midY half a
+    // point below the expanded run's, so the name jumps at the collapse handoff.
+    if (bar.orientation == PSMTabBarHorizontalOrientation) {
+        box.size.height = MAX(0, NSHeight(box) - 1);
+    } else {
+        box.size.width = MAX(0, NSWidth(box) - 1);
+    }
+    if (NSWidth(box) <= 0 || NSHeight(box) <= 0) {
+        return;
+    }
+
+    // Solid group-color block.
+    [groupColor set];
+    NSRectFill(box);
+
+    // Label ("Name  N"), left-aligned, leaving room for the chevron.
+    NSString *label = [self collapsedLabelForName:name count:count];
+    NSMutableParagraphStyle *para = [[NSMutableParagraphStyle alloc] init];
+    para.alignment = NSTextAlignmentLeft;
+    para.lineBreakMode = NSLineBreakByTruncatingTail;
+    NSDictionary *attrs = @{ NSFontAttributeName: font,
+                             NSForegroundColorAttributeName: textColor,
+                             NSParagraphStyleAttributeName: para };
+    const CGFloat textHeight = ceil(font.ascender - font.descender);
+    const CGFloat pad = kPSMSquaredGroupNamePad;
+    const CGFloat chevronW = kPSMSquaredCollapsedChevron;
+    NSRect textRect = NSMakeRect(NSMinX(box) + pad,
+                                 NSMidY(box) - textHeight / 2.0,
+                                 MAX(0, NSWidth(box) - pad * 2 - chevronW),
+                                 textHeight);
+    [label drawInRect:textRect withAttributes:attrs];
+
+    // Downward chevron: the collapse affordance.
+    const CGFloat cx = NSMaxX(box) - pad - chevronW / 2.0;
+    const CGFloat cy = NSMidY(box);
+    const CGFloat half = 3;
+    NSBezierPath *chevron = [NSBezierPath bezierPath];
+    [chevron moveToPoint:NSMakePoint(cx - half, cy + half / 2.0)];
+    [chevron lineToPoint:NSMakePoint(cx, cy - half / 2.0)];
+    [chevron lineToPoint:NSMakePoint(cx + half, cy + half / 2.0)];
+    chevron.lineWidth = 1.5;
+    chevron.lineCapStyle = NSLineCapStyleRound;
+    chevron.lineJoinStyle = NSLineJoinStyleRound;
+    [textColor setStroke];
+    [chevron stroke];
+
+    // Squared enclosing outline.
+    [groupColor set];
+    NSFrameRectWithWidthUsingOperation(box, 1, NSCompositingOperationSourceOver);
+}
+
+- (void)drawSquaredTabGroupRunHorizontal:(BOOL)horizontal
+                                    chip:(PSMTabBarCell *)chip
+                                tabsRect:(NSRect)tabsRect
+                                firstTab:(PSMTabBarCell *)firstTab
+                                 groupID:(NSString *)gid
+                                   inBar:(PSMTabBarControl *)bar {
+    id<PSMTabGroup> group = [bar.tabGroupDataSource tabGroupWithIdentifier:gid];
+    NSColor *groupColor = group.color ?: [NSColor systemBlueColor];
+    NSString *name = group.name ?: @"";
+    NSColor *textColor = [self squaredGroupNameTextColorForColor:groupColor];
+    NSFont *font = [self squaredGroupNameFont];
+    const NSRect chipFrame = chip.frame;
+    const NSRect firstVis = firstTab.frame;
+    const CGFloat outset = kPSMSquaredGroupOutset;
+
+    // The run spans from the chip's leading edge to the tabs' trailing edge, at
+    // the tab height. No trailing outset: the box's trailing line sits flush
+    // with the tabs' far edge, not 1pt beyond it.
+    NSRect pill;
+    if (horizontal) {
+        pill = NSMakeRect(NSMinX(chipFrame),
+                          NSMinY(tabsRect) - outset,
+                          NSMaxX(tabsRect) - NSMinX(chipFrame),
+                          NSHeight(tabsRect) + 2 * outset);
+    } else {
+        pill = NSMakeRect(NSMinX(tabsRect) - outset,
+                          NSMinY(chipFrame),
+                          NSWidth(tabsRect) + 2 * outset,
+                          NSMaxY(tabsRect) - NSMinY(chipFrame));
+    }
+
+    // When the tabs fill the whole bar (e.g. Compact/Yosemite have no cell
+    // inset), the outset would push the top/leading edge past the bar; clamp so
+    // it sits flush on-bar. No-op for themes whose tabs leave room for the outset.
+    const NSRect barBounds = bar.bounds;
+    pill = NSIntersectionRect(pill, barBounds);
+
+    // The trailing row (bottom for horizontal, right for vertical) is owned by
+    // the tab-bar/content divider that a neighbor paints after us, so pull the
+    // box in 1pt there. This lets a uniform 1pt divider show beneath the whole
+    // run and keeps the box's trailing stroke from being overpainted.
+    NSRect box = pill;
+    if (horizontal) {
+        box.size.height = MAX(0, NSHeight(box) - 1);
+    } else {
+        box.size.width = MAX(0, NSWidth(box) - 1);
+    }
+
+    // Solid group-color block: the chip name area up to the first tab, sized to
+    // the box so the divider reads identically under the chip and under the tabs.
+    NSRect solid;
+    if (horizontal) {
+        solid = NSMakeRect(NSMinX(box), NSMinY(box),
+                           MAX(0, NSMinX(firstVis) - NSMinX(box)), NSHeight(box));
+    } else {
+        solid = NSMakeRect(NSMinX(box), NSMinY(box),
+                           NSWidth(box), MAX(0, NSMinY(firstVis) - NSMinY(box)));
+    }
+
+    // Solid group-color block for the name and the colored area up to the tab.
+    [groupColor set];
+    NSRectFill(solid);
+
+    // Name (bold, left-aligned, on the color).
+    if (name.length > 0) {
+        NSMutableParagraphStyle *para = [[NSMutableParagraphStyle alloc] init];
+        para.alignment = NSTextAlignmentLeft;
+        para.lineBreakMode = NSLineBreakByTruncatingTail;
+        NSDictionary *attrs = @{ NSFontAttributeName: font,
+                                 NSForegroundColorAttributeName: textColor,
+                                 NSParagraphStyleAttributeName: para };
+        const CGFloat textHeight = ceil(font.ascender - font.descender);
+        const CGFloat pad = kPSMSquaredGroupNamePad;
+        NSRect textRect = NSMakeRect(NSMinX(solid) + pad,
+                                     NSMidY(solid) - textHeight / 2.0,
+                                     MAX(0, NSWidth(solid) - pad * 2),
+                                     textHeight);
+        [name drawInRect:textRect withAttributes:attrs];
+    }
+
+    // Squared enclosing outline (1pt) on the trailing-inset box computed above.
+    // The box is integral, so frame it directly on whole pixels (no half-pixel
+    // inset, which would blur the strokes and clip them at the bar edge).
+    [groupColor set];
+    NSFrameRectWithWidthUsingOperation(box, 1, NSCompositingOperationSourceOver);
 }
 
 - (void)drawDividerBetweenTabBarAndContent:(NSRect)rect bar:(PSMTabBarControl *)bar {

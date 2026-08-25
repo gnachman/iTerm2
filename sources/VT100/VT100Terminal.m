@@ -1345,7 +1345,7 @@ static const int kMaxScreenRows = 4096;
                 }
                 break;
 
-            case 997:  // https://github.com/contour-terminal/contour/blob/master/docs/vt-extensions/color-palette-update-notifications.md
+            case 996:  // https://github.com/contour-terminal/contour/blob/master/docs/vt-extensions/color-palette-update-notifications.md
                 // Send CSI ? 996 n to the terminal to explicitly request the current color preference (dark mode or light mode) by the operating system.
                 // The terminal will reply back in either of the two ways:
                 // VT sequence      description
@@ -2642,6 +2642,22 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             }
             break;
         }
+        case XTERMCC_KITTY_DND:
+            // OSC 72: one escape sequence of the Kitty drag-and-drop protocol.
+            // token.string is the content after "72;" (metadata plus optional
+            // base64 payload). Chunk reassembly and interpretation happen in the
+            // per-session controller; here we just forward the raw content.
+            if (token.string) {
+                [_delegate terminalDidReceiveKittyDragAndDrop:token.string];
+            } else {
+                // The accumulated OSC bytes were not decodable in the session
+                // encoding (a corrupted or non-ASCII stream; conforming senders use
+                // ASCII metadata/base64). Log rather than silently drop, since a
+                // dropped chunk can leave the reassembler pending until the next
+                // prompt reset. See docs/kitty-dnd-design.md section 8.
+                DLog(@"Dropping undecodable OSC 72 (Kitty DnD) sequence");
+            }
+            break;
         case XTERMCC_RESET_COLOR:
             [self resetColors:token.string];
             break;

@@ -653,15 +653,10 @@ static NSString *iTermSocketEndpointString(const struct in_sockinfo *in, BOOL lo
             block(nil);
             return;
         }
-        if (@available(macOS 10.15, *)) {
-            NSString *dir = [[iTermSyntheticConfParser sharedInstance] pathByReplacingPrefixWithSyntheticRoot:rawDir];
-            DLog(@"Result: %@ -> %@", rawDir, dir);
-            block(dir);
-            return;
-        }
-        // pre-10.15 code path - no synthetics existed
-        DLog(@"Result: %@", rawDir);
-        block(rawDir);
+        NSString *dir = [[iTermSyntheticConfParser sharedInstance] pathByReplacingPrefixWithSyntheticRoot:rawDir];
+        DLog(@"Result: %@ -> %@", rawDir, dir);
+        block(dir);
+        return;
     }];
 }
 
