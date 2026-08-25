@@ -921,11 +921,27 @@ DEFINE_STRING(companionRelayOrigin, @"https://relay.iterm2.com", SECTION_GENERAL
 DEFINE_STRING(companionResolverURL, @"https://resolver.iterm2.com/shardmap.json", SECTION_GENERAL @"Shard-map URL for companion iOS device pairing.\nAn https URL pointing directly at the static shard-map JSON, used to find the relay shard that serves the phone-to-mac connection. It is fetched verbatim (nothing is appended). Leave empty to use direct connections (such as if you run your own relay).");
 DEFINE_STRING(llmPlatform, @"OpenAI", SECTION_GENERAL @"LLM Platform.\nLegal values are: OpenAI, Azure, Gemini. This determines the format of requests and responses.");
 DEFINE_STRING(aiModelCatalogURL, @"https://iterm2.com/downloads/ai/manifest.json", SECTION_GENERAL @"URL to check for updates to the AI model catalog.\nThe catalog defines the built-in AI models (context window, capabilities, and the recommended model per vendor). iTerm2 periodically downloads a signed newer copy so new models become available without an app update. This happens only when AI features are enabled and you have granted permission; a non-empty URL by itself does not enable checking. Clearing this URL disables checking entirely.");
-DEFINE_BOOL(alternateScreenBidi, YES, SECTION_EXPERIMENTAL @"When right-to-left text support is enabled, also support it in alternate screen mode?");
 DEFINE_BOOL(aquaSKKBugfixEnabled, NO, SECTION_EXPERIMENTAL @"Enable AquaSKK bugfix?")
 DEFINE_BOOL(channelsEnabled, NO, SECTION_EXPERIMENTAL @"Enable Channels feature?")
 DEFINE_BOOL(rightJustifyRTLLines, YES, SECTION_EXPERIMENTAL @"Right-justify lines in paragraphs with base writing direction of right-to-left?\nRequires BOTH “right-to-left text support” and “auto-detect paragraph writing detection” to be enabled.");
 DEFINE_BOOL(detectParagraphDirection, NO, SECTION_EXPERIMENTAL @"Auto-detect paragraph writing direction based on the first strong directional character?\nRequires right-to-left text support to be enabled.");
+// This defaults to NO, so right-to-left text IS reordered in the alternate
+// screen by default. That default came from issue 12131: a Persian user found
+// RTL text rendered correctly outside vim but reversed inside it, while macOS
+// Terminal reorders in the alternate screen and got both cases right. He
+// confirmed that reordering fixed his editor and asked for it on by default.
+//
+// Pros of reordering (the default): editors and pagers that emit text in logical
+// order and rely on the terminal for bidi then display correctly. vim in
+// particular hands bidi to the terminal when 'set termbidi' is on, so the
+// terminal has to reorder for it to look right; plain vim/nvim, less, and
+// similar also benefit. This matches macOS Terminal.
+//
+// Cons (why this opt-out exists): some full-screen apps position their own text
+// with absolute cursor moves and pre-order it for display (certain agent CLIs).
+// Reordering it a second time fights their layout. Turning this setting on
+// leaves alternate-screen text unreordered for those cases.
+DEFINE_BOOL(disableBidiInAlternateScreen, NO, SECTION_EXPERIMENTAL @"Do not reorder right-to-left text in the alternate screen?\nFull-screen apps (editors and some CLIs) position their own text and may already order it for display, so reordering it again fights their layout. Turn this on to leave alternate-screen text unreordered. Requires right-to-left text support.");
 DEFINE_BOOL(browserProfiles, YES, SECTION_EXPERIMENTAL @"Enable browser-style profiles?\nYou must restart iTerm2 for this to take effect.");
 DEFINE_BOOL(companionStreamFrameNumbers, NO, SECTION_EXPERIMENTAL @"Stamp frame numbers into the iTerm2 Buddy live stream?\nDraws a monotonic counter onto each streamed video frame, for debugging the phone’s live session view.");
 DEFINE_INT(companionStreamMaxLeadMilliseconds, 500, SECTION_EXPERIMENTAL @"iTerm2 Buddy live stream: maximum capture-time lead, in milliseconds.\nThe host stops sending new frames once it is more than this far ahead of the last frame the phone acknowledged, then resumes when the phone catches up. Larger values tolerate more link latency at the cost of a live view that can lag further behind. Only the frame rate is affected; per-frame quality is unchanged.");
