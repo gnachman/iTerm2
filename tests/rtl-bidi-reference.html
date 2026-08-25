@@ -1,0 +1,68 @@
+<meta charset="utf-8">
+<title>RTL bidi reference — Safari vs iTerm2</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 15px/1.35 -apple-system, system-ui, sans-serif; margin: 24px; max-width: 1100px; }
+  h1 { font-size: 20px; }
+  p.note { opacity: .75; }
+  table { border-collapse: collapse; width: 100%; margin-top: 16px; }
+  th, td { border: 1px solid #8884; padding: 10px 12px; vertical-align: top; }
+  th { text-align: left; background: #8881; position: sticky; top: 0; }
+  td.label { width: 190px; opacity: .8; font: 12px/1.3 ui-monospace, Menlo, monospace; }
+  .mono { font: 20px/1.7 ui-monospace, "SF Mono", Menlo, monospace; white-space: pre; }
+  /* Reference: let the browser's bidi engine lay it out as RTL, like a terminal line. */
+  .ref { direction: rtl; unicode-bidi: isolate; }
+  /* The logical bytes exactly as sent (what iTerm2 receives), shown left-to-right. */
+  .logical { direction: ltr; unicode-bidi: bidi-override; opacity: .65; font-size: 15px; }
+  caption { text-align: left; opacity: .7; padding: 6px 0; }
+</style>
+
+<h1>RTL rendering reference (Safari = correct) vs iTerm2</h1>
+<p class="note">Each row shows the same Persian/English line two ways. <b>Reference</b> is how Safari's bidi engine lays it out (the benchmark). <b>Logical bytes</b> is the raw character order that was sent (what iTerm2 receives, before it reorders). Compare the <b>Reference</b> column to what your iTerm2 draws for the same input.</p>
+
+<table>
+  <tr><th>Case</th><th>Reference (Safari, correct)</th><th>Logical bytes (as sent)</th></tr>
+
+  <tr>
+    <td class="label">list marker + English + em-dash</td>
+    <td class="mono ref">۱. Motivation — نود درصد انگیزه بود</td>
+    <td class="mono logical">۱. Motivation — نود درصد انگیزه بود</td>
+  </tr>
+  <tr>
+    <td class="label">list marker + English + percent</td>
+    <td class="mono ref">۲. Therapy — به روانشناس گفتم ۷۰٪ مشکلاتم مالیه</td>
+    <td class="mono logical">۲. Therapy — به روانشناس گفتم ۷۰٪ مشکلاتم مالیه</td>
+  </tr>
+  <tr>
+    <td class="label">multi-item list (like the joke)</td>
+    <td class="mono ref">۵. Small — یک تغییر در هر درخواست، پانصد خطی را فقط تأیید میکنی</td>
+    <td class="mono logical">۵. Small — یک تغییر در هر درخواست، پانصد خطی را فقط تأیید میکنی</td>
+  </tr>
+  <tr>
+    <td class="label">period after English word</td>
+    <td class="mono ref">۱. burnout. من دیگه که feel نمیشه.</td>
+    <td class="mono logical">۱. burnout. من دیگه که feel نمیشه.</td>
+  </tr>
+  <tr>
+    <td class="label">percent in a mixed run</td>
+    <td class="mono ref">۳. personality. من الان ۷۰٪ caffeine و ۲۰٪ اضطراب.</td>
+    <td class="mono logical">۳. personality. من الان ۷۰٪ caffeine و ۲۰٪ اضطراب.</td>
+  </tr>
+  <tr>
+    <td class="label">combining marks (hamza / fathatan)</td>
+    <td class="mono ref">مغزم دقیقاً تو حالت loading و تا قهوهٔ دوم ۷۰٪ خالی مانده.</td>
+    <td class="mono logical">مغزم دقیقاً تو حالت loading و تا قهوهٔ دوم ۷۰٪ خالی مانده.</td>
+  </tr>
+  <tr>
+    <td class="label">slashes + English + parens</td>
+    <td class="mono ref">بگو یا کاری/burnout، عشقی/situationship، یا کامل/nihilist.</td>
+    <td class="mono logical">بگو یا کاری/burnout، عشقی/situationship، یا کامل/nihilist.</td>
+  </tr>
+  <tr>
+    <td class="label">ZWNJ half-space + percent</td>
+    <td class="mono ref">من مشکل بی‌خوابی ندارم، فقط ۲۰٪ شارژ دارم.</td>
+    <td class="mono logical">من مشکل بی‌خوابی ندارم، فقط ۲۰٪ شارژ دارم.</td>
+  </tr>
+</table>
+
+<p class="note">Note: iTerm2's <code>IsolateLatinRunsInRTL</code> setting deliberately keeps English words in left-to-right order (islands), which can differ from Safari's pure Unicode-bidi order for the English runs. But the <i>list marker</i>, numbers, and punctuation placement should match. That's the comparison that matters here.</p>

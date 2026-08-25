@@ -12,6 +12,7 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermBackgroundColorRun.h"
 #import "iTermBoxDrawingBezierCurveFactory.h"
+#import "iTermCharacterSets.h"
 #import "iTermExternalAttributeIndex.h"
 #import "iTermColorMap.h"
 #import "iTermMutableAttributedStringBuilder.h"
@@ -437,6 +438,27 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
         unichar code = c.code;
         BOOL isComplex = c.complexChar;
 
+        // UBA rule L4: draw a bidi-mirrorable character as its counterpart when
+        // CoreText resolved it to right-to-left. Driven by the per-cell set
+        // BidiDisplayInfo computed from CoreText's real resolution, so brackets
+        // around an embedded LTR run (e.g. Persian «(English)») are correctly
+        // left un-mirrored. Only simple (non-complex) cells can mirror.
+        BOOL manuallyMirrored = NO;
+        if (!isComplex && [bidiInfo mirrorsSourceCell:i]) {
+            code = iTermBidiMirroredCounterpart(code);
+            manuallyMirrored = YES;
+            // The glyph is now the mirrored counterpart and must be drawn as-is. Mark
+            // the cell left-to-right so it gets an LTR writing-direction override: that
+            // stops CoreText from mirroring it a second time (the double-mirror that drew
+            // "(تهران)" as ")تهران(" when the bracket shared a CoreText run with RTL
+            // letters) and segments it out of the surrounding RTL run so its direction
+            // can differ from the shaped letters around it.
+            c.rtlStatus = RTLStatusLTR;
+        }
+        // Writing direction to draw this cell with. A manually-mirrored cell was
+        // forced LTR above; every other cell follows its resolved rtlStatus.
+        const BOOL charIsRTL = manuallyMirrored ? NO : (c.rtlStatus == RTLStatusRTL);
+
         NSString *charAsString;
 
         CGFloat xPosition;
@@ -462,12 +484,12 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 // complicating its ASCII fastpath.
                 int lastCellDraw;
                 if (bidiLUT && i - 1 < bidiLUTLength) {
-                    lastCellDraw = bidiLUT[i - i];
+                    lastCellDraw = bidiLUT[i - 1];
                 } else {
                     lastCellDraw = i - 1;
                 }
                 [builder appendString:charAsString
-                                  rtl:c.rtlStatus == RTLStatusRTL
+                                  rtl:charIsRTL
                            sourceCell:i
                            drawInCell:lastCellDraw];
                 const CGFloat lastValue = CTVectorGet(positions, CTVectorCount(positions) - 1);
@@ -530,7 +552,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 [self updateBuilder:builder
                          withString:drawable ? charAsString : @" "
                         orCharacter:code
-                                rtl:c.rtlStatus == RTLStatusRTL
+                                rtl:charIsRTL
                           positions:positions
                              offset:xPosition
                          sourceCell:i
@@ -638,7 +660,7 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
             [self updateBuilder:builder
                      withString:drawable ? charAsString : @" "
                     orCharacter:code
-                            rtl:c.rtlStatus == RTLStatusRTL
+                            rtl:charIsRTL
                       positions:positions
                          offset:xPosition
                      sourceCell:i

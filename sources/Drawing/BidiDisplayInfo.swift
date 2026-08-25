@@ -124,12 +124,23 @@ struct ResolvedCellPosition: Comparable {
 
 fileprivate struct IntermediateLookupTable {
     var rtlIndexes = IndexSet()
+    // Source cells to draw bidi-mirrored (UBA rule L4): a mirrorable character
+    // that CoreText resolved into a right-to-left run. See the loop below.
+    var mirroredIndexes = IndexSet()
     var sourceCellToPositionRange: Array<ClosedRange<CGFloat>?>
     var count: Int
 
-    init(line: CTLine, deltas: UnsafePointer<Int32>, count: Int) {
+    // `string` is what CoreText laid out. `deltas` maps each UTF-16 index of
+    // `string` to its source cell (a cumulative sum, since a wide character or
+    // surrogate pair occupies more UTF-16 units than cells).
+    init(line: CTLine, string: NSString, deltas: UnsafePointer<Int32>, count: Int) {
         self.count = count
         let runs = CTLineGetGlyphRuns(line) as! [CTRun]
+
+        func cell(_ stringIndex: Int) -> Int {
+            guard stringIndex >= 0 && stringIndex < string.length else { return -1 }
+            return Int(CellOffsetFromUTF16Offset(Int32(stringIndex), deltas))
+        }
 
         // Source cell to range of positions
         sourceCellToPositionRange = Array<ClosedRange<CGFloat>?>(repeating: nil, count: count)
@@ -140,21 +151,48 @@ fileprivate struct IntermediateLookupTable {
             // Update rtlIndexes
             if isRTL {
                 for stringIndex in run.stringRange {
-                    let sourceCell = Int(CellOffsetFromUTF16Offset(Int32(stringIndex), deltas))
-                    rtlIndexes.insert(sourceCell)
+                    let sourceCell = cell(stringIndex)
+                    if sourceCell >= 0 { rtlIndexes.insert(sourceCell) }
                 }
             }
 
-            // Update sourceCellToPositionRange
+            // Update sourceCellToPositionRange, and detect L4 mirroring.
             let positions = run.positions
             for i in 0..<run.glyphCount {
                 let stringIndex = stringIndices[i]
-                let sourceCell = Int(CellOffsetFromUTF16Offset(Int32(stringIndex), deltas))
+                let sourceCell = cell(stringIndex)
+                if sourceCell < 0 { continue }  // out of range (shouldn't happen)
+                // Only the cell's base character (its first UTF-16 unit) may
+                // set the cell's position. A combining mark merged into a cell
+                // is a zero-advance glyph positioned over its base's glyph, or
+                // over a ligature that consumed the base, as in کاملاً where
+                // the fathatan rides the lam-alef ligature. Crediting the
+                // mark's x to the cell gave the alef's cell an absolute
+                // position at/right of the ligature's origin, sorting it to the
+                // wrong side of the lam. Ignored, the cell falls back to
+                // leftOfPredecessor/rightOfPredecessor as ligature-consumed
+                // cells are meant to.
+                if stringIndex > 0 && cell(stringIndex - 1) == sourceCell { continue }
                 if var existing = sourceCellToPositionRange[sourceCell] {
                     existing.formUnion(positions[i].x...positions[i].x)
                     sourceCellToPositionRange[sourceCell] = existing
                 } else {
                     sourceCellToPositionRange[sourceCell] = positions[i].x...positions[i].x
+                }
+
+                // UBA rule L4: a mirrorable character is drawn mirrored iff its
+                // resolved bidi level is odd (right-to-left). A CTRun's direction
+                // is exactly that level parity, so a mirrorable character in an
+                // RTL run mirrors and one in an LTR run does not. This covers the
+                // N0 bracket-pair cases for free: brackets around an embedded
+                // left-to-right run (e.g. Persian «(English)») are resolved to an
+                // even level by CoreText and land in an LTR run, so isRTL is false
+                // and they are correctly left un-mirrored.
+                if isRTL, stringIndex >= 0, stringIndex < string.length {
+                    let ch = string.character(at: stringIndex)
+                    if iTermBidiMirroredCounterpart(ch) != ch {
+                        mirroredIndexes.insert(sourceCell)
+                    }
                 }
             }
         }
@@ -196,30 +234,73 @@ fileprivate struct IntermediateLookupTable {
     }
 }
 
+// Empty cells hold code 0, which ScreenCharArrayToString stringifies to U+0000.
+// A TUI (Claude Code / Ink) positions words with absolute-column moves (CHA,
+// ESC[<n>G) and never writes real spaces, so the gaps between words are code-0
+// holes. U+0000 is bidi class BN (Boundary Neutral); next to a number (EN) or a
+// ZWNJ it perturbs the reorder so every following cell maps one visual column
+// too far, and the line renders with spaces inside words. Treat holes as real
+// spaces (bidi-neutral whitespace, one UTF-16 unit each so all cell/delta
+// indices are unchanged), which is also how empty cells actually draw.
+private func replacingNulWithSpace(_ s: NSString) -> NSString {
+    let n = s.length
+    guard n > 0 else { return s }
+    var buf = [unichar](repeating: 0, count: n)
+    s.getCharacters(&buf, range: NSRange(location: 0, length: n))
+    var changed = false
+    for i in 0..<n where buf[i] == 0 {
+        buf[i] = 0x20
+        changed = true
+    }
+    return changed ? NSString(characters: buf, length: n) : s
+}
+
 // Make a lookup table that maps source cell to display cell.
-fileprivate func makeLookupTable(_ attributedString: NSAttributedString,
-                                     deltas: UnsafePointer<Int32>,
-                                 count: Int) -> ([Int32], IndexSet, Bool) {
+fileprivate func makeLookupTable(_ string: NSString,
+                                 deltas: UnsafePointer<Int32>,
+                                 count: Int) -> ([Int32], IndexSet, IndexSet, Bool) {
+    let paragraphIsRTL: Bool =
+        iTermAdvancedSettingsModel.detectParagraphDirection() &&
+        detectedParagraphIsRTL(string)
+    // Lay the CTLine out with the same base direction the line is justified
+    // with, so justification and the neutrals' resolved positions agree.
+    let paragraphStyle = NSMutableParagraphStyle()
+    if iTermAdvancedSettingsModel.detectParagraphDirection() {
+        paragraphStyle.baseWritingDirection = paragraphIsRTL ? .rightToLeft : .leftToRight
+    } else {
+        paragraphStyle.baseWritingDirection = .leftToRight
+    }
+    let attributedString = NSAttributedString(string: string as String,
+                                              attributes: [.paragraphStyle: paragraphStyle])
     // Create a CTLine from the attributed string
     let line = CTLineCreateWithAttributedString(attributedString)
-    let intermediate = IntermediateLookupTable(line: line, deltas: deltas, count: count)
+    let intermediate = IntermediateLookupTable(line: line,
+                                               string: string,
+                                               deltas: deltas,
+                                               count: count)
 
-    let firstStrongLTR = attributedString.string.rangeOfCharacter(from: NSCharacterSet.strongLTRCodePoints())
-    let firstStrongRTL = attributedString.string.rangeOfCharacter(from: NSCharacterSet.strongRTLCodePoints())
+    return (intermediate.lut, intermediate.rtlIndexes, intermediate.mirroredIndexes, paragraphIsRTL)
+}
 
-    let paragraphIsRTL: Bool =
-        if iTermAdvancedSettingsModel.detectParagraphDirection() {
-            if let firstStrongLTR, let firstStrongRTL {
-                firstStrongLTR.lowerBound > firstStrongRTL.lowerBound
-            } else if firstStrongRTL != nil {
-                true
-            } else {
-                false
-            }
-        } else {
-            false
+// A line lays out right-to-left when its first strong directional character is
+// right-to-left, per the Unicode bidirectional algorithm (rules P2/P3). Walk
+// scalars, not UTF-16 units: surrogate halves never form a scalar, so a UTF-16
+// walk would ignore supplementary-plane strong-RTL scripts (Adlam, Hanifi
+// Rohingya) and misdetect lines written in them.
+fileprivate func detectedParagraphIsRTL(_ s: NSString) -> Bool {
+    guard let ltr = NSCharacterSet.strongLTRCodePoints(),
+          let rtl = NSCharacterSet.strongRTLCodePoints() else {
+        return false
+    }
+    for scalar in (s as String).unicodeScalars {
+        if rtl.contains(scalar) {
+            return true
         }
-    return (intermediate.lut, intermediate.rtlIndexes, paragraphIsRTL)
+        if ltr.contains(scalar) {
+            return false
+        }
+    }
+    return false
 }
 
 extension IndexSet {
@@ -284,9 +365,17 @@ class BidiDisplayInfoObjc: NSObject {
 
     @objc var paragraphIsRTL: Bool { guts.paragraphIsRTL }
 
+    // Whether the given source cell's glyph must be drawn bidi-mirrored (L4).
+    @objc(mirrorsSourceCell:)
+    func mirrorsSourceCell(_ cell: Int32) -> Bool {
+        return guts.mirroredIndexes.contains(Int(cell))
+    }
+
+
     private enum Keys: String {
         case lut = "lut"
         case rtlIndexes = "rtlIndexes"
+        case mirroredIndexes = "mirroredIndexes"
         case paragraphIsRTL = "paragraphIsRTL"
     }
 
@@ -294,6 +383,7 @@ class BidiDisplayInfoObjc: NSObject {
     var dictionaryValue: [String: Any] {
         return [Keys.lut.rawValue: guts.lut.efficientlyEncodedForPlist(),
                 Keys.rtlIndexes.rawValue: rtlIndexes.rangeView.map { NSValue(range: NSRange($0)) },
+                Keys.mirroredIndexes.rawValue: guts.mirroredIndexes.rangeView.map { NSValue(range: NSRange($0)) },
                 Keys.paragraphIsRTL.rawValue: guts.paragraphIsRTL ]
     }
 
@@ -320,6 +410,12 @@ class BidiDisplayInfoObjc: NSObject {
             return nil
         }
         let indexes = IndexSet(ranges: indexesArray.compactMap { Range($0.rangeValue) })
+        let mirroredIndexes: IndexSet =
+            if let obj = dictionary[Keys.mirroredIndexes.rawValue], let arr = obj as? Array<NSValue> {
+                IndexSet(ranges: arr.compactMap { Range($0.rangeValue) })
+            } else {
+                IndexSet()
+            }
         let paragraphIsRTL: Bool =
             if let obj = dictionary[Keys.paragraphIsRTL.rawValue],
                let convertedParagraphIsRTL = obj as? Bool {
@@ -329,6 +425,7 @@ class BidiDisplayInfoObjc: NSObject {
             }
         guts = BidiDisplayInfo(lut: lut,
                                rtlIndexes: indexes,
+                               mirroredIndexes: mirroredIndexes,
                                paragraphIsRTL: paragraphIsRTL)
     }
 
@@ -619,6 +716,11 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
     // direction. Adjacent RTL indexes will be drawn right-to-left.
     fileprivate let rtlIndexes: IndexSet
 
+    // Source cells whose glyph must be drawn bidi-mirrored (UBA rule L4): a
+    // mirrorable character CoreText resolved into a right-to-left run. A bracket
+    // around an embedded LTR run resolves to an LTR run, so it is excluded.
+    fileprivate let mirroredIndexes: IndexSet
+
     // Base writing direction. Determines how the paragraph should be justified.
     fileprivate let paragraphIsRTL: Bool
 
@@ -691,18 +793,19 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
 
     fileprivate init(lut: [Int32],
                      rtlIndexes: IndexSet,
+                     mirroredIndexes: IndexSet = IndexSet(),
                      paragraphIsRTL: Bool) {
         self.lut = lut
         self.rtlIndexes = rtlIndexes
+        self.mirroredIndexes = mirroredIndexes
         self.paragraphIsRTL = paragraphIsRTL
     }
 
-    private static var paragraphStyle: NSParagraphStyle {
-        let paragraphStyle = NSMutableParagraphStyle()
-        if !iTermAdvancedSettingsModel.detectParagraphDirection() {
-            paragraphStyle.baseWritingDirection = .leftToRight
-        }
-        return paragraphStyle
+    // The string CoreText should lay out. Empty cells (code 0) are replaced with
+    // spaces; the replacement is length-preserving, so the caller's `deltas`
+    // still map each UTF-16 index of the result to its source cell.
+    fileprivate static func sanitized(_ s: NSString) -> NSString {
+        return replacingNulWithSpace(s)
     }
 
     // Fails if no RTL was found
@@ -719,22 +822,20 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
             free(buffer)
         }
 
-        let attributedString = NSAttributedString(string: string,
-                                                  attributes: [.paragraphStyle: Self.paragraphStyle])
-        (lut, rtlIndexes, paragraphIsRTL) = makeLookupTable(attributedString,
-                                                            deltas: deltas!,
-                                                            count: Int(nonEmptyCount))
+        let laidOut = Self.sanitized(string as NSString)
+        (lut, rtlIndexes, mirroredIndexes, paragraphIsRTL) = makeLookupTable(laidOut,
+                                                                            deltas: deltas!,
+                                                                            count: Int(nonEmptyCount))
         if rtlIndexes.isEmpty {
             return nil
         }
     }
 
     init?(deltaString: DeltaString, usedCount: Int) {
-        let attributedString = NSAttributedString(string: deltaString.unsafeString as String,
-                                                  attributes: [.paragraphStyle: Self.paragraphStyle])
-        (lut, rtlIndexes, paragraphIsRTL) = makeLookupTable(attributedString,
-                                                            deltas: deltaString.deltas,
-                                                            count: usedCount)
+        let laidOut = Self.sanitized(deltaString.unsafeString)
+        (lut, rtlIndexes, mirroredIndexes, paragraphIsRTL) = makeLookupTable(laidOut,
+                                                                            deltas: deltaString.deltas,
+                                                                            count: usedCount)
         if rtlIndexes.isEmpty {
             return nil
         }
@@ -756,6 +857,9 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
         }
         let growth = width - Int32(temp.lut.count)
         self.paragraphIsRTL = temp.paragraphIsRTL
+        // Padding only appends cells at the edge; existing source-cell indices
+        // (which mirroredIndexes keys on) are unchanged, so carry it verbatim.
+        self.mirroredIndexes = temp.mirroredIndexes
         if growth == 0 || !iTermAdvancedSettingsModel.rightJustifyRTLLines() {
             self.lut = temp.lut
             self.rtlIndexes = temp.rtlIndexes
@@ -769,6 +873,7 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
     init(basedOn base: BidiDisplayInfo, paddedTo width: Int32) {
         lut = iTermAdvancedSettingsModel.rightJustifyRTLLines() ? Self.pad(lut: base.lut, width: width, paragraphIsRTL: base.paragraphIsRTL) : base.lut
         rtlIndexes = base.rtlIndexes
+        mirroredIndexes = base.mirroredIndexes
         paragraphIsRTL = base.paragraphIsRTL
     }
 
@@ -787,6 +892,11 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
             return nil
         }
 
+        var subMirrored = IndexSet()
+        for mirroredRange in mirroredIndexes.rangeView(of: range) {
+            subMirrored.insert(integersIn: mirroredRange.shifted(by: -nsrange.location))
+        }
+
         let sublut = lut[range]
         let sorted = sublut.sorted()
 
@@ -797,7 +907,7 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
         let fixed = sublut.map {
             compression[$0]!
         }
-        return BidiDisplayInfo(lut: fixed, rtlIndexes: subIndexes, paragraphIsRTL: paragraphIsRTL)
+        return BidiDisplayInfo(lut: fixed, rtlIndexes: subIndexes, mirroredIndexes: subMirrored, paragraphIsRTL: paragraphIsRTL)
     }
 
     func subInfo(range nsrange: NSRange, width: Int32) -> BidiDisplayInfo? {
@@ -808,11 +918,12 @@ struct BidiDisplayInfo: CustomDebugStringConvertible, Equatable {
         guard width > lut.count else {
             return self
         }
-        guard rtlIndexes.contains(0) else {
+        // Justify by the line's paragraph direction, not by whether the first
+        // CELL is right-to-left: a right-to-left line can open with a neutral or
+        // a number (so cell 0 is not in rtlIndexes) yet must still right-justify.
+        guard paragraphIsRTL else {
             return self
         }
-        // It would be better to keep an index of strong ltr/rtl charactesr so that subinfos could
-        // use the first strong character to define the justification for the wrapped line.
         return BidiDisplayInfo(basedOn: self, paddedTo: width)
     }
 

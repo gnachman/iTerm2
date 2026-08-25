@@ -1,0 +1,56 @@
+========================================================================
+ TEST 1: Glyph mirroring (needs: RTL support ON)
+========================================================================
+Mirrorable characters ( ) [ ] { } < > must point the right way in RTL text.
+This is display-only; copying still yields the original character.
+
+IMPORTANT: a bracket only mirrors when it is surrounded by RTL text on BOTH
+sides (so it lands at an RTL embedding level). Parens at the very edge of a
+line, like "(تهران)", stay at the paragraph base level (LTR by default) and
+do NOT mirror, so they look the same old vs new. The strings below embed the
+brackets between Persian words so mirroring actually triggers.
+
+------------------------------------------------------------------------
+1a. Parentheses embedded between Persian words.
+    NEW: parens hug inward      ->  متن (تهران) شهر
+    OLD: parens render reversed ->  متن )تهران( شهر
+------------------------------------------------------------------------
+متن (تهران) شهر
+
+------------------------------------------------------------------------
+1b. Square brackets and braces embedded between Persian words.
+    NEW: brackets face inward: متن [تهران] شهر  and  متن {تهران} شهر
+------------------------------------------------------------------------
+متن [تهران] شهر
+متن {تهران} شهر
+
+------------------------------------------------------------------------
+1c. Parentheses around an EMBEDDED English word inside Persian.
+    The bracket wraps an LTR run, so per CoreText it must NOT flip.
+    NEW: مرورگر (Google) را باز کن   <- parens stay around Google
+    OLD: the parens were reversed / on the wrong side.
+------------------------------------------------------------------------
+مرورگر (Google) را باز کن
+
+------------------------------------------------------------------------
+1d. Guillemets « » ‹ › follow the Unicode bidi algorithm like any other
+    mirrorable punctuation (no special-casing). On a terminal line, which is an
+    LTR container by default, a whole-line quoted RTL span keeps its marks at
+    the line edges and reads as typed: «متن». Turn on “Auto-detect paragraph
+    writing direction” and the same line becomes an RTL paragraph, where the
+    marks mirror to »متن« exactly as TextEdit and Safari render it.
+    The pair must never both land on the same side («»متن); that was the bug.
+------------------------------------------------------------------------
+«متن»
+
+------------------------------------------------------------------------
+1e. With “Treat Latin words as LTR islands” ON, guillemets wrapping a Latin
+    phrase join the island and stay on their typed sides (the island is LTR, so
+    the marks are not mirrored): «machine learning».
+------------------------------------------------------------------------
+«machine learning»
+
+------------------------------------------------------------------------
+1f. Both kinds on one line: brackets mirror, English-wrapping parens do not.
+------------------------------------------------------------------------
+متن (English) و (فارسی) تمام
