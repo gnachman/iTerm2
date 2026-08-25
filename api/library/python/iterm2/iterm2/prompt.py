@@ -15,7 +15,7 @@ class PromptState(enum.Enum):
     UNKNOWN = -1  #: This version of iTerm2 does not report prompt state (you should upgrade)
     EDITING = 0  #: User is editing the command at the prompt
     RUNNING = 1  #: The last entered command is still executing, and has not finished yet.
-    FINISHED = 3  #: The last entered command has finished but there hasn't been a new prompt yet (rare).
+    FINISHED = 2  #: The last entered command has finished but there hasn't been a new prompt yet (rare).
 
 
 class Prompt:
