@@ -124,6 +124,7 @@
 #import "iTermSessionLauncher.h"
 #import "iTermSubpixelModelBuilder.h"
 #import "iTermSystemVersion.h"
+#import "iTermTimerCensus.h"
 #import "iTermTipController.h"
 #import "iTermTipWindowController.h"
 #import "iTermToolbeltView.h"
@@ -1311,6 +1312,9 @@ void TurnOnDebugLoggingAutomatically(void) {
 
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
     DLog(@"Begin");
+    // Diagnostic for issue 1765 (main-thread beachball in a run-loop timer scan).
+    // This is a purpose-built diagnostic build, so it always installs.
+    [iTermTimerCensus install];
     [[iTermApplication sharedApplication] updateAppearance];
     [[iTermUserDefaults userDefaults] it_addObserverForKey:kPreferenceKeyTabStyle
                                                      block:^(id _Nonnull newValue) {
