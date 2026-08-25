@@ -936,8 +936,13 @@ iTermCommandInfoViewControllerDelegate>
         return;
     }
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self.dataSource];
+    // clickPoint is a visual grid coordinate; rangeForWordAt works in logical
+    // space, so convert it (a no-op unless the line is bidi-reordered). Without
+    // this, "Look Up" landed on the wrong word on right-to-left lines.
+    const VT100GridCoord logicalCoord =
+        [self logicalCoordForVisualCoord:VT100GridCoordMake(clickPoint.x, clickPoint.y)];
     VT100GridWindowedRange range =
-    [extractor rangeForWordAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)
+    [extractor rangeForWordAt:logicalCoord
                 maximumLength:kReasonableMaximumWordLength];
     NSAttributedString *word = [extractor contentInRange:range
                                        attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea, const iTermImmutableMetadata *metadata) {

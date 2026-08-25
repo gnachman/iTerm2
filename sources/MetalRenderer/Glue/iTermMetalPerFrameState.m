@@ -1415,7 +1415,13 @@ int iTermGetMetalBackgroundColors(iTermMetalPerFrameState *self,
             }
             continue;
         }
-        const BOOL selected = [selectedIndexes containsIndex:visualX];
+        // selectedIndexes is in LOGICAL coordinates (the selection is stored and
+        // reported logically), so test the logical cell index. The run is still
+        // positioned at its visual column via the LUT above; testing visualX here
+        // lit the mirror-image cells on right-to-left lines (the highlight landed
+        // on empty trailing-space columns at the left). Matches the CoreGraphics
+        // path in iTermBackgroundColorRun.m.
+        const BOOL selected = [selectedIndexes containsIndex:logicalX];
         BOOL findMatch = NO;
         if (findMatches && !selected) {
             findMatch = CheckFindMatchAtIndex(findMatches, logicalX);
@@ -1693,7 +1699,11 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         }
 
         const vector_float4 bgColor = attributes[visualX].backgroundColor;
-        BOOL selected = [selectedIndexes containsIndex:visualX];
+        // selectedIndexes is in LOGICAL coordinates; testing visualX here gave
+        // a glyph the selected background with the unselected foreground on
+        // reordered lines (the background path below tests logicalX), which
+        // made selected glyphs disappear on the GPU renderer.
+        BOOL selected = [selectedIndexes containsIndex:logicalIndex];
         BOOL findMatch = NO;
         if (findMatches && !selected) {
             findMatch = CheckFindMatchAtIndex(findMatches, logicalIndex);
@@ -1711,7 +1721,9 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
             // Normal code path
             lastSelected = selected;
         }
-        const BOOL annotated = [annotatedIndexes containsIndex:visualX];
+        // Annotation indexes are logical as well; the attribute is still
+        // STORED at the visual column, where the cell draws.
+        const BOOL annotated = [annotatedIndexes containsIndex:logicalIndex];
         const BOOL inUnderlinedRange = NSLocationInRange(logicalIndex, underlinedRange) || annotated;
 
 

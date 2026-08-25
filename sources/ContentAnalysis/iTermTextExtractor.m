@@ -263,7 +263,7 @@ const NSInteger kLongMaximumWordLength = 100000;
 }
 
 // The maximum length is a rough guideline. You might get a word up to twice as long.
-- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)visualLocation
+- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)logicalLocation
                            maximumLength:(NSInteger)maximumLength
                                      big:(BOOL)big
                 additionalWordCharacters:(NSString *)additionalWordCharacters
@@ -281,7 +281,7 @@ const NSInteger kLongMaximumWordLength = 100000;
         effectiveAdditionalWordCharacters = additionalWordCharacters;
     }
 
-    return [self rangeForWordAt:visualLocation
+    return [self rangeForWordAt:logicalLocation
                   maximumLength:maximumLength
                             big:big
        additionalWordCharacters:effectiveAdditionalWordCharacters
@@ -289,21 +289,22 @@ const NSInteger kLongMaximumWordLength = 100000;
 }
 
 // Version that accepts custom regex patterns (for testing)
-- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)visualLocation
+- (VT100GridWindowedRange)rangeForWordAt:(VT100GridCoord)logicalLocation
                            maximumLength:(NSInteger)maximumLength
                                      big:(BOOL)big
                 additionalWordCharacters:(NSString *)additionalWordCharacters
                            regexPatterns:(NSArray<NSString *> *)regexPatterns {
-    VT100GridCoord location = visualLocation;
-    iTermBidiDisplayInfo *bidi = nil;
-    if (_supportBidi) {
-        ScreenCharArray *sca = [_dataSource screenCharArrayForLine:visualLocation.y];
-        bidi = sca.bidiInfo;
-        if (bidi) {
-            location.x = [bidi logicalForVisual:visualLocation.x];
-        }
-    }
-    iTermWordExtractor *wordExtractor = [[iTermWordExtractor alloc] initWithLocation:location
+    // `logicalLocation` is a LOGICAL coordinate and the returned range is
+    // logical. Word boundaries are found in the logical backing store, so this
+    // must not reorder: no caller reaches here with bidi conversion enabled (the
+    // extractor's supportBidi is NO on every path that calls this), and callers
+    // that begin from a mouse click convert the click from visual to logical
+    // first (see -[PTYTextView getWordForX:] and the mouse handler). Applying
+    // logicalForVisual here would double-apply the bidi reorder map and select a
+    // different word on a right-to-left line (the "double-click selects the wrong
+    // word" bug). The selection model is logical; the highlight maps
+    // logical→visual via the LUT.
+    iTermWordExtractor *wordExtractor = [[iTermWordExtractor alloc] initWithLocation:logicalLocation
                                                                        maximumLength:maximumLength
                                                                                  big:big];
     if (additionalWordCharacters) {
@@ -313,12 +314,7 @@ const NSInteger kLongMaximumWordLength = 100000;
         wordExtractor.regexPatterns = regexPatterns;
     }
     wordExtractor.dataSource = self;
-    VT100GridWindowedRange range = [wordExtractor windowedRange];
-    if (bidi) {
-        // TODO: This is wrong. When a word wraps, we need to select characters from the left side of the start line and the right side of the end line. Selections don't know how to do this currently.
-        return [self visualWindowedRangeForLogical:range];
-    }
-    return range;
+    return [wordExtractor windowedRange];
 }
 
 - (VT100GridCoordRange)visualRangeForLogical:(VT100GridCoordRange)logical {
@@ -2059,17 +2055,20 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         iTermBidiDisplayInfo *bidi = _supportBidi ? sca.bidiInfo : nil;
         if (charBlock) {
             if (supportBidi && bidi) {
-                const NSRange visualRange = NSMakeRangeFromHalfOpenInterval(MIN(width - 1, MAX(range.columnWindow.location, startx)),
-                                                                            endx);
-                [bidi enumerateLogicalRangesIn:visualRange closure:^(NSRange logicalRange, int visualStart, BOOL *stop) {
-                    for (int i = 0; i < logicalRange.length; i++) {
-                        int x = logicalRange.location + i;
-                        if (charBlock(theLine, theLine[x], eaIndex[x], VT100GridCoordMake(x, y), VT100GridCoordMake(visualStart + i, y), &lineMetadata)) {
-                            *stop = YES;
-                            return;
-                        }
+                // The selection is stored in LOGICAL coordinates (the highlight uses
+                // them too), so emit the logical range in reading order rather than
+                // gathering the cells that happen to fall under a visual span. That
+                // keeps a partial selection on a mixed line a contiguous string (an
+                // English word embedded in right-to-left text (e.g. «Berlin») is
+                // copied whole instead of split into visually-adjacent pieces) while
+                // the bytes stay in the logical order that editors re-render correctly.
+                // Report each cell's visual column via the LUT for callers that use it.
+                const int lo = MIN(width - 1, MAX(range.columnWindow.location, startx));
+                for (int x = lo; x < endx; x++) {
+                    if (charBlock(theLine, theLine[x], eaIndex[x], VT100GridCoordMake(x, y), VT100GridCoordMake([bidi visualForLogical:x], y), &lineMetadata)) {
+                        return;
                     }
-                }];
+                }
             } else {
                 // Iterate over characters up to terminal nulls.
                 for (int x = MIN(width - 1, MAX(range.columnWindow.location, startx)); x < endx - numNulls; x++) {
@@ -2098,11 +2097,6 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         }
         startx = left;
     }
-}
-
-static NSRange NSMakeRangeFromHalfOpenInterval(NSUInteger lowerBound, NSUInteger openUpperBound) {
-    assert(lowerBound <= openUpperBound);
-    return NSMakeRange(lowerBound, openUpperBound - lowerBound);
 }
 
 // NOTE: This enumerates in logical order. RTL characters will not actually be reversed.
@@ -2306,6 +2300,12 @@ static NSRange NSMakeRangeFromHalfOpenInterval(NSUInteger lowerBound, NSUInteger
 
 - (VT100GridCoord)logicalCoordForVisualCoord:(VT100GridCoord)visualCoord {
     if (!_supportBidi) {
+        return visualCoord;
+    }
+    // An off-screen line (selection auto-scroll passes a negative y; mouse
+    // overflow can pass one past the end) has nothing to reorder. Fetching it
+    // would assert in the line buffer, so treat it as an identity mapping.
+    if (visualCoord.y < 0 || visualCoord.y >= [_dataSource numberOfLines]) {
         return visualCoord;
     }
     iTermBidiDisplayInfo *bidi = nil;
