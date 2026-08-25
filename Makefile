@@ -659,12 +659,12 @@ SearchableComboListView: force
 SwiftyMarkdown: force
 	cd submodules/SwiftyMarkdown && xcodebuild -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)' $(SIGNING_FLAGS) $(ARCH_FLAGS)
 	rm -rf ThirdParty/SwiftyMarkdown.framework
-	mv submodules/SwiftyMarkdown/build/Release/SwiftyMarkdown.framework ThirdParty/SwiftyMarkdown.framework
+	mv submodules/SwiftyMarkdown/Build/Release/SwiftyMarkdown.framework ThirdParty/SwiftyMarkdown.framework
 
 Highlightr: force
 	cd submodules/Highlightr && xcodebuild -project Highlightr.xcodeproj -target Highlightr-macOS 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)' $(SIGNING_FLAGS) $(ARCH_FLAGS)
 	rm -rf ThirdParty/Highlightr.framework
-	mv submodules/Highlightr/build/Release/Highlightr.framework ThirdParty/Highlightr.framework
+	mv submodules/Highlightr/Build/Release/Highlightr.framework ThirdParty/Highlightr.framework
 
 cleandeps: force
 	cd submodules/CoreParse/ && git clean -f -d .
