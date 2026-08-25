@@ -108,6 +108,14 @@ actor CompanionClient {
         try await session.send(.deleteChat(chatID: chatID))
     }
 
+    /// Delete messages from a chat (truncate the log from a chosen message
+    /// onward, so messageIDs is a suffix). Fire-and-forget, like deleteChat; the
+    /// mac echoes a messagesRemoved back. Only send to a mac at
+    /// messageDeletionRevision or newer.
+    func deleteMessages(chatID: String, messageIDs: [UUID]) async throws {
+        try await session.send(.deleteMessages(chatID: chatID, messageIDs: messageIDs))
+    }
+
     /// Mute or unmute a chat. The mac persists the muted set and stops sending
     /// pushes for muted chats. Fire-and-forget, like deleteChat. Only send to a
     /// mac at chatMuteRevision or newer.

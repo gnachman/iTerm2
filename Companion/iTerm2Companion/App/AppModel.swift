@@ -2224,10 +2224,55 @@ final class AppModel {
         }
     }
 
+    /// Delete `messageID` and every message after it (matching the Mac's
+    /// Edit/Delete, which truncate the log from a chosen message onward).
+    /// Optimistically truncate the local transcript for instant feedback, then
+    /// ask the Mac; its messagesRemoved echo confirms and reconciles any other
+    /// client (including the Mac's own window). Offered only when
+    /// macSupportsMessageDeletion.
+    func deleteMessages(fromMessageID messageID: UUID, inChat chatID: String) {
+        let ids = suffixMessageIDs(fromMessageID: messageID, inChat: chatID)
+        guard !ids.isEmpty else {
+            return
+        }
+        let idSet = Set(ids)
+        if openChatID == chatID {
+            messages.removeAll { idSet.contains($0.uniqueID) }
+        }
+        transcriptCache[chatID]?.removeAll { idSet.contains($0.uniqueID) }
+        Task {
+            do {
+                let client = try await currentClient(label: "Delete messages")
+                try await client.deleteMessages(chatID: chatID, messageIDs: ids)
+            } catch {
+                companionLog("Delete messages failed: \(String(describing: error))")
+            }
+        }
+    }
+
+    /// The uniqueIDs of `messageID` and every message after it in the chat's
+    /// transcript (deletion is always a suffix truncation). Reads the open
+    /// transcript when the chat is open, else its cached snapshot.
+    private func suffixMessageIDs(fromMessageID messageID: UUID, inChat chatID: String) -> [UUID] {
+        let transcript = (openChatID == chatID) ? messages : (transcriptCache[chatID] ?? [])
+        guard let start = transcript.firstIndex(where: { $0.uniqueID == messageID }) else {
+            return []
+        }
+        return transcript[start...].map { $0.uniqueID }
+    }
+
     /// Whether the connected Mac persists per-chat mute state; the mute UI is
     /// offered only then (an older mac would silently ignore the toggle).
     var macSupportsChatMuting: Bool {
         macRevision >= CompanionProtocolVersion.chatMuteRevision
+    }
+
+    /// Whether the connected Mac applies message deletion (the deleteMessages
+    /// request and the messagesRemoved echo). The per-message Delete affordance is
+    /// offered only then; an older mac would silently ignore the request, leaving
+    /// the phone diverged until its next reconnect.
+    var macSupportsMessageDeletion: Bool {
+        macRevision >= CompanionProtocolVersion.messageDeletionRevision
     }
 
     /// Whether the connected Mac can resize a session on the phone's behalf; the
@@ -3847,6 +3892,16 @@ final class AppModel {
             }
         case .turnLifecycle(let event, let chatID):
             acceptTurnLifecycle(event, chatID: chatID)
+        case .messagesRemoved(let chatID, let messageIDs):
+            // An edit/delete truncation on the Mac or another client. Drop the
+            // affected IDs from the open transcript and/or the cached snapshot.
+            // Idempotent, so a phone-initiated delete's own echo (which already
+            // removed optimistically) is a no-op.
+            let ids = Set(messageIDs)
+            if openChatID == chatID {
+                messages.removeAll { ids.contains($0.uniqueID) }
+            }
+            transcriptCache[chatID]?.removeAll { ids.contains($0.uniqueID) }
         case .chatListChanged(let entries):
             // The Mac pushes a fresh list whenever a chat is renamed, gets
             // its icon, or is created/deleted/reordered.

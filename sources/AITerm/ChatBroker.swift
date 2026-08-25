@@ -148,6 +148,20 @@ class ChatBroker {
         fanOut(.turnLifecycle(turnEvent), toChatID: chatID)
     }
 
+    // Remove messages from a chat and tell every subscriber. Deletion is a
+    // truncation (edit/delete drop a chosen message and everything after it),
+    // so the removed IDs are always a suffix. Routing it through the broker,
+    // rather than mutating the model directly, is what lets the local UI, the
+    // agent, and a subscribed companion phone all converge - the same fan-out
+    // that publish() uses for new messages.
+    func deleteMessages(_ messageIDs: [UUID], fromChatID chatID: String) {
+        guard !messageIDs.isEmpty else {
+            return
+        }
+        listModel.delete(chatID: chatID, messageIDs: messageIDs)
+        fanOut(.messagesRemoved(messageIDs, chatID), toChatID: chatID)
+    }
+
     // Deliver an update to every subscriber of `chatID` (and wildcard subscribers).
     // Snapshots `subs` first so a subscriber that unsubscribes in its own closure
     // doesn't mutate the collection mid-iteration.
@@ -206,6 +220,7 @@ class ChatBroker {
             case let .typingStatus(typing, participant): "\(participant) typing=\(typing)"
             case let .delivery(message, chat, partial): "Message in \(chat) (partial=\(partial)) - \(message.snippetText ?? "[empty]")"
             case let .turnLifecycle(event): "turn \(event)"
+            case let .messagesRemoved(ids, chat): "removed \(ids.count) message(s) from \(chat)"
             }
         }
         case typingStatus(Bool, Participant)
@@ -219,6 +234,11 @@ class ChatBroker {
         // understands the turnLifecycle wire message; a mid-turn park does NOT
         // produce one (the turn is still in flight).
         case turnLifecycle(TurnEvent)
+        // A suffix of the chat's messages was removed (edit/delete truncates the
+        // log from a chosen message onward). Carries the removed message IDs and
+        // the chat ID. The bridge forwards it to a phone that understands the
+        // messagesRemoved wire message; the Mac UI applies it to its own model.
+        case messagesRemoved([UUID], String)
     }
 
     func subscribe(chatID: String?,

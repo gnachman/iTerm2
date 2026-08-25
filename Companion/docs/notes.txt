@@ -1,6 +1,11 @@
 iTerm2 Buddy (Companion App) Release Notes
 
 New Features:
+- Long-press one of your own messages in a chat
+  to delete it and everything after it. The
+  change syncs to the Mac and any other device in
+  the same chat. Chats also now update live when
+  you edit or delete a message on the Mac.
 - You can now turn on push notifications from
   your phone. After pairing, iTerm2 Buddy asks
   whether you want to receive notifications, and

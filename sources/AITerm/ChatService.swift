@@ -85,6 +85,11 @@ class ChatService {
             break
         case .turnLifecycle:
             break
+        case .messagesRemoved:
+            // The store was truncated (edit/delete). The agent rebuilds its
+            // request thread from the persisted messages each turn, so the
+            // removal is picked up on the next turn with no action here.
+            break
         case let .delivery(message, chatID, _):
             switch message.author {
             case .agent:

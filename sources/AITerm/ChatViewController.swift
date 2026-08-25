@@ -899,6 +899,12 @@ extension ChatViewController {
                         // and, at turn end, does not undo the no-scroll intent that
                         // typingStatus(false) just set.
                         shouldScroll = false
+                    case let .messagesRemoved(ids, _):
+                        // Edit/Delete truncated the log (here, on another window
+                        // showing this chat, or on a companion phone). Drop the
+                        // affected rows; the store was already updated by the broker.
+                        model.removeMessages(withIDs: ids)
+                        shouldScroll = false
                     }
                     if shouldScroll {
                         DLog("Schedule scroll to bottom")
@@ -1466,12 +1472,16 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
 
     private func edit(_ messageID: UUID) {
         guard let model,
+              let chatID,
               let i = model.index(ofMessageID: messageID),
               case .message(let message) = model.items[i],
               case .plainText(let text, _) = message.message.content else {
             return
         }
-        model.deleteFrom(index: i)
+        // Route through the broker so the truncation reaches the store and any
+        // subscribed companion phone; the fan-out echoes .messagesRemoved back
+        // to our own subscription, which updates the display model.
+        client.deleteMessages(model.messageIDs(fromIndex: i), fromChatID: chatID)
         inputView.stringValue = text
     }
 
@@ -1485,10 +1495,10 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
     }
 
     private func delete(_ messageID: UUID) {
-        guard let model, let i = model.index(ofMessageID: messageID) else {
+        guard let model, let chatID, let i = model.index(ofMessageID: messageID) else {
             return
         }
-        model.deleteFrom(index: i)
+        client.deleteMessages(model.messageIDs(fromIndex: i), fromChatID: chatID)
     }
 
     private func configure(cell: MultipartMessageCellView,

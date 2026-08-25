@@ -372,6 +372,16 @@ final class CompanionHostBridge {
                 send(.error(CompanionError(code: .internalError, message: "\(error)")),
                      requestID: requestID)
             }
+        case .deleteMessages(let chatID, let messageIDs):
+            // The phone truncated the log (its Edit/Delete). Route through the
+            // same broker path the Mac UI uses, so the store, the Mac window, the
+            // agent, and the phone (via the messagesRemoved echo) all converge.
+            if let client = ChatClient.instance {
+                client.deleteMessages(messageIDs, fromChatID: chatID)
+            } else {
+                send(.error(CompanionError(code: .internalError, message: "Chat system unavailable")),
+                     requestID: requestID)
+            }
         case .setChatMuted(let chatID, let muted):
             // The phone toggled the row optimistically; persist so the push
             // path (agent-activity notifier + syncSince) honors it even while
@@ -812,6 +822,15 @@ final class CompanionHostBridge {
     /// .ended, or the reply never fires.
     nonisolated static func peerConsumesTurnLifecycle(localRevision: Int, peerRevision: Int) -> Bool {
         min(localRevision, peerRevision) >= CompanionProtocolVersion.turnLifecycleRevision
+    }
+
+    /// Both peers must be at messageDeletionRevision for a messagesRemoved event
+    /// to cross the wire. The mac routes every messagesRemoved SEND through this;
+    /// the phone gates its Delete affordance on the same predicate from its side.
+    /// A pre-12 phone gets nothing and reconciles on reconnect via the
+    /// messagesSince seq-reset path.
+    nonisolated static func peerConsumesMessageDeletion(localRevision: Int, peerRevision: Int) -> Bool {
+        min(localRevision, peerRevision) >= CompanionProtocolVersion.messageDeletionRevision
     }
 
     nonisolated static func subscribeSnapshotMessages(chatID: String,
@@ -1506,6 +1525,15 @@ final class CompanionHostBridge {
                 return
             }
             send(.turnLifecycle(event: event, chatID: chatID), requestID: nil)
+        case .messagesRemoved(let messageIDs, let removedChatID):
+            // Forward truncations only to a phone at messageDeletionRevision; an
+            // older phone reconciles on its next reconnect via messagesSince
+            // (a truncation lowers the chat's max seq, forcing a reset refetch).
+            guard Self.peerConsumesMessageDeletion(localRevision: CompanionProtocolVersion.current,
+                                                   peerRevision: CompanionPushRegistry.peerRevision) else {
+                return
+            }
+            send(.messagesRemoved(chatID: removedChatID, messageIDs: messageIDs), requestID: nil)
         }
     }
 

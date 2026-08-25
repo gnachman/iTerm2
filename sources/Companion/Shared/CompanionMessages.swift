@@ -482,6 +482,16 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// Delete a chat. No reply beyond an optional `.error`.
     case deleteChat(chatID: String)
 
+    /// Delete messages from a chat (the phone's Edit/Delete, mirroring the Mac's:
+    /// deletion truncates the log from a chosen message onward, so `messageIDs`
+    /// is a suffix). The mac routes it through the same broker path its own UI
+    /// uses, so every subscriber - the Mac window, the agent, and this phone -
+    /// converges. No reply beyond an optional `.error`. Requires a mac at
+    /// `messageDeletionRevision` or newer; an older mac decodes this as
+    /// `.unsupported` and ignores it, so the phone offers Delete only when the
+    /// mac advertises support.
+    case deleteMessages(chatID: String, messageIDs: [UUID])
+
     /// Mute or unmute a chat. The mac persists the muted set (it is the side
     /// that decides whether to push, possibly while the phone is unreachable)
     /// and stops sending push notifications for muted chats; chat-list entries
@@ -675,7 +685,7 @@ enum CompanionClientMessage: Codable, CompanionMessagePayload {
     /// Add a line here whenever a case is added.
     static let knownPayloadKeys: Set<String> = [
         "unsupported", "hello", "listChatsAndSessions", "createChat", "deleteChat",
-        "setChatMuted",
+        "deleteMessages", "setChatMuted",
         "subscribe", "unsubscribe", "publish", "selectSessionResponse",
         "remoteCommandDecision", "linkSession", "resolveMentions",
         "fetchSessionScreenInfo", "fetchSessionContent", "fetchHistoryTile", "fetchWorkgroupInfo",
@@ -724,6 +734,14 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
     /// ChatBroker.Update.delivery(Message, chatID). `partial` is true for
     /// streaming deltas (append/appendAttachment/commit).
     case delivery(message: Message, chatID: String, partial: Bool)
+
+    /// Unsolicited: a suffix of a subscribed chat's messages was removed (an
+    /// edit/delete truncation on the Mac or another client). Mirrors
+    /// ChatBroker.Update.messagesRemoved([UUID], chatID). The phone drops the
+    /// carried IDs from the chat's transcript. The mac emits this only to a peer
+    /// at `messageDeletionRevision` or newer; an older phone reconciles on its
+    /// next reconnect via the messagesSince seq-reset path instead.
+    case messagesRemoved(chatID: String, messageIDs: [UUID])
 
     /// Unsolicited: typing-status change. Mirrors
     /// ChatBroker.Update.typingStatus(Bool, Participant).
@@ -837,7 +855,7 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
     /// Discriminators this build knows. Add a line here whenever a case is added.
     static let knownPayloadKeys: Set<String> = [
         "unsupported", "hello", "chatsAndSessions", "chatCreated", "history",
-        "delivery", "typingStatus", "mentionsResolved", "sessionScreenInfo",
+        "delivery", "messagesRemoved", "typingStatus", "mentionsResolved", "sessionScreenInfo",
         "sessionContent", "workgroupInfo", "sessionTree", "pong",
         "relayRoomSecretStored", "chatListChanged", "requestNotificationPermission",
         "unpaired", "messagesSince", "syncSince", "error",

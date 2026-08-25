@@ -101,6 +101,10 @@ class ChatClient {
         try broker.delete(chatID: chatID)
     }
 
+    func deleteMessages(_ messageIDs: [UUID], fromChatID chatID: String) {
+        broker.deleteMessages(messageIDs, fromChatID: chatID)
+    }
+
     func subscribe(chatID: String?,
                    registrationProvider: AIRegistrationProvider?,
                    closure: @escaping (ChatBroker.Update) -> ()) -> ChatBroker.Subscription {

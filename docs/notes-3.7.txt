@@ -137,7 +137,9 @@ Major New Features:
   offers Delete, which removes that message and
   everything after it. Edit, Fork, and Delete are
   also available when right-clicking inside the
-  message text.
+  message text. Editing or deleting a message now
+  also syncs to a paired iPhone viewing the same
+  chat (and the phone can delete messages too).
 
 - AI chat linked to a terminal session can now
   watch that session and tell you when it reaches

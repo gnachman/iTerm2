@@ -133,6 +133,12 @@ class ChatCellView: NSTableCellView {
             // Chat-list snippet reacts to typing + deliveries, not turn-lifecycle
             // boundaries (those drive the phone's reply notification).
             break
+        case .messagesRemoved:
+            // A truncation may have removed the message the snippet reflected;
+            // recompute it from what remains.
+            if !typing {
+                self.snippet = dataSource?.snippet(forChatID: chatID) ?? ""
+            }
         }
     }
 

@@ -104,7 +104,18 @@ public enum CompanionProtocolVersion {
     /// that predates the migration (a revision-10 peer has no resolver support at
     /// all), and each side also shows a one-time notice telling the user to update
     /// the OTHER device.
-    public static let current = 11
+    ///
+    /// Revision 12 adds message deletion (the messagesRemoved host event and the
+    /// deleteMessages client message), so an edit/delete truncation on either the
+    /// Mac or the phone reflects on the other while both are connected. Additive
+    /// and backward-compatible: an older peer decodes the unknown message as
+    /// `.unsupported` and ignores it, so minimumPeer stays at 11. Each direction
+    /// self-gates on `messageDeletionRevision` (see peerConsumesMessageDeletion) -
+    /// the mac forwards messagesRemoved only to a phone that understands it, and
+    /// the phone offers Delete only to a mac that does. An un-upgraded phone still
+    /// reconciles a Mac-side deletion on its next reconnect via the messagesSince
+    /// seq-reset path.
+    public static let current = 12
 
     /// The oldest peer revision this build accepts. Raised to 11 (lockstep with
     /// `current`) for the resolver migration: peers older than revision 11 stay on
@@ -160,6 +171,14 @@ public enum CompanionProtocolVersion {
     /// when the mac advertises at least this revision; an older mac would silently
     /// ignore the message, leaving dead keys.
     public static let keyInputRevision = 10
+
+    /// The first revision that carries message deletion (the messagesRemoved host
+    /// event and the deleteMessages client message). Each direction consumes it
+    /// only when BOTH peers are at least here (see peerConsumesMessageDeletion):
+    /// the mac forwards messagesRemoved only to such a phone, and the phone offers
+    /// Delete only to such a mac. Below it, an edit/delete stays local and the
+    /// phone reconciles on reconnect via the messagesSince seq reset.
+    public static let messageDeletionRevision = 12
 
     /// The verdict of a version handshake, from the evaluating side's view.
     public enum Compatibility: Equatable {
