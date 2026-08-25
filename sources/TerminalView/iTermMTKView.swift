@@ -10,6 +10,10 @@ public class iTermMTKView: iTermMetalView {
     private var _timer: Timer?
     private var _lastSetNeedsDisplay: TimeInterval = 0
 
+    // How often to keep an ordered-out or fully occluded window's Metal pipeline warm. Matches the
+    // 1 Hz background update cadence (kBackgroundUpdateCadence) that hidden sessions already tick at.
+    private static let occludedRedrawPeriod: TimeInterval = 1.0
+
     @objc(initWithFrame:device:)
     override init(frame: NSRect, device: MTLDevice?) {
         super.init(frame: frame, device: device)
@@ -53,19 +57,20 @@ public class iTermMTKView: iTermMetalView {
             DLog("Not visible \(self)")
             return;
         }
-        if window?.occlusionState.contains(.visible) != true {
-            // The window was ordered out (e.g., a hidden hotkey window) or is fully occluded.
-            // Keeping the pipeline warm would burn CPU and GPU drawing pixels nobody can see.
-            DLog("Window not visible \(self)")
-            return;
-        }
         if (round(1000 * timer.timeInterval) != round(1000 * iTermAdvancedSettingsModel.metalRedrawPeriod()))  {
             DLog("Recreate timer");
             _timer?.invalidate()
             _timer = nil
             it_schedule()
         }
-        if (NSDate.it_timeSinceBoot() - _lastSetNeedsDisplay < timer.timeInterval) {
+        // An ordered-out or fully occluded window (e.g. a hidden hotkey window) can't be seen, but a
+        // cold Metal pipeline hitches on its first draw after a period of inactivity, which is very
+        // visible the moment the window is revealed. Keep it warm at the slow occludedRedrawPeriod
+        // instead of stopping entirely so the content is fresh and the pipeline is warm on reveal.
+        let occluded = window?.occlusionState.contains(.visible) != true
+        let minInterval = occluded ? max(Self.occludedRedrawPeriod, iTermAdvancedSettingsModel.metalRedrawPeriod())
+                                   : timer.timeInterval
+        if (NSDate.it_timeSinceBoot() - _lastSetNeedsDisplay < minInterval) {
             DLog("Redrew recently");
             return;
         }
