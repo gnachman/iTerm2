@@ -38,6 +38,30 @@ class ChatService {
     // absent entry means idle.
     private var pendingMessages: [String: [Message]] = [:]
 
+    // Per-chat tracking of whether an approved remote command is currently
+    // executing (an async tool call the user allowed, or one that auto-ran, whose
+    // .remoteCommandResponse has not come back yet). Both a running command and one
+    // still awaiting the user's Allow/Deny leave the agent parked
+    // (isAwaitingUserApproval), but only the still-awaiting one may be abandoned
+    // when the user types: killing a command the user already approved would orphan
+    // its output. The execute signal (.executingCommand) is agent-authored and the
+    // service otherwise ignores its own agent's messages, so it is tracked here.
+    //
+    // CORRECT ONLY UNDER STRICTLY-SERIAL TOOL DISPATCH. The LLM framework resolves
+    // one tool call before issuing the next, so at most one command is ever in
+    // flight per chat and this holds {absent, 1}. The increment (.executingCommand)
+    // and decrement (.remoteCommandResponse) are NOT correlated by request id - a
+    // response for a command that never published an .executingCommand (a
+    // synchronous or .never-denied command) still decrements - so with more than
+    // one command in flight the count would drift: a stray decrement could clear a
+    // genuinely-executing command's mark (then a typed message wrongly abandons
+    // it), or an auto-run's mark could suppress abandoning a DIFFERENT parked
+    // command. If parallel/concurrent tool dispatch is ever added this must become
+    // keyed per request id (which needs the request uuid plumbed into
+    // .executingCommand, since today only the response carries it via requestID).
+    // (GitLab #12984)
+    private var executingCommandCounts: [String: Int] = [:]
+
     init?() {
         guard let listModel = ChatListModel.instance, let broker = ChatBroker.instance else {
             return nil
@@ -93,8 +117,11 @@ class ChatService {
         case let .delivery(message, chatID, _):
             switch message.author {
             case .agent:
-                // Ignore messages from myself
-                break
+                // The service ignores its own agent's messages, with ONE
+                // exception: note when an approved remote command starts
+                // executing, so a later user message can tell a running command
+                // apart from one still awaiting the user's Allow/Deny (#12984).
+                noteIfExecutingCommandStarted(message, inChat: chatID)
             case .user:
                 handleUserMessage(message, inChat: chatID)
             }
@@ -134,6 +161,8 @@ class ChatService {
             return
 
         case .remoteCommandResponse:
+            // The command finished (or was denied): it is no longer executing.
+            clearExecutingCommand(inChat: chatID)
             deliverToolResult(message, inChat: chatID)
             return
 
@@ -149,7 +178,110 @@ class ChatService {
                 .remoteCommandRequest, .selectSessionRequest,
                 .renameChat, .append, .appendAttachment, .commit, .vectorStoreCreated,
                 .terminalCommand, .multipart, .watcherEvent:
+            // If the in-flight turn is parked on the user's Allow/Deny for a tool
+            // call they never answered, a newly TYPED message would otherwise sit
+            // behind that parked head forever: finishTurn never runs for a park, so
+            // startNextTurn (which only fires at queue.count == 1) is never reached
+            // for anything queued behind it. Read the user composing a new message
+            // as abandoning the pending approval: tearing the parked turn down runs
+            // its completion chain through finishTurn, which pops the dead head so
+            // the queue can drain. The next turn's history rebuild heals the
+            // now-orphaned tool call via AIChatToolCallRepair.
+            //
+            // ORDER MATTERS: enqueue BEFORE abandoning. agent.stop() synchronously
+            // drives finishTurn, which pops the head and dispatches whatever is now
+            // at index 0. If we abandoned first, a watcher-event turn already queued
+            // behind the parked head would dispatch before this message is even
+            // enqueued, landing the user's interjection behind that machine turn -
+            // the opposite of the human-jumps-ahead-of-watchers invariant
+            // queueInsertionIndex enforces. Enqueued first, this message is ordered
+            // ahead of any watcher events, so when stop() pops the dead head it
+            // becomes the new head and dispatches first.
+            //
+            // Gated so we abandon ONLY a genuinely-unanswered prompt (see
+            // shouldAbandonPendingApproval). This is the message-ARRIVAL trigger:
+            // the user typed while the head was already parked. The complementary
+            // PARK-arrival trigger (agentDidParkOnUser) covers the reverse order,
+            // where this message was enqueued while the turn was still working and
+            // the head parked afterward. (GitLab #12984)
             enqueue(message: message, inChat: chatID)
+            if Self.isUserComposedTurn(message),
+               shouldAbandonPendingApproval(forChatID: chatID) {
+                agents[chatID]?.stop()
+            }
+        }
+    }
+
+    // The chat is in the #12984 wedge state: the in-flight head is parked waiting
+    // on the user's Allow/Deny (or orchestration Enable/Not Now) and no approved
+    // command is mid-execution (an executing command the user already allowed must
+    // run to completion, not be killed). When true, resolving the park via
+    // agent.stop() lets finishTurn pop the dead head so the queue can drain.
+    private func shouldAbandonPendingApproval(forChatID chatID: String) -> Bool {
+        return executingCommandCounts[chatID] == nil
+            && agents[chatID]?.isAwaitingUserApproval == true
+    }
+
+    // The PARK-arrival trigger for the #12984 wedge. Called (via the agent's
+    // onParkedOnUser hook) the instant a turn parks on the user, which can happen
+    // AFTER a user-composed message was already enqueued behind the still-working
+    // head - a wedge the message-arrival gate in handleUserMessage cannot catch
+    // because isAwaitingUserApproval was false when that message arrived. Deferred
+    // one runloop turn because the hook fires synchronously from inside the
+    // agent's tool-dispatch stack; abandoning the park there would re-enter the
+    // agent mid-park. By the next turn the park has settled and the stack unwound,
+    // and the check re-reads live state so it is a safe no-op if the park was
+    // meanwhile answered or the queue drained.
+    private func agentDidParkOnUser(chatID: String) {
+        Task { @MainActor [weak self] in
+            self?.abandonParkIfQueuedMessageWedged(forChatID: chatID)
+        }
+    }
+
+    private func abandonParkIfQueuedMessageWedged(forChatID chatID: String) {
+        guard shouldAbandonPendingApproval(forChatID: chatID),
+              let queue = pendingMessages[chatID],
+              queue.count > 1,
+              queue.dropFirst().contains(where: { Self.isUserComposedTurn($0) }) else {
+            return
+        }
+        agents[chatID]?.stop()
+    }
+
+    // The message shapes a human composes and sends from the input field. Used
+    // to decide whether an incoming turn abandons a pending approval (#12984);
+    // machine-authored turns must not. Note watcher events are author == .user,
+    // so this gates on content, not author.
+    private static func isUserComposedTurn(_ message: Message) -> Bool {
+        switch message.content {
+        case .plainText, .markdown, .multipart:
+            return true
+        default:
+            return false
+        }
+    }
+
+    // Bump the per-chat executing count when an approved remote command begins
+    // running (ChatClient publishes .executingCommand only when the command did
+    // not complete synchronously). Paired with clearExecutingCommand on the
+    // matching .remoteCommandResponse. (GitLab #12984)
+    private func noteIfExecutingCommandStarted(_ message: Message, inChat chatID: String) {
+        guard case .clientLocal(let clientLocal) = message.content,
+              case .executingCommand = clientLocal.action else {
+            return
+        }
+        executingCommandCounts[chatID, default: 0] += 1
+    }
+
+    // A command finished (or was denied). Decrement, clamping at zero: not every
+    // .remoteCommandResponse has a matching .executingCommand (a synchronous or
+    // auto-denied command never publishes one), so an absent entry is a no-op.
+    private func clearExecutingCommand(inChat chatID: String) {
+        guard let count = executingCommandCounts[chatID] else { return }
+        if count <= 1 {
+            executingCommandCounts.removeValue(forKey: chatID)
+        } else {
+            executingCommandCounts[chatID] = count - 1
         }
     }
 
@@ -187,6 +319,17 @@ class ChatService {
                 queue.removeSubrange(1...)
                 pendingMessages[chatID] = queue
             }
+            // Stop abandons the whole turn, including any approved command still
+            // executing: agent.stop() resolves the parked completion internally
+            // and publishes NO .remoteCommandResponse, so the matching
+            // clearExecutingCommand would never fire and the count would stay
+            // stuck above zero for a command that never returns (a hung command,
+            // or one whose session closed). A stuck count silently disables the
+            // #12984 gate for this chat (executingCommandCounts[chatID] == nil
+            // stays false), so a later ignored approval would wedge the queue
+            // again. Reset here - the guaranteed Stop entry point, independent of
+            // whether the cancel reaches finishTurn - mirroring dropAgent.
+            executingCommandCounts.removeValue(forKey: chatID)
             agents[chatID]?.stop()
         case .workgroupPermissionResponse, .revokeOrchestrationPermission:
             // Consumed by the orchestrator dispatcher / client via their
@@ -394,6 +537,9 @@ class ChatService {
             mode: mode,
             registrationProvider: reg,
             messages: Array(messages))
+        agent.onParkedOnUser = { [weak self] in
+            self?.agentDidParkOnUser(chatID: chatID)
+        }
         self.agents[chatID] = agent
         return agent
     }
@@ -419,6 +565,7 @@ class ChatService {
     // LLM call.
     func dropAgent(forChatID chatID: String) {
         pendingMessages.removeValue(forKey: chatID)
+        executingCommandCounts.removeValue(forKey: chatID)
         agents[chatID]?.stop()
         agents.removeValue(forKey: chatID)
         registrationContexts.removeValue(forKey: chatID)

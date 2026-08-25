@@ -148,10 +148,20 @@ extension AILiveHarness {
         // ignores the tool output can't reproduce it by chance.
         let toolMarker = "kw-MAGENTA-LARK-77"
         let toolOutput = "command output containing \(toolMarker)"
+        // emitExecuting: represent a genuinely in-flight (running) tool. This
+        // fixture uses a fabricated session guid, so remoteCommandParksOnUser
+        // returns true (no resolvable session) and the command parks with
+        // clearedTyping == true even though perms grant .always - a state a real
+        // .always+resolvable-session auto-run never reaches. A real long-running
+        // command publishes .executingCommand (ChatClient.performRemoteCommand),
+        // so emitting it here matches production AND records the execution with
+        // ChatService, so the #12984 abandon-pending-approval logic correctly
+        // leaves this running tool alone and B waits for the turn as intended.
         let responder = FakeToolResponder(broker: broker,
                                           chatID: chatID,
                                           delay: toolDelay,
-                                          output: toolOutput)
+                                          output: toolOutput,
+                                          emitExecuting: true)
         defer { responder.shutdown() }
 
         // 6) Expectations driven by the recorder's transition log.
@@ -394,6 +404,544 @@ extension AILiveHarness {
 
         let dump = recorder.summary(formatContent: short)
         print("[stop-then-send-test] broker log:\n\(dump)")
+    }
+
+    /// Repros GitLab issue #12984: the AI makes a tool call that needs
+    /// approval, the user IGNORES the approval prompt, types a new
+    /// message, and hits return — and the AI "just stops responding."
+    ///
+    /// Mechanism (same head-of-line wedge as the stop-then-send bug, but
+    /// triggered by an ignored approval instead of Stop): an
+    /// approval-gated tool call parks the in-flight turn.
+    /// ChatAgent.reallyRunCommand stashes the dispatcher completion in
+    /// pendingRemoteCommands and never calls it, so fetchCompletion's
+    /// completion never fires and ChatService.finishTurn never pops the
+    /// queue head. The ignored approval leaves that parked turn sitting at
+    /// index 0 of pendingMessages indefinitely. The user's next message is
+    /// enqueued behind it, but ChatService.enqueue only calls
+    /// startNextTurn when queue.count == 1, so with the parked head still
+    /// present the new message is never dispatched. The
+    /// cancelPendingCommands() at the top of
+    /// ChatAgent.fetchCompletionForRegularMessage — which WOULD clear the
+    /// park — is only reached once the new message's turn actually runs,
+    /// which it never does. So the queue is wedged and the chat goes
+    /// silent.
+    ///
+    /// Test: grant Run Commands = .ask so the tool is exposed AND parks on
+    /// approval. Send msg A that triggers the tool; wait for the
+    /// .remoteCommandRequest (the approval prompt). DO NOT answer it — no
+    /// tool responder is installed, so the approval is simply ignored.
+    /// Send msg B and expect B's turn to dispatch (turnLifecycle .started
+    /// after B). With the bug, B is enqueued behind the parked approval
+    /// head, startNextTurn is never called for it, no turn ever starts, and
+    /// this times out.
+    ///
+    /// FAILS on current main; PASSES once an ignored approval no longer
+    /// wedges the queue (e.g. a human message enqueued behind a parked
+    /// approval head resolves the park and lets the new turn start).
+    func test_chat_ignoredApprovalThenSend_secondMessageStillDispatches() throws {
+        let providerName = AITermController.provider?.displayName ?? ""
+        let envKey: String?
+        switch providerName {
+        case "OpenAI":     envKey = Self.configValue("OPENAI_API_KEY")
+        case "Anthropic":  envKey = Self.configValue("ANTHROPIC_API_KEY")
+        case "Google":     envKey = Self.configValue("GEMINI_API_KEY")
+        case "Deep Seek":  envKey = Self.configValue("DEEPSEEK_API_KEY")
+        default:           envKey = nil
+        }
+        guard let apiKey = envKey, !apiKey.isEmpty else {
+            throw XCTSkip("No live API key for current provider \(providerName)")
+        }
+        guard AITermController.provider?.functionsSupported == true else {
+            throw XCTSkip("Configured provider does not support function calling; approval-park test needs a tool round-trip")
+        }
+        guard let broker = ChatBroker.instance else {
+            throw XCTSkip("ChatBroker.instance unavailable")
+        }
+        suspendBrokerProcessors(broker)
+
+        // Run Commands = .ask: exposes execute_command to the LLM AND makes the
+        // call PARK on the user's approval (Permission.parksOnApproval is always
+        // true for .ask). No FakeToolResponder is installed, so the parked
+        // approval is never answered — exactly the "user ignores the request"
+        // case from issue #12984.
+        let perms = #"[{"guid":"queue-test","category":"Run Commands","chatID":"queue-test"},"ask"]"#
+
+        let recorder = BrokerEventRecorder()
+        let listenAll = broker.subscribe(chatID: nil, registrationProvider: nil) { update in
+            recorder.record(update)
+        }
+        defer { listenAll.unsubscribe() }
+
+        let chatID = try broker.create(
+            chatWithTitle: "live ignored-approval test \(UUID().uuidString.prefix(8))",
+            terminalSessionGuid: "queue-test",
+            browserSessionGuid: nil,
+            permissions: perms,
+            initialMessages: [])
+        addTeardownBlock { try? broker.delete(chatID: chatID) }
+
+        let registrationProvider = TestRegistrationProvider(apiKey: apiKey)
+        let registrationSub = broker.subscribe(chatID: chatID,
+                                               registrationProvider: registrationProvider) { _ in }
+        defer { registrationSub.unsubscribe() }
+
+        let sawToolRequest = expectation(description: "agent dispatched .remoteCommandRequest (approval prompt)")
+        let sawBTurnStarted = expectation(description: "B's turn dispatches (turnLifecycle .started after B) — the queue is no longer wedged")
+        var toolRequestSeen = false
+        var bTurnStarted = false
+        // Flipped true right before B is published. A's turn started before that,
+        // and abandoning the parked approval emits A's .ended followed by
+        // startNextTurn(B)'s fresh .started, so the first .started after this flag
+        // is B's turn dispatching. That is the exact thing the wedge prevents: with
+        // the bug B enqueues behind the parked head, startNextTurn is never called
+        // for it, and no .started ever fires after B. (Waiting on B's turn END
+        // instead would be flaky: the model sometimes re-issues the tool on B's
+        // turn and re-parks, so B legitimately may not end.)
+        var bPublished = false
+        recorder.onEntry = { entry, _ in
+            switch entry {
+            case .delivery(let message, _):
+                if case .remoteCommandRequest = message.content,
+                   message.author == .agent, !toolRequestSeen {
+                    toolRequestSeen = true
+                    sawToolRequest.fulfill()
+                }
+            case .typing:
+                // Spinner hint only; toggles false on the approval park and is
+                // not a turn boundary.
+                return
+            case .turnLifecycle(let event):
+                if event == .started, bPublished, !bTurnStarted {
+                    bTurnStarted = true
+                    sawBTurnStarted.fulfill()
+                }
+            }
+        }
+
+        // (1) Send A; wait for the tool dispatch. The turn is now parked on the
+        //     user's approval — which we deliberately never answer.
+        try broker.publish(message: userText(chatID: chatID,
+                                             body: "Use the execute_command tool to run any command. The exact command does not matter."),
+                           toChatID: chatID, partial: false)
+        wait(for: [sawToolRequest], timeout: 60)
+
+        // (2) Ignore the approval prompt. Instead, type a new message and hit
+        //     return — the exact repro steps from the issue.
+        bPublished = true
+        try broker.publish(message: userText(chatID: chatID,
+                                             body: "Never mind that. Reply with the single digit answer to 1+1, nothing else."),
+                           toChatID: chatID, partial: false)
+
+        // (3) Expect B's turn to dispatch. With the bug, B is enqueued behind the
+        //     parked approval head, startNextTurn is never called for it, no turn
+        //     ever starts, and this times out (the AI "just stops responding").
+        wait(for: [sawBTurnStarted], timeout: 90)
+
+        let dump = recorder.summary(formatContent: short)
+        print("[ignored-approval-test] broker log (provider=\(providerName)):\n\(dump)")
+    }
+
+    /// The other side of the #12984 fix: a command the user ALREADY APPROVED
+    /// and that is now executing must NOT be abandoned when the user types a
+    /// follow-up. This is "state 3" - at the agent level it is indistinguishable
+    /// from an unanswered approval (both leave a parked, clearedTyping entry), so
+    /// the naive fix would stop() the running command and orphan its result.
+    /// ChatService avoids that by tracking .executingCommand, and the follow-up
+    /// message must simply WAIT for the running command's turn to finish.
+    ///
+    /// Test: grant Run Commands = .ask so the call parks. The responder emits
+    /// .executingCommand the instant it sees the request (simulating the user
+    /// clicking Allow), then delays before publishing the response. While the
+    /// command "runs", send msg B. Assert the strict order tool request -> B
+    /// published -> tool RESPONSE delivered -> A's turn ends -> B's turn ends.
+    /// The critical link is response-before-A's-turn-end: if the fix over-fired
+    /// and abandoned the approved command, A's turn would end on the stop()
+    /// BEFORE the (now orphaned) response, and that assertion would fail.
+    func test_chat_approvedCommandExecutingThenSend_isNotAbandoned() throws {
+        let providerName = AITermController.provider?.displayName ?? ""
+        let envKey: String?
+        switch providerName {
+        case "OpenAI":     envKey = Self.configValue("OPENAI_API_KEY")
+        case "Anthropic":  envKey = Self.configValue("ANTHROPIC_API_KEY")
+        case "Google":     envKey = Self.configValue("GEMINI_API_KEY")
+        case "Deep Seek":  envKey = Self.configValue("DEEPSEEK_API_KEY")
+        default:           envKey = nil
+        }
+        guard let apiKey = envKey, !apiKey.isEmpty else {
+            throw XCTSkip("No live API key for current provider \(providerName)")
+        }
+        guard AITermController.provider?.functionsSupported == true else {
+            throw XCTSkip("Configured provider does not support function calling; approval-park test needs a tool round-trip")
+        }
+        guard let broker = ChatBroker.instance else {
+            throw XCTSkip("ChatBroker.instance unavailable")
+        }
+        suspendBrokerProcessors(broker)
+
+        // .ask so the call parks; the responder (emitExecuting: true) then plays
+        // "user approved, command now running".
+        let perms = #"[{"guid":"queue-test","category":"Run Commands","chatID":"queue-test"},"ask"]"#
+
+        let recorder = BrokerEventRecorder()
+        let listenAll = broker.subscribe(chatID: nil, registrationProvider: nil) { update in
+            recorder.record(update)
+        }
+        defer { listenAll.unsubscribe() }
+
+        let chatID = try broker.create(
+            chatWithTitle: "live approved-executing test \(UUID().uuidString.prefix(8))",
+            terminalSessionGuid: "queue-test",
+            browserSessionGuid: nil,
+            permissions: perms,
+            initialMessages: [])
+        addTeardownBlock { try? broker.delete(chatID: chatID) }
+
+        let registrationProvider = TestRegistrationProvider(apiKey: apiKey)
+        let registrationSub = broker.subscribe(chatID: chatID,
+                                               registrationProvider: registrationProvider) { _ in }
+        defer { registrationSub.unsubscribe() }
+
+        let toolDelay: TimeInterval = 3.0
+        let toolMarker = "kw-VIOLET-OTTER-42"
+        let responder = FakeToolResponder(broker: broker,
+                                          chatID: chatID,
+                                          delay: toolDelay,
+                                          output: "command output containing \(toolMarker)",
+                                          emitExecuting: true)
+        defer { responder.shutdown() }
+
+        let sawToolRequest = expectation(description: "agent dispatched .remoteCommandRequest")
+        let sawATurnEnd    = expectation(description: "first agent turnLifecycle .ended (A's turn finished after the tool round-trip)")
+        let sawBTurnEnd    = expectation(description: "second agent turnLifecycle .ended (B's turn finished)")
+        let userMessageBBody = "Reply with the single digit answer to 1+1, nothing else."
+        var agentTurnEndCount = 0
+        var toolRequestSeen = false
+        recorder.onEntry = { entry, _ in
+            switch entry {
+            case .delivery(let message, _):
+                if case .remoteCommandRequest = message.content,
+                   message.author == .agent, !toolRequestSeen {
+                    toolRequestSeen = true
+                    sawToolRequest.fulfill()
+                }
+            case .typing:
+                return
+            case .turnLifecycle(let event):
+                guard event == .ended else { return }
+                agentTurnEndCount += 1
+                if agentTurnEndCount == 1 {
+                    sawATurnEnd.fulfill()
+                } else if agentTurnEndCount == 2 {
+                    sawBTurnEnd.fulfill()
+                }
+            }
+        }
+
+        // (1) Send A; wait for the tool dispatch. The responder has, by now, also
+        //     published .executingCommand (approve + run).
+        try broker.publish(message: userText(chatID: chatID,
+                                             body: "Use the execute_command tool to run any command. The exact command does not matter."),
+                           toChatID: chatID, partial: false)
+        wait(for: [sawToolRequest], timeout: 60)
+
+        // (2) Send B while the approved command is still running. It must WAIT for
+        //     A's turn (the running command is not abandoned).
+        try broker.publish(message: userText(chatID: chatID, body: userMessageBBody),
+                           toChatID: chatID, partial: false)
+
+        wait(for: [sawATurnEnd], timeout: 120)
+        wait(for: [sawBTurnEnd], timeout: 120)
+
+        let dump = recorder.summary(formatContent: short)
+        print("[approved-executing-test] broker log (provider=\(providerName)):\n\(dump)")
+
+        let toolRequestIdx = recorder.firstDelivery { msg in
+            if case .remoteCommandRequest = msg.content, msg.author == .agent { return true }
+            return false
+        }
+        let bPublishIdx = recorder.firstDelivery { msg in
+            msg.author == .user && msg.content.simpleText == userMessageBBody
+        }
+        let toolResponseIdx = recorder.firstDelivery(after: (toolRequestIdx ?? 0) + 1) { msg in
+            if case .remoteCommandResponse = msg.content { return true }
+            return false
+        }
+        let aTurnEndIdx = recorder.firstAgentTurnEnd(at: 0)
+        let bTurnEndIdx = aTurnEndIdx.flatMap { recorder.firstAgentTurnEnd(at: $0 + 1) }
+
+        guard let toolRequestIdx, let bPublishIdx, let toolResponseIdx,
+              let aTurnEndIdx, let bTurnEndIdx
+        else {
+            XCTFail("""
+                Could not locate all required events in broker log. \
+                toolRequest=\(String(describing: toolRequestIdx)), \
+                bPublish=\(String(describing: bPublishIdx)), \
+                toolResponse=\(String(describing: toolResponseIdx)), \
+                aTurnEnd=\(String(describing: aTurnEndIdx)), \
+                bTurnEnd=\(String(describing: bTurnEndIdx)). Full log printed above.
+                """)
+            return
+        }
+
+        XCTAssertLessThan(toolRequestIdx, bPublishIdx,
+                          "B should be published after the tool request (we want to race the executing command)")
+        XCTAssertLessThan(bPublishIdx, toolResponseIdx,
+                          "B must be published before the tool response — proves B raced a still-running command")
+        XCTAssertLessThan(toolResponseIdx, aTurnEndIdx,
+                          "A's turn must end AFTER the tool response was consumed. If the approved command were wrongly abandoned, A's turn would end on stop() before the response and its result would be orphaned. (#12984 state 3)")
+        XCTAssertLessThan(aTurnEndIdx, bTurnEndIdx,
+                          "B's turn must end after A's — queue discipline")
+    }
+
+    /// Guards a #12984 balance bug in ChatService's execution tracking: the
+    /// per-chat executingCommandCounts is incremented by an agent-authored
+    /// .executingCommand but decremented only by a user .remoteCommandResponse,
+    /// and those are not paired by identity. If the user presses Stop while an
+    /// approved command is executing (count == 1) and that command never returns
+    /// a response (a hung command, or a session that closed), agent.stop()
+    /// resolves the parked completion internally and publishes NO response, so
+    /// the count stays stuck above zero with no self-healing path. A stuck count
+    /// silently disables the fix for that chat: the abandon gate
+    /// executingCommandCounts[chatID] == nil is false forever, so the NEXT time
+    /// the AI asks for approval and the user ignores it and types a new message,
+    /// the queue wedges again exactly like the original bug.
+    ///
+    /// Test: drive the count to 1 by publishing the same .executingCommand
+    /// ChatClient sends (a command started running), then press Stop WITHOUT ever
+    /// publishing that command's response (it hung). Then run the ordinary
+    /// ignored-approval-then-send repro. It must still abandon the park and
+    /// dispatch the new message. With the leak, the stuck count skips the abandon
+    /// and no turn ever starts after the follow-up — this times out.
+    ///
+    /// FAILS if Stop does not reset executingCommandCounts; PASSES once
+    /// handleUserCommand(.stop) clears it.
+    func test_chat_stopDuringExecutingCommand_doesNotWedgeLaterApproval() throws {
+        let providerName = AITermController.provider?.displayName ?? ""
+        let envKey: String?
+        switch providerName {
+        case "OpenAI":     envKey = Self.configValue("OPENAI_API_KEY")
+        case "Anthropic":  envKey = Self.configValue("ANTHROPIC_API_KEY")
+        case "Google":     envKey = Self.configValue("GEMINI_API_KEY")
+        case "Deep Seek":  envKey = Self.configValue("DEEPSEEK_API_KEY")
+        default:           envKey = nil
+        }
+        guard let apiKey = envKey, !apiKey.isEmpty else {
+            throw XCTSkip("No live API key for current provider \(providerName)")
+        }
+        guard AITermController.provider?.functionsSupported == true else {
+            throw XCTSkip("Configured provider does not support function calling; approval-park test needs a tool round-trip")
+        }
+        guard let broker = ChatBroker.instance else {
+            throw XCTSkip("ChatBroker.instance unavailable")
+        }
+        suspendBrokerProcessors(broker)
+
+        let perms = #"[{"guid":"queue-test","category":"Run Commands","chatID":"queue-test"},"ask"]"#
+
+        let recorder = BrokerEventRecorder()
+        let listenAll = broker.subscribe(chatID: nil, registrationProvider: nil) { update in
+            recorder.record(update)
+        }
+        defer { listenAll.unsubscribe() }
+
+        let chatID = try broker.create(
+            chatWithTitle: "live stop-clears-executing test \(UUID().uuidString.prefix(8))",
+            terminalSessionGuid: "queue-test",
+            browserSessionGuid: nil,
+            permissions: perms,
+            initialMessages: [])
+        addTeardownBlock { try? broker.delete(chatID: chatID) }
+
+        let registrationProvider = TestRegistrationProvider(apiKey: apiKey)
+        let registrationSub = broker.subscribe(chatID: chatID,
+                                               registrationProvider: registrationProvider) { _ in }
+        defer { registrationSub.unsubscribe() }
+
+        // (1) Simulate an approved command that started running: publish the same
+        //     .executingCommand ChatClient publishes, so ChatService records an
+        //     execution in progress (count -> 1). Its response is never published
+        //     (the command hangs), so nothing decrements it.
+        let executing = Message(chatID: chatID,
+                                author: .agent,
+                                content: .clientLocal(.init(action: .executingCommand(sampleExecuteCommand()))),
+                                sentDate: Date(),
+                                uniqueID: UUID())
+        try broker.publish(message: executing, toChatID: chatID, partial: false)
+
+        // (2) User presses Stop. This must reset the stuck count; otherwise the
+        //     abandon gate below stays disabled for this chat.
+        try broker.publish(message: Message(chatID: chatID,
+                                            author: .user,
+                                            content: .userCommand(.stop),
+                                            sentDate: Date(),
+                                            uniqueID: UUID()),
+                           toChatID: chatID, partial: false)
+
+        // (3) The ordinary repro: the AI asks for approval, the user ignores it
+        //     and sends a new message. This must still dispatch (it only does if
+        //     Stop reset the count).
+        let sawToolRequest = expectation(description: "agent dispatched .remoteCommandRequest (approval prompt)")
+        let sawFollowupTurnStarted = expectation(description: "follow-up turn dispatches (turnLifecycle .started after it) — gate not wedged")
+        var toolRequestSeen = false
+        var followupTurnStarted = false
+        var followupPublished = false
+        recorder.onEntry = { entry, _ in
+            switch entry {
+            case .delivery(let message, _):
+                if case .remoteCommandRequest = message.content,
+                   message.author == .agent, !toolRequestSeen {
+                    toolRequestSeen = true
+                    sawToolRequest.fulfill()
+                }
+            case .typing:
+                return
+            case .turnLifecycle(let event):
+                if event == .started, followupPublished, !followupTurnStarted {
+                    followupTurnStarted = true
+                    sawFollowupTurnStarted.fulfill()
+                }
+            }
+        }
+
+        try broker.publish(message: userText(chatID: chatID,
+                                             body: "Use the execute_command tool to run any command. The exact command does not matter."),
+                           toChatID: chatID, partial: false)
+        wait(for: [sawToolRequest], timeout: 60)
+
+        followupPublished = true
+        try broker.publish(message: userText(chatID: chatID,
+                                             body: "Never mind that. Reply with the single digit answer to 1+1, nothing else."),
+                           toChatID: chatID, partial: false)
+
+        // With the leak, the stuck count skips the abandon, the follow-up enqueues
+        // behind the parked head, and no turn ever starts after it — times out.
+        wait(for: [sawFollowupTurnStarted], timeout: 90)
+
+        let dump = recorder.summary(formatContent: short)
+        print("[stop-clears-executing-test] broker log (provider=\(providerName)):\n\(dump)")
+    }
+
+    /// The type-BEFORE-park ordering of #12984, which the message-arrival gate
+    /// alone cannot catch. A user message enqueued while the turn is still
+    /// WORKING (streaming, before any tool call) correctly waits behind the head;
+    /// isAwaitingUserApproval is false at that instant, so the arrival gate does
+    /// not fire. The turn THEN issues an approval-gated tool call and parks. With
+    /// only the arrival gate, the queued message would stay wedged behind the
+    /// parked head until the user answered the prompt or typed again. The
+    /// park-arrival trigger (ChatAgent.onParkedOnUser -> ChatService) re-evaluates
+    /// the wedge the instant the turn parks and abandons it so the queued message
+    /// dispatches.
+    ///
+    /// Test: ask the model to stream a dozen lines of text and only THEN call the
+    /// tool. Wait for the first streamed chunk (the turn is working, not parked),
+    /// publish M1 so it enqueues behind the working head, then let the turn reach
+    /// its tool call and park. M1's turn must dispatch. Non-vacuous: it asserts a
+    /// tool request actually appeared (the head really parked) - and with the
+    /// park-arrival trigger removed this times out (verified by hand), because M1
+    /// was enqueued before the park and so never re-enters the arrival gate.
+    func test_chat_typeWhileWorkingThenParks_dispatchesQueuedMessage() throws {
+        let providerName = AITermController.provider?.displayName ?? ""
+        let envKey: String?
+        switch providerName {
+        case "OpenAI":     envKey = Self.configValue("OPENAI_API_KEY")
+        case "Anthropic":  envKey = Self.configValue("ANTHROPIC_API_KEY")
+        case "Google":     envKey = Self.configValue("GEMINI_API_KEY")
+        case "Deep Seek":  envKey = Self.configValue("DEEPSEEK_API_KEY")
+        default:           envKey = nil
+        }
+        guard let apiKey = envKey, !apiKey.isEmpty else {
+            throw XCTSkip("No live API key for current provider \(providerName)")
+        }
+        guard AITermController.provider?.functionsSupported == true else {
+            throw XCTSkip("Configured provider does not support function calling; approval-park test needs a tool round-trip")
+        }
+        guard let broker = ChatBroker.instance else {
+            throw XCTSkip("ChatBroker.instance unavailable")
+        }
+        suspendBrokerProcessors(broker)
+
+        let perms = #"[{"guid":"queue-test","category":"Run Commands","chatID":"queue-test"},"ask"]"#
+
+        let recorder = BrokerEventRecorder()
+        let listenAll = broker.subscribe(chatID: nil, registrationProvider: nil) { update in
+            recorder.record(update)
+        }
+        defer { listenAll.unsubscribe() }
+
+        let chatID = try broker.create(
+            chatWithTitle: "live type-before-park test \(UUID().uuidString.prefix(8))",
+            terminalSessionGuid: "queue-test",
+            browserSessionGuid: nil,
+            permissions: perms,
+            initialMessages: [])
+        addTeardownBlock { try? broker.delete(chatID: chatID) }
+
+        let registrationProvider = TestRegistrationProvider(apiKey: apiKey)
+        let registrationSub = broker.subscribe(chatID: chatID,
+                                               registrationProvider: registrationProvider) { _ in }
+        defer { registrationSub.unsubscribe() }
+
+        let sawAgentStreaming = expectation(description: "H emitted its first streamed text (working, not yet parked)")
+        let sawToolRequest = expectation(description: "H issued the approval-gated tool call (the head parked)")
+        let sawM1TurnStarted = expectation(description: "M1's turn dispatches (turnLifecycle .started after M1) — park-arrival trigger fired")
+        var sawStream = false
+        var toolRequestSeen = false
+        var m1TurnStarted = false
+        // Set true right before M1 is published, AFTER H is already streaming. H's
+        // own .started fired at the very beginning, so the first .started after
+        // this flag is M1's turn dispatching (H parks -> abandon -> H .ended ->
+        // M1 .started).
+        var m1Published = false
+        recorder.onEntry = { entry, _ in
+            switch entry {
+            case .delivery(let message, _):
+                if message.author == .agent, !sawStream {
+                    switch message.content {
+                    case .markdown, .plainText, .append:
+                        sawStream = true
+                        sawAgentStreaming.fulfill()
+                    default:
+                        break
+                    }
+                }
+                if case .remoteCommandRequest = message.content,
+                   message.author == .agent, !toolRequestSeen {
+                    toolRequestSeen = true
+                    sawToolRequest.fulfill()
+                }
+            case .typing:
+                return
+            case .turnLifecycle(let event):
+                if event == .started, m1Published, !m1TurnStarted {
+                    m1TurnStarted = true
+                    sawM1TurnStarted.fulfill()
+                }
+            }
+        }
+
+        // (1) Start H: stream text first, tool call last.
+        try broker.publish(message: userText(chatID: chatID,
+                                             body: "Write the word thinking on 12 separate lines, one per line and nothing else on each line. Only after all 12 lines are written, call the execute_command tool to run any command."),
+                           toChatID: chatID, partial: false)
+
+        // (2) Wait until H is actively streaming (working, not parked), then enqueue
+        //     M1 so it lands behind the working head - the arrival gate must NOT
+        //     fire here because isAwaitingUserApproval is still false.
+        wait(for: [sawAgentStreaming], timeout: 45)
+        m1Published = true
+        try broker.publish(message: userText(chatID: chatID,
+                                             body: "Never mind that. Reply with the single digit answer to 1+1, nothing else."),
+                           toChatID: chatID, partial: false)
+
+        // (3) H finishes streaming, calls the tool, and parks. The park-arrival
+        //     trigger must abandon it so M1 dispatches. With only the arrival gate,
+        //     M1 stays wedged and this times out.
+        wait(for: [sawToolRequest], timeout: 90)
+        wait(for: [sawM1TurnStarted], timeout: 90)
+
+        let dump = recorder.summary(formatContent: short)
+        print("[type-before-park-test] broker log (provider=\(providerName)):\n\(dump)")
     }
 
     /// Repros the third production bug captured in debuglog.txt:
@@ -704,6 +1252,22 @@ extension AILiveHarness {
                        uniqueID: UUID())
     }
 
+    /// A standalone RemoteCommand for constructing a synthetic .executingCommand
+    /// signal (no live PTYSession needed). Used to drive ChatService's execution
+    /// count without a real command running. (GitLab #12984)
+    private func sampleExecuteCommand() -> RemoteCommand {
+        let callID = "call_exec_\(UUID().uuidString.prefix(8))"
+        let llm = LLM.Message(
+            role: .assistant,
+            body: .functionCall(LLM.FunctionCall(name: "execute_command",
+                                                 arguments: "{\"command\":\"sleep 999\"}",
+                                                 id: callID,
+                                                 thoughtSignature: nil),
+                                id: seedFcid(callID)))
+        return RemoteCommand(llmMessage: llm,
+                             content: .executeCommand(.init(command: "sleep 999")))
+    }
+
     private func seedUserText(_ s: String) -> Message {
         Message(chatID: "seed", author: .user, content: .markdown(s),
                 sentDate: Date(), uniqueID: UUID())
@@ -813,6 +1377,9 @@ private final class BrokerEventRecorder {
             // (not on typing edges) because typing is now a pure spinner hint
             // that toggles false mid-turn on a park.
             entry = .turnLifecycle(event)
+        case .messagesRemoved:
+            // Store truncation (edit/delete); not a queue-ordering event. Ignore.
+            return
         }
         entries.append(entry)
         timestamps.append(Date())
@@ -868,6 +1435,14 @@ private final class FakeToolResponder {
     private let chatID: String
     private let delay: TimeInterval
     private let output: String
+    // When true, publish an agent-authored .executingCommand clientLocal the
+    // instant the request is seen, before the delayed response. This simulates
+    // the user APPROVING a parked .ask command so it starts running (what
+    // ChatClient.performRemoteCommand does in production). ChatService keys its
+    // "don't abandon a running approved command" logic on that signal, so this
+    // is how a test drives state 3 (approved + executing) rather than state 2
+    // (still awaiting Allow/Deny). (GitLab #12984)
+    private let emitExecuting: Bool
     private var subscription: ChatBroker.Subscription?
     // One response per REQUEST, not one total: a later turn can re-issue
     // the tool (the interrupted-call filler in a rebuilt history invites a
@@ -878,11 +1453,13 @@ private final class FakeToolResponder {
     // orphan no matter how many requests get answered.
     private var respondedRequestIDs = Set<UUID>()
 
-    init(broker: ChatBroker, chatID: String, delay: TimeInterval, output: String) {
+    init(broker: ChatBroker, chatID: String, delay: TimeInterval, output: String,
+         emitExecuting: Bool = false) {
         self.broker = broker
         self.chatID = chatID
         self.delay = delay
         self.output = output
+        self.emitExecuting = emitExecuting
         subscription = broker.subscribe(chatID: chatID,
                                         registrationProvider: nil) { [weak self] update in
             self?.handle(update)
@@ -914,6 +1491,16 @@ private final class FakeToolResponder {
         let output = self.output
         let broker = self.broker
         let chatID = self.chatID
+        if emitExecuting {
+            // Mark the command as approved-and-running so ChatService records an
+            // execution in progress for this chat (noteIfExecutingCommandStarted).
+            let executing = Message(chatID: chatID,
+                                    author: .agent,
+                                    content: .clientLocal(.init(action: .executingCommand(cmd))),
+                                    sentDate: Date(),
+                                    uniqueID: UUID())
+            try? broker.publish(message: executing, toChatID: chatID, partial: false)
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
             let response = Message(
                 chatID: chatID,

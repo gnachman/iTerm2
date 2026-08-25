@@ -94,6 +94,11 @@ Major New Features:
   always sent the temperature parameter,
   failing against endpoints that reject it.
 
+- Fixed a bug where, if the AI asked for
+  permission in a chat and you ignored the
+  request and sent a new message instead, the
+  chat would stop responding.
+
 - Fixed a bug where an AI chat permission
   button (such as “Check terminal state”)
   did not update its label after you changed

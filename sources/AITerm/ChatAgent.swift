@@ -248,6 +248,13 @@ class ChatAgent {
         if parkedTyping.park() {
             broker.publish(typingStatus: false, of: .agent, toChatID: chatID)
         }
+        // Fire on every park (not just the ref-count 0->1 edge): the turn is now
+        // suspended on the user and will not resume on its own, so ChatService can
+        // re-check whether a user-composed message is already queued behind this
+        // head and got wedged by the park materializing AFTER it was enqueued
+        // (GitLab #12984). Called synchronously from inside the tool-dispatch
+        // stack, so ChatService must defer any teardown it decides to do.
+        onParkedOnUser?()
     }
     private func typingResumeFromPark() {
         if parkedTyping.resume() {
@@ -1238,6 +1245,41 @@ class ChatAgent {
         // covers ALL callers - stop(), transitionToOrchestration(), and
         // fetchCompletionForRegularMessage() - not just stop().
         parkedTyping.reset()
+    }
+
+    // Invoked (on the main thread, synchronously from inside the tool-dispatch
+    // stack) each time the turn parks on the user's approval. ChatService uses it
+    // to re-evaluate the #12984 head-of-line wedge at park-creation time, since a
+    // user message enqueued while the turn was still working would otherwise stay
+    // stuck behind the head once it parks. Set by ChatService.newAgent.
+    var onParkedOnUser: (() -> Void)?
+
+    // True when the in-flight turn is suspended waiting on the user's approval
+    // and cannot resume on its own: a tool call parked for Allow/Deny, or a
+    // request_orchestration_enable parked for Enable/Not Now. ChatService reads
+    // this to detect the head-of-line wedge a newly typed message would hit -
+    // finishTurn never runs for a parked turn, so nothing queued behind it ever
+    // dispatches (GitLab #12984). An AUTO-running tool (clearedTyping == false)
+    // is deliberately excluded: its result arrives without the user, so a second
+    // message must WAIT for it rather than cancel it (the "user message during
+    // in-flight tool waits" invariant). A command the user already approved and
+    // that is now executing still looks parked here (its clearedTyping stays
+    // true until the result arrives); ChatService tells that case apart with its
+    // own execution tracking, since the execute signal never reaches the agent.
+    //
+    // Caveat: clearedTyping is frozen at dispatch time from the agent's PREDICTION
+    // (remoteCommandParksOnUser), which must match the client's ACTUAL park
+    // decision in ChatClient.processRemoteCommandRequest. The two read the same
+    // RemoteCommandExecutor state within essentially the same synchronous publish,
+    // so they cannot realistically diverge; but if a permission or session-
+    // availability change slipped between predict and process, a command that
+    // actually parks could carry clearedTyping == false and this would false-
+    // negative, leaving that wedge unfixed. The robust form would flip clearedTyping
+    // from the client's real park rather than the up-front prediction (which would
+    // also harden the pre-existing typing-spinner logic that shares the prediction).
+    var isAwaitingUserApproval: Bool {
+        pendingRemoteCommands.values.contains { $0.clearedTyping }
+            || !pendingOrchestrationRequests.isEmpty
     }
 
     func stop() {
