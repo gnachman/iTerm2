@@ -12,7 +12,7 @@ class MessageTextView: NSTextView {}
 class MessageTimestamp: NSTextField {}
 
 @objc
-class RegularMessageCellView: MessageCellView {
+class RegularMessageCellView: MessageCellView, ChatFindableCellView {
     let bubbleView = BubbleView()
 
     private let textLabel: AutoSizingTextView = {
@@ -283,6 +283,11 @@ class RegularMessageCellView: MessageCellView {
         pasteboard.clearContents()
         pasteboard.setString(textLabel.string, forType: .string)
     }
+
+    // The order here must match the segment order produced by
+    // ChatViewController.findSegments(for:) for a .regular flavor (one
+    // segment: the bubble's attributed string).
+    var findableTextViews: [NSTextView] { [textLabel] }
 
     static func cellHeight(for rendition: MessageRendition,
                            tableViewWidth: CGFloat) -> CGFloat {

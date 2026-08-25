@@ -386,7 +386,25 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         if menuItem.action == #selector(closeCurrentSession(_:)) {
             return true
         }
+        if let action = menuItem.action, chatViewController.isFindAction(action) {
+            return chatViewController.validateFindAction(action, tag: menuItem.tag)
+        }
         return false
+    }
+
+    // Find actions reach the window controller when no view in the
+    // conversation subtree is first responder (e.g. nothing focused). Forward
+    // to the conversation so Cmd-F works regardless of focus.
+    @objc func performFindPanelAction(_ sender: Any?) {
+        chatViewController.performFindPanelAction(sender)
+    }
+
+    @objc func findNext(_ sender: Any?) {
+        chatViewController.findNext(sender)
+    }
+
+    @objc func findPrevious(_ sender: Any?) {
+        chatViewController.findPrevious(sender)
     }
 
     @objc(closeCurrentSession:)

@@ -7,7 +7,7 @@
 
 class TerminalCommandCellContainer: NSView {}
 
-class TerminalCommandMessageCellView: MessageCellView {
+class TerminalCommandMessageCellView: MessageCellView, ChatFindableCellView {
     private var url: URL?
     private let bubbleView: TerminalCommandCellContainer = {
         let view = TerminalCommandCellContainer()
@@ -159,6 +159,9 @@ class TerminalCommandMessageCellView: MessageCellView {
         pasteboard.clearContents()
         pasteboard.setString(textLabel.string, forType: .string)
     }
+
+    // One segment: the command text. Matches ChatViewController.findSegments(for:).
+    var findableTextViews: [NSTextView] { [textLabel] }
 
     override func setupViews() {
         updateColors()

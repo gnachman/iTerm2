@@ -10,7 +10,7 @@ import AppKit
 class CodeAttachmentTextView: AutoSizingTextView {}
 class StatusUpdateTextView: AutoSizingTextView {}
 
-class MultipartMessageCellView: MessageCellView {
+class MultipartMessageCellView: MessageCellView, ChatFindableCellView {
     let bubbleView = BubbleView()
 
     private let timestamp: MessageTimestamp = {
@@ -56,6 +56,11 @@ class MultipartMessageCellView: MessageCellView {
             }
         }
     }
+
+    // Text-bearing subparts in order (file attachments have no text view).
+    // Must match the segment order produced by
+    // ChatViewController.findSegments(for:) for a .multipart flavor.
+    var findableTextViews: [NSTextView] { textViews }
 
     static let bubbleInsetTop: CGFloat = 8
     static let bubbleInsetBottom: CGFloat = 8

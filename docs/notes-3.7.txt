@@ -424,6 +424,12 @@ Triggers Improvements:
   Claude Code is running.
 
 AI Improvements:
+- You can now press Cmd-F in an AI chat to search
+  the current conversation. A find bar appears at
+  the top with match counts and next/previous
+  navigation; matches are highlighted in place.
+  Supports smart-case, case-sensitive, and regular
+  expression modes.
 - Fixed AI chat failing on OpenAI models with an
   error about an invalid tool schema. Also fixed
   a crash while parsing AI responses that

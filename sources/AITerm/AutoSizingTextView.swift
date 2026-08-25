@@ -79,5 +79,32 @@ class AutoSizingTextView: ClickableTextView {
         }
         return nil
     }
+
+    // A focused message text view otherwise claims performFindPanelAction:
+    // for its own content, disabling Cmd-F for the conversation. Forward it
+    // (and its validation) to the enclosing ChatViewController.
+    override func performFindPanelAction(_ sender: Any?) {
+        if let controller = enclosingChatViewController {
+            controller.performFindPanelAction(sender)
+        } else {
+            super.performFindPanelAction(sender)
+        }
+    }
+
+    override func validateUserInterfaceItem(_ item: NSValidatedUserInterfaceItem) -> Bool {
+        if let action = item.action,
+           let controller = enclosingChatViewController,
+           controller.isFindAction(action) {
+            return controller.validateFindAction(action, tag: item.tag)
+        }
+        return super.validateUserInterfaceItem(item)
+    }
+
+    // Report clicks so an open find bar can anchor Find Next/Previous to the
+    // click location. super.mouseDown returns after the selection is set.
+    override func mouseDown(with event: NSEvent) {
+        super.mouseDown(with: event)
+        enclosingChatViewController?.conversationTextViewDidReceiveClick(self)
+    }
 }
 

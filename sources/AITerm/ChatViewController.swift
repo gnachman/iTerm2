@@ -258,6 +258,21 @@ class ChatViewController: NSViewController {
     // macOS 26 floating bar; positioned manually in performLayoutNow().
     private var floatingControlsView: NSView?
 
+    // In-conversation find (Cmd-F). The bar is created lazily and hosted
+    // as an overlay at the top of the conversation in performLayoutNow().
+    private var findBar: ChatFindBarView?
+    private lazy var findController: ChatFindController = {
+        let controller = ChatFindController()
+        controller.segmentsProvider = { [weak self] message in
+            self?.findSegments(for: message) ?? []
+        }
+        return controller
+    }()
+    // Coalesces find rescans so a burst of streaming updates in one runloop
+    // turn triggers a single rebuild instead of one per token.
+    private let findRescanJoiner = IdempotentOperationJoiner.asyncJoiner(.main)
+    private var pendingFindModifiedMessageIDs = Set<UUID>()
+
     private var lastTableViewWidth: CGFloat?
 
     // iOS-style deferred layout. AppKit's viewDidLayout (and any other
@@ -311,6 +326,38 @@ class ChatViewController: NSViewController {
             scrollView.frame = scrollFrame
         }
 
+        // Compute the floating-controls (macOS 26) frame first so the find bar
+        // can be placed just beneath it. This is a pure computation; the frame
+        // is applied further down.
+        let floatingFrame: NSRect? = (floatingControlsView as? FloatingChatToolbarView)
+            .map { floating in
+                let preferred = floating.preferredSize()
+                let availableWidth = max(0, bounds.width - 32)
+                let width = min(availableWidth, preferred.width)
+                let height = max(0, preferred.height)
+                let x = floor((bounds.width - width) / 2)
+                let topPadding: CGFloat = 8
+                let y = bounds.height - topPadding - height
+                return NSRect(x: x, y: y, width: width, height: height)
+            }
+
+        // The find bar is a centered, fixed-max-width overlay that sits just
+        // below the top chrome (the floating controls on macOS 26, otherwise
+        // the inline toolbar / titlebar).
+        let findBarFrame: NSRect? = findBar.map { _ in
+            let barHeight = ChatFindBarView.barHeight
+            let gap: CGFloat = 8
+            let topReference = (floatingFrame?.minY ?? (bounds.height - toolbarHeight)) - gap
+            let sideMargin: CGFloat = 16
+            let maxWidth: CGFloat = 640
+            let width = min(maxWidth, max(0, bounds.width - sideMargin * 2))
+            let x = floor((bounds.width - width) / 2)
+            return NSRect(x: x,
+                          y: topReference - barHeight,
+                          width: width,
+                          height: barHeight)
+        }
+
         let inputHeight = inputView.preferredHeight(forContainerWidth: bounds.width)
         let inputFrame = NSRect(x: 0, y: 0, width: bounds.width, height: inputHeight)
         if inputView.frame != inputFrame {
@@ -321,12 +368,18 @@ class ChatViewController: NSViewController {
         // area's height so the last row can scroll above it. iOS
         // pattern: scroll view's contentInset.bottom == hovering view's
         // height, so the content can scroll up out from underneath.
+        // When the find bar is visible it overlays the top of the scroll
+        // view; reserve down to its bottom edge with a top content inset so
+        // no message is hidden behind it (or behind the chrome above it).
+        let topInset: CGFloat = findBarFrame.map { frame in
+            max(0, (bounds.height - toolbarHeight) - frame.minY)
+        } ?? 0
         let currentInsets = scrollView.contentInsets
         if currentInsets.bottom != inputHeight ||
-           currentInsets.top != 0 ||
+           currentInsets.top != topInset ||
            currentInsets.left != 0 ||
            currentInsets.right != 0 {
-            scrollView.contentInsets = NSEdgeInsets(top: 0,
+            scrollView.contentInsets = NSEdgeInsets(top: topInset,
                                                     left: 0,
                                                     bottom: inputHeight,
                                                     right: 0)
@@ -361,18 +414,13 @@ class ChatViewController: NSViewController {
             }
         }
 
-        if let floating = floatingControlsView as? FloatingChatToolbarView {
-            let preferred = floating.preferredSize()
-            let availableWidth = max(0, bounds.width - 32)
-            let width = min(availableWidth, preferred.width)
-            let height = max(0, preferred.height)
-            let x = floor((bounds.width - width) / 2)
-            let topPadding: CGFloat = 8
-            let y = bounds.height - topPadding - height
-            let floatingFrame = NSRect(x: x, y: y, width: width, height: height)
-            if floating.frame != floatingFrame {
-                floating.frame = floatingFrame
-            }
+        if let floating = floatingControlsView, let floatingFrame,
+           floating.frame != floatingFrame {
+            floating.frame = floatingFrame
+        }
+
+        if let findBar, let findBarFrame, findBar.frame != findBarFrame {
+            findBar.frame = findBarFrame
         }
     }
 
@@ -821,6 +869,8 @@ extension ChatViewController {
                 inputView.attributedStringValue = draft.text
                 inputView.setAttachedFiles(draft.attachments)
             }
+            // The find bar's matches belong to the outgoing conversation.
+            closeFindBar()
         }
         ensureCurrentChatHasModel()
         chatToolbar.update()
@@ -1415,6 +1465,9 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
         }
         let view = view(forItem: model.items[row], isLastMessage: model.indexIsLastMessage(row))
         DLog("Return view of class \(type(of: view)) for row \(row))")
+        if findController.hasQuery {
+            applyFindHighlights(to: view, row: row)
+        }
         return view
     }
 
@@ -2054,6 +2107,29 @@ extension ChatViewController: NSTableViewDataSource, NSTableViewDelegate {
                                 isEditable: editable,
                                 linkColor: message.linkColor)
     }
+
+    // Ordered rendered-plain-text segments for a message, used as the
+    // corpus for in-conversation find. Derived from the same MessageRendition
+    // the cells display, so match ranges map 1:1 onto the cell's
+    // findableTextViews (same order). File-attachment subparts have no text
+    // view and are skipped, matching MultipartMessageCellView.textViews.
+    func findSegments(for message: Message) -> [String] {
+        switch rendition(for: message, isLast: false).flavor {
+        case .regular(let regular):
+            return [regular.attributedString.string]
+        case .command(let command):
+            return [command.command]
+        case .multipart(let subparts):
+            return subparts.compactMap { subpart in
+                switch subpart.kind {
+                case .fileAttachment:
+                    return nil
+                case .regular, .codeAttachment, .statusUpdate:
+                    return subpart.attributedString.string
+                }
+            }
+        }
+    }
 }
 
 extension LLM.Message.Attachment {
@@ -2357,6 +2433,7 @@ extension ChatViewController: ChatViewControllerModelDelegate {
         estimatedCount += 1
         it_assert(i <= estimatedCount)
         tableView.insertRows(at: IndexSet(integer: i))
+        scheduleFindRescan()
 
         // Disable buttons in message that just became second-to-last.
         if let model,
@@ -2377,6 +2454,7 @@ extension ChatViewController: ChatViewControllerModelDelegate {
         it_assert(range.upperBound <= estimatedCount)
         estimatedCount -= range.count
         tableView.removeRows(at: IndexSet(ranges: [range]))
+        scheduleFindRescan()
         setNeedsLayoutNow()
     }
 
@@ -2398,6 +2476,7 @@ extension ChatViewController: ChatViewControllerModelDelegate {
         tableView.reloadData(forRowIndexes: indexSet,
                               columnIndexes: IndexSet(integer: 0))
         tableView.endUpdates()
+        scheduleFindRescan(modifiedMessageIDs: modifiedMessageIDs(atIndexes: indexSet))
         setNeedsLayoutNow()
     }
 }
@@ -2788,7 +2867,311 @@ extension ChatViewController: NSMenuItemValidation {
                 menuItem.title = "AI can \(category.rawValue)"
             }
         }
+        if let action = menuItem.action, isFindAction(action) {
+            return validateFindAction(action, tag: menuItem.tag)
+        }
         return true
+    }
+}
+
+// MARK: - In-conversation find (Cmd-F)
+
+extension ChatViewController: ChatFindBarViewDelegate {
+    // Standard macOS find highlight: the current match uses the system find
+    // color; other matches use a translucent version of it.
+    private static let findHighlightColor = NSColor.findHighlightColor.withAlphaComponent(0.45)
+    private static let currentFindHighlightColor = NSColor.findHighlightColor
+
+    @objc func performFindPanelAction(_ sender: Any?) {
+        guard let menuItem = sender as? NSMenuItem else {
+            showFindBar()
+            return
+        }
+        switch NSFindPanelAction(rawValue: UInt(menuItem.tag)) {
+        case .showFindPanel:
+            showFindBar()
+        case .setFindString:
+            guard let text = selectedFindText() else {
+                return
+            }
+            iTermFindPasteboard.sharedInstance().setStringValueUnconditionally(text)
+            iTermFindPasteboard.sharedInstance().updateObservers(nil, internallyGenerated: true)
+            showFindBar(initialQuery: text)
+        default:
+            break
+        }
+    }
+
+    @objc func findNext(_ sender: Any?) {
+        revealMatch(findController.next())
+    }
+
+    @objc func findPrevious(_ sender: Any?) {
+        revealMatch(findController.previous())
+    }
+
+    // Selectors this controller handles for in-conversation find. Shared so
+    // the focused text views and the window controller can forward and
+    // validate them (a focused NSTextView otherwise claims
+    // performFindPanelAction: for itself and disables the menu item).
+    func isFindAction(_ action: Selector) -> Bool {
+        return action == #selector(performFindPanelAction(_:)) ||
+               action == #selector(findNext(_:)) ||
+               action == #selector(findPrevious(_:))
+    }
+
+    func validateFindAction(_ action: Selector, tag: Int) -> Bool {
+        if action == #selector(performFindPanelAction(_:)) {
+            switch NSFindPanelAction(rawValue: UInt(max(0, tag))) {
+            case .showFindPanel:
+                return model != nil
+            case .setFindString:
+                return selectedFindText() != nil
+            default:
+                return false
+            }
+        }
+        if action == #selector(findNext(_:)) || action == #selector(findPrevious(_:)) {
+            return findController.numberOfResults > 0
+        }
+        return false
+    }
+
+    // MARK: ChatFindBarViewDelegate
+
+    func chatFindBar(_ bar: ChatFindBarView,
+                     didChangeQuery query: String,
+                     mode: iTermFindMode) {
+        runFind(query: query, mode: mode)
+    }
+
+    func chatFindBarFindNext(_ bar: ChatFindBarView) {
+        findNext(nil)
+    }
+
+    func chatFindBarFindPrevious(_ bar: ChatFindBarView) {
+        findPrevious(nil)
+    }
+
+    func chatFindBarClose(_ bar: ChatFindBarView) {
+        closeFindBar()
+    }
+
+    // MARK: Internal
+
+    private func showFindBar(initialQuery: String? = nil) {
+        guard model != nil else {
+            return
+        }
+        findController.model = model
+        // Model mutations while the bar was closed don't refresh the cache, so
+        // rebuild from current rendered text on every open.
+        findController.invalidateCache()
+        let bar: ChatFindBarView
+        if let existing = findBar {
+            bar = existing
+        } else {
+            bar = ChatFindBarView(frame: .zero)
+            bar.delegate = self
+            bar.selectMode(iTermFindDriver.mode())
+            view.addSubview(bar)
+            findBar = bar
+        }
+        let seed = initialQuery ?? nonEmptyOrNil(iTermFindPasteboard.sharedInstance().stringValue)
+        if let seed {
+            bar.query = seed
+        }
+        setNeedsLayoutNow()
+        bar.focusSearchField()
+        runFind(query: bar.query, mode: bar.mode)
+    }
+
+    private func nonEmptyOrNil(_ string: String?) -> String? {
+        guard let string, !string.isEmpty else {
+            return nil
+        }
+        return string
+    }
+
+    func closeFindBar() {
+        guard findBar != nil else {
+            return
+        }
+        findController.clear()
+        refreshVisibleHighlights()
+        findBar?.removeFromSuperview()
+        findBar = nil
+        setNeedsLayoutNow()
+    }
+
+    private func runFind(query: String, mode: iTermFindMode) {
+        findController.model = model
+        findController.search(query, mode: mode)
+        revealMatch(findController.currentMatch)
+    }
+
+    // Schedule a coalesced find rescan after a conversation change. Pass the
+    // uniqueIDs of messages whose content changed in place (from
+    // didModifyItemsAtIndexes); insert/remove pass none (rebuild picks up new
+    // messages on demand and ignores removed ones).
+    func scheduleFindRescan(modifiedMessageIDs: [UUID] = []) {
+        guard findBar != nil else {
+            return
+        }
+        pendingFindModifiedMessageIDs.formUnion(modifiedMessageIDs)
+        findRescanJoiner.setNeedsUpdate { [weak self] in
+            self?.performFindRescan()
+        }
+    }
+
+    private func performFindRescan() {
+        guard findBar != nil else {
+            pendingFindModifiedMessageIDs.removeAll()
+            return
+        }
+        let ids = Array(pendingFindModifiedMessageIDs)
+        pendingFindModifiedMessageIDs.removeAll()
+        findController.model = model
+        findController.rescan(invalidatingMessageIDs: ids)
+        updateFindResultsUI()
+        refreshVisibleHighlights()
+    }
+
+    // Message uniqueIDs at the given item indexes (non-message rows dropped).
+    func modifiedMessageIDs(atIndexes indexSet: IndexSet) -> [UUID] {
+        guard let model else {
+            return []
+        }
+        return indexSet.compactMap { index in
+            guard index < model.items.count,
+                  case .message(let updatable) = model.items[index] else {
+                return nil
+            }
+            return updatable.message.uniqueID
+        }
+    }
+
+    private func revealMatch(_ match: ChatFindController.Match?) {
+        updateFindResultsUI()
+        guard let match else {
+            refreshVisibleHighlights()
+            return
+        }
+        tableView.scrollRowToVisible(match.itemIndex)
+        refreshVisibleHighlights()
+        scrollMatchRangeToVisible(match)
+    }
+
+    private func updateFindResultsUI() {
+        findBar?.updateResults(current: findController.currentIndex,
+                               total: findController.numberOfResults)
+    }
+
+    private func refreshVisibleHighlights() {
+        let visible = tableView.rows(in: tableView.visibleRect)
+        guard visible.length > 0 else {
+            return
+        }
+        for row in visible.location..<(visible.location + visible.length) {
+            guard let cell = tableView.view(atColumn: 0,
+                                            row: row,
+                                            makeIfNecessary: false) else {
+                continue
+            }
+            applyFindHighlights(to: cell, row: row)
+        }
+    }
+
+    fileprivate func applyFindHighlights(to view: NSView, row: Int) {
+        guard let cell = view as? ChatFindableCellView,
+              let model,
+              row < model.items.count,
+              case .message(let updatable) = model.items[row] else {
+            return
+        }
+        let messageID = updatable.message.uniqueID
+        let textViews = cell.findableTextViews
+        for textView in textViews {
+            guard let layoutManager = textView.layoutManager,
+                  let textStorage = textView.textStorage else {
+                continue
+            }
+            layoutManager.removeTemporaryAttribute(
+                .backgroundColor,
+                forCharacterRange: NSRange(location: 0, length: textStorage.length))
+        }
+        guard findController.hasQuery else {
+            return
+        }
+        let current = findController.currentMatch
+        for match in findController.matches(forMessageID: messageID) {
+            guard match.segment < textViews.count,
+                  let textStorage = textViews[match.segment].textStorage,
+                  let layoutManager = textViews[match.segment].layoutManager,
+                  NSMaxRange(match.range) <= textStorage.length else {
+                continue
+            }
+            let color = (match == current)
+                ? Self.currentFindHighlightColor
+                : Self.findHighlightColor
+            layoutManager.addTemporaryAttributes([.backgroundColor: color],
+                                                 forCharacterRange: match.range)
+        }
+    }
+
+    private func scrollMatchRangeToVisible(_ match: ChatFindController.Match) {
+        guard let cell = tableView.view(atColumn: 0,
+                                        row: match.itemIndex,
+                                        makeIfNecessary: true) as? ChatFindableCellView,
+              match.segment < cell.findableTextViews.count else {
+            return
+        }
+        let textView = cell.findableTextViews[match.segment]
+        guard let layoutManager = textView.layoutManager,
+              let container = textView.textContainer,
+              NSMaxRange(match.range) <= (textView.textStorage?.length ?? 0) else {
+            return
+        }
+        let glyphRange = layoutManager.glyphRange(forCharacterRange: match.range,
+                                                  actualCharacterRange: nil)
+        var rect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: container)
+        let origin = textView.textContainerOrigin
+        rect.origin.x += origin.x
+        rect.origin.y += origin.y
+        let rectInTable = textView.convert(rect, to: tableView)
+        tableView.scrollToVisible(rectInTable.insetBy(dx: 0, dy: -20))
+    }
+
+    private func selectedFindText() -> String? {
+        guard let textView = view.window?.firstResponder as? NSTextView else {
+            return nil
+        }
+        let range = textView.selectedRange()
+        guard range.length > 0 else {
+            return nil
+        }
+        return (textView.string as NSString).substring(with: range)
+    }
+
+    // A click landed in a conversation text view. While find is active, anchor
+    // the find cursor there so the next Find Next/Previous navigates relative
+    // to the click instead of the last match.
+    func conversationTextViewDidReceiveClick(_ textView: NSTextView) {
+        guard findBar != nil else {
+            return
+        }
+        let row = tableView.row(for: textView)
+        guard row >= 0,
+              let cell = tableView.view(atColumn: 0,
+                                        row: row,
+                                        makeIfNecessary: false) as? ChatFindableCellView,
+              let segment = cell.findableTextViews.firstIndex(of: textView) else {
+            return
+        }
+        findController.setCursor(ChatFindController.Position(
+            itemIndex: row,
+            segment: segment,
+            location: textView.selectedRange().location))
     }
 }
 
