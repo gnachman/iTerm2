@@ -147,6 +147,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .subscribe(chatID: "c"),
         .unsubscribe(chatID: "c"),
         .publish(message: sampleMessage, toChatID: "c", partial: false),
+        .deleteMessages(chatID: "c", messageIDs: []),
         .selectSessionResponse(chatID: "c", originalMessage: sampleMessage, sessionGuid: nil, terminal: false),
         .remoteCommandDecision(chatID: "c", messageUniqueID: UUID(), decision: .allowOnce),
         .linkSession(chatID: "c", sessionGuid: "s", terminal: false),
@@ -201,6 +202,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .subscribe: return "subscribe"
         case .unsubscribe: return "unsubscribe"
         case .publish: return "publish"
+        case .deleteMessages: return "deleteMessages"
         case .selectSessionResponse: return "selectSessionResponse"
         case .remoteCommandDecision: return "remoteCommandDecision"
         case .linkSession: return "linkSession"
@@ -242,6 +244,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         .chatCreated(entry: CompanionChatListEntry(chat: Chat(title: "t", permissions: ""), snippet: nil)),
         .history(chatID: "c", messages: [], maxSeq: 0),
         .delivery(message: sampleMessage, chatID: "c", partial: false),
+        .messagesRemoved(chatID: "c", messageIDs: []),
         .typingStatus(isTyping: true, participant: .agent, chatID: "c"),
         .mentionsResolved([]),
         .sessionScreenInfo(CompanionSessionScreenInfo(guid: "s", name: "n", lineCount: 0, columns: 0,
@@ -291,6 +294,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .chatCreated: return "chatCreated"
         case .history: return "history"
         case .delivery: return "delivery"
+        case .messagesRemoved: return "messagesRemoved"
         case .typingStatus: return "typingStatus"
         case .mentionsResolved: return "mentionsResolved"
         case .sessionScreenInfo: return "sessionScreenInfo"
