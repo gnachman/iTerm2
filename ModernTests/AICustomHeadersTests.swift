@@ -2,96 +2,75 @@
 //  AICustomHeadersTests.swift
 //  iTerm2 ModernTests
 //
-//  Offline coverage for AICustomHeaders.merged(into:): the helper that
-//  layers user-defined HTTP headers on top of built-in ones for every
-//  outbound AI request. Validates the toggle, name/value sanitization,
-//  override behavior, and that values are not allowed to inject extra
-//  headers via CRLF.
+//  Offline coverage for AICustomHeaders.merged(into:customHeaders:): the helper
+//  that layers a model's user-defined HTTP headers on top of built-in ones for
+//  every outbound AI request. Validates name/value sanitization, override
+//  behavior, and that values are not allowed to inject extra headers via CRLF.
 //
 
 import XCTest
 @testable import iTerm2SharedARC
 
 final class AICustomHeadersTests: XCTestCase {
-    private var savedEnabled: Bool = false
-    private var savedRaw: Any?
-
-    override func setUp() {
-        super.setUp()
-        savedEnabled = iTermPreferences.bool(forKey: kPreferenceKeyAICustomHeadersEnabled)
-        savedRaw = iTermPreferences.object(forKey: kPreferenceKeyAICustomHeaders)
-    }
-
-    override func tearDown() {
-        iTermPreferences.setBool(savedEnabled, forKey: kPreferenceKeyAICustomHeadersEnabled)
-        iTermPreferences.setObject(savedRaw, forKey: kPreferenceKeyAICustomHeaders)
-        super.tearDown()
-    }
-
-    private func setHeaders(_ entries: [[String: String]], enabled: Bool = true) {
-        iTermPreferences.setBool(enabled, forKey: kPreferenceKeyAICustomHeadersEnabled)
-        iTermPreferences.setObject(entries, forKey: kPreferenceKeyAICustomHeaders)
-    }
-
-    func testToggleOffReturnsBaseUnchanged() {
-        setHeaders([["name": "X-Foo", "value": "bar"]], enabled: false)
-        let result = AICustomHeaders.merged(into: ["Content-Type": "application/json"])
+    func testEmptyHeadersReturnBaseUnchanged() {
+        let result = AICustomHeaders.merged(into: ["Content-Type": "application/json"],
+                                            customHeaders: [])
         XCTAssertEqual(result, ["Content-Type": "application/json"])
     }
 
     func testCustomHeaderIsAppended() {
-        setHeaders([["name": "X-Route", "value": "alpha"]])
-        let result = AICustomHeaders.merged(into: ["Content-Type": "application/json"])
+        let result = AICustomHeaders.merged(into: ["Content-Type": "application/json"],
+                                            customHeaders: [["name": "X-Route", "value": "alpha"]])
         XCTAssertEqual(result["X-Route"], "alpha")
         XCTAssertEqual(result["Content-Type"], "application/json")
     }
 
     func testCustomHeaderOverridesBuiltIn() {
-        setHeaders([["name": "User-Agent", "value": "override"]])
-        let result = AICustomHeaders.merged(into: ["User-Agent": "iTerm2"])
+        let result = AICustomHeaders.merged(into: ["User-Agent": "iTerm2"],
+                                            customHeaders: [["name": "User-Agent", "value": "override"]])
         XCTAssertEqual(result["User-Agent"], "override")
     }
 
     func testEmptyNameIsSkipped() {
-        setHeaders([
-            ["name": "", "value": "ignored"],
-            ["name": "X-Keep", "value": "kept"],
-        ])
-        let result = AICustomHeaders.merged(into: [:])
+        let result = AICustomHeaders.merged(into: [:],
+                                            customHeaders: [
+                                                ["name": "", "value": "ignored"],
+                                                ["name": "X-Keep", "value": "kept"],
+                                            ])
         XCTAssertNil(result[""])
         XCTAssertEqual(result["X-Keep"], "kept")
     }
 
     func testInvalidNameCharactersAreRejected() {
-        setHeaders([
-            ["name": "Bad Name", "value": "x"],
-            ["name": "Bad:Name", "value": "x"],
-            ["name": "Bad\nName", "value": "x"],
-        ])
-        let result = AICustomHeaders.merged(into: ["Content-Type": "application/json"])
+        let result = AICustomHeaders.merged(into: ["Content-Type": "application/json"],
+                                            customHeaders: [
+                                                ["name": "Bad Name", "value": "x"],
+                                                ["name": "Bad:Name", "value": "x"],
+                                                ["name": "Bad\nName", "value": "x"],
+                                            ])
         XCTAssertEqual(result, ["Content-Type": "application/json"])
     }
 
     func testCRLFInValueIsRejected() {
-        setHeaders([
-            ["name": "X-Injected", "value": "ok\r\nX-Smuggled: yes"],
-            ["name": "X-Normal", "value": "fine"],
-        ])
-        let result = AICustomHeaders.merged(into: [:])
+        let result = AICustomHeaders.merged(into: [:],
+                                            customHeaders: [
+                                                ["name": "X-Injected", "value": "ok\r\nX-Smuggled: yes"],
+                                                ["name": "X-Normal", "value": "fine"],
+                                            ])
         XCTAssertNil(result["X-Injected"])
         XCTAssertNil(result["X-Smuggled"])
         XCTAssertEqual(result["X-Normal"], "fine")
     }
 
     func testNULInValueIsRejected() {
-        setHeaders([["name": "X-Null", "value": "ab\0cd"]])
-        let result = AICustomHeaders.merged(into: [:])
+        let result = AICustomHeaders.merged(into: [:],
+                                            customHeaders: [["name": "X-Null", "value": "ab\0cd"]])
         XCTAssertNil(result["X-Null"])
     }
 
     func testEmptyValueIsAllowed() {
-        setHeaders([["name": "X-Empty", "value": ""]])
-        let result = AICustomHeaders.merged(into: [:])
+        let result = AICustomHeaders.merged(into: [:],
+                                            customHeaders: [["name": "X-Empty", "value": ""]])
         XCTAssertEqual(result["X-Empty"], "")
     }
 

@@ -447,6 +447,69 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
         }
     }
 
+    // One-time: custom HTTP headers used to be a single global setting
+    // (kPreferenceKeyAICustomHeaders, shipped in 3.7.0beta3). They are now
+    // per-model. Copy the former global list into every existing manual model
+    // configuration that does not already define its own headers, so a user who
+    // relied on e.g. a proxy auth header keeps sending it to those models. The
+    // legacy single model (when there are no configurations) inherits the global
+    // pref directly in LLMMetadata.legacyManualModel(), so it needs nothing here.
+    // The global pref is left in place for that legacy path; the request builder
+    // no longer reads it (it uses the per-model headers).
+    NSUserDefaults *headersDefaults = [iTermUserDefaults userDefaults];
+    if (![headersDefaults boolForKey:@"NoSyncAICustomHeadersPerModelMigrationDone"]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyAICustomHeadersEnabled]) {
+            id rawHeaders = [iTermPreferences objectForKey:kPreferenceKeyAICustomHeaders];
+            id rawConfigs = [iTermPreferences objectForKey:kPreferenceKeyAIManualModelConfigurations];
+            // The header pref is non-NoSync and can round-trip through synced or
+            // hand-edited plists, so keep only well-formed {name,value} string
+            // entries. A malformed value would otherwise be stamped verbatim and
+            // then silently dropped at request time.
+            NSMutableArray *sanitizedHeaders = [NSMutableArray array];
+            if ([rawHeaders isKindOfClass:[NSArray class]]) {
+                for (id header in (NSArray *)rawHeaders) {
+                    if ([header isKindOfClass:[NSDictionary class]] &&
+                        [((NSDictionary *)header)[@"name"] isKindOfClass:[NSString class]]) {
+                        id value = ((NSDictionary *)header)[@"value"];
+                        [sanitizedHeaders addObject:@{
+                            @"name": ((NSDictionary *)header)[@"name"],
+                            @"value": [value isKindOfClass:[NSString class]] ? value : @"",
+                        }];
+                    }
+                }
+            }
+            if (sanitizedHeaders.count > 0 &&
+                [rawConfigs isKindOfClass:[NSArray class]] &&
+                [(NSArray *)rawConfigs count] > 0) {
+                NSMutableArray *migratedConfigs = [NSMutableArray array];
+                for (id entry in (NSArray *)rawConfigs) {
+                    id existing = [entry isKindOfClass:[NSDictionary class]]
+                        ? ((NSDictionary *)entry)[@"customHeaders"] : nil;
+                    // Treat missing OR empty headers as not-yet-migrated: opening
+                    // the editor before this migration runs stamps an empty array
+                    // into a config, which must not shadow the global headers the
+                    // user was relying on.
+                    const BOOL needsHeaders =
+                        (existing == nil) ||
+                        ([existing isKindOfClass:[NSArray class]] && [(NSArray *)existing count] == 0);
+                    if ([entry isKindOfClass:[NSDictionary class]] && needsHeaders) {
+                        NSMutableDictionary *updated = [entry mutableCopy];
+                        updated[@"customHeaders"] = sanitizedHeaders;
+                        [migratedConfigs addObject:updated];
+                    } else {
+                        [migratedConfigs addObject:entry];
+                    }
+                }
+                [iTermPreferences setObject:migratedConfigs
+                                     forKey:kPreferenceKeyAIManualModelConfigurations];
+            }
+        }
+        // Set the done flag only AFTER the config write above. If the process
+        // dies in between, the flag stays unset and this (idempotent) migration
+        // re-runs, rather than being marked complete with nothing copied.
+        [headersDefaults setBool:YES forKey:@"NoSyncAICustomHeadersPerModelMigrationDone"];
+    }
+
     if ([iTermSecureUserDefaults.instance enableAI]) {
         // A default configuration has no model or URL set.
         iTermAIModel *model;

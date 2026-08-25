@@ -31,7 +31,7 @@
 #import "iTermWarning.h"
 #import <SSKeychain/SSKeychain.h>
 
-@interface GeneralPreferencesViewController () <NSTableViewDataSource, CompetentTableViewDelegate, NSTextFieldDelegate>
+@interface GeneralPreferencesViewController () <NSTextFieldDelegate>
 @end
 
 enum {
@@ -54,6 +54,8 @@ static NSString *const kAIManualModelStreamingKey = @"streaming";
 static NSString *const kAIManualModelVectorStoreKey = @"vectorStore";
 static NSString *const kAIManualModelSupportsTemperatureKey = @"supportsTemperature";
 static NSString *const kAIManualModelConfigurableThinkingKey = @"configurableThinking";
+// Array of {"name","value"} dictionaries. Must match LLMMetadata.ManualModelKey.customHeaders.
+static NSString *const kAIManualModelCustomHeadersKey = @"customHeaders";
 
 static NSString *const kAIManualModelsDefaultColumn = @"default";
 static NSString *const kAIManualModelsModelColumn = @"model";
@@ -118,6 +120,45 @@ static NSString *iTermTitleForAIAPI(iTermAIAPI api) {
     return @"Chat Completions";
 }
 
+// Human-readable provider name for the vendor whose stored key authorizes a
+// model. Used both by the API Keys section and by the manual AI settings key
+// hint so the two never disagree.
+static NSString *iTermAIVendorProviderName(iTermAIVendor vendor) {
+    switch (vendor) {
+        case iTermAIVendorOpenAI:
+            return @"OpenAI";
+        case iTermAIVendorAnthropic:
+            return @"Anthropic";
+        case iTermAIVendorGemini:
+            return @"Gemini";
+        case iTermAIVendorDeepSeek:
+            return @"DeepSeek";
+        case iTermAIVendorLlama:
+            return @"Llama";
+        case iTermAIVendorApple:
+            return @"Apple Intelligence";
+    }
+    return @"OpenAI";
+}
+
+// Whether the user can actually configure a key for this vendor. Only the
+// vendors in the "Set API Key" sheet (see aiAPIKeyProviderVendors) have one.
+// Llama endpoints are self-hosted and Apple runs on-device, so neither has an
+// enterable key; the hint must not claim one exists.
+static BOOL iTermAIVendorHasEnterableKey(iTermAIVendor vendor) {
+    switch (vendor) {
+        case iTermAIVendorOpenAI:
+        case iTermAIVendorAnthropic:
+        case iTermAIVendorGemini:
+        case iTermAIVendorDeepSeek:
+            return YES;
+        case iTermAIVendorLlama:
+        case iTermAIVendorApple:
+            return NO;
+    }
+    return YES;
+}
+
 static NSString *iTermManualAIModelHost(NSDictionary *configuration) {
     NSString *url = configuration[kAIManualModelURLKey] ?: @"";
     if (url.length == 0) {
@@ -159,7 +200,7 @@ static NSString *iTermManualAIModelHost(NSDictionary *configuration) {
 // Sheet form for adding or editing one manual model. Owns its window; presented
 // as a child sheet of the manager panel. Completion is called with the built
 // configuration dictionary, or nil if the user cancels.
-@interface iTermManualAIModelEditorController : NSObject
+@interface iTermManualAIModelEditorController : NSObject <NSTextFieldDelegate, NSTableViewDataSource, NSTableViewDelegate>
 @property(nonatomic, readonly) NSWindow *window;
 - (instancetype)initWithConfiguration:(NSDictionary *)configuration
                             isEditing:(BOOL)isEditing;
@@ -499,11 +540,14 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSTextField *_nameField;
     NSTextField *_urlField;
     NSPopUpButton *_apiPopup;
+    NSTextField *_apiKeyHintLabel;
     NSTextField *_contextField;
     NSTextField *_responseField;
     NSPopUpButton *_vectorStorePopup;
     NSButton *_supportsTemperatureButton;
     NSButton *_configurableThinkingButton;
+    NSTableView *_headersTable;
+    NSMutableArray<NSMutableDictionary *> *_headers;
     NSMutableDictionary<NSString *, NSButton *> *_featureButtons;
     NSButton *_testButton;
     NSProgressIndicator *_testSpinner;
@@ -551,7 +595,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 - (void)buildWindow {
     const CGFloat width = 540;
-    const CGFloat height = 528;
+    // Extra height over the base layout makes room for the API-key hint line
+    // under the API popup and the custom-headers section near the bottom.
+    const CGFloat height = 706;
     const CGFloat margin = 20;
     const CGFloat labelWidth = 150;
     const CGFloat fieldX = margin + labelWidth + 12;
@@ -637,8 +683,24 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     [_apiPopup selectItemWithTag:iTermManualAIModelIntegerValue(_base,
                                                                 kAIManualModelAPIKey,
                                                                 iTermAIAPIChatCompletions)];
+    _apiPopup.target = self;
+    _apiPopup.action = @selector(apiKeyHintInputDidChange:);
     [content addSubview:_apiPopup];
-    y -= rowHeight;
+    y -= 24;
+
+    // The API key sent is the stored key for the vendor inferred from the API,
+    // URL, and model name, which is not obvious to users (see issue 12975). Spell
+    // it out here, updated live as those fields change.
+    _apiKeyHintLabel = [NSTextField labelWithString:@""];
+    _apiKeyHintLabel.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
+    _apiKeyHintLabel.textColor = [NSColor secondaryLabelColor];
+    _apiKeyHintLabel.frame = NSMakeRect(fieldX, y + 4, fieldWidth, 16);
+    [content addSubview:_apiKeyHintLabel];
+    y -= 22;
+
+    // The name and URL fields feed the vendor resolver, so track their edits.
+    _nameField.delegate = self;
+    _urlField.delegate = self;
 
     _contextField =
         addTextField(@"Context tokens:",
@@ -706,6 +768,59 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                                   width:fieldWidth
                                 content:content];
 
+    // Per-model custom HTTP headers, merged into every request to this model's
+    // endpoint. Lets an authenticated self-hosted endpoint carry the auth header
+    // it needs (issue 12975). Editable Header/Value table with add/remove.
+    _headers = [NSMutableArray array];
+    id savedHeaders = _base[kAIManualModelCustomHeadersKey];
+    if ([savedHeaders isKindOfClass:NSArray.class]) {
+        for (id entry in (NSArray *)savedHeaders) {
+            if ([entry isKindOfClass:NSDictionary.class]) {
+                [_headers addObject:[entry mutableCopy]];
+            }
+        }
+    }
+
+    y -= 6;
+    NSTextField *headersLabel = [NSTextField labelWithString:@"Custom headers:"];
+    headersLabel.alignment = NSTextAlignmentRight;
+    headersLabel.frame = NSMakeRect(margin, y - 17, labelWidth, 20);
+    [content addSubview:headersLabel];
+
+    const CGFloat headersTableHeight = 120;
+    NSScrollView *headersScroll =
+        [[NSScrollView alloc] initWithFrame:NSMakeRect(fieldX, y - headersTableHeight, fieldWidth, headersTableHeight)];
+    headersScroll.hasVerticalScroller = YES;
+    headersScroll.borderType = NSBezelBorder;
+    _headersTable = [[NSTableView alloc] initWithFrame:headersScroll.bounds];
+    _headersTable.usesAlternatingRowBackgroundColors = YES;
+    _headersTable.allowsMultipleSelection = NO;
+    _headersTable.rowHeight = 22;
+    NSTableColumn *nameColumn = [[NSTableColumn alloc] initWithIdentifier:@"name"];
+    nameColumn.title = @"Header";
+    nameColumn.width = 170;
+    nameColumn.editable = YES;
+    NSTableColumn *valueColumn = [[NSTableColumn alloc] initWithIdentifier:@"value"];
+    valueColumn.title = @"Value";
+    valueColumn.width = fieldWidth - nameColumn.width - 24;
+    valueColumn.editable = YES;
+    [_headersTable addTableColumn:nameColumn];
+    [_headersTable addTableColumn:valueColumn];
+    _headersTable.dataSource = self;
+    _headersTable.delegate = self;
+    headersScroll.documentView = _headersTable;
+    [content addSubview:headersScroll];
+    y -= headersTableHeight + 4;
+
+    NSSegmentedControl *headersAddRemove =
+        [NSSegmentedControl segmentedControlWithLabels:@[ @"+", @"−" ]
+                                          trackingMode:NSSegmentSwitchTrackingMomentary
+                                                target:self
+                                                action:@selector(headersAddRemoveClicked:)];
+    headersAddRemove.frame = NSMakeRect(fieldX, y - 22, 72, 22);
+    [content addSubview:headersAddRemove];
+    y -= 22 + 10;
+
     NSButton *save = [NSButton buttonWithTitle:(_isEditing ? @"Save" : @"Add")
                                         target:self
                                         action:@selector(saveClicked:)];
@@ -750,6 +865,151 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     _window.initialFirstResponder = _nameField;
     _window.defaultButtonCell = save.cell;
+
+    [self updateEditorAPIKeyHint];
+}
+
+// Resolves the vendor from the current form values exactly as at request time so
+// the hint agrees with the key that will actually be sent.
+- (void)updateEditorAPIKeyHint {
+    const iTermAIAPI api = (iTermAIAPI)_apiPopup.selectedTag;
+    NSString *modelName = _nameField.stringValue ?: @"";
+    NSString *url = _urlField.stringValue ?: @"";
+    const iTermAIVendor vendor = [iTermLLMMetadata vendorForManualModelWithAPI:api
+                                                                           url:url
+                                                                     modelName:modelName];
+    if (iTermAIVendorHasEnterableKey(vendor)) {
+        _apiKeyHintLabel.stringValue =
+            [NSString stringWithFormat:@"Authorizes with your %@ API key.",
+             iTermAIVendorProviderName(vendor)];
+    } else {
+        // No key can be configured: self-hosted (Llama) or Apple Intelligence
+        // (which runs on-device or via Private Cloud Compute).
+        _apiKeyHintLabel.stringValue = @"No API key is used.";
+    }
+}
+
+- (void)apiKeyHintInputDidChange:(id)sender {
+    [self updateEditorAPIKeyHint];
+}
+
+- (void)controlTextDidChange:(NSNotification *)notification {
+    [self updateEditorAPIKeyHint];
+}
+
+#pragma mark - Custom headers table
+
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {
+    if (tableView != _headersTable) {
+        return 0;
+    }
+    return (NSInteger)_headers.count;
+}
+
+// View-based cell: a borderless editable NSTextField inside an NSTableCellView.
+// NSTextField vertically centers single-line text and uses the correct control
+// text color, unlike a bare NSTextFieldCell (which top-aligns). Edits commit
+// through -controlTextDidEndEditing:.
+- (NSView *)tableView:(NSTableView *)tableView
+   viewForTableColumn:(NSTableColumn *)tableColumn
+                  row:(NSInteger)row {
+    if (tableView != _headersTable || row < 0 || row >= (NSInteger)_headers.count) {
+        return nil;
+    }
+    NSString *identifier = tableColumn.identifier;
+    NSTableCellView *cell = [tableView makeViewWithIdentifier:identifier owner:self];
+    if (cell == nil) {
+        const CGFloat cellHeight = _headersTable.rowHeight;
+        cell = [[NSTableCellView alloc] initWithFrame:NSMakeRect(0, 0, tableColumn.width, cellHeight)];
+        cell.identifier = identifier;
+        NSTextField *field = [[NSTextField alloc] initWithFrame:NSZeroRect];
+        field.bordered = NO;
+        field.drawsBackground = NO;
+        field.editable = YES;
+        field.selectable = YES;
+        field.usesSingleLineMode = YES;
+        field.lineBreakMode = NSLineBreakByTruncatingTail;
+        field.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+        [field sizeToFit];  // natural single-line height for the font
+        // NSTextFieldCell top-aligns single-line text, so a field that fills a
+        // taller row draws its text near the top (the off-center look). Give the
+        // field its natural height and center it in the row with flexible
+        // top/bottom margins, so the text stays centered for both display and
+        // editing (the field editor inherits this frame).
+        const CGFloat fieldHeight = NSHeight(field.frame) > 0 ? NSHeight(field.frame) : 17;
+        field.frame = NSMakeRect(0,
+                                 floor((cellHeight - fieldHeight) / 2.0),
+                                 tableColumn.width,
+                                 fieldHeight);
+        field.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin | NSViewMaxYMargin;
+        field.delegate = self;
+        cell.textField = field;
+        [cell addSubview:field];
+    }
+    cell.textField.stringValue = _headers[(NSUInteger)row][identifier] ?: @"";
+    return cell;
+}
+
+- (void)controlTextDidEndEditing:(NSNotification *)notification {
+    NSTextField *field = notification.object;
+    if (![field isKindOfClass:NSTextField.class]) {
+        return;
+    }
+    const NSInteger row = [_headersTable rowForView:field];
+    const NSInteger column = [_headersTable columnForView:field];
+    if (row < 0 || column < 0 || row >= (NSInteger)_headers.count ||
+        column >= (NSInteger)_headersTable.tableColumns.count) {
+        return;  // not one of our header cells (e.g. the model/URL fields)
+    }
+    NSString *identifier = _headersTable.tableColumns[(NSUInteger)column].identifier;
+    NSString *value = field.stringValue ?: @"";
+    if ([identifier isEqualToString:@"name"]) {
+        value = [value stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+    }
+    // Commit the raw value into the model. Validation happens once in
+    // -saveClicked:, not here: presenting an alert from this delegate (which
+    // fires while first responder resigns as the Save button is clicked) would
+    // race the sheet teardown, orphaning the alert and dropping the edit.
+    _headers[(NSUInteger)row][identifier] = value;
+}
+
+- (void)headersAddRemoveClicked:(NSSegmentedControl *)sender {
+    // Commit any in-progress cell edit before mutating _headers, so the pending
+    // value lands in the right row (rowForView: would otherwise resolve against
+    // the already-mutated table) and is not dropped.
+    [_window makeFirstResponder:nil];
+    if (sender.selectedSegment == 0) {
+        [_headers addObject:[@{ @"name": @"", @"value": @"" } mutableCopy]];
+        [_headersTable reloadData];
+        const NSInteger row = (NSInteger)_headers.count - 1;
+        [_headersTable selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)row]
+                   byExtendingSelection:NO];
+        [_headersTable editColumn:0 row:row withEvent:nil select:YES];
+        return;
+    }
+    const NSInteger row = _headersTable.selectedRow;
+    if (row >= 0 && row < (NSInteger)_headers.count) {
+        [_headers removeObjectAtIndex:(NSUInteger)row];
+        [_headersTable reloadData];
+    }
+}
+
+// The persisted list, dropping rows the user added but never named.
+- (NSArray<NSDictionary *> *)nonEmptyHeaders {
+    NSMutableArray<NSDictionary *> *result = [NSMutableArray array];
+    for (NSDictionary *entry in _headers) {
+        // Persist exactly what -saveClicked: validated: the trimmed name and a
+        // string value. Otherwise a name like "Foo " validates (trimmed) but is
+        // stored untrimmed and later dropped by AICustomHeaders.merged.
+        NSString *name = [entry[@"name"] isKindOfClass:NSString.class] ? entry[@"name"] : @"";
+        name = [name stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+        if (name.length == 0) {
+            continue;
+        }
+        NSString *value = [entry[@"value"] isKindOfClass:NSString.class] ? entry[@"value"] : @"";
+        [result addObject:@{ @"name": name, @"value": value }];
+    }
+    return result;
 }
 
 - (void)beginSheetModalForWindow:(NSWindow *)parent
@@ -804,6 +1064,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         preset.configurableThinkingFeatureEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     _supportsTemperatureButton.state =
         preset.supportsTemperature ? NSControlStateValueOn : NSControlStateValueOff;
+    [self updateEditorAPIKeyHint];
 }
 
 // A provider preset configures an OpenAI-compatible gateway: it fills in the
@@ -831,11 +1092,14 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _featureButtons[kAIManualModelHostedCodeInterpreterKey].state = NSControlStateValueOff;
     _configurableThinkingButton.state = NSControlStateValueOff;
     _supportsTemperatureButton.state = NSControlStateValueOn;
+    [self updateEditorAPIKeyHint];
     // The model name is required to save; nudge the user straight to it.
     [_window makeFirstResponder:_nameField];
 }
 
 - (void)testClicked:(id)sender {
+    // Commit any in-progress header cell edit so the probe uses what's on screen.
+    [_window makeFirstResponder:nil];
     NSString *name =
         [_nameField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
     NSString *url =
@@ -863,6 +1127,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                                        api:api
                            functionCalling:functionCalling
                        supportsTemperature:supportsTemperature
+                             customHeaders:[self nonEmptyHeaders]
                                   inWindow:_window
                                 completion:^(iTermAIConnectionTestOutcome outcome, NSString *message) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -893,6 +1158,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 }
 
 - (void)saveClicked:(id)sender {
+    // The Save button is momentary and refuses first responder, so a mouse click
+    // does not end an in-progress header cell edit. Force it to commit into
+    // _headers before we read them, or the last-typed header is lost.
+    [_window makeFirstResponder:nil];
     NSString *name =
         [_nameField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
     NSString *url =
@@ -908,6 +1177,31 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         failure = @"Max response tokens must be greater than zero.";
     } else if (_nameIsTaken && _nameIsTaken(name)) {
         failure = @"Manual model names must be unique.";
+    }
+    // Validate custom headers here rather than in the per-cell delegate: the Save
+    // button click ends the active cell edit, so a per-cell alert would race the
+    // sheet teardown. Blank-name rows are dropped on save, so skip them.
+    if (!failure) {
+        for (NSDictionary *entry in _headers) {
+            NSString *headerName = [entry[@"name"] isKindOfClass:NSString.class] ? entry[@"name"] : @"";
+            headerName = [headerName stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+            if (headerName.length == 0) {
+                continue;
+            }
+            NSString *headerValue = [entry[@"value"] isKindOfClass:NSString.class] ? entry[@"value"] : @"";
+            if (![AICustomHeaders isValidName:headerName]) {
+                failure = [NSString stringWithFormat:
+                           @"Custom header name “%@” is not valid. Use only RFC 7230 token "
+                           @"characters (letters, digits, and any of !#$%%&'*+-.^_`|~).", headerName];
+                break;
+            }
+            if (![AICustomHeaders isValidValue:headerValue]) {
+                failure = [NSString stringWithFormat:
+                           @"The value for custom header “%@” must not contain newline or "
+                           @"null characters.", headerName];
+                break;
+            }
+        }
     }
     if (failure) {
         NSAlert *alert = [[NSAlert alloc] init];
@@ -932,6 +1226,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     for (NSString *key in _featureButtons) {
         result[key] = @(_featureButtons[key].state == NSControlStateValueOn);
     }
+    result[kAIManualModelCustomHeadersKey] = [self nonEmptyHeaders];
     _result = result;
     [_window.sheetParent endSheet:_window returnCode:NSModalResponseOK];
 }
@@ -1094,11 +1389,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     BOOL _customScriptsFolderDidChange;
 
-    IBOutlet NSComboBox *_aiModel;
-    IBOutlet NSTextField *_aiTokenLimit;
-    IBOutlet NSTextField *_aiResponseTokenLimit;
-    IBOutlet NSTextField *_aiModelLabel;
-    IBOutlet NSTextField *_aiTokenLimitLabel;
     IBOutlet NSButton *_resetAIPrompt;
     IBOutlet NSTextField *_aiTimeout;
     IBOutlet NSButton *_automaticallyUpdateAIModels;
@@ -1110,19 +1400,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     IBOutlet NSButton *_installPluginButton;
     BOOL _pluginOK;
 
-    IBOutlet NSTextField *_customAIEndpoint;
-    IBOutlet NSPopUpButton *_aiAPI;
-
-    IBOutlet NSButton *_aiFeatureHostedCodeInterpeter;
-    IBOutlet NSButton *_aiFeatureHostedFileSearch;
-    IBOutlet NSButton *_aiFeatureHostedWebSearch;
-    IBOutlet NSButton *_aiFeatureFunctionCalling;
-    IBOutlet NSButton *_aiFeatureStreamingResponses;
-    IBOutlet NSPopUpButton *_vectorStore;
-
     IBOutlet NSButton *_useRecommendedModel;
-    IBOutlet NSView *_manualAISettings;
-    NSWindow *_manualAIConfigurationSheet;
     IBOutlet NSButton *_manualAIConfiguration;
     IBOutlet NSPopUpButton *_aiVendor;
     IBOutlet NSButton *_aiSafetyCheck;
@@ -1150,18 +1428,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     IBOutlet NSButton *_sshIntegrationForURLs;
 
     NSString *_lastModel;
-    PreferenceInfo *_aiModelInfo;
-    PreferenceInfo *_aiTokenLimitInfo;
-    PreferenceInfo *_aiResponseTokenLimitInfo;
-    PreferenceInfo *_aiURLInfo;
-    PreferenceInfo *_aiAPIInfo;
-    NSArray<PreferenceInfo *> *_aiFeatureInfos;
 
-    // Custom headers section (wired up in the XIB).
-    IBOutlet NSButton *_aiCustomHeadersEnabled;
-    IBOutlet NSTableView *_aiCustomHeadersTableView;
-    IBOutlet NSSegmentedControl *_aiCustomHeadersAddRemove;  // segment 0 = add, segment 1 = remove
-    NSMutableArray<NSMutableDictionary *> *_customHeaders;
+    IBOutlet NSTextField *_mainAIAPIKeyHint;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -1206,7 +1474,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }
     _awoken = YES;
 
-    [self setupCustomHeadersSection];
     [self setupDefaultAIModelSelector];
     PreferenceInfo *info;
 
@@ -1735,32 +2002,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         [iTermPreferences setWithoutSideEffectsObject:newValue forKey:key];
     };
 
-    [AIMetadata.instance enumerateModels:^(NSString * _Nonnull name, NSInteger context, NSString *url) {
-        [_aiModel addItemWithObjectValue:name];
-    }];
-
-    PreferenceInfo *tokenLimitInfo =
-        [self defineControl:_aiTokenLimit
-                        key:kPreferenceKeyAITokenLimit
-                relatedView:_aiTokenLimitLabel
-                       type:kPreferenceInfoTypeIntegerTextField];
-    _aiTokenLimitInfo = tokenLimitInfo;
-    PreferenceInfo *responseTokenLimitInfo =
-        [self defineControl:_aiResponseTokenLimit
-                        key:kPreferenceKeyAIResponseTokenLimit
-                relatedView:_aiTokenLimitLabel
-                       type:kPreferenceInfoTypeIntegerTextField];
-    _aiResponseTokenLimitInfo = responseTokenLimitInfo;
-    PreferenceInfo *urlInfo = [self defineControl:_customAIEndpoint
-                                              key:kPreferenceKeyAITermURL
-                                      displayName:@"Custom URL for AI"
-                                             type:kPreferenceInfoTypeStringTextField];
-    _aiURLInfo = urlInfo;
-    urlInfo.onUpdate = ^BOOL{
-        [weakSelf updateEnabledState];
-        return NO;
-    };
-
     info = [self defineControl:_checkTerminalStateButton
                            key:kPreferenceKeyAIPermissionCheckTerminalState
                    relatedView:_checkTerminalStateLabel
@@ -1801,66 +2042,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                    relatedView:_actInWebBrowserLabel
                           type:kPreferenceInfoTypeUnsignedIntegerPopup];
 
-    NSMutableArray<PreferenceInfo *> *aiFeatureInfos = [NSMutableArray array];
-    info = [self defineControl:_aiFeatureHostedCodeInterpeter
-                    key:kPreferenceKeyAIFeatureHostedCodeInterpreter
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
-    [aiFeatureInfos addObject:info];
-    info = [self defineControl:_aiFeatureHostedFileSearch
-                    key:kPreferenceKeyAIFeatureHostedFileSearch
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
-    [aiFeatureInfos addObject:info];
-    info = [self defineControl:_aiFeatureHostedWebSearch
-                    key:kPreferenceKeyAIFeatureHostedWebSearch
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
-    [aiFeatureInfos addObject:info];
-    info = [self defineControl:_aiFeatureFunctionCalling
-                    key:kPreferenceKeyAIFeatureFunctionCalling
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
-    [aiFeatureInfos addObject:info];
-    info = [self defineControl:_aiFeatureStreamingResponses
-                    key:kPreferenceKeyAIFeatureStreamingResponses
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
-    [aiFeatureInfos addObject:info];
-    info = [self defineControl:_vectorStore
-                           key:kPreferenceKeyAIVectorStore
-                   relatedView:nil
-                          type:kPreferenceInfoTypePopup];
-    [aiFeatureInfos addObject:info];
-
-    PreferenceInfo *apiInfo = [self defineControl:_aiAPI
-                           key:kPreferenceKeyAITermAPI
-                   relatedView:nil
-                          type:kPreferenceInfoTypePopup];
-    _aiAPIInfo = apiInfo;
-    apiInfo.shouldBeEnabled = ^BOOL{
-        return [weakSelf canCustomizeAPI];
-    };
-    apiInfo.observer = ^{
-        [weakSelf updateAIEnabled];
-    };
-
-    _lastModel = [self stringForKey:kPreferenceKeyAIModel];
-    info = [self defineControl:_aiModel
-                           key:kPreferenceKeyAIModel
-                   relatedView:_aiModelLabel
-                          type:kPreferenceInfoTypeStringTextField];
-    _aiModelInfo = info;
-    info.onChange = ^{
-        [weakSelf aiModelDidChange:tokenLimitInfo
-                 responseLimitInfo:responseTokenLimitInfo
-                           urlInfo:urlInfo
-                           apiInfo:apiInfo
-                      featureInfos:aiFeatureInfos];
-        [weakSelf updateAIEnabled];
-    };
-
-    _aiFeatureInfos = [aiFeatureInfos copy];
     [_observer observeKey:kPreferenceKeyUseRecommendedAIModel block:^{
         [weakSelf reloadDefaultAIModelPopup];
         [weakSelf updateCoarseAIModelSettingsEnabled];
@@ -1942,15 +2123,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             // on still confirms via the modal (the existing per-machine logic).
             [iTermUserDefaults setAiModelCatalogUpdateConsent:iTermAIModelCatalogUpdateConsentGranted];
         }
-    };
-
-    info = [self defineControl:_aiCustomHeadersEnabled
-                           key:kPreferenceKeyAICustomHeadersEnabled
-                   relatedView:nil
-                          type:kPreferenceInfoTypeCheckbox];
-    info.onChange = ^{
-        __strong __typeof(weakSelf) strongSelf = weakSelf;
-        [strongSelf updateCustomHeadersControlsEnabled];
     };
 
     // ---------------------------------------------------------------------------------------------
@@ -2188,40 +2360,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     if (_aiVendor.selectedItem == nil && _aiVendor.numberOfItems > 0) {
         [_aiVendor selectItemAtIndex:0];
     }
-}
-
-- (void)updateAIModelDependentControlValues {
-    NSMutableArray<PreferenceInfo *> *infos = [NSMutableArray array];
-    if (_aiModelInfo) {
-        [infos addObject:_aiModelInfo];
-    }
-    if (_aiTokenLimitInfo) {
-        [infos addObject:_aiTokenLimitInfo];
-    }
-    if (_aiResponseTokenLimitInfo) {
-        [infos addObject:_aiResponseTokenLimitInfo];
-    }
-    if (_aiURLInfo) {
-        [infos addObject:_aiURLInfo];
-    }
-    if (_aiAPIInfo) {
-        [infos addObject:_aiAPIInfo];
-    }
-    for (PreferenceInfo *info in infos) {
-        [self updateValueForInfo:info];
-    }
-    for (PreferenceInfo *info in _aiFeatureInfos) {
-        [self updateValueForInfo:info];
-    }
+    [self updateAIAPIKeyHint];
 }
 
 - (void)updateAIAfterDefaultModelChange {
-    [self aiModelDidChange:_aiTokenLimitInfo
-         responseLimitInfo:_aiResponseTokenLimitInfo
-                   urlInfo:_aiURLInfo
-                   apiInfo:_aiAPIInfo
-              featureInfos:_aiFeatureInfos ?: @[]];
-    [self updateAIModelDependentControlValues];
+    [self aiModelDidChange];
     [self reloadDefaultAIModelPopup];
     [self updateAIEnabled];
 }
@@ -2334,38 +2477,29 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }
 }
 
-- (void)aiModelDidChange:(PreferenceInfo *)tokenLimitInfo
-       responseLimitInfo:(PreferenceInfo *)responseLimitInfo
-                 urlInfo:(PreferenceInfo *)urlInfo
-                 apiInfo:(PreferenceInfo *)apiInfo
-            featureInfos:(NSArray<PreferenceInfo *> *)featureInfos {
+- (void)aiModelDidChange {
     NSString *model = [self stringForKey:kPreferenceKeyAIModel];
     // Ignore it if it doesn't change because this is called when the view is closed.
     if (!model || [model isEqualToString:_lastModel]) {
         return;
     }
-
     _lastModel = [self stringForKey:kPreferenceKeyAIModel];
 
     const iTermAIAPI api = [AIMetadata.instance apiForModel:model
                                                    fallback:[self unsignedIntegerForKey:kPreferenceKeyAITermAPI]];
     [self setObject:@(api) forKey:kPreferenceKeyAITermAPI];
-    [self updateValueForInfo:apiInfo];
 
     NSNumber *tokens = [AIMetadata.instance contextWindowTokensForModelName:model];
     if (tokens) {
         [self setObject:tokens forKey:kPreferenceKeyAITokenLimit];
-        [self updateValueForInfo:tokenLimitInfo];
     }
     NSNumber *responseTokens = [AIMetadata.instance responseTokenLimitForModelName:model];
     if (responseTokens) {
         [self setObject:responseTokens forKey:kPreferenceKeyAIResponseTokenLimit];
-        [self updateValueForInfo:responseLimitInfo];
     }
     NSString *url = [AIMetadata.instance urlForModelName:model];
     if (url) {
         [self setObject:url forKey:kPreferenceKeyAITermURL];
-        [self updateValueForInfo:urlInfo];
     }
     if ([AIMetadata.instance modelHasDefaults:model]) {
         [self setBool:[AIMetadata.instance modelSupportsHostedCodeInterpreter:model]
@@ -2380,9 +2514,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                forKey:kPreferenceKeyAIFeatureStreamingResponses];
         [self setInteger:[AIMetadata.instance vectorStoreForModel:model]
                   forKey:kPreferenceKeyAIVectorStore];
-        for (PreferenceInfo *info in featureInfos) {
-            [self updateValueForInfo:info];
-        }
     }
 }
 
@@ -2429,20 +2560,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 }
 
 - (NSString *)aiAPIKeyProviderNameForVendor:(iTermAIVendor)vendor {
-    switch (vendor) {
-        case iTermAIVendorOpenAI:
-            return @"OpenAI";
-        case iTermAIVendorAnthropic:
-            return @"Anthropic";
-        case iTermAIVendorGemini:
-            return @"Gemini";
-        case iTermAIVendorDeepSeek:
-            return @"DeepSeek";
-        case iTermAIVendorLlama:
-            return @"Llama";
-        case iTermAIVendorApple:
-            return @"Apple Intelligence";
-    }
+    return iTermAIVendorProviderName(vendor);
 }
 
 - (void)updateAIEnabled {
@@ -2451,26 +2569,59 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     const BOOL allowed = _pluginOK && [iTermAITermGatekeeper allowed];
     _openAIAPIKey.enabled = allowed;
     _aiPrompt.editable = allowed;
-    _aiModel.enabled = allowed;
-    _aiTokenLimit.enabled = allowed;
     _resetAIPrompt.enabled = allowed;
-    _customAIEndpoint.enabled = allowed;
     _enableAI.enabled = [iTermAdvancedSettingsModel generativeAIAllowed];
-    _aiResponseTokenLimit.enabled = allowed;
-    _aiModelLabel.enabled = allowed;
-    _aiTokenLimitLabel.enabled = allowed;
-    _aiAPI.enabled = allowed;
-    _aiFeatureHostedCodeInterpeter.enabled = allowed;
-    _aiFeatureHostedFileSearch.enabled = allowed;
-    _aiFeatureHostedWebSearch.enabled = allowed;
-    _aiFeatureFunctionCalling.enabled = allowed;
-    _aiFeatureStreamingResponses.enabled = allowed;
     _aiSafetyCheck.enabled = allowed;
-    _vectorStore.enabled = allowed;
     _automaticallyUpdateAIModels.enabled = allowed;
     _updateAIModelsNowButton.enabled = allowed;
 
     [self updateCoarseAIModelSettingsEnabled];
+}
+
+// The API key that authorizes the default model is not obvious: it is the stored
+// key for the model's vendor, and for a manual model that vendor is inferred from
+// its API, URL, and name (see issue 12975). Spell it out under the model popup,
+// but only when a manual model is the default: a built-in vendor selection makes
+// the key obvious, so hide it then. (The manual model editor has its own hint.)
+- (void)updateAIAPIKeyHint {
+    if (!_mainAIAPIKeyHint) {
+        return;
+    }
+    NSString *identifier = _aiVendor.selectedItem.representedObject;
+    if ([self providerFromDefaultAIModelIdentifier:identifier] != nil) {
+        _mainAIAPIKeyHint.hidden = YES;
+        return;
+    }
+    const iTermAIVendor vendor = [self vendorForSelectedDefaultAIModel];
+    _mainAIAPIKeyHint.hidden = NO;
+    if (iTermAIVendorHasEnterableKey(vendor)) {
+        _mainAIAPIKeyHint.stringValue =
+            [NSString stringWithFormat:@"Authorizes with your %@ API key.",
+             iTermAIVendorProviderName(vendor)];
+    } else {
+        // No key can be configured: self-hosted (Llama) or Apple Intelligence
+        // (which runs on-device or via Private Cloud Compute).
+        _mainAIAPIKeyHint.stringValue = @"No API key is used.";
+    }
+}
+
+// The vendor whose stored key authorizes the model currently selected in the
+// default-model popup. Mirrors the routing in defaultAIModelPopupDidChange: so
+// the hint agrees with what actually gets used.
+- (iTermAIVendor)vendorForSelectedDefaultAIModel {
+    NSString *identifier = _aiVendor.selectedItem.representedObject;
+    NSNumber *providerNumber = [self providerFromDefaultAIModelIdentifier:identifier];
+    if (providerNumber) {
+        return (iTermAIVendor)providerNumber.unsignedIntegerValue;
+    }
+    NSString *manualName = [self manualModelNameFromDefaultAIModelIdentifier:identifier];
+    NSDictionary *configuration =
+        [self manualAIModelConfigurationNamed:manualName
+                             inConfigurations:[self mutableManualAIModelConfigurations]];
+    if (configuration) {
+        return [self providerForManualAIModelConfiguration:configuration];
+    }
+    return (iTermAIVendor)[self unsignedIntegerForKey:kPreferenceKeyAIVendor];
 }
 
 - (BOOL)modelSupportsModernAPI {
@@ -2689,261 +2840,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }];
 }
 
-#pragma mark - Custom Headers
-
-// Loads the persisted headers into _customHeaders and sets initial UI state.
-// All view layout (labels, segmented control, table view, columns, scroll
-// view) lives in the XIB; the controls are connected via the IBOutlets above
-// and the table view's dataSource/delegate are set in the XIB to this
-// controller.
-- (void)setupCustomHeadersSection {
-    id saved = [iTermPreferences objectForKey:kPreferenceKeyAICustomHeaders];
-    _customHeaders = [NSMutableArray array];
-    if ([saved isKindOfClass:[NSArray class]]) {
-        for (id entry in (NSArray *)saved) {
-            if ([entry isKindOfClass:[NSDictionary class]]) {
-                [_customHeaders addObject:[entry mutableCopy]];
-            }
-        }
-    }
-    [_aiCustomHeadersTableView reloadData];
-    [self updateCustomHeadersControlsEnabled];
-}
-
-- (BOOL)customHeadersEnabled {
-    return [iTermPreferences boolForKey:kPreferenceKeyAICustomHeadersEnabled];
-}
-
-- (void)updateCustomHeadersControlsEnabled {
-    const BOOL enabled = [self customHeadersEnabled];
-    _aiCustomHeadersAddRemove.enabled = enabled;
-    _aiCustomHeadersTableView.enabled = enabled;
-    if (!enabled) {
-        [_aiCustomHeadersTableView deselectAll:nil];
-    }
-    [_aiCustomHeadersTableView reloadData];  // refresh cell editability
-    [self updateCustomHeadersRemoveEnabled];
-}
-
-- (void)updateCustomHeadersRemoveEnabled {
-    const BOOL hasSelection = (_aiCustomHeadersTableView.selectedRow >= 0);
-    const BOOL canRemove = hasSelection && [self customHeadersEnabled];
-    [_aiCustomHeadersAddRemove setEnabled:canRemove forSegment:1];
-}
-
-- (void)saveCustomHeaders {
-    // Skip rows with empty names so the persisted plist doesn't accumulate
-    // blanks from rows the user added but never named.
-    NSMutableArray *toSave = [NSMutableArray array];
-    for (NSDictionary *entry in _customHeaders) {
-        NSString *name = entry[@"name"];
-        if ([name isKindOfClass:[NSString class]] && name.length > 0) {
-            [toSave addObject:[entry copy]];
-        }
-    }
-    [iTermPreferences setObject:toSave forKey:kPreferenceKeyAICustomHeaders];
-}
-
-- (IBAction)customHeadersAddRemove:(id)sender {
-    NSSegmentedControl *control = (NSSegmentedControl *)sender;
-    switch (control.selectedSegment) {
-        case 0:
-            [self addCustomHeader];
-            break;
-        case 1:
-            [self removeCustomHeader];
-            break;
-    }
-}
-
-- (void)addCustomHeader {
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Add Custom Header";
-    alert.informativeText = @"Enter a header name and value. The name is required.";
-    [alert addButtonWithTitle:@"Add"];
-    [alert addButtonWithTitle:@"Cancel"];
-
-    const CGFloat width = 280.0;
-    const CGFloat fieldHeight = 22.0;
-    const CGFloat labelHeight = 17.0;
-    const CGFloat gap = 4.0;
-    const CGFloat sectionGap = 10.0;
-    const CGFloat totalHeight = labelHeight + gap + fieldHeight + sectionGap + labelHeight + gap + fieldHeight;
-
-    NSView *accessory = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, width, totalHeight)];
-
-    CGFloat y = totalHeight;
-
-    y -= labelHeight;
-    NSTextField *nameLabel = [NSTextField labelWithString:@"Name:"];
-    nameLabel.frame = NSMakeRect(0, y, width, labelHeight);
-    [accessory addSubview:nameLabel];
-
-    y -= gap + fieldHeight;
-    NSTextField *nameField = [[NSTextField alloc] initWithFrame:NSMakeRect(0, y, width, fieldHeight)];
-    [accessory addSubview:nameField];
-
-    y -= sectionGap + labelHeight;
-    NSTextField *valueLabel = [NSTextField labelWithString:@"Value:"];
-    valueLabel.frame = NSMakeRect(0, y, width, labelHeight);
-    [accessory addSubview:valueLabel];
-
-    y -= gap + fieldHeight;
-    NSTextField *valueField = [[NSTextField alloc] initWithFrame:NSMakeRect(0, y, width, fieldHeight)];
-    [accessory addSubview:valueField];
-
-    alert.accessoryView = accessory;
-
-    NSTextField *focusField = nameField;
-    while (YES) {
-        [alert.window setInitialFirstResponder:focusField];
-        const NSModalResponse response = [alert runModal];
-        if (response != NSAlertFirstButtonReturn) {
-            return;
-        }
-        NSString *name = [nameField.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        NSString *value = valueField.stringValue ?: @"";
-        if (![AICustomHeaders isValidName:name]) {
-            alert.informativeText = @"The header name must be non-empty and contain only RFC 7230 token characters (letters, digits, and any of !#$%&'*+-.^_`|~).";
-            focusField = nameField;
-            continue;
-        }
-        if (![AICustomHeaders isValidValue:value]) {
-            alert.informativeText = @"The header value must not contain newline or null characters.";
-            focusField = valueField;
-            continue;
-        }
-        [_customHeaders addObject:[@{@"name": name, @"value": value} mutableCopy]];
-        [self saveCustomHeaders];
-        [_aiCustomHeadersTableView reloadData];
-        NSInteger newRow = (NSInteger)_customHeaders.count - 1;
-        [_aiCustomHeadersTableView selectRowIndexes:[NSIndexSet indexSetWithIndex:(NSUInteger)newRow]
-                               byExtendingSelection:NO];
-        [_aiCustomHeadersTableView scrollRowToVisible:newRow];
-        return;
-    }
-}
-
-- (void)removeCustomHeader {
-    NSInteger row = _aiCustomHeadersTableView.selectedRow;
-    if (row < 0 || row >= (NSInteger)_customHeaders.count) {
-        return;
-    }
-    [_customHeaders removeObjectAtIndex:(NSUInteger)row];
-    [self saveCustomHeaders];
-    [_aiCustomHeadersTableView deselectAll:nil];
-    [_aiCustomHeadersTableView reloadData];
-    [self updateCustomHeadersRemoveEnabled];
-}
-
-#pragma mark - NSTableViewDataSource
-
-- (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {
-    if (tableView != _aiCustomHeadersTableView) {
-        return 0;
-    }
-    return (NSInteger)_customHeaders.count;
-}
-
-#pragma mark - NSTableViewDelegate
-
-// View-based table view. The XIB defines an NSTableCellView prototype per
-// column whose identifier matches the column identifier (“name” or “value”),
-// containing an editable NSTextField wired to the cell view’s textField
-// outlet. The text field’s delegate is forced to this controller here so
-// edits always route through -controlTextDidEndEditing:.
-- (NSView *)tableView:(NSTableView *)tableView
-   viewForTableColumn:(NSTableColumn *)tableColumn
-                  row:(NSInteger)row {
-    if (tableView != _aiCustomHeadersTableView) {
-        return nil;
-    }
-    NSTableCellView *cell = [tableView makeViewWithIdentifier:tableColumn.identifier owner:self];
-    NSMutableDictionary *entry = _customHeaders[(NSUInteger)row];
-    const BOOL enabled = [self customHeadersEnabled];
-    cell.textField.stringValue = entry[tableColumn.identifier] ?: @"";
-    cell.textField.editable = enabled;
-    cell.textField.selectable = enabled;
-    cell.textField.enabled = enabled;
-    cell.textField.delegate = self;
-    return cell;
-}
-
-- (BOOL)tableView:(NSTableView *)tableView shouldSelectRow:(NSInteger)row {
-    if (tableView == _aiCustomHeadersTableView && ![self customHeadersEnabled]) {
-        return NO;
-    }
-    return YES;
-}
-
-- (void)tableViewSelectionDidChange:(NSNotification *)notification {
-    if (notification.object == _aiCustomHeadersTableView) {
-        [self updateCustomHeadersRemoveEnabled];
-    }
-}
-
-- (void)competentTableViewDeleteSelectedRows:(CompetentTableView *)sender {
-    if (sender != _aiCustomHeadersTableView || ![self customHeadersEnabled]) {
-        return;
-    }
-    [self removeCustomHeader];
-}
-
 #pragma mark - NSTextFieldDelegate
 
 - (void)controlTextDidEndEditing:(NSNotification *)notification {
-    NSTextField *field = (NSTextField *)notification.object;
-    if (![field isKindOfClass:[NSTextField class]]) {
-        [super controlTextDidEndEditing:notification];
-        return;
-    }
-    const NSInteger row = [_aiCustomHeadersTableView rowForView:field];
-    const NSInteger column = [_aiCustomHeadersTableView columnForView:field];
-    if (row < 0 || column < 0) {
-        // Not one of our custom-header cells; let the base class handle
-        // info.controlTextDidEndEditing blocks and integer/double field
-        // canonicalization.
-        [super controlTextDidEndEditing:notification];
-        return;
-    }
-    if (row >= (NSInteger)_customHeaders.count ||
-        column >= (NSInteger)_aiCustomHeadersTableView.tableColumns.count) {
-        return;
-    }
-    NSTableColumn *tableColumn = _aiCustomHeadersTableView.tableColumns[(NSUInteger)column];
-    NSMutableDictionary *entry = _customHeaders[(NSUInteger)row];
-    NSString *newValue = field.stringValue;
-    NSString *failure = nil;
-    if ([tableColumn.identifier isEqualToString:@"name"]) {
-        newValue = [newValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        if (![AICustomHeaders isValidName:newValue]) {
-            failure = @"The header name must be non-empty and contain only RFC 7230 token characters (letters, digits, and any of !#$%&'*+-.^_`|~).";
-        }
-    } else if ([tableColumn.identifier isEqualToString:@"value"]) {
-        if (![AICustomHeaders isValidValue:newValue]) {
-            failure = @"The header value must not contain newline or null characters.";
-        }
-    }
-    if (failure) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Invalid HTTP header";
-        alert.informativeText = failure;
-        [alert runModal];
-        // Put the user back into the same cell so they can fix the value
-        // without retyping it from scratch.
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (row < (NSInteger)self->_customHeaders.count &&
-                column < (NSInteger)self->_aiCustomHeadersTableView.tableColumns.count) {
-                [self->_aiCustomHeadersTableView editColumn:column
-                                                        row:row
-                                                  withEvent:nil
-                                                     select:YES];
-            }
-        });
-        return;
-    }
-    entry[tableColumn.identifier] = newValue;
-    [self saveCustomHeaders];
+    [super controlTextDidEndEditing:notification];
 }
 
 - (BOOL)manualAIModelConfiguration:(NSDictionary *)configuration boolForKey:(NSString *)key {
@@ -3304,11 +3204,44 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     [self selectProviderAsDefaultForNewChats:(iTermAIVendor)[self unsignedIntegerForKey:kPreferenceKeyAIVendor]];
 }
 
+// Legacy single-model users (no saved configurations) keep their former global
+// custom headers only through LLMMetadata.legacyManualModel(). Editing anything
+// in the models panel materializes a configuration, after which the legacy path
+// is never consulted and the headers stop being sent. There is no config to seed
+// during migration, so warn the (small, beta-only) affected population once
+// before they can lose the headers.
+- (void)warnAboutLegacyGlobalHeadersIfNeeded {
+    NSUserDefaults *ud = [iTermUserDefaults userDefaults];
+    if ([ud boolForKey:@"NoSyncAILegacyGlobalHeadersWarningShown"]) {
+        return;
+    }
+    if (![iTermPreferences boolForKey:kPreferenceKeyAICustomHeadersEnabled]) {
+        return;
+    }
+    id rawHeaders = [iTermPreferences objectForKey:kPreferenceKeyAICustomHeaders];
+    if (![rawHeaders isKindOfClass:[NSArray class]] || [(NSArray *)rawHeaders count] == 0) {
+        return;
+    }
+    id rawConfigs = [iTermPreferences objectForKey:kPreferenceKeyAIManualModelConfigurations];
+    if ([rawConfigs isKindOfClass:[NSArray class]] && [(NSArray *)rawConfigs count] > 0) {
+        return;  // Not on the legacy path; the migration handles configured models.
+    }
+    [ud setBool:YES forKey:@"NoSyncAILegacyGlobalHeadersWarningShown"];
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Custom Headers Are Now Set Per Model";
+    alert.informativeText = @"Your AI custom HTTP headers used to be a single global "
+                            @"setting. They still apply to your current model, but adding "
+                            @"or editing models here does not carry them over. Re-add the "
+                            @"headers you need in each model’s “Custom headers” section.";
+    [alert runModal];
+}
+
 - (IBAction)showManualAIConfigurationPanel:(NSButton *)button {
     NSWindow *parent = self.view.window;
     if (parent == nil) {
         return;
     }
+    [self warnAboutLegacyGlobalHeadersIfNeeded];
     iTermManualAIModelsPanelController *panel =
         [[iTermManualAIModelsPanelController alloc] initWithConfigurations:[self mutableManualAIModelConfigurations]
                                                           defaultModelName:[self currentDefaultManualModelName]
@@ -3323,13 +3256,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             strongSelf->_manualModelsPanel = nil;
         }
     }];
-}
-
-- (IBAction)closeManualAIConfigurationSheet:(id)sender {
-    if (_manualAIConfigurationSheet == nil) {
-        return;
-    }
-    [self.view.window endSheet:_manualAIConfigurationSheet returnCode:NSModalResponseOK];
 }
 
 - (IBAction)reloadPlugin:(id)sender {

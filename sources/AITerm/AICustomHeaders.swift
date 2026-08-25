@@ -21,13 +21,17 @@ import Foundation
         return !value.unicodeScalars.contains { $0 == "\r" || $0 == "\n" || $0 == "\0" }
     }
 
-    static func merged(into base: [String: String]) -> [String: String] {
-        guard iTermPreferences.bool(forKey: kPreferenceKeyAICustomHeadersEnabled),
-              let raw = iTermPreferences.object(forKey: kPreferenceKeyAICustomHeaders) as? [[String: String]] else {
+    // Merges a model's custom headers into `base`. Headers are per-model (each
+    // manual model carries its own list, set in the editor) so an authenticated
+    // self-hosted endpoint can send the auth header it requires without affecting
+    // other models. Each entry is a {"name": ..., "value": ...} dictionary.
+    static func merged(into base: [String: String],
+                       customHeaders: [[String: String]]) -> [String: String] {
+        guard !customHeaders.isEmpty else {
             return base
         }
         var result = base
-        for entry in raw {
+        for entry in customHeaders {
             guard let name = entry["name"], isValidName(name) else { continue }
             let value = entry["value"] ?? ""
             guard isValidValue(value) else {

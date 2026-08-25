@@ -799,6 +799,15 @@ Bug Fixes:
   Previously that override was inherited by split
   panes and could go stale, dropping the shell in
   the wrong directory. Issue 12981.
+- Custom HTTP headers for AI requests are now
+  set per manual model in the model editor,
+  not one global list, so each endpoint can
+  send its own auth header. This lets an
+  authenticated self-hosted / local endpoint
+  work by adding its Authorization header.
+  Existing global headers are copied to your
+  saved models. The editor also shows which
+  API key (if any) each model uses. Issue 12975.
 - Fixed a bug where ⌘-clicking a URL at the end
   of a line in a full-screen app (like irssi or
   mutt) could extend the link onto the next line

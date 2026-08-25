@@ -203,6 +203,13 @@ class AIMetadata: NSObject {
         var reasoningEfforts: [ResponsesRequestBody.ReasoningOptions.Effort] = []
         var serviceTiers: [ResponsesRequestBody.ServiceTier] = []
 
+        // Per-model custom HTTP headers merged into every request to this model's
+        // endpoint (see AICustomHeaders.merged). Each entry is a
+        // {"name": ..., "value": ...} dictionary. Empty for built-in models; set
+        // via the manual model editor. Lets an authenticated self-hosted endpoint
+        // carry the auth header it needs. Issue 12975.
+        var customHeaders: [[String: String]] = []
+
         func supports(reasoningEffort: ResponsesRequestBody.ReasoningOptions.Effort?) -> Bool {
             guard let reasoningEffort else {
                 return false

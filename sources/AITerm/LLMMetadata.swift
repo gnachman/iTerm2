@@ -22,6 +22,7 @@ class LLMMetadata: NSObject {
         static let vectorStore = "vectorStore"
         static let supportsTemperature = "supportsTemperature"
         static let configurableThinking = "configurableThinking"
+        static let customHeaders = "customHeaders"
     }
 
     @objc(openAIModelIsLegacy:)
@@ -189,7 +190,7 @@ class LLMMetadata: NSObject {
         let api = iTermAIAPI(rawValue: iTermPreferences.unsignedInteger(
             forKey: kPreferenceKeyAITermAPI)) ?? .chatCompletions
 
-        return AIMetadata.Model(
+        var model = AIMetadata.Model(
             name: name,
             contextWindowTokens: iTermPreferences.integer(
                 forKey: kPreferenceKeyAITokenLimit),
@@ -200,6 +201,15 @@ class LLMMetadata: NSObject {
             features: features,
             vectorStoreConfig: .init(rawValue: iTermPreferences.integer(forKey: kPreferenceKeyAIVectorStore)) ?? .disabled,
             vendor: manualVendor(api: api, url: url, modelName: name))
+        // Custom headers used to be a single global setting. Now they are
+        // per-model. The legacy single manual model inherits that former global
+        // pref as its headers so users who configured headers before per-model
+        // support keep sending them. Issue 12975.
+        if iTermPreferences.bool(forKey: kPreferenceKeyAICustomHeadersEnabled),
+           let headers = iTermPreferences.object(forKey: kPreferenceKeyAICustomHeaders) as? [[String: String]] {
+            model.customHeaders = headers
+        }
+        return model
     }
 
     private static func manualModel(configuration: [String: Any]) -> AIMetadata.Model? {
@@ -270,6 +280,9 @@ class LLMMetadata: NSObject {
             model.serviceTiers = catalogTwin.serviceTiers
             model.thinkingOffEffort = catalogTwin.thinkingOffEffort
             model.thinkingOnEffort = catalogTwin.thinkingOnEffort
+        }
+        if let headers = configuration[ManualModelKey.customHeaders] as? [[String: String]] {
+            model.customHeaders = headers
         }
         return model
     }

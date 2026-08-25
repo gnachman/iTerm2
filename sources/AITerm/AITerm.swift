@@ -155,6 +155,12 @@ class AITermController {
 
     private var _registration: Registration?
     var registration: Registration? {
+        // Self-hosted/private endpoints and Apple Intelligence never get a real
+        // vendor key: a stored key (e.g. OpenAI) must not be sent as a Bearer
+        // token to a localhost/private-IP server the user pointed a manual model
+        // at, or it leaks off the intended vendor (issue 12477). An authenticated
+        // self-hosted endpoint carries its own auth via the model's custom
+        // headers instead. Checked first so it always wins over _registration.
         if isSelfHosted || providerIsAppleIntelligence {
             return Registration(apiKey: "Placeholder for self-hosted")
         }

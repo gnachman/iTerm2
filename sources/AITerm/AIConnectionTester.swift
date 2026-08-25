@@ -26,12 +26,13 @@ enum AIConnectionTestOutcome: Int {
 @objc(iTermAIConnectionTester)
 class AIConnectionTester: NSObject {
     // Sends the probe. `completion` is always called on the main thread.
-    @objc(testModelName:url:api:functionCalling:supportsTemperature:inWindow:completion:)
+    @objc(testModelName:url:api:functionCalling:supportsTemperature:customHeaders:inWindow:completion:)
     static func test(modelName: String,
                      url: String,
                      api: iTermAIAPI,
                      functionCalling: Bool,
                      supportsTemperature: Bool,
+                     customHeaders: [[String: String]],
                      inWindow window: NSWindow,
                      completion: @escaping (AIConnectionTestOutcome, String) -> Void) {
         let vendor = LLMMetadata.objcManualVendor(api: api, url: url, modelName: modelName)
@@ -48,6 +49,7 @@ class AIConnectionTester: NSObject {
                  api: api,
                  functionCalling: functionCalling,
                  supportsTemperature: supportsTemperature,
+                 customHeaders: customHeaders,
                  apiKey: registration.apiKey,
                  vendor: vendor,
                  completion: completion)
@@ -59,6 +61,7 @@ class AIConnectionTester: NSObject {
                              api: iTermAIAPI,
                              functionCalling: Bool,
                              supportsTemperature: Bool,
+                             customHeaders: [[String: String]],
                              apiKey: String,
                              vendor: iTermAIVendor,
                              completion: @escaping (AIConnectionTestOutcome, String) -> Void) {
@@ -86,6 +89,11 @@ class AIConnectionTester: NSObject {
         // the temperature field for endpoints that 400 on it, matching what a
         // real chat request does for the saved model.
         model.supportsTemperature = supportsTemperature
+        // Include the editor's custom headers so the probe carries the same
+        // auth header a real request to the saved model would (issue 12975):
+        // otherwise an endpoint gated by a custom Authorization header always
+        // 401s the test even though real requests would succeed.
+        model.customHeaders = customHeaders
         let provider = LLMProvider(model: model)
         guard provider.urlIsValid else {
             completion(.failure, "The URL is not valid.")
