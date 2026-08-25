@@ -140,6 +140,17 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // spawned at entry into a single group.
 - (void)groupTabs:(NSArray<PTYTab *> *)tabs withName:(NSString *)name;
 
+// Snapshot / restore a tab's group membership (id/name/color/collapsed).
+// Used to revert the entry tab's grouping when a workgroup exits. A snapshot
+// with a null id restores to "no group", dissolving a one-member leftover.
+// Keyed by tab so the snapshot survives the original session terminating.
+- (NSDictionary *)tabGroupSnapshotForTab:(PTYTab *)tab;
+- (void)restoreTabGroupSnapshot:(NSDictionary *)snapshot forTab:(PTYTab *)tab;
+// YES if the tab's current group is the one the snapshot recorded (unchanged
+// since capture). Lets callers test "did grouping touch this tab" without
+// depending on the snapshot's internal shape.
+- (BOOL)tabGroupSnapshot:(NSDictionary *)snapshot describesCurrentGroupOfTab:(PTYTab *)tab;
+
 // The group a plain "new tab" at `index` (nil for the default position) should
 // inherit: the current tab's group, but only when the new tab will land
 // immediately after it. Returns nil when there is nothing to inherit.
