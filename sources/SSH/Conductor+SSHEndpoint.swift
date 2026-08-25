@@ -6,7 +6,6 @@
 //
 
 
-@available(macOS 11.0, *)
 extension Conductor: SSHEndpoint {
     @MainActor
     func performFileOperation(subcommand: FileSubcommand,
@@ -368,7 +367,6 @@ extension Conductor: SSHEndpoint {
         }
     }
 
-    @available(macOS 11.0, *)
     @MainActor
     func search(_ basedir: String,
                 query: String,

@@ -414,7 +414,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)setBrowserViewController:(iTermBrowserViewController *)browserViewController
                       initialURL:(NSString *)initialURL
-                 restorableState:(NSDictionary *)restorableState NS_AVAILABLE_MAC(11_0) {
+                 restorableState:(NSDictionary *)restorableState {
     _browserViewController = browserViewController;
 
     // Set initial frame to avoid constraint conflicts
@@ -1443,9 +1443,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
     [self _dimShadeToDimmingAmount:amount];
     [_title setDimmingAmount:amount];
-    if (@available(macOS 11, *)) {
-        _browserViewController.dimming = amount;
-    }
+    _browserViewController.dimming = amount;
     iTermStatusBarViewController *statusBar = self.delegate.sessionViewStatusBarViewController;
     [statusBar updateColors];
 }

@@ -332,10 +332,8 @@ static int gSignalsToList[] = {
 }
 
 - (void)awakeFromNib {
-    if (@available(macOS 10.16, *)) {
-        kill_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPlay) accessibilityDescription:@"Clear"];
-        _outlineView.style = NSTableViewStyleInset;
-    }
+    kill_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPlay) accessibilityDescription:@"Clear"];
+    _outlineView.style = NSTableViewStyleInset;
     _outlineView.backgroundColor = [NSColor clearColor];
     if (!_useVisualEffectView) {
         [_vev removeFromSuperview];

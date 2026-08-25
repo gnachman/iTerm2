@@ -54,35 +54,32 @@
     }
 
     if (self.showWarningIcon) {
-        if (@available(macOS 11.0, *)) {
-            const CGFloat diameter = 12;
-            const CGFloat inset = 1;
-            const NSRect imageRect = NSMakeRect(NSMaxX(self.bounds) - diameter - inset,
-                                                inset,
-                                                diameter,
-                                                diameter);
+        const CGFloat diameter = 12;
+        const CGFloat inset = 1;
+        const NSRect imageRect = NSMakeRect(NSMaxX(self.bounds) - diameter - inset,
+                                            inset,
+                                            diameter,
+                                            diameter);
 
-            static NSImage *warningImage;
-            static NSImage *filledImage;
-            static dispatch_once_t onceToken;
-            dispatch_once(&onceToken, ^{
-                warningImage = [NSImage imageWithSystemSymbolName:@"exclamationmark.triangle"
-                                         accessibilityDescription:@"Color is out-of-gamut for this color space"];
+        static NSImage *warningImage;
+        static NSImage *filledImage;
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            warningImage = [NSImage imageWithSystemSymbolName:@"exclamationmark.triangle"
+                                     accessibilityDescription:@"Color is out-of-gamut for this color space"];
 
-                filledImage = [[NSImage imageWithSystemSymbolName:@"exclamationmark.triangle.fill"
-                                         accessibilityDescription:@"Color is out-of-gamut for this color space"] cpk_imageWithTintColor:[NSColor whiteColor]];
-            });
-            [filledImage drawInRect:imageRect
-                           fromRect:NSZeroRect
-                          operation:NSCompositingOperationSourceOver
-                           fraction:1];
+            filledImage = [[NSImage imageWithSystemSymbolName:@"exclamationmark.triangle.fill"
+                                     accessibilityDescription:@"Color is out-of-gamut for this color space"] cpk_imageWithTintColor:[NSColor whiteColor]];
+        });
+        [filledImage drawInRect:imageRect
+                       fromRect:NSZeroRect
+                      operation:NSCompositingOperationSourceOver
+                       fraction:1];
 
-            [warningImage drawInRect:imageRect
-                            fromRect:NSZeroRect
-                           operation:NSCompositingOperationSourceOver
-                            fraction:1];
-
-        }
+        [warningImage drawInRect:imageRect
+                        fromRect:NSZeroRect
+                       operation:NSCompositingOperationSourceOver
+                        fraction:1];
     }
 }
 

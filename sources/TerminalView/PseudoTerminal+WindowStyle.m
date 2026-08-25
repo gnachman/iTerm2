@@ -124,17 +124,15 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
 }
 
 - (void)updateTitlebarSeparatorStyle {
-    if (@available(macOS 11.0, *)) {
-        // .none is harmful outside full screen mode because it causes the titlebar to be the wrong color.
-        // In order to avoid having the separator in non-fullscreen windows, we use a series of disgusting hacks.
-        // See commit 883a3faac0392dbea9464e5255212c96b9f1470c.
-        // .none is absolutely necessary in full screen mode to avoid a flashing white line. 
-        // See commit 0257ba8f8398240c813c35aa72fe2f652cb11b1e.
-        if ([self lionFullScreen] && !exitingLionFullscreen_) {
-            self.window.titlebarSeparatorStyle = NSTitlebarSeparatorStyleNone;
-        } else {
-            self.window.titlebarSeparatorStyle = NSTitlebarSeparatorStyleAutomatic;
-        }
+    // .none is harmful outside full screen mode because it causes the titlebar to be the wrong color.
+    // In order to avoid having the separator in non-fullscreen windows, we use a series of disgusting hacks.
+    // See commit 883a3faac0392dbea9464e5255212c96b9f1470c.
+    // .none is absolutely necessary in full screen mode to avoid a flashing white line.
+    // See commit 0257ba8f8398240c813c35aa72fe2f652cb11b1e.
+    if ([self lionFullScreen] && !exitingLionFullscreen_) {
+        self.window.titlebarSeparatorStyle = NSTitlebarSeparatorStyleNone;
+    } else {
+        self.window.titlebarSeparatorStyle = NSTitlebarSeparatorStyleAutomatic;
     }
 }
 
@@ -201,12 +199,6 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     if (oldWindow != self.window) {
         [oldWindow orderOut:nil];
         [oldWindow close];
-    }
-    if (@available(macOS 10.16, *)) {
-        // TODO
-    } else {
-        NSView *view = [myWindow it_titlebarViewOfClassWithName:@"_NSTitlebarDecorationView"];
-        [view setHidden:YES];
     }
 
     [self updateVariables];

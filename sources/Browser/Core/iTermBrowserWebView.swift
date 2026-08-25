@@ -7,7 +7,6 @@
 
 import WebKit
 
-@available(macOS 11.0, *)
 @MainActor
 protocol iTermBrowserWebViewDelegate: AnyObject {
     func webViewDidRequestViewSource(_ webView: iTermBrowserWebView)
@@ -51,7 +50,6 @@ protocol iTermEditableTextDetecting {
     var isEditingText: Bool { get }
 }
 
-@available(macOS 11.0, *)
 @MainActor
 class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
     enum Event {
@@ -873,7 +871,6 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
 
 }
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserWebView: iTermFocusFollowsMouseDelegate {
     func focusFollowsMouseDidBecomeFirstResponder() {
@@ -895,7 +892,6 @@ extension iTermBrowserWebView {
     }
 }
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserWebView: iTermBrowserContextMenuHelperDelegate {
     func contextMenuCurrentSelection() -> String? {
@@ -1004,7 +1000,6 @@ extension iTermBrowserWebView: iTermBrowserContextMenuHelperDelegate {
 
 // MARK: - Internal methods
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserWebView {
     func copy(string: String) {

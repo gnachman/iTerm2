@@ -7,62 +7,48 @@
 
 @MainActor
 protocol SSHEndpoint: AnyObject {
-    @available(macOS 11.0, *)
     @MainActor
     func listFiles(_ path: String, sort: FileSorting) async throws -> [RemoteFile]
 
-    @available(macOS 11.0, *)
     @MainActor
     func download(_ path: String, chunk: DownloadChunk?, uniqueID: String?) async throws -> Data
 
-    @available(macOS 11.0, *)
     @MainActor
     func downloadChunked(remoteFile: RemoteFile,
                          progress: Progress?,
                          cancellation: Cancellation?,
                          destination: URL) async throws -> DownloadType
 
-    @available(macOS 11.0, *)
     @MainActor
     func cancelDownload(uniqueID: String) async throws
     
-    @available(macOS 11.0, *)
     @MainActor
     func stat(_ path: String) async throws -> RemoteFile
 
-    @available(macOS 11.0, *)
     @MainActor
     func delete(_ path: String, recursive: Bool) async throws
 
-    @available(macOS 11.0, *)
     @MainActor
     func ln(_ source: String, _ symlink: String) async throws -> RemoteFile
 
-    @available(macOS 11.0, *)
     @MainActor
     func mv(_ file: String, newParent: String, newName: String) async throws -> RemoteFile
 
-    @available(macOS 11.0, *)
     @MainActor
     func mkdir(_ file: String) async throws
 
-    @available(macOS 11.0, *)
     @MainActor
     func create(_ file: String, content: Data) async throws
 
-    @available(macOS 11.0, *)
     @MainActor
     func replace(_ file: String, content: Data) async throws -> RemoteFile
 
-    @available(macOS 11.0, *)
     @MainActor
     func setModificationDate(_ file: String, date: Date) async throws -> RemoteFile
 
-    @available(macOS 11.0, *)
     @MainActor
     func chmod(_ file: String, permissions: RemoteFile.Permissions) async throws -> RemoteFile
 
-    @available(macOS 11.0, *)
     @MainActor
     func search(_ basedir: String,
                 query: String,

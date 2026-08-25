@@ -10,7 +10,6 @@ import Foundation
 import WebExtensionsFramework
 import AppKit
 
-@available(macOS 11.0, *)
 protocol iTermBrowserSettingsHandlerDelegate: AnyObject {
     @MainActor func settingsHandlerDidUpdateAdblockSettings(_ handler: iTermBrowserSettingsHandler)
     @MainActor func settingsHandlerDidRequestAdblockUpdate(_ handler: iTermBrowserSettingsHandler)
@@ -18,7 +17,6 @@ protocol iTermBrowserSettingsHandlerDelegate: AnyObject {
     @MainActor func settingsHandlerExtensionManager(_ handler: iTermBrowserSettingsHandler) -> iTermBrowserExtensionManagerProtocol?
 }
 
-@available(macOS 11.0, *)
 @objc(iTermBrowserSettingsHandler)
 @MainActor
 class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
@@ -623,7 +621,6 @@ class iTermBrowserSettingsHandler: NSObject, iTermBrowserPageHandler {
 
 // MARK: - iTermBrowserExtensionManagerDelegate
 
-@available(macOS 11.0, *)
 extension iTermBrowserSettingsHandler: iTermBrowserExtensionManagerDelegate {
     func extensionManagerDidUpdateExtensions(_ manager: iTermBrowserExtensionManagerProtocol) {
         // Refresh the extensions list in the settings UI

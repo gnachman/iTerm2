@@ -31,9 +31,7 @@
 #import "PTYSession.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
-static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 5;
-static const CGFloat kHelpMargin = 5;
 
 @interface ToolDirectoriesView() <NSSearchFieldDelegate, NSMenuItemValidation>
 @end
@@ -65,9 +63,7 @@ static const CGFloat kHelpMargin = 5;
         [help_ setBezelStyle:NSBezelStyleHelpButton];
         [help_ setButtonType:NSButtonTypeMomentaryPushIn];
         [help_ setBordered:YES];
-        if (@available(macOS 10.16, *)) {
-            help_.controlSize = NSControlSizeSmall;
-        }
+        help_.controlSize = NSControlSizeSmall;
         [help_ sizeToFit];
         help_.target = self;
         help_.action = @selector(help:);
@@ -76,18 +72,11 @@ static const CGFloat kHelpMargin = 5;
         [self addSubview:help_];
 
         clear_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
-        if (@available(macOS 10.16, *)) {
-            clear_.bezelStyle = NSBezelStyleRegularSquare;
-            clear_.bordered = NO;
-            clear_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:@"Clear"];
-            clear_.imagePosition = NSImageOnly;
-            clear_.frame = NSMakeRect(0, 0, 22, 22);
-        } else {
-            [clear_ setButtonType:NSButtonTypeMomentaryPushIn];
-            [clear_ setTitle:@"Clear All"];
-            [clear_ setBezelStyle:NSBezelStyleSmallSquare];
-            [clear_ sizeToFit];
-        }
+        clear_.bezelStyle = NSBezelStyleRegularSquare;
+        clear_.bordered = NO;
+        clear_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:@"Clear"];
+        clear_.imagePosition = NSImageOnly;
+        clear_.frame = NSMakeRect(0, 0, 22, 22);
         [clear_ setTarget:self];
         [clear_ setAction:@selector(clear:)];
         [clear_ setAutoresizingMask:NSViewMinYMargin | NSViewMinXMargin];
@@ -148,14 +137,6 @@ static const CGFloat kHelpMargin = 5;
 }
 
 - (void)relayout {
-    if (@available(macOS 10.16, *)) {
-        [self relayout_bigSur];
-    } else {
-        [self relayout_legacy];
-    }
-}
-
-- (void)relayout_bigSur {
     NSRect frame = self.frame;
 
     // Search field
@@ -167,10 +148,7 @@ static const CGFloat kHelpMargin = 5;
 
     // Help button
     {
-        CGFloat fudgeFactor = 1;
-        if (@available(macOS 10.16, *)) {
-            fudgeFactor = 2;
-        }
+        CGFloat fudgeFactor = 2;
         help_.frame = NSMakeRect(frame.size.width - help_.frame.size.width,
                                  fudgeFactor,
                                  help_.frame.size.width,
@@ -179,10 +157,7 @@ static const CGFloat kHelpMargin = 5;
 
     // Clear button
     {
-        CGFloat fudgeFactor = 1;
-        if (@available(macOS 10.16, *)) {
-            fudgeFactor = 0;
-        }
+        CGFloat fudgeFactor = 0;
         clear_.frame = NSMakeRect(help_.frame.origin.x - clear_.frame.size.width - kMargin,
                                   fudgeFactor,
                                   clear_.frame.size.width,
@@ -198,10 +173,7 @@ static const CGFloat kHelpMargin = 5;
     // Table view
     NSSize contentSize = [_scrollView contentSize];
     NSTableColumn *column = _tableView.tableColumns[0];
-    CGFloat fudgeFactor = 0;
-    if (@available(macOS 10.16, *)) {
-        fudgeFactor = 32;
-    }
+    CGFloat fudgeFactor = 32;
     // See the note in ToolCommandHistoryView.relayout_bigSur: a zero-width toolbelt during
     // new-window construction poisons the column width and hides freshly reloaded cells until a
     // manual resize. Only pin the column when the width is sane.
@@ -213,22 +185,6 @@ static const CGFloat kHelpMargin = 5;
         [_tableView sizeToFit];
     }
     [_tableView reloadData];
-}
-
-- (void)relayout_legacy {
-    NSRect frame = self.frame;
-    searchField_.frame = NSMakeRect(0, 0, frame.size.width, searchField_.frame.size.height);
-    help_.frame = NSMakeRect(frame.size.width - help_.frame.size.width,
-                             frame.size.height - help_.frame.size.height - ceil((clear_.frame.size.height - help_.frame.size.height) / 2) + 2,
-                             help_.frame.size.width,
-                             help_.frame.size.height);
-    [clear_ setFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width - help_.frame.size.width - kHelpMargin, kButtonHeight)];
-    _scrollView.frame = NSMakeRect(0,
-                                   searchField_.frame.size.height + kMargin,
-                                   frame.size.width,
-                                   frame.size.height - kButtonHeight - 2 * kMargin - searchField_.frame.size.height);
-    NSSize contentSize = [self contentSize];
-    [_tableView setFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
 }
 
 - (BOOL)isFlipped {

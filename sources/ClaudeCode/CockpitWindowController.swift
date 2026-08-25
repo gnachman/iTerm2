@@ -113,9 +113,7 @@ class CockpitWindowController: NSWindowController {
     }
 
     private func configureToolbar() {
-        if #available(macOS 11.0, *) {
-            window?.toolbarStyle = .unifiedCompact
-        }
+        window?.toolbarStyle = .unifiedCompact
     }
 
     private func configureOutlineView() {

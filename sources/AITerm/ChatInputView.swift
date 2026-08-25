@@ -90,21 +90,11 @@ class ChatInputView: NSView, NSTextFieldDelegate {
         // Match the symbol size of the + button (pointSize 16, weight
         // .medium). Without this, paperplane.fill renders ~10pt taller
         // than plus, throwing off the row visually.
-        let sendConfig: NSImage.SymbolConfiguration?
-        if #available(macOS 11.0, *) {
-            sendConfig = NSImage.SymbolConfiguration(pointSize: 16, weight: .medium)
-        } else {
-            sendConfig = nil
-        }
+        let sendConfig = NSImage.SymbolConfiguration(pointSize: 16, weight: .medium)
         let rawSendImage = NSImage(systemSymbolName: SFSymbol.paperplaneFill.rawValue, accessibilityDescription: "Send")!
         let rawStopImage = NSImage(systemSymbolName: SFSymbol.stopCircleFill.rawValue, accessibilityDescription: "Stop")!
-        if #available(macOS 11.0, *), let sendConfig {
-            sendImage = rawSendImage.withSymbolConfiguration(sendConfig) ?? rawSendImage
-            stopImage = rawStopImage.withSymbolConfiguration(sendConfig) ?? rawStopImage
-        } else {
-            sendImage = rawSendImage
-            stopImage = rawStopImage
-        }
+        sendImage = rawSendImage.withSymbolConfiguration(sendConfig) ?? rawSendImage
+        stopImage = rawStopImage.withSymbolConfiguration(sendConfig) ?? rawStopImage
         vev = NSVisualEffectView()
         super.init(frame: .zero)
 
@@ -129,10 +119,8 @@ class ChatInputView: NSView, NSTextFieldDelegate {
                                         accessibilityDescription: "Attach files",
                                         fallbackImageName: "plus",
                                         for: ChatInputView.self)!
-        if #available(macOS 11.0, *) {
-            let config = NSImage.SymbolConfiguration(pointSize: 16, weight: .medium)
-            addImage = addImage.withSymbolConfiguration(config)!
-        }
+        let config = NSImage.SymbolConfiguration(pointSize: 16, weight: .medium)
+        addImage = addImage.withSymbolConfiguration(config)!
         addAttachmentButton = AddAttachmentButton(image: addImage,
                                                   target: self,
                                                   action: #selector(attachmentButtonClicked))

@@ -8,7 +8,6 @@
 fileprivate let favoriteReorderPasteboardType =
     NSPasteboard.PasteboardType("com.iterm2.ssh-favorite-reorder")
 
-@available(macOS 11, *)
 class SSHFilePanelSourceList: NSOutlineView {
     static let sshFileNodePasteboardType = NSPasteboard.PasteboardType("com.iterm2.ssh-file-node")
     static let sshFileNodeDirectoryPasteboardType = NSPasteboard.PasteboardType("com.iterm2.ssh-file-node-directory")
@@ -42,7 +41,6 @@ class SSHFilePanelSourceList: NSOutlineView {
 
 // MARK: - SSHFilePanelSidebarDelegate Protocol
 
-@available(macOS 11, *)
 protocol SSHFilePanelSidebarDelegate: AnyObject {
     func sidebarDidSelectHost(_ sidebar: SSHFilePanelSidebar, host: SSHIdentity)
     func sidebarDidSelectFavorite(_ sidebar: SSHFilePanelSidebar, host: SSHIdentity, path: String)
@@ -51,7 +49,6 @@ protocol SSHFilePanelSidebarDelegate: AnyObject {
 }
 
 
-@available(macOS 11, *)
 class SSHFilePanelSidebar: NSView {
     private(set) var sidebarOutlineView: SSHFilePanelSourceList!
     private var sidebarScrollView: NSScrollView!
@@ -417,7 +414,6 @@ class SSHFilePanelSidebar: NSView {
 
 // MARK: - NSOutlineViewDataSource
 
-@available(macOS 11, *)
 extension SSHFilePanelSidebar: NSOutlineViewDataSource {
     func outlineView(
         _ outlineView: NSOutlineView,
@@ -646,7 +642,6 @@ enum Either<Left, Right> {
 
 // MARK: - NSOutlineViewDelegate
 
-@available(macOS 11, *)
 extension SSHFilePanelSidebar: NSOutlineViewDelegate {
     func outlineView(_ outlineView: NSOutlineView,
         viewFor tableColumn: NSTableColumn?,

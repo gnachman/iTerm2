@@ -234,10 +234,8 @@ typedef struct {
         _copyBackgroundRenderer = [[iTermCopyBackgroundRenderer alloc] initWithDevice:device];
         _copyToDrawableRenderer = [[iTermCopyToDrawableRenderer alloc] initWithDevice:device];
         _blockRenderer = [[iTermBlockRenderer alloc] initWithDevice:device];
-        if (@available(macOS 11, *)) {
-            _pillBackgroundRenderer = [[iTermPillBackgroundRenderer alloc] initWithDevice:device];
-            _terminalButtonRenderer = [[iTermTerminalButtonRenderer alloc] initWithDevice:device];
-        }
+        _pillBackgroundRenderer = [[iTermPillBackgroundRenderer alloc] initWithDevice:device];
+        _terminalButtonRenderer = [[iTermTerminalButtonRenderer alloc] initWithDevice:device];
         _rectangleRenderer = [[iTermRectangleRenderer alloc] initWithDevice:device];
         _underlineRenderer = [[iTermUnderlineRenderer alloc] initWithDevice:device];
         _underlineCompositeRenderer = [[iTermUnderlineCompositeRenderer alloc] initWithDevice:device];
@@ -882,9 +880,7 @@ panelReservationPoints:(CGFloat)panelReservationPoints {
     [self populateImageRendererTransientStateWithFrameData:frameData];
     [self populateBackgroundImageRendererTransientStateWithFrameData:frameData];
     [self populateBlockRendererTransientStateWithFrameData:frameData];
-    if (@available(macOS 11, *)) {
-        [self populateTerminalButtonRendererTransientStateWithFrameData:frameData];
-    }
+    [self populateTerminalButtonRendererTransientStateWithFrameData:frameData];
     [self populateRectangleRendererTransientStateWithFrameData:frameData];
     [self populateUnderlineRendererTransientStateWithFrameData:frameData];
     [self populateUnderlineCompositeRendererTransientStateWithFrameData:frameData];

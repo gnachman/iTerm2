@@ -57,14 +57,10 @@ const CGFloat kDragAreaSize = 5;
 
 - (void)updateKillButtonImage {
     NSImage *closeImage;
-    if (@available(macOS 11.0, *)) {
-        closeImage = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolTrash)
-                               accessibilityDescription:@"Delete annotation"];
-        NSColor *tintColor = self.effectiveAppearance.it_isDark ? [NSColor whiteColor] : [NSColor blackColor];
-        closeImage = [closeImage it_imageWithTintColor:tintColor];
-    } else {
-        closeImage = [NSImage it_imageNamed:@"closebutton" forClass:self.class];
-    }
+    closeImage = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolTrash)
+                           accessibilityDescription:@"Delete annotation"];
+    NSColor *tintColor = self.effectiveAppearance.it_isDark ? [NSColor whiteColor] : [NSColor blackColor];
+    closeImage = [closeImage it_imageWithTintColor:tintColor];
     [killButton_ setImage:closeImage];
 }
 

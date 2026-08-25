@@ -17,16 +17,12 @@ class TerminalCommandMessageCellView: MessageCellView {
     }()
     private let icon: NSImageView = {
         let image: NSImage = {
-            if #available(macOS 11, *) {
-                let image = NSImage(systemSymbolName: SFSymbol.desktopcomputer.rawValue,
-                                    accessibilityDescription: "Command icon")!
-                if #available(macOS 12, *) {
-                    return image.withSymbolConfiguration(.init(paletteColors: [.white, .clear, .black]))!
-                }
-                return image
+            let image = NSImage(systemSymbolName: SFSymbol.desktopcomputer.rawValue,
+                                accessibilityDescription: "Command icon")!
+            if #available(macOS 12, *) {
+                return image.withSymbolConfiguration(.init(paletteColors: [.white, .clear, .black]))!
             }
-            return NSImage.it_imageNamed("CommandIcon",
-                                         for: TerminalCommandMessageCellView.self)!
+            return image
         }()
         let view = NSImageView(image: image)
         view.imageScaling = .scaleProportionallyUpOrDown

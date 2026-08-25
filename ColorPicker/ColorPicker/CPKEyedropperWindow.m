@@ -33,33 +33,17 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
 }
 
 + (BOOL)canTakeScreenshot {
-    if (@available(macOS 10.16, *)) {
-      return CGPreflightScreenCaptureAccess();
-    }
-    return YES;
+    return CGPreflightScreenCaptureAccess();
 }
 
 + (void)complainAboutScreenCapturePermission {
-    if (@available(macOS 10.15, *)) {
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Permission Needed";
-        alert.informativeText = @"The eyedropper needs Screen Recording permission to work.";
-        [alert addButtonWithTitle:@"OK"];
-        [alert addButtonWithTitle:@"Cancel"];
-        if ([alert runModal] == NSAlertFirstButtonReturn) {
-            CGRequestScreenCaptureAccess();
-            NSURL *URL = [NSURL URLWithString:@"x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"];
-            [[NSWorkspace sharedWorkspace] openURL:URL];
-        }
-        return;
-    }
-
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = @"Permission Needed";
-    alert.informativeText = [NSString stringWithFormat:@"The eyedropper requires screen recording permission.\n\nYou can enable this by adding %@ to System Preferences > Security & Privacy > Privacy > Screen Recording.", [NSRunningApplication currentApplication].localizedName];
-    [alert addButtonWithTitle:@"Open System Preferences"];
+    alert.informativeText = @"The eyedropper needs Screen Recording permission to work.";
+    [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
     if ([alert runModal] == NSAlertFirstButtonReturn) {
+        CGRequestScreenCaptureAccess();
         NSURL *URL = [NSURL URLWithString:@"x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"];
         [[NSWorkspace sharedWorkspace] openURL:URL];
     }
@@ -111,9 +95,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     [self doPick];
     [[NSCursor crosshairCursor] pop];
     NSColor *selectedColor = [self selectedColor];
-    if (@available(macOS 10.13, *)) {
-        [self orderOut:nil];
-    }
+    [self orderOut:nil];
     if (selectedColor.alphaComponent == 0) {
         completion(nil, nil);
     } else {

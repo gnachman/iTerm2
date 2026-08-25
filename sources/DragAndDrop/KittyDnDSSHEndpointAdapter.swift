@@ -11,7 +11,6 @@
 
 import Foundation
 
-@available(macOS 11.0, *)
 @MainActor
 final class KittyDnDSSHEndpointAdapter: KittyDnDEndpoint {
     private let endpointProvider: () -> SSHEndpoint

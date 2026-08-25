@@ -2171,43 +2171,41 @@ static iTermKeyEventReplayer *gReplayer;
     const BOOL silent = ([components.queryItems objectPassingTest:^BOOL(NSURLQueryItem *element, NSUInteger index, BOOL *stop) {
         return [element.name isEqualToString:@"silent"];
     }] != nil);
-    if (@available(macOS 11, *)) {
-        iTermCommandURLHandler *handler = [[[iTermCommandURLHandler alloc] initWithCommand:command
-                                                                                  hostname:hostname
-                                                                                  username:username
-                                                                                 directory:directory
-                                                                                  offerTab:(iTermController.sharedInstance.currentTerminal != nil)
-                                                                                    silent:silent] autorelease];
-        [handler showWithCompletion:^(iTermCommandURLHandler *handler) {
-            if ([handler.action isEqualTo: iTermCommandURLHandler.openInWindow]) {
-                [[iTermController sharedInstance] openWindow:YES
-                                                     command:nil
-                                                 initialText:handler.command
-                                                   directory:handler.directory
-                                                    hostname:handler.hostname
-                                                    username:handler.username];
-            } else if ([handler.action isEqualTo: iTermCommandURLHandler.openInTab]) {
-                [[iTermController sharedInstance] openWindow:NO
-                                                     command:nil
-                                                 initialText:handler.command
-                                                   directory:handler.directory
-                                                    hostname:handler.hostname
-                                                    username:handler.username];
-            } else if ([handler.action isEqualTo: iTermCommandURLHandler.runInCurrentTab]) {
-                [[[[iTermController sharedInstance] currentTerminal] currentSession] runCommand:handler.command
-                                                                                    inDirectory:handler.directory
-                                                                                         onHost:handler.hostname
-                                                                                         asUser:handler.username];
-            } else if ([handler.action isEqual:iTermCommandURLHandler.runSilently] && internal) {
-                NSArray<NSString *> *parts = [handler.command componentsInShellCommand];
-                if (parts.count > 0) {
-                    [iTermBufferedCommandRunner runCommandWithPath:@"/bin/sh"
-                                                         arguments:@[ @"-c", handler.command ?: @"" ]
-                                                            window:[[[iTermController sharedInstance] currentTerminal] window]];
-                }
+    iTermCommandURLHandler *handler = [[[iTermCommandURLHandler alloc] initWithCommand:command
+                                                                              hostname:hostname
+                                                                              username:username
+                                                                             directory:directory
+                                                                              offerTab:(iTermController.sharedInstance.currentTerminal != nil)
+                                                                                silent:silent] autorelease];
+    [handler showWithCompletion:^(iTermCommandURLHandler *handler) {
+        if ([handler.action isEqualTo: iTermCommandURLHandler.openInWindow]) {
+            [[iTermController sharedInstance] openWindow:YES
+                                                 command:nil
+                                             initialText:handler.command
+                                               directory:handler.directory
+                                                hostname:handler.hostname
+                                                username:handler.username];
+        } else if ([handler.action isEqualTo: iTermCommandURLHandler.openInTab]) {
+            [[iTermController sharedInstance] openWindow:NO
+                                                 command:nil
+                                             initialText:handler.command
+                                               directory:handler.directory
+                                                hostname:handler.hostname
+                                                username:handler.username];
+        } else if ([handler.action isEqualTo: iTermCommandURLHandler.runInCurrentTab]) {
+            [[[[iTermController sharedInstance] currentTerminal] currentSession] runCommand:handler.command
+                                                                                inDirectory:handler.directory
+                                                                                     onHost:handler.hostname
+                                                                                     asUser:handler.username];
+        } else if ([handler.action isEqual:iTermCommandURLHandler.runSilently] && internal) {
+            NSArray<NSString *> *parts = [handler.command componentsInShellCommand];
+            if (parts.count > 0) {
+                [iTermBufferedCommandRunner runCommandWithPath:@"/bin/sh"
+                                                     arguments:@[ @"-c", handler.command ?: @"" ]
+                                                        window:[[[iTermController sharedInstance] currentTerminal] window]];
             }
-        }];
-    }
+        }
+    }];
 }
 
 - (void)getUrl:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent {

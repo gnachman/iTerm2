@@ -9,7 +9,6 @@ import Foundation
 import UserNotifications
 import WebKit
 
-@available(macOS 11.0, *)
 @MainActor
 class iTermBrowserPermissionManager: NSObject {
     private let user: iTermBrowserUser
@@ -19,7 +18,6 @@ class iTermBrowserPermissionManager: NSObject {
     }
 }
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserPermissionManager {
     // MARK: - Permission Management

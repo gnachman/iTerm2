@@ -156,51 +156,47 @@ func AttributedStringForGPTMarkdown(_ unsafeString: String,
 private func AttributedStringForMessage(_ md: SwiftyMarkdown,
                                         didCopy: (() -> ())?) -> NSAttributedString {
     let attributedString = md.attributedString()
-    if #available(macOS 11.0, *) {
-        let image = NSImage(systemSymbolName: SFSymbol.docOnDoc.rawValue, accessibilityDescription: "Copy")!
-        let modified = attributedString.mutableCopy() as! NSMutableAttributedString
-        var ranges = [NSRange]()
-        let utf16String = attributedString.string.utf16
-        attributedString.enumerateAttribute(
-            NSAttributedString.Key.swiftyMarkdownLineStyle,
-            in: NSRange(from: 0, to: attributedString.length)) { value, range, stopPtr in
-            guard value as? String == "codeblock" else {
+    let image = NSImage(systemSymbolName: SFSymbol.docOnDoc.rawValue, accessibilityDescription: "Copy")!
+    let modified = attributedString.mutableCopy() as! NSMutableAttributedString
+    var ranges = [NSRange]()
+    let utf16String = attributedString.string.utf16
+    attributedString.enumerateAttribute(
+        NSAttributedString.Key.swiftyMarkdownLineStyle,
+        in: NSRange(from: 0, to: attributedString.length)) { value, range, stopPtr in
+        guard value as? String == "codeblock" else {
+            return
+        }
+        if let previous = ranges.last {
+            let startIndex = utf16String.index(utf16String.startIndex, offsetBy: previous.upperBound)
+            let endIndex = utf16String.index(utf16String.startIndex, offsetBy: range.lowerBound)
+            let utf16CodeUnits = Array(utf16String[startIndex..<endIndex])
+            let substringToCheck = String(utf16CodeUnits: utf16CodeUnits, count: utf16CodeUnits.count)
+            if substringToCheck.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                // The area between this range and the last contains contains only whitespace characters
+                ranges.removeLast()
+                ranges.append(NSRange(location: previous.location,
+                                      length: range.upperBound - previous.location))
                 return
             }
-            if let previous = ranges.last {
-                let startIndex = utf16String.index(utf16String.startIndex, offsetBy: previous.upperBound)
-                let endIndex = utf16String.index(utf16String.startIndex, offsetBy: range.lowerBound)
-                let utf16CodeUnits = Array(utf16String[startIndex..<endIndex])
-                let substringToCheck = String(utf16CodeUnits: utf16CodeUnits, count: utf16CodeUnits.count)
-                if substringToCheck.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    // The area between this range and the last contains contains only whitespace characters
-                    ranges.removeLast()
-                    ranges.append(NSRange(location: previous.location,
-                                          length: range.upperBound - previous.location))
-                    return
-                }
-            }
-            ranges.append(range)
         }
-        if let didCopy {
-            for range in ranges.reversed() {
-                modified.insertButton(withImage: DynamicImage(image: image, dark: .white, light: .black), at: range.location) { point in
-                    NSPasteboard.general.declareTypes([.string], owner: NSApp)
-                    NSPasteboard.general.setString(attributedString.string.substring(nsrange: range), forType: .string)
-                    ToastWindowController.showToast(withMessage: "Copied", duration: 1, screenCoordinate: point, pointSize: 12)
-                    didCopy()
-                }
-                modified.insert(
-                    NSAttributedString(
-                        string: " ",
-                        attributes: modified.attributes(
-                            at: range.location + 1,
-                            effectiveRange: nil)),
-                    at: range.location + 1)
-            }
-        }
-        return modified
-    } else {
-        return attributedString
+        ranges.append(range)
     }
+    if let didCopy {
+        for range in ranges.reversed() {
+            modified.insertButton(withImage: DynamicImage(image: image, dark: .white, light: .black), at: range.location) { point in
+                NSPasteboard.general.declareTypes([.string], owner: NSApp)
+                NSPasteboard.general.setString(attributedString.string.substring(nsrange: range), forType: .string)
+                ToastWindowController.showToast(withMessage: "Copied", duration: 1, screenCoordinate: point, pointSize: 12)
+                didCopy()
+            }
+            modified.insert(
+                NSAttributedString(
+                    string: " ",
+                    attributes: modified.attributes(
+                        at: range.location + 1,
+                        effectiveRange: nil)),
+                at: range.location + 1)
+        }
+    }
+    return modified
 }

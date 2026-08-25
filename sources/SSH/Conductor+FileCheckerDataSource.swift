@@ -5,7 +5,6 @@
 //  Created by George Nachman on 7/1/25.
 //
 
-@available(macOS 11, *)
 @MainActor
 extension Conductor: FileCheckerDataSource {
     func fileCheckerDataSourceDidReset() {

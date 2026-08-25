@@ -8,7 +8,6 @@
 import Foundation
 import WebKit
 
-@available(macOS 11.0, *)
 extension PTYSession: iTermBrowserViewControllerDelegate {
     func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResultBundle) {
         view?.findDriver?.viewController.countDidChange()

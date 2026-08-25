@@ -7,14 +7,12 @@
 
 import WebKit
 
-@available(macOS 11.0, *)
 @MainActor
 @objc protocol iTermBrowserReaderModeManagerDelegate: AnyObject {
     func readerModeManager(_ manager: iTermBrowserReaderModeManager, didChangeActiveState isActive: Bool)
     func readerModeManager(_ manager: iTermBrowserReaderModeManager, didChangeDistractionRemovalState isActive: Bool)
 }
 
-@available(macOS 11.0, *)
 @objc(iTermBrowserReaderModeManager)
 @MainActor
 class iTermBrowserReaderModeManager: NSObject {
@@ -225,7 +223,6 @@ class iTermBrowserReaderModeManager: NSObject {
 
 // MARK: - WKScriptMessageHandler
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserReaderModeManager: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {

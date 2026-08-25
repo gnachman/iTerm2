@@ -35,7 +35,6 @@ extension SSHLocation {
     }
 }
 
-@available(macOS 11.0, *)
 @MainActor
 class iTermBrowserPageSaver {
     private let webView: iTermBrowserWebView

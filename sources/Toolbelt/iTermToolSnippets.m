@@ -99,24 +99,16 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     NSButton *button = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
     [button setButtonType:NSButtonTypeMomentaryPushIn];
     if (imageName) {
-        if (@available(macOS 10.16, *)) {
-            button.image = [NSImage it_imageForSymbolName:imageName accessibilityDescription:title];
-        } else {
-            button.image = [NSImage imageNamed:imageName];
-        }
+        button.image = [NSImage it_imageForSymbolName:imageName accessibilityDescription:title];
     } else {
         button.title = title;
     }
     [button setTarget:target];
     [button setAction:selector];
-    if (@available(macOS 10.16, *)) {
-        button.bezelStyle = NSBezelStyleRegularSquare;
-        button.bordered = NO;
-        button.imageScaling = NSImageScaleProportionallyUpOrDown;
-        button.imagePosition = NSImageOnly;
-    } else {
-        [button setBezelStyle:NSBezelStyleSmallSquare];
-    }
+    button.bezelStyle = NSBezelStyleRegularSquare;
+    button.bordered = NO;
+    button.imageScaling = NSImageScaleProportionallyUpOrDown;
+    button.imagePosition = NSImageOnly;
     [button sizeToFit];
     [button setAutoresizingMask:NSViewMinYMargin];
 
@@ -126,23 +118,14 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        if (@available(macOS 11.0, *)) {
-            _icon = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolTextBubbleFill) accessibilityDescription:@"Snippet icon"];
-            _folderIcon = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolFolderFill) accessibilityDescription:@"Folder icon"];
-        }
-        if (@available(macOS 10.16, *)) {
-            _applyButton = iTermToolSnippetsNewButton(@"play", @"Send", self, @selector(apply:), frame);
-            _addButton = iTermToolSnippetsNewButton(@"plus", @"Add", self, @selector(add:), frame);
-            _removeButton = iTermToolSnippetsNewButton(@"minus", @"Remove", self, @selector(remove:), frame);
-            _editButton = iTermToolSnippetsNewButton(@"square.and.pencil", @"Edit", self, @selector(edit:), frame);
-            _advancedPasteButton = iTermToolSnippetsNewButton(@"rectangle.and.pencil.and.ellipsis", @"Open in Advanced Paste", self, @selector(openInAdvancedPaste:), frame);
-            [self addSubview:_advancedPasteButton];
-        } else {
-            _applyButton = iTermToolSnippetsNewButton(nil, @"Send", self, @selector(apply:), frame);
-            _addButton = iTermToolSnippetsNewButton(NSImageNameAddTemplate, nil, self, @selector(add:), frame);
-            _removeButton = iTermToolSnippetsNewButton(NSImageNameRemoveTemplate, nil, self, @selector(remove:), frame);
-            _editButton = iTermToolSnippetsNewButton(nil, @"✐", self, @selector(edit:), frame);
-        }
+        _icon = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolTextBubbleFill) accessibilityDescription:@"Snippet icon"];
+        _folderIcon = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolFolderFill) accessibilityDescription:@"Folder icon"];
+        _applyButton = iTermToolSnippetsNewButton(@"play", @"Send", self, @selector(apply:), frame);
+        _addButton = iTermToolSnippetsNewButton(@"plus", @"Add", self, @selector(add:), frame);
+        _removeButton = iTermToolSnippetsNewButton(@"minus", @"Remove", self, @selector(remove:), frame);
+        _editButton = iTermToolSnippetsNewButton(@"square.and.pencil", @"Edit", self, @selector(edit:), frame);
+        _advancedPasteButton = iTermToolSnippetsNewButton(@"rectangle.and.pencil.and.ellipsis", @"Open in Advanced Paste", self, @selector(openInAdvancedPaste:), frame);
+        [self addSubview:_advancedPasteButton];
         [self addSubview:_applyButton];
         [self addSubview:_addButton];
         [self addSubview:_removeButton];
@@ -180,9 +163,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
         [_help setBezelStyle:NSBezelStyleHelpButton];
         [_help setButtonType:NSButtonTypeMomentaryPushIn];
         [_help setBordered:YES];
-        if (@available(macOS 10.16, *)) {
-            _help.controlSize = NSControlSizeSmall;
-        }
+        _help.controlSize = NSControlSizeSmall;
         [_help sizeToFit];
         _help.target = self;
         _help.action = @selector(help:);
@@ -337,20 +318,14 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
                                          _searchField.frame.size.height);
     _searchField.frame = searchFieldFrame;
 
-    CGFloat fudgeFactor = 1;
-    if (@available(macOS 10.16, *)) {
-        fudgeFactor = 2;
-    }
+    CGFloat fudgeFactor = 2;
     _help.frame = NSMakeRect(NSMaxX(searchFieldFrame) + kMargin, NSMinY(searchFieldFrame) + fudgeFactor, NSWidth(_help.frame), NSHeight(_help.frame));
 
     [_applyButton sizeToFit];
     [_applyButton setFrame:NSMakeRect(0, frame.size.height - kButtonHeight, _applyButton.frame.size.width, kButtonHeight)];
 
     [_advancedPasteButton sizeToFit];
-    CGFloat margin = -1;
-    if (@available(macOS 10.16, *)) {
-        margin = 2;
-    }
+    CGFloat margin = 2;
     _advancedPasteButton.frame = NSMakeRect(NSMaxX(_applyButton.frame) + margin,
                                             frame.size.height - kButtonHeight,
                                             _advancedPasteButton.frame.size.width,
@@ -360,11 +335,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     for (NSButton *button in @[ _addButton, _removeButton, _editButton]) {
         [button sizeToFit];
         CGFloat width;
-        if (@available(macOS 10.16, *)) {
-            width = NSWidth(button.frame);
-        } else {
-            width = MAX(kButtonHeight, button.frame.size.width);
-        }
+        width = NSWidth(button.frame);
         x -= width + margin;
         button.frame = NSMakeRect(x,
                                   frame.size.height - kButtonHeight,
@@ -799,10 +770,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 }
 
 - (NSTableRowView *)outlineView:(NSOutlineView *)outlineView rowViewForItem:(id)item {
-    if (@available(macOS 10.16, *)) {
-        return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
-    }
-    return [[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect];
+    return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
 }
 
 - (NSView *)outlineView:(NSOutlineView *)outlineView viewForTableColumn:(NSTableColumn *)tableColumn item:(id)item {

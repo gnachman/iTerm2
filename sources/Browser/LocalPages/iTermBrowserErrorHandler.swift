@@ -8,7 +8,6 @@
 import Foundation
 @preconcurrency import WebKit
 
-@available(macOS 11.0, *)
 @objc(iTermBrowserErrorHandler)
 class iTermBrowserErrorHandler: NSObject, iTermBrowserPageHandler {
     private var pendingErrorHTML: String?

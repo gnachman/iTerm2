@@ -856,16 +856,13 @@ extension PTYSession {
     func createFileCommand(createFile: RemoteCommand.CreateFile,
                            completion: @escaping (String, String) throws -> ()) rethrows {
         DLog("\(createFile)")
-        if #available(macOS 11, *) {
-            if let conductor, conductor.framing {
-                try createRemoteFile(createFile, conductor: conductor, completion: completion)
-                return
-            }
+        if let conductor, conductor.framing {
+            try createRemoteFile(createFile, conductor: conductor, completion: completion)
+            return
         }
         try createLocalFile(createFile, completion: completion)
     }
 
-    @available(macOS 11.0, *)
     private func createRemoteFile(_ createFile: RemoteCommand.CreateFile,
                                   conductor: Conductor,
                                   completion: @escaping (String, String) throws -> ()) rethrows {
@@ -1182,7 +1179,6 @@ extension PTYSession {
     }
 }
 
-@available(macOS 11.0, *)
 extension PTYSession: PathCompletionHelperDelegate {
     @objc(showCompletionUIForPathMark:)
     func showCompletionUI(pathMark: PathMarkReading) -> PathCompletionHelper? {
@@ -1344,7 +1340,6 @@ extension PTYSession {
     }
 }
 
-@available(macOS 11, *)
 extension PTYSession {
     @objc(openURL:)
     func open(url: URL) {
@@ -1357,10 +1352,7 @@ extension PTYSession {
 
     @objc
     var webSiteTitle: String? {
-        if #available(macOS 11, *) {
-            return view?.browserViewController?.title
-        }
-        return nil
+        return view?.browserViewController?.title
     }
 
     @objc
@@ -1370,7 +1362,6 @@ extension PTYSession {
 }
 
 
-@available(macOS 11, *)
 extension PTYSession {
     @discardableResult
     @objc

@@ -18,7 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol PSMTabStyle <NSObject>
 
 @property(nonatomic, weak, nullable) PSMTabBarControl *tabBar;
-@property(nonatomic, readonly, nullable) NSAppearance *accessoryAppearance NS_AVAILABLE_MAC(10_14);
+@property(nonatomic, readonly, nullable) NSAppearance *accessoryAppearance;
 @property(nonatomic, readonly) CGFloat edgeDragHeight;
 @property(nonatomic, readonly) BOOL supportsMultiLineLabels;
 @property(nonatomic, readonly) CGFloat intercellSpacing;

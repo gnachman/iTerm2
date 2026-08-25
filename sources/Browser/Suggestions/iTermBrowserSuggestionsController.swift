@@ -5,7 +5,6 @@
 //  Created by George Nachman on 6/20/25.
 //
 
-@available(macOS 11.0, *)
 @MainActor
 class iTermBrowserSuggestionsController {
     private let tailTruncatingAttributes: [NSAttributedString.Key: Any]

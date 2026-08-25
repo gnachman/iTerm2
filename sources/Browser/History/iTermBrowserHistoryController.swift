@@ -7,7 +7,6 @@
 
 import WebKit
 
-@available(macOS 11.0, *)
 class iTermBrowserHistoryController {
     private let sessionGuid: String
     private let navigationState: iTermBrowserNavigationState

@@ -24,16 +24,13 @@ class OptionsButtonController: NSObject {
     }
 
     private static func makeOptionsButton() -> MenuButton? {
-        if #available(macOS 11, *) {
-            let optionsButton = MenuButton()
-            optionsButton.image = NSImage(systemSymbolName: "ellipsis.circle",
-                                          accessibilityDescription: "Choose font features")
-            optionsButton.imagePosition = .imageOnly
-            optionsButton.isHidden = true
-            optionsButton.sizeToFit()
-            return optionsButton
-        }
-        return nil
+        let optionsButton = MenuButton()
+        optionsButton.image = NSImage(systemSymbolName: "ellipsis.circle",
+                                      accessibilityDescription: "Choose font features")
+        optionsButton.imagePosition = .imageOnly
+        optionsButton.isHidden = true
+        optionsButton.sizeToFit()
+        return optionsButton
     }
 
     /// Feature settings dicts derived from the current selections, suitable for

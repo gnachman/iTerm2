@@ -310,12 +310,10 @@ extension TextClipDrawing: iTermTextDrawingHelperDelegate {
         return originalDelegate.drawingHelperBidiInfo(forLine: line)
     }
 
-    @available(macOS 11, *)
     func absCoord(for button: TerminalButton) -> VT100GridAbsCoord {
         return VT100GridAbsCoord(x: -1, y: -1)
     }
     
-    @available(macOS 11, *)
     func drawingHelperTerminalButtons() -> [TerminalButton] {
         return []
     }

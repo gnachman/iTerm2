@@ -121,11 +121,7 @@ const CGFloat kEdgeWidth = 3;
 }
 
 - (void)drawWithFrame:(NSRect)originalFrame inView:(NSView *)controlView {
-    if (@available(macOS 10.16, *)) {
-        [self drawModernWithFrame:originalFrame inView:controlView];
-    } else {
-        [self drawLegacyWithFrame:originalFrame inView:controlView];
-    }
+    [self drawModernWithFrame:originalFrame inView:controlView];
 }
 
 - (void)drawLegacyWithFrame:(NSRect)originalFrame inView:(NSView *)controlView {

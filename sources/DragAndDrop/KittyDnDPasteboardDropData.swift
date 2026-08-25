@@ -15,7 +15,6 @@
 import AppKit
 import UniformTypeIdentifiers
 
-@available(macOS 11.0, *)
 @MainActor
 final class KittyDnDPasteboardDropData: KittyDnDDropData {
     let mimeTypes: [String]

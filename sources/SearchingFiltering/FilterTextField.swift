@@ -23,9 +23,6 @@ class FilterTextField: NSSearchField {
     }
 
     private func changeIcon(_ cell: NSButtonCell) {
-        guard #available(macOS 11, *) else {
-            return
-        }
         cell.setButtonType(.toggle)
         let filterImage = NSImage(systemSymbolName: SFSymbol.lineHorizontal3DecreaseCircle.rawValue,
                                   accessibilityDescription: "Filter")

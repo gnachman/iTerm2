@@ -8,12 +8,10 @@
 import WebKit
 import Foundation
 
-@available(macOS 11.0, *)
 @objc protocol iTermBrowserHistoryViewHandlerDelegate: AnyObject {
     @MainActor func historyViewHandlerDidNavigateToURL(_ handler: iTermBrowserHistoryViewHandler, url: String)
 }
 
-@available(macOS 11.0, *)
 @objc(iTermBrowserHistoryViewHandler)
 @MainActor
 class iTermBrowserHistoryViewHandler: NSObject, iTermBrowserPageHandler {

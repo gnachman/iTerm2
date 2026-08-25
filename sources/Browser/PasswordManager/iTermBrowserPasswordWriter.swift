@@ -7,7 +7,6 @@
 
 import WebKit
 
-@available(macOS 11.0, *)
 final class iTermBrowserPasswordWriter {
     private let mutex = AsyncMutex()
 
@@ -65,7 +64,6 @@ final class iTermBrowserPasswordWriter {
     }
 }
 
-@available(macOS 11, *)
 private extension iTermBrowserPasswordWriter {
     private func stringified(password: String) -> String {
         if let data = try? JSONSerialization.data(withJSONObject: password, options: [.fragmentsAllowed]),

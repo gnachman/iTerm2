@@ -86,13 +86,9 @@
 
 - (void)awakeFromNib {
     // Initialize the table
-#ifdef MAC_OS_X_VERSION_10_16
-    if (@available(macOS 10.16, *)) {
-        _table.style = NSTableViewStyleInset;
-        // Possibly a 10.16 beta bug? Using intercell spacing clips the selection rect.
-        _table.intercellSpacing = NSZeroSize;
-    }
-#endif
+    _table.style = NSTableViewStyleInset;
+    // Possibly a 10.16 beta bug? Using intercell spacing clips the selection rect.
+    _table.intercellSpacing = NSZeroSize;
     [_table setDoubleAction:@selector(doubleClick:)];
 
     // Initialize the window's contentView
@@ -105,50 +101,40 @@
     contentView.color = [NSColor clearColor];
     self.window.backgroundColor = [NSColor clearColor];
 
-    if (@available(macOS 10.16, *)) {
-        {
-            NSImage *image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolMagnifyingglass)
-                                       accessibilityDescription:@"Search icon"];
-            NSImageSymbolConfiguration *config =
-            [NSImageSymbolConfiguration configurationWithPointSize:21
-                                                            weight:NSFontWeightRegular];
-            [_loupe setImage:[image imageWithSymbolConfiguration:config]];
-        }
-        {
-            NSImageSymbolConfiguration *config =
-            [NSImageSymbolConfiguration configurationWithPointSize:14
-                                                            weight:NSFontWeightRegular];
-            NSImage *image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolXmarkCircleFill)
-                                       accessibilityDescription:@"Clear search query"];
-            [_xButton setImage:[image imageWithSymbolConfiguration:config]];
-            NSRect frame = _xButton.frame;
-            const CGFloat delta = 2;
-            frame.size.width += delta;
-            frame.size.height += delta;
-            frame.origin.x -= delta / 2.0;
-            frame.origin.y -= delta / 2.0;
-            _xButton.frame = frame;
-        }
+    {
+        NSImage *image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolMagnifyingglass)
+                                   accessibilityDescription:@"Search icon"];
+        NSImageSymbolConfiguration *config =
+        [NSImageSymbolConfiguration configurationWithPointSize:21
+                                                        weight:NSFontWeightRegular];
+        [_loupe setImage:[image imageWithSymbolConfiguration:config]];
+    }
+    {
+        NSImageSymbolConfiguration *config =
+        [NSImageSymbolConfiguration configurationWithPointSize:14
+                                                        weight:NSFontWeightRegular];
+        NSImage *image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolXmarkCircleFill)
+                                   accessibilityDescription:@"Clear search query"];
+        [_xButton setImage:[image imageWithSymbolConfiguration:config]];
+        NSRect frame = _xButton.frame;
+        const CGFloat delta = 2;
+        frame.size.width += delta;
+        frame.size.height += delta;
+        frame.origin.x -= delta / 2.0;
+        frame.origin.y -= delta / 2.0;
+        _xButton.frame = frame;
     }
 
     // Rounded corners for contentView
     contentView.wantsLayer = YES;
-    if (@available(macOS 10.16, *)) {
-        contentView.layer.cornerRadius = 10;
-    } else {
-        contentView.layer.cornerRadius = 6;
-    }
+    contentView.layer.cornerRadius = 10;
     contentView.layer.masksToBounds = YES;
     if (@available(macOS 26, *)) {} else {
         contentView.layer.borderColor = [[NSColor colorWithCalibratedRed:0.66 green:0.66 blue:0.66 alpha:1] CGColor];
         contentView.layer.borderWidth = 0.5;
     }
 
-    if (@available(macOS 10.16, *)) {
-        _divider.hidden = YES;
-    } else {
-        _divider.color = [NSColor colorWithCalibratedRed:0.66 green:0.66 blue:0.66 alpha:1];
-    }
+    _divider.hidden = YES;
 }
 
 - (void)presentWindow {
@@ -169,11 +155,7 @@
     // are not honored for non-activating panels on macOS 26 when the app is
     // in the background, so the panel ends up hidden behind other apps on
     // subsequent shows.
-    if (@available(macOS 10.16, *)) {
-        self.window.level = NSMainMenuWindowLevel - 2;
-    } else {
-        self.window.level = 17;
-    }
+    self.window.level = NSMainMenuWindowLevel - 2;
     // Set the window's frame to be table-less initially.
     [self.window setFrame:[self frame] display:YES animate:NO];
     [_textField selectText:nil];
@@ -207,11 +189,7 @@
 
     NSRect frame = [self frame];
     NSRect contentViewFrame = [self.window frameRectForContentRect:frame];
-    if (@available(macOS 10.16, *)) {
-        _divider.hidden = YES;
-    } else {
-        _divider.hidden = (self.model.items.count == 0);
-    }
+    _divider.hidden = YES;
     _scrollView.frame = NSMakeRect(_scrollView.frame.origin.x,
                                    _scrollView.frame.origin.y,
                                    contentViewFrame.size.width,
@@ -276,9 +254,7 @@
         NSRect frameOfLastVisibleCell = [_table frameOfCellAtColumn:0
                                                                 row:numberOfVisibleRowsDesired - 1];
         contentSize.height += NSMaxY(frameOfLastVisibleCell);
-        if (@available(macOS 10.16, *)) {
-            contentSize.height += 10;
-        }
+        contentSize.height += 10;
     }
     frame.size.height = contentSize.height;
 
@@ -502,52 +478,50 @@
                 });
             }
         } else {
-            if (@available(macOS 11, *)) {
-                if ([object isKindOfClass:[iTermOpenQuicklyInvocationItem class]]) {
-                    iTermOpenQuicklyInvocationItem *item = [iTermOpenQuicklyInvocationItem castFrom:object];
-                    [iTermScriptFunctionCall callFunction:item.identifier
-                                                  timeout:[[NSDate distantFuture] timeIntervalSinceNow]
-                                       sideEffectsAllowed:YES
-                                                    scope:item.scope
-                                               retainSelf:YES
-                                               completion:^(id value, NSError *error, NSSet<NSString *> *missing) {
-                        if (error) {
-                            [iTermAPIHelper reportFunctionCallError:error
-                                                      forInvocation:item.identifier
-                                                             origin:@"Open Quickly"
-                                                             window:nil];
+            if ([object isKindOfClass:[iTermOpenQuicklyInvocationItem class]]) {
+                iTermOpenQuicklyInvocationItem *item = [iTermOpenQuicklyInvocationItem castFrom:object];
+                [iTermScriptFunctionCall callFunction:item.identifier
+                                              timeout:[[NSDate distantFuture] timeIntervalSinceNow]
+                                   sideEffectsAllowed:YES
+                                                scope:item.scope
+                                           retainSelf:YES
+                                           completion:^(id value, NSError *error, NSSet<NSString *> *missing) {
+                    if (error) {
+                        [iTermAPIHelper reportFunctionCallError:error
+                                                  forInvocation:item.identifier
+                                                         origin:@"Open Quickly"
+                                                         window:nil];
+                    } else {
+                        NSAlert *alert = [[NSAlert alloc] init];
+                        [alert setMessageText:@"Function Call Result"];
+                        [alert setInformativeText:[NSString stringWithFormat:@"%@ returned:\n%@", item.identifier, [value description]]];
+                        [alert addButtonWithTitle:@"OK"];
+                        [alert runModal];
+                    }
+                }];
+            } else {
+                if ([iTermBrowserGateway browserAllowedCheckingIfNot:NO]) {
+                    if ([object isKindOfClass:[iTermOpenQuicklyBookmarkItem class]]) {
+                        iTermOpenQuicklyBookmarkItem *item = [iTermOpenQuicklyBookmarkItem castFrom:object];
+                        PTYSession *session = iTermController.sharedInstance.currentTerminal.currentSession;
+                        if (session.isBrowserSession) {
+                            [session openURL:item.url];
                         } else {
-                            NSAlert *alert = [[NSAlert alloc] init];
-                            [alert setMessageText:@"Function Call Result"];
-                            [alert setInformativeText:[NSString stringWithFormat:@"%@ returned:\n%@", item.identifier, [value description]]];
-                            [alert addButtonWithTitle:@"OK"];
-                            [alert runModal];
+                            [[iTermController sharedInstance] openURL:item.url
+                                                               target:nil
+                                                            openStyle:iTermOpenStyleTab
+                                                            select:YES];
                         }
-                    }];
-                } else {
-                    if ([iTermBrowserGateway browserAllowedCheckingIfNot:NO]) {
-                        if ([object isKindOfClass:[iTermOpenQuicklyBookmarkItem class]]) {
-                            iTermOpenQuicklyBookmarkItem *item = [iTermOpenQuicklyBookmarkItem castFrom:object];
-                            PTYSession *session = iTermController.sharedInstance.currentTerminal.currentSession;
-                            if (session.isBrowserSession) {
-                                [session openURL:item.url];
-                            } else {
-                                [[iTermController sharedInstance] openURL:item.url
-                                                                   target:nil
-                                                                openStyle:iTermOpenStyleTab
-                                                                select:YES];
-                            }
-                        } else if ([object isKindOfClass:[iTermOpenQuicklyURLItem class]]) {
-                            iTermOpenQuicklyURLItem *item = [iTermOpenQuicklyURLItem castFrom:object];
-                            PTYSession *session = iTermController.sharedInstance.currentTerminal.currentSession;
-                            if (session.isBrowserSession) {
-                                [session openURL:item.url];
-                            } else {
-                                [[iTermController sharedInstance] openURL:item.url
-                                                                   target:nil
-                                                                openStyle:iTermOpenStyleTab
-                                                                   select:YES];
-                            }
+                    } else if ([object isKindOfClass:[iTermOpenQuicklyURLItem class]]) {
+                        iTermOpenQuicklyURLItem *item = [iTermOpenQuicklyURLItem castFrom:object];
+                        PTYSession *session = iTermController.sharedInstance.currentTerminal.currentSession;
+                        if (session.isBrowserSession) {
+                            [session openURL:item.url];
+                        } else {
+                            [[iTermController sharedInstance] openURL:item.url
+                                                               target:nil
+                                                            openStyle:iTermOpenStyleTab
+                                                               select:YES];
                         }
                     }
                 }
@@ -597,11 +571,7 @@
 }
 
 - (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
-    if (@available(macOS 10.16, *)) {
-        return [[iTermOpenQuicklyTableRowView_BigSur alloc] init];
-    } else {
-        return [[iTermOpenQuicklyTableRowView alloc] init];
-    }
+    return [[iTermOpenQuicklyTableRowView_BigSur alloc] init];
 }
 
 - (void)doubleClick:(id)sender {

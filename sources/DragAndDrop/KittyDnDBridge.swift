@@ -34,7 +34,6 @@ protocol KittyDnDBridgeDataSource: AnyObject {
     func kittyDnDDragDidBegin()
 }
 
-@available(macOS 11.0, *)
 @objc(iTermKittyDnDBridge)
 @MainActor
 class KittyDnDBridge: NSObject {

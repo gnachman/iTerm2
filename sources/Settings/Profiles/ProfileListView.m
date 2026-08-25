@@ -157,10 +157,7 @@ const CGFloat kDefaultTagsWidth = 80;
                                     scrollerStyle:scrollView_.verticalScroller.scrollerStyle];
 
         tableView_ = [[ProfileTableView alloc] initWithFrame:tableViewFrame];
-
-        if (@available(macOS 10.16, *)) {
-            tableView_.style = NSTableViewStyleInset;
-        }
+        tableView_.style = NSTableViewStyleInset;
 
         [tableView_ setMenuHandler:self];
         [tableView_ registerForDraggedTypes:[NSArray arrayWithObject:kProfileTableViewDataType]];
@@ -178,11 +175,7 @@ const CGFloat kDefaultTagsWidth = 80;
         [tableView_ addTableColumn:tableColumn_];
 
         [scrollView_ setDocumentView:tableView_];
-        if (@available(macOS 10.16, *)) {
-            scrollView_.borderType = NSLineBorder;
-        } else {
-            [scrollView_ setBorderType:NSBezelBorder];
-        }
+        scrollView_.borderType = NSLineBorder;
 
         selectedGuids_ = [[NSMutableSet alloc] init];
 
@@ -613,18 +606,16 @@ const CGFloat kDefaultTagsWidth = 80;
     }
     if (isBrowser) {
         NSAttributedString *browserIcon;
-        if (@available(macOS 11.0, *)) {
-            NSTextAttachment *attachment = [[[NSTextAttachment alloc] init] autorelease];
-            NSString *imageName = isDefault ? SFSymbolGetString(SFSymbolSafariFill) : SFSymbolGetString(SFSymbolSafari);
-            NSImage *image = [NSImage imageWithSystemSymbolName:imageName accessibilityDescription:nil];
-            image.size = NSMakeSize(16, 16);
-            attachment.image = image;
-            NSAttributedString *safari = [NSAttributedString attributedStringWithAttachment:attachment];
-            NSAttributedString *space = [[[NSAttributedString alloc] initWithString:@" "
-                                                           attributes:plainAttributes] autorelease];
-            browserIcon = [safari attributedStringByAppendingAttributedString:space];
-            [theAttributedString insertAttributedString:browserIcon atIndex:0];
-        }
+        NSTextAttachment *attachment = [[[NSTextAttachment alloc] init] autorelease];
+        NSString *imageName = isDefault ? SFSymbolGetString(SFSymbolSafariFill) : SFSymbolGetString(SFSymbolSafari);
+        NSImage *image = [NSImage imageWithSystemSymbolName:imageName accessibilityDescription:nil];
+        image.size = NSMakeSize(16, 16);
+        attachment.image = image;
+        NSAttributedString *safari = [NSAttributedString attributedStringWithAttachment:attachment];
+        NSAttributedString *space = [[[NSAttributedString alloc] initWithString:@" "
+                                                       attributes:plainAttributes] autorelease];
+        browserIcon = [safari attributedStringByAppendingAttributedString:space];
+        [theAttributedString insertAttributedString:browserIcon atIndex:0];
     }
     if (isDynamic) {
         if (@available(macOS 12.0, *)) {

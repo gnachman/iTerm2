@@ -12,7 +12,6 @@
 import XCTest
 @testable import iTerm2SharedARC
 
-@available(macOS 11.0, *)
 @MainActor
 final class KittyDnDRemoteDragFetchTests: XCTestCase {
     private func makeTempDirectory() -> URL {

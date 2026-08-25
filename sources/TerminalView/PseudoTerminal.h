@@ -478,7 +478,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 - (iTermBrowserWebView *)openTabWithURL:(NSURL *)url
                             baseProfile:(Profile *)base
                         nearSessionGuid:(NSString *)sessionGuid
-                          configuration:(WKWebViewConfiguration *)configuration NS_AVAILABLE_MAC(11_0);
+                          configuration:(WKWebViewConfiguration *)configuration;
 
 - (void)openSplitPaneWithURL:(NSURL *)url
                       target:(NSString *)target

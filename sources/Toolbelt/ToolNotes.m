@@ -102,12 +102,8 @@ typedef NS_ENUM(NSInteger, ToolNotesMode) {
         [self addSubview:modeControl_];
 
         scrollView_ = [[NSScrollView alloc] initWithFrame:NSZeroRect];
-        if (@available(macOS 10.16, *)) {
-            [scrollView_ setBorderType:NSLineBorder];
-            scrollView_.scrollerStyle = NSScrollerStyleOverlay;
-        } else {
-            [scrollView_ setBorderType:NSBezelBorder];
-        }
+        [scrollView_ setBorderType:NSLineBorder];
+        scrollView_.scrollerStyle = NSScrollerStyleOverlay;
         [scrollView_ setHasVerticalScroller:YES];
         [scrollView_ setHasHorizontalScroller:NO];
         scrollView_.drawsBackground = NO;

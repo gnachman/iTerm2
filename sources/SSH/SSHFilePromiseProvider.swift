@@ -7,7 +7,6 @@
 
 import UniformTypeIdentifiers
 
-@available(macOS 11, *)
 class SSHFilePromiseProvider: NSFilePromiseProvider {
 
     struct UserInfoKeys {

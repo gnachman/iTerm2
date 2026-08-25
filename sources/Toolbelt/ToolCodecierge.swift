@@ -985,11 +985,7 @@ class CodeciergeSuggestionView: NSView, NSTextFieldDelegate {
         replyButton = NSButton()
         replyButton.isEnabled = false
         replyButton.isBordered = false
-        if #available(macOS 11.0, *) {
-            replyButton.image = NSImage(systemSymbolName: SFSymbol.paperplane.rawValue, accessibilityDescription: "Send reply")
-        } else {
-            replyButton.stringValue = "Send"
-        }
+        replyButton.image = NSImage(systemSymbolName: SFSymbol.paperplane.rawValue, accessibilityDescription: "Send reply")
         replyButton.action = #selector(send(_:))
 
         super.init(frame: .zero)

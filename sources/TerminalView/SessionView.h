@@ -256,7 +256,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)layoutContentsForNewlyActiveSession;
 - (void)setBrowserViewController:(iTermBrowserViewController *)browserViewController
                       initialURL:(nullable NSString *)initialURL
-                 restorableState:(nullable NSDictionary *)restorableState NS_AVAILABLE_MAC(11_0);
+                 restorableState:(nullable NSDictionary *)restorableState;
 
 - (void)setTerminalBackgroundColor:(nullable NSColor *)color;
 

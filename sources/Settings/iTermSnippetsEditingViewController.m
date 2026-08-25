@@ -344,13 +344,7 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
     const NSInteger numberOfRows = [[self selectedSnippets] count];
     _removeButton.enabled = numberOfRows > 0;
     _editButton.enabled = numberOfRows == 1;
-    if (@available(macOS 10.16, *)) {
-        _exportButton.enabled = numberOfRows > 0;
-    } else {
-        // This is just because we don't have SF Symbols and I don't have a nice asset to use here.
-        _importButton.hidden = YES;
-        _exportButton.hidden = YES;
-    }
+    _exportButton.enabled = numberOfRows > 0;
 }
 
 #pragma mark - Actions
@@ -524,10 +518,7 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.ite
 #pragma mark - NSTableViewDelegate
 
 - (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
-    if (@available(macOS 10.16, *)) {
-        return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
-    }
-    return [[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect];
+    return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {

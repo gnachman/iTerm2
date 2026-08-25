@@ -2876,10 +2876,7 @@ extension ChatViewController: ChatToolbarDataSource {
             if !model.features.contains(.hostedWebSearch) {
                 return false
             }
-            if #available(macOS 11, *) {
-                return iTermUserDefaults.userDefaults().bool(forKey: Self.webSearchUserDefaultsKey)
-            }
-            return false
+            return iTermUserDefaults.userDefaults().bool(forKey: Self.webSearchUserDefaultsKey)
         }
         set {
             return iTermUserDefaults.userDefaults().set(newValue, forKey: Self.webSearchUserDefaultsKey)

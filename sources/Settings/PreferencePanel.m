@@ -517,10 +517,8 @@ static iTermPreferencesSearchEngine *gSearchEngine;
     IBOutlet NSToolbarItem *_shortcutsToolbarItem;
 
     NSToolbarItem *_searchFieldToolbarItem;
-#ifdef MAC_OS_X_VERSION_10_16
-    NSSearchToolbarItem *_bigSurSearchFieldToolbarItem NS_AVAILABLE_MAC(10_16);
-    NSMenuItem *_showNonDefaultValuesMenuItem NS_AVAILABLE_MAC(10_16);
-#endif
+    NSSearchToolbarItem *_bigSurSearchFieldToolbarItem;
+    NSMenuItem *_showNonDefaultValuesMenuItem;
     NSDictionary<NSString *, NSString *> *_keywords;
     NSDictionary<NSString *, id<iTermSearchableViewController>> *_keywordToViewController;
     // This class is not well named. It is a view controller for the window
@@ -646,11 +644,9 @@ static iTermPreferencesSearchEngine *gSearchEngine;
         [self.window addTitlebarAccessoryViewController:vc];
     }
 
-    if (@available(macOS 11, *)) {
-        if (!_editCurrentSessionMode && iTermUserDefaultsUnsavedController.allowed) {
-            iTermUserDefaultsUnsavedController *unsaved = [[iTermUserDefaultsUnsavedController alloc] init];
-            [self.window addTitlebarAccessoryViewController:unsaved];
-        }
+    if (!_editCurrentSessionMode && iTermUserDefaultsUnsavedController.allowed) {
+        iTermUserDefaultsUnsavedController *unsaved = [[iTermUserDefaultsUnsavedController alloc] init];
+        [self.window addTitlebarAccessoryViewController:unsaved];
     }
     if (!_editCurrentSessionMode) {
         [_profilesViewController selectDefaultProfile];
@@ -1033,7 +1029,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     return _bigSurSearchFieldToolbarItem;
 }
 
-- (void)toggleIndicateNonDefaultValues:(id)sender NS_AVAILABLE_MAC(10_16) {
+- (void)toggleIndicateNonDefaultValues:(id)sender {
     [iTermPreferences setBool:![iTermPreferences boolForKey:kPreferenceKeyIndicateNonDefaultValues]
                        forKey:kPreferenceKeyIndicateNonDefaultValues];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermPreferencesDidToggleIndicateNonDefaultValues
@@ -1041,11 +1037,9 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
-    if (@available(macOS 10.16, *)) {
-        if (menuItem.action == @selector(toggleIndicateNonDefaultValues:)) {
-            menuItem.state = [iTermPreferences boolForKey:kPreferenceKeyIndicateNonDefaultValues] ? NSControlStateValueOn: NSControlStateValueOff;
-            return YES;
-        }
+    if (menuItem.action == @selector(toggleIndicateNonDefaultValues:)) {
+        menuItem.state = [iTermPreferences boolForKey:kPreferenceKeyIndicateNonDefaultValues] ? NSControlStateValueOn: NSControlStateValueOff;
+        return YES;
     }
     return YES;
 }
@@ -1269,13 +1263,9 @@ andEditComponentWithIdentifier:(NSString *)identifier
 #pragma mark - NSSearchFieldDelegate
 
 - (NSSearchField *)searchField {
-#ifdef MAC_OS_X_VERSION_10_16
-    if (@available(macOS 10.16, *)) {
-        if (self.bigSurSearchFieldToolbarItem) {
-            return self.bigSurSearchFieldToolbarItem.searchField;
-        }
+    if (self.bigSurSearchFieldToolbarItem) {
+        return self.bigSurSearchFieldToolbarItem.searchField;
     }
-#endif
     return (NSSearchField *)_searchFieldToolbarItem.view;
 }
 
