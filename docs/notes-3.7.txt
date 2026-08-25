@@ -125,6 +125,13 @@ Major New Features:
   the window was resized when a new window
   was opened with the toolbelt showing.
 
+- Reduced idle CPU usage. The window title
+  label was rebuilt about once per second
+  per visible session even when nothing
+  changed, so CPU grew with the number of
+  open windows. It now rebuilds only when
+  the rendered title actually changes.
+
 - There's a new kind of AI chat called
   "orchestration" which can view all your
   sessions and operate iTerm2 for you.

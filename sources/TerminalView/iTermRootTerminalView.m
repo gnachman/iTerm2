@@ -135,6 +135,12 @@ typedef struct {
     iTermStandardWindowButtonsView *_standardWindowButtonsView;
     NSMutableDictionary<NSNumber *, NSButton *> *_standardButtons;
     NSString *_windowTitle;
+    // Snapshot of the inputs last used to render _windowTitleLabel. It lets us
+    // skip the expensive attributed-string build + alignment layout when nothing
+    // that affects the rendered label has changed. The title is polled ~once per
+    // second per visible session even while idle, so without this guard many
+    // open windows burn CPU rebuilding an identical label (issue 12982).
+    iTermWindowTitleLabelInputs *_lastRenderedWindowTitleLabelInputs;
     NSNumber *_windowNumber;
     NSTextField *_windowNumberLabel;
     iTermFakeWindowTitleLabel *_windowTitleLabel;
@@ -947,7 +953,41 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 }
 
 - (void)setWindowTitleLabelToString:(NSString *)title subtitle:(NSString *)subtitle icon:(NSImage *)icon {
-    _windowTitleLabel.puaFontProvider = [self.delegate rootTerminalViewPUAFontProvider];
+    id<PSMPUAFontProvider> puaFontProvider = [self.delegate rootTerminalViewPUAFontProvider];
+    _windowTitleLabel.puaFontProvider = puaFontProvider;
+
+    // Short-circuit if nothing that affects the rendered label has changed. The
+    // title is polled ~once per second per visible session even while idle, so
+    // rebuilding an identical label scales CPU with the number of open windows
+    // (issue 12982). The rendered result depends on the content (title/subtitle/
+    // icon), the drawing attributes (text color, font, HTML parsing, and the PUA
+    // fonts resolved from the terminal font), and the alignment, which is a
+    // function of the available width (frame width, toolbelt width, tab bar
+    // insets, whether the tab bar control is on loan, and the macOS 26 minimal
+    // left-align setting). iTermWindowTitleLabelInputs captures all of these.
+    BOOL leftAlignTitleBarMinimalTahoe = NO;
+    if (@available(macOS 26, *)) {
+        leftAlignTitleBarMinimalTahoe = [iTermAdvancedSettingsModel leftAlignTitleBarMinimalTahoe];
+    }
+    iTermWindowTitleLabelInputs *inputs =
+        [[iTermWindowTitleLabelInputs alloc] initWithTitle:title
+                                                  subtitle:subtitle
+                                                      icon:icon
+                                                 textColor:_windowTitleLabel.textColor
+                                                      font:_windowTitleLabel.font
+                                                     width:NSWidth(self.frame)
+                                             toolbeltWidth:[self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0.0
+                                                    insets:[self.delegate tabBarInsets]
+                                       tabBarControlOnLoan:_tabBarControlOnLoan
+                                                 parseHTML:[iTermPreferences boolForKey:kPreferenceKeyHTMLTabTitles]
+                             leftAlignTitleBarMinimalTahoe:leftAlignTitleBarMinimalTahoe
+                                   effectiveAppearanceName:self.effectiveAppearance.name
+                                           puaFontProvider:puaFontProvider];
+    if ([inputs isEqual:_lastRenderedWindowTitleLabelInputs]) {
+        return;
+    }
+    _lastRenderedWindowTitleLabelInputs = inputs;
+
     [_windowTitleLabel setTitle:title subtitle:subtitle icon:icon alignmentProvider:
      ^NSTextAlignment(NSTextField * _Nonnull scratch) {
          BOOL leftAligned = NO;
