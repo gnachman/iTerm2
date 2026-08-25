@@ -53,6 +53,12 @@ public class iTermMTKView: iTermMetalView {
             DLog("Not visible \(self)")
             return;
         }
+        if window?.occlusionState.contains(.visible) != true {
+            // The window was ordered out (e.g., a hidden hotkey window) or is fully occluded.
+            // Keeping the pipeline warm would burn CPU and GPU drawing pixels nobody can see.
+            DLog("Window not visible \(self)")
+            return;
+        }
         if (round(1000 * timer.timeInterval) != round(1000 * iTermAdvancedSettingsModel.metalRedrawPeriod()))  {
             DLog("Recreate timer");
             _timer?.invalidate()
