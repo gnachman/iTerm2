@@ -140,6 +140,16 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // spawned at entry into a single group.
 - (void)groupTabs:(NSArray<PTYTab *> *)tabs withName:(NSString *)name;
 
+// The group a plain "new tab" at `index` (nil for the default position) should
+// inherit: the current tab's group, but only when the new tab will land
+// immediately after it. Returns nil when there is nothing to inherit.
+- (NSString *)groupIDToInheritForNewTabAtIndex:(NSNumber *)index;
+
+// Add the just-created tab hosting `session` to the tab group `groupID`.
+// Intended to run from a new-tab creation completion. No-op for an empty
+// groupID or a session with no tab in this window.
+- (void)addTabForSession:(PTYSession *)session toGroupWithID:(NSString *)groupID;
+
 // Mutable state for the tab color picker (popover, debounce timer, etc.).
 @property(nonatomic, strong) TabColorPickerState *tabColorPickerState;
 

@@ -361,6 +361,13 @@ static iTermController *gSharedInstance;
 // Launch a new session using the default profile. If the current session is
 // tmux and possiblyTmux is true, open a new tmux session.
 - (void)newSession:(id)sender possiblyTmux:(BOOL)possiblyTmux index:(NSNumber *)index {
+    [self newSession:sender possiblyTmux:possiblyTmux index:index didMakeSession:nil];
+}
+
+- (void)newSession:(id)sender
+      possiblyTmux:(BOOL)possiblyTmux
+             index:(NSNumber *)index
+    didMakeSession:(void (^)(PTYSession *session))didMakeSession {
     DLog(@"newSession:%@ possiblyTmux:%d from %@",
          sender, (int)possiblyTmux, [NSThread callStackSymbols]);
     if (possiblyTmux &&
@@ -379,7 +386,7 @@ static iTermController *gSharedInstance;
                                        index:index
                                      command:nil
                                  makeSession:nil
-                              didMakeSession:nil
+                              didMakeSession:didMakeSession
                                   completion:nil];
     }
 }

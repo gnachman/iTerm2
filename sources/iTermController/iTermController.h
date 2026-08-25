@@ -81,6 +81,12 @@ extern NSString *const iTermSnippetsTagsDidChange;
 - (void)newWindow:(id)sender possiblyTmux:(BOOL)possiblyTmux;
 - (void)newSessionWithSameProfile:(id)sender newWindow:(BOOL)newWindow;
 - (void)newSession:(id)sender possiblyTmux:(BOOL)possiblyTmux index:(NSNumber *)index;
+// As above, but `didMakeSession` runs once the new session and its tab exist.
+// Not called for the tmux path (which has no per-session completion here).
+- (void)newSession:(id)sender
+      possiblyTmux:(BOOL)possiblyTmux
+             index:(NSNumber *)index
+    didMakeSession:(void (^)(PTYSession *session))didMakeSession;
 - (void)previousTerminal;
 - (void)nextTerminal;
 - (void)newSessionsInWindow:(id)sender;
