@@ -9021,6 +9021,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     menu.autoenablesItems = NO;  // contextual actions are always applicable
     const BOOL collapsed = [self tabsInGroup:groupID].firstObject.tabGroupCollapsed;
     NSArray<NSArray<NSString *> *> *specs = @[
+        @[@"New Tab in Group", @"newTabInGroup:"],
+        @[@"-", @""],
         collapsed ? @[@"Expand Group", @"expandTabGroupFromMenu:"]
                   : @[@"Collapse Group", @"collapseTabGroupFromMenu:"],
         @[@"-", @""],
@@ -13911,7 +13913,76 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     if (index == NSNotFound) {
         return;
     }
-    [[[iTermApplication sharedApplication] delegate] newTabAtIndex:@(index + 1)];
+    // A tab created directly to the right of a grouped tab joins that group:
+    // "next to X" means "with X". nil groupID (ungrouped reference) just
+    // creates a normal tab.
+    [self newTabAtIndex:index + 1 joiningGroup:tab.tabGroupID];
+}
+
+// Create a new tab that joins `groupID` (from the tab group context menu),
+// placed right after the group's last member so it extends the block.
+- (void)newTabInGroup:(id)sender {
+    NSString *groupID = [sender representedObject];
+    NSArray<PTYTab *> *members = [self tabsInGroup:groupID];
+    if (members.count == 0) {
+        return;
+    }
+    const NSInteger lastIndex = [self indexOfTab:members.lastObject];
+    if (lastIndex == NSNotFound) {
+        return;
+    }
+    [self newTabAtIndex:lastIndex + 1 joiningGroup:groupID];
+}
+
+// Create a new tab at `index` and, once it exists, add it to `groupID`. The
+// grouping runs in the creation completion on the exact new session, so there
+// is no shared state to leak: the launcher hands back the session with its tab
+// already inserted. A nil/empty groupID just creates the tab.
+- (void)newTabAtIndex:(NSInteger)index joiningGroup:(NSString *)groupID {
+    __weak __typeof(self) weakSelf = self;
+    [[[iTermApplication sharedApplication] delegate]
+        newTabAtIndex:@(index)
+        didMakeSession:groupID.length == 0 ? nil : ^(PTYSession *session) {
+            [weakSelf addTabForSession:session toGroupWithID:groupID];
+        }];
+}
+
+// The group a plain "new tab" should inherit: the current tab's group, but
+// only when the new tab will land immediately after it (so it extends the
+// group's run). `index` is the resolved insertion index, or nil for the
+// default position. Returns nil when there is nothing to inherit. Pure query;
+// used by the app delegate to decide whether to pass a grouping completion.
+- (NSString *)groupIDToInheritForNewTabAtIndex:(NSNumber *)index {
+    PTYTab *current = self.currentTab;
+    if (!current || current.tabGroupID.length == 0) {
+        return nil;
+    }
+    const NSInteger currentIndex = [self indexOfTab:current];
+    if (currentIndex == NSNotFound) {
+        return nil;
+    }
+    const NSInteger effective = index ? index.integerValue : [self indexForNewTab];
+    return (effective == currentIndex + 1) ? current.tabGroupID : nil;
+}
+
+// Add the just-created tab hosting `session` to `groupID`. The tab was inserted
+// next to a member of the group, so it is already contiguous; reconcile copies
+// the group's name/color/collapsed onto it and tabsDidReorder keeps the block
+// valid. No-op if the group vanished or the session has no tab here.
+- (void)addTabForSession:(PTYSession *)session toGroupWithID:(NSString *)groupID {
+    if (groupID.length == 0 || !session) {
+        return;
+    }
+    PTYTab *tab = [self tabForSession:session];
+    if (!tab || [self tabsInGroup:groupID].count == 0) {
+        return;
+    }
+    RLog(@"tabGroup: new tab %@ joins group %@", tab, groupID);
+    tab.tabGroupID = groupID;
+    [self reconcileTabGroupDefinitionForTab:tab];
+    [self updateTabColors];
+    [self tabsDidReorder];
+    [self expandTabGroupIfSelectedTabIsCollapsed];
 }
 
 - (NSUInteger)indexForNewTab {

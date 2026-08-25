@@ -85,6 +85,10 @@ void TurnOnDebugLoggingAutomatically(void);
 - (void)didToggleTraditionalFullScreenMode;
 - (void)willRestoreWindow;
 - (void)newTabAtIndex:(NSNumber *)index;
+// As above, but `didMakeSession` runs once the new session and its tab exist
+// (used to add the new tab to a tab group). Not called for the tmux path.
+- (void)newTabAtIndex:(NSNumber *)index
+       didMakeSession:(void (^)(PTYSession *session))didMakeSession;
 
 #pragma mark - Actions
 

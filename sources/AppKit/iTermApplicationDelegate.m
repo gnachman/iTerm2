@@ -2826,6 +2826,23 @@ static iTermKeyEventReplayer *gReplayer;
 }
 
 - (void)newTabAtIndex:(NSNumber *)index {
+    // A plain new tab inherits the current tab's group when it lands right
+    // after it (see -groupIDToInheritForNewTabAtIndex:). The grouping runs on
+    // the exact new session in the creation completion.
+    PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+    NSString *groupID = [term groupIDToInheritForNewTabAtIndex:index];
+    void (^didMakeSession)(PTYSession *) = nil;
+    if (groupID.length > 0) {
+        __weak PseudoTerminal *weakTerm = term;
+        didMakeSession = ^(PTYSession *session) {
+            [weakTerm addTabForSession:session toGroupWithID:groupID];
+        };
+    }
+    [self newTabAtIndex:index didMakeSession:didMakeSession];
+}
+
+- (void)newTabAtIndex:(NSNumber *)index
+       didMakeSession:(void (^)(PTYSession *session))didMakeSession {
     DLog(@"iTermApplicationDelegate newSession:");
     BOOL cancel;
     BOOL tmux = [self possiblyTmuxValueForWindow:NO cancel:&cancel];
@@ -2833,7 +2850,10 @@ static iTermKeyEventReplayer *gReplayer;
         DLog(@"Cancel");
         return;
     }
-    [[iTermController sharedInstance] newSession:nil possiblyTmux:tmux index:index];
+    [[iTermController sharedInstance] newSession:nil
+                                   possiblyTmux:tmux
+                                          index:index
+                                 didMakeSession:didMakeSession];
 }
 
 - (IBAction)arrangeHorizontally:(id)sender

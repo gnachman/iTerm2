@@ -177,6 +177,14 @@ Major New Features:
   split or tab takes the name you gave it in the
   Workgroup so its tab title is recognizable.
 
+- A new tab created next to a tab that belongs to
+  a tab group now joins that group, so it stays
+  with the set you're working in. This covers New
+  Tab Next to Current Tab, and New Tab when it is
+  configured to open next to the current tab. The
+  tab group menu also gained a New Tab in Group
+  command.
+
 - Clippings is a new side panel that contains a
   list of items formatted as markdown. They're a
   useful place to store text that you need
