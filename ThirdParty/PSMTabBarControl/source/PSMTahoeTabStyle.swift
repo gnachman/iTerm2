@@ -1211,7 +1211,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
 
     var dividerColor: NSColor {
-        NSColor(displayP3Red: 0.82, green: 0.82, blue: 0.82, alpha: 1.0)
+        NSColor(displayP3Red: 205.0 / 255.0, green: 205.0 / 255.0, blue: 205.0 / 255.0, alpha: 1.0)
     }
 
     func drawDivider(betweenCell leftCell: PSMTabBarCell, andCell rightCell: PSMTabBarCell) {
@@ -2369,7 +2369,7 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
     }()
     
     override var dividerColor: NSColor {
-        NSColor(displayP3Red: 0.271, green: 0.292, blue: 0.301, alpha: 1.0)
+        NSColor(displayP3Red: 38.0 / 255.0, green: 38.0 / 255.0, blue: 38.0 / 255.0, alpha: 1.0)
     }
 
     override func useLightControls() -> Bool {
