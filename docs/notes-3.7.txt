@@ -2650,3 +2650,13 @@ Bug Fixes:
   laptops. Hidden windows now drop to
   the background refresh rate and repaint
   the instant they are revealed.
+- The AI timeout is now an idle timeout (the
+  maximum gap between bytes received) rather
+  than a cap on the total time a request may
+  take. A slow but healthy generation, such as
+  a reasoning model that is still thinking or a
+  cold local model, keeps running as long as it
+  makes progress, while a dead connection still
+  fails. The default was also raised to 20
+  minutes. This fixes spurious timeouts against
+  local Ollama servers.

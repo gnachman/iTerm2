@@ -694,7 +694,7 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
                   kPreferenceKeyPromptOnQuit: @YES,
                   kPreferenceKeyPromptOnQuitEvenIfThereAreNoWindows: @NO,
                   kPreferenceKeyInstantReplayMemoryMegabytes: @4,
-                  kPreferenceKeyAITimeout: @300,
+                  kPreferenceKeyAITimeout: @1200,
                   kPreferenceKeySavePasteAndCommandHistory: @NO,
                   kPreferenceKeyAddBonjourHostsToProfiles: @NO,
                   kPreferenceKeyNotifyOnlyForCriticalShellIntegrationUpdates: @YES,
