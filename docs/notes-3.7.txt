@@ -88,6 +88,11 @@ Major New Features:
   notified when it changes, so tools like vim
   and delta can adapt automatically.
 
+- Fixed a bug where a profile whose custom
+  working directory used a tilde (such as
+  ~/www) wrongly reported the directory as
+  unavailable and started in the home
+  directory instead.
 - Fixed a bug where the manual AI model
   editor’s Test Connection button ignored
   the “Supports temperature” toggle and

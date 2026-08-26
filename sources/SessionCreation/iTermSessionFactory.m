@@ -343,10 +343,15 @@ NS_ASSUME_NONNULL_BEGIN
     // can't be checked against the local filesystem.
     const BOOL willLaunch = !self.hasServerConnection && self.partialAttachment == nil;
     if (willLaunch && !self.ssh && pwd.length > 0) {
+        // Check the same path the shell will actually chdir to. PTYTask standardizes PWD (which
+        // expands a leading tilde) before launch, so a custom directory like “~/www” exists on disk
+        // even though the raw string does not. Standardize here too so we don't misreport a valid
+        // tilde/relative directory as unavailable (issue 12997).
+        NSString *resolved = [pwd stringByStandardizingPath];
         BOOL isDirectory = NO;
-        const BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:pwd isDirectory:&isDirectory];
+        const BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:resolved isDirectory:&isDirectory];
         if (!exists || !isDirectory) {
-            DLog(@"Working directory %@ is unavailable; falling back to home directory", pwd);
+            DLog(@"Working directory %@ (resolved %@) is unavailable; falling back to home directory", pwd, resolved);
             self.session.unavailableWorkingDirectory = pwd;
             pwd = NSHomeDirectory();
         }
