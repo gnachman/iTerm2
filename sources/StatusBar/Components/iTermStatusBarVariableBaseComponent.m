@@ -315,6 +315,23 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
     return self.fullString;
 }
 
+- (nullable NSURL *)statusBarComponentProxyIconURL {
+    NSString *path = self.fullString;
+    if (path.length == 0) {
+        return nil;
+    }
+    // A proxy icon drag hands a real file to another app, so it only makes sense for a local
+    // directory that actually exists on this machine.
+    if (![[self remoteHost] isLocalhost]) {
+        return nil;
+    }
+    BOOL isDirectory = NO;
+    if (![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory] || !isDirectory) {
+        return nil;
+    }
+    return [NSURL fileURLWithPath:path isDirectory:YES];
+}
+
 - (BOOL)statusBarComponentHandlesClicks {
     return YES;
 }

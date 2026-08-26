@@ -175,5 +175,11 @@ forInvocation:(NSString *)invocation
 // does not have meaningful copyable text.
 - (nullable NSString *)statusBarComponentCopyableString;
 
+// If implemented, the component's icon becomes a proxy icon: a drag source that vends this file
+// URL (like the proxy icon in a window title bar). Return nil to leave the icon non-draggable
+// (for example when the directory isn't local or doesn't exist). The icon's appearance is
+// unchanged; only its drag behavior is affected.
+- (nullable NSURL *)statusBarComponentProxyIconURL;
+
 @end
 NS_ASSUME_NONNULL_END

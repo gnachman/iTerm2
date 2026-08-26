@@ -2682,3 +2682,8 @@ Bug Fixes:
   string, making typos and unavailable
   variables obvious. Use \(x?) to treat a
   missing value as empty.
+- The Current Directory status bar
+  component’s folder icon is now a proxy
+  icon: drag it to another app to drag the
+  session’s working directory, like the
+  proxy icon in a window title bar.
