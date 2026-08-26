@@ -1519,7 +1519,7 @@ typedef NS_ENUM(int, iTermKeepAwakeSetting) {
     BOOL agentActive = [self agentIsActive];
     BOOL wantSystem = agentActive &&
         [self keepAwakeSettingPermitsWithSetting:(iTermKeepAwakeSetting)[iTermAdvancedSettingsModel keepAwakeWhileAgentRunning]];
-    BOOL wantDisplay = agentActive &&
+    BOOL wantDisplay = wantSystem &&
         [self keepAwakeSettingPermitsWithSetting:(iTermKeepAwakeSetting)[iTermAdvancedSettingsModel keepDisplayAwakeWhileAgentRunning]];
 
     DLog(@"updateAgentKeepAwakeAssertions: agentActive=%@ wantSystem=%@ wantDisplay=%@",
@@ -1666,15 +1666,16 @@ typedef NS_ENUM(int, iTermKeepAwakeSetting) {
                                                                 reason:@"User Preference"] retain];
     }
 
-    // Re-evaluate keep-awake assertions when agent sessions start/stop or power source changes.
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(agentRunningDidChange:)
-                                                 name:[iTermGlobalJobMonitor didChangeNotification]
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(agentRunningDidChange:)
-                                                 name:iTermPowerManagerStateDidChange
-                                               object:nil];
+    // Re-evaluate keep-awake assertions when agent sessions start/stop, power source changes,
+    // or the user changes the keep-awake settings in Advanced Settings.
+    for (NSNotificationName keepAwakeTrigger in @[[iTermGlobalJobMonitor didChangeNotification],
+                                                  iTermPowerManagerStateDidChange,
+                                                  iTermAdvancedSettingsDidChange]) {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(agentRunningDidChange:)
+                                                     name:keepAwakeTrigger
+                                                   object:nil];
+    }
     // Seed assertions with current state in case sessions already exist.
     [[iTermGlobalJobMonitor instance] replayCurrentState];
 

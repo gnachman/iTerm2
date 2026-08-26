@@ -2534,13 +2534,14 @@ Bug Fixes:
   built-in model list from iterm2.com (off by
   default), with an Update Now button to check
   on demand.
-- New advanced setting "Prevent idle sleep
-  while a Claude Code agent is running"
-  (on by default). iTerm2 holds a power
-  assertion while claude appears in any
-  session's process ancestry, preventing
-  the Mac from sleeping due to inactivity.
-  User-initiated sleep is unaffected.
+- Three new advanced settings to prevent
+  sleep while an AI coding agent runs:
+  system idle sleep, display sleep (both
+  default to AC power only), and a
+  custom agent names list to extend the
+  built-in set (claude, codex, opencode,
+  cline, pi). User-initiated sleep is
+  unaffected.
 - In orchestration chats, a session reference
   the AI writes without a leading @ now still
   renders as a clickable session link.
