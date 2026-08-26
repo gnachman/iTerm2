@@ -56,7 +56,7 @@
     return rect;
 }
 
-- (NSAppearance *)accessoryAppearance NS_AVAILABLE_MAC(10_14) {
+- (NSAppearance *)accessoryAppearance {
     if (self.backgroundIsDark) {
         return [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
     } else {
@@ -704,7 +704,7 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
 
 - (BOOL)shouldDrawTopLineSelected:(BOOL)selected
                          attached:(BOOL)attached
-                         position:(PSMTabPosition)position NS_AVAILABLE_MAC(10_16) {
+                         position:(PSMTabPosition)position {
     switch (position) {
         case PSMTab_BottomTab:
             return NO;

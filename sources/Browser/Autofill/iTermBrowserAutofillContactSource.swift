@@ -1,7 +1,6 @@
 import Foundation
 import Contacts
 
-@available(macOS 11.0, *)
 @MainActor
 class iTermBrowserAutofillContactSource {
     

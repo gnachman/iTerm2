@@ -6,7 +6,6 @@
 //
 
 
-@available(macOS 11.0, *)
 @MainActor
 extension Conductor: ConductorFileTransferDelegate {
     func beginDownload(fileTransfer: ConductorFileTransfer) {

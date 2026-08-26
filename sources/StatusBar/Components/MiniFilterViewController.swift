@@ -38,9 +38,6 @@ class MiniFilterField: iTermMiniSearchField {
     }
 
     private func changeIcon(_ cell: NSButtonCell) {
-        guard #available(macOS 11, *) else {
-            return
-        }
         cell.setButtonType(.toggle)
         let filterImage = NSImage(systemSymbolName: SFSymbol.lineHorizontal3DecreaseCircle.rawValue,
                                   accessibilityDescription: "Filter")
@@ -111,10 +108,7 @@ class MiniFilterViewController: NSViewController, NSTextFieldDelegate, iTermFilt
     }
 
     private var shouldUseLargeControls: Bool {
-        if #available(macOS 11, *) {
-            return iTermAdvancedSettingsModel.statusBarHeight() >= 32
-        }
-        return false
+        return iTermAdvancedSettingsModel.statusBarHeight() >= 32
     }
 
     @objc func setFont(_ font: NSFont) {

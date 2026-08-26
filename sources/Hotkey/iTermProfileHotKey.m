@@ -312,12 +312,7 @@ static NSString *const kArrangement = @"Arrangement";
         return NSNormalWindowLevel;
     }
     DLog(@"Use main menu window level (I am key, no detected panels are open)");
-    NSWindowLevel windowLevelJustBelowNotificiations;
-    if (@available(macOS 10.16, *)) {
-        windowLevelJustBelowNotificiations = NSMainMenuWindowLevel - 2;
-    } else {
-        windowLevelJustBelowNotificiations = 17;
-    }
+    NSWindowLevel windowLevelJustBelowNotificiations = NSMainMenuWindowLevel - 2;
     // These are the window levels in play:
     //
     // NSStatusWindowLevel (25) -                Floating hotkey panels overlapping a fixed, visible menu bar.

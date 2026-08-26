@@ -7,14 +7,12 @@
 
 import Foundation
 
-@available(macOS 11, *)
 @MainActor
 protocol ConductorFileTransferDelegate: AnyObject {
     func beginDownload(fileTransfer: ConductorFileTransfer)
     func beginUpload(fileTransfer: ConductorFileTransfer)
 }
 
-@available(macOS 11, *)
 @MainActor
 @objc
 class ConductorFileTransfer: TransferrableFile {

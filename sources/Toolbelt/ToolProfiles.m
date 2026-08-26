@@ -43,25 +43,17 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
         [listView_ allowMultipleSelections];
         [listView_.tableView setHeaderView:nil];
         listView_.tableView.enclosingScrollView.drawsBackground = NO;
-        if (@available(macOS 10.16, *)) {
-            [listView_ forceOverlayScroller];
-        }
+        [listView_ forceOverlayScroller];
         listView_.tableView.backgroundColor = [NSColor clearColor];
 
         [self addSubview:listView_];
 
         _openButton = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
-        if (@available(macOS 10.16, *)) {
-            _openButton.bezelStyle = NSBezelStyleRegularSquare;
-            _openButton.bordered = NO;
-            _openButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPlay) accessibilityDescription:@"Open Profile"];
-            _openButton.imageScaling = NSImageScaleProportionallyUpOrDown;
-            _openButton.imagePosition = NSImageOnly;
-        } else {
-            [_openButton setButtonType:NSButtonTypeMomentaryPushIn];
-            [_openButton setTitle:@"Open"];
-            [_openButton setBezelStyle:NSBezelStyleSmallSquare];
-        }
+        _openButton.bezelStyle = NSBezelStyleRegularSquare;
+        _openButton.bordered = NO;
+        _openButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPlay) accessibilityDescription:@"Open Profile"];
+        _openButton.imageScaling = NSImageScaleProportionallyUpOrDown;
+        _openButton.imagePosition = NSImageOnly;
         [_openButton setTarget:self];
         [_openButton setAction:@selector(open:)];
         [_openButton sizeToFit];
@@ -120,28 +112,17 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
 - (void)relayout {
     NSRect frame = self.frame;
     listView_.frame = NSMakeRect(kMargin, 0, frame.size.width - kMargin * 2, frame.size.height - kPopupHeight - kVerticalMargin);
-    if (@available(macOS 10.16, *)) {
-        const CGFloat margin = 0;
-        popup_.frame = NSMakeRect(0,
-                                  frame.size.height - kPopupHeight,
-                                  frame.size.width - NSWidth(_openButton.frame) - margin,
-                                  kPopupHeight);
-        NSRect rect = _openButton.frame;
-        const CGFloat inset = (NSHeight(popup_.frame) - NSHeight(rect)) / 2.0;
-        rect.origin.x = NSMaxX(popup_.frame) + margin;
-        const CGFloat fudgeFactor = 1;
-        rect.origin.y = inset + NSMinY(popup_.frame) - fudgeFactor;
-        _openButton.frame = rect;
-    } else {
-        popup_.frame = NSMakeRect(0,
-                                  frame.size.height - kPopupHeight,
-                                  frame.size.width - _openButton.frame.size.width - kInnerMargin,
-                                  kPopupHeight);
-        _openButton.frame = NSMakeRect(frame.size.width - _openButton.frame.size.width,
-                                       frame.size.height - kPopupHeight,
-                                       _openButton.frame.size.width,
-                                       _openButton.frame.size.height);
-    }
+    const CGFloat margin = 0;
+    popup_.frame = NSMakeRect(0,
+                              frame.size.height - kPopupHeight,
+                              frame.size.width - NSWidth(_openButton.frame) - margin,
+                              kPopupHeight);
+    NSRect rect = _openButton.frame;
+    const CGFloat inset = (NSHeight(popup_.frame) - NSHeight(rect)) / 2.0;
+    rect.origin.x = NSMaxX(popup_.frame) + margin;
+    const CGFloat fudgeFactor = 1;
+    rect.origin.y = inset + NSMinY(popup_.frame) - fudgeFactor;
+    _openButton.frame = rect;
 }
 
 - (BOOL)isFlipped

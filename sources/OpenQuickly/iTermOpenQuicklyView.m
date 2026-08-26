@@ -45,11 +45,7 @@
         // Fallback for older macOS versions: use NSVisualEffectView
         NSVisualEffectView *visual = [[NSVisualEffectView alloc] initWithFrame:self.bounds];
         visual.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-        if (@available(macOS 10.16, *)) {
-            visual.material = NSVisualEffectMaterialMenu;
-        } else {
-            visual.material = NSVisualEffectMaterialSheet;
-        }
+        visual.material = NSVisualEffectMaterialMenu;
         visual.state = NSVisualEffectStateActive;
         _backgroundEffectView = visual;
         [_container addSubview:_backgroundEffectView];

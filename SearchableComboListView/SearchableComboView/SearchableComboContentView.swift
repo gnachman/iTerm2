@@ -24,9 +24,7 @@ class SearchableComboContentView: NSView {
     }
 
     public override func viewDidMoveToWindow() {
-        if #available(macOS 10.14, *) {
-            window?.backgroundColor = NSColor.clear
-        }
+        window?.backgroundColor = NSColor.clear
         super.viewDidMoveToWindow()
     }
 }

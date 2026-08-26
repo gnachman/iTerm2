@@ -2589,9 +2589,7 @@ ITERM_WEAKLY_REFERENCEABLE
               horizontalSpacing:[iTermProfilePreferences doubleForKey:KEY_HORIZONTAL_SPACING inProfile:_profile]
                 verticalSpacing:[iTermProfilePreferences doubleForKey:KEY_VERTICAL_SPACING inProfile:_profile]];
     }
-    if (@available(macOS 11, *)) {
-        _view.browserViewController.zoom = [iTermProfilePreferences doubleForKey:KEY_BROWSER_ZOOM inProfile:_profile];
-    }
+    _view.browserViewController.zoom = [iTermProfilePreferences doubleForKey:KEY_BROWSER_ZOOM inProfile:_profile];
     [self setTransparency:[[_profile objectForKey:KEY_TRANSPARENCY] floatValue]];
     [self setTransparencyAffectsOnlyDefaultBackgroundColor:[[_profile objectForKey:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR] boolValue]];
 
@@ -4016,11 +4014,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (void)writeData:(NSData *)data {
-    if (@available(macOS 11, *)) {
-        if (_view.isBrowser) {
-            [_view.browserViewController sendData:data];
-            return;
-        }
+    if (_view.isBrowser) {
+        [_view.browserViewController sendData:data];
+        return;
     }
     const char *bytes = data.bytes;
     BOOL newline = NO;
@@ -4070,13 +4066,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 }
 
 - (void)enterUsername:(NSString *)username {
-    if (@available(macOS 11, *)) {
-        if (_view.isBrowser) {
-            if (@available(macOS 12, *)) {
-                [_view.browserViewController enterUsername:username];
-            }
-            return;
+    if (_view.isBrowser) {
+        if (@available(macOS 12, *)) {
+            [_view.browserViewController enterUsername:username];
         }
+        return;
     }
     [self performBlockWithoutFocusReporting:^{
         [self writeTask:[username stringByAppendingString:@"\n"]];
@@ -5130,10 +5124,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (diffOverlay != nil && diffOverlay.window != nil && !diffOverlay.isHidden) {
         return diffOverlay.promptResponder;
     }
-    if (@available(macOS 11, *)) {
-        if (_view.isBrowser) {
-            return _view.browserViewController.webView;
-        }
+    if (_view.isBrowser) {
+        return _view.browserViewController.webView;
     }
     return _textview;
 }
@@ -6360,10 +6352,8 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             return nil;
 
         case iTermProfileIconAutomatic:
-            if (@available(macOS 11, *)) {
-                if (_view.isBrowser) {
-                    return _view.browserViewController.favicon;
-                }
+            if (_view.isBrowser) {
+                return _view.browserViewController.favicon;
             }
             if (self.isTmuxClient) {
                 [_graphicSource updateImageForJobName:self.tmuxForegroundJobMonitor.lastValue
@@ -7021,12 +7011,10 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     }
 
     if (includeContents || [options[PTYSessionArrangementOptionsForDuplication] boolValue]) {
-        if (@available(macOS 11, *)) {
-            if (_view.isBrowser && _view.browserViewController) {
-                NSDictionary *browserState = _view.browserViewController.restorableState;
-                if (browserState) {
-                    result[SESSION_ARRANGEMENT_BROWSER_STATE] = browserState;
-                }
+        if (_view.isBrowser && _view.browserViewController) {
+            NSDictionary *browserState = _view.browserViewController.restorableState;
+            if (browserState) {
+                result[SESSION_ARRANGEMENT_BROWSER_STATE] = browserState;
             }
         }
     }
@@ -7634,9 +7622,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (self.isBrowserSession) {
         [_textview configureAsBrowser];
     }
-    if (@available(macOS 11, *)) {
-        _view.browserViewController.zoom = newFontTable.browserZoom * 100.0;
-    }
+    _view.browserViewController.zoom = newFontTable.browserZoom * 100.0;
     DLog(@"Line height is now %f", [_textview lineHeight]);
     [_delegate sessionDidChangeFontSize:self adjustWindow:!_windowAdjustmentDisabled && !_view.isBrowser];
     [_composerManager updateFont];
@@ -7938,9 +7924,7 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
             [_textview setFontTable:fontTable
                   horizontalSpacing:[hSpacing doubleValue]
                     verticalSpacing:[vSpacing doubleValue]];
-            if (@available(macOS 11, *)) {
-                _view.browserViewController.zoom = fontTable.browserZoom * 100.0;
-            }
+            _view.browserViewController.zoom = fontTable.browserZoom * 100.0;
         }
     }
 }
@@ -9437,13 +9421,11 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 }
 
 - (void)enterPassword:(NSString *)password {
-    if (@available(macOS 11, *)) {
-        if (_view.isBrowser) {
-            if (@available(macOS 12, *)) {
-                [_view.browserViewController enterPassword:password];
-            }
-            return;
+    if (_view.isBrowser) {
+        if (@available(macOS 12, *)) {
+            [_view.browserViewController enterPassword:password];
         }
+        return;
     }
     [self incrementDisableFocusReporting:1];
     [_screen beginEchoProbeWithBackspace:[self backspaceData] password:password delegate:self];
@@ -10350,11 +10332,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)scrollToNamedMark:(id<iTermGenericNamedMarkReading>)genericMark {
-    if (@available(macOS 11, *)) {
-        if (self.isBrowserSession) {
-            [_view.browserViewController revealNamedMark:genericMark];
-            return;
-        }
+    if (self.isBrowserSession) {
+        [_view.browserViewController revealNamedMark:genericMark];
+        return;
     }
     if ([[NSObject castFrom:genericMark] conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
         id<VT100ScreenMarkReading> mark = (id)genericMark;
@@ -11555,10 +11535,8 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)reallyPerformKeyBindingAction:(iTermKeyBindingAction *)action event:(NSEvent *)event {
     if (_view.isBrowser) {
-        if (@available(macOS 11, *)) {
-            if ([_view.browserViewController performKeyBindingAction:action event:event]) {
-                return;
-            }
+        if ([_view.browserViewController performKeyBindingAction:action event:event]) {
+            return;
         }
     }
     BOOL isTmuxGateway = (!_exited && self.tmuxMode == TMUX_GATEWAY);
@@ -12804,7 +12782,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 - (BOOL)textViewDrawBackgroundImageInView:(NSView *)view
                                  viewRect:(NSRect)dirtyRect
                    blendDefaultBackground:(BOOL)blendDefaultBackground
-                            virtualOffset:(CGFloat)virtualOffset NS_DEPRECATED_MAC(10_0, 10_16) {
+                            virtualOffset:(CGFloat)virtualOffset {
     if (!!self.shouldDrawBackgroundImageManually) {
         return NO;
     }
@@ -14598,19 +14576,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if (![iTermProfilePreferences boolForKey:KEY_PROMPT_PATH_CLICK_OPENS_NAVIGATOR inProfile:self.profile]) {
         return;
     }
-    if (@available(macOS 11, *)) {
-        [_pathCompletionHelper invalidate];
-        [_pathCompletionHelper autorelease];
-        _pathCompletionHelper = [[self showCompletionUIForPathMark:pathMark] retain];
-    }
+    [_pathCompletionHelper invalidate];
+    [_pathCompletionHelper autorelease];
+    _pathCompletionHelper = [[self showCompletionUIForPathMark:pathMark] retain];
 }
 
 - (void)textViewCancelSingleClick {
-    if (@available(macOS 11, *)) {
-        [_pathCompletionHelper invalidate];
-        [_pathCompletionHelper autorelease];
-        _pathCompletionHelper = nil;
-    }
+    [_pathCompletionHelper invalidate];
+    [_pathCompletionHelper autorelease];
+    _pathCompletionHelper = nil;
 }
 
 - (void)textViewRevealChannelWithUID:(NSString *)uid {
@@ -14935,12 +14909,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         path.path = [destinationPath.path stringByAppendingPathComponent:filename];
         DLog(@"Will upload local:%@ to remote:%@", file, path.path);
 
-        if (@available(macOS 11, *)) {
-            if ([_conductor canTransferFilesTo:path]) {
-                DLog(@"Using conductor for upload");
-                [_conductor uploadFile:file to:path];
-                break;
-            }
+        if ([_conductor canTransferFilesTo:path]) {
+            DLog(@"Using conductor for upload");
+            [_conductor uploadFile:file to:path];
+            break;
         }
         DLog(@"Using SCPFile for upload");
         SCPFile *scpFile = [[[SCPFile alloc] init] autorelease];
@@ -14957,10 +14929,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (BOOL)textViewCanUploadOverSSHIntegrationTo:(SCPPath *)path {
-    if (@available(macOS 11, *)) {
-        return [_conductor canTransferFilesTo:path];
-    }
-    return NO;
+    return [_conductor canTransferFilesTo:path];
 }
 
 - (BOOL)textViewCanUseSSHIntegrationFor:(SCPPath *)path {
@@ -16024,11 +15993,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)refuseFirstResponderAtCurrentMouseLocation {
-    if (@available(macOS 11, *)) {
-        if (_view.isBrowser) {
-            [_view.browserViewController refuseFirstResponderAtCurrentMouseLocation];
-            return;
-        }
+    if (_view.isBrowser) {
+        [_view.browserViewController refuseFirstResponderAtCurrentMouseLocation];
+        return;
     }
     [self.textview refuseFirstResponderAtCurrentMouseLocation];
 }
@@ -16376,11 +16343,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)renameMark:(id<iTermGenericNamedMarkReading>)genericMark to:(NSString *)newName {
-    if (@available(macOS 11, *)) {
-        if (self.isBrowserSession) {
-            [_view.browserViewController renameNamedMark:genericMark to:newName];
-            return;
-        }
+    if (self.isBrowserSession) {
+        [_view.browserViewController renameNamedMark:genericMark to:newName];
+        return;
     }
     if ([[NSObject castFrom:genericMark] conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
         id<VT100ScreenMarkReading> mark = (id)genericMark;
@@ -16408,11 +16373,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (void)removeNamedMark:(id<iTermGenericNamedMarkReading>)genericMark {
-    if (@available(macOS 11, *)) {
-        if (self.isBrowserSession) {
-            [_view.browserViewController removeNamedMark:genericMark];
-            return;
-        }
+    if (self.isBrowserSession) {
+        [_view.browserViewController removeNamedMark:genericMark];
+        return;
     }
     if ([[NSObject castFrom:genericMark] conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
         id<VT100ScreenMarkReading> mark = (id)genericMark;
@@ -16421,19 +16384,15 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (BOOL)canAddNamedMark {
-    if (@available(macOS 11, *)) {
-        if (self.isBrowserSession) {
-            return _view.browserViewController.canAddNamedMark;
-        }
+    if (self.isBrowserSession) {
+        return _view.browserViewController.canAddNamedMark;
     }
     return YES; // Always allow for terminal sessions
 }
 
 - (NSArray<id<iTermGenericNamedMarkReading>> *)namedMarks {
-    if (@available(macOS 11, *)) {
-        if ([self isBrowserSession]) {
-            return [_view.browserViewController namedMarks];
-        }
+    if ([self isBrowserSession]) {
+        return [_view.browserViewController namedMarks];
     }
     return _screen.namedMarks;
 }
@@ -20372,10 +20331,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)sessionViewMouseEntered:(NSEvent *)event {
     DLog(@"sessionViewMouseEntered");
-    if (@available(macOS 11, *)) {
-        if (_view.isBrowser) {
-            return;
-        }
+    if (_view.isBrowser) {
+        return;
     }
     [_textview mouseEntered:event];
     [_textview requestDelegateRedraw];
@@ -23914,11 +23871,7 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
                                tmuxController:(TmuxController *)tmuxController {
     if (remoteHost.isRemoteHost) {
         // Don't try to complete filenames if not on localhost unless we can ask the conductor.
-        if (@available(macOS 11, *)) {
-            return [_conductor framing];
-        } else {
-            return NO;
-        }
+        return [_conductor framing];
     }
     if (tmuxController) {
         // I haven't implemented this on tmux because it's probably gonna be slow and knowing the
@@ -23931,10 +23884,8 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
 - (NSString * _Nullable)composerManager:(iTermComposerManager *)composerManager
              valueOfEnvironmentVariable:(NSString *)name {
     // This is implicitly only for remote hosts.
-    if (@available(macOS 11, *)) {
-        if ([_conductor framing]) {
-            return _conductor.environmentVariables[name];
-        }
+    if ([_conductor framing]) {
+        return _conductor.environmentVariables[name];
     }
     return nil;
 }
@@ -23943,25 +23894,23 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
        fetchSuggestions:(iTermSuggestionRequest *)request
           byUserRequest:(BOOL)byUserRequest {
     const BOOL aiSuggest = iTermSecureUserDefaults.instance.aiCompletionsEnabled;
-    if (@available(macOS 11, *)) {
-        if ([_conductor framing]) {
-            iTermSuggestionRequest *limited = [request requestWithReducedLimitBy:8];
-            if (aiSuggest) {
-                request.startActivityIndicator();
-                [_conductor fetchSuggestions:[limited requestWrappingCompletion:^(BOOL _suggestionOnly,
-                                                                                  NSArray<iTermCompletionItem *> *dumb,
-                                                                                  void (^ignore)(BOOL, NSArray<iTermCompletionItem *> *)) {
+    if ([_conductor framing]) {
+        iTermSuggestionRequest *limited = [request requestWithReducedLimitBy:8];
+        if (aiSuggest) {
+            request.startActivityIndicator();
+            [_conductor fetchSuggestions:[limited requestWrappingCompletion:^(BOOL _suggestionOnly,
+                                                                              NSArray<iTermCompletionItem *> *dumb,
+                                                                              void (^ignore)(BOOL, NSArray<iTermCompletionItem *> *)) {
 
-                    request.startActivityIndicator();
-                    iTermCompletionItem *firstResult = request.earlyResult(dumb);
-                    [self suggestWithAI:request fileCompletions:dumb firstResult:firstResult];
-                }]
-                              suggestionOnly:NO];
-            } else {
-                [_conductor fetchSuggestions:limited suggestionOnly:byUserRequest];
-            }
-            return;
+                request.startActivityIndicator();
+                iTermCompletionItem *firstResult = request.earlyResult(dumb);
+                [self suggestWithAI:request fileCompletions:dumb firstResult:firstResult];
+            }]
+                          suggestionOnly:NO];
+        } else {
+            [_conductor fetchSuggestions:limited suggestionOnly:byUserRequest];
         }
+        return;
     }
     [[iTermSlowOperationGateway sharedInstance] findCompletionsWithPrefix:request.prefix
                                                             inDirectories:request.directories
@@ -23985,10 +23934,8 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
 }
 
 - (iTermFileChecker *)fileChecker {
-    if (@available(macOS 11, *)) {
-        if (_conductor.canCheckFiles) {
-            return _conductor.fileChecker;
-        }
+    if (_conductor.canCheckFiles) {
+        return _conductor.fileChecker;
     }
     if (!_localFileChecker) {
         _localFileChecker = [[iTermLocalFileChecker alloc] initWithShell:[self bestGuessAtUserShellWithPath:YES]];
@@ -24108,9 +24055,7 @@ preferredOffsetFromTopDidChange:(CGFloat)offset {
 - (void)composerManagerDidDismissMinimalView:(iTermComposerManager *)composerManager {
     _view.composerHeight = 0;
     [_localFileChecker reset];
-    if (@available(macOS 11, *)) {
-        [_conductor.fileChecker reset];
-    }
+    [_conductor.fileChecker reset];
 }
 
 - (NSAppearance *)composerManagerAppearance:(iTermComposerManager *)composerManager {

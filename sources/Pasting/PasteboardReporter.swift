@@ -104,9 +104,7 @@ class PasteboardReporter: NSObject {
         alert.informativeText = "Reporting the content of the clipboard to apps running inside iTerm2 may expose sensitive information such as passwords. Think carefully before enabling this."
         alert.alertStyle = .warning
         let button = alert.addButton(withTitle: "OK")
-        if #available(macOS 11.0, *) {
-            button.hasDestructiveAction = true
-        }
+        button.hasDestructiveAction = true
         alert.addButton(withTitle: "Cancel")
         return alert.runModal() == .alertFirstButtonReturn
     }

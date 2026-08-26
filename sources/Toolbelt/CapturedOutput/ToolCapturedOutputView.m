@@ -66,9 +66,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         [help_ setBezelStyle:NSBezelStyleHelpButton];
         [help_ setButtonType:NSButtonTypeMomentaryPushIn];
         [help_ setBordered:YES];
-        if (@available(macOS 10.16, *)) {
-            help_.controlSize = NSControlSizeSmall;
-        }
+        help_.controlSize = NSControlSizeSmall;
         [help_ sizeToFit];
         help_.target = self;
         help_.action = @selector(help:);
@@ -80,18 +78,11 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         [_clearButton setTarget:self];
         [_clearButton setAction:@selector(clear:)];
         [_clearButton setAutoresizingMask:NSViewMinYMargin];
-        if (@available(macOS 10.16, *)) {
-            _clearButton.bezelStyle = NSBezelStyleRegularSquare;
-            _clearButton.bordered = NO;
-            _clearButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:@"Clear"];
-            _clearButton.imagePosition = NSImageOnly;
-            _clearButton.frame = NSMakeRect(0, 0, 22, 22);
-        } else {
-            [_clearButton setTitle:@"Clear"];
-            [_clearButton setButtonType:NSButtonTypeMomentaryPushIn];
-            [_clearButton setBezelStyle:NSBezelStyleSmallSquare];
-            [_clearButton sizeToFit];
-        }
+        _clearButton.bezelStyle = NSBezelStyleRegularSquare;
+        _clearButton.bordered = NO;
+        _clearButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:@"Clear"];
+        _clearButton.imagePosition = NSImageOnly;
+        _clearButton.frame = NSMakeRect(0, 0, 22, 22);
         [self addSubview:_clearButton];
 
         searchField_ = [[iTermSearchField alloc] initWithFrame:CGRectZero];
@@ -106,11 +97,6 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         scrollView_ = [NSScrollView scrollViewWithTableViewForToolbeltWithContainer:self
                                                                              insets:NSEdgeInsetsZero];
         tableView_ = scrollView_.documentView;
-        if (@available(macOS 10.16, *)) { } else {
-            NSSize spacing = tableView_.intercellSpacing;
-            spacing.height += 5;
-            tableView_.intercellSpacing = spacing;
-        }
 
         [tableView_ setDoubleAction:@selector(doubleClickOnTableView:)];
         tableView_.target = self;
@@ -218,10 +204,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
 
     // Help button
     {
-        CGFloat fudgeFactor = 1;
-        if (@available(macOS 10.16, *)) {
-            fudgeFactor = 2;
-        }
+        CGFloat fudgeFactor = 2;
         help_.frame = NSMakeRect(frame.size.width - help_.frame.size.width,
                                  fudgeFactor,
                                  help_.frame.size.width,
@@ -246,10 +229,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     // Table view
     NSSize contentSize = [scrollView_ contentSize];
     NSTableColumn *column = tableView_.tableColumns[0];
-    CGFloat fudgeFactor = 0;
-    if (@available(macOS 10.16, *)) {
-        fudgeFactor = 32;
-    }
+    CGFloat fudgeFactor = 32;
     // See the note in ToolCommandHistoryView.relayout_bigSur: a zero-width toolbelt during
     // new-window construction poisons the column width and hides freshly reloaded cells until a
     // manual resize. Only pin the column when the width is sane.

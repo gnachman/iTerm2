@@ -240,43 +240,19 @@ const CGFloat iTermAnnouncementViewHeightPadding = 29;
 }
 
 - (NSImage *)iconImage {
-    if (@available(macOS 11.0, *)) {
-        NSImage *image;
-        switch (_style) {
-            case kiTermAnnouncementViewStyleWarning:
-                image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolExclamationmarkTriangle) accessibilityDescription:@"Warning icon"];
-                break;
-            case kiTermAnnouncementViewStyleQuestion:
-                image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolQuestionmarkCircle) accessibilityDescription:@"Question icon"];
-                break;
-        }
-        NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithPointSize:22.0 weight:NSFontWeightRegular];
-        image = [image imageWithSymbolConfiguration:config];
-        image.template = YES;
-        return image;
-    }
-
-    NSString *iconString;
+    NSImage *image;
     switch (_style) {
         case kiTermAnnouncementViewStyleWarning:
-            iconString = @"⚠";  // Warning sign
+            image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolExclamationmarkTriangle) accessibilityDescription:@"Warning icon"];
             break;
         case kiTermAnnouncementViewStyleQuestion:
-            return [NSImage it_imageNamed:@"QuestionMarkSign" forClass:self.class];
+            image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolQuestionmarkCircle) accessibilityDescription:@"Question icon"];
+            break;
     }
-
-    NSFont *emojiFont = [NSFont fontWithName:@"Apple Color Emoji" size:18];
-    NSDictionary *attributes = @{ NSFontAttributeName: emojiFont };
-
-    NSSize size = [iconString sizeWithAttributes:attributes];
-    // This is a better estimate of the height. Maybe it doesn't include leading?
-    size.height = [emojiFont ascender] - [emojiFont descender];
-    NSImage *iconImage = [[NSImage alloc] initWithSize:size];
-    [iconImage lockFocus];
-    [iconString drawAtPoint:NSMakePoint(0, 0) withAttributes:attributes];
-    [iconImage unlockFocus];
-
-    return iconImage;
+    NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithPointSize:22.0 weight:NSFontWeightRegular];
+    image = [image imageWithSymbolConfiguration:config];
+    image.template = YES;
+    return image;
 }
 
 - (void)setTitle:(NSString *)title {

@@ -55,11 +55,7 @@
     if (!app) {
         return nil;
     }
-    if (@available(macOS 11.0, *)) {
-        if (![[iTermSecureKeyboardEntryController sharedInstance] isEnabled]) {
-            return app;
-        }
-    } else {
+    if (![[iTermSecureKeyboardEntryController sharedInstance] isEnabled]) {
         return app;
     }
 

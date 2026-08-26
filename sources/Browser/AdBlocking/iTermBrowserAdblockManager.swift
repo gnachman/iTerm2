@@ -8,7 +8,6 @@
 import Foundation
 import WebKit
 
-@available(macOS 11.0, *)
 @objc(iTermBrowserAdblockManager)
 class iTermBrowserAdblockManager: NSObject {
     

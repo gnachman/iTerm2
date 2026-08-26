@@ -49,18 +49,11 @@ static const CGFloat kMargin = 4;
         _paragraphStyle.allowsDefaultTighteningForTruncation = NO;
 
         clear_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
-        if (@available(macOS 10.16, *)) {
-            clear_.bezelStyle = NSBezelStyleRegularSquare;
-            clear_.bordered = NO;
-            clear_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:@"Delete All"];
-            clear_.imagePosition = NSImageOnly;
-            clear_.frame = NSMakeRect(0, 0, 22, 22);
-        } else {
-            [clear_ setButtonType:NSButtonTypeMomentaryPushIn];
-            [clear_ setTitle:@"Clear All"];
-            [clear_ setBezelStyle:NSBezelStyleSmallSquare];
-            [clear_ sizeToFit];
-        }
+        clear_.bezelStyle = NSBezelStyleRegularSquare;
+        clear_.bordered = NO;
+        clear_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:@"Delete All"];
+        clear_.imagePosition = NSImageOnly;
+        clear_.frame = NSMakeRect(0, 0, 22, 22);
         [clear_ setTarget:self];
         [clear_ setAction:@selector(clear:)];
         [clear_ setAutoresizingMask:NSViewMinYMargin];
@@ -170,15 +163,10 @@ static const CGFloat kMargin = 4;
 
 - (void)relayout {
     NSRect frame = self.frame;
-    if (@available(macOS 10.16, *)){
-        clear_.frame = NSMakeRect(frame.size.width - clear_.frame.size.width,
-                                  frame.size.height - clear_.frame.size.height,
-                                  clear_.frame.size.width,
-                                  clear_.frame.size.height);
-    } else {
-        [clear_ sizeToFit];
-        [clear_ setFrame:NSMakeRect(frame.size.width - clear_.frame.size.width, frame.size.height - kButtonHeight, clear_.frame.size.width, kButtonHeight)];
-    }
+    clear_.frame = NSMakeRect(frame.size.width - clear_.frame.size.width,
+                              frame.size.height - clear_.frame.size.height,
+                              clear_.frame.size.width,
+                              clear_.frame.size.height);
 
     _secureKeyboardEntryWarning.hidden = [iTermAdvancedSettingsModel saveToPasteHistoryWhenSecureInputEnabled] || ![[iTermSecureKeyboardEntryController sharedInstance] isEnabled];
     _secureKeyboardEntryWarning.frame = NSMakeRect(0, 0, frame.size.width, _secureKeyboardEntryWarning.frame.size.height);
@@ -195,10 +183,7 @@ static const CGFloat kMargin = 4;
 }
 
 - (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
-    if (@available(macOS 10.16, *)) {
-        return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
-    }
-    return [[iTermCompetentTableRowView alloc] initWithFrame:NSZeroRect];
+    return [[iTermBigSurTableRowView alloc] initWithFrame:NSZeroRect];
 }
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {

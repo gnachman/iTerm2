@@ -20,7 +20,6 @@ struct BrowserAnnouncement<T> {
     var identifier: String
 }
 
-@available(macOS 11.0, *)
 @MainActor
 protocol iTermBrowserManagerDelegate: AnyObject, iTermBrowserFindManagerDelegate, iTermBrowserTriggerHandlerDelegate {
     func browserManager(_ manager: iTermBrowserManager, didUpdateURL url: String?)
@@ -77,7 +76,6 @@ protocol iTermBrowserManagerDelegate: AnyObject, iTermBrowserFindManagerDelegate
     func browserManager(_ browserManager: iTermBrowserManager, handleKeyDown event: NSEvent) -> Bool
 }
 
-@available(macOS 11.0, *)
 @objc(iTermBrowserManager)
 @MainActor
 class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler {
@@ -857,7 +855,6 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
 
 // MARK: - iTermBrowserWebViewDelegate
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserManager: iTermBrowserWebViewDelegate {
     func webViewDidChangeEffectiveAppearance(_ webView: iTermBrowserWebView) {
@@ -1056,7 +1053,6 @@ extension iTermBrowserManager: iTermBrowserWebViewDelegate {
 
 // MARK: - WKScriptMessageHandler
 
-@available(macOS 11.0, *)
 extension iTermBrowserManager {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         // Handle console.{log,debug,error} messages separately since they come as String
@@ -1192,7 +1188,6 @@ extension iTermBrowserManager {
 
 // MARK: - WKURLSchemeHandler
 
-@available(macOS 11.0, *)
 extension iTermBrowserManager {
     func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
         guard let url = urlSchemeTask.request.url else {
@@ -1228,7 +1223,6 @@ extension iTermBrowserManager {
 
 // MARK: - WKNavigationDelegate
 
-@available(macOS 11.0, *)
 extension iTermBrowserManager: WKNavigationDelegate {
     func webView(_ webView: WKWebView,
                  didReceive challenge: URLAuthenticationChallenge,
@@ -1485,7 +1479,6 @@ extension iTermBrowserManager: WKNavigationDelegate {
         decisionHandler(.allow)
     }
 
-    @available(macOS 11, *)
     func webView(_ webView: WKWebView,
                  decidePolicyFor navigationResponse: WKNavigationResponse,
                  decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
@@ -1507,32 +1500,27 @@ extension iTermBrowserManager: WKNavigationDelegate {
         // Download if:
         // 1. Content-Disposition header indicates attachment
         // 2. Content type is not something WKWebView can display well
-        if #available(macOS 11.3, *) {
-            if contentDisposition.lowercased().contains("attachment") ||
-                !canWebViewDisplay(contentType: contentType) {
-                decisionHandler(.download)
-                return
-            }
+        if contentDisposition.lowercased().contains("attachment") ||
+            !canWebViewDisplay(contentType: contentType) {
+            decisionHandler(.download)
+            return
         }
 
         decisionHandler(.allow)
     }
 
-    @available(macOS 11.3, *)
     func webView(_ webView: WKWebView,
                  navigationAction: WKNavigationAction,
                  didBecome download: WKDownload) {
         handleDownload(download, sourceURL: navigationAction.request.url)
     }
 
-    @available(macOS 11.3, *)
     func webView(_ webView: WKWebView,
                  navigationResponse: WKNavigationResponse,
                  didBecome download: WKDownload) {
         handleDownload(download, sourceURL: navigationResponse.response.url)
     }
 
-    @available(macOS 11.3, *)
     private func canWebViewDisplay(contentType: String) -> Bool {
         let lowerContentType = contentType.lowercased()
 
@@ -1569,7 +1557,6 @@ extension iTermBrowserManager: WKNavigationDelegate {
         return displayableTypes.contains { lowerContentType.hasPrefix($0) }
     }
 
-    @available(macOS 11.3, *)
     private func handleDownload(_ download: WKDownload, sourceURL: URL?) {
         guard let sourceURL = sourceURL else { return }
 
@@ -1589,7 +1576,6 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
 // MARK: - WKUIDelegate
 
-@available(macOS 11.0, *)
 extension iTermBrowserManager: WKUIDelegate {
     func webView(_ webView: WKWebView,
                  createWebViewWith configuration: WKWebViewConfiguration,
@@ -1772,7 +1758,6 @@ extension iTermBrowserManager: WKUIDelegate {
     }
 }
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserManager: iTermBrowserLocalPageManagerDelegate {
     func localPageManagerDidUpdateAdblockSettings(_ manager: iTermBrowserLocalPageManager) {
@@ -1833,7 +1818,6 @@ extension iTermBrowserManager: iTermBrowserLocalPageManagerDelegate {
     }
 }
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserManager {
     // MARK: - Settings Integration
@@ -1873,7 +1857,6 @@ extension iTermBrowserManager {
     }
 }
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserManager {
 
@@ -1973,7 +1956,6 @@ extension iTermBrowserManager {
 
 // MARK: - iTermBrowserReaderModeManagerDelegate
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserManager: iTermBrowserReaderModeManagerDelegate {
     func readerModeManager(_ manager: iTermBrowserReaderModeManager, didChangeActiveState isActive: Bool) {
@@ -1985,7 +1967,6 @@ extension iTermBrowserManager: iTermBrowserReaderModeManagerDelegate {
     }
 }
 
-@available(macOS 11.0, *)
 @MainActor
 extension iTermBrowserManager: iTermBrowserAutofillHandlerDelegate {
     func autoFillHandler(_ handler: iTermBrowserAutofillHandler,

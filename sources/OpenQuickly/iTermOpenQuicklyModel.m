@@ -686,7 +686,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 - (void)addInvocation:(NSString *)invocation 
                 scope:(iTermVariableScope *)scope
               toItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
-          withMatcher:(iTermMinimumSubsequenceMatcher *)matcher NS_AVAILABLE_MAC(11_0) {
+          withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
     iTermOpenQuicklyInvocationItem *item = [[iTermOpenQuicklyInvocationItem alloc] init];
     item.score = 1;
     item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
@@ -901,23 +901,21 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     if ([command supportsMenuItems]) {
         [self addMenuItemsToItems:items withMatcher:matcher];
     }
-    if (@available(macOS 11, *)) {
 #if DEBUG
-        NSLog(@"Not attempting invocation for open quickly because it throws exceptions");
+    NSLog(@"Not attempting invocation for open quickly because it throws exceptions");
 #else
-        iTermVariableScope *scope = [self scopeForValidInvocation:queryString];
-        if (scope) {
-            [self addInvocation:queryString scope:scope toItems:items withMatcher:matcher];
-        }
+    iTermVariableScope *scope = [self scopeForValidInvocation:queryString];
+    if (scope) {
+        [self addInvocation:queryString scope:scope toItems:items withMatcher:matcher];
+    }
 #endif
-        if ([iTermBrowserGateway browserAllowedCheckingIfNot:NO]) {
-            NSMutableSet<NSURL *> *urls = [NSMutableSet set];
-            if ([command supportsBookmarks]) {
-                [self addBookmarkToItems:items withMatcher:matcher urls:urls];
-            }
-            if ([command supportsURLs]) {
-                [self addURLToItems:items withMatcher:matcher urls:urls];
-            }
+    if ([iTermBrowserGateway browserAllowedCheckingIfNot:NO]) {
+        NSMutableSet<NSURL *> *urls = [NSMutableSet set];
+        if ([command supportsBookmarks]) {
+            [self addBookmarkToItems:items withMatcher:matcher urls:urls];
+        }
+        if ([command supportsURLs]) {
+            [self addURLToItems:items withMatcher:matcher urls:urls];
         }
     }
     // Sort from highest to lowest score.
@@ -1029,10 +1027,8 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     } else if ([item isKindOfClass:[iTermOpenQuicklyURLItem class]]) {
         return item;
     }
-    if (@available(macOS 11, *)) {
-        if ([item isKindOfClass:[iTermOpenQuicklyInvocationItem class]]) {
-            return item;
-        }
+    if ([item isKindOfClass:[iTermOpenQuicklyInvocationItem class]]) {
+        return item;
     }
     return nil;
 }

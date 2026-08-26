@@ -15,7 +15,6 @@ struct WebSmartMatch {
     var score: Double
 }
 
-@available(macOS 11.0, *)
 extension iTermBrowserWebView {
     func performScroll(movement: ScrollMovement) {
         let script: String

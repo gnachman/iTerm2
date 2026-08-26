@@ -69,11 +69,7 @@ class SavePanelBuiltInFunction: NSObject, iTermBuiltInFunctionProtocol {
                     panel.directoryURL = URL(fileURLWithPath: path)
                 }
                 if let types = parameters[extensionsArgName] as? [String] {
-                    if #available(macOS 11, *) {
-                        panel.allowedContentTypes = types.compactMap { UTType.init(filenameExtension: $0) }
-                    } else {
-                        panel.allowedFileTypes = types
-                    }
+                    panel.allowedContentTypes = types.compactMap { UTType.init(filenameExtension: $0) }
                 }
                 if let prompt = parameters[promptArgName] as? String {
                     panel.prompt = prompt

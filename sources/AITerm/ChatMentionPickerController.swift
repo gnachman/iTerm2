@@ -107,9 +107,7 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
         outline.doubleAction = #selector(doubleClicked)
         outline.action = #selector(singleClicked)
         outline.autoresizingMask = [.width, .height]
-        if #available(macOS 11.0, *) {
-            outline.style = .inset
-        }
+        outline.style = .inset
 
         scroll.frame = contentView.bounds
         scroll.autoresizingMask = [.width, .height]

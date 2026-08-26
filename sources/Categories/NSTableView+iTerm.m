@@ -80,11 +80,6 @@ NSString *const iTermDynamicProfileSymbolName = @"iTermDynamicProfileSymbolName"
 - (void)updateTextFieldFrame {
     const CGFloat verticalPadding = 2.0;
     CGFloat horizontalInset = 0;
-    if (@available(macOS 10.16, *)) {
-        horizontalInset = 0;
-    } else {
-        horizontalInset = 2;
-    }
     NSRect frame = self.bounds;
     frame.origin.x += horizontalInset;
     frame.size.width -= horizontalInset * 2;
@@ -229,9 +224,7 @@ static NSRect iTermOutlineViewDisclosureButtonImageRectForBounds(id self, SEL _c
                                           owner:(NSView<NSOutlineViewDelegate, NSOutlineViewDataSource> *)owner {
     NSSize contentSize = [scrollView contentSize];
     NSOutlineView *outlineView = [[iTermToolbeltOutlineView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
-    if (@available(macOS 10.16, *)) {
-        outlineView.style = NSTableViewStyleInset;
-    }
+    outlineView.style = NSTableViewStyleInset;
     NSTableColumn *valueColumn = [[NSTableColumn alloc] initWithIdentifier:@"value"];
     [valueColumn setEditable:NO];
     [outlineView addTableColumn:valueColumn];
@@ -269,9 +262,7 @@ static NSRect iTermOutlineViewDisclosureButtonImageRectForBounds(id self, SEL _c
                                         owner:(NSView<NSTableViewDelegate,NSTableViewDataSource> *)owner {
     NSSize contentSize = [scrollView contentSize];
     NSTableView *tableView = [[self alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
-    if (@available(macOS 10.16, *)) {
-        tableView.style = NSTableViewStyleInset;
-    }
+    tableView.style = NSTableViewStyleInset;
     NSTableColumn *valueColumn = [[NSTableColumn alloc] initWithIdentifier:@"value"];
     [valueColumn setEditable:NO];
     [tableView addTableColumn:valueColumn];

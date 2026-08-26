@@ -48,7 +48,7 @@ extern const NSTimeInterval iTermWindowTitleChangeMinimumInterval;
 - (BOOL)terminalWindowIsEnteringLionFullScreen;
 - (void)windowWillShowInitial;
 - (void)toggleTraditionalFullScreenMode;
-- (BOOL)terminalWindowShouldHaveTitlebarSeparator NS_AVAILABLE_MAC(10_16);
+- (BOOL)terminalWindowShouldHaveTitlebarSeparator;
 
 // Returns the tab a session belongs to.
 - (PTYTab *)tabForSession:(PTYSession *)session;

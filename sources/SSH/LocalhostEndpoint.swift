@@ -7,7 +7,6 @@
 
 import Foundation
 
-@available(macOS 11.0, *)
 class LocalhostEndpoint: SSHEndpoint {
     static let instance = LocalhostEndpoint()
     let sshIdentity: SSHIdentity = .localhost

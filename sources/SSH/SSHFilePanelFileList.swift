@@ -6,7 +6,6 @@
 //
 import UniformTypeIdentifiers
 
-@available(macOS 11, *)
 protocol SSHFilePanelFileListDelegate: AnyObject {
     func sshFilePanelList(didSelect file: SSHFilePanelFileList.FileNode)
     func sshFilePanelList(write file: SSHFilePanelFileList.FileNode,
@@ -19,7 +18,6 @@ protocol SSHFilePanelFileListDelegate: AnyObject {
     func sshFilePanelListShouldShowHiddenFiles() -> Bool
 }
 
-@available(macOS 11, *)
 class SSHFilePanelFileList: NSScrollView {
     // Custom header cell to control text color
     class CustomHeaderCell: NSTableHeaderCell {
@@ -607,7 +605,6 @@ class SSHFilePanelFileList: NSScrollView {
 }
 
 // MARK: - NSOutlineViewDataSource
-@available(macOS 11, *)
 extension SSHFilePanelFileList: NSOutlineViewDataSource {
     func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
         if item == nil {
@@ -634,7 +631,6 @@ extension SSHFilePanelFileList: NSOutlineViewDataSource {
 }
 
 // MARK: - NSOutlineViewDelegate
-@available(macOS 11, *)
 extension SSHFilePanelFileList: NSOutlineViewDelegate {
     func outlineView(_ outlineView: NSOutlineView,
                      shouldTypeSelectFor event: NSEvent,
@@ -983,7 +979,6 @@ extension SSHFilePanelFileList: NSOutlineViewDelegate {
 }
 
 // MARK: - NSFilePromiseProviderDelegate
-@available(macOS 11, *)
 extension SSHFilePanelFileList: NSFilePromiseProviderDelegate {
     func filePromiseProvider(_ filePromiseProvider: NSFilePromiseProvider, fileNameForType fileType: String) -> String {
         DLog("filePromiseProvider fileNameForType called with: \(fileType)")

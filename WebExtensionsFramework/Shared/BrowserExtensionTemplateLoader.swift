@@ -5,7 +5,6 @@
 
 import Foundation
 
-@available(macOS 11.0, *)
 public class BrowserExtensionTemplateLoader {
     public static func load(template templateName: String, substitutions: [String: String] = [:]) -> String {
         let nsString = templateName as NSString

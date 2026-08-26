@@ -188,10 +188,8 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
         horizontalSpacing = view
         view.size = initialValue
         let imageView = imageViewForImage(withName: "HorizontalSpacingIcon")
-        if #available(macOS 10.14, *) {
-            imageView.image?.isTemplate = true
-            imageView.contentTintColor = NSColor.labelColor
-        }
+        imageView.image?.isTemplate = true
+        imageView.contentTintColor = NSColor.labelColor
         add(accessory: imageView)
         add(accessory: view)
         return view
@@ -204,10 +202,8 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
         verticalSpacing = view
         view.size = initialValue
         let imageView = imageViewForImage(withName: "VerticalSpacingIcon")
-        if #available(macOS 10.14, *) {
-            imageView.image?.isTemplate = true
-            imageView.contentTintColor = NSColor.labelColor
-        }
+        imageView.image?.isTemplate = true
+        imageView.contentTintColor = NSColor.labelColor
         add(accessory: imageView)
         add(accessory: view)
         return view

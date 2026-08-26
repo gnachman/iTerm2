@@ -1388,9 +1388,7 @@ iTermCommandInfoViewControllerDelegate>
           minimumLineNumber:(int)minimumLineNumber
                  timestamps:(BOOL)timestamps
                   selection:(iTermSelection *)selection {
-    if (@available(macOS 11.0, *)) {
-        [[iTermAsyncSelectionProvider currentProvider] cancel];
-    }
+    [[iTermAsyncSelectionProvider currentProvider] cancel];
     switch (style) {
         case iTermCopyTextStyleAttributed:
             return [[self promisedAttributedStringForSelectedTextCappedAtSize:maxBytes

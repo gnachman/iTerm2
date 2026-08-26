@@ -85,7 +85,6 @@ import Foundation
 
 // MARK: - Static Page Configuration
 
-@available(macOS 11.0, *)
 struct iTermBrowserStaticPageConfig {
     var url: URL
     var templateName: String
@@ -100,7 +99,6 @@ struct iTermBrowserStaticPageConfig {
 
 // MARK: - Static Page Handler
 
-@available(macOS 11.0, *)
 @MainActor
 class iTermBrowserStaticPageHandler: NSObject, iTermBrowserPageHandler {
     private let config: iTermBrowserStaticPageConfig
@@ -155,7 +153,6 @@ class iTermBrowserStaticPageHandler: NSObject, iTermBrowserPageHandler {
 
 // MARK: - Static Page Registry
 
-@available(macOS 11.0, *)
 class iTermBrowserStaticPageRegistry {
     static let shared = iTermBrowserStaticPageRegistry()
     

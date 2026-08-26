@@ -7,7 +7,6 @@
 
 import WebKit
 
-@available(macOS 11.0, *)
 class iTermBrowserSourceHandler: NSObject, iTermBrowserPageHandler {
     static let sourceURL = URL(string: "\(iTermBrowserSchemes.about):source")!
 

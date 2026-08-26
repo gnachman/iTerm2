@@ -728,11 +728,7 @@ class FileItemView: NSCollectionViewItem {
             isPlaceholder = true
             // For placeholders, get a generic icon based on the file extension.
             if placeholder.isDirectory {
-                if #available(macOS 11, *) {
-                    icon = NSWorkspace.shared.icon(for: UTType.folder)
-                } else {
-                    icon = NSWorkspace.shared.icon(forFile: "/")
-                }
+                icon = NSWorkspace.shared.icon(for: UTType.folder)
             } else {
                 let uttype = UTType(filenameExtension: (fileName as NSString).pathExtension) ?? UTType.plainText
                 icon = NSWorkspace.shared.icon(for: uttype)

@@ -48,19 +48,13 @@
         _tableView.allowsEmptySelection = YES;
         _tableView.allowsMultipleSelection = YES;
         _tableView.allowsTypeSelect = YES;
-        if (@available(macOS 10.16, *)) {
-            _tableView.style = NSTableViewStyleInset;
-        }
+        _tableView.style = NSTableViewStyleInset;
         _tagsColumn = [[NSTableColumn alloc] initWithIdentifier:@"tags"];
         [_tagsColumn setEditable:NO];
         [_tableView addTableColumn:_tagsColumn];
 
         [_scrollView setDocumentView:_tableView];
-        if (@available(macOS 10.16, *)) {
-            _scrollView.borderType = NSLineBorder;
-        } else {
-            [_scrollView setBorderType:NSBezelBorder];
-        }
+        _scrollView.borderType = NSLineBorder;
 
         _tableView.delegate = self;
         _tableView.dataSource = self;

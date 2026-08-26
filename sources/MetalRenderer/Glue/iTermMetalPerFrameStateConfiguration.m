@@ -98,10 +98,8 @@ static vector_float4 VectorForColor(NSColor *color) {
     const CGFloat vmargin = [iTermPreferences topBottomMargins];
     _buttonsBackgroundRects = [drawingHelper.buttonsBackgroundRects shiftedBy:NSMakePoint(0, -textView.visibleRect.origin.y - vmargin)];
 
-    if (@available(macOS 11, *)) {
-        // Pass raw pill infos - the renderer will calculate Y from absLine and margins
-        _buttonPillInfos = [drawingHelper buttonPillInfos];
-    }
+    // Pass raw pill infos - the renderer will calculate Y from absLine and margins
+    _buttonPillInfos = [drawingHelper buttonPillInfos];
 
     const BOOL useThemeMarkColors = drawingHelper.useThemeMarkColors;
     NSColor *markBackgroundColor = [drawingHelper defaultBackgroundColor];
@@ -168,11 +166,9 @@ static vector_float4 VectorForColor(NSColor *color) {
                                                                                   cellHeight:_cellSize.height];
     _strikethroughUnderlineDescriptor.thickness = [drawingHelper strikethroughThicknessForFont:_fontTable.asciiFont.font];
 
-    if (@available(macOS 11, *)) {
-        _terminalButtons = [textView.terminalButtons mapWithBlock:^id _Nullable(iTermTerminalButton * _Nonnull button) {
-            return [button clone];
-        }];
-    }
+    _terminalButtons = [textView.terminalButtons mapWithBlock:^id _Nullable(iTermTerminalButton * _Nonnull button) {
+        return [button clone];
+    }];
 
     // Indicators
     NSColor *color = [[textView indicatorFullScreenFlashColor] colorUsingColorSpace:_colorSpace];

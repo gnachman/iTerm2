@@ -242,12 +242,8 @@
 }
 
 - (void)awakeFromNib {
-    if (@available(macOS 10.16, *)) {
-#ifdef MAC_OS_X_VERSION_10_16
-        _sessionTabWindowOutlineView.style = NSTableViewStyleInset;
-        _variablesOutlineView.style = NSTableViewStyleInset;
-#endif
-    }
+    _sessionTabWindowOutlineView.style = NSTableViewStyleInset;
+    _variablesOutlineView.style = NSTableViewStyleInset;
     [_sessionTabWindowOutlineView expandItem:nil expandChildren:YES];
 }
 

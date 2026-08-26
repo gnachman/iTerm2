@@ -91,9 +91,7 @@ typedef struct {
         _visualEffectView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
         NSVisualEffectState state = NSVisualEffectStateActive;
         if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
-            if (@available(macOS 10.16, *)) {
-                state = NSVisualEffectStateFollowsWindowActiveState;
-            }
+            state = NSVisualEffectStateFollowsWindowActiveState;
         }
         _visualEffectView.state = state;
 
@@ -108,9 +106,7 @@ typedef struct {
 
 - (void)addWindowColorView {
     if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
-        if (@available(macOS 10.16, *)) {
-            return;
-        }
+        return;
     }
     NSView *windowColorView = [[NSView alloc] initWithFrame:self.bounds];
     windowColorView.wantsLayer = YES;
@@ -259,18 +255,14 @@ typedef struct {
         [self updateToolbeltForWindow:nil];
 
         _windowNumberLabel = [NSTextField newLabelStyledTextField];
-        if (@available(macOS 10.16, *)) {
-            _windowNumberLabel.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
-        }
+        _windowNumberLabel.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
         _windowNumberLabel.alphaValue = 0.75;
         _windowNumberLabel.hidden = YES;
         _windowNumberLabel.autoresizingMask = (NSViewMaxXMargin | NSViewMinYMargin);
         [self addSubview:_windowNumberLabel];
 
         _windowTitleLabel = [iTermFakeWindowTitleLabel newLabelStyledTextField];
-        if (@available(macOS 10.16, *)) {
-            _windowTitleLabel.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
-        }
+        _windowTitleLabel.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
         _windowTitleLabel.alphaValue = 1;
         _windowTitleLabel.alignment = NSTextAlignmentCenter;
         _windowTitleLabel.hidden = YES;
@@ -771,9 +763,7 @@ typedef struct {
                 _titleBackgroundVEV.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
                 NSVisualEffectState state = NSVisualEffectStateActive;
                 if (![iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
-                    if (@available(macOS 10.16, *)) {
-                        state = NSVisualEffectStateFollowsWindowActiveState;
-                    }
+                    state = NSVisualEffectStateFollowsWindowActiveState;
                 }
                 _titleBackgroundVEV.state = state;
                 _titleBackgroundVEV.blendingMode = NSVisualEffectBlendingModeWithinWindow;
@@ -1253,17 +1243,9 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 
 - (void)updateWindowNumberFont {
     if ([self tabBarShouldBeVisible]) {
-        if (@available(macOS 10.16, *)) {
-            _windowNumberLabel.font = [NSFont titleBarFontOfSize:[NSFont smallSystemFontSize]];
-        } else {
-            _windowNumberLabel.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
-        }
+        _windowNumberLabel.font = [NSFont titleBarFontOfSize:[NSFont smallSystemFontSize]];
     } else {
-        if (@available(macOS 10.16, *)) {
-            _windowNumberLabel.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
-        } else {
-            _windowNumberLabel.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
-        }
+        _windowNumberLabel.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
     }
 }
 
@@ -2032,9 +2014,6 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
 @end
 
 BOOL PSMShouldExtendTransparencyIntoMinimalTabBar(void) {
-    if (@available(macOS 10.16, *)) { } else {
-        return NO;
-    }
     switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
         case TAB_STYLE_MINIMAL:
             return YES;

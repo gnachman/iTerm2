@@ -1578,41 +1578,39 @@ const CGFloat commandRegionOutlineThickness = 2.0;
     NSColor *foreground = [self.delegate drawingHelperColorForCode:ALTSEM_DEFAULT green:0 blue:0 colorMode:ColorModeAlternate bold:NO faint:NO isBackground:NO];
     NSColor *selectedColor = [self.delegate drawingHelperColorForCode:ALTSEM_SELECTED green:0 blue:0 colorMode:ColorModeAlternate bold:NO faint:NO isBackground:YES];
 
-    if (@available(macOS 11, *)) {
-        // Draw pill-shaped backgrounds for button groups
-        NSArray<iTermButtonPillInfo *> *pillInfos = [self buttonPillInfos];
-        const CGFloat scale = self.isRetina ? 2.0 : 1.0;
-        for (iTermButtonPillInfo *pillInfo in pillInfos) {
-            NSImage *pillImage = [iTermPillBackgroundGenerator generatePillImageWithSize:pillInfo.rect.size
-                                                                       dividerXPositions:pillInfo.dividerXPositions
-                                                                         backgroundColor:background
-                                                                         foregroundColor:foreground
-                                                                     pressedSegmentIndex:pillInfo.pressedButtonIndex
-                                                                                   scale:scale];
-            // Draw at 1:1 scale (the image is already scaled internally)
-            // Adjust y by 2 points to align with Metal renderer
-            NSRect destRect = pillInfo.rect;
-            destRect.origin.y -= virtualOffset;
-            destRect.origin.y -= 2;
-            [pillImage drawInRect:destRect
-                         fromRect:NSMakeRect(0, 0, pillImage.size.width, pillImage.size.height)
-                        operation:NSCompositingOperationSourceOver
-                         fraction:1.0
-                   respectFlipped:YES
-                            hints:nil];
-        }
+    // Draw pill-shaped backgrounds for button groups
+    NSArray<iTermButtonPillInfo *> *pillInfos = [self buttonPillInfos];
+    const CGFloat scale = self.isRetina ? 2.0 : 1.0;
+    for (iTermButtonPillInfo *pillInfo in pillInfos) {
+        NSImage *pillImage = [iTermPillBackgroundGenerator generatePillImageWithSize:pillInfo.rect.size
+                                                                   dividerXPositions:pillInfo.dividerXPositions
+                                                                     backgroundColor:background
+                                                                     foregroundColor:foreground
+                                                                 pressedSegmentIndex:pillInfo.pressedButtonIndex
+                                                                               scale:scale];
+        // Draw at 1:1 scale (the image is already scaled internally)
+        // Adjust y by 2 points to align with Metal renderer
+        NSRect destRect = pillInfo.rect;
+        destRect.origin.y -= virtualOffset;
+        destRect.origin.y -= 2;
+        [pillImage drawInRect:destRect
+                     fromRect:NSMakeRect(0, 0, pillImage.size.width, pillImage.size.height)
+                    operation:NSCompositingOperationSourceOver
+                     fraction:1.0
+               respectFlipped:YES
+                        hints:nil];
+    }
 
-        // Draw buttons (they now have transparent backgrounds since drawsBackground was set to false)
-        for (iTermTerminalButton *button in [self.delegate drawingHelperTerminalButtons]) {
-            if (![self canDrawLine:button.absCoordForDesiredFrame.y - _totalScrollbackOverflow]) {
-                continue;
-            }
-            [button drawWithBackgroundColor:background
-                            foregroundColor:foreground
-                              selectedColor:selectedColor
-                                      frame:button.desiredFrame
-                              virtualOffset:virtualOffset];
+    // Draw buttons (they now have transparent backgrounds since drawsBackground was set to false)
+    for (iTermTerminalButton *button in [self.delegate drawingHelperTerminalButtons]) {
+        if (![self canDrawLine:button.absCoordForDesiredFrame.y - _totalScrollbackOverflow]) {
+            continue;
         }
+        [button drawWithBackgroundColor:background
+                        foregroundColor:foreground
+                          selectedColor:selectedColor
+                                  frame:button.desiredFrame
+                          virtualOffset:virtualOffset];
     }
 }
 

@@ -7,7 +7,6 @@
 
 import Foundation
 
-@available(macOS 11.0, *)
 @objc(iTermBrowserCSSLoader)
 class iTermBrowserCSSLoader: NSObject {
     

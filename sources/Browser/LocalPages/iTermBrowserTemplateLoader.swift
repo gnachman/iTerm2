@@ -7,7 +7,6 @@
 
 import Foundation
 
-@available(macOS 11.0, *)
 @objc(iTermBrowserTemplateLoader)
 class iTermBrowserTemplateLoader: NSObject {
     static func load(template templateName: String, substitutions: [String: String] = [:]) -> String {

@@ -325,12 +325,7 @@
         NSMenuItem *theItem = [[NSMenuItem alloc] init];
         NSColor *color = [NSColor colorFromHexString:shortSelectedText];
         if (color) {
-            CGFloat x;
-            if (@available(macOS 10.16, *)) {
-                x = 15;
-            } else {
-                x = 11;
-            }
+            CGFloat x = 15;
             const CGFloat margin = 2;
             const CGFloat height = 24;
             const CGFloat width = 24;

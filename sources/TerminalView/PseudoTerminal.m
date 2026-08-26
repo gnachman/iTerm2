@@ -2444,9 +2444,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (IBAction)addNamedMark:(id)sender {
     if (self.currentSession.isBrowserSession) {
         // I'm not sure this is reachable but I want to be safe.
-        if (@available(macOS 11, *)) {
-            [self.currentSession.view.browserViewController addNamedMark:sender];
-        }
+        [self.currentSession.view.browserViewController addNamedMark:sender];
         return;
     }
     __weak PTYSession *session = self.currentSession;
@@ -2758,25 +2756,23 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (PTYTextView *)checkFirstResponder {
-    if (@available(macOS 11, *)) {
-        NSResponder *responder = self.window.firstResponder;
-        while (responder &&
-               ![responder isKindOfClass:[PTYTextView class]] &&
-               ![responder isKindOfClass:[iTermBrowserViewController class]]) {
-            responder = responder.nextResponder;
+    NSResponder *responder = self.window.firstResponder;
+    while (responder &&
+           ![responder isKindOfClass:[PTYTextView class]] &&
+           ![responder isKindOfClass:[iTermBrowserViewController class]]) {
+        responder = responder.nextResponder;
+    }
+    if ([responder isKindOfClass:[iTermBrowserViewController class]]) {
+        iTermBrowserViewController *vc = (iTermBrowserViewController *)responder;
+        NSString *guid = [vc sessionGuid];
+        PTYSession *session = [self.allSessions objectPassingTest:^BOOL(PTYSession *candidate, NSUInteger index, BOOL *stop) {
+            return [candidate.guid isEqualToString:guid];
+        }];
+        if (session != self.currentSession) {
+            [session notifyActive];
         }
-        if ([responder isKindOfClass:[iTermBrowserViewController class]]) {
-            iTermBrowserViewController *vc = (iTermBrowserViewController *)responder;
-            NSString *guid = [vc sessionGuid];
-            PTYSession *session = [self.allSessions objectPassingTest:^BOOL(PTYSession *candidate, NSUInteger index, BOOL *stop) {
-                return [candidate.guid isEqualToString:guid];
-            }];
-            if (session != self.currentSession) {
-                [session notifyActive];
-            }
-        } else if ([responder isKindOfClass:[PTYTextView class]]) {
-            return (PTYTextView *)responder;
-        }
+    } else if ([responder isKindOfClass:[PTYTextView class]]) {
+        return (PTYTextView *)responder;
     }
     return nil;
 }
@@ -6319,13 +6315,6 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         _anyPaneIsTransparent = [self anyPaneIsTransparent];
         [self repositionWidgets];
     }
-    if (@available(macOS 10.16, *)) { }
-    else {
-        if ([iTermAdvancedSettingsModel disableWindowShadowWhenTransparencyOnMojave]) {
-            [self updateWindowShadowForNonFullScreenWindowDisablingIfAnySessionHasTransparency:window];
-            shouldEnableShadow = NO;
-        }
-    }
     if ([iTermPreferences perPaneBackgroundImage]) {
         self.contentView.backgroundImage.hidden = YES;
     } else {
@@ -6339,17 +6328,6 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
     if (shouldEnableShadow) {
         window.hasShadow = YES;
-    }
-}
-
-- (void)updateWindowShadowForNonFullScreenWindowDisablingIfAnySessionHasTransparency:(NSWindow *)window {
-    const BOOL haveTransparency = [self anyPaneIsTransparent];
-    RLog(@"%@: have transparency = %@ for sessions %@ in tab %@", self, @(haveTransparency), self.currentTab.sessions, self.currentTab);
-    // Let's try enabling window shadow on 10.16 when there is transparency. Now that I set the
-    // background color to NSColor.clearColor.withAlphaComponent(0.01) maybe shadows will magically
-    // start working again.
-    if (@available(macOS 10.16, *)) {} else {
-        window.hasShadow = !haveTransparency;
     }
 }
 
@@ -6460,10 +6438,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     RLog(@"self=%@", self);
     NSScreen *screen = self.window.screen;
     [_contentView setShowsWindowSize:NO];
-    if (@available(macOS 10.16, *)) {
-        // Zoom/unzoom leaves wrong titlebar separator.
-        [self forceUpdateTitlebarSeparator];
-    }
+    // Zoom/unzoom leaves wrong titlebar separator.
+    [self forceUpdateTitlebarSeparator];
 
     // Canonicalize the frame so that centered windows stay centered, edge-attached windows stay edge
     // attached.
@@ -9783,31 +9759,29 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                 return @0;
         }
     } else if ([option isEqualToString:PSMTabBarControlOptionAttachedToTitleBar]) {
-        if (@available(macOS 10.16, *)) {
-            iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-            switch (preferredStyle) {
-                case TAB_STYLE_COMPACT:
-                    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-                        case PSMTab_TopTab:
-                            return @NO;
-                        case PSMTab_LeftTab:
-                        case PSMTab_RightTab:
-                        case PSMTab_BottomTab:
-                            return @YES;
-                    }
-                    assert(NO);
-                    break;
+        iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+        switch (preferredStyle) {
+            case TAB_STYLE_COMPACT:
+                switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
+                    case PSMTab_TopTab:
+                        return @NO;
+                    case PSMTab_LeftTab:
+                    case PSMTab_RightTab:
+                    case PSMTab_BottomTab:
+                        return @YES;
+                }
+                assert(NO);
+                break;
 
-                case TAB_STYLE_MINIMAL:
-                    return @YES;
+            case TAB_STYLE_MINIMAL:
+                return @YES;
 
-                case TAB_STYLE_LIGHT:
-                case TAB_STYLE_DARK:
-                case TAB_STYLE_LIGHT_HIGH_CONTRAST:
-                case TAB_STYLE_DARK_HIGH_CONTRAST:
-                case TAB_STYLE_AUTOMATIC:
-                    return @YES;
-            }
+            case TAB_STYLE_LIGHT:
+            case TAB_STYLE_DARK:
+            case TAB_STYLE_LIGHT_HIGH_CONTRAST:
+            case TAB_STYLE_DARK_HIGH_CONTRAST:
+            case TAB_STYLE_AUTOMATIC:
+                return @YES;
         }
     } else if ([option isEqualToString:PSMTabBarControlOptionHTMLTabTitles]) {
         return @([iTermPreferences boolForKey:kPreferenceKeyHTMLTabTitles]);
@@ -10989,12 +10963,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         newSession.view.enableProgressBars = originalNewSessionView.enableProgressBars;
         newSession.view.progressBarHeight = originalNewSessionView.progressBarHeight;
         newSession.view.progressBarColorScheme = originalNewSessionView.progressBarColorScheme;
-        if (@available(macOS 11, *)) {
-            if (originalNewSessionView.browserViewController) {
-                [newSession.view setBrowserViewController:originalNewSessionView.browserViewController
-                                               initialURL:nil
-                                          restorableState:nil];
-            }
+        if (originalNewSessionView.browserViewController) {
+            [newSession.view setBrowserViewController:originalNewSessionView.browserViewController
+                                           initialURL:nil
+                                      restorableState:nil];
         }
     }
     if (!performSetup) {
@@ -12622,14 +12594,12 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (void)rootTerminalViewWillLayoutSubviews {
-    if (@available(macOS 10.16, *)) {
-        const iTermShouldHaveTitleSeparator shouldHave =
-        [self terminalWindowShouldHaveTitlebarSeparator] ?
-            iTermShouldHaveTitleSeparatorYes : iTermShouldHaveTitleSeparatorNo;
-        if (shouldHave != _previousTerminalWindowShouldHaveTitlebarSeparator) {
-            [self forceUpdateTitlebarSeparator];
-            _previousTerminalWindowShouldHaveTitlebarSeparator = shouldHave;
-        }
+    const iTermShouldHaveTitleSeparator shouldHave =
+    [self terminalWindowShouldHaveTitlebarSeparator] ?
+        iTermShouldHaveTitleSeparatorYes : iTermShouldHaveTitleSeparatorNo;
+    if (shouldHave != _previousTerminalWindowShouldHaveTitlebarSeparator) {
+        [self forceUpdateTitlebarSeparator];
+        _previousTerminalWindowShouldHaveTitlebarSeparator = shouldHave;
     }
 }
 
@@ -12639,7 +12609,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     }
 }
 
-- (void)forceUpdateTitlebarSeparator NS_AVAILABLE_MAC(10_16) {
+- (void)forceUpdateTitlebarSeparator {
     NSTitlebarSeparatorStyle saved = self.window.titlebarSeparatorStyle;
     self.window.titlebarSeparatorStyle = (saved == NSTitlebarSeparatorStyleAutomatic) ? NSTitlebarSeparatorStyleNone : NSTitlebarSeparatorStyleAutomatic;
     self.window.titlebarSeparatorStyle = saved;
@@ -14463,7 +14433,7 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 - (iTermBrowserWebView *)openTabWithURL:(NSURL *)url
                             baseProfile:(Profile *)base
                         nearSessionGuid:(NSString *)sessionGuid
-                          configuration:(WKWebViewConfiguration *)configuration NS_AVAILABLE_MAC(11_0) {
+                          configuration:(WKWebViewConfiguration *)configuration {
     MutableProfile *profile = [[base mutableCopy] autorelease];
     profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeBrowserValue;
     profile[KEY_INITIAL_URL] = url.absoluteString;

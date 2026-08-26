@@ -64,7 +64,7 @@
 
 #pragma mark - APIs
 
-- (BOOL)evaluateTrust:(out NSError **)error NS_AVAILABLE_MAC(10_14) {
+- (BOOL)evaluateTrust:(out NSError **)error {
     CFErrorRef secError = NULL;
     const BOOL trusted = SecTrustEvaluateWithError(self->_secTrust,
                                                    &secError);
@@ -74,45 +74,6 @@
                                   detail:@"Failed to evaluate certificate chain"];
     }
     return trusted;
-}
-
-- (BOOL)resultIsTrustedPreMojave:(SecTrustResultType)trustResult
-                           error:(out NSError **)error NS_DEPRECATED_MAC(10_0, 10_14) {
-    switch (trustResult) {
-        case kSecTrustResultDeny:  // user-configured deny
-            if (error) {
-                *error = [SIGError errorWithCode:SIGErrorCodeTrustUserDeny];
-            }
-            break;
-        case kSecTrustResultOtherError:  // a failure other than that of trust evaluation
-        case kSecTrustResultInvalid:  // invalid setting or result
-            if (error) {
-                *error = [SIGError errorWithCode:SIGErrorCodeTrustMisconfiguration];
-            }
-            break;
-        case kSecTrustResultFatalTrustFailure:  // trust failure which cannot be overridden by the user
-        case kSecTrustResultRecoverableTrustFailure:  // a trust policy failure which can be overridden by the user
-            if (error) {
-                *error = [SIGError errorWithCode:SIGErrorCodeTrustFailed];
-            }
-            break;
-
-        case kSecTrustResultProceed:  // you may proceed
-        case kSecTrustResultUnspecified:  // the certificate is implicitly trusted, but user intent was not explicitly specified
-            if (error) {
-                *error = nil;
-            }
-            return YES;
-            break;
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        case kSecTrustResultConfirm:
-#pragma clang diagnostic pop
-            assert(NO);
-            break;
-    }
-    return NO;
 }
 
 @end

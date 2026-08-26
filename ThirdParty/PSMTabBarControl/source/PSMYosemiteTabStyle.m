@@ -592,47 +592,6 @@
     return [NSColor colorWithWhite:0 alpha:base + (1 - base) * (highlightAmount * 0.05)];
 }
 
-- (NSColor *)mojaveBackgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount NS_AVAILABLE_MAC(10_14) {
-    CGFloat colors[3];
-    const BOOL keyMainAndActive = self.windowIsMainAndAppIsActive;
-    if (keyMainAndActive) {
-        if (selected) {
-            colors[0] = 210.0 / 255.0;
-            colors[1] = 210.0 / 255.0;
-            colors[2] = 210.0 / 255.0;
-        } else {
-            NSColor *color = self.tabBarColor;
-            colors[0] = color.redComponent;
-            colors[1] = color.greenComponent;
-            colors[2] = color.blueComponent;
-        }
-    } else {
-        if (selected) {
-            colors[0] = 246.0 / 255.0;
-            colors[1] = 246.0 / 255.0;
-            colors[2] = 246.0 / 255.0;
-        } else {
-            NSColor *color = self.tabBarColor;
-            colors[0] = color.redComponent;
-            colors[1] = color.greenComponent;
-            colors[2] = color.blueComponent;
-        }
-    }
-    CGFloat highlightedColors[3] = { 0, 0, 0 };
-    CGFloat a = 0;
-    if (!selected) {
-        a = highlightAmount * 0.05;
-    }
-    for (int i = 0; i < 3; i++) {
-        colors[i] = colors[i] * (1.0 - a) + highlightedColors[i] * a;
-    }
-
-    return [NSColor colorWithSRGBRed:colors[0]
-                               green:colors[1]
-                                blue:colors[2]
-                               alpha:1];
-}
-
 - (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
     return [self bigSurBackgroundColorSelected:selected highlightAmount:highlightAmount];
 }

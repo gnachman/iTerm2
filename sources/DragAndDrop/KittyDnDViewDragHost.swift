@@ -17,7 +17,6 @@
 import AppKit
 import UniformTypeIdentifiers
 
-@available(macOS 11.0, *)
 @objc(iTermKittyDnDViewDragHost)
 @MainActor
 final class KittyDnDViewDragHost: NSObject, KittyDnDDragHost, NSDraggingSource {

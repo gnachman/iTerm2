@@ -13,24 +13,16 @@ func makeToolbeltButton(imageName: String?, title: String, target: AnyObject, se
     let button = NSButton(frame: NSRect(x: 0.0, y: frame.size.height - buttonHeight, width: frame.width, height: buttonHeight))
     button.setButtonType(.momentaryPushIn)
     if let imageName {
-        if #available(macOS 10.16, *) {
-            button.image = NSImage.it_image(forSymbolName: imageName, accessibilityDescription: title)
-        } else {
-            button.image = NSImage(named: imageName)
-        }
+        button.image = NSImage.it_image(forSymbolName: imageName, accessibilityDescription: title)
     } else {
         button.title = title
     }
     button.target = target
     button.action = selector
-    if #available(macOS 10.16, *) {
-        button.bezelStyle = .regularSquare
-        button.isBordered = false
-        button.imageScaling = .scaleProportionallyUpOrDown
-        button.imagePosition = .imageOnly
-    } else {
-        button.bezelStyle = .smallSquare
-    }
+    button.bezelStyle = .regularSquare
+    button.isBordered = false
+    button.imageScaling = .scaleProportionallyUpOrDown
+    button.imagePosition = .imageOnly
     button.sizeToFit()
     button.autoresizingMask = [.minYMargin]
 
@@ -113,19 +105,11 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
     }
 
     @objc func relayout() {
-        var margin = -1.0
-        if #available(macOS 10.16, *) {
-            margin = 2
-        }
+        let margin = 2.0
         var x = frame.width
         for button in [ addButton!, removeButton!, editButton! ] {
             button.sizeToFit()
-            var width = 0.0
-            if #available(macOS 10.16, *) {
-                width = button.frame.width
-            } else {
-                width = max(buttonHeight, button.frame.width)
-            }
+            let width = button.frame.width
             x -= width + margin
             button.frame = NSRect(x: x, y: frame.height - buttonHeight, width: width, height: buttonHeight)
         }

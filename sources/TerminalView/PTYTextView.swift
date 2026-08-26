@@ -946,11 +946,7 @@ extension PTYTextView {
     @objc(swiftValidateMenuItem:)
     func swiftValidate(menuItem item: NSMenuItem) -> Bool {
         if item.action == #selector(downloadFiles(_:)) {
-            if #available(macOS 11, *) {
-                return !ConductorRegistry.instance.isEmpty
-            } else {
-                return false
-            }
+            return !ConductorRegistry.instance.isEmpty
         } else if item.action == #selector(saveArchive(_:)) {
             return true
         } else if item.action == #selector(toggleBufferInput(_:)) {

@@ -27,13 +27,11 @@
                                              selector:@selector(modifiersDidChange:)
                                                  name:kPSMModifierChangedNotification
                                                object:nil];
-    if (@available(macOS 10.16, *)) {
-        NSRect frame = _label.frame;
-        frame.origin.y += 4;
-        frame.size.width -=6;
-        _label.frame = frame;
-        _label.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
-    }
+    NSRect frame = _label.frame;
+    frame.origin.y += 4;
+    frame.size.width -=6;
+    _label.frame = frame;
+    _label.font = [NSFont titleBarFontOfSize:[NSFont systemFontSize]];
 }
 
 - (void)dealloc {
@@ -47,31 +45,29 @@
 }
 
 - (void)viewDidLayout {
-    if (@available(macOS 10.16, *)) {
-        // Big sur likes to change the height of this accessory view when the tab bar
-        // is added or removed from being an accessory view. Luckily there's enough
-        // wiggle room to keep it aligned.
-        const CGFloat containerHeight = self.view.frame.size.height;
-        NSRect frame = _label.frame;
-        CGFloat yOffset = 21;
+    // Big sur likes to change the height of this accessory view when the tab bar
+    // is added or removed from being an accessory view. Luckily there's enough
+    // wiggle room to keep it aligned.
+    const CGFloat containerHeight = self.view.frame.size.height;
+    NSRect frame = _label.frame;
+    CGFloat yOffset = 21;
 
-        // On macOS 26, adjust position to align with title baseline
-        if (@available(macOS 26, *)) {
-            switch (self.titlebarStyle) {
-                case iTermTitlebarStyleRegular:
-                    yOffset += 3;  // Move down by 3 points for regular theme
-                    break;
-                case iTermTitlebarStyleMinimal:
-                    // Minimal theme doesn't use titlebar accessory - handled in iTermRootTerminalView
-                case iTermTitlebarStyleCompact:
-                case iTermTitlebarStyleNone:
-                    break;
-            }
+    // On macOS 26, adjust position to align with title baseline
+    if (@available(macOS 26, *)) {
+        switch (self.titlebarStyle) {
+            case iTermTitlebarStyleRegular:
+                yOffset += 3;  // Move down by 3 points for regular theme
+                break;
+            case iTermTitlebarStyleMinimal:
+                // Minimal theme doesn't use titlebar accessory - handled in iTermRootTerminalView
+            case iTermTitlebarStyleCompact:
+            case iTermTitlebarStyleNone:
+                break;
         }
-
-        frame.origin.y = containerHeight - yOffset;
-        _label.frame = frame;
     }
+
+    frame.origin.y = containerHeight - yOffset;
+    _label.frame = frame;
 }
 - (void)updateLabel {
     [self view];  // Ensure the label exists.

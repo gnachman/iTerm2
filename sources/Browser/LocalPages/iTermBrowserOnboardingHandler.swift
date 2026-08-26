@@ -8,13 +8,11 @@
 import Foundation
 @preconcurrency import WebKit
 
-@available(macOS 11.0, *)
 struct iTermBrowserOnboardingSettings {
     let adBlockerEnabled: Bool
     let instantReplayEnabled: Bool
 }
 
-@available(macOS 11.0, *)
 protocol iTermBrowserOnboardingHandlerDelegate: AnyObject {
     @MainActor func onboardingHandlerEnableAdBlocker(_ handler: iTermBrowserOnboardingHandler)
     @MainActor func onboardingHandlerEnableInstantReplay(_ handler: iTermBrowserOnboardingHandler) 
@@ -25,7 +23,6 @@ protocol iTermBrowserOnboardingHandlerDelegate: AnyObject {
     @MainActor func onboardingHandlerGetSettings(_ handler: iTermBrowserOnboardingHandler) -> iTermBrowserOnboardingSettings
 }
 
-@available(macOS 11.0, *)
 @objc(iTermBrowserOnboardingHandler)
 @MainActor
 class iTermBrowserOnboardingHandler: NSObject, iTermBrowserPageHandler {

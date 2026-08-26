@@ -300,20 +300,13 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
         if #available(macOS 26, *) {
             // On macOS 26, no toolbar - we'll use floating controls
             window.titlebarSeparatorStyle = .none
-        } else if #available(macOS 11.0, *) {
+        } else {
             // Use unified compact style for cleaner appearance
             window.toolbarStyle = .unifiedCompact
             // Remove the separator line for seamless blending
             window.titlebarSeparatorStyle = .none
 
             // Only create toolbar for pre-macOS 26
-            let toolbar = NSToolbar(identifier: "MainToolbar")
-            toolbar.delegate = self
-            toolbar.displayMode = .iconOnly
-            window.toolbar = toolbar
-            window.toolbar?.isVisible = true
-        } else {
-            // macOS 10.x
             let toolbar = NSToolbar(identifier: "MainToolbar")
             toolbar.delegate = self
             toolbar.displayMode = .iconOnly
@@ -467,7 +460,7 @@ extension ChatWindowController: NSToolbarDelegate {
             // Standard toolbar buttons get automatic glass backing on macOS 26
             if #available(macOS 26, *) {
                 item.isBordered = true  // Let the system handle the glass effect
-            } else if #available(macOS 11.0, *) {
+            } else {
                 item.isBordered = true
             }
             return item

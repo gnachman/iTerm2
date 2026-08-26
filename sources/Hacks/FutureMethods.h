@@ -46,21 +46,8 @@ MTActuatorActuateFunction *iTermGetMTActuatorActuateFunction(void);
 MTActuatorIsOpenFunction *iTermGetMTActuatorIsOpenFunction(void);
 
 NS_INLINE BOOL iTermTextIsMonochromeOnMojave(void) {
-    if (@available(macOS 10.16, *)) {
-        // Issue 9209
-        return YES;
-    }
-    static dispatch_once_t onceToken;
-    static BOOL subpixelAAEnabled;
-    dispatch_once(&onceToken, ^{
-        NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:@"CGFontRenderingFontSmoothingDisabled"];
-        if (!number) {
-            subpixelAAEnabled = NO;
-        } else {
-            subpixelAAEnabled = !number.boolValue;
-        }
-    });
-    return !subpixelAAEnabled;
+    // Issue 9209
+    return YES;
 }
 
 NS_INLINE BOOL iTermTextIsMonochrome(void) {

@@ -6,7 +6,6 @@
 //
 
 /// Sidebar item for the source list
-@available(macOS 11, *)
 enum SSHFilePanelSidebarItem: Equatable, Hashable {
     case host(RemoteHostStatus)
     case favorite(RemoteFavorite)
