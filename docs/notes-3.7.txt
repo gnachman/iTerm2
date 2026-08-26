@@ -805,6 +805,11 @@ Web browser improvements:
   password manager.
 
 Bug Fixes:
+- The SCP-download menu animation no longer
+  leaves an invisible window behind. That stray
+  window could make clicking the Dock icon fail
+  to open a new terminal after the last window
+  was closed. Issue 12996.
 - Duplicate Session no longer stamps a permanent
   working-directory override on the new session.
   Previously that override was inherited by split

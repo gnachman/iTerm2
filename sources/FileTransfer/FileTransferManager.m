@@ -140,10 +140,19 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 }
 
 - (void)fadeWindowOut:(NSWindow *)window {
-    [window.animator setAlphaValue:0];
-    [window performSelector:@selector(release)
-               withObject:nil
-               afterDelay:[[NSAnimationContext currentContext] duration]];
+    // Fade the animation window out, then take it off screen and release it. Simply releasing the
+    // window is not enough: an on-screen NSWindow is retained by AppKit's window list, so -release
+    // only balances the +1 from -alloc and the (now invisible, alpha-0) window would linger in
+    // -[NSApp orderedWindows] forever. That stray ordered window makes AppKit believe iTerm2 still
+    // has a visible window after the last terminal closes, so a Dock-icon reopen never triggers
+    // -applicationOpenUntitledFile: and no new terminal window opens (issue 12996). -orderOut: is
+    // what actually removes it from the ordered-window list.
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context) {
+        window.animator.alphaValue = 0;
+    } completionHandler:^{
+        [window orderOut:nil];
+        [window release];
+    }];
 }
 
 - (AXUIElementRef)downloadsMenuElement {
