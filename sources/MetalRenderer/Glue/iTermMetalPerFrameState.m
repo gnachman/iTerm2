@@ -470,6 +470,14 @@ typedef struct {
                     }
                 }
             }
+            DLog(@"Cursor(metal): coord=(%d,%d) type=%d smartCursorColor=%d reverseVideo=%d shouldDrawText=%d cursorColor=%@ textColor=(%.3f,%.3f,%.3f)",
+                 _cursorInfo.coord.x, _cursorInfo.coord.y,
+                 (int)_cursorInfo.type,
+                 (int)drawingHelper.useSmartCursorColor,
+                 (int)_configuration->_renderInputs.reverseVideo,
+                 (int)_cursorInfo.shouldDrawText,
+                 _cursorInfo.cursorColor,
+                 _cursorInfo.textColor.x, _cursorInfo.textColor.y, _cursorInfo.textColor.z);
         }
     } else {
         _cursorInfo.cursorVisible = NO;

@@ -271,6 +271,9 @@
         _smartCursorColor.delegate = self.delegate;
         backgroundColor = [_smartCursorColor backgroundColorForCharacter:screenChar];
     }
+    DLog(@"Cursor(cg): coord=(%d,%d) smartCursorColor=%d focused=%d charCode=0x%x boxColor=%@ textColor=%@",
+         coord.x, coord.y, (int)smart, (int)focused, (unsigned int)screenChar.code,
+         backgroundColor, foregroundColor);
     [backgroundColor set];
     const BOOL frameOnly = !focused;
     if (frameOnly) {

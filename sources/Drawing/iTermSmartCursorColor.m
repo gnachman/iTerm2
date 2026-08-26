@@ -67,17 +67,39 @@
     for (int y = 0; y < 3; y++) {
         for (int x = 0; x < 3; x++) {
             if (neighbors.valid[y][x]) {
-                [constraints addObject:@([self brightnessOfCharBackground:neighbors.chars[y][x]])];
+                const screen_char_t neighbor = neighbors.chars[y][x];
+                const double neighborBrightness = [self brightnessOfCharBackground:neighbor];
+                [constraints addObject:@(neighborBrightness)];
+                DLog(@"SmartCursor:   neighbor[%d][%d] code=0x%x fg=(%d,%d,%d) bg=(%d,%d,%d) mode(fg=%d,bg=%d) bgBrightness=%.3f",
+                     y, x,
+                     (unsigned int)neighbor.code,
+                     neighbor.foregroundColor, neighbor.fgGreen, neighbor.fgBlue,
+                     neighbor.backgroundColor, neighbor.bgGreen, neighbor.bgBlue,
+                     neighbor.foregroundColorMode, neighbor.backgroundColorMode,
+                     neighborBrightness);
             }
         }
     }
     CGFloat bgBrightness = [bgColor perceivedBrightness];
-    if ([self minimumDistanceOf:bgBrightness fromAnyValueIn:constraints] <
-        [iTermAdvancedSettingsModel smartCursorColorBgThreshold]) {
+    const CGFloat minDistance = [self minimumDistanceOf:bgBrightness fromAnyValueIn:constraints];
+    const double threshold = [iTermAdvancedSettingsModel smartCursorColorBgThreshold];
+    const BOOL swap = (minDistance < threshold);
+    DLog(@"SmartCursor: char code=0x%x baseCursorColor=%@ baseBrightness=%.3f neighborCount=%lu minDistanceToNeighbor=%.3f bgThreshold=%.3f -> %@",
+         (unsigned int)screenChar.code,
+         bgColor,
+         bgBrightness,
+         (unsigned long)constraints.count,
+         minDistance,
+         threshold,
+         swap ? @"SWAP to grayscale" : @"KEEP text color");
+    if (swap) {
         CGFloat b = [self farthestValueFromAnyValueIn:constraints];
         bgColor = [NSColor colorWithCalibratedRed:b green:b blue:b alpha:1];
+        DLog(@"SmartCursor: swapped to grayscale value=%.3f color=%@", b, bgColor);
     }
-    return [[self.delegate cursorColorByDimmingSmartColor:bgColor] colorWithAlphaComponent:1];
+    NSColor *result = [[self.delegate cursorColorByDimmingSmartColor:bgColor] colorWithAlphaComponent:1];
+    DLog(@"SmartCursor: final box color (after dimming)=%@", result);
+    return result;
 }
 
 - (NSColor *)textColorForCharacter:(screen_char_t)screenChar
