@@ -162,12 +162,10 @@ static const CGFloat iTermStatusBarSparklineBottomMargin = 2;
     position.x += dx;
     animation.toValue = (id)[NSValue valueWithPoint:position];
     animation.duration = 1.0;
-    if (@available(macOS 12, *)) {
-        if ([[iTermPowerManager sharedInstance] isLowPowerModeEnabled]) {
-            animation.preferredFrameRateRange = CAFrameRateRangeMake(1, 1, 1);
-        } else {
-            animation.preferredFrameRateRange = CAFrameRateRangeMake(1, 60, 5);
-        }
+    if ([[iTermPowerManager sharedInstance] isLowPowerModeEnabled]) {
+        animation.preferredFrameRateRange = CAFrameRateRangeMake(1, 1, 1);
+    } else {
+        animation.preferredFrameRateRange = CAFrameRateRangeMake(1, 60, 5);
     }
     layer.position = position;
     [layer addAnimation:animation forKey:@"animateLeft"];

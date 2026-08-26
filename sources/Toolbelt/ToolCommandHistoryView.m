@@ -28,7 +28,6 @@
 
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 5;
-static const CGFloat kHelpMargin = 5;
 
 @interface ToolCommandHistoryView() <NSSearchFieldDelegate>
 @end

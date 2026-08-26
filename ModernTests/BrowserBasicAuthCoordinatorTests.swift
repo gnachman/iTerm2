@@ -11,7 +11,6 @@
 import XCTest
 @testable import iTerm2SharedARC
 
-@available(macOS 11.0, *)
 @MainActor
 final class BrowserBasicAuthCoordinatorTests: XCTestCase {
     typealias Coord = BrowserBasicAuthCoordinator

@@ -1505,17 +1505,6 @@ void TurnOnDebugLoggingAutomatically(void) {
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-    if (@available(macOS 12, *)) {
-        // ok
-    } else {
-        [iTermWarning showWarningWithTitle:@"This is the last nightly build that will support macOS 11 and older. Sorry for the inconvenience!"
-                                   actions:@[ @"OK" ]
-                                 accessory:nil
-                                identifier:@"NoSyncMacOS11Deprecation"
-                               silenceable:kiTermWarningTypePermanentlySilenceable
-                                   heading:@"Deprecation Notice"
-                                    window:nil];
-    }
     [iTermMacOS13RequirementNotice maybeShow];
     DLog(@"didFinishLaunching");
 
