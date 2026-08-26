@@ -113,10 +113,10 @@ NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression"
         _swiftyString = [[iTermSwiftyStringPlaceholder alloc] initWithString:expression];
         self.stringValue = expression;
     } else {
-        _swiftyString = [[iTermSwiftyString alloc] initWithString:expression
-                                                            scope:self.scope
-                                               sideEffectsAllowed:false
-                                                         observer:^NSString *(NSString * _Nonnull newValue, NSError *error) {
+        _swiftyString = [[iTermAnnotatingSwiftyString alloc] initWithString:expression
+                                                                     scope:self.scope
+                                                        sideEffectsAllowed:false
+                                                                  observer:^NSString *(NSString * _Nonnull newValue, NSError *error) {
                                                              return [weakSelf didEvaluateExpression:expression withResult:newValue error:error];
                                                          }];
         self.stringValue = _swiftyString.evaluatedString;

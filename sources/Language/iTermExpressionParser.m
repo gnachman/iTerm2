@@ -333,6 +333,18 @@
                                                  escapingFunction:(NSString *(^)(NSString *string))escapingFunction
                                                             scope:(iTermVariableScope *)scope
                                                            strict:(BOOL)strict {
+    return [self parsedExpressionWithInterpolatedString:swifty
+                                       escapingFunction:escapingFunction
+                                                  scope:scope
+                                                 strict:strict
+                             annotateUndefinedVariables:NO];
+}
+
++ (iTermParsedExpression *)parsedExpressionWithInterpolatedString:(NSString *)swifty
+                                                 escapingFunction:(NSString *(^)(NSString *string))escapingFunction
+                                                            scope:(iTermVariableScope *)scope
+                                                           strict:(BOOL)strict
+                                       annotateUndefinedVariables:(BOOL)annotateUndefinedVariables {
     __block BOOL allLiterals = YES;
     __block NSError *error = nil;
     NSMutableArray *interpolatedParts = [NSMutableArray array];
@@ -352,16 +364,28 @@
             [interpolatedParts addObject:[[iTermParsedExpression alloc] initWithString:escapedString]];
             return;
         }
-        if (!strict &&
-            [iTermAdvancedSettingsModel laxNilPolicyInInterpolatedStrings] &&
+        const BOOL laxNilPolicy = (!strict && [iTermAdvancedSettingsModel laxNilPolicyInInterpolatedStrings]);
+        if ((annotateUndefinedVariables || laxNilPolicy) &&
             expression.expressionType == iTermParsedExpressionTypeError) {
-            // If the expression was a variable reference, replace it with empty string. This works
-            // around the annoyance of remembering to add question marks in interpolated strings,
-            // where you know the result you want is always an empty string.
+            // The expression failed to evaluate. If it was a bare variable reference (as opposed to,
+            // say, a syntax error or a failing function call), that means it referenced an undefined
+            // variable. Reparsing against a placeholder scope tells us whether it was a reference.
             iTermParsedExpression *expressionWithPlaceholders = [parser parse:substring
                                                                         scope:[[iTermVariablePlaceholderScope alloc] init]];
             if ([expressionWithPlaceholders.object conformsToProtocol:@protocol(iTermExpressionParserPlaceholder)]) {
-                expression = [[iTermParsedExpression alloc] initWithString:@""];
+                if (annotateUndefinedVariables) {
+                    // Make the undefined reference obvious inline instead of hiding it. This helps
+                    // when authoring interpolated strings (e.g. status bar components) where a blank
+                    // result is indistinguishable from a typo.
+                    NSString *path = [substring stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                    NSString *annotation = [NSString stringWithFormat:@"[undef: %@]", path];
+                    expression = [[iTermParsedExpression alloc] initWithString:annotation];
+                } else {
+                    // laxNilPolicy: replace the reference with empty string. This works around the
+                    // annoyance of remembering to add question marks in interpolated strings, where
+                    // you know the result you want is always an empty string.
+                    expression = [[iTermParsedExpression alloc] initWithString:@""];
+                }
             }
         }
         [interpolatedParts addObject:expression];

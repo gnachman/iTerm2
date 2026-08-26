@@ -96,6 +96,20 @@
                                     scope:scope];
 }
 
+- (instancetype)initWithInterpolatedString:(NSString *)interpolatedString
+                                     scope:(iTermVariableScope *)scope
+                annotateUndefinedVariables:(BOOL)annotateUndefinedVariables {
+    iTermParsedExpression *parsedExpression =
+    [iTermExpressionParser parsedExpressionWithInterpolatedString:interpolatedString
+                                                escapingFunction:nil
+                                                           scope:scope
+                                                          strict:NO
+                                      annotateUndefinedVariables:annotateUndefinedVariables];
+    return [self initWithParsedExpression:parsedExpression
+                               invocation:interpolatedString
+                                    scope:scope];
+}
+
 - (id)value {
     if (_hasBeenEvaluated) {
         return _value;

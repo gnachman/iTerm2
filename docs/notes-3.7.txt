@@ -2675,3 +2675,10 @@ Bug Fixes:
   fails. The default was also raised to 20
   minutes. This fixes spurious timeouts against
   local Ollama servers.
+- The Interpolated String status bar
+  component now shows [undef: x] for a
+  reference to an undefined variable
+  instead of silently rendering an empty
+  string, making typos and unavailable
+  variables obvious. Use \(x?) to treat a
+  missing value as empty.

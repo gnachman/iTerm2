@@ -211,6 +211,44 @@ final class ExpressionSystemIntegrationTests: XCTestCase, iTermObject {
         XCTAssertNotNil(error)
     }
 
+    // MARK: - Undefined Variable Annotation
+
+    func testAnnotateUndefinedVariable() {
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(interpolatedString: "[\\(tab.window.zzznope)]",
+                                                 scope: scope,
+                                                 annotateUndefinedVariables: true)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: false) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        XCTAssertEqual(output as? String, "[[undef: tab.window.zzznope]]")
+    }
+
+    func testAnnotateUndefinedVariableLeavesDefinedVariablesAlone() {
+        scope.setValue("hello" as NSString, forVariableNamed: "greeting")
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(interpolatedString: "\\(greeting) \\(missing)",
+                                                 scope: scope,
+                                                 annotateUndefinedVariables: true)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: false) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        XCTAssertEqual(output as? String, "hello [undef: missing]")
+    }
+
+    func testUndefinedVariableWithoutAnnotationIsEmpty() {
+        // Default (lax) behavior: an undefined variable renders as empty string.
+        var output: Any?
+        let evaluator = iTermExpressionEvaluator(interpolatedString: "[\\(missing)]", scope: scope)
+        evaluator.evaluate(withTimeout: 0, sideEffectsAllowed: false) { eval in
+            output = eval.value
+            XCTAssertNil(eval.error)
+        }
+        XCTAssertEqual(output as? String, "[]")
+    }
+
     // MARK: - Performance
 
     func testLargeArithmeticExpression() {

@@ -28,6 +28,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
+// Like iTermSwiftyString, but references to undefined variables render inline as
+// "[undefined variable <path>]" rather than silently evaluating to an empty string. This makes
+// typos and unavailable variables obvious when authoring interpolated strings (e.g. in the
+// Interpolated String status bar component).
+@interface iTermAnnotatingSwiftyString : iTermSwiftyString
+@end
+
 @interface iTermExpressionObserver: iTermGenericEvaluator
 @end
 
