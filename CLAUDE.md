@@ -14,11 +14,10 @@
 - When renaming a file tracked by git (and almost all of them are) use `git mv` instead of `mv`
 - To make a debug build run `tools/build.sh` (or `tools/build.sh Development`). This saves logs to `tmp/build.log` and shows only errors/warnings on failure.
 - Little scripts or text files that are used for manual testing of features go in tests/
-- The deployment target for iTerm2 is macOS 12. You don't need to perform availability checks for older versions.
+- The deployment target for iTerm2 is macOS 13. You don't need to perform availability checks for older versions.
 - Don't replace curly quotes with straight quotes. Same for apostrophes and single quotes. If you need help typing a curly quote, just ask. Here are some you can copy and paste: ‘’“”
 - In user-visible strings do not use " except as a shorthand for inch. Prefer curly quotes like “ and ”. I know this goes against your nature, but fight hard here.
 - Ask permission before using auto layout if it's not already in use in a given file. Debugging auto layout is the worst hell.
-- The deployment target is macOS 12. Don't add availability checks for 12 and lower.
 - Never `git add` submodules without express written permission.
 - Don't include AI-generated markdown files (summaries, plans, etc.) in commits — only ship code.
 - Avoid duplicate expressions; hoist shared computations into a named `const` before branching.
