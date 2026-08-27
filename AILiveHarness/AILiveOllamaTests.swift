@@ -156,19 +156,21 @@ extension AILiveHarness {
                       "think:false should suppress reasoning, but reasoning was delivered: \(reasoning.prefix(200))")
     }
 
-    // think:true must reach the wire AND actually produce reasoning.
+    // think:true must reach the wire AND actually produce reasoning. Keep the
+    // prompt trivial so the model doesn't spend minutes thinking.
     func test_ollama_thinkTrue_setsThinkTrueAndReasons() throws {
-        let messages = [LLM.Message(role: .user,
-                                    content: "A farmer has 17 sheep; all but 9 run away. How many are left? Think it through.")]
+        let messages = [LLM.Message(role: .user, content: "What is 5 + 8? Think briefly.")]
         let result = try runOllama(thinking: true, messages: messages, timeout: 300, scenario: "thinkTrue")
 
         let body = try XCTUnwrap(lastRequestBody(result), "no request body captured")
         XCTAssertEqual(body["think"] as? Bool, true, "think:true was not sent; body=\(body)")
 
-        XCTAssertFalse(result.finalText.isEmpty, "expected a non-empty answer")
         let reasoning = result.deliveredReasoning ?? ""
         XCTAssertFalse(reasoning.isEmpty,
                        "think:true should produce reasoning, but none was delivered")
+        // Answer may land in content or reasoning; require it somewhere.
+        XCTAssertTrue((result.finalText + " " + reasoning).contains("13"),
+                      "wrong or missing answer; text=\(result.finalText) reasoning=\(String(reasoning.prefix(160)))")
     }
 
     // MARK: - num_ctx
@@ -236,5 +238,216 @@ extension AILiveHarness {
                       "tool was never invoked; final text: \(result.finalText)")
         XCTAssertTrue(result.finalText.contains(token),
                       "tool result not echoed; final text: \(result.finalText)")
+    }
+
+    // Generic tool runner (the primary runOllama is pinned to EmptyArgs).
+    private func runOllamaTool<T: Codable>(messages: [LLM.Message],
+                                           function: AILiveFunctionSpec<T>,
+                                           timeout: TimeInterval = 240,
+                                           scenario: String) throws -> AILiveRunResult {
+        let apiKey = try ollamaKeyOrSkip()
+        let model = try ollamaModel()
+        try requireReachableOllama(model: model.name)
+        // Tools ride the non-streaming path (#llama-streaming-functions).
+        return try AILiveDriver.run(model: model,
+                                    apiKey: apiKey,
+                                    messages: messages,
+                                    streaming: false,
+                                    thinking: false,
+                                    function: function,
+                                    scenarioTag: scenario,
+                                    timeout: timeout,
+                                    test: self)
+    }
+
+    private struct AddArgs: Codable {
+        var a = 0
+        var b = 0
+    }
+
+    private func addTool(callCount: NSMutableArray) -> AILiveFunctionSpec<AddArgs> {
+        let decl = ChatGPTFunctionDeclaration(
+            name: "add",
+            description: "Adds two integers and returns their sum. Use this for any addition.",
+            parameters: JSONSchema(for: AddArgs(),
+                                   descriptions: ["a": "First addend.", "b": "Second addend."]))
+        return AILiveFunctionSpec<AddArgs>(
+            decl: decl,
+            implementation: { _, args, completion in
+                callCount.add(args.a + args.b)
+                try completion(.success("\(args.a + args.b)"))
+            })
+    }
+
+    // A tool with real arguments: the model must pass 4 and 5, and its final
+    // answer must reflect the tool's computed result (proves args round-trip
+    // into the tool and the result round-trips back in the native shape).
+    func test_ollama_toolCall_withArguments() throws {
+        let calls = NSMutableArray()
+        let tool = addTool(callCount: calls)
+        let messages = [LLM.Message(role: .user,
+                                    content: "Use the add tool to compute 4 plus 5, then tell me the result as a number.")]
+        let result = try runOllamaTool(messages: messages, function: tool, scenario: "toolArgs")
+
+        XCTAssertTrue(result.functionsInvoked.contains("add"),
+                      "add tool was never invoked; final text: \(result.finalText)")
+        XCTAssertTrue(calls.contains(9),
+                      "the tool did not receive a=4,b=5 (sums seen: \(calls)); arguments did not round-trip")
+        XCTAssertTrue(result.finalText.contains("9"),
+                      "final answer did not reflect the tool result; final text: \(result.finalText)")
+    }
+
+    // Agentic loop: two SEQUENTIAL tool calls, where the second depends on the
+    // first's result. Exercises the multi-round native tool round-trip, not just
+    // a single call.
+    func test_ollama_agentic_twoSequentialToolCalls() throws {
+        let calls = NSMutableArray()
+        let tool = addTool(callCount: calls)
+        let messages = [LLM.Message(role: .user,
+                                    content: "First use the add tool to compute 2 plus 3. Then use the add tool again to add 10 to that result. Tell me only the final number.")]
+        let result = try runOllamaTool(messages: messages, function: tool, timeout: 300, scenario: "agentic")
+
+        XCTAssertGreaterThanOrEqual(result.functionsInvoked.filter { $0 == "add" }.count, 2,
+                                    "expected at least two sequential add calls, saw: \(result.functionsInvoked)")
+        XCTAssertTrue(result.finalText.contains("15"),
+                      "the two-step computation did not reach 15; final text: \(result.finalText)")
+    }
+
+    // MARK: - smoke (both transports)
+
+    func test_ollama_smoke_nonStreaming() throws {
+        let result = try runOllama(thinking: false,
+                                   messages: [LLM.Message(role: .user, content: "Reply with exactly: pong")],
+                                   streaming: false, timeout: 120, scenario: "smokeNonStreaming")
+        XCTAssertTrue(result.finalText.lowercased().contains("pong"),
+                      "expected pong, got: \(result.finalText)")
+    }
+
+    func test_ollama_smoke_streaming() throws {
+        let result = try runOllama(thinking: false,
+                                   messages: [LLM.Message(role: .user, content: "Reply with exactly: pong")],
+                                   streaming: true, timeout: 120, scenario: "smokeStreaming")
+        XCTAssertTrue(result.finalText.lowercased().contains("pong"),
+                      "expected pong, got: \(result.finalText)")
+    }
+
+    // Streaming must assemble from multiple NDJSON deltas, not arrive as one
+    // blob. Asks for enough tokens that the server emits several chunks.
+    func test_ollama_streaming_deliversIncrementalChunks() throws {
+        let result = try runOllama(thinking: false,
+                                   messages: [LLM.Message(role: .user, content: "List the numbers 1 through 20, separated by commas.")],
+                                   streaming: true, timeout: 120, scenario: "streamChunks")
+        XCTAssertGreaterThan(result.streamedChunks.count, 1,
+                             "streaming delivered \(result.streamedChunks.count) chunk(s); expected incremental deltas")
+        XCTAssertTrue(result.finalText.contains("20"), "answer truncated: \(result.finalText)")
+    }
+
+    // MARK: - multi-turn
+
+    func test_ollama_multiTurn_nonStreaming() throws {
+        try assertMultiTurnCarriesContext(streaming: false, scenario: "multiTurnNonStreaming")
+    }
+
+    func test_ollama_multiTurn_streaming() throws {
+        try assertMultiTurnCarriesContext(streaming: true, scenario: "multiTurnStreaming")
+    }
+
+    private func assertMultiTurnCarriesContext(streaming: Bool, scenario: String) throws {
+        let messages = [
+            LLM.Message(role: .user, content: "My favorite number is 7. Remember it."),
+            LLM.Message(role: .assistant, content: "Got it, your favorite number is 7."),
+            LLM.Message(role: .user, content: "What is my favorite number multiplied by 6? Reply with just the number."),
+        ]
+        let result = try runOllama(thinking: false, messages: messages,
+                                   streaming: streaming, timeout: 120, scenario: scenario)
+        XCTAssertTrue(result.finalText.contains("42"),
+                      "prior-turn context was lost (expected 42); got: \(result.finalText)")
+    }
+
+    // A system message must steer behavior.
+    func test_ollama_systemMessage_respected() throws {
+        let messages = [
+            LLM.Message(role: .system, content: "You are a calculator. Reply with only the numeric result, no words."),
+            LLM.Message(role: .user, content: "6 times 7"),
+        ]
+        let result = try runOllama(thinking: false, messages: messages,
+                                   streaming: false, timeout: 120, scenario: "system")
+        XCTAssertTrue(result.finalText.contains("42"),
+                      "system instruction not followed; got: \(result.finalText)")
+    }
+
+    // Non-ASCII content must survive serialization and round-trip.
+    func test_ollama_unicode_roundTrips() throws {
+        let messages = [LLM.Message(role: .user,
+                                    content: "Repeat this text back exactly, unchanged: café ☕ 日本語 —")]
+        let result = try runOllama(thinking: false, messages: messages,
+                                   streaming: false, timeout: 120, scenario: "unicode")
+        XCTAssertTrue(result.finalText.contains("café"), "lost accented text: \(result.finalText)")
+        XCTAssertTrue(result.finalText.contains("日本語"), "lost CJK text: \(result.finalText)")
+    }
+
+    // A longer answer must not be cut off, i.e. num_predict is sized sanely.
+    func test_ollama_longOutput_notTruncated() throws {
+        let messages = [LLM.Message(role: .user,
+                                    content: "Write the numbers 1 to 50, one per line, nothing else.")]
+        let result = try runOllama(thinking: false, messages: messages,
+                                   streaming: true, timeout: 180, scenario: "longOutput")
+        XCTAssertTrue(result.finalText.contains("50"),
+                      "long output was truncated before reaching 50; got tail: \(result.finalText.suffix(80))")
+    }
+
+    // MARK: - think (both transports + coexistence)
+
+    func test_ollama_thinkFalse_nonStreaming() throws {
+        let result = try runOllama(thinking: false,
+                                   messages: [LLM.Message(role: .user, content: "What is 2+2? Just the number.")],
+                                   streaming: false, timeout: 120, scenario: "thinkFalseNonStreaming")
+        XCTAssertEqual(lastRequestBody(result)?["think"] as? Bool, false)
+        XCTAssertTrue(result.finalText.contains("4"), "got: \(result.finalText)")
+        XCTAssertTrue((result.deliveredReasoning ?? "").isEmpty, "reasoning leaked with think:false")
+    }
+
+    func test_ollama_thinkTrue_nonStreaming_producesReasoning() throws {
+        let result = try runOllama(thinking: true,
+                                   messages: [LLM.Message(role: .user, content: "Is 91 prime? Think step by step, then answer yes or no.")],
+                                   streaming: false, timeout: 300, scenario: "thinkTrueNonStreaming")
+        XCTAssertEqual(lastRequestBody(result)?["think"] as? Bool, true)
+        XCTAssertFalse((result.deliveredReasoning ?? "").isEmpty, "think:true produced no reasoning")
+    }
+
+    // The streaming think path must deliver reasoning AND reach the right answer.
+    // Whether the answer lands in the visible content or inside the reasoning is
+    // the model's call (a small model often keeps a trivial answer in its
+    // reasoning and leaves content empty), so accept it in either place; the
+    // point is that streamed thinking works end to end and the computation is
+    // correct.
+    func test_ollama_thinkTrue_streaming_reasonsAndAnswers() throws {
+        let result = try runOllama(thinking: true,
+                                   messages: [LLM.Message(role: .user, content: "What is 12 + 30? Think briefly, then give the number.")],
+                                   streaming: true, timeout: 300, scenario: "thinkStreaming")
+        XCTAssertFalse((result.deliveredReasoning ?? "").isEmpty, "no reasoning delivered on the streaming think path")
+        let combined = result.finalText + " " + (result.deliveredReasoning ?? "")
+        XCTAssertTrue(combined.contains("42"),
+                      "wrong or missing answer; text=\(result.finalText) reasoning=\(String((result.deliveredReasoning ?? "").prefix(200)))")
+    }
+
+    // A thinking turn's reasoning must not break the NEXT turn (Ollama, unlike
+    // DeepSeek, does not require thinking echoed back; a prior assistant turn
+    // must still round-trip cleanly).
+    func test_ollama_multiTurn_withThinking() throws {
+        let messages = [
+            LLM.Message(role: .user, content: "My favorite number is 7."),
+            LLM.Message(role: .assistant, content: "Understood."),
+            LLM.Message(role: .user, content: "Multiply my favorite number by 6 and give just the number."),
+        ]
+        let result = try runOllama(thinking: true, messages: messages,
+                                   streaming: false, timeout: 300, scenario: "multiTurnThinking")
+        // With thinking on, a small model may surface the answer in its reasoning
+        // rather than the final content. Either is fine here: the point is that the
+        // prior-turn context survived and the reasoning round-trip didn't break the
+        // turn (no 400, a real response came back with the right computation).
+        let combined = result.finalText + " " + (result.deliveredReasoning ?? "")
+        XCTAssertTrue(combined.contains("42"),
+                      "thinking multi-turn lost context or broke; text=\(result.finalText) reasoning=\(String((result.deliveredReasoning ?? "").prefix(200)))")
     }
 }

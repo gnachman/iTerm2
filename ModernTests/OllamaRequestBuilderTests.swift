@@ -160,6 +160,14 @@ final class OllamaRequestBuilderTests: XCTestCase {
                         "keep_alive must be sent to keep the model resident and avoid cold-reload latency")
     }
 
+    // keep_alive on the wire must reflect the configured advanced setting.
+    func test_keepAlive_reflectsSetting() throws {
+        let json = try body(shouldThink: nil)
+        XCTAssertEqual(json["keep_alive"] as? String,
+                       iTermAdvancedSettingsModel.ollamaKeepAlive(),
+                       "keep_alive must carry the configured value")
+    }
+
     // MARK: - native tool round-trip
 
     // Ollama's /api/chat honors a tool RESULT only as
@@ -208,6 +216,28 @@ final class OllamaRequestBuilderTests: XCTestCase {
         XCTAssertTrue(arguments is [String: Any],
                       "arguments must be an object, not a string; got \(String(describing: arguments))")
         XCTAssertEqual((arguments as? [String: Any])?["city"] as? String, "Paris")
+    }
+
+    // Ollama returns tool-call arguments as typed JSON (numbers/bools/objects),
+    // e.g. {"a":4,"b":5}. Decoding them as [String: String] crashes the whole
+    // response. The parser must accept the full JSON value space.
+    func test_response_toolCallWithTypedArguments_decodes() throws {
+        let wire = """
+        {"model":"m","message":{"role":"assistant","content":"","tool_calls":\
+        [{"function":{"name":"add","arguments":{"a":4,"b":5}}}]},"done":true}
+        """
+        var parser = LlamaResponseParser()
+        let response = try parser.parse(data: Data(wire.utf8))
+        let call: LLM.FunctionCall? = response?.choiceMessages.compactMap {
+            if case .functionCall(let c, _) = $0.body { return c }
+            return nil
+        }.first
+        let arguments = try XCTUnwrap(call?.arguments, "no function call decoded")
+        // Re-encoded arguments must preserve the numeric values.
+        XCTAssertTrue(arguments.contains("\"a\"") && arguments.contains("4"),
+                      "typed argument a=4 was lost: \(arguments)")
+        XCTAssertTrue(arguments.contains("\"b\"") && arguments.contains("5"),
+                      "typed argument b=5 was lost: \(arguments)")
     }
 
     // MARK: - blob-replay compatibility
