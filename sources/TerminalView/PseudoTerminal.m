@@ -5492,31 +5492,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (NSEdgeInsets)tabBarInsetsForCompactWindow {
-    CGFloat stoplightButtonsWidth = MAX(0, [iTermAdvancedSettingsModel compactTabBarStoplightButtonsWidth]);
-    if (@available(macOS 26, *)) {
-        stoplightButtonsWidth += 3;
-    }
-    const CGFloat proxyIconWidth = [_contentView compactProxyIconWidthIncludingMargin];
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_TopTab: {
             const CGFloat extraSpace = MAX(0, [iTermAdvancedSettingsModel extraSpaceBeforeCompactTopTabBar]);
-            const CGFloat windowNameWidth = [_contentView windowNameBesideTabsWidthIncludingMargin];
-            if ([self rootTerminalViewWindowNumberLabelShouldBeVisible]) {
-                const CGFloat leftInset = (stoplightButtonsWidth +
-                                           proxyIconWidth +
-                                           iTermRootTerminalViewWindowNumberLabelMargin * 2 +
-                                           iTermRootTerminalViewWindowNumberLabelWidth +
-                                           windowNameWidth +
-                                           extraSpace);
-                return NSEdgeInsetsMake(0,
-                                        leftInset,
-                                        0,
-                                        0);
-            } else {
-                // Make room for stoplight buttons when there is no tab title.
-                const CGFloat proxyIconExtraPadding = proxyIconWidth > 0 ? iTermRootTerminalViewCompactProxyIconExtraPadding : 0;
-                return NSEdgeInsetsMake(0, stoplightButtonsWidth + proxyIconWidth + proxyIconExtraPadding + windowNameWidth + extraSpace, 0, 0);
-            }
+            // Both branches of this used to be spelled out here and again in the
+            // root view, so the space reserved for the window name and the point
+            // it was drawn at could disagree. One expression owns it now.
+            const CGFloat leftInset = ([_contentView widthOfDecorationsBeforeWindowNameBesideTabs] +
+                                       [_contentView windowNameBesideTabsWidthIncludingMargin] +
+                                       extraSpace);
+            return NSEdgeInsetsMake(0, leftInset, 0, 0);
         }
         case PSMTab_LeftTab:
         case PSMTab_RightTab:
