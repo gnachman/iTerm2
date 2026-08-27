@@ -107,6 +107,7 @@ struct LLMRequestBuilder {
                                         provider: provider,
                                         functions: functions,
                                         stream: stream,
+                                        shouldThink: shouldThink,
                                         frozenHistoryElements: frozenHistoryElements).body()
         case .deepSeek:
             try DeepSeekRequestBuilder(messages: messagesWithVolatile,

@@ -5545,6 +5545,7 @@
 		DECF12ECD66573849C34F781 /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E1B6BE78A6A0C18980A2A46 /* Helpers.swift */; };
 		DF93E577C867F721A8F84CB7 /* iTermTabGroupContiguity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842E85C7646AD1CE30E147AD /* iTermTabGroupContiguity.swift */; };
 		E0674A4A31C8440A9DF370CD /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = E85C9259B4BF4E83BBC22D64 /* InfoPlist.xcstrings */; };
+		DFD374B25802C2E7C25B95F0 /* AILiveOllamaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EC03AC4196A9AA446D5A176 /* AILiveOllamaTests.swift */; };
 		E2DFAD8D76A3655948CB3F37 /* iTermModalSheetRunner.m in Sources */ = {isa = PBXBuildFile; fileRef = E9B6267AF6FAE7F906B1DBF9 /* iTermModalSheetRunner.m */; };
 		E3F691502939DF2E874D7DD1 /* IT2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92FC80BA122066E3610BEA16 /* IT2.swift */; };
 		E42AFCD2191DB57A5A504F23 /* AIProviderPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC183FBA34E8F9843DD6AA6 /* AIProviderPreset.swift */; };
@@ -6481,6 +6482,7 @@
 		2C7FA7091BC6651354944E64 /* CompanionTouchMapper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionTouchMapper.swift; sourceTree = "<group>"; };
 		2C9EF4B4D9DF2F4E3CA2A3F5 /* AIExplanationRequest+Mac.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "AIExplanationRequest+Mac.swift"; sourceTree = "<group>"; };
 		2D87E8EB4F6B647368CED6F0 /* ChatMentionPickerController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChatMentionPickerController.swift; sourceTree = "<group>"; };
+		2EC03AC4196A9AA446D5A176 /* AILiveOllamaTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AILiveOllamaTests.swift; sourceTree = "<group>"; };
 		2FAA0491F10CEBBC4BA051B1 /* OrchestratorCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrchestratorCommand.swift; sourceTree = "<group>"; };
 		2FBEEBCEC29954CD954C38E3 /* AIReasoningTypes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIReasoningTypes.swift; sourceTree = "<group>"; };
 		30BDC3CFCE129E42150030AF /* iTermRosettaSupport.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermRosettaSupport.swift; sourceTree = "<group>"; };
@@ -16489,6 +16491,7 @@
 				CFDF88A516D67FABD556F296 /* AILiveBlobReplayTests.swift */,
 				7133FD0EA06B662C44BD713A /* AILiveAppleIntelligenceTabTitle.swift */,
 				63E84D570B65467F50B49267 /* AILiveLlamaToolCallTests.swift */,
+				2EC03AC4196A9AA446D5A176 /* AILiveOllamaTests.swift */,
 			);
 			path = AILiveHarness;
 			sourceTree = "<group>";
@@ -22512,6 +22515,7 @@
 				C17A8484C4DAB6EEFC5D14D9 /* AILiveBlobReplayTests.swift in Sources */,
 				F50FD9F1F317F265BA9D2575 /* AILiveAppleIntelligenceTabTitle.swift in Sources */,
 				B80BB2D6C74CAD9750556804 /* AILiveLlamaToolCallTests.swift in Sources */,
+				DFD374B25802C2E7C25B95F0 /* AILiveOllamaTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

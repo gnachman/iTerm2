@@ -91,6 +91,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)aiModelCatalogURL;
 + (NSString *)aiModernModelPrefixes;
 + (NSString *)aiProxy;
++ (int)ollamaNumCtx;
++ (NSString *)ollamaKeepAlive;
 + (double)alertTriggerRateLimit;
 + (BOOL)alertsIndicateShortcuts;
 + (BOOL)allowDragOfTabIntoNewWindow;

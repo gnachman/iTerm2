@@ -202,6 +202,13 @@ Major New Features:
   falls back to your configured model when no
   economy model exists.
 
+- The Ollama native API type now sizes the
+  context window to your prompt so long prompts
+  are no longer silently truncated, and the
+  chat’s Think toggle now controls whether a
+  reasoning-capable local model thinks. Turning
+  thinking off makes quick questions fast again.
+
 - Claude Code integration was added. It enables
   the new Session Status feature for claude code
   sessions so you can see at a glance which
