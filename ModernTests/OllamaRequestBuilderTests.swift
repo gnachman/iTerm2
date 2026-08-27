@@ -274,6 +274,82 @@ final class OllamaRequestBuilderTests: XCTestCase {
                       "typed argument b=5 was lost: \(arguments)")
     }
 
+    // MARK: - non-streaming thinking (answer/tool must survive)
+
+    // parseNonStreamingResponse consumes only choiceMessages.first, so on the
+    // non-streaming path a thinking response must put the ANSWER first (with
+    // reasoning folded in as a scalar), not a leading reasoning attachment that
+    // would deliver an empty answer.
+    func test_nonStreamingResponse_withThinking_keepsAnswerAndReasoning() throws {
+        let wire = """
+        {"model":"m","message":{"role":"assistant","content":"The answer is 42.",\
+        "thinking":"let me reason about it"},"done":true}
+        """
+        var parser = LlamaResponseParser()
+        let response = try parser.parse(data: Data(wire.utf8))
+        let first = try XCTUnwrap(response?.choiceMessages.first)
+        XCTAssertEqual(first.trimmedString, "The answer is 42.",
+                       "non-streaming .first must carry the answer, not an empty reasoning message")
+        XCTAssertEqual(first.reasoningContent, "let me reason about it",
+                       "reasoning must be folded onto the answer message as a scalar")
+    }
+
+    // A tool call under thinking on the non-streaming path must be the FIRST
+    // message so parseNonStreamingResponse dispatches it (the agentic loop).
+    func test_nonStreamingResponse_withThinking_dispatchesToolCall() throws {
+        let wire = """
+        {"model":"m","message":{"role":"assistant","content":"","thinking":"reasoning",\
+        "tool_calls":[{"function":{"name":"add","arguments":{"a":1,"b":2}}}]},"done":true}
+        """
+        var parser = LlamaResponseParser()
+        let response = try parser.parse(data: Data(wire.utf8))
+        let first = try XCTUnwrap(response?.choiceMessages.first)
+        XCTAssertNotNil(first.function_call,
+                        "the tool call must be .first so non-streaming dispatch fires it")
+    }
+
+    // Streaming must still surface reasoning as its own message for live display.
+    func test_streamingResponse_withThinking_emitsReasoningMessage() throws {
+        let wire = """
+        {"model":"m","message":{"role":"assistant","content":"","thinking":"partial"},"done":false}
+        """
+        var parser = LlamaStreamingResponseParser()
+        let response = try parser.parse(data: Data(wire.utf8))
+        let msgs = try XCTUnwrap(response?.choiceMessages)
+        XCTAssertTrue(msgs.contains { $0.reasoningContent == "partial" },
+                      "streaming must deliver reasoning as a delta message for live rendering")
+    }
+
+    // MARK: - prompt that does not fit the model window
+
+    // When the prompt approaches/exceeds the model's context window, the old code
+    // silently clamped num_predict to 1 (a one-token/empty reply, prompt
+    // truncated, no error). It must surface requestTooLarge instead.
+    func test_promptExceedingContextWindow_throwsInsteadOfCollapsing() throws {
+        // ~10k-token prompt against an 8192 window, but under the 128k AI token
+        // limit so the existing numPredict<2 guard does not fire.
+        let bigPrompt = String(repeating: "word word word word word ", count: 2_000)
+        let model = try ollamaModel(contextWindow: 8_192, maxResponse: 8_192)
+        let builder = LLMRequestBuilder(
+            provider: LLMProvider(model: model),
+            apiKey: "test-key",
+            messages: [LLM.Message(role: .system, content: "S"),
+                       LLM.Message(role: .user, content: bigPrompt)],
+            functions: [],
+            stream: false,
+            hostedTools: HostedTools(),
+            previousResponseID: nil,
+            shouldThink: nil,
+            reasoningEffort: nil,
+            serviceTier: nil,
+            trailingVolatileText: nil)
+        XCTAssertThrowsError(try builder.body(),
+                             "a prompt that leaves no room for a response must throw, not emit num_predict:1") { error in
+            XCTAssertEqual((error as? AIError)?.type, .requestTooLarge,
+                           "expected requestTooLarge, got \(error)")
+        }
+    }
+
     // MARK: - blob-replay compatibility
 
     // The messages array must keep collapsing a single text part to a plain

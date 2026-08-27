@@ -243,6 +243,7 @@ extension AILiveHarness {
     // Generic tool runner (the primary runOllama is pinned to EmptyArgs).
     private func runOllamaTool<T: Codable>(messages: [LLM.Message],
                                            function: AILiveFunctionSpec<T>,
+                                           thinking: Bool = false,
                                            timeout: TimeInterval = 240,
                                            scenario: String) throws -> AILiveRunResult {
         let apiKey = try ollamaKeyOrSkip()
@@ -253,7 +254,7 @@ extension AILiveHarness {
                                     apiKey: apiKey,
                                     messages: messages,
                                     streaming: false,
-                                    thinking: false,
+                                    thinking: thinking,
                                     function: function,
                                     scenarioTag: scenario,
                                     timeout: timeout,
@@ -311,6 +312,25 @@ extension AILiveHarness {
                                     "expected at least two sequential add calls, saw: \(result.functionsInvoked)")
         XCTAssertTrue(result.finalText.contains("15"),
                       "the two-step computation did not reach 15; final text: \(result.finalText)")
+    }
+
+    // Regression for the non-streaming thinking bug: with Think ON, tools force
+    // the non-streaming path, and parseNonStreamingResponse consumes only .first.
+    // If the reasoning message leads, the tool call is never dispatched and the
+    // agentic loop silently breaks. Assert the tool still fires and its result is
+    // used, WITH thinking enabled.
+    func test_ollama_toolCall_withThinking_nonStreaming() throws {
+        let calls = NSMutableArray()
+        let tool = addTool(callCount: calls)
+        let messages = [LLM.Message(role: .user,
+                                    content: "Use the add tool to compute 4 plus 5, then tell me the result as a number.")]
+        let result = try runOllamaTool(messages: messages, function: tool,
+                                       thinking: true, timeout: 300, scenario: "toolThinking")
+        XCTAssertTrue(result.functionsInvoked.contains("add"),
+                      "tool never dispatched under thinking (answer/tool dropped by .first); text: \(result.finalText)")
+        XCTAssertTrue(calls.contains(9), "add did not receive 4,5 (sums: \(calls))")
+        XCTAssertTrue(result.finalText.contains("9"),
+                      "final answer lost the tool result under thinking; text: \(result.finalText)")
     }
 
     // MARK: - smoke (both transports)
@@ -413,6 +433,12 @@ extension AILiveHarness {
                                    streaming: false, timeout: 300, scenario: "thinkTrueNonStreaming")
         XCTAssertEqual(lastRequestBody(result)?["think"] as? Bool, true)
         XCTAssertFalse((result.deliveredReasoning ?? "").isEmpty, "think:true produced no reasoning")
+        // The answer must survive the non-streaming path (it is 91 = 7*13, not
+        // prime -> "no"). Accept it in content or reasoning, but it must appear:
+        // the old leading-reasoning-message bug delivered an empty answer here.
+        let combined = (result.finalText + " " + (result.deliveredReasoning ?? "")).lowercased()
+        XCTAssertTrue(combined.contains("no") || combined.contains("not prime"),
+                      "answer lost on the non-streaming thinking path; text=\(result.finalText)")
     }
 
     // The streaming think path must deliver reasoning AND reach the right answer.

@@ -87,12 +87,42 @@ extension LlamaResponse: LLM.AnyResponse {
         if done && Streaming.streaming {
             return []
         }
+        let thinking: String? = {
+            guard let t = message.thinking, !t.isEmpty else { return nil }
+            return t
+        }()
+        // The assistant's actual output: a tool call, or text. nil only when
+        // there is nothing to emit but reasoning (a streaming thinking-only
+        // delta), in which case the reasoning message carries the turn.
+        let primaryBody: LLM.Message.Body? = {
+            if let toolCall = message.tool_calls?.first {
+                return .functionCall(
+                    .init(name: toolCall.function.name,
+                          arguments: try? JSONEncoder().encode(toolCall.function.arguments).lossyString),
+                    id: nil)
+            }
+            if !message.content.isEmpty || thinking == nil {
+                return .text(message.content)
+            }
+            return nil
+        }()
+
+        if !Streaming.streaming {
+            // Non-streaming: parseNonStreamingResponse consumes only .first, so a
+            // single assistant message must carry the answer/tool with reasoning
+            // folded in as a scalar (matching the modern/DeepSeek non-streaming
+            // shape). Emitting a separate LEADING reasoning message would make
+            // .first an empty reasoning attachment and drop the real answer/tool.
+            return [LLM.Message(responseID: nil,
+                                role: .assistant,
+                                body: primaryBody ?? .text(message.content),
+                                reasoningContent: thinking)]
+        }
+
+        // Streaming: AITerm iterates every choice, so reasoning arrives as its own
+        // delta message and renders live via the reasoningSummaryUpdate path.
         var messages = [LLM.Message]()
-        // Surface Ollama's native `thinking` via the reasoningSummaryUpdate
-        // status path (same as DeepSeek/OpenAI) so the chat renders it, and stash
-        // it on reasoningContent so the accumulator in AITerm.swift can fold it
-        // into the final assistant turn.
-        if let thinking = message.thinking, !thinking.isEmpty {
+        if let thinking {
             var msg = LLM.Message(
                 role: .assistant,
                 body: .attachment(.init(
@@ -102,20 +132,8 @@ extension LlamaResponse: LLM.AnyResponse {
             msg.reasoningContent = thinking
             messages.append(msg)
         }
-        if let toolCall = message.tool_calls?.first {
-            messages.append(LLM.Message(
-                responseID: nil,
-                role: .assistant,
-                body: .functionCall(
-                    .init(
-                        name: toolCall.function.name,
-                        arguments: try? JSONEncoder().encode(
-                            toolCall.function.arguments).lossyString),
-                    id: nil)))
-        } else if messages.isEmpty || !message.content.isEmpty {
-            messages.append(LLM.Message(responseID: nil,
-                                        role: .assistant,
-                                        body: .text(message.content)))
+        if let primaryBody {
+            messages.append(LLM.Message(responseID: nil, role: .assistant, body: primaryBody))
         }
         return messages
     }
@@ -192,6 +210,10 @@ struct LlamaBodyRequestBuilder {
     // and can force a CPU fallback on a small machine.
     private static let numCtxHeadroom = 256
     private static let minNumCtx = 4096
+    // Below this many tokens of room left inside num_ctx, the response would be
+    // uselessly short (or a degenerate single token), so the prompt is treated as
+    // too large rather than sent with a silently truncated context.
+    private static let minResponseBudget = 128
     // Cap the response space reserved inside num_ctx. Terminal-assistant answers
     // fit comfortably; without a cap a model whose maxResponseTokens equals its
     // context window would always request the full window.
@@ -225,12 +247,15 @@ struct LlamaBodyRequestBuilder {
 
     private static func estimatedPromptTokens(messages: [CompletionsMessage],
                                               tools: [LlamaFunctionDeclaration]?) -> Int {
-        let encoder = JSONEncoder()
-        var text = (try? encoder.encode(messages).lossyString) ?? ""
-        if let tools, let data = try? encoder.encode(tools) {
-            text += data.lossyString
+        // Reuse CompletionsMessage.approximateTokenCount rather than
+        // re-serializing the whole (potentially multi-hundred-KB) prompt to a
+        // JSON string just to feed tokens(in:). Only the small tools array is
+        // encoded.
+        var total = messages.map { $0.approximateTokenCount }.reduce(0, +)
+        if let tools, let data = try? JSONEncoder().encode(tools) {
+            total += AIMetadata.instance.tokens(in: data.lossyString)
         }
-        return AIMetadata.instance.tokens(in: text)
+        return total
     }
 
     // Llama doesn't like multiple text parts.
@@ -298,9 +323,19 @@ struct LlamaBodyRequestBuilder {
         let numCtx = Self.computedNumCtx(promptTokens: promptTokens,
                                          numPredict: numPredict,
                                          contextWindow: provider.model.contextWindowTokens)
+        // If the prompt leaves no room for a usable response inside num_ctx, the
+        // request is too large for this model's window (or for a too-small
+        // ollamaNumCtx override). The numPredict<2 guard above misses this because
+        // it budgets against the AI token-limit pref, which is independent of the
+        // model's contextWindowTokens. Fail loudly instead of sending num_predict:1
+        // with a truncated prompt and a silent one-token reply.
+        let responseBudget = numCtx - promptTokens
+        if responseBudget < Self.minResponseBudget {
+            throw AIError.requestTooLarge
+        }
         // Never let num_predict exceed the room left in the window, or Ollama
         // truncates the answer mid-stream once generation reaches num_ctx.
-        let effectiveNumPredict = max(1, min(numPredict, numCtx - promptTokens - 64))
+        let effectiveNumPredict = max(1, min(numPredict, responseBudget - 64))
 
         let keepAliveSetting = iTermAdvancedSettingsModel.ollamaKeepAlive()
         let keepAlive = (keepAliveSetting?.isEmpty ?? true) ? nil : keepAliveSetting
@@ -316,7 +351,7 @@ struct LlamaBodyRequestBuilder {
         // Request body carries the user's prompts/messages; keep it out of the ring.
         RLog("REQUEST:\n\(redacted: body)")
         let bodyEncoder = JSONEncoder()
-        let bodyData = try! bodyEncoder.encode(body)
+        let bodyData = try bodyEncoder.encode(body)
         return try ChatBlobAssembler.spliceFrozenHistory(
             frozenHistoryElements, into: bodyData, arrayKey: "messages",
             afterCount: messages.filter { $0.role == .system }.count)
