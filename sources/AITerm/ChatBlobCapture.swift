@@ -205,7 +205,8 @@ enum ChatBlobCapture {
                                 role: .user,  // a round leads with a user message
                                 payload: payload,
                                 responseID: responseID,
-                                tokenCount: tokenCountForSingleRound)
+                                tokenCount: tokenCountForSingleRound,
+                                wireFormatVersion: ChatBlob.currentWireFormatVersion(for: api))
             if database.appendBlob(blob) != nil {
                 appended += 1
             } else {

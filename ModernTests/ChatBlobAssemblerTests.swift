@@ -214,6 +214,38 @@ final class ChatBlobAssemblerTests: XCTestCase {
                        "truncated blob replay must equal the live builder fed the truncated history")
     }
 
+    // MARK: - wire-format versioning (stale-format refusal)
+
+    // A .llama blob frozen under an OLDER wire format (version 0) must be REFUSED
+    // for replay even though its protocol still matches, because the frozen bytes
+    // are not valid under the current native /api/chat shape. Without the version
+    // gate, safeBlobsForReplay accepts it (protocol matches) and splices
+    // incompatible bytes into a native request.
+    func test_safeBlobsForReplay_refusesStaleWireFormatVersion() throws {
+        let db = try makeTempDB()
+        let stale = ChatBlob(chatID: "A", blobProtocol: .llama, role: .user,
+                             payload: Data("[{\"role\":\"user\",\"content\":\"hi\"}]".utf8),
+                             wireFormatVersion: 0)
+        XCTAssertNotNil(db.appendBlob(stale))
+        XCTAssertNil(ChatBlobAssembler.safeBlobsForReplay(chatID: "A",
+                                                          expectedProtocol: .llama,
+                                                          database: db),
+                     "a stale-wire-format .llama blob must be refused so it is re-frozen, not replayed")
+    }
+
+    // A .llama blob frozen under the CURRENT wire format is replayable.
+    func test_safeBlobsForReplay_acceptsCurrentWireFormatVersion() throws {
+        let db = try makeTempDB()
+        let current = ChatBlob(chatID: "A", blobProtocol: .llama, role: .user,
+                               payload: Data("[{\"role\":\"user\",\"content\":\"hi\"}]".utf8),
+                               wireFormatVersion: ChatBlob.currentWireFormatVersion(for: .llama))
+        XCTAssertNotNil(db.appendBlob(current))
+        XCTAssertNotNil(ChatBlobAssembler.safeBlobsForReplay(chatID: "A",
+                                                             expectedProtocol: .llama,
+                                                             database: db),
+                        "a current-wire-format .llama blob must be replayable")
+    }
+
     // MARK: - forkBlobPrefix (fork blob inheritance)
 
     private func blob(_ chatID: String) -> ChatBlob {
