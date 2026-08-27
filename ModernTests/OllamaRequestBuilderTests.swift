@@ -160,6 +160,56 @@ final class OllamaRequestBuilderTests: XCTestCase {
                         "keep_alive must be sent to keep the model resident and avoid cold-reload latency")
     }
 
+    // MARK: - native tool round-trip
+
+    // Ollama's /api/chat honors a tool RESULT only as
+    // {"role":"tool","tool_name":...}; the legacy OpenAI {"role":"function",
+    // "name":...} shape is silently ignored, so the model never sees the tool
+    // output. (Verified live: legacy -> model confabulates a different answer;
+    // native -> model echoes the real value.)
+    func test_toolResult_serializesAsNativeToolRole() throws {
+        let messages = [
+            LLM.Message(role: .user, content: "get a word"),
+            LLM.Message(role: .assistant,
+                        body: .functionCall(.init(name: "get_random_word", arguments: "{}"), id: nil)),
+            // name + content builds a .functionOutput body.
+            LLM.Message(role: .user, content: "zzq-42", name: "get_random_word"),
+        ]
+        let json = try body(shouldThink: nil, messages: messages)
+        let msgs = try XCTUnwrap(json["messages"] as? [[String: Any]])
+        let toolMsg = try XCTUnwrap(msgs.last)
+        XCTAssertEqual(toolMsg["role"] as? String, "tool",
+                       "tool result must use role:tool; body=\(toolMsg)")
+        XCTAssertEqual(toolMsg["tool_name"] as? String, "get_random_word")
+        XCTAssertEqual(toolMsg["content"] as? String, "zzq-42")
+        XCTAssertNil(toolMsg["name"],
+                     "must not emit the legacy function `name` field Ollama ignores")
+    }
+
+    // The assistant tool-call turn must round-trip as native tool_calls (no id;
+    // Ollama returns tool_calls without ids), not the legacy function_call field.
+    func test_toolCall_assistantTurn_usesNativeToolCalls() throws {
+        let messages = [
+            LLM.Message(role: .user, content: "get weather"),
+            LLM.Message(role: .assistant,
+                        body: .functionCall(.init(name: "get_weather", arguments: "{\"city\":\"Paris\"}"), id: nil)),
+        ]
+        let json = try body(shouldThink: nil, messages: messages)
+        let msgs = try XCTUnwrap(json["messages"] as? [[String: Any]])
+        let assistant = try XCTUnwrap(msgs.last)
+        let toolCalls = try XCTUnwrap(assistant["tool_calls"] as? [[String: Any]],
+                                      "assistant tool call must serialize as tool_calls; body=\(assistant)")
+        XCTAssertNil(assistant["function_call"],
+                     "native Ollama uses tool_calls, not the legacy function_call field")
+        let function = try XCTUnwrap(toolCalls.first?["function"] as? [String: Any])
+        // arguments must be a JSON OBJECT, not a JSON-in-a-string. Ollama 400s on
+        // a string ("Value looks like object, but can't find closing '}'").
+        let arguments = function["arguments"]
+        XCTAssertTrue(arguments is [String: Any],
+                      "arguments must be an object, not a string; got \(String(describing: arguments))")
+        XCTAssertEqual((arguments as? [String: Any])?["city"] as? String, "Paris")
+    }
+
     // MARK: - blob-replay compatibility
 
     // The messages array must keep collapsing a single text part to a plain

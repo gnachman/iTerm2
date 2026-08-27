@@ -272,8 +272,12 @@ struct LlamaBodyRequestBuilder {
 
         let llamaMessages = messages.compactMap {
             CompletionsMessage($0)
-        }.map {
-            Self.joinText($0)
+        }.map { message -> CompletionsMessage in
+            var m = Self.joinText(message)
+            // Emit tool messages in Ollama's native shape (role:tool/tool_name,
+            // idless tool_calls); non-tool messages are unaffected.
+            m.ollamaToolFormat = true
+            return m
         }
 
         let numPredict = provider.maxTokens(functions: functions, messages: messages)

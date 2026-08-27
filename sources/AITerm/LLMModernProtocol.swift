@@ -29,6 +29,15 @@ struct CompletionsMessage: Codable, Equatable {
     // wire we use a separate single-case ReasoningKey in init(from:).
     var reasoning_content: String?
 
+    // Native Ollama /api/chat needs tool messages in a different shape than the
+    // OpenAI-compatible one: a tool RESULT is {role:"tool", tool_name, content}
+    // and a tool CALL is tool_calls with no id (Ollama returns tool_calls without
+    // ids and ignores the legacy {role:"function", name:...} result shape). Set by
+    // LlamaBodyRequestBuilder so only the .llama path diverges; false everywhere
+    // else keeps the OpenAI-compatible encoding byte-identical. Not in CodingKeys,
+    // so it never serializes and never reads off the wire.
+    var ollamaToolFormat: Bool = false
+
     struct ToolCall: Codable, Equatable {
         var index: Int?
         var id: String?
@@ -55,6 +64,7 @@ struct CompletionsMessage: Codable, Equatable {
         case function_call
         case tool_calls
         case tool_call_id
+        case tool_name  // native Ollama tool-result key; see ollamaToolFormat
     }
 
     // Read-only side channel for DeepSeek's reasoning_content. Kept out of
@@ -81,6 +91,13 @@ struct CompletionsMessage: Codable, Equatable {
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
+
+        // Native Ollama diverges only for tool messages; a non-tool message
+        // (regular text/attachment) returns false here and falls through to the
+        // shared encoding below, so it stays byte-identical across vendors.
+        if ollamaToolFormat, try encodeOllamaToolMessage(into: &container) {
+            return
+        }
 
         // Modern format requires role="tool" with tool_call_id for function
         // outputs; legacy used role="function" with name. Pick based on
@@ -113,6 +130,57 @@ struct CompletionsMessage: Codable, Equatable {
 
         if let tool_call_id {
             try container.encode(tool_call_id, forKey: .tool_call_id)
+        }
+    }
+
+    /// Native Ollama /api/chat encoding for a tool message. Returns true if this
+    /// was a tool message and got encoded here; false for anything else so the
+    /// caller falls through to the shared OpenAI-compatible encoding.
+    private func encodeOllamaToolMessage(
+        into container: inout KeyedEncodingContainer<CodingKeys>) throws -> Bool {
+        // Tool RESULT: init sets functionName (not tool_call_id) because Ollama's
+        // tool_calls carry no id, and there is no assistant call slot on it.
+        if function_call == nil, tool_calls == nil, let functionName, let content {
+            try container.encode("tool", forKey: .role)
+            try container.encode(functionName, forKey: .tool_name)
+            try container.encode(content, forKey: .content)
+            return true
+        }
+        // Tool CALL captured in the legacy function_call slot (again, Ollama gave
+        // no id): re-emit as native tool_calls with no id. Ollama requires
+        // function.arguments to be a JSON OBJECT, not the JSON-in-a-string that
+        // FunctionCall.arguments holds (a string 400s: "Value looks like object,
+        // but can't find closing '}'"), so decode it to a map here.
+        if let function_call, tool_calls == nil {
+            try container.encode(LLM.Role.assistant, forKey: .role)
+            try container.encode([OllamaToolCall(function_call)], forKey: .tool_calls)
+            try container.encodeIfPresent(content, forKey: .content)
+            return true
+        }
+        return false
+    }
+
+    // A native Ollama assistant tool call: {type:"function", function:{name,
+    // arguments}} where arguments is a JSON object decoded from the stored
+    // arguments string (empty object when absent or unparseable).
+    private struct OllamaToolCall: Encodable {
+        var type = "function"
+        var function: Function
+
+        struct Function: Encodable {
+            var name: String?
+            var arguments: [String: AnyCodable]
+        }
+
+        init(_ call: LLM.FunctionCall) {
+            let arguments: [String: AnyCodable]
+            if let data = call.arguments?.data(using: .utf8),
+               let decoded = try? JSONDecoder().decode([String: AnyCodable].self, from: data) {
+                arguments = decoded
+            } else {
+                arguments = [:]
+            }
+            function = Function(name: call.name, arguments: arguments)
         }
     }
 

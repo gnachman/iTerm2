@@ -22,9 +22,10 @@
 //
 //    LLAMA_API_KEY=ollama tools/run_ai_live.sh ollama
 //
-//  The test model is qwen3.5:35b: it advertises thinking + tools + a large
-//  context, so one model covers every dimension. Override with
-//  ITERM2_AI_LIVE_OLLAMA_MODEL if you have a different thinking-capable tag.
+//  The test model is qwen3.5:4b: small enough to run without swapping, and it
+//  advertises thinking + tools + vision so one model covers every dimension.
+//  Override by adding an OLLAMA_MODEL entry to the live-harness config if you
+//  have a different thinking-capable tag pulled.
 //
 
 import XCTest
@@ -54,7 +55,7 @@ extension AILiveHarness {
     }
 
     private var ollamaModelName: String {
-        ollamaConfig()?["OLLAMA_MODEL"] ?? "qwen3.5:35b"
+        ollamaConfig()?["OLLAMA_MODEL"] ?? "qwen3.5:4b"
     }
 
     /// Hit /api/tags to confirm the server is up and the model is pulled;
@@ -211,16 +212,6 @@ extension AILiveHarness {
     // MARK: - tool calling
 
     func test_ollama_toolCall_roundTrip() throws {
-        // KNOWN GAP (tracked; fix is the next commit): the tool CALL works, but
-        // native Ollama expects a tool RESULT as {"role":"tool","tool_name":...};
-        // iTerm still emits the legacy OpenAI {"role":"function","name":...} shape
-        // because Ollama returns tool_calls with no id. Ollama silently ignores
-        // the legacy shape, so the model never sees the tool output and
-        // confabulates a different answer. Verified by curl: legacy shape -> model
-        // makes up a word; native shape -> model echoes the real value. Remove
-        // this skip once LlamaBodyRequestBuilder serializes tool results natively.
-        try XCTSkipIf(true, "native Ollama tool-result serialization (role=tool/tool_name) not yet implemented; tool CALL works, result round-trip is the next commit")
-
         let token = "zzq-ollama-tool-42"
         let decl = ChatGPTFunctionDeclaration(
             name: "get_random_word",
