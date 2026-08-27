@@ -51,6 +51,7 @@ static NSString *const kAIManualModelHostedFileSearchKey = @"hostedFileSearch";
 static NSString *const kAIManualModelHostedWebSearchKey = @"hostedWebSearch";
 static NSString *const kAIManualModelFunctionCallingKey = @"functionCalling";
 static NSString *const kAIManualModelStreamingKey = @"streaming";
+static NSString *const kAIManualModelVisionKey = @"vision";
 static NSString *const kAIManualModelVectorStoreKey = @"vectorStore";
 static NSString *const kAIManualModelSupportsTemperatureKey = @"supportsTemperature";
 static NSString *const kAIManualModelConfigurableThinkingKey = @"configurableThinking";
@@ -727,6 +728,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSArray<NSDictionary *> *features = @[
         @{ @"title": NSLocalizedStringWithDefaultValue(@"AIModelEditor.FeatureFunctionCalling", nil, [NSBundle mainBundle], @"Function calling", @"Checkbox label for the function-calling model feature"), @"key": kAIManualModelFunctionCallingKey },
         @{ @"title": NSLocalizedStringWithDefaultValue(@"AIModelEditor.FeatureStreamingResponses", nil, [NSBundle mainBundle], @"Streaming responses", @"Checkbox label for the streaming-responses model feature"), @"key": kAIManualModelStreamingKey },
+        @{ @"title": NSLocalizedStringWithDefaultValue(@"AIModelEditor.FeatureVision", nil, [NSBundle mainBundle], @"Vision (image input)", @"Checkbox label for the vision (image input) model feature"), @"key": kAIManualModelVisionKey },
         @{ @"title": NSLocalizedStringWithDefaultValue(@"AIModelEditor.FeatureHostedWebSearch", nil, [NSBundle mainBundle], @"Hosted web search", @"Checkbox label for the hosted web search model feature"), @"key": kAIManualModelHostedWebSearchKey },
         @{ @"title": NSLocalizedStringWithDefaultValue(@"AIModelEditor.FeatureHostedFileSearch", nil, [NSBundle mainBundle], @"Hosted file search", @"Checkbox label for the hosted file search model feature"), @"key": kAIManualModelHostedFileSearchKey },
         @{ @"title": NSLocalizedStringWithDefaultValue(@"AIModelEditor.FeatureHostedCodeInterpreter", nil, [NSBundle mainBundle], @"Hosted code interpreter", @"Checkbox label for the hosted code interpreter model feature"), @"key": kAIManualModelHostedCodeInterpreterKey }

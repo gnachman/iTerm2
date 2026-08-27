@@ -22,6 +22,7 @@ class LLMMetadata: NSObject {
         static let vectorStore = "vectorStore"
         static let supportsTemperature = "supportsTemperature"
         static let configurableThinking = "configurableThinking"
+        static let vision = "vision"
         static let customHeaders = "customHeaders"
     }
 
@@ -268,6 +269,9 @@ class LLMMetadata: NSObject {
         }
         if bool(configuration, key: ManualModelKey.hostedCodeInterpreter) {
             features.insert(.hostedCodeInterpreter)
+        }
+        if bool(configuration, key: ManualModelKey.vision) {
+            features.insert(.vision)
         }
         var model = AIMetadata.Model(
             name: name,

@@ -29,6 +29,7 @@
 //
 
 import XCTest
+import AppKit
 @testable import iTerm2SharedARC
 
 extension AILiveHarness {
@@ -331,6 +332,47 @@ extension AILiveHarness {
         XCTAssertTrue(calls.contains(9), "add did not receive 4,5 (sums: \(calls))")
         XCTAssertTrue(result.finalText.contains("9"),
                       "final answer lost the tool result under thinking; text: \(result.finalText)")
+    }
+
+    // MARK: - vision
+
+    private func solidColorPNG(_ color: NSColor, size: Int = 96) -> Data {
+        let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: size, pixelsHigh: size,
+                                   bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
+                                   isPlanar: false, colorSpaceName: .deviceRGB,
+                                   bytesPerRow: 0, bitsPerPixel: 0)!
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        color.setFill()
+        NSRect(x: 0, y: 0, width: size, height: size).fill()
+        NSGraphicsContext.restoreGraphicsState()
+        return rep.representation(using: .png, properties: [:]) ?? Data()
+    }
+
+    // Native Ollama vision (message.images[]) against a vision-capable model.
+    // A solid red image; the model must identify the color, proving the image
+    // reached it in the native shape.
+    func test_ollama_vision_describesImage() throws {
+        let apiKey = try ollamaKeyOrSkip()
+        var model = try ollamaModel()
+        model.features = [.streaming, .vision]
+        try requireReachableOllama(model: model.name)
+
+        let png = solidColorPNG(.red)
+        XCTAssertFalse(png.isEmpty, "failed to render test image")
+        let attachment = LLM.Message.Attachment(
+            inline: true, id: "red",
+            type: .file(.init(name: "red.png", content: png, mimeType: "image/png", localPath: nil)))
+        let messages = [LLM.Message(responseID: nil, role: .user,
+                                    body: .multipart([
+                                        .text("What is the single dominant color in this image? Answer with just the color name."),
+                                        .attachment(attachment)]))]
+        let result = try AILiveDriver.run(model: model, apiKey: apiKey, messages: messages,
+                                          streaming: false,
+                                          function: Optional<AILiveFunctionSpec<EmptyArgs>>.none,
+                                          scenarioTag: "vision", timeout: 240, test: self)
+        XCTAssertTrue(result.finalText.lowercased().contains("red"),
+                      "vision model did not identify the red image; got: \(result.finalText)")
     }
 
     // MARK: - smoke (both transports)

@@ -274,6 +274,45 @@ final class OllamaRequestBuilderTests: XCTestCase {
                       "typed argument b=5 was lost: \(arguments)")
     }
 
+    // MARK: - vision (native images[])
+
+    // An image attachment must serialize as Ollama's native message.images array
+    // of raw base64, with the prompt text as `content` and NO OpenAI image_url
+    // block (which /api/chat does not accept).
+    func test_imageAttachment_serializesAsNativeImagesArray() throws {
+        let bytes = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A])  // PNG-ish bytes
+        let attachment = LLM.Message.Attachment(
+            inline: true, id: "img",
+            type: .file(.init(name: "x.png", content: bytes, mimeType: "image/png", localPath: nil)))
+        let messages = [LLM.Message(responseID: nil, role: .user,
+                                    body: .multipart([.text("What is this?"), .attachment(attachment)]))]
+        let json = try body(shouldThink: nil, messages: messages)
+        let msgs = try XCTUnwrap(json["messages"] as? [[String: Any]])
+        let user = try XCTUnwrap(msgs.last)
+        let images = try XCTUnwrap(user["images"] as? [String],
+                                   "native Ollama vision message must carry images[]; got \(user)")
+        XCTAssertEqual(images.first, bytes.base64EncodedString(),
+                       "images[] must be raw base64, not a data: URL")
+        XCTAssertEqual(user["content"] as? String, "What is this?")
+        let wholeBody = String(decoding: try JSONSerialization.data(withJSONObject: json), as: UTF8.self)
+        XCTAssertFalse(wholeBody.contains("image_url"),
+                       "must not emit the OpenAI image_url block on the native path")
+    }
+
+    // Image attachments are gated on the model's Vision capability, since a local
+    // runner's capability can't be inferred from the host.
+    func test_visionGate_onlyAcceptsImagesWhenVisionEnabled() throws {
+        var noVision = try ollamaModel()
+        noVision.features = [.streaming]
+        XCTAssertFalse(LLMProvider(model: noVision).accepts(mimeType: "image/png"),
+                       "a non-vision Ollama model must refuse images")
+
+        var vision = try ollamaModel()
+        vision.features = [.streaming, .vision]
+        XCTAssertTrue(LLMProvider(model: vision).accepts(mimeType: "image/png"),
+                      "a vision Ollama model must accept images")
+    }
+
     // MARK: - non-streaming thinking (answer/tool must survive)
 
     // parseNonStreamingResponse consumes only choiceMessages.first, so on the

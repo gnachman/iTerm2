@@ -159,6 +159,10 @@ class AIMetadata: NSObject {
             case hostedWebSearch // Can perform web searches (e.g., via a built-in tool).
             case hostedCodeInterpreter
             case configurableThinking
+            case vision // Accepts inline image input. Used to gate image
+                        // attachments for self-hosted models (e.g. an Ollama
+                        // vision model), where capability can't be inferred from
+                        // the host the way it can for OpenAI/Anthropic/Google.
         }
         var features: Set<Feature>
 

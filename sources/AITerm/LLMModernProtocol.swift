@@ -65,6 +65,7 @@ struct CompletionsMessage: Codable, Equatable {
         case tool_calls
         case tool_call_id
         case tool_name  // native Ollama tool-result key; see ollamaToolFormat
+        case images     // native Ollama vision: message.images = [<base64>, ...]
     }
 
     // Read-only side channel for DeepSeek's reasoning_content. Kept out of
@@ -95,8 +96,13 @@ struct CompletionsMessage: Codable, Equatable {
         // Native Ollama diverges only for tool messages; a non-tool message
         // (regular text/attachment) returns false here and falls through to the
         // shared encoding below, so it stays byte-identical across vendors.
-        if ollamaToolFormat, try encodeOllamaToolMessage(into: &container) {
-            return
+        if ollamaToolFormat {
+            if try encodeOllamaToolMessage(into: &container) {
+                return
+            }
+            if try encodeOllamaImageMessage(into: &container) {
+                return
+            }
         }
 
         // Modern format requires role="tool" with tool_call_id for function
@@ -182,6 +188,43 @@ struct CompletionsMessage: Codable, Equatable {
             }
             function = Function(name: call.name, arguments: arguments)
         }
+    }
+
+    /// Native Ollama /api/chat vision encoding. Ollama takes images as a separate
+    /// message.images array of raw base64 strings, NOT as OpenAI image_url content
+    /// parts. If this message's content array carries any image, emit
+    /// {role, content: <joined text>, images: [<base64>...]} and return true;
+    /// otherwise return false so a plain message falls through unchanged.
+    private func encodeOllamaImageMessage(
+        into container: inout KeyedEncodingContainer<CodingKeys>) throws -> Bool {
+        guard case .array(let parts) = content else {
+            return false
+        }
+        let images: [String] = parts.compactMap { part in
+            guard case .imageURL(let image) = part else { return nil }
+            return Self.base64Payload(ofDataURL: image.url)
+        }
+        guard !images.isEmpty else {
+            return false
+        }
+        let text = parts.compactMap { part -> String? in
+            if case .text(let t) = part { return t.text }
+            return nil
+        }.joined(separator: "\n")
+
+        try container.encode(role, forKey: .role)
+        try container.encode(Content.string(text), forKey: .content)
+        try container.encode(images, forKey: .images)
+        return true
+    }
+
+    // "data:<mime>;base64,<payload>" -> "<payload>". Falls back to the whole
+    // string if it isn't a data URL (Ollama wants bare base64, not a data URL).
+    private static func base64Payload(ofDataURL url: String) -> String {
+        guard url.hasPrefix("data:"), let comma = url.firstIndex(of: ",") else {
+            return url
+        }
+        return String(url[url.index(after: comma)...])
     }
 
     var approximateTokenCount: Int {

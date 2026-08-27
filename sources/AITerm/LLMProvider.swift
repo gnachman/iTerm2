@@ -247,6 +247,13 @@ struct LLMProvider {
     // support here for free. Image-shaped MIMEs that are really text
     // (image/svg+xml) are handled by the textual branch of accepts() first.
     var supportsInlineImageBlock: Bool {
+        // Native Ollama can carry images (message.images[]), but capability is
+        // model-specific for a local runner and can't be inferred from the host,
+        // so gate it on the model's declared Vision feature (the manual editor
+        // checkbox). The cloud hosts stay serializer-capability gated.
+        if model.api == .llama {
+            return model.features.contains(.vision)
+        }
         let url = URL(string: model.url)
         return LLMMetadata.hostIsAnthropicAIAPI(url: url)
             || LLMMetadata.hostIsGoogleAIAPI(url: url)
