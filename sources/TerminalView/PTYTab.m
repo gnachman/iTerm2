@@ -1739,6 +1739,23 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [hiddenLiveViews_ addObject:oldView];
     [parentSplit replaceSubview:oldView with:newView];
 
+    // If the tab is maximized, root_'s single slot now holds the synthetic
+    // newView, but idMap_ still references the live oldView. Mirror
+    // -showLiveSession:inPlaceOf: and remap idMap_ so the maximized slot's view
+    // is the one idMap_ knows about. Otherwise -removeSession: for the synthetic
+    // would skip its unmaximize guard (view not in idMap_) yet still pull the
+    // view out of root_, emptying it while isMaximized_ stays YES and crashing a
+    // later -unmaximize. The loop is a no-op when not maximized (idMap_ is nil).
+    // See issue 12992.
+    for (NSNumber *key in idMap_) {
+        if (idMap_[key] == oldView) {
+            idMap_[key] = newView;
+            // Copy the saved size so unmaximize restores to the correct pre-maximize size.
+            [newView setSavedSize:oldView.savedSize];
+            break;
+        }
+    }
+
     // NOTE: We set newView.frame to oldView.frame above. If they are equal in
     // size then -resizeSubviewsWithOldSize: does not fire, so the synthetic
     // session's scrollview frame is NOT re-fit to the new view here. That leaves a
@@ -2225,10 +2242,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)removeSession:(PTYSession*)aSession {
     SessionView *theView = aSession.view;
 
-    // Only unmaximize if the session's view is actually in idMap_. When a synthetic session
-    // (e.g., filter) is terminated, its view may have already been replaced by the live session's
-    // view in idMap_, so we shouldn't unmaximize in that case.
-    if (idMap_ && [[idMap_ allValues] containsObject:theView]) {
+    // Unmaximize if the session's view is in idMap_ (the normal maximized case,
+    // where every pane's view is in idMap_). Also unmaximize if the view being
+    // removed currently occupies the maximized root_ slot even when it is not in
+    // idMap_ (e.g. a synthetic filter/instant-replay view swapped into root_
+    // after maximize): otherwise the removal below would empty root_ while
+    // isMaximized_ stays YES, corrupting the maximize invariant and crashing a
+    // later -unmaximize. When a synthetic session has already been swapped back
+    // to the live view in idMap_ (see -showLiveSession:inPlaceOf:), neither
+    // condition holds and we correctly skip unmaximize. See issue 12992.
+    if (idMap_ && ([[idMap_ allValues] containsObject:theView] ||
+                   [[root_ subviews] firstObject] == theView)) {
         [self unmaximize];
     }
     PtyLog(@"PTYTab removeSession:%p", aSession);
@@ -3421,6 +3445,19 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)replaceWithContentsOfTab:(PTYTab *)tabToGut {
+    // This rewrites root_'s subviews wholesale (below). If either tab is
+    // maximized, its root_ holds only the zoomed view with the rest parked in
+    // idMap_, and isMaximized_/idMap_/savedArrangement_ describe a layout this
+    // rewrite would invalidate, leaving root_'s subview count != 1 and crashing
+    // a later -unmaximize (including during teardown). Restore both tabs to
+    // their full trees first, matching the pattern in -swapSession:*. See issue
+    // 12992.
+    if (isMaximized_) {
+        [self unmaximize];
+    }
+    if (tabToGut->isMaximized_) {
+        [tabToGut unmaximize];
+    }
     for (PTYSession *aSession in [tabToGut sessions]) {
         aSession.delegate = self;
     }
@@ -5193,6 +5230,15 @@ typedef struct {
 
 - (void)replaceViewHierarchyWithParseTree:(NSMutableDictionary *)parseTree
                            tmuxController:(TmuxController *)tmuxController {
+    // This reads [self sessions] (idMap_-backed while maximized) and rebuilds
+    // root_ via -setRoot:, terminating the leftover sessions. It is only correct
+    // when not maximized; its sole caller (-setTmuxLayout:...) unmaximizes first.
+    // Assert to catch any future or re-entrant caller that reaches here while
+    // maximized, which would terminate every parked pane and corrupt root_. See
+    // issue 12992.
+    ITAssertWithMessage(!isMaximized_,
+                        @"replaceViewHierarchyWithParseTree while maximized (idMap_ has %@ entries)",
+                        @(idMap_.count));
     SessionView *nearestNeighbor = [self nearestNeighborOfSession:self.activeSession];
 
     NSMutableDictionary *arrangement = [NSMutableDictionary dictionary];
@@ -5594,17 +5640,35 @@ typedef struct {
 }
 
 - (void)unmaximize {
-    assert(savedArrangement_);
-    assert(idMap_);
-    assert(isMaximized_);
+    ITAssertWithMessage(savedArrangement_, @"unmaximize with nil savedArrangement_");
+    ITAssertWithMessage(idMap_, @"unmaximize with nil idMap_");
+    ITAssertWithMessage(isMaximized_, @"unmaximize while not maximized");
 
-    // Pull the formerly maximized sessionview out of the old root.
-    assert([[root_ subviews] count] == 1);
-    SessionView* formerlyMaximizedSessionView = [[root_ subviews] objectAtIndex:0];
+    // A properly maximized tab always has exactly one subview in root_. A
+    // different count means some view-hierarchy mutation corrupted the maximize
+    // invariant without going through the unmaximize/maximize dance. We do not
+    // expect this to happen (see issue 12992 fixes), but if it does, recover by
+    // rebuilding from idMap_/savedArrangement_ below rather than crashing.
+    // ITCriticalError captures a debug log and prompts the user to send it so the
+    // corrupter can be found, while letting the app keep running.
+    const NSUInteger rootSubviewCount = [[root_ subviews] count];
+    ITCriticalError(rootSubviewCount == 1,
+                    @"unmaximize: root_ has %@ subviews, expected 1. idMap_ has %@ entries. %@",
+                    @(rootSubviewCount), @(idMap_.count), self);
+    if (rootSubviewCount == 1) {
+        // Pull the formerly maximized sessionview out of the old root.
+        SessionView* formerlyMaximizedSessionView = [[root_ subviews] objectAtIndex:0];
 
-    // I'm not convinced this is necessary but I'm afraid to remove it. idMap_ should hold refs to all SessionViews that matter.
-    [formerlyMaximizedSessionView removeFromSuperview];
-    [formerlyMaximizedSessionView setFrameSize:savedSize_];
+        // I'm not convinced this is necessary but I'm afraid to remove it. idMap_ should hold refs to all SessionViews that matter.
+        [formerlyMaximizedSessionView removeFromSuperview];
+        [formerlyMaximizedSessionView setFrameSize:savedSize_];
+    } else {
+        // Detach whatever root_ currently holds so nothing is double-parented
+        // when the rebuilt tree re-adds views from idMap_.
+        for (NSView *subview in [[root_ subviews] copy]) {
+            [subview removeFromSuperview];
+        }
+    }
 
     // Build a tree with splitters and SessionViews/PTYSessions from idMap.
     NSSplitView *newRoot = [PTYTab _recursiveRestoreSplitters:[savedArrangement_ objectForKey:TAB_ARRANGEMENT_ROOT]

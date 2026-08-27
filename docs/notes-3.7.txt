@@ -88,6 +88,10 @@ Major New Features:
   notified when it changes, so tools like vim
   and delta can adapt automatically.
 
+- Fixed a crash that could occur when a
+  maximized (zoomed) split pane was torn
+  down, such as when a tmux connection
+  dropped.
 - Fixed a bug where a profile whose custom
   working directory used a tilde (such as
   ~/www) wrongly reported the directory as
