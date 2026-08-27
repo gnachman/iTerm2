@@ -142,6 +142,40 @@ final class OllamaRequestBuilderTests: XCTestCase {
                              "a large prompt must raise num_ctx above the 4096 default so the prompt is not truncated, was \(numCtx)")
     }
 
+    // Blob-native replay splices the frozen history (all prior rounds) into the
+    // messages array AFTER num_ctx is computed. If the estimate omits that
+    // prefix, num_ctx is sized only for [system + latest round] and Ollama
+    // silently truncates the replayed history: the exact regression this feature
+    // exists to prevent, on the normal multi-turn path.
+    func test_numCtx_coversFrozenHistory() throws {
+        // ~50k tokens of frozen prior rounds, spliced after the system message.
+        // Plain letters/spaces so the JSON needs no escaping.
+        let bigContent = String(repeating: "frozen history token content here ", count: 6_000)
+        let frozen = Data("{\"role\":\"user\",\"content\":\"\(bigContent)\"}".utf8)
+
+        let model = try ollamaModel(contextWindow: 262_144, maxResponse: 8_192)
+        let builder = LLMRequestBuilder(
+            provider: LLMProvider(model: model),
+            apiKey: "test-key",
+            messages: [LLM.Message(role: .system, content: "S"),
+                       LLM.Message(role: .user, content: "hi")],
+            functions: [],
+            stream: false,
+            hostedTools: HostedTools(),
+            previousResponseID: nil,
+            shouldThink: nil,
+            reasoningEffort: nil,
+            serviceTier: nil,
+            trailingVolatileText: nil,
+            frozenHistoryElements: frozen)
+        let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: try builder.body()) as? [String: Any])
+        let numCtx = try XCTUnwrap((json["options"] as? [String: Any])?["num_ctx"] as? Int)
+
+        let frozenTokens = AIMetadata.instance.tokens(in: String(decoding: frozen, as: UTF8.self))
+        XCTAssertGreaterThan(numCtx, frozenTokens,
+                             "num_ctx (\(numCtx)) does not cover the spliced frozen history (~\(frozenTokens) tokens); Ollama will truncate it")
+    }
+
     // MARK: - options.num_predict
 
     func test_emitsNumPredict() throws {

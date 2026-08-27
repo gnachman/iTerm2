@@ -287,7 +287,14 @@ struct LlamaBodyRequestBuilder {
         // See the note about streaming function calling in Llama in AIMetadata.swift
         // #llama-streaming-functions
         let tools = stream ? nil : maybeDecls
-        let promptTokens = Self.estimatedPromptTokens(messages: llamaMessages, tools: tools)
+        // llamaMessages is only the CURRENT round. On the blob-native replay path
+        // the frozen prior rounds are spliced into `messages` below, AFTER this,
+        // so they must be counted here too or num_ctx is sized for just the latest
+        // round and Ollama silently truncates the replayed history.
+        var promptTokens = Self.estimatedPromptTokens(messages: llamaMessages, tools: tools)
+        if let frozenHistoryElements, !frozenHistoryElements.isEmpty {
+            promptTokens += AIMetadata.instance.tokens(in: frozenHistoryElements.lossyString)
+        }
         let numCtx = Self.computedNumCtx(promptTokens: promptTokens,
                                          numPredict: numPredict,
                                          contextWindow: provider.model.contextWindowTokens)
