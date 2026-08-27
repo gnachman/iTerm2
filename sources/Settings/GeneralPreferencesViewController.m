@@ -552,6 +552,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSMutableArray<NSMutableDictionary *> *_headers;
     NSMutableDictionary<NSString *, NSButton *> *_featureButtons;
     NSButton *_testButton;
+    NSButton *_fetchModelsButton;
     NSProgressIndicator *_testSpinner;
     NSDictionary *_result;
     BOOL (^_nameIsTaken)(NSString *name);
@@ -665,6 +666,22 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     y -= rowHeight + 8;
 
     _nameField = addTextField(NSLocalizedStringWithDefaultValue(@"AIModelEditor.ModelLabel", nil, [NSBundle mainBundle], @"Model:", @"Label for the model name field"), _base[kAIManualModelNameKey]);
+    // Shrink the Model field and add a button that lists the models installed on
+    // the server (Ollama /api/tags), so the user can pick instead of typing an
+    // exact tag. Harmless for non-Ollama endpoints (it just reports none found).
+    {
+        const CGFloat fetchWidth = 130;
+        NSRect nameFrame = _nameField.frame;
+        nameFrame.size.width -= (fetchWidth + 6);
+        _nameField.frame = nameFrame;
+        _fetchModelsButton = [NSButton buttonWithTitle:NSLocalizedStringWithDefaultValue(@"AIModelEditor.FetchModels", nil, [NSBundle mainBundle], @"Fetch Models", @"Button that lists models installed on the server")
+                                                target:self
+                                                action:@selector(fetchOllamaModels:)];
+        _fetchModelsButton.bezelStyle = NSBezelStyleRounded;
+        _fetchModelsButton.frame = NSMakeRect(NSMaxX(nameFrame) + 6, nameFrame.origin.y - 1,
+                                              fetchWidth, 24);
+        [content addSubview:_fetchModelsButton];
+    }
     _urlField = addTextField(NSLocalizedStringWithDefaultValue(@"AIModelEditor.URLLabel", nil, [NSBundle mainBundle], @"URL:", @"Label for the URL field"), _base[kAIManualModelURLKey]);
 
     addLabel(NSLocalizedStringWithDefaultValue(@"AIModelEditor.APILabel", nil, [NSBundle mainBundle], @"API:", @"Label for the API popup"));
@@ -1102,6 +1119,65 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     [self updateEditorAPIKeyHint];
     // The model name is required to save; nudge the user straight to it.
     [_window makeFirstResponder:_nameField];
+}
+
+- (void)fetchOllamaModels:(id)sender {
+    [_window makeFirstResponder:nil];
+    NSString *url =
+        [_urlField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+    if (url.length == 0) {
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = @"Missing URL";
+        alert.informativeText = @"Enter the server URL before fetching models.";
+        [alert beginSheetModalForWindow:_window completionHandler:^(NSModalResponse r) {}];
+        return;
+    }
+    NSButton *button = _fetchModelsButton;
+    NSString *savedTitle = button.title;
+    button.enabled = NO;
+    button.title = @"Fetching…";
+    __weak __typeof(self) weakSelf = self;
+    [iTermOllamaModelDiscovery fetchModelNamesFromEndpoint:url
+                                                   timeout:10
+                                                completion:^(NSArray<NSString *> *names, NSString *errorMessage) {
+        button.enabled = YES;
+        button.title = savedTitle;
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        if (errorMessage) {
+            NSAlert *alert = [[NSAlert alloc] init];
+            alert.messageText = @"Could Not Fetch Models";
+            alert.informativeText = errorMessage;
+            [alert beginSheetModalForWindow:strongSelf->_window completionHandler:^(NSModalResponse r) {}];
+            return;
+        }
+        [strongSelf presentOllamaModelMenu:names fromButton:button];
+    }];
+}
+
+- (void)presentOllamaModelMenu:(NSArray<NSString *> *)names fromButton:(NSButton *)button {
+    NSMenu *menu = [[NSMenu alloc] init];
+    for (NSString *name in names) {
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:name
+                                                      action:@selector(ollamaModelMenuItemSelected:)
+                                               keyEquivalent:@""];
+        item.target = self;
+        item.representedObject = name;
+        [menu addItem:item];
+    }
+    [menu popUpMenuPositioningItem:nil
+                        atLocation:NSMakePoint(0, NSHeight(button.bounds))
+                            inView:button];
+}
+
+- (void)ollamaModelMenuItemSelected:(NSMenuItem *)item {
+    NSString *name = item.representedObject;
+    if ([name isKindOfClass:NSString.class]) {
+        _nameField.stringValue = name;
+        [self updateEditorAPIKeyHint];
+    }
 }
 
 - (void)testClicked:(id)sender {

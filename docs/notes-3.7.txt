@@ -210,7 +210,10 @@ Major New Features:
   thinking off makes quick questions fast again.
   There is a new one-click “Ollama (native)”
   model preset, and the API type is now named
-  “Ollama.”
+  “Ollama.” The manual model editor has a Fetch
+  Models button that lists the models installed
+  on your Ollama server, and a Vision checkbox so
+  image-capable local models can accept images.
 
 - Claude Code integration was added. It enables
   the new Session Status feature for claude code
