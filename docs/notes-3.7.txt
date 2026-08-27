@@ -2687,3 +2687,8 @@ Bug Fixes:
   icon: drag it to another app to drag the
   session’s working directory, like the
   proxy icon in a window title bar.
+- Fixed a bug where a smooth-blinking cursor
+  passed through light gray while fading in
+  the GPU renderer instead of fading
+  directly to the background color. Issue
+  12990.

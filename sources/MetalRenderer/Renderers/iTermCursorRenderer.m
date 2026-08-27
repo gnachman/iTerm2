@@ -405,6 +405,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermUnderlineCursorRenderer
 
++ (iTermMetalBlending *)blending {
+    // Composite-source-over so a partial fadeAlpha (smooth blink) does not punch a
+    // hole in the destination alpha. The default straight-alpha blend uses
+    // OneMinusSourceAlpha on the alpha channel, which drops the target's opacity
+    // mid-fade and lets the backing bleed through in light mode. See the note on
+    // iTermBlockCursorRenderer.
+    return [iTermMetalBlending compositeSourceOver];
+}
+
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
 }
@@ -448,6 +457,12 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @implementation iTermBarCursorRenderer
+
++ (iTermMetalBlending *)blending {
+    // Preserve the destination alpha while fading. See the note on
+    // iTermBlockCursorRenderer.
+    return [iTermMetalBlending compositeSourceOver];
+}
 
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
@@ -517,6 +532,19 @@ static id<MTLBuffer> iTermNewVertexBufferWithBlockCursorQuad(iTermCursorRenderer
 
 
 @implementation iTermBlockCursorRenderer
+
+// Composite-source-over instead of the default straight-alpha blend. The default
+// blend's alpha channel uses (srcAlpha=SourceAlpha, dstAlpha=OneMinusSourceAlpha),
+// so filling the cell at a partial fadeAlpha (smooth blink) reduces the render
+// target's alpha to 1 - fade + fade^2 (min 0.75 at fade=0.5). That partial hole
+// lets a light backing show through mid-fade, so a fading black box appears to pass
+// through light gray in light mode instead of going straight to the background
+// color. compositeSourceOver keeps alpha at max(src, dst) = 1 while producing the
+// identical RGB result (applyFadeAlpha premultiplies the color for this blend mode),
+// so the fill stays opaque throughout the fade. Issue 12990.
++ (iTermMetalBlending *)blending {
+    return [iTermMetalBlending compositeSourceOver];
+}
 
 - (void)initializeTransientState:(iTermCursorRendererTransientState *)tState {
     [super initializeTransientState:tState];
