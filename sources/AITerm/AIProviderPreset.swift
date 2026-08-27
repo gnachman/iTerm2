@@ -24,6 +24,10 @@ class AIProviderPreset: NSObject {
     @objc let maxResponseTokens: Int
     @objc let functionCalling: Bool
     @objc let streaming: Bool
+    // Whether to preselect the "Configurable thinking" capability, so the chat's
+    // Think toggle appears. On for native Ollama, whose models often support a
+    // thinking mode controllable via the `think` field.
+    @objc let configurableThinking: Bool
     // Suggested model name shown as placeholder text in the Model field so the
     // user knows the shape of a valid identifier for this host.
     @objc let placeholderModelName: String
@@ -35,6 +39,7 @@ class AIProviderPreset: NSObject {
          maxResponseTokens: Int = 16_384,
          functionCalling: Bool = true,
          streaming: Bool = true,
+         configurableThinking: Bool = false,
          placeholderModelName: String) {
         self.name = name
         self.url = url
@@ -43,6 +48,7 @@ class AIProviderPreset: NSObject {
         self.maxResponseTokens = maxResponseTokens
         self.functionCalling = functionCalling
         self.streaming = streaming
+        self.configurableThinking = configurableThinking
         self.placeholderModelName = placeholderModelName
     }
 }
@@ -55,6 +61,16 @@ extension AIMetadata {
     // the resolved vendor (these all classify as .openAI).
     @objc(providerPresets) var providerPresets: [AIProviderPreset] {
         return [
+            // The native /api/chat dialect is the recommended way to use Ollama:
+            // it is the only endpoint that can control thinking (the `think`
+            // field) and size the context window, which the OpenAI-compatible
+            // endpoint below cannot. See the Ollama (.llama) request builder.
+            AIProviderPreset(
+                name: "Ollama (native)",
+                url: "http://localhost:11434/api/chat",
+                api: .llama,
+                configurableThinking: true,
+                placeholderModelName: "qwen3.5"),
             AIProviderPreset(
                 name: "Ollama (OpenAI-compatible)",
                 url: "http://localhost:11434/v1/chat/completions",

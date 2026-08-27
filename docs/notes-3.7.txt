@@ -208,6 +208,9 @@ Major New Features:
   chat’s Think toggle now controls whether a
   reasoning-capable local model thinks. Turning
   thinking off makes quick questions fast again.
+  There is a new one-click “Ollama (native)”
+  model preset, and the API type is now named
+  “Ollama.”
 
 - Claude Code integration was added. It enables
   the new Session Status feature for claude code

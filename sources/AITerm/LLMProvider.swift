@@ -101,6 +101,12 @@ struct LLMProvider {
                                                      streaming: false)) {
             return "Anthropic"
         }
+        // The .llama API type is Ollama's native /api/chat dialect regardless of
+        // which model (llama, qwen, ...) is served, so name it for the runner, not
+        // the model family. This is what error prefixes ("Error from Ollama") use.
+        if model.api == .llama {
+            return "Ollama"
+        }
         if model.name.contains("llama") {
             return "Llama"
         }

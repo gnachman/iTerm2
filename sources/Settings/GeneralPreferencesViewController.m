@@ -105,7 +105,7 @@ static NSString *iTermTitleForAIAPI(iTermAIAPI api) {
         case iTermAIAPIEarlyO1:
             return NSLocalizedStringWithDefaultValue(@"AIAPI.ChatCompletionsEarlyO1", nil, [NSBundle mainBundle], @"Chat Completions (Early O1)", @"Name of the early-O1 Chat Completions AI API");
         case iTermAIAPILlama:
-            return NSLocalizedStringWithDefaultValue(@"AIProvider.Llama", nil, [NSBundle mainBundle], @"Llama", @"Llama provider name");
+            return NSLocalizedStringWithDefaultValue(@"AIProvider.Ollama", nil, [NSBundle mainBundle], @"Ollama", @"Ollama provider name");
         case iTermAIAPIDeepSeek:
             return NSLocalizedStringWithDefaultValue(@"AIProvider.DeepSeek", nil, [NSBundle mainBundle], @"DeepSeek", @"DeepSeek provider name");
         case iTermAIAPIAnthropic:
@@ -134,7 +134,7 @@ static NSString *iTermAIVendorProviderName(iTermAIVendor vendor) {
         case iTermAIVendorDeepSeek:
             return NSLocalizedStringWithDefaultValue(@"AIProvider.DeepSeek", nil, [NSBundle mainBundle], @"DeepSeek", @"DeepSeek provider name");
         case iTermAIVendorLlama:
-            return NSLocalizedStringWithDefaultValue(@"AIProvider.Llama", nil, [NSBundle mainBundle], @"Llama", @"Llama provider name");
+            return NSLocalizedStringWithDefaultValue(@"AIProvider.Ollama", nil, [NSBundle mainBundle], @"Ollama", @"Ollama provider name");
         case iTermAIVendorApple:
             return NSLocalizedStringWithDefaultValue(@"AIProvider.AppleIntelligence", nil, [NSBundle mainBundle], @"Apple Intelligence", @"Apple Intelligence provider name");
     }
@@ -1094,7 +1094,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _featureButtons[kAIManualModelHostedWebSearchKey].state = NSControlStateValueOff;
     _featureButtons[kAIManualModelHostedFileSearchKey].state = NSControlStateValueOff;
     _featureButtons[kAIManualModelHostedCodeInterpreterKey].state = NSControlStateValueOff;
-    _configurableThinkingButton.state = NSControlStateValueOff;
+    _configurableThinkingButton.state =
+        preset.configurableThinking ? NSControlStateValueOn : NSControlStateValueOff;
     _supportsTemperatureButton.state = NSControlStateValueOn;
     [self updateEditorAPIKeyHint];
     // The model name is required to save; nudge the user straight to it.
@@ -2221,12 +2222,16 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 }
 
 - (NSArray<NSNumber *> *)defaultAIModelProviderVendors {
+    // Ollama/Llama is intentionally NOT offered as a "recommended" provider: a
+    // local runner has no universal recommended model, and its catalog entry
+    // (llama4:latest) is a large model most users have not pulled, so picking it
+    // here 404s. Local models are configured through the manual editor, guided by
+    // the "Ollama (native)" provider preset.
     return @[
         @(iTermAIVendorOpenAI),
         @(iTermAIVendorAnthropic),
         @(iTermAIVendorGemini),
-        @(iTermAIVendorDeepSeek),
-        @(iTermAIVendorLlama)
+        @(iTermAIVendorDeepSeek)
     ];
 }
 
