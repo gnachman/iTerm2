@@ -215,6 +215,15 @@ Major New Features:
   on your Ollama server, and a Vision checkbox so
   image-capable local models can accept images.
 
+- New “Ollama (auto-discover)” model preset: point
+  it at your Ollama server and it lists every
+  installed model in the picker automatically,
+  reading each model’s context window and
+  capabilities (thinking, tools, vision) from the
+  server. No need to name models or set
+  capabilities by hand, and newly pulled models
+  show up on refresh.
+
 - Claude Code integration was added. It enables
   the new Session Status feature for claude code
   sessions so you can see at a glance which

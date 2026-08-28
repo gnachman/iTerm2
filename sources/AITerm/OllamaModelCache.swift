@@ -43,6 +43,7 @@ class OllamaModelCache: NSObject {
 
     // Force a background refresh (e.g. the settings "refresh" affordance). Coalesces
     // concurrent refreshes of the same endpoint.
+    @objc(refreshEndpoint:)
     func refresh(endpoint: String) {
         lock.lock()
         if inFlight.contains(endpoint) {

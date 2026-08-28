@@ -39,6 +39,21 @@ final class AIProviderPresetTests: XCTestCase {
         XCTAssertFalse(try preset(named: "Ollama (native)").vision)
     }
 
+    // The auto-discover preset is the guided dynamic-provider entry: native
+    // dialect, dynamic models, thinking on.
+    func test_ollamaAutoDiscoverPreset_isDynamic() throws {
+        let p = try preset(named: "Ollama (auto-discover)")
+        XCTAssertTrue(p.dynamicModels, "auto-discover preset must be dynamic")
+        XCTAssertEqual(p.api, .llama)
+        XCTAssertTrue(p.url.hasSuffix("/api/chat"))
+        XCTAssertTrue(p.configurableThinking)
+    }
+
+    func test_ollamaNativePreset_isNotDynamic() throws {
+        XCTAssertFalse(try preset(named: "Ollama (native)").dynamicModels,
+                       "the single-model native preset must not be dynamic")
+    }
+
     // The OpenAI-compatible preset stays available but on the compat endpoint,
     // which cannot express think/num_ctx.
     func test_ollamaCompatPreset_staysOnCompatEndpoint() throws {

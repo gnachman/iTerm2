@@ -55,6 +55,7 @@ static NSString *const kAIManualModelVisionKey = @"vision";
 static NSString *const kAIManualModelVectorStoreKey = @"vectorStore";
 static NSString *const kAIManualModelSupportsTemperatureKey = @"supportsTemperature";
 static NSString *const kAIManualModelConfigurableThinkingKey = @"configurableThinking";
+static NSString *const kAIManualModelDynamicModelsKey = @"dynamicModels";
 // Array of {"name","value"} dictionaries. Must match LLMMetadata.ManualModelKey.customHeaders.
 static NSString *const kAIManualModelCustomHeadersKey = @"customHeaders";
 
@@ -548,6 +549,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSPopUpButton *_vectorStorePopup;
     NSButton *_supportsTemperatureButton;
     NSButton *_configurableThinkingButton;
+    NSButton *_dynamicModelsButton;
     NSTableView *_headersTable;
     NSMutableArray<NSMutableDictionary *> *_headers;
     NSMutableDictionary<NSString *, NSButton *> *_featureButtons;
@@ -708,6 +710,20 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _apiPopup.action = @selector(apiKeyHintInputDidChange:);
     [content addSubview:_apiPopup];
     y -= 24;
+
+    // Ollama can report its installed models and each model's capabilities from
+    // /api/tags, so this entry can discover them instead of naming one model and
+    // toggling capabilities by hand. When on, the Model field and capability
+    // checkboxes are unused (the server is the source of truth).
+    _dynamicModelsButton =
+        [NSButton checkboxWithTitle:@"Discover installed models automatically (Ollama)"
+                             target:self
+                             action:@selector(dynamicModelsToggled:)];
+    _dynamicModelsButton.state = iTermManualAIModelBoolValue(_base, kAIManualModelDynamicModelsKey)
+        ? NSControlStateValueOn : NSControlStateValueOff;
+    _dynamicModelsButton.frame = NSMakeRect(fieldX, y, fieldWidth, 22);
+    [content addSubview:_dynamicModelsButton];
+    y -= 26;
 
     // The API key sent is the stored key for the vendor inferred from the API,
     // URL, and model name, which is not obvious to users (see issue 12975). Spell
@@ -890,6 +906,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _window.defaultButtonCell = save.cell;
 
     [self updateEditorAPIKeyHint];
+    [self updateDynamicModelsEditorState];
 }
 
 // Resolves the vendor from the current form values exactly as at request time so
@@ -1089,7 +1106,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         preset.configurableThinkingFeatureEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     _supportsTemperatureButton.state =
         preset.supportsTemperature ? NSControlStateValueOn : NSControlStateValueOff;
+    // A catalog model names a specific model, so it is never auto-discovering.
+    _dynamicModelsButton.state = NSControlStateValueOff;
     [self updateEditorAPIKeyHint];
+    [self updateDynamicModelsEditorState];
 }
 
 // A provider preset configures an OpenAI-compatible gateway: it fills in the
@@ -1119,10 +1139,36 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _featureButtons[kAIManualModelHostedCodeInterpreterKey].state = NSControlStateValueOff;
     _configurableThinkingButton.state =
         preset.configurableThinking ? NSControlStateValueOn : NSControlStateValueOff;
+    _dynamicModelsButton.state =
+        preset.dynamicModels ? NSControlStateValueOn : NSControlStateValueOff;
     _supportsTemperatureButton.state = NSControlStateValueOn;
     [self updateEditorAPIKeyHint];
-    // The model name is required to save; nudge the user straight to it.
-    [_window makeFirstResponder:_nameField];
+    [self updateDynamicModelsEditorState];
+    // The model name is required to save; nudge the user straight to it (unless
+    // auto-discovery is on, in which case the field is disabled).
+    [_window makeFirstResponder:(preset.dynamicModels ? _urlField : _nameField)];
+}
+
+- (void)dynamicModelsToggled:(id)sender {
+    [self updateDynamicModelsEditorState];
+}
+
+// When auto-discovery is on, the Model field and the capability/limit controls
+// are unused (the server provides names, capabilities, and context windows), so
+// disable them to make that clear, and relabel Fetch as Refresh.
+- (void)updateDynamicModelsEditorState {
+    const BOOL dynamic = _dynamicModelsButton.state == NSControlStateValueOn;
+    _nameField.enabled = !dynamic;
+    if (dynamic) {
+        _nameField.placeholderString = @"Discovered from the server";
+    }
+    _contextField.enabled = !dynamic;
+    _responseField.enabled = !dynamic;
+    _configurableThinkingButton.enabled = !dynamic;
+    for (NSButton *button in _featureButtons.allValues) {
+        button.enabled = !dynamic;
+    }
+    _fetchModelsButton.title = dynamic ? @"Refresh Models" : @"Fetch Models";
 }
 
 - (void)fetchOllamaModels:(id)sender {
@@ -1154,6 +1200,19 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Could Not Fetch Models";
             alert.informativeText = errorMessage;
+            [alert beginSheetModalForWindow:strongSelf->_window completionHandler:^(NSModalResponse r) {}];
+            return;
+        }
+        // Auto-discovery mode: refresh the cache the model pickers read from (so
+        // they pick up the current list) and confirm, instead of offering a name
+        // to paste into the disabled Model field.
+        if (strongSelf->_dynamicModelsButton.state == NSControlStateValueOn) {
+            [iTermOllamaModelCache.shared refreshEndpoint:url];
+            NSAlert *alert = [[NSAlert alloc] init];
+            alert.messageText = @"Models Refreshed";
+            alert.informativeText = [NSString stringWithFormat:
+                @"Found %lu installed model%@. They will appear in the model picker.",
+                (unsigned long)names.count, names.count == 1 ? @"" : @"s"];
             [alert beginSheetModalForWindow:strongSelf->_window completionHandler:^(NSModalResponse r) {}];
             return;
         }
@@ -1253,16 +1312,19 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         [_nameField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
     NSString *url =
         [_urlField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+    const BOOL dynamic = _dynamicModelsButton.state == NSControlStateValueOn;
     NSString *failure = nil;
-    if (name.length == 0) {
-        failure = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ModelRequired", nil, [NSBundle mainBundle], @"Model is required.", @"Validation error when the model name is empty");
-    } else if (url.length == 0) {
+    // In auto-discovery mode the model name, context window, and response limit
+    // come from the server per model, so only the URL is required.
+    if (url.length == 0) {
         failure = NSLocalizedStringWithDefaultValue(@"AIModelEditor.URLRequired", nil, [NSBundle mainBundle], @"URL is required.", @"Validation error when the URL is empty");
-    } else if (_contextField.integerValue <= 0) {
+    } else if (!dynamic && name.length == 0) {
+        failure = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ModelRequired", nil, [NSBundle mainBundle], @"Model is required.", @"Validation error when the model name is empty");
+    } else if (!dynamic && _contextField.integerValue <= 0) {
         failure = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ContextTokensPositive", nil, [NSBundle mainBundle], @"Context tokens must be greater than zero.", @"Validation error when context tokens is not positive");
-    } else if (_responseField.integerValue <= 0) {
+    } else if (!dynamic && _responseField.integerValue <= 0) {
         failure = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MaxResponseTokensPositive", nil, [NSBundle mainBundle], @"Max response tokens must be greater than zero.", @"Validation error when max response tokens is not positive");
-    } else if (_nameIsTaken && _nameIsTaken(name)) {
+    } else if (!dynamic && _nameIsTaken && _nameIsTaken(name)) {
         failure = NSLocalizedStringWithDefaultValue(@"AIModelEditor.NamesUnique", nil, [NSBundle mainBundle], @"Manual model names must be unique.", @"Validation error when a manual model name is already taken");
     }
     // Validate custom headers here rather than in the per-cell delegate: the Save
@@ -1300,7 +1362,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     NSMutableDictionary *result = [NSMutableDictionary dictionary];
     result[kAIManualModelIDKey] = _base[kAIManualModelIDKey] ?: NSUUID.UUID.UUIDString;
-    result[kAIManualModelNameKey] = name;
+    // A dynamic entry has no single model name; give the management-list row a
+    // friendly label when the field is blank (the picker shows the discovered
+    // tags, not this label).
+    result[kAIManualModelNameKey] = (dynamic && name.length == 0) ? @"Ollama (auto)" : name;
     result[kAIManualModelURLKey] = url;
     result[kAIManualModelAPIKey] = @(_apiPopup.selectedItem.tag);
     result[kAIManualModelContextWindowTokensKey] = @(_contextField.integerValue);
@@ -1310,6 +1375,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         @(_supportsTemperatureButton.state == NSControlStateValueOn);
     result[kAIManualModelConfigurableThinkingKey] =
         @(_configurableThinkingButton.state == NSControlStateValueOn);
+    result[kAIManualModelDynamicModelsKey] = @(dynamic);
     for (NSString *key in _featureButtons) {
         result[key] = @(_featureButtons[key].state == NSControlStateValueOn);
     }
