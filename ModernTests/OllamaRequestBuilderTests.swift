@@ -329,6 +329,66 @@ final class OllamaRequestBuilderTests: XCTestCase {
                           "num_ctx inflated as if charging base64 length: \(numCtx)")
     }
 
+    // Frozen blob-replay history for a vision round carries the image inline as
+    // native images[] base64. Sizing that by byte length (~100x its token cost)
+    // throws requestTooLarge on the next turn of a vision chat; the frozen path
+    // must charge images by pixel area like the live path.
+    func test_numCtx_frozenVisionHistory_chargedByPixelArea() throws {
+        let png = noisyPNG(800)
+        let frozen = Data("{\"role\":\"user\",\"content\":\"look\",\"images\":[\"\(png.base64EncodedString())\"]}".utf8)
+        let model = try ollamaModel(contextWindow: 262_144, maxResponse: 8_192)
+        let builder = LLMRequestBuilder(
+            provider: LLMProvider(model: model), apiKey: "k",
+            messages: [LLM.Message(role: .system, content: "S"),
+                       LLM.Message(role: .user, content: "hi")],
+            functions: [], stream: false, hostedTools: HostedTools(),
+            previousResponseID: nil, shouldThink: nil, reasoningEffort: nil,
+            serviceTier: nil, trailingVolatileText: nil, frozenHistoryElements: frozen)
+        let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: try builder.body()) as? [String: Any])
+        let numCtx = try XCTUnwrap((json["options"] as? [String: Any])?["num_ctx"] as? Int)
+        XCTAssertLessThan(numCtx, 32_768,
+                          "frozen image sized by base64 length inflated num_ctx: \(numCtx)")
+    }
+
+    // A zero-argument tool call may omit the arguments key entirely; a required
+    // key would make JSONDecoder throw and drop the whole assistant turn.
+    func test_response_toolCallWithoutArguments_decodes() throws {
+        let wire = """
+        {"model":"m","message":{"role":"assistant","content":"","tool_calls":[{"function":{"name":"now"}}]},"done":true}
+        """
+        var parser = LlamaResponseParser()
+        let response = try parser.parse(data: Data(wire.utf8))
+        let first = try XCTUnwrap(response?.choiceMessages.first)
+        XCTAssertNotNil(first.function_call, "an arguments-less tool call must still dispatch")
+    }
+
+    // Non-image binaries can't reach the native Ollama builder, so the
+    // estimatedTokens default branch never over-counts them (see the invariant
+    // comment there). This pins that gate.
+    func test_visionGate_rejectsNonImageBinariesForOllama() throws {
+        var model = try ollamaModel()
+        model.features = [.streaming, .vision]
+        let provider = LLMProvider(model: model)
+        XCTAssertFalse(provider.accepts(mimeType: "application/pdf"), "native Ollama has no PDF path")
+        XCTAssertFalse(provider.accepts(mimeType: "audio/wav"), "native Ollama has no audio path")
+    }
+
+    // A valid image whose base64 has embedded whitespace (MIME line wrapping)
+    // must still decode to real dimensions, not silently floor and undersize.
+    func test_imageTokenEstimate_toleratesWhitespaceInBase64() throws {
+        let raw = noisyPNG(600).base64EncodedString()
+        var chunked = ""
+        var i = raw.startIndex
+        while i < raw.endIndex {
+            let end = raw.index(i, offsetBy: 76, limitedBy: raw.endIndex) ?? raw.endIndex
+            chunked += raw[i..<end] + "\n"
+            i = end
+        }
+        let estimate = LlamaBodyRequestBuilder.imageTokenEstimate(dataURL: "data:image/png;base64,\(chunked)")
+        XCTAssertGreaterThan(estimate, LlamaBodyRequestBuilder.imageTokenFloor,
+                             "whitespace in base64 defeated pixel-size decoding (fell back to the floor)")
+    }
+
     // MARK: - .llama parser is native-only (finding #5 validity)
 
     // Proves the .llama type was never functional against an OpenAI-compatible

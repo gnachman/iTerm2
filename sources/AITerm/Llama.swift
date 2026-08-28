@@ -76,7 +76,10 @@ struct LlamaResponse<Streaming: LlamaStreaming>: Codable {
                 // the JSON types the tool's own schema declared, so a parameter
                 // typed integer|null arrives as a number or null and a
                 // String-valued dictionary fails to decode the whole response.
-                var arguments: [String: AnyCodable]
+                // Optional because a zero-argument tool call may omit the key
+                // entirely; a required key would make JSONDecoder throw and drop
+                // the whole assistant turn. nil is treated as {} at use.
+                var arguments: [String: AnyCodable]?
             }
         }
     }
@@ -95,7 +98,7 @@ extension LlamaResponse: LLM.AnyResponse {
         }()
         let functionCall: LLM.FunctionCall? = message.tool_calls?.first.map {
             .init(name: $0.function.name,
-                  arguments: try? JSONEncoder().encode($0.function.arguments).lossyString)
+                  arguments: try? JSONEncoder().encode($0.function.arguments ?? [:]).lossyString)
         }
 
         if !Streaming.streaming {
@@ -293,10 +296,50 @@ struct LlamaBodyRequestBuilder {
             switch part {
             case .imageURL(let image):
                 return subtotal + imageTokenEstimate(dataURL: image.url)
-            default:
+            case .text:
+                return subtotal + part.approximateTokenCount
+            case .file, .inputAudio:
+                // Would over-count by base64 length like .imageURL did, BUT these
+                // can't reach the native Ollama builder: LLMProvider.accepts gates
+                // PDFs/audio on OpenAI/Anthropic/Google hosts, so a localhost
+                // .llama model refuses them (textual files inline as .text above,
+                // not base64). Asserted by
+                // test_visionGate_rejectsNonImageBinariesForOllama. If a future
+                // path lets one through, give it a bounded estimate here.
                 return subtotal + part.approximateTokenCount
             }
         }
+    }
+
+    // Token estimate for the frozen blob-replay history, which is spliced into
+    // the request AFTER num_ctx would otherwise be computed. Frozen vision rounds
+    // carry the image inline as native `images:[<base64>]`, so counting the raw
+    // bytes (tokens(in:) = base64 length) over-counts a ~500 KB image by ~100x
+    // and throws requestTooLarge on the next turn of any vision chat. Charge
+    // images by pixel area here too, exactly like the live estimatedTokens(for:),
+    // so the two paths agree and a frozen vision round stays replayable.
+    private static func estimatedFrozenTokens(_ frozen: Data) -> Int {
+        // Frozen bytes are the comma-joined message objects with no surrounding
+        // brackets; wrap them into an array to parse.
+        let wrapped = Data("[".utf8) + frozen + Data("]".utf8)
+        guard let messages = try? JSONSerialization.jsonObject(with: wrapped) as? [[String: Any]] else {
+            // Unparseable (shouldn't happen for our own frozen bytes): fall back to
+            // the byte estimate rather than under-counting to zero.
+            return AIMetadata.instance.tokens(in: frozen.lossyString)
+        }
+        var total = 0
+        for var message in messages {
+            if let images = message["images"] as? [String] {
+                for base64 in images {
+                    total += imageTokenEstimate(dataURL: base64)
+                }
+                message["images"] = nil  // count the rest (text/tool) without the base64
+            }
+            if let data = try? JSONSerialization.data(withJSONObject: message) {
+                total += AIMetadata.instance.tokens(in: data.lossyString)
+            }
+        }
+        return total
     }
 
     static let imageTokenFloor = 85
@@ -306,9 +349,11 @@ struct LlamaBodyRequestBuilder {
     // w*h/750, the highest of the common estimates, so it errs toward not
     // truncating), floored and capped so one giant image can't re-inflate the
     // estimate the way base64 length does. Falls back to the floor when the
-    // dimensions can't be read (never the base64 length).
+    // dimensions can't be read (never the base64 length). Accepts either a
+    // "data:...;base64," URL (the live path's image_url) or bare base64 (the
+    // frozen path's native images[] payload).
     static func imageTokenEstimate(dataURL: String) -> Int {
-        guard let (width, height) = imagePixelSize(dataURL: dataURL), width > 0, height > 0 else {
+        guard let (width, height) = imagePixelSize(base64OrDataURL: dataURL), width > 0, height > 0 else {
             return imageTokenFloor
         }
         let estimate = Int((Double(width) * Double(height) / 750.0).rounded(.up))
@@ -317,12 +362,16 @@ struct LlamaBodyRequestBuilder {
 
     // Read pixel dimensions cheaply from the image header (no full pixel decode)
     // via CGImageSource. nil if the payload isn't a decodable image.
-    private static func imagePixelSize(dataURL: String) -> (Int, Int)? {
-        guard let comma = dataURL.firstIndex(of: ","),
-              let data = Data(base64Encoded: String(dataURL[dataURL.index(after: comma)...])) else {
-            return nil
-        }
-        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+    private static func imagePixelSize(base64OrDataURL string: String) -> (Int, Int)? {
+        // Reuse the shared data-URL parser (single source of truth for the
+        // prefix/comma split); a bare base64 string (native images[]) is the
+        // payload directly.
+        let base64 = CompletionsMessage.splitDataURL(string).map { String($0.payload) } ?? string
+        // .ignoreUnknownCharacters so MIME-wrapped or URL-safe-ish base64 with
+        // embedded whitespace still decodes, rather than silently falling back to
+        // the token floor and undersizing num_ctx.
+        guard let data = Data(base64Encoded: base64, options: .ignoreUnknownCharacters),
+              let source = CGImageSourceCreateWithData(data as CFData, nil),
               let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
               let width = props[kCGImagePropertyPixelWidth] as? Int,
               let height = props[kCGImagePropertyPixelHeight] as? Int else {
@@ -391,7 +440,7 @@ struct LlamaBodyRequestBuilder {
         // round and Ollama silently truncates the replayed history.
         var promptTokens = Self.estimatedPromptTokens(messages: llamaMessages, tools: tools)
         if let frozenHistoryElements, !frozenHistoryElements.isEmpty {
-            promptTokens += AIMetadata.instance.tokens(in: frozenHistoryElements.lossyString)
+            promptTokens += Self.estimatedFrozenTokens(frozenHistoryElements)
         }
         let numCtx = Self.computedNumCtx(promptTokens: promptTokens,
                                          numPredict: numPredict,

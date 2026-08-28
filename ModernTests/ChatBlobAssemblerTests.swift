@@ -294,6 +294,16 @@ final class ChatBlobAssemblerTests: XCTestCase {
                       "no current-version row should have been appended onto the stale chat")
     }
 
+    // ChatBlob.init must not default a .llama blob to version 0 (stale on
+    // arrival): a caller that omits the version should get the protocol's current
+    // version, or safeBlobsForReplay would refuse the chat forever.
+    func test_chatBlobInit_defaultsToCurrentWireFormatVersion() {
+        let blob = ChatBlob(chatID: "c", blobProtocol: .llama, role: .user, payload: Data("[]".utf8))
+        XCTAssertEqual(blob.wireFormatVersion, ChatBlob.currentWireFormatVersion(for: .llama))
+        XCTAssertEqual(blob.wireFormatVersion, 1,
+                       "a .llama blob without an explicit version must be current, not stale")
+    }
+
     // MARK: - forkBlobPrefix (fork blob inheritance)
 
     private func blob(_ chatID: String) -> ChatBlob {

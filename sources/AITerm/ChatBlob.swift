@@ -99,7 +99,7 @@ struct ChatBlob: iTermDatabaseInitializable {
          payload: Data,
          responseID: String? = nil,
          tokenCount: Int? = nil,
-         wireFormatVersion: Int = 0,
+         wireFormatVersion: Int? = nil,
          seq: Int64 = 0) {
         self.seq = seq
         self.blobID = blobID
@@ -109,7 +109,12 @@ struct ChatBlob: iTermDatabaseInitializable {
         self.payload = payload
         self.responseID = responseID
         self.tokenCount = tokenCount
-        self.wireFormatVersion = wireFormatVersion
+        // Default to the CURRENT wire-format version for this protocol, not a
+        // literal 0: a caller that omits the version (a new/future construction
+        // site) must not mint a stale-on-arrival blob that safeBlobsForReplay
+        // then refuses forever. An explicit value still wins (e.g. a test
+        // simulating a pre-migration v0 blob, or a fork copying its source).
+        self.wireFormatVersion = wireFormatVersion ?? Self.currentWireFormatVersion(for: blobProtocol)
     }
 
     static func schema() -> String {
