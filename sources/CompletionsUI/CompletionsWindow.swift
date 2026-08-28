@@ -579,7 +579,7 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
                                         fallbackImageName: "document",
                                         for: CompletionsWindow.self)!
             }
-        case .aiSuggestion:
+        case .aiSuggestion, .aiReplacement:
             return NSImage.it_image(forSymbolName: SFSymbol.sparkles.rawValue,
                                     accessibilityDescription: "AI",
                                     fallbackImageName: "sparkles",

@@ -2713,6 +2713,11 @@ Bug Fixes:
   dark appearance and tint now follow the page's
   background color instead of the profile's
   terminal background color.
+- AI command suggestions can now recognize when
+  you have typed a plain-English request instead
+  of the start of a command. In that case the
+  suggested command replaces what you typed rather
+  than being appended to it.
 - The Cockpit panel can now send commands from a
   full composer docked along its bottom (the
   same multi-cursor editor, in your profile’s
