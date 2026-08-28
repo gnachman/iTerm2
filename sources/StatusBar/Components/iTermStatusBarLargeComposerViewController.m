@@ -108,7 +108,7 @@
     self.textView.textColor = [NSColor textColor];
     self.textView.insertionPointColor = [NSColor textColor];
     self.textView.font = [NSFont fontWithName:@"Menlo" size:11];
-    _aiCompletionWarning.hidden = ![[iTermSecureUserDefaults instance] aiCompletionsEnabled] || ![iTermAdvancedSettingsModel generativeAIAllowed];
+    [self updateAIAccessoryVisibility];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(secureUserDefaultDidChange:)
                                                  name:iTermSecureUserDefaults.secureUserDefaultsDidChangeNotificationName
@@ -117,13 +117,21 @@
                                              selector:@selector(commandValidityDidChange:)
                                                  name:iTermLocalFileChecker.commandValidityDidChange
                                                object:nil];
-    if (![iTermAdvancedSettingsModel generativeAIAllowed]) {
-        _engageAI.hidden = YES;
-    }
+}
+
+- (void)setForceHideAIAccessories:(BOOL)forceHideAIAccessories {
+    _forceHideAIAccessories = forceHideAIAccessories;
+    [self updateAIAccessoryVisibility];
+}
+
+- (void)updateAIAccessoryVisibility {
+    const BOOL aiCompletionsOn = [[iTermSecureUserDefaults instance] aiCompletionsEnabled] && [iTermAdvancedSettingsModel generativeAIAllowed];
+    _aiCompletionWarning.hidden = _forceHideAIAccessories || !aiCompletionsOn;
+    _engageAI.hidden = _forceHideAIAccessories || ![iTermAdvancedSettingsModel generativeAIAllowed];
 }
 
 - (void)secureUserDefaultDidChange:(NSNotification *)notification {
-    _aiCompletionWarning.hidden = ![[iTermSecureUserDefaults instance] aiCompletionsEnabled] || ![iTermAdvancedSettingsModel generativeAIAllowed];
+    [self updateAIAccessoryVisibility];
 }
 
 - (void)commandValidityDidChange:(NSNotification *)notification {
@@ -720,7 +728,8 @@
     // Escape filename completions.
     NSArray<iTermCompletionItem *> *completions =
     [[filenameCompletions mapWithBlock:^id _Nullable(iTermCompletionItem *item) {
-        if (item.kind == iTermCompletionItemKindAiSuggestion) {
+        if (item.kind == iTermCompletionItemKindAiSuggestion ||
+            item.kind == iTermCompletionItemKindAiReplacement) {
             // AI generally escapes for us. Don't double escape.
             return item;
         }
@@ -742,20 +751,31 @@
         [self.textView setCompletions:@[] prefix:@""];
         return;
     }
+    // Full-command replacement suggestions do not begin with what the user typed,
+    // so they must never be shown as inline ghost text (that would append a whole
+    // command after the user's text). They appear in the dropdown only.
+    NSArray<iTermCompletionItem *> *inlineCompletions =
+    [completions filteredArrayUsingBlock:^BOOL(iTermCompletionItem *item) {
+        return item.kind != iTermCompletionItemKindAiReplacement;
+    }];
+    NSArray<iTermCompletionItem *> *inlineFilenameCompletions =
+    [filenameCompletions filteredArrayUsingBlock:^BOOL(iTermCompletionItem *item) {
+        return item.kind != iTermCompletionItemKindAiReplacement;
+    }];
     // Pick the shortest suggestion because otherwise it's hard to traverse a deep path since the
     // suggestion will make it easy to skip over intermediate folders.
-    NSString *suggestion = [[completions mapWithBlock:^id _Nullable(iTermCompletionItem *item) {
+    NSString *suggestion = [[inlineCompletions mapWithBlock:^id _Nullable(iTermCompletionItem *item) {
         return item.value;
     }] longestCommonStringPrefix];
     if (!suggestionOnly) {
         if (suggestion.length == 0) {
-            suggestion = completions.firstObject.value;
+            suggestion = inlineCompletions.firstObject.value;
         }
-        if (filenameCompletions.count > 0) {
-            suggestion = filenameCompletions[0].value;
+        if (inlineFilenameCompletions.count > 0) {
+            suggestion = inlineFilenameCompletions[0].value;
         }
     }
-    self.textView.suggestion = suggestion;
+    self.textView.suggestion = suggestion.length > 0 ? suggestion : nil;
     if (suggestionOnly) {
         [self.textView setCompletions:@[] prefix:@""];
     } else {

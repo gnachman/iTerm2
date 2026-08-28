@@ -27,12 +27,19 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
         let title: String
         let session: PTYSession?
         var children: [Node]
+        // For container rows (window / real tab) whose selection is
+        // allowed only when the host opts in via allowsContainerSelection.
+        // The token the picker reports on commit ("win:<guid>" /
+        // "tab:<uid>"); nil for session rows and non-addressable groups.
+        let containerToken: String?
 
-        init(kind: Kind, title: String, session: PTYSession?, children: [Node]) {
+        init(kind: Kind, title: String, session: PTYSession?, children: [Node],
+             containerToken: String? = nil) {
             self.kind = kind
             self.title = title
             self.session = session
             self.children = children
+            self.containerToken = containerToken
         }
 
         var isSelectable: Bool { session != nil }
@@ -52,6 +59,11 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
     private weak var anchorView: NSView?
     private weak var hostWindow: NSWindow?
     private(set) var isVisible = false
+
+    // Opt-in (cockpit only). When true, window and real-tab rows are
+    // selectable and commit reports their "win:<guid>" / "tab:<uid>"
+    // token. AI chat leaves this off, so its picker stays session-only.
+    @objc var allowsContainerSelection = false
 
     private static let panelWidth: CGFloat = 280
     private static let rowHeight: CGFloat = 22
@@ -177,28 +189,44 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
 
     func commitSelection() {
         let row = outlineView.selectedRow
-        guard row >= 0, let node = outlineView.item(atRow: row) as? Node,
-              let session = node.session else {
+        guard row >= 0, let node = outlineView.item(atRow: row) as? Node else {
             return
         }
-        let choose = onChoose
-        hide()
-        // Insert the reload-durable stableID so the user's @mention keeps
-        // resolving after a shell reload rotates the session's guid.
-        choose?(session.stableID, ChatMentionDisplay.displayName(for: session))
+        if let session = node.session {
+            let choose = onChoose
+            hide()
+            // Insert the reload-durable stableID so the user's @mention keeps
+            // resolving after a shell reload rotates the session's guid.
+            choose?(session.stableID, ChatMentionDisplay.displayName(for: session))
+            return
+        }
+        if allowsContainerSelection, let token = node.containerToken {
+            let choose = onChoose
+            hide()
+            choose?(token, node.title)
+        }
+    }
+
+    // A node the user is allowed to pick: always a session; also a
+    // window/tab container when the host opted in.
+    private func canSelect(_ node: Node) -> Bool {
+        if node.session != nil {
+            return true
+        }
+        return allowsContainerSelection && node.containerToken != nil
     }
 
     private func moveSelection(by delta: Int) {
         let count = outlineView.numberOfRows
         guard count > 0 else { return }
         var row = outlineView.selectedRow
-        // Step in `delta`'s direction, skipping non-selectable (window/tab) rows.
+        // Step in `delta`'s direction, skipping non-selectable rows.
         var steps = 0
         while steps < count {
             row += delta
             if row < 0 { row = count - 1 }
             if row >= count { row = 0 }
-            if let node = outlineView.item(atRow: row) as? Node, node.isSelectable {
+            if let node = outlineView.item(atRow: row) as? Node, canSelect(node) {
                 outlineView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
                 outlineView.scrollRowToVisible(row)
                 refreshPreview()
@@ -210,7 +238,7 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
 
     private func selectFirstSelectableRow() {
         for row in 0..<outlineView.numberOfRows {
-            if let node = outlineView.item(atRow: row) as? Node, node.isSelectable {
+            if let node = outlineView.item(atRow: row) as? Node, canSelect(node) {
                 outlineView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
                 outlineView.scrollRowToVisible(row)
                 return
@@ -251,16 +279,19 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
                     tabNodes.append(Node(kind: .tab,
                                          title: appendShortcut(tab.title, shortcut),
                                          session: nil,
-                                         children: paneNodes))
+                                         children: paneNodes,
+                                         containerToken: "tab:\(Int(tab.uniqueId))"))
                 }
             }
             if !tabNodes.isEmpty {
                 let base = (term.window?.title.isEmpty == false) ? term.window!.title : "Window \(term.number + 1)"
                 let shortcut = windowShortcut(number: Int(term.number), glyphs: windowGlyphs)
+                let windowToken = term.terminalGuid.map { "win:\($0)" }
                 windowNodes.append(Node(kind: .window,
                                         title: appendShortcut(base, shortcut),
                                         session: nil,
-                                        children: tabNodes))
+                                        children: tabNodes,
+                                        containerToken: windowToken))
             }
         }
         return windowNodes
@@ -467,7 +498,7 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
     // MARK: - NSOutlineViewDelegate
 
     func outlineView(_ outlineView: NSOutlineView, shouldSelectItem item: Any) -> Bool {
-        return (item as? Node)?.isSelectable ?? false
+        return (item as? Node).map { canSelect($0) } ?? false
     }
 
     func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {

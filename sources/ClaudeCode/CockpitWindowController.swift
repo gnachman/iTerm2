@@ -38,9 +38,48 @@ class CockpitWindowController: NSWindowController {
 
     @IBOutlet private var outlineView: NSOutlineView!
     @IBOutlet private var settingsToolbarItem: NSToolbarItem!
+    // Real button backing the settings toolbar item, so the settings
+    // popover has a view to anchor to.
+    private var settingsButton: NSButton?
     @IBOutlet private var searchToolbarItem: NSSearchToolbarItem!
     @IBOutlet private var groupModeToolbarItem: NSToolbarItem!
     @IBOutlet private var notifyToolbarItem: NSToolbarItem!
+
+    // The real iTerm2 composer (a multi-cursor text view), embedded and
+    // docked along the bottom as the cockpit's command bar. At-mention
+    // support and chrome-hiding are opt-in hooks on the composer that
+    // leave its behavior everywhere else unchanged. Sending resolves any
+    // leading @-mention tokens to their sessions.
+    private let composerVC = iTermMinimalComposerViewController()
+    // Height of the docked composer strip: a fixed 12 lines of the
+    // profile's ASCII font.
+    private var composerBarHeight: CGFloat = 0
+    // Height of the hint line reserved below the composer.
+    private var composerTipHeight: CGFloat = 0
+    // The hint line under the composer; also shows transient send
+    // status (in place of a screen-center toast).
+    private var composerTipLabel: NSTextField!
+    private var tipResetItem: DispatchWorkItem?
+    private static let defaultCockpitTip = "Type @ to choose sessions to write to"
+    // Local (NoSync) autosave for the list/composer divider position.
+    private static let splitAutosaveName = "NoSyncCockpitSplit"
+    // The document range of the @-run the picker is currently editing,
+    // so a chosen session replaces exactly that text with a token.
+    private var activeMentionRange: NSRange?
+
+    // Guards the two-way binding between composer @-mention chips and
+    // outline row selection so an update in one doesn't bounce back.
+    private var isSyncingTargets = false
+
+    // The AI chat's @-mention session picker, reused: a window > tab >
+    // pane > peer outline with a live session preview, driven from the
+    // composer so it never steals key focus. Unlike chat, the cockpit
+    // lets you pick a whole window or tab (fans out to its sessions).
+    private lazy var mentionPicker: ChatMentionPickerController = {
+        let picker = ChatMentionPickerController()
+        picker.allowsContainerSelection = true
+        return picker
+    }()
 
     // How rows are organized at the top of the outline. Persisted in
     // NoSync user defaults so a relaunch comes back in the same mode
@@ -50,6 +89,7 @@ class CockpitWindowController: NSWindowController {
             if oldValue == groupMode { return }
             CockpitGroupMode.persist(groupMode)
             scheduleRefresh()
+            updateSettingsButtonEnabled()
         }
     }
 
@@ -59,6 +99,21 @@ class CockpitWindowController: NSWindowController {
     // longer have any matching descendant. Keeps the structure the user
     // chose (group mode), just narrower.
     private var filter: String = ""
+
+    // Status filter: nil shows all; otherwise only session rows whose
+    // status text matches survive. The status list is dynamic; a
+    // segmented control is used when the options fit horizontally, else
+    // a popup button.
+    private var statusFilter: String?
+    private var statusFilterSegmented: NSSegmentedControl!
+    private var statusFilterButton: NSPopUpButton!
+    // Shared ordered items backing both controls: All (status == nil)
+    // followed by each present status. Index maps 1:1 to segment / menu
+    // item index.
+    private var statusFilterItems: [(title: String, status: String?)] = []
+    private var stateFilterBarHeight: CGFloat = 0
+    // Session counts per status text (pre-filter), for the filter labels.
+    private var statusCounts: [String: Int] = [:]
 
     // Live tree built from iTermController + session state. Rebuilt
     // by refresh(); the cache below keeps CockpitRow instances stable
@@ -83,8 +138,11 @@ class CockpitWindowController: NSWindowController {
         configureToolbar()
         configureGroupModeToolbarItem()
         configureNotifyToolbarItem()
+        configureSettingsToolbarItem()
         configureOutlineView()
         configureSearch()
+        configureStateFilterBar()
+        configureCommandBar()
         registerForLiveUpdates()
         // First-time bootstrap. oldShape is empty (rootRows is empty),
         // so every window/group/session flows through applyDiff as an
@@ -108,7 +166,12 @@ class CockpitWindowController: NSWindowController {
         // of the user's way the rest of the time. hidesOnDeactivate is
         // what stops the panel from overlapping unrelated apps.
         panel.level = .floating
-        panel.becomesKeyOnlyIfNeeded = true
+        // The cockpit is interactive (outline selection + composer), so a
+        // click anywhere should make it key. becomesKeyOnlyIfNeeded=YES
+        // (the global-search panel's setting) only grants key to views
+        // that report needing it (a text field), so clicking the outline
+        // selected a row without ever making the panel key/active.
+        panel.becomesKeyOnlyIfNeeded = false
         panel.hidesOnDeactivate = true
     }
 
@@ -120,11 +183,13 @@ class CockpitWindowController: NSWindowController {
         outlineView.dataSource = self
         outlineView.delegate = self
         outlineView.target = self
-        // Source-list convention: a single click on a leaf reveals the
-        // backing entity (Finder sidebar style). NSTableView fires
-        // action for the first click of a double-click too, so wiring
-        // doubleAction here would invoke reveal twice on a double-click.
-        outlineView.action = #selector(rowClicked(_:))
+        // Single click just selects (which drives composer targeting via
+        // the two-way binding); double click reveals/jumps to the backing
+        // session so selecting a target doesn't pull focus away.
+        outlineView.doubleAction = #selector(rowDoubleClicked(_:))
+        // Multi-select so the command bar can fan a command out to
+        // several chosen sessions at once (e.g. three of seven agents).
+        outlineView.allowsMultipleSelection = true
         outlineView.headerView = nil
         // Defensive: isGroupItem returns false for every row today, so
         // there are no group rows to float, but if a future change
@@ -132,6 +197,40 @@ class CockpitWindowController: NSWindowController {
         // first one to render as a pinned floating header (which
         // shows a different background and looks inconsistent).
         outlineView.floatsGroupRows = false
+        // The source-list table style backs the scroll view with a vibrant
+        // NSVisualEffectView, which looks out of place here. The modern
+        // .inset style drops that VEV (opaque background, inset rows with a
+        // rounded selection) while still reading as a contemporary list.
+        outlineView.style = .inset
+        outlineView.selectionHighlightStyle = .regular
+        configureListContainer()
+    }
+
+    // Give the session list a modern rounded "card" look matching the
+    // composer. Rounding the scroll view itself with masksToBounds clips the
+    // border stroke at the corners (they look shaved off), so instead a
+    // lightweight container draws the rounded fill + border with a bezier
+    // path (crisp corners) and hosts a transparent scroll view. The scroll
+    // view fills the container and paints no background of its own, so the
+    // container's rounded fill shows through at the corners with nothing
+    // square poking out. The container is inset 8pt inside its split pane so
+    // its card lines up with the composer's card (which is inset 8pt too).
+    private func configureListContainer() {
+        guard let scrollView = outlineView.enclosingScrollView,
+              let pane = scrollView.superview else {
+            return
+        }
+        let container = CockpitListContainerView(frame: pane.bounds.insetBy(dx: 8, dy: 8))
+        container.autoresizingMask = [.width, .height]
+        pane.addSubview(container)
+        scrollView.frame = container.bounds
+        scrollView.autoresizingMask = [.width, .height]
+        container.addSubview(scrollView)
+        // Transparent so the container's rounded fill is the visible surface;
+        // otherwise the scroll view's square opaque background would cover
+        // the rounded corners.
+        scrollView.drawsBackground = false
+        outlineView.backgroundColor = .clear
     }
 
     private func configureGroupModeToolbarItem() {
@@ -192,6 +291,241 @@ class CockpitWindowController: NSWindowController {
         (field.cell as? NSSearchFieldCell)?.controlSize = .small
     }
 
+    // A thin bar pinned along the top of the content view holding the
+    // status filter ("All" + whatever statuses sessions currently
+    // report, with counts). Insets the split view down so it doesn't
+    // overlap. Uses a segmented control when it fits and a popup button
+    // when there are more statuses than fit across the bar.
+    private func configureStateFilterBar() {
+        guard let contentView = window?.contentView else { return }
+        let barHeight: CGFloat = 30
+        stateFilterBarHeight = barHeight
+        let width = contentView.bounds.width
+
+        if let tree = contentView.subviews.first {
+            var frame = tree.frame
+            frame.size.height -= barHeight
+            tree.frame = frame
+        }
+
+        let bar = CockpitFilterBar(frame: NSRect(x: 0,
+                                                 y: contentView.bounds.height - barHeight,
+                                                 width: width,
+                                                 height: barHeight))
+        bar.autoresizingMask = [.width, .minYMargin]
+        bar.onResize = { [weak self] in self?.layoutStatusFilterControl() }
+
+        let segmented = NSSegmentedControl()
+        segmented.trackingMode = .selectOne
+        segmented.controlSize = .small
+        segmented.target = self
+        segmented.action = #selector(statusFilterSegmentChanged(_:))
+        segmented.isHidden = true
+        statusFilterSegmented = segmented
+        bar.addSubview(segmented)
+
+        let popup = NSPopUpButton(frame: .zero, pullsDown: false)
+        popup.controlSize = .small
+        popup.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        popup.target = self
+        popup.action = #selector(statusFilterPopupChanged(_:))
+        popup.isHidden = true
+        statusFilterButton = popup
+        bar.addSubview(popup)
+
+        let separator = NSBox(frame: NSRect(x: 0, y: 0, width: width, height: 1))
+        separator.boxType = .separator
+        separator.autoresizingMask = [.width, .maxYMargin]
+        bar.addSubview(separator)
+
+        contentView.addSubview(bar)
+        updateStatusFilter()
+    }
+
+    @objc private func statusFilterSegmentChanged(_ sender: NSSegmentedControl) {
+        applyStatusFilter(atIndex: sender.selectedSegment)
+    }
+
+    @objc private func statusFilterPopupChanged(_ sender: NSPopUpButton) {
+        applyStatusFilter(atIndex: sender.indexOfSelectedItem)
+    }
+
+    private func applyStatusFilter(atIndex index: Int) {
+        guard index >= 0, index < statusFilterItems.count else { return }
+        statusFilter = statusFilterItems[index].status
+        refresh()
+    }
+
+    // Rebuild the shared item list from the live statuses (preserving
+    // the current selection when its status still exists), populate both
+    // controls, then choose which one to show.
+    private func updateStatusFilter() {
+        let total = statusCounts.values.reduce(0, +)
+        let statuses = statusCounts.keys.sorted { statusSortKey($0) < statusSortKey($1) }
+        // Drop a filter whose status vanished.
+        if let statusFilter, !statuses.contains(statusFilter) {
+            self.statusFilter = nil
+        }
+        statusFilterItems = [(title: "All (\(total))", status: nil)]
+            + statuses.map { (title: "\($0) (\(statusCounts[$0] ?? 0))", status: $0) }
+
+        let selectedIndex = statusFilterItems.firstIndex { $0.status == statusFilter } ?? 0
+
+        if let segmented = statusFilterSegmented {
+            segmented.segmentCount = statusFilterItems.count
+            for (i, item) in statusFilterItems.enumerated() {
+                segmented.setLabel(item.title, forSegment: i)
+            }
+            segmented.selectedSegment = selectedIndex
+            segmented.sizeToFit()
+        }
+        if let popup = statusFilterButton {
+            popup.removeAllItems()
+            popup.addItems(withTitles: statusFilterItems.map { $0.title })
+            popup.selectItem(at: selectedIndex)
+            popup.sizeToFit()
+        }
+        layoutStatusFilterControl()
+    }
+
+    // Show the segmented control if it fits across the bar; otherwise the
+    // popup button. Called on refresh and on bar resize.
+    private func layoutStatusFilterControl() {
+        guard let segmented = statusFilterSegmented,
+              let popup = statusFilterButton,
+              let bar = segmented.superview else {
+            return
+        }
+        let leading: CGFloat = 8
+        let available = bar.bounds.width - leading * 2
+        let fits = segmented.frame.width <= available
+        segmented.isHidden = !fits
+        popup.isHidden = fits
+        let control: NSView = fits ? segmented : popup
+        let height = control.frame.height
+        control.frame = NSRect(x: leading,
+                               y: (bar.bounds.height - height) / 2.0,
+                               width: fits ? segmented.frame.width : max(160, popup.frame.width),
+                               height: height)
+    }
+
+    // The profile's ASCII font, used for the composer per the request
+    // that it match a terminal. Falls back to a fixed-pitch system font.
+    private func profileASCIIFont() -> NSFont {
+        // KEY_NORMAL_FONT ("Normal Font") is a #define not visible to
+        // Swift; the key string is stable across releases.
+        let profile = ProfileModel.sharedInstance()?.defaultProfile()
+        if let desc = profile?["Normal Font"] as? String,
+           let font = ITAddressBookMgr.font(withDesc: desc, ligaturesEnabled: false) {
+            return font
+        }
+        return NSFont.userFixedPitchFont(ofSize: 12) ?? NSFont.systemFont(ofSize: 12)
+    }
+
+    // Dock the real composer along the bottom of the content view, 12
+    // lines tall, and inset the tree above it. The panel uses
+    // autoresizing masks (see Cockpit.xib), not auto layout, so the
+    // composer pins to the bottom with a flexible top margin and the
+    // tree keeps a fixed bottom inset while it grows to fill the rest.
+    private func configureCommandBar() {
+        guard let contentView = window?.contentView else {
+            RLog("Cockpit: no content view; cannot build command bar")
+            return
+        }
+        let font = profileASCIIFont()
+        let lineHeight = ceil(NSLayoutManager().defaultLineHeight(for: font))
+        // 12 text lines plus the composer's own vertical insets and the
+        // accessory row (top 11 + bottom 19 in standard mode) so the tip
+        // sits below a full 12 visible lines.
+        composerBarHeight = ceil(lineHeight * 12) + 40
+        composerTipHeight = 20
+        let width = contentView.bounds.width
+
+        // The split view (the XIB's first subview) now hosts BOTH the list
+        // and the composer as draggable panes, so it only has to clear the
+        // bottom tip line. Full width; each pane insets its own content 8pt
+        // so the list card and composer card line up.
+        guard let splitView = contentView.subviews.first as? NSSplitView else {
+            RLog("Cockpit: first subview is not the split view; cannot build command bar")
+            return
+        }
+        // Span the full width, from just above the tip line to just below the
+        // filter bar. (Set absolutely rather than adjusting the XIB frame so
+        // the bottom lands exactly on the tip line.)
+        splitView.frame = NSRect(x: 0,
+                                 y: composerTipHeight,
+                                 width: width,
+                                 height: contentView.bounds.height - stateFilterBarHeight - composerTipHeight)
+
+        // A hint line pinned along the very bottom, under the split view.
+        // Doubles as the send-status line.
+        let tip = NSTextField(labelWithString: Self.defaultCockpitTip)
+        tip.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        tip.textColor = .secondaryLabelColor
+        tip.alignment = .center
+        tip.lineBreakMode = .byTruncatingTail
+        tip.frame = NSRect(x: 8, y: 0, width: width - 16, height: composerTipHeight)
+        tip.autoresizingMask = [.width, .maxYMargin]
+        composerTipLabel = tip
+        contentView.addSubview(tip)
+
+        composerVC.delegate = self
+        composerVC.isAutoComposer = false
+        // Opt in to the cockpit-only hooks; harmless everywhere else.
+        composerVC.forwardsTextChangesAlways = true
+        _ = composerVC.view  // force the nib to load before configuring
+        composerVC.setFont(font)
+        composerVC.setDockedChromeHidden(true)
+        composerVC.setTextColor(.labelColor, cursorColor: .labelColor)
+        // Let @-mention chips (NSTextAttachments) survive editing; the
+        // composer is plain-text by default and would strip them.
+        composerVC.setComposerRichTextEnabled(true)
+        composerVC.setComposerPlaceholder("Type here to write to selected sessions…")
+        // No host/scope: the cockpit has no shell, and suggestions are
+        // suppressed (see minimalComposerShouldFetchSuggestions), so the
+        // shell-completion path that would use them is never reached.
+
+        // Add the composer as the bottom pane. configureSplitView sets
+        // arrangesAllSubviews=true so both direct subviews (the list's pane,
+        // already present, and this composer) are laid out as panes; without
+        // that the XIB's arrangesAllSubviews=NO left the composer floating,
+        // overlapping the list.
+        composerVC.view.autoresizingMask = [.width, .height]
+        splitView.addSubview(composerVC.view)
+        configureSplitView(splitView)
+        composerVC.updateFrame()
+    }
+
+    // Turn the XIB's (single-pane, vertical) split view into a horizontal
+    // one with a draggable divider so the user can trade vertical space
+    // between the session list (top) and the composer (bottom). Uses the
+    // classic frame-based split-view API to match the rest of this window.
+    private func configureSplitView(_ splitView: NSSplitView) {
+        // Treat every direct subview as a pane (the XIB set this NO, which
+        // left the composer floating over the list).
+        splitView.arrangesAllSubviews = true
+        splitView.isVertical = false
+        splitView.dividerStyle = .paneSplitter
+        splitView.delegate = self
+        // When the window grows vertically, the list absorbs the extra space
+        // and the composer keeps the height the user set (higher holding
+        // priority resists resizing).
+        splitView.setHoldingPriority(NSLayoutConstraint.Priority(250), forSubviewAt: 0)
+        splitView.setHoldingPriority(NSLayoutConstraint.Priority(260), forSubviewAt: 1)
+        // Persist the user's divider position locally (NoSync: it's UI state,
+        // not a real setting). Only seed a default the first time, so a saved
+        // position is never clobbered.
+        splitView.autosaveName = Self.splitAutosaveName
+        let autosaveKey = "NSSplitView Subview Frames \(Self.splitAutosaveName)"
+        if UserDefaults.standard.object(forKey: autosaveKey) == nil {
+            let total = splitView.bounds.height
+            let position = total - composerBarHeight - splitView.dividerThickness
+            if position > 0 {
+                splitView.setPosition(position, ofDividerAt: 0)
+            }
+        }
+    }
+
     // MARK: - Public API
 
     @objc func show() {
@@ -208,12 +542,53 @@ class CockpitWindowController: NSWindowController {
         window.makeFirstResponder(searchToolbarItem.searchField)
     }
 
+    // The menu/hotkey entry point: bring the panel forward and land the
+    // caret directly in the command bar so directing a message is
+    // keyboard-only from the first keystroke.
+    @objc func showAndFocusCommand() {
+        guard let window else { return }
+        window.makeKeyAndOrderFront(nil)
+        composerVC.makeFirstResponder()
+    }
+
     // MARK: - Toolbar actions
 
+    // Give the settings item a real bordered button (so the popover has
+    // a view to anchor to; the XIB reserves it as a plain placeholder),
+    // then reflect the current mode. The button stays in place across
+    // mode switches, so nothing in the toolbar shifts.
+    private func configureSettingsToolbarItem() {
+        let button = NSButton(frame: NSRect(x: 0, y: 0, width: 30, height: 24))
+        button.bezelStyle = .texturedRounded
+        button.isBordered = true
+        button.image = NSImage(systemSymbolName: SFSymbol.gearshape.rawValue,
+                               accessibilityDescription: "Settings")
+        button.imagePosition = .imageOnly
+        button.target = self
+        button.action = #selector(showSettings(_:))
+        settingsButton = button
+        settingsToolbarItem.view = button
+        updateSettingsButtonEnabled()
+    }
+
+    // The settings popover only configures status-priority ordering, so
+    // it's meaningful only in Session Status grouping; disable it (in
+    // place, no layout shift) in the other modes.
+    private func updateSettingsButtonEnabled() {
+        settingsButton?.isEnabled = (groupMode == .byStatus)
+    }
+
+    // Open the shared status-priority settings popover (the same one the
+    // Session Status tool the cockpit mirrors uses), anchored to the
+    // settings button.
     @IBAction func showSettings(_ sender: Any?) {
-        // TODO: open the Session Status tool's settings popover,
-        // anchored to the Settings toolbar item's button view.
-        DLog("Cockpit: showSettings tapped (not yet implemented)")
+        guard let anchor = (sender as? NSView) ?? settingsButton else {
+            return
+        }
+        StatusPrioritySettings.shared.showSettingsPopover(
+            relativeTo: anchor.bounds,
+            of: anchor,
+            preferredEdge: .maxY)
     }
 
     @IBAction func groupModeChanged(_ sender: Any?) {
@@ -284,7 +659,7 @@ class CockpitWindowController: NSWindowController {
 
     // MARK: - Selection
 
-    @objc private func rowClicked(_ sender: Any?) {
+    @objc private func rowDoubleClicked(_ sender: Any?) {
         let row = outlineView.clickedRow
         guard row >= 0,
               let item = outlineView.item(atRow: row) as? CockpitRow else {
@@ -363,6 +738,448 @@ class CockpitWindowController: NSWindowController {
         guard let controller = iTermController.sharedInstance() else { return nil }
         return controller.terminals().first { $0.terminalGuid == guid }
     }
+
+    // MARK: - Command bar
+
+    // Sessions under the outline's current row selection (the mouse
+    // path), walking the model tree so a collapsed window/tab/workgroup
+    // row still targets every session beneath it. Deduped. Used only as
+    // the fallback target when the command carries no @-mention.
+    private func selectedRowSessions() -> [PTYSession] {
+        var guids: [String] = []
+        var seen = Set<String>()
+        for index in outlineView.selectedRowIndexes {
+            guard let row = outlineView.item(atRow: index) as? CockpitRow else {
+                continue
+            }
+            collectSessionGuids(row, into: &guids, seen: &seen)
+        }
+        return resolveGuids(guids)
+    }
+
+    private func collectSessionGuids(_ row: CockpitRow,
+                                     into guids: inout [String],
+                                     seen: inout Set<String>) {
+        if case .session(let guid) = row.kind, seen.insert(guid).inserted {
+            guids.append(guid)
+        }
+        for child in row.children {
+            collectSessionGuids(child, into: &guids, seen: &seen)
+        }
+    }
+
+    // Every session the cockpit currently lists. Walks the model tree,
+    // so it honors the active group mode and search filter: @all and
+    // @working address exactly what the user sees, not a hidden superset.
+    private func allModelSessions() -> [PTYSession] {
+        var guids: [String] = []
+        var seen = Set<String>()
+        for row in rootRows {
+            collectSessionGuids(row, into: &guids, seen: &seen)
+        }
+        return resolveGuids(guids)
+    }
+
+    private func resolveGuids(_ guids: [String]) -> [PTYSession] {
+        let controller = iTermController.sharedInstance()
+        return guids.compactMap { controller?.anySession(withGUID: $0) }
+    }
+
+    private func modelSessions(inState state: SessionState) -> [PTYSession] {
+        return allModelSessions().filter { sessionState(for: $0) == state }
+    }
+
+    // Resolve one @-token (leading '@' included) to its sessions.
+    // Case-insensitive keywords (@all / @working / @waiting / @idle)
+    // fan out; anything else is a session reference (a stableID inserted
+    // by the picker, or a legacy guid) resolved through
+    // anySession(forReference:). Empty means the token matched nothing.
+    private func sessions(forToken token: String) -> [PTYSession] {
+        let body = String(token.dropFirst())
+        switch body.lowercased() {
+        case "all": return allModelSessions()
+        case "working": return modelSessions(inState: .working)
+        case "waiting": return modelSessions(inState: .waiting)
+        case "idle": return modelSessions(inState: .idle)
+        default:
+            break
+        }
+        // A tab mention fans out to every pane; a window mention to every
+        // session in the window.
+        if body.hasPrefix("tab:"), let uniqueId = Int(body.dropFirst(4)) {
+            return sessions(inTabWithUniqueId: uniqueId)
+        }
+        if body.hasPrefix("win:") {
+            return sessions(inWindowWithGuid: String(body.dropFirst(4)))
+        }
+        if let session = iTermController.sharedInstance()?.anySession(forReference: body) {
+            return [session]
+        }
+        return []
+    }
+
+    private func sessions(inTabWithUniqueId uniqueId: Int) -> [PTYSession] {
+        for terminal in iTermController.sharedInstance()?.terminals() ?? [] {
+            if let tab = terminal.tab(withUniqueId: Int32(uniqueId)) {
+                return tab.sessions()
+            }
+        }
+        return []
+    }
+
+    private func sessions(inWindowWithGuid guid: String) -> [PTYSession] {
+        guard let terminal = terminal(forGuid: guid) else {
+            return []
+        }
+        return terminal.allSessions()
+    }
+
+    private func resolveTargets(_ tokens: [String]) -> (sessions: [PTYSession], unknown: [String]) {
+        var result: [PTYSession] = []
+        var seen = Set<String>()
+        var unknown: [String] = []
+        for token in tokens {
+            let matched = sessions(forToken: token)
+            if matched.isEmpty {
+                unknown.append(token)
+                continue
+            }
+            for session in matched where seen.insert(session.guid).inserted {
+                result.append(session)
+            }
+        }
+        return (result, unknown)
+    }
+
+    // Show a transient message in the tip line under the composer (in
+    // place of a screen-center toast), reverting to the default hint
+    // after a few seconds. Errors are tinted red.
+    private func setCockpitStatus(_ message: String, isError: Bool) {
+        guard let label = composerTipLabel else { return }
+        tipResetItem?.cancel()
+        label.stringValue = message
+        label.textColor = isError ? .systemRed : .secondaryLabelColor
+        let item = DispatchWorkItem { [weak self] in
+            self?.composerTipLabel?.stringValue = Self.defaultCockpitTip
+            self?.composerTipLabel?.textColor = .secondaryLabelColor
+        }
+        tipResetItem = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4, execute: item)
+    }
+
+    // CR matches what pressing Return sends and is what raw-mode TUIs
+    // (the agents this panel exists for) require.
+    private func commandByAppendingTerminator(_ command: String) -> String {
+        if command.hasSuffix("\n") || command.hasSuffix("\r") {
+            return command
+        }
+        return command + "\r"
+    }
+
+    // Send the command view's contents. Mention chips are targets no
+    // matter where they sit and are stripped from the command entirely;
+    // the command is the typed (non-chip) text, sent verbatim (a typed
+    // "@x" that never became a chip is literal text, not a target). With no
+    // chips, the command goes to the selected rows. On success the view
+    // clears (chips repopulated from the selection). Anything that would
+    // send to nowhere reports a status and leaves the text in place.
+    fileprivate func sendCommandFieldContents() {
+        mentionPicker.hide()
+
+        // Split the composer into chip targets (anywhere) and the typed
+        // text, so a chip embedded mid-text never leaks into the command.
+        let attributed = composerVC.attributedStringValue
+        let ns = attributed.string as NSString
+        var chipTokens: [String] = []
+        var typed = ""
+        attributed.enumerateAttribute(.attachment,
+                                      in: NSRange(location: 0, length: attributed.length),
+                                      options: []) { value, range, _ in
+            if let mention = value as? ChatSessionMentionAttachment {
+                chipTokens.append("@" + mention.guid)
+            } else if value == nil {
+                typed += ns.substring(with: range)
+            }
+        }
+
+        // Only chips are targets; every typed character (including any
+        // literal '@x' that never became a chip) is sent verbatim.
+        let command = typed.trimmingCharacters(in: .whitespacesAndNewlines)
+        DLog("Cockpit send: chips=\(chipTokens) command=\(command)")
+
+        let sessions: [PTYSession]
+        if chipTokens.isEmpty {
+            guard !command.isEmpty else { return }
+            sessions = selectedRowSessions()
+            guard !sessions.isEmpty else {
+                setCockpitStatus("Type @ to pick a session, or select rows first", isError: true)
+                return
+            }
+        } else {
+            let (resolved, unknown) = resolveTargets(chipTokens)
+            guard unknown.isEmpty else {
+                setCockpitStatus("Unknown target \(unknown.joined(separator: " "))", isError: true)
+                return
+            }
+            guard !command.isEmpty else {
+                setCockpitStatus("Add a command after the @mention", isError: true)
+                return
+            }
+            guard !resolved.isEmpty else {
+                setCockpitStatus("No matching sessions", isError: true)
+                return
+            }
+            sessions = resolved
+        }
+
+        let terminated = commandByAppendingTerminator(command)
+        var sent = 0
+        for session in sessions where !session.exited {
+            session.writeTaskNoBroadcast(terminated)
+            sent += 1
+        }
+        guard sent > 0 else {
+            setCockpitStatus("No running sessions to send to", isError: true)
+            return
+        }
+        DLog("Cockpit sent command to \(sent) session(s)")
+        clearCommandView()
+        setCockpitStatus("Sent to \(sent) session\(sent == 1 ? "" : "s")", isError: false)
+    }
+
+    // After a send, drop the command text but keep the mention chips
+    // (the row selection persists, so the two stay in sync and you can
+    // fire again at the same targets without re-picking them).
+    private func clearCommandView() {
+        let chips = mentionChips(for: selectedTargets())
+        let length = composerVC.attributedStringValue.length
+        isSyncingTargets = true
+        composerVC.replace(NSRange(location: 0, length: length), with: chips)
+        isSyncingTargets = false
+        activeMentionRange = nil
+    }
+
+    // A run of chips (each followed by a space) for the given targets.
+    private func mentionChips(for targets: [(token: String, name: String)]) -> NSAttributedString {
+        let font = profileASCIIFont()
+        let result = NSMutableAttributedString()
+        for target in targets {
+            result.append(ChatSessionMentionAttachment.attributedString(
+                guid: target.token,
+                displayName: target.name,
+                font: font,
+                color: NSColor.linkColor,
+                symbolName: symbolName(forToken: target.token)))
+            result.append(NSAttributedString(string: " ",
+                                             attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
+        }
+        return result
+    }
+
+    // MARK: - @-mention session picker (reuses ChatMentionPickerController)
+
+    // The composer supports multiple cursors, so several @-runs can be
+    // in flight at once. Per the routing rule, auto-completion is always
+    // aimed at the FIRST at-mention in the document: the earliest '@'
+    // that starts a word and is followed by a run of non-whitespace,
+    // non-token characters. Returns that run's range and the query typed
+    // after '@'. nil means there is no at-mention to complete.
+    private func firstMentionContext() -> (range: NSRange, query: String)? {
+        let ns = composerVC.attributedStringValue.string as NSString
+        let length = ns.length
+        var i = 0
+        while i < length {
+            let c = ns.character(at: i)
+            let startsWord = (i == 0) || isMentionBoundary(ns.character(at: i - 1))
+            if c == UInt16(UnicodeScalar("@").value) && startsWord {
+                var end = i + 1
+                while end < length && !isMentionBoundary(ns.character(at: end)) {
+                    end += 1
+                }
+                let queryRange = NSRange(location: i + 1, length: end - (i + 1))
+                return (NSRange(location: i, length: end - i), ns.substring(with: queryRange))
+            }
+            i += 1
+        }
+        return nil
+    }
+
+    private func isMentionBoundary(_ c: unichar) -> Bool {
+        if c == 0xFFFC { return true }  // object replacement char: an existing token
+        guard let scalar = UnicodeScalar(c) else { return false }
+        return CharacterSet.whitespacesAndNewlines.contains(scalar)
+    }
+
+    // Drive the shared picker for the first at-mention, or hide it when
+    // there is none. Called on every composer text change.
+    fileprivate func updateMentionPicker() {
+        guard window != nil, let context = firstMentionContext() else {
+            activeMentionRange = nil
+            mentionPicker.hide()
+            return
+        }
+        activeMentionRange = context.range
+        if mentionPicker.isVisible {
+            mentionPicker.update(query: context.query)
+        } else {
+            mentionPicker.show(anchorView: composerVC.completionAnchorView,
+                               query: context.query) { [weak self] guid, displayName in
+                self?.insertMention(guid: guid, displayName: displayName)
+            }
+        }
+    }
+
+    // The chip icon for a target token: window, tab, or (default)
+    // session. Matches the window/tab/pane glyphs used elsewhere (the
+    // Companion app's session tree): macwindow / folder / terminal.
+    private func symbolName(forToken token: String) -> String {
+        if token.hasPrefix("win:") {
+            return SFSymbol.macwindow.rawValue
+        }
+        if token.hasPrefix("tab:") {
+            return SFSymbol.folder.rawValue
+        }
+        return SFSymbol.terminal.rawValue
+    }
+
+    // Replace the first at-mention run with an atomic chip token.
+    private func insertMention(guid: String, displayName: String) {
+        guard let range = firstMentionContext()?.range ?? activeMentionRange else { return }
+        let font = profileASCIIFont()
+        let mention = NSMutableAttributedString(
+            attributedString: ChatSessionMentionAttachment.attributedString(
+                guid: guid,
+                displayName: displayName,
+                font: font,
+                color: NSColor.linkColor,
+                symbolName: symbolName(forToken: guid)))
+        mention.append(NSAttributedString(string: " ",
+                                          attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
+        composerVC.replace(range, with: mention)
+        activeMentionRange = nil
+    }
+
+    // MARK: - Two-way binding: composer @-mentions <-> row selection
+
+    // The sessions currently @-mentioned as chips in the composer, in
+    // document order, deduped.
+    // The target tokens currently @-mentioned as chips (the chip guid,
+    // e.g. a session stableID, "tab:<uid>", or "win:<guid>"), in
+    // document order, deduped.
+    private func composerTokens() -> [String] {
+        let attr = composerVC.attributedStringValue
+        var tokens: [String] = []
+        var seen = Set<String>()
+        attr.enumerateAttribute(.attachment,
+                                in: NSRange(location: 0, length: attr.length)) { value, _, _ in
+            if let mention = value as? ChatSessionMentionAttachment, seen.insert(mention.guid).inserted {
+                tokens.append(mention.guid)
+            }
+        }
+        return tokens
+    }
+
+    // The (token, display name) targets for the current row selection. A
+    // window or tab row is a single container target; a session row is a
+    // session target; a status/workgroup group expands to its sessions.
+    private func selectedTargets() -> [(token: String, name: String)] {
+        let controller = iTermController.sharedInstance()
+        var out: [(token: String, name: String)] = []
+        var seen = Set<String>()
+        func add(_ token: String, _ name: String) {
+            if seen.insert(token).inserted {
+                out.append((token, name))
+            }
+        }
+        for index in outlineView.selectedRowIndexes {
+            guard let row = outlineView.item(atRow: index) as? CockpitRow else { continue }
+            switch row.kind {
+            case .window(let guid):
+                add("win:\(guid)", row.title)
+            case .tab(let uniqueId):
+                add("tab:\(uniqueId)", row.title)
+            case .session(let guid):
+                if let session = controller?.anySession(withGUID: guid) {
+                    add(session.stableID, ChatMentionDisplay.displayName(for: session))
+                }
+            case .group, .buriedRoot, .workgroup:
+                var guids: [String] = []
+                var innerSeen = Set<String>()
+                collectSessionGuids(row, into: &guids, seen: &innerSeen)
+                for guid in guids {
+                    if let session = controller?.anySession(withGUID: guid) {
+                        add(session.stableID, ChatMentionDisplay.displayName(for: session))
+                    }
+                }
+            }
+        }
+        return out
+    }
+
+    // Composer chips changed -> select the rows those targets name. Only
+    // acts when the target set actually differs, so a container-row
+    // selection whose expansion matches isn't needlessly rewritten.
+    fileprivate func syncSelectionFromComposer() {
+        guard !isSyncingTargets else { return }
+        let chips = Set(composerTokens())
+        guard chips != Set(selectedTargets().map { $0.token }) else { return }
+        let controller = iTermController.sharedInstance()
+        var desired = IndexSet()
+        for row in 0..<outlineView.numberOfRows {
+            guard let item = outlineView.item(atRow: row) as? CockpitRow else { continue }
+            let matches: Bool
+            switch item.kind {
+            case .window(let guid):
+                matches = chips.contains("win:\(guid)")
+            case .tab(let uniqueId):
+                matches = chips.contains("tab:\(uniqueId)")
+            case .session(let guid):
+                matches = (controller?.anySession(withGUID: guid)?.stableID).map { chips.contains($0) } ?? false
+            case .group, .buriedRoot, .workgroup:
+                matches = false
+            }
+            if matches {
+                desired.insert(row)
+            }
+        }
+        isSyncingTargets = true
+        outlineView.selectRowIndexes(desired, byExtendingSelection: false)
+        isSyncingTargets = false
+    }
+
+    // Row selection changed -> rewrite the composer's chips to match,
+    // preserving the typed command. Only fires when the target set
+    // actually differs, so it never clobbers the command or caret on a
+    // no-op reselection.
+    fileprivate func syncComposerFromSelection() {
+        guard !isSyncingTargets else { return }
+        let targets = selectedTargets()
+        guard Set(targets.map { $0.token }) != Set(composerTokens()) else { return }
+        isSyncingTargets = true
+        setComposerMentions(targets)
+        isSyncingTargets = false
+    }
+
+    // Replace the composer's contents with chips for `targets` (in
+    // order) followed by the existing command text (everything that
+    // isn't a mention chip, with leading whitespace trimmed).
+    private func setComposerMentions(_ targets: [(token: String, name: String)]) {
+        let attr = composerVC.attributedStringValue
+        let ns = attr.string as NSString
+        let command = NSMutableString()
+        attr.enumerateAttribute(.attachment,
+                                in: NSRange(location: 0, length: attr.length)) { value, range, _ in
+            if value == nil {
+                command.append(ns.substring(with: range))
+            }
+        }
+        let commandText = String(command).drop { $0 == " " || $0 == "\t" }
+        let font = profileASCIIFont()
+        let result = NSMutableAttributedString(attributedString: mentionChips(for: targets))
+        result.append(NSAttributedString(string: String(commandText),
+                                         attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
+        composerVC.replace(NSRange(location: 0, length: attr.length), with: result)
+    }
 }
 
 // MARK: - Live model
@@ -398,7 +1215,9 @@ fileprivate final class CockpitRow {
         case buriedRoot
         case workgroup(id: String)
         case tab(uniqueId: Int)
-        case group(scope: String, state: SessionState)
+        // A status bucket in byStatus mode. `status` is the session's
+        // arbitrary reported status text (or a "No status" sentinel).
+        case group(scope: String, status: String)
         case session(guid: String)
     }
     enum Identity: Hashable {
@@ -406,17 +1225,21 @@ fileprivate final class CockpitRow {
         case buriedRoot
         case workgroup(String)
         case tab(Int)
-        case group(String, SessionState)
+        case group(String, String)
         case session(String)
     }
     let identity: Identity
     let kind: Kind
     var title: String
-    // Secondary line shown under the title in a smaller, dimmer font.
-    // Only populated for session rows in byStatus mode (the only place
-    // a session's live detail string is surfaced); nil everywhere else,
-    // which the cell renders as a plain single-line row.
+    // Secondary line shown under the title in a smaller, dimmer font:
+    // the session's live detail string. Shown for session rows in every
+    // grouping mode; nil elsewhere (a plain single-line row).
     var detail: String?
+    // The session's live, arbitrary status text (e.g. "Waiting",
+    // "Testing") and its color, for the trailing status word and the
+    // status filter. nil for non-session rows / no reported status.
+    var status: String?
+    var statusColor: NSColor?
     // True when this window or session has notify-on-status-change armed.
     // The cell shows a trailing bell when set. Only window and session
     // rows ever set it.
@@ -493,11 +1316,6 @@ fileprivate final class CockpitRow {
 // disjoint between real windows and the buried section.
 fileprivate let cockpitBuriedWindowGuid = "<buried>"
 
-// Display order for state subgroups within a window. Waiting first
-// (it's the only state that requires user attention), then Working
-// (active runs the user might be watching), then Idle (the rest).
-private let cockpitStateOrder: [SessionState] = [.waiting, .working, .idle]
-
 // Row view that always reports itself as emphasized so source-list
 // selection draws in its active blue style on the non-activating
 // cockpit panel, where the window never becomes key.
@@ -530,6 +1348,44 @@ fileprivate final class CockpitAlwaysEmphasizedRowView: NSTableRowView {
 fileprivate final class CockpitPassthroughImageView: NSImageView {
     override func hitTest(_ point: NSPoint) -> NSView? {
         return nil
+    }
+}
+
+// The status filter bar. Calls `onResize` when its width changes so the
+// controller can switch between the segmented control and the popup
+// depending on whether the options fit.
+fileprivate final class CockpitFilterBar: NSView {
+    var onResize: (() -> Void)?
+    override func setFrameSize(_ newSize: NSSize) {
+        let changed = newSize.width != frame.width
+        super.setFrameSize(newSize)
+        if changed {
+            onResize?()
+        }
+    }
+}
+
+// The rounded "card" behind the session list. Draws its own fill + border
+// with a bezier path so the corners stay crisp (masksToBounds on a scroll
+// view shaves the border stroke at the corners). Its scroll view child is
+// transparent, so this fill is what shows through, including at the rounded
+// corners.
+fileprivate final class CockpitListContainerView: NSView {
+    private static let cornerRadius: CGFloat = 10
+
+    override func draw(_ dirtyRect: NSRect) {
+        // Inset by half a point so the 1pt stroke sits fully inside the
+        // bounds (a stroke straddles its path, so an un-inset path would
+        // clip the outer half).
+        let rect = bounds.insetBy(dx: 0.5, dy: 0.5)
+        let path = NSBezierPath(roundedRect: rect,
+                                xRadius: Self.cornerRadius,
+                                yRadius: Self.cornerRadius)
+        NSColor.textBackgroundColor.setFill()
+        path.fill()
+        NSColor.separatorColor.setStroke()
+        path.lineWidth = 1
+        path.stroke()
     }
 }
 
@@ -589,11 +1445,38 @@ fileprivate final class CockpitTableCellView: NSTableCellView {
         }
     }
 
+    // Leading kind icon (window / tab / session / …). nil hides it.
+    var cockpitIconSymbolName: String? {
+        didSet {
+            if cockpitIconSymbolName != oldValue {
+                updateIcon()
+                needsLayout = true
+            }
+        }
+    }
+
+    // Trailing status word for a session row (state), tinted by state
+    // color. nil hides it.
+    var cockpitState: (text: String, color: NSColor)? {
+        didSet {
+            if cockpitState?.text != oldValue?.text || cockpitState?.color != oldValue?.color {
+                updateStateLabel()
+                needsLayout = true
+            }
+        }
+    }
+
     private var detailField: NSTextField?
     private var renderedDetail: NSAttributedString?
     private var bellView: NSImageView?
+    private var iconView: NSImageView?
+    private var stateLabel: NSTextField?
     private static let bellSize: CGFloat = 14
     private static let bellGap: CGFloat = 4
+    private static let iconSize: CGFloat = 15
+    private static let iconGap: CGFloat = 5
+    private static let stateLabelFont = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+    private static let stateLabelTrailing: CGFloat = 8
 
     // Lay out top-down so the title sits above the detail line.
     override var isFlipped: Bool { true }
@@ -646,16 +1529,78 @@ fileprivate final class CockpitTableCellView: NSTableCellView {
         bell.autoresizingMask = []
         addSubview(bell)
         bellView = bell
+
+        let icon = CockpitPassthroughImageView()
+        icon.imageScaling = .scaleProportionallyDown
+        icon.isHidden = true
+        icon.translatesAutoresizingMaskIntoConstraints = true
+        icon.autoresizingMask = []
+        addSubview(icon)
+        iconView = icon
+
+        let state = NSTextField(labelWithString: "")
+        state.font = Self.stateLabelFont
+        state.alignment = .right
+        state.lineBreakMode = .byClipping
+        state.isHidden = true
+        state.translatesAutoresizingMaskIntoConstraints = true
+        state.autoresizingMask = []
+        addSubview(state)
+        stateLabel = state
+    }
+
+    private func updateStateLabel() {
+        guard let stateLabel else { return }
+        if let state = cockpitState {
+            stateLabel.stringValue = state.text
+            stateLabel.textColor = state.color
+            stateLabel.isHidden = false
+        } else {
+            stateLabel.stringValue = ""
+            stateLabel.isHidden = true
+        }
+    }
+
+    private var stateLabelWidth: CGFloat {
+        guard let stateLabel, !stateLabel.isHidden else { return 0 }
+        return ceil(stateLabel.intrinsicContentSize.width)
+    }
+
+    private func updateIcon() {
+        guard let iconView else { return }
+        let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .regular)
+        if let name = cockpitIconSymbolName,
+           let image = NSImage(systemSymbolName: name, accessibilityDescription: nil)?
+            .withSymbolConfiguration(config) {
+            iconView.image = image
+            iconView.isHidden = false
+        } else {
+            iconView.image = nil
+            iconView.isHidden = true
+        }
+        applyIconTint()
+    }
+
+    private func applyIconTint() {
+        iconView?.contentTintColor = (backgroundStyle == .emphasized)
+            ? .alternateSelectedControlTextColor
+            : .controlAccentColor
     }
 
     override func layout() {
         super.layout()
         guard let textField else { return }
-        // When armed, the bell sits at the leading edge (still inside the
-        // row's indentation) and the text is pushed right to make room.
+        // Leading run: the kind icon, then (when armed) the notify bell,
+        // then the text pushed right to make room for both.
+        let hasIcon = (iconView?.isHidden == false)
+        let iconLeading = hasIcon ? (Self.iconSize + Self.iconGap) : 0
         let armed = (bellView?.isHidden == false)
-        let leading = armed ? (Self.bellSize + Self.bellGap) : 0
-        let width = max(0, bounds.width - leading)
+        let bellLeading = armed ? (Self.bellSize + Self.bellGap) : 0
+        let leading = iconLeading + bellLeading
+        // Reserve room at the trailing edge for the state word.
+        let stateWidth = stateLabelWidth
+        let trailing = stateWidth > 0 ? (stateWidth + Self.stateLabelTrailing * 2) : 0
+        let width = max(0, bounds.width - leading - trailing)
         let titleHeight = ceil(textField.intrinsicContentSize.height)
         let titleTop: CGFloat
         if let detailField, !detailField.isHidden {
@@ -671,14 +1616,26 @@ fileprivate final class CockpitTableCellView: NSTableCellView {
             titleTop = (bounds.height - titleHeight) / 2
             textField.frame = NSRect(x: leading, y: titleTop, width: width, height: titleHeight)
         }
+        // Vertically center the icon/bell on the title line, not the whole
+        // cell, so they line up with the name even with a detail line.
+        if hasIcon, let iconView {
+            iconView.frame = NSRect(x: 0,
+                                    y: titleTop + (titleHeight - Self.iconSize) / 2,
+                                    width: Self.iconSize,
+                                    height: Self.iconSize)
+        }
         if let bellView, armed {
-            // Vertically center the bell on the title line, not the whole
-            // cell, so it lines up with the name even when a detail line
-            // is present.
-            bellView.frame = NSRect(x: 0,
+            bellView.frame = NSRect(x: iconLeading,
                                     y: titleTop + (titleHeight - Self.bellSize) / 2,
                                     width: Self.bellSize,
                                     height: Self.bellSize)
+        }
+        if stateWidth > 0, let stateLabel {
+            let labelHeight = ceil(stateLabel.intrinsicContentSize.height)
+            stateLabel.frame = NSRect(x: bounds.width - stateWidth - Self.stateLabelTrailing,
+                                      y: titleTop + (titleHeight - labelHeight) / 2,
+                                      width: stateWidth,
+                                      height: labelHeight)
         }
     }
 
@@ -709,6 +1666,7 @@ fileprivate final class CockpitTableCellView: NSTableCellView {
         bellView?.contentTintColor = emphasized
             ? .alternateSelectedControlTextColor
             : .controlAccentColor
+        applyIconTint()
     }
 
     // Render the markdown detail string into a compact, single-line
@@ -742,16 +1700,6 @@ fileprivate final class CockpitTableCellView: NSTableCellView {
         result.addAttribute(.paragraphStyle, value: paragraph, range: fullRange)
         return result
     }
-}
-
-private func cockpitStateLabel(_ state: SessionState, count: Int) -> String {
-    let name: String
-    switch state {
-    case .waiting: name = "Waiting"
-    case .working: name = "Working"
-    case .idle, .unknown: name = "Idle"
-    }
-    return "\(name) · \(count)"
 }
 
 // MARK: - Data source / delegate
@@ -843,6 +1791,7 @@ extension CockpitWindowController: NSOutlineViewDataSource, NSOutlineViewDelegat
 
     func outlineViewSelectionDidChange(_ notification: Notification) {
         updateNotifyToolbarItem()
+        syncComposerFromSelection()
     }
 
     func outlineView(_ outlineView: NSOutlineView,
@@ -860,7 +1809,31 @@ extension CockpitWindowController: NSOutlineViewDataSource, NSOutlineViewDelegat
         cell.cockpitTitle = row.title
         cell.cockpitDetail = row.detail
         cell.cockpitArmed = row.armed
+        cell.cockpitIconSymbolName = iconSymbolName(for: row.kind)
+        cell.cockpitState = row.status.map {
+            (text: $0, color: row.statusColor ?? .secondaryLabelColor)
+        }
         return cell
+    }
+
+    // Leading icon per row kind, matching the chip glyphs and the
+    // Companion app's session tree (macwindow / folder / terminal).
+    // Status-bucket group rows are sub-headers and get no icon.
+    private func iconSymbolName(for kind: CockpitRow.Kind) -> String? {
+        switch kind {
+        case .window:
+            return SFSymbol.macwindow.rawValue
+        case .tab:
+            return SFSymbol.folder.rawValue
+        case .session:
+            return SFSymbol.terminal.rawValue
+        case .workgroup:
+            return SFSymbol.rectangle3Group.rawValue
+        case .buriedRoot:
+            return SFSymbol.archivebox.rawValue
+        case .group:
+            return nil
+        }
     }
 
     // Rows carrying a detail line are taller so the smaller second line
@@ -952,6 +1925,13 @@ extension CockpitWindowController {
                                        newShape: newShape,
                                        previouslyExpanded: previouslyExpanded)
         restoreSelection(previouslySelected: previouslySelected)
+        updateStatusFilter()
+        // With a filter active the surviving matches must be visible, so
+        // expand every container (otherwise a collapsed window hides the
+        // sessions the filter kept).
+        if !filter.isEmpty || statusFilter != nil {
+            outlineView.expandItem(nil, expandChildren: true)
+        }
     }
 
     fileprivate func rebuildRows() {
@@ -965,11 +1945,28 @@ extension CockpitWindowController {
         case .byWorkgroup:
             rebuiltRoots = rebuildByWorkgroup(freshCache: &freshCache)
         }
-        let pruned = filter.isEmpty
+        statusCounts = Self.countStatuses(in: rebuiltRoots)
+        let pruned = (filter.isEmpty && statusFilter == nil)
             ? rebuiltRoots
-            : Self.prune(rebuiltRoots, filter: filter, keptCache: &freshCache)
+            : Self.prune(rebuiltRoots, needle: filter.lowercased(), status: statusFilter, keptCache: &freshCache)
         rowCache = freshCache
         rootRows = pruned
+    }
+
+    // Session counts keyed by status text (no-status folded under the
+    // sentinel), for the filter menu.
+    private static func countStatuses(in roots: [CockpitRow]) -> [String: Int] {
+        var counts: [String: Int] = [:]
+        func walk(_ row: CockpitRow) {
+            if case .session = row.kind {
+                counts[row.status ?? Self.noStatusLabel, default: 0] += 1
+            }
+            for child in row.children {
+                walk(child)
+            }
+        }
+        roots.forEach(walk)
+        return counts
     }
 
     // Walk a freshly-built tree and keep only the subtrees that contain
@@ -981,12 +1978,12 @@ extension CockpitWindowController {
     // dropped rows are evicted from keptCache so the diff and the cache
     // agree on the surviving set.
     private static func prune(_ rows: [CockpitRow],
-                              filter: String,
+                              needle: String,
+                              status: String?,
                               keptCache: inout [CockpitRow.Identity: CockpitRow]) -> [CockpitRow] {
-        let needle = filter.lowercased()
         var kept: [CockpitRow] = []
         for row in rows {
-            if let surviving = pruneRow(row, needle: needle, keptCache: &keptCache) {
+            if let surviving = pruneRow(row, needle: needle, status: status, keptCache: &keptCache) {
                 kept.append(surviving)
             }
         }
@@ -995,10 +1992,13 @@ extension CockpitWindowController {
 
     private static func pruneRow(_ row: CockpitRow,
                                  needle: String,
+                                 status: String?,
                                  keptCache: inout [CockpitRow.Identity: CockpitRow]) -> CockpitRow? {
         switch row.kind {
         case .session:
-            if row.title.lowercased().contains(needle) {
+            let textOk = needle.isEmpty || row.title.lowercased().contains(needle)
+            let statusOk = status == nil || (row.status ?? Self.noStatusLabel) == status
+            if textOk && statusOk {
                 return row
             }
             keptCache.removeValue(forKey: row.identity)
@@ -1006,7 +2006,7 @@ extension CockpitWindowController {
         case .window, .buriedRoot, .workgroup, .tab, .group:
             var keptChildren: [CockpitRow] = []
             for child in row.children {
-                if let survivor = pruneRow(child, needle: needle, keptCache: &keptCache) {
+                if let survivor = pruneRow(child, needle: needle, status: status, keptCache: &keptCache) {
                     keptChildren.append(survivor)
                 }
             }
@@ -1040,7 +2040,7 @@ extension CockpitWindowController {
             freshCache[windowIdentity] = windowRow
             let expanded = expandWithPeers(terminal.allSessions(),
                                             alreadySeen: &alreadySeen)
-            windowRow.children = bucketSessionsByState(
+            windowRow.children = bucketSessionsByStatus(
                 expanded,
                 scope: windowGuid,
                 freshCache: &freshCache)
@@ -1063,7 +2063,7 @@ extension CockpitWindowController {
             buriedRow.title = "Buried Sessions"
             buriedRow.armed = false
             freshCache[identity] = buriedRow
-            buriedRow.children = bucketSessionsByState(
+            buriedRow.children = bucketSessionsByStatus(
                 buriedExpanded,
                 scope: cockpitBuriedWindowGuid,
                 freshCache: &freshCache)
@@ -1180,10 +2180,12 @@ extension CockpitWindowController {
                               kind: .session(guid: session.guid),
                               title: title)
             row.title = title
-            // Detail is a byStatus-only affordance; clear any value a
-            // cached row carried over from a previous byStatus build so
-            // it doesn't leak into byWindow / byWorkgroup rows.
-            row.detail = nil
+            // The session's self-reported detail and state are shown in
+            // every grouping mode now, not just byStatus.
+            row.detail = cockpitDetailText(for: session)
+            let status = cockpitStatus(for: session)
+            row.status = status?.text
+            row.statusColor = status?.color
             row.armed = NotifyOnStatusChangeController.instance.isSessionArmed(forGuid: session.guid)
             row.children = []
             freshCache[identity] = row
@@ -1259,12 +2261,13 @@ extension CockpitWindowController {
         return result
     }
 
-    private func bucketSessionsByState(_ sessions: [PTYSession],
-                                       scope: String,
-                                       freshCache: inout [CockpitRow.Identity: CockpitRow]) -> [CockpitRow] {
-        var bucketed: [SessionState: [CockpitRow]] = [:]
+    private func bucketSessionsByStatus(_ sessions: [PTYSession],
+                                        scope: String,
+                                        freshCache: inout [CockpitRow.Identity: CockpitRow]) -> [CockpitRow] {
+        var bucketed: [String: [CockpitRow]] = [:]
         for session in sessions {
-            let state = sessionState(for: session)
+            let status = cockpitStatus(for: session)
+            let bucketKey = status?.text ?? Self.noStatusLabel
             let identity = CockpitRow.Identity.session(session.guid)
             let title = cockpitSessionTitle(for: session)
             let row = rowCache[identity]
@@ -1273,21 +2276,23 @@ extension CockpitWindowController {
                               title: title)
             row.title = title
             row.detail = cockpitDetailText(for: session)
+            row.status = status?.text
+            row.statusColor = status?.color
             row.armed = NotifyOnStatusChangeController.instance.isSessionArmed(forGuid: session.guid)
             row.children = []
             freshCache[identity] = row
-            bucketed[state, default: []].append(row)
+            bucketed[bucketKey, default: []].append(row)
         }
 
         var groupRows: [CockpitRow] = []
-        for state in cockpitStateOrder {
-            let members = bucketed[state] ?? []
+        for status in bucketed.keys.sorted(by: { statusSortKey($0) < statusSortKey($1) }) {
+            let members = bucketed[status] ?? []
             if members.isEmpty { continue }
-            let identity = CockpitRow.Identity.group(scope, state)
-            let label = cockpitStateLabel(state, count: members.count)
+            let identity = CockpitRow.Identity.group(scope, status)
+            let label = "\(status) · \(members.count)"
             let groupRow = rowCache[identity]
                 ?? CockpitRow(identity: identity,
-                              kind: .group(scope: scope, state: state),
+                              kind: .group(scope: scope, status: status),
                               title: label)
             groupRow.title = label
             groupRow.children = members
@@ -1393,6 +2398,12 @@ extension CockpitWindowController {
         var titleOf: [CockpitRow.Identity: String] = [:]
         var detailOf: [CockpitRow.Identity: String?] = [:]
         var armedOf: [CockpitRow.Identity: Bool] = [:]
+        var statusOf: [CockpitRow.Identity: String?] = [:]
+        // The status text can stay the same while its color changes (e.g. a
+        // tool flips from an indicator color to a red statusTextColor), so
+        // the color is snapshotted separately; comparing text alone would
+        // miss those and leave the old color rendered.
+        var statusColorOf: [CockpitRow.Identity: NSColor?] = [:]
     }
 
     private func snapshotTreeShape(of roots: [CockpitRow]) -> TreeShape {
@@ -1403,6 +2414,8 @@ extension CockpitWindowController {
             shape.titleOf[root.identity] = root.title
             shape.detailOf[root.identity] = root.detail
             shape.armedOf[root.identity] = root.armed
+            shape.statusOf[root.identity] = root.status
+            shape.statusColorOf[root.identity] = root.statusColor
             snapshotChildren(of: root, into: &shape)
         }
         return shape
@@ -1416,6 +2429,8 @@ extension CockpitWindowController {
             shape.titleOf[child.identity] = child.title
             shape.detailOf[child.identity] = child.detail
             shape.armedOf[child.identity] = child.armed
+            shape.statusOf[child.identity] = child.status
+            shape.statusColorOf[child.identity] = child.statusColor
             snapshotChildren(of: child, into: &shape)
         }
     }
@@ -1539,7 +2554,9 @@ extension CockpitWindowController {
             let titleChanged = old.titleOf[id] != new.titleOf[id]
             let detailChanged = old.detailOf[id] != new.detailOf[id]
             let armedChanged = old.armedOf[id] != new.armedOf[id]
-            guard titleChanged || detailChanged || armedChanged,
+            let statusChanged = old.statusOf[id] != new.statusOf[id]
+                || old.statusColorOf[id] != new.statusColorOf[id]
+            guard titleChanged || detailChanged || armedChanged || statusChanged,
                   let row = rowCache[id] else {
                 continue
             }
@@ -1579,6 +2596,43 @@ extension CockpitWindowController {
     private func sessionState(for session: PTYSession) -> SessionState {
         let state = WorkgroupIntrospection.state(for: session)
         return state == .unknown ? .idle : state
+    }
+
+    // Sentinel bucket/filter key for sessions that report no status.
+    static let noStatusLabel = "No status"
+
+    // The session's live, arbitrary status text and its color, straight
+    // from the tab status (the same source the Session Status tool uses).
+    // nil when the session reports no status.
+    private func cockpitStatus(for session: PTYSession) -> (text: String, color: NSColor)? {
+        guard let status = session.tabStatus,
+              let raw = status.statusText?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !raw.isEmpty else {
+            return nil
+        }
+        let color: NSColor
+        if status.hasStatusTextColor {
+            color = Self.nsColor(from: status.statusTextColor)
+        } else if status.hasIndicator {
+            color = Self.nsColor(from: status.indicatorColor)
+        } else {
+            color = .secondaryLabelColor
+        }
+        return (raw, color)
+    }
+
+    private static func nsColor(from c: iTermSRGBColor) -> NSColor {
+        return NSColor(srgbRed: CGFloat(c.r), green: CGFloat(c.g), blue: CGFloat(c.b), alpha: 1)
+    }
+
+    // Order statuses the way the Session Status tool does (its priority
+    // list), so the byStatus buckets and the filter menu read the same.
+    // No-status sorts last.
+    private func statusSortKey(_ status: String) -> (Int, String) {
+        if status == Self.noStatusLabel {
+            return (Int.max, status)
+        }
+        return (StatusPrioritySettings.shared.priority(for: status), status.lowercased())
     }
 
     private func cockpitWindowTitle(for terminal: PseudoTerminal) -> String {
@@ -1683,14 +2737,156 @@ extension CockpitWindowController {
 
 // MARK: - Search
 
+extension CockpitWindowController: NSSplitViewDelegate {
+    // Minimum height for the top (list) pane: keep a few rows visible.
+    private static let listMinHeight: CGFloat = 100
+    // Minimum height for the bottom (composer) pane: enough for a couple of
+    // lines plus the accessory row so the send tip stays visible.
+    private static let composerMinHeight: CGFloat = 110
+
+    func splitView(_ splitView: NSSplitView,
+                   constrainMinCoordinate proposedMinimumPosition: CGFloat,
+                   ofSubviewAt dividerIndex: Int) -> CGFloat {
+        // Divider position is measured from the top, so the minimum position
+        // is the list pane's minimum height.
+        return proposedMinimumPosition + Self.listMinHeight
+    }
+
+    func splitView(_ splitView: NSSplitView,
+                   constrainMaxCoordinate proposedMaximumPosition: CGFloat,
+                   ofSubviewAt dividerIndex: Int) -> CGFloat {
+        // The remaining space below the divider is the composer; cap the
+        // divider so the composer never shrinks past its minimum.
+        return proposedMaximumPosition - Self.composerMinHeight
+    }
+}
+
 extension CockpitWindowController: NSSearchFieldDelegate {
     func controlTextDidChange(_ obj: Notification) {
-        guard let field = obj.object as? NSSearchField else { return }
-        filter = field.stringValue
+        guard obj.object as? NSSearchField != nil else { return }
+        filter = searchToolbarItem.searchField.stringValue
         // refresh() rebuilds the tree, then rebuildRows applies the
         // prune; identity-stable row reuse keeps expansion / selection
         // across filter edits.
         refresh()
     }
+}
+
+extension CockpitWindowController: iTermMinimalComposerViewControllerDelegate {
+    // The composer's cockpit-only text-change hook: drive the @-mention
+    // picker for the first at-mention. This is where auto-completion is
+    // routed to the first at-mentioned run.
+    func minimalComposerTextDidChange(_ composer: iTermMinimalComposerViewController) {
+        updateMentionPicker()
+        syncSelectionFromComposer()
+    }
+
+    // Send (Shift-Return) and cancel (Esc). Esc arrives as an empty
+    // command with dismiss=YES; treat that as "just close the picker,"
+    // never a send, and never actually dismiss the docked composer.
+    func minimalComposer(_ composer: iTermMinimalComposerViewController,
+                         sendCommand command: String,
+                         addNewline: Bool,
+                         dismiss: Bool) {
+        if command.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            mentionPicker.hide()
+            return
+        }
+        sendCommandFieldContents()
+    }
+
+    func minimalComposer(_ composer: iTermMinimalComposerViewController,
+                         enqueueCommand command: String,
+                         dismiss: Bool) {
+        sendCommandFieldContents()
+    }
+
+    // Route arrow / Return to the picker while it is open. Reached before
+    // the composer moves its cursor (see ComposerTextView.keyDown), so
+    // navigation drives the list instead of the text.
+    func minimalComposerHandleKeyDown(_ event: NSEvent) -> Bool {
+        guard mentionPicker.isVisible else { return false }
+        switch event.specialKey {
+        case NSEvent.SpecialKey.upArrow:
+            mentionPicker.moveSelectionUp()
+            return true
+        case NSEvent.SpecialKey.downArrow:
+            mentionPicker.moveSelectionDown()
+            return true
+        default:
+            break
+        }
+        if event.keyCode == 36 || event.characters == "\r" {
+            mentionPicker.commitSelection()
+            return true
+        }
+        return false
+    }
+
+    // Docked geometry: a fixed 12-line strip along the bottom.
+    func minimalComposer(_ composer: iTermMinimalComposerViewController,
+                         frameForHeight desiredHeight: CGFloat) -> NSRect {
+        let width = window?.contentView?.bounds.width ?? composer.view.frame.width
+        return NSRect(x: 0, y: composerTipHeight, width: width, height: composerBarHeight)
+    }
+
+    func minimalComposerMaximumHeight(_ composer: iTermMinimalComposerViewController) -> CGFloat {
+        return composerBarHeight
+    }
+
+    func minimalComposerLineHeight(_ composer: iTermMinimalComposerViewController) -> CGFloat {
+        return ceil(NSLayoutManager().defaultLineHeight(for: profileASCIIFont()))
+    }
+
+    func minimalComposerClear(_ composer: iTermMinimalComposerViewController) {
+        clearCommandView()
+    }
+
+    // No shell here, so never fetch shell completions; this also keeps
+    // the composer off the host/scope-dependent path.
+    func minimalComposerShouldFetchSuggestions(_ composer: iTermMinimalComposerViewController,
+                                               forHost remoteHost: VT100RemoteHostReading,
+                                               tmuxController: TmuxController) -> Bool {
+        return false
+    }
+
+    func minimalComposer(_ composer: iTermMinimalComposerViewController,
+                         syntaxHighlighterFor attributedString: NSMutableAttributedString) -> SyntaxHighlighting {
+        return CockpitNoopSyntaxHighlighter()
+    }
+
+    func minimalComposerNextResponder() -> NSResponder? {
+        return nil
+    }
+
+    func minimalComposer(_ composer: iTermMinimalComposerViewController,
+                         valueOfEnvironmentVariable name: String) -> String? {
+        return nil
+    }
+
+    // Everything below is inert in the docked cockpit composer.
+    func minimalComposer(_ composer: iTermMinimalComposerViewController, sendControl control: String) {}
+    func minimalComposer(_ composer: iTermMinimalComposerViewController, sendToAdvancedPaste content: String) {}
+    func minimalComposer(_ composer: iTermMinimalComposerViewController, frameDidChangeTo newFrame: NSRect) {}
+    func minimalComposerOpenHistory(_ composer: iTermMinimalComposerViewController, prefix: String, forSearch: Bool) {}
+    func minimalComposerShowCompletions(_ completions: [String]) {}
+    func minimalComposer(_ composer: iTermMinimalComposerViewController, wantsKeyEquivalent event: NSEvent) -> Bool { false }
+    func minimalComposer(_ composer: iTermMinimalComposerViewController, performFindPanelAction sender: Any) {}
+    func minimalComposer(_ composer: iTermMinimalComposerViewController, desiredHeightDidChange desiredHeight: CGFloat) {}
+    func minimalComposerAutoComposerTextDidChange(_ composer: iTermMinimalComposerViewController) {}
+    func minimalComposerShouldForwardCopy(_ composer: iTermMinimalComposerViewController) -> Bool { false }
+    func minimalComposerForwardMenuItem(_ menuItem: NSMenuItem) {}
+    func minimalComposerPreferredOffset(fromTopDidChange composer: iTermMinimalComposerViewController) {}
+    func minimalComposerDidBecomeFirstResponder(_ composer: iTermMinimalComposerViewController) {}
+    func minimalComposer(_ composer: iTermMinimalComposerViewController,
+                         fetchSuggestions request: SuggestionRequest,
+                         byUserRequest: Bool) {}
+}
+
+// A do-nothing syntax highlighter for the cockpit composer, which has
+// no shell/color-map context to highlight against.
+@MainActor
+private final class CockpitNoopSyntaxHighlighter: NSObject, SyntaxHighlighting {
+    func highlight(range: NSRange) {}
 }
 

@@ -2713,3 +2713,30 @@ Bug Fixes:
   dark appearance and tint now follow the page's
   background color instead of the profile's
   terminal background color.
+- The Cockpit panel can now send commands from a
+  full composer docked along its bottom (the
+  same multi-cursor editor, in your profile’s
+  font): opening the Cockpit lands the caret
+  there. Type @ to pick a session, tab, or
+  window from the same picker the AI chat uses
+  (with a live preview); it becomes a chip and
+  the rest is the command, sent verbatim. Return
+  inserts a newline and Shift-Return sends.
+  Mentions and the outline selection stay in
+  sync: selecting a session, tab, or window row
+  adds the matching chip (a tab or window chip
+  fans out to all its panes), and editing chips
+  reselects the rows. A status line under the
+  composer confirms the count. The list and
+  composer are resizable split panes and the
+  list is a rounded inset card.
+- The Cockpit shows each session's live status in
+  every grouping: the session's own status word
+  (whatever it reports, in its own color) and the
+  detail line now appear in Window and Workgroup
+  views too, not just Status. A filter bar along
+  the top narrows the list to any one status,
+  with live counts; the status list is dynamic,
+  so arbitrary statuses from any tool just work.
+  Window/tab/session rows also carry the matching
+  macwindow / folder / terminal icon.

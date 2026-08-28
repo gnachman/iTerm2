@@ -37,6 +37,11 @@ protocol ComposerTextViewDelegate: AnyObject {
 @objc(iTermComposerTextView)
 class ComposerTextView: MultiCursorTextView {
     @IBOutlet weak var composerDelegate: ComposerTextViewDelegate?
+    // Opt-in (cockpit only). When the composer is switched to rich text
+    // so @-mention attachment chips survive editing, this coerces paste
+    // to plain text so pasted fonts/colors can't leak in. Default off,
+    // so ordinary plain-text composer usage is unaffected.
+    @objc var forcePlainTextPaste = false
     @objc private(set) var isSettingSuggestion = false
     @objc private(set) var isDoingSyntaxHighlighting = false
     private let syntaxHighlightingRateLimit = iTermRateLimitedUpdate(name: "Syntax Highlighting Rate Limit",
@@ -160,8 +165,13 @@ class ComposerTextView: MultiCursorTextView {
         if let completions, let prefix {
             let items = completions.map { item in
                 let string = item.value
+                // A completion's value is the remainder after what the user typed, so the
+                // row shows the typed prefix (bold) followed by the remainder. A replacement's
+                // value is already the full command that takes the place of the whole line, so
+                // it must be shown on its own without the typed prefix in front of it.
+                let rowPrefix = item.kind == .aiReplacement ? "" : prefix
                 let attributedString = CompletionsWindow.attributedString(font: font!,
-                                                                          prefix: prefix,
+                                                                          prefix: rowPrefix,
                                                                           suffix: string)
                 let detail = CompletionsWindow.attributedDetail(string: item.detail ?? item.value,
                                                                 font: font!)
@@ -184,7 +194,14 @@ class ComposerTextView: MultiCursorTextView {
             }()
             completionsWindow.selectionDidChange = { [weak self] window, suggestion in
                 if case .visible(let current) = self?.completionState, current == window {
-                    self?.suggestion = suggestion
+                    // A replacement is a full command that takes the place of the whole
+                    // line; it must not be shown as appended ghost text. It's accepted
+                    // via Tab/Return/click, which replaces the editable text instead.
+                    if current.selectedItem?.kind == .aiReplacement {
+                        self?.suggestion = nil
+                    } else {
+                        self?.suggestion = suggestion
+                    }
                 }
             }
             completionsWindow.returnPressed = { [weak self] _ in
@@ -194,6 +211,15 @@ class ComposerTextView: MultiCursorTextView {
                 _ = handleReturnInCompletionsWindow()
             }
             completionState = .visible(completionsWindow)
+            // The window selects row 0 during construction, before selectionDidChange
+            // is wired above, so that initial selection never runs the replacement
+            // guard. If the first row is a replacement, clear the inline ghost text the
+            // caller set from the non-replacement items so the preview doesn't disagree
+            // with the highlighted row. (Leave a non-replacement ghost as-is; the caller
+            // chose it deliberately, e.g. the longest common prefix of the file matches.)
+            if completionsWindow.selectedItem?.kind == .aiReplacement {
+                suggestion = nil
+            }
         } else {
             if let existingWindow {
                 DLog("Switch existing window to thinking mode")
@@ -241,6 +267,82 @@ class ComposerTextView: MultiCursorTextView {
         if !completions.isEmpty && !isSettingSuggestion {
             setCompletions(completions: [], prefix: "")
         }
+    }
+
+    open override func paste(_ sender: Any?) {
+        if forcePlainTextPaste {
+            // Strip pasted fonts/colors/attachments; insert plain text
+            // only. Keeps a rich-text-enabled cockpit composer safe.
+            pasteAsPlainText(sender)
+            return
+        }
+        super.paste(sender)
+    }
+
+    // Opt-in (cockpit only). Placeholder text drawn when there is no
+    // typed command (empty, or only @-mention chips). Default nil, so
+    // ordinary composer usage draws nothing extra.
+    @objc var placeholderString: String? {
+        didSet { needsDisplay = true }
+    }
+
+    // True when the composer holds no typed text (attachment chips and
+    // whitespace don't count), so the placeholder should show.
+    private var shouldShowPlaceholder: Bool {
+        guard let textStorage else { return true }
+        let ns = textStorage.string as NSString
+        var hasTyped = false
+        textStorage.enumerateAttribute(.attachment,
+                                       in: NSRange(location: 0, length: textStorage.length),
+                                       options: []) { value, range, stop in
+            if value == nil,
+               !ns.substring(with: range).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                hasTyped = true
+                stop.pointee = true
+            }
+        }
+        return !hasTyped
+    }
+
+    open override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+        guard let placeholder = placeholderString,
+              !placeholder.isEmpty,
+              shouldShowPlaceholder,
+              let layoutManager,
+              let textContainer else {
+            return
+        }
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize),
+            .foregroundColor: NSColor.placeholderTextColor
+        ]
+        let origin = textContainerOrigin
+        // Draw after the last mention chip (so the placeholder follows
+        // selected-session tokens), but NOT after typed whitespace —
+        // otherwise a stray space would shove the placeholder sideways.
+        var lastChipEnd = 0
+        if let textStorage {
+            textStorage.enumerateAttribute(.attachment,
+                                           in: NSRange(location: 0, length: textStorage.length),
+                                           options: []) { value, range, _ in
+                if value != nil {
+                    lastChipEnd = max(lastChipEnd, NSMaxRange(range))
+                }
+            }
+        }
+        let point: NSPoint
+        if lastChipEnd == 0 {
+            point = NSPoint(x: origin.x + textContainer.lineFragmentPadding, y: origin.y)
+        } else {
+            layoutManager.ensureLayout(for: textContainer)
+            let glyphRange = layoutManager.glyphRange(forCharacterRange: NSRange(location: lastChipEnd - 1, length: 1),
+                                                      actualCharacterRange: nil)
+            let rect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
+            point = NSPoint(x: origin.x + rect.maxX + textContainer.lineFragmentPadding,
+                            y: origin.y + rect.minY)
+        }
+        (placeholder as NSString).draw(at: point, withAttributes: attributes)
     }
 
     @objc
@@ -448,6 +550,33 @@ class ComposerTextView: MultiCursorTextView {
         doSyntaxHighlighting()
     }
 
+    // The command of the currently selected completion if it is a full-command
+    // replacement (i.e. the AI turned a natural-language request into a command),
+    // or nil otherwise.
+    private var selectedReplacementCommand: String? {
+        guard let item = completionsWindowIfVisible?.selectedItem,
+              item.kind == .aiReplacement else {
+            return nil
+        }
+        return item.suggestion
+    }
+
+    // Replace everything the user typed (the editable region after the prompt) with
+    // a full command. Used to accept a replacement suggestion.
+    @objc func acceptReplacement(_ command: String) {
+        guard let textStorage else {
+            return
+        }
+        if hasSuggestion {
+            suggestion = nil
+        }
+        setCompletions(completions: [], prefix: "")
+        let range = NSRange(from: prefixRange.upperBound, to: textStorage.length)
+        _ = multiCursorReplaceCharacters(in: range, with: command)
+        setSelectedRange(NSRange(location: (self.string as NSString).length, length: 0))
+        doSyntaxHighlighting()
+    }
+
     @objc var firstSelectionIsNontrivial: Bool {
         return (multiCursorSelectedRanges.first?.length ?? 0) > 0
     }
@@ -513,6 +642,10 @@ class ComposerTextView: MultiCursorTextView {
 
     private func handleReturnInCompletionsWindow() -> Bool {
         if completionsWindowIfVisible != nil {
+            if let command = selectedReplacementCommand {
+                acceptReplacement(command)
+                return true
+            }
             if hasSuggestion && suggestionRange.length > 0 {
                 setCompletions(completions: [], prefix: "")
                 acceptSuggestion()
@@ -574,7 +707,9 @@ class ComposerTextView: MultiCursorTextView {
         }),
         // Tab
         Action(modifiers: [], characters: "\t", closure: { textView, _ in
-            if textView.hasSuggestion && textView.suggestionRange.length > 0 {
+            if let command = textView.selectedReplacementCommand {
+                textView.acceptReplacement(command)
+            } else if textView.hasSuggestion && textView.suggestionRange.length > 0 {
                 textView.setCompletions(completions: [], prefix: "")
                 textView.acceptSuggestion()
             } else {
@@ -641,7 +776,9 @@ class ComposerTextView: MultiCursorTextView {
         }),
         // Tab
         Action(modifiers: [], characters: "\t", closure: { textView, _ in
-            if textView.hasSuggestion && textView.suggestionRange.length > 0 {
+            if let command = textView.selectedReplacementCommand {
+                textView.acceptReplacement(command)
+            } else if textView.hasSuggestion && textView.suggestionRange.length > 0 {
                 textView.acceptSuggestion()
             } else {
                 textView.composerDelegate?.composerTextViewShowCompletions()

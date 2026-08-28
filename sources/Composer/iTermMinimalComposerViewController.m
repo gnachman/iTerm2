@@ -52,12 +52,17 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
 
 // Called when mouse moves
 - (void)mouseMoved:(NSEvent *)event {
-    NSPoint mouseLocation = [self.superview convertPoint:event.locationInWindow fromView:nil];
-    NSView *hitView = [self hitTest:mouseLocation];
+    // The open-hand cursor advertises that the composer can be dragged. When
+    // it isn't draggable (e.g. docked in the cockpit) leave the arrow alone
+    // so the edges don't look grabbable.
+    if (self.draggable) {
+        NSPoint mouseLocation = [self.superview convertPoint:event.locationInWindow fromView:nil];
+        NSView *hitView = [self hitTest:mouseLocation];
 
-    // Check if the hit view is this view (not a subview)
-    if (hitView == self) {
-        [[NSCursor openHandCursor] set];
+        // Check if the hit view is this view (not a subview)
+        if (hitView == self) {
+            [[NSCursor openHandCursor] set];
+        }
     }
 
     [super mouseMoved:event];
@@ -127,6 +132,7 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
     iTermCompletionsWindow *_completionsWindow;
     CGFloat _manualHeight;
     CGFloat _desiredHeight;
+    BOOL _cockpitDocked;
 }
 
 - (instancetype)init {
@@ -225,6 +231,45 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
         _largeComposerViewController.view.frame = NSMakeRect(0, 0, self.view.bounds.size.width, self.view.bounds.size.height - offset);
     } else {
         _largeComposerViewController.view.frame = _containerView.bounds;
+    }
+    if (_cockpitDocked) {
+        const CGFloat margin = 8;
+        const CGFloat radius = 10;
+        // Tighten the wrapper inset (autoresizing view, so set its frame
+        // directly). Reapplied here because the composer's layout would
+        // otherwise reset it to the XIB's 9pt.
+        _wrapper.frame = NSMakeRect(margin, margin,
+                                    self.view.bounds.size.width - margin * 2,
+                                    self.view.bounds.size.height - margin * 2);
+        // The scroll view paints an opaque square background over the vev's
+        // rounded material; make it transparent so the material shows.
+        _largeComposerViewController.textView.enclosingScrollView.drawsBackground = NO;
+        // The vev is the visible field. An NSVisualEffectView's material
+        // ignores layer.cornerRadius (only its border layer rounds, which is
+        // why the corners looked square). A maskImage with capInsets is the
+        // only thing that clips the material itself, so round it that way
+        // (same technique as ToastWindowController). The layer border, at the
+        // matching radius, draws the outline.
+        _vev.hidden = NO;
+        _vev.wantsLayer = YES;
+        _vev.layer.cornerRadius = radius;
+        _vev.layer.borderColor = [[NSColor separatorColor] CGColor];
+        _vev.layer.borderWidth = 1;
+        if (_vev.maskImage == nil || _vev.maskImage.capInsets.top != radius) {
+            const CGFloat tile = radius * 2 + 1;
+            NSImage *mask = [NSImage imageWithSize:NSMakeSize(tile, tile)
+                                           flipped:NO
+                                    drawingHandler:^BOOL(NSRect dstRect) {
+                NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:dstRect
+                                                                    xRadius:radius
+                                                                    yRadius:radius];
+                [[NSColor blackColor] setFill];
+                [path fill];
+                return YES;
+            }];
+            mask.capInsets = NSEdgeInsetsMake(radius, radius, radius, radius);
+            _vev.maskImage = mask;
+        }
     }
 }
 
@@ -337,6 +382,72 @@ workingDirectory:(NSString *)pwd
 
 - (NSString *)stringValue {
     return _largeComposerViewController.textView.stringExcludingPrefix;
+}
+
+- (NSAttributedString *)attributedStringValue {
+    return [_largeComposerViewController.textView.textStorage copy] ?: [[NSAttributedString alloc] initWithString:@""];
+}
+
+- (NSRange)composerSelectedRange {
+    return _largeComposerViewController.textView.selectedRange;
+}
+
+- (NSView *)completionAnchorView {
+    return _largeComposerViewController.textView;
+}
+
+- (void)replaceRange:(NSRange)range withAttributedString:(NSAttributedString *)attributedString {
+    NSTextView *tv = _largeComposerViewController.textView;
+    if (![tv shouldChangeTextInRange:range replacementString:attributedString.string]) {
+        return;
+    }
+    [tv.textStorage replaceCharactersInRange:range withAttributedString:attributedString];
+    [tv didChangeText];
+    const NSUInteger caret = range.location + attributedString.length;
+    [tv setSelectedRange:NSMakeRange(caret, 0)];
+    [tv it_scrollCursorToVisible];
+}
+
+- (void)setDockedChromeHidden:(BOOL)hidden {
+    [self view];
+    if (!hidden) {
+        return;
+    }
+    [_topDragHandle removeFromSuperview];
+    [_bottomDragHandle removeFromSuperview];
+    _closeButton.hidden = YES;
+    // The modern rounded box + tight inset are applied in layoutSubviews
+    // (reapplied every pass): the vev resets its layer, and the wrapper's
+    // frame is otherwise overwritten by the composer's own layout.
+    _cockpitDocked = YES;
+    [self layoutSubviews];
+    // Keep the accessory row (so the send tip shows and editing stays in
+    // standard mode: Return inserts a newline, Shift-Return sends), but
+    // hide the AI bits, which are meaningless in a host with no AI.
+    _largeComposerViewController.forceHideAIAccessories = YES;
+    ((iTermMinimalComposerView *)self.view).draggable = NO;
+}
+
+- (void)clearComposer {
+    [_largeComposerViewController.textView setStringExcludingPrefix:@""];
+}
+
+- (void)setComposerPlaceholder:(NSString *)placeholder {
+    [self view];
+    _largeComposerViewController.textView.placeholderString = placeholder;
+}
+
+- (void)setComposerRichTextEnabled:(BOOL)enabled {
+    [self view];
+    iTermComposerTextView *textView = _largeComposerViewController.textView;
+    // Rich text lets programmatic @-mention chips (attachments) survive
+    // editing, but we lock down every user-facing way rich content could
+    // leak in: no graphics import, no font panel, and paste is coerced
+    // to plain text (see ComposerTextView.forcePlainTextPaste).
+    textView.richText = enabled;
+    textView.importsGraphics = NO;
+    textView.usesFontPanel = NO;
+    textView.forcePlainTextPaste = enabled;
 }
 
 - (void)setString:(NSString *)stringValue includingPrefix:(BOOL)includingPrefix {
@@ -484,6 +595,10 @@ workingDirectory:(NSString *)pwd
 }
 
 - (void)largeComposerViewControllerTextDidChange:(nonnull iTermStatusBarLargeComposerViewController *)controller {
+    if (self.forwardsTextChangesAlways &&
+        [self.delegate respondsToSelector:@selector(minimalComposerTextDidChange:)]) {
+        [self.delegate minimalComposerTextDidChange:self];
+    }
     if (!self.isAutoComposer) {
         return;
     }

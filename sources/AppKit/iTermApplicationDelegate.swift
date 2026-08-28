@@ -236,6 +236,6 @@ extension iTermApplicationDelegate {
 @objc
 extension iTermApplicationDelegate {
     @IBAction func revealCockpit(_ sender: Any?) {
-        CockpitWindowController.shared.showAndFocusSearch()
+        CockpitWindowController.shared.showAndFocusCommand()
     }
 }

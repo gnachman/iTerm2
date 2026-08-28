@@ -21,10 +21,15 @@ import AppKit
 class ChatSessionMentionAttachment: NSTextAttachment {
     let guid: String
     let displayName: String
+    // SF Symbol drawn to the left of the name. Defaults to the terminal
+    // glyph (a session); callers that mention a whole tab or window pass
+    // a different symbol so the three kinds are visually distinct.
+    let symbolName: String
 
-    init(guid: String, displayName: String) {
+    init(guid: String, displayName: String, symbolName: String = SFSymbol.terminal.rawValue) {
         self.guid = guid
         self.displayName = displayName
+        self.symbolName = symbolName
         super.init(data: nil, ofType: nil)
     }
 
@@ -32,14 +37,15 @@ class ChatSessionMentionAttachment: NSTextAttachment {
         it_fatalError("init(coder:) has not been implemented")
     }
 
-    // Builds an atomic mention: a single attachment whose image is the terminal
-    // glyph + name, baseline-aligned to `font`. `color` should already be
+    // Builds an atomic mention: a single attachment whose image is the glyph
+    // + name, baseline-aligned to `font`. `color` should already be
     // resolved for the appearance the text view is currently showing.
     static func attributedString(guid: String,
                                  displayName: String,
                                  font: NSFont,
-                                 color: NSColor) -> NSAttributedString {
-        let attachment = ChatSessionMentionAttachment(guid: guid, displayName: displayName)
+                                 color: NSColor,
+                                 symbolName: String = SFSymbol.terminal.rawValue) -> NSAttributedString {
+        let attachment = ChatSessionMentionAttachment(guid: guid, displayName: displayName, symbolName: symbolName)
         attachment.renderImage(font: font, color: color)
         // Carry the default font/label color on the attachment character itself.
         // When the caret sits next to the token (e.g. before a token that's the
@@ -57,7 +63,7 @@ class ChatSessionMentionAttachment: NSTextAttachment {
     // token is a rasterized image, so callers must invoke this again when the
     // effective appearance changes or the baked link color goes stale.
     func renderImage(font: NSFont, color: NSColor) {
-        let image = Self.tokenImage(displayName: displayName, font: font, color: color)
+        let image = Self.tokenImage(displayName: displayName, font: font, color: color, symbolName: symbolName)
         self.image = image
         // The image is rendered with its single text line laid out from the top
         // (flipped drawing handler), so the baseline sits `ascender` below the
@@ -73,8 +79,9 @@ class ChatSessionMentionAttachment: NSTextAttachment {
     // Renders the glyph + underlined name to a resolution-independent image.
     private static func tokenImage(displayName: String,
                                    font: NSFont,
-                                   color: NSColor) -> NSImage {
-        let inner = innerAttributedString(displayName: displayName, font: font, color: color)
+                                   color: NSColor,
+                                   symbolName: String) -> NSImage {
+        let inner = innerAttributedString(displayName: displayName, font: font, color: color, symbolName: symbolName)
         let bounding = inner.boundingRect(with: NSSize(width: CGFloat.greatestFiniteMagnitude,
                                                        height: CGFloat.greatestFiniteMagnitude),
                                           options: [.usesLineFragmentOrigin])
@@ -91,9 +98,10 @@ class ChatSessionMentionAttachment: NSTextAttachment {
     // The terminal glyph + thin space + underlined name, in `color`.
     private static func innerAttributedString(displayName: String,
                                               font: NSFont,
-                                              color: NSColor) -> NSAttributedString {
+                                              color: NSColor,
+                                              symbolName: String) -> NSAttributedString {
         let result = NSMutableAttributedString()
-        if let icon = iconString(font: font, color: color) {
+        if let icon = iconString(font: font, color: color, symbolName: symbolName) {
             result.append(icon)
             result.append(NSAttributedString(string: "\u{2009}",
                                              attributes: [.font: font, .foregroundColor: color]))
@@ -106,16 +114,21 @@ class ChatSessionMentionAttachment: NSTextAttachment {
         return result
     }
 
-    // A terminal glyph tinted to `color`, sized to the run's font and embedded
-    // in an attachment so it lays out inline with the name.
-    private static func iconString(font: NSFont, color: NSColor) -> NSAttributedString? {
-        guard let symbol = NSImage(systemSymbolName: SFSymbol.terminal.rawValue,
+    // A glyph in `color`, sized to the run's font and embedded in an
+    // attachment so it lays out inline with the name.
+    private static func iconString(font: NSFont, color: NSColor, symbolName: String) -> NSAttributedString? {
+        guard let symbol = NSImage(systemSymbolName: symbolName,
                                    accessibilityDescription: "iTerm2 session") else {
             return nil
         }
         let height = font.ascender - font.descender
         let aspectRatio = symbol.size.height > 0 ? symbol.size.width / symbol.size.height : 1
-        let tinted = symbol.it_image(withTintColor: color)
+        // Render every layer in `color` at full opacity (monochrome).
+        // it_image(withTintColor:) preserves a symbol's built-in
+        // two-tone opacity, which makes macwindow's faint window body
+        // read as washed out; a single-color palette flattens that.
+        let tinted = symbol.withSymbolConfiguration(NSImage.SymbolConfiguration(paletteColors: [color]))
+            ?? symbol.it_image(withTintColor: color)
         let attachment = NSTextAttachment()
         attachment.image = tinted
         attachment.bounds = NSRect(x: 0, y: font.descender, width: height * aspectRatio, height: height)

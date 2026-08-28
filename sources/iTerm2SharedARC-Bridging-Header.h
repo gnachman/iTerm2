@@ -276,4 +276,5 @@
 #import "iTermCarbonHotKeyController.h"
 #import "iTermOpenQuicklyWindowController.h"
 #import "iTermSessionPreviewPanel.h"
+#import "iTermMinimalComposerViewController.h"
 #import <CoreParse/CoreParse.h>
