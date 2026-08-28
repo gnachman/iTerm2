@@ -5,6 +5,8 @@
 //  Created by George Nachman on 6/11/25.
 //
 
+import ImageIO
+
 struct LlamaResponseParser: LLMResponseParser {
     var parsedResponse: LlamaResponse<LlamaNonStreamingValue>?
 
@@ -105,17 +107,28 @@ extension LlamaResponse: LLM.AnyResponse {
             // When a preamble AND a tool call co-arrive, keep BOTH via a multipart
             // body so the text isn't dropped (again matching the modern shape).
             let body: LLM.Message.Body
+            var scalarReasoning = thinking
             if let functionCall {
                 body = message.content.isEmpty
                     ? .functionCall(functionCall, id: nil)
                     : .multipart([.text(message.content), .functionCall(functionCall, id: nil)])
+            } else if !message.content.isEmpty {
+                body = .text(message.content)
+            } else if let thinking {
+                // A thinking model returned its answer only in `thinking` (small
+                // models do this). Surface it as the visible answer instead of a
+                // blank reply, and don't ALSO deliver it as reasoning (avoid
+                // showing the same text twice; Ollama doesn't require reasoning on
+                // round-trip the way DeepSeek does).
+                body = .text(thinking)
+                scalarReasoning = nil
             } else {
                 body = .text(message.content)
             }
             return [LLM.Message(responseID: nil,
                                 role: .assistant,
                                 body: body,
-                                reasoningContent: thinking)]
+                                reasoningContent: scalarReasoning)]
         }
 
         // Streaming: AITerm iterates every choice, so reasoning arrives as its own
@@ -242,10 +255,14 @@ struct LlamaBodyRequestBuilder {
         if override > 0 {
             return override
         }
+        // A non-positive context window (a blank/0 manual field, which the editor
+        // writes for an empty box) is unknown, not "zero tokens": treat it as the
+        // floor so we never emit num_ctx 0 and hard-fail every request.
+        let window = contextWindow > 0 ? contextWindow : minNumCtx
         let reserve = min(max(numPredict, 512), maxResponseReserve)
         let desired = promptTokens + reserve + numCtxHeadroom
         let sized = roundUpToPowerOfTwo(max(desired, minNumCtx))
-        return min(sized, contextWindow)
+        return min(sized, window)
     }
 
     private static func estimatedPromptTokens(messages: [CompletionsMessage],
@@ -254,11 +271,64 @@ struct LlamaBodyRequestBuilder {
         // re-serializing the whole (potentially multi-hundred-KB) prompt to a
         // JSON string just to feed tokens(in:). Only the small tools array is
         // encoded.
-        var total = messages.map { $0.approximateTokenCount }.reduce(0, +)
+        var total = messages.map { estimatedTokens(for: $0) }.reduce(0, +)
         if let tools, let data = try? JSONEncoder().encode(tools) {
             total += AIMetadata.instance.tokens(in: data.lossyString)
         }
         return total
+    }
+
+    // Per-message token estimate for num_ctx sizing. Same as
+    // approximateTokenCount EXCEPT an inline image is charged by PIXEL AREA, not
+    // by the length of its base64 data URL. Charging the base64 length (as
+    // approximateTokenCount does, via tokens(in: url) = utf8.count/2) over-counts
+    // a ~500 KB image by ~100x, which either throws requestTooLarge on a valid
+    // vision request or over-allocates the KV cache. Image cost depends on the
+    // loaded model's projector; we use a conservative upper bound.
+    private static func estimatedTokens(for message: CompletionsMessage) -> Int {
+        guard case .array(let parts) = message.content else {
+            return message.approximateTokenCount
+        }
+        return parts.reduce(1) { subtotal, part in
+            switch part {
+            case .imageURL(let image):
+                return subtotal + imageTokenEstimate(dataURL: image.url)
+            default:
+                return subtotal + part.approximateTokenCount
+            }
+        }
+    }
+
+    static let imageTokenFloor = 85
+    static let imageTokenCap = 2048
+
+    // A conservative per-image token estimate from pixel area (Anthropic-style
+    // w*h/750, the highest of the common estimates, so it errs toward not
+    // truncating), floored and capped so one giant image can't re-inflate the
+    // estimate the way base64 length does. Falls back to the floor when the
+    // dimensions can't be read (never the base64 length).
+    static func imageTokenEstimate(dataURL: String) -> Int {
+        guard let (width, height) = imagePixelSize(dataURL: dataURL), width > 0, height > 0 else {
+            return imageTokenFloor
+        }
+        let estimate = Int((Double(width) * Double(height) / 750.0).rounded(.up))
+        return min(max(estimate, imageTokenFloor), imageTokenCap)
+    }
+
+    // Read pixel dimensions cheaply from the image header (no full pixel decode)
+    // via CGImageSource. nil if the payload isn't a decodable image.
+    private static func imagePixelSize(dataURL: String) -> (Int, Int)? {
+        guard let comma = dataURL.firstIndex(of: ","),
+              let data = Data(base64Encoded: String(dataURL[dataURL.index(after: comma)...])) else {
+            return nil
+        }
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let width = props[kCGImagePropertyPixelWidth] as? Int,
+              let height = props[kCGImagePropertyPixelHeight] as? Int else {
+            return nil
+        }
+        return (width, height)
     }
 
     // Llama doesn't like multiple text parts.

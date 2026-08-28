@@ -276,6 +276,24 @@ final class ChatBlobAssemblerTests: XCTestCase {
                         "chat should be replayable again after the re-freeze")
     }
 
+    // The incremental append path (the hot path for an existing chat) must also
+    // refuse to append a current-version round onto stale-format rows, or it
+    // recreates the permanent v0+v1 mix the captureTurn gate was meant to prevent.
+    func test_appendNewRounds_refusesStaleWireFormatVersion() throws {
+        let db = try makeTempDB()
+        let chatID = "AV"
+        XCTAssertNotNil(db.appendBlob(ChatBlob(chatID: chatID, blobProtocol: .llama,
+                                               role: .user,
+                                               payload: Data("[{\"role\":\"user\",\"content\":\"hi\"}]".utf8),
+                                               wireFormatVersion: 0)))
+        let appended = ChatBlobCapture.appendNewRounds(chatID: chatID, newRounds: [plainRound],
+                                                       api: .llama, modelName: "m",
+                                                       hostedTools: HostedTools(), database: db)
+        XCTAssertEqual(appended, 0, "appendNewRounds must refuse to append onto stale-format blobs")
+        XCTAssertTrue(db.blobs(inChat: chatID).allSatisfy { $0.wireFormatVersion == 0 },
+                      "no current-version row should have been appended onto the stale chat")
+    }
+
     // MARK: - forkBlobPrefix (fork blob inheritance)
 
     private func blob(_ chatID: String) -> ChatBlob {

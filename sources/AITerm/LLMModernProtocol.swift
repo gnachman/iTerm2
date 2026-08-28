@@ -218,13 +218,22 @@ struct CompletionsMessage: Codable, Equatable {
         return true
     }
 
+    // Split "data:<meta>,<payload>" into its meta and base64 payload. Single
+    // source of truth for the prefix/comma parsing that both the Ollama image
+    // path and decodeDataURL(_:) rely on, so the two can't drift.
+    static func splitDataURL(_ string: String) -> (meta: Substring, payload: Substring)? {
+        guard string.hasPrefix("data:"), let comma = string.firstIndex(of: ",") else {
+            return nil
+        }
+        let meta = string[string.index(string.startIndex, offsetBy: 5)..<comma]  // after "data:"
+        let payload = string[string.index(after: comma)...]
+        return (meta, payload)
+    }
+
     // "data:<mime>;base64,<payload>" -> "<payload>". Falls back to the whole
     // string if it isn't a data URL (Ollama wants bare base64, not a data URL).
     private static func base64Payload(ofDataURL url: String) -> String {
-        guard url.hasPrefix("data:"), let comma = url.firstIndex(of: ",") else {
-            return url
-        }
-        return String(url[url.index(after: comma)...])
+        Self.splitDataURL(url).map { String($0.payload) } ?? url
     }
 
     var approximateTokenCount: Int {
@@ -479,15 +488,11 @@ struct CompletionsMessage: Codable, Equatable {
 
     // Parse "data:<mime>;base64,<payload>" back into its MIME and bytes.
     static func decodeDataURL(_ string: String) -> (String, Data)? {
-        guard string.hasPrefix("data:"), let comma = string.firstIndex(of: ",") else {
+        guard let (meta, payload) = splitDataURL(string),
+              let data = Data(base64Encoded: String(payload)) else {
             return nil
         }
-        let meta = string[string.index(string.startIndex, offsetBy: 5)..<comma]
-        let payload = String(string[string.index(after: comma)...])
         let mime = meta.split(separator: ";").first.map(String.init) ?? "application/octet-stream"
-        guard let data = Data(base64Encoded: payload) else {
-            return nil
-        }
         return (mime, data)
     }
 }

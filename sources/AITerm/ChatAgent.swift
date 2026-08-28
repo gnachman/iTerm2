@@ -1843,7 +1843,13 @@ class ChatAgent {
                                       database: ChatDatabase) -> Int {
         let existing = database.blobCount(inChat: chatID)
         let sameProtocol = existing == 0 || database.storedBlobProtocol(inChat: chatID) == Int(api.rawValue)
-        if existing > 0, sameProtocol, !Self.historyUsesExplainFeature(display),
+        // The incremental append path must not run when the stored blobs are a
+        // stale wire-FORMAT version: appending current-version rounds onto them
+        // makes a permanent mixed-version chat that replay refuses forever. Fall
+        // through to captureTurn, whose gate re-freezes the whole history.
+        let sameVersion = existing == 0 ||
+            database.minStoredBlobWireFormatVersion(inChat: chatID) == ChatBlob.currentWireFormatVersion(for: api)
+        if existing > 0, sameProtocol, sameVersion, !Self.historyUsesExplainFeature(display),
            let tail = Self.displayTailForNewRounds(display, existing: existing) {
             let tailMessages = translate(messages: tail)
             // The tail must begin at a clean round boundary (a user turn). It does by

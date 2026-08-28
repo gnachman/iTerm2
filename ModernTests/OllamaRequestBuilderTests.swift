@@ -26,6 +26,7 @@
 //
 
 import XCTest
+import AppKit
 @testable import iTerm2SharedARC
 
 @MainActor
@@ -176,6 +177,15 @@ final class OllamaRequestBuilderTests: XCTestCase {
                              "num_ctx (\(numCtx)) does not cover the spliced frozen history (~\(frozenTokens) tokens); Ollama will truncate it")
     }
 
+    // A blank/0 context-window field (the manual editor writes 0 for an empty
+    // field) must not make num_ctx 0 and throw requestTooLarge on every turn.
+    func test_contextWindowZero_fallsBackToUsableFloor() throws {
+        let json = try body(shouldThink: nil, contextWindow: 0, maxResponse: 8_192)
+        let numCtx = try XCTUnwrap((json["options"] as? [String: Any])?["num_ctx"] as? Int)
+        XCTAssertGreaterThanOrEqual(numCtx, 4_096,
+                                    "a 0/blank context window must fall back to a usable floor, was \(numCtx)")
+    }
+
     // MARK: - options.num_predict
 
     func test_emitsNumPredict() throws {
@@ -274,6 +284,66 @@ final class OllamaRequestBuilderTests: XCTestCase {
                       "typed argument b=5 was lost: \(arguments)")
     }
 
+    // MARK: - image token estimate (num_ctx sizing)
+
+    // A byte-heavy image whose base64 is large but whose pixel area is modest.
+    private func noisyPNG(_ dim: Int) -> Data {
+        let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: dim, pixelsHigh: dim,
+                                   bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
+                                   isPlanar: false, colorSpaceName: .deviceRGB,
+                                   bytesPerRow: 0, bitsPerPixel: 0)!
+        if let ptr = rep.bitmapData {
+            let count = rep.bytesPerRow * dim
+            // Deterministic pseudo-noise so PNG can't compress it away (keeps the
+            // base64 large), no RNG.
+            for i in 0..<count { ptr[i] = UInt8((i &* 2654435761) & 0xff) }
+        }
+        return rep.representation(using: .png, properties: [:]) ?? Data()
+    }
+
+    // The per-image estimate must come from pixel area, capped, and must NOT
+    // scale with the (far larger) base64 length the way the old path did.
+    func test_imageTokenEstimate_boundedByPixelArea_notBase64Length() throws {
+        let png = noisyPNG(1_500)
+        let dataURL = "data:image/png;base64,\(png.base64EncodedString())"
+        let estimate = LlamaBodyRequestBuilder.imageTokenEstimate(dataURL: dataURL)
+        XCTAssertLessThanOrEqual(estimate, LlamaBodyRequestBuilder.imageTokenCap)
+        XCTAssertGreaterThanOrEqual(estimate, LlamaBodyRequestBuilder.imageTokenFloor)
+        let base64Tokens = dataURL.utf8.count / 2
+        XCTAssertLessThan(estimate, base64Tokens / 10,
+                          "estimate still scales with base64 length (\(estimate) vs \(base64Tokens))")
+    }
+
+    // A large-BYTE image must not be charged its base64 length, which would blow
+    // past the window and throw requestTooLarge on a valid vision request.
+    func test_largeImage_doesNotInflateNumCtxOrThrow() throws {
+        let png = noisyPNG(800)
+        let attachment = LLM.Message.Attachment(
+            inline: true, id: "big",
+            type: .file(.init(name: "big.png", content: png, mimeType: "image/png", localPath: nil)))
+        let messages = [LLM.Message(responseID: nil, role: .user,
+                                    body: .multipart([.text("Describe this."), .attachment(attachment)]))]
+        let json = try body(shouldThink: nil, contextWindow: 262_144, messages: messages)
+        let numCtx = try XCTUnwrap((json["options"] as? [String: Any])?["num_ctx"] as? Int)
+        XCTAssertLessThan(numCtx, 32_768,
+                          "num_ctx inflated as if charging base64 length: \(numCtx)")
+    }
+
+    // MARK: - .llama parser is native-only (finding #5 validity)
+
+    // Proves the .llama type was never functional against an OpenAI-compatible
+    // endpoint: its parser only decodes Ollama's native {message,done} shape, so
+    // a compat {choices:[...]} response fails. Hence there is no previously
+    // working manual .llama + /v1 config for the native-body change to break.
+    func test_llamaResponseParser_rejectsOpenAICompatShape() throws {
+        let openAIShape = Data("""
+        {"choices":[{"message":{"role":"assistant","content":"hi"}}],"model":"m"}
+        """.utf8)
+        var parser = LlamaResponseParser()
+        XCTAssertThrowsError(try parser.parse(data: openAIShape),
+                             ".llama parser must reject the OpenAI-compatible response shape")
+    }
+
     // MARK: - vision (native images[])
 
     // An image attachment must serialize as Ollama's native message.images array
@@ -361,6 +431,21 @@ final class OllamaRequestBuilderTests: XCTestCase {
         XCTAssertNotNil(first.function_call, "the tool call must remain dispatchable")
         XCTAssertTrue((first.trimmedString ?? "").contains("Let me look that up"),
                       "the preamble text was dropped; got: \(String(describing: first.trimmedString))")
+    }
+
+    // When a thinking model puts its whole answer in `thinking` and leaves
+    // content empty (small models do this), the non-streaming path must not
+    // deliver a blank visible reply: surface the reasoning as the answer.
+    func test_nonStreamingResponse_thinkingOnlyEmptyContent_surfacesReasoning() throws {
+        let wire = """
+        {"model":"m","message":{"role":"assistant","content":"","thinking":"The answer is 42."},"done":true}
+        """
+        var parser = LlamaResponseParser()
+        let response = try parser.parse(data: Data(wire.utf8))
+        let first = try XCTUnwrap(response?.choiceMessages.first)
+        XCTAssertFalse((first.trimmedString ?? "").isEmpty,
+                       "a thinking-only reply delivered an empty visible answer")
+        XCTAssertTrue((first.trimmedString ?? "").contains("42"))
     }
 
     // Streaming must still surface reasoning as its own message for live display.
