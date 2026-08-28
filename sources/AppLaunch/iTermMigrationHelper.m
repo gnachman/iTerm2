@@ -509,6 +509,24 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
         [headersDefaults setBool:YES forKey:@"NoSyncAICustomHeadersPerModelMigrationDone"];
     }
 
+    // One-time: Ollama/Llama is no longer offered as a recommended provider (a
+    // local runner has no universal recommended model, and its catalog entry
+    // 404s), so a user who had it selected as their recommended default would
+    // otherwise silently fall back to whatever the popup shows at index 0. Move
+    // them off it EXPLICITLY: switch to manual configuration so their local
+    // intent is preserved and the "Ollama (native)" preset guides them, rather
+    // than silently enabling a cloud vendor. Their recommended-Llama default was
+    // already 404-broken, so nothing working is disrupted.
+    NSUserDefaults *vendorDefaults = [iTermUserDefaults userDefaults];
+    if (![vendorDefaults boolForKey:@"NoSyncAILlamaRecommendedVendorMigrationDone"]) {
+        [vendorDefaults setBool:YES forKey:@"NoSyncAILlamaRecommendedVendorMigrationDone"];
+        if ([iTermPreferences boolForKey:kPreferenceKeyUseRecommendedAIModel] &&
+            [iTermPreferences unsignedIntegerForKey:kPreferenceKeyAIVendor] == iTermAIVendorLlama) {
+            RLog(@"Migrating recommended-Llama AI default to manual configuration (Llama is no longer a recommended provider)");
+            [iTermPreferences setBool:NO forKey:kPreferenceKeyUseRecommendedAIModel];
+        }
+    }
+
     if ([iTermSecureUserDefaults.instance enableAI]) {
         // A default configuration has no model or URL set.
         iTermAIModel *model;

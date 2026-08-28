@@ -25,6 +25,10 @@ class OllamaModelDiscovery: NSObject {
         components.scheme = scheme
         components.host = host
         components.port = url.port
+        // Preserve basic-auth userinfo (user:pass@) so a server behind HTTP auth
+        // is reachable for discovery, not just for chat requests.
+        components.user = url.user
+        components.password = url.password
         components.path = "/api/tags"
         return components.url
     }

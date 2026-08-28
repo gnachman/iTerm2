@@ -28,6 +28,12 @@ class AIProviderPreset: NSObject {
     // Think toggle appears. On for native Ollama, whose models often support a
     // thinking mode controllable via the `think` field.
     @objc let configurableThinking: Bool
+    // Whether to preselect the Vision capability. Off by default: a local runner
+    // is a mix of text and vision models, and enabling it for a text-only model
+    // would make image attachments serialize to a runner that rejects them, so
+    // the user opts in per vision model. (A future dynamic provider can read this
+    // from the server's per-model capabilities.)
+    @objc let vision: Bool
     // Suggested model name shown as placeholder text in the Model field so the
     // user knows the shape of a valid identifier for this host.
     @objc let placeholderModelName: String
@@ -40,6 +46,7 @@ class AIProviderPreset: NSObject {
          functionCalling: Bool = true,
          streaming: Bool = true,
          configurableThinking: Bool = false,
+         vision: Bool = false,
          placeholderModelName: String) {
         self.name = name
         self.url = url
@@ -49,6 +56,7 @@ class AIProviderPreset: NSObject {
         self.functionCalling = functionCalling
         self.streaming = streaming
         self.configurableThinking = configurableThinking
+        self.vision = vision
         self.placeholderModelName = placeholderModelName
     }
 }

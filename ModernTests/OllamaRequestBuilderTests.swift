@@ -347,6 +347,22 @@ final class OllamaRequestBuilderTests: XCTestCase {
                         "the tool call must be .first so non-streaming dispatch fires it")
     }
 
+    // When a non-streaming reply carries BOTH preamble text and a tool call, the
+    // text must not be dropped: emit a multipart body so the tool is dispatchable
+    // and the preamble survives (matching the modern/DeepSeek shape).
+    func test_nonStreamingResponse_preambleWithToolCall_keepsBoth() throws {
+        let wire = """
+        {"model":"m","message":{"role":"assistant","content":"Let me look that up.",\
+        "tool_calls":[{"function":{"name":"get_weather","arguments":{"city":"Paris"}}}]},"done":true}
+        """
+        var parser = LlamaResponseParser()
+        let response = try parser.parse(data: Data(wire.utf8))
+        let first = try XCTUnwrap(response?.choiceMessages.first)
+        XCTAssertNotNil(first.function_call, "the tool call must remain dispatchable")
+        XCTAssertTrue((first.trimmedString ?? "").contains("Let me look that up"),
+                      "the preamble text was dropped; got: \(String(describing: first.trimmedString))")
+    }
+
     // Streaming must still surface reasoning as its own message for live display.
     func test_streamingResponse_withThinking_emitsReasoningMessage() throws {
         let wire = """

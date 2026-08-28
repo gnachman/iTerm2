@@ -203,6 +203,18 @@ struct ChatBlob: iTermDatabaseInitializable {
          [chatID])
     }
 
+    // The LOWEST wire-format version among a chat's blobs. If it is below the
+    // current version for the protocol, at least one blob is stale-format and the
+    // whole chat needs a re-freeze (a mixed v0+v1 chat can never satisfy the
+    // all-equal-version replay guard).
+    static func minWireFormatVersionQuery(forChatID chatID: String) -> (String, [Any?]) {
+        ("""
+         select min(\(Columns.wireFormatVersion.rawValue)) as minversion from ChatBlob
+         where \(Columns.chatID.rawValue)=?
+         """,
+         [chatID])
+    }
+
     /// The blobID of a chat's NEWEST blob (highest seq), read WITHOUT decoding any
     /// payload. Nil if the chat has no blobs. Used by capture to link the just-frozen
     /// round to its message, avoiding an O(rounds) full-payload decode just to recover

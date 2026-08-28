@@ -91,21 +91,10 @@ extension LlamaResponse: LLM.AnyResponse {
             guard let t = message.thinking, !t.isEmpty else { return nil }
             return t
         }()
-        // The assistant's actual output: a tool call, or text. nil only when
-        // there is nothing to emit but reasoning (a streaming thinking-only
-        // delta), in which case the reasoning message carries the turn.
-        let primaryBody: LLM.Message.Body? = {
-            if let toolCall = message.tool_calls?.first {
-                return .functionCall(
-                    .init(name: toolCall.function.name,
-                          arguments: try? JSONEncoder().encode(toolCall.function.arguments).lossyString),
-                    id: nil)
-            }
-            if !message.content.isEmpty || thinking == nil {
-                return .text(message.content)
-            }
-            return nil
-        }()
+        let functionCall: LLM.FunctionCall? = message.tool_calls?.first.map {
+            .init(name: $0.function.name,
+                  arguments: try? JSONEncoder().encode($0.function.arguments).lossyString)
+        }
 
         if !Streaming.streaming {
             // Non-streaming: parseNonStreamingResponse consumes only .first, so a
@@ -113,9 +102,19 @@ extension LlamaResponse: LLM.AnyResponse {
             // folded in as a scalar (matching the modern/DeepSeek non-streaming
             // shape). Emitting a separate LEADING reasoning message would make
             // .first an empty reasoning attachment and drop the real answer/tool.
+            // When a preamble AND a tool call co-arrive, keep BOTH via a multipart
+            // body so the text isn't dropped (again matching the modern shape).
+            let body: LLM.Message.Body
+            if let functionCall {
+                body = message.content.isEmpty
+                    ? .functionCall(functionCall, id: nil)
+                    : .multipart([.text(message.content), .functionCall(functionCall, id: nil)])
+            } else {
+                body = .text(message.content)
+            }
             return [LLM.Message(responseID: nil,
                                 role: .assistant,
-                                body: primaryBody ?? .text(message.content),
+                                body: body,
                                 reasoningContent: thinking)]
         }
 
@@ -132,8 +131,12 @@ extension LlamaResponse: LLM.AnyResponse {
             msg.reasoningContent = thinking
             messages.append(msg)
         }
-        if let primaryBody {
-            messages.append(LLM.Message(responseID: nil, role: .assistant, body: primaryBody))
+        if let functionCall {
+            messages.append(LLM.Message(responseID: nil, role: .assistant,
+                                        body: .functionCall(functionCall, id: nil)))
+        } else if messages.isEmpty || !message.content.isEmpty {
+            messages.append(LLM.Message(responseID: nil, role: .assistant,
+                                        body: .text(message.content)))
         }
         return messages
     }

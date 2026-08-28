@@ -28,6 +28,13 @@ final class OllamaModelDiscoveryTests: XCTestCase {
         XCTAssertEqual(url?.absoluteString, "https://ollama.example.com:9999/api/tags")
     }
 
+    // A server behind HTTP basic auth encodes credentials in the URL; the tags
+    // request must keep them or it 401s while normal chat requests work.
+    func test_tagsURL_preservesBasicAuthUserinfo() {
+        let url = OllamaModelDiscovery.tagsURL(fromEndpoint: "http://user:pass@host:11434/api/chat")
+        XCTAssertEqual(url?.absoluteString, "http://user:pass@host:11434/api/tags")
+    }
+
     func test_tagsURL_invalidEndpoint_isNil() {
         XCTAssertNil(OllamaModelDiscovery.tagsURL(fromEndpoint: ""))
         XCTAssertNil(OllamaModelDiscovery.tagsURL(fromEndpoint: "not a url"))

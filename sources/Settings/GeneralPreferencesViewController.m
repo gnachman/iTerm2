@@ -1077,6 +1077,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         preset.functionCallingFeatureEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     _featureButtons[kAIManualModelStreamingKey].state =
         preset.streamingFeatureEnabled ? NSControlStateValueOn : NSControlStateValueOff;
+    _featureButtons[kAIManualModelVisionKey].state =
+        preset.visionFeatureEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     _featureButtons[kAIManualModelHostedWebSearchKey].state =
         preset.hostedWebSearchFeatureEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     _featureButtons[kAIManualModelHostedFileSearchKey].state =
@@ -1110,6 +1112,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         preset.functionCalling ? NSControlStateValueOn : NSControlStateValueOff;
     _featureButtons[kAIManualModelStreamingKey].state =
         preset.streaming ? NSControlStateValueOn : NSControlStateValueOff;
+    _featureButtons[kAIManualModelVisionKey].state =
+        preset.vision ? NSControlStateValueOn : NSControlStateValueOff;
     _featureButtons[kAIManualModelHostedWebSearchKey].state = NSControlStateValueOff;
     _featureButtons[kAIManualModelHostedFileSearchKey].state = NSControlStateValueOff;
     _featureButtons[kAIManualModelHostedCodeInterpreterKey].state = NSControlStateValueOff;

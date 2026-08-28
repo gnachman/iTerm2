@@ -77,9 +77,20 @@ enum ChatBlobCapture {
                             hostedTools: HostedTools,
                             newRoundTokenCount: Int? = nil,
                             database: ChatDatabase) -> Int {
-        if database.blobCount(inChat: chatID) > 0,
-           database.storedBlobProtocol(inChat: chatID) != Int(api.rawValue) {
-            database.replaceBlobs(inChat: chatID, with: [])
+        if database.blobCount(inChat: chatID) > 0 {
+            // Re-freeze the whole history when the stored blobs no longer match
+            // what this turn will send: either a different PROTOCOL, or the SAME
+            // protocol at an older wire-FORMAT version (e.g. pre-native-shape
+            // .llama blobs). Without the version check, a stale-format chat would
+            // stay a permanent v0+v1 mix that safeBlobsForReplay always refuses,
+            // silently defeating blob replay forever and leaking rows.
+            let protocolMismatch = database.storedBlobProtocol(inChat: chatID) != Int(api.rawValue)
+            let versionMismatch = (database.minStoredBlobWireFormatVersion(inChat: chatID)
+                                   ?? ChatBlob.currentWireFormatVersion(for: api))
+                != ChatBlob.currentWireFormatVersion(for: api)
+            if protocolMismatch || versionMismatch {
+                database.replaceBlobs(inChat: chatID, with: [])
+            }
         }
         return captureNewRounds(chatID: chatID, allMessages: allMessages, api: api,
                                 modelName: modelName, hostedTools: hostedTools,

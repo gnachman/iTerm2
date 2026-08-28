@@ -246,6 +246,36 @@ final class ChatBlobAssemblerTests: XCTestCase {
                         "a current-wire-format .llama blob must be replayable")
     }
 
+    // A chat with pre-native-shape (version 0) .llama blobs must be RE-FROZEN on
+    // the next turn, not left a permanent v0+v1 mix that safeBlobsForReplay
+    // always refuses (which would silently defeat replay forever and leak rows).
+    func test_captureTurn_reFreezesStaleWireFormatVersion() throws {
+        let db = try makeTempDB()
+        let chatID = "V"
+        // An old build's round-1 blob, stamped version 0 by the column migration.
+        let round1Payload = Data("[{\"role\":\"user\",\"content\":\"hi\"}]".utf8)
+        XCTAssertNotNil(db.appendBlob(ChatBlob(chatID: chatID, blobProtocol: .llama,
+                                               role: .user, payload: round1Payload,
+                                               wireFormatVersion: 0)))
+        XCTAssertEqual(db.minStoredBlobWireFormatVersion(inChat: chatID), 0)
+
+        // A new turn (two rounds now) on the same protocol. Without re-freezing,
+        // round 2 would append as v1 onto the v0 round 1 = an unreplayable mix.
+        ChatBlobCapture.captureTurn(chatID: chatID,
+                                    allMessages: plainRound + plainRound,
+                                    api: .llama, modelName: "m",
+                                    hostedTools: HostedTools(), database: db)
+
+        let blobs = db.blobs(inChat: chatID)
+        XCTAssertFalse(blobs.isEmpty)
+        XCTAssertTrue(blobs.allSatisfy { $0.wireFormatVersion == 1 },
+                      "stale v0 blobs were not re-frozen: \(blobs.map { $0.wireFormatVersion })")
+        XCTAssertNotNil(ChatBlobAssembler.safeBlobsForReplay(chatID: chatID,
+                                                             expectedProtocol: .llama,
+                                                             database: db),
+                        "chat should be replayable again after the re-freeze")
+    }
+
     // MARK: - forkBlobPrefix (fork blob inheritance)
 
     private func blob(_ chatID: String) -> ChatBlob {

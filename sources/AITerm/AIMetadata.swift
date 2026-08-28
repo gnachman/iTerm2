@@ -136,6 +136,7 @@ class AIModel: NSObject {
     @objc var hostedWebSearchFeatureEnabled: Bool { model.features.contains(.hostedWebSearch) }
     @objc var hostedCodeInterpreterFeatureEnabled: Bool { model.features.contains(.hostedCodeInterpreter) }
     @objc var configurableThinkingFeatureEnabled: Bool { model.features.contains(.configurableThinking) }
+    @objc var visionFeatureEnabled: Bool { model.features.contains(.vision) }
     @objc var supportsTemperature: Bool { model.supportsTemperature }
 
     @objc var vectorStoreConfig: AIMetadata.Model.VectorStoreConfig { model.vectorStoreConfig }

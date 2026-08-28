@@ -32,6 +32,13 @@ final class AIProviderPresetTests: XCTestCase {
                       "native Ollama preset should enable the Think toggle")
     }
 
+    // Vision defaults off even on the native preset: a local runner mixes text
+    // and vision models, so the user opts in per model. (The reset itself is what
+    // matters: a preset must drive every capability so none goes stale.)
+    func test_ollamaNativePreset_visionDefaultsOff() throws {
+        XCTAssertFalse(try preset(named: "Ollama (native)").vision)
+    }
+
     // The OpenAI-compatible preset stays available but on the compat endpoint,
     // which cannot express think/num_ctx.
     func test_ollamaCompatPreset_staysOnCompatEndpoint() throws {
