@@ -626,6 +626,10 @@ UI Improvements:
   and dim it. A snoozed entry un-snoozes
   automatically the next time its status
   changes.
+- The Session Status toolbelt tool has a
+  snooze button next to the notify button
+  that toggles snooze on the selected
+  session.
 - Contextual alternates (calt) are enabled by
   default for ligature-capable fonts.
 - Rename dialogs, the pane menu, and the context

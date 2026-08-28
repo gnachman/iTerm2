@@ -17,6 +17,7 @@ class ToolStatus: NSView {
     private var helpButton: PopoverHelpButton!
     private var settingsButton: NSButton!
     private var notifyButton: NSButton!
+    private var snoozeButton: NSButton!
     private static let buttonHeight: CGFloat = 23
     private static let margin: CGFloat = 5
     static let statusToolLastUseUserDefaultsKey = "NoSyncStatusToolLastUseDate"
@@ -137,6 +138,20 @@ class ToolStatus: NSView {
         updateNotifyButtonAppearance()
         addSubview(notifyButton)
 
+        // Snooze toggle — right of the notify button. Enabled only when a row
+        // is selected; toggles snooze on the selected session's workgroup,
+        // exactly like the row's right-click Snooze menu item.
+        snoozeButton = NSButton(frame: NSRect(x: 0, y: 0, width: 22, height: 22))
+        snoozeButton.bezelStyle = .regularSquare
+        snoozeButton.setButtonType(.toggle)
+        snoozeButton.isBordered = false
+        snoozeButton.imagePosition = .imageOnly
+        snoozeButton.target = self
+        snoozeButton.action = #selector(toggleSnoozeButton(_:))
+        snoozeButton.autoresizingMask = []
+        updateSnoozeButtonAppearance()
+        addSubview(snoozeButton)
+
         scrollView = NSScrollView.scrollViewWithTableViewForToolbelt(container: self,
                                                                      insets: NSEdgeInsets(),
                                                                      rowHeight: 0,
@@ -234,6 +249,12 @@ extension ToolStatus: ToolbeltTool {
                                     y: 0,
                                     width: notifyButton.frame.width,
                                     height: notifyButton.frame.height)
+
+        // Snooze toggle — right of the notify button
+        snoozeButton.frame = NSRect(x: notifyButton.frame.maxX + m,
+                                    y: 0,
+                                    width: snoozeButton.frame.width,
+                                    height: snoozeButton.frame.height)
 
         // Scroll view — above buttons
         let scrollY = bh + m
@@ -398,8 +419,9 @@ private extension ToolStatus {
             _tableView?.selectRowIndexes(IndexSet(), byExtendingSelection: false)
         }
         // This programmatic change skips tableViewSelectionDidChange (it's
-        // suppressed by disableSelectionCount), so refresh the bell here.
+        // suppressed by disableSelectionCount), so refresh the buttons here.
         updateNotifyButtonAppearance()
+        updateSnoozeButtonAppearance()
     }
 
     // MARK: - Status-change notifications
@@ -1036,8 +1058,10 @@ extension ToolStatus: NSTableViewDelegate {
         if disableSelectionCount > 0 {
             return
         }
-        // The bell targets the selected session, so keep it in sync.
+        // The bell and snooze buttons target the selected session, so keep
+        // them in sync.
         updateNotifyButtonAppearance()
+        updateSnoozeButtonAppearance()
         let row = _tableView!.selectedRow
         if row == -1 {
             return
@@ -1091,6 +1115,43 @@ extension ToolStatus: NSMenuDelegate {
         // un-snooze them all; otherwise snooze them all so the merged row
         // reads as snoozed (a snoozed member only represents when all are).
         setSnoozed(!allSnoozed(members), forSessionIDs: members)
+    }
+
+    // The snooze toolbar button acts on the selected row, doing the same
+    // thing as its right-click Snooze menu item.
+    @objc func toggleSnoozeButton(_ sender: NSButton) {
+        guard let sessionID = selectedRepresentativeSessionID else {
+            return
+        }
+        let members = groupMemberSessionIDs(forRepresentative: sessionID)
+        setSnoozed(!allSnoozed(members), forSessionIDs: members)
+    }
+
+    // The displayed row's session ID for the current selection, or nil when
+    // nothing is selected.
+    private var selectedRepresentativeSessionID: String? {
+        guard let row = _tableView?.selectedRow, row >= 0, row < displayedStatuses.count else {
+            return nil
+        }
+        return displayedStatuses[row].sessionID
+    }
+
+    func updateSnoozeButtonAppearance() {
+        let sessionID = selectedRepresentativeSessionID
+        // Only actionable with a selection, matching the right-click item's
+        // requirement of a clicked row.
+        snoozeButton.isEnabled = sessionID != nil
+        let snoozed = sessionID.map { allSnoozed(groupMemberSessionIDs(forRepresentative: $0)) } ?? false
+        snoozeButton.state = snoozed ? .on : .off
+        snoozeButton.image = NSImage(systemSymbolName: SFSymbol.moonZzz.rawValue,
+                                     accessibilityDescription: "Snooze")
+        if sessionID == nil {
+            snoozeButton.toolTip = "Select a session to snooze it."
+        } else if snoozed {
+            snoozeButton.toolTip = "Un-snooze the selected session."
+        } else {
+            snoozeButton.toolTip = "Snooze the selected session so it sinks to the bottom of the list and dims until its status changes."
+        }
     }
 
     // The session IDs in `statuses` that share the clicked representative's
