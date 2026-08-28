@@ -116,4 +116,23 @@ class OllamaModelDiscovery: NSObject {
         }
         task.resume()
     }
+
+    // Fetch the installed models mapped to capability-aware catalog models. The
+    // completion runs on the main queue; empty on any failure. Used by the
+    // dynamic-provider cache.
+    static func fetchModels(fromEndpoint endpoint: String,
+                            timeout: TimeInterval,
+                            completion: @escaping ([AIMetadata.Model]) -> Void) {
+        guard let url = tagsURL(fromEndpoint: endpoint) else {
+            DispatchQueue.main.async { completion([]) }
+            return
+        }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = timeout
+        let task = URLSession.shared.dataTask(with: request) { data, _, _ in
+            let resolved = data.map { Self.models(fromTagsResponse: $0, endpoint: endpoint) } ?? []
+            DispatchQueue.main.async { completion(resolved) }
+        }
+        task.resume()
+    }
 }

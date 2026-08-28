@@ -334,6 +334,29 @@ extension AILiveHarness {
                       "final answer lost the tool result under thinking; text: \(result.finalText)")
     }
 
+    // MARK: - dynamic provider discovery
+
+    // The cache refreshes from the real /api/tags and surfaces the installed
+    // model (with capabilities) via its change notification.
+    func test_ollama_cache_discoversInstalledModel() throws {
+        _ = try ollamaKeyOrSkip()
+        try requireReachableOllama(model: ollamaModelName)
+        let cache = OllamaModelCache()
+        let endpoint = "\(AILiveHarness.ollamaBaseURL)/api/chat"
+        let exp = expectation(forNotification: OllamaModelCache.didChangeNotification, object: nil)
+        cache.refresh(endpoint: endpoint)
+        wait(for: [exp], timeout: 20)
+        let discovered = cache.models(forEndpoint: endpoint)
+        XCTAssertTrue(discovered.contains { $0.name == ollamaModelName },
+                      "cache did not discover \(ollamaModelName); got \(discovered.map { $0.name })")
+        // qwen3.5:4b advertises all capabilities; confirm they came through.
+        if let qwen = discovered.first(where: { $0.name == ollamaModelName }) {
+            XCTAssertTrue(qwen.features.contains(.vision))
+            XCTAssertTrue(qwen.features.contains(.configurableThinking))
+            XCTAssertGreaterThan(qwen.contextWindowTokens, 0)
+        }
+    }
+
     // MARK: - vision
 
     private func solidColorPNG(_ color: NSColor, size: Int = 96) -> Data {
