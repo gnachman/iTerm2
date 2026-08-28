@@ -24,6 +24,10 @@ class LLMMetadata: NSObject {
         static let configurableThinking = "configurableThinking"
         static let vision = "vision"
         static let customHeaders = "customHeaders"
+        // A dynamic Ollama provider: the entry stores only the endpoint (+ auth
+        // headers), and its models are discovered live from /api/tags rather than
+        // named/capability-checkboxed by hand.
+        static let dynamicModels = "dynamicModels"
     }
 
     @objc(openAIModelIsLegacy:)
@@ -194,7 +198,32 @@ class LLMMetadata: NSObject {
         guard let raw = iTermPreferences.object(forKey: kPreferenceKeyAIManualModelConfigurations) as? [[String: Any]] else {
             return []
         }
-        return raw.compactMap { manualModel(configuration: $0) }
+        return raw.flatMap { configuration -> [AIMetadata.Model] in
+            // A dynamic Ollama entry expands into one model per installed tag,
+            // discovered from the server (with capabilities), instead of a single
+            // hand-configured model.
+            if bool(configuration, key: ManualModelKey.dynamicModels) {
+                return dynamicOllamaModels(configuration: configuration)
+            }
+            return manualModel(configuration: configuration).map { [$0] } ?? []
+        }
+    }
+
+    // Expand a dynamic Ollama provider entry into the models the cache discovered
+    // for its endpoint. Empty until the first /api/tags fetch lands; the cache
+    // posts OllamaModelCache.didChangeNotification when it does, so the pickers
+    // rebuild. Each model inherits the entry's custom auth headers.
+    private static func dynamicOllamaModels(configuration: [String: Any]) -> [AIMetadata.Model] {
+        guard let url = configuration[ManualModelKey.url] as? String,
+              !url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return []
+        }
+        let headers = (configuration[ManualModelKey.customHeaders] as? [[String: String]]) ?? []
+        return OllamaModelCache.shared.models(forEndpoint: url).map { model in
+            var m = model
+            m.customHeaders = headers
+            return m
+        }
     }
 
     private static func legacyManualModel() -> AIMetadata.Model? {

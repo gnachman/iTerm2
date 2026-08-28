@@ -106,6 +106,9 @@ class ChatToolbar {
     private(set) var titleLabel: NSTextField!
 
     private let userDefaultsObserver = iTermUserDefaultsObserver()
+    // Rebuilds the provider/model selectors when the dynamic Ollama model cache
+    // finishes a background /api/tags refresh and the model list changes.
+    private var ollamaCacheObserver: NSObjectProtocol?
 
     weak var dataSource: ChatToolbarDataSource?
 
@@ -189,7 +192,19 @@ class ChatToolbar {
         userDefaultsObserver.observeKey(ChatViewController.serviceTierUserDefaultsKey) { [weak self] in
             self?.update()
         }
+        ollamaCacheObserver = NotificationCenter.default.addObserver(
+            forName: OllamaModelCache.didChangeNotification,
+            object: nil,
+            queue: .main) { [weak self] _ in
+            self?.update()
+        }
         update()
+    }
+
+    deinit {
+        if let ollamaCacheObserver {
+            NotificationCenter.default.removeObserver(ollamaCacheObserver)
+        }
     }
 }
 

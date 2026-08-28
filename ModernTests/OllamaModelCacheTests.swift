@@ -39,4 +39,33 @@ final class OllamaModelCacheTests: XCTestCase {
         cache.update(endpoint: "e", models: models("e"))  // identical: no change, no post
         waitForExpectations(timeout: 0.3)
     }
+
+    // Integration: a dynamic Ollama manual entry expands (via the shared cache)
+    // into one catalog model per discovered tag, with capabilities, so the
+    // provider picker shows them without any per-model config.
+    func test_dynamicOllamaEntry_expandsToDiscoveredModels() {
+        let endpoint = "http://dyn-provider-test.local:11434/api/chat"
+        let fixture = Data("""
+        {"models":[{"name":"m1","capabilities":["tools"],"details":{"context_length":4096}},
+                   {"name":"m2","capabilities":["vision"],"details":{"context_length":8192}}]}
+        """.utf8)
+        OllamaModelCache.shared.update(endpoint: endpoint,
+                                       models: OllamaModelDiscovery.models(fromTagsResponse: fixture, endpoint: endpoint))
+
+        let key = kPreferenceKeyAIManualModelConfigurations
+        let saved = iTermPreferences.object(forKey: key)
+        defer { iTermPreferences.setObject(saved, forKey: key) }
+        iTermPreferences.setObject([[
+            "url": endpoint,
+            "dynamicModels": true,
+            "api": Int(iTermAIAPI.llama.rawValue),
+        ]], forKey: key)
+
+        let models = LLMMetadata.manualModels()
+        XCTAssertEqual(Set(models.map { $0.name }), ["m1", "m2"],
+                       "dynamic entry did not expand to the discovered tags")
+        let m1 = try? XCTUnwrap(models.first { $0.name == "m1" })
+        XCTAssertEqual(m1?.api, .llama)
+        XCTAssertTrue(m1?.features.contains(.functionCalling) ?? false)
+    }
 }
