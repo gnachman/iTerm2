@@ -113,6 +113,20 @@ static NSString *const iTermSessionTitleSession = @"session";
     };
     NSString *sessionID = parameters[iTermSessionTitleSession];
     PTYSession *session = [[PTYSession sessionMap] objectForKey:sessionID];
+    if (!session) {
+        // The session id did not resolve to a live session in the session map. Don't
+        // bail: name/profile/job below come from the invocation scope, not the session
+        // object, so we can still produce a (degraded) title -- which is what a terminal
+        // session shows in this case, as it did before. We deliberately do NOT force the
+        // browser session-name component here (we can't tell it's a browser without the
+        // session), but a browser's resulting blank title is caught by the name
+        // controller's browser-only blank suppression, which reads the real session via
+        // its delegate. This should not normally happen; if it recurs it usually means
+        // session.id has diverged from the session's guid (the map key), e.g. an
+        // arrangement restoring the reserved id variable outside of -setGuid:.
+        RLog(@"session_title: session id “%@” not found in session map (idIsEmpty=%@, mapCount=%@); computing from arguments",
+             sessionID, @(sessionID.length == 0), @([PTYSession sessionMap].count));
+    }
     NSString *name = trim(parameters[iTermSessionTitleArgName]);
     NSString *profile = trim(parameters[iTermSessionTitleArgProfile]);
     NSString *job = trim(parameters[iTermSessionTitleArgJob]);
@@ -133,6 +147,27 @@ static NSString *const iTermSessionTitleSession = @"session";
     iTermTitleComponents titleComponents;
     titleComponents = [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS
                                                            inProfile:session.profile];
+
+    // A browser session has no job, tty, host, user, pwd, or terminal size, so a
+    // title made only of those components (the job-only global default, or a stale
+    // job-only override left in a saved arrangement by an older build) renders empty.
+    // Guarantee the page title is visible by including the session-name component.
+    // This is done here, at the single point where the components are consumed, so it
+    // covers every browser session regardless of how it was created or restored.
+    // A name component or the profile name yields a non-empty title for a browser;
+    // only when neither is present do we add the session-name component so the page
+    // title shows. Custom is deliberately NOT counted: a bare Custom component with no
+    // script provider yields an empty title for a browser (there is no custom text),
+    // which is exactly what we want to avoid. A real custom-title profile uses a
+    // separate provider identifier, so session_title is not invoked for it and this
+    // guarantee never runs.
+    const iTermTitleComponents browserVisibleComponents = (iTermTitleComponentsSessionName |
+                                                           iTermTitleComponentsProfileName |
+                                                           iTermTitleComponentsProfileAndSessionName |
+                                                           iTermTitleComponentsTemporarySessionName);
+    if (session.isBrowserSession && !(titleComponents & browserVisibleComponents)) {
+        titleComponents |= iTermTitleComponentsSessionName;
+    }
 
     NSString *result = [self titleForSessionName:name
                                      profileName:profile

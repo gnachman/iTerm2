@@ -25,6 +25,7 @@ protocol iTermBrowserManagerDelegate: AnyObject, iTermBrowserFindManagerDelegate
     func browserManager(_ manager: iTermBrowserManager, didUpdateURL url: String?)
     func browserManager(_ manager: iTermBrowserManager, didUpdateTitle title: String?)
     func browserManager(_ manager: iTermBrowserManager, didUpdateFavicon favicon: NSImage?)
+    func browserManager(_ manager: iTermBrowserManager, didUpdateBackgroundColor color: NSColor?)
     func browserManager(_ manager: iTermBrowserManager, didUpdateCanGoBack canGoBack: Bool)
     func browserManager(_ manager: iTermBrowserManager, didUpdateCanGoForward canGoForward: Bool)
     func browserManager(_ manager: iTermBrowserManager, didStartNavigation navigation: WKNavigation?)
@@ -488,6 +489,12 @@ class iTermBrowserManager: NSObject, WKURLSchemeHandler, WKScriptMessageHandler 
         webView.configuration.preferences.setValue(true, forKey: "developerExtrasEnabled")
         // Observe title changes
         webView.addObserver(self, forKeyPath: "title", options: [.new], context: nil)
+        // We intentionally do NOT observe underPageBackgroundColor via KVO. WebKit
+        // reports transient values during load (its light default before the page is
+        // parsed, then the page's real color), which would flip the minimal-theme tab
+        // tint and window appearance on every navigation. Instead the settled color is
+        // read once per load in webView(_:didFinish:), so the tint updates once the
+        // page has resolved a background.
 
         // TODO: This is going to cause problems for extensions. If you open a link with target=_blank then the new webview won't have a content
         // manager. I don't know what will happen if we do not register a webview with the extension manager.
@@ -1294,6 +1301,12 @@ extension iTermBrowserManager: WKNavigationDelegate {
 
         notifyDelegateOfUpdates()
 
+        // Emit the page background color once, now that the page has loaded and its
+        // background has settled. This is the single source for the minimal-theme tab
+        // tint; we deliberately don't observe underPageBackgroundColor via KVO to avoid
+        // flipping the appearance on each transient value reported during load.
+        delegate?.browserManager(self, didUpdateBackgroundColor: webView.underPageBackgroundColor)
+
         // Update permission states for geolocation
         if let url = webView.url {
             let originString = iTermBrowserPermissionManager.normalizeOrigin(from: url)
@@ -1866,7 +1879,7 @@ extension iTermBrowserManager {
         if keyPath == "title", let webView = object as? iTermBrowserWebView, webView == self.webView {
             // Title changed - notify delegate
             notifyDelegateOfUpdates()
-            
+
             // Update history with new title if we have a current URL
             if let url = webView.url {
                 historyController.titleDidChange(for: url, title: webView.title)

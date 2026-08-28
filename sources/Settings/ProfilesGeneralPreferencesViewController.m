@@ -700,6 +700,20 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         [titleSettings.menu removeItemAtIndex:idx];
     }];
 
+    // Browser sessions have no job, tty, host, user, working directory, command line,
+    // or terminal size, so hide those components for a browser profile. A terminal-only
+    // component that is already selected stays visible so the user can turn it off (see
+    // iTermBrowserSessionTitle). Only name/profile-name (and custom) otherwise apply.
+    const BOOL isBrowser = [[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue];
+    const NSUInteger selectedComponents = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
+    for (NSMenuItem *item in titleSettings.menu.itemArray) {
+        if (item.tag > 0) {
+            item.hidden = [iTermBrowserSessionTitle shouldHideTitleComponentMenuItemWithTag:item.tag
+                                                                                  isBrowser:isBrowser
+                                                                         selectedComponents:selectedComponents];
+        }
+    }
+
     NSArray<iTermSessionTitleProvider *> *funcs = [iTermAPIHelper sessionTitleFunctions];
     NSString *uniqueIdentifier = [self titleFunctionUniqueIdentifier];
     if (funcs.count || uniqueIdentifier) {

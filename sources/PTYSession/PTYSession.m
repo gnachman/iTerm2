@@ -764,6 +764,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     // Browser navigation state
     BOOL _browserIsLoading;
 
+    // The committed page background color used for the minimal-theme browser tint.
+    // New values are coalesced through the rate limiter (committing propagates to tab
+    // colors and the minimal-theme appearance, which is expensive).
+    NSColor *_browserBackgroundColor;
+    iTermRateLimitedUpdate *_browserBackgroundColorRateLimit;
+
     // Disables short-lived session warning so the user can read the error.
     BOOL _execDidFail;
 
@@ -1210,6 +1216,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     [_cursorGuideColor release];
+    [_browserBackgroundColor release];
+    [_browserBackgroundColorRateLimit invalidate];
+    [_browserBackgroundColorRateLimit release];
     [_textview release];  // I'm not sure it's ever nonnil here
     [_currentMarkOrNotePosition release];
     [_graphicSource release];
@@ -1701,6 +1710,15 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             if ([key isEqualToString:iTermVariableKeyIsBroadcastSource]) {
                 // Input broadcasting is not restored.
+                continue;
+            }
+            if ([key isEqualToString:iTermVariableKeySessionID] ||
+                [key isEqualToString:iTermVariableKeySessionTermID]) {
+                // Identity is owned by _guid/-setGuid: and the global session map;
+                // termid is derived from the guid and re-set by setTermIDIfPossible.
+                // Restoring these directly would decouple session.id from _guid and
+                // the session map, so session_title(session: session.id) could no
+                // longer resolve the live session and its title would come up blank.
                 continue;
             }
             [aSession.variablesScope setValue:variables[key] forVariableNamed:key];
@@ -5617,12 +5635,103 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                                         inProfile:aDict]];
 }
 
+// The page background color to use for the minimal-theme browser tint, or nil to use
+// the profile color. Non-nil only for a browser session that has reported a page color
+// while the minimal tab style is active. This is the single source of the "minimal
+// browser session -> use the page color" decision; -effectiveUnprocessedBackgroundColor,
+// -colorMapShouldBeInDarkMode, and -minimalThemeTextColor all consult it so the tab
+// tint, colorMap dark-mode, and tab-bar text color can't drift out of sync.
+- (NSColor *)minimalBrowserTintColor {
+    if (_browserBackgroundColor &&
+        self.isBrowserSession &&
+        [iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL) {
+        return _browserBackgroundColor;
+    }
+    return nil;
+}
+
 - (NSColor *)effectiveUnprocessedBackgroundColor {
+    // A browser session has no terminal content, so its color map background is just
+    // the profile's static background color (dark by default). For a minimal-theme
+    // browser session (-minimalBrowserTintColor is non-nil) return the actual page
+    // background color instead. Note this override applies to EVERY consumer of this
+    // method (and of -effectiveProcessedBackgroundColor): the session view, status bar,
+    // background-image tint, tab-bar dark/light vote, and minimal tab tint all follow
+    // the page color. That is intentional -- in the minimal theme all background-derived
+    // chrome should match the page. The scoping is (browser session + minimal theme),
+    // not a subset of consumers; in non-minimal themes the profile color still stands.
+    NSColor *browserTint = self.minimalBrowserTintColor;
+    if (browserTint) {
+        return browserTint;
+    }
     NSColor *color = _textview.colorForMargins;
     if (color) {
         return color;
     }
     return [self.screen.colorMap colorForKey:kColorMapBackground];
+}
+
+- (NSColor *)browserBackgroundColor {
+    return _browserBackgroundColor;
+}
+
+- (void)setBrowserBackgroundColor:(NSColor *)color {
+    // WebKit's underPageBackgroundColor can be a dynamic/catalog color. -isDark ->
+    // -perceivedBrightness converts to genericRGB and treats a failed (nil) conversion
+    // as brightness 0 -- i.e. "dark" -- which would misclassify a light page. Resolve
+    // to a concrete sRGB color up front; if that fails, fall back to the profile color
+    // by storing nil. (A dynamic color resolves under the app's current appearance,
+    // which for a browser window normally matches what the page is rendered against.)
+    NSColor *resolved = [color colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    if (!_browserBackgroundColorRateLimit) {
+        _browserBackgroundColorRateLimit =
+            [[iTermRateLimitedUpdate alloc] initWithName:@"browserBackgroundColor"
+                                         minimumInterval:0.25];
+    }
+    // performRateLimitedBlock runs the most recent deferred block, so capturing
+    // `resolved` here always commits the latest value -- no pending ivar needed.
+    __weak __typeof(self) weakSelf = self;
+    [_browserBackgroundColorRateLimit performRateLimitedBlock:^{
+        [weakSelf commitBrowserBackgroundColor:resolved];
+    }];
+}
+
+- (void)commitBrowserBackgroundColor:(NSColor *)newColor {
+    // Keep oldColor alive past the -release below so the DLog (and any other read)
+    // doesn't touch a deallocated object.
+    NSColor *oldColor = [[_browserBackgroundColor retain] autorelease];
+    if (newColor == oldColor || [newColor isEqual:oldColor]) {
+        return;
+    }
+    // Compare against the effective darkness *before* this override takes effect.
+    // On the first report oldColor is nil, but the tab was already showing the
+    // profile's darkness, so comparing a nil oldColor as "light" would miss a real
+    // dark->light flip. _browserBackgroundColor still holds oldColor here, so
+    // -effectiveUnprocessedBackgroundColor returns the profile color when oldColor is nil.
+    const BOOL oldDark = self.effectiveUnprocessedBackgroundColor.isDark;
+    [newColor retain];
+    [_browserBackgroundColor release];
+    _browserBackgroundColor = newColor;
+    // _browserBackgroundColor is only consumed by the minimal tab style, so in any other
+    // style committing a new page color has no visible effect. Store it (so a later
+    // switch to the minimal style picks it up) but skip the expensive tab-color and
+    // appearance propagation below.
+    if ([iTermPreferences intForKey:kPreferenceKeyTabStyle] != TAB_STYLE_MINIMAL) {
+        return;
+    }
+    const BOOL darknessDidChange = (oldDark != self.effectiveUnprocessedBackgroundColor.isDark);
+    DLog(@"browserBg: page background color changed %@ -> %@ (darknessDidChange=%@) for %@",
+         oldColor, newColor, @(darknessDidChange), self);
+    // Mirror -textViewBackgroundColorDidChangeFrom:to: so tab colors, the minimal
+    // theme appearance, and metal state all pick up the new background.
+    [self backgroundColorDidChangeJigglingIfNeeded:NO];
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf updateAppearanceForMinimalTheme];
+        if (darknessDidChange) {
+            [weakSelf notifyTerminalOfDarknessChange];
+        }
+    });
 }
 
 - (NSColor *)effectiveProcessedBackgroundColor {
@@ -14073,6 +14182,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 }
 
 - (BOOL)colorMapShouldBeInDarkMode {
+    NSColor *browserTint = self.minimalBrowserTintColor;
+    if (browserTint) {
+        // Browser sessions tint from the page background, not the profile color.
+        return browserTint.isDark;
+    }
     const BOOL minimal = [iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL;
     if (minimal) {
         NSColor *backgroundColor = [iTermProfilePreferences colorForKey:KEY_BACKGROUND_COLOR
@@ -22100,6 +22214,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     } else {
         return nil;
     }
+}
+
+- (BOOL)sessionNameControllerShouldSuppressEmptyTitle {
+    // Browser sessions always have a name fallback (page title, host, or profile name),
+    // so a blank built-in title is always a transient artifact and should be dropped in
+    // favor of the last good title. Terminal sessions may legitimately clear their name.
+    return self.isBrowserSession;
 }
 
 - (void)sessionNameControllerNameWillChangeTo:(NSString *)newName {

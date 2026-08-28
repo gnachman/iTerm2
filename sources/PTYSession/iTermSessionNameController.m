@@ -155,7 +155,13 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
                                              withResult:possiblyEmptyResult
                                                   error:error];
          }];
-        _cachedBuiltInWindowTitleEvaluation = windowTitle;
+        // Same transient-blank protection as the session title: during a restoration
+        // blip window_title can come back blank; keep the previously cached window
+        // title instead of blanking the title bar. (This branch only runs for the
+        // built-in provider, so no custom-provider empty value is suppressed here.)
+        if (![self shouldSuppressBlankResult:windowTitle comparedToCached:_cachedBuiltInWindowTitleEvaluation]) {
+            _cachedBuiltInWindowTitleEvaluation = windowTitle;
+        }
     } else {
         _cachedBuiltInWindowTitleEvaluation = nil;
     }
@@ -235,7 +241,31 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
     }
 }
 
+// The built-in title provider can transiently produce a blank result -- for example
+// during window restoration, when the session momentarily can't be resolved from its
+// id, so session_title returns nil/blank. Don't let that clobber a good cached title.
+// This only applies to the built-in provider: a custom script/API title provider may
+// return an empty string deliberately, which must be honored (not suppressed).
+- (BOOL)shouldSuppressBlankResult:(NSString *)result comparedToCached:(NSString *)cached {
+    if (![self usingBuiltInTitleProvider]) {
+        return NO;
+    }
+    if (![self.delegate sessionNameControllerShouldSuppressEmptyTitle]) {
+        // Only sessions that never legitimately have a blank title (browsers) suppress
+        // it. Terminal sessions must honor an explicit clear (e.g. OSC 2).
+        return NO;
+    }
+    NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    const BOOL newIsBlank = [[(result ?: @"") stringByTrimmingCharactersInSet:whitespace] length] == 0;
+    const BOOL haveCached = [[(cached ?: @"") stringByTrimmingCharactersInSet:whitespace] length] > 0;
+    return newIsBlank && haveCached;
+}
+
 - (void)didEvaluateInvocationWithResult:(NSString *)result {
+    if ([self shouldSuppressBlankResult:result comparedToCached:_cachedEvaluation]) {
+        DLog(@"Ignore blank evaluation result; keep %@", _cachedEvaluation);
+        return;
+    }
     _cachedEvaluation = [result copy];
     [_delegate sessionNameControllerNameWillChangeTo:_cachedEvaluation];
     [_delegate sessionNameControllerPresentationNameDidChangeTo:self.presentationSessionTitle];
@@ -398,6 +428,10 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
                 return;
             }
             strongSelf->_appliedCount = count;
+            if ([strongSelf shouldSuppressBlankResult:presentationName comparedToCached:strongSelf->_cachedEvaluation]) {
+                DLog(@"Ignore blank evaluation; keep %@", strongSelf->_cachedEvaluation);
+                return;
+            }
             NSString *safeName = presentationName ?: @"Untitled";
             if ([NSObject object:strongSelf->_cachedEvaluation isEqualToObject:safeName]) {
                 DLog(@"result is unchanged %@", strongSelf.delegate);

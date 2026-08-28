@@ -751,6 +751,19 @@ backgroundColor:(nullable NSColor *)backgroundColor;
 // Autodetected dominant color, otherwise configured bg color
 @property(nonatomic, readonly, nullable) NSColor *effectiveUnprocessedBackgroundColor;
 @property(nonatomic, readonly, nullable) NSColor *effectiveProcessedBackgroundColor;
+
+// For browser sessions: the page's background color (from the web view's
+// underPageBackgroundColor). When set, it overrides the profile background color
+// for the minimal theme's light/dark decision and tab tint. Setting it is rate
+// limited internally because propagation triggers a relayout.
+@property(nonatomic, strong, nullable) NSColor *browserBackgroundColor;
+
+// The page background color to use for the minimal-theme browser tint, or nil to use
+// the profile color. Non-nil only for a browser session that has reported a page color
+// while the minimal tab style is active. Single source of the minimal-browser tint
+// decision shared by effectiveUnprocessedBackgroundColor, colorMapShouldBeInDarkMode,
+// and minimalThemeTextColor.
+@property(nonatomic, readonly, nullable) NSColor *minimalBrowserTintColor;
 @property(nonatomic, readonly) BOOL abortBury;
 @property(nonatomic, readonly) BOOL isArchive;
 @property(nonatomic, copy, nullable) NSString *browserTarget;

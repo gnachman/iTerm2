@@ -1329,12 +1329,18 @@ extension PTYSession {
 extension PTYSession {
     @objc
     var minimalThemeTextColor: NSColor {
+        let light = NSColor(displayP3Red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
+        let dark = NSColor(displayP3Red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
+        // A browser session has no colorForMargins, so the fallback below would use the
+        // profile's foreground color, which does not track the page background. Pick the
+        // text color from the page background's darkness instead. minimalBrowserTintColor
+        // is the shared accessor (also gated on the minimal tab style), so this stays in
+        // sync with effectiveUnprocessedBackgroundColor and colorMapShouldBeInDarkMode.
+        if let bg = minimalBrowserTintColor {
+            return bg.isDark ? light : dark
+        }
         if let color = textview?.colorForMargins {
-            if color.isDark {
-                return NSColor(displayP3Red: 0.95, green: 0.95, blue: 0.95, alpha: 1.0)
-            } else {
-                return NSColor(displayP3Red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
-            }
+            return color.isDark ? light : dark
         }
         return textview?.colorMap.color(forKey: kColorMapForeground) ?? NSColor.textColor
     }
@@ -1607,6 +1613,16 @@ extension PTYSession {
             vc, initialURL: iTermProfilePreferences.string(forKey: KEY_INITIAL_URL,
                                                            inProfile: justProfile),
             restorableState: restorableState as? [AnyHashable: Any])
+        // Seed the session name only when there isn't one already, so it is non-empty
+        // before the first page-title callback for a fresh session, WITHOUT clobbering a
+        // name restored from a saved arrangement (the last page title). The latter must
+        // survive even if the page fails to reload (offline, or a now-missing file:// URL).
+        // didUpdateTitle overwrites it once WebKit reports a title, and the session-name
+        // component is guaranteed for browsers by iTermSessionTitleBuiltInFunction, so a
+        // seeded or restored name shows regardless of the profile's title components.
+        if !hasExistingSessionName {
+            setUntrustedIconName(justProfile[KEY_NAME] as? String ?? iTermBrowserSessionTitle.defaultProfileName)
+        }
         return true
     }
 

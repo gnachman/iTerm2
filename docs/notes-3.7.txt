@@ -2706,3 +2706,10 @@ Bug Fixes:
 - The tab group rename and creation dialogs now
   match the light/dark appearance of their
   window in the minimal theme.
+- Browser tabs now show a title (page title, or
+  the host, or the profile name) instead of a
+  blank tab and window title.
+- In the minimal theme, a browser tab's light or
+  dark appearance and tint now follow the page's
+  background color instead of the profile's
+  terminal background color.

@@ -20,6 +20,8 @@ protocol iTermBrowserViewControllerDelegate: AnyObject, iTermBrowserFindManagerD
     func browserViewController(_ controller: iTermBrowserViewController,
                                didUpdateFavicon favicon: NSImage?)
     func browserViewController(_ controller: iTermBrowserViewController,
+                               didUpdateBackgroundColor color: NSColor?)
+    func browserViewController(_ controller: iTermBrowserViewController,
                                requestNewWindowForURL url: URL,
                                configuration: WKWebViewConfiguration) -> iTermBrowserWebView?
     func browserViewControllerShowFindPanel(_ controller: iTermBrowserViewController)
@@ -809,6 +811,10 @@ extension iTermBrowserViewController {
 
     private func setupBrowserManager() {
         browserManager.delegate = self
+        // Don't seed the page background color here: before any page has loaded, the web
+        // view's underPageBackgroundColor is WebKit's (light) default, not the page's
+        // real color. Seeding it would flip a dark-profile browser tab to light until a
+        // real page loads. The color is emitted once the page settles in didFinish.
     }
 
     private func setupToolbar() {
@@ -1098,6 +1104,10 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
     func browserManager(_ manager: iTermBrowserManager, didUpdateFavicon favicon: NSImage?) {
         toolbar.updateFavicon(favicon)
         delegate?.browserViewController(self, didUpdateFavicon: favicon)
+    }
+
+    func browserManager(_ manager: iTermBrowserManager, didUpdateBackgroundColor color: NSColor?) {
+        delegate?.browserViewController(self, didUpdateBackgroundColor: color)
     }
 
     func browserManager(_ manager: iTermBrowserManager, didUpdateCanGoBack canGoBack: Bool) {
