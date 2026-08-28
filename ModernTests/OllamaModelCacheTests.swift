@@ -18,21 +18,31 @@ final class OllamaModelCacheTests: XCTestCase {
         OllamaModelDiscovery.models(fromTagsResponse: fixture, endpoint: endpoint)
     }
 
-    func test_update_thenRead_returnsModels() {
+    // A cache that does no real network or timer work by default, so tests are
+    // deterministic and never touch the network. Individual tests override
+    // `fetcher`/`retryScheduler` where they need to drive them.
+    private func makeCache() -> OllamaModelCache {
         let cache = OllamaModelCache()
+        cache.fetcher = { _, _, _, _ in }        // never completes -> no network
+        cache.retryScheduler = { _, _ in }        // no real timers
+        return cache
+    }
+
+    func test_update_thenRead_returnsModels() {
+        let cache = makeCache()
         cache.update(endpoint: "e", models: models("e"))
         XCTAssertEqual(cache.models(forEndpoint: "e").map { $0.name }, ["qwen3.5:4b"])
     }
 
     func test_update_postsChangeNotificationWhenListChanges() {
-        let cache = OllamaModelCache()
+        let cache = makeCache()
         expectation(forNotification: OllamaModelCache.didChangeNotification, object: nil)
         cache.update(endpoint: "e", models: models("e"))  // nil -> [model] is a change
         waitForExpectations(timeout: 1)
     }
 
     func test_update_sameModels_doesNotPost() {
-        let cache = OllamaModelCache()
+        let cache = makeCache()
         cache.update(endpoint: "e", models: models("e"))
         let inverted = expectation(forNotification: OllamaModelCache.didChangeNotification, object: nil)
         inverted.isInverted = true
@@ -45,7 +55,7 @@ final class OllamaModelCacheTests: XCTestCase {
     // launch-before-Ollama scenario.
     func test_failedFetch_retriesAfterBackoff_successRefreshesAfterTTL() {
         var now = Date()
-        let cache = OllamaModelCache()
+        let cache = makeCache()
         cache.nowProvider = { now }
 
         XCTAssertTrue(cache.shouldRefresh(endpoint: "e"), "never fetched -> refresh")
@@ -63,7 +73,7 @@ final class OllamaModelCacheTests: XCTestCase {
 
     // A transient failure after a good fetch keeps the last good models.
     func test_failure_keepsPreviousModels() {
-        let cache = OllamaModelCache()
+        let cache = makeCache()
         cache.update(endpoint: "e", result: models("e"))
         cache.update(endpoint: "e", result: nil)
         XCTAssertEqual(cache.models(forEndpoint: "e").map { $0.name }, ["qwen3.5:4b"],
@@ -74,12 +84,60 @@ final class OllamaModelCacheTests: XCTestCase {
     // distinct from a failure.
     func test_emptyServer_isSuccess_notImmediatelyRetried() {
         var now = Date()
-        let cache = OllamaModelCache()
+        let cache = makeCache()
         cache.nowProvider = { now }
         cache.update(endpoint: "e", result: [])
         XCTAssertFalse(cache.shouldRefresh(endpoint: "e"), "empty-but-reachable is a success")
         now = now.addingTimeInterval(400)
         XCTAssertTrue(cache.shouldRefresh(endpoint: "e"), "re-fetched after TTL to catch newly pulled models")
+    }
+
+    // A failed fetch schedules a self-healing retry, bounded so a permanently-down
+    // server isn't probed forever; a success resets the budget.
+    func test_failedFetch_schedulesBoundedSelfHealingRetry() {
+        let cache = makeCache()
+        var scheduled = 0
+        cache.retryScheduler = { _, _ in scheduled += 1 }  // record, don't run
+        for _ in 0..<20 { cache.update(endpoint: "e", result: nil) }
+        XCTAssertEqual(scheduled, cache.maxAutoRetries, "auto-retry must stop after the cap")
+
+        cache.update(endpoint: "e", result: [])  // success resets the failure budget
+        cache.update(endpoint: "e", result: nil)
+        XCTAssertEqual(scheduled, cache.maxAutoRetries + 1, "a success re-arms the retry")
+    }
+
+    // End to end: a failure at launch, then the server comes up, and the scheduled
+    // retry repopulates the cache on its own (self-healing).
+    func test_selfHeals_whenServerComesUp() {
+        let cache = makeCache()
+        var scheduledBlocks: [() -> Void] = []
+        cache.retryScheduler = { _, block in scheduledBlocks.append(block) }
+        var nextResult: [AIMetadata.Model]? = nil  // server down
+        cache.fetcher = { _, _, _, completion in completion(nextResult) }
+
+        cache.refresh(endpoint: "e")  // fails -> schedules a retry
+        XCTAssertTrue(cache.models(forEndpoint: "e").isEmpty)
+        XCTAssertEqual(scheduledBlocks.count, 1)
+
+        nextResult = models("e")      // server came up
+        scheduledBlocks[0]()          // the scheduled retry runs -> succeeds
+        XCTAssertEqual(cache.models(forEndpoint: "e").map { $0.name }, ["qwen3.5:4b"],
+                       "the picker should repopulate on its own once the server is up")
+    }
+
+    // A user-initiated (forced) refresh bypasses the in-flight coalescing so it
+    // can't be swallowed behind a slow background refresh that then fails.
+    func test_refresh_force_bypassesCoalescing() {
+        let cache = makeCache()
+        var fetchCount = 0
+        cache.fetcher = { _, _, _, _ in fetchCount += 1 }  // never completes -> stays in-flight
+
+        cache.refresh(endpoint: "e")
+        XCTAssertEqual(fetchCount, 1)
+        cache.refresh(endpoint: "e")  // coalesced behind the in-flight one
+        XCTAssertEqual(fetchCount, 1)
+        cache.refresh(endpoint: "e", force: true)
+        XCTAssertEqual(fetchCount, 2, "forced refresh must issue even with one in flight")
     }
 
     // Integration: a dynamic Ollama manual entry expands (via the shared cache)

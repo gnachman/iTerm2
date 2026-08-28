@@ -8,11 +8,12 @@
 //  discovery is a network call), and posts a change notification so the model
 //  pickers rebuild when a refresh brings in new models or capabilities.
 //
-//  A FAILED fetch (server down at launch, a 401 from an auth proxy) is never
-//  cached as a successful empty result: reads keep retrying (with a short
-//  backoff) so the picker recovers on its own once the server comes up, instead
-//  of wedging empty until a manual refresh or app restart. A SUCCESSFUL result is
-//  re-fetched after a TTL so newly pulled models appear.
+//  Self-healing: a FAILED fetch (server down at launch, a 401 from an auth proxy)
+//  is never cached as a successful empty result. It keeps the last good models,
+//  and schedules a bounded one-shot retry after `failureRetryInterval` so the
+//  picker repopulates on its own once the server comes up, without waiting for an
+//  incidental read. A SUCCESSFUL result is re-fetched after `successTTL` so newly
+//  pulled models appear, and on-read staleness also triggers a refresh.
 //
 
 import Foundation
@@ -25,33 +26,36 @@ class OllamaModelCache: NSObject {
     @objc static let shared = OllamaModelCache()
 
     private struct Entry {
-        // The last SUCCESSFUL result (may be empty for a reachable but empty
-        // server). Empty and haveSucceeded=false is the never-succeeded state.
         var models: [AIMetadata.Model] = []
         var haveSucceeded = false
-        // When the last fetch was ATTEMPTED (success or failure), for backoff/TTL.
         var lastAttempt: Date?
+        var consecutiveFailures = 0
+        // Kept so a self-healing retry re-authenticates the same way.
+        var headers: [[String: String]] = []
     }
 
-    // Guards `cache` and `inFlight`. model resolution can run off the main thread
-    // (request building), while refreshes complete on main, so both are locked.
     private let lock = NSLock()
     private var cache: [String: Entry] = [:]
     private var inFlight: Set<String> = []
 
-    // The URLRequest network timeout for a discovery fetch.
     private let networkTimeout: TimeInterval = 10
-    // Re-fetch a SUCCESSFUL list after this long so newly pulled models appear.
     private let successTTL: TimeInterval = 300
-    // Minimum spacing between retries after a FAILED fetch, so a down server
-    // doesn't get hammered on every read.
     private let failureRetryInterval: TimeInterval = 5
+    // Stop the timer-driven retry loop after this many consecutive failures so a
+    // permanently-down server isn't probed forever; read-driven recovery remains.
+    let maxAutoRetries = 6
 
-    // Injectable clock so tests can exercise the TTL/backoff without waiting.
+    // Injectable for tests: the clock, the network fetch, and the retry timer.
     var nowProvider: () -> Date = { Date() }
+    var fetcher: (String, [[String: String]], TimeInterval, @escaping ([AIMetadata.Model]?) -> Void) -> Void = {
+        endpoint, headers, timeout, completion in
+        OllamaModelDiscovery.fetchModels(fromEndpoint: endpoint, headers: headers,
+                                         timeout: timeout, completion: completion)
+    }
+    var retryScheduler: (TimeInterval, @escaping () -> Void) -> Void = { delay, block in
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: block)
+    }
 
-    // Whether a read should kick off a background refresh: never fetched, a prior
-    // FAILURE past the retry backoff, or a SUCCESS past the TTL.
     func shouldRefresh(endpoint: String) -> Bool {
         lock.lock()
         defer { lock.unlock() }
@@ -60,15 +64,14 @@ class OllamaModelCache: NSObject {
 
     private func shouldRefreshLocked(endpoint: String) -> Bool {
         guard let entry = cache[endpoint] else {
-            return true  // never fetched
+            return true
         }
         let elapsed = entry.lastAttempt.map { nowProvider().timeIntervalSince($0) } ?? .infinity
         return entry.haveSucceeded ? elapsed >= successTTL : elapsed >= failureRetryInterval
     }
 
-    // The cached models for an endpoint. Kicks off a background refresh when the
-    // entry is missing/stale; the pickers update via didChangeNotification when it
-    // lands. `headers` are the entry's custom auth headers, applied to the probe.
+    // The cached models for an endpoint. Kicks off a background refresh when
+    // missing/stale; the pickers update via didChangeNotification when it lands.
     func models(forEndpoint endpoint: String, headers: [[String: String]] = []) -> [AIMetadata.Model] {
         lock.lock()
         let cached = cache[endpoint]?.models ?? []
@@ -80,55 +83,81 @@ class OllamaModelCache: NSObject {
         return cached
     }
 
-    // Force a background refresh (e.g. the settings "refresh" affordance). Coalesces
-    // concurrent refreshes of the same endpoint.
-    @objc(refreshEndpoint:headers:)
-    func refresh(endpoint: String, headers: [[String: String]] = []) {
+    // Kick off a background refresh. Coalesces concurrent refreshes of the same
+    // endpoint UNLESS `force` (a user-initiated refresh must always issue, or it
+    // could be dropped behind a slow background fetch that then fails). completion
+    // runs on the main queue with (modelCount, failed) after the fetch resolves.
+    @objc(refreshEndpoint:headers:force:completion:)
+    func refresh(endpoint: String,
+                 headers: [[String: String]] = [],
+                 force: Bool = false,
+                 completion: ((Int, Bool) -> Void)? = nil) {
         lock.lock()
-        if inFlight.contains(endpoint) {
+        if !force && inFlight.contains(endpoint) {
             lock.unlock()
             return
         }
         inFlight.insert(endpoint)
         lock.unlock()
 
-        OllamaModelDiscovery.fetchModels(fromEndpoint: endpoint,
-                                         headers: headers,
-                                         timeout: networkTimeout) { [weak self] result in
-            self?.update(endpoint: endpoint, result: result)
+        fetcher(endpoint, headers, networkTimeout) { [weak self] result in
+            self?.update(endpoint: endpoint, result: result, headers: headers)
+            completion?(result?.count ?? 0, result == nil)
         }
     }
 
-    // Record a fetch outcome. nil = failure: keep the previous models but stamp the
-    // attempt time so the next read retries after the backoff. Non-nil = success:
-    // replace the models and, if the list changed, post didChangeNotification.
-    func update(endpoint: String, result: [AIMetadata.Model]?) {
+    // ObjC convenience without a completion.
+    @objc(refreshEndpoint:headers:)
+    func refresh(endpoint: String, headers: [[String: String]]) {
+        refresh(endpoint: endpoint, headers: headers, force: false, completion: nil)
+    }
+
+    // Record a fetch outcome. nil = failure: keep the previous models, stamp the
+    // attempt, and schedule a bounded self-healing retry. Non-nil = success:
+    // replace the models, reset the failure count, and post the change
+    // notification if the list changed.
+    func update(endpoint: String, result: [AIMetadata.Model]?, headers: [[String: String]] = []) {
         lock.lock()
         var entry = cache[endpoint] ?? Entry()
         entry.lastAttempt = nowProvider()
+        entry.headers = headers
         var changed = false
+        var scheduleRetry = false
         if let result {
             changed = !entry.haveSucceeded || entry.models != result
             entry.models = result
             entry.haveSucceeded = true
+            entry.consecutiveFailures = 0
+        } else {
+            entry.consecutiveFailures += 1
+            scheduleRetry = entry.consecutiveFailures <= maxAutoRetries
         }
         cache[endpoint] = entry
         inFlight.remove(endpoint)
         lock.unlock()
 
-        if changed {
-            if Thread.isMainThread {
-                NotificationCenter.default.post(name: Self.didChangeNotification, object: nil)
-            } else {
-                DispatchQueue.main.async {
-                    NotificationCenter.default.post(name: Self.didChangeNotification, object: nil)
-                }
+        if scheduleRetry {
+            retryScheduler(failureRetryInterval) { [weak self] in
+                self?.refresh(endpoint: endpoint, headers: headers)
             }
+        }
+        if changed {
+            postDidChange()
         }
     }
 
     // Convenience for a known-successful result (tests, seeding).
     func update(endpoint: String, models: [AIMetadata.Model]) {
         update(endpoint: endpoint, result: models)
+    }
+
+    private func postDidChange() {
+        if Thread.isMainThread {
+            NotificationCenter.default.post(name: Self.didChangeNotification, object: nil)
+        } else {
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: Self.didChangeNotification, object: nil)
+            }
+        }
     }
 }

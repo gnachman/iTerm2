@@ -40,6 +40,15 @@ final class OllamaModelDiscoveryTests: XCTestCase {
         XCTAssertNil(OllamaModelDiscovery.tagsURL(fromEndpoint: "not a url"))
     }
 
+    // A scheme-less "host:port" endpoint (a common user input) must still resolve
+    // for discovery, defaulting to http, instead of failing permanently.
+    func test_tagsURL_defaultsMissingSchemeToHTTP() {
+        XCTAssertEqual(OllamaModelDiscovery.tagsURL(fromEndpoint: "localhost:11434")?.absoluteString,
+                       "http://localhost:11434/api/tags")
+        XCTAssertEqual(OllamaModelDiscovery.tagsURL(fromEndpoint: "localhost:11434/api/chat")?.absoluteString,
+                       "http://localhost:11434/api/tags")
+    }
+
     func test_modelNames_parsesTagsResponse() {
         let body = Data("""
         {"models":[{"name":"qwen3.5:4b","size":1},{"name":"llama3.3:latest","size":2}]}

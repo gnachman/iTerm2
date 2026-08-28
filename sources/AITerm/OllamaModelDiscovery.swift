@@ -16,7 +16,14 @@ class OllamaModelDiscovery: NSObject {
     // keeping only scheme/host/port so it works whether the user pointed the
     // model at /api/chat (native) or /v1/chat/completions (OpenAI-compatible).
     @objc static func tagsURL(fromEndpoint endpoint: String) -> URL? {
-        guard let url = URL(string: endpoint),
+        var url = URL(string: endpoint)
+        // A scheme-less "host:port[/path]" parses with scheme="host" and host=nil
+        // (e.g. "localhost:11434"), which would fail discovery permanently. Default
+        // a missing scheme to http:// so a bare host:port endpoint is usable.
+        if url?.host == nil, !endpoint.contains("://") {
+            url = URL(string: "http://" + endpoint)
+        }
+        guard let url,
               let scheme = url.scheme,
               let host = url.host else {
             return nil

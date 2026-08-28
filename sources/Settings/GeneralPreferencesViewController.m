@@ -550,6 +550,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSButton *_supportsTemperatureButton;
     NSButton *_configurableThinkingButton;
     NSButton *_dynamicModelsButton;
+    NSString *_savedNamePlaceholder;
     NSTableView *_headersTable;
     NSMutableArray<NSMutableDictionary *> *_headers;
     NSMutableDictionary<NSString *, NSButton *> *_featureButtons;
@@ -1159,8 +1160,17 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 - (void)updateDynamicModelsEditorState {
     const BOOL dynamic = _dynamicModelsButton.state == NSControlStateValueOn;
     _nameField.enabled = !dynamic;
+    // Override the placeholder only while dynamic, and restore whatever it was
+    // (e.g. a preset's example model name) when turning it off, so the now-required
+    // Model field doesn't keep implying "no name needed".
     if (dynamic) {
+        if (!_savedNamePlaceholder) {
+            _savedNamePlaceholder = _nameField.placeholderString ?: @"";
+        }
         _nameField.placeholderString = @"Discovered from the server";
+    } else if (_savedNamePlaceholder) {
+        _nameField.placeholderString = _savedNamePlaceholder;
+        _savedNamePlaceholder = nil;
     }
     _contextField.enabled = !dynamic;
     _responseField.enabled = !dynamic;
@@ -1188,6 +1198,41 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     button.title = @"Fetching…";
     NSArray<NSDictionary<NSString *, NSString *> *> *headers = [self nonEmptyHeaders];
     __weak __typeof(self) weakSelf = self;
+
+    // Auto-discovery mode: seed the cache the model pickers read from (forced, so a
+    // slow background refresh already in flight can't swallow this user action) and
+    // report the count. An empty-but-reachable server is a SUCCESS (0 models), not
+    // an error, matching the cache's failure-vs-empty distinction.
+    if (_dynamicModelsButton.state == NSControlStateValueOn) {
+        [iTermOllamaModelCache.shared refreshEndpoint:url
+                                              headers:headers
+                                                force:YES
+                                           completion:^(NSInteger count, BOOL failed) {
+            button.enabled = YES;
+            button.title = savedTitle;
+            __strong __typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            NSAlert *alert = [[NSAlert alloc] init];
+            if (failed) {
+                alert.messageText = @"Could Not Reach Server";
+                alert.informativeText = @"Could not reach the Ollama server to list its models. "
+                                        @"Check that it is running and the URL is correct.";
+            } else {
+                alert.messageText = @"Models Refreshed";
+                alert.informativeText = [NSString stringWithFormat:
+                    @"Found %ld installed model%@. They will appear in the model picker.",
+                    (long)count, count == 1 ? @"" : @"s"];
+            }
+            [alert beginSheetModalForWindow:strongSelf->_window completionHandler:^(NSModalResponse r) {}];
+        }];
+        return;
+    }
+
+    // Single-model mode: list the names and offer one to paste into the Model
+    // field. Here an empty server IS a dead end (nothing to pick), so the names
+    // path's "no models" error is appropriate.
     [iTermOllamaModelDiscovery fetchModelNamesFromEndpoint:url
                                                    headers:headers
                                                    timeout:10
@@ -1202,19 +1247,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Could Not Fetch Models";
             alert.informativeText = errorMessage;
-            [alert beginSheetModalForWindow:strongSelf->_window completionHandler:^(NSModalResponse r) {}];
-            return;
-        }
-        // Auto-discovery mode: refresh the cache the model pickers read from (so
-        // they pick up the current list) and confirm, instead of offering a name
-        // to paste into the disabled Model field.
-        if (strongSelf->_dynamicModelsButton.state == NSControlStateValueOn) {
-            [iTermOllamaModelCache.shared refreshEndpoint:url headers:headers];
-            NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = @"Models Refreshed";
-            alert.informativeText = [NSString stringWithFormat:
-                @"Found %lu installed model%@. They will appear in the model picker.",
-                (unsigned long)names.count, names.count == 1 ? @"" : @"s"];
             [alert beginSheetModalForWindow:strongSelf->_window completionHandler:^(NSModalResponse r) {}];
             return;
         }
@@ -1243,6 +1275,20 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         _nameField.stringValue = name;
         [self updateEditorAPIKeyHint];
     }
+}
+
+// The management-list label for a dynamic (auto-discovering) entry. It has no
+// single model name, so derive a stable, URL-scoped label (distinct per server)
+// rather than reusing whatever was left in the disabled Model field. Two dynamic
+// entries for the same server therefore collide on the uniqueness check.
+- (NSString *)ollamaAutoLabelForURL:(NSString *)url {
+    NSURLComponents *components = [NSURLComponents componentsWithString:url];
+    NSString *host = components.host;
+    if (host.length == 0) {
+        return @"Ollama (auto)";
+    }
+    NSString *hostPort = components.port ? [NSString stringWithFormat:@"%@:%@", host, components.port] : host;
+    return [NSString stringWithFormat:@"Ollama (auto): %@", hostPort];
 }
 
 - (void)testClicked:(id)sender {
@@ -1315,6 +1361,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSString *url =
         [_urlField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
     const BOOL dynamic = _dynamicModelsButton.state == NSControlStateValueOn;
+    // A dynamic entry has no single model name: ignore whatever is left in the
+    // (disabled) Model field and use a URL-scoped label. The uniqueness check runs
+    // on this label too, so a dynamic entry can't collide with another config or a
+    // second dynamic entry for the same server.
+    NSString *storedName = dynamic ? [self ollamaAutoLabelForURL:url] : name;
     NSString *failure = nil;
     // In auto-discovery mode the model name, context window, and response limit
     // come from the server per model, so only the URL is required.
@@ -1326,8 +1377,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         failure = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ContextTokensPositive", nil, [NSBundle mainBundle], @"Context tokens must be greater than zero.", @"Validation error when context tokens is not positive");
     } else if (!dynamic && _responseField.integerValue <= 0) {
         failure = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MaxResponseTokensPositive", nil, [NSBundle mainBundle], @"Max response tokens must be greater than zero.", @"Validation error when max response tokens is not positive");
-    } else if (!dynamic && _nameIsTaken && _nameIsTaken(name)) {
-        failure = NSLocalizedStringWithDefaultValue(@"AIModelEditor.NamesUnique", nil, [NSBundle mainBundle], @"Manual model names must be unique.", @"Validation error when a manual model name is already taken");
+    } else if (_nameIsTaken && _nameIsTaken(storedName)) {
+        failure = dynamic ? NSLocalizedStringWithDefaultValue(@"AIModelEditor.AutoDiscoverEntryExists", nil, [NSBundle mainBundle], @"There is already an auto-discover entry for this server.", @"Validation error when an auto-discover entry already exists for a server")
+                          : NSLocalizedStringWithDefaultValue(@"AIModelEditor.NamesUnique", nil, [NSBundle mainBundle], @"Manual model names must be unique.", @"Validation error when a manual model name is already taken");
     }
     // Validate custom headers here rather than in the per-cell delegate: the Save
     // button click ends the active cell edit, so a per-cell alert would race the
@@ -1364,10 +1416,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     NSMutableDictionary *result = [NSMutableDictionary dictionary];
     result[kAIManualModelIDKey] = _base[kAIManualModelIDKey] ?: NSUUID.UUID.UUIDString;
-    // A dynamic entry has no single model name; give the management-list row a
-    // friendly label when the field is blank (the picker shows the discovered
-    // tags, not this label).
-    result[kAIManualModelNameKey] = (dynamic && name.length == 0) ? @"Ollama (auto)" : name;
+    // The management-list row name: the URL-scoped label for a dynamic entry (the
+    // picker shows the discovered tags, not this label), else the typed name.
+    result[kAIManualModelNameKey] = storedName;
     result[kAIManualModelURLKey] = url;
     result[kAIManualModelAPIKey] = @(_apiPopup.selectedItem.tag);
     result[kAIManualModelContextWindowTokensKey] = @(_contextField.integerValue);
