@@ -88,6 +88,31 @@ final class OllamaModelDiscoveryTests: XCTestCase {
         XCTAssertEqual(OllamaModelDiscovery.models(fromTagsResponse: Data("nope".utf8), endpoint: "u").count, 0)
     }
 
+    // The cache needs to tell a FAILURE (unparseable/401 body) apart from a
+    // reachable-but-empty server, or a transient failure wedges the picker empty.
+    func test_modelsIfParseable_distinguishesFailureFromEmpty() {
+        XCTAssertNil(OllamaModelDiscovery.modelsIfParseable(fromTagsResponse: Data("garbage".utf8), endpoint: "u"),
+                     "unparseable body -> nil (failure)")
+        XCTAssertEqual(OllamaModelDiscovery.modelsIfParseable(fromTagsResponse: Data("{\"models\":[]}".utf8), endpoint: "u")?.count, 0,
+                       "reachable but empty server -> [] (success)")
+    }
+
+    // The discovery probe must carry the entry's custom auth headers (a
+    // header-authenticated Ollama behind a proxy 401s /api/tags otherwise).
+    func test_tagsRequest_appliesCustomHeaders() {
+        let request = OllamaModelDiscovery.tagsRequest(
+            fromEndpoint: "http://h:11434/api/chat",
+            headers: [["name": "Authorization", "value": "Bearer tok"]],
+            timeout: 5)
+        XCTAssertEqual(request?.value(forHTTPHeaderField: "Authorization"), "Bearer tok")
+        XCTAssertEqual(request?.url?.absoluteString, "http://h:11434/api/tags")
+        XCTAssertEqual(request?.timeoutInterval, 5)
+    }
+
+    func test_tagsRequest_invalidURL_isNil() {
+        XCTAssertNil(OllamaModelDiscovery.tagsRequest(fromEndpoint: "", headers: [], timeout: 5))
+    }
+
     func test_modelNames_emptyOrGarbage_isEmpty() {
         XCTAssertEqual(OllamaModelDiscovery.modelNames(fromTagsResponse: Data("{}".utf8)), [])
         XCTAssertEqual(OllamaModelDiscovery.modelNames(fromTagsResponse: Data("not json".utf8)), [])

@@ -1186,8 +1186,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSString *savedTitle = button.title;
     button.enabled = NO;
     button.title = @"Fetching…";
+    NSArray<NSDictionary<NSString *, NSString *> *> *headers = [self nonEmptyHeaders];
     __weak __typeof(self) weakSelf = self;
     [iTermOllamaModelDiscovery fetchModelNamesFromEndpoint:url
+                                                   headers:headers
                                                    timeout:10
                                                 completion:^(NSArray<NSString *> *names, NSString *errorMessage) {
         button.enabled = YES;
@@ -1207,7 +1209,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         // they pick up the current list) and confirm, instead of offering a name
         // to paste into the disabled Model field.
         if (strongSelf->_dynamicModelsButton.state == NSControlStateValueOn) {
-            [iTermOllamaModelCache.shared refreshEndpoint:url];
+            [iTermOllamaModelCache.shared refreshEndpoint:url headers:headers];
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Models Refreshed";
             alert.informativeText = [NSString stringWithFormat:

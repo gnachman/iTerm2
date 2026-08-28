@@ -40,6 +40,48 @@ final class OllamaModelCacheTests: XCTestCase {
         waitForExpectations(timeout: 0.3)
     }
 
+    // A FAILED fetch must not wedge the picker empty: reads keep retrying (after a
+    // short backoff), and a SUCCESS is re-fetched only after the TTL. This is the
+    // launch-before-Ollama scenario.
+    func test_failedFetch_retriesAfterBackoff_successRefreshesAfterTTL() {
+        var now = Date()
+        let cache = OllamaModelCache()
+        cache.nowProvider = { now }
+
+        XCTAssertTrue(cache.shouldRefresh(endpoint: "e"), "never fetched -> refresh")
+
+        cache.update(endpoint: "e", result: nil)  // failure (server down)
+        XCTAssertFalse(cache.shouldRefresh(endpoint: "e"), "within failure backoff")
+        now = now.addingTimeInterval(6)
+        XCTAssertTrue(cache.shouldRefresh(endpoint: "e"), "failed fetch must retry after the backoff")
+
+        cache.update(endpoint: "e", result: models("e"))  // success
+        XCTAssertFalse(cache.shouldRefresh(endpoint: "e"), "fresh success not re-fetched")
+        now = now.addingTimeInterval(400)
+        XCTAssertTrue(cache.shouldRefresh(endpoint: "e"), "stale success re-fetched after TTL")
+    }
+
+    // A transient failure after a good fetch keeps the last good models.
+    func test_failure_keepsPreviousModels() {
+        let cache = OllamaModelCache()
+        cache.update(endpoint: "e", result: models("e"))
+        cache.update(endpoint: "e", result: nil)
+        XCTAssertEqual(cache.models(forEndpoint: "e").map { $0.name }, ["qwen3.5:4b"],
+                       "a transient failure must not drop the last good models")
+    }
+
+    // An empty-but-reachable server is a success (cached, not retried until TTL),
+    // distinct from a failure.
+    func test_emptyServer_isSuccess_notImmediatelyRetried() {
+        var now = Date()
+        let cache = OllamaModelCache()
+        cache.nowProvider = { now }
+        cache.update(endpoint: "e", result: [])
+        XCTAssertFalse(cache.shouldRefresh(endpoint: "e"), "empty-but-reachable is a success")
+        now = now.addingTimeInterval(400)
+        XCTAssertTrue(cache.shouldRefresh(endpoint: "e"), "re-fetched after TTL to catch newly pulled models")
+    }
+
     // Integration: a dynamic Ollama manual entry expands (via the shared cache)
     // into one catalog model per discovered tag, with capabilities, so the
     // provider picker shows them without any per-model config.

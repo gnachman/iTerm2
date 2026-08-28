@@ -60,13 +60,13 @@ class OllamaModelDiscovery: NSObject {
         return response.models.map { $0.name }
     }
 
-    // Map an /api/tags body to catalog models for the given chat endpoint. This is
-    // the heart of the dynamic provider: the model list AND each model's
-    // capabilities/context window come from the server, so nothing is hand-typed.
-    // `endpoint` is the native /api/chat URL the resolved models will POST to.
-    static func models(fromTagsResponse data: Data, endpoint: String) -> [AIMetadata.Model] {
+    // Map an /api/tags body to catalog models for the given chat endpoint, or nil
+    // if the body isn't a parseable /api/tags response (a network error page, a
+    // proxy 401, garbage). Distinct from an empty [] (a reachable server with no
+    // models), which the cache must not confuse with a failure.
+    static func modelsIfParseable(fromTagsResponse data: Data, endpoint: String) -> [AIMetadata.Model]? {
         guard let response = try? JSONDecoder().decode(TagsResponse.self, from: data) else {
-            return []
+            return nil
         }
         return response.models.map { entry in
             let caps = Set(entry.capabilities ?? [])
@@ -89,22 +89,48 @@ class OllamaModelDiscovery: NSObject {
         }
     }
 
+    // Non-optional convenience: [] for both a failure and an empty server. Kept
+    // for callers that don't need to tell the two apart.
+    static func models(fromTagsResponse data: Data, endpoint: String) -> [AIMetadata.Model] {
+        return modelsIfParseable(fromTagsResponse: data, endpoint: endpoint) ?? []
+    }
+
+    // The /api/tags request for an endpoint, carrying the entry's custom auth
+    // headers (a header-authenticated Ollama behind a reverse proxy needs the
+    // same token the chat path sends, or the probe 401s). Headers are
+    // [{"name":..,"value":..}] like the manual-model config stores.
+    static func tagsRequest(fromEndpoint endpoint: String,
+                            headers: [[String: String]],
+                            timeout: TimeInterval) -> URLRequest? {
+        guard let url = tagsURL(fromEndpoint: endpoint) else {
+            return nil
+        }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = timeout
+        for header in headers {
+            if let name = header["name"], let value = header["value"], !name.isEmpty {
+                request.setValue(value, forHTTPHeaderField: name)
+            }
+        }
+        return request
+    }
+
     // Fetch the installed model names. The completion runs on the main queue with
     // (names, errorMessage): names is empty and errorMessage is non-nil on any
     // failure (bad URL, network error, unparseable body, or an empty list).
     @objc static func fetchModelNames(fromEndpoint endpoint: String,
+                                      headers: [[String: String]],
                                       timeout: TimeInterval,
                                       completion: @escaping ([String], String?) -> Void) {
-        guard let url = tagsURL(fromEndpoint: endpoint) else {
+        guard let request = tagsRequest(fromEndpoint: endpoint, headers: headers, timeout: timeout) else {
             DispatchQueue.main.async { completion([], "Could not derive an /api/tags URL from “\(endpoint)”.") }
             return
         }
-        var request = URLRequest(url: url)
-        request.timeoutInterval = timeout
+        let host = request.url?.host ?? "the server"
         let task = URLSession.shared.dataTask(with: request) { data, _, error in
             let (names, message): ([String], String?) = {
                 if let error {
-                    return ([], "Could not reach Ollama at \(url.host ?? "the server"): \(error.localizedDescription)")
+                    return ([], "Could not reach Ollama at \(host): \(error.localizedDescription)")
                 }
                 guard let data else {
                     return ([], "Ollama returned no response.")
@@ -118,19 +144,24 @@ class OllamaModelDiscovery: NSObject {
     }
 
     // Fetch the installed models mapped to capability-aware catalog models. The
-    // completion runs on the main queue; empty on any failure. Used by the
-    // dynamic-provider cache.
+    // completion runs on the main queue with nil on FAILURE (bad URL, network
+    // error, unparseable/401 body) and a (possibly empty) array on SUCCESS, so the
+    // cache can retry a failure without wedging an empty list. Carries the entry's
+    // custom auth headers.
     static func fetchModels(fromEndpoint endpoint: String,
+                            headers: [[String: String]],
                             timeout: TimeInterval,
-                            completion: @escaping ([AIMetadata.Model]) -> Void) {
-        guard let url = tagsURL(fromEndpoint: endpoint) else {
-            DispatchQueue.main.async { completion([]) }
+                            completion: @escaping ([AIMetadata.Model]?) -> Void) {
+        guard let request = tagsRequest(fromEndpoint: endpoint, headers: headers, timeout: timeout) else {
+            DispatchQueue.main.async { completion(nil) }
             return
         }
-        var request = URLRequest(url: url)
-        request.timeoutInterval = timeout
-        let task = URLSession.shared.dataTask(with: request) { data, _, _ in
-            let resolved = data.map { Self.models(fromTagsResponse: $0, endpoint: endpoint) } ?? []
+        let task = URLSession.shared.dataTask(with: request) { data, _, error in
+            let resolved: [AIMetadata.Model]? = {
+                if error != nil { return nil }
+                guard let data else { return nil }
+                return Self.modelsIfParseable(fromTagsResponse: data, endpoint: endpoint)
+            }()
             DispatchQueue.main.async { completion(resolved) }
         }
         task.resume()

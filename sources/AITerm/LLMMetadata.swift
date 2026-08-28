@@ -219,7 +219,9 @@ class LLMMetadata: NSObject {
             return []
         }
         let headers = (configuration[ManualModelKey.customHeaders] as? [[String: String]]) ?? []
-        return OllamaModelCache.shared.models(forEndpoint: url).map { model in
+        // Pass the headers so the discovery probe authenticates the same way the
+        // chat requests do (a header-auth server would otherwise 401 /api/tags).
+        return OllamaModelCache.shared.models(forEndpoint: url, headers: headers).map { model in
             var m = model
             m.customHeaders = headers
             return m
