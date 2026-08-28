@@ -225,7 +225,9 @@ extern NSString *const kPreferenceKeyAIManualModelConfigurations;  // NSArray of
 // Name of the manual model the user designated as the "economy" model: a
 // cheaper model used for frequent, low-stakes background judgements (command
 // safety, screen-idle detection). Empty string means none; the catalog's
-// per-model economy pointer is then used instead. See ScreenWatchPoller.
+// per-model economy pointer is then used instead. Resolved by
+// LLMMetadata.economyModel(); consumed by ScreenWatchPoller and
+// AISafetyClassifierBackend.
 extern NSString *const kPreferenceKeyAIEconomyModelName;
 extern NSString *const kPreferenceKeyUseRecommendedAIModel;
 extern NSString *const kPreferenceKeyAIVendor;  // iTermAIVendor

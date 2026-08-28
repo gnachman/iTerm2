@@ -177,6 +177,13 @@ Major New Features:
   button that verifies your settings and API key
   before you save.
 
+- AI command safety checks now prefer the cheaper
+  "economy" model when one is available, matching
+  the screen-watch poller, so the frequent
+  low-stakes safety side-query costs less. It
+  falls back to your configured model when no
+  economy model exists.
+
 - Claude Code integration was added. It enables
   the new Session Status feature for claude code
   sessions so you can see at a glance which

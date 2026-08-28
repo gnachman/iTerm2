@@ -158,6 +158,37 @@ class LLMMetadata: NSObject {
         return nil
     }
 
+    // The economy model to prefer for high-frequency or low-stakes AI work
+    // (the screen-watch poller, command safety checks): a cheaper same-vendor
+    // model where the primary chat model would be overkill and too expensive to
+    // run repeatedly. A user-designated economy model (toggled in Manual AI
+    // Models) wins; otherwise the configured model's catalog economy variant
+    // (AIMetadata.economyModel(for:)), which preserves the configured model's
+    // url/api so a custom base URL is honored and the API key is not leaked to
+    // the public vendor host. nil when there is no economy alternative (or AI is
+    // unconfigured/unknown), leaving the caller on the configured chat model.
+    static func economyModel() -> AIMetadata.Model? {
+        // A user-designated economy model is a full manual model with its own
+        // url/api/auth, so it is used verbatim.
+        if let designated = userDesignatedEconomyModel() {
+            return designated
+        }
+        guard let configured = model() else {
+            return nil
+        }
+        return AIMetadata.economyModel(for: configured)
+    }
+
+    // The manual model the user marked as the economy model, if any, resolved to
+    // a full model. nil if unset or no longer present among the manual models.
+    private static func userDesignatedEconomyModel() -> AIMetadata.Model? {
+        guard let name = iTermPreferences.string(forKey: kPreferenceKeyAIEconomyModelName),
+              !name.isEmpty else {
+            return nil
+        }
+        return manualModels().first { $0.name == name }
+    }
+
     private static func manualConfiguredModels() -> [AIMetadata.Model] {
         guard let raw = iTermPreferences.object(forKey: kPreferenceKeyAIManualModelConfigurations) as? [[String: Any]] else {
             return []

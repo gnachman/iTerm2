@@ -268,36 +268,14 @@ final class ScreenWatchPoller {
     // REACHED/NOT_YET in the same conversation before giving up as unknown.
     // Prefer a cheaper same-vendor model for these frequent, low-stakes
     // judgements (e.g. Opus -> Haiku), where the primary chat model would be
-    // overkill and too expensive to run every few seconds. nil (no economy
-    // alternative, or an unconfigured/unknown model) leaves the conversation on
-    // the user's configured chat model. The returned model preserves the
-    // configured model's url/api, so a user's custom base URL (proxy/gateway) is
-    // honored and the API key is not leaked to the public vendor host.
-    private static func economyModel() -> AIMetadata.Model? {
-        // A user-designated economy model (toggled in Manual AI Models) wins. It
-        // is a full manual model with its own url/api/auth, so it is used
-        // verbatim, honoring a custom base URL and its own vendor's API key.
-        if let designated = userDesignatedEconomyModel() {
-            return designated
-        }
-        guard let configured = LLMMetadata.model() else {
-            return nil
-        }
-        return AIMetadata.economyModel(for: configured)
-    }
-
-    // The manual model the user marked as the economy model, if any, resolved to
-    // a full model. nil if unset or no longer present among the manual models.
-    private static func userDesignatedEconomyModel() -> AIMetadata.Model? {
-        guard let name = iTermPreferences.string(forKey: kPreferenceKeyAIEconomyModelName),
-              !name.isEmpty else {
-            return nil
-        }
-        return LLMMetadata.manualModels().first { $0.name == name }
-    }
-
+    // overkill and too expensive to run every few seconds. LLMMetadata.economyModel()
+    // returns nil (no economy alternative, or an unconfigured/unknown model) to
+    // leave the conversation on the user's configured chat model; when non-nil it
+    // preserves the configured model's url/api, so a user's custom base URL
+    // (proxy/gateway) is honored and the API key is not leaked to the public
+    // vendor host.
     private func evaluate(window: [Capture], kind: SessionKind) async -> Verdict {
-        let economyModel = Self.economyModel()
+        let economyModel = LLMMetadata.economyModel()
         var conversation = AIConversation(registrationProvider: nil)
         conversation.systemMessage = Self.systemPrompt(for: watcher)
         conversation.shouldThink = false

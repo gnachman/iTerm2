@@ -34,6 +34,7 @@ class CommandSafetyChecker {
     // Returns true if the command is safe to run automatically. Delegates to
     // AutoModeClassifier: deterministic TerminalHardRules run first, falling
     // through to a one-shot LLM side-query. The side-query runs against the
+    // cheaper same-vendor economy model when one is available, else the
     // configured conversation model (a cloud provider for most users), or
     // against on-device Apple Intelligence for users grandfathered in under
     // the old free path who declined to switch (see AISafetyClassifierBackend).
