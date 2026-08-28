@@ -48,6 +48,46 @@ final class OllamaModelDiscoveryTests: XCTestCase {
                        ["qwen3.5:4b", "llama3.3:latest"])
     }
 
+    // The dynamic-provider core: /api/tags maps to catalog models with features
+    // and context windows straight from the server, no hand-typing.
+    func test_models_mapsCapabilitiesAndContextWindow() {
+        let body = Data("""
+        {"models":[
+          {"name":"qwen3.5:4b","capabilities":["vision","completion","tools","thinking"],"details":{"context_length":262144}},
+          {"name":"llama3.3:latest","capabilities":["completion","tools"],"details":{"context_length":131072}}
+        ]}
+        """.utf8)
+        let models = OllamaModelDiscovery.models(fromTagsResponse: body,
+                                                 endpoint: "http://localhost:11434/api/chat")
+        XCTAssertEqual(models.map { $0.name }, ["qwen3.5:4b", "llama3.3:latest"])
+
+        let qwen = models[0]
+        XCTAssertEqual(qwen.api, .llama)
+        XCTAssertEqual(qwen.url, "http://localhost:11434/api/chat")
+        XCTAssertEqual(qwen.vendor, .llama)
+        XCTAssertEqual(qwen.contextWindowTokens, 262_144)
+        XCTAssertTrue(qwen.features.isSuperset(of: [.streaming, .functionCalling, .configurableThinking, .vision]))
+
+        let llama = models[1]
+        XCTAssertEqual(llama.contextWindowTokens, 131_072)
+        XCTAssertTrue(llama.features.contains(.functionCalling))
+        XCTAssertFalse(llama.features.contains(.vision), "llama3.3 has no vision capability")
+        XCTAssertFalse(llama.features.contains(.configurableThinking), "llama3.3 has no thinking capability")
+    }
+
+    func test_models_missingCapabilitiesAndDetails_usesSafeDefaults() {
+        let models = OllamaModelDiscovery.models(fromTagsResponse: Data("{\"models\":[{\"name\":\"x\"}]}".utf8),
+                                                 endpoint: "u")
+        XCTAssertEqual(models.count, 1)
+        XCTAssertEqual(models[0].features, [.streaming],
+                       "no capabilities -> only streaming (which Ollama always supports)")
+        XCTAssertEqual(models[0].contextWindowTokens, OllamaModelDiscovery.defaultContextWindow)
+    }
+
+    func test_models_garbage_isEmpty() {
+        XCTAssertEqual(OllamaModelDiscovery.models(fromTagsResponse: Data("nope".utf8), endpoint: "u").count, 0)
+    }
+
     func test_modelNames_emptyOrGarbage_isEmpty() {
         XCTAssertEqual(OllamaModelDiscovery.modelNames(fromTagsResponse: Data("{}".utf8)), [])
         XCTAssertEqual(OllamaModelDiscovery.modelNames(fromTagsResponse: Data("not json".utf8)), [])

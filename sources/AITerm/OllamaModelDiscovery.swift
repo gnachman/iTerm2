@@ -36,9 +36,20 @@ class OllamaModelDiscovery: NSObject {
     private struct TagsResponse: Decodable {
         struct Model: Decodable {
             var name: String
+            // Newer Ollama reports per-model capabilities and the real context
+            // window right in /api/tags, so one call gives the whole picture.
+            // Optional for older servers / unexpected shapes.
+            var capabilities: [String]?
+            var details: Details?
+            struct Details: Decodable {
+                var context_length: Int?
+            }
         }
         var models: [Model]
     }
+
+    // A conservative context window when the server doesn't report one.
+    static let defaultContextWindow = 8_192
 
     // Model names from an /api/tags body, in server order. Empty for a body that
     // isn't the expected shape (so callers surface "no models" rather than crash).
@@ -47,6 +58,35 @@ class OllamaModelDiscovery: NSObject {
             return []
         }
         return response.models.map { $0.name }
+    }
+
+    // Map an /api/tags body to catalog models for the given chat endpoint. This is
+    // the heart of the dynamic provider: the model list AND each model's
+    // capabilities/context window come from the server, so nothing is hand-typed.
+    // `endpoint` is the native /api/chat URL the resolved models will POST to.
+    static func models(fromTagsResponse data: Data, endpoint: String) -> [AIMetadata.Model] {
+        guard let response = try? JSONDecoder().decode(TagsResponse.self, from: data) else {
+            return []
+        }
+        return response.models.map { entry in
+            let caps = Set(entry.capabilities ?? [])
+            // Ollama always supports streaming; the rest come from the server's
+            // per-model capability list.
+            var features: Set<AIMetadata.Model.Feature> = [.streaming]
+            if caps.contains("tools") { features.insert(.functionCalling) }
+            if caps.contains("thinking") { features.insert(.configurableThinking) }
+            if caps.contains("vision") { features.insert(.vision) }
+            let contextWindow = entry.details?.context_length ?? defaultContextWindow
+            return AIMetadata.Model(
+                name: entry.name,
+                contextWindowTokens: contextWindow,
+                maxResponseTokens: contextWindow,
+                url: endpoint,
+                api: .llama,
+                features: features,
+                vectorStoreConfig: .disabled,
+                vendor: .llama)
+        }
     }
 
     // Fetch the installed model names. The completion runs on the main queue with
