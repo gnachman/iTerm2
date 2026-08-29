@@ -676,12 +676,11 @@ iTermCommandInfoViewControllerDelegate>
 
     iTermSelection *selection = [[iTermSelection alloc] init];
     selection.delegate = self;
-    [selection beginSelectionAtAbsCoord:absCoordRange.start
-                                   mode:kiTermSelectionModeCharacter
-                                 resume:NO
-                                 append:NO];
-    [selection moveSelectionEndpointTo:absCoordRange.end];
-    [selection endLiveSelection];
+    // absCoordRange is LOGICAL. Commit it as a logical selection rather than
+    // driving a character-mode live selection, which with bidi on would treat it
+    // as visual columns and extract the wrong text on right-to-left lines.
+    [selection setSelectedLogicalRange:VT100GridAbsWindowedRangeMake(absCoordRange, 0, 0)
+                                  mode:kiTermSelectionModeCharacter];
     return [self promisedStringForSelectedTextCappedAtSize:INT_MAX
                                          minimumLineNumber:0
                                                 timestamps:NO
@@ -2211,6 +2210,11 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     const NSRect visibleRect = [self visibleRect];
     const double sideMargins = [iTermPreferences sideMargins];
 
+    // Internal geometry: use raw allSubSelections. During an in-progress bidi
+    // character drag the live range holds visual columns, which is what a pixel rect
+    // wants; logicalSubSelections would decompose it into logical runs. (In practice
+    // this only ever reads a committed selection, where the two are identical, but the
+    // rule is: logical for external consumers, raw for geometry.)
     for (iTermSubSelection *sub in self.selection.allSubSelections) {
         VT100GridAbsCoordRange absRange = sub.absRange.coordRange;
 

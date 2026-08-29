@@ -3909,7 +3909,10 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
         selection = nil;
     }
     const NSInteger absoluteOffset = session.screen.totalScrollbackOverflow;
-    for (iTermSubSelection *sub in selection.allSubSelections) {
+    // logicalSubSelections (not allSubSelections) so a get_selection during an
+    // in-progress bidi character drag reports logical buffer coordinates, which
+    // is what a script pairs with the (logical) screen contents.
+    for (iTermSubSelection *sub in selection.logicalSubSelections) {
         ITMSubSelection *subProto = [[ITMSubSelection alloc] init];
         const long long overflow = session.screen.totalScrollbackOverflow;
         const VT100GridWindowedRange relativeRange = VT100GridWindowedRangeFromAbsWindowedRange(sub.absRange, overflow);

@@ -668,16 +668,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         } else if ([self.mouseDelegate mouseHandler:self getFindOnPageCursor:&findOnPageCursor] &&
                    ![self.selection hasSelection]) {
             const long long overflow = [_mouseDelegate mouseHandlerTotalScrollbackOverflow:self];
-            [self.selection beginSelectionAtAbsCoord:VT100GridAbsCoordFromCoord(findOnPageCursor, overflow)
-                                                mode:kiTermSelectionModeCharacter
-                                              resume:NO
-                                              append:NO];
-            
-            const VT100GridCoord newEndPoint =
+            const VT100GridCoord visualEndPoint =
             [self.mouseDelegate mouseHandler:self clickPoint:event allowOverflow:YES firstMouse:_mouseDownWasFirstMouse];
-            [self.selection moveSelectionEndpointTo:VT100GridAbsCoordFromCoord(newEndPoint, overflow)];
-            [self.selection endLiveSelection];
-            
+            // BOTH endpoints are VISUAL here: the click obviously is, and the find
+            // cursor is too because the reachable path is "plain click (which cleared
+            // the selection and stored a VISUAL click coord as the find cursor), then
+            // shift-click". Convert both to logical and commit a LOGICAL range, or the
+            // anchor lands on the mirror-image column on a right-to-left line.
+            const VT100GridAbsWindowedRange range =
+            [iTermSelection logicalAbsRangeFromVisualStart:findOnPageCursor
+                                                visualEnd:visualEndPoint
+                                                 overflow:overflow
+                                                converter:^VT100GridCoord(VT100GridCoord visualCoord) {
+                return [self.mouseDelegate mouseHandler:self logicalCoordForVisualCoord:visualCoord];
+            }];
+            [self.selection setSelectedLogicalRange:range mode:kiTermSelectionModeCharacter];
+
             [self.mouseDelegate mouseHandlerResetFindOnPageCursor:self];
             result |= iTermClickSideEffectsMoveFindOnPageCursor | iTermClickSideEffectsModifySelection;
         }

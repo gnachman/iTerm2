@@ -906,6 +906,12 @@ extension PTYTextView: NSViewContentSelectionInfo {
                                                          0,
                                                          Int64(temp.location) + Int64(temp.length) + offset)
         let visibleAbsLines = (visibleAbsRange.start.y)..<(visibleAbsRange.end.y)
+        // Internal geometry: use raw allSubSelections. During an in-progress bidi
+        // character drag the live range holds visual columns, which is exactly what a
+        // pixel rect wants; logicalSubSelections would decompose it into logical runs.
+        // (In practice this is only ever read against a committed selection, where the
+        // two are identical, but the rule is: logical for external consumers, raw for
+        // geometry.)
         for subselection in selection.allSubSelections {
             let absRange = subselection.absRange
             let selRange = absRange.coordRange.start.y..<(absRange.coordRange.end.y + 1)

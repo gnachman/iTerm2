@@ -1352,12 +1352,12 @@ const int kMaxSelectedTextLengthForCustomActions = 400;
     const long long overflow = [self.delegate contextMenuTotalScrollbackOverflow:self];
     VT100GridAbsCoordRange absRange = VT100GridAbsCoordRangeFromCoordRange(range, overflow);
     iTermSelection *selection = [self.delegate contextMenuSelection:self];
-    [selection beginSelectionAtAbsCoord:absRange.start
-                                    mode:kiTermSelectionModeCharacter
-                                  resume:NO
-                                  append:NO];
-    [selection moveSelectionEndpointTo:absRange.end];
-    [selection endLiveSelection];
+    // absRange is LOGICAL. Commit it as a logical selection rather than driving a
+    // character-mode live selection, which with bidi on would treat it as visual
+    // columns and mis-select on right-to-left output lines. Matches
+    // -[PTYTextView selectLastCommandOutput].
+    [selection setSelectedLogicalRange:VT100GridAbsWindowedRangeMake(absRange, 0, 0)
+                                  mode:kiTermSelectionModeCharacter];
 
     if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
         [self.delegate contextMenuCopySelectionAccordingToUserPreferences:self];

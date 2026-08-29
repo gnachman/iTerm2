@@ -2063,8 +2063,13 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                 // copied whole instead of split into visually-adjacent pieces) while
                 // the bytes stay in the logical order that editors re-render correctly.
                 // Report each cell's visual column via the LUT for callers that use it.
+                // Stop before the trailing nulls/terminal-spaces, exactly like the
+                // non-bidi branch below. They are the reading-order tail (counted in
+                // logical order above), so a logical selection reaching the right
+                // edge of a right-to-left line trims them instead of copying spurious
+                // trailing whitespace.
                 const int lo = MIN(width - 1, MAX(range.columnWindow.location, startx));
-                for (int x = lo; x < endx; x++) {
+                for (int x = lo; x < endx - numNulls; x++) {
                     if (charBlock(theLine, theLine[x], eaIndex[x], VT100GridCoordMake(x, y), VT100GridCoordMake([bidi visualForLogical:x], y), &lineMetadata)) {
                         return;
                     }

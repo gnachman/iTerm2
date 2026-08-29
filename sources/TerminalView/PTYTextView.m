@@ -3868,12 +3868,11 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
     DLog(@"Total scrollback overflow is %lld", [_dataSource totalScrollbackOverflow]);
 
-    [_selection beginSelectionAtAbsCoord:range.start
-                                    mode:kiTermSelectionModeCharacter
-                                  resume:NO
-                                  append:NO];
-    [_selection moveSelectionEndpointTo:range.end];
-    [_selection endLiveSelection];
+    // `range` is LOGICAL. Commit it as a logical selection rather than driving a
+    // character-mode live selection, which with bidi on would treat these as
+    // visual columns and mis-select on right-to-left lines.
+    [_selection setSelectedLogicalRange:VT100GridAbsWindowedRangeMake(range, 0, 0)
+                                   mode:kiTermSelectionModeCharacter];
     DLog(@"Done selecting output of last command.");
 
     if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
@@ -4014,8 +4013,14 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     // auto-scroll can pass a y below the top (negative) or an empty buffer
     // can leave y = -1, and fetching that line to read its bidi info would
     // assert.
+    // Convert unless the live range is VISUAL. A new character drag with bidi on
+    // stores visual columns (liveRangeIsVisual == YES), so x passes through. But a
+    // shift-click EXTEND of a character selection restored its range from a
+    // committed LOGICAL subselection (liveRangeIsVisual == NO), so its moving
+    // endpoint must be converted like word/line modes, or the anchor (logical) and
+    // endpoint (visual) mix and select the mirror cells on a right-to-left line.
     if (!completingPreviousLine && y >= 0 && y < numberOfLines &&
-        _selection.selectionMode != kiTermSelectionModeCharacter &&
+        !_selection.liveRangeIsVisual &&
         x >= 0 && x < width) {
         x = [self logicalCoordForVisualCoord:VT100GridCoordMake(x, y)].x;
     }
@@ -5543,7 +5548,10 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 - (NSRange)selectedRange {
     if (_selection.hasSelection) {
         DLog(@"Use range of selection");
-        return [self nsRangeForAbsCoordRange:_selection.allSubSelections.lastObject.absRange.coordRange];
+        // logicalSubSelections (not allSubSelections) so an IME/AX poll during an
+        // in-progress bidi character drag reads logical columns, not the raw visual
+        // live range.
+        return [self nsRangeForAbsCoordRange:_selection.logicalSubSelections.lastObject.absRange.coordRange];
     }
     DLog(@"Use range of cursor");
     return [self nsrangeOfCursor];
@@ -5893,24 +5901,36 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     return extractor;
 }
 
++ (VT100GridCoordRange)findOnPageSelectionRangeForLogicalMatch:(VT100GridCoordRange)logicalMatch
+                                                   visualMatch:(VT100GridCoordRange)visualMatch {
+    return logicalMatch;
+}
+
 - (void)findOnPageSelectRange:(VT100GridCoordRange)logicalRange
                 logicalWindow:(VT100GridRange)logicalWindow
                       wrapped:(BOOL)wrapped {
-    VT100GridCoordRange range = [self.bidiExtractor visualRangeForLogical:logicalRange];
-    const VT100GridWindowedRange windowedRange = VT100GridWindowedRangeMake(range,
-                                                                            logicalWindow.location,
-                                                                            logicalWindow.length);
+    // The visual range is used only for the on-screen find indicator. The
+    // selection is stored logically, so it must select the logical range.
+    const VT100GridCoordRange visualRange = [self.bidiExtractor visualRangeForLogical:logicalRange];
+    const VT100GridCoordRange selectionRange =
+        [PTYTextView findOnPageSelectionRangeForLogicalMatch:logicalRange visualMatch:visualRange];
+    const VT100GridWindowedRange indicatorWindowedRange = VT100GridWindowedRangeMake(visualRange,
+                                                                                     logicalWindow.location,
+                                                                                     logicalWindow.length);
+    const VT100GridWindowedRange selectionWindowedRange = VT100GridWindowedRangeMake(selectionRange,
+                                                                                     logicalWindow.location,
+                                                                                     logicalWindow.length);
     if (logicalWindow.length > 0) {
         VT100GridAbsWindowedRange absWindowedRange =
-            VT100GridAbsWindowedRangeFromRelative(windowedRange,
+            VT100GridAbsWindowedRangeFromRelative(selectionWindowedRange,
                                                   _dataSource.totalScrollbackOverflow);
         [self selectAbsWindowedCoordRange:absWindowedRange];
     } else {
-        [self selectCoordRange:range];
+        [self selectCoordRange:selectionRange];
     }
     // Let the scrollview scroll if needs to before showing the find indicator.
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self.delegate textViewShowFindIndicator:windowedRange];
+        [self.delegate textViewShowFindIndicator:indicatorWindowedRange];
     });
     if (!wrapped) {
         [self requestDelegateRedraw];
@@ -7341,21 +7361,52 @@ static NSString *iTermStringFromRange(NSRange range) {
     return accessibilityLineNumber + offset;
 }
 
++ (int)accessibilityLogicalXForVisualX:(int)visualX
+                              bidiInfo:(iTermBidiDisplayInfo *)bidiInfo {
+    return [iTermBidiDisplayInfo logicalColumnForVisualColumn:visualX info:bidiInfo];
+}
+
 // WARNING! accessibilityScreenPosition is idiotic: y=0 is the top of the main screen and it increases going down.
 - (VT100GridCoord)accessibilityHelperCoordForPoint:(NSPoint)accessibilityScreenPosition {
     const NSPoint locationInTextView = [self viewPointFromAccessibilityScreenPoint:accessibilityScreenPosition];
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    int x = (locationInTextView.x - [iTermPreferences sideMargins] - visibleRect.origin.x) / _charWidth;
-    int y = locationInTextView.y / _lineHeight;
+    const int visualX = (locationInTextView.x - [iTermPreferences sideMargins] - visibleRect.origin.x) / _charWidth;
+    const int y = locationInTextView.y / _lineHeight;
+    // The point yields a VISUAL column; the accessibility text model is logical.
+    const int x = [PTYTextView accessibilityLogicalXForVisualX:visualX
+                                                      bidiInfo:[_dataSource bidiInfoForLine:y]];
     return VT100GridCoordMake(x, [self accessibilityHelperAccessibilityLineNumberForLineNumber:y]);
+}
+
++ (VT100GridRange)accessibilityVisualColumnSpanForLogicalStartX:(int)startX
+                                                           endX:(int)endX
+                                                       bidiInfo:(iTermBidiDisplayInfo *)bidiInfo {
+    return [iTermBidiDisplayInfo visualColumnSpanForLogicalStartX:startX endX:endX info:bidiInfo];
 }
 
 - (NSRect)accessibilityHelperFrameForCoordRange:(VT100GridCoordRange)coordRange {
     coordRange.start.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.start.y];
     coordRange.end.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.end.y];
-    NSRect result = NSMakeRect(MAX(0, floor(coordRange.start.x * _charWidth + [iTermPreferences sideMargins])),
+    // coordRange.x is LOGICAL; the frame is drawn at VISUAL columns. Convert the
+    // single-line case to its bounding visual span. Multi-line ranges are left in
+    // LOGICAL columns (raw start column and logical width) as a known limitation:
+    // a two-point rect can't bound bidi-reordered cells across lines, so on an RTL
+    // first line the rect's left edge sits at the mirror-image column. This matches
+    // the pre-refactor behavior and the Companion currentSelectionRange multi-line
+    // branch, which is best-effort for the same reason.
+    int startX = coordRange.start.x;
+    int spanWidth = coordRange.end.x - coordRange.start.x;
+    if (coordRange.start.y == coordRange.end.y) {
+        const VT100GridRange visualSpan =
+            [PTYTextView accessibilityVisualColumnSpanForLogicalStartX:coordRange.start.x
+                                                                  endX:coordRange.end.x
+                                                              bidiInfo:[_dataSource bidiInfoForLine:coordRange.start.y]];
+        startX = visualSpan.location;
+        spanWidth = visualSpan.length;
+    }
+    NSRect result = NSMakeRect(MAX(0, floor(startX * _charWidth + [iTermPreferences sideMargins])),
                                MAX(0, coordRange.start.y * _lineHeight),
-                               MAX(0, (coordRange.end.x - coordRange.start.x) * _charWidth),
+                               MAX(0, spanWidth * _charWidth),
                                MAX(0, (coordRange.end.y - coordRange.start.y + 1) * _lineHeight));
     result = [self convertRect:result toView:nil];
     result = [self.window convertRectToScreen:result];
@@ -7374,14 +7425,14 @@ static NSString *iTermStringFromRange(NSRange range) {
         [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.start.y];
     coordRange.end.y =
         [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.end.y];
-    [_selection clearSelection];
+    // coordRange is LOGICAL. Commit it as a logical selection rather than driving
+    // a character-mode live selection, which with bidi on would treat these as
+    // visual columns and mis-select on right-to-left lines.
     const long long overflow = _dataSource.totalScrollbackOverflow;
-    [_selection beginSelectionAtAbsCoord:VT100GridAbsCoordFromCoord(coordRange.start, overflow)
-                            mode:kiTermSelectionModeCharacter
-                          resume:NO
-                          append:NO];
-    [_selection moveSelectionEndpointTo:VT100GridAbsCoordFromCoord(coordRange.end, overflow)];
-    [_selection endLiveSelection];
+    const VT100GridAbsCoord absStart = VT100GridAbsCoordFromCoord(coordRange.start, overflow);
+    const VT100GridAbsCoord absEnd = VT100GridAbsCoordFromCoord(coordRange.end, overflow);
+    [_selection setSelectedLogicalRange:VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeMake(absStart.x, absStart.y, absEnd.x, absEnd.y), 0, 0)
+                                   mode:kiTermSelectionModeCharacter];
 }
 
 - (VT100GridCoordRange)accessibilityRangeOfCursor {
@@ -7390,7 +7441,11 @@ static NSString *iTermStringFromRange(NSRange range) {
 }
 
 - (VT100GridCoordRange)accessibilityHelperSelectedRange {
-    iTermSubSelection *sub = _selection.allSubSelections.lastObject;
+    // logicalSubSelections (not allSubSelections) so VoiceOver reads logical columns
+    // during an in-progress bidi character drag. Otherwise the raw visual live range
+    // is returned as logical and accessibilityHelperFrameForCoordRange maps it
+    // logical->visual a second time, landing the focus rect on the mirror cells.
+    iTermSubSelection *sub = _selection.logicalSubSelections.lastObject;
 
     if (!sub) {
         return [self accessibilityRangeOfCursor];

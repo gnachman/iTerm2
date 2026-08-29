@@ -253,7 +253,10 @@ extension PTYSession {
         var items = [URLQueryItem]()
         items.append(URLQueryItem(name: "session", value: guid))
         let overflow = screen.totalScrollbackOverflow()
-        for sub in selection.allSubSelections {
+        // logicalSubSelections (not allSubSelections) so serializing during an
+        // in-progress bidi character drag encodes LOGICAL buffer positions, not the
+        // raw visual live range. Same coordinate contract as the get_selection API.
+        for sub in selection.logicalSubSelections {
             let coordRange = VT100GridCoordRangeFromAbsCoordRange(sub.absRange.coordRange, overflow)
             if coordRange.start.y < 0 {
                 continue

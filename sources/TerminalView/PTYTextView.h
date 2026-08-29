@@ -30,6 +30,7 @@
 
 @class CRunStorage;
 @class iTermAction;
+@class iTermBidiDisplayInfo;
 @class iTermKittyDnDBridge;
 @class iTermExpect;
 @class iTermFindCursorView;
@@ -830,6 +831,30 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries;
 
 - (void)selectCoordRange:(VT100GridCoordRange)range;
 - (void)selectAbsWindowedCoordRange:(VT100GridAbsWindowedRange)windowedRange;
+
+// Find-on-page selects a match and flashes an indicator over it. The selection
+// model is LOGICAL, so it must select the logical match range; only the on-screen
+// indicator uses the visual range. Feeding the visual range to the selection made
+// the logical draw layer re-map it and highlight the mirror-image cells on
+// right-to-left lines. Exposed as a pure decision for testing.
++ (VT100GridCoordRange)findOnPageSelectionRangeForLogicalMatch:(VT100GridCoordRange)logicalMatch
+                                                   visualMatch:(VT100GridCoordRange)visualMatch;
+
+// Accessibility hit-testing derives a VISUAL column from a screen point, but the
+// accessibility text model is LOGICAL. Convert so range-for-position lands on the
+// correct character on right-to-left lines. Identity when there is no bidi info
+// or the column is past the mapped cells. Exposed for testing.
++ (int)accessibilityLogicalXForVisualX:(int)visualX
+                              bidiInfo:(iTermBidiDisplayInfo *)bidiInfo;
+
+// Best-effort VISUAL column span for a LOGICAL column range on one line, for
+// accessibility bounds. A logical range can be visually discontiguous on a bidi
+// line; this returns the tight bounding visual span (correct for VoiceOver focus
+// in the common contiguous case). Identity when there is no bidi info. Exposed
+// for testing.
++ (VT100GridRange)accessibilityVisualColumnSpanForLogicalStartX:(int)startX
+                                                           endX:(int)endX
+                                                       bidiInfo:(iTermBidiDisplayInfo *)bidiInfo;
 
 - (NSRect)frameForCoord:(VT100GridCoord)coord;
 
