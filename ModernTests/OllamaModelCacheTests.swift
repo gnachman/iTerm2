@@ -214,6 +214,20 @@ final class OllamaModelCacheTests: XCTestCase {
                       "each must still send the raw tag on the wire")
     }
 
+    // The first-class Ollama vendor resolves its models from discovery at the
+    // default endpoint, not a static catalog.
+    func test_ollamaVendor_resolvesModelsFromDiscovery() {
+        let endpoint = LLMMetadata.defaultOllamaEndpoint
+        OllamaModelCache.shared.update(endpoint: endpoint, models: models(endpoint))
+        defer { OllamaModelCache.shared.update(endpoint: endpoint, models: []) }
+
+        let alternates = LLMMetadata.alternateModels(for: .llama)
+        XCTAssertTrue(alternates.contains { $0.name == "qwen3.5:4b" },
+                      "the Ollama vendor's models come from discovery")
+        XCTAssertEqual(LLMMetadata.recommendedModel(for: .llama)?.name, alternates.first?.name,
+                       "the default is the first discovered model")
+    }
+
     // Integration: a dynamic Ollama manual entry expands (via the shared cache)
     // into one catalog model per discovered tag, with capabilities, so the
     // provider picker shows them without any per-model config.

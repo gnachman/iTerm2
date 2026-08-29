@@ -224,6 +224,14 @@ Major New Features:
   capabilities by hand, and newly pulled models
   show up on refresh.
 
+- Ollama is now a first-class provider in the AI
+  model dropdown, alongside OpenAI, Anthropic,
+  Gemini, and DeepSeek. Selecting it lists the
+  models installed on your local server
+  automatically, with no manual configuration. A
+  non-local Ollama server is still added as a
+  manual model.
+
 - Claude Code integration was added. It enables
   the new Session Status feature for claude code
   sessions so you can see at a glance which

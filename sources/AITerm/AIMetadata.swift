@@ -312,9 +312,10 @@ class AIMetadata: NSObject {
         return recommendedModel(for: .gemini)
     }
 
-    static var recommendedLlamaModel: Model {
-        return recommendedModel(for: .llama)
-    }
+    // No recommendedLlamaModel / alternateLlamaModels: the Ollama vendor's models
+    // are discovered from the local server (see LLMMetadata.discoveredOllamaModels),
+    // not the static catalog. recommendedModel(for: .llama) would assert since the
+    // catalog no longer ships a llama entry.
 
     static var recommendedAnthropicModel: Model {
         return recommendedModel(for: .anthropic)
@@ -339,12 +340,6 @@ class AIMetadata: NSObject {
     static var alternateGeminiModels: [Model] {
         return AIMetadata.instance.models.filter { candidate in
             candidate.vendor == .gemini
-        }
-    }
-
-    static var alternateLlamaModels: [Model] {
-        return AIMetadata.instance.models.filter { candidate in
-            candidate.vendor == .llama
         }
     }
 

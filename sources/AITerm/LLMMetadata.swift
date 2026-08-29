@@ -104,7 +104,9 @@ class LLMMetadata: NSObject {
         case .gemini:
             return AIMetadata.alternateGeminiModels
         case .llama:
-            return AIMetadata.alternateLlamaModels
+            // Ollama is a dynamic vendor: its models are discovered from the
+            // local server, not a static catalog.
+            return discoveredOllamaModels()
         case .anthropic:
             return AIMetadata.alternateAnthropicModels
         case .apple:
@@ -123,7 +125,10 @@ class LLMMetadata: NSObject {
         case .gemini:
             return AIMetadata.recommendedGeminiModel
         case .llama:
-            return AIMetadata.recommendedLlamaModel
+            // The default for the Ollama vendor is the first discovered model
+            // (the user switches among the rest in the chat picker). nil until
+            // discovery lands / if the local server is down.
+            return discoveredOllamaModels().first
         case .anthropic:
             return AIMetadata.recommendedAnthropicModel
         case .apple:
@@ -237,18 +242,38 @@ class LLMMetadata: NSObject {
     // for its endpoint. Empty until the first /api/tags fetch lands; the cache
     // posts OllamaModelCache.didChangeNotification when it does, so the pickers
     // rebuild. Each model inherits the entry's custom auth headers.
-    // The endpoint URLs of the currently-configured dynamic Ollama entries. Used
-    // to scope the model-cache change notification so a toolbar only rebuilds for
-    // endpoints that are actually configured.
+    // The built-in "Ollama" vendor discovers its models from this local endpoint.
+    // A non-local server is configured as a manual dynamic entry instead.
+    static let defaultOllamaEndpoint = "http://localhost:11434/api/chat"
+
+    // The models discovered at the default Ollama endpoint. Triggers a background
+    // /api/tags fetch on first read; empty until it lands or if the server is down
+    // (persistence restores the last-known set synchronously at launch).
+    static func discoveredOllamaModels() -> [AIMetadata.Model] {
+        return OllamaModelCache.shared.models(forEndpoint: defaultOllamaEndpoint)
+    }
+
+    // Whether the built-in Ollama vendor is the current recommended default.
+    private static func ollamaIsRecommendedDefault() -> Bool {
+        return iTermPreferences.bool(forKey: kPreferenceKeyUseRecommendedAIModel)
+            && iTermAIVendor(rawValue: iTermPreferences.unsignedInteger(forKey: kPreferenceKeyAIVendor)) == .llama
+    }
+
+    // The endpoint URLs whose discovered models are currently in use: every
+    // configured dynamic entry, plus the default endpoint when the built-in Ollama
+    // vendor is the recommended default. Used to scope the model-cache change
+    // notification and to prune persistence to live endpoints.
     @objc static func dynamicOllamaEndpoints() -> Set<String> {
-        guard let raw = iTermPreferences.object(forKey: kPreferenceKeyAIManualModelConfigurations) as? [[String: Any]] else {
-            return []
-        }
         var result = Set<String>()
-        for configuration in raw where bool(configuration, key: ManualModelKey.dynamicModels) {
-            if let url = configuration[ManualModelKey.url] as? String, !url.isEmpty {
-                result.insert(url)
+        if let raw = iTermPreferences.object(forKey: kPreferenceKeyAIManualModelConfigurations) as? [[String: Any]] {
+            for configuration in raw where bool(configuration, key: ManualModelKey.dynamicModels) {
+                if let url = configuration[ManualModelKey.url] as? String, !url.isEmpty {
+                    result.insert(url)
+                }
             }
+        }
+        if ollamaIsRecommendedDefault() {
+            result.insert(defaultOllamaEndpoint)
         }
         return result
     }

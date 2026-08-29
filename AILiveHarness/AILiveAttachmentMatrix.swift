@@ -128,15 +128,20 @@ enum AttachmentLane: String, CaseIterable {
         case .deepseek:
             return try lookup("deepseek-v4-flash")
         case .llama:
-            // Local Ollama, url http://localhost:11434/api/chat. Pinned to
-            // llama3.3:latest: the multimodal llama4 (67GB) does not fit in
-            // 64GB RAM and is unusably slow, and llama3.3 is the llama-family
-            // model in AIMetadata that fits. It is text-only, so the lane
-            // covers the text cells; the binary/image cells stay skipped (see
-            // the matrix). The lane only runs when LLAMA_API_KEY is set (see
-            // keyOrSkipForLane): a record run needs Ollama up; replay serves a
-            // committed cassette and never reaches the network.
-            return try lookup("llama3.3:latest")
+            // Local Ollama, url http://localhost:11434/api/chat, pinned to
+            // llama3.3:latest (text-only, fits in RAM; the multimodal llama4 is
+            // 67GB). Ollama models are no longer in the static catalog (they're
+            // discovered), so synthesize the model directly; the name matches the
+            // committed cassettes. The lane only runs when LLAMA_API_KEY is set.
+            return AIMetadata.Model(
+                name: "llama3.3:latest",
+                contextWindowTokens: 131_072,
+                maxResponseTokens: 131_072,
+                url: "http://localhost:11434/api/chat",
+                api: .llama,
+                features: [.streaming, .functionCalling],
+                vectorStoreConfig: .disabled,
+                vendor: .llama)
         }
     }
 

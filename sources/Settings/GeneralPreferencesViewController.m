@@ -2451,16 +2451,16 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 }
 
 - (NSArray<NSNumber *> *)defaultAIModelProviderVendors {
-    // Ollama/Llama is intentionally NOT offered as a "recommended" provider: a
-    // local runner has no universal recommended model, and its catalog entry
-    // (llama4:latest) is a large model most users have not pulled, so picking it
-    // here 404s. Local models are configured through the manual editor, guided by
-    // the "Ollama (native)" provider preset.
+    // Ollama is a first-class vendor: selecting it discovers the models installed
+    // on the local server (localhost:11434) with their capabilities, rather than
+    // resolving a static catalog model. A non-local Ollama server is still
+    // configured as a manual dynamic entry.
     return @[
         @(iTermAIVendorOpenAI),
         @(iTermAIVendorAnthropic),
         @(iTermAIVendorGemini),
-        @(iTermAIVendorDeepSeek)
+        @(iTermAIVendorDeepSeek),
+        @(iTermAIVendorLlama)
     ];
 }
 
