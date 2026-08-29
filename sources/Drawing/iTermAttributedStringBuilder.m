@@ -483,11 +483,24 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
                 // This does not apply to ASCII characters, since they can never combine with a
                 // spacing combining mark. That's done for performance in the GPU renderer to avoid
                 // complicating its ASCII fastpath.
+                // The base is normally the preceding cell (i-1). But a double-width
+                // base stores the base at i-2 with a DWC_RIGHT placeholder at i-1, so
+                // for a DWC base the mark's origin is two cells back; using i-1 would
+                // credit the mark to the right half. (Metal looks one cell ahead from
+                // the base and so drops the mark on a DWC base; this keeps Core Text
+                // from drawing it at the wrong, right-half column.)
+                // Test the ACTUAL previous cell, not the loop-carried `predecessor`:
+                // predecessor is assigned at the bottom of the loop, but the spacing-
+                // mark branch continues before that, so on the second of two
+                // consecutive marks predecessor is stale (two cells back). Using it
+                // would wrongly see DWC_RIGHT and credit the mark to the right half.
+                const BOOL previousCellIsDWCRight = (i >= 2) && ScreenCharIsDWC_RIGHT(line[i - 1]);
+                const int baseCell = previousCellIsDWCRight ? (i - 2) : (i - 1);
                 int lastCellDraw;
-                if (bidiLUT && i - 1 < bidiLUTLength) {
-                    lastCellDraw = bidiLUT[i - 1];
+                if (bidiLUT && baseCell >= 0 && baseCell < bidiLUTLength) {
+                    lastCellDraw = bidiLUT[baseCell];
                 } else {
-                    lastCellDraw = i - 1;
+                    lastCellDraw = baseCell;
                 }
                 [builder appendString:charAsString
                                   rtl:charIsRTL

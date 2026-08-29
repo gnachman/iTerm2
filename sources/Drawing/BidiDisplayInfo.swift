@@ -588,6 +588,50 @@ class BidiDisplayInfoObjc: NSObject {
         }
         return NSRange(min...max)
     }
+
+    // Canonical nil-safe single-column converters. Identity when there is no bidi
+    // info or the column is outside the mapped cells (0..<numberOfCells), so
+    // left-to-right lines and out-of-range columns pass through unchanged. Callers
+    // in several files (accessibility, the Companion bridge) used to reimplement
+    // this convention, which could (and did) drift from logicalForVisual /
+    // visualForLogical, whose own out-of-range handling differs. Route everyone
+    // through these instead.
+    @objc(logicalColumnForVisualColumn:info:)
+    static func logicalColumn(forVisualColumn visualX: Int32, info: BidiDisplayInfoObjc?) -> Int32 {
+        guard let info, visualX >= 0, visualX < info.numberOfCells else { return visualX }
+        return info.logicalForVisual(visualX)
+    }
+
+    @objc(visualColumnForLogicalColumn:info:)
+    static func visualColumn(forLogicalColumn logicalX: Int32, info: BidiDisplayInfoObjc?) -> Int32 {
+        guard let info, logicalX >= 0, logicalX < info.numberOfCells else { return logicalX }
+        return info.visualForLogical(logicalX)
+    }
+
+    // Bounding visual column span [location, location + length) for a logical column
+    // range [startX, endX). Identity span when there is no bidi info; a zero-width
+    // range (a caret) still converts its single column so a caret rect lands at the
+    // visual position on a right-to-left line.
+    @objc(visualColumnSpanForLogicalStartX:endX:info:)
+    static func visualColumnSpan(forLogicalStartX startX: Int32,
+                                 endX: Int32,
+                                 info: BidiDisplayInfoObjc?) -> VT100GridRange {
+        guard let info else {
+            return VT100GridRangeMake(startX, max(0, endX - startX))
+        }
+        if endX <= startX {
+            return VT100GridRangeMake(visualColumn(forLogicalColumn: startX, info: info),
+                                      max(0, endX - startX))
+        }
+        var lo = Int32.max
+        var hi = Int32.min
+        for logicalX in startX..<endX {
+            let v = visualColumn(forLogicalColumn: logicalX, info: info)
+            lo = min(lo, v)
+            hi = max(hi, v)
+        }
+        return VT100GridRangeMake(lo, hi - lo + 1)
+    }
 }
 
 struct CollectionRangeIterator<C: Collection>: IteratorProtocol, Sequence where C.Element: BinaryInteger {

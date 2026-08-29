@@ -25,10 +25,16 @@ extension iTermCoreTextLineRenderingHelper {
                 return ld < rd
             }
 
-            let le = positions[lhs].x + advances[lhs].width
-            let re = positions[rhs].x + advances[rhs].width
-            if le != re {
-                return le < re
+            // Within a display column, order by DECREASING advance so the BASE glyph
+            // (nonzero advance) comes before its zero-advance combining marks. The
+            // previous tie-break sorted by TRAILING edge (position.x + advance),
+            // which for a zero-advance mark is just its own x and so sorted the mark
+            // ahead of the base; columnBaseline was then taken from the mark, shifting
+            // the base glyph when Core Text gave the mark a nonzero x offset (Arabic
+            // base + haraka) and diverging from Metal, which anchors the cluster by
+            // cell. Base-first keeps the existing comment (base before its marks) true.
+            if advances[lhs].width != advances[rhs].width {
+                return advances[lhs].width > advances[rhs].width
             }
 
             return lhs < rhs
