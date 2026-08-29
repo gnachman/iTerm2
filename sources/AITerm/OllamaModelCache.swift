@@ -183,7 +183,16 @@ class OllamaModelCache: NSObject {
         guard let representation = iTermUserDefaults.userDefaults().object(forKey: Self.persistenceKey) as? [String: Any] else {
             return
         }
-        restore(from: representation)
+        // Drop endpoints that are no longer configured (a since-deleted entry, or a
+        // URL the user probed with "Refresh Models" but never saved), so the
+        // persisted blob tracks only currently-configured servers.
+        restore(from: Self.endpointsPruned(representation, keeping: LLMMetadata.dynamicOllamaEndpoints()))
+    }
+
+    // Keep only the endpoints in `configured`. Pure, so it's unit-testable.
+    static func endpointsPruned(_ representation: [String: Any],
+                                keeping configured: Set<String>) -> [String: Any] {
+        return representation.filter { configured.contains($0.key) }
     }
 
     // The serializable snapshot of the successfully-discovered models, keyed by
@@ -212,7 +221,12 @@ class OllamaModelCache: NSObject {
 
     private func persistIfEnabled() {
         guard persistenceEnabled else { return }
-        iTermUserDefaults.userDefaults().set(persistedRepresentation(), forKey: Self.persistenceKey)
+        // Persist only currently-configured endpoints: a "Refresh Models" probe of
+        // an unsaved URL still seeds the in-memory cache, but it must not grow the
+        // persisted blob unboundedly.
+        let pruned = Self.endpointsPruned(persistedRepresentation(),
+                                          keeping: LLMMetadata.dynamicOllamaEndpoints())
+        iTermUserDefaults.userDefaults().set(pruned, forKey: Self.persistenceKey)
     }
 
     private static let featureNames: [(AIMetadata.Model.Feature, String)] = [

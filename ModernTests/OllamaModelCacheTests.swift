@@ -159,6 +159,20 @@ final class OllamaModelCacheTests: XCTestCase {
         XCTAssertTrue(m.first?.features.contains(.configurableThinking) ?? false)
     }
 
+    // Persistence must track only currently-configured endpoints, so probing
+    // unsaved URLs or deleting an entry doesn't grow the blob without bound.
+    func test_endpointsPruned_keepsOnlyConfigured() {
+        let representation: [String: Any] = [
+            "http://a/api/chat": [["name": "m"]],
+            "http://b/api/chat": [["name": "m"]],
+            "http://gone/api/chat": [["name": "m"]],
+        ]
+        let pruned = OllamaModelCache.endpointsPruned(representation,
+                                                      keeping: ["http://a/api/chat", "http://b/api/chat"])
+        XCTAssertEqual(Set(pruned.keys), ["http://a/api/chat", "http://b/api/chat"],
+                       "a since-removed endpoint must be dropped from persistence")
+    }
+
     // The change notification carries the endpoint so observers can scope rebuilds.
     func test_update_notificationCarriesEndpoint() {
         let cache = makeCache()

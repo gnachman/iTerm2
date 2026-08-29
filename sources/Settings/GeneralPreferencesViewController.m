@@ -1199,6 +1199,14 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     for (NSButton *button in _featureButtons.allValues) {
         button.enabled = !dynamic;
     }
+    // Discovery is Ollama-native by construction (discovered models are always
+    // api:.llama), so pin and disable the API popup: a still-live control would
+    // imply a choice that has no effect, and could put a /v1 URL into an
+    // inconsistent URL+API state (native builder POSTing to an OpenAI-compat path).
+    if (dynamic) {
+        [_apiPopup selectItemWithTag:iTermAIAPILlama];
+    }
+    _apiPopup.enabled = !dynamic;
     _fetchModelsButton.title = dynamic ? @"Refresh Models" : @"Fetch Models";
 }
 
