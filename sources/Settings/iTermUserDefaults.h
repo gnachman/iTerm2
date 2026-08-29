@@ -25,6 +25,9 @@ extern NSString *const iTermShowSessionStatusInTabSubtitleDidChange;
 
 + (void)performMigrations;
 
+// Exposed for testing. performMigrations forwards to this with self.userDefaults.
++ (void)performMigrationsInUserDefaults:(NSUserDefaults *)userDefaults;
+
 @property (class, nonatomic, copy) NSArray<NSString *> *searchHistory;
 @property (class, nonatomic) BOOL secureKeyboardEntry;
 @property (class, nonatomic) BOOL enableAutomaticProfileSwitchingLogging;

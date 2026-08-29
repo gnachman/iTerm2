@@ -49,6 +49,10 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (void)enumerateDictionaries:(void (^)(NSDictionary *))block;
 + (void)loadAdvancedSettingsFromUserDefaults;
 
+// One-time migration of the renamed alternateScreenBidi -> disableBidiInAlternateScreen
+// setting. Operates on the given defaults; exposed for testing.
++ (void)migrateAlternateScreenBidiSettingInUserDefaults:(NSUserDefaults *)userDefaults;
+
 #pragma mark - Accessors
 
 + (BOOL)aboutToPasteTabsWithCancel;

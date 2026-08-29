@@ -968,8 +968,31 @@ DEFINE_BOOL(pythonRuntimeUsesUV, YES, SECTION_SCRIPTING @"Use uv to provision th
 DEFINE_SETTABLE_BOOL(setCookie, SetCookie, NO, SECTION_SCRIPTING @"Set ITERM2_COOKIE environment variable, allowing Python scripts to be launched without confirmation?\nThis will only affect sessions created after changing this setting.");
 DEFINE_SETTABLE_BOOL(setIT2AppPath, SetIT2AppPath, NO, SECTION_SCRIPTING @"Set IT2_APP_PATH environment variable on new sessions, pointing at this iTerm2 build’s app bundle?\nThis disambiguates the AppleScript target when multiple iTerm2 builds with the same bundle identifier are running, so that the “it2” CLI requests its cookie from this iTerm2 instance. Intended for iTerm2 developers. Only affects sessions created after changing this setting.");
 
++ (void)migrateAlternateScreenBidiSettingInUserDefaults:(NSUserDefaults *)userDefaults {
+    // The alt-screen bidi setting was renamed from alternateScreenBidi (key
+    // AlternateScreenBidi, default YES = reorder) to disableBidiInAlternateScreen
+    // (key DisableBidiInAlternateScreen, default NO = reorder), inverting polarity
+    // with a new UserDefaults key. Without migration a user who explicitly set
+    // alternateScreenBidi = NO (reordering OFF) would silently revert to reordering
+    // on upgrade, since the new key is absent and defaults to NO (= not disabled).
+    // Carry that choice over. Removing the old key makes this a one-time migration.
+    id oldValue = [userDefaults objectForKey:@"AlternateScreenBidi"];
+    if (oldValue == nil) {
+        return;
+    }
+    if (![oldValue boolValue] &&
+        [userDefaults objectForKey:@"DisableBidiInAlternateScreen"] == nil) {
+        [userDefaults setObject:@YES forKey:@"DisableBidiInAlternateScreen"];
+    }
+    [userDefaults removeObjectForKey:@"AlternateScreenBidi"];
+}
+
 + (void)initialize {
     if (self == [iTermAdvancedSettingsModel self]) {
+        // Note: the AlternateScreenBidi -> DisableBidiInAlternateScreen migration is
+        // run from +[iTermUserDefaults performMigrations], not here. +initialize fires
+        // too early (before custom-folder prefs are copied into local defaults) to see
+        // a copied-down opt-out.
         static iTermUserDefaultsObserver *observer;
         observer = [[iTermUserDefaultsObserver alloc] init];
         [self enumerateMethods:^(Method method, SEL selector) {
