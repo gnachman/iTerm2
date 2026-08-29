@@ -275,6 +275,7 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
             [iTermHighlightLineTrigger class],
             [iTermUserNotificationTrigger class],
             [iTermSetUserVariableTrigger class],
+            [iTermSetProfileBooleanTrigger class],
             [iTermShellPromptTrigger class],
             [iTermSetTitleTrigger class],
             [iTermSetNamedMarkTrigger class],
@@ -893,6 +894,17 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
 
         return container;
     }
+    if ([trigger paramIsSettingPicker]) {
+        iTermProfileBoolSettingPickerView *picker =
+            [[iTermProfileBoolSettingPickerView alloc] initWithFrame:NSMakeRect(0, 0, size.width, size.height)];
+        picker.param = [NSString castFrom:value] ?: @"";
+        __weak id<iTermTriggerParameterController> weakReceiver = receiver;
+        __weak iTermProfileBoolSettingPickerView *weakPicker = picker;
+        picker.onChange = ^{
+            [weakReceiver settingPickerDidChange:weakPicker];
+        };
+        return picker;
+    }
     if ([trigger paramIsTwoStrings]) {
         const CGFloat margin = 5;
         const NSSize subsize = NSMakeSize((size.width - margin) / 2, size.height);
@@ -1317,6 +1329,23 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
         triggerDictionary[kTriggerParameterKey] = [triggerObj defaultPopupParameterObject];
     } else if ([triggerObj triggerOptionalDefaultParameterValueWithInterpolation:_interpolatedStringParameters.state == NSControlStateValueOn]) {
         triggerDictionary[kTriggerParameterKey] = [triggerObj triggerOptionalDefaultParameterValueWithInterpolation:_interpolatedStringParameters.state == NSControlStateValueOn];
+    }
+    [triggerDictionary removeObjectForKey:kTriggerProvenanceKey];
+    [self setTriggerDictionary:triggerDictionary forRow:rowIndex reloadData:NO];
+}
+
+- (void)settingPickerDidChange:(iTermProfileBoolSettingPickerView *)picker {
+    NSInteger rowIndex = [_tableView rowForView:picker];
+    if (rowIndex < 0) {
+        return;
+    }
+    NSMutableDictionary *triggerDictionary =
+        [[self triggerDictionariesForCurrentProfile][rowIndex] mutableCopy];
+    NSString *parameter = picker.param;
+    if (parameter.length) {
+        triggerDictionary[kTriggerParameterKey] = parameter;
+    } else {
+        [triggerDictionary removeObjectForKey:kTriggerParameterKey];
     }
     [triggerDictionary removeObjectForKey:kTriggerProvenanceKey];
     [self setTriggerDictionary:triggerDictionary forRow:rowIndex reloadData:NO];

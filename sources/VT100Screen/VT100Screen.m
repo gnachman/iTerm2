@@ -2335,6 +2335,12 @@ launchCoprocessWithCommand:(NSString *)command
     [self.delegate triggerSideEffectSetValue:value forVariableNamed:name];
 }
 
+- (void)triggerSession:(Trigger *)trigger
+    setSessionSpecificProfileBool:(BOOL)value
+                           forKey:(NSString *)profileKey {
+    [self.delegate triggerSideEffectSetSessionSpecificProfileBool:value forKey:profileKey];
+}
+
 - (void)triggerSession:(Trigger *)trigger setTabStatus:(VT100TabStatusUpdate *)status {
     [self.delegate screenSetTabStatus:status];
 }

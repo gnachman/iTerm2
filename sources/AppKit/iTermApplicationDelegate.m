@@ -1585,6 +1585,11 @@ void TurnOnDebugLoggingAutomatically(void) {
     [self turnOffMetalCaptureEnabledIfNeeded];
     [iTermFontPanel makeDefault];
 
+    // Start the sleep-prevention coordinator. Its initializer seeds itself from existing
+    // sessions and begins observing lifecycle/power/settings changes; recompute once more
+    // now that launch is essentially complete.
+    [[iTermSleepPreventionCoordinator instance] recompute];
+
     finishedLaunching_ = YES;
     // Create the app support directory
     [self createVersionFile];

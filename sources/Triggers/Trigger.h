@@ -105,6 +105,9 @@ extern NSString * const kTriggerVariableValueRegexKey;
 - (void)triggerSession:(Trigger *)trigger injectData:(NSData *)data;
 - (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value;
 - (void)triggerSession:(Trigger *)trigger
+    setSessionSpecificProfileBool:(BOOL)value
+                           forKey:(NSString *)profileKey;
+- (void)triggerSession:(Trigger *)trigger
   showAlertWithMessage:(NSString *)message
              rateLimit:(iTermRateLimitedUpdate *)rateLimit
                disable:(void (^)(void))disable;
@@ -176,6 +179,8 @@ extern NSString * const kTriggerVariableValueRegexKey;
 - (BOOL)paramIsTwoColorWells;
 - (BOOL)paramIsTwoStrings;
 - (BOOL)paramIsComboBoxAndTwoColorWells;
+// Rendered as an iTermProfileBoolSettingPickerView (searchable setting picker + On/Off).
+- (BOOL)paramIsSettingPicker;
 // Items for the combo box when paramIsComboBoxAndTwoColorWells returns YES.
 - (nullable NSArray<NSString *> *)comboBoxItems;
 // Returns the current combo box string extracted from the parameter.

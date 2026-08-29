@@ -30,8 +30,11 @@ extern NSString *const kStatusTextComboBoxIdentifier;
 - (void)triggersCopyToProfile;
 @end
 
+@class iTermProfileBoolSettingPickerView;
+
 @protocol iTermTriggerParameterController<NSObject, NSTextFieldDelegate, iTermFocusReportingTextFieldDelegate>
 - (void)parameterPopUpButtonDidChange:(id)sender;
+- (void)settingPickerDidChange:(iTermProfileBoolSettingPickerView *)picker;
 @end
 
 @interface TriggerController : NSWindowController <NSWindowDelegate>

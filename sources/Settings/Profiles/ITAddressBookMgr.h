@@ -223,6 +223,7 @@
 #define KEY_SILENCE_BELL                      @"Silence Bell"
 #define KEY_VISUAL_BELL                       @"Visual Bell"
 #define KEY_FLASHING_BELL                     @"Flashing Bell"
+#define KEY_PREVENT_SLEEP                     @"Prevent Sleep"
 #define KEY_XTERM_MOUSE_REPORTING             @"Mouse Reporting"
 #define KEY_XTERM_MOUSE_REPORTING_ALLOW_MOUSE_WHEEL @"Mouse Reporting allow mouse wheel"
 #define KEY_XTERM_MOUSE_REPORTING_ALLOW_CLICKS_AND_DRAGS @"Mouse Reporting allow clicks and drags"

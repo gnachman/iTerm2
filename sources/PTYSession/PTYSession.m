@@ -291,6 +291,7 @@ NSString *const SESSION_ARRANGEMENT_SERVER_DICT = @"Server Dict";  // NSDictiona
 // TODO: Make server report the TTY to us since orphans will end up with a nil tty.
 static NSString *const SESSION_ARRANGEMENT_TTY = @"TTY";  // TTY name. Used when using restoration to connect to a restored server.
 static NSString *const SESSION_ARRANGEMENT_VARIABLES = @"Variables";  // _variables
+static NSString *const SESSION_ARRANGEMENT_FOREGROUND_JOB_ANCESTORS = @"Foreground Job Ancestors";  // NSArray<NSString *>, deepest first
 // static NSString *const SESSION_ARRANGEMENT_COMMAND_RANGE_DEPRECATED = @"Command Range";  // VT100GridCoordRange
 // Deprecated in favor of SESSION_ARRANGEMENT_SHOULD_EXPECT_PROMPT_MARKS and SESSION_ARRANGEMENT_SHOULD_EXPECT_CURRENT_DIR_UPDATES
 static NSString *const SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED_DEPRECATED = @"Shell Integration Ever Used";  // BOOL
@@ -446,6 +447,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 
     // Has the underlying connection been closed?
     BOOL _exited;
+
+    // Restore reconciliation (see -didFinishInitialization): the foreground-job ancestry saved in
+    // the arrangement, and whether the session reattached to a still-running process.
+    NSArray<NSString *> *_restoreSavedForegroundJobAncestors;
+    BOOL _restoreAttachedToServer;
 
     // A view that wraps the textview. It is the scrollview's document. This exists to provide a
     // top margin above the textview.
@@ -1108,6 +1114,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
 ITERM_WEAKLY_REFERENCEABLE
 
 - (void)dealloc {
+    [_restoreSavedForegroundJobAncestors release];
     [NSApp removeObserver:self forKeyPath:@"effectiveAppearance"];
     NSString *guid = [_guid copy];
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -1319,6 +1326,40 @@ ITERM_WEAKLY_REFERENCEABLE
         _desiredComposerPrompt = nil;
         [self screenRevealComposerWithPrompt:prompt];
     }
+    [self reconcileRestoredForegroundJobAncestryIfNeeded];
+
+    // PTYSessionCreated is posted from -init, before the profile is assigned, so the
+    // sleep-prevention coordinator can't yet see a profile that permanently enables "Prevent
+    // sleep". By this point the profile is set, so recompute to pick up the standalone-checkbox
+    // case. (Restored sessions also reach here, and revived sessions are already covered by
+    // PTYSessionRevived.)
+    [[iTermSleepPreventionCoordinator instance] recompute];
+}
+
+// Re-derive the job-ended edges lost across a save/restore boundary for jobs that were running at
+// save but have died by restore. Gated so the ~99% of sessions that either had no running job at
+// save or have no job-ancestry trigger do no work at all. For the rest, the current ancestry is
+// computed synchronously: empty for a fresh relaunch / exited session (every saved job is gone),
+// or one synchronous walk of the still-live process for a reattached session.
+- (void)reconcileRestoredForegroundJobAncestryIfNeeded {
+    NSArray<NSString *> *baseline = [_restoreSavedForegroundJobAncestors autorelease];
+    _restoreSavedForegroundJobAncestors = nil;
+    if (baseline.count == 0) {
+        return;
+    }
+    if (!_eventTriggerEvaluator.hasJobStartedTrigger && !_eventTriggerEvaluator.hasJobEndedTrigger) {
+        // Nothing to reconcile, but we began deferring live updates during restore; resume them.
+        [_eventTriggerEvaluator endDeferringLiveUpdatesForRestore];
+        return;
+    }
+    NSArray<NSString *> *current = @[];
+    if (_restoreAttachedToServer) {
+        const pid_t effectivePid = _shell.tmuxClientProcessID ? _shell.tmuxClientProcessID.intValue : _shell.pid;
+        [self.processInfoProvider updateSynchronously];
+        iTermProcessInfo *deepest = [self.processInfoProvider deepestForegroundJobForPid:effectivePid];
+        current = deepest.foregroundJobAncestorNames ?: @[];
+    }
+    [_eventTriggerEvaluator reconcileRestoredBaseline:baseline currentAncestry:current];
 }
 
 - (void)setGuid:(NSString *)guid {
@@ -1725,6 +1766,8 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         aSession.textview.badgeLabel = aSession.badgeLabel;
     }
+    // (The saved foreground-job ancestry was recorded earlier in +sessionFromArrangement:, before
+    // any attach, so live ancestry updates could be buffered; -didFinishInitialization reconciles.)
 
     if (didRestoreContents && attachedToServer) {
         [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
@@ -1919,6 +1962,24 @@ ITERM_WEAKLY_REFERENCEABLE
     PTYSession *aSession = [[[PTYSession alloc] initSynthetic:NO] autorelease];
     aSession.foundingArrangement = [arrangement dictionaryByRemovingObjectForKey:SESSION_ARRANGEMENT_CONTENTS];
     aSession.view = sessionView;
+
+    // Record the saved foreground-job ancestry now, synchronously and before any (re)attach, and
+    // begin buffering live ancestry updates so a process-cache notification arriving during the
+    // async restore gap can't fire a spurious job-started before -reconcileRestoredForegroundJob...
+    // runs at didFinishInitialization. (Keep only string elements: a corrupt/hand-edited
+    // arrangement with a non-string would otherwise trap when bridged to [String].)
+    {
+        NSArray *savedAncestors = arrangement[SESSION_ARRANGEMENT_FOREGROUND_JOB_ANCESTORS];
+        if ([savedAncestors isKindOfClass:[NSArray class]]) {
+            NSArray<NSString *> *strings = [savedAncestors filteredArrayUsingBlock:^BOOL(id element) {
+                return [element isKindOfClass:[NSString class]];
+            }];
+            if (strings.count > 0) {
+                aSession->_restoreSavedForegroundJobAncestors = [strings copy];
+                [aSession->_eventTriggerEvaluator beginDeferringLiveUpdatesForRestore];
+            }
+        }
+    }
     aSession->_savedGridSize = VT100GridSizeMake(MAX(1, [arrangement[SESSION_ARRANGEMENT_COLUMNS] intValue]),
                                                  MAX(1, [arrangement[SESSION_ARRANGEMENT_ROWS] intValue]));
     // Re-bind the inline AI chat here, synchronously, rather than in the
@@ -2335,6 +2396,12 @@ ITERM_WEAKLY_REFERENCEABLE
                 }] mutableCopy];
             }
         }
+
+        // Whether this restore reattached to a still-running process (vs launched a fresh one or
+        // left the session exited). -didFinishInitialization uses this to reconcile the saved
+        // foreground-job ancestry: for a reattach it walks the live process; otherwise every saved
+        // job is gone.
+        aSession->_restoreAttachedToServer = attachedToServer;
 
         if (runCommand) {
             // This path is NOT taken when attaching to a running server.
@@ -4584,6 +4651,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
     RLog(@"  brokenPipe: set exited = YES");
     [self cleanUpAfterBrokenPipe];
+
+    // An exited session no longer counts as a Prevent-Sleep requester. brokenPipe posts nothing the
+    // coordinator observes, so recompute now; otherwise a dead-but-open pane would hold the idle
+    // sleep assertion until it is manually closed.
+    [[iTermSleepPreventionCoordinator instance] recompute];
 
     if (_shouldRestart) {
         _modeHandler.mode = iTermSessionModeDefault;
@@ -7093,6 +7165,11 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
             }];
         }
         result[SESSION_ARRANGEMENT_VARIABLES] = _variables.encodableDictionaryValue;
+        // Save the foreground-job ancestry so that on restore we can re-derive job-ended edges
+        // for jobs that were running at save but have died by the time the session is restored.
+        if (_eventTriggerEvaluator.foregroundJobAncestors.count > 0) {
+            result[SESSION_ARRANGEMENT_FOREGROUND_JOB_ANCESTORS] = _eventTriggerEvaluator.foregroundJobAncestors;
+        }
         result[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] = @(_alertOnNextMark);
         result[SESSION_ARRANGEMENT_LOCKED] = @(_locked);
         result[SESSION_ARRANGEMENT_CURSOR_GUIDE] = @(_textview.highlightCursorLine);
@@ -16579,6 +16656,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [_originalProfile autorelease];
     _originalProfile = [newProfile copy];
     [self remarry];
+    // Reassigning the profile (Automatic Profile Switching, Open Quickly's Change Profile) can turn
+    // KEY_PREVENT_SLEEP on or off for this session, but posts nothing else the coordinator observes.
+    [[iTermSleepPreventionCoordinator instance] recompute];
     if (preserveName) {
         [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionProfileName: newProfile[KEY_NAME] ?: [NSNull null] }];
         return YES;
@@ -24880,6 +24960,14 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     if (newName.length > 0) {
         [self enableSessionNameTitleComponentIfPossible];
     }
+}
+
+- (void)triggerSideEffectSetSessionSpecificProfileBool:(BOOL)value forKey:(NSString *)profileKey {
+    [iTermGCD assertMainQueueSafe];
+    // setSessionSpecificProfileValues: is a no-op when the value already matches, so a trigger
+    // that re-fires (e.g. Job started firing again) won't churn the profile. When it does
+    // change, it posts kSessionProfileDidChange, which the sleep-prevention coordinator observes.
+    [self setSessionSpecificProfileValues:@{ profileKey: @(value) }];
 }
 
 - (void)triggerSideEffectEnterWorkgroupWithIdentifier:(NSString * _Nonnull)workgroupUniqueIdentifier {

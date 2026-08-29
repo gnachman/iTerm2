@@ -83,7 +83,8 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 
     IBOutlet NSTextField *_undoTimeout;
     IBOutlet NSButton *_reduceFlicker;
-
+    IBOutlet NSButton *_preventSleep;
+    IBOutlet NSTextField *_sleepStatus;
     IBOutlet NSPopUpButton *_promptBeforeClosing;
 
     IBOutlet NSButton *_statusBarEnabled;
@@ -112,6 +113,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     _jobsTable.dataSource = nil;
     _jobsTable.delegate = nil;
 }
@@ -300,6 +302,11 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
+    [self defineControl:_preventSleep
+                    key:KEY_PREVENT_SLEEP
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
     info = [self defineControl:_defaultPaneLocked
                     key:KEY_DEFAULT_PANE_LOCKED
             relatedView:nil
@@ -443,7 +450,39 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
                    displayName:@"Configure status bar"
                        phrases:@[]
                            key:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(sleepPreventionCountDidChange:)
+                                                 name:[iTermSleepPreventionCoordinator didChangeNotification]
+                                               object:nil];
+    [self updateSleepStatus];
+
     [self commitControls];
+}
+
+- (void)sleepPreventionCountDidChange:(NSNotification *)notification {
+    [self updateSleepStatus];
+}
+
+- (void)updateSleepStatus {
+    iTermSleepPreventionCoordinator *coordinator = [iTermSleepPreventionCoordinator instance];
+    const NSInteger holding = coordinator.numberOfSessionsPreventingSleep;
+    const NSInteger requesting = coordinator.numberOfSessionsRequestingPreventSleep;
+    NSString *text;
+    if (requesting == 0) {
+        text = @"No sessions are currently preventing sleep.";
+    } else if (holding > 0) {
+        // Gate is open (on power, or the battery override is enabled): holding == requesting.
+        text = (holding == 1)
+            ? @"1 session is currently preventing sleep."
+            : [NSString stringWithFormat:@"%@ sessions are currently preventing sleep.", @(holding)];
+    } else {
+        // Sessions want to prevent sleep but are gated off on battery.
+        text = (requesting == 1)
+            ? @"1 session would prevent sleep, but it is disabled while on battery."
+            : [NSString stringWithFormat:@"%@ sessions would prevent sleep, but it is disabled while on battery.", @(requesting)];
+    }
+    _sleepStatus.stringValue = text;
 }
 
 - (void)populateProgressBarColorSchemes {

@@ -45,16 +45,66 @@ class EventTriggerEvaluator: NSObject {
 
     @objc var triggerParametersUseInterpolatedStrings = false
     @objc var disabled = false
+    private var _foregroundJobAncestors: [String]?
+
+    // While true, live foregroundJobAncestors updates are stored WITHOUT firing. Set for a restored
+    // session before its process is (re)attached, so a process-cache update delivered during the
+    // async restore gap (e.g. behind the autolog-filename fetch) cannot fire a spurious job-started
+    // for a survived job before reconcileRestoredBaseline runs. Cleared by the reconcile (or by
+    // endDeferringLiveUpdatesForRestore if the session turns out not to need one).
+    private var deferringLiveUpdatesForRestore = false
+
     @objc var foregroundJobAncestors: [String]? {
-        didSet {
-            // Detect deltas in the foreground-job ancestry chain so
-            // job-started / job-ended event triggers can fire. The
-            // trigger.job filter (applied by fireTriggersForMatchType)
-            // selects which job name each trigger cares about; we
-            // just need to fire the event when ancestry membership
-            // for any job changes.
-            handleAncestorDelta(previous: oldValue, current: foregroundJobAncestors)
+        get { _foregroundJobAncestors }
+        set {
+            let old = _foregroundJobAncestors
+            _foregroundJobAncestors = newValue
+            if deferringLiveUpdatesForRestore {
+                return
+            }
+            // Detect deltas in the foreground-job ancestry chain so job-started / job-ended event
+            // triggers can fire.
+            handleAncestorDelta(previous: old, current: newValue)
         }
+    }
+
+    /// Begin buffering live updates silently until the restore reconcile runs (see the flag above).
+    @objc func beginDeferringLiveUpdatesForRestore() {
+        deferringLiveUpdatesForRestore = true
+    }
+
+    /// Stop buffering without a reconcile (for a restored session that has no saved baseline job
+    /// ancestry trigger to reconcile). Resumes normal live diffing from the current stored value.
+    @objc func endDeferringLiveUpdatesForRestore() {
+        deferringLiveUpdatesForRestore = false
+    }
+
+    /// Reconcile a restored session against the ancestry saved in its arrangement, to re-derive the
+    /// job-ended edges lost across the save/restore boundary (a job running at save that has since
+    /// died would otherwise never produce a job-ended edge).
+    ///
+    /// The session computes `currentAncestry` SYNCHRONOUSLY at restore, which sidesteps all the
+    /// ambiguity of watching the async post-restore reading stream: for a fresh relaunch or an
+    /// exited session every saved job is gone by definition, so the session passes []; for a
+    /// reattached (survived) session it passes one synchronous walk of the still-live process
+    /// (whose names read reliably, unlike a just-exec'd process). Fires job-ended for baseline jobs
+    /// no longer present, then seeds the current ancestry WITHOUT firing, so the first live reading
+    /// diffs against the correct state and does not re-fire job-started for a survived job.
+    @objc func reconcileRestoredBaseline(_ baseline: [String], currentAncestry: [String]) {
+        deferringLiveUpdatesForRestore = false
+        let currentLower = Set(currentAncestry.map { $0.lowercased() })
+        // Deduplicate case-insensitively (preserving original case for the captured string) so a
+        // chain with a repeated name -- e.g. ["make", "make", "bash"] -- fires job-ended once per
+        // distinct departed name, matching the live handleAncestorDelta path.
+        var seen = Set<String>()
+        for job in baseline {
+            let lower = job.lowercased()
+            guard !currentLower.contains(lower), seen.insert(lower).inserted else {
+                continue
+            }
+            fireJobAncestryTriggers(matchType: .eventJobEnded, job: job)
+        }
+        _foregroundJobAncestors = currentAncestry
     }
 
     /// Description of the owning session for logging purposes

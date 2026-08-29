@@ -7505,6 +7505,14 @@ launchCoprocessWithCommand:(NSString *)command
     } name:@"trigger set variable"];
 }
 
+- (void)triggerSession:(Trigger *)trigger
+    setSessionSpecificProfileBool:(BOOL)value
+                           forKey:(NSString *)profileKey {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectSetSessionSpecificProfileBool:value forKey:profileKey];
+    } name:@"trigger set profile bool"];
+}
+
 - (void)triggerSession:(Trigger *)trigger setTabStatus:(VT100TabStatusUpdate *)status {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSetTabStatus:status];

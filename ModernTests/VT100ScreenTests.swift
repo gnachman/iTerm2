@@ -2551,6 +2551,10 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
 
+    func triggerSideEffectSetSessionSpecificProfileBool(_ value: Bool, forKey profileKey: String) {
+
+    }
+
     private let colorMap = iTermColorMap()
 
     func immutableColorMap(_ colorMap: (any iTermColorMapReading)!, didChangeColorForKey theKey: iTermColorMapKey, from before: NSColor!, to after: NSColor!) {

@@ -49,6 +49,16 @@ class SpyingScreenDelegate: FakeSession {
     private(set) var promptDidEndCalls: [PromptDidEndCall] = []
     private(set) var commandDidChangeCalls: [CommandDidChangeCall] = []
 
+    struct SetSessionSpecificProfileBoolCall {
+        let value: Bool
+        let key: String
+    }
+    private(set) var setSessionSpecificProfileBoolCalls: [SetSessionSpecificProfileBoolCall] = []
+
+    override func triggerSideEffectSetSessionSpecificProfileBool(_ value: Bool, forKey profileKey: String) {
+        setSessionSpecificProfileBoolCalls.append(SetSessionSpecificProfileBoolCall(value: value, key: profileKey))
+    }
+
     func reset() {
         getWorkingDirectoryCalls.removeAll()
         pollLocalDirectoryOnlyCalls.removeAll()

@@ -1971,6 +1971,13 @@ static const CGFloat kLabelWidth = 124;
     }
 }
 
+- (void)settingPickerDidChange:(iTermProfileBoolSettingPickerView *)picker {
+    [_currentTrigger setParam:picker.param];
+    if (_didChange) {
+        _didChange();
+    }
+}
+
 - (void)comboBoxSelectionDidChange:(NSNotification *)notification {
     NSComboBox *comboBox = notification.object;
     NSString *value = [comboBox objectValueOfSelectedItem];

@@ -393,6 +393,7 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
             KEY_SEND_NEW_OUTPUT_ALERT, KEY_SEND_SESSION_ENDED_ALERT,
             KEY_SEND_TERMINAL_GENERATED_ALERT, KEY_FLASHING_BELL, KEY_VISUAL_BELL,
             KEY_SUPPRESS_ALERTS_IN_ACTIVE_SESSION, KEY_SEND_ALERTS_TO_COMPANION,
+            KEY_PREVENT_SLEEP,
 
             KEY_REDUCE_FLICKER, KEY_SHOW_STATUS_BAR, KEY_SEND_CODE_WHEN_IDLE,
             KEY_APPLICATION_KEYPAD_ALLOWED, KEY_ALLOW_MODIFY_OTHER_KEYS,
@@ -837,6 +838,7 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
             KEY_DISABLE_PRINTING:                                   @"Whether to disable printing via escape sequences",
             KEY_DISABLE_SMCUP_RMCUP:                                @"Whether to disable alternate screen mode switching",
             KEY_SILENCE_BELL:                                       @"Whether to silence the terminal bell",
+            KEY_PREVENT_SLEEP:                                      @"Whether to prevent system idle sleep while a session with this profile exists",
             KEY_DEFAULT_PANE_LOCKED:                                @"Whether new panes are locked by default",
             KEY_BUFFER_BY_DEFAULT:                                  @"Whether keyboard input should be buffered by default in new sessions",
             KEY_BOOKMARK_USER_NOTIFICATIONS:                        @"Whether to post user notifications for this profile",
@@ -1185,6 +1187,7 @@ static NSString *const iTermBindingOwnerPalette = @"palette";
                   KEY_DISABLE_PRINTING: @NO,
                   KEY_DISABLE_SMCUP_RMCUP: @NO,
                   KEY_SILENCE_BELL: @NO,
+                  KEY_PREVENT_SLEEP: @NO,
                   KEY_DEFAULT_PANE_LOCKED: @NO,
                   KEY_BUFFER_BY_DEFAULT: @NO,
                   KEY_BOOKMARK_USER_NOTIFICATIONS: @NO,

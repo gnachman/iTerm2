@@ -443,6 +443,17 @@ Triggers Improvements:
   is running. This makes it possible, for example,
   to write triggers that are only active while
   Claude Code is running.
+- A new “Set Profile Setting” trigger action turns
+  a profile checkbox on or off for the session.
+  Paired with Job Started and Job Ended matches it
+  gives declarative “while this job runs” logic.
+- A new “Prevent sleep” profile setting keeps the
+  Mac from idle-sleeping while a session with the
+  setting enabled exists. Combine it with the new
+  trigger action to keep the Mac awake only while
+  a long-running job like an AI coding agent runs.
+  By default it applies on AC power only; an
+  advanced setting extends it to battery.
 
 AI Improvements:
 - You can now press Cmd-F in an AI chat to search

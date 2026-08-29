@@ -149,6 +149,10 @@ NSString * const kTriggerVariableValueRegexKey = @"variableValueRegex";
     return NO;
 }
 
+- (BOOL)paramIsSettingPicker {
+    return NO;
+}
+
 - (BOOL)paramIsTwoColorWells {
     return NO;
 }
