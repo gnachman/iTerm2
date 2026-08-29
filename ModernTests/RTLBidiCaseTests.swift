@@ -131,7 +131,7 @@ class RTLBidiCaseTests: XCTestCase {
     // base cell and takes zero extra columns. Checked here for fathatan (ً U+064B),
     // hamza (ٔ U+0654), kasra (ِ U+0650), shadda (ّ U+0651), sukun (ْ U+0652) and
     // superscript-alef (ٰ U+0670). So the extra space seen with words like
-    // "دقیقاً"/"قهوهٔ" is NOT a cell/bidi bug — it's a DRAWING-layer issue (the mark's
+    // "دقیقاً"/"قهوهٔ" is NOT a cell/bidi bug; it is a DRAWING-layer issue (the mark's
     // glyph advance in iTermTextDrawingHelper), which these bidi/cell tests cannot
     // observe. Tracked separately; needs a rendering-level test.
     func testCombiningMarksMergeIntoBaseCell() {

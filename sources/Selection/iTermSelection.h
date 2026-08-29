@@ -109,6 +109,13 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 // selections.
 @property(nonatomic, readonly) BOOL liveRangeIsFlipped;
 
+// YES when the live range's x coordinates are VISUAL columns (a character drag
+// with bidi enabled). NO for word/line/box modes and for an EXTEND that restored
+// its range from a committed (logical) subselection. Callers that feed a mouse
+// endpoint into the live range use this to decide whether to convert the visual
+// mouse column to logical first.
+@property(nonatomic, readonly) BOOL liveRangeIsVisual;
+
 // The range of selections. May be flipped.
 @property(nonatomic, readonly) VT100GridAbsWindowedRange liveRange;
 
@@ -117,6 +124,13 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 
 // All sub selections, including the live one if applicable.
 @property(nonatomic, readonly) NSArray<iTermSubSelection *> *allSubSelections;
+
+// Like allSubSelections, but an in-progress VISUAL character-drag live range
+// (bidi) is reported in LOGICAL coordinates. Use this for external consumers
+// that read the selection as logical buffer coordinates (the scripting API), so
+// a mid-drag read on a right-to-left line does not expose raw visual columns.
+// allSubSelections keeps the raw live range for internal geometry.
+@property(nonatomic, readonly) NSArray<iTermSubSelection *> *logicalSubSelections;
 
 // The last range, including the live one if applicable. Ranges are ordered by endpoint.
 // The range will be -1,-1,-1,-1 if there are none.
@@ -186,11 +200,39 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 // Add a range to the set of selections.
 - (void)addSubSelection:(iTermSubSelection *)sub;
 
+// Replace the selection with a single committed subselection covering a LOGICAL
+// range. Use this for programmatic callers that already hold logical coordinates
+// (find, "select last command output", VoiceOver set-range, smart select).
+// Driving a character-mode live selection instead would, with bidi enabled,
+// reinterpret the coordinates as VISUAL columns (the live range is visual for
+// character mode) and mis-select on right-to-left lines.
+//
+// Only for NON-EXPANDING modes (character, smart): the range is committed as
+// given (clamped to width). Line and box modes expand a range to whole lines /
+// column bounds only while it is LIVE, so they must use the live path instead.
+- (void)setSelectedLogicalRange:(VT100GridAbsWindowedRange)range
+                           mode:(iTermSelectionMode)mode;
+
+// Build a committed-logical range (suitable for setSelectedLogicalRange:mode:)
+// from two VISUAL coordinates, converting BOTH to logical via `converter` (a
+// no-op on non-reordered lines). Used by find-on-page shift-extend, where the
+// find cursor and the click are both visual. Exposed for testing.
++ (VT100GridAbsWindowedRange)logicalAbsRangeFromVisualStart:(VT100GridCoord)visualStart
+                                                 visualEnd:(VT100GridCoord)visualEnd
+                                                  overflow:(long long)overflow
+                                                 converter:(VT100GridCoord (^)(VT100GridCoord))converter;
+
 // This is much faster than repeated calls to addSubSelection:.
 - (void)addSubSelections:(NSArray<iTermSubSelection *> *)subSelectionArray;
 
 // Returns the indexes of characters selected on a given line.
 - (NSIndexSet *)selectedIndexesOnAbsoluteLine:(long long)line;
+
+// Per-line visual index span of a character-mode range, honoring the column
+// window. Drives the live highlight and the endLive decomposition. Exposed for
+// testing.
+- (NSRange)visualRangeOfIndexesInAbsRange:(VT100GridAbsWindowedRange)range
+                           onAbsoluteLine:(long long)line;
 
 // Calls the block for each selected range.
 - (void)enumerateSelectedAbsoluteRanges:(void (^ NS_NOESCAPE)(VT100GridAbsWindowedRange range, BOOL *stop, BOOL eol))block;

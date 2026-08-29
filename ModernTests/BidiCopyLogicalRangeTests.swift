@@ -80,6 +80,12 @@ class BidiCopyLogicalRangeTests: XCTestCase {
         XCTAssertEqual(text, expected, "partial RTL copy should be the logical range \(expected), got >>>\(text)<<<")
     }
 
+    // Note: the trailing-null trim in the bidi enumerate branch (matching the
+    // non-bidi branch's `endx - numNulls` bound) is not unit-tested here because
+    // content(in:) applies its own trailing-whitespace trim, which masks the
+    // enumerate-level difference; the fix is a symmetric correction verified by
+    // inspection.
+
     // Multi-line: line 0 from logical 4 to end, line 1 from start to logical 6.
     // Copy must include BOTH lines' logical text.
     func testMultilineRTLCopyIncludesBothLines() {
