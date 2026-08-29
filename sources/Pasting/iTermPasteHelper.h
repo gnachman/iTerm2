@@ -71,6 +71,10 @@ extern const NSInteger iTermQuickPasteBytesPerCallDefaultValue;
 
 + (NSMutableCharacterSet *)unsafeControlCodeSet;
 
+// Zero-width bidi/format characters removed by the "strip zero-width bidi/format
+// characters on paste" option. Exposed for testing.
++ (NSCharacterSet *)zeroWidthFormatCharacterSet;
+
 // This performs all the transformations except for bracketing.
 + (void)sanitizePasteEvent:(PasteEvent *)pasteEvent
                   encoding:(NSStringEncoding)encoding;

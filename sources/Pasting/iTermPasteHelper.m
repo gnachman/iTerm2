@@ -146,6 +146,13 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         NSMutableCharacterSet *s = [[NSMutableCharacterSet alloc] init];
         [s addCharactersInRange:NSMakeRange(0x200b, 5)];  // 200B ZWSP, 200C ZWNJ, 200D ZWJ, 200E LRM, 200F RLM
         [s addCharactersInString:@"\u00ad\u2060\ufeff"];  // soft hyphen, word joiner, ZWNBSP/BOM
+        // Bidi reordering controls (the Trojan-Source set): directional embeddings
+        // and overrides, isolates, and the Arabic Letter Mark. These are zero-width
+        // bidi/format characters too, and the ones a user most expects a "bidi/
+        // format" stripper to remove (they render as a visible <202e> at a prompt).
+        [s addCharactersInRange:NSMakeRange(0x202a, 5)];  // 202A LRE, 202B RLE, 202C PDF, 202D LRO, 202E RLO
+        [s addCharactersInRange:NSMakeRange(0x2066, 4)];  // 2066 LRI, 2067 RLI, 2068 FSI, 2069 PDI
+        [s addCharactersInString:@"\u061c"];         // 061C ALM (Arabic Letter Mark)
         set = s;
     });
     return set;
