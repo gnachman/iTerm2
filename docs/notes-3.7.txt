@@ -2819,3 +2819,7 @@ Bug Fixes:
   pieces in reading order instead of stacking
   them on separate lines. Pieces on different
   lines still copy with line breaks.
+- With the tab bar on the left or right, the tab
+  context menu now says “New Tab Below” instead
+  of “New Tab to the Right”, matching the
+  “Close Tabs Below” item just under it.

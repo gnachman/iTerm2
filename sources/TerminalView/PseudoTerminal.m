@@ -8031,7 +8031,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
    }
 
     // add tasks
-    item = [[[NSMenuItem alloc] initWithTitle:@"New Tab to the Right"
+    const PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
+    const BOOL verticalTabBar = (tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab);
+    item = [[[NSMenuItem alloc] initWithTitle:verticalTabBar ? @"New Tab Below" : @"New Tab to the Right"
                                        action:@selector(newTabToTheRight:)
                                 keyEquivalent:@""] autorelease];
     [item setRepresentedObject:tabViewItem];
@@ -8101,13 +8103,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         }
 
         if (hasUnpinnedToRight) {
-            NSString *title;
-            const PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
-            if (tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab) {
-                title = @"Close Tabs Below";
-            } else {
-                title = @"Close Tabs to the Right";
-            }
+            NSString *title = verticalTabBar ? @"Close Tabs Below" : @"Close Tabs to the Right";
             item = [[[NSMenuItem alloc] initWithTitle:title
                                                action:@selector(closeTabsToTheRight:)
                                         keyEquivalent:@""] autorelease];
