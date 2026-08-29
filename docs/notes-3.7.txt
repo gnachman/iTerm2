@@ -2820,6 +2820,8 @@ Bug Fixes:
   them on separate lines. Pieces on different
   lines still copy with line breaks.
 - With the tab bar on the left or right, the tab
-  context menu now says “New Tab Below” instead
-  of “New Tab to the Right”, matching the
-  “Close Tabs Below” item just under it.
+  and tab group context menus now say “New Tab
+  Below” and “Close Tabs Below” instead of “to
+  the Right”, matching the direction the tabs
+  actually run. The confirmation for closing the
+  tabs after a group follows suit.

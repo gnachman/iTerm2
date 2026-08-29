@@ -7997,6 +7997,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     return YES;
 }
 
+// A left or right tab bar runs top to bottom, so directional menu wording
+// says “Below” where a horizontal tab bar says “to the Right”.
+- (BOOL)tabBarIsVertical {
+    const PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
+    return tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab;
+}
+
 - (NSMenu *)tabView:(NSTabView *)tabView menuForTabViewItem:(NSTabViewItem *)tabViewItem
 {
     NSMenuItem *item;
@@ -8031,8 +8038,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
    }
 
     // add tasks
-    const PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
-    const BOOL verticalTabBar = (tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab);
+    const BOOL verticalTabBar = [self tabBarIsVertical];
     item = [[[NSMenuItem alloc] initWithTitle:verticalTabBar ? @"New Tab Below" : @"New Tab to the Right"
                                        action:@selector(newTabToTheRight:)
                                 keyEquivalent:@""] autorelease];
@@ -9068,6 +9074,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     NSMenu *menu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
     menu.autoenablesItems = NO;  // contextual actions are always applicable
     const BOOL collapsed = [self tabsInGroup:groupID].firstObject.tabGroupCollapsed;
+    NSString *closeAfterTitle = [self tabBarIsVertical] ? @"Close Tabs Below" : @"Close Tabs to the Right";
     NSArray<NSArray<NSString *> *> *specs = @[
         @[@"New Tab in Group", @"newTabInGroup:"],
         @[@"-", @""],
@@ -9084,7 +9091,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         @[@"-", @""],
         @[@"Close Group", @"closeTabGroup:"],
         @[@"Close Other Tabs", @"closeTabsOutsideGroup:"],
-        @[@"Close Tabs to the Right", @"closeTabsRightOfGroup:"],
+        @[closeAfterTitle, @"closeTabsRightOfGroup:"],
     ];
     for (NSArray<NSString *> *spec in specs) {
         if ([spec[0] isEqualToString:@"-"]) {
@@ -9506,7 +9513,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return;
     }
     NSArray<PTYTab *> *toRight = [tabs subarrayWithRange:NSMakeRange(lastIndex + 1, tabs.count - lastIndex - 1)];
-    [self closeTabs:toRight confirmWith:@"Close all tabs to the right of this group?" skippingPinned:YES];
+    NSString *question = [self tabBarIsVertical] ? @"Close all tabs below this group?"
+                                                : @"Close all tabs to the right of this group?";
+    [self closeTabs:toRight confirmWith:question skippingPinned:YES];
 }
 
 // Close a batch of tabs with a single confirmation. `skipPinned` protects
