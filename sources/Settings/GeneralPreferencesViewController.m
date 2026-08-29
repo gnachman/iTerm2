@@ -1123,6 +1123,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }
     iTermAIProviderPreset *preset = _providerPresets[(NSUInteger)index];
     _nameField.stringValue = @"";
+    // This preset defines the Model-field placeholder afresh, so drop any value
+    // stashed by a prior dynamic-on: otherwise updateDynamicModelsEditorState's
+    // dynamic-off restore would clobber this placeholder with the stale one.
+    _savedNamePlaceholder = nil;
     _nameField.placeholderString = preset.placeholderModelName ?: @"";
     _urlField.stringValue = preset.url ?: @"";
     [_apiPopup selectItemWithTag:(NSInteger)preset.api];
