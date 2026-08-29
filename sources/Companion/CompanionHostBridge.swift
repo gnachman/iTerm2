@@ -622,16 +622,26 @@ final class CompanionHostBridge {
         } else {
             // Word/line/smart selections snap to whole-token boundaries, so there is
             // no single-cell exclusivity to reconcile: drive iTermSelection's live
-            // selection directly.
+            // selection directly. But the phone's column is VISUAL, and these modes
+            // interpret the coordinate as LOGICAL (unlike character mode, whose live
+            // range is visual), so convert first (a no-op unless the line is
+            // bidi-reordered), matching the Mac mouse handler. Without this, a
+            // double-tap or smart select on a right-to-left line snaps to the wrong
+            // token.
+            let relLine = clampedAbsLine - session.screen.totalScrollbackOverflow()
+            let bidi = (relLine >= 0 && relLine < Int64(session.screen.numberOfLines()))
+                ? textview.dataSource?.bidiInfo(forLine: Int32(clamping: relLine)) : nil
+            let logicalCoord = VT100GridAbsCoordMake(Self.logicalColumn(forVisualColumn: coord.x, bidi: bidi),
+                                                     clampedAbsLine)
             var moved = true
             switch phase {
             case .begin:
-                textview.selection?.begin(at: coord, mode: mode.iTermSelectionMode,
+                textview.selection?.begin(at: logicalCoord, mode: mode.iTermSelectionMode,
                                           resume: false, append: false)
             case .move:
-                moved = textview.selection?.moveEndpoint(to: coord) ?? false
+                moved = textview.selection?.moveEndpoint(to: logicalCoord) ?? false
             case .end:
-                moved = textview.selection?.moveEndpoint(to: coord) ?? false
+                moved = textview.selection?.moveEndpoint(to: logicalCoord) ?? false
                 textview.selection?.endLive()
             }
             changed = (phase != .move) || moved
@@ -722,6 +732,51 @@ final class CompanionHostBridge {
 
     /// Report the session's current selection span (or nil) so the phone can draw
     /// and move handles.
+    /// The phone works entirely in VISUAL columns (it renders a streamed image and
+    /// touches at pixel positions), but iTermSelection is LOGICAL. These convert a
+    /// single column for one line. Identity when there is no bidi info or the column
+    /// is outside the mapped cells, so left-to-right text is untouched.
+    nonisolated static func logicalColumn(forVisualColumn visualX: Int32,
+                                          bidi: BidiDisplayInfoObjc?) -> Int32 {
+        return BidiDisplayInfoObjc.logicalColumn(forVisualColumn: visualX, info: bidi)
+    }
+
+    nonisolated static func visualColumn(forLogicalColumn logicalX: Int32,
+                                         bidi: BidiDisplayInfoObjc?) -> Int32 {
+        return BidiDisplayInfoObjc.visualColumn(forLogicalColumn: logicalX, info: bidi)
+    }
+
+    /// Visual [min, max] columns for the cells that `subs` select on `line`. iTermSelection
+    /// stores a selection running through the end of a line as (startX, line, 0, line+1),
+    /// so a sub whose end wrapped to the next line must sweep to the grid width, not to its
+    /// raw exclusive end.x (which is 0 and would make the loop select nothing and the phone
+    /// show no selection). Returns nil only when no cell on the line is selected.
+    nonisolated static func visualColumnSpan(forSelectedSubs subs: [iTermSubSelection],
+                                             onLine line: Int64,
+                                             gridWidth: Int32,
+                                             bidi: BidiDisplayInfoObjc?) -> (min: Int32, max: Int32)? {
+        var vmin = Int32.max
+        var vmax = Int32.min
+        for sub in subs where sub.absRange.coordRange.start.y == line {
+            let cr = sub.absRange.coordRange
+            let rawStop = (cr.end.y == line) ? cr.end.x : gridWidth
+            // On a reordered line, logical columns >= numberOfCells (the trailing
+            // padding of a select-through-EOL range) are not in the LUT and map to
+            // identity (large) visual columns, which would inflate the max even
+            // though they render on the visual left. Bound the sweep to the reordered
+            // cells for the bidi case.
+            let stop = bidi.map { min(rawStop, $0.numberOfCells) } ?? rawStop
+            var logical = cr.start.x
+            while logical < stop {
+                let v = visualColumn(forLogicalColumn: logical, bidi: bidi)
+                vmin = min(vmin, v)
+                vmax = max(vmax, v)
+                logical += 1
+            }
+        }
+        return vmin <= vmax ? (min: vmin, max: vmax) : nil
+    }
+
     /// iTermSelection's end x is EXCLUSIVE (one past the last selected cell; select
     /// all yields end.x == gridWidth). The phone treats the wire end as the
     /// inclusive last cell, so convert here. An exclusive end at column 0 means the
@@ -853,13 +908,63 @@ final class CompanionHostBridge {
 
     private func currentSelectionRange(_ textview: PTYTextView) -> CompanionSelectionRange? {
         guard let selection = textview.selection, selection.hasSelection else { return nil }
-        let span = selection.spanningAbsRange
+        // logicalSubSelections (not spanningAbsRange, which folds in the raw live
+        // range via allSubSelections) so an in-progress bidi character drag is
+        // decomposed to LOGICAL runs before we convert to visual. Otherwise mid-drag
+        // the live range already holds visual columns and we would map it a second
+        // time, so the handles land on the mirror side until finger-lift.
+        let subs = selection.logicalSubSelections
+        guard !subs.isEmpty else { return nil }
         let gridWidth = Int(textview.dataSource?.width() ?? 0)
-        let end = Self.inclusiveSelectionEnd(exclusiveColumn: Int(span.end.x), absLine: span.end.y,
+        let overflow = textview.dataSource?.totalScrollbackOverflow() ?? 0
+        let numLines = Int64(textview.dataSource?.numberOfLines() ?? 0)
+        let bidiFor: (Int64) -> BidiDisplayInfoObjc? = { absLine in
+            let rel = absLine - overflow
+            guard rel >= 0, rel < numLines else { return nil }
+            return textview.dataSource?.bidiInfo(forLine: Int32(clamping: rel))
+        }
+
+        // Document-order bounding endpoints over the logical subselections.
+        var startCoord = subs[0].absRange.coordRange.start
+        var endCoord = subs[0].absRange.coordRange.end
+        for sub in subs {
+            let cr = sub.absRange.coordRange
+            if cr.start.y < startCoord.y || (cr.start.y == startCoord.y && cr.start.x < startCoord.x) {
+                startCoord = cr.start
+            }
+            if cr.end.y > endCoord.y || (cr.end.y == endCoord.y && cr.end.x > endCoord.x) {
+                endCoord = cr.end
+            }
+        }
+        let end = Self.inclusiveSelectionEnd(exclusiveColumn: Int(endCoord.x), absLine: endCoord.y,
                                              gridWidth: gridWidth)
+
+        if startCoord.y == end.absLine {
+            // Single line: take the visual min/max over the ACTUALLY-selected logical
+            // cells. One visual sweep is contiguous in visual space, so this is exact.
+            // Using the bounding [start, end] would include unselected cells sitting
+            // between the logical runs of one sweep (RTL text with an embedded LTR
+            // number), and converting only the two endpoints would emit a backwards
+            // pair on an RTL line, where visualForLogical is monotonically decreasing.
+            guard let span = Self.visualColumnSpan(forSelectedSubs: subs,
+                                                   onLine: startCoord.y,
+                                                   gridWidth: Int32(clamping: gridWidth),
+                                                   bidi: bidiFor(startCoord.y)) else {
+                return nil
+            }
+            return CompanionSelectionRange(
+                start: CompanionSelectionPoint(absLine: startCoord.y, column: Int(span.min)),
+                end: CompanionSelectionPoint(absLine: end.absLine, column: Int(span.max)))
+        }
+        // Multi-line: a two-point range cannot bound bidi-reordered cells across
+        // lines (same limitation as accessibility bounds-for-range), so convert each
+        // endpoint on its own line as a best effort.
+        let startVisual = Self.visualColumn(forLogicalColumn: startCoord.x, bidi: bidiFor(startCoord.y))
+        let endVisual = Self.visualColumn(forLogicalColumn: Int32(clamping: end.column),
+                                          bidi: bidiFor(end.absLine))
         return CompanionSelectionRange(
-            start: CompanionSelectionPoint(absLine: span.start.y, column: Int(span.start.x)),
-            end: CompanionSelectionPoint(absLine: end.absLine, column: end.column))
+            start: CompanionSelectionPoint(absLine: startCoord.y, column: Int(startVisual)),
+            end: CompanionSelectionPoint(absLine: end.absLine, column: Int(endVisual)))
     }
 
     private func sendSelectionRange(streamID: UInt32, textview: PTYTextView) {
