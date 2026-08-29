@@ -245,7 +245,7 @@ class LLMMetadata: NSObject {
     // rebuild. Each model inherits the entry's custom auth headers.
     // The built-in "Ollama" vendor discovers its models from this local endpoint.
     // A non-local server is configured as a manual dynamic entry instead.
-    static let defaultOllamaEndpoint = "http://localhost:11434/api/chat"
+    @objc static let defaultOllamaEndpoint = "http://localhost:11434/api/chat"
 
     // The models discovered at the default Ollama endpoint. Triggers a background
     // /api/tags fetch on first read; empty until it lands or if the server is down

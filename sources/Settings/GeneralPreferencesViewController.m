@@ -2680,11 +2680,75 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                                 window:self.view.window];
 }
 
+// Probe the local Ollama server with a blocking sheet: an indeterminate spinner
+// while /api/tags is fetched (which also seeds the model cache), then dismiss on
+// success or surface an error if the server can't be reached. A Cancel button
+// lets the user bail out of a hung server. Interactive-only (see the caller).
+- (void)probeOllamaServerWithBlockingUI {
+    NSWindow *window = self.view.window;
+    if (!window) {
+        return;
+    }
+    NSString *endpoint = [iTermLLMMetadata defaultOllamaEndpoint];
+
+    NSAlert *probe = [[NSAlert alloc] init];
+    probe.messageText = @"Contacting Ollama…";
+    probe.informativeText = @"Fetching the models installed on your local Ollama server.";
+    NSProgressIndicator *spinner =
+        [[NSProgressIndicator alloc] initWithFrame:NSMakeRect(0, 0, 320, 20)];
+    spinner.style = NSProgressIndicatorStyleBar;
+    spinner.indeterminate = YES;
+    [spinner startAnimation:nil];
+    probe.accessoryView = spinner;
+    [probe addButtonWithTitle:@"Cancel"];
+
+    // resultFailed is filled in by the fetch completion before it ends the sheet
+    // with NSModalResponseContinue; a Cancel click ends it with a different code.
+    __block BOOL resultFailed = NO;
+    __weak __typeof(self) weakSelf = self;
+    [probe beginSheetModalForWindow:window completionHandler:^(NSModalResponse response) {
+        if (response != NSModalResponseContinue) {
+            return;  // user cancelled
+        }
+        if (!resultFailed) {
+            return;  // success: the populated model picker is the feedback
+        }
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        NSAlert *error = [[NSAlert alloc] init];
+        error.messageText = @"Could Not Reach Ollama";
+        error.informativeText = [NSString stringWithFormat:
+            @"Could not reach the Ollama server at %@. Make sure Ollama is running, then try again.",
+            endpoint];
+        [error beginSheetModalForWindow:strongSelf.view.window
+                      completionHandler:^(NSModalResponse r) {}];
+    }];
+
+    [iTermOllamaModelCache.shared refreshEndpoint:endpoint
+                                          headers:@[]
+                                            force:YES
+                                       completion:^(NSInteger count, BOOL failed) {
+        resultFailed = failed;
+        [window endSheet:probe.window returnCode:NSModalResponseContinue];
+    }];
+}
+
 - (IBAction)defaultAIModelPopupDidChange:(id)sender {
     NSString *identifier = _aiVendor.selectedItem.representedObject;
     NSNumber *providerNumber = [self providerFromDefaultAIModelIdentifier:identifier];
     if (providerNumber) {
-        [self selectProviderAsDefaultForNewChats:(iTermAIVendor)providerNumber.unsignedIntegerValue];
+        const iTermAIVendor vendor = (iTermAIVendor)providerNumber.unsignedIntegerValue;
+        [self selectProviderAsDefaultForNewChats:vendor];
+        // Interactively picking the Ollama vendor probes the local server now with
+        // a blocking sheet, so the user gets immediate feedback and a slow/hung
+        // server is obvious. Only here in the popup action, never for a
+        // programmatic pref change or a prefs load (those also call
+        // selectProviderAsDefaultForNewChats but not this).
+        if (vendor == iTermAIVendorLlama) {
+            [self probeOllamaServerWithBlockingUI];
+        }
         return;
     }
 
