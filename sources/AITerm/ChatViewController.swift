@@ -568,6 +568,14 @@ extension ChatViewController {
         .llama
     ]
 
+    // The built-in catalog plus the currently-discovered Ollama models, which live
+    // in the discovery cache rather than the static catalog. Used everywhere the
+    // chat classifies a model by name so a first-class Ollama model resolves and
+    // isn't mistaken for "unknown" (which crosses to the default cloud vendor).
+    private var builtInModels: [AIMetadata.Model] {
+        return AIMetadata.instance.models + LLMMetadata.discoveredOllamaModels()
+    }
+
     private func model(named name: String?) -> AIMetadata.Model? {
         guard let name else {
             return nil
@@ -577,7 +585,7 @@ extension ChatViewController {
         if let manual = manualConfiguredModels.first(where: { $0.name == name }) {
             return manual
         }
-        return AIMetadata.instance.models.first { $0.name == name }
+        return builtInModels.first { $0.name == name }
     }
 
     private var storedChatModel: AIMetadata.Model? {
@@ -693,7 +701,7 @@ extension ChatViewController {
         if manualConfiguredModels.contains(where: { $0.name == name }) {
             return ChatProviderOption.manualModel(name: name).identifier
         }
-        if let builtInVendor = AIMetadata.instance.models.first(where: { $0.name == name })?.vendor {
+        if let builtInVendor = builtInModels.first(where: { $0.name == name })?.vendor {
             return ChatProviderOption.vendorIdentifier(builtInVendor)
         }
         if let effectiveChatProvider {
@@ -711,7 +719,7 @@ extension ChatViewController {
                 manualConfiguredModels.contains { $0.name == modelName }
         }
         if let vendor = ChatProviderOption.vendor(from: identifier) {
-            return AIMetadata.instance.models.contains { $0.name == modelName && $0.vendor == vendor }
+            return builtInModels.contains { $0.name == modelName && $0.vendor == vendor }
         }
         return false
     }

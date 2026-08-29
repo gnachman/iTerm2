@@ -125,10 +125,11 @@ class LLMMetadata: NSObject {
         case .gemini:
             return AIMetadata.recommendedGeminiModel
         case .llama:
-            // The default for the Ollama vendor is the first discovered model
-            // (the user switches among the rest in the chat picker). nil until
-            // discovery lands / if the local server is down.
-            return discoveredOllamaModels().first
+            // The default for the Ollama vendor is the first discovered model (the
+            // user switches among the rest in the chat picker), or a placeholder
+            // while discovery is pending so the vendor never crosses to a cloud
+            // default.
+            return discoveredOllamaModels().first ?? pendingOllamaModel()
         case .anthropic:
             return AIMetadata.recommendedAnthropicModel
         case .apple:
@@ -251,6 +252,23 @@ class LLMMetadata: NSObject {
     // (persistence restores the last-known set synchronously at launch).
     static func discoveredOllamaModels() -> [AIMetadata.Model] {
         return OllamaModelCache.shared.models(forEndpoint: defaultOllamaEndpoint)
+    }
+
+    // A stand-in shown while discovery is pending (or if the local server is down),
+    // so the built-in Ollama vendor keeps its OWN vendor instead of the resolution
+    // falling through to a cloud vendor (which would silently route a message meant
+    // for local Ollama to, say, OpenAI). Replaced by a real model once /api/tags
+    // lands (the change notification rebuilds the pickers). Its name is used as the
+    // wire model only if a turn is sent during that window, where the local server
+    // rejects it clearly rather than a cloud vendor accepting it.
+    static let pendingOllamaModelName = "Ollama (discovering models…)"
+    static func pendingOllamaModel() -> AIMetadata.Model {
+        return AIMetadata.Model(name: pendingOllamaModelName,
+                                contextWindowTokens: OllamaModelDiscovery.defaultContextWindow,
+                                maxResponseTokens: OllamaModelDiscovery.defaultContextWindow,
+                                url: defaultOllamaEndpoint, api: .llama,
+                                features: [.streaming], vectorStoreConfig: .disabled,
+                                vendor: .llama)
     }
 
     // Whether the built-in Ollama vendor is the current recommended default.

@@ -228,6 +228,28 @@ final class OllamaModelCacheTests: XCTestCase {
                        "the default is the first discovered model")
     }
 
+    // The regression: recommended-Ollama with EMPTY discovery must resolve to an
+    // Ollama-vendored model (a placeholder), never fall through to a cloud default
+    // (which would silently send a local-model message to e.g. OpenAI).
+    func test_recommendedOllama_emptyDiscovery_staysOnOllama() {
+        OllamaModelCache.shared.update(endpoint: LLMMetadata.defaultOllamaEndpoint, models: [])  // reachable, empty
+        defer { OllamaModelCache.shared.update(endpoint: LLMMetadata.defaultOllamaEndpoint, models: []) }
+
+        let savedRecommended = iTermPreferences.object(forKey: kPreferenceKeyUseRecommendedAIModel)
+        let savedVendor = iTermPreferences.object(forKey: kPreferenceKeyAIVendor)
+        defer {
+            iTermPreferences.setObject(savedRecommended, forKey: kPreferenceKeyUseRecommendedAIModel)
+            iTermPreferences.setObject(savedVendor, forKey: kPreferenceKeyAIVendor)
+        }
+        iTermPreferences.setBool(true, forKey: kPreferenceKeyUseRecommendedAIModel)
+        iTermPreferences.setObject(Int(iTermAIVendor.llama.rawValue), forKey: kPreferenceKeyAIVendor)
+
+        let model = LLMMetadata.model()
+        XCTAssertEqual(model?.vendor, .llama,
+                       "recommended Ollama with no discovered models must stay Ollama, not cross to a cloud vendor")
+        XCTAssertEqual(model?.api, .llama)
+    }
+
     // Integration: a dynamic Ollama manual entry expands (via the shared cache)
     // into one catalog model per discovered tag, with capabilities, so the
     // provider picker shows them without any per-model config.
