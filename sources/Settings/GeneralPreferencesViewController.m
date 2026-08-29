@@ -482,9 +482,20 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }
     const BOOL selectedIsDefault = selectedName != nil &&
         [selectedName isEqualToString:self.defaultModelName];
+    // A dynamic (auto-discovering) entry is a whole server, not a single model, so
+    // it cannot be the default or economy model: those store a model NAME that
+    // would be the server label, which never matches a discovered tag. Disable
+    // both actions for such a row (the user picks a concrete tag in the chat
+    // model picker instead).
+    const BOOL selectedIsDynamic = hasSelection &&
+        [self.configurations[(NSUInteger)self.selectedIndex][kAIManualModelDynamicModelsKey] boolValue];
+    const NSInteger defaultSegment = 2;
     const NSInteger economySegment = _editControl.segmentCount - 1;
     for (NSInteger i = 0; i < _editControl.segmentCount; i++) {
-        const BOOL enabled = hasSelection && !(i == economySegment && selectedIsDefault);
+        BOOL enabled = hasSelection && !(i == economySegment && selectedIsDefault);
+        if (selectedIsDynamic && (i == defaultSegment || i == economySegment)) {
+            enabled = NO;
+        }
         [_editControl setEnabled:enabled forSegment:i];
     }
 }
@@ -1164,6 +1175,12 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 - (void)updateDynamicModelsEditorState {
     const BOOL dynamic = _dynamicModelsButton.state == NSControlStateValueOn;
     _nameField.enabled = !dynamic;
+    // A dynamic entry has no model name: clear the field so the stored URL-scoped
+    // label ("Ollama (auto): host") can't sit in the disabled field and then leak
+    // as a bogus model name if the user later unchecks auto-discovery.
+    if (dynamic) {
+        _nameField.stringValue = @"";
+    }
     // Override the placeholder only while dynamic, and restore whatever it was
     // (e.g. a preset's example model name) when turning it off, so the now-required
     // Model field doesn't keep implying "no name needed".
@@ -1286,13 +1303,12 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 // rather than reusing whatever was left in the disabled Model field. Two dynamic
 // entries for the same server therefore collide on the uniqueness check.
 - (NSString *)ollamaAutoLabelForURL:(NSString *)url {
-    NSURLComponents *components = [NSURLComponents componentsWithString:url];
-    NSString *host = components.host;
-    if (host.length == 0) {
-        return @"Ollama (auto)";
-    }
-    NSString *hostPort = components.port ? [NSString stringWithFormat:@"%@:%@", host, components.port] : host;
-    return [NSString stringWithFormat:@"Ollama (auto): %@", hostPort];
+    // Reuse the discovery layer's server label, which normalizes a missing scheme
+    // (so scheme-less "host:port" endpoints don't all collapse to one label) and
+    // includes the scheme (so http/https to the same host are distinct). This is
+    // what the per-server uniqueness check keys on.
+    return [NSString stringWithFormat:@"Ollama (auto): %@",
+            [iTermOllamaModelDiscovery serverLabelForEndpoint:url]];
 }
 
 - (void)testClicked:(id)sender {

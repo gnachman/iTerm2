@@ -114,12 +114,29 @@ class OllamaModelDiscovery: NSObject {
         }
         var request = URLRequest(url: url)
         request.timeoutInterval = timeout
-        for header in headers {
-            if let name = header["name"], let value = header["value"], !name.isEmpty {
-                request.setValue(value, forHTTPHeaderField: name)
-            }
+        // Validate/normalize exactly like the chat path (AICustomHeaders.merged:
+        // RFC-7230 name check, control-char value rejection, field-log breadcrumbs)
+        // so discovery and chat authenticate with the SAME header set.
+        for (name, value) in AICustomHeaders.merged(into: [:], customHeaders: headers) {
+            request.setValue(value, forHTTPHeaderField: name)
         }
         return request
+    }
+
+    // A human-readable label for the server behind an endpoint, used to name a
+    // dynamic provider entry. Normalizes a missing scheme the same way tagsURL
+    // does and INCLUDES the scheme, so scheme-less hosts don't all collapse to one
+    // label and http/https to the same host stay distinct. e.g.
+    // "localhost:11434" -> "http://localhost:11434".
+    @objc(serverLabelForEndpoint:)
+    static func serverLabel(forEndpoint endpoint: String) -> String {
+        guard let url = tagsURL(fromEndpoint: endpoint),
+              let scheme = url.scheme,
+              let host = url.host else {
+            return endpoint
+        }
+        let hostPort = url.port.map { "\(host):\($0)" } ?? host
+        return "\(scheme)://\(hostPort)"
     }
 
     // Fetch the installed model names. The completion runs on the main queue with
@@ -165,9 +182,19 @@ class OllamaModelDiscovery: NSObject {
         }
         let task = URLSession.shared.dataTask(with: request) { data, _, error in
             let resolved: [AIMetadata.Model]? = {
-                if error != nil { return nil }
-                guard let data else { return nil }
-                return Self.modelsIfParseable(fromTagsResponse: data, endpoint: endpoint)
+                if let error {
+                    DLog("Ollama /api/tags fetch for \(endpoint) failed: \(error)")
+                    return nil
+                }
+                guard let data else {
+                    DLog("Ollama /api/tags fetch for \(endpoint) returned no data")
+                    return nil
+                }
+                let models = Self.modelsIfParseable(fromTagsResponse: data, endpoint: endpoint)
+                if models == nil {
+                    DLog("Ollama /api/tags fetch for \(endpoint) returned an unparseable body (\(data.count) bytes)")
+                }
+                return models
             }()
             DispatchQueue.main.async { completion(resolved) }
         }

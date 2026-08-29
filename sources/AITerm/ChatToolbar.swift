@@ -195,7 +195,16 @@ class ChatToolbar {
         ollamaCacheObserver = NotificationCenter.default.addObserver(
             forName: OllamaModelCache.didChangeNotification,
             object: nil,
-            queue: .main) { [weak self] _ in
+            queue: .main) { [weak self] notification in
+            // Scope the fan-out: only rebuild when the changed endpoint is one of
+            // the currently-configured dynamic entries (a stale retry for a
+            // since-removed entry, or an unknown object, is ignored). Every
+            // configured endpoint's models appear in the provider popup, so a
+            // real configured change does still rebuild.
+            if let endpoint = notification.object as? String,
+               !LLMMetadata.dynamicOllamaEndpoints().contains(endpoint) {
+                return
+            }
             self?.update()
         }
         update()

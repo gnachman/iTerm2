@@ -213,6 +213,22 @@ class LLMMetadata: NSObject {
     // for its endpoint. Empty until the first /api/tags fetch lands; the cache
     // posts OllamaModelCache.didChangeNotification when it does, so the pickers
     // rebuild. Each model inherits the entry's custom auth headers.
+    // The endpoint URLs of the currently-configured dynamic Ollama entries. Used
+    // to scope the model-cache change notification so a toolbar only rebuilds for
+    // endpoints that are actually configured.
+    @objc static func dynamicOllamaEndpoints() -> Set<String> {
+        guard let raw = iTermPreferences.object(forKey: kPreferenceKeyAIManualModelConfigurations) as? [[String: Any]] else {
+            return []
+        }
+        var result = Set<String>()
+        for configuration in raw where bool(configuration, key: ManualModelKey.dynamicModels) {
+            if let url = configuration[ManualModelKey.url] as? String, !url.isEmpty {
+                result.insert(url)
+            }
+        }
+        return result
+    }
+
     private static func dynamicOllamaModels(configuration: [String: Any]) -> [AIMetadata.Model] {
         guard let url = configuration[ManualModelKey.url] as? String,
               !url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {

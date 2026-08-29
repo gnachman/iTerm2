@@ -40,6 +40,34 @@ final class OllamaModelDiscoveryTests: XCTestCase {
         XCTAssertNil(OllamaModelDiscovery.tagsURL(fromEndpoint: "not a url"))
     }
 
+    // The discovery probe must validate headers the same way the chat path does
+    // (AICustomHeaders): a bad RFC-7230 name or a control-char value is dropped, so
+    // discovery and chat authenticate with the same set.
+    func test_tagsRequest_validatesHeadersLikeChatPath() {
+        let request = OllamaModelDiscovery.tagsRequest(
+            fromEndpoint: "http://h/api/chat",
+            headers: [
+                ["name": "Authorization", "value": "Bearer ok"],
+                ["name": "Bad Name", "value": "x"],          // space -> invalid name
+                ["name": "X-Ctrl", "value": "line1\nline2"],  // control char -> invalid value
+            ],
+            timeout: 5)
+        XCTAssertEqual(request?.value(forHTTPHeaderField: "Authorization"), "Bearer ok")
+        XCTAssertNil(request?.value(forHTTPHeaderField: "Bad Name"), "invalid header name must be dropped")
+        XCTAssertNil(request?.value(forHTTPHeaderField: "X-Ctrl"), "control-char value must be dropped")
+    }
+
+    // Server labels must distinguish scheme-less hosts (so two different servers
+    // don't collide) and http vs https (distinct endpoints).
+    func test_serverLabel_distinguishesHostsAndScheme() {
+        XCTAssertEqual(OllamaModelDiscovery.serverLabel(forEndpoint: "localhost:11434"), "http://localhost:11434")
+        XCTAssertEqual(OllamaModelDiscovery.serverLabel(forEndpoint: "10.0.0.5:11434"), "http://10.0.0.5:11434")
+        XCTAssertNotEqual(OllamaModelDiscovery.serverLabel(forEndpoint: "localhost:11434"),
+                          OllamaModelDiscovery.serverLabel(forEndpoint: "10.0.0.5:11434"))
+        XCTAssertNotEqual(OllamaModelDiscovery.serverLabel(forEndpoint: "http://gpu1:11434"),
+                          OllamaModelDiscovery.serverLabel(forEndpoint: "https://gpu1:11434"))
+    }
+
     // A scheme-less "host:port" endpoint (a common user input) must still resolve
     // for discovery, defaulting to http, instead of failing permanently.
     func test_tagsURL_defaultsMissingSchemeToHTTP() {

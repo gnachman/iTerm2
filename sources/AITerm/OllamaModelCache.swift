@@ -45,6 +45,11 @@ class OllamaModelCache: NSObject {
     // permanently-down server isn't probed forever; read-driven recovery remains.
     let maxAutoRetries = 6
 
+    // Disk persistence is enabled only after loadPersistedModels() runs (at app
+    // launch), so tests that use the shared instance don't touch user defaults.
+    private var persistenceEnabled = false
+    private static let persistenceKey = "NoSyncOllamaDiscoveredModels"
+
     // Injectable for tests: the clock, the network fetch, and the retry timer.
     var nowProvider: () -> Date = { Date() }
     var fetcher: (String, [[String: String]], TimeInterval, @escaping ([AIMetadata.Model]?) -> Void) -> Void = {
@@ -132,17 +137,24 @@ class OllamaModelCache: NSObject {
             entry.consecutiveFailures += 1
             scheduleRetry = entry.consecutiveFailures <= maxAutoRetries
         }
+        let failures = entry.consecutiveFailures
         cache[endpoint] = entry
         inFlight.remove(endpoint)
         lock.unlock()
 
+        if let result {
+            DLog("Ollama discovery for \(endpoint): success, \(result.count) model(s), changed=\(changed)")
+        } else {
+            DLog("Ollama discovery for \(endpoint): FAILED (attempt \(failures)); scheduleRetry=\(scheduleRetry)")
+        }
         if scheduleRetry {
             retryScheduler(failureRetryInterval) { [weak self] in
                 self?.refresh(endpoint: endpoint, headers: headers)
             }
         }
         if changed {
-            postDidChange()
+            persistIfEnabled()
+            postDidChange(endpoint: endpoint)
         }
     }
 
@@ -151,12 +163,86 @@ class OllamaModelCache: NSObject {
         update(endpoint: endpoint, result: models)
     }
 
-    private func postDidChange() {
+    // Posts the CHANGED endpoint as the notification `object` so observers can
+    // ignore refreshes for endpoints they don't display (a toolbar bound to one
+    // Ollama server shouldn't rebuild when a different server's list changes).
+    // MARK: - Persistence
+    //
+    // The in-memory cache starts empty on launch and only populates after an async
+    // /api/tags round-trip, so a chat pinned to a discovered tag would resolve to
+    // nil (and silently route to the global default provider, possibly a cloud
+    // vendor) during that window. Persisting the last-discovered models lets them
+    // resolve SYNCHRONOUSLY at launch (possibly stale) while a fresh fetch updates.
+
+    // Load persisted models into the cache and enable persistence on future
+    // successful refreshes. Call once at app launch, before any dynamic-model
+    // resolution. Seeded entries are treated as succeeded-but-stale so the first
+    // read still kicks off a refresh.
+    @objc func loadPersistedModels() {
+        persistenceEnabled = true
+        guard let representation = iTermUserDefaults.userDefaults().object(forKey: Self.persistenceKey) as? [String: Any] else {
+            return
+        }
+        restore(from: representation)
+    }
+
+    // The serializable snapshot of the successfully-discovered models, keyed by
+    // endpoint. Pure (no I/O) so it's unit-testable.
+    func persistedRepresentation() -> [String: Any] {
+        lock.lock()
+        defer { lock.unlock() }
+        var result: [String: Any] = [:]
+        for (endpoint, entry) in cache where entry.haveSucceeded {
+            result[endpoint] = entry.models.map { Self.dictionary(from: $0) }
+        }
+        return result
+    }
+
+    // Seed the cache from a persisted snapshot. Entries are marked succeeded with
+    // no lastAttempt, so shouldRefresh triggers a fresh fetch on the first read.
+    func restore(from representation: [String: Any]) {
+        lock.lock()
+        defer { lock.unlock() }
+        for (endpoint, value) in representation {
+            guard let dicts = value as? [[String: Any]] else { continue }
+            let models = dicts.compactMap { Self.model(from: $0, endpoint: endpoint) }
+            cache[endpoint] = Entry(models: models, haveSucceeded: true, lastAttempt: nil)
+        }
+    }
+
+    private func persistIfEnabled() {
+        guard persistenceEnabled else { return }
+        iTermUserDefaults.userDefaults().set(persistedRepresentation(), forKey: Self.persistenceKey)
+    }
+
+    private static let featureNames: [(AIMetadata.Model.Feature, String)] = [
+        (.streaming, "streaming"),
+        (.functionCalling, "functionCalling"),
+        (.configurableThinking, "configurableThinking"),
+        (.vision, "vision"),
+    ]
+
+    private static func dictionary(from model: AIMetadata.Model) -> [String: Any] {
+        let features = featureNames.filter { model.features.contains($0.0) }.map { $0.1 }
+        return ["name": model.name, "ctx": model.contextWindowTokens, "features": features]
+    }
+
+    private static func model(from dictionary: [String: Any], endpoint: String) -> AIMetadata.Model? {
+        guard let name = dictionary["name"] as? String else { return nil }
+        let ctx = dictionary["ctx"] as? Int ?? OllamaModelDiscovery.defaultContextWindow
+        let names = Set(dictionary["features"] as? [String] ?? [])
+        let features = Set(featureNames.filter { names.contains($0.1) }.map { $0.0 })
+        return AIMetadata.Model(name: name, contextWindowTokens: ctx, maxResponseTokens: ctx,
+                                url: endpoint, api: .llama, features: features,
+                                vectorStoreConfig: .disabled, vendor: .llama)
+    }
+
+    private func postDidChange(endpoint: String) {
         if Thread.isMainThread {
-            NotificationCenter.default.post(name: Self.didChangeNotification, object: nil)
+            NotificationCenter.default.post(name: Self.didChangeNotification, object: endpoint)
         } else {
             DispatchQueue.main.async {
-                NotificationCenter.default.post(name: Self.didChangeNotification, object: nil)
+                NotificationCenter.default.post(name: Self.didChangeNotification, object: endpoint)
             }
         }
     }

@@ -140,6 +140,33 @@ final class OllamaModelCacheTests: XCTestCase {
         XCTAssertEqual(fetchCount, 2, "forced refresh must issue even with one in flight")
     }
 
+    // Persisted models restore synchronously (with capabilities), so a chat pinned
+    // to a discovered tag resolves at launch instead of routing to the default
+    // provider while /api/tags is fetched.
+    func test_persistenceRoundTrip_restoresModelsSynchronously() {
+        let endpoint = "http://persist-test:11434/api/chat"
+        let source = makeCache()
+        source.update(endpoint: endpoint, models: models(endpoint))
+
+        let restored = makeCache()
+        restored.restore(from: source.persistedRepresentation())
+
+        let m = restored.models(forEndpoint: endpoint)
+        XCTAssertEqual(m.map { $0.name }, ["qwen3.5:4b"])
+        XCTAssertEqual(m.first?.url, endpoint)
+        XCTAssertEqual(m.first?.contextWindowTokens, 262_144)
+        XCTAssertTrue(m.first?.features.contains(.vision) ?? false, "capabilities survive persistence")
+        XCTAssertTrue(m.first?.features.contains(.configurableThinking) ?? false)
+    }
+
+    // The change notification carries the endpoint so observers can scope rebuilds.
+    func test_update_notificationCarriesEndpoint() {
+        let cache = makeCache()
+        expectation(forNotification: OllamaModelCache.didChangeNotification, object: "ep1")
+        cache.update(endpoint: "ep1", models: models("ep1"))
+        waitForExpectations(timeout: 1)
+    }
+
     // Integration: a dynamic Ollama manual entry expands (via the shared cache)
     // into one catalog model per discovered tag, with capabilities, so the
     // provider picker shows them without any per-model config.
