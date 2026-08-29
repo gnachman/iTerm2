@@ -198,7 +198,7 @@ class LLMMetadata: NSObject {
         guard let raw = iTermPreferences.object(forKey: kPreferenceKeyAIManualModelConfigurations) as? [[String: Any]] else {
             return []
         }
-        return raw.flatMap { configuration -> [AIMetadata.Model] in
+        let models = raw.flatMap { configuration -> [AIMetadata.Model] in
             // A dynamic Ollama entry expands into one model per installed tag,
             // discovered from the server (with capabilities), instead of a single
             // hand-configured model.
@@ -206,6 +206,30 @@ class LLMMetadata: NSObject {
                 return dynamicOllamaModels(configuration: configuration)
             }
             return manualModel(configuration: configuration).map { [$0] } ?? []
+        }
+        return disambiguateDynamicCollisions(models)
+    }
+
+    // Two dynamic Ollama servers can expose the same tag (e.g. both have
+    // "llama3.3"), producing models with identical `name` but different url/headers
+    // that every name-based resolver would collapse to the first. Qualify the
+    // DISPLAY name of each colliding dynamic model with its server so identities
+    // are unique (pins/picker resolve to the right transport); effectiveModelName
+    // still carries the raw tag for the wire. A dynamic model that doesn't collide
+    // keeps its clean tag name.
+    private static func disambiguateDynamicCollisions(_ models: [AIMetadata.Model]) -> [AIMetadata.Model] {
+        var nameCounts: [String: Int] = [:]
+        for model in models {
+            nameCounts[model.name, default: 0] += 1
+        }
+        return models.map { model in
+            // Only dynamic models carry wireModelName; only qualify on a real clash.
+            guard model.wireModelName != nil, (nameCounts[model.name] ?? 0) > 1 else {
+                return model
+            }
+            var qualified = model
+            qualified.name = "\(model.effectiveModelName) (\(OllamaModelDiscovery.serverLabel(forEndpoint: model.url)))"
+            return qualified
         }
     }
 
@@ -240,6 +264,10 @@ class LLMMetadata: NSObject {
         return OllamaModelCache.shared.models(forEndpoint: url, headers: headers).map { model in
             var m = model
             m.customHeaders = headers
+            // Mark as dynamic and preserve the raw tag: if this tag collides with
+            // another server's, disambiguateDynamicCollisions qualifies `name` but
+            // effectiveModelName (this) still goes on the wire.
+            m.wireModelName = model.name
             return m
         }
     }

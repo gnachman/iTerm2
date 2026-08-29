@@ -167,6 +167,39 @@ final class OllamaModelCacheTests: XCTestCase {
         waitForExpectations(timeout: 1)
     }
 
+    // Two dynamic servers exposing the same tag must not collide: each must remain
+    // reachable (its own url) with a distinct identity, while still sending the raw
+    // tag on the wire.
+    func test_twoDynamicServers_sameTag_disambiguatedByEndpoint() {
+        let epA = "http://serverA:11434/api/chat"
+        let epB = "http://serverB:11434/api/chat"
+        let body = { (ep: String) in
+            Data("{\"models\":[{\"name\":\"llama3.3\",\"capabilities\":[\"tools\"],\"details\":{\"context_length\":4096}}]}".utf8)
+        }
+        OllamaModelCache.shared.update(endpoint: epA, models: OllamaModelDiscovery.models(fromTagsResponse: body(epA), endpoint: epA))
+        OllamaModelCache.shared.update(endpoint: epB, models: OllamaModelDiscovery.models(fromTagsResponse: body(epB), endpoint: epB))
+        defer {
+            OllamaModelCache.shared.update(endpoint: epA, models: [])
+            OllamaModelCache.shared.update(endpoint: epB, models: [])
+        }
+
+        let key = kPreferenceKeyAIManualModelConfigurations
+        let saved = iTermPreferences.object(forKey: key)
+        defer { iTermPreferences.setObject(saved, forKey: key) }
+        iTermPreferences.setObject([
+            ["url": epA, "dynamicModels": true, "api": Int(iTermAIAPI.llama.rawValue)],
+            ["url": epB, "dynamicModels": true, "api": Int(iTermAIAPI.llama.rawValue)],
+        ], forKey: key)
+
+        let models = LLMMetadata.manualModels()
+        let llama = models.filter { ($0.wireModelName ?? $0.name) == "llama3.3" }
+        XCTAssertEqual(llama.count, 2, "both servers' llama3.3 should be present")
+        XCTAssertEqual(Set(llama.map { $0.name }).count, 2, "identities must be distinct (no ambiguous .first match)")
+        XCTAssertEqual(Set(llama.map { $0.url }), [epA, epB], "each must keep its own endpoint")
+        XCTAssertTrue(llama.allSatisfy { $0.effectiveModelName == "llama3.3" },
+                      "each must still send the raw tag on the wire")
+    }
+
     // Integration: a dynamic Ollama manual entry expands (via the shared cache)
     // into one catalog model per discovered tag, with capabilities, so the
     // provider picker shows them without any per-model config.

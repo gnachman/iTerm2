@@ -208,6 +208,15 @@ class AIMetadata: NSObject {
         var reasoningEfforts: [ResponsesRequestBody.ReasoningOptions.Effort] = []
         var serviceTiers: [ResponsesRequestBody.ServiceTier] = []
 
+        // The model identifier sent ON THE WIRE, when it must differ from `name`.
+        // `name` is both the display identity (unique, used for pins and picker
+        // resolution) and normally the wire model id, but two dynamic Ollama
+        // servers can expose the same tag: then `name` is disambiguated (e.g.
+        // "llama3.3 (http://gpu2:11434)") while `wireModelName` keeps the raw tag
+        // the server expects. nil means "use name". See effectiveModelName.
+        var wireModelName: String? = nil
+        var effectiveModelName: String { wireModelName ?? name }
+
         // Per-model custom HTTP headers merged into every request to this model's
         // endpoint (see AICustomHeaders.merged). Each entry is a
         // {"name": ..., "value": ...} dictionary. Empty for built-in models; set

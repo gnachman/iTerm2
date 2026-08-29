@@ -463,7 +463,9 @@ struct LlamaBodyRequestBuilder {
         let keepAlive = (keepAliveSetting?.isEmpty ?? true) ? nil : keepAliveSetting
 
         let body = Body(
-            model: provider.dynamicModelsSupported ? provider.model.name : nil,
+            // effectiveModelName is the raw server tag even when the display name
+            // was disambiguated for two same-tag dynamic servers.
+            model: provider.dynamicModelsSupported ? provider.model.effectiveModelName : nil,
             messages: llamaMessages,
             tools: tools,
             stream: stream,
