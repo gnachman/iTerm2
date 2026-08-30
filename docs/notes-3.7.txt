@@ -749,6 +749,11 @@ Settings Improvements:
   the current tab.
 
 Bug Fixes:
+- The selected tab’s bright HDR outline on
+  macOS Tahoe is now off by default. It is
+  gated behind a new “Allow HDR effects”
+  advanced setting because forcing the
+  display into HDR could hang some systems.
 - In the tmux Dashboard, “Open in Tabs” is now
   enabled when a single hidden window is
   selected, matching “Open in Window.” Issue

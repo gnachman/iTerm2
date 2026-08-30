@@ -256,6 +256,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)gitSearchPath;
 + (double)gitTimeout;
 + (void)setGitTimeout:(double)value;
++ (BOOL)allowHDR;
 + (BOOL)hdrCursor;
 + (BOOL)hideStuckTooltips;
 + (BOOL)highVisibility;

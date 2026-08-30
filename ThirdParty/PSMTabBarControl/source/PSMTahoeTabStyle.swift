@@ -1370,9 +1370,16 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                 NSGraphicsContext.current?.saveGraphicsState()
                 path.addClip()
                 rect.fill(using: .color)
-                
-                NSColor(white: 1.0, alpha: tabColor.perceivedBrightness).set()
-                rect.fill(using: .plusLighter)
+
+                // Additive white pushes the outline past reference white, which
+                // reads as an HDR glow on an extended-range display. Gated
+                // because forcing the display into EDR can hang some systems
+                // (the same risk as the Metal HDR cursor). Off leaves the
+                // outline tinted with the tab color, just not brighter than white.
+                if iTermAdvancedSettingsModel.allowHDR() {
+                    NSColor(white: 1.0, alpha: tabColor.perceivedBrightness).set()
+                    rect.fill(using: .plusLighter)
+                }
                 NSGraphicsContext.current?.restoreGraphicsState()
             }
             
