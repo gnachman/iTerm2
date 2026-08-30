@@ -2990,19 +2990,23 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         return;
     }
 
+    // The popup's manual items are the RESOLVED models, so apply by model. This
+    // must come before the config-by-name lookup: a dynamic entry whose discovered
+    // tag collides (so its display name is qualified with the server) can equal a
+    // dynamic config's URL-scoped label, and selectManualConfigurationAsDefaultForNewChats:
+    // silently no-ops for a dynamic config - which would leave the recommended
+    // Ollama vendor as the default (and its Regular/Budget pickers visible).
     NSString *manualName = [self manualModelNameFromDefaultAIModelIdentifier:identifier];
+    iTermAIModel *model = [self settingsManualModelNamed:manualName];
+    if (model) {
+        [self selectManualModelAsDefaultForNewChats:model];
+        return;
+    }
     NSDictionary *configuration =
         [self manualAIModelConfigurationNamed:manualName
                             inConfigurations:[self mutableManualAIModelConfigurations]];
     if (configuration) {
         [self selectManualConfigurationAsDefaultForNewChats:configuration];
-        return;
-    }
-    // A dynamic entry's discovered tag: not a config label, so apply it directly
-    // from the resolved model.
-    iTermAIModel *model = [self settingsManualModelNamed:manualName];
-    if (model) {
-        [self selectManualModelAsDefaultForNewChats:model];
         return;
     }
 
@@ -3179,17 +3183,17 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     if (providerNumber) {
         return (iTermAIVendor)providerNumber.unsignedIntegerValue;
     }
+    // Model-first, matching defaultAIModelPopupDidChange:'s routing.
     NSString *manualName = [self manualModelNameFromDefaultAIModelIdentifier:identifier];
+    iTermAIModel *model = [self settingsManualModelNamed:manualName];
+    if (model) {
+        return [iTermLLMMetadata vendorForManualModelWithAPI:model.api url:model.url modelName:model.name];
+    }
     NSDictionary *configuration =
         [self manualAIModelConfigurationNamed:manualName
                              inConfigurations:[self mutableManualAIModelConfigurations]];
     if (configuration) {
         return [self providerForManualAIModelConfiguration:configuration];
-    }
-    // A dynamic entry's discovered tag: derive the vendor from the resolved model.
-    iTermAIModel *model = [self settingsManualModelNamed:manualName];
-    if (model) {
-        return [iTermLLMMetadata vendorForManualModelWithAPI:model.api url:model.url modelName:model.name];
     }
     return (iTermAIVendor)[self unsignedIntegerForKey:kPreferenceKeyAIVendor];
 }
