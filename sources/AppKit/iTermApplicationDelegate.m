@@ -1519,6 +1519,10 @@ void TurnOnDebugLoggingAutomatically(void) {
     [iTermMacOS13RequirementNotice maybeShow];
     DLog(@"didFinishLaunching");
 
+    // When running an isolated instance via -suite, overlay the suite name on
+    // the dock icon so it's obvious which instance this dock icon belongs to.
+    [iTermSuiteDockTileView configureDockTileIfNeeded];
+
     // Record whether the previous shutdown ran to completion. +lastShutdownWasClean
     // returns NO if the process was killed (e.g. SIGKILL by the logout/reboot
     // watchdog) before +markShutdownAsClean ran at the end of

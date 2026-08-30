@@ -276,6 +276,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)includePasteHistoryInAdvancedPaste;
 + (BOOL)includeShortcutInWindowsMenu;
 + (BOOL)indicateBellsInDockBadgeLabel;
++ (BOOL)showSuiteNameInDockIcon;
 + (double)indicatorFlashInitialAlpha;
 + (BOOL)jiggleTTYSizeOnClearBuffer;
 + (BOOL)killJobsInServersOnQuit;
