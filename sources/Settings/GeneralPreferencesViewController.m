@@ -2657,13 +2657,15 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }
 }
 
-// YES when the default-model popup has the Ollama VENDOR selected (not a manual
-// model that happens to route to Ollama).
+// YES only when the recommended (built-in) Ollama VENDOR is the default: that is
+// the sole case the Regular/Budget pickers apply to (they set the Ollama vendor's
+// per-tier model prefs). A manual model - even one that routes to Ollama - has
+// useRecommended=NO, so the pickers are hidden and the normal API-key hint shows.
+// Read from the committed prefs, not the popup's selected item, so a stale/pending
+// selection can't leave the pickers visible over a manual default.
 - (BOOL)selectedDefaultIsOllamaVendor {
-    NSString *identifier = _aiVendor.selectedItem.representedObject;
-    NSNumber *providerNumber = [self providerFromDefaultAIModelIdentifier:identifier];
-    return providerNumber != nil &&
-        (iTermAIVendor)providerNumber.unsignedIntegerValue == iTermAIVendorLlama;
+    return [self boolForKey:kPreferenceKeyUseRecommendedAIModel] &&
+        (iTermAIVendor)[self unsignedIntegerForKey:kPreferenceKeyAIVendor] == iTermAIVendorLlama;
 }
 
 - (void)populateOllamaModelPopups {
