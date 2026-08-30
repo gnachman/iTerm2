@@ -614,9 +614,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     // Wide enough for the API-key hint line under the API popup to fit longer
     // localizations (e.g. Russian) without truncating.
     const CGFloat width = 590;
-    // Extra height over the base layout makes room for the API-key hint line
-    // under the API popup and the custom-headers section near the bottom.
-    const CGFloat height = 706;
+    // Height must clear the fixed button row (Save/Cancel/Test) at y=16..46: the
+    // content flows downward from height-66 and the custom-headers add/remove
+    // control lands at height-694, so the window has to be tall enough to keep
+    // that (and the headers table above it) above the buttons with a small gap.
+    const CGFloat height = 756;
     const CGFloat margin = 20;
     const CGFloat labelWidth = 150;
     const CGFloat fieldX = margin + labelWidth + 12;
