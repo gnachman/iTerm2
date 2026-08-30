@@ -109,6 +109,31 @@ final class OllamaModelCacheTests: XCTestCase {
         XCTAssertEqual(scheduled, cache.maxAutoRetries + 1, "a success re-arms the retry")
     }
 
+    // A forced refresh runs alongside an in-flight background one, so two fetches
+    // for one endpoint can be outstanding at once. If both fail (server down), that
+    // is ONE failed round, not two: it must not double-count the failure budget nor
+    // schedule two retries.
+    func test_concurrentFailures_countAsOneRound() {
+        let cache = makeCache()
+        var scheduled = 0
+        var completions: [([AIMetadata.Model]?) -> Void] = []
+        cache.fetcher = { _, _, _, completion in completions.append(completion) }
+        cache.retryScheduler = { _, _ in scheduled += 1 }
+
+        cache.refresh(endpoint: "e")               // background, in flight
+        cache.refresh(endpoint: "e", force: true)  // forced probe, also in flight
+        XCTAssertEqual(completions.count, 2, "the forced refresh runs alongside the background one")
+
+        completions[0](nil)  // first fails
+        completions[1](nil)  // second fails
+        XCTAssertEqual(scheduled, 1, "two concurrent failures are one round, not two retries")
+
+        // And the budget is intact: it still takes maxAutoRetries more failed rounds
+        // (each a single fetch) to hit the cap.
+        for _ in 0..<(cache.maxAutoRetries * 2) { cache.update(endpoint: "e", result: nil) }
+        XCTAssertEqual(scheduled, cache.maxAutoRetries, "the cap counts rounds, not raw concurrent failures")
+    }
+
     // End to end: a failure at launch, then the server comes up, and the scheduled
     // retry repopulates the cache on its own (self-healing).
     func test_selfHeals_whenServerComesUp() {

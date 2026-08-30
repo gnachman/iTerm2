@@ -728,6 +728,15 @@ extension ChatViewController {
         guard !LLMMetadata.alternateModels(for: vendor).isEmpty else {
             return false
         }
+        // The built-in Ollama vendor is self-hosted (default endpoint is localhost)
+        // and intentionally keyless: the request path grants it a placeholder
+        // registration (AITermController.isSelfHosted). Gating it on an API key
+        // would drop it from the switcher unless the user typed a bogus key, so once
+        // it has discovered models (the guard above) it is available. Remote Ollama
+        // servers are configured as manual entries, not this vendor.
+        if vendor == .llama {
+            return true
+        }
         let key = AITermControllerObjC.apiKey(for: vendor)
         return key?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
     }

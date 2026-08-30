@@ -34,7 +34,11 @@ class OllamaModelCache: NSObject {
 
     private let lock = NSLock()
     private var cache: [String: Entry] = [:]
-    private var inFlight: Set<String> = []
+    // How many fetches are outstanding per endpoint. A COUNT (not a set) because a
+    // forced refresh deliberately runs alongside an in-flight background one, so an
+    // endpoint can have two fetches at once; the failure bookkeeping runs only for
+    // the last completion of a batch so concurrent failures count as one round.
+    private var inFlightCount: [String: Int] = [:]
 
     private let networkTimeout: TimeInterval = 10
     private let successTTL: TimeInterval = 300
@@ -96,11 +100,11 @@ class OllamaModelCache: NSObject {
                  force: Bool = false,
                  completion: ((Int, Bool) -> Void)? = nil) {
         lock.lock()
-        if !force && inFlight.contains(endpoint) {
+        if !force && (inFlightCount[endpoint] ?? 0) > 0 {
             lock.unlock()
             return
         }
-        inFlight.insert(endpoint)
+        inFlightCount[endpoint, default: 0] += 1
         lock.unlock()
 
         fetcher(endpoint, headers, networkTimeout) { [weak self] result in
@@ -121,6 +125,26 @@ class OllamaModelCache: NSObject {
     // notification if the list changed.
     func update(endpoint: String, result: [AIMetadata.Model]?, headers: [[String: String]] = []) {
         lock.lock()
+        // Decrement the in-flight count for this endpoint. Only the completion that
+        // drains the last outstanding fetch does the per-round failure bookkeeping,
+        // so two concurrent fetches (a background one plus a forced probe) that both
+        // fail count as ONE failed round instead of two, keeping the self-healing
+        // retry budget intact. A direct update() with no tracked fetch (tests,
+        // seeding) has count 0 and is its own round.
+        let outstanding = inFlightCount[endpoint] ?? 0
+        let lastOfBatch: Bool
+        if outstanding > 0 {
+            let remaining = outstanding - 1
+            if remaining == 0 {
+                inFlightCount[endpoint] = nil
+            } else {
+                inFlightCount[endpoint] = remaining
+            }
+            lastOfBatch = (remaining == 0)
+        } else {
+            lastOfBatch = true
+        }
+
         var entry = cache[endpoint] ?? Entry()
         entry.lastAttempt = nowProvider()
         var changed = false
@@ -130,13 +154,12 @@ class OllamaModelCache: NSObject {
             entry.models = result
             entry.haveSucceeded = true
             entry.consecutiveFailures = 0
-        } else {
+        } else if lastOfBatch {
             entry.consecutiveFailures += 1
             scheduleRetry = entry.consecutiveFailures <= maxAutoRetries
         }
         let failures = entry.consecutiveFailures
         cache[endpoint] = entry
-        inFlight.remove(endpoint)
         lock.unlock()
 
         if let result {
