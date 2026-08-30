@@ -1335,12 +1335,15 @@ CA
                 <outlet property="_irMemoryLabel" destination="5053" id="uKW-nY-Haw"/>
                 <outlet property="_lionStyleFullscreen" destination="5319" id="1Ja-r1-AWt"/>
                 <outlet property="_loadPrefsFromCustomFolder" destination="5614" id="9l7-ub-H9J"/>
+                <outlet property="_localModelSettingsView" destination="FSc-ug-4e8" id="oLv-ie-003"/>
                 <outlet property="_mainAIAPIKeyHint" destination="csg-IK-alh" id="VrE-dh-qLk"/>
                 <outlet property="_manualAIConfiguration" destination="hgA-kj-jox" id="mPG-eV-Gpd"/>
                 <outlet property="_maxVertically" destination="4540" id="Voi-dz-2WX"/>
                 <outlet property="_maximizeThroughput" destination="d2e-qW-9tY" id="chQ-zk-gQP"/>
                 <outlet property="_nightlyBuildNotice" destination="12T-17-tZZ" id="d2S-M3-V72"/>
                 <outlet property="_notifyOnlyCriticalShellIntegrationUpdates" destination="swc-Bv-Lbu" id="7ic-JY-Xfm"/>
+                <outlet property="_ollamaBudgetModelPopup" destination="h1h-cq-Dac" id="oLb-ud-002"/>
+                <outlet property="_ollamaRegularModelPopup" destination="eAk-i4-6ja" id="oLr-eg-001"/>
                 <outlet property="_openAIAPIKey" destination="eCo-bK-ey8" id="6oB-za-eR1"/>
                 <outlet property="_openAIAPIKeyLabel" destination="RYR-Tl-aPi" id="aYu-i7-V0s"/>
                 <outlet property="_openBookmark" destination="1959" id="PNp-By-R5Y"/>
@@ -7407,6 +7410,60 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                                     </textFieldCell>
                                                                 </textField>
+                                                                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FSc-ug-4e8" userLabel="Local Model Settings">
+                                                                    <rect key="frame" x="104" y="150" width="534" height="26"/>
+                                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                    <subviews>
+                                                                        <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="h1h-cq-Dac">
+                                                                            <rect key="frame" x="363" y="2" width="171" height="24"/>
+                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                            <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="T72-4I-nvw" id="3Nz-uw-uq4">
+                                                                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                                                <font key="font" metaFont="message"/>
+                                                                                <menu key="menu" id="VfN-Sb-OCI">
+                                                                                    <items>
+                                                                                        <menuItem title="Item 1" state="on" id="T72-4I-nvw"/>
+                                                                                        <menuItem title="Item 2" id="qRI-0q-xjo"/>
+                                                                                        <menuItem title="Item 3" id="2bM-zr-yMw"/>
+                                                                                    </items>
+                                                                                </menu>
+                                                                            </popUpButtonCell>
+                                                                        </popUpButton>
+                                                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5TE-yi-KYN">
+                                                                            <rect key="frame" x="267" y="6" width="80" height="16"/>
+                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Budget:" id="EyK-Y1-w8X">
+                                                                                <font key="font" metaFont="system"/>
+                                                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                                            </textFieldCell>
+                                                                        </textField>
+                                                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Kzh-f3-ksj">
+                                                                            <rect key="frame" x="0.0" y="6" width="80" height="16"/>
+                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Regular:" id="Kgn-Fr-aIj">
+                                                                                <font key="font" metaFont="system"/>
+                                                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                                            </textFieldCell>
+                                                                        </textField>
+                                                                        <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eAk-i4-6ja">
+                                                                            <rect key="frame" x="86" y="2" width="171" height="24"/>
+                                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                                            <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="vyz-YX-AnX" id="7lu-w3-k2c">
+                                                                                <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                                                <font key="font" metaFont="message"/>
+                                                                                <menu key="menu" id="goL-6g-aCi">
+                                                                                    <items>
+                                                                                        <menuItem title="Item 1" state="on" id="vyz-YX-AnX"/>
+                                                                                        <menuItem title="Item 2" id="VkH-Uk-pnd"/>
+                                                                                        <menuItem title="Item 3" id="F8j-y6-Pd4"/>
+                                                                                    </items>
+                                                                                </menu>
+                                                                            </popUpButtonCell>
+                                                                        </popUpButton>
+                                                                    </subviews>
+                                                                </customView>
                                                             </subviews>
                                                         </view>
                                                     </tabViewItem>

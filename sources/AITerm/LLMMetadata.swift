@@ -206,6 +206,12 @@ class LLMMetadata: NSObject {
         if let designated = userDesignatedEconomyModel() {
             return designated
         }
+        // The Ollama vendor has no catalog economy pointer; the user picks a budget
+        // model explicitly (the "Budget model" popup). nil means "same as regular",
+        // handled by leaving the caller on the main model.
+        if isOllamaVendorDefault {
+            return ollamaVendorEconomyModel()
+        }
         guard let configured = model() else {
             return nil
         }

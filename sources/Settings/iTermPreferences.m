@@ -261,6 +261,8 @@ NSString *const kPreferenceKeyAIManualModelConfigurations = @"AIManualModelConfi
 NSString *const kPreferenceKeyAIEconomyModelName = @"AIEconomyModelName";
 NSString *const kPreferenceKeyUseRecommendedAIModel = @"UseRecommendedAIModel";
 NSString *const kPreferenceKeyAIVendor = @"AIVendor";
+NSString *const kPreferenceKeyAIOllamaRegularModel = @"AIOllamaRegularModel";
+NSString *const kPreferenceKeyAIOllamaEconomyModel = @"AIOllamaEconomyModel";
 NSString *const kPreferenceKeyAISafetyCheck = @"AI Safety Check";
 NSString *const kPreferenceKeyAISafetyCheckUsesAppleIntelligence = @"NoSyncAISafetyCheckUsesAppleIntelligence";
 NSString *const kPreferenceKeyAISafetyCheckProviderSwitchPending = @"NoSyncAISafetyCheckProviderSwitchPending";
@@ -784,6 +786,8 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
                   kPreferenceKeyAIFeatureStreamingResponses: @NO,
                   kPreferenceKeyAIManualModelConfigurations: @[],
                   kPreferenceKeyAIEconomyModelName: @"",
+                  kPreferenceKeyAIOllamaRegularModel: @"",
+                  kPreferenceKeyAIOllamaEconomyModel: @"",
                   kPreferenceKeyUseRecommendedAIModel: @YES,
                   kPreferenceKeyAIVectorStore: @0,
                   kPreferenceKeyAIVendor: @(iTermAIVendorOpenAI),

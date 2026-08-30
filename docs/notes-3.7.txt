@@ -230,7 +230,10 @@ Major New Features:
   models installed on your local server
   automatically, with no manual configuration. A
   non-local Ollama server is still added as a
-  manual model.
+  manual model. When Ollama is your default, pick
+  which discovered model to use for regular chats
+  and an optional smaller one for quick background
+  tasks.
 
 - Claude Code integration was added. It enables
   the new Session Status feature for claude code
