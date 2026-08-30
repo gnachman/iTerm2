@@ -279,7 +279,7 @@ class LLMMetadata: NSObject {
     // lands (the change notification rebuilds the pickers). Its name is used as the
     // wire model only if a turn is sent during that window, where the local server
     // rejects it clearly rather than a cloud vendor accepting it.
-    static let pendingOllamaModelName = "Ollama (discovering models…)"
+    @objc static let pendingOllamaModelName = "Ollama (discovering models…)"
     static func pendingOllamaModel() -> AIMetadata.Model {
         return AIMetadata.Model(name: pendingOllamaModelName,
                                 contextWindowTokens: OllamaModelDiscovery.defaultContextWindow,

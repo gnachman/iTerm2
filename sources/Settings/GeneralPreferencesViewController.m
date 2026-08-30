@@ -2774,7 +2774,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 - (void)updateAIModelFromVendor {
     iTermAIModel *model = [iTermAIModel modelFromSettings];
-    if (model) {
+    // Never persist the transient Ollama "discovering models…" placeholder into
+    // the model pref: it is a UI stand-in for the window before /api/tags lands,
+    // not a real model name, and leaking it here would surface it later (e.g. as
+    // the prefilled name when adding a new manual model).
+    if (model && ![model.name isEqualToString:iTermLLMMetadata.pendingOllamaModelName]) {
         [self setString:model.name forKey:kPreferenceKeyAIModel];
     }
 }
@@ -3192,9 +3196,16 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     const NSInteger savedResponseTokens = [self integerForKey:kPreferenceKeyAIResponseTokenLimit];
     const NSInteger contextTokens = savedContextTokens > 0 ? savedContextTokens : 8192;
     const NSInteger responseTokens = savedResponseTokens > 0 ? savedResponseTokens : 8192;
+    // Seed the name from the current model, but never with the transient Ollama
+    // "discovering models…" placeholder (it is not a real model name and may have
+    // leaked into the pref from an earlier build).
+    NSString *seedName = [self stringForKey:kPreferenceKeyAIModel];
+    if (seedName.length == 0 || [seedName isEqualToString:iTermLLMMetadata.pendingOllamaModelName]) {
+        seedName = @"gpt-4o-mini";
+    }
     return @{
         kAIManualModelIDKey: NSUUID.UUID.UUIDString,
-        kAIManualModelNameKey: [self stringForKey:kPreferenceKeyAIModel] ?: @"gpt-4o-mini",
+        kAIManualModelNameKey: seedName,
         kAIManualModelURLKey: [self stringForKey:kPreferenceKeyAITermURL] ?: @"",
         kAIManualModelAPIKey: @([self unsignedIntegerForKey:kPreferenceKeyAITermAPI]),
         kAIManualModelContextWindowTokensKey: @(contextTokens),
