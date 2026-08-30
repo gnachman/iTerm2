@@ -400,6 +400,11 @@ final class OllamaModelCacheTests: XCTestCase {
         XCTAssertEqual(models.first?.effectiveModelName, "m2", "the chosen tag still goes on the wire")
         XCTAssertTrue(models.first?.features.contains(.vision) ?? false,
                       "the chosen model keeps its discovered capabilities")
+
+        // The Settings default-model popup builds from settingsManualModels(), so a
+        // dynamic entry must be surfaced there too (the regression: it was hidden).
+        XCTAssertEqual(LLMMetadata.settingsManualModels().map { $0.name }, ["m2"],
+                       "dynamic manual models must appear in the default-model popup")
     }
 
     // MARK: - Regular/Budget model selection for the Ollama vendor

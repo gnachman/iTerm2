@@ -166,6 +166,15 @@ class LLMMetadata: NSObject {
         return []
     }
 
+    // The RESOLVED manual models for the Settings default-model popup: a dynamic
+    // Ollama entry is expanded to the discovered tag(s) it exposes, with the same
+    // (disambiguated) names the chat picker uses. Because each name here is exactly
+    // what resolves at request time, an item selected as the default always maps
+    // back to a real model, so dynamic entries no longer need special-casing.
+    @objc static func settingsManualModels() -> [AIModel] {
+        return manualModels().map { AIModel($0) }
+    }
+
     static func model() -> AIMetadata.Model? {
         if iTermPreferences.bool(forKey: kPreferenceKeyUseRecommendedAIModel),
            let vendor = iTermAIVendor(rawValue: iTermPreferences.unsignedInteger(forKey: kPreferenceKeyAIVendor)) {

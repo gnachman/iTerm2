@@ -2615,14 +2615,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     return [iTermLLMMetadata vendorForManualModelWithAPI:api url:url modelName:modelName];
 }
 
-- (NSString *)defaultAIModelTitleForManualConfiguration:(NSDictionary *)configuration {
-    NSString *name = configuration[kAIManualModelNameKey] ?: NSLocalizedStringWithDefaultValue(@"AIManualModels.UntitledModel", nil, [NSBundle mainBundle], @"Untitled model", @"Placeholder name for a manual AI model with no name");
-    iTermAIVendor provider = [self providerForManualAIModelConfiguration:configuration];
-    return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.DefaultModelManualTitle", nil, [NSBundle mainBundle], @"Manual: %1$@ — %2$@", @"Menu title for a manual AI model; first %@ is the model name, second is the provider"),
-            name,
-            [self aiAPIKeyProviderNameForVendor:provider]];
-}
-
 - (void)setupDefaultAIModelSelector {
     // The popup's placement/size, the adjacent label text, and whether the
     // "use recommended model" checkbox is shown all live in the XIB. Here we
@@ -2725,7 +2717,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 }
 
 - (void)ollamaModelCacheDidChange:(NSNotification *)notification {
-    // Only the default endpoint feeds these popups; ignore other servers.
+    // Discovered models from any server feed the manual section of the default
+    // popup (dynamic entries are expanded to their tags), so rebuild it whenever a
+    // list changes.
+    [self reloadDefaultAIModelPopup];
+    // The Regular/Budget pickers below are localhost-only.
     if ([notification.object isKindOfClass:[NSString class]] &&
         ![notification.object isEqual:[iTermLLMMetadata defaultOllamaEndpoint]]) {
         return;
@@ -2765,22 +2761,21 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         _aiVendor.lastItem.representedObject = [self defaultAIModelIdentifierForProvider:provider];
     }
 
-    NSArray<NSDictionary *> *manualConfigurations = [self mutableManualAIModelConfigurations];
-    if (manualConfigurations.count > 0) {
+    // Every manual model appears beneath a separator. A dynamic (auto-discover)
+    // Ollama entry is expanded to its discovered tag(s) here, so those are listed
+    // and selectable like any other manual model - no special-casing, now that
+    // Ollama is a first-class vendor. Each name is exactly what resolves at request
+    // time, so selecting one always maps back to a real model.
+    NSArray<iTermAIModel *> *manualModels = [iTermLLMMetadata settingsManualModels];
+    if (manualModels.count > 0) {
         [_aiVendor.menu addItem:[NSMenuItem separatorItem]];
-        for (NSDictionary *configuration in manualConfigurations) {
-            // A dynamic (auto-discover) entry is a whole server, not one model: its
-            // name is a URL-scoped label that resolves to no model, so it must not
-            // be selectable as the default (it would store an unresolvable model
-            // name). The user picks a concrete discovered tag in the chat model
-            // picker instead. This mirrors the management panel, which already
-            // disables "Toggle Default" for such a row.
-            if ([configuration[kAIManualModelDynamicModelsKey] boolValue]) {
-                continue;
-            }
-            NSString *name = configuration[kAIManualModelNameKey] ?: @"";
-            [_aiVendor addItemWithTitle:[self defaultAIModelTitleForManualConfiguration:configuration]];
-            _aiVendor.lastItem.representedObject = [self defaultAIModelIdentifierForManualModelName:name];
+        for (iTermAIModel *model in manualModels) {
+            const iTermAIVendor vendor = [iTermLLMMetadata vendorForManualModelWithAPI:model.api
+                                                                                   url:model.url
+                                                                             modelName:model.name];
+            [_aiVendor addItemWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.DefaultModelManualTitle", nil, [NSBundle mainBundle], @"Manual: %1$@ — %2$@", @"Menu title for a manual AI model; first %@ is the model name, second is the provider"),
+                                         model.name, [self aiAPIKeyProviderNameForVendor:vendor]]];
+            _aiVendor.lastItem.representedObject = [self defaultAIModelIdentifierForManualModelName:model.name];
         }
     }
 
@@ -2804,13 +2799,58 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     [self updateAIAfterDefaultModelChange];
 }
 
+// The resolved manual model with this (possibly disambiguated) name, or nil. Used
+// to apply a dynamic-expanded discovered tag as the default, since its name is not
+// a config label and so isn't found by manualAIModelConfigurationNamed:.
+- (iTermAIModel *)settingsManualModelNamed:(NSString *)name {
+    if (name.length == 0) {
+        return nil;
+    }
+    for (iTermAIModel *model in [iTermLLMMetadata settingsManualModels]) {
+        if ([model.name isEqualToString:name]) {
+            return model;
+        }
+    }
+    return nil;
+}
+
+// Make a resolved manual model the default for new chats. The request path uses
+// the resolved model (LLMMetadata.model()) keyed on kPreferenceKeyAIModel, so the
+// name is what matters; the transport prefs are set from the model to keep the
+// hint/legacy path consistent.
+- (void)selectManualModelAsDefaultForNewChats:(iTermAIModel *)model {
+    if (!model) {
+        return;
+    }
+    NSString *name = model.name;
+    if ([name isEqualToString:[self currentEconomyModelName]]) {
+        [self setCurrentEconomyModelName:nil];
+    }
+    [self setBool:NO forKey:kPreferenceKeyUseRecommendedAIModel];
+    [self setString:name forKey:kPreferenceKeyAIModel];
+    [self setString:model.url ?: @"" forKey:kPreferenceKeyAITermURL];
+    [self setObject:@(model.api) forKey:kPreferenceKeyAITermAPI];
+    [self setInteger:model.contextWindowTokens forKey:kPreferenceKeyAITokenLimit];
+    [self setInteger:model.maxResponseTokens forKey:kPreferenceKeyAIResponseTokenLimit];
+    [self setBool:model.hostedCodeInterpreterFeatureEnabled forKey:kPreferenceKeyAIFeatureHostedCodeInterpreter];
+    [self setBool:model.hostedFileSearchFeatureEnabled forKey:kPreferenceKeyAIFeatureHostedFileSearch];
+    [self setBool:model.hostedWebSearchFeatureEnabled forKey:kPreferenceKeyAIFeatureHostedWebSearch];
+    [self setBool:model.functionCallingFeatureEnabled forKey:kPreferenceKeyAIFeatureFunctionCalling];
+    [self setBool:model.streamingFeatureEnabled forKey:kPreferenceKeyAIFeatureStreamingResponses];
+    [self setInteger:model.vectorStoreConfig forKey:kPreferenceKeyAIVectorStore];
+    _lastModel = name;
+    [self updateAIAfterDefaultModelChange];
+}
+
 - (void)selectManualConfigurationAsDefaultForNewChats:(NSDictionary *)configuration {
     if (!configuration) {
         return;
     }
     // A dynamic (auto-discover) entry has no single model name, so it can't be a
     // default: its label would be stored as an unresolvable model name. Defense in
-    // depth behind the popup exclusion and the panel's disabled "Toggle Default".
+    // depth behind the panel's disabled "Toggle Default". (The default-model popup
+    // lists the EXPANDED discovered models and applies them via
+    // selectManualModelAsDefaultForNewChats: instead.)
     if ([configuration[kAIManualModelDynamicModelsKey] boolValue]) {
         return;
     }
@@ -2954,6 +2994,13 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                             inConfigurations:[self mutableManualAIModelConfigurations]];
     if (configuration) {
         [self selectManualConfigurationAsDefaultForNewChats:configuration];
+        return;
+    }
+    // A dynamic entry's discovered tag: not a config label, so apply it directly
+    // from the resolved model.
+    iTermAIModel *model = [self settingsManualModelNamed:manualName];
+    if (model) {
+        [self selectManualModelAsDefaultForNewChats:model];
         return;
     }
 
@@ -3136,6 +3183,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                              inConfigurations:[self mutableManualAIModelConfigurations]];
     if (configuration) {
         return [self providerForManualAIModelConfiguration:configuration];
+    }
+    // A dynamic entry's discovered tag: derive the vendor from the resolved model.
+    iTermAIModel *model = [self settingsManualModelNamed:manualName];
+    if (model) {
+        return [iTermLLMMetadata vendorForManualModelWithAPI:model.api url:model.url modelName:model.name];
     }
     return (iTermAIVendor)[self unsignedIntegerForKey:kPreferenceKeyAIVendor];
 }
