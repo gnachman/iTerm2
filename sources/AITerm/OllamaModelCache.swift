@@ -30,8 +30,6 @@ class OllamaModelCache: NSObject {
         var haveSucceeded = false
         var lastAttempt: Date?
         var consecutiveFailures = 0
-        // Kept so a self-healing retry re-authenticates the same way.
-        var headers: [[String: String]] = []
     }
 
     private let lock = NSLock()
@@ -125,7 +123,6 @@ class OllamaModelCache: NSObject {
         lock.lock()
         var entry = cache[endpoint] ?? Entry()
         entry.lastAttempt = nowProvider()
-        entry.headers = headers
         var changed = false
         var scheduleRetry = false
         if let result {

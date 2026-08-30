@@ -271,27 +271,22 @@ class LLMMetadata: NSObject {
                                 vendor: .llama)
     }
 
-    // Whether the built-in Ollama vendor is the current recommended default.
-    private static func ollamaIsRecommendedDefault() -> Bool {
-        return iTermPreferences.bool(forKey: kPreferenceKeyUseRecommendedAIModel)
-            && iTermAIVendor(rawValue: iTermPreferences.unsignedInteger(forKey: kPreferenceKeyAIVendor)) == .llama
-    }
-
     // The endpoint URLs whose discovered models are currently in use: every
-    // configured dynamic entry, plus the default endpoint when the built-in Ollama
-    // vendor is the recommended default. Used to scope the model-cache change
-    // notification and to prune persistence to live endpoints.
+    // configured dynamic entry, plus the built-in default endpoint. The default is
+    // ALWAYS included because ChatViewController.builtInModels always surfaces its
+    // discovered models (a chat can pin the built-in Ollama vendor even when the
+    // global default is a different vendor), so a discovery update for it is always
+    // relevant. Used to scope the model-cache change notification and to prune
+    // persistence to live endpoints (localhost is a single fixed endpoint, so
+    // always persisting it is bounded and lets it resolve synchronously at launch).
     @objc static func dynamicOllamaEndpoints() -> Set<String> {
-        var result = Set<String>()
+        var result = Set<String>([defaultOllamaEndpoint])
         if let raw = iTermPreferences.object(forKey: kPreferenceKeyAIManualModelConfigurations) as? [[String: Any]] {
             for configuration in raw where bool(configuration, key: ManualModelKey.dynamicModels) {
                 if let url = configuration[ManualModelKey.url] as? String, !url.isEmpty {
                     result.insert(url)
                 }
             }
-        }
-        if ollamaIsRecommendedDefault() {
-            result.insert(defaultOllamaEndpoint)
         }
         return result
     }

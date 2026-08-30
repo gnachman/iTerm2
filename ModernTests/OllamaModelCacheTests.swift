@@ -250,6 +250,31 @@ final class OllamaModelCacheTests: XCTestCase {
         XCTAssertEqual(model?.api, .llama)
     }
 
+    // The default endpoint's discovered models are ALWAYS displayable (a chat can
+    // pin the built-in Ollama vendor even when the global default is a different
+    // vendor), so the default endpoint must be in the scoping set regardless of
+    // whether Ollama is the recommended global default. Otherwise the ChatToolbar
+    // observer drops a real discovery update for that chat's picker.
+    func test_dynamicOllamaEndpoints_includesDefault_evenWhenNotRecommended() {
+        let savedRecommended = iTermPreferences.object(forKey: kPreferenceKeyUseRecommendedAIModel)
+        let savedVendor = iTermPreferences.object(forKey: kPreferenceKeyAIVendor)
+        let key = kPreferenceKeyAIManualModelConfigurations
+        let savedManual = iTermPreferences.object(forKey: key)
+        defer {
+            iTermPreferences.setObject(savedRecommended, forKey: kPreferenceKeyUseRecommendedAIModel)
+            iTermPreferences.setObject(savedVendor, forKey: kPreferenceKeyAIVendor)
+            iTermPreferences.setObject(savedManual, forKey: key)
+        }
+        // Global default is a non-Ollama recommended vendor and there are no manual
+        // dynamic entries: the default endpoint must still be scoped in.
+        iTermPreferences.setBool(true, forKey: kPreferenceKeyUseRecommendedAIModel)
+        iTermPreferences.setObject(Int(iTermAIVendor.openAI.rawValue), forKey: kPreferenceKeyAIVendor)
+        iTermPreferences.setObject([], forKey: key)
+
+        XCTAssertTrue(LLMMetadata.dynamicOllamaEndpoints().contains(LLMMetadata.defaultOllamaEndpoint),
+                      "the default Ollama endpoint is always displayable and must be scoped in")
+    }
+
     // Integration: a dynamic Ollama manual entry expands (via the shared cache)
     // into one catalog model per discovered tag, with capabilities, so the
     // provider picker shows them without any per-model config.
