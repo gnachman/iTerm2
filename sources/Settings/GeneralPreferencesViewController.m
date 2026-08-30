@@ -3835,6 +3835,12 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (strongSelf) {
             strongSelf->_manualModelsPanel = nil;
+            // Rebuild the top-level default-model popup from the now-saved configs.
+            // The per-action handlers already refresh it while the panel is open,
+            // but this is a catch-all so no edit path can leave it showing a stale
+            // manual-model list after the panel closes.
+            [strongSelf reloadDefaultAIModelPopup];
+            [strongSelf updateAIEnabled];
         }
     }];
 }
