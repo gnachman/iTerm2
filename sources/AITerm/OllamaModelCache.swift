@@ -90,6 +90,16 @@ class OllamaModelCache: NSObject {
         return cached
     }
 
+    // The names of the currently-cached models for an endpoint, WITHOUT kicking off
+    // a refresh. For the editor's discovered-models popup, which is populated after
+    // an explicit Refresh (or from the persisted/seeded cache).
+    @objc(cachedModelNamesForEndpoint:)
+    func cachedModelNames(forEndpoint endpoint: String) -> [String] {
+        lock.lock()
+        defer { lock.unlock() }
+        return cache[endpoint]?.models.map { $0.name } ?? []
+    }
+
     // Kick off a background refresh. Coalesces concurrent refreshes of the same
     // endpoint UNLESS `force` (a user-initiated refresh must always issue, or it
     // could be dropped behind a slow background fetch that then fails). completion

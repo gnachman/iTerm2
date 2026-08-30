@@ -370,4 +370,110 @@ final class OllamaModelCacheTests: XCTestCase {
         XCTAssertEqual(m1?.api, .llama)
         XCTAssertTrue(m1?.features.contains(.functionCalling) ?? false)
     }
+
+    // A dynamic entry that names ONE discovered model (the user picked it from the
+    // editor popup) exposes just that model, not every tag. An empty selection
+    // still means whole-server (backward compatible).
+    func test_dynamicOllamaEntry_withSelectedModel_exposesOnlyThatModel() {
+        let endpoint = "http://dyn-pick-test.local:11434/api/chat"
+        let fixture = Data("""
+        {"models":[{"name":"m1","capabilities":["tools"],"details":{"context_length":4096}},
+                   {"name":"m2","capabilities":["vision"],"details":{"context_length":8192}}]}
+        """.utf8)
+        OllamaModelCache.shared.update(endpoint: endpoint,
+                                       models: OllamaModelDiscovery.models(fromTagsResponse: fixture, endpoint: endpoint))
+        defer { OllamaModelCache.shared.update(endpoint: endpoint, models: []) }
+
+        let key = kPreferenceKeyAIManualModelConfigurations
+        let saved = iTermPreferences.object(forKey: key)
+        defer { iTermPreferences.setObject(saved, forKey: key) }
+        iTermPreferences.setObject([[
+            "url": endpoint,
+            "dynamicModels": true,
+            "dynamicSelectedModel": "m2",
+            "api": Int(iTermAIAPI.llama.rawValue),
+        ]], forKey: key)
+
+        let models = LLMMetadata.manualModels()
+        XCTAssertEqual(models.map { $0.name }, ["m2"],
+                       "a dynamic entry with a chosen model must expose only that one")
+        XCTAssertEqual(models.first?.effectiveModelName, "m2", "the chosen tag still goes on the wire")
+        XCTAssertTrue(models.first?.features.contains(.vision) ?? false,
+                      "the chosen model keeps its discovered capabilities")
+    }
+
+    // MARK: - Regular/Budget model selection for the Ollama vendor
+
+    private func multiModelFixture() -> Data {
+        Data("""
+        {"models":[
+          {"name":"alpha:1b","capabilities":["tools"],"details":{"context_length":4096}},
+          {"name":"zeta:7b","capabilities":["tools","vision"],"details":{"context_length":8192}}
+        ]}
+        """.utf8)
+    }
+
+    // Seed the default endpoint with two models, make the Ollama vendor the
+    // default, set the regular/economy prefs, run `body`, then restore everything.
+    private func withOllamaVendorDefault(regular: String, economy: String, _ body: () -> Void) {
+        let endpoint = LLMMetadata.defaultOllamaEndpoint
+        OllamaModelCache.shared.update(
+            endpoint: endpoint,
+            models: OllamaModelDiscovery.models(fromTagsResponse: multiModelFixture(), endpoint: endpoint))
+
+        let keys = [kPreferenceKeyUseRecommendedAIModel, kPreferenceKeyAIVendor,
+                    kPreferenceKeyAIOllamaRegularModel, kPreferenceKeyAIOllamaEconomyModel]
+        let saved = keys.map { iTermPreferences.object(forKey: $0) }
+        defer {
+            for (i, key) in keys.enumerated() { iTermPreferences.setObject(saved[i], forKey: key) }
+            OllamaModelCache.shared.update(endpoint: endpoint, models: [])
+        }
+        iTermPreferences.setBool(true, forKey: kPreferenceKeyUseRecommendedAIModel)
+        iTermPreferences.setObject(Int(iTermAIVendor.llama.rawValue), forKey: kPreferenceKeyAIVendor)
+        iTermPreferences.setObject(regular, forKey: kPreferenceKeyAIOllamaRegularModel)
+        iTermPreferences.setObject(economy, forKey: kPreferenceKeyAIOllamaEconomyModel)
+        body()
+    }
+
+    func test_recommendedOllama_honorsChosenRegularModel() {
+        withOllamaVendorDefault(regular: "zeta:7b", economy: "") {
+            XCTAssertEqual(LLMMetadata.recommendedModel(for: .llama)?.name, "zeta:7b",
+                           "the explicitly chosen regular model is the default")
+        }
+    }
+
+    func test_recommendedOllama_unsetRegular_usesLexicographicFirst() {
+        withOllamaVendorDefault(regular: "", economy: "") {
+            XCTAssertEqual(LLMMetadata.recommendedModel(for: .llama)?.name, "alpha:1b",
+                           "with no chosen regular model, the lexicographically-first tag is the default")
+        }
+    }
+
+    func test_recommendedOllama_staleRegularChoice_fallsBackToFirst() {
+        withOllamaVendorDefault(regular: "removed:99b", economy: "") {
+            XCTAssertEqual(LLMMetadata.recommendedModel(for: .llama)?.name, "alpha:1b",
+                           "a chosen model that is no longer installed falls back to the first tag")
+        }
+    }
+
+    func test_ollamaVendorEconomyModel_chosenAndInstalled() {
+        withOllamaVendorDefault(regular: "zeta:7b", economy: "alpha:1b") {
+            XCTAssertTrue(LLMMetadata.isOllamaVendorDefault)
+            XCTAssertEqual(LLMMetadata.ollamaVendorEconomyModel()?.name, "alpha:1b")
+        }
+    }
+
+    func test_ollamaVendorEconomyModel_sameAsRegular_isNil() {
+        withOllamaVendorDefault(regular: "zeta:7b", economy: "") {
+            XCTAssertNil(LLMMetadata.ollamaVendorEconomyModel(),
+                         "an empty budget pref means same-as-regular, i.e. no distinct economy model")
+        }
+    }
+
+    func test_ollamaVendorEconomyModel_staleChoice_isNil() {
+        withOllamaVendorDefault(regular: "zeta:7b", economy: "removed:99b") {
+            XCTAssertNil(LLMMetadata.ollamaVendorEconomyModel(),
+                         "a budget choice that is no longer installed resolves to nil")
+        }
+    }
 }

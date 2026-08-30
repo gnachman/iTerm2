@@ -56,6 +56,10 @@ static NSString *const kAIManualModelVectorStoreKey = @"vectorStore";
 static NSString *const kAIManualModelSupportsTemperatureKey = @"supportsTemperature";
 static NSString *const kAIManualModelConfigurableThinkingKey = @"configurableThinking";
 static NSString *const kAIManualModelDynamicModelsKey = @"dynamicModels";
+// For a dynamic entry, the single discovered model the user chose from the popup.
+// Empty/absent = expose every discovered model. Must match
+// LLMMetadata.ManualModelKey.dynamicSelectedModel.
+static NSString *const kAIManualModelDynamicSelectedModelKey = @"dynamicSelectedModel";
 // Array of {"name","value"} dictionaries. Must match LLMMetadata.ManualModelKey.customHeaders.
 static NSString *const kAIManualModelCustomHeadersKey = @"customHeaders";
 
@@ -561,7 +565,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSButton *_supportsTemperatureButton;
     NSButton *_configurableThinkingButton;
     NSButton *_dynamicModelsButton;
-    NSString *_savedNamePlaceholder;
+    // Shown in place of the Model text field while auto-discovery is on: the user
+    // picks one discovered model (or "All installed models") from it.
+    NSPopUpButton *_modelPopup;
     NSTableView *_headersTable;
     NSMutableArray<NSMutableDictionary *> *_headers;
     NSMutableDictionary<NSString *, NSButton *> *_featureButtons;
@@ -697,6 +703,16 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         _fetchModelsButton.frame = NSMakeRect(NSMaxX(nameFrame) + 6, nameFrame.origin.y - 1,
                                               fetchWidth, 24);
         [content addSubview:_fetchModelsButton];
+
+        // In auto-discovery mode this popup replaces the Model text field: the user
+        // picks one discovered model (or "All installed models") instead of typing a
+        // tag. Same slot as the (shrunk) Model field; shown/hidden by
+        // updateDynamicModelsEditorState. Populated by reloadDynamicModelPopup.
+        _modelPopup = [[NSPopUpButton alloc] initWithFrame:_nameField.frame pullsDown:NO];
+        _modelPopup.target = self;
+        _modelPopup.action = @selector(dynamicModelPopupChanged:);
+        _modelPopup.hidden = YES;
+        [content addSubview:_modelPopup];
     }
     _urlField = addTextField(NSLocalizedStringWithDefaultValue(@"AIModelEditor.URLLabel", nil, [NSBundle mainBundle], @"URL:", @"Label for the URL field"), _base[kAIManualModelURLKey]);
 
@@ -949,6 +965,57 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 - (void)controlTextDidChange:(NSNotification *)notification {
     [self updateEditorAPIKeyHint];
+    // The discovered-models popup is scoped to the URL, so refresh its contents
+    // when the URL changes while auto-discovery is on.
+    if (notification.object == _urlField && !_modelPopup.hidden) {
+        [self reloadDynamicModelPopup];
+    }
+}
+
+// Rebuild the auto-discovery model popup from the cache for the current URL, with
+// an "All installed models" choice first (the whole-server behavior) followed by
+// each discovered tag. Restores the previously-chosen selection.
+- (void)reloadDynamicModelPopup {
+    NSString *url =
+        [_urlField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+    NSString *previous = _modelPopup.selectedItem.representedObject ?: (_base[kAIManualModelDynamicSelectedModelKey] ?: @"");
+    [_modelPopup removeAllItems];
+
+    [_modelPopup addItemWithTitle:@"All installed models"];
+    _modelPopup.lastItem.representedObject = @"";
+
+    NSMutableArray<NSString *> *names =
+        [(url.length ? [iTermOllamaModelCache.shared cachedModelNamesForEndpoint:url] : @[]) mutableCopy];
+    // Keep a previously-chosen model selectable even when discovery hasn't run yet
+    // (editing a saved entry with a cold cache), so opening + saving doesn't
+    // silently reset the choice to "All".
+    if ([previous isKindOfClass:NSString.class] && previous.length > 0 && ![names containsObject:previous]) {
+        [names insertObject:previous atIndex:0];
+    }
+    if (names.count > 0) {
+        [_modelPopup.menu addItem:[NSMenuItem separatorItem]];
+        for (NSString *name in names) {
+            [_modelPopup addItemWithTitle:name];
+            _modelPopup.lastItem.representedObject = name;
+        }
+    } else {
+        [_modelPopup.menu addItem:[NSMenuItem separatorItem]];
+        NSMenuItem *hint = [[NSMenuItem alloc] initWithTitle:@"No models discovered - click Refresh Models"
+                                                      action:NULL
+                                               keyEquivalent:@""];
+        hint.enabled = NO;
+        [_modelPopup.menu addItem:hint];
+    }
+
+    const NSInteger previousIndex =
+        ([previous isKindOfClass:NSString.class] && previous.length > 0)
+            ? [_modelPopup indexOfItemWithRepresentedObject:previous]
+            : -1;
+    [_modelPopup selectItemAtIndex:(previousIndex >= 0 ? previousIndex : 0)];  // else All installed models
+}
+
+- (void)dynamicModelPopupChanged:(id)sender {
+    [self updateEditorAPIKeyHint];
 }
 
 #pragma mark - Custom headers table
@@ -1136,10 +1203,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }
     iTermAIProviderPreset *preset = _providerPresets[(NSUInteger)index];
     _nameField.stringValue = @"";
-    // This preset defines the Model-field placeholder afresh, so drop any value
-    // stashed by a prior dynamic-on: otherwise updateDynamicModelsEditorState's
-    // dynamic-off restore would clobber this placeholder with the stale one.
-    _savedNamePlaceholder = nil;
     _nameField.placeholderString = preset.placeholderModelName ?: @"";
     _urlField.stringValue = preset.url ?: @"";
     [_apiPopup selectItemWithTag:(NSInteger)preset.api];
@@ -1176,24 +1239,14 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 // disable them to make that clear, and relabel Fetch as Refresh.
 - (void)updateDynamicModelsEditorState {
     const BOOL dynamic = _dynamicModelsButton.state == NSControlStateValueOn;
-    _nameField.enabled = !dynamic;
-    // A dynamic entry has no model name: clear the field so the stored URL-scoped
-    // label ("Ollama (auto): host") can't sit in the disabled field and then leak
-    // as a bogus model name if the user later unchecks auto-discovery.
+    // In auto-discovery mode the Model text field is replaced by a popup of the
+    // discovered models, so hide the field (and clear it so a stale value can't
+    // leak as a bogus name) and show the popup instead.
+    _nameField.hidden = dynamic;
+    _modelPopup.hidden = !dynamic;
     if (dynamic) {
         _nameField.stringValue = @"";
-    }
-    // Override the placeholder only while dynamic, and restore whatever it was
-    // (e.g. a preset's example model name) when turning it off, so the now-required
-    // Model field doesn't keep implying "no name needed".
-    if (dynamic) {
-        if (!_savedNamePlaceholder) {
-            _savedNamePlaceholder = _nameField.placeholderString ?: @"";
-        }
-        _nameField.placeholderString = @"Discovered from the server";
-    } else if (_savedNamePlaceholder) {
-        _nameField.placeholderString = _savedNamePlaceholder;
-        _savedNamePlaceholder = nil;
+        [self reloadDynamicModelPopup];
     }
     _contextField.enabled = !dynamic;
     _responseField.enabled = !dynamic;
@@ -1245,6 +1298,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             if (!strongSelf) {
                 return;
             }
+            // The cache is now seeded for this URL: repopulate the model popup so
+            // the discovered tags are selectable without reopening the editor.
+            [strongSelf reloadDynamicModelPopup];
             NSAlert *alert = [[NSAlert alloc] init];
             if (failed) {
                 alert.messageText = @"Could Not Reach Server";
@@ -1253,7 +1309,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             } else {
                 alert.messageText = @"Models Refreshed";
                 alert.informativeText = [NSString stringWithFormat:
-                    @"Found %ld installed model%@. They will appear in the model picker.",
+                    @"Found %ld installed model%@. Choose one from the Model popup, or "
+                    @"“All installed models” to expose every one.",
                     (long)count, count == 1 ? @"" : @"s"];
             }
             [alert beginSheetModalForWindow:strongSelf->_window completionHandler:^(NSModalResponse r) {}];
@@ -1391,11 +1448,23 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSString *url =
         [_urlField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
     const BOOL dynamic = _dynamicModelsButton.state == NSControlStateValueOn;
-    // A dynamic entry has no single model name: ignore whatever is left in the
-    // (disabled) Model field and use a URL-scoped label. The uniqueness check runs
-    // on this label too, so a dynamic entry can't collide with another config or a
-    // second dynamic entry for the same server.
-    NSString *storedName = dynamic ? [self ollamaAutoLabelForURL:url] : name;
+    // The discovered model chosen in the popup ("" = every model). Read here so it
+    // can also seed the management-list label.
+    id popupSelection = _modelPopup.selectedItem.representedObject;
+    NSString *selectedModel = (dynamic && [popupSelection isKindOfClass:NSString.class]) ? popupSelection : @"";
+    // The management-list label: for a whole-server dynamic entry, a URL-scoped
+    // label (one per server). For a single chosen model, "model (server)" so the
+    // user can add several models from the same server as distinct entries. The
+    // uniqueness check runs on this label.
+    NSString *storedName;
+    if (dynamic) {
+        storedName = selectedModel.length
+            ? [NSString stringWithFormat:@"%@ (%@)", selectedModel,
+               [iTermOllamaModelDiscovery serverLabelForEndpoint:url]]
+            : [self ollamaAutoLabelForURL:url];
+    } else {
+        storedName = name;
+    }
     NSString *failure = nil;
     // In auto-discovery mode the model name, context window, and response limit
     // come from the server per model, so only the URL is required.
@@ -1408,7 +1477,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     } else if (!dynamic && _responseField.integerValue <= 0) {
         failure = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MaxResponseTokensPositive", nil, [NSBundle mainBundle], @"Max response tokens must be greater than zero.", @"Validation error when max response tokens is not positive");
     } else if (_nameIsTaken && _nameIsTaken(storedName)) {
-        failure = dynamic ? NSLocalizedStringWithDefaultValue(@"AIModelEditor.AutoDiscoverEntryExists", nil, [NSBundle mainBundle], @"There is already an auto-discover entry for this server.", @"Validation error when an auto-discover entry already exists for a server")
+        failure = dynamic ? (selectedModel.length
+                                ? NSLocalizedStringWithDefaultValue(@"AIModelEditor.ModelEntryExists", nil, [NSBundle mainBundle], @"There is already an entry for this model on this server.", @"Validation error when an entry for this model already exists on a server")
+                                : NSLocalizedStringWithDefaultValue(@"AIModelEditor.AutoDiscoverEntryExists", nil, [NSBundle mainBundle], @"There is already an auto-discover entry for this server.", @"Validation error when an auto-discover entry already exists for a server"))
                           : NSLocalizedStringWithDefaultValue(@"AIModelEditor.NamesUnique", nil, [NSBundle mainBundle], @"Manual model names must be unique.", @"Validation error when a manual model name is already taken");
     }
     // Validate custom headers here rather than in the per-cell delegate: the Save
@@ -1459,6 +1530,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     result[kAIManualModelConfigurableThinkingKey] =
         @(_configurableThinkingButton.state == NSControlStateValueOn);
     result[kAIManualModelDynamicModelsKey] = @(dynamic);
+    // The chosen discovered model for a dynamic entry ("" = every model).
+    if (dynamic) {
+        result[kAIManualModelDynamicSelectedModelKey] = selectedModel;
+    }
     for (NSString *key in _featureButtons) {
         result[key] = @(_featureButtons[key].state == NSControlStateValueOn);
     }
@@ -1639,6 +1714,13 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     IBOutlet NSButton *_useRecommendedModel;
     IBOutlet NSButton *_manualAIConfiguration;
     IBOutlet NSPopUpButton *_aiVendor;
+    // Shown, overlapping the "runs on-device" hint, only when the built-in Ollama
+    // vendor is the default: its models are discovered from the local server, so
+    // the user picks the regular and budget models here (there is no sane
+    // automatic choice). See updateLocalModelSettingsUI.
+    IBOutlet NSView *_localModelSettingsView;
+    IBOutlet NSPopUpButton *_ollamaRegularModelPopup;
+    IBOutlet NSPopUpButton *_ollamaBudgetModelPopup;
     IBOutlet NSButton *_aiSafetyCheck;
     IBOutlet NSButton *_aiZeroDataRetention;
 
@@ -2548,12 +2630,109 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _aiVendor.target = self;
     _aiVendor.action = @selector(defaultAIModelPopupDidChange:);
 
+    _ollamaRegularModelPopup.target = self;
+    _ollamaRegularModelPopup.action = @selector(ollamaRegularModelChanged:);
+    _ollamaBudgetModelPopup.target = self;
+    _ollamaBudgetModelPopup.action = @selector(ollamaBudgetModelChanged:);
+    // Repopulate the Regular/Budget popups when a background /api/tags refresh
+    // brings in new models (matches ChatToolbar's observer). The notification
+    // name matches OllamaModelCache.didChangeNotification.
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(ollamaModelCacheDidChange:)
+                                                 name:@"iTermOllamaModelCacheDidChange"
+                                               object:nil];
+
     [self addViewToSearchIndex:_aiVendor
                    displayName:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.DefaultModelForNewChats", nil, [NSBundle mainBundle], @"Default model for new AI chats", @"Search index display name for the default AI model setting")
                        phrases:@[ @"AI default provider",
                                    @"AI manual model default" ]
                            key:kPreferenceKeyAIModel];
     [self reloadDefaultAIModelPopup];
+}
+
+// The built-in Ollama vendor discovers its models from the local server, so when
+// it is the default we offer explicit Regular/Budget model pickers in place of
+// the "runs on-device; no API key" hint (they occupy the same space in the XIB).
+// For any other default the pickers are hidden and the normal hint shows.
+- (void)updateLocalModelSettingsUI {
+    const BOOL ollama = [self selectedDefaultIsOllamaVendor];
+    _localModelSettingsView.hidden = !ollama;
+    if (ollama) {
+        // The pickers take over the space, so suppress the API-key hint that
+        // updateAIAPIKeyHint would otherwise show for a keyless vendor.
+        _mainAIAPIKeyHint.hidden = YES;
+        [self populateOllamaModelPopups];
+    }
+}
+
+// YES when the default-model popup has the Ollama VENDOR selected (not a manual
+// model that happens to route to Ollama).
+- (BOOL)selectedDefaultIsOllamaVendor {
+    NSString *identifier = _aiVendor.selectedItem.representedObject;
+    NSNumber *providerNumber = [self providerFromDefaultAIModelIdentifier:identifier];
+    return providerNumber != nil &&
+        (iTermAIVendor)providerNumber.unsignedIntegerValue == iTermAIVendorLlama;
+}
+
+- (void)populateOllamaModelPopups {
+    NSArray<NSString *> *names = [iTermLLMMetadata discoveredOllamaModelNames];
+    [_ollamaRegularModelPopup removeAllItems];
+    [_ollamaBudgetModelPopup removeAllItems];
+    if (names.count == 0) {
+        // Discovery pending or the server is unreachable. Show a disabled hint so
+        // the space isn't empty; the observer repopulates when a refresh lands.
+        [_ollamaRegularModelPopup addItemWithTitle:@"No models found (is Ollama running?)"];
+        [_ollamaBudgetModelPopup addItemWithTitle:@"No models found (is Ollama running?)"];
+        _ollamaRegularModelPopup.enabled = NO;
+        _ollamaBudgetModelPopup.enabled = NO;
+        return;
+    }
+    _ollamaRegularModelPopup.enabled = YES;
+    _ollamaBudgetModelPopup.enabled = YES;
+    [_ollamaRegularModelPopup addItemsWithTitles:names];
+    // The budget model is optional: default it to the regular model.
+    [_ollamaBudgetModelPopup addItemWithTitle:@"Same as regular model"];
+    [_ollamaBudgetModelPopup addItemsWithTitles:names];
+
+    NSString *regular = [self stringForKey:kPreferenceKeyAIOllamaRegularModel];
+    if (regular.length > 0 && [names containsObject:regular]) {
+        [_ollamaRegularModelPopup selectItemWithTitle:regular];
+    } else {
+        // Mirror the resolver's fallback: lexicographically first (names is sorted).
+        [_ollamaRegularModelPopup selectItemAtIndex:0];
+    }
+    NSString *budget = [self stringForKey:kPreferenceKeyAIOllamaEconomyModel];
+    if (budget.length > 0 && [names containsObject:budget]) {
+        [_ollamaBudgetModelPopup selectItemWithTitle:budget];
+    } else {
+        [_ollamaBudgetModelPopup selectItemAtIndex:0];  // "Same as regular model"
+    }
+}
+
+- (void)ollamaRegularModelChanged:(id)sender {
+    [self setString:_ollamaRegularModelPopup.selectedItem.title
+             forKey:kPreferenceKeyAIOllamaRegularModel];
+}
+
+- (void)ollamaBudgetModelChanged:(id)sender {
+    // Index 0 is "Same as regular model", stored as an empty pref (nil economy).
+    if (_ollamaBudgetModelPopup.indexOfSelectedItem <= 0) {
+        [self setString:@"" forKey:kPreferenceKeyAIOllamaEconomyModel];
+    } else {
+        [self setString:_ollamaBudgetModelPopup.selectedItem.title
+                 forKey:kPreferenceKeyAIOllamaEconomyModel];
+    }
+}
+
+- (void)ollamaModelCacheDidChange:(NSNotification *)notification {
+    // Only the default endpoint feeds these popups; ignore other servers.
+    if ([notification.object isKindOfClass:[NSString class]] &&
+        ![notification.object isEqual:[iTermLLMMetadata defaultOllamaEndpoint]]) {
+        return;
+    }
+    if ([self selectedDefaultIsOllamaVendor]) {
+        [self populateOllamaModelPopups];
+    }
 }
 
 - (void)selectPopUpButton:(NSPopUpButton *)button representedObject:(NSString *)representedObject {
@@ -2590,6 +2769,15 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     if (manualConfigurations.count > 0) {
         [_aiVendor.menu addItem:[NSMenuItem separatorItem]];
         for (NSDictionary *configuration in manualConfigurations) {
+            // A dynamic (auto-discover) entry is a whole server, not one model: its
+            // name is a URL-scoped label that resolves to no model, so it must not
+            // be selectable as the default (it would store an unresolvable model
+            // name). The user picks a concrete discovered tag in the chat model
+            // picker instead. This mirrors the management panel, which already
+            // disables "Toggle Default" for such a row.
+            if ([configuration[kAIManualModelDynamicModelsKey] boolValue]) {
+                continue;
+            }
             NSString *name = configuration[kAIManualModelNameKey] ?: @"";
             [_aiVendor addItemWithTitle:[self defaultAIModelTitleForManualConfiguration:configuration]];
             _aiVendor.lastItem.representedObject = [self defaultAIModelIdentifierForManualModelName:name];
@@ -2618,6 +2806,12 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 - (void)selectManualConfigurationAsDefaultForNewChats:(NSDictionary *)configuration {
     if (!configuration) {
+        return;
+    }
+    // A dynamic (auto-discover) entry has no single model name, so it can't be a
+    // default: its label would be stored as an unresolvable model name. Defense in
+    // depth behind the popup exclusion and the panel's disabled "Toggle Default".
+    if ([configuration[kAIManualModelDynamicModelsKey] boolValue]) {
         return;
     }
     // A model cannot be both the default and the economy model. If the model
@@ -2888,24 +3082,38 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 // The API key that authorizes the default model is not obvious: it is the stored
 // key for the model's vendor, and for a manual model that vendor is inferred from
-// its API, URL, and name (see issue 12975). Spell it out under the model popup,
-// but only when a manual model is the default: a built-in vendor selection makes
-// the key obvious, so hide it then. (The manual model editor has its own hint.)
+// its API, URL, and name (see issue 12975). Spell it out under the model popup for
+// every selection: which vendor's key authorizes it, and whether that key is set.
+// The one exception is the Ollama vendor, which uses this space for its discovered
+// Regular/Budget model pickers instead. (The manual model editor has its own hint.)
 - (void)updateAIAPIKeyHint {
     if (!_mainAIAPIKeyHint) {
         return;
     }
-    NSString *identifier = _aiVendor.selectedItem.representedObject;
-    if ([self providerFromDefaultAIModelIdentifier:identifier] != nil) {
-        _mainAIAPIKeyHint.hidden = YES;
+    // Show/hide the Ollama Regular/Budget pickers (which overlap the hint) and, for
+    // the Ollama vendor, suppress the hint below. Must run before the early return.
+    [self updateLocalModelSettingsUI];
+    // The Ollama vendor uses this space for the Regular/Budget model pickers, so
+    // updateLocalModelSettingsUI already hid the hint; leave it hidden.
+    if ([self selectedDefaultIsOllamaVendor]) {
         return;
     }
+    // For every other selection (a built-in vendor OR a manual model) spell out
+    // which key authorizes it, and whether that key is set, so the situation is
+    // clear before starting a chat.
     const iTermAIVendor vendor = [self vendorForSelectedDefaultAIModel];
     _mainAIAPIKeyHint.hidden = NO;
     if (iTermAIVendorHasEnterableKey(vendor)) {
-        _mainAIAPIKeyHint.stringValue =
-            [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"AIKeyHint.Authorizes", nil, [NSBundle mainBundle], @"Authorizes with your %@ API key.", @"Hint telling the user which provider's API key authorizes the model; %@ is the provider name"),
-             iTermAIVendorProviderName(vendor)];
+        NSString *providerName = iTermAIVendorProviderName(vendor);
+        if ([AITermControllerObjC apiKeyIsConfiguredForVendor:vendor]) {
+            _mainAIAPIKeyHint.stringValue =
+                [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"AIKeyHint.Authorizes", nil, [NSBundle mainBundle], @"Authorizes with your %@ API key.", @"Hint telling the user which provider's API key authorizes the model; %@ is the provider name"),
+                 providerName];
+        } else {
+            _mainAIAPIKeyHint.stringValue =
+                [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"AIKeyHint.NoKeySet", nil, [NSBundle mainBundle], @"No %@ API key is set yet.", @"Hint telling the user no API key is set yet for a provider; %@ is the provider name"),
+                 providerName];
+        }
     } else {
         // No key can be configured: self-hosted (Llama) or Apple Intelligence
         // (which runs on-device or via Private Cloud Compute).

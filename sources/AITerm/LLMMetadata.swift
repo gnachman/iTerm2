@@ -28,6 +28,9 @@ class LLMMetadata: NSObject {
         // headers), and its models are discovered live from /api/tags rather than
         // named/capability-checkboxed by hand.
         static let dynamicModels = "dynamicModels"
+        // For a dynamic entry: the single discovered model the user chose from the
+        // popup. Empty/absent means expose EVERY discovered model (whole-server).
+        static let dynamicSelectedModel = "dynamicSelectedModel"
     }
 
     @objc(openAIModelIsLegacy:)
@@ -125,11 +128,21 @@ class LLMMetadata: NSObject {
         case .gemini:
             return AIMetadata.recommendedGeminiModel
         case .llama:
-            // The default for the Ollama vendor is the first discovered model (the
-            // user switches among the rest in the chat picker), or a placeholder
-            // while discovery is pending so the vendor never crosses to a cloud
-            // default.
-            return discoveredOllamaModels().first ?? pendingOllamaModel()
+            // The Ollama vendor's models are discovered from the local server, so
+            // there is no sane automatic choice of a default. The user picks one
+            // explicitly (the "Regular model" popup, stored in
+            // kPreferenceKeyAIOllamaRegularModel); honor it when it is still
+            // installed. Absent a valid pick (not yet chosen, or the tag was
+            // removed), fall back to the lexicographically-first discovered tag for
+            // determinism, or a placeholder while discovery is pending so the
+            // vendor never crosses to a cloud default.
+            let discovered = discoveredOllamaModels()
+            if let chosen = iTermPreferences.string(forKey: kPreferenceKeyAIOllamaRegularModel),
+               !chosen.isEmpty,
+               let model = discovered.first(where: { $0.name == chosen }) {
+                return model
+            }
+            return discovered.sorted { $0.name < $1.name }.first ?? pendingOllamaModel()
         case .anthropic:
             return AIMetadata.recommendedAnthropicModel
         case .apple:
@@ -272,6 +285,32 @@ class LLMMetadata: NSObject {
         return OllamaModelCache.shared.models(forEndpoint: defaultOllamaEndpoint)
     }
 
+    // The discovered tag names at the default endpoint, sorted for a stable picker
+    // order. ObjC-exposed so the preferences UI can populate the Regular/Budget
+    // model popups.
+    @objc static func discoveredOllamaModelNames() -> [String] {
+        return discoveredOllamaModels().map { $0.name }.sorted()
+    }
+
+    // Whether the built-in Ollama vendor is the current default for new chats
+    // (recommended-model mode with the Llama vendor). The Regular/Budget popups
+    // apply only in this case.
+    @objc static var isOllamaVendorDefault: Bool {
+        return iTermPreferences.bool(forKey: kPreferenceKeyUseRecommendedAIModel) &&
+            iTermAIVendor(rawValue: iTermPreferences.unsignedInteger(forKey: kPreferenceKeyAIVendor)) == .llama
+    }
+
+    // The user's chosen budget/economy model for the Ollama vendor, if set and
+    // still installed. nil means "same as regular" (an empty pref) or the chosen
+    // tag is gone; callers treat nil as "use the main model". See ScreenWatchPoller.
+    static func ollamaVendorEconomyModel() -> AIMetadata.Model? {
+        guard let chosen = iTermPreferences.string(forKey: kPreferenceKeyAIOllamaEconomyModel),
+              !chosen.isEmpty else {
+            return nil
+        }
+        return discoveredOllamaModels().first { $0.name == chosen }
+    }
+
     // A stand-in shown while discovery is pending (or if the local server is down),
     // so the built-in Ollama vendor keeps its OWN vendor instead of the resolution
     // falling through to a cloud vendor (which would silently route a message meant
@@ -317,7 +356,7 @@ class LLMMetadata: NSObject {
         let headers = (configuration[ManualModelKey.customHeaders] as? [[String: String]]) ?? []
         // Pass the headers so the discovery probe authenticates the same way the
         // chat requests do (a header-auth server would otherwise 401 /api/tags).
-        return OllamaModelCache.shared.models(forEndpoint: url, headers: headers).map { model in
+        let discovered = OllamaModelCache.shared.models(forEndpoint: url, headers: headers).map { model -> AIMetadata.Model in
             var m = model
             m.customHeaders = headers
             // Mark as dynamic and preserve the raw tag: if this tag collides with
@@ -326,6 +365,29 @@ class LLMMetadata: NSObject {
             m.wireModelName = model.name
             return m
         }
+        // If the entry names a single discovered model (the user picked one in the
+        // editor popup), expose just that one; empty/absent means whole-server (every
+        // discovered tag). Kept backward compatible: pre-existing dynamic entries
+        // have no selection and still expand to all.
+        let selected = (configuration[ManualModelKey.dynamicSelectedModel] as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !selected.isEmpty else {
+            return discovered
+        }
+        if let match = discovered.first(where: { $0.name == selected }) {
+            return [match]
+        }
+        // Chosen but not yet in the cache (discovery pending or the tag was removed
+        // from the server): construct a minimal stand-in so the pinned selection
+        // still resolves synchronously and stays on the Ollama vendor.
+        var fallback = AIMetadata.Model(name: selected,
+                                        contextWindowTokens: OllamaModelDiscovery.defaultContextWindow,
+                                        maxResponseTokens: OllamaModelDiscovery.defaultContextWindow,
+                                        url: url, api: .llama, features: [.streaming],
+                                        vectorStoreConfig: .disabled, vendor: .llama)
+        fallback.customHeaders = headers
+        fallback.wireModelName = selected
+        return [fallback]
     }
 
     private static func legacyManualModel() -> AIMetadata.Model? {
