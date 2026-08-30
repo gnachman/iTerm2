@@ -103,6 +103,11 @@ Major New Features:
   always sent the temperature parameter,
   failing against endpoints that reject it.
 
+- Fixed Kitty keyboard protocol base-layout
+  reporting for non-US keyboard layouts, so
+  shortcuts such as Ctrl-C work without
+  switching layouts.
+
 - Fixed a bug where, if the AI asked for
   permission in a chat and you ignored the
   request and sent a new message instead, the
