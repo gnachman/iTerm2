@@ -213,7 +213,18 @@ class LLMMetadata: NSObject {
             }
             return manualModel(configuration: configuration).map { [$0] } ?? []
         }
-        return disambiguateDynamicCollisions(models)
+        // Also disambiguate against the built-in default-endpoint models: those are
+        // a SEPARATE list (ChatViewController.builtInModels) merged with these, so a
+        // manual dynamic tag that collides with a built-in local tag would otherwise
+        // stay bare and, under "manual wins" resolution, shadow the local model,
+        // silently routing a local-meant message to the remote server.
+        return disambiguateDynamicCollisions(models, builtInNames: builtInOllamaModelNames())
+    }
+
+    // The display names of the built-in default-endpoint Ollama models. Read from
+    // the discovery cache (synchronous; kicks off a refresh if stale).
+    private static func builtInOllamaModelNames() -> Set<String> {
+        return Set(discoveredOllamaModels().map { $0.name })
     }
 
     // Two dynamic Ollama servers can expose the same tag (e.g. both have
@@ -222,9 +233,16 @@ class LLMMetadata: NSObject {
     // DISPLAY name of each colliding dynamic model with its server so identities
     // are unique (pins/picker resolve to the right transport); effectiveModelName
     // still carries the raw tag for the wire. A dynamic model that doesn't collide
-    // keeps its clean tag name.
-    private static func disambiguateDynamicCollisions(_ models: [AIMetadata.Model]) -> [AIMetadata.Model] {
+    // keeps its clean tag name. `builtInNames` seeds the collision count with the
+    // built-in default-endpoint tags (a separate list these get merged with), so a
+    // manual tag clashing only with a built-in one is qualified too; the built-in
+    // model keeps its clean name (the local Ollama vendor is the unqualified one).
+    private static func disambiguateDynamicCollisions(_ models: [AIMetadata.Model],
+                                                      builtInNames: Set<String> = []) -> [AIMetadata.Model] {
         var nameCounts: [String: Int] = [:]
+        for name in builtInNames {
+            nameCounts[name, default: 0] += 1
+        }
         for model in models {
             nameCounts[model.name, default: 0] += 1
         }

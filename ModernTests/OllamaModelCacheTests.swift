@@ -44,7 +44,10 @@ final class OllamaModelCacheTests: XCTestCase {
     func test_update_sameModels_doesNotPost() {
         let cache = makeCache()
         cache.update(endpoint: "e", models: models("e"))
-        let inverted = expectation(forNotification: OllamaModelCache.didChangeNotification, object: nil)
+        // Scope to this endpoint's object: the notification carries the changed
+        // endpoint, so a shared-cache change from another test can't trip this
+        // inverted expectation.
+        let inverted = expectation(forNotification: OllamaModelCache.didChangeNotification, object: "e")
         inverted.isInverted = true
         cache.update(endpoint: "e", models: models("e"))  // identical: no change, no post
         waitForExpectations(timeout: 0.3)
@@ -212,6 +215,45 @@ final class OllamaModelCacheTests: XCTestCase {
         XCTAssertEqual(Set(llama.map { $0.url }), [epA, epB], "each must keep its own endpoint")
         XCTAssertTrue(llama.allSatisfy { $0.effectiveModelName == "llama3.3" },
                       "each must still send the raw tag on the wire")
+    }
+
+    // A manual dynamic tag that collides with a BUILT-IN default-endpoint tag must
+    // also be qualified. Otherwise (built-in Ollama local qwen3 + a remote manual
+    // dynamic qwen3) there are two bare "qwen3" across the two merged lists, and
+    // "manual wins" name resolution silently routes a message meant for the local
+    // server to the remote one.
+    func test_manualDynamicTag_collidingWithBuiltInDefault_isQualified() {
+        let remote = "http://gpu2:11434/api/chat"
+        let tag = "{\"models\":[{\"name\":\"qwen3\",\"capabilities\":[\"tools\"],\"details\":{\"context_length\":4096}}]}"
+        // Built-in default endpoint has qwen3; remote manual dynamic entry also has qwen3.
+        OllamaModelCache.shared.update(endpoint: LLMMetadata.defaultOllamaEndpoint,
+                                       models: OllamaModelDiscovery.models(fromTagsResponse: Data(tag.utf8),
+                                                                          endpoint: LLMMetadata.defaultOllamaEndpoint))
+        OllamaModelCache.shared.update(endpoint: remote,
+                                       models: OllamaModelDiscovery.models(fromTagsResponse: Data(tag.utf8), endpoint: remote))
+        defer {
+            OllamaModelCache.shared.update(endpoint: LLMMetadata.defaultOllamaEndpoint, models: [])
+            OllamaModelCache.shared.update(endpoint: remote, models: [])
+        }
+
+        let key = kPreferenceKeyAIManualModelConfigurations
+        let saved = iTermPreferences.object(forKey: key)
+        defer { iTermPreferences.setObject(saved, forKey: key) }
+        iTermPreferences.setObject([
+            ["url": remote, "dynamicModels": true, "api": Int(iTermAIAPI.llama.rawValue)],
+        ], forKey: key)
+
+        // The built-in list keeps the clean local tag...
+        XCTAssertTrue(LLMMetadata.discoveredOllamaModels().contains { $0.name == "qwen3" },
+                      "the local built-in model keeps its clean tag")
+        // ...but the remote manual model must NOT collide with it by bare name.
+        let manual = LLMMetadata.manualModels()
+        XCTAssertFalse(manual.contains { $0.name == "qwen3" },
+                       "remote manual qwen3 must be qualified so it can't shadow the local built-in qwen3")
+        let remoteModel = manual.first { $0.url == remote }
+        XCTAssertNotNil(remoteModel)
+        XCTAssertEqual(remoteModel?.effectiveModelName, "qwen3",
+                       "the qualified remote model still sends the raw tag on the wire")
     }
 
     // The first-class Ollama vendor resolves its models from discovery at the
