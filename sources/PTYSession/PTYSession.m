@@ -3451,9 +3451,12 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     if (!unavailable.length) {
         return;
     }
-    self.unavailableWorkingDirectory = nil;
+    // Build the message before clearing the property. This file is MRC and
+    // `unavailable` is unretained, so niling the copy property here would
+    // deallocate the string and leave `unavailable` dangling (issue 12955 crash).
     NSString *message = [NSString stringWithFormat:@"The directory “%@” is unavailable. Started in home directory instead.",
                          unavailable];
+    self.unavailableWorkingDirectory = nil;
     [_screen mutateAsynchronously:^(VT100Terminal *terminal,
                                     VT100ScreenMutableState *mutableState,
                                     id<VT100ScreenDelegate> delegate) {
