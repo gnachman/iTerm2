@@ -1,6 +1,6 @@
 //
 //  PSMTabBarMinimumCellAreaTests.swift
-//  iTerm2XCTests
+//  ModernTests
 //
 //  -maximumLeftInsetFittingAllCellsMinimallyForWidth: answers "how much of the
 //  bar can something else take before a tab stops fitting". It mirrors the

@@ -15,6 +15,7 @@
 #import "NSColor+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "NSView+iTerm.h"
@@ -589,7 +590,17 @@ typedef struct {
     // The tab bar's frame is not assigned until after the insets are, so its own
     // width is a pass stale here. The strip minus the toolbelt is what the
     // layout calculator starts from.
-    const CGFloat stripWidth = NSWidth(self.frame) - ([self shouldShowToolbelt] ? NSWidth(_toolbelt.frame) : 0);
+    //
+    // Not -_toolbelt.frame: that is not resized until -updateToolbeltFrameForWindow
+    // later in the same pass, so during a live toolbelt drag it lags the width the
+    // tab bar is sized against by the drag delta and the name over-reserves, which
+    // near the overflow boundary squeezes a cell under its minimum for that frame.
+    // -constrainToolbeltWidth has not run yet either, so take the clamp it is about
+    // to apply rather than the raw ivar: this is the value the layout inputs floor.
+    const CGFloat toolbeltWidth = ([self shouldShowToolbelt]
+                                   ? floor([self maximumToolbeltWidthForViewWidth:NSWidth(self.frame)])
+                                   : 0);
+    const CGFloat stripWidth = NSWidth(self.frame) - toolbeltWidth;
     // -tabBarInsetsForCompactWindow reserves this after the name, so it is space
     // the tabs never get either. Ignoring it let a large setting crowd the tabs,
     // which is the one thing this allowance exists to prevent.
@@ -601,16 +612,36 @@ typedef struct {
             extraSpace);
 }
 
+// The width the name wants, measured from the string rather than read off the
+// label. -fittingSize makes a text field lay itself out to answer, and this sits
+// on -layoutSubviews' path, which runs on every resize and drag frame.
+- (CGFloat)naturalWindowNameBesideTabsTextWidth {
+    // Nothing can truncate against an unconstrained width, so this out-param is
+    // always NO here and the caller compares against its own allowance instead.
+    BOOL truncated = NO;
+    const NSRect rect = [_windowNameBesideTabsLabel.stringValue
+                            it_boundingRectWithSize:NSMakeSize(CGFLOAT_MAX, CGFLOAT_MAX)
+                                         attributes:[self windowNameBesideTabsMetricAttributes]
+                                          truncated:&truncated];
+    return ceil(NSWidth(rect));
+}
+
 - (CGFloat)measuredWindowNameBesideTabsTextWidth {
     if (_tabBarControlOnLoan || _windowNameBesideTabsLabel.stringValue.length == 0) {
         return 0;
     }
     const CGFloat allowance = MIN(iTermWindowNameBesideTabsMaximumWidth,
                                   [self allowanceForWindowNameBesideTabs]);
-    if (allowance < iTermWindowNameBesideTabsMinimumWidth) {
+    const CGFloat natural = [self naturalWindowNameBesideTabsTextWidth];
+    // The minimum gates truncation, not slack. Applying it to the space left
+    // over hid a name that would have fitted whole: “A” in 30 points of slack
+    // neither truncates nor takes anything the tabs need, so the reason to hide
+    // it -- that the tail ellipsis leaves too little to identify a window by --
+    // does not apply to it.
+    if (natural > allowance && allowance < iTermWindowNameBesideTabsMinimumWidth) {
         return 0;
     }
-    return MIN(allowance, ceil(_windowNameBesideTabsLabel.fittingSize.width));
+    return MIN(allowance, natural);
 }
 
 // Drops the cached width so the next read measures again. Call whenever the text
@@ -1114,6 +1145,17 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
                                  icon:_windowTitleLabel.windowIcon];
 }
 
+// The attributes that decide how wide the name draws. Color and truncation do
+// not change its metrics, so the measurement takes only these and the drawn
+// string builds on them: the measured width and the drawn width are then one
+// expression rather than two that have to agree.
+- (NSDictionary *)windowNameBesideTabsMetricAttributes {
+    return @{
+        NSFontAttributeName: _windowNameBesideTabsLabel.font,
+        NSKernAttributeName: @(iTermWindowNameBesideTabsTracking)
+    };
+}
+
 // Rebuilds the label's styled text. The color lives here rather than in
 // -textColor because the tracking forces an attributed string anyway.
 - (void)applyWindowNameBesideTabsAttributes {
@@ -1131,12 +1173,9 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     // rather than as context for them.
     NSColor *decorationColor = ([self.delegate rootTerminalViewTabBarTextColorForWindowNumber] ?:
                                 [NSColor labelColor]);
-    NSDictionary *attributes = @{
-        NSFontAttributeName: _windowNameBesideTabsLabel.font,
-        NSKernAttributeName: @(iTermWindowNameBesideTabsTracking),
-        NSParagraphStyleAttributeName: paragraphStyle,
-        NSForegroundColorAttributeName: [decorationColor colorWithAlphaComponent:iTermWindowNameBesideTabsAlpha]
-    };
+    NSMutableDictionary *attributes = [[self windowNameBesideTabsMetricAttributes] mutableCopy];
+    attributes[NSParagraphStyleAttributeName] = paragraphStyle;
+    attributes[NSForegroundColorAttributeName] = [decorationColor colorWithAlphaComponent:iTermWindowNameBesideTabsAlpha];
     _windowNameBesideTabsLabel.attributedStringValue = [[NSAttributedString alloc] initWithString:name
                                                                                       attributes:attributes];
 }
