@@ -413,12 +413,24 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
 
     // MARK: Screen 2 - phone app
 
+    // Flip to true in the launch build once iTerm2 Buddy is live on the App
+    // Store. When true, the setup wizard links straight to the App Store and
+    // never mentions the TestFlight beta, whatever this iTerm2 build's release
+    // channel is. Leave false until the iOS app is released.
+    private static let companionIOSAppIsOnAppStore = false
+
+    // A redirect on iterm2.com that we control, so the shipped app never hardcodes
+    // the raw App Store URL. Point it at the App Store page
+    // (https://apps.apple.com/app/id<APPLE_ID>, the app's Apple ID from App Store
+    // Connect) at launch. Until that redirect is set up, this link will not resolve.
+    private static let companionAppStoreURL = "https://iterm2.com/companion-app-store"
+
     private func buildPhoneAppScreen(in view: NSView) {
         addTitle("Install iTerm2 Buddy on Your iPhone", to: view)
         addBodyLabel("Pairing connects this Mac to the iTerm2 Buddy app on your iPhone. Install it now, then come back and continue.",
                      to: view, y: Self.contentHeight - 170, height: 80)
 
-        if Bundle.it_isEarlyAdopter() || Bundle.it_isNightlyBuild() {
+        if !Self.companionIOSAppIsOnAppStore && (Bundle.it_isEarlyAdopter() || Bundle.it_isNightlyBuild()) {
             addBodyLabel("This is a beta build, so iTerm2 Buddy is distributed through TestFlight. Install TestFlight, then join the beta.",
                          to: view, y: Self.contentHeight - 260, height: 60)
             let testFlight = makeButton("Install TestFlight", action: #selector(openTestFlightApp))
@@ -664,7 +676,7 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
     @objc private func openDocs(_ sender: Any) { open("https://iterm2.com/companion-app.html") }
     @objc private func openTestFlightApp(_ sender: Any) { open("https://apps.apple.com/app/testflight/id899247664") }
     @objc private func openJoinBeta(_ sender: Any) { open("https://testflight.apple.com/join/hMsVghmx") }
-    @objc private func openReleaseApp(_ sender: Any) { open("about:empty") }
+    @objc private func openReleaseApp(_ sender: Any) { open(Self.companionAppStoreURL) }
 
     // MARK: Pairing controller callbacks
 
