@@ -1,0 +1,66 @@
+Version 3.7.0beta12 was built on September 1, 2026.
+
+Changes since 3.7.0beta11:
+
+Improvements:
+- iTerm2 uses far less memory and CPU when a
+  full-screen program repaints the screen
+  rapidly, such as a TUI or an AI agent that
+  redraws every frame. This fixes runaway
+  memory growth that could reach several
+  gigabytes. Issue 12992.
+- When you enter a Workgroup, its tabs are now
+  gathered into one tab group and given the
+  names from the Workgroup configuration, so
+  they are easy to tell apart. Leaving the
+  Workgroup restores the tab you started from to
+  its previous name and group. Issue 12967.
+- A new tab opened next to a tab that belongs to
+  a tab group now joins that group, so it stays
+  with the set you are working in. The tab group
+  menu also gained a New Tab in Group command.
+- Tab Groups gained Window menu commands: Select
+  Tab > Select Next Tab Group (⌃⇧⌘]) and Select
+  Previous Tab Group (⌃⇧⌘[), plus Add Tab to New
+  Group and Remove Tab from Group. The selection
+  commands skip over the rest of a group. For
+  an ungrouped tab they behave like Select
+  Next/Previous Tab.
+- The Password Manager now has a single Edit
+  panel that changes an entry's name, user name,
+  and password, available whenever a row is
+  selected. On backends that support it the edit
+  is made in place, so renaming an entry keeps
+  its other fields, such as one-time passwords,
+  intact.
+- You can now create and edit 1Password entries
+  from the Password Manager. The password you
+  choose is sent securely and never appears on
+  the command line. This needs the 1Password
+  command-line tool version 2.23 or later.
+- The Keeper backend now supports Nested Shared
+  Folders alongside the classic vault, both in
+  one list labeled (Classic) or (Nested), and
+  the Add Account panel offers a “Use classic
+  permission model” choice.
+- In AI chat, a session reference the assistant
+  writes without a leading @ now still renders
+  as a clickable session link.
+
+Bug Fixes:
+- Programs that ask whether iTerm2 is in light
+  or dark mode (the DSR 996 query) now receive
+  a reply. The query was being ignored, so
+  tools that check it before drawing, such as
+  delta, saw no response.
+- Right-to-left text no longer scrambles when a
+  full-screen program scrolls part of the
+  screen, and wrapped right-to-left lines shown
+  from scrollback keep their correct display
+  order.
+- The selected tab's bright HDR outline on
+  macOS Tahoe is now off by default. It is
+  gated behind a new “Allow HDR effects”
+  advanced setting because forcing the display
+  into HDR could hang some systems.
+- Fixed various crashes.
