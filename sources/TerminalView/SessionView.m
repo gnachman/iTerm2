@@ -1792,7 +1792,23 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     _splitSelectionView.wantsLayer = [iTermPreferences boolForKey:kPreferenceKeyUseMetal];
     [_splitSelectionView setFrameOrigin:NSMakePoint(0, 0)];
     [_splitSelectionView setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
+    [self offerTabEdgeDropTargets];
     [self addSubviewBelowFindView:_splitSelectionView];
+}
+
+// Let the overlay offer whole-tab drop targets on whichever of this pane’s edges
+// are also the tab’s edges, and forward the resulting selection to the tab,
+// which is the only object that can draw across panes.
+- (void)offerTabEdgeDropTargets {
+    _splitSelectionView.tabEdges = [_delegate sessionViewTabEdges];
+    __weak __typeof(self) weakSelf = self;
+    _splitSelectionView.tabEdgeDidChange = ^(SplitSessionHalf half) {
+        [weakSelf.delegate sessionViewDidUpdateTabEdgeDropTarget:half];
+    };
+}
+
+- (void)clearTabEdgeDropTarget {
+    [_delegate sessionViewDidUpdateTabEdgeDropTarget:kNoHalf];
 }
 
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move session:(id)session {
@@ -1811,6 +1827,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
         case kSplitSelectionModeOff:
             [_splitSelectionView removeFromSuperview];
             _splitSelectionView = nil;
+            [self clearTabEdgeDropTarget];
             break;
 
         case kSplitSelectionModeCancel:
@@ -1889,6 +1906,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
                                                                                frame.size.width,
                                                                                frame.size.height)];
     _splitSelectionView.wantsLayer = [iTermPreferences boolForKey:kPreferenceKeyUseMetal];
+    [self offerTabEdgeDropTargets];
     [self addSubviewBelowFindView:_splitSelectionView];
     [[self window] orderFront:nil];
 }
@@ -1897,6 +1915,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     SplitSessionHalf half = [_splitSelectionView half];
     [_splitSelectionView removeFromSuperview];
     _splitSelectionView = nil;
+    [self clearTabEdgeDropTarget];
     return half;
 }
 
@@ -2005,6 +2024,7 @@ typedef NS_ENUM(NSInteger, SessionViewTrackingMode) {
     [_delegate sessionViewDraggingExited:sender];
     [_splitSelectionView removeFromSuperview];
     _splitSelectionView = nil;
+    [self clearTabEdgeDropTarget];
 }
 
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {

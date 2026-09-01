@@ -203,6 +203,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     // The active pane is maximized, meaning there are other panes that are hidden.
     BOOL isMaximized_;
 
+    // Highlights the region a dragged pane would occupy if dropped at an edge of
+    // the whole tab. Nil unless such a drop target is currently offered. It
+    // lives in the window’s content view because it spans panes and root_ is a
+    // split view, which can hold only panes.
+    SplitSelectionView *_tabEdgeDropTargetView;
+
     // Holds references to invisible session views. The key is a number that corresponds to the
     // TAB_ARRANGEMENT_ID in a saved arrangement. It is used when a split pane is maximized to
     // hold on to the SessionView's that are not currently visible. It used to be necessary to
@@ -537,6 +543,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         aSession.active = NO;
     }
 
+    [self hideTabEdgeDropTarget];
     root_ = nil;
     flexibleView_ = nil;
 }
@@ -2414,6 +2421,174 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [tmuxController_ setLayoutInWindow:self.tmuxWindow toLayout:@"tiled"];
     }
 }
+
+#pragma mark - Whole-tab drop targets
+
+- (void)hideTabEdgeDropTarget {
+    if (!_tabEdgeDropTargetView) {
+        return;
+    }
+    DLog(@"Hide tab edge drop target");
+    [_tabEdgeDropTargetView removeFromSuperview];
+    _tabEdgeDropTargetView = nil;
+}
+
+// The band the dropped pane would occupy, in window coordinates.
+- (NSRect)tabEdgeDropTargetRectInWindow:(SplitSessionHalf)edge {
+    const NSRect bounds = [root_ convertRect:root_.bounds toView:nil];
+    const BOOL isVertical = SplitSessionHalfTabEdgeIsVertical(edge);
+    // The dropped pane becomes one of n+1 children of the root splitter if the
+    // root already splits along the same axis, and one of two otherwise. Show
+    // the size it will really get.
+    const NSUInteger siblings = (root_.isVertical == isVertical) ? root_.subviews.count : 1;
+    const CGFloat fraction = 1.0 / (CGFloat)(siblings + 1);
+    NSRect band = NSZeroRect;
+    NSRect remainder = NSZeroRect;
+    switch (edge) {
+        case kTabTopEdge:
+            NSDivideRect(bounds, &band, &remainder, NSHeight(bounds) * fraction, NSMaxYEdge);
+            break;
+        case kTabBottomEdge:
+            NSDivideRect(bounds, &band, &remainder, NSHeight(bounds) * fraction, NSMinYEdge);
+            break;
+        case kTabLeftEdge:
+            NSDivideRect(bounds, &band, &remainder, NSWidth(bounds) * fraction, NSMinXEdge);
+            break;
+        case kTabRightEdge:
+            NSDivideRect(bounds, &band, &remainder, NSWidth(bounds) * fraction, NSMaxXEdge);
+            break;
+        case kNoHalf:
+        case kNorthHalf:
+        case kSouthHalf:
+        case kEastHalf:
+        case kWestHalf:
+        case kFullPane:
+            break;
+    }
+    return band;
+}
+
+- (void)showTabEdgeDropTarget:(SplitSessionHalf)edge {
+    NSView *superview = root_.window.contentView;
+    if (!superview) {
+        DLog(@"No content view to host the tab edge drop target");
+        return;
+    }
+    DLog(@"Show tab edge drop target %@", @(edge));
+    const NSRect frame = [superview convertRect:[self tabEdgeDropTargetRectInWindow:edge]
+                                       fromView:nil];
+    if (!_tabEdgeDropTargetView) {
+        _tabEdgeDropTargetView = [[SplitSelectionView alloc] initWithFrame:frame];
+        // It is decoration only: in click-to-move mode the click must reach the
+        // pane overlay underneath it.
+        _tabEdgeDropTargetView.clickThrough = YES;
+        _tabEdgeDropTargetView.wantsLayer = [iTermPreferences boolForKey:kPreferenceKeyUseMetal];
+        [_tabEdgeDropTargetView setHalf:kFullPane];
+    }
+    _tabEdgeDropTargetView.frame = frame;
+    if (_tabEdgeDropTargetView.superview != superview) {
+        [superview addSubview:_tabEdgeDropTargetView positioned:NSWindowAbove relativeTo:nil];
+    }
+    [_tabEdgeDropTargetView setNeedsDisplay:YES];
+}
+
+// newView arrives spanning the whole root, so -adjustSubviews would scale it to
+// about half the tab no matter how many panes were already there. Give it an
+// equal share instead and let the existing panes keep their relative sizes,
+// which is what -tabEdgeDropTargetRectInWindow: showed the user.
+- (void)giveNewRootSubview:(NSView *)newView anEqualShareAlongVertical:(BOOL)isVertical {
+    NSArray<NSView *> *children = root_.subviews;
+    const NSUInteger count = children.count;
+    if (count < 2) {
+        return;
+    }
+    const CGFloat extent = isVertical ? NSWidth(root_.bounds) : NSHeight(root_.bounds);
+    const CGFloat available = MAX(1, extent - root_.dividerThickness * (count - 1));
+    const CGFloat share = available / count;
+    CGFloat othersTotal = 0;
+    for (NSView *child in children) {
+        if (child == newView) {
+            continue;
+        }
+        othersTotal += isVertical ? NSWidth(child.frame) : NSHeight(child.frame);
+    }
+    const CGFloat scale = (othersTotal > 0) ? (available - share) / othersTotal : 0;
+    CGFloat offset = 0;
+    for (NSView *child in children) {
+        const CGFloat current = isVertical ? NSWidth(child.frame) : NSHeight(child.frame);
+        const CGFloat size = (child == newView) ? share : current * scale;
+        NSRect frame = child.frame;
+        if (isVertical) {
+            frame.origin.x = offset;
+            frame.size.width = size;
+        } else {
+            // Split views are flipped, so subviews run top to bottom in order.
+            frame.origin.y = offset;
+            frame.size.height = size;
+        }
+        child.frame = frame;
+        offset += size + root_.dividerThickness;
+    }
+}
+
+// Adds newSession as a child of the root splitter so that it spans the whole
+// width (top/bottom) or height (left/right) of the tab. This is what
+// -splitVertically:newSession:before:targetSession: cannot do, since that always
+// splits the target pane’s own splitter.
+- (void)insertSession:(PTYSession *)newSession atTabEdge:(SplitSessionHalf)edge {
+    ITAssertWithMessage(SplitSessionHalfIsTabEdge(edge), @"Not a tab edge: %@", @(edge));
+    if (isMaximized_) {
+        [self unmaximize];
+    }
+    const BOOL isVertical = SplitSessionHalfTabEdgeIsVertical(edge);
+    const BOOL before = SplitSessionHalfTabEdgeIsBefore(edge);
+    PtyLog(@"PTYTab insertSession:atTabEdge:%@", @(edge));
+    [self checkInvariants:@"Before inserting at tab edge"];
+    [self dump];
+    SessionView *newView = [[SessionView alloc] initWithFrame:root_.bounds];
+
+    if (root_.subviews.count <= 1) {
+        // The root’s only child, if any, is a SessionView (invariant), so the
+        // root is free to take whichever orientation we need.
+        [root_ setVertical:isVertical];
+    } else if (root_.isVertical != isVertical) {
+        // The root splits along the wrong axis. Move its children into a new
+        // splitter that preserves their arrangement, then flip the root so the
+        // incoming pane can span it.
+        NSSplitView *inner = [[PTYSplitView alloc] initWithFrame:root_.bounds];
+        if (USE_THIN_SPLITTERS) {
+            [inner setDividerStyle:NSSplitViewDividerStyleThin];
+        }
+        [inner setAutoresizesSubviews:YES];
+        [inner setDelegate:self];
+        [inner setVertical:root_.isVertical];
+        for (NSView *child in [root_.subviews copy]) {
+            [child removeFromSuperview];
+            [inner addSubview:child];
+        }
+        [inner adjustSubviews];
+        [root_ addSubview:inner];
+        [root_ setVertical:isVertical];
+    }
+    NSView *reference = before ? root_.subviews.firstObject : root_.subviews.lastObject;
+    [root_ addSubview:newView
+           positioned:before ? NSWindowBelow : NSWindowAbove
+           relativeTo:reference];
+    [self giveNewRootSubview:newView anEqualShareAlongVertical:isVertical];
+    [self adjustSubviewsOf:root_];
+    [self _splitViewDidResizeSubviews:root_];
+    PtyLog(@"After:");
+    [self dump];
+
+    newSession.delegate = self;
+    newSession.view = newView;
+    [self.viewToSessionMap setObject:newSession forKey:newView];
+    [self checkInvariants:@"After inserting at tab edge"];
+    newSession.useMetal = NO;
+    [self updateUseMetal];
+}
+
+#pragma mark - Splitting
 
 - (void)splitVertically:(BOOL)isVertical
              newSession:(PTYSession *)newSession
@@ -7267,6 +7442,60 @@ typedef struct {
 
 #pragma mark - PTYSessionDelegate
 // TODO: Move the rest of the delegate methods here.
+
+- (iTermTabEdgeMask)tabEdgesForSession:(PTYSession *)session {
+    if ([iTermAdvancedSettingsModel tabEdgeDropZoneSize] <= 0) {
+        return iTermTabEdgeMaskNone;
+    }
+    if (self.isTmuxTab) {
+        // tmux owns the layout and has no command to move a pane to the edge of
+        // a window, so don’t offer something we can’t do.
+        return iTermTabEdgeMaskNone;
+    }
+    if (isMaximized_) {
+        return iTermTabEdgeMaskNone;
+    }
+    if (self.realParentWindow.layoutLocked) {
+        return iTermTabEdgeMaskNone;
+    }
+    if (self.sessions.count < 2) {
+        // With one pane a whole-tab drop is indistinguishable from a half-pane
+        // drop, so there is nothing to add.
+        return iTermTabEdgeMaskNone;
+    }
+    SessionView *view = session.view;
+    if (!view || ![view isDescendantOf:root_]) {
+        return iTermTabEdgeMaskNone;
+    }
+    // Compare in window coordinates: split views are flipped, so root_’s own
+    // coordinate space would invert top and bottom.
+    const NSRect frame = [view convertRect:view.bounds toView:nil];
+    const NSRect bounds = [root_ convertRect:root_.bounds toView:nil];
+    const CGFloat tolerance = 1;
+    iTermTabEdgeMask mask = iTermTabEdgeMaskNone;
+    if (fabs(NSMaxY(frame) - NSMaxY(bounds)) < tolerance) {
+        mask |= iTermTabEdgeMaskTop;
+    }
+    if (fabs(NSMinY(frame) - NSMinY(bounds)) < tolerance) {
+        mask |= iTermTabEdgeMaskBottom;
+    }
+    if (fabs(NSMinX(frame) - NSMinX(bounds)) < tolerance) {
+        mask |= iTermTabEdgeMaskLeft;
+    }
+    if (fabs(NSMaxX(frame) - NSMaxX(bounds)) < tolerance) {
+        mask |= iTermTabEdgeMaskRight;
+    }
+    DLog(@"Tab edges for %@ are %@", session, @(mask));
+    return mask;
+}
+
+- (void)session:(PTYSession *)session didUpdateTabEdgeDropTarget:(SplitSessionHalf)half {
+    if (!SplitSessionHalfIsTabEdge(half)) {
+        [self hideTabEdgeDropTarget];
+        return;
+    }
+    [self showTabEdgeDropTarget:half];
+}
 
 - (BOOL)sessionTabHasMultipleDistinctTabColors {
     NSString *firstColor = nil;

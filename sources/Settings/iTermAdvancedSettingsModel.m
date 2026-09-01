@@ -353,6 +353,7 @@ DEFINE_STRING(splitPaneSourceInnerBorderColor, @"#000000", SECTION_TABS @"Color 
 DEFINE_STRING(splitPaneTargetDropFillColor, @"#800000", SECTION_TABS @"Color of drop target fill when dragging a split pane.\nShould be a web-style color, #rrggbb. You can also use p3#rrggbb for p3 color space.")
 DEFINE_STRING(splitPaneTargetDropBorderColor, @"#ffffff", SECTION_TABS @"Color of drop target outer border when dragging a split pane.\nShould be a web-style color, #rrggbb. You can also use p3#rrggbb for p3 color space.")
 DEFINE_STRING(splitPaneTargetDropInnerBorderColor, @"#000000", SECTION_TABS @"Color of drop target inner border when dragging a split pane.\nShould be a web-style color, #rrggbb. You can also use p3#rrggbb for p3 color space.")
+DEFINE_FLOAT(tabEdgeDropZoneSize, 24, SECTION_TABS @"When dragging a split pane, how close to the tab’s outer edge (in points) must the pointer be for the drop to span the whole width or height of the tab?\nSet to 0 to disable whole-tab drop targets.");
 
 #pragma mark Mouse
 

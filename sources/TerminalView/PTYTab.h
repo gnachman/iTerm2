@@ -267,6 +267,14 @@ extern NSString *const PTYTabArrangementOptionsPendingJumps;
                  before:(BOOL)before
           targetSession:(PTYSession*)targetSession;
 
+// Adds newSession as a child of the tab’s root splitter so that it spans the
+// full width (kTabTopEdge, kTabBottomEdge) or full height (kTabLeftEdge,
+// kTabRightEdge) of the tab, rather than splitting one existing pane.
+- (void)insertSession:(PTYSession *)newSession atTabEdge:(SplitSessionHalf)edge;
+
+// Removes the highlight showing where a whole-tab drop would land, if shown.
+- (void)hideTabEdgeDropTarget;
+
 // A viewMap maps a session's unique ID to a SessionView. Views in the
 // arrangement with matching session unique IDs will be assigned those
 // SessionView's.
