@@ -456,6 +456,16 @@ Triggers Improvements:
   advanced setting extends it to battery.
 
 AI Improvements:
+- iTerm2 can now name a tab after the work visible
+  in its session, generated on-device by Apple
+  Intelligence. It is off by default; turn on
+  “Name tabs after the work on screen, using
+  on-device AI” in Advanced Settings, then add the
+  “AI-generated name” title component to a profile
+  (or use \(session.aiTitle) in a custom title
+  format). The screen contents never leave your
+  Mac and no API key is used. Requires Apple
+  Intelligence.
 - You can now press Cmd-F in an AI chat to search
   the current conversation. A find bar appears at
   the top with match counts and next/previous

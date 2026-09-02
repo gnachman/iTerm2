@@ -1051,6 +1051,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
                                                  selector:@selector(metalClipViewWillScroll:)
                                                      name:iTermMetalClipViewWillScroll
                                                    object:nil];
+        // Clear a stale AI tab title promptly when the user disables the feature,
+        // instead of waiting for a display tick that a quiescent/occluded session may
+        // not get soon.
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(aiGeneratedTabTitlesSettingDidChange)
+                                                     name:iTermAdvancedSettingsDidChange
+                                                   object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(alertOnMarksinOffscreenSessionsDidChange:)
                                                      name:iTermDidToggleAlertOnMarksInOffscreenSessionsNotification
@@ -1119,6 +1126,27 @@ ITERM_WEAKLY_REFERENCEABLE
     NSString *guid = [_guid copy];
     dispatch_async(dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidDealloc object:guid];
+        // Drop any AI-title generator state keyed by this guid. -terminate and
+        // -setGuid: normally forget first, but a session released without either
+        // (broken pipe / tmux disconnect that set exited without -terminate) would
+        // otherwise leak its entries. Guid-keyed so it doesn't touch the (gone)
+        // self.
+        //
+        // But ONLY if no LIVE session currently owns this guid. Generator state is keyed
+        // on guid, and an adopt-guid restore transiently gives two sessions the same guid
+        // (the saved guid is adopted while the source is still alive). When one of them
+        // deallocs here, an unguarded forget would wipe the SURVIVOR's applied title and
+        // fingerprints, resetting its tab title. Use -anySessionWithGUID:, NOT
+        // -sessionWithGUID: or -sessionMap: the map is weak-to-weak (holds only the latest
+        // registrant) and -sessionWithGUID: only walks in-tab sessions, so both MISS a
+        // survivor that is buried - and adopt-guid restore restores buried sessions, so the
+        // survivor keeping guid G can be buried when the source deallocs. -anySessionWithGUID:
+        // also covers buried/peer sessions, finding the live survivor in either ordering;
+        // this dying session is already out of every session list, so it can't match
+        // itself.
+        if (guid && ![[iTermController sharedInstance] anySessionWithGUID:guid]) {
+            [PTYSession forgetAITitleStateForGuid:guid];
+        }
         [guid release];
     });
     if (_textview.delegate == self) {
@@ -1367,6 +1395,25 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     if (_guid) {
+        // The guid is actually changing (a broken-pipe auto-restart via
+        // replaceTerminatedShellWithNewInstance, or a reload). forgetAITitleState
+        // uses the current guid, so forget the OLD guid's AI-title generator state
+        // here, before reassigning - otherwise it is orphaned (a leak per restart)
+        // and an in-flight generation could apply a stale title to the new shell.
+        // -terminate already forgets first on the manual path; this covers the
+        // paths that never go through -terminate.
+        //
+        // forgetAITitleState drives the main-actor generator and mutates genericScope,
+        // so it asserts the main thread AND must run synchronously here (before the
+        // reassignment below) so it operates on the OLD guid. A main hop would run
+        // after _guid is replaced and forget the wrong session. All guid-reassignment
+        // callers (arrangement restore, replaceTerminatedShellWithNewInstance, init)
+        // are on main; assert it so an off-main guid change fails fast here with a
+        // clear message rather than deep inside Swift. -dealloc, which cannot assume
+        // main, instead uses the guid-keyed +forgetAITitleStateForGuid: static.
+        ITAssertWithMessage([NSThread isMainThread],
+                            @"-setGuid: guid reassignment must run on the main thread");
+        [self forgetAITitleState];
         [[PTYSession sessionMap] removeObjectForKey:_guid];
     }
     iTermPublisher<NSNumber *> *previousPublisher = [[[[iTermCPUUtilization instanceForSessionID:_guid] publisher] retain] autorelease];
@@ -1760,6 +1807,15 @@ ITERM_WEAKLY_REFERENCEABLE
                 // Restoring these directly would decouple session.id from _guid and
                 // the session map, so session_title(session: session.id) could no
                 // longer resolve the live session and its title would come up blank.
+                continue;
+            }
+            if ([key isEqualToString:iTermVariableKeySessionAITitle]) {
+                // A generated AI tab title is derived from live screen content and
+                // will be re-derived; don't restore a stale value from the previous
+                // run. If AI is unavailable at restore (macOS < 26, disabled, or a
+                // machine without it), maybeUpdateAITitle can neither regenerate nor
+                // clear it, so a restored value would be pinned for the session's
+                // life.
                 continue;
             }
             [aSession.variablesScope setValue:variables[key] forVariableNamed:key];
@@ -3816,6 +3872,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 // "restart", which is done by first calling revive and then replaceTerminatedShellWithNewInstance.
 - (void)terminate {
     RLog(@"terminate called from %@", [NSThread callStackSymbols]);
+    [self forgetAITitleState];
     if (self.isBrowserSession) {
         [self terminateBrowser];
     }
@@ -7075,6 +7132,28 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     return kProgramTypeCommand;
 }
 
+// The variables to persist in a saved arrangement, minus values that must be
+// re-derived on restore rather than restored stale. The AI tab title is a model
+// summary of live screen content: the restore path deliberately skips it (see the
+// iTermVariableKeySessionAITitle branch in the initializer), so persisting it is
+// dead data, and it would also write a screen summary into the on-disk plist,
+// against the feature's local-only framing. Mirror the restore-side skip.
+- (NSDictionary *)encodableArrangementVariables {
+    NSDictionary *all = _variables.encodableDictionaryValue;
+    if (!all[iTermVariableKeySessionAITitle]) {
+        return all;
+    }
+    NSMutableDictionary *filtered = [all mutableCopy];
+    [filtered removeObjectForKey:iTermVariableKeySessionAITitle];
+    // This file is manual retain/release (see -dealloc). -mutableCopy returns a +1
+    // object, and this method's name is not alloc/new/copy/mutableCopy, so by Cocoa
+    // convention it must return an autoreleased (non-owning) result. Without this the
+    // full variables copy leaks every time an arrangement is encoded for a session
+    // with an aiTitle set (Save Window Arrangement, and periodic restorable-state
+    // autosave).
+    return [filtered autorelease];
+}
+
 - (BOOL)encodeArrangementWithContents:(BOOL)includeContents
                               encoder:(id<iTermEncoderAdapter>)result {
     return [self encodeArrangementWithContents:includeContents
@@ -7164,7 +7243,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
                                      unlimited:unlimited];
             }];
         }
-        result[SESSION_ARRANGEMENT_VARIABLES] = _variables.encodableDictionaryValue;
+        result[SESSION_ARRANGEMENT_VARIABLES] = [self encodableArrangementVariables];
         // Save the foreground-job ancestry so that on restore we can re-derive job-ended edges
         // for jobs that were running at save but have died by the time the session is restored.
         if (_eventTriggerEvaluator.foregroundJobAncestors.count > 0) {
@@ -7482,6 +7561,14 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     } else {
         [self setCurrentForegroundJobProcessInfo:[self.sessionProcessInfoProvider cachedProcessInfoIfAvailable]];
         [self.view setTitle:_nameController.presentationSessionTitle];
+    }
+    // Runs for inactive sessions too: a background tab is exactly the one whose
+    // name the user needs in order to find it again. Skip tmux gateway sessions,
+    // matching the label-attribute guard above: a gateway session is invisible
+    // plumbing, so extracting its screen and running the model would waste on-device
+    // calls titling something the user never sees.
+    if (![self isTmuxGateway]) {
+        [self maybeUpdateAITitle];
     }
 
     const BOOL transientTitle = _delegate.realParentWindow.isShowingTransientTitle;
@@ -15838,7 +15925,41 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     // Avoid changing the profile in a side-effect.
     dispatch_async(dispatch_get_main_queue(), ^{
         DLog(@"Deferred enableSessionNameTitleComponentIfPossible");
-        [weakSelf enableSessionNameTitleComponentIfPossible];
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        // A program's OSC icon/window name must not hijack an AI profile's title.
+        // Only this OSC path is suppressed for AI; deliberate triggers/renames go
+        // through enableSessionNameTitleComponentIfPossible directly.
+        const iTermTitleComponents components =
+            [iTermProfilePreferences unsignedIntegerForKey:KEY_TITLE_COMPONENTS inProfile:strongSelf.profile];
+        // For an AI profile with the feature on, suppress promoting the program's OSC
+        // name to the (sticky) TemporarySessionName - do NOT consult the availability
+        // probe here. Rationale:
+        //  - When AI is available, the AI title fills the name slot (as before).
+        //  - When AI is UNAVAILABLE (or not yet generated), titleForSessionName's
+        //    AI-empty degrade already shows the program's own icon/window name in
+        //    the name slot - non-stickily - so the program's title is not lost.
+        //  - Gating suppression on a probe was actively harmful: the cached probe is up
+        //    to 10s stale, so a false->true availability flip (user just enabled Apple
+        //    Intelligence) could, within that window, let the OSC name set the STICKY
+        //    TemporarySessionName bit, which out-ranks the AI title for the life of the
+        //    session and does not self-heal. Dropping the probe removes that hole and
+        //    the per-frame main-thread availability read entirely.
+        //
+        //    Decide suppression from PROFILE config (does the profile select the AI
+        //    component?), NOT the transient global setting. Gating on the setting had the
+        //    SAME sticky-bit trap the probe did: with the setting OFF, an AI profile would
+        //    set the sticky TemporarySessionName bit, and re-enabling the setting never
+        //    clears it, so the OSC name out-ranks the AI title for the life of the session.
+        //    An AI profile with the setting off does not need the sticky bit anyway - the
+        //    AI-empty degrade already shows the program's own icon/window name in the
+        //    name slot NON-stickily, so re-enable then shows the AI title.
+        if (![PTYSession programOSCTitleShouldEnableTemporaryNameForComponents:components]) {
+            return;
+        }
+        [strongSelf enableSessionNameTitleComponentIfPossible];
     });
 }
 
@@ -15867,9 +15988,30 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if (components & (iTermTitleComponentsSessionName | iTermTitleComponentsProfileAndSessionName | iTermTitleComponentsTemporarySessionName)) {
         return;
     }
+    // NOTE: this shared path deliberately enables TemporarySessionName even for an
+    // AI profile, so a deliberate "Set Title" trigger, manual rename, or workgroup
+    // name takes precedence over the AI title, per. The AI-only suppression
+    // for *program* OSC titles is applied at the setUntrustedIconName caller, which
+    // is the only source that should not beat AI.
     components |= iTermTitleComponentsTemporarySessionName;
     [self setSessionSpecificProfileValues:@{ KEY_TITLE_COMPONENTS: @(components) }];
 
+}
+
+// Whether a program-set OSC 0/1/2 title should enable TemporarySessionName. It must
+// NOT for a profile that selects the AI component, or the sticky TemporarySessionName
+// out-ranks the AI title in titleForSessionName for the life of the session. Decided
+// purely from PROFILE config, NOT device availability or the transient global setting:
+// even when the AI title is empty (unavailable / setting off / not yet generated), the
+// AI-empty degrade in titleForSessionName still shows the program's OSC name
+// non-stickily, so suppressing here loses nothing but avoids a sticky bit that never
+// self-heals when AI later populates. (Gating on availability or the setting - as the
+// probe and the `aiGeneratedTabTitles` check did - both re-introduced
+// exactly that persistent-mask bug on a false->true flip / re-enable, so both were
+// removed and the once-per-frame availability read with them.) A deliberate
+// trigger/rename does not come through here.
++ (BOOL)programOSCTitleShouldEnableTemporaryNameForComponents:(NSUInteger)components {
+    return (components & iTermTitleComponentsAI) == 0;
 }
 
 - (void)resetSessionNameTitleComponents {

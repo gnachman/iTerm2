@@ -2696,3 +2696,625 @@ extension PTYSession {
         }
     }
 }
+
+// MARK: - AI-generated tab titles
+
+extension PTYSession {
+    // Ticked from -updateDisplayBecause:, i.e. on the display-update cadence,
+    // which can fire many times a second. That is deliberate: there is no
+    // separate timer to keep in sync with output, and a tick that does nothing
+    // costs a handful of dictionary lookups in AITabTitleGenerator.shouldAttempt.
+    // Reading the screen - the part that walks the grid - and gathering context
+    // happen only once that returns true.
+    // Whether this session's current profile will actually display an AI title (the
+    // AI title component is selected, or a custom title function that might
+    // interpolate session.aiTitle). A missing profile is treated as "does not
+    // consume" rather than falling through. Re-evaluated at both attempt time and
+    // write time so a mid-generation profile switch is honored.
+    private func sessionConsumesAITitle() -> Bool {
+        guard let profile = self.profile else {
+            return false
+        }
+        let components = iTermProfilePreferences.unsignedInteger(forKey: KEY_TITLE_COMPONENTS,
+                                                                inProfile: profile)
+        // Whether an active TemporarySessionName (manual tab rename / Set-Title trigger) is
+        // currently masking the AI title. Mirrors the precedence titleForSessionName
+        // enforces: the TemporarySessionName bit set AND a non-empty EFFECTIVE session name.
+        // The effective name for a TAB (isWindowTitle == NO) is the tmux pane title for a
+        // tmux session, else the autoName - matching the renderer's effectiveSessionName
+        // (its `if (tmuxPaneVariable)` uses the TRIMMED pane title, so an empty/whitespace
+        // pane title falls through to the non-tmux `effectiveSessionName = sessionName` =
+        // autoName branch). Trim both here too, exactly as the renderer's trim() does, so
+        // a whitespace-only value can't make the gate skip a title the tab would show.
+        let trimmed = { (name: String) in name.trimmingCharacters(in: .whitespaces) }
+        let tmuxPaneTitle = trimmed((genericScope.value(forVariableName: iTermVariableKeySessionTmuxPaneTitle) as? String) ?? "")
+        let autoName = trimmed((genericScope.value(forVariableName: iTermVariableKeySessionAutoName) as? String) ?? "")
+        let effectiveName = tmuxPaneTitle.isEmpty ? autoName : tmuxPaneTitle
+        let isMaskedByTemporaryName =
+            (components & iTermTitleComponents.temporarySessionName.rawValue) != 0 && !effectiveName.isEmpty
+        // KEY_TITLE_FUNC is stored as an iTermTuple plist (display name, unique id),
+        // NOT a string: reading it via stringForKey force-bridges an NSArray to
+        // String and traps. Decode the tuple and use its identifier (secondObject),
+        // mirroring the reader in PTYSession.m.
+        let titleFuncTuple = iTermTuple<NSString, NSString>.fromPlistValue(
+            iTermProfilePreferences.object(forKey: KEY_TITLE_FUNC, inProfile: profile))
+        let hasCustomTitleFunction = !((titleFuncTuple.secondObject as String?) ?? "").isEmpty
+        return AITabTitleGenerator.sessionConsumesAITitle(titleComponents: components,
+                                                          hasCustomTitleFunction: hasCustomTitleFunction,
+                                                          isMaskedByTemporaryName: isMaskedByTemporaryName)
+    }
+
+    @objc
+    @MainActor
+    func maybeUpdateAITitle() {
+        // Main-thread only: this drives AITabTitleGenerator (whose methods assert the
+        // main queue) and reads genericScope. Called from -updateDisplayBecause: on
+        // the main thread today; asserting here makes that requirement explicit and
+        // traps clearly at the boundary if a future path drives the cadence off-main
+        // rather than racing genericScope.
+        dispatchPrecondition(condition: .onQueue(.main))
+        // Browser sessions have a real-but-empty VT100Screen and report idle
+        // continuously; the whole AI-title path (screen extraction, availability
+        // probe) assumes a terminal. isWorthTitling would reject the empty grid so no
+        // model call happens, but the per-tick work is pure waste - skip it.
+        guard !isBrowserSession() else {
+            return
+        }
+        // The global feature gate first, before any per-session profile reads.
+        // This is called from -updateDisplayBecause: for every session on the
+        // display cadence; for the off-by-default common case the disabled path
+        // must not pay for a profile lookup and two profile-pref reads per session
+        // per tick.
+        guard iTermAdvancedSettingsModel.aiGeneratedTabTitles() else {
+            // The feature is off. If we previously set an AI title it would otherwise
+            // stay frozen on the tab for the life of the session: the profile keeps
+            // the AI component bit (so it stays reachable to uncheck) and
+            // titleForSessionName still consumes aiTitle, and nothing else clears it.
+            // Clear it (and the generator's state) once, only when one is actually
+            // showing. Ask the generator's own applied-title record (a single dictionary
+            // lookup) instead of a variable-scope traversal, so the common disabled-
+            // default tick - every session, every display tick, for a user who never
+            // enabled the feature - is as cheap as possible. The generator's
+            // lastAppliedTitle is a faithful proxy: aiTitle is only ever written by the
+            // generation completion (which sets it) or forgetAITitleState (which clears
+            // it), and is no longer restored from arrangements.
+            if AITabTitleGenerator.instance.hasNonEmptyAppliedTitle(forSessionID: guid) {
+                forgetAITitleState()
+            }
+            return
+        }
+        // A terminated session must not be titled: -terminate forgets this
+        // session's generator state and then schedules an async display tick,
+        // which lands here after exited is set. Without this guard that tick
+        // re-populates the generator via shouldAttempt, undoing the forget and
+        // leaking one entry per closed session for the life of the process (and
+        // a late generation could write a stale title onto a revived session).
+        guard !exited else {
+            return
+        }
+        // Only name a screen that has stopped moving. Titling mid-output would
+        // name a half-drawn frame; isIdle (one second since the last byte) is
+        // the signal the cadence controller already uses to decide a session
+        // has settled.
+        guard isIdle else {
+            return
+        }
+        // The cheap throttle BEFORE the per-session profile reads. shouldAttempt
+        // is a dictionary lookup plus the 5s throttle and does not need the
+        // profile; on the vast majority of idle ticks it returns false here, so
+        // the profile lookup and two profile-pref reads below run only ~once per
+        // interval instead of every tick.
+        let sessionID = guid
+        guard AITabTitleGenerator.instance.shouldAttempt(forSessionID: sessionID) else {
+            return
+        }
+        // Only run sessions that will actually display the AI title. A session
+        // whose profile did not select the AI component (and has no custom title
+        // function that might interpolate session.aiTitle) would feed its screen
+        // through the model for a title it never shows.
+        guard sessionConsumesAITitle() else {
+            return
+        }
+        // The visible grid only, never scrollback: name what the user is looking
+        // at now. For a full-screen app (tmux, an editor, an agent CLI) the
+        // scrollback holds discarded frames, not history.
+        let scrollback = screen.numberOfScrollbackLines()
+        // extractScreenText is the agent screen-reading path: it weaves in ⟨cursor⟩,
+        // ⟨dim⟩…⟨/dim⟩, and ⟨image⟩ markup. Strip it for titling so the model isn't
+        // told the screen literally contains those tokens, the digest doesn't churn
+        // on cursor movement, and a faint shell autosuggestion (a command NOT run)
+        // doesn't name the tab.
+        let contents = WorkgroupIntrospection.plainTitleText(
+            WorkgroupIntrospection.extractScreenText(
+                ofScreen: screen,
+                fromLine: scrollback,
+                toLine: scrollback + screen.height()))
+        // Whether we're in a full-screen app, and (only then) the background-color
+        // fingerprint of the visible grid. The generator only consults the
+        // histogram on the alternate-screen path (a TUI re-titles when the color
+        // layout changes, not when content scrolls); a plain shell decides on the
+        // content digest alone. Computing the histogram walks the whole grid, so
+        // skip that work for shells and pass an empty one.
+        let isAlternate = screen.terminalSoftAlternateScreenMode
+        let backgroundHistogram = isAlternate
+            ? iTermTabTitleFrameFingerprint.backgroundHistogram(for: screen)
+            : [:]
+        // The program's own OSC titles (OSC 0/1 icon name, OSC 0/2 window name)
+        // are a strong "task changed" signal that the background fingerprint
+        // misses - e.g. switching files in vim keeps the same status-bar color
+        // but changes the OSC title. Cleaned of the volatile leading glyphs some
+        // programs animate (Claude Code cycles a spinner in its title) so the
+        // animation itself doesn't count as a change.
+        let oscTitle = Self.cleanedOSCTitle(genericScope.value(forVariableName: iTermVariableKeySessionIconName) as? String)
+            + "\u{1}"
+            + Self.cleanedOSCTitle(genericScope.value(forVariableName: iTermVariableKeySessionWindowName) as? String)
+        AITabTitleGenerator.instance.requestTitle(
+            forSessionID: sessionID,
+            screen: contents,
+            backgroundHistogram: backgroundHistogram,
+            isAlternate: isAlternate,
+            oscTitle: oscTitle,
+            // Built lazily: the mark walk + variable reads happen only if a
+            // generation actually runs, not on the common unchanged-screen tick.
+            // The provider is non-escaping and runs synchronously inside
+            // requestTitle, so a strong self capture cannot outlive this call.
+            context: { self.aiTitleContext() }) { [weak self] title in
+                guard let self, let title else {
+                    return
+                }
+                // Re-check exited at write time. A generation can be in flight
+                // when the session dies via a path that doesn't call -terminate
+                // (broken pipe, tmux disconnect set exited=YES without forgetting
+                // the generator state), so the !exited guard at the top of
+                // maybeUpdateAITitle doesn't cover this late write.
+                //
+                // Forget, don't just return, for the SAME reason as the sibling guards
+                // below: finish() has already committed lastAppliedTitle and stamped this
+                // screen's fingerprint. The exited-without-terminate path runs no
+                // forget, and a same-guid revive early-returns in -setGuid: (guid
+                // unchanged), so without reconciling here an unchanged/similar screen whose
+                // digest matches the stamp returns .skip forever, leaving the revived tab
+                // stuck on the plain name. (If the object is instead released, the dealloc
+                // forget already ran, making this a harmless no-op.)
+                guard !self.exited else {
+                    self.forgetAITitleState()
+                    return
+                }
+                // Re-check the feature flag at write time too: the user can disable
+                // aiGeneratedTabTitles while this ~0.3s generation is in flight, and
+                // the disable-path clear in maybeUpdateAITitle only runs on the next
+                // display tick - which may not come for a quiescent session. Without
+                // this the late completion would write a title the feature is no
+                // longer meant to produce, and it would linger.
+                //
+                // Forget rather than just return: finish() has already stamped this
+                // screen's fingerprint and lastAppliedTitle in the generator. If we
+                // bailed without resetting, re-enabling the feature on the unchanged
+                // (idle) screen would hit regenerationDecision's .skip path and never
+                // regenerate, leaving the tab stuck on the plain session name - the
+                // same stuck state the profile-switch guard below forgets to avoid.
+                // forgetAITitleState clears aiTitle AND resets those fingerprints so a
+                // re-enable re-generates.
+                guard iTermAdvancedSettingsModel.aiGeneratedTabTitles() else {
+                    self.forgetAITitleState()
+                    return
+                }
+                // Re-check the profile still consumes the AI title: the user can
+                // switch to a non-AI profile while this generation is in flight. Just
+                // clearing aiTitle is not enough - finish() already stamped this
+                // screen's fingerprint in the generator, so switching BACK to the AI
+                // profile on the unchanged screen would return .skip and never
+                // regenerate, leaving the tab stuck on the plain name. forgetAITitleState
+                // clears aiTitle AND resets those fingerprints so a switch-back
+                // re-generates.
+                guard self.sessionConsumesAITitle() else {
+                    self.forgetAITitleState()
+                    return
+                }
+                // genericScope, not variablesScope: the latter's generic type
+                // does not bridge to Swift (see PTYSession.h).
+                self.genericScope.setValue(title,
+                                           forVariableNamed: iTermVariableKeySessionAITitle)
+            }
+    }
+
+    // Strips leading non-alphanumeric junk (spinner/activity glyphs some programs
+    // animate in their title) and collapses whitespace, so a change signal
+    // reflects a real title change, not an animation frame.
+    static func cleanedOSCTitle(_ s: String?) -> String {
+        guard var t = s?[...] else {
+            return ""
+        }
+        while let first = t.first, !first.isLetter, !first.isNumber {
+            t = t.dropFirst()
+        }
+        // Normalize each whitespace token that is a whole volatile numeric shape -
+        // a clock (12:34:56), an ISO date (2026-08-30), a percentage (41%), or an
+        // elapsed-time counter (12s, 5m30s) - by replacing its digit runs with
+        // '#'. This stops an animated clock/timer/percentage from reading as a
+        // task change every tick, WITHOUT erasing digits that identify real work
+        // (file1 -> file2, Issue 1234, 1m.log). Requiring the whole token to match
+        // a volatile shape is what distinguishes "12s" (a timer) from "1m.log" (a
+        // file).
+        //
+        // Drop tokens with NO letter or number (a braille/ASCII spinner or bracketed
+        // glyph animated anywhere in the title - leading, middle, or trailing), so
+        // they don't churn the change signal every frame. A token with any alnum
+        // (e.g. "41%") is kept so the volatile-numeric normalizer above still handles
+        // it - the leading char-strip already covers a spinner glued to the first
+        // word.
+        let tokens = t.split(whereSeparator: { $0 == " " || $0 == "\t" || $0 == "\n" }).map(String.init)
+        return tokens
+            .filter { token in token.contains(where: { $0.isLetter || $0.isNumber }) }
+            .map { Self.normalizeVolatileToken($0) }
+            .joined(separator: " ")
+    }
+
+    // Replaces digit runs with '#' if the token (ignoring surrounding brackets) is
+    // a volatile numeric shape; otherwise returns it unchanged.
+    private static func normalizeVolatileToken(_ token: String) -> String {
+        let openers = Set("([{")
+        let closers = Set(")]}")
+        var start = token.startIndex
+        var end = token.endIndex
+        while start < end, openers.contains(token[start]) {
+            start = token.index(after: start)
+        }
+        while start < end, closers.contains(token[token.index(before: end)]) {
+            end = token.index(before: end)
+        }
+        let core = String(token[start..<end])
+        guard Self.isVolatileNumericCore(core) else {
+            return token
+        }
+        var body = ""
+        var inDigits = false
+        for ch in core {
+            if ch.isNumber {
+                if !inDigits {
+                    body.append("#")
+                    inDigits = true
+                }
+            } else {
+                body.append(ch)
+                inDigits = false
+            }
+        }
+        return String(token[token.startIndex..<start]) + body + String(token[end..<token.endIndex])
+    }
+
+    // YYYY-MM-DD: three all-digit groups of lengths 4, 2, 2.
+    private static func isISODateParts(_ s: Substring) -> Bool {
+        let parts = s.split(separator: "-", omittingEmptySubsequences: false)
+        return parts.count == 3
+            && parts[0].count == 4 && parts[1].count == 2 && parts[2].count == 2
+            && parts.allSatisfy { !$0.isEmpty && $0.allSatisfy { $0.isNumber } }
+    }
+
+    // A classic wall clock H:MM[:SS][.fff], optionally an ISO datetime (date T
+    // time) and/or with a trailing Z or +/-HH:MM timezone offset. The strict shape
+    // is what keeps ratios/scores/host:port from being mistaken for clocks.
+    private static func isVolatileClock(_ s: Substring) -> Bool {
+        var time = s
+        var isoDatetime = false
+        if let t = time.firstIndex(of: "T") {
+            guard Self.isISODateParts(time[..<t]) else {
+                return false
+            }
+            time = time[time.index(after: t)...]
+            isoDatetime = true
+        }
+        if time.hasSuffix("Z") {
+            time = time.dropLast()
+        } else if let sign = time.lastIndex(where: { $0 == "+" || $0 == "-" }),
+                  sign != time.startIndex {
+            let base = time[..<sign]
+            let offset = time[time.index(after: sign)...]
+            // Only strip a trailing +/-HH:MM when it can actually be a timezone offset
+            // and NOT the separator of a time RANGE like 09:00-10:30. A real offset
+            // rides on an ISO datetime (a T preceded it) or on a seconds-precision time
+            // (12:34:56+05:00); a schedule range is bare HH:MM-HH:MM. Without this guard
+            // lastIndex finds the range's own '-', its trailing HH:MM passes the offset
+            // shape test, and two different ranges (09:00-10:30, 11:00-12:00) collapse to
+            // the same token, hiding a real OSC change. Range-validating the offset alone
+            // is not enough: 10:30 is itself a plausible-looking offset. Requiring the
+            // datetime/seconds context is what separates an offset from a range, and the
+            // range check on the offset additionally rejects 12:34-45:67.
+            let baseHasSeconds = base.split(separator: ":", omittingEmptySubsequences: false).count == 3
+            if (isoDatetime || baseHasSeconds) && Self.isTimezoneOffset(offset) {
+                time = base
+            }
+        }
+        return Self.isClockTime(time)
+    }
+
+    // A +/-HH:MM timezone offset (the sign is already consumed): two 2-digit groups
+    // with hour 00-14 (max real UTC offset is +14) and minute 00-59.
+    private static func isTimezoneOffset(_ s: Substring) -> Bool {
+        let groups = s.split(separator: ":", omittingEmptySubsequences: false)
+        guard groups.count == 2, groups[0].count == 2, groups[1].count == 2,
+              let hour = Int(groups[0]), let minute = Int(groups[1]),
+              hour <= 14, minute <= 59 else {
+            return false
+        }
+        return true
+    }
+
+    // H:MM or H:MM:SS with optional fractional seconds. First group 1-2 digits, the
+    // minute/second groups exactly 2. Also validate the RANGES (hour 0-23, minute/
+    // second 0-59): the digit-length check alone still matches a genuine 2+2 token
+    // like a host:port pair (80:80, 90:90) or a two-part id, which would then collapse
+    // to #:# and hide a real OSC title change. Requiring valid clock ranges rejects
+    // those (80 > 23) while keeping real clocks (12:34). It still can't distinguish a
+    // port pair whose values happen to be valid clock numbers (22:22), but that is far
+    // rarer.
+    private static func isClockTime(_ s: Substring) -> Bool {
+        let groups = s.split(separator: ":", omittingEmptySubsequences: false)
+        guard groups.count == 2 || groups.count == 3 else {
+            return false
+        }
+        for (i, group) in groups.enumerated() {
+            var digits = group
+            // Only the final group may carry a fractional part (.fff seconds).
+            if i == groups.count - 1, let dot = digits.firstIndex(of: ".") {
+                let frac = digits[digits.index(after: dot)...]
+                guard !frac.isEmpty, frac.allSatisfy({ $0.isNumber }) else {
+                    return false
+                }
+                digits = digits[..<dot]
+            }
+            guard !digits.isEmpty, digits.allSatisfy({ $0.isNumber }), let value = Int(digits) else {
+                return false
+            }
+            if i == 0 {
+                // Hour: 1-2 digits, 0-23.
+                guard digits.count <= 2, value <= 23 else {
+                    return false
+                }
+            } else {
+                // Minute / second: exactly 2 digits, 0-59.
+                guard digits.count == 2, value <= 59 else {
+                    return false
+                }
+            }
+        }
+        return true
+    }
+
+    private static func isVolatileNumericCore(_ core: String) -> Bool {
+        guard core.contains(where: { $0.isNumber }) else {
+            return false
+        }
+        // Clock, possibly as an ISO datetime (date T time) with a trailing timezone
+        // (Z or +/-HH:MM) or a 12-hour am/pm suffix - so 12:34:56,
+        // 2026-08-30T12:34:56Z, 12:34:56+05:00, and 3:45pm normalize. Tightened to
+        // the classic H:MM[:SS] shape (first group 1-2 digits, minute/second groups
+        // exactly 2) so plain N:N ratios (16:9), scores (2:1), and host:port
+        // (8080:80) are NOT swallowed and can still register a real OSC change.
+        var clockCore = Substring(core)
+        for suffix in ["am", "pm"] where clockCore.count > suffix.count
+            && clockCore.suffix(suffix.count).lowercased() == suffix {
+            clockCore = clockCore.dropLast(suffix.count)
+            break
+        }
+        if Self.isVolatileClock(clockCore) {
+            return true
+        }
+        // ISO date YYYY-MM-DD: three all-digit groups of lengths 4, 2, 2. Merely
+        // "two hyphens" would also match version strings (1-2-3), IP fragments
+        // (10-0-0), and step counters, masking real title changes.
+        if Self.isISODateParts(Substring(core)) {
+            return true
+        }
+        // Percentage: ends with '%', the rest digits or '.'.
+        if core.hasSuffix("%") && core.dropLast().allSatisfy({ $0.isNumber || $0 == "." }) {
+            return true
+        }
+        // Metric-suffixed counter: digits (with optional '.') then a thousands/
+        // millions suffix, e.g. 1.2k, 3.4M, 100k. (Claude Code animates a "1.2k
+        // tokens" readout.) Deliberately NOT B/G/T: those far more often denote a
+        // size that identifies the work (7B model, 40G) than a counter. And an
+        // all-digit UPPERCASE <n>K/<n>M is a resolution/size identifier (4K, 8K,
+        // 1M rows), not a counter, so require either a lowercase 'k' or a decimal
+        // point - the shapes animated counters actually take - to collapse it;
+        // otherwise a 4K -> 8K switch would be masked as unchanged.
+        if let last = core.last, "kKM".contains(last),
+           last == "k" || core.contains("."),
+           core.dropLast().contains(where: { $0.isNumber }),
+           core.dropLast().allSatisfy({ $0.isNumber || $0 == "." }) {
+            return true
+        }
+        // N/M progress: digits '/' digits, e.g. 42/100.
+        let slashParts = core.split(separator: "/", omittingEmptySubsequences: false)
+        if slashParts.count == 2,
+           slashParts.allSatisfy({ !$0.isEmpty && $0.allSatisfy { $0.isNumber } }) {
+            return true
+        }
+        // Elapsed time: one-or-more (digits + unit), unit in {h, m, s, ms}.
+        return Self.isElapsedTime(core)
+    }
+
+    private static func isElapsedTime(_ core: String) -> Bool {
+        let chars = Array(core)
+        var i = 0
+        var sawSegment = false
+        while i < chars.count {
+            guard chars[i].isNumber else {
+                return false
+            }
+            while i < chars.count && chars[i].isNumber {
+                i += 1
+            }
+            // Optional fractional part (1.5s), matching the percentage/metric
+            // branches which already allow a decimal point.
+            if i + 1 < chars.count && chars[i] == "." && chars[i + 1].isNumber {
+                i += 1
+                while i < chars.count && chars[i].isNumber {
+                    i += 1
+                }
+            }
+            if i + 1 < chars.count && chars[i] == "m" && chars[i + 1] == "s" {
+                i += 2   // milliseconds
+            } else if i < chars.count && (chars[i] == "s" || chars[i] == "m" || chars[i] == "h") {
+                i += 1   // seconds / minutes / hours
+            } else {
+                return false   // digits not followed by a unit
+            }
+            sawSegment = true
+        }
+        return sawSegment
+    }
+
+    // Observes iTermAdvancedSettingsDidChange (posted whenever any advanced setting's
+    // backing default changes). When the user turns aiGeneratedTabTitles OFF, clear an
+    // already-applied AI title right away rather than waiting for maybeUpdateAITitle on
+    // the display cadence: a fully idle/occluded session may not get a tick soon, so
+    // the stale title would stay pinned on the tab, masking the real session name.
+    // Turning the feature ON needs no action here - the next idle tick regenerates. The
+    // notification fires for every advanced-setting change, so the common case is the
+    // cheap early return below.
+    @objc
+    nonisolated func aiGeneratedTabTitlesSettingDidChange() {
+        // iTermAdvancedSettingsDidChange is posted SYNCHRONOUSLY from a user-defaults KVO
+        // block on whatever thread mutated the default - not guaranteed main (a settable
+        // bool changed off-main, or an external `defaults write` from another process). So
+        // hop to main before touching genericScope / the main-actor generator, rather than
+        // asserting main and crashing in release (the sibling observers registered in the
+        // same block do not assert either).
+        Task { @MainActor [weak self] in
+            self?.clearAppliedAITitleIfFeatureDisabled()
+        }
+    }
+
+    // Internal (not private) so the lifecycle tests can drive the clearing logic
+    // synchronously, without the async main-hop in the @objc entry point above.
+    @MainActor
+    func clearAppliedAITitleIfFeatureDisabled() {
+        guard !iTermAdvancedSettingsModel.aiGeneratedTabTitles() else {
+            return
+        }
+        if let current = genericScope.value(forVariableName: iTermVariableKeySessionAITitle) as? String,
+           !current.isEmpty {
+            forgetAITitleState()
+        }
+    }
+
+    // Drops the generator's per-session state so a long-lived iTerm2 process
+    // does not retain an entry for every session ever opened.
+    @objc
+    @MainActor
+    func forgetAITitleState() {
+        // Main-thread only: forget() asserts the main queue and we mutate genericScope.
+        // Called from -terminate and -setGuid: on the main thread; -dealloc uses the
+        // guid-keyed static variant dispatched to main instead.
+        dispatchPrecondition(condition: .onQueue(.main))
+        // Read the displayed title before dropping generator state (forget() doesn't
+        // touch the variable, but read first for clarity).
+        let current = genericScope.value(forVariableName: iTermVariableKeySessionAITitle) as? String
+        AITabTitleGenerator.instance.forget(sessionID: guid)
+        // Also clear the displayed AI title, but ONLY if one is actually showing.
+        // forget() wipes the generator's lastAppliedTitle, which disables the normal
+        // clear-on-idle path, so on a restart / guid change a stale title from the shell
+        // that just died would otherwise linger on the revived session's tab. The
+        // variable lives on this session object, which survives a restart, so it must be
+        // reset here. But aiTitle is now a declared dependency of session_title, so
+        // writing "" onto an already-empty variable invalidates the title and forces a
+        // recompute - and -terminate calls this for EVERY session on close, including
+        // feature-off sessions that never titled. Checking the variable first skips that
+        // per-session write + recompute for them, and unlike the generator's
+        // lastAppliedTitle it also correctly clears a variable left stale after the
+        // generator state was already dropped.
+        if let current, !current.isEmpty {
+            genericScope.setValue("", forVariableNamed: iTermVariableKeySessionAITitle)
+        }
+    }
+
+    // Guid-keyed variant for -dealloc, which must not touch `self` and may run off
+    // the main thread. The caller captures the guid and dispatches to the main
+    // queue. Covers a session released without -terminate and without a guid
+    // change (a broken pipe / tmux disconnect that set exited=YES).
+    @objc
+    @MainActor
+    static func forgetAITitleState(forGuid guid: String) {
+        AITabTitleGenerator.instance.forget(sessionID: guid)
+    }
+
+    // How many recent shell commands to feed the title model. Enough to show the
+    // arc of a task without letting old, unrelated work dominate the context.
+    private static let maxRecentAICommands = 8
+
+    // The most recent shell commands run in this session, oldest first. Walks the
+    // session's prompt marks (shell integration) and keeps the tail; the mark at
+    // the current prompt has no command yet, so a command still being typed is
+    // naturally excluded. Empty without shell integration.
+    private func recentShellCommands(limit: Int) -> [String] {
+        // Walk prompt marks newest-first and stop once we have `limit` commands,
+        // rather than enumerating the entire (possibly tens-of-thousands) mark
+        // history forward every ~5s just to keep the last few.
+        var newestFirst: [String] = []
+        screen.enumeratePromptsBackward { mark, stop in
+            if let command = mark.fullCommand, !command.isEmpty {
+                newestFirst.append(command)
+                if newestFirst.count >= limit {
+                    stop.pointee = true
+                }
+            }
+        }
+        return newestFirst.reversed()
+    }
+
+    // The structured context that precedes the screen. Only present fields go
+    // into `text`; the raw fields are kept for the corpus. When idle at a shell
+    // prompt the foreground job is just the shell (noise) and the command that
+    // produced the screen has already exited, so the recent command history is
+    // the real signal - it tells the model that a screenful of filenames is the
+    // result of `ls DIR`, not a thing to name after one filename, and lets it
+    // read a sequence of commands as one task in progress.
+    private func aiTitleContext() -> AITabTitleContext {
+        func string(_ name: String) -> String? {
+            guard let value = genericScope.value(forVariableName: name) as? String,
+                  !value.isEmpty else {
+                return nil
+            }
+            return value
+        }
+        let job = string(iTermVariableKeySessionJob)
+        let commandLine = string(iTermVariableKeySessionCommandLine)
+        let cwd = string(iTermVariableKeySessionPath)
+        let user = string(iTermVariableKeySessionUsername)
+        let host = string(iTermVariableKeySessionHostname)
+        let windowName = string(iTermVariableKeySessionWindowName)
+        let atPrompt = isAtShellPrompt
+        let lastCommand = string(iTermVariableKeySessionLastCommand)
+        let home = string(iTermVariableKeySessionHomeDirectory)
+        // Outside the alternate screen the command arc is a strong task signal,
+        // whether idle at a prompt or with a long-running command in the
+        // foreground: a slow `git push` should still be read as the tail of the
+        // commit-and-push it followed, not named in isolation. In the alternate
+        // screen the visible grid is the content, so history is noise.
+        let recentCommands = screen.terminalSoftAlternateScreenMode
+            ? []
+            : recentShellCommands(limit: Self.maxRecentAICommands)
+
+        let text = AITabTitleContext.assembleText(job: job,
+                                                  commandLine: commandLine,
+                                                  atPrompt: atPrompt,
+                                                  lastCommand: lastCommand,
+                                                  recentCommands: recentCommands,
+                                                  cwd: cwd,
+                                                  user: user,
+                                                  host: host,
+                                                  home: home,
+                                                  runningCommandInHistory: haveAutoComposer())
+        return AITabTitleContext(job: job,
+                                 commandLine: commandLine,
+                                 atPrompt: atPrompt,
+                                 lastCommand: lastCommand,
+                                 recentCommands: recentCommands,
+                                 cwd: cwd,
+                                 user: user,
+                                 host: host,
+                                 windowName: windowName,
+                                 text: text)
+    }
+}

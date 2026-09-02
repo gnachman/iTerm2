@@ -668,7 +668,12 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     // Unless a custom title function is in use, ensure session name is visible in the title.
     NSUInteger components = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
 
-    if (components & (iTermTitleComponentsSessionName | iTermTitleComponentsProfileAndSessionName)) {
+    // The AI title occupies the name slot too, so an AI profile already shows a
+    // name-group component: leave it alone rather than force-adding SessionName,
+    // which would render AI | SessionName and break the name-group mutual exclusion
+    // the popup toggle maintains. The name group EXCEPT ProfileName, which is not
+    // yet in the session-name slot and is handled by the promotion branch below.
+    if (components & (iTermTitleComponentsNameGroup & ~iTermTitleComponentsProfileName)) {
         return;
     }
     if (components == iTermTitleComponentsCustom) {
@@ -691,6 +696,17 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     [self updateTitleSettingsMenuForView:_titleSettingsForEditCurrentSession];
 }
 
++ (BOOL)shouldOfferAITitleComponentWithSettingEnabled:(BOOL)enabled
+                                    profileComponents:(NSUInteger)components {
+    // Normally gated behind the off-by-default advanced setting so the feature
+    // stays invisible in a public build. But if the profile already carries the
+    // AI bit (the user enabled the setting, selected AI, then turned it back off)
+    // keep offering it, so the bit stays reachable to uncheck. Otherwise it is
+    // stuck set, the popup label reads "AI" for an item that isn't there, and an
+    // AI-only profile renders the tab as a single blank space.
+    return enabled || (components & iTermTitleComponentsAI) != 0;
+}
+
 - (void)updateTitleSettingsMenuForView:(NSPopUpButton *)titleSettings {
     // First remove any programmatically added items
     NSIndexSet *indexSet = [titleSettings.menu.itemArray indexesOfObjectsPassingTest:^BOOL(NSMenuItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
@@ -700,12 +716,32 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         [titleSettings.menu removeItemAtIndex:idx];
     }];
 
+    const NSUInteger selectedComponents = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
+
+    // The AI-generated name option is gated behind the off-by-default
+    // aiGeneratedTabTitles advanced setting (the same switch that gates
+    // generation), so the whole feature stays invisible in a public build until
+    // it's turned on. Remove any existing item first, then re-add it only when
+    // enabled, so toggling the setting is reflected on the next menu rebuild.
+    // Added here rather than in the xib so the option ships without a nib edit;
+    // its tag is not -1, so the tag==-1 removal above never touches it.
+    const NSInteger existingAIIndex = [titleSettings.menu indexOfItemWithTag:iTermTitleComponentsAI];
+    if (existingAIIndex != -1) {
+        [titleSettings.menu removeItemAtIndex:existingAIIndex];
+    }
+    if ([ProfilesGeneralPreferencesViewController shouldOfferAITitleComponentWithSettingEnabled:[iTermAdvancedSettingsModel aiGeneratedTabTitles]
+                                                                              profileComponents:selectedComponents]) {
+        NSMenuItem *aiItem = [[NSMenuItem alloc] init];
+        aiItem.title = @"AI-generated name";
+        aiItem.tag = iTermTitleComponentsAI;
+        [titleSettings.menu addItem:aiItem];
+    }
+
     // Browser sessions have no job, tty, host, user, working directory, command line,
     // or terminal size, so hide those components for a browser profile. A terminal-only
     // component that is already selected stays visible so the user can turn it off (see
     // iTermBrowserSessionTitle). Only name/profile-name (and custom) otherwise apply.
     const BOOL isBrowser = [[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue];
-    const NSUInteger selectedComponents = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
     for (NSMenuItem *item in titleSettings.menu.itemArray) {
         if (item.tag > 0) {
             item.hidden = [iTermBrowserSessionTitle shouldHideTitleComponentMenuItemWithTag:item.tag
@@ -1422,9 +1458,13 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         }
     }
 
-    NSUInteger nameTagsMask = (iTermTitleComponentsProfileName |
-                               iTermTitleComponentsSessionName |
-                               iTermTitleComponentsProfileAndSessionName);
+    // AI is a name-slot winner in titleForSessionName (it out-ranks the other
+    // name components), and its item lives in the same name popup, so it must be
+    // part of the mutually-exclusive name group: selecting it deselects the other
+    // name components and vice versa. Omitting it left both checked (AI silently
+    // dropping the other name) and made switching back to a plain name impossible
+    // without toggling AI off first.
+    NSUInteger nameTagsMask = iTermTitleComponentsNameGroup;
     if (selectedTag & nameTagsMask) {
         // Selected a name tag. Deselect all other name tags. Toggle the selected one.
         const NSUInteger originalTitleBits = (originalValue & nameTagsMask);
@@ -1489,6 +1529,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                                                           tty:@"TTY"
                                                                                          user:@"User"
                                                                                          host:@"Host"
+                                                                                      aiTitle:@"AI"
                                                                                 homeDirectory:nil
                                                                                      tmuxPane:nil
                                                                                      iconName:@"“Shell”"

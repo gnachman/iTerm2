@@ -61,6 +61,7 @@ NSString *const iTermVariableKeySessionTermID = @"termid";
 NSString *const iTermVariableKeySessionProfileName = @"profileName";
 NSString *const iTermVariableKeySessionIconName = @"terminalIconName";
 NSString *const iTermVariableKeySessionTriggerName = @"triggerName";
+NSString *const iTermVariableKeySessionAITitle = @"aiTitle";
 NSString *const iTermVariableKeySessionWindowName = @"terminalWindowName";
 NSString *const iTermVariableKeySessionJob = @"jobName";
 NSString *const iTermVariableKeySessionProcessTitle = @"processTitle";

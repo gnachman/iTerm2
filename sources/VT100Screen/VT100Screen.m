@@ -1050,6 +1050,31 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
     }
 }
 
+- (void)enumeratePromptsBackward:(void (^ NS_NOESCAPE)(id<VT100ScreenMarkReading> mark, BOOL *stop))block {
+    NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
+    NSArray *objects = [enumerator nextObject];
+    while (objects) {
+        // reverseLimitEnumerator yields groups newest-first, but within a group
+        // the objects are in forward (oldest-first) order, so reverse each group
+        // to honor the newest-first contract when a limit group holds a tie.
+        for (id obj in [objects reverseObjectEnumerator]) {
+            id<VT100ScreenMarkReading> screenMark = [VT100ScreenMark castFrom:obj];
+            if (!screenMark) {
+                continue;
+            }
+            if (!screenMark.isPrompt) {
+                continue;
+            }
+            BOOL stop = NO;
+            block(screenMark, &stop);
+            if (stop) {
+                return;
+            }
+        }
+        objects = [enumerator nextObject];
+    }
+}
+
 - (void)enumeratePortholes:(void (^ NS_NOESCAPE)(id<PortholeMarkReading> mark))block {
     for (NSArray<id<IntervalTreeImmutableObject>> *objects in _state.intervalTree.forwardLimitEnumerator) {
         for (id<IntervalTreeImmutableObject> object in objects) {

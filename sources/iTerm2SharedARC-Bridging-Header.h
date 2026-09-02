@@ -281,3 +281,5 @@
 #import "iTermSessionPreviewPanel.h"
 #import "iTermMinimalComposerViewController.h"
 #import <CoreParse/CoreParse.h>
+#import "iTermTabTitleFrameFingerprint.h"
+#import "iTermSessionTitleBuiltInFunction.h"
