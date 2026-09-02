@@ -11,6 +11,7 @@
 #import "FutureMethods.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermCursor.h"
 #import "iTermHistogram.h"
 #import "iTermMetalCellRenderer.h"
 #import "iTermMetalRenderer.h"
@@ -136,6 +137,7 @@ static NSInteger gNextFrameDataNumber;
         _view = view;
         _fullSizeTexturePool = fullSizeTexturePool;
         _device = view.device;
+        _framebufferPixelFormat = MTLPixelFormatBGRA8Unorm;
         _creation = [NSDate timeIntervalSinceReferenceDate];
         _frameNumber = gNextFrameDataNumber++;
         _framePoolContext = [[iTermMetalBufferPoolContext alloc] init];
@@ -319,12 +321,7 @@ static NSInteger gNextFrameDataNumber;
     colorAttachment.texture = fast ? [self.fullSizeTexturePool requestTextureOfSize:self.viewportSize] : nil;
     if (!colorAttachment.texture) {
         // Allocate a new texture.
-        MTLPixelFormat pixelFormat;
-        if ([iTermAdvancedSettingsModel hdrCursor]) {
-            pixelFormat = MTLPixelFormatRGBA16Float;
-        } else {
-            pixelFormat = MTLPixelFormatBGRA8Unorm;
-        }
+        const MTLPixelFormat pixelFormat = self.framebufferPixelFormat;
         MTLTextureDescriptor *textureDescriptor = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:pixelFormat
                                                                                                      width:self.viewportSize.x
                                                                                                     height:self.viewportSize.y
@@ -541,6 +538,9 @@ static NSInteger gNextFrameDataNumber;
                                                                  cellSizeWithoutSpacing:self.cellSizeWithoutSpacing
                                                                                gridSize:self.gridSize
                                                                   usingIntermediatePass:(self.intermediateRenderPassDescriptor != nil)];
+        // Every renderer receives this configuration; carry the frame's framebuffer
+        // format on it so each renderer builds its pipeline with the matching format.
+        _cellConfiguration.framebufferPixelFormat = self.framebufferPixelFormat;
     }
     return _cellConfiguration;
 }

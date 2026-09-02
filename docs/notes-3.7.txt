@@ -875,6 +875,12 @@ Bug Fixes:
   screen with “Hide tab bar when there is only
   one tab” enabled, which left an unused strip
   at the bottom of the window.
+- New per-profile “Use HDR cursor when
+  available” setting (Profiles > Colors). When
+  on, a white cursor renders brighter than white
+  on an HDR-capable display, with either the GPU
+  or the legacy renderer. Only sessions that
+  enable it pay the extra fp16 cost.
 - In the tmux Dashboard, “Open in Tabs” is now
   enabled when a single hidden window is
   selected, matching “Open in Window.” Issue

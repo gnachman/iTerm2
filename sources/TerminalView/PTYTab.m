@@ -7456,6 +7456,13 @@ typedef struct {
     [self updateUseMetal];
 }
 
+- (void)sessionRebuildMetal {
+    // The metal framebuffer pixel format is baked into the driver at creation, so
+    // a session's HDR-cursor toggle requires a full teardown/rebuild. Reuse the
+    // same off/on cycle used when a metal-affecting setting changes.
+    [self bounceMetal];
+}
+
 - (void)sessionDidChangeMetalViewAlphaValue:(PTYSession *)session to:(CGFloat)newValue {
     [self.delegate tabDidChangeMetalViewVisibility:self];
 }

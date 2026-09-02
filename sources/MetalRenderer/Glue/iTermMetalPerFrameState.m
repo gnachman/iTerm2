@@ -6,6 +6,8 @@
 //
 
 #import "iTermMetalPerFrameState.h"
+#import "iTermCursor.h"
+#import "iTermMalloc.h"
 
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
@@ -350,10 +352,17 @@ typedef struct {
 }
 - (void)loadCursorInfoWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
                                textView:(PTYTextView *)textView {
+    const CGFloat potentialEDR = textView.window.screen.maximumPotentialExtendedDynamicRangeColorComponentValue;
     _cursorVisible = drawingHelper.isCursorVisible;
     const int offset = _visibleRange.start.y - _numberOfScrollbackLines;
     _cursorInfo = [[iTermMetalCursorInfo alloc] init];
     _cursorInfo.fadeAlpha = 1.0;
+    // Decide the HDR-cursor treatment once, where the profile hint, headroom, and
+    // background are all known, so the cursor renderer and the bold path agree.
+    // Uses the default background (like the legacy renderer) as the dark test.
+    _cursorInfo.useHDRWhite = [iTermCursor shouldUseHDRCursorOnBackground:[drawingHelper defaultBackgroundColor]
+                                                          profileEnabled:drawingHelper.hdrCursorEnabled
+                                                       potentialHeadroom:potentialEDR];
     _cursorInfo.password = drawingHelper.passwordInput;
     _cursorInfo.copyMode = drawingHelper.copyMode;
     _cursorInfo.copyModeCursorCoord = VT100GridCoordMake(drawingHelper.copyModeCursorCoord.x,
@@ -409,6 +418,16 @@ typedef struct {
         _cursorInfo.fadeAlpha = fadeAlpha;
         _cursorInfo.type = drawingHelper.cursorType;
         _cursorInfo.cursorColor = [self backgroundColorForCursor];
+        // An unfocused box is drawn as a hollow frame by _frameCursorRenderer using
+        // this cursorColor, and that frame must keep the profile color (the frame
+        // renderer never forces white). Everywhere the block is actually filled and
+        // forced white, the glyph's antialiasing background (also derived from
+        // cursorColor) must be white too, or a saturated profile color fringes the
+        // character. The box-frame exception rule is shared with the legacy path.
+        if (_cursorInfo.useHDRWhite &&
+            [iTermCursor hdrCursorForcesWhiteForType:_cursorInfo.type focused:focused]) {
+            _cursorInfo.cursorColor = [NSColor whiteColor];
+        }
         {
             const screen_char_t *const line = _rows[_cursorInfo.coord.y]->_screenCharLine.line;
             const screen_char_t screenChar = _cursorInfo.coord.x < _rows[_cursorInfo.coord.y]->_screenCharLine.length ? line[_cursorInfo.coord.x] : (screen_char_t){0};
@@ -431,7 +450,13 @@ typedef struct {
             if (_cursorInfo.type == CURSOR_BOX) {
                 _cursorInfo.shouldDrawText = YES;
                 iTermSmartCursorColor *smartCursorColor = nil;
-                if (drawingHelper.useSmartCursorColor) {
+                // When the HDR hint applies, iTermCursorRenderer force-overrides
+                // the block to white, so smart cursor color must be suppressed
+                // here: otherwise the glyph would be colored to contrast a
+                // smart-picked background that is never drawn (e.g. light-on-white
+                // and illegible). The legacy path does the same via
+                // smart:(_useSmartCursorColor && !hdrCursor).
+                if (drawingHelper.useSmartCursorColor && !_cursorInfo.useHDRWhite) {
                     smartCursorColor = [[iTermSmartCursorColor alloc] init];
                     smartCursorColor.delegate = self;
                 }
@@ -1895,8 +1920,23 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
         underlinedRange = NSMakeRange(NSNotFound, 0);
         annotatedIndexes = nil;
     }
-    const screen_char_t *const line = (const screen_char_t *const)lineData.line;
+    const screen_char_t *line = (const screen_char_t *)lineData.line;
     const iTermLineAttribute rowLineAttribute = _rows[row]->_screenCharLine.metadata.lineAttribute;
+
+    // An HDR box cursor draws its character bold so it stays legible over the
+    // much-brighter-than-white block. Do it at the source (mark the cell bold and
+    // let the normal glyph pipeline resolve weight) so decomposed, regular, and
+    // ASCII glyphs all get the same treatment, real bold font if the font has one,
+    // otherwise a synthetic strike, independent of whether RTL/ligatures decompose
+    // the glyph. This mirrors the legacy renderer.
+    const BOOL hdrBoldCursorOnRow = (_cursorInfo != nil &&
+                                     _cursorInfo.useHDRWhite &&
+                                     _cursorInfo.cursorVisible &&
+                                     !_cursorInfo.frameOnly &&
+                                     _cursorInfo.type == CURSOR_BOX &&
+                                     _cursorInfo.coord.y == row &&
+                                     _cursorInfo.coord.x >= 0 &&
+                                     _cursorInfo.coord.x < width);
     iTermExternalAttributeIndex *eaIndex = _rows[row]->_eaIndex;
 
     *hoverStatePtr =_rows[row]->_hoverState;
@@ -1920,6 +1960,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     const BOOL cacheable = (_rowOutputCache != nil &&
                             !suppressed &&
                             !hasOverlay &&
+                            !hdrBoldCursorOnRow &&
                             _rows[row]->_contentIdentity.generation != iTermRowContentGenerationUncacheable);
     iTermRowCacheKey cacheKey;
     if (cacheable) {
@@ -1947,6 +1988,24 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
             return;
         }
         _rowCacheMisses++;
+    }
+
+    // Substitute a bold copy of the cursor cell so the glyph is built bold. Kept
+    // local and freed below; the row is uncacheable (see hdrBoldCursorOnRow) so
+    // this per-frame edit is never stored. We copy rather than set/restore the bit
+    // in place because lineData may be the shared per-frame snapshot
+    // (paddedToAtLeastLength returns self when already wide enough); an in-place
+    // edit could corrupt it or a concurrent read. This is an O(width) copy per
+    // frame while an HDR box cursor is visible, acceptable for one cursor row.
+    screen_char_t *hdrBoldLine = NULL;
+    if (hdrBoldCursorOnRow) {
+        // lineData is paddedToAtLeastLength:width, so its buffer covers the full
+        // drawn range; copy that many cells.
+        hdrBoldLine = ScreenCharLineCopyWithBoldCursorCell(line,
+                                                           (size_t)lineData.length,
+                                                           _cursorInfo.coord.x,
+                                                           _cursorInfo.doubleWidth);
+        line = hdrBoldLine;
     }
 
     vector_float4 unprocessedBackgroundColors[width];
@@ -2071,6 +2130,9 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
 
     [self applyBoxCursorTextColorTweakForRow:row width:width attributes:attributes];
     CTVectorDestroy(&positions);
+    if (hdrBoldLine) {
+        free(hdrBoldLine);
+    }
 }
 
 // Tweaks the text color for the cell that has a box cursor. This is a per-frame

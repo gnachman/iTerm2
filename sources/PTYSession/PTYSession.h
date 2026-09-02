@@ -299,6 +299,11 @@ typedef enum {
 
 // Whether metal is allowed has changed
 - (void)sessionUpdateMetalAllowed;
+
+// The session's metal framebuffer pixel format changed (its HDR-cursor setting
+// flipped), so the metal driver must be torn down and rebuilt with the new
+// format. Implemented by bouncing metal for the tab.
+- (void)sessionRebuildMetal;
 - (void)sessionDidChangeMetalViewAlphaValue:(PTYSession *)session to:(CGFloat)newValue;
 
 // Amount of transparency changed (perhaps to none!)

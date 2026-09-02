@@ -128,6 +128,7 @@
 #define KEY_UNDERLINE_COLOR        @"Underline Color"
 #define KEY_USE_UNDERLINE_COLOR    @"Use Underline Color"
 #define KEY_CURSOR_BOOST           @"Cursor Boost"
+#define KEY_HDR_CURSOR             @"HDR Cursor"
 #define KEY_USE_CURSOR_GUIDE       @"Use Cursor Guide"
 #define KEY_CURSOR_GUIDE_COLOR     @"Cursor Guide Color"
 #define KEY_BADGE_COLOR            @"Badge Color"

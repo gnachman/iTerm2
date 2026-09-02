@@ -11,6 +11,7 @@
 #import "charmaps.h"
 #import "CVector.h"
 #import "DebugLogging.h"
+#import "iTermMalloc.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAttributedStringBuilder.h"
@@ -129,6 +130,10 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     NSTimeInterval _lastTimeCursorMoved;
 
     BOOL _blinkingFound;
+
+    // Set while drawing an HDR cursor so its character is rendered bold, keeping
+    // it legible over the much-brighter-than-white block.
+    BOOL _drawBoldCursorCharacter;
 
     // Drives the smooth cursor blink fade. Lazily created.
     iTermCursorBlinkFadeAnimator *_blinkFadeAnimator;
@@ -4003,6 +4008,35 @@ typedef struct {
     const iTermCursorInfo cursorInfo = [self cursorInfoForCoord:cursorCoord];
     NSColor *cursorColor = [self cursorColorWithOutline:outline];
 
+    // The HDR cursor hint forces a bright HDR-white cursor when it applies (the
+    // profile's HDR cursor on, a dark background, and an EDR-capable display). The
+    // white is drawn normally and then pushed past reference white with additive
+    // passes,
+    // because this drawRect: backing clamps a color with components > 1 at set
+    // time but accumulates already-written values via plusLighter (the Tahoe tab
+    // outline glows the same way). When the hint does not apply, the cursor draws
+    // normally so cursor boost and smart cursor color still take effect.
+    CGFloat hdrBrightness = 1.0;
+    // A box cursor in an unfocused window is drawn as a hollow frame that keeps its
+    // profile color and is not filled, so forcing it white (and boosting it) would
+    // both lose that color and do nothing useful. The Metal path shares this rule
+    // via hdrCursorForcesWhiteForType:focused:. Underline and vertical cursors are
+    // drawn solid regardless of focus, so they are unaffected.
+    const BOOL forcesWhite = [iTermCursor hdrCursorForcesWhiteForType:_cursorType focused:[self isFocused]];
+    if (!outline && forcesWhite) {
+        // Potential (not current) headroom: on a reference-mode XDR display the
+        // window backing can show values above 1.0 even while the *current*
+        // headroom API reports 1.0. Potential reflects the panel's capability;
+        // the display tonemaps whatever we draw down to what it can show.
+        const CGFloat headroom = _delegate.enclosingScrollView.window.screen.maximumPotentialExtendedDynamicRangeColorComponentValue;
+        if ([iTermCursor shouldUseHDRCursorOnBackground:[self defaultBackgroundColor]
+                                         profileEnabled:self.hdrCursorEnabled
+                                      potentialHeadroom:headroom]) {
+            cursorColor = [NSColor whiteColor];
+            hdrBrightness = headroom;
+        }
+    }
+
     if (_passwordInput) {
         NSImage *keyImage;
         if (backgroundColor.isDark) {
@@ -4034,16 +4068,24 @@ typedef struct {
                                                          faint:NO
                                                   isBackground:NO];
     }
+    cursor.hdrBrightness = hdrBrightness;
+    const BOOL hdrCursor = (hdrBrightness > 1.0);
+    _drawBoldCursorCharacter = hdrCursor;
+    // When the HDR hint applies we force a full-white fill (see above), so smart
+    // cursor color must be suppressed here too: otherwise the box cursor would
+    // pick a smart background color and then get boosted past white, and the
+    // Metal path (which forces white unconditionally) would disagree.
     [cursor drawWithRect:cursorInfo.rect
              doubleWidth:cursorInfo.isDoubleWidth
               screenChar:cursorInfo.screenChar
          backgroundColor:cursorColor
          foregroundColor:cursorTextColor
-                   smart:_useSmartCursorColor
+                   smart:(_useSmartCursorColor && !hdrCursor)
                  focused:[self isFocused]
                    coord:cursorCoord
                  outline:outline
            virtualOffset:virtualOffset];
+    _drawBoldCursorCharacter = NO;
     return cursorInfo.rect;
 }
 
@@ -4502,10 +4544,43 @@ typedef struct {
     NSRect innerRect = [self rectForCoordRange:coordRange];
     iTermRectClip(innerRect, virtualOffset);
 
-    const screen_char_t *line = [self lineAtIndex:row isFirst:nil];
+    BOOL isFirst = NO;
+    const screen_char_t *line = [self lineAtIndex:row isFirst:&isFirst];
     iTermImmutableMetadata metadata = [self.delegate drawingHelperMetadataOnLine:row];
     const BOOL rtlFound = metadata.rtlFound;
     id<iTermExternalAttributeIndexReading> eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(metadata);
+
+    // For an HDR cursor, draw the character bold so it stays legible over the
+    // much-brighter-than-white block. Copy the line and set the bold bit on the
+    // cursor cell (and its double-width partner) rather than mutating in place:
+    // `line` points into the data source's buffer (or, for the offscreen command
+    // line, a padded ScreenCharArray) that other code may read, so an in-place
+    // set/restore is not safe. This is an O(width) copy per frame while an HDR box
+    // cursor is visible, which is acceptable for one cursor row.
+    screen_char_t *boldLine = NULL;
+    if (_drawBoldCursorCharacter && coord.x >= 0 && coord.x < _gridSize.width) {
+        // A normal grid line is exactly _gridSize.width wide and its backing
+        // ScreenCharArray is valid through the continuation cell at
+        // [_gridSize.width], so copying width + 1 is safe. The offscreen command
+        // line (the only isFirst case) is different: its buffer is built by
+        // -mutableLineData, which allocates exactly `length` cells with no trailing
+        // continuation cell, and a saved command can be shorter than the current
+        // grid width. Pad it to at least the grid width (like the Metal path) so
+        // the copy covers the full drawn range and always includes the cursor cell,
+        // then clamp to the padded length to avoid reading past the buffer.
+        size_t count = (size_t)_gridSize.width + 1;
+        const screen_char_t *source = line;
+        // Kept alive until end of scope: `source` points into its buffer and is
+        // read by the copy below.
+        NS_VALID_UNTIL_END_OF_SCOPE ScreenCharArray *padded = nil;
+        if (isFirst) {
+            padded = [_offscreenCommandLine.characters paddedToAtLeastLength:_gridSize.width];
+            source = padded.line;
+            count = MIN(count, (size_t)padded.length);
+        }
+        boldLine = ScreenCharLineCopyWithBoldCursorCell(source, count, coord.x, width == 2);
+        line = boldLine;
+    }
 
     [self constructAndDrawRunsForLine:line
                              bidiInfo:rtlFound ? [self.delegate drawingHelperBidiInfoForLine:row] : nil
@@ -4524,6 +4599,9 @@ typedef struct {
                         virtualOffset:virtualOffset
                         lineAttribute:metadata.lineAttribute];
 
+    if (boldLine) {
+        free(boldLine);
+    }
     [context restoreGraphicsState];
 }
 

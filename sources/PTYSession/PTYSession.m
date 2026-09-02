@@ -5758,6 +5758,22 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     [self setSmartCursorColor:[iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_SMART_CURSOR_COLOR, aDict, dark)
                                                         inProfile:aDict]];
 
+    const BOOL hdrCursorEnabled = [iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_HDR_CURSOR, aDict, dark)
+                                                            inProfile:aDict];
+    self.textview.hdrCursorEnabled = hdrCursorEnabled;
+    if (_view.hdrCursorEnabled != hdrCursorEnabled) {
+        _view.hdrCursorEnabled = hdrCursorEnabled;
+        // The metal framebuffer pixel format is fp16 only when the HDR cursor is
+        // on, and it is baked into the driver's pipeline states at creation time.
+        // So a change while metal is active needs a driver rebuild; bounceMetal
+        // tears the tab's metal views down and rebuilds them with the new
+        // per-session format. The legacy renderer reads the setting per draw and
+        // needs no rebuild.
+        if (_useMetal) {
+            [self.delegate sessionRebuildMetal];
+        }
+    }
+
     DLog(@"set min contrast to %f using key %@", [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, aDict, dark)
                                                                             inProfile:aDict], iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, aDict, dark));
     [self setMinimumContrast:[iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, aDict, dark)

@@ -241,6 +241,14 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 // the inner edge of the panel area.
 @property (nonatomic) CGFloat actualPanelReservation;
 @property (nonatomic, readonly) BOOL isBrowser;
+
+// The session's per-profile HDR-cursor setting (KEY_HDR_CURSOR). When on, the
+// metal framebuffer is fp16 and EDR is engaged (via the metal view and the HDR
+// engager) so the cursor can render brighter than white. Changing it while the
+// metal renderer is active requires rebuilding the driver (the pixel format is
+// baked into pipeline states); PTYSession does that via -bounceMetal.
+@property (nonatomic) BOOL hdrCursorEnabled;
+
 @property (nonatomic) VT100ScreenProgress progress;
 @property (nonatomic) BOOL enableProgressBars;
 @property (nonatomic) BOOL showInlineProgressBar;

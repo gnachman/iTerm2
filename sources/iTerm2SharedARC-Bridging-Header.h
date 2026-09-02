@@ -15,6 +15,7 @@
 #import "iTermSplitViewAnimation.h"
 #import "iTermBijection.h"
 #import "iTermBuiltInFunctions.h"
+#import "iTermCursor.h"
 #import "iTermCache.h"
 #import "iTermColorMap.h"
 #import "iTermCommandRunner.h"

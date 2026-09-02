@@ -262,8 +262,22 @@ final class iTermMarginRenderer: NSObject, iTermMetalCellRendererProtocol {
         return false
     }
 
+    private var allSubRenderers: [iTermMetalCellRenderer] {
+        return [blendingRenderer, nonblendingRenderer, compositeOverRenderer,
+                blendingRendererForPIUs, nonblendingRendererForPIUs, compositeOverRendererForPIUs].compactMap { $0 }
+    }
+
     func createTransientState(forCellConfiguration configuration: iTermCellRenderConfiguration,
                               commandBuffer: MTLCommandBuffer) -> iTermMetalRendererTransientState? {
+        // The base createTransientState stamps the framebuffer pixel format only
+        // onto the renderer it is called on, but this wrapper also draws with the
+        // PIU sub-renderers (drawWithExtensions), whose pipelines are built lazily
+        // from their own framebufferPixelFormat. Stamp the format onto every
+        // sub-renderer so none builds an 8-bit pipeline against an fp16 (HDR
+        // cursor) framebuffer, which would be a pipeline/target format mismatch.
+        for subRenderer in allSubRenderers {
+            subRenderer.framebufferPixelFormat = configuration.framebufferPixelFormat
+        }
         let renderer = renderer(for: configuration, forPIUs: false)
         let ts = renderer.createTransientState(
             forCellConfiguration: configuration,

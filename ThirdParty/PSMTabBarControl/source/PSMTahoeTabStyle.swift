@@ -15,7 +15,7 @@ fileprivate let PSMTahoeTabStyleDebuggingEnabled: Bool = false
 @objc
 @available(macOS 26, *)
 class PSMTahoeTabStyle: NSObject, PSMTabStyle {
-   
+
     // MARK: - Private Properties
     private var _closeButton: NSImage?
     private var _closeButtonDown: NSImage?

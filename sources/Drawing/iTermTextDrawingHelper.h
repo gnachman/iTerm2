@@ -140,6 +140,11 @@ extern const CGFloat iTermCursorGuideAlphaThreshold;
 // Is the cursor configured to blink?
 @property(nonatomic, assign) BOOL cursorBlinking;
 
+// The profile's HDR-cursor hint (KEY_HDR_CURSOR). A bright HDR-white cursor is
+// used only when this is on, the display has headroom, and the cursor is on a
+// dark background; otherwise the cursor draws normally.
+@property(nonatomic) BOOL hdrCursorEnabled;
+
 // When YES, a blinking cursor fades smoothly in and out (with dwell times at
 // the extremes) instead of toggling abruptly. The durations and curves below
 // are honored only when this is YES.

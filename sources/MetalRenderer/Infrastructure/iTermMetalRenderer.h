@@ -33,6 +33,12 @@ extern const NSInteger iTermMetalDriverMaximumNumberOfFramesInFlight;
 @property (nonatomic, readonly) NSEdgeInsets extraMargins;
 @property (nonatomic, readonly) CGFloat maximumExtendedDynamicRangeColorComponentValue;
 @property (nonatomic, readonly) NSColorSpace *colorSpace;
+// The framebuffer/pipeline/intermediate-texture pixel format for this frame
+// (fp16 when this session's HDR cursor is on, else 8-bit). Stamped by the driver
+// from its per-session decision and applied to each renderer just before its
+// pipeline is built, so every pipeline's color attachment matches the framebuffer
+// and the intermediate textures. Defaults to BGRA8Unorm.
+@property (nonatomic) MTLPixelFormat framebufferPixelFormat;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithViewportSize:(vector_uint2)viewportSize
@@ -113,6 +119,12 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
 @interface iTermMetalRenderer : NSObject <iTermMetalDebugInfoFormatter>
 
 @property (nonatomic, readonly) id<MTLDevice> device;
+// The pixel format of the framebuffer this renderer draws into. Adopted from the
+// render configuration in -createTransientStateForConfiguration: just before the
+// pipeline is built (the configuration carries the driver's per-session decision);
+// used for the pipeline state's color attachment so it matches the framebuffer and
+// intermediate textures. Defaults to BGRA8Unorm (the non-HDR format).
+@property (nonatomic) MTLPixelFormat framebufferPixelFormat;
 @property (nonatomic, readonly) Class transientStateClass;
 @property (nonatomic, copy) NSString *vertexFunctionName;
 @property (nonatomic, copy) NSString *fragmentFunctionName;
@@ -172,5 +184,14 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
 @end
 
 int iTermBitsPerSampleForPixelFormat(MTLPixelFormat format);
+
+// The pixel format for the Metal framebuffer, pipeline states, and intermediate
+// textures. fp16 when the session's HDR cursor is enabled (so content can exceed
+// reference white), otherwise 8-bit. This must be one decision shared by every
+// attachment, or the pipeline-state format and the texture format can drift
+// apart. The value is fixed for a driver's lifetime: it is decided from the
+// session's HDR-cursor setting when the driver is built, and the driver is
+// rebuilt if that setting changes.
+MTLPixelFormat iTermMetalFramebufferPixelFormat(BOOL hdrCursorEnabled);
 
 NS_ASSUME_NONNULL_END

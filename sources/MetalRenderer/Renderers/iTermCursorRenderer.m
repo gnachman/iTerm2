@@ -3,6 +3,7 @@
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermCursor.h"
 #import "iTermMetalBufferPool.h"
 #import "iTermSharedImageStore.h"
 #import "NSColor+iTerm.h"
@@ -355,12 +356,22 @@ NS_ASSUME_NONNULL_BEGIN
             1
         }
     };
-    if ([iTermAdvancedSettingsModel hdrCursor] &&
-        color.redComponent == 1 &&
-        color.greenComponent == 1 &&
-        color.blueComponent == 1 &&
-        color.alphaComponent == 1) {
-        CGFloat maxValue = tState.configuration.maximumExtendedDynamicRangeColorComponentValue;
+    if (tState.useHDRCursor) {
+        // Invariant: the glue (iTermMetalPerFrameState) forces cursorColor to white
+        // wherever it sets useHDRWhite, so `color` is white here and we overwrite it
+        // with the boosted maxValue white. We deliberately do not gate on a white
+        // check: color-space conversion nudges the components off exactly 1.0, and
+        // an exact check previously suppressed the glow entirely. Log (without
+        // changing output) if a future path sets useHDRCursor without forcing white
+        // so the split-across-two-files invariant is diagnosable in the field.
+        if (color.redComponent < 0.9 || color.greenComponent < 0.9 || color.blueComponent < 0.9) {
+            DLog(@"HDR cursor override with non-white color (%@, %@, %@); glue should have forced white",
+                 @(color.redComponent), @(color.greenComponent), @(color.blueComponent));
+        }
+        // Cap at the shared maximum so the GPU and legacy renderers request the
+        // same peak brightness regardless of the display's potential headroom.
+        const CGFloat maxValue = MIN(tState.configuration.maximumExtendedDynamicRangeColorComponentValue,
+                                     iTermHDRCursorMaximumBrightness);
         description.color = simd_make_float4(maxValue, maxValue, maxValue, 1);
     }
     return description;
