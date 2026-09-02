@@ -2846,3 +2846,8 @@ Bug Fixes:
   pieces in reading order instead of stacking
   them on separate lines. Pieces on different
   lines still copy with line breaks.
+- Fixed a bug where the Keys > General tab in
+  the Edit Session window could appear empty
+  for a terminal session after editing a
+  browser session, because previously hidden
+  controls were not restored.
