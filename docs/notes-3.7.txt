@@ -2570,3 +2570,8 @@ Bug Fixes:
 - In orchestration chats, a session reference
   the AI writes without a leading @ now still
   renders as a clickable session link.
+- Fixed a bug where the Keys > General tab in
+  the Edit Session window could appear empty
+  for a terminal session after editing a
+  browser session, because previously hidden
+  controls were not restored.
