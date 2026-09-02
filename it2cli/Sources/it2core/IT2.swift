@@ -38,6 +38,7 @@ struct IT2: ParsableCommand {
             Monitor.self,
             NewShortcut.self,
             NewTabShortcut.self,
+            Notify.self,
             Profile.self,
             RunShortcut.self,
             SendShortcut.self,

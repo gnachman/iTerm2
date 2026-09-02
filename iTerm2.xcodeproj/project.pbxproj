@@ -5630,6 +5630,7 @@
 		B3F134FF5266734ED326399E /* AICustomHeaders.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E6892F33EA732E982A1991D /* AICustomHeaders.swift */; };
 		B4B8B00F6B4DED8C57F32A44 /* iTermRosettaSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30BDC3CFCE129E42150030AF /* iTermRosettaSupport.swift */; };
 		B526853D585AF3C43FB31FF4 /* SessionCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7F8E4B139D63B87BBCC27AC /* SessionCommand.swift */; };
+		5076A281A0DAE9713EFDB80D /* NotifyCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F37768B62D771300093874E /* NotifyCommand.swift */; };
 		B661B16FF0C20DC268588314 /* iTermMacOS13RequirementNotice.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED1A9F00EB0A2E18AD334E88 /* iTermMacOS13RequirementNotice.swift */; };
 		B6F107C3AFA77C36642979FC /* CompanionPushRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A955B14FF6B89D29018C2AEA /* CompanionPushRegistry.swift */; };
 		B7D24BCC35360983559E530C /* iTermSuppressedAlerts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DB0124F2AA65D7F51AD4A32 /* iTermSuppressedAlerts.swift */; };
@@ -5734,6 +5735,7 @@
 		F968986D3911FB8752DFAA33 /* OrchestrationToolProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC80F2A9A6FBB24419560FD1 /* OrchestrationToolProvider.swift */; };
 		F96B31FFBFC5DFE713E9C670 /* EnterWorkgroupBrowserTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 171DC262300F3B977D7FF1DB /* EnterWorkgroupBrowserTrigger.swift */; };
 		FAD6DE861DB58FBEB8390E1F /* CompanionSessionStreamer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C1A8905A6728CBE90BCD09 /* CompanionSessionStreamer.swift */; };
+		FB47A51FE147AA2BDA2FFFD4 /* SendCompanionNotificationBuiltInFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24E4996901DA8086C54D1664 /* SendCompanionNotificationBuiltInFunction.swift */; };
 		FB4CEC973C7E9235362E3F26 /* iTermRemotePreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = FB4CECF4AC4392B21E87A07B /* iTermRemotePreferences.h */; };
 		FC58829E571DF07C5902F3EB /* EnterWorkgroupTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23866DFB3D15427C93C0849 /* EnterWorkgroupTrigger.swift */; };
 		FD34D15329745082B47FF48A /* InlineChatToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D24FA729C97DC10CC13FB8C /* InlineChatToolbarView.swift */; };
@@ -6596,6 +6598,7 @@
 		23DA26C236E4BC3ECF3CF916 /* WorkgroupModeSwitcherItem.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkgroupModeSwitcherItem.swift; sourceTree = "<group>"; };
 		240C63271364D969B638DA6E /* ResilientCoordinateNotifications.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ResilientCoordinateNotifications.swift; sourceTree = "<group>"; };
 		2423D133EA9874246E972978 /* APIChannel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = APIChannel.swift; path = it2cli/Sources/it2core/Transport/APIChannel.swift; sourceTree = "<group>"; };
+		24E4996901DA8086C54D1664 /* SendCompanionNotificationBuiltInFunction.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SendCompanionNotificationBuiltInFunction.swift; sourceTree = "<group>"; };
 		25308DD4E67A2804961C3F3E /* Chat+Database.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "Chat+Database.swift"; sourceTree = "<group>"; };
 		257048DB7F3343FA9AA49966 /* iTermStatusBarSetupViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = iTermStatusBarSetupViewController.xib; path = iTermStatusBarSetupViewController.xcstrings; sourceTree = "<group>"; };
 		2592CCDF993CD33E0DE3E6A3 /* AITabTitleCorpus.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AITabTitleCorpus.swift; sourceTree = "<group>"; };
@@ -10048,6 +10051,7 @@
 		C6675EBB1C4FE96B0041173B /* iTermSelectorSwizzler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSelectorSwizzler.m; sourceTree = "<group>"; };
 		C78C2666BDAB4973BE1F00B6 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermStatusBarKnobFontViewController.xib; sourceTree = "<group>"; };
 		C7F8E4B139D63B87BBCC27AC /* SessionCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SessionCommand.swift; path = it2cli/Sources/it2core/Commands/SessionCommand.swift; sourceTree = "<group>"; };
+		5F37768B62D771300093874E /* NotifyCommand.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NotifyCommand.swift; path = it2cli/Sources/it2core/Commands/NotifyCommand.swift; sourceTree = "<group>"; };
 		C832F1FDBC038F9C98F04DE7 /* RemoteCommand+Mac.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "RemoteCommand+Mac.swift"; sourceTree = "<group>"; };
 		C8EEBBD51AD44F3AB26B9B9A /* iTermStatusBarKnobNumericViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = iTermStatusBarKnobNumericViewController.xib; path = iTermStatusBarKnobNumericViewController.xcstrings; sourceTree = "<group>"; };
 		C9C3CE71F77D41DCA78BDAF8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermGlobalSearch.xib; sourceTree = "<group>"; };
@@ -10669,6 +10673,7 @@
 				C064EB0F853DE6D529AF6FD4 /* AuthCommand.swift */,
 				3C2A1099DFA4459A4A485034 /* ConfigCommand.swift */,
 				68BF1DCEF74D6DEC0A2552F2 /* MonitorCommand.swift */,
+				5F37768B62D771300093874E /* NotifyCommand.swift */,
 				06CD1E12A99FD69B6B9B93ED /* ProfileCommand.swift */,
 				C7F8E4B139D63B87BBCC27AC /* SessionCommand.swift */,
 				490F2382F49288FB53C839C0 /* ShortcutCommands.swift */,
@@ -14776,6 +14781,7 @@
 				9801DA0646B0541548CD6B0E /* ApplyLayoutBuiltInFunction.swift */,
 				9B084D285B6C1CDDE2932596 /* ArchiveClippingsBuiltInFunction.swift */,
 				CB585CA61BDA34E5071CFD83 /* ColorAlphaBuiltInFunction.swift */,
+				24E4996901DA8086C54D1664 /* SendCompanionNotificationBuiltInFunction.swift */,
 			);
 			path = BuiltInFunctions;
 			sourceTree = "<group>";
@@ -21098,6 +21104,7 @@
 				F591A4498CAE20BD9C1C36C7 /* MonitorCommand.swift in Sources */,
 				7DAF3897BC1A4B7E33AB921B /* ProfileCommand.swift in Sources */,
 				B526853D585AF3C43FB31FF4 /* SessionCommand.swift in Sources */,
+				5076A281A0DAE9713EFDB80D /* NotifyCommand.swift in Sources */,
 				77964331E82525DEE9FBF333 /* ShortcutCommands.swift in Sources */,
 				552A7C6A82E7B335CC24714E /* TabCommand.swift in Sources */,
 				ADD0A0ADE0A926F49C2D6116 /* WindowCommand.swift in Sources */,
@@ -22742,6 +22749,7 @@
 				D2EA0869C83835F0422A576A /* iTermTabTitleFrameFingerprint.m in Sources */,
 				4629801EDF70C846D9B37B22 /* iTermTabTitleFrameFingerprint.h in Sources */,
 				DDC6A04E4BD124950415EFEA /* iTermHDREngager.swift in Sources */,
+				FB47A51FE147AA2BDA2FFFD4 /* SendCompanionNotificationBuiltInFunction.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

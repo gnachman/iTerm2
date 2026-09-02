@@ -2851,3 +2851,6 @@ Bug Fixes:
   for a terminal session after editing a
   browser session, because previously hidden
   controls were not restored.
+- The it2 command-line tool can now send a push
+  notification to your paired companion device
+  with “it2 notify «title» «body»”.
