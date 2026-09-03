@@ -64,16 +64,16 @@ enum SSHFilePanelSidebarItem: Equatable, Hashable {
         case .host(let hostStatus):
             return hostStatus.isConnected ?
                 NSImage.it_image(forSymbolName: SFSymbol.desktopcomputer.rawValue,
-                                 accessibilityDescription: "Connected host",
+                                 accessibilityDescription: String(localized: "SshFilePanelSidebarItem_ConnectedHost", defaultValue: "Connected host", comment: "Accessibility description for a connected SSH host"),
                                  fallbackImageName: "desktopcomputer",
                                  for: SSHFilePanel.self) :
                 NSImage.it_image(forSymbolName: SFSymbol.desktopcomputerTrianglebadgeExclamationmark.rawValue,
-                                 accessibilityDescription: "Disconnected host",
+                                 accessibilityDescription: String(localized: "SshFilePanelSidebarItem_DisconnectedHost", defaultValue: "Disconnected host", comment: "Accessibility description for a disconnected SSH host"),
                                  fallbackImageName: "desktopcomputer.trianglebadge.exclamationmark",
                                  for: SSHFilePanel.self)
         case .favorite:
             return NSImage.it_image(forSymbolName: SFSymbol.starFill.rawValue,
-                                    accessibilityDescription: "Star",
+                                    accessibilityDescription: String(localized: "SshFilePanelSidebarItem_Star", defaultValue: "Star", comment: "Accessibility description for the starred SSH host"),
                                     fallbackImageName: "star.fill",
                                     for: SSHFilePanel.self)
         case .separator:

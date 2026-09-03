@@ -338,7 +338,7 @@ static const CGFloat kLabelWidth = 124;
     [stackView addArrangedSubview:matchTypeRow];
 
     // Regular Expression row
-    _regexRow = [self createRowWithLabelText:@"Regular Expression:" hasVisualizationButton:YES];
+    _regexRow = [self createRowWithLabelText:ITLocalize(@"ADD_TRIGGER_LABEL_REGULAR_EXPRESSION", @"Regular Expression:", @"Label for the regular-expression field in the trigger editor") hasVisualizationButton:YES];
     [stackView addArrangedSubview:_regexRow];
 
     // Event parameter row (hidden by default)
@@ -353,11 +353,11 @@ static const CGFloat kLabelWidth = 124;
     }
     
     // Name row
-    NSView *nameRow = [self createRowWithLabelText:@"Name:" hasVisualizationButton:NO];
+    NSView *nameRow = [self createRowWithLabelText:ITLocalize(@"ADD_TRIGGER_LABEL_NAME", @"Name:", @"Label for the name field in the trigger editor") hasVisualizationButton:NO];
     [stackView addArrangedSubview:nameRow];
 
     // Job row
-    NSView *jobRow = [self createRowWithLabelText:@"Job:" hasVisualizationButton:NO];
+    NSView *jobRow = [self createRowWithLabelText:ITLocalize(@"ADD_TRIGGER_LABEL_JOB", @"Job:", @"Label for the job field in the trigger editor") hasVisualizationButton:NO];
     [stackView addArrangedSubview:jobRow];
 
     // Buttons row
@@ -421,7 +421,7 @@ static const CGFloat kLabelWidth = 124;
     performanceRow.hidden = YES;
     
     // Create help button
-    NSString *helpText = @"This histogram shows how much CPU time was used evaluating the regular expression for this trigger over the lifetime of the current terminal session. The X axis gives time in microseconds while the Y axis gives the number of samples which fell in that duration bucket. The vertical red line indicates the mean duration. You can use this to diagnose triggers that cause performance problems.";
+    NSString *helpText = ITLocalize(@"AddTriggerViewController_Facing_ThisHistogramShowsHowMuchCpuTime", @"This histogram shows how much CPU time was used evaluating the regular expression for this trigger over the lifetime of the current terminal session. The X axis gives time in microseconds while the Y axis gives the number of samples which fell in that duration bucket. The vertical red line indicates the mean duration. You can use this to diagnose triggers that cause performance problems.", @"Text shown in createViews");
     iTermPopoverHelpButton *helpButton = [[iTermPopoverHelpButton alloc] initWithHelpText:helpText];
     helpButton.translatesAutoresizingMaskIntoConstraints = NO;
     [performanceRow addSubview:helpButton];
@@ -429,7 +429,7 @@ static const CGFloat kLabelWidth = 124;
     // Create label
     NSTextField *performanceLabel = [[NSTextField alloc] init];
     performanceLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    performanceLabel.stringValue = @"CPU Time:";
+    performanceLabel.stringValue = ITLocalize(@"AddTriggerViewController_CpuTime", @"CPU Time:", @"Label text in createViews");
     performanceLabel.editable = NO;
     performanceLabel.bordered = NO;
     performanceLabel.backgroundColor = [NSColor clearColor];
@@ -604,7 +604,7 @@ static const CGFloat kLabelWidth = 124;
         _nameTextField = textField;
     } else if ([labelText isEqualToString:@"Job:"]) {
         _jobTextField = textField;
-        _jobTextField.placeholderString = @"Trigger enabled only for this job (e.g., emacs)";
+        _jobTextField.placeholderString = ITLocalize(@"AddTriggerViewController_Placeholder_TriggerEnabledOnlyForThisJobE", @"Trigger enabled only for this job (e.g., emacs)",@"Placeholder text in createRowWithLabelText:(NSString *)labelText hasVisualizationButton:(BOOL)hasVisualizationButton");
     }
     
     // Add visualization button if needed
@@ -781,7 +781,7 @@ static const CGFloat kLabelWidth = 124;
     // Create label
     NSTextField *label = [[NSTextField alloc] init];
     label.translatesAutoresizingMaskIntoConstraints = NO;
-    label.stringValue = @"Match Against:";
+    label.stringValue = ITLocalize(@"AddTriggerViewController_MatchAgainst", @"Match Against:", @"Label text in createMatchTypeRow");
     label.editable = NO;
     label.bordered = NO;
     label.backgroundColor = [NSColor clearColor];
@@ -793,12 +793,12 @@ static const CGFloat kLabelWidth = 124;
     // Create popup button for match type
     _matchTypeButton = [[NSPopUpButton alloc] init];
     _matchTypeButton.translatesAutoresizingMaskIntoConstraints = NO;
-    [_matchTypeButton it_addItemWithTitle:@"Regular Expression" tag:iTermTriggerMatchTypeRegex];
+    [_matchTypeButton it_addItemWithTitle:ITLocalize(@"AddTriggerViewController_Menu_RegularExpression", @"Regular Expression", @"Button title in createMatchTypeRow") tag:iTermTriggerMatchTypeRegex];
 
     if (_browserMode) {
         // Browser-specific match types
-        [_matchTypeButton it_addItemWithTitle:@"URL" tag:iTermTriggerMatchTypeURLRegex];
-        [_matchTypeButton it_addItemWithTitle:@"Page Content" tag:iTermTriggerMatchTypePageContentRegex];
+        [_matchTypeButton it_addItemWithTitle:ITLocalize(@"AddTriggerViewController_Menu_Url", @"URL", @"Button title in createMatchTypeRow") tag:iTermTriggerMatchTypeURLRegex];
+        [_matchTypeButton it_addItemWithTitle:ITLocalize(@"AddTriggerViewController_Menu_PageContent", @"Page Content", @"Button title in createMatchTypeRow") tag:iTermTriggerMatchTypePageContentRegex];
     } else {
         // Terminal-specific event types, sorted alphabetically by display name
         [[_matchTypeButton menu] addItem:[NSMenuItem separatorItem]];
@@ -881,7 +881,7 @@ static const CGFloat kLabelWidth = 124;
     // Create label
     NSTextField *label = [[NSTextField alloc] init];
     label.translatesAutoresizingMaskIntoConstraints = NO;
-    label.stringValue = @"Content Regex:";
+    label.stringValue = ITLocalize(@"AddTriggerViewController_ContentRegex", @"Content Regex:", @"Label text in createContentRegexRow");
     label.editable = NO;
     label.bordered = NO;
     label.backgroundColor = [NSColor clearColor];
@@ -1010,7 +1010,7 @@ static const CGFloat kLabelWidth = 124;
     // Create label
     NSTextField *label = [[NSTextField alloc] init];
     label.translatesAutoresizingMaskIntoConstraints = NO;
-    label.stringValue = @"Parameters:";
+    label.stringValue = ITLocalize(@"AddTriggerViewController_Parameters", @"Parameters:", @"Label text in createEventParamRow");
     label.editable = NO;
     label.bordered = NO;
     label.backgroundColor = [NSColor clearColor];
@@ -1093,7 +1093,7 @@ static const CGFloat kLabelWidth = 124;
     _instantButton = [[NSButton alloc] init];
     _instantButton.translatesAutoresizingMaskIntoConstraints = NO;
     _instantButton.buttonType = NSButtonTypeSwitch;
-    _instantButton.title = @"Instant";
+    _instantButton.title = ITLocalize(@"AddTriggerViewController_Instant", @"Instant", @"Button title in createButtonsRow");
     _instantButton.target = self;
     _instantButton.action = @selector(instantDidChange:);
     [row addSubview:_instantButton];
@@ -1101,7 +1101,7 @@ static const CGFloat kLabelWidth = 124;
     _enabledButton = [[NSButton alloc] init];
     _enabledButton.translatesAutoresizingMaskIntoConstraints = NO;
     _enabledButton.buttonType = NSButtonTypeSwitch;
-    _enabledButton.title = @"Enabled";
+    _enabledButton.title = ITLocalize(@"AddTriggerViewController_Enabled", @"Enabled", @"Button title in createButtonsRow");
     _enabledButton.target = self;
     _enabledButton.action = @selector(enabledDidChange:);
     [row addSubview:_enabledButton];
@@ -1109,7 +1109,7 @@ static const CGFloat kLabelWidth = 124;
     _updateProfileButton = [[NSButton alloc] init];
     _updateProfileButton.translatesAutoresizingMaskIntoConstraints = NO;
     _updateProfileButton.buttonType = NSButtonTypeSwitch;
-    _updateProfileButton.title = @"Update Profile";
+    _updateProfileButton.title = ITLocalize(@"AddTriggerViewController_UpdateProfile", @"Update Profile", @"Button title in createButtonsRow");
     [row addSubview:_updateProfileButton];
     
     // Add leading spacer to align with text fields
@@ -1195,8 +1195,8 @@ static const CGFloat kLabelWidth = 124;
     _leaderOnlyButton = [[NSButton alloc] init];
     _leaderOnlyButton.translatesAutoresizingMaskIntoConstraints = NO;
     _leaderOnlyButton.buttonType = NSButtonTypeSwitch;
-    _leaderOnlyButton.title = @"Only on the workgroup leader";
-    _leaderOnlyButton.toolTip = @"When set, the trigger fires only for the workgroup leader (the session that originally entered the workgroup). Peers such as the Code Review and Diff sessions do not, so reloading or quitting one keeps the workgroup open.";
+    _leaderOnlyButton.title = ITLocalize(@"AddTriggerViewController_OnlyOnTheWorkgroupLeader", @"Only on the workgroup leader", @"Button title in createLeaderOnlyRow");
+    _leaderOnlyButton.toolTip = ITLocalize(@"AddTriggerViewController_WhenSetTheTriggerFiresOnlyFor", @"When set, the trigger fires only for the workgroup leader (the session that originally entered the workgroup). Peers such as the Code Review and Diff sessions do not, so reloading or quitting one keeps the workgroup open.", @"Button title in createLeaderOnlyRow");
     _leaderOnlyButton.target = self;
     _leaderOnlyButton.action = @selector(leaderOnlyDidChange:);
     [row addSubview:_leaderOnlyButton];
@@ -1258,7 +1258,7 @@ static const CGFloat kLabelWidth = 124;
     // Create label
     NSTextField *label = [[NSTextField alloc] init];
     label.translatesAutoresizingMaskIntoConstraints = NO;
-    label.stringValue = @"Action:";
+    label.stringValue = ITLocalize(@"AddTriggerViewController_Action", @"Action:", @"Label text in createActionRow");
     label.editable = NO;
     label.bordered = NO;
     label.backgroundColor = [NSColor clearColor];
@@ -1337,7 +1337,7 @@ static const CGFloat kLabelWidth = 124;
     _cancelButton = [[NSButton alloc] init];
     _cancelButton.translatesAutoresizingMaskIntoConstraints = NO;
     _cancelButton.bezelStyle = NSBezelStyleRounded;
-    _cancelButton.title = @"Cancel";
+    _cancelButton.title = ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in createOkCancelRow");
     _cancelButton.target = self;
     _cancelButton.action = @selector(cancel:);
     _cancelButton.keyEquivalent = @"\e"; // Escape key
@@ -1346,7 +1346,7 @@ static const CGFloat kLabelWidth = 124;
     _okButton = [[NSButton alloc] init];
     _okButton.translatesAutoresizingMaskIntoConstraints = NO;
     _okButton.bezelStyle = NSBezelStyleRounded;
-    _okButton.title = @"OK";
+    _okButton.title = ITLocalize(@"COMMON_OK", @"OK", @"Button title in createOkCancelRow");
     _okButton.target = self;
     _okButton.action = @selector(ok:);
     _okButton.keyEquivalent = @"\r"; // Return key
@@ -1596,7 +1596,7 @@ static const CGFloat kLabelWidth = 124;
                               _matchType == iTermTriggerMatchTypeEventJobEnded);
     _jobTextField.enabled = !jobFieldRedundant;
     if (jobFieldRedundant) {
-        _jobTextField.placeholderString = @"Set job above";
+        _jobTextField.placeholderString = ITLocalize(@"AddTriggerViewController_Placeholder_SetJobAbove", @"Set job above",@"Placeholder text in updateEventTriggerVisibility");
         // Clear so we don't serialize a stale trigger.job from a
         // previously-selected match type. The job-started/ended
         // evaluator ignores trigger.job entirely (it reads from
@@ -1604,7 +1604,7 @@ static const CGFloat kLabelWidth = 124;
         // would confuse future callers.
         _jobTextField.stringValue = @"";
     } else {
-        _jobTextField.placeholderString = @"Trigger enabled only for this job (e.g., emacs)";
+        _jobTextField.placeholderString = ITLocalize(@"AddTriggerViewController_Placeholder_TriggerEnabledOnlyForThisJobE", @"Trigger enabled only for this job (e.g., emacs)",@"Placeholder text in updateEventTriggerVisibility");
     }
 }
 
@@ -1618,7 +1618,7 @@ static const CGFloat kLabelWidth = 124;
     [_matchTypeButton removeAllItems];
 
     // Always add regex
-    [_matchTypeButton it_addItemWithTitle:@"Regular Expression" tag:iTermTriggerMatchTypeRegex];
+    [_matchTypeButton it_addItemWithTitle:ITLocalize(@"AddTriggerViewController_Menu_RegularExpression", @"Regular Expression", @"Button title in updateMatchTypeButtonForTrigger:") tag:iTermTriggerMatchTypeRegex];
 
     // Add all event types, sorted alphabetically by display name
     NSArray<NSNumber *> *sortedEventTypes = [[iTermEventTriggerMatchTypeHelper allEventTypes] sortedArrayUsingComparator:^NSComparisonResult(NSNumber *a, NSNumber *b) {
@@ -1867,9 +1867,9 @@ static const CGFloat kLabelWidth = 124;
     // Update the regex label text based on match type
     if (_regexLabel) {
         if (_matchType == iTermTriggerMatchTypePageContentRegex) {
-            _regexLabel.stringValue = @"URL Regex:";
+            _regexLabel.stringValue = ITLocalize(@"AddTriggerViewController_UrlRegex", @"URL Regex:", @"Label text in updateContentRegexVisibility");
         } else {
-            _regexLabel.stringValue = @"Regular Expression:";
+            _regexLabel.stringValue = ITLocalize(@"AddTriggerViewController_RegularExpression", @"Regular Expression:", @"Label text in updateContentRegexVisibility");
         }
     }
 }

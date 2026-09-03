@@ -415,20 +415,20 @@ withApplicationAtURL:appURL
         case iTermOpenStyleWindow:
         case iTermOpenStyleTab:
             if (isFileURL) {
-                selection = [iTermWarning showWarningWithTitle:@"iTerm2 can display files like this in its built-in web browser! Would you like to open this link in iTerm2?"
-                                                      actions:@[ @"Use Default App", @"Open in iTerm2", @"Cancel"]
+                selection = [iTermWarning showWarningWithTitle:ITLocalize(@"NsWorkspaceITerm_Alert_ITerm2CanDisplayFilesLikeThis", @"iTerm2 can display files like this in its built-in web browser! Would you like to open this link in iTerm2?", @"Alert title in it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:")
+                                                      actions:@[ ITLocalize(@"NsWorkspaceITerm_Action_UseDefaultApp", @"Use Default App", @"Action title in it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:"), ITLocalize(@"NsWorkspaceITerm_Action_OpenInITerm2", @"Open in iTerm2", @"Title in it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:")]
                                                     accessory:nil
                                                    identifier:identifier
                                                   silenceable:kiTermWarningTypePermanentlySilenceable
-                                                      heading:@"Open in iTerm2?"
+                                                      heading:ITLocalize(@"NsWorkspaceITerm_AlertHeading_OpenInITerm2", @"Open in iTerm2?",@"Alert heading in it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:(NSURL *)url")
                                                        window:window];
             } else {
-                selection = [iTermWarning showWarningWithTitle:@"iTerm2 can display web pages! Would you like to open this link in iTerm2?"
-                                                      actions:@[ @"Use Default Browser", @"Open in iTerm2", @"Cancel"]
+                selection = [iTermWarning showWarningWithTitle:ITLocalize(@"NsWorkspaceITerm_Alert_ITerm2CanDisplayWebPagesWould", @"iTerm2 can display web pages! Would you like to open this link in iTerm2?", @"Alert title in it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:")
+                                                      actions:@[ ITLocalize(@"NsWorkspaceITerm_Action_UseDefaultBrowser", @"Use Default Browser", @"Action title in it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:"), ITLocalize(@"NsWorkspaceITerm_Action_OpenInITerm2", @"Open in iTerm2", @"Title in it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:")]
                                                     accessory:nil
                                                    identifier:identifier
                                                   silenceable:kiTermWarningTypePermanentlySilenceable
-                                                      heading:@"Open in iTerm2?"
+                                                      heading:ITLocalize(@"NsWorkspaceITerm_AlertHeading_OpenInITerm2", @"Open in iTerm2?",@"Alert heading in it_tryToOpenURLLocallyDespiteNotBeingDefaultBrowser:(NSURL *)url")
                                                        window:window];
             }
             break;

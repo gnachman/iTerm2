@@ -74,7 +74,7 @@ static const CGFloat kMargin = 5;
         clear_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
         clear_.bezelStyle = NSBezelStyleRegularSquare;
         clear_.bordered = NO;
-        clear_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:@"Clear"];
+        clear_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:ITLocalize(@"TOOL_DIRECTORIES_CLEAR", @"Clear", @"Button that clears the directories tool")];
         clear_.imagePosition = NSImageOnly;
         clear_.frame = NSMakeRect(0, 0, 22, 22);
         [clear_ setTarget:self];
@@ -95,7 +95,7 @@ static const CGFloat kMargin = 5;
         _tableView.menu = [[NSMenu alloc] init];
         _tableView.menu.delegate = self;
         NSMenuItem *item;
-        item = [[NSMenuItem alloc] initWithTitle:@"Toggle Star"
+        item = [[NSMenuItem alloc] initWithTitle:ITLocalize(@"ToolDirectoriesView_Menu_ToggleStar", @"Toggle Star", @"menu item title")
                                           action:@selector(toggleStar:)
                                    keyEquivalent:@""];
         [_tableView.menu addItem:item];
@@ -280,9 +280,9 @@ static const CGFloat kMargin = 5;
 
 - (void)clear:(id)sender {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Erase Saved Directories?";
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
+    alert.messageText = ITLocalize(@"ToolDirectoriesView_EraseSavedDirectories", @"Erase Saved Directories?", @"Alert title in clear:");
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in clear:")];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in clear:")];
     if ([alert runModal] == NSAlertFirstButtonReturn) {
         [[iTermShellHistoryController sharedInstance] eraseCommandHistory:NO directories:YES];
     }

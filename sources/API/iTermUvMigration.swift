@@ -103,16 +103,17 @@ class iTermUvMigration: NSObject {
         guard !remaps.isEmpty else {
             return ""
         }
-        let caveat = "Python versions are not always compatible across releases, so a bumped script may need small changes."
+        let caveat = String(localized: "UvMigration_PythonVersionsAreNotAlwaysCompatibleAcross", defaultValue: "Python versions are not always compatible across releases, so a bumped script may need small changes.", comment: "Text shown in consolidatedWarningText: Python versions are not always compatible across releases, so a bumped script may need small changes.")
         if remaps.count == 1, let only = remaps.first {
-            return "The script “\(only.scriptName)” was written for Python \(only.fromVersion), "
-                + "which is no longer available, so it now uses Python \(only.toVersion). "
-                + caveat
+            return String(format: String(localized: "UvMigration_TheScriptWasWrittenForPythonWhich_FORMAT", defaultValue: "The script “%1$@” was written for Python %2$@, which is no longer available, so it now uses Python %3$@. %4$@", comment: "Formatted user-facing text in consolidatedWarningText"),
+                          only.scriptName, only.fromVersion, only.toVersion, caveat)
         }
-        let lines = remaps.map { "• “\($0.scriptName)”: \($0.fromVersion) → \($0.toVersion)" }
-        return "Some scripts were written for Python versions that are no longer available "
-            + "and now use newer ones. " + caveat + "\n\n"
-            + lines.joined(separator: "\n")
+        let lines = remaps.map {
+            String(format: String(localized: "UvMigration_Text_FORMAT", defaultValue: "• “%1$@”: %2$@ → %3$@", comment: "Formatted user-facing text in consolidatedWarningText"),
+                   $0.scriptName, $0.fromVersion, $0.toVersion)
+        }
+        return String(format: String(localized: "UvMigration_SomeScriptsWereWrittenForPythonVersions_FORMAT", defaultValue: "Some scripts were written for Python versions that are no longer available and now use newer ones. %1$@\n\n%2$@", comment: "Formatted user-facing text in consolidatedWarningText"),
+                      caveat, lines.joined(separator: "\n"))
     }
 
     // MARK: - Rebuild-with-rollback file operations

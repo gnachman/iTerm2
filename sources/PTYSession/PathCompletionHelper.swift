@@ -140,7 +140,7 @@ class PathCompletionHelper: NSObject {
                                                                                                      suffix: parent),
                                                 detail: CompletionsWindow.attributedString(font: font,
                                                                                            prefix: "",
-                                                                                           suffix: "Parent directory"),
+                                                                                           suffix: String(localized: "PathCompletionHelper_ParentDirectory", defaultValue: "Parent directory", comment: "Text shown in showUIForDirectories: Parent directory")),
                                                 kind: .folder),
                          at: 0)
         }
@@ -182,7 +182,7 @@ class PathCompletionHelper: NSObject {
         completionsWindow = CompletionsWindow(parent: window,
                                               location: rect,
                                               mode: .indicator,
-                                              placeholder: "Getting directory listing…")
+                                              placeholder: String(localized: "PathCompletionHelper_GettingDirectoryListing", defaultValue: "Getting directory listing…", comment: "Placeholder text in openWindowAsIndicator"))
         completionsWindow?.selectionDidChange = { [weak self] _, suggestion in
             self?.selection = suggestion
         }

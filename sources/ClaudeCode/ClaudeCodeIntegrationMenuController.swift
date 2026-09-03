@@ -40,14 +40,13 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
 
     @objc func uninstall(_ sender: Any?) {
         let confirm = NSAlert()
-        confirm.messageText = "Uninstall Claude Code Integration?"
-        confirm.informativeText = "This removes the cc-status hook from "
-            + "~/.claude/settings.json, the Claude Code workgroup from your "
-            + "settings, and the Enter/Exit Workgroup triggers from every "
-            + "profile. You can reinstall any time using iTerm2 > Install Claude Code Integration."
+        confirm.messageText = String(localized: "ClaudeCodeIntegrationMenuController_UninstallClaudeCodeIntegration", defaultValue: "Uninstall Claude Code Integration?", comment: "Alert title in uninstall")
+        confirm.informativeText = String(localized: "ClaudeCodeIntegrationMenuController_ThisRemovesTheCcStatusHookFrom",
+                                         defaultValue: "This removes the cc-status hook from ~/.claude/settings.json, the Claude Code workgroup from your settings, and the Enter/Exit Workgroup triggers from every profile. You can reinstall any time using iTerm2 > Install Claude Code Integration.",
+                                         comment: "Alert explanatory text in uninstall")
         confirm.alertStyle = .warning
-        confirm.addButton(withTitle: "Uninstall")
-        confirm.addButton(withTitle: "Cancel")
+        confirm.addButton(withTitle: String(localized: "ClaudeCodeIntegrationMenuController_Uninstall", defaultValue: "Uninstall", comment: "Button title in uninstall"))
+        confirm.addButton(withTitle: String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Button title in uninstall"))
         guard confirm.runModal() == .alertFirstButtonReturn else { return }
 
         // Hooks first — they're the only step that can fail (disk).
@@ -76,13 +75,13 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
                 detail = ""
             }
             let failure = NSAlert()
-            failure.messageText = "Couldn\u{2019}t Remove Hooks"
-            failure.informativeText = "\(detail) Continue removing the "
-                + "workgroup and triggers anyway? cc-status will keep "
-                + "running until you fix the underlying issue and try again."
+            failure.messageText = String(localized: "ClaudeCodeIntegrationMenuController_CouldnU2019TRemoveHooks", defaultValue: "Couldn\u{2019}t Remove Hooks", comment: "Alert title in uninstall")
+            failure.informativeText = String(format: String(localized: "ClaudeCodeIntegrationMenuController_ContinueRemovingTheWorkgroupAndTriggersAnyway_FORMAT",
+                                                            defaultValue: "%1$@ Continue removing the workgroup and triggers anyway? cc-status will keep running until you fix the underlying issue and try again.",
+                                                            comment: "Alert explanatory text in uninstall"), detail)
             failure.alertStyle = .warning
-            failure.addButton(withTitle: "Continue")
-            failure.addButton(withTitle: "Cancel")
+            failure.addButton(withTitle: String(localized: "ClaudeCodeIntegrationMenuController_Continue", defaultValue: "Continue", comment: "Button title in uninstall"))
+            failure.addButton(withTitle: String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Button title in uninstall"))
             guard failure.runModal() == .alertFirstButtonReturn else { return }
         }
 
@@ -101,12 +100,12 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
         // to offer).
         if iTermAPIHelper.isEnabled() {
             let apiAlert = NSAlert()
-            apiAlert.messageText = "Disable the Python API?"
-            apiAlert.informativeText = "The installer enabled iTerm2\u{2019}s "
-                + "Python API. Other scripts or integrations may be using "
-                + "it now. Leave it enabled, or turn it off?"
-            apiAlert.addButton(withTitle: "Leave Enabled")
-            apiAlert.addButton(withTitle: "Disable")
+            apiAlert.messageText = String(localized: "ClaudeCodeIntegrationMenuController_DisableThePythonApi", defaultValue: "Disable the Python API?", comment: "Alert title in uninstall")
+            apiAlert.informativeText = String(localized: "ClaudeCodeIntegrationMenuController_TheInstallerEnabledITerm2SPython",
+                                              defaultValue: "The installer enabled iTerm2\u{2019}s Python API. Other scripts or integrations may be using it now. Leave it enabled, or turn it off?",
+                                              comment: "Alert explanatory text in uninstall")
+            apiAlert.addButton(withTitle: String(localized: "ClaudeCodeIntegrationMenuController_LeaveEnabled", defaultValue: "Leave Enabled", comment: "Button title in uninstall"))
+            apiAlert.addButton(withTitle: String(localized: "ClaudeCodeIntegrationMenuController_Disable", defaultValue: "Disable", comment: "Button title in uninstall"))
             if apiAlert.runModal() == .alertSecondButtonReturn {
                 iTermAPIHelper.setEnabled(false)
             }

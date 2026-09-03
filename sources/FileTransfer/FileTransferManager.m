@@ -274,7 +274,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     [item setAction:@selector(itemSelected:)];
 
     NSMenu *submenu = [[[NSMenu alloc] init] autorelease];
-    NSMenuItem *subItem = [[[NSMenuItem alloc] initWithTitle:@"Stop"
+    NSMenuItem *subItem = [[[NSMenuItem alloc] initWithTitle:ITLocalize(@"FileTransferManager_Menu_Stop", @"Stop", @"menu item title")
                                                       action:@selector(stop:)
                                                keyEquivalent:@""] autorelease];
     [subItem setTarget:controller];
@@ -282,7 +282,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     controller.stopSubItem = subItem;
 
     if (transferrableFile.isDownloading) {
-        subItem = [[[NSMenuItem alloc] initWithTitle:@"Show in Finder"
+        subItem = [[[NSMenuItem alloc] initWithTitle:ITLocalize(@"FileTransferManager_Menu_ShowInFinder", @"Show in Finder", @"menu item title")
                                               action:@selector(showInFinder:)
                                        keyEquivalent:@""] autorelease];
         [subItem setTarget:controller];
@@ -290,7 +290,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
         controller.showInFinderSubItem = subItem;
     }
 
-    subItem = [[[NSMenuItem alloc] initWithTitle:@"Remove from List"
+    subItem = [[[NSMenuItem alloc] initWithTitle:ITLocalize(@"FileTransferManager_Menu_RemoveFromList", @"Remove from List", @"menu item title")
                                           action:@selector(removeFromList:)
                                    keyEquivalent:@""] autorelease];
     [subItem setTarget:controller];
@@ -298,7 +298,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     controller.removeFromListSubItem = subItem;
 
     if (transferrableFile.isDownloading) {
-        subItem = [[[NSMenuItem alloc] initWithTitle:@"Open"
+        subItem = [[[NSMenuItem alloc] initWithTitle:ITLocalize(@"FileTransferManager_Menu_Open", @"Open", @"menu item title")
                                               action:@selector(open:)
                                        keyEquivalent:@""] autorelease];
         [subItem setTarget:controller];
@@ -306,7 +306,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
         controller.openSubItem = subItem;
     }
 
-    subItem = [[[NSMenuItem alloc] initWithTitle:@"Get Info"
+    subItem = [[[NSMenuItem alloc] initWithTitle:ITLocalize(@"FileTransferManager_Menu_GetInfo", @"Get Info", @"menu item title")
                                           action:@selector(getInfo:)
                                    keyEquivalent:@""] autorelease];
     [subItem setTarget:controller];
@@ -344,7 +344,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 - (void)transferrableFile:(TransferrableFile *)transferrableFile
     didFinishTransmissionWithError:(NSError *)error {
     if (error) {
-        [transferrableFile didFailWithError:error.localizedDescription ?: @"File transfer failed with an unknown error"];
+        [transferrableFile didFailWithError:error.localizedDescription ?: ITLocalize(@"FileTransferManager_Descriptive_FileTransferFailedWithAnUnknownError", @"File transfer failed with an unknown error", @"Fallback text for an unknown file-transfer error")];
     } else {
         transferrableFile.status = kTransferrableFileStatusFinishedSuccessfully;
     }
@@ -377,7 +377,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 
     // Call the completion block if set (transfer was cancelled)
     if (transferrableFile.completionBlock) {
-        transferrableFile.completionBlock(NO, @"Transfer cancelled");
+        transferrableFile.completionBlock(NO, ITLocalize(@"FileTransferManager_Facing_TransferCancelled", @"Transfer cancelled", @"Text shown in transferrableFileDidStopTransfer:: Transfer cancelled"));
         transferrableFile.completionBlock = nil;
     }
 }
@@ -388,15 +388,15 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 - (void)transferrableFile:(TransferrableFile *)transferrableFile
         interactivePrompt:(NSString *)prompt
                completion:(void (^)(NSString *password))completion {
-    NSString *text = [NSString stringWithFormat:@"Authenticate %@", transferrableFile.authRequestor];
+    NSString *text = [NSString stringWithFormat:ITLocalize(@"FileTransferManager_FormattedFacing_Authenticate_FORMAT", @"Authenticate %1$@",@"Formatted user-facing text in transferrableFile:(TransferrableFile *)transferrableFile"), transferrableFile.authRequestor];
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = text;
-    alert.informativeText = [NSString stringWithFormat:@"Please enter the %@ for %@ to begin %@.",
+    alert.informativeText = [NSString stringWithFormat:ITLocalize(@"FileTransferManager_AlertExplanatory_PleaseEnterTheForToBegin_FORMAT", @"Please enter the %1$@ for %2$@ to begin %3$@.", @"Alert explanatory text in transferrableFile:"),
                              prompt, transferrableFile.authRequestor,
                              transferrableFile.protocolName];
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
-    [alert addButtonWithTitle:@"Password Manager…"];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in transferrableFile:")];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in transferrableFile:")];
+    [alert addButtonWithTitle:ITLocalize(@"FileTransferManager_PasswordManager", @"Password Manager…", @"Button title in transferrableFile:")];
 
     NSSecureTextField *input =
         [[[NSSecureTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
@@ -433,8 +433,8 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = title;
     alert.informativeText = message;
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in transferrableFile:")];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in transferrableFile:")];
 
     [alert layout];
     NSInteger button = [alert runModal];

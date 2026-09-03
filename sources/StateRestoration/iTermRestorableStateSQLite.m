@@ -145,11 +145,11 @@
         __block BOOL result = NO;
         dispatch_sync(dispatch_get_main_queue(), ^{
             NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = @"Still restoring your windows…";
-            alert.informativeText = @"iTerm2 is taking longer than usual to verify your saved windows and tabs. This usually means the system is busy and it’s safe to keep waiting, but a damaged state restoration database could also cause it. You can discard the saved windows instead if you’d rather not wait.";
+            alert.messageText = ITLocalize(@"RestorableStateSqLite_Alert_StillRestoringYourWindows", @"Still restoring your windows…", @"Alert title in initializeDb");
+            alert.informativeText = ITLocalize(@"RestorableStateSqLite_AlertExplanatory_ITerm2IsTakingLongerThanUsual", @"iTerm2 is taking longer than usual to verify your saved windows and tabs. This usually means the system is busy and it’s safe to keep waiting, but a damaged state restoration database could also cause it. You can discard the saved windows instead if you’d rather not wait.", @"Alert explanatory text in initializeDb");
             // Keep Waiting is added first so it is the default action (triggered by Return).
-            [alert addButtonWithTitle:@"Keep Waiting"];
-            [alert addButtonWithTitle:@"Discard Saved Windows"];
+            [alert addButtonWithTitle:ITLocalize(@"RestorableStateSqLite_KeepWaiting", @"Keep Waiting", @"Button title in initializeDb")];
+            [alert addButtonWithTitle:ITLocalize(@"RestorableStateSqLite_DiscardSavedWindows", @"Discard Saved Windows", @"Button title in initializeDb")];
             result = ([alert runModal] == NSAlertSecondButtonReturn);
         });
         return result;

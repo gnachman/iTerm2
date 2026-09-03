@@ -42,18 +42,18 @@ static NSString *const iTermStatusBarSpringComponentSizeMultipleKey = @"iTermSta
 - (NSString *)statusBarComponentShortDescription {
     switch (self.advancedConfiguration.layoutAlgorithm) {
         case iTermStatusBarLayoutAlgorithmSettingStable:
-            return @"Empty Space";
+            return ITLocalize(@"StatusBarSpringComponent_Facing_EmptySpace", @"Empty Space", @"Text shown in statusBarComponentShortDescription: Empty Space");
         case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
-            return @"Spring";
+            return ITLocalize(@"StatusBarSpringComponent_Facing_Spring", @"Spring", @"Text shown in statusBarComponentShortDescription: Spring");
     }
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
     switch (self.advancedConfiguration.layoutAlgorithm) {
         case iTermStatusBarLayoutAlgorithmSettingStable:
-            return @"Empty space that draws only a background color.";
+            return ITLocalize(@"StatusBarSpringComponent_Facing_EmptySpaceThatDrawsOnlyABackground", @"Empty space that draws only a background color.", @"Text shown in statusBarComponentDetailedDescription: Empty space that draws only a background color.");
         case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
-            return @"Pushes items apart. Use one spring to right-align status bar elements that follow it. Use two to center those inbetween.";
+            return ITLocalize(@"StatusBarSpringComponent_Facing_PushesItemsApartUseOneSpringTo", @"Pushes items apart. Use one spring to right-align status bar elements that follow it. Use two to center those inbetween.", @"Text shown in statusBarComponentDetailedDescription: Pushes items apart. Use one spring to right-align status bar elements that follow it. Use two to center those inbetween.");
     }
 }
 
@@ -88,7 +88,7 @@ static NSString *const iTermStatusBarSpringComponentSizeMultipleKey = @"iTermSta
     switch (self.advancedConfiguration.layoutAlgorithm) {
         case iTermStatusBarLayoutAlgorithmSettingTightlyPacked:
             springConstantKnob =
-            [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Compression Resistance:"
+            [[iTermStatusBarComponentKnob alloc] initWithLabelText:ITLocalize(@"StatusBarSpringComponent_StatusBarKnob_CompressionResistance", @"Compression Resistance:", @"Status bar knob")
                                                               type:iTermStatusBarComponentKnobTypeDouble
                                                        placeholder:@""
                                                       defaultValue:@0.01
@@ -96,7 +96,7 @@ static NSString *const iTermStatusBarSpringComponentSizeMultipleKey = @"iTermSta
             break;
         case iTermStatusBarLayoutAlgorithmSettingStable:
             springConstantKnob =
-            [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Size Multiple:"
+            [[iTermStatusBarComponentKnob alloc] initWithLabelText:ITLocalize(@"StatusBarSpringComponent_StatusBarKnob_SizeMultiple", @"Size Multiple:", @"Status bar knob")
                                                               type:iTermStatusBarComponentKnobTypeDouble
                                                        placeholder:@""
                                                       defaultValue:@1
@@ -104,8 +104,8 @@ static NSString *const iTermStatusBarSpringComponentSizeMultipleKey = @"iTermSta
             break;
     }
     iTermStatusBarComponentKnob *backgroundColorKnob =
-    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Color"
-                                                      type:iTermStatusBarComponentKnobTypeColor
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:ITLocalize(@"StatusBarSpringComponent_StatusBarKnob_Color", @"Color", @"Status bar knob")
+                                                       type:iTermStatusBarComponentKnobTypeColor
                                                placeholder:nil
                                               defaultValue:nil
                                                        key:iTermStatusBarSharedBackgroundColorKey];

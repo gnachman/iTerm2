@@ -3584,7 +3584,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
                                                                 blockID:block
                                                                    mark:nil
                                                                    absY:@(i + _dataSource.totalScrollbackOverflow)
-                                                                tooltip:@"Copy block to clipboard"];
+                                                                tooltip:ITLocalize(@"PtyTextView_Tooltip_CopyBlockToClipboard", @"Copy block to clipboard", @"tooltip text")];
     _hoverBlockCopyButton.isFloating = YES;
     __weak __typeof(self) weakSelf = self;
     const long long offset = _dataSource.totalScrollbackOverflow;
@@ -4414,7 +4414,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
 
     NSButton *timestampsButton = [[[NSButton alloc] init] autorelease];
     [timestampsButton setButtonType:NSButtonTypeSwitch];
-    timestampsButton.title = @"Include timestamps";
+    timestampsButton.title = ITLocalize(@"PtyTextView_IncludeTimestamps", @"Include timestamps", @"Button title in saveDocumentAs:");
     NSString *userDefaultsKey = @"NoSyncSaveWithTimestamps";
     timestampsButton.state = [[iTermUserDefaults userDefaults] boolForKey:userDefaultsKey] ? NSControlStateValueOn : NSControlStateValueOff;
     [timestampsButton sizeToFit];
@@ -4433,7 +4433,7 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
     NSString *formattedDate = [dateFormatter stringFromDate:[NSDate date]];
     // Stupid mac os can't have colons in filenames
     formattedDate = [formattedDate stringByReplacingOccurrencesOfString:@":" withString:@"-"];
-    NSString *nowStr = [NSString stringWithFormat:@"Log at %@.txt", formattedDate];
+    NSString *nowStr = [NSString stringWithFormat:ITLocalize(@"PtyTextView_FormattedFacing_LogAtTxt_FORMAT", @"Log at %1$@.txt",@"Formatted user-facing text in saveDocumentAs:(id)sender"), formattedDate];
 
     // Show the save panel. The first time it's done set the path, and from then on the save panel
     // will remember the last path you used.tmp
@@ -5243,20 +5243,20 @@ static NSString *iTermStringForEventPhase(NSEventPhase eventPhase) {
         return NO;
     }
     if (files.count == 1) {
-        text = [NSString stringWithFormat:@"OK to %@\n%@\nto\n%@@%@:%@?",
-                useSSHIntegration ? @"copy" : @"scp",
+        text = [NSString stringWithFormat:ITLocalize(@"PtyTextView_FormattedFacing_OkToNNtoN_FORMAT", @"OK to %1$@\n%2$@\nto\n%3$@@%4$@:%5$@?",@"Formatted user-facing text in confirmUploadOfFiles:(NSArray *)files toPath:(SCPPath *)path"),
+                useSSHIntegration ? ITLocalize(@"PtyTextView_Facing_Copy", @"copy", @"Text shown in confirmUploadOfFiles:: copy") : ITLocalize(@"PtyTextView_Facing_Scp", @"scp", @"Text shown in confirmUploadOfFiles:: scp"),
                 [files componentsJoinedByString:@", "],
                 path.username, path.hostname, path.path];
     } else {
-        text = [NSString stringWithFormat:@"OK to %@ the following files:\n%@\n\nto\n%@@%@:%@?",
-                useSSHIntegration ? @"copy" : @"scp",
+        text = [NSString stringWithFormat:ITLocalize(@"PtyTextView_FormattedFacing_OkToTheFollowingFilesNN_FORMAT", @"OK to %1$@ the following files:\n%2$@\n\nto\n%3$@@%4$@:%5$@?",@"Formatted user-facing text in confirmUploadOfFiles:(NSArray *)files toPath:(SCPPath *)path"),
+                useSSHIntegration ? ITLocalize(@"PtyTextView_Facing_Copy", @"copy", @"Text shown in confirmUploadOfFiles:: copy") : ITLocalize(@"PtyTextView_Facing_Scp", @"scp", @"Text shown in confirmUploadOfFiles:: scp"),
                 [files componentsJoinedByString:@", "],
                 path.username, path.hostname, path.path];
     }
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = text;
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in confirmUploadOfFiles:")];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in confirmUploadOfFiles:")];
     [alert layout];
     NSInteger button = [alert runModal];
     return (button == NSAlertFirstButtonReturn);
@@ -6792,7 +6792,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
                                                                                    blockID:place.mark.copyBlockID
                                                                                       mark:place.mark
                                                                                       absY:nil
-                                                                                   tooltip:@"Copy Block to clipboard"] autorelease];
+                                                                                   tooltip:ITLocalize(@"PtyTextView_Tooltip_CopyBlockToClipboard_2", @"Copy Block to clipboard", @"tooltip text")] autorelease];
                 NSString *blockID = [[place.mark.copyBlockID copy] autorelease];
 
                 button.action = ^(NSPoint locationInWindow) {
@@ -6939,11 +6939,11 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 - (void)popCommandSettingsButtonAt:(NSPoint)locationInWindow for:(id<VT100ScreenMarkReading>)mark {
     iTermSimpleContextMenu *menu = [[[iTermSimpleContextMenu alloc] init] autorelease];
     __weak __typeof(self) weakSelf = self;
-    [menu addItemWithTitle:@"Disable Command Selection" action:^{
+    [menu addItemWithTitle:ITLocalize(@"PtyTextView_Menu_DisableCommandSelection", @"Disable Command Selection",@"Menu title in popCommandSettingsButtonAt:(NSPoint)locationInWindow for:(id<VT100ScreenMarkReading>)mark") action:^{
         [iTermPreferences setBool:NO forKey:kPreferenceKeyClickToSelectCommand];
         [weakSelf.delegate textViewReloadSelectedCommand];
     }];
-    [menu addItemWithTitle:@"Help" action:^{
+    [menu addItemWithTitle:ITLocalize(@"PtyTextView_Menu_Help", @"Help",@"Menu title in popCommandSettingsButtonAt:(NSPoint)locationInWindow for:(id<VT100ScreenMarkReading>)mark") action:^{
         if (!weakSelf) {
             return;
         }
@@ -6969,18 +6969,18 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     iTermSimpleContextMenu *menu = [[[iTermSimpleContextMenu alloc] init] autorelease];
     if (command.length) {
         __weak __typeof(self) weakSelf = self;
-        [menu addItemWithTitle:@"Copy Command" action:^{
+        [menu addItemWithTitle:ITLocalize(@"PtyTextView_Menu_CopyCommand", @"Copy Command",@"Menu title in popCommandCopyMenuAt:(NSPoint)locationInWindow for:(id<VT100ScreenMarkReading>)mark") action:^{
             [weakSelf copyString:command];
-            [ToastWindowController showToastWithMessage:@"Command Copied"
+            [ToastWindowController showToastWithMessage:ITLocalize(@"PtyTextView_Toast_CommandCopied", @"Command Copied", @"toast message")
                                                duration:1.5
                                 topLeftScreenCoordinate:[weakSelf.window convertPointToScreen:locationInWindow]
                                               pointSize:12];
         }];
-        [menu addItemWithTitle:@"Copy Output" action:^{
+        [menu addItemWithTitle:ITLocalize(@"PtyTextView_Menu_CopyOutput", @"Copy Output",@"Menu title in popCommandCopyMenuAt:(NSPoint)locationInWindow for:(id<VT100ScreenMarkReading>)mark") action:^{
             iTermRenegablePromise<NSString *> *promise = [self promisedOutputForMark:mark progress:nil];
             [[promise wait] whenFirst:^(NSString * _Nonnull string) {
                 [weakSelf copyString:string];
-                [ToastWindowController showToastWithMessage:@"Output Copied"
+                [ToastWindowController showToastWithMessage:ITLocalize(@"PtyTextView_Toast_OutputCopied", @"Output Copied", @"toast message")
                                                    duration:1.5
                                     topLeftScreenCoordinate:[weakSelf.window convertPointToScreen:locationInWindow]
                                                   pointSize:12];
@@ -7066,7 +7066,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 
 - (void)copyBlock:(NSString *)block absLine:(long long)absLine screenCoordinate:(NSPoint)screenCoordinate {
     if ([self copyBlock:block includingAbsLine:absLine]) {
-        [ToastWindowController showToastWithMessage:@"Copied"
+        [ToastWindowController showToastWithMessage:ITLocalize(@"PtyTextView_Toast_Copied", @"Copied", @"toast message")
                                            duration:1
                             topLeftScreenCoordinate:screenCoordinate
                                           pointSize:12];
@@ -7710,12 +7710,12 @@ static NSString *iTermStringFromRange(NSRange range) {
 #pragma mark - PTYNoteViewControllerDelegate
 
 - (void)noteDidRequestRemoval:(PTYNoteViewController *)note {
-    const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:@"Really remove annotation?"
-                                                                       actions:@[ @"OK", @"Cancel" ]
+    const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:ITLocalize(@"PtyTextView_Alert_ReallyRemoveAnnotation", @"Really remove annotation?", @"Alert title in noteDidRequestRemoval:")
+                                                                       actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in noteDidRequestRemoval:"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in noteDidRequestRemoval:") ]
                                                                      accessory:nil
                                                                     identifier:@"NoSyncConfirmRemoveAnnotation"
                                                                    silenceable:kiTermWarningTypePermanentlySilenceable
-                                                                       heading:@"Confirm"
+                                                                       heading:ITLocalize(@"PtyTextView_AlertHeading_Confirm", @"Confirm",@"Alert heading in noteDidRequestRemoval:(PTYNoteViewController *)note")
                                                                         window:self.window];
     if (selection == kiTermWarningSelection1) {
         return;
@@ -8697,7 +8697,7 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
         NSString *copyString = url.absoluteString;
         [pasteboard setString:copyString forType:NSPasteboardTypeString];
         [[PasteboardHistory sharedInstance] save:copyString];
-        [ToastWindowController showToastWithMessage:@"Copied"
+        [ToastWindowController showToastWithMessage:ITLocalize(@"PtyTextView_Toast_Copied", @"Copied", @"toast message")
                                            duration:1
                                    screenCoordinate:[NSEvent mouseLocation]
                                           pointSize:12];

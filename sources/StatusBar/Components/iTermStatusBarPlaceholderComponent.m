@@ -12,11 +12,11 @@ NS_ASSUME_NONNULL_BEGIN
 @implementation iTermStatusBarPlaceholderComponent
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Placeholder";
+    return ITLocalize(@"StatusBarPlaceholderComponent_Facing_Placeholder", @"Placeholder", @"Text shown in statusBarComponentShortDescription: Placeholder");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Placeholder";
+    return ITLocalize(@"StatusBarPlaceholderComponent_Facing_Placeholder", @"Placeholder", @"Text shown in statusBarComponentDetailedDescription: Placeholder");
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
@@ -34,7 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (nullable NSString *)stringValue {
-    return @"Click here to configure status bar";
+    return ITLocalize(@"StatusBarPlaceholderComponent_StatusBarPlaceholder_ClickHereToConfigureStatusBar", @"Click here to configure status bar", @"Status bar placeholder");
 }
 
 - (nullable NSString *)stringValueForCurrentWidth {

@@ -399,12 +399,12 @@ static NSString *const iTermStatusBarRPCRegistrationRequestV2Key = @"registratio
         return;
     }
 
-    if ([iTermWarning showWarningWithTitle:@"This will move the script into the AutoLaunch folder."
-                                   actions:@[ @"OK", @"Cancel" ]
+    if ([iTermWarning showWarningWithTitle:ITLocalize(@"StatusBarRpcProvidedTextComponent_Alert_ThisWillMoveTheScriptIntoThe", @"This will move the script into the AutoLaunch folder.", @"Alert title in maybeOfferToMoveScriptToAutoLaunch")
+                                   actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in maybeOfferToMoveScriptToAutoLaunch"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in maybeOfferToMoveScriptToAutoLaunch") ]
                                  accessory:nil
                                 identifier:[NSString stringWithFormat:@"NoSyncAutoLaunchScript_%@", _fullPath]
                                silenceable:kiTermWarningTypePermanentlySilenceable
-                                   heading:@"Always launch this script when iTerm2 starts?"
+                                   heading:ITLocalize(@"StatusBarRpcProvidedTextComponent_AlertHeading_AlwaysLaunchThisScriptWhenITerm2", @"Always launch this script when iTerm2 starts?",@"Alert heading in maybeOfferToMoveScriptToAutoLaunch")
                                     window:self.delegate.textField.window] == kiTermWarningSelection0) {
         [menuController moveScriptToAutoLaunch:_fullPath];
     }
@@ -534,22 +534,22 @@ static NSString *const iTermStatusBarRPCRegistrationRequestV2Key = @"registratio
     if (_errorMessage) {
         iTermWarning *warning = [[iTermWarning alloc] init];
         warning.title = _errorMessage;
-        warning.heading = @"Status Bar Component Problem";
-        NSArray *actions = @[ [iTermWarningAction warningActionWithLabel:@"OK" block:nil] ];
+        warning.heading = ITLocalize(@"StatusBarRpcProvidedTextComponent_AlertHeading_StatusBarComponentProblem", @"Status Bar Component Problem",@"Alert heading in onClick:(id)sender");
+        NSArray *actions = @[ [iTermWarningAction warningActionWithLabel:ITLocalize(@"COMMON_OK", @"OK", @"Label text in onClick:") block:nil] ];
         if ([self scriptIsNotRunningButCouldBeLaunched]) {
-            iTermWarningAction *launch = [iTermWarningAction warningActionWithLabel:@"Launch Script" block:^(iTermWarningSelection selection) {
+            iTermWarningAction *launch = [iTermWarningAction warningActionWithLabel:ITLocalize(@"StatusBarRpcProvidedTextComponent_LaunchScript", @"Launch Script", @"Label text in onClick:") block:^(iTermWarningSelection selection) {
                 [self launchScript];
             }];
-            iTermWarningAction *reveal = [iTermWarningAction warningActionWithLabel:@"Reveal in Finder" block:^(iTermWarningSelection selection) {
+            iTermWarningAction *reveal = [iTermWarningAction warningActionWithLabel:ITLocalize(@"StatusBarRpcProvidedTextComponent_RevealInFinder", @"Reveal in Finder", @"Label text in onClick:") block:^(iTermWarningSelection selection) {
                 [self revealInFinder];
             }];
             actions = [actions arrayByAddingObjectsFromArray:@[ launch, reveal ]];
 
-            warning.title = [NSString stringWithFormat:@"%@It looks like the script is not running. Launching it might fix the problem.", _errorMessage];
+            warning.title = [NSString stringWithFormat:ITLocalize(@"StatusBarRpcProvidedTextComponent_ItLooksLikeTheScriptIsNot_FORMAT", @"%1$@It looks like the script is not running. Launching it might fix the problem.", @"Title in onClick:"), _errorMessage];
         }
         warning.warningActions = actions;
         warning.warningType = kiTermWarningTypePersistent;
-        warning.heading = @"Status Bar Script Error";
+        warning.heading = ITLocalize(@"StatusBarRpcProvidedTextComponent_AlertHeading_StatusBarScriptError", @"Status Bar Script Error",@"Alert heading in onClick:(id)sender");
         warning.window = self.delegate.textField.window;
         [warning runModal];
         return;

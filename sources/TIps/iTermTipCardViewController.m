@@ -118,11 +118,11 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
     _body.textColor = [iTermTipCardViewController tipTextColor];
     _title.textColor = [NSColor whiteColor];
     _title.accessibilityElement = YES;
-    _title.accessibilityLabel = @"Tip title";
+    _title.accessibilityLabel = ITLocalize(@"TipCardViewController_TipTitle", @"Tip title", @"Title in awakeFromNib");
 
     _body.accessibilityElement = YES;
     _body.accessibilityRole = NSAccessibilityStaticTextRole;
-    _body.accessibilityLabel = @"Tip content";
+    _body.accessibilityLabel = ITLocalize(@"TipCardViewController_TipContent", @"Tip content", @"Label text in awakeFromNib");
 
     self.view.accessibilityChildren = @[ _body ];
 }
@@ -188,7 +188,7 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
                           withAttributes:bigTextAttributes];
     [attributedString iterm_appendString:@"\n"
                           withAttributes:bigTextAttributes];
-    [attributedString iterm_appendString:@"iTerm2 tip of the day"
+    [attributedString iterm_appendString:ITLocalize(@"TipCardViewController_Facing_ITerm2TipOfTheDay", @"iTerm2 tip of the day", @"Text shown in setBodyText:: iTerm2 tip of the day")
                           withAttributes:signatureAttributes];
 
     _body.attributedStringValue = attributedString;

@@ -445,12 +445,14 @@
         NSError *error;
         NSNumber *indexValue = [indexExpression synchronousValueWithSideEffectsAllowed:NO scope:_scope error:&error];
         if (error) {
-            NSString *reason = [NSString stringWithFormat:@"Error evaluating index expression: %@", error.localizedDescription];
+            NSString *reason = [NSString stringWithFormat:ITLocalize(@"EXPRESSION_PARSER_INDEX_EVALUATION_ERROR_FORMAT", @"Error evaluating index expression: %1$@", @"Error explaining that an array index expression could not be evaluated"), error.localizedDescription];
             return [[iTermIndirectValue alloc] initWithError:reason path:path];
         }
         const NSInteger index = indexValue.integerValue;
         if (index < 0 || index >= array.count) {
-            NSString *reason = [NSString stringWithFormat:@"Index %@ out of range of “%@”, which has %@ value%@", @(index), path, @(array.count), array.count == 1 ? @"" : @"s"];
+            NSString *reason = array.count == 1
+                ? [NSString stringWithFormat:ITLocalize(@"EXPRESSION_PARSER_INDEX_OUT_OF_RANGE_ONE_VALUE_FORMAT", @"Index %1$@ out of range of “%2$@”, which has 1 value", @"Error for an array index outside the bounds of a one-value array"), @(index), path]
+                : [NSString stringWithFormat:ITLocalize(@"EXPRESSION_PARSER_INDEX_OUT_OF_RANGE_MANY_VALUES_FORMAT", @"Index %1$@ out of range of “%2$@”, which has %3$@ values", @"Error for an array index outside the bounds of an array"), @(index), path, @(array.count)];
             return [[iTermIndirectValue alloc] initWithError:reason path:path];
         }
         return [[iTermIndirectValue alloc] initWithValue:array[index] path:path];

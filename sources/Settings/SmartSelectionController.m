@@ -110,7 +110,7 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
     _regexTextView.richText = NO;
 
     _playgroundTextView.font = [NSFont userFixedPitchFontOfSize:[NSFont systemFontSize]];
-    _playgroundTextView.it_placeholderString = @"Smart Selection Playground\nEnter text here, then click to see which rule matches at that location.";
+    _playgroundTextView.it_placeholderString = ITLocalize(@"SmartSelectionController_Placeholder_SmartSelectionPlaygroundNEnterTextHere", @"Smart Selection Playground\nEnter text here, then click to see which rule matches at that location.",@"Placeholder text in awakeFromNib");
     _playgroundTextView.playgroundDelegate = self;
     _playgroundTextView.automaticSpellingCorrectionEnabled = NO;
     _playgroundTextView.automaticDashSubstitutionEnabled = NO;
@@ -139,7 +139,7 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
                                                                                ofType:@"plist"];
         NSDictionary* rulesDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
         if (!plistFile) {
-            [iTermAppSignatureValidator warnWithReason:@"While loading the default smart selection rules"];
+            [iTermAppSignatureValidator warnWithReason:ITLocalize(@"SmartSelectionController_Facing_WhileLoadingTheDefaultSmartSelectionRules", @"While loading the default smart selection rules", @"Text shown in defaultRules: While loading the default smart selection rules")];
         }
         ITCriticalError(rulesDict != nil, @"Failed to parse SmartSelectionRules in %@: %@", plistFile, [NSString stringWithContentsOfFile:plistFile encoding:NSUTF8StringEncoding error:nil]);
         rulesArray = [rulesDict objectForKey:@"Rules"];
@@ -238,11 +238,11 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
         [popover showRelativeToRect:button.bounds ofView:button preferredEdge:NSRectEdgeMaxX];
         _popover = popover;
 
-        _visualizationButton.title = @"Close Regular Expression Visualization";
+        _visualizationButton.title = ITLocalize(@"SmartSelectionController_CloseRegularExpressionVisualization", @"Close Regular Expression Visualization", @"Button title in openRegexVisualizer:");
     } else {
         [_popover close];
         _popover = nil;
-        _visualizationButton.title = @"Open Regular Expression Visualization";
+        _visualizationButton.title = ITLocalize(@"SmartSelectionController_OpenRegularExpressionVisualization", @"Open Regular Expression Visualization", @"Button title in openRegexVisualizer:");
     }
 }
 
@@ -294,11 +294,11 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
 }
 
 - (NSString *)displayNameForPrecision:(NSString *)precision {
-    NSDictionary *names = @{ kVeryLowPrecision: @"Very Low",
+    NSDictionary *names = @{ kVeryLowPrecision: ITLocalize(@"SmartSelectionController_Facing_VeryLow", @"Very Low", @"Text shown in displayNameForPrecision:: Very Low"),
                              kLowPrecision: @"Low",
                              kNormalPrecision: @"Normal",
                              kHighPrecision: @"High",
-                             kVeryHighPrecision: @"Very High" };
+                             kVeryHighPrecision: ITLocalize(@"SmartSelectionController_Facing_VeryHigh", @"Very High", @"Text shown in displayNameForPrecision:: Very High") };
     return names[precision] ?: @"Undefined";
 }
 
@@ -366,7 +366,7 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
         NSParagraphStyleAttributeName: paragraphStyle,
         NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize] weight:NSFontWeightSemibold]
     };
-    NSString *name = [[self displayNameForPrecision:precision] stringByAppendingString:@" precision"];
+    NSString *name = [[self displayNameForPrecision:precision] stringByAppendingString:ITLocalize(@"SmartSelectionController_Facing_Precision", @" precision", @"Text shown in precisionAttributedString::  precision")];
     if (actionCount == 1) {
         name = [name stringByAppendingFormat:@", one action"];
     } else if (actionCount > 1) {
@@ -431,9 +431,9 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
     _detailView.hidden = !self.hasSelection;
     _noRuleSelected.hidden = self.hasSelection;
     if (tableView_.numberOfSelectedRows > 1) {
-        _noRuleSelected.stringValue = @"Multiple rules selected";
+        _noRuleSelected.stringValue = ITLocalize(@"SmartSelectionController_Facing_MultipleRulesSelected", @"Multiple rules selected", @"Text shown in updateDetailView: Multiple rules selected");
     } else {
-        _noRuleSelected.stringValue = @"No rule selected";
+        _noRuleSelected.stringValue = ITLocalize(@"SmartSelectionController_Facing_NoRuleSelected", @"No rule selected", @"Text shown in updateDetailView: No rule selected");
     }
     if (self.hasSelection) {
         const NSInteger row = [tableView_ selectedRow];
@@ -444,9 +444,9 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
         [self updateVisualization];
         const NSInteger actionCount = [[NSArray castFrom:rule[kActionsKey]] count];
         if (actionCount == 0) {
-            _actionsButton.title = [NSString stringWithFormat:@"Actions…"];
+            _actionsButton.title = ITLocalize(@"SmartSelectionController_Actions", @"Actions…", @"Button title in updateDetailView");
         } else {
-            _actionsButton.title = [NSString stringWithFormat:@"Actions (%@)…", @(actionCount)];
+            _actionsButton.title = [NSString stringWithFormat:ITLocalize(@"SmartSelectionController_Actions_FORMAT", @"Actions (%1$@)…", @"Button title in updateDetailView"), @(actionCount)];
         }
     } else {
         _nameTextField.stringValue = @"";
@@ -571,12 +571,12 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
 
 - (void)updatePlayground {
     if (_playgroundTextView.lastCoord.x < 0 || _playgroundTextView.lastCoord.y < 0) {
-        _playgroundResultLabel.stringValue = @"Click on text in playground to test rules";
+        _playgroundResultLabel.stringValue = ITLocalize(@"SmartSelectionController_ClickOnTextInPlaygroundToTest", @"Click on text in playground to test rules", @"Label text in updatePlayground");
         return;
     }
     if (_playgroundTextView.lastCoord.y >= _playgroundTextView.textStorage.string.numberOfLines ||
         _playgroundTextView.lastCoord.x >= _playgroundTextView.textStorage.string.width) {
-        _playgroundResultLabel.stringValue = @"Click on text in playground to test rules";
+        _playgroundResultLabel.stringValue = ITLocalize(@"SmartSelectionController_ClickOnTextInPlaygroundToTest", @"Click on text in playground to test rules", @"Label text in updatePlayground");
         return;
     }
     iTermTextExtractor *extractor = [[iTermTextExtractor alloc] initWithDataSource:_playgroundTextView.textStorage.string ?: @""];
@@ -587,7 +587,7 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
                                                range:&relativeRange
                                     ignoringNewlines:NO];
     if (!result) {
-        _playgroundResultLabel.stringValue = @"No match";
+        _playgroundResultLabel.stringValue = ITLocalize(@"SmartSelectionController_NoMatch", @"No match", @"Label text in updatePlayground");
         return;
     }
     _playgroundResultLabel.stringValue = result.rule[kNotesKey];

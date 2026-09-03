@@ -338,7 +338,7 @@ static PreferencePanel *gSessionsPreferencePanel;
     if (!repr.length) {
         repr = @"Empty Default";
     }
-    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:@"Reset to %@", repr]
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:ITLocalize(@"PreferencePanel_Menu_ResetTo_FORMAT", @"Reset to %1$@", @"menu item title"), repr]
                                                   action:@selector(resetPrefToDefaultValue:)
                                            keyEquivalent:@""];
     item.target = self;
@@ -614,15 +614,15 @@ static iTermPreferencesSearchEngine *gSearchEngine;
 
     if (_editCurrentSessionMode) {
         [self layoutSubviewsForEditCurrentSessionMode];
-        self.window.title = @"Edit Session";
+        self.window.title = ITLocalize(@"PreferencePanel_EditSession", @"Edit Session", @"Title in awakeFromNib");
     } else {
         [_toolbar setVisible:YES];
         [self resizeWindowForTabViewItem:_globalTabViewItem animated:NO];
         NSString *suiteName = [iTermUserDefaults customSuiteName];
         if (suiteName.length > 0) {
-            self.window.title = [NSString stringWithFormat:@"Settings: %@", suiteName];
+            self.window.title = [NSString stringWithFormat:ITLocalize(@"PreferencePanel_Settings_FORMAT", @"Settings: %1$@", @"Title in awakeFromNib"), suiteName];
         } else {
-            self.window.title = @"Settings";
+            self.window.title = ITLocalize(@"PreferencePanel_Settings", @"Settings", @"Title in awakeFromNib");
         }
     }
 
@@ -1013,8 +1013,8 @@ andEditComponentWithIdentifier:(NSString *)identifier
             }
         }
 
-        NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Search Options"];
-        NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:@"Show indicators for non-default values"
+        NSMenu *menu = [[NSMenu alloc] initWithTitle:ITLocalize(@"PreferencePanel_Menu_SearchOptions", @"Search Options",@"Menu title in bigSurSearchFieldToolbarItem")];
+        NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:ITLocalize(@"PreferencePanel_Menu_ShowIndicatorsForNonDefaultValues", @"Show indicators for non-default values", @"menu item title")
                                                           action:@selector(toggleIndicateNonDefaultValues:)
                                                    keyEquivalent:@""];
         menuItem.target = self;

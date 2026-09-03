@@ -550,8 +550,8 @@
         if (![state.db executeUpdate:@"ALTER TABLE Node ADD COLUMN generation INTEGER DEFAULT 0"]) {
             NSString *error = [state.db.lastError localizedDescription] ?: @"Unknown error";
             dispatch_async(dispatch_get_main_queue(), ^{
-                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Failed to migrate session database (adding generation column): %@", error]
-                                           actions:@[ @"OK" ]
+                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"GraphDatabase_Alert_FailedToMigrateSessionDatabaseAddingGeneration_FORMAT", @"Failed to migrate session database (adding generation column): %1$@", @"Alert title in migrateSchemaIfNeeded:"), error]
+                                           actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in migrateSchemaIfNeeded:") ]
                                         identifier:@"NoSyncGraphDatabaseMigrationFailed"
                                        silenceable:kiTermWarningTypePersistent
                                             window:nil];
@@ -561,8 +561,8 @@
         if (![state.db executeUpdate:@"ALTER TABLE Node ADD COLUMN large_data BLOB"]) {
             NSString *error = [state.db.lastError localizedDescription] ?: @"Unknown error";
             dispatch_async(dispatch_get_main_queue(), ^{
-                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Failed to migrate session database (adding large_data column): %@", error]
-                                           actions:@[ @"OK" ]
+                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"GraphDatabase_Alert_FailedToMigrateSessionDatabaseAddingLarge_FORMAT", @"Failed to migrate session database (adding large_data column): %1$@", @"Alert title in migrateSchemaIfNeeded:"), error]
+                                           actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in migrateSchemaIfNeeded:") ]
                                         identifier:@"NoSyncGraphDatabaseMigrationFailed"
                                        silenceable:kiTermWarningTypePersistent
                                             window:nil];

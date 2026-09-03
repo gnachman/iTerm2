@@ -151,7 +151,11 @@ static NSError *SCPFileError(NSString *description) {
 }
 
 - (NSString *)displayName {
-    return [NSString stringWithFormat:@"Secure copy\nUser name: %@\nHost: %@\nFile: %@", _path.username, _path.hostname, _path.path];
+  return [NSString
+      stringWithFormat:
+          ITLocalize(@"ScpFile_FormattedFacing_SecureCopyNUserNameNHost_FORMAT",
+                     @"Secure copy\nUser name: %1$@\nHost: %2$@\nFile: %3$@",@"Formatted user-facing text in displayName"),
+          _path.username, _path.hostname, _path.path];
 }
 
 - (NSString *)shortName {
@@ -375,10 +379,18 @@ static NSError *SCPFileError(NSString *description) {
     RLog(@"performTransfer download=%@ agentAllowed=%@ path=%@ baseName=%@",
          @(isDownload), @(agentAllowed), self.path, baseName);
     if (!baseName) {
-        self.error = [NSString stringWithFormat:@"Invalid path: %@", self.path.path];
+    self.error = [NSString
+        stringWithFormat:ITLocalize(
+                             @"ScpFile_FormattedFacing_InvalidPath_FORMAT",
+                             @"Invalid path: %1$@",@"Formatted user-facing text in performTransfer:(BOOL)isDownload agentAllowed:(BOOL)agentAllowed"),
+                         self.path.path];
         [self performOnMainThread:^{
-            [[FileTransferManager sharedInstance] transferrableFile:self
-                                     didFinishTransmissionWithError:SCPFileError(@"Invalid filename")];
+      [[FileTransferManager sharedInstance]
+                       transferrableFile:self
+          didFinishTransmissionWithError:
+              SCPFileError(ITLocalize(
+                  @"ScpFile_Facing_InvalidFilename", @"Invalid filename",
+                  @"Text shown in performTransfer: Invalid filename"))];
         }];
         return;
     }
@@ -414,22 +426,46 @@ static NSError *SCPFileError(NSString *description) {
             // error. Should that ever change, this clause will not execute.
             theError = [NSError errorWithDomain:@"com.googlecode.iterm2"
                                            code:-1
-                                       userInfo:@{ NSLocalizedDescriptionKey: @"Could not connect." }];
+                 userInfo:@{
+                   NSLocalizedDescriptionKey :
+                       ITLocalize(@"ScpFile_Descriptive_CouldNotConnect",
+                                  @"Could not connect.",
+                                  @"Error description when connection fails")
+                 }];
         }
-        self.error = [NSString stringWithFormat:@"Connection failed: %@",
+    self.error = [NSString
+        stringWithFormat:ITLocalize(
+                             @"ScpFile_FormattedFacing_ConnectionFailed_FORMAT",
+                             @"Connection failed: %1$@",@"Formatted user-facing text in performTransfer:(BOOL)isDownload agentAllowed:(BOOL)agentAllowed"),
                          theError.localizedDescription];
         [self performOnMainThread:^{
             [[FileTransferManager sharedInstance] transferrableFile:self
                                      didFinishTransmissionWithError:theError];
-            iTermWarningSelection selection =
-                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Failed to connect to %@:%d. Double-check that the host name is correct.", self.hostname, effectivePort]
-                                           actions:@[ @"Ok", @"Help" ]
+      iTermWarningSelection selection = [iTermWarning
+          showWarningWithTitle:
+              [NSString
+                  stringWithFormat:
+                      ITLocalize(@"SCPFile_Alert_FailedToConnectTo_FORMAT",
+                                 @"Failed to connect to %1$@:%2$d. "
+                                 @"Double-check that the host name is correct.",
+                                 @"Alert title in handleConnectionError:"),
+                      self.hostname, effectivePort]
+                       actions:@[
+                         ITLocalize(@"COMMON_OK", @"OK",
+                                    @"Action title in handleConnectionError:"),
+                         ITLocalize(@"COMMON_HELP", @"Help",
+                                    @"Action title in handleConnectionError:")
+                       ]
                                      actionMapping:nil
                                          accessory:nil
                                         identifier:kSecureCopyConnectionFailedWarning
                                        silenceable:kiTermWarningTypePermanentlySilenceable
-                                           heading:@"Connection Failed"
-                                       cancelLabel:@"Help"
+                       heading:ITLocalize(
+                                   @"SCPFile_AlertHeading_ConnectionFailed",
+                                   @"Connection Failed",@"Alert heading in performTransfer:(BOOL)isDownload agentAllowed:(BOOL)agentAllowed")
+                   cancelLabel:ITLocalize(
+                                   @"COMMON_HELP", @"Help",
+                                   @"Action title in handleConnectionError:")
                                             window:nil];
             if (selection == kiTermWarningSelection1) {
                 [[NSWorkspace sharedWorkspace] it_openURL:[NSURL URLWithString:@"https://iterm2.com/troubleshoot-hostname"]
@@ -468,7 +504,10 @@ static NSError *SCPFileError(NSString *description) {
                 break;
             }
             if ([authType isEqualToString:@"password"]) {
-                NSString *password = [self keyboardInteractiveRequest:@"password"];
+        NSString *password =
+            [self keyboardInteractiveRequest:
+                      ITLocalize(@"ScpFile_Facing_Password", @"password",
+                                 @"Text shown in performTransfer:: password")];
                 if (self.stopped || !password) {
                     break;
                 }
@@ -513,11 +552,15 @@ static NSError *SCPFileError(NSString *description) {
                         if (keyIsEncrypted) {
                             NSString *prompt;
                             if (firstAttempt) {
-                                prompt = [NSString stringWithFormat:@"passphrase for private key “%@”:",
-                                          keyPath];
+                                prompt = [NSString stringWithFormat:ITLocalize(@"ScpFile_FormattedFacing_PassphraseForPrivateKey_FORMAT",
+                                                                               @"passphrase for private key “%1$@”:",
+                                                                               @"Formatted user-facing text in performTransfer:(BOOL)isDownload agentAllowed:(BOOL)agentAllowed"),
+                                                                    keyPath];
                             } else {
-                                prompt = [NSString stringWithFormat:@"correct passphrase for “%@”:",
-                                          keyPath];
+                                prompt = [NSString stringWithFormat:ITLocalize(@"ScpFile_FormattedFacing_CorrectPassphraseFor_FORMAT",
+                                                                               @"correct passphrase for “%1$@”:",
+                                                                               @"Formatted user-facing text in performTransfer:(BOOL)isDownload agentAllowed:(BOOL)agentAllowed"),
+                                                                    keyPath];
                             }
                             password = [self keyboardInteractiveRequest:prompt];
                             if (!password) {
@@ -584,9 +627,16 @@ static NSError *SCPFileError(NSString *description) {
             if (!error) {
                 error = [NSError errorWithDomain:@"com.googlecode.iterm2.SCPFile"
                                             code:0
-                                        userInfo:@{ NSLocalizedDescriptionKey: @"Authentication failed." }];
+                   userInfo:@{
+                     NSLocalizedDescriptionKey : ITLocalize(
+                         @"ScpFile_Descriptive_AuthenticationFailed",
+                         @"Authentication failed.",
+                         @"Error description when authentication fails")
+                   }];
             }
-            self.error = @"Authentication error.";
+      self.error = ITLocalize(
+          @"ScpFile_Facing_AuthenticationError", @"Authentication error.",
+          @"Text shown in performTransfer: Authentication error.");
             [[FileTransferManager sharedInstance] transferrableFile:self
                                      didFinishTransmissionWithError:error];
         }];
@@ -610,7 +660,11 @@ static NSError *SCPFileError(NSString *description) {
             tempfile = [downloadDirectory stringByAppendingPathComponent:tempFileName];
         }
         if (!tempfile) {
-            self.error = [NSString stringWithFormat:@"Downloads folder not writable. Tried %@",
+      self.error = [NSString
+          stringWithFormat:ITLocalize(
+                               @"ScpFile_FormattedFacing_"
+                               @"DownloadsFolderNotWritableTried_FORMAT",
+                               @"Downloads folder not writable. Tried %1$@",@"Formatted user-facing text in performTransfer:(BOOL)isDownload agentAllowed:(BOOL)agentAllowed"),
                           downloadDirectory];
             [self performOnMainThread:^{
                 [[FileTransferManager sharedInstance] transferrableFile:self
@@ -702,16 +756,16 @@ static NSError *SCPFileError(NSString *description) {
                 return;
             } else {
                 if (quarantineError) {
-                    self.error = @"Quarantine Error";
+                    self.error = ITLocalize(@"ScpFile_Facing_QuarantineError", @"Quarantine Error", @"Text shown in performTransfer:: Quarantine Error");
                 } else {
                     NSString *errorDescription = [[self lastError] localizedDescription];
                     if (errorDescription.length) {
                         self.error = errorDescription;
                     } else {
-                        self.error = @"Download failed";
+                        self.error = ITLocalize(@"ScpFile_Facing_DownloadFailed", @"Download failed", @"Text shown in performTransfer:: Download failed");
                     }
                 }
-                error = SCPFileError(@"Download failed");
+                error = SCPFileError(ITLocalize(@"ScpFile_Facing_DownloadFailed", @"Download failed", @"Text shown in performTransfer:: Download failed"));
             }
         }
         [self performOnMainThread:^{
@@ -809,13 +863,25 @@ static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
 }
 
 - (BOOL)shouldConnectToNewHostname {
-    const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Connect to %@?", self.userHostPort]
-                               actions:@[ @"OK", @"Cancel" ]
+  const iTermWarningSelection selection = [iTermWarning
+      showWarningWithTitle:
+          [NSString
+              stringWithFormat:
+                  ITLocalize(@"SCPFile_Alert_ConnectTo_FORMAT",
+                             @"Connect to %1$@?",
+                             @"Alert title in shouldConnectToNewHostname"),
+                  self.userHostPort]
+                   actions:@[
+                     ITLocalize(@"COMMON_OK", @"OK",
+                                @"Action title in shouldConnectToNewHostname"),
+                     ITLocalize(@"COMMON_CANCEL", @"Cancel",
+                                @"Action title in shouldConnectToNewHostname")
+                   ]
                              accessory:nil
                             identifier:[@"NoSyncConnectTo_" stringByAppendingString:self.userHostPort]
                            silenceable:kiTermWarningTypePermanentlySilenceable
-                               heading:@"Connect to New Host?"
+                   heading:ITLocalize(@"SCPFile_AlertHeading_ConnectToNewHost",
+                                      @"Connect to New Host?",@"Alert heading in shouldConnectToNewHostname")
                                 window:nil];
     return selection == kiTermWarningSelection0;
 }
@@ -946,10 +1012,15 @@ static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
         NSString *title = @"Notice";  // The default value should never be used.
         switch (status) {
             case NMSSHKnownHostStatusFailure:
-                title = [NSString stringWithFormat:@"Problem connecting to %@", host];
-                message = [NSString stringWithFormat:@"Could not read the known_hosts file.\n"
-                                                     @"As a result, the authenticity of host '%@' can't be established."
-                                                     @"%@ key fingerprint is %@. Connect anyway?",
+                title = [NSString stringWithFormat:ITLocalize(@"ScpFile_ProblemConnectingTo_FORMAT",
+                                                              @"Problem connecting to %1$@",
+                                                              @"Title in session:shouldConnectToHostWithFingerprint:knownHostStatus:"),
+                                                   host];
+                message = [NSString stringWithFormat:ITLocalize(@"ScpFile_FormattedFacing_CouldNotReadTheKnownHostsFile_FORMAT",
+                                                                @"Could not read the known_hosts file.\n"
+                                                                @"As a result, the authenticity of host '%1$@' can't be established."
+                                                                @"%2$@ key fingerprint is %3$@. Connect anyway?",
+                                                                @"Formatted user-facing text in session:(NMSSHSession *)session"),
                            host, hashName, fingerprint];
                 break;
 
@@ -959,20 +1030,24 @@ static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
                 break;
 
             case NMSSHKnownHostStatusMismatch:
-                title = @"Warning!";
+                title = ITLocalize(@"COMMON_WARNING", @"Warning!", @"Title in session:shouldConnectToHostWithFingerprint:");
                 message =
-                    [NSString stringWithFormat:@"REMOTE HOST IDENTIFICATION HAS CHANGED!\n\n"
-                                               @"The %@ key fingerprint of host '%@' has changed. It is %@.\n\n"
-                                               @"Someone could be eavesdropping on you right now (man-in-the-middle attack)!\n"
-                                               @"It is also possible that a host key has just been changed.\nConnect anyway?",
-                     host, hashName, fingerprint];
+                    [NSString stringWithFormat:ITLocalize(@"ScpFile_FormattedFacing_RemoteHostIdentificationHasChanged_FORMAT",
+                                                           @"REMOTE HOST IDENTIFICATION HAS CHANGED!\n\n"
+                                                           @"The %1$@ key fingerprint of host '%2$@' has changed. It is %3$@.\n\n"
+                                                           @"Someone could be eavesdropping on you right now (man-in-the-middle attack)!\n"
+                                                           @"It is also possible that a host key has just been changed.\nConnect anyway?",
+                                                           @"Formatted user-facing text in session:(NMSSHSession *)session"),
+                     hashName, host, fingerprint];
                 break;
 
             case NMSSHKnownHostStatusNotFound:
-                title = [NSString stringWithFormat:@"First time connecting to %@", host];
+                title = [NSString stringWithFormat:ITLocalize(@"ScpFile_FirstTimeConnectingTo_FORMAT", @"First time connecting to %1$@", @"Title in session:shouldConnectToHostWithFingerprint:"), host];
                 message =
-                    [NSString stringWithFormat:@"The authenticity of host '%@' can't be established.\n\n"
-                                               @"%@ key fingerprint is %@.\n\nConnect anyway?",
+                    [NSString stringWithFormat:ITLocalize(@"ScpFile_FormattedFacing_TheAuthenticityOfHostCantBeEstablished_FORMAT",
+                                                           @"The authenticity of host '%1$@' can't be established.\n\n"
+                                                           @"%2$@ key fingerprint is %3$@.\n\nConnect anyway?",
+                                                           @"Formatted user-facing text in session:(NMSSHSession *)session"),
                      host, hashName, fingerprint];
                 _okToAdd = YES;
                 break;

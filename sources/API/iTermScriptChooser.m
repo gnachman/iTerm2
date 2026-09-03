@@ -46,7 +46,7 @@
         [_signButton setAction:@selector(didToggleSignButton:)];
         _signButton.translatesAutoresizingMaskIntoConstraints = NO;
         _signButton.buttonType = NSButtonTypeSwitch;
-        _signButton.title = @"Code-sign exported script using identity: ";
+        _signButton.title = ITLocalize(@"ScriptChooser_CodeSignExportedScriptUsingIdentity", @"Code-sign exported script using identity: ", @"Button title in init");
         [_signButton sizeToFit];
         [self addSubview:_signButton];
 
@@ -74,7 +74,7 @@
         _launchButton.action = @selector(toggleAutoLaunch:);
         _launchButton.translatesAutoresizingMaskIntoConstraints = NO;
         _launchButton.buttonType = NSButtonTypeSwitch;
-        _launchButton.title = @"Offer to launch automatically during installation";
+        _launchButton.title = ITLocalize(@"ScriptChooser_OfferToLaunchAutomaticallyDuringInstallation", @"Offer to launch automatically during installation", @"Button title in init");
         _launchButton.state = NSControlStateValueOff;
         _launchButton.enabled = NO;
         [_launchButton sizeToFit];

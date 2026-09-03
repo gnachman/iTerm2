@@ -46,7 +46,7 @@ static NSString *const iTermStatusBarActionKey = @"action";
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *actionKnob =
-    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Action"
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:ITLocalize(@"StatusBarActionComponent_Action", @"Action", @"Label text in statusBarComponentKnobs")
                                                       type:iTermStatusBarComponentKnobTypeAction
                                                placeholder:nil
                                               defaultValue:nil
@@ -84,7 +84,7 @@ static NSString *const iTermStatusBarActionKey = @"action";
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Custom Action";
+    return ITLocalize(@"StatusBarActionComponent_Facing_CustomAction", @"Custom Action", @"Text shown in statusBarComponentShortDescription: Custom Action");
 }
 
 - (BOOL)statusBarComponentCanStretch {
@@ -92,7 +92,7 @@ static NSString *const iTermStatusBarActionKey = @"action";
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Adds a button that performs a user-configurable action, similar to a key binding.";
+    return ITLocalize(@"StatusBarActionComponent_Facing_AddsAButtonThatPerformsAUser", @"Adds a button that performs a user-configurable action, similar to a key binding.", @"Text shown in statusBarComponentDetailedDescription: Adds a button that performs a user-configurable action, similar to a key binding.");
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
@@ -101,7 +101,7 @@ static NSString *const iTermStatusBarActionKey = @"action";
     if (dict.count) {
         return self.action.title;
     } else {
-        return @"Custom Action";
+        return ITLocalize(@"StatusBarActionComponent_Facing_CustomAction", @"Custom Action", @"Text shown in statusBarComponentExemplarWithBackgroundColor:: Custom Action");
     }
 }
 
@@ -145,16 +145,16 @@ static NSString *const iTermStatusBarActionKey = @"action";
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Actions Menu";
+    return ITLocalize(@"StatusBarActionComponent_Facing_ActionsMenu", @"Actions Menu", @"Text shown in statusBarComponentShortDescription: Actions Menu");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"When clicked, opens a menu of actions. Actions are like custom key bindings, but without a keystroke attached.";
+    return ITLocalize(@"StatusBarActionComponent_Facing_WhenClickedOpensAMenuOfActions", @"When clicked, opens a menu of actions. Actions are like custom key bindings, but without a keystroke attached.", @"Text shown in statusBarComponentDetailedDescription: When clicked, opens a menu of actions. Actions are like custom key bindings, but without a keystroke attached.");
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
                                           textColor:(NSColor *)textColor {
-    return @"Action…";
+    return ITLocalize(@"StatusBarActionComponent_Facing_Action", @"Action…", @"Text shown in statusBarComponentExemplarWithBackgroundColor:: Action…");
 }
 
 - (BOOL)statusBarComponentCanStretch {
@@ -162,7 +162,7 @@ static NSString *const iTermStatusBarActionKey = @"action";
 }
 
 - (nullable NSString *)stringValue {
-    return @"Perform Action…";
+    return ITLocalize(@"StatusBarActionComponent_Facing_PerformAction", @"Perform Action…", @"Text shown in stringValue: Perform Action…");
 }
 
 - (nullable NSString *)stringValueForCurrentWidth {
@@ -206,7 +206,7 @@ static NSString *const iTermStatusBarActionKey = @"action";
 
     [menu addItem:[NSMenuItem separatorItem]];
 
-    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"Edit Actions…" action:@selector(editActions:) keyEquivalent:@""];
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:ITLocalize(@"StatusBarActionComponent_StatusBarContextMenu_EditActions", @"Edit Actions…", @"Status bar context menu") action:@selector(editActions:) keyEquivalent:@""];
     item.target = self;
     [menu addItem:item];
 

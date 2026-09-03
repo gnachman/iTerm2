@@ -293,12 +293,12 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     }
 
     func browserViewController(_ controller: iTermBrowserViewController, runCommand command: String) {
-        guard iTermWarning.show(withTitle: "OK to run:\n\(command)",
-                                actions: ["OK", "Cancel"],
+        guard iTermWarning.show(withTitle: String(format: String(localized: "PtySessionBrowser_OkToRunN_FORMAT", defaultValue: "OK to run:\n%1$@", comment: "Alert title in browserViewController"), command),
+                                actions: [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Action title in browserViewController"), String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Action title in browserViewController")],
                                 accessory: nil,
                                 identifier: nil,
                                 silenceable: .kiTermWarningTypePersistent,
-                                heading: "Run command?",
+                                heading: String(localized: "PtySessionBrowser_RunCommand", defaultValue: "Run command?", comment: "Alert heading in browserViewController"),
                                 window: view?.window) == .kiTermWarningSelection0 else {
             return
         }
@@ -328,12 +328,12 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     }
 
     func browserViewController(_ controller: iTermBrowserViewController, openFile file: String) {
-        guard iTermWarning.show(withTitle: "OK to open this file?\n\(file)",
-                                actions: ["OK", "Cancel"],
+        guard iTermWarning.show(withTitle: String(format: String(localized: "PtySessionBrowser_OkToOpenThisFileN_FORMAT", defaultValue: "OK to open this file?\n%1$@", comment: "Alert title in browserViewController"), file),
+                                actions: [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Action title in browserViewController"), String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Action title in browserViewController")],
                                 accessory: nil,
                                 identifier: nil,
                                 silenceable: .kiTermWarningTypePersistent,
-                                heading: "Open file?",
+                                heading: String(localized: "PtySessionBrowser_OpenFile", defaultValue: "Open file?", comment: "Alert heading in browserViewController"),
                                 window: view?.window) == .kiTermWarningSelection0 else {
             return
         }

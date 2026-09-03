@@ -73,7 +73,7 @@ static const CGFloat kMargin = 5;
         clear_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
         clear_.bezelStyle = NSBezelStyleRegularSquare;
         clear_.bordered = NO;
-        clear_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:@"Clear"];
+        clear_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:ITLocalize(@"TOOL_COMMAND_HISTORY_CLEAR", @"Clear", @"Button that clears command history")];
         clear_.imagePosition = NSImageOnly;
         clear_.frame = NSMakeRect(0, 0, 22, 22);
         [clear_ setTarget:self];
@@ -312,10 +312,10 @@ static const CGFloat kMargin = 5;
 
 - (void)clear:(id)sender {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Erase Command History";
-    alert.informativeText = @"Command history for all hosts will be erased. Continue?";
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
+    alert.messageText = ITLocalize(@"ToolCommandHistoryView_EraseCommandHistory", @"Erase Command History", @"Alert title in clear:");
+    alert.informativeText = ITLocalize(@"ToolCommandHistoryView_CommandHistoryForAllHostsWillBe", @"Command history for all hosts will be erased. Continue?", @"Alert explanatory text in clear:");
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in clear:")];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in clear:")];
     if ([alert runModal] == NSAlertFirstButtonReturn) {
         [[iTermShellHistoryController sharedInstance] eraseCommandHistory:YES directories:NO];
     }

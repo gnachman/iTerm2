@@ -36,14 +36,14 @@
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *textColorKnob =
-    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Icon Color:"
-                                                      type:iTermStatusBarComponentKnobTypeColor
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:ITLocalize(@"StatusBarComposerComponent_StatusBarKnob_IconColor", @"Icon Color:", @"Status bar knob")
+                                                       type:iTermStatusBarComponentKnobTypeColor
                                                placeholder:nil
                                               defaultValue:nil
                                                        key:iTermStatusBarSharedTextColorKey];
     iTermStatusBarComponentKnob *backgroundColorKnob =
-    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Background Color:"
-                                                      type:iTermStatusBarComponentKnobTypeColor
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:ITLocalize(@"StatusBarComposerComponent_StatusBarKnob_BackgroundColor", @"Background Color:", @"Status bar knob")
+                                                       type:iTermStatusBarComponentKnobTypeColor
                                                placeholder:nil
                                               defaultValue:nil
                                                        key:iTermStatusBarSharedBackgroundColorKey];
@@ -66,11 +66,11 @@
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Composer";
+    return ITLocalize(@"StatusBarComposerComponent_Facing_Composer", @"Composer", @"Text shown in statusBarComponentShortDescription: Composer");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Adds a text field for composing command lines.";
+    return ITLocalize(@"StatusBarComposerComponent_Facing_AddsATextFieldForComposingCommand", @"Adds a text field for composing command lines.", @"Text shown in statusBarComponentDetailedDescription: Adds a text field for composing command lines.");
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor

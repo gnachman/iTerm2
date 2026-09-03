@@ -37,11 +37,11 @@ class StatusBarTriggersComponent: iTermStatusBarTextComponent {
     }
 
     override func statusBarComponentShortDescription() -> String {
-        return "Triggers Menu"
+        return String(localized: "StatusBarTriggersComponent_TriggersMenu", defaultValue: "Triggers Menu", comment: "Text shown in statusBarComponentShortDescription: Triggers Menu")
     }
 
     override func statusBarComponentDetailedDescription() -> String {
-        return "When clicked, opens a menu of triggers. You can use it to enable or disable triggers."
+        return String(localized: "StatusBarTriggersComponent_WhenClickedOpensAMenuOfTriggers", defaultValue: "When clicked, opens a menu of triggers. You can use it to enable or disable triggers.", comment: "Text shown in statusBarComponentDetailedDescription: When clicked, opens a menu of triggers. You can use it to enable or disable triggers.")
     }
 
     override func statusBarComponentExemplar(withBackgroundColor backgroundColor: NSColor, textColor: NSColor) -> Any {
@@ -53,7 +53,7 @@ class StatusBarTriggersComponent: iTermStatusBarTextComponent {
     }
 
     private var stringValue: String {
-        return "Triggers…"
+        return String(localized: "StatusBarTriggersComponent_Triggers", defaultValue: "Triggers…", comment: "Text shown in statusBarComponentCanStretch: Triggers…")
     }
 
     override func stringValueForCurrentWidth() -> String? {
@@ -102,8 +102,8 @@ class StatusBarTriggersComponent: iTermStatusBarTextComponent {
             menu.addItem(item)
         }
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Add Trigger…", action: #selector(addTrigger(_:)), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "Edit Triggers…", action: #selector(editTriggers(_:)), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: String(localized: "StatusBarTriggersComponent_AddTrigger", defaultValue: "Add Trigger…", comment: "Menu item title in openMenu"), action: #selector(addTrigger(_:)), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: String(localized: "StatusBarTriggersComponent_EditTriggers", defaultValue: "Edit Triggers…", comment: "Menu item title in openMenu"), action: #selector(editTriggers(_:)), keyEquivalent: ""))
 
         menu.popUp(positioning: menu.items.first!, at: NSPoint.zero, in: containingView)
     }

@@ -107,12 +107,12 @@ class iTermBrowserGateway: NSObject {
 
     @objc
     static func offerPlugin() {
-        let selection = iTermWarning.show(withTitle: "You must install the Browser Plugin first. Download it now?",
-                                          actions: ["OK", "Cancel"],
+        let selection = iTermWarning.show(withTitle: String(localized: "BrowserGateway_YouMustInstallTheBrowserPluginFirst", defaultValue: "You must install the Browser Plugin first. Download it now?", comment: "Alert title in offerPlugin"),
+                                          actions: [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Action title in offerPlugin"), String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Action title in offerPlugin")],
                                           accessory: nil,
                                           identifier: nil,
                                           silenceable: .kiTermWarningTypePersistent,
-                                          heading: "Plugin Required",
+                                          heading: String(localized: "BrowserGateway_PluginRequired", defaultValue: "Plugin Required", comment: "Alert heading in offerPlugin"),
                                           window: nil)
         if selection == .kiTermWarningSelection0 {
             NSWorkspace.shared.open(URL(string: "https://iterm2.com/browser-plugin.html")!)
@@ -138,12 +138,14 @@ class iTermBrowserGateway: NSObject {
         // would cause an infinite loop since the plugin would still not be installed.
         // Remembering "Cancel" is also not useful.
         let warning = iTermWarning()
-        warning.title = "iTerm2 can display web pages! But first you must download the Browser Plugin."
-        warning.actionLabels = ["Download", "Use System Browser", "Cancel"]
+        warning.title = String(localized: "BrowserGateway_ITerm2CanDisplayWebPagesBut", defaultValue: "iTerm2 can display web pages! But first you must download the Browser Plugin.", comment: "Title in upsell")
+        warning.actionLabels = [String(localized: "BrowserGateway_Download", defaultValue: "Download", comment: "Label text in upsell"),
+                                String(localized: "BrowserGateway_UseSystemBrowser", defaultValue: "Use System Browser", comment: "Text shown in upsell: Use System Browser"),
+                                String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Text shown in upsell: Cancel")]
         warning.identifier = upsellWarningIdentifier
         warning.warningType = .kiTermWarningTypePermanentlySilenceable
-        warning.heading = "Plugin Required"
-        warning.doNotRememberLabels = ["Download", "Cancel"]
+        warning.heading = String(localized: "BrowserGateway_PluginRequired", defaultValue: "Plugin Required", comment: "Alert heading in upsell")
+        warning.doNotRememberLabels = [String(localized: "BrowserGateway_Download", defaultValue: "Download", comment: "Label text in upsell"), String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Label text in upsell")]
         let selection = warning.runModal()
         switch selection {
         case .kiTermWarningSelection0:

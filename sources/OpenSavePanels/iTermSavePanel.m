@@ -108,22 +108,22 @@ static NSString *const iTermSavePanelLoggingStyleUserDefaultsKey = @"NoSyncLoggi
         button = [[NSPopUpButton alloc] init];
         NSMenuItem *item;
         {
-            item = [[NSMenuItem alloc] initWithTitle:@"Raw data" action:nil keyEquivalent:@""];
+            item = [[NSMenuItem alloc] initWithTitle:ITLocalize(@"SavePanel_Menu_RawData", @"Raw data", @"menu item title") action:nil keyEquivalent:@""];
             item.tag = iTermLoggingStyleRaw;
             [button.menu addItem:item];
         }
         {
-            item = [[NSMenuItem alloc] initWithTitle:@"Plain text" action:nil keyEquivalent:@""];
+            item = [[NSMenuItem alloc] initWithTitle:ITLocalize(@"SavePanel_Menu_PlainText", @"Plain text", @"menu item title") action:nil keyEquivalent:@""];
             item.tag = iTermLoggingStylePlainText;
             [button.menu addItem:item];
         }
         {
-            item = [[NSMenuItem alloc] initWithTitle:@"HTML" action:nil keyEquivalent:@""];
+            item = [[NSMenuItem alloc] initWithTitle:ITLocalize(@"SavePanel_Menu_Html", @"HTML", @"menu item title") action:nil keyEquivalent:@""];
             item.tag = iTermLoggingStyleHTML;
             [button.menu addItem:item];
         }
         {
-            item = [[NSMenuItem alloc] initWithTitle:@"ASCIInema" action:nil keyEquivalent:@""];
+            item = [[NSMenuItem alloc] initWithTitle:ITLocalize(@"SavePanel_Menu_AsciInema", @"ASCIInema", @"menu item title") action:nil keyEquivalent:@""];
             item.tag = iTermLoggingStyleAsciicast;
             [button.menu addItem:item];
         }
@@ -323,19 +323,22 @@ typedef NS_ENUM(NSUInteger, iTermSavePanelAction) {
     NSString *location = @"";
     NSString *directory = [self.item.filename stringByDeletingLastPathComponent];
     if ([directory isEqualToString:self.item.host.homeDirectory]) {
-        location = @" in your home directory";
+        location = ITLocalize(@"SavePanel_Facing_InYourHomeDirectory", @" in your home directory", @"Text shown in didCheckForExistingFile:withCompletion::  in your home directory");
     } else if (self.item.host.isLocalhost && [directory isEqualToString:[[NSFileManager defaultManager] desktopDirectory]]) {
-        location = @" on the Desktop";
+        location = ITLocalize(@"SavePanel_Facing_OnTheDesktop", @" on the Desktop", @"Text shown in didCheckForExistingFile:withCompletion::  on the Desktop");
     }
 
     NSString *heading =
-    [NSString stringWithFormat:@"“%@” already exists. Do you want to replace it or append to it?",
+    [NSString stringWithFormat:ITLocalize(@"SavePanel_FormattedFacing_AlreadyExistsDoYouWantTo_FORMAT", @"“%1$@” already exists. Do you want to replace it or append to it?",@"Formatted user-facing text in didCheckForExistingFile:(BOOL)exists withCompletion:(void (^)(BOOL retry))completion"),
      [self.item.filename lastPathComponent]];
-    NSString *body = [NSString stringWithFormat:@"A file or folder with the same name already exists%@. "
-                      @"Replacing it will overwrite its current contents.",
+    NSString *body = [NSString stringWithFormat:ITLocalize(@"SavePanel_FormattedFacing_AFileOrFolderWithTheSame_FORMAT",
+                                                           @"A file or folder with the same name already exists%1$@. "
+                                                           @"Replacing it will overwrite its current contents.",@"Formatted user-facing text in didCheckForExistingFile:(BOOL)exists withCompletion:(void (^)(BOOL retry))completion"),
                       location];
     iTermWarningSelection selection = [iTermWarning showWarningWithTitle:body
-                                                                 actions:@[ @"Cancel", @"Replace", @"Append" ]
+                                                                 actions:@[ ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Action title in didCheckForExistingFile:withCompletion:"),
+                                                                            ITLocalize(@"SavePanel_Action_Replace", @"Replace", @"Action title in didCheckForExistingFile:withCompletion:"),
+                                                                            ITLocalize(@"SavePanel_Action_Append", @"Append", @"Action title in didCheckForExistingFile:withCompletion:") ]
                                                                accessory:nil
                                                               identifier:nil
                                                              silenceable:kiTermWarningTypePersistent
@@ -404,14 +407,14 @@ typedef NS_ENUM(NSUInteger, iTermSavePanelAction) {
     if ([proposedExtension isEqualToString:self.requiredExtension]) {
         return YES;
     }
-    iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"You can choose to use both, so that your file name ends in “.%@.%@”.", proposedExtension, _requiredExtension]
-                                                                 actions:@[ [NSString stringWithFormat:@"Use .%@", _requiredExtension],
-                                                                            @"Cancel",
-                                                                            @"Use both" ]
+    iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"SavePanel_Alert_YouCanChooseToUseBothSo_FORMAT", @"You can choose to use both, so that your file name ends in “.%1$@.%2$@”.", @"Alert title in offerToChangeExtension:"), proposedExtension, _requiredExtension]
+                                                                 actions:@[ [NSString stringWithFormat:ITLocalize(@"SavePanel_Action_Use_FORMAT", @"Use .%1$@", @"Action title in offerToChangeExtension:"), _requiredExtension],
+                                                                            ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Text shown in offerToChangeExtension: Cancel"),
+                                                                            ITLocalize(@"SavePanel_Facing_UseBoth", @"Use both", @"Text shown in offerToChangeExtension: Use both") ]
                                                                accessory:nil
                                                               identifier:nil
                                                              silenceable:kiTermWarningTypePersistent
-                                                                 heading:[NSString stringWithFormat:@"You cannot save this document with extension “.%@” at the end of the name. The required extension is “.%@”.",
+                                                                 heading:[NSString stringWithFormat:ITLocalize(@"SavePanel_AlertHeading_YouCannotSaveThisDocumentWith_FORMAT", @"You cannot save this document with extension “.%1$@” at the end of the name. The required extension is “.%2$@”.",@"Alert heading in panel:(iTermModernSavePanel *)sender"),
                                                                           proposedExtension, _requiredExtension]
                                                                   window:nil];
     switch (selection) {

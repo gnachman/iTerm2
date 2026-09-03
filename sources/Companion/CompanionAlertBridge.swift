@@ -31,20 +31,20 @@ final class CompanionAlertBridge: NSObject {
     /// enabled state alone no longer conveys the notification-permission step.
     @objc static var sendToPhoneStatusMessage: String {
         if !CompanionPushRegistry.devicePaired {
-            return "Pair an iPhone running iTerm2 Buddy to use this."
+            return String(localized: "CompanionAlertBridge_PairAnIPhoneRunningITerm2", defaultValue: "Pair an iPhone running iTerm2 Buddy to use this.", comment: "User-visible message: Pair an iPhone running iTerm2 Buddy to use this.")
         }
         if !CompanionPushRegistry.supportsContentlessWakeup {
             // Either the phone hasn't connected since pairing (so its revision isn't
             // known yet) or it is too old for terminal alerts.
-            return "Open iTerm2 Buddy on your paired iPhone (update it if needed)."
+            return String(localized: "CompanionAlertBridge_OpenITerm2BuddyOnYourPaired", defaultValue: "Open iTerm2 Buddy on your paired iPhone (update it if needed).", comment: "User-visible message: Open iTerm2 Buddy on your paired iPhone (update it if needed).")
         }
         switch CompanionPushRegistry.authorization {
         case .authorized:
-            return "Alerts will be delivered to your paired iPhone."
+            return String(localized: "CompanionAlertBridge_AlertsWillBeDeliveredToYourPaired", defaultValue: "Alerts will be delivered to your paired iPhone.", comment: "User-visible message: Alerts will be delivered to your paired iPhone.")
         case .denied:
-            return "Turn on notifications for iTerm2 Buddy in iOS Settings."
+            return String(localized: "CompanionAlertBridge_TurnOnNotificationsForITerm2Buddy", defaultValue: "Turn on notifications for iTerm2 Buddy in iOS Settings.", comment: "User-visible message: Turn on notifications for iTerm2 Buddy in iOS Settings.")
         case .notDetermined:
-            return "Turn this on to allow notifications on your iPhone."
+            return String(localized: "CompanionAlertBridge_TurnThisOnToAllowNotificationsOn", defaultValue: "Turn this on to allow notifications on your iPhone.", comment: "User-visible message: Turn this on to allow notifications on your iPhone.")
         }
     }
 

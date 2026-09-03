@@ -180,7 +180,7 @@ typedef enum {
         [tableView_ setTagsOpen:YES animated:NO];
     }
     // Load the new window icon for split buttons
-    _newWindowIcon = [NSImage imageWithSystemSymbolName:@"rectangle.badge.plus" accessibilityDescription:@"Open in new window"];
+    _newWindowIcon = [NSImage imageWithSystemSymbolName:@"rectangle.badge.plus" accessibilityDescription:ITLocalize(@"ProfilesWindowController_Descriptive_OpenInNewWindow", @"Open in new window", @"Accessibility description for the Open in New Window button")];
     [horizontalPaneButton_ setImagePosition:NSImageLeft];
     [verticalPaneButton_ setImagePosition:NSImageLeft];
 }
@@ -341,7 +341,7 @@ typedef enum {
 }
 
 - (void)profileTableTagsVisibilityDidChange:(ProfileListView *)profileListView {
-    [toggleTagsButton_ setTitle:profileListView.tagsVisible ? @"< Tags" : @"Tags >"];
+    [toggleTagsButton_ setTitle:profileListView.tagsVisible ? ITLocalize(@"ProfilesWindowController_Tags", @"< Tags", @"Button title in profileTableTagsVisibilityDidChange:") : ITLocalize(@"ProfilesWindowController_Tags_2", @"Tags >", @"Button title in profileTableTagsVisibilityDidChange:")];
 }
 
 - (void)profileTableSelectionDidChange:(id)profileTable
@@ -361,7 +361,7 @@ typedef enum {
         // don't want to break that.
         [tabButton_ setEnabled:!anySelectionDisablesTabs];
         [windowButton_ setEnabled:YES];
-        [windowButton_ setTitle:([guids count] > 1 ? @"New Windows" : @"New Window")];
+        [windowButton_ setTitle:([guids count] > 1 ? ITLocalize(@"ProfilesWindowController_ProfilesWindow_NewWindows", @"New Windows", @"Profiles window") : ITLocalize(@"COMMON_NEW_WINDOW", @"New Window", @"Profiles window"))];
         if ([guids count] > 1) {
             [newTabsInNewWindowButton_ setEnabled:!anySelectionDisablesTabs];
             [horizontalPaneButton_ setEnabled:YES];
@@ -435,20 +435,20 @@ typedef enum {
 
     int count = [[profileTable selectedGuids] count];
     if (count == 1) {
-        [menu addItemWithTitle:@"Edit Profile..."
+        [menu addItemWithTitle:ITLocalize(@"ProfilesWindowController_Menu_EditProfile", @"Edit Profile...",@"Menu title in profileTable:(id)profileTable menuForEvent:(NSEvent *)theEvent")
                         action:@selector(editSelectedBookmark:)
                  keyEquivalent:@""];
-        [menu addItemWithTitle:@"Open in New Tab"
+        [menu addItemWithTitle:ITLocalize(@"ProfilesWindowController_Menu_OpenInNewTab", @"Open in New Tab",@"Menu title in profileTable:(id)profileTable menuForEvent:(NSEvent *)theEvent")
                         action:@selector(openBookmarkInTab:)
                  keyEquivalent:@""];
-        [menu addItemWithTitle:@"Open in New Window"
+        [menu addItemWithTitle:ITLocalize(@"ProfilesWindowController_Menu_OpenInNewWindow", @"Open in New Window",@"Menu title in profileTable:(id)profileTable menuForEvent:(NSEvent *)theEvent")
                         action:@selector(openBookmarkInWindow:)
                  keyEquivalent:@""];
     } else if (count > 1) {
-        [menu addItemWithTitle:@"Open in New Tabs"
+        [menu addItemWithTitle:ITLocalize(@"ProfilesWindowController_Menu_OpenInNewTabs", @"Open in New Tabs",@"Menu title in profileTable:(id)profileTable menuForEvent:(NSEvent *)theEvent")
                         action:@selector(openBookmarkInTab:)
                  keyEquivalent:@""];
-        [menu addItemWithTitle:@"Open in New Windows"
+        [menu addItemWithTitle:ITLocalize(@"ProfilesWindowController_Menu_OpenInNewWindows", @"Open in New Windows",@"Menu title in profileTable:(id)profileTable menuForEvent:(NSEvent *)theEvent")
                         action:@selector(openBookmarkInWindow:)
                  keyEquivalent:@""];
     }

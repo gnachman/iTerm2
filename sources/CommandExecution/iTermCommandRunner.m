@@ -390,10 +390,10 @@ static NSMutableArray<iTermBufferedCommandRunner *> *gCommandRunners;
         return;
     }
     iTermWarning *warning = [[iTermWarning alloc] init];
-    warning.title = [NSString stringWithFormat:@"The following command returned a non-zero exit code:\n\n“%@ %@”",
+    warning.title = [NSString stringWithFormat:ITLocalize(@"CommandRunner_TheFollowingCommandReturnedANonZero_FORMAT", @"The following command returned a non-zero exit code:\n\n“%1$@ %2$@”", @"Title in runnerDidFinish:"),
                      runner.command,
                      [runner.arguments componentsJoinedByString:@" "]];
-    warning.heading = @"Command Failed";
+    warning.heading = ITLocalize(@"CommandRunner_AlertHeading_CommandFailed", @"Command Failed",@"Alert heading in runnerDidFinish:(iTermBufferedCommandRunner *)runner withStatus:(int)status");
     static const iTermSingleUseWindowOptions options = iTermSingleUseWindowOptionsShortLived;
     NSMutableData *inject = [runner.output mutableCopy];
     NSString *truncationWarning = [NSString stringWithFormat:@"\n%c[m;[output truncated]\n", 27];
@@ -402,8 +402,8 @@ static NSMutableArray<iTermBufferedCommandRunner *> *gCommandRunners;
     }
     [inject it_replaceOccurrencesOfData:[NSData dataWithBytes:"\n" length:1]
                                withData:[NSData dataWithBytes:"\r\n" length:2]];
-    warning.warningActions = @[ [iTermWarningAction warningActionWithLabel:@"OK" block:nil],
-                                [iTermWarningAction warningActionWithLabel:@"View" block:^(iTermWarningSelection selection) {
+    warning.warningActions = @[ [iTermWarningAction warningActionWithLabel:ITLocalize(@"COMMON_OK", @"OK", @"Label text in runnerDidFinish:") block:nil],
+                                [iTermWarningAction warningActionWithLabel:ITLocalize(@"CommandRunner_View", @"View", @"Label text in runnerDidFinish:") block:^(iTermWarningSelection selection) {
                                     [[iTermController sharedInstance] openSingleUseWindowWithCommand:@"/usr/bin/true"
                                                                                            arguments:nil
                                                                                               inject:inject

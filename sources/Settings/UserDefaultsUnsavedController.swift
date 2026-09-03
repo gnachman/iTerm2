@@ -133,17 +133,17 @@ class UserDefaultsUnsavedController: NSTitlebarAccessoryViewController {
         }
         let menu = SimpleContextMenu()
         if iTermRemotePreferences.sharedInstance().remoteLocationIsURL {
-            menu.addItem(title: "Disable Loading Settings from URL") { [weak self] in
+            menu.addItem(title: String(localized: "UserDefaultsUnsavedController_DisableLoadingSettingsFromUrl", defaultValue: "Disable Loading Settings from URL", comment: "Menu title in handleClick")) { [weak self] in
                 self?.disableRemotePrefs()
             }
         } else {
-            menu.addItem(title: "Save Settings") { [weak self] in
+            menu.addItem(title: String(localized: "UserDefaultsUnsavedController_SaveSettings", defaultValue: "Save Settings", comment: "Menu title in handleClick")) { [weak self] in
                 self?.save()
             }
-            menu.addItem(title: "Save Settings Automatically") { [weak self] in
+            menu.addItem(title: String(localized: "UserDefaultsUnsavedController_SaveSettingsAutomatically", defaultValue: "Save Settings Automatically", comment: "Menu title in handleClick")) { [weak self] in
                 self?.enableAutosave()
             }
-            menu.addItem(title: "Hide Unsaved Changes Notification") { [weak self] in
+            menu.addItem(title: String(localized: "UserDefaultsUnsavedController_HideUnsavedChangesNotification", defaultValue: "Hide Unsaved Changes Notification", comment: "Menu title in handleClick")) { [weak self] in
                 self?.hideNotification()
             }
         }

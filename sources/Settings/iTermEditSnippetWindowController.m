@@ -101,11 +101,13 @@
 
 - (IBAction)help:(id)sender {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Escaping";
+    alert.messageText = ITLocalize(@"EditSnippetWindowController_Alert_Escaping", @"Escaping", @"Alert title in help:");
     alert.informativeText =
-    @"C-Style Backslash Escaping supports: \\a (bell), \\b (backspace), \\e (escape), \\n (newline), \\r (carriage return), \\t (tab), \\\\ (backslash), and \\x followed by two hex digits giving a single byte of UTF-8.\n\n"
-    @"Unescaped Literal Text does not have any special characters.\n\n"
-    @"Backward Compatibility Escaping, which is not recommended for new snippets, supports: \\n (newline), \\e (escape), \\a (bell), and \\t (tab).\n\n";
+    ITLocalize(@"EditSnippetWindowController_AlertExplanatory_CStyleBackslashEscapingSupportsABell",
+               @"C-Style Backslash Escaping supports: \\a (bell), \\b (backspace), \\e (escape), \\n (newline), \\r (carriage return), \\t (tab), \\\\ (backslash), and \\x followed by two hex digits giving a single byte of UTF-8.\n\n"
+               @"Unescaped Literal Text does not have any special characters.\n\n"
+               @"Backward Compatibility Escaping, which is not recommended for new snippets, supports: \\n (newline), \\e (escape), \\a (bell), and \\t (tab).\n\n",
+               @"Alert explanatory text in help:");
     [alert runModal];
 }
 

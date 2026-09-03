@@ -382,8 +382,8 @@ workingDirectory:(NSString *)workingDirectory
     iTermBackgroundCommandRunner *runner =
         [[iTermBackgroundCommandRunner alloc] initWithCommand:command
                                                         shell:[self.delegate urlActionHelperShell:self]
-                                                        title:@"URL Handler"];
-    runner.notificationTitle = @"URL Handler Command Failed";
+                                                        title:ITLocalize(@"UrlActionHelper_UrlHandler", @"URL Handler", @"Title in launchURLHandlerCommand:")];
+    runner.notificationTitle = ITLocalize(@"UrlActionHelper_UrlHandlerCommandFailed", @"URL Handler Command Failed", @"Title in launchURLHandlerCommand:");
     [runner run];
 }
 
@@ -522,9 +522,9 @@ workingDirectory:(NSString *)workingDirectory
 
 + (NSString *)usernameToDownloadFileOnHost:(NSString *)host {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = [NSString stringWithFormat:@"Enter username for host %@ to download file with scp", host];
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
+    alert.messageText = [NSString stringWithFormat:ITLocalize(@"UrlActionHelper_Alert_EnterUsernameForHostToDownloadFile_FORMAT", @"Enter username for host %1$@ to download file with scp", @"Alert title in usernameToDownloadFileOnHost:"), host];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in usernameToDownloadFileOnHost:")];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in usernameToDownloadFileOnHost:")];
 
     NSTextField *input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
     [input setStringValue:NSUserName()];

@@ -214,7 +214,7 @@ class SSHConfigurationWindowController: NSWindowController {
             panelDelegate = SSHBinaryPanelDelegate()
             openPanel.delegate = panelDelegate
 
-            openPanel.title = "Select SSH Binary"
+            openPanel.title = String(localized: "SshConfigurationWindowController_SelectSshBinary", defaultValue: "Select SSH Binary", comment: "Title in pickSSHBinary")
             openPanel.canChooseFiles = true
             openPanel.canChooseDirectories = false
             openPanel.allowsMultipleSelection = false
@@ -365,7 +365,7 @@ fileprivate class SSHCopyDestinationView: NSView {
 
         textField = NSTextField()
         textField.stringValue = "~"
-        label = NSTextField(labelWithString: "Destination folder on remote host:")
+        label = NSTextField(labelWithString: String(localized: "SshConfigurationWindowController_DestinationFolderOnRemoteHost", defaultValue: "Destination folder on remote host:", comment: "Label text in controlTextDidChange"))
         label.translatesAutoresizingMaskIntoConstraints = false
         label.sizeToFit()
 

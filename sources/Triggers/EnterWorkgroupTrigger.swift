@@ -16,11 +16,11 @@ import Foundation
 @objc(iTermEnterWorkgroupTrigger)
 class EnterWorkgroupTrigger: Trigger {
     override static var title: String {
-        return "Enter Workgroup…"
+        return String(localized: "EnterWorkgroupTrigger_EnterWorkgroup", defaultValue: "Enter Workgroup…", comment: "User-visible message: Enter Workgroup…")
     }
 
     override var description: String {
-        return "Enter Workgroup “\(displayLabel(forID: effectiveID))”"
+        return String(format: String(localized: "EnterWorkgroupTrigger_EnterWorkgroup_FORMAT", defaultValue: "Enter Workgroup “%1$@”", comment: "Formatted user-facing text in description"), displayLabel(forID: effectiveID))
     }
 
     override func takesParameter() -> Bool {
@@ -74,17 +74,17 @@ class EnterWorkgroupTrigger: Trigger {
     }
 
     private func displayLabel(forID id: String?) -> String {
-        guard let id, !id.isEmpty else { return "(unset)" }
+        guard let id, !id.isEmpty else { return String(localized: "EnterWorkgroupTrigger_Unset", defaultValue: "(unset)", comment: "Text shown in displayLabel: (unset)") }
         if let wg = availableWorkgroups.first(where: { $0.uniqueIdentifier == id }) {
-            return wg.name.isEmpty ? "Untitled" : wg.name
+            return wg.name.isEmpty ? String(localized: "EnterWorkgroupTrigger_Untitled", defaultValue: "Untitled", comment: "Text shown in displayLabel: Untitled") : wg.name
         }
-        return "(missing)"
+        return String(localized: "EnterWorkgroupTrigger_Missing", defaultValue: "(missing)", comment: "Text shown in displayLabel: (missing)")
     }
 
     override func menuItemsForPoupupButton() -> [AnyHashable: Any]? {
         var dict: [AnyHashable: Any] = [:]
         for wg in availableWorkgroups {
-            let label = wg.name.isEmpty ? "Untitled" : wg.name
+            let label = wg.name.isEmpty ? String(localized: "EnterWorkgroupTrigger_Untitled", defaultValue: "Untitled", comment: "Label text in menuItemsForPoupupButton") : wg.name
             dict[wg.uniqueIdentifier] = label
         }
         return dict

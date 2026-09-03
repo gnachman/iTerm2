@@ -271,15 +271,15 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         var errorDescription: String? {
             switch self {
             case .usrLocalIsFile:
-                "\(FallbackFolder) is a file, not a directory. Please remove it and try again."
+                String(format: String(localized: "SecureUserDefaults_IsAFileNotADirectoryPlease_FORMAT", defaultValue: "%1$@ is a file, not a directory. Please remove it and try again.", comment: "Formatted user-facing text in setOpenURL"), FallbackFolder)
             case .failedToCreateUsrLocal:
-                "Failed to create \(FallbackFolder). Please manually create this folder."
+                String(format: String(localized: "SecureUserDefaults_FailedToCreatePleaseManuallyCreateThis_FORMAT", defaultValue: "Failed to create %1$@. Please manually create this folder.", comment: "Formatted user-facing text in setOpenURL"), FallbackFolder)
             case .badMagic:
-                "The secure user default is corrupted."
+                String(localized: "SecureUserDefaults_TheSecureUserDefaultIsCorrupted", defaultValue: "The secure user default is corrupted.", comment: "Text shown in setOpenURL: The secure user default is corrupted.")
             case .scriptError(let message):
                 message
             case .directoryDoesNotExist:
-                "The containing directory for secure user defaults does not exist"
+                String(localized: "SecureUserDefaults_TheContainingDirectoryForSecureUserDefaults", defaultValue: "The containing directory for secure user defaults does not exist", comment: "Text shown in setOpenURL: The containing directory for secure user defaults does not exist")
             }
         }
     }
@@ -330,11 +330,11 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         } catch {
             RLog("Fail: \(error)")
             iTermWarning.show(withTitle: error.localizedDescription,
-                              actions: ["OK"],
+                              actions: [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Action title in set")],
                               accessory: nil,
                               identifier: "NoSyncSecureUserDefaultsSetFailed",
                               silenceable: .kiTermWarningTypeTemporarilySilenceable,
-                              heading: "Failed to Save Secure Setting",
+                              heading: String(localized: "SecureUserDefaults_FailedToSaveSecureSetting", defaultValue: "Failed to Save Secure Setting", comment: "Alert heading in set"),
                               window: nil)
             throw error
         }
@@ -383,7 +383,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         // notifications for keys that were never written.
         try runPrivilegedWrites(statements: statements,
                                 keys: writes.map { $0.key },
-                                prompt: "iTerm2 needs to modify secure settings.")
+                                prompt: String(localized: "SecureUserDefaults_ITerm2NeedsToModifySecureSettings", defaultValue: "iTerm2 needs to modify secure settings.", comment: "Text shown in storeBatch: iTerm2 needs to modify secure settings."))
     }
 
     private static func fallbackBaseDirectory(create: Bool) throws -> String {
@@ -589,7 +589,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         let statement = try writeStatement(key: key, encodedValue: SecureUserDefaultValue<U>(value: value).encodedString)
         try runPrivilegedWrites(statements: [statement],
                                 keys: [key],
-                                prompt: "iTerm2 needs to modify a secure setting.")
+                                prompt: String(localized: "SecureUserDefaults_ITerm2NeedsToModifyASecure", defaultValue: "iTerm2 needs to modify a secure setting.", comment: "Text shown in store: iTerm2 needs to modify a secure setting."))
     }
 
     /// The double-backslash/double-quote escaping for a path embedded in the

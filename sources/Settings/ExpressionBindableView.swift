@@ -27,14 +27,14 @@ extension ExpressionBindableView where Self: NSView, Self: NSAlertDelegate {
         let menu = NSMenu()
         let hasExpression = (expression?.isEmpty == false)
         do {
-            let item = NSMenuItem(title: hasExpression ? "Edit Expression Binding" : "Bind to Expression",
+            let item = NSMenuItem(title: hasExpression ? String(localized: "ExpressionBindableView_EditExpressionBinding", defaultValue: "Edit Expression Binding", comment: "Menu item title in handleRightMouseDown") : String(localized: "ExpressionBindableView_BindToExpression", defaultValue: "Bind to Expression", comment: "Menu item title in handleRightMouseDown"),
                                   action: #selector(editBinding(_:)),
                                   keyEquivalent: "")
             item.target = self
             menu.addItem(item)
         }
         if hasExpression {
-            let item = NSMenuItem(title: "Remove Expression Binding",
+            let item = NSMenuItem(title: String(localized: "ExpressionBindableView_RemoveExpressionBinding", defaultValue: "Remove Expression Binding", comment: "Menu item title in handleRightMouseDown"),
                                   action: #selector(removeBinding(_:)),
                                   keyEquivalent: "")
             item.target = self
@@ -65,7 +65,7 @@ extension ExpressionBindableView where Self: NSView, Self: NSAlertDelegate {
         textField.isEditable = true
         textField.isSelectable = true
         textField.stringValue = expression ?? ""
-        textField.placeholderString = "Expression (e.g., \(example))"
+        textField.placeholderString = String(format: String(localized: "ExpressionBindableView_ExpressionEG_FORMAT", defaultValue: "Expression (e.g., %1$@)", comment: "Placeholder text in editBinding"), example)
 
         let pathSource = iTermVariableHistory.pathSource(for: .session)
         textFieldDelegate = iTermFunctionCallTextFieldDelegate(
@@ -74,15 +74,15 @@ extension ExpressionBindableView where Self: NSView, Self: NSAlertDelegate {
         textField.delegate = textFieldDelegate
 
         let alert = NSAlert()
-        alert.messageText = "Bind Expression to Setting"
-        alert.informativeText = "Enter expression to bind to this setting, or leave empty to clear the binding."
+        alert.messageText = String(localized: "ExpressionBindableView_BindExpressionToSetting", defaultValue: "Bind Expression to Setting", comment: "Alert title in editBinding")
+        alert.informativeText = String(localized: "ExpressionBindableView_EnterExpressionToBindToThisSetting", defaultValue: "Enter expression to bind to this setting, or leave empty to clear the binding.", comment: "Alert explanatory text in editBinding")
         alert.accessoryView = textField
         alert.layout()
         DispatchQueue.main.async {
             alert.window.makeFirstResponder(textField)
         }
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: String(localized: "COMMON_OK", defaultValue: "OK", comment: "Button title in editBinding"))
+        alert.addButton(withTitle: String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Button title in editBinding"))
         alert.showsHelp = true
         alert.delegate = self
         alert.beginSheetModal(for: window) { [weak self] response in
@@ -119,41 +119,47 @@ extension ExpressionBindableView where Self: NSView, Self: NSAlertDelegate {
 extension ExpressionBindableView {
     func showHelp(alert: NSAlert, exampleUserVar: String, exampleEnvironmentVar: String) -> Bool {
         let optionalTypeHelp = if let typeHelp {
-            """
-            ### For This Setting
-            \(typeHelp)
-            
-            
-            """
+            String(
+                format: String(localized: "EXPRESSION_BINDING_FOR_THIS_SETTING_FORMAT",
+                               defaultValue: "### For This Setting\n%1$@\n\n",
+                               comment: "Markdown help section title followed by the setting-specific explanation"),
+                typeHelp)
         } else {
             ""
         }
         alert.accessoryView?.it_showInformativeMessage(withMarkdown:
                                                             optionalTypeHelp +
-            """
-            ### Background
-            Binding a setting to an expression lets you change settings programmatically.
-            
-            iTerm2 tracks a collection of “Variables” for each session. You can learn more about them in [Scripting Fundamentals](https://iterm2.com/documentation-scripting-fundamentals.html).
-            
-            Typically this feature is used by binding a setting to a user-defined variable.
-            
-            ### Example
-            The easiest way to set a user-defined variable is to install shell integration and then define a `iterm2_print_user_vars` function. Here's an example using bash:
-            
-            ```
-            iterm2_print_user_vars() {
-              iterm2_set_user_var \(exampleUserVar) $(echo $\(exampleEnvironmentVar))
-            }
-            ```
-            
-            This runs each time the shell prompt is printed. The example sets a user-defined variable to the value of the environment variable `\(exampleEnvironmentVar)`.
-            
-            The appropriate expression to bind this example would be `user.\(exampleUserVar)`. All user-defined variables go in the `user` scope.
-            
-            ### Debugging
-            You can view variables in the Inspector (**Scripts > Manage > Console** and then click **Inspector**).
-            """)
+            String(
+                format: String(localized: "EXPRESSION_BINDING_HELP_FORMAT",
+                               defaultValue: """
+                               ### Background
+                               Binding a setting to an expression lets you change settings programmatically.
+
+                               iTerm2 tracks a collection of “Variables” for each session. You can learn more about them in [Scripting Fundamentals](https://iterm2.com/documentation-scripting-fundamentals.html).
+
+                               Typically this feature is used by binding a setting to a user-defined variable.
+
+                               ### Example
+                               The easiest way to set a user-defined variable is to install shell integration and then define a `iterm2_print_user_vars` function. Here's an example using bash:
+
+                               ```
+                               iterm2_print_user_vars() {
+                                 iterm2_set_user_var %1$@ $(echo $(%2$@))
+                               }
+                               ```
+
+                               This runs each time the shell prompt is printed. The example sets a user-defined variable to the value of the environment variable `%3$@`.
+
+                               The appropriate expression to bind this example would be `user.%4$@`. All user-defined variables go in the `user` scope.
+
+                               ### Debugging
+                               You can view variables in the Inspector (**Scripts > Manage > Console** and then click **Inspector**).
+                               """,
+                               comment: "Markdown help explaining expression bindings and showing a shell integration example"),
+                exampleUserVar,
+                exampleEnvironmentVar,
+                exampleEnvironmentVar,
+                exampleUserVar))
         return true
     }
 }

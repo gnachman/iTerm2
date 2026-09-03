@@ -7069,11 +7069,12 @@ typedef struct {
         notify &&
         [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]] > POST_WINDOW_RESIZE_SILENCE_SEC) {
         if ([iTermProfilePreferences boolForKey:KEY_SEND_NEW_OUTPUT_ALERT inProfile:self.activeSession.profile]) {
-            [[iTermNotificationController sharedInstance] notify:NSLocalizedStringFromTableInBundle(@"New Output",
-                                                                                                @"iTerm",
-                                                                                                [NSBundle bundleForClass:[self class]],
-                                                                                                @"User Alerts")
-                                             withDescription:[NSString stringWithFormat:@"New output was received in %@, tab #%d.",
+            [[iTermNotificationController sharedInstance] notify:ITLocalize(@"TAB_NEW_OUTPUT_ALERT",
+                                                                            @"New Output",
+                                                                            @"macOS user notification title for new terminal output")
+                                             withDescription:[NSString localizedStringWithFormat:ITLocalize(@"TAB_NEW_OUTPUT_DESCRIPTION_FORMAT",
+                                                                                                            @"New output was received in %1$@, tab #%2$d.",
+                                                                                                            @"Notification body naming the session and tab number that received output"),
                                                               [[[self activeSession] name] removingHTMLFromTabTitleIfNeeded],
                                                               [self tabNumber]]
                                                  windowIndex:[[self activeSession] screenWindowIndex]

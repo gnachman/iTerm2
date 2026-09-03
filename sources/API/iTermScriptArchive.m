@@ -140,25 +140,25 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
 }
 
 - (BOOL)userAcceptsTrustedScriptAutoLaunchInstall {
-    NSString *body = [NSString stringWithFormat:@"“%@” would like to launch automatically when iTerm2 starts. Would you like to allow that?", self.name];
+    NSString *body = [NSString stringWithFormat:ITLocalize(@"ScriptArchive_FormattedFacing_WouldLikeToLaunchAutomaticallyWhenI_FORMAT", @"“%1$@” would like to launch automatically when iTerm2 starts. Would you like to allow that?",@"Formatted user-facing text in userAcceptsTrustedScriptAutoLaunchInstall"), self.name];
     const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:body
-                                                                       actions:@[ @"Launch Automatically", @"Lauch Manually" ]
+                                                                       actions:@[ ITLocalize(@"ScriptArchive_Action_LaunchAutomatically", @"Launch Automatically", @"Action title in userAcceptsTrustedScriptAutoLaunchInstall"), ITLocalize(@"ScriptArchive_Action_LauchManually", @"Lauch Manually", @"Title in userAcceptsTrustedScriptAutoLaunchInstall") ]
                                                                      accessory:nil
                                                                     identifier:nil
                                                                    silenceable:kiTermWarningTypePersistent
-                                                                       heading:@"Allow Auto-Launch?"
+                                                                       heading:ITLocalize(@"ScriptArchive_AlertHeading_AllowAutoLaunch", @"Allow Auto-Launch?",@"Alert heading in userAcceptsTrustedScriptAutoLaunchInstall")
                                                                         window:nil];
     return (selection == kiTermWarningSelection0);
 }
 
 - (BOOL)userAcceptsExplicitAutoLaunchInstall {
-    NSString *body = [NSString stringWithFormat:@"“%@” can launch automatically when iTerm2 starts. Would you like to allow that?", self.name];
+    NSString *body = [NSString stringWithFormat:ITLocalize(@"ScriptArchive_FormattedFacing_CanLaunchAutomaticallyWhenITerm2Starts_FORMAT", @"“%1$@” can launch automatically when iTerm2 starts. Would you like to allow that?",@"Formatted user-facing text in userAcceptsExplicitAutoLaunchInstall"), self.name];
     const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:body
-                                                                       actions:@[ @"Launch Automatically", @"Lauch Manually" ]
+                                                                       actions:@[ ITLocalize(@"ScriptArchive_Action_LaunchAutomatically", @"Launch Automatically", @"Action title in userAcceptsExplicitAutoLaunchInstall"), ITLocalize(@"ScriptArchive_Action_LauchManually", @"Lauch Manually", @"Title in userAcceptsExplicitAutoLaunchInstall") ]
                                                                      accessory:nil
                                                                     identifier:nil
                                                                    silenceable:kiTermWarningTypePersistent
-                                                                       heading:@"Allow Auto-Launch?"
+                                                                       heading:ITLocalize(@"ScriptArchive_AlertHeading_AllowAutoLaunch", @"Allow Auto-Launch?",@"Alert heading in userAcceptsExplicitAutoLaunchInstall")
                                                                         window:nil];
     return (selection == kiTermWarningSelection0);
 }

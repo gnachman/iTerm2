@@ -117,7 +117,7 @@ static const CGFloat kCollapsedHeight = 51;
     switch (_transferrableFile.status) {
         case kTransferrableFileStatusUnstarted:
         case kTransferrableFileStatusStarting:
-            view.statusMessage = @"Starting…";
+            view.statusMessage = ITLocalize(@"TransferrableFileMenuItemViewController_Status_Starting", @"Starting…", @"status text");
             [self collapse];
             break;
 
@@ -125,32 +125,32 @@ static const CGFloat kCollapsedHeight = 51;
             [self expand];
             [view.progressIndicator setHidden:[_transferrableFile fileSize] < 0];
             if (self.transferrableFile.isDownloading) {
-                view.statusMessage = @"Downloading…";
+                view.statusMessage = ITLocalize(@"TransferrableFileMenuItemViewController_Status_Downloading", @"Downloading…", @"status text");
             } else {
-                view.statusMessage = @"Uploading…";
+                view.statusMessage = ITLocalize(@"TransferrableFileMenuItemViewController_Status_Uploading", @"Uploading…", @"status text");
             }
             [self showMenu];
             break;
 
         case kTransferrableFileStatusFinishedSuccessfully:
             [self collapse];
-            view.statusMessage = @"Finished";
+            view.statusMessage = ITLocalize(@"TransferrableFileMenuItemViewController_Status_Finished", @"Finished", @"status text");
             break;
 
         case kTransferrableFileStatusFinishedWithError:
             [self collapse];
-            view.statusMessage = @"Failed";
+            view.statusMessage = ITLocalize(@"TransferrableFileMenuItemViewController_Status_Failed", @"Failed", @"status text");
             [self showMenu];
             break;
 
         case kTransferrableFileStatusCancelling:
             [self expand];
-            view.statusMessage = @"Cancelling…";
+            view.statusMessage = ITLocalize(@"TransferrableFileMenuItemViewController_Status_Cancelling", @"Cancelling…", @"status text");
             break;
 
         case kTransferrableFileStatusCancelled:
             [self collapse];
-            view.statusMessage = @"Cancelled";
+            view.statusMessage = ITLocalize(@"TransferrableFileMenuItemViewController_Status_Cancelled", @"Cancelled", @"status text");
             break;
     }
     [view setNeedsDisplay:YES];
@@ -192,37 +192,37 @@ static const CGFloat kCollapsedHeight = 51;
 - (NSString *)stringForStatus:(TransferrableFileStatus)status {
     switch (_transferrableFile.status) {
         case kTransferrableFileStatusUnstarted:
-            return @"Unstarted";
+            return ITLocalize(@"TransferrableFileMenuItemViewController_Facing_Unstarted", @"Unstarted", @"Text shown in stringForStatus:: Unstarted");
         case kTransferrableFileStatusStarting:
-            return @"Starting";
+            return ITLocalize(@"TransferrableFileMenuItemViewController_Facing_Starting", @"Starting", @"Text shown in stringForStatus:: Starting");
         case kTransferrableFileStatusTransferring:
-            return @"Transferring";
+            return ITLocalize(@"TransferrableFileMenuItemViewController_Facing_Transferring", @"Transferring", @"Text shown in stringForStatus:: Transferring");
         case kTransferrableFileStatusFinishedSuccessfully:
-            return @"Finished";
+            return ITLocalize(@"TransferrableFileMenuItemViewController_Facing_Finished", @"Finished", @"Text shown in stringForStatus:: Finished");
         case kTransferrableFileStatusFinishedWithError:
-            return [NSString stringWithFormat:@"Failed with error “%@”", [_transferrableFile error]];
+            return [NSString stringWithFormat:ITLocalize(@"TransferrableFileMenuItemViewController_FormattedFacing_FailedWithError_FORMAT", @"Failed with error “%1$@”",@"Formatted user-facing text in stringForStatus:(TransferrableFileStatus)status"), [_transferrableFile error]];
         case kTransferrableFileStatusCancelling:
-            return @"Waiting to cancel";
+            return ITLocalize(@"TransferrableFileMenuItemViewController_Facing_WaitingToCancel", @"Waiting to cancel", @"Text shown in stringForStatus:: Waiting to cancel");
         case kTransferrableFileStatusCancelled:
-            return @"Canceled by user";
+            return ITLocalize(@"TransferrableFileMenuItemViewController_Facing_CanceledByUser", @"Canceled by user", @"Text shown in stringForStatus:: Canceled by user");
     }
 }
 
 - (void)getInfo:(id)sender {
     NSString *extra = @"";
     if (_transferrableFile.destination) {
-        extra = [NSString stringWithFormat:@"\nDestination: %@",
+        extra = [NSString stringWithFormat:ITLocalize(@"TransferrableFileMenuItemViewController_FormattedFacing_NDestination_FORMAT", @"\nDestination: %1$@",@"Formatted user-facing text in getInfo:(id)sender"),
                        _transferrableFile.destination];
     } else if (_transferrableFile.localPath) {
-        extra = [NSString stringWithFormat:@"\nLocal path: %@",
+        extra = [NSString stringWithFormat:ITLocalize(@"TransferrableFileMenuItemViewController_FormattedFacing_NLocalPath_FORMAT", @"\nLocal path: %1$@",@"Formatted user-facing text in getInfo:(id)sender"),
                        _transferrableFile.localPath];
     }
-    NSString *text = [NSString stringWithFormat:@"%@\n\nStatus: %@%@",
+    NSString *text = [NSString stringWithFormat:ITLocalize(@"TransferrableFileMenuItemViewController_FormattedFacing_NNStatus_FORMAT", @"%1$@\n\nStatus: %2$@%3$@",@"Formatted user-facing text in getInfo:(id)sender"),
                       [_transferrableFile displayName],
                       [self stringForStatus:_transferrableFile.status],
                       extra];
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"File Transfer Summary";
+    alert.messageText = ITLocalize(@"TransferrableFileMenuItemViewController_Alert_FileTransferSummary", @"File Transfer Summary", @"Alert title in getInfo:");
     alert.informativeText = text;
     [alert layout];
     [alert runModal];

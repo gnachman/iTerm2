@@ -10,11 +10,11 @@ import Foundation
 @objc(iTermSGRTrigger)
 class SGRTrigger: Trigger {
     override var description: String {
-        return "Change Style “\(self.param ?? "")”"
+        return String(format: String(localized: "SgrTrigger_ChangeStyle_FORMAT", defaultValue: "Change Style “%1$@”", comment: "Formatted user-facing text in description"), String(describing: self.param ?? ""))
     }
 
     override static var title: String {
-        return "Change Style…"
+        return String(localized: "SgrTrigger_ChangeStyle", defaultValue: "Change Style…", comment: "User-visible message: Change Style…")
     }
 
     override func takesParameter() -> Bool {
@@ -22,11 +22,11 @@ class SGRTrigger: Trigger {
     }
 
     override func triggerOptionalParameterPlaceholder(withInterpolation interpolation: Bool) -> String? {
-        return "Enter SGR codes. See help button for details."
+        return String(localized: "SgrTrigger_EnterSgrCodesSeeHelpButtonFor", defaultValue: "Enter SGR codes. See help button for details.", comment: "Text shown in triggerOptionalParameterPlaceholder: Enter SGR codes. See help button for details.")
     }
 
     override var helpText: String? {
-        """
+        String(localized: "SGR_TRIGGER_HELP", defaultValue: """
         A sequence of SGR codes specifying the style to apply. Codes are delimited by semicolons. For example, to change text to be bold and red you’d use `1;31`. You may use the following codes:
         
         ```
@@ -109,7 +109,7 @@ class SGRTrigger: Trigger {
                         I is a value in 0…255.
               48;5;I    8-bit background color. 
                         I is a value in 0…255.
-        """
+        """, comment: "Help text listing the SGR codes accepted by the SGR trigger")
     }
 
     override func performAction(withCapturedStrings strings: [String],

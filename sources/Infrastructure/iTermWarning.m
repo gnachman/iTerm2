@@ -112,7 +112,7 @@ BOOL gShowRememberedAlerts = NO;
                            identifier:identifier
                           silenceable:warningType
                               heading:heading
-                          cancelLabel:kCancel
+                          cancelLabel:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Standard Cancel button title")
                                window:window];
 }
 
@@ -322,12 +322,12 @@ BOOL gShowRememberedAlerts = NO;
 
 - (NSAlert *)makeAlert {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = _heading ?: @"Warning";
+    alert.messageText = _heading ?: ITLocalize(@"Warning_AlertHeading_Warning", @"Warning",@"Alert heading in makeAlert");
 
     // If this warning is being shown due to the "always show alerts with remembered
     // selections" mode, prepend explanatory text.
     if (_shownDueToRememberedAlertsMode && _savedSelectionLabel) {
-        alert.informativeText = [NSString stringWithFormat:@"%@\n\nThis alert had a saved selection of “%@”. It is being shown because “Always show alerts with remembered selections” is turned on in iTerm2 > Suppressed Alerts.", _title, _savedSelectionLabel];
+        alert.informativeText = [NSString stringWithFormat:ITLocalize(@"Warning_AlertExplanatory_NNThisAlertHadASaved_FORMAT", @"%1$@\n\nThis alert had a saved selection of “%2$@”. It is being shown because “Always show alerts with remembered selections” is turned on in iTerm2 > Suppressed Alerts.", @"Alert explanatory text in makeAlert"), _title, _savedSelectionLabel];
     } else {
         alert.informativeText = _title;
     }
@@ -362,7 +362,7 @@ BOOL gShowRememberedAlerts = NO;
 
     // Add "Permanently Forget Saved Selection" button when in remembered alerts mode.
     if (_shownDueToRememberedAlertsMode && _identifier) {
-        [alert addButtonWithTitle:@"Permanently Forget Saved Selection"];
+        [alert addButtonWithTitle:ITLocalize(@"Warning_PermanentlyForgetSavedSelection", @"Permanently Forget Saved Selection", @"Button title in makeAlert")];
     }
 
     int numNonCancelActions = [_warningActions count];
@@ -376,25 +376,25 @@ BOOL gShowRememberedAlerts = NO;
     if (_warningType == kiTermWarningTypeTemporarilySilenceable) {
         assert(_identifier);
         if (numNonCancelActions == 1) {
-            alert.suppressionButton.title = @"Suppress this message for ten minutes";
+            alert.suppressionButton.title = ITLocalize(@"Warning_SuppressThisMessageForTenMinutes", @"Suppress this message for ten minutes", @"Button title in makeAlert");
         } else if (numNonCancelActions > 1) {
-            alert.suppressionButton.title = @"Remember my choice for ten minutes";
+            alert.suppressionButton.title = ITLocalize(@"Warning_RememberMyChoiceForTenMinutes", @"Remember my choice for ten minutes", @"Button title in makeAlert");
         }
         alert.showsSuppressionButton = YES;
     } else if (_warningType == kiTermWarningTypeSilenceableForOneMonth) {
         assert(_identifier);
         if (numNonCancelActions == 1) {
-            alert.suppressionButton.title = @"Suppress this message for 30 days";
+            alert.suppressionButton.title = ITLocalize(@"Warning_SuppressThisMessageFor30Days", @"Suppress this message for 30 days", @"Button title in makeAlert");
         } else if (numNonCancelActions > 1) {
-            alert.suppressionButton.title = @"Remember my choice for 30 days";
+            alert.suppressionButton.title = ITLocalize(@"Warning_RememberMyChoiceFor30Days", @"Remember my choice for 30 days", @"Button title in makeAlert");
         }
         alert.showsSuppressionButton = YES;
     } else if (_warningType == kiTermWarningTypePermanentlySilenceable) {
         assert(_identifier);
         if (numNonCancelActions == 1) {
-            alert.suppressionButton.title = @"Suppress this message permanently";
+            alert.suppressionButton.title = ITLocalize(@"Warning_SuppressThisMessagePermanently", @"Suppress this message permanently", @"Button title in makeAlert");
         } else if (numNonCancelActions > 1) {
-            alert.suppressionButton.title = @"Remember my choice";
+            alert.suppressionButton.title = ITLocalize(@"Warning_RememberMyChoice", @"Remember my choice", @"Button title in makeAlert");
         }
         alert.showsSuppressionButton = YES;
     }

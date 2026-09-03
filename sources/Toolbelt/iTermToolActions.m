@@ -64,10 +64,10 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        _applyButton = iTermToolActionsNewButton(@"play", @"Apply", self, @selector(apply:), frame);
-        _addButton = iTermToolActionsNewButton(@"plus", @"Add", self, @selector(add:), frame);
-        _removeButton = iTermToolActionsNewButton(@"minus", @"Remove", self, @selector(remove:), frame);
-        _editButton = iTermToolActionsNewButton(@"pencil", @"Edit", self, @selector(edit:), frame);
+        _applyButton = iTermToolActionsNewButton(@"play", ITLocalize(@"COMMON_APPLY", @"Apply", @"Button that applies the selected tool actions"), self, @selector(apply:), frame);
+        _addButton = iTermToolActionsNewButton(@"plus", ITLocalize(@"COMMON_ADD", @"Add", @"Button that adds a tool action"), self, @selector(add:), frame);
+        _removeButton = iTermToolActionsNewButton(@"minus", ITLocalize(@"COMMON_REMOVE", @"Remove", @"Button that removes a tool action"), self, @selector(remove:), frame);
+        _editButton = iTermToolActionsNewButton(@"pencil", ITLocalize(@"COMMON_EDIT", @"Edit", @"Button that edits a tool action"), self, @selector(edit:), frame);
         [self addSubview:_applyButton];
         [self addSubview:_addButton];
         [self addSubview:_removeButton];
@@ -292,7 +292,7 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
     if (title.length) {
         return title;
     }
-    return @"Untitled";
+    return ITLocalize(@"ToolActions_Untitled", @"Untitled", @"Text shown in stringForTableColumn:: Untitled");
 }
 
 - (void)update {

@@ -5,4 +5,6 @@ _Pragma("clang diagnostic ignored \"-Wpartial-availability\"")
 #define ITERM_IGNORE_PARTIAL_END \
 _Pragma("clang diagnostic pop")
 
+#define ITLocalize(key, defaultValue, comment) \
+    NSLocalizedStringWithDefaultValue(key, nil, [NSBundle mainBundle], defaultValue, comment)
 

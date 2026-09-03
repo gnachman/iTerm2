@@ -28,9 +28,9 @@
     _value = value;
     _stepper.doubleValue = _value.doubleValue;
     if (_value.doubleValue == INFINITY) {
-        _textField.stringValue = @"∞";
+        _textField.stringValue = ITLocalize(@"StatusBarKnobNumericViewController_Facing", @"∞", @"Text shown in setValue:: ∞");
     } else if (_value.doubleValue == -INFINITY) {
-        _textField.stringValue = @"-∞";
+        _textField.stringValue = ITLocalize(@"StatusBarKnobNumericViewController_Facing_2", @"-∞", @"Text shown in setValue:: -∞");
     } else {
         _textField.doubleValue = _value.doubleValue;
     }

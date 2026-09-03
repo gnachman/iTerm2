@@ -81,7 +81,7 @@
                         kTipBodyKey: @"Quadruple click to perform Smart Selection. It figures out if you’re selecting a URL, filename, email address, etc. based on prioritized regular expressions.",
                         kTipUrlKey: @"https://www.iterm2.com/smartselection.html" },
 
-            @"0018": @{ kTipTitleKey: @"Instant Replay",
+            @"0018": @{ kTipTitleKey: ITLocalize(@"TipData_InstantReplay", @"Instant Replay", @"Title in allTips"),
                         kTipBodyKey: @"Press ⌥⌘B to step back in time in a terminal window. Use arrow keys to go frame by frame. Hold ⇧ and press arrow keys to go faster." },
 
             @"0019": @{ kTipTitleKey: @"Hotkey Window",
@@ -256,7 +256,7 @@
             @"0070": @{ kTipTitleKey: @"Double-Tap Hotkey",
                         kTipBodyKey: @"New in 3.1: You can configure a hotkey window to open on double-tap of a modifier in “Settings > Profiles > Keys > Customize Hotkey Window.”" },
 
-            @"0071": @{ kTipTitleKey: @"Buried Sessions",
+            @"0071": @{ kTipTitleKey: ITLocalize(@"TipData_BuriedSessions", @"Buried Sessions", @"Title in allTips"),
                         kTipBodyKey: @"You can “bury” a session with “Session > Bury Session.” It remains hidden until you restore it by selecting it from “Session > Buried Sessions > Your session.”" },
 
             @"0072": @{ kTipTitleKey: @"Python API",
@@ -394,7 +394,7 @@
             @"0116": @{ kTipTitleKey: @"Draggable Tip Window",
                         kTipBodyKey: @"Reposition the Tip of the Day window conveniently on your screen, as it is now draggable." },
 
-            @"0117": @{ kTipTitleKey: @"AI Chat",
+            @"0117": @{ kTipTitleKey: ITLocalize(@"TipData_AiChat", @"AI Chat", @"Title in allTips"),
                         kTipBodyKey: @"iTerm2 now has an AI Chat feature! Use “Window > AI Chats” or “Edit > Explain Output with AI”. The assistant can interact with your terminal (with your permission) and explain command output, adding annotations right in the terminal." },
 
             @"0118": @{ kTipTitleKey: @"Web Browser Profiles",

@@ -432,7 +432,7 @@ NSString *const iTermSessionNameControllerSystemTitleUniqueIdentifier = @"com.it
                 DLog(@"Ignore blank evaluation; keep %@", strongSelf->_cachedEvaluation);
                 return;
             }
-            NSString *safeName = presentationName ?: @"Untitled";
+            NSString *safeName = presentationName ?: ITLocalize(@"SESSION_NAME_UNTITLED", @"Untitled", @"Placeholder name for a session with no evaluated name");
             if ([NSObject object:strongSelf->_cachedEvaluation isEqualToObject:safeName]) {
                 DLog(@"result is unchanged %@", strongSelf.delegate);
                 return;

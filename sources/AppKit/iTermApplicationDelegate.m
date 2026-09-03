@@ -376,7 +376,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     NSSize tabColorViewSize = [ColorsMenuItemView preferredSize];
     ColorsMenuItemView *labelTrackView = [[[ColorsMenuItemView alloc]
                                            initWithFrame:NSMakeRect(0, 0, tabColorViewSize.width, tabColorViewSize.height)] autorelease];
-    [self addMenuItemView:labelTrackView toMenu:viewMenu title:@"Current Tab Color"];
+    [self addMenuItemView:labelTrackView toMenu:viewMenu title:ITLocalize(@"ApplicationDelegate_Menu_CurrentTabColor", @"Current Tab Color", @"menu item title")];
 
     if (![iTermTipController sharedInstance]) {
         [_showTipOfTheDay.menu removeItem:_showTipOfTheDay];
@@ -454,7 +454,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         if (undoResponder) {
             return YES;
         } else {
-            menuItem.title = @"Undo Close Session";
+            menuItem.title = ITLocalize(@"ApplicationDelegate_Menu_UndoCloseSession", @"Undo Close Session", @"menu item title");
             return [[iTermController sharedInstance] hasRestorableSession];
         }
     } else if ([menuItem action] == @selector(enableMarkAlertShowsModalAlert:)) {
@@ -597,7 +597,7 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         }
         return !!(menuItem.tag & profileType);
     } else if (menuItem.action == @selector(newSessionAlternate:)) {
-        menuItem.title = [self alternateNewSessionShouldOpenAtEnd] ? @"New Tab At End" : @"New Tab Next to Current Tab";
+        menuItem.title = [self alternateNewSessionShouldOpenAtEnd] ? ITLocalize(@"ApplicationDelegate_FileMenu_NewTabAtEnd", @"New Tab At End", @"File menu") : ITLocalize(@"ApplicationDelegate_FileMenu_NewTabNextToCurrentTab", @"New Tab Next to Current Tab", @"File menu");
         return YES;
     } else {
         return YES;
@@ -789,8 +789,8 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         RLog(@"Importing color presets from %@", filename);
         if ([iTermColorPresets importColorPresetFromFile:filename]) {
             NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-            alert.messageText = @"Colors Scheme Imported";
-            alert.informativeText = @"The color scheme was imported and added to presets. You can find it under Settings > Profiles > Colors > Load Presets….";
+            alert.messageText = ITLocalize(@"ApplicationDelegate_Alert_ColorsSchemeImported", @"Colors Scheme Imported", @"Alert title in importColorPresetFromFile:");
+            alert.informativeText = ITLocalize(@"ApplicationDelegate_AlertExplanatory_TheColorSchemeWasImportedAndAddedToPresetsYou", @"The color scheme was imported and added to presets. You can find it under Settings > Profiles > Colors > Load Presets….", @"Alert explanatory text in importColorPresetFromFile:");
             [alert runModal];
         }
         return YES;
@@ -834,8 +834,8 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
                 }
 
                 const iTermWarningSelection selection =
-                    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"OK to run “%@”?", filename]
-                                               actions:@[ @"OK", @"Cancel" ]
+                    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"ApplicationDelegate_Alert_OkToRun_FORMAT", @"OK to run “%1$@”?", @"Alert title in application:openFile:"), filename]
+                                               actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in application:openFile:"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Action title in application:openFile:") ]
                                             identifier:@"NoSyncConfirmRunOpenFile"
                                            silenceable:kiTermWarningTypePermanentlySilenceable
                                                 window:nil];
@@ -1027,19 +1027,19 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
         RLog(@"Showing quit alert");
         NSString *message;
         if ([[iTermController sharedInstance] shouldLeaveSessionsRunningOnQuit]) {
-            message = @"Sessions will be restored automatically when iTerm2 is relaunched.";
+            message = ITLocalize(@"ApplicationDelegate_Facing_SessionsWillBeRestoredAutomaticallyWhenITerm2Is", @"Sessions will be restored automatically when iTerm2 is relaunched.", @"Text shown in applicationShouldTerminate: Sessions will be restored automatically when iTerm2 is relaunched.");
         } else {
-            message = @"All sessions will be closed.";
+            message = ITLocalize(@"ApplicationDelegate_Facing_AllSessionsWillBeClosed", @"All sessions will be closed.", @"Text shown in applicationShouldTerminate: All sessions will be closed.");
         }
         [NSApp activateIgnoringOtherApps:YES];
         NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-        alert.messageText = @"Quit iTerm2?";
+        alert.messageText = ITLocalize(@"ApplicationDelegate_Alert_QuitITerm2", @"Quit iTerm2?", @"Alert title in applicationShouldTerminate:");
         alert.informativeText = message;
-        [alert addButtonWithTitle:@"OK"];
-        [alert addButtonWithTitle:@"Cancel"];
+        [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in applicationShouldTerminate:")];
+        [alert addButtonWithTitle:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in applicationShouldTerminate:")];
         iTermDisclosableView *accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
-                                                                               prompt:@"Why am I being prompted?"
-                                                                              message:[NSString stringWithFormat:@"You are being prompted because:\n\n%@",
+                                                                               prompt:ITLocalize(@"ApplicationDelegate_Facing_WhyAmIBeingPrompted", @"Why am I being prompted?", @"Text shown in applicationShouldTerminate: Why am I being prompted?")
+                                                                              message:[NSString stringWithFormat:ITLocalize(@"ApplicationDelegate_FormattedFacing_YouAreBeingPromptedBecauseNN_FORMAT", @"You are being prompted because:\n\n%1$@",@"Formatted user-facing text in applicationShouldTerminate:(NSNotification *)theNotification"),
                                                                                        reason.message]];
         iTermAccessoryViewUnfucker *unfucker = [[iTermAccessoryViewUnfucker alloc] initWithView:accessory];
         accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
@@ -1508,12 +1508,12 @@ void TurnOnDebugLoggingAutomatically(void) {
     if (@available(macOS 12, *)) {
         // ok
     } else {
-        [iTermWarning showWarningWithTitle:@"This is the last nightly build that will support macOS 11 and older. Sorry for the inconvenience!"
-                                   actions:@[ @"OK" ]
+        [iTermWarning showWarningWithTitle:ITLocalize(@"ApplicationDelegate_Alert_ThisIsTheLastNightlyBuildThat", @"This is the last nightly build that will support macOS 11 and older. Sorry for the inconvenience!", @"Alert title in applicationDidFinishLaunching:")
+                                   actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in applicationDidFinishLaunching:") ]
                                  accessory:nil
                                 identifier:@"NoSyncMacOS11Deprecation"
                                silenceable:kiTermWarningTypePermanentlySilenceable
-                                   heading:@"Deprecation Notice"
+                                   heading:ITLocalize(@"ApplicationDelegate_AlertHeading_DeprecationNotice", @"Deprecation Notice",@"Alert heading in applicationDidFinishLaunching:(NSNotification *)aNotification")
                                     window:nil];
     }
     [iTermMacOS13RequirementNotice maybeShow];
@@ -1768,10 +1768,10 @@ void TurnOnDebugLoggingAutomatically(void) {
     NSMenu *appMenu = [[[[NSApp mainMenu] itemArray] firstObject] submenu];
     [appMenu addItem:[NSMenuItem separatorItem]];
 
-    NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:@"Toggle Key Recording" action:@selector(toggleKeyRecording:) keyEquivalent:@""] autorelease];
+    NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:ITLocalize(@"ApplicationDelegate_Menu_ToggleKeyRecording", @"Toggle Key Recording", @"menu item title") action:@selector(toggleKeyRecording:) keyEquivalent:@""] autorelease];
     [appMenu addItem:item];
 
-    item = [[[NSMenuItem alloc] initWithTitle:@"Replay Recorded Keys" action:@selector(replayRecordedKeys:) keyEquivalent:@""] autorelease];
+    item = [[[NSMenuItem alloc] initWithTitle:ITLocalize(@"ApplicationDelegate_Menu_ReplayRecordedKeys", @"Replay Recorded Keys", @"menu item title") action:@selector(replayRecordedKeys:) keyEquivalent:@""] autorelease];
     [appMenu addItem:item];
 #endif
 }
@@ -1785,7 +1785,7 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)replayRecordedKeys:(id)sender {
     NSOpenPanel *panel = [NSOpenPanel openPanel];
-    panel.title = @"Choose a JSON File";
+    panel.title = ITLocalize(@"ApplicationDelegate_ChooseAJsonFile", @"Choose a JSON File", @"Title in replayRecordedKeys:");
     panel.allowedContentTypes = @[ UTTypeJSON ];
     panel.canChooseFiles = YES;
     panel.canChooseDirectories = NO;
@@ -1817,12 +1817,12 @@ static iTermKeyEventReplayer *gReplayer;
     NSMenu *menu = [[[NSMenu alloc] init] autorelease];
     NSMenuItem *item;
 
-    item = [[[NSMenuItem alloc] initWithTitle:@"Settings"
+    item = [[[NSMenuItem alloc] initWithTitle:ITLocalize(@"ApplicationDelegate_StatusBarMenu_Settings", @"Settings", @"Status bar menu")
                                        action:@selector(showAndOrderFrontRegardlessPrefWindow:)
                                 keyEquivalent:@""] autorelease];
     [menu addItem:item];
 
-    item = [[[NSMenuItem alloc] initWithTitle:@"Bring All Windows to Front"
+    item = [[[NSMenuItem alloc] initWithTitle:ITLocalize(@"ApplicationDelegate_StatusBarMenu_BringAllWindowsToFront", @"Bring All Windows to Front", @"Status bar menu")
                                        action:@selector(arrangeInFront:)
                                 keyEquivalent:@""] autorelease];
     [menu addItem:item];
@@ -1830,21 +1830,21 @@ static iTermKeyEventReplayer *gReplayer;
     item = [[[NSMenuItem alloc] init] autorelease];
     _statusIconBuriedSessions = [[[NSMenu alloc] init] autorelease];
     item.submenu = _statusIconBuriedSessions;
-    item.title = @"Buried Sessions";
+    item.title = ITLocalize(@"ApplicationDelegate_StatusBarMenu_BuriedSessions", @"Buried Sessions", @"Status bar menu");
     [menu addItem:item];
 
     [[iTermBuriedSessions sharedInstance] setMenus:[NSArray arrayWithObjects:_buriedSessions, _statusIconBuriedSessions, nil]];
 
-    item = [[[NSMenuItem alloc] initWithTitle:@"Check For Updates"
+    item = [[[NSMenuItem alloc] initWithTitle:ITLocalize(@"ApplicationDelegate_StatusBarMenu_CheckForUpdates", @"Check For Updates", @"Status bar menu")
                                        action:@selector(checkForUpdatesFromMenu:)
                                 keyEquivalent:@""] autorelease];
     [menu addItem:item];
 
-    NSMenuItem *mainMenuItem = [[[NSMenuItem alloc] initWithTitle:@"Main Menu" action:nil keyEquivalent:@""] autorelease];
+    NSMenuItem *mainMenuItem = [[[NSMenuItem alloc] initWithTitle:ITLocalize(@"ApplicationDelegate_StatusBarMenu_MainMenu", @"Main Menu", @"Status bar menu") action:nil keyEquivalent:@""] autorelease];
     mainMenuItem.submenu = [[NSApp mainMenu] it_deepCopy];
     [menu addItem:mainMenuItem];
     
-    item = [[[NSMenuItem alloc] initWithTitle:@"Quit iTerm2"
+    item = [[[NSMenuItem alloc] initWithTitle:ITLocalize(@"ApplicationDelegate_StatusBarMenu_QuitITerm2", @"Quit iTerm2", @"Status bar menu")
                                        action:@selector(terminate:)
                                 keyEquivalent:@""] autorelease];
     [menu addItem:item];
@@ -2363,8 +2363,9 @@ static iTermKeyEventReplayer *gReplayer;
     NSTimeInterval age = -[[NSBundle it_buildDate] timeIntervalSinceNow];
     if (age > 30 * 24 * 60 * 60) {
         iTermWarningSelection selection =
-        [iTermWarning showWarningWithTitle:@"This nightly build is over 30 days old. Consider updating soon: you may be suffering from awful bugs in blissful ignorance."
-                                   actions:@[ @"I’ll Take My Chances", @"Update Now" ]
+        [iTermWarning showWarningWithTitle:ITLocalize(@"ApplicationDelegate_Alert_ThisNightlyBuildIsOver30DaysOldConsider", @"This nightly build is over 30 days old. Consider updating soon: you may be suffering from awful bugs in blissful ignorance.", @"Alert title in complainIfNightlyBuildIsTooOld")
+                                   actions:@[ ITLocalize(@"ApplicationDelegate_Action_ILlTakeMyChances", @"I’ll Take My Chances", @"Action title in complainIfNightlyBuildIsTooOld"),
+                                              ITLocalize(@"ApplicationDelegate_Action_UpdateNow", @"Update Now", @"Title in complainIfNightlyBuildIsTooOld") ]
                                 identifier:@"NoSyncVeryOldNightlyBuildWarning"
                                silenceable:kiTermWarningTypeSilenceableForOneMonth
                                     window:nil];
@@ -2543,7 +2544,7 @@ static iTermKeyEventReplayer *gReplayer;
     NSMenuItem *companionItem = [self menuItemWithAction:@selector(pairCompanionDevice:)
                                                  inMenu:[NSApp mainMenu]];
     companionItem.image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolLaptopcomputerAndIphone)
-                                  accessibilityDescription:@"Companion Device Settings"];
+                                  accessibilityDescription:ITLocalize(@"ApplicationDelegate_Descriptive_CompanionDeviceSettings", @"Companion Device Settings", @"Error description when fetching token fails")];
     companionItem.hidden = ![iTermAdvancedSettingsModel companionPairingAllowed];
 }
 
@@ -2635,7 +2636,7 @@ static iTermKeyEventReplayer *gReplayer;
 }
 
 - (void)addArrangementsToDockMenu:(NSMenu *)theMenu {
-    NSMenuItem *container = [theMenu addItemWithTitle:@"Restore Arrangement"
+    NSMenuItem *container = [theMenu addItemWithTitle:ITLocalize(@"ApplicationDelegate_DockMenu_RestoreArrangement", @"Restore Arrangement", @"Dock menu")
                                                action:nil
                                         keyEquivalent:@""];
     NSMenu *subMenu = [[[NSMenu alloc] init] autorelease];
@@ -3189,9 +3190,9 @@ static iTermKeyEventReplayer *gReplayer;
     NSString *ring = iTermRetrospectiveLogString();
     if (ring.length == 0) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"No Retrospective Logs";
-        alert.informativeText = @"No retrospective debug logs have been recorded yet.";
-        [alert addButtonWithTitle:@"OK"];
+        alert.messageText = ITLocalize(@"ApplicationDelegate_Alert_NoRetrospectiveLogs", @"No Retrospective Logs", @"Alert title in saveRetrospectiveDebugLogs:");
+        alert.informativeText = ITLocalize(@"ApplicationDelegate_AlertExplanatory_NoRetrospectiveDebugLogsHaveBeenRecordedYet", @"No retrospective debug logs have been recorded yet.", @"Alert explanatory text in saveRetrospectiveDebugLogs:");
+        [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in saveRetrospectiveDebugLogs:")];
         [alert runModal];
         return;
     }
@@ -3200,16 +3201,16 @@ static iTermKeyEventReplayer *gReplayer;
     NSString *log = [iTermDebugLogHeaderString() stringByAppendingString:ring];
     NSSavePanel *panel = [NSSavePanel savePanel];
     panel.nameFieldStringValue = @"retrospective-debuglog.txt";
-    panel.title = @"Save Retrospective Debug Logs";
+    panel.title = ITLocalize(@"ApplicationDelegate_SaveRetrospectiveDebugLogs", @"Save Retrospective Debug Logs", @"Title in saveRetrospectiveDebugLogs:");
     if ([panel runModal] != NSModalResponseOK || panel.URL == nil) {
         return;
     }
     NSError *error = nil;
     if (![log writeToURL:panel.URL atomically:YES encoding:NSUTF8StringEncoding error:&error]) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Could Not Save";
-        alert.informativeText = [NSString stringWithFormat:@"Failed to save retrospective debug logs: %@", error.localizedDescription];
-        [alert addButtonWithTitle:@"OK"];
+        alert.messageText = ITLocalize(@"ApplicationDelegate_Alert_CouldNotSave", @"Could Not Save", @"Alert title in saveRetrospectiveDebugLogs:");
+        alert.informativeText = [NSString stringWithFormat:ITLocalize(@"ApplicationDelegate_AlertExplanatory_FailedToSaveRetrospectiveDebugLogs_FORMAT", @"Failed to save retrospective debug logs: %1$@", @"Alert explanatory text in saveRetrospectiveDebugLogs:"), error.localizedDescription];
+        [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in saveRetrospectiveDebugLogs:")];
         [alert runModal];
     }
 }
@@ -3266,12 +3267,12 @@ static iTermKeyEventReplayer *gReplayer;
                                                                                        withCompletion:
      ^(iTermPythonRuntimeDownloaderStatus status) {
          if (status == iTermPythonRuntimeDownloaderStatusNotNeeded) {
-             [iTermWarning showWarningWithTitle:@"You’re up to date!"
-                                        actions:@[ @"OK" ]
+             [iTermWarning showWarningWithTitle:ITLocalize(@"ApplicationDelegate_Alert_YouReUpToDate", @"You’re up to date!", @"Alert title in installPythonRuntime:")
+                                        actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in installPythonRuntime:") ]
                                       accessory:nil
                                      identifier:nil
                                     silenceable:kiTermWarningTypePersistent
-                                        heading:@"Python Runtime"
+                                        heading:ITLocalize(@"ApplicationDelegate_AlertHeading_PythonRuntime", @"Python Runtime",@"Alert heading in installPythonRuntime:(id)sender")
                                          window:nil];
          }
      }];
@@ -3287,7 +3288,7 @@ static iTermKeyEventReplayer *gReplayer;
         [[iTermUvProvisioner shared] userRequestedUpgradeCheckWithCompletion:^(BOOL ok, NSString *message) {
             [[iTermScriptHistoryEntry globalEntry] addOutput:[message stringByAppendingString:@"\n"] completion:^{}];
             NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-            alert.messageText = ok ? @"Python Runtime" : @"Update Failed";
+            alert.messageText = ok ? ITLocalize(@"ApplicationDelegate_AlertHeading_PythonRuntime", @"Python Runtime",@"Alert heading in installOrCheckUvRuntime") : ITLocalize(@"ApplicationDelegate_Alert_UpdateFailed", @"Update Failed", @"Alert title in installOrCheckUvRuntime");
             alert.informativeText = message;
             [alert runModal];
         }];
@@ -3301,9 +3302,9 @@ static iTermKeyEventReplayer *gReplayer;
         }
         if (error != nil || python == nil) {
             NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-            alert.messageText = @"Installation Failed";
-            alert.informativeText = [NSString stringWithFormat:@"Could not install the Python runtime: %@",
-                                     error.localizedDescription ?: @"unknown error"];
+            alert.messageText = ITLocalize(@"ApplicationDelegate_Alert_InstallationFailed", @"Installation Failed", @"Alert title in installOrCheckUvRuntime");
+            alert.informativeText = [NSString stringWithFormat:ITLocalize(@"ApplicationDelegate_AlertExplanatory_CouldNotInstallThePythonRuntime_FORMAT", @"Could not install the Python runtime: %1$@", @"Alert explanatory text in installOrCheckUvRuntime"),
+                                     error.localizedDescription ?: ITLocalize(@"ApplicationDelegate_UnknownErrorLowercase", @"unknown error", @"Error fallback")];
             [alert runModal];
             return;
         }
@@ -3322,20 +3323,20 @@ static iTermKeyEventReplayer *gReplayer;
             [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentFromZip:panel.URL.path
                                                                                 completion:^(NSError *error) {
                 if (!error) {
-                    [iTermWarning showWarningWithTitle:@"Installed successfully!"
-                                               actions:@[ @"OK" ]
+                    [iTermWarning showWarningWithTitle:ITLocalize(@"ApplicationDelegate_Alert_InstalledSuccessfully", @"Installed successfully!", @"Alert title in installAlreadyDownloadedPythonRuntime:")
+                                               actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in installAlreadyDownloadedPythonRuntime:") ]
                                              accessory:nil
                                             identifier:nil
                                            silenceable:kiTermWarningTypePersistent
-                                               heading:@"Python Runtime"
+                                               heading:ITLocalize(@"ApplicationDelegate_AlertHeading_PythonRuntime", @"Python Runtime",@"Alert heading in installAlreadyDownloadedPythonRuntime:(id)sender")
                                                 window:nil];
                 } else {
-                    [iTermWarning showWarningWithTitle:error.localizedDescription ?: @"Unknown error"
-                                               actions:@[ @"OK" ]
+                    [iTermWarning showWarningWithTitle:error.localizedDescription ?: ITLocalize(@"ApplicationDelegate_UnknownError", @"Unknown error", @"Error fallback")
+                                               actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in installAlreadyDownloadedPythonRuntime:") ]
                                              accessory:nil
                                             identifier:nil
                                            silenceable:kiTermWarningTypePersistent
-                                               heading:@"Error Installing Python Runtime"
+                                               heading:ITLocalize(@"ApplicationDelegate_AlertHeading_ErrorInstallingPythonRuntime", @"Error Installing Python Runtime",@"Alert heading in installAlreadyDownloadedPythonRuntime:(id)sender")
                                                 window:nil];
                 }
             }];
@@ -3394,9 +3395,9 @@ static iTermKeyEventReplayer *gReplayer;
             }
             if (interpreter == nil) {
                 NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-                alert.messageText = @"Python Environment Unavailable";
-                alert.informativeText = [NSString stringWithFormat:@"Could not prepare the Python environment for the REPL: %@",
-                                         uvError.localizedDescription ?: @"unknown error"];
+                alert.messageText = ITLocalize(@"ApplicationDelegate_Alert_PythonEnvironmentUnavailable", @"Python Environment Unavailable", @"Alert title in applicationDidFinishLaunching:");
+                alert.informativeText = [NSString stringWithFormat:ITLocalize(@"ApplicationDelegate_AlertExplanatory_CouldNotPreparePythonEnvironmentForREPL_FORMAT", @"Could not prepare the Python environment for the REPL: %1$@", @"Alert explanatory text in applicationDidFinishLaunching:"),
+                                         uvError.localizedDescription ?: ITLocalize(@"ApplicationDelegate_UnknownErrorLowercase", @"unknown error", @"Error fallback")];
                 [alert runModal];
                 return;
             }
@@ -3541,15 +3542,15 @@ static iTermKeyEventReplayer *gReplayer;
 
 - (IBAction)gpuRendererAvailability:(id)sender {
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = @"GPU Renderer Availability";
+    alert.messageText = ITLocalize(@"ApplicationDelegate_Alert_GpuRendererAvailability", @"GPU Renderer Availability", @"Alert title in gpuRendererAvailability:");
     PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
     PTYSession *session = [term currentSession];
     PTYTab *tab = [term tabForSession:session];
     NSString *reason = [self gpuUnavailableStringForReason:tab.metalUnavailableReason];
     if (reason) {
-        alert.informativeText = [NSString stringWithFormat:@"GPU rendering is off in the current session because %@", reason];
+        alert.informativeText = [NSString stringWithFormat:ITLocalize(@"ApplicationDelegate_AlertExplanatory_GpuRenderingIsOffInTheCurrent_FORMAT", @"GPU rendering is off in the current session because %1$@", @"Alert explanatory text in gpuRendererAvailability:"), reason];
     } else {
-        alert.informativeText = @"GPU rendering is enabled for the current session.";
+        alert.informativeText = ITLocalize(@"ApplicationDelegate_AlertExplanatory_GpuRenderingIsEnabledForTheCurrent", @"GPU rendering is enabled for the current session.", @"Alert explanatory text in gpuRendererAvailability:");
     }
     [alert runModal];
 }
@@ -3621,15 +3622,16 @@ static iTermKeyEventReplayer *gReplayer;
 
     if ([[[[iTermController sharedInstance] currentTerminal] currentSession] isTmuxClient]) {
         NSString *heading =
-            [NSString stringWithFormat:@"What kind of %@ do you want to open?",
-                isWindow ? @"window" : @"tab"];
+            [NSString stringWithFormat:ITLocalize(@"ApplicationDelegate_FormattedFacing_WhatKindOfDoYouWantTo_FORMAT", @"What kind of %1$@ do you want to open?",@"Formatted user-facing text in possiblyTmuxValueForWindow:(BOOL)isWindow cancel:(BOOL *)cancel"),
+                isWindow ? ITLocalize(@"ApplicationDelegate_Facing_Window", @"window", @"Text shown in possiblyTmuxValueForWindow:: window") : ITLocalize(@"ApplicationDelegate_Facing_Tab", @"tab", @"Text shown in possiblyTmuxValueForWindow:: tab")];
         NSString *title =
-            [NSString stringWithFormat:@"The current session is a tmux session. "
-                                       @"Would you like to create a new tmux %@ or use the default profile?",
-                                       isWindow ? @"window" : @"tab"];
-        NSString *tmuxAction = isWindow ? @"New tmux Window" : @"New tmux Tab";
+            [NSString stringWithFormat:ITLocalize(@"ApplicationDelegate_FormattedFacing_TheCurrentSessionIsATmuxSession_FORMAT", @"The current session is a tmux session. Would you like to create a new tmux %1$@ or use the default profile?",@"Formatted user-facing text in possiblyTmuxValueForWindow:(BOOL)isWindow cancel:(BOOL *)cancel"),
+                                       isWindow ? ITLocalize(@"ApplicationDelegate_Facing_Window", @"window", @"Text shown in possiblyTmuxValueForWindow:: window") : ITLocalize(@"ApplicationDelegate_Facing_Tab", @"tab", @"Text shown in possiblyTmuxValueForWindow:: tab")];
+        NSString *tmuxAction = isWindow ? ITLocalize(@"ApplicationDelegate_Action_NewTmuxWindow", @"New tmux Window", @"Action title in possiblyTmuxValueForWindow:") : ITLocalize(@"ApplicationDelegate_Action_NewTmuxTab", @"New tmux Tab", @"Title in possiblyTmuxValueForWindow:");
         iTermWarningSelection selection = [iTermWarning showWarningWithTitle:title
-                                                                     actions:@[ tmuxAction, @"Use Default Profile", @"Cancel" ]
+                                                                     actions:@[ tmuxAction,
+                                                                                ITLocalize(@"ApplicationDelegate_Action_UseDefaultProfile", @"Use Default Profile", @"Action title in possiblyTmuxValueForWindow:"),
+                                                                                ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in possiblyTmuxValueForWindow:") ]
                                                                    accessory:nil
                                                                   identifier:key
                                                                  silenceable:kiTermWarningTypePermanentlySilenceable
@@ -3672,7 +3674,7 @@ static iTermKeyEventReplayer *gReplayer;
     double rate = bytes;
     rate /= delay;
 
-    [ToastWindowController showToastWithMessage:[NSString stringWithFormat:@"Pasting at up to %@/sec", [NSString it_formatBytes:rate]]];
+    [ToastWindowController showToastWithMessage:[NSString stringWithFormat:ITLocalize(@"ApplicationDelegate_FormattedFacing_PastingAtUpToSec_FORMAT", @"Pasting at up to %1$@/sec",@"Formatted user-facing text in changePasteSpeedBy:(double)factor"), [NSString it_formatBytes:rate]]];
 }
 
 - (void)hideStuckToolTips {
@@ -4147,7 +4149,7 @@ static iTermKeyEventReplayer *gReplayer;
             }];
         }
         for (id<iTermGenericNamedMarkReading> mark in namedMarks) {
-            NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:mark.name ?: @"Unnamed Mark"
+            NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:mark.name ?: ITLocalize(@"ApplicationDelegate_Menu_UnnamedMark", @"Unnamed Mark", @"menu item title")
                                                               action:@selector(navigateToNamedMark:)
                                                        keyEquivalent:@""];
             menuItem.representedObject = mark.guid;

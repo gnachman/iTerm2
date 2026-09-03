@@ -19,17 +19,17 @@ enum NerdFontInstallerError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .userDeniedPermission:
-            return "User denied permission"
+            return String(localized: "NerdFontInstaller_UserDeniedPermission", defaultValue: "User denied permission", comment: "User-visible message: User denied permission")
         case .downloadFailed(let reason):
-            return "Download failed: \(reason)"
+            return String(format: String(localized: "NerdFontInstaller_DownloadFailed_FORMAT", defaultValue: "Download failed: %1$@", comment: "Formatted user-facing text in reason"), reason)
         case .saveDownloadFailed(let reason):
-            return "Downloaded file could not be saved: \(reason)"
+            return String(format: String(localized: "NerdFontInstaller_DownloadedFileCouldNotBeSaved_FORMAT", defaultValue: "Downloaded file could not be saved: %1$@", comment: "Formatted user-facing text in reason"), reason)
         case .unzipFailed(let reason):
-            return "Unzip failed: \(reason)"
+            return String(format: String(localized: "NerdFontInstaller_UnzipFailed_FORMAT", defaultValue: "Unzip failed: %1$@", comment: "Formatted user-facing text in reason"), reason)
         case .missingRequiredFonts:
-            return "The downloaded bundle is missing some required fonts"
+            return String(localized: "NerdFontInstaller_TheDownloadedBundleIsMissingSomeRequired", defaultValue: "The downloaded bundle is missing some required fonts", comment: "User-visible message: The downloaded bundle is missing some required fonts")
         case .fontInstallationFailed(let reason):
-            return "Installation of downloaded fonts failed: \(reason)"
+            return String(format: String(localized: "NerdFontInstaller_InstallationOfDownloadedFontsFailed_FORMAT", defaultValue: "Installation of downloaded fonts failed: %1$@", comment: "Formatted user-facing text in reason"), reason)
         }
     }
 }
@@ -122,12 +122,12 @@ class NerdFontInstaller {
 
     private func askUserForPermissionToDownload() -> Bool {
         let selection = iTermWarning.show(
-            withTitle: "To install the Nerd Font Bundle iTerm2 must first download and install these fonts: \(neededFontPostscriptNames.joined(separator: ", ")).",
-            actions: ["Download", "Cancel"],
+            withTitle: String(format: String(localized: "NerdFontInstaller_ToInstallTheNerdFontBundleI_FORMAT", defaultValue: "To install the Nerd Font Bundle iTerm2 must first download and install these fonts: %1$@.", comment: "Alert title in askUserForPermissionToDownload"), neededFontPostscriptNames.joined(separator: ", ")),
+            actions: [String(localized: "NerdFontInstaller_Download", defaultValue: "Download", comment: "Action title in askUserForPermissionToDownload"), String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Action title in askUserForPermissionToDownload")],
             accessory: nil,
             identifier: "SpecialExceptionsMissingFontsForNerdBundle",
             silenceable: .kiTermWarningTypePersistent,
-            heading: "Download Needed",
+            heading: String(localized: "NerdFontInstaller_DownloadNeeded", defaultValue: "Download Needed", comment: "Alert heading in askUserForPermissionToDownload"),
             window: window)
         return selection == .kiTermWarningSelection0
     }
@@ -267,7 +267,7 @@ class NerdFontInstaller {
             }
             var reason = fatalErrors.compactMap { CFErrorCopyDescription($0) as String? }.joined(separator: ", ")
             if reason.isEmpty {
-                reason = "Unknown errors occurred"
+                reason = String(localized: "NerdFontInstaller_UnknownErrorsOccurred", defaultValue: "Unknown errors occurred", comment: "Text shown in install: Unknown errors occurred")
             }
             RLog("\(reason)")
             DispatchQueue.main.async {

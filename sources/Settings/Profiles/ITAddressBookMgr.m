@@ -546,10 +546,9 @@ iTermPercentage iTermPercentageFromProfile(Profile *profile, iTermWindowType win
 
     NSString *aName;
 
-    aName = NSLocalizedStringFromTableInBundle(@"Default",
-                                               @"iTerm",
-                                               [NSBundle bundleForClass: [self class]],
-                                               @"Terminal Profiles");
+    aName = ITLocalize(@"PROFILE_DEFAULT_NAME",
+                       @"Default",
+                       @"Name assigned to a newly created terminal profile");
     [aDict setObject:aName forKey: KEY_NAME];
     [aDict setObject:kProfilePreferenceCommandTypeLoginShellValue forKey:KEY_CUSTOM_COMMAND];
     [aDict setObject:@"" forKey: KEY_COMMAND_LINE];

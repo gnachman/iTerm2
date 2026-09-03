@@ -109,17 +109,15 @@ final class CompanionPairingController: NSObject {
         alert.alertStyle = .warning
         switch verdict {
         case .peerMustUpgrade:
-            alert.messageText = "Companion Device Needs an Update"
-            alert.informativeText = "The iTerm2 Buddy app on your phone is too old to connect to "
-                + "this version of iTerm2. Update the iPhone app to continue."
+            alert.messageText = String(localized: "CompanionPairingController_CompanionDeviceNeedsAnUpdate", defaultValue: "Companion Device Needs an Update", comment: "Alert title in showVersionIncompatibleAlert")
+            alert.informativeText = String(localized: "CompanionPairingController_TheITerm2BuddyAppOnYour", defaultValue: "The iTerm2 Buddy app on your phone is too old to connect to this version of iTerm2. Update the iPhone app to continue.", comment: "Alert explanatory text in showVersionIncompatibleAlert")
         case .selfMustUpgrade:
-            alert.messageText = "iTerm2 Needs an Update"
-            alert.informativeText = "This version of iTerm2 is too old to connect to the iTerm2 "
-                + "Buddy app on your phone. Update iTerm2 to continue."
+            alert.messageText = String(localized: "CompanionPairingController_ITerm2NeedsAnUpdate", defaultValue: "iTerm2 Needs an Update", comment: "Alert title in showVersionIncompatibleAlert")
+            alert.informativeText = String(localized: "CompanionPairingController_ThisVersionOfITerm2IsToo", defaultValue: "This version of iTerm2 is too old to connect to the iTerm2 Buddy app on your phone. Update iTerm2 to continue.", comment: "Alert explanatory text in showVersionIncompatibleAlert")
         case .compatible:
             return
         }
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: String(localized: "COMMON_OK", defaultValue: "OK", comment: "Button title in showVersionIncompatibleAlert"))
         alert.runModal()
     }
 
@@ -180,14 +178,13 @@ final class CompanionPairingController: NSObject {
                 return
             }
             let alert = NSAlert()
-            alert.messageText = "Re-pair Your Companion Device"
+            alert.messageText = String(localized: "CompanionPairingController_RePairYourCompanionDevice", defaultValue: "Re-pair Your Companion Device", comment: "Alert title in promptToRepairAfterRelayMoveIfNeeded")
             alert.informativeText =
-                "The iTerm2 server has moved to a new address. Your paired "
-                + "iPhone is still registered with the old server. The old "
-                + "server will go away soon. You should re-pair to avoid "
-                + "problems when that happens."
-            alert.addButton(withTitle: "OK")
-            alert.addButton(withTitle: "Later")
+                String(localized: "CompanionPairingController_TheITerm2ServerHasMovedTo",
+                       defaultValue: "The iTerm2 server has moved to a new address. Your paired iPhone is still registered with the old server. The old server will go away soon. You should re-pair to avoid problems when that happens.",
+                       comment: "Alert explaining why the device must be re-paired")
+            alert.addButton(withTitle: String(localized: "COMMON_OK", defaultValue: "OK", comment: "Button title in promptToRepairAfterRelayMoveIfNeeded"))
+            alert.addButton(withTitle: String(localized: "CompanionPairingController_Later", defaultValue: "Later", comment: "Button title in promptToRepairAfterRelayMoveIfNeeded"))
             if alert.runModal() == .alertFirstButtonReturn {
                 CompanionOnboardingRouter.openSettingsOrWizard()
             }
@@ -246,14 +243,14 @@ final class CompanionPairingController: NSObject {
             }
             RLog("Companion pairing incomplete at launch (missing: \(missing.joined(separator: ", "))); prompting to re-pair")
             let alert = NSAlert()
-            alert.messageText = "Re-pair Your Companion Device"
+            alert.messageText = String(localized: "CompanionPairingController_RePairYourCompanionDevice", defaultValue: "Re-pair Your Companion Device", comment: "Alert title in promptToRepairIfPairingIncompleteIfNeeded")
             alert.informativeText =
-                "Your paired iPhone can’t connect because some pairing information "
-                + "stored on this Mac is missing (\(missing.joined(separator: ", "))). "
-                + "This can happen after reinstalling or rebuilding iTerm2, or after a "
-                + "keychain reset. Re-pair to fix it."
-            alert.addButton(withTitle: "Re-pair…")
-            alert.addButton(withTitle: "Later")
+                String(format: String(localized: "CompanionPairingController_YourPairedIPhoneCanTConnect_FORMAT",
+                                      defaultValue: "Your paired iPhone can’t connect because some pairing information stored on this Mac is missing (%1$@). This can happen after reinstalling or rebuilding iTerm2, or after a keychain reset. Re-pair to fix it.",
+                                      comment: "Formatted user-facing text in promptToRepairIfPairingIncompleteIfNeeded"),
+                       missing.joined(separator: ", "))
+            alert.addButton(withTitle: String(localized: "CompanionPairingController_RePair", defaultValue: "Re-pair…", comment: "Button title in promptToRepairIfPairingIncompleteIfNeeded"))
+            alert.addButton(withTitle: String(localized: "CompanionPairingController_Later", defaultValue: "Later", comment: "Button title in promptToRepairIfPairingIncompleteIfNeeded"))
             if alert.runModal() == .alertFirstButtonReturn {
                 CompanionOnboardingRouter.openSettingsOrWizard()
             }
@@ -652,10 +649,12 @@ final class CompanionPairingController: NSObject {
         relayLog("Relay migration: presenting the update-your-iPhone alert")
         DispatchQueue.main.async {
             let alert = NSAlert()
-            alert.messageText = "Update iTerm2 Buddy on your iPhone"
-            alert.informativeText = "iTerm2 has moved to the new relay. For your Mac and iPhone to keep connecting, "
-                + "update the iTerm2 Buddy app on your iPhone to the latest version."
-            alert.addButton(withTitle: "OK")
+            alert.messageText = String(localized: "CompanionPairingController_UpdateITerm2BuddyOnYourI", defaultValue: "Update iTerm2 Buddy on your iPhone", comment: "Alert title in presentRelayMigrationNotice")
+            alert.informativeText =
+                String(localized: "CompanionPairingController_ITerm2HasMovedToTheNew",
+                       defaultValue: "iTerm2 has moved to the new relay. For your Mac and iPhone to keep connecting, update the iTerm2 Buddy app on your iPhone to the latest version.",
+                       comment: "Alert explanatory text in presentRelayMigrationNotice")
+            alert.addButton(withTitle: String(localized: "COMMON_OK", defaultValue: "OK", comment: "Button title in presentRelayMigrationNotice"))
             alert.runModal()
         }
     }
@@ -1128,7 +1127,7 @@ final class CompanionPairingController: NSObject {
     /// attacker never sees the victim's mac, so the victim has no code to type.
     private func runSASConfirmation(expected: String) async -> Bool {
         relayLog("SAS: awaiting code entry")
-        onStatus?("Enter the code shown on your iPhone.")
+        onStatus?(String(localized: "CompanionPairingController_EnterTheCodeShownOnYourI", defaultValue: "Enter the code shown on your iPhone.", comment: "Status text in runSASConfirmation"))
         onSASEntryNeeded?()
         for attempt in 1...3 {
             let typed = await withCheckedContinuation { (continuation: CheckedContinuation<String?, Never>) in
@@ -1143,7 +1142,7 @@ final class CompanionPairingController: NSObject {
                 return true
             }
             relayLog("SAS: mismatch (attempt \(attempt))")
-            onStatus?("That code doesn’t match. Check your iPhone and try again.")
+            onStatus?(String(localized: "CompanionPairingController_ThatCodeDoesnTMatchCheckYour", defaultValue: "That code doesn’t match. Check your iPhone and try again.", comment: "Status text in runSASConfirmation"))
         }
         return false
     }
@@ -1292,7 +1291,7 @@ final class CompanionPairingController: NSObject {
                         // The park succeeded, so any prior quota teardown is behind us:
                         // clear the backoff marker so the UI leaves the quota state.
                         self.relayQuotaBackoffUntil = nil
-                        self.onStatus?("Waiting for your iPhone…")
+                        self.onStatus?(String(localized: "CompanionPairingController_WaitingForYourIPhone", defaultValue: "Waiting for your iPhone…", comment: "Status text in parkAndAccept"))
                         guard self.relayConnectedSince == nil else { return }
                         self.relayConnectedSince = Date()
                         self.notifyPresenceChanged()
@@ -1464,7 +1463,7 @@ final class CompanionPairingController: NSObject {
                         // The displayed QR is dead until the regeneration
                         // fires; say so instead of leaving the stale
                         // "Waiting for your iPhone…" up.
-                        onStatus?("Reconnecting to the relay…")
+                        onStatus?(String(localized: "CompanionPairingController_ReconnectingToTheRelay", defaultValue: "Reconnecting to the relay…", comment: "Status text in acceptLoop"))
                     } else {
                         onFailed?(Self.userFacingDescription(of: error))
                     }
@@ -1529,7 +1528,7 @@ final class CompanionPairingController: NSObject {
                 defer { confirmationInProgress = false }
                 RLog("Companion pairing: connection accepted; starting Noise handshake")
                 relayLog("acceptLoop: connection ACCEPTED (peer joined); starting Noise handshake")
-                onStatus?("Phone connected. Securing the connection…")
+                onStatus?(String(localized: "CompanionPairingController_PhoneConnectedSecuringTheConnection", defaultValue: "Phone connected. Securing the connection…", comment: "Status text in acceptLoop"))
                 let channel = try await NoiseHandshake.perform(
                     role: .responder,
                     transport: transport,
@@ -1567,7 +1566,7 @@ final class CompanionPairingController: NSObject {
                         // photographed QR is invalidated and they must start over.
                         RLog("Companion pairing: SAS not confirmed; regenerating pid")
                         relayLog("acceptLoop: SAS REJECTED; closing and regenerating pid")
-                        onStatus?("Pairing declined.")
+                        onStatus?(String(localized: "CompanionPairingController_PairingDeclined", defaultValue: "Pairing declined.", comment: "Status text in acceptLoop"))
                         await channel.close()
                         regenerateFreshPairing(reason: "sas-rejected")
                         return
@@ -1702,7 +1701,7 @@ final class CompanionPairingController: NSObject {
             } catch {
                 RLog("Companion pairing: handshake failed: \(error); still listening")
                 relayLog("acceptLoop: handshake FAILED (\(error)); closing socket and re-accepting")
-                onStatus?("Waiting for your iPhone…")
+                onStatus?(String(localized: "CompanionPairingController_WaitingForYourIPhone", defaultValue: "Waiting for your iPhone…", comment: "Status text in acceptLoop"))
                 // The parked socket was consumed by the failed handshake; close
                 // it so the next accept() can park a fresh one (and the relay
                 // listener's wait-for-close serialization is released).

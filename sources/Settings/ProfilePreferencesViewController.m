@@ -167,9 +167,9 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
         message = @"A required user interface component is missing or corrupted, yet against all odds the code signature for iTerm2 is valid. Please file a bug at https://iterm2.com/bugs";
     }
     NSAlert *alert = [[NSAlert alloc] init];
-    [alert setMessageText:@"Application Corrupt"];
+    [alert setMessageText:ITLocalize(@"ProfilePreferencesViewController_Alert_ApplicationCorrupt", @"Application Corrupt", @"Alert title in warnAboutCorruptNib")];
     [alert setInformativeText:message];
-    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in warnAboutCorruptNib")];
     [alert setAlertStyle:NSAlertStyleCritical];
     [alert runModal];
     exit(1);
@@ -496,7 +496,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 - (void)profileTableTagsVisibilityDidChange:(ProfileListView *)profileListView {
-    [_toggleTagsButton setTitle:profileListView.tagsVisible ? @"< Tags" : @"Tags >"];
+    [_toggleTagsButton setTitle:profileListView.tagsVisible ? ITLocalize(@"ProfilePreferencesViewController_Tags", @"< Tags", @"Button title in profileTableTagsVisibilityDidChange:") : ITLocalize(@"ProfilePreferencesViewController_Tags_2", @"Tags >", @"Button title in profileTableTagsVisibilityDidChange:")];
 }
 
 #pragma mark - Private
@@ -505,7 +505,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     NSMutableString *question = [NSMutableString stringWithFormat:@"Delete profile %@?",
                                  profile[KEY_NAME]];
     if ([iTermWarning showWarningWithTitle:question
-                                   actions:@[ @"Delete", @"Cancel" ]
+                                   actions:@[ ITLocalize(@"COMMON_DELETE", @"Delete", @"Action title in confirmProfileDeletion:"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in confirmProfileDeletion:") ]
                                 identifier:@"DeleteProfile"
                                silenceable:kiTermWarningTypeTemporarilySilenceable
                                     window:self.view.window] == kiTermWarningSelection0) {
@@ -770,10 +770,10 @@ andEditComponentWithIdentifier:(NSString *)identifier
     }
 
     NSString *title =
-        [NSString stringWithFormat:@"Replace profile “%@” with the current session's settings?",
+        [NSString stringWithFormat:ITLocalize(@"ProfilePreferencesViewController_FormattedFacing_ReplaceProfileWithTheCurrentSessionS_FORMAT", @"Replace profile “%1$@” with the current session's settings?",@"Formatted user-facing text in copyToProfile:(id)sender"),
             [iTermProfilePreferences stringForKey:KEY_NAME inProfile:destination]];
     if ([iTermWarning showWarningWithTitle:title
-                                   actions:@[ @"Replace", @"Cancel" ]
+                                   actions:@[ ITLocalize(@"ProfilePreferencesViewController_Action_Replace", @"Replace", @"Action title in copyToProfile:"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in copyToProfile:") ]
                                  identifier:@"NoSyncReplaceProfileWarning"
                                silenceable:kiTermWarningTypePermanentlySilenceable
                                     window:self.view.window] == kiTermWarningSelection1) {
@@ -930,17 +930,17 @@ andEditComponentWithIdentifier:(NSString *)identifier
             for (NSURL *url in urls) {
                 NSError *error = nil;
                 if (![self tryToImportJSONProfileFromURL:url error:&error]) {
-                    NSArray<NSString *> *actions = @[ @"OK" ];
+                    NSArray<NSString *> *actions = @[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in importJSONProfiles:") ];
                     if (![url isEqual:urls.lastObject]) {
                         actions = [actions arrayByAddingObject:@"Abort"];
                     }
                     iTermWarningSelection selection =
-                    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Import from %@ failed: %@", url.path, error.localizedDescription]
+                    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"ProfilePreferencesViewController_Alert_ImportFromFailed_FORMAT", @"Import from %1$@ failed: %2$@", @"Alert title in importJSONProfiles:"), url.path, error.localizedDescription]
                                                actions:actions
                                              accessory:nil
                                             identifier:@"NoSyncJSONImportFailed"
                                            silenceable:kiTermWarningTypeTemporarilySilenceable
-                                               heading:@"Could not Import Profile"
+                                               heading:ITLocalize(@"ProfilePreferencesViewController_AlertHeading_CouldNotImportProfile", @"Could not Import Profile",@"Alert heading in importJSONProfiles:(id)sender")
                                                 window:self.view.window];
                     if (selection == kiTermWarningSelection1) {
                         return;
@@ -1040,8 +1040,8 @@ andEditComponentWithIdentifier:(NSString *)identifier
         dispatch_async(dispatch_get_main_queue(), ^{
             if (error) {
                 NSAlert *alert = [[NSAlert alloc] init];
-                alert.messageText = @"Error";
-                alert.informativeText = [NSString stringWithFormat:@"Couldn't save to “%@” on %@: %@",
+                alert.messageText = ITLocalize(@"ProfilePreferencesViewController_Alert_Error", @"Error", @"Alert title in saveString:");
+                alert.informativeText = [NSString stringWithFormat:ITLocalize(@"ProfilePreferencesViewController_AlertExplanatory_CouldnTSaveToOn_FORMAT", @"Couldn't save to “%1$@” on %2$@: %3$@", @"Alert explanatory text in saveString:"),
                                          item.filename,
                                          item.host.displayName,
                                          [error localizedDescription]];
@@ -1080,8 +1080,8 @@ andEditComponentWithIdentifier:(NSString *)identifier
     NSString *string = [self jsonForProfile:profile error:&error];
     if (!string) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Error";
-        alert.informativeText = [NSString stringWithFormat:@"Couldn't convert profile to JSON: %@",
+        alert.messageText = ITLocalize(@"ProfilePreferencesViewController_Alert_Error", @"Error", @"Alert title in reallySaveProfile:");
+        alert.informativeText = [NSString stringWithFormat:ITLocalize(@"ProfilePreferencesViewController_AlertExplanatory_CouldnTConvertProfileToJson_FORMAT", @"Couldn't convert profile to JSON: %1$@", @"Alert explanatory text in reallySaveProfile:"),
                                  [error localizedDescription]];
         [alert runModal];
         return;
@@ -1115,8 +1115,8 @@ andEditComponentWithIdentifier:(NSString *)identifier
     NSString *string = [self jsonForAllProfilesWithErrorCount:&errors];
     if (errors) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Error";
-        alert.informativeText = [NSString stringWithFormat:@"Couldn't convert one or more profiles to JSON. Check Console.app for errors."];
+        alert.messageText = ITLocalize(@"ProfilePreferencesViewController_Alert_Error", @"Error", @"Alert title in reallySaveAllProfilesAsJSON:");
+        alert.informativeText = [NSString stringWithFormat:ITLocalize(@"ProfilePreferencesViewController_AlertExplanatory_CouldnTConvertOneOrMoreProfiles", @"Couldn't convert one or more profiles to JSON. Check Console.app for errors.", @"Alert explanatory text in reallySaveAllProfilesAsJSON:")];
         [alert runModal];
         return;
     }
@@ -1215,16 +1215,16 @@ andEditComponentWithIdentifier:(NSString *)identifier
         return;
     }
     NSString *profileName = [profile objectForKey:KEY_NAME] ?: @"(unknown name)";
-    NSString *message = [NSString stringWithFormat:@"The selected profile, “%@”, is a dynamic profile. These are generally only edited by hand.\n\niTerm2 is now able to write changes back to dynamic profiles when they are marked as “rewritable“. Rewriting can cause the order of values to change.", profileName];
+    NSString *message = [NSString stringWithFormat:ITLocalize(@"ProfilePreferencesViewController_FormattedFacing_TheSelectedProfileIsADynamicProfile_FORMAT", @"The selected profile, “%1$@”, is a dynamic profile. These are generally only edited by hand.\n\niTerm2 is now able to write changes back to dynamic profiles when they are marked as “rewritable“. Rewriting can cause the order of values to change.",@"Formatted user-facing text in showDynamicProfileWarning"), profileName];
     // "Reveal in Finder" is a one-time navigation action and shouldn't be remembered.
     iTermWarning *warning = [[iTermWarning alloc] init];
     warning.title = message;
-    warning.actionLabels = @[ @"Mark as Rewritable", @"Reveal in Finder", @"Cancel" ];
+    warning.actionLabels = @[ ITLocalize(@"ProfilePreferencesViewController_MarkAsRewritable", @"Mark as Rewritable", @"Label text in showDynamicProfileWarning"), ITLocalize(@"ProfilePreferencesViewController_RevealInFinder", @"Reveal in Finder", @"Label text in showDynamicProfileWarning"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Label text in showDynamicProfileWarning") ];
     warning.identifier = @"NoSyncDynamicProfileChangeWillBeLost";
     warning.warningType = kiTermWarningTypeTemporarilySilenceable;
-    warning.heading = @"Changes Will Be Lost";
+    warning.heading = ITLocalize(@"ProfilePreferencesViewController_AlertHeading_ChangesWillBeLost", @"Changes Will Be Lost",@"Alert heading in showDynamicProfileWarning");
     warning.window = self.view.window;
-    warning.doNotRememberLabels = @[ @"Reveal in Finder" ];
+    warning.doNotRememberLabels = @[ ITLocalize(@"ProfilePreferencesViewController_RevealInFinder", @"Reveal in Finder", @"Label text in showDynamicProfileWarning") ];
     const iTermWarningSelection selection = [warning runModal];
     switch (selection) {
         case kiTermWarningSelection0:

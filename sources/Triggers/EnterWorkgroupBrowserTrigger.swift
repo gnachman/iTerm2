@@ -63,17 +63,17 @@ class EnterWorkgroupBrowserTrigger: Trigger {
     }
 
     private func displayLabel(forID id: String?) -> String {
-        guard let id, !id.isEmpty else { return "(unset)" }
+        guard let id, !id.isEmpty else { return String(localized: "EnterWorkgroupBrowserTrigger_Unset", defaultValue: "(unset)", comment: "Text shown in displayLabel: (unset)") }
         if let wg = availableWorkgroups.first(where: { $0.uniqueIdentifier == id }) {
-            return wg.name.isEmpty ? "Untitled" : wg.name
+            return wg.name.isEmpty ? String(localized: "EnterWorkgroupBrowserTrigger_Untitled", defaultValue: "Untitled", comment: "Text shown in displayLabel: Untitled") : wg.name
         }
-        return "(missing)"
+        return String(localized: "EnterWorkgroupBrowserTrigger_Missing", defaultValue: "(missing)", comment: "Text shown in displayLabel: (missing)")
     }
 
     override func menuItemsForPoupupButton() -> [AnyHashable: Any]? {
         var dict: [AnyHashable: Any] = [:]
         for wg in availableWorkgroups {
-            let label = wg.name.isEmpty ? "Untitled" : wg.name
+            let label = wg.name.isEmpty ? String(localized: "EnterWorkgroupBrowserTrigger_Untitled", defaultValue: "Untitled", comment: "Label text in menuItemsForPoupupButton") : wg.name
             dict[wg.uniqueIdentifier] = label
         }
         return dict

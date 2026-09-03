@@ -127,12 +127,12 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
         [_presetsPopup.menu addItem:[NSMenuItem separatorItem]];
     }
     NSMenuItem *item;
-    item = [[NSMenuItem alloc] initWithTitle:@"Import…"
+    item = [[NSMenuItem alloc] initWithTitle:ITLocalize(@"KeyMappingViewController_Menu_Import", @"Import…", @"menu item title")
                                       action:@selector(importMenuItem:)
                                keyEquivalent:@""];
     item.target = self;
     [_presetsPopup.menu addItem:item];
-    item = [[NSMenuItem alloc] initWithTitle:@"Export…"
+    item = [[NSMenuItem alloc] initWithTitle:ITLocalize(@"KeyMappingViewController_Menu_Export", @"Export…", @"menu item title")
                                       action:@selector(exportMenuItem:)
                                keyEquivalent:@""];
     item.target = self;
@@ -146,18 +146,18 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
 
 - (void)addViewsToSearchIndex:(iTermPreferencesBaseViewController *)vc {
     [vc addViewToSearchIndex:_addTouchBarItem
-                 displayName:@"Add touch bar item"
+                 displayName:ITLocalize(@"KeyMappingViewController_Facing_AddTouchBarItem", @"Add touch bar item", @"Text shown in addViewsToSearchIndex: Add touch bar item")
                      phrases:@[]
                          key:nil];
     [vc addViewToSearchIndex:_presetsPopup
-                 displayName:@"Key binding presets"
+                 displayName:ITLocalize(@"KeyMappingViewController_Facing_KeyBindingPresets", @"Key binding presets", @"Text shown in addViewsToSearchIndex: Key binding presets")
                      phrases:@[]
                          key:nil];
     [vc addViewToSearchIndex:_touchBarMitigationsButton
-                 displayName:@"Touch bar mitigations"
-                     phrases:@[ @"Haptic feedback for esc key",
-                                @"Key click sound for esc key",
-                                @"Visual indicator for esc key" ]
+                 displayName:ITLocalize(@"KeyMappingViewController_Facing_TouchBarMitigations", @"Touch bar mitigations", @"Text shown in addViewsToSearchIndex: Touch bar mitigations")
+                     phrases:@[ ITLocalize(@"KeyMappingViewController_Facing_HapticFeedbackForEscKey", @"Haptic feedback for esc key", @"Text shown in addViewsToSearchIndex: Haptic feedback for esc key"),
+                                ITLocalize(@"KeyMappingViewController_Facing_KeyClickSoundForEscKey", @"Key click sound for esc key", @"Text shown in addViewsToSearchIndex: Key click sound for esc key"),
+                                ITLocalize(@"KeyMappingViewController_Facing_VisualIndicatorForEscKey", @"Visual indicator for esc key", @"Text shown in addViewsToSearchIndex: Visual indicator for esc key") ]
                          key:_touchBarMitigationsButton.accessibilityIdentifier];
 }
 
@@ -384,7 +384,7 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
                      second:
      ^(iTermTouchbarItem * _Nonnull touchbarItem) {
         iTermKeyBindingAction *action = [iTermKeyBindingAction withDictionary:dict[touchbarItem.identifier]];
-        _editActionWindowController.label = action.label ?: @"[bug]";
+        _editActionWindowController.label = action.label ?: ITLocalize(@"KeyMappingViewController_Bug", @"[bug]", @"placeholder label");
         _editActionWindowController.touchBarItemID = touchbarItem.identifier;
         binding = dict[touchbarItem.identifier];
     }];
@@ -529,12 +529,14 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
 
 - (NSNumber *)removeBeforeLoading:(NSString *)thing {
     const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Remove all key mappings before %@?", thing]
-                               actions:@[ @"Keep", @"Remove", @"Cancel" ]
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"KeyMappingViewController_Alert_RemoveAllKeyMappingsBefore_FORMAT", @"Remove all key mappings before %1$@?", @"Alert title in removeBeforeLoading:"), thing]
+                               actions:@[ ITLocalize(@"KeyMappingViewController_Action_Keep", @"Keep", @"Action title in removeBeforeLoading:"),
+                                          ITLocalize(@"COMMON_REMOVE", @"Remove", @"Title in removeBeforeLoading:"),
+                                          ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in removeBeforeLoading:") ]
                              accessory:nil
                             identifier:@"RemoveExistingGlobalKeyMappingsBeforeLoading"
                            silenceable:kiTermWarningTypePersistent
-                               heading:@"Load Preset"
+                               heading:ITLocalize(@"KeyMappingViewController_AlertHeading_LoadPreset", @"Load Preset", @"Alert heading in removeBeforeLoading:(NSString *)thing")
                                 window:self.view.window];
     switch (selection) {
         case kiTermWarningSelection0:

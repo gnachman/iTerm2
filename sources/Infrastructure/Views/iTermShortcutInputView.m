@@ -153,11 +153,11 @@
     }
     NSString *string;
     if (isFirstResponder && self.hotkeyBeingRecorded.length == 0) {
-        string = @"Recording";
+        string = ITLocalize(@"ShortcutInputView_Facing_Recording", @"Recording", @"Text shown in drawRect:: Recording");
     } else if (isFirstResponder) {
         string = self.hotkeyBeingRecorded;
     } else if (self.stringValue.length == 0) {
-        string = self.isEnabled ? @"Click to Set" : @"";
+        string = self.isEnabled ? ITLocalize(@"ShortcutInputView_Facing_ClickToSet", @"Click to Set", @"Text shown in drawRect:: Click to Set") : @"";
     } else {
         string = self.stringValue;
     }
@@ -233,12 +233,12 @@
                                                      leaderAllowed:_leaderAllowed];
         if (self.purpose && shortcut.smellsAccidental) {
             const iTermWarningSelection selection =
-            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Are you sure you want to use “%@” %@? This looks like a commonly used keystroke.", shortcut.stringValue, self.purpose]
-                                       actions:@[ @"OK", @"Cancel" ]
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"ShortcutInputView_Alert_AreYouSureYouWantToUse_FORMAT", @"Are you sure you want to use “%1$@” %2$@? This looks like a commonly used keystroke.", @"Alert title in handleShortcutEvent:"), shortcut.stringValue, self.purpose]
+                                       actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in handleShortcutEvent:"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in handleShortcutEvent:") ]
                                      accessory:nil
                                     identifier:nil
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"Confirm Shortcut"
+                                       heading:ITLocalize(@"ShortcutInputView_AlertHeading_ConfirmShortcut", @"Confirm Shortcut",@"Alert heading in handleShortcutEvent:(NSEvent *)event")
                                         window:self.window];
             if (selection == kiTermWarningSelection1) {
                 [self revert];

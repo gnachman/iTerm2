@@ -103,7 +103,7 @@
 
     {
         NSImage *image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolMagnifyingglass)
-                                   accessibilityDescription:@"Search icon"];
+                                   accessibilityDescription:ITLocalize(@"OPEN_QUICKLY_SEARCH_ICON", @"Search icon", @"Accessibility label for the Open Quickly search icon")];
         NSImageSymbolConfiguration *config =
         [NSImageSymbolConfiguration configurationWithPointSize:21
                                                         weight:NSFontWeightRegular];
@@ -114,7 +114,7 @@
         [NSImageSymbolConfiguration configurationWithPointSize:14
                                                         weight:NSFontWeightRegular];
         NSImage *image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolXmarkCircleFill)
-                                   accessibilityDescription:@"Clear search query"];
+                                   accessibilityDescription:ITLocalize(@"OPEN_QUICKLY_CLEAR_SEARCH_QUERY", @"Clear search query", @"Accessibility label for the button that clears the Open Quickly query")];
         [_xButton setImage:[image imageWithSymbolConfiguration:config]];
         NSRect frame = _xButton.frame;
         const CGFloat delta = 2;
@@ -289,9 +289,9 @@
     PTYTab *tab = (PTYTab *)session.delegate;
     NSString *windowTitle = tab.realParentWindow.window.title ?: @"";
     if (windowTitle.length == 0) {
-        return [NSString stringWithFormat:@"Tab %d", tab.objectCount];
+        return [NSString stringWithFormat:ITLocalize(@"OpenQuicklyWindowController_Tab_FORMAT", @"Tab %1$d",@"Formatted user-facing text in previewDetailForSession:(PTYSession *)session"), tab.objectCount];
     }
-    return [NSString stringWithFormat:@"Tab %d · %@", tab.objectCount, windowTitle];
+    return [NSString stringWithFormat:ITLocalize(@"OpenQuicklyWindowController_Tab_FORMAT_2", @"Tab %1$d · %2$@",@"Formatted user-facing text in previewDetailForSession:(PTYSession *)session"), tab.objectCount, windowTitle];
 }
 
 - (void)refreshPreview {
@@ -489,13 +489,13 @@
                     if (error) {
                         [iTermAPIHelper reportFunctionCallError:error
                                                   forInvocation:item.identifier
-                                                         origin:@"Open Quickly"
+                                                         origin:ITLocalize(@"OPEN_QUICKLY_ORIGIN", @"Open Quickly", @"Origin label for errors reported from the Open Quickly window")
                                                          window:nil];
                     } else {
                         NSAlert *alert = [[NSAlert alloc] init];
-                        [alert setMessageText:@"Function Call Result"];
+                        [alert setMessageText:ITLocalize(@"OPEN_QUICKLY_FUNCTION_CALL_RESULT", @"Function Call Result", @"Alert title showing the result of a script function called from Open Quickly")];
                         [alert setInformativeText:[NSString stringWithFormat:@"%@ returned:\n%@", item.identifier, [value description]]];
-                        [alert addButtonWithTitle:@"OK"];
+                        [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Standard OK button title")];
                         [alert runModal];
                     }
                 }];
@@ -552,7 +552,7 @@
     result.imageView.image = item.icon;
 
     result.textField.attributedStringValue =
-        item.title ?: [[NSAttributedString alloc] initWithString:@"Untitled" attributes:@{}];
+        item.title ?: [[NSAttributedString alloc] initWithString:ITLocalize(@"OpenQuicklyWindowController_Untitled", @"Untitled", @"Title in tableView:") attributes:@{}];
     [result.textField.cell setLineBreakMode:NSLineBreakByTruncatingTail];
     if (item.detail) {
         result.detailTextField.attributedStringValue = item.detail;

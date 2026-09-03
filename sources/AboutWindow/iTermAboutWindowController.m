@@ -196,21 +196,21 @@ static const CGFloat kSponsorRowY = 170.0;
     if (self) {
         NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
         NSString *const versionNumber = myDict[(NSString *)kCFBundleVersionKey];
-        NSString *versionString = [NSString stringWithFormat: @"Build %@\n\n", versionNumber];
+        NSString *versionString = [NSString stringWithFormat:ITLocalize(@"AboutWindowController_FormattedFacing_BuildNN_FORMAT", @"Build %1$@\n\n",@"Formatted user-facing text in init"), versionNumber];
         NSAttributedString *whatsNew = nil;
         if ([versionNumber hasPrefix:@"3.7."] || [versionString isEqualToString:@"unknown"]) {
             whatsNew = [self attributedStringWithLinkToURL:iTermAboutWindowControllerWhatsNewURLString
-                                                     title:@"What’s New in 3.7?\n"];
+                                                     title:ITLocalize(@"AboutWindowController_WhatSNewIn37N", @"What’s New in 3.7?\n", @"Title in init")];
         }
 
         NSAttributedString *webAString = [self attributedStringWithLinkToURL:@"https://iterm2.com/"
-                                                                       title:@"Home Page"];
+                                                                       title:ITLocalize(@"AboutWindowController_HomePage", @"Home Page", @"Title in init")];
         NSAttributedString *bugsAString =
                 [self attributedStringWithLinkToURL:@"https://iterm2.com/bugs"
-                                              title:@"Report a bug"];
+                                              title:ITLocalize(@"AboutWindowController_ReportABug", @"Report a bug", @"Title in init")];
         NSAttributedString *creditsAString =
                 [self attributedStringWithLinkToURL:@"https://iterm2.com/credits"
-                                              title:@"Credits"];
+                                              title:ITLocalize(@"AboutWindowController_Credits", @"Credits", @"Title in init")];
 
         // Force IBOutlets to be bound by creating window.
         [self window];
@@ -284,7 +284,7 @@ static const CGFloat kSponsorRowY = 170.0;
 }
 
 - (NSAttributedString *)defaultPatronsString {
-    NSString *string = [NSString stringWithFormat:@"Loading supporters…"];
+    NSString *string = ITLocalize(@"AboutWindowController_Facing_LoadingSupporters", @"Loading supporters…", @"Text shown in defaultPatronsString: Loading supporters…");
     NSMutableAttributedString *attributedString =
         [[NSMutableAttributedString alloc] initWithString:string
                                                attributes:self.attributes];
@@ -303,7 +303,7 @@ static const CGFloat kSponsorRowY = 170.0;
 
 - (void)setPatrons:(NSArray *)patronNames {
     if (!patronNames.count) {
-        [self setPatronsString:[[NSAttributedString alloc] initWithString:@"Error loading patrons :("
+        [self setPatronsString:[[NSAttributedString alloc] initWithString:ITLocalize(@"AboutWindowController_Facing_ErrorLoadingPatrons", @"Error loading patrons :(", @"Text shown in setPatrons:: Error loading patrons :(")
                                                                 attributes:[self attributes]]
                        animate:NO];
         return;

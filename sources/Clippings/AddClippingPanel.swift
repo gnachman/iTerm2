@@ -25,7 +25,7 @@ class AddClippingPanel: NSObject {
                             styleMask: [.titled],
                             backing: .buffered,
                             defer: true)
-        panel.title = "New Clipping"
+        panel.title = String(localized: "AddClippingPanel_NewClipping", defaultValue: "New Clipping", comment: "Title in present")
         panel.isFloatingPanel = false
         let content = NSView(frame: panel.contentRect(forFrameRect: panel.frame))
         content.autoresizingMask = [.width, .height]
@@ -61,7 +61,7 @@ class AddClippingPanel: NSObject {
 
         let buttonH: CGFloat = 32
         let buttonY: CGFloat = pad
-        let cancel = NSButton(title: "Cancel", target: self, action: #selector(cancelClicked))
+        let cancel = NSButton(title: String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Button title in buildContent"), target: self, action: #selector(cancelClicked))
         cancel.bezelStyle = .rounded
         cancel.keyEquivalent = "\u{1b}"
         cancel.sizeToFit()
@@ -73,7 +73,7 @@ class AddClippingPanel: NSObject {
         cancel.autoresizingMask = [.minXMargin, .maxYMargin]
         container.addSubview(cancel)
 
-        let add = NSButton(title: "Add", target: self, action: #selector(addClicked))
+        let add = NSButton(title: String(localized: "COMMON_ADD", defaultValue: "Add", comment: "Button title in buildContent"), target: self, action: #selector(addClicked))
         add.bezelStyle = .rounded
         add.keyEquivalent = "\r"
         add.sizeToFit()

@@ -45,7 +45,7 @@ class iTermBookmarkTagEditorWindowController: NSWindowController {
                            styleMask: [.titled, .closable],
                            backing: .buffered,
                            defer: false)
-        panel.title = "Edit Bookmark"
+        panel.title = String(localized: "BookmarkTagEditorWindowController_EditBookmark", defaultValue: "Edit Bookmark", comment: "Title in bookmarkTagEditorWillClose")
         panel.isFloatingPanel = true
         panel.level = .modalPanel
         panel.center()
@@ -64,7 +64,7 @@ class iTermBookmarkTagEditorWindowController: NSWindowController {
         guard let contentView = window?.contentView else { return }
 
         // Create and configure UI elements
-        titleLabel = NSTextField(labelWithString: "Title:")
+        titleLabel = NSTextField(labelWithString: String(localized: "BookmarkTagEditorWindowController_Title", defaultValue: "Title:", comment: "Title in setupUI"))
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
 
         let titleValueLabel = NSTextField(labelWithString: bookmarkTitle)
@@ -73,7 +73,7 @@ class iTermBookmarkTagEditorWindowController: NSWindowController {
         titleValueLabel.textColor = .secondaryLabelColor
         titleValueLabel.lineBreakMode = .byTruncatingTail
 
-        urlLabel = NSTextField(labelWithString: "URL:")
+        urlLabel = NSTextField(labelWithString: String(localized: "BookmarkTagEditorWindowController_Url", defaultValue: "URL:", comment: "Label text in setupUI"))
         urlLabel.translatesAutoresizingMaskIntoConstraints = false
 
         let urlValueLabel = NSTextField(labelWithString: bookmarkURL)
@@ -82,25 +82,25 @@ class iTermBookmarkTagEditorWindowController: NSWindowController {
         urlValueLabel.textColor = .secondaryLabelColor
         urlValueLabel.lineBreakMode = .byTruncatingTail
 
-        let tagsLabel = NSTextField(labelWithString: "Tags:")
+        let tagsLabel = NSTextField(labelWithString: String(localized: "BookmarkTagEditorWindowController_Tags", defaultValue: "Tags:", comment: "Label text in setupUI"))
         tagsLabel.translatesAutoresizingMaskIntoConstraints = false
 
         tagsTokenField = NSTokenField()
         tagsTokenField.translatesAutoresizingMaskIntoConstraints = false
         tagsTokenField.delegate = self
-        tagsTokenField.placeholderString = "Enter tags..."
+        tagsTokenField.placeholderString = String(localized: "BookmarkTagEditorWindowController_EnterTags", defaultValue: "Enter tags...", comment: "Placeholder text in setupUI")
 
         // Buttons
-        deleteButton = NSButton(title: "Delete Bookmark", target: self, action: #selector(deleteBookmark))
+        deleteButton = NSButton(title: String(localized: "BookmarkTagEditorWindowController_DeleteBookmark", defaultValue: "Delete Bookmark", comment: "Delete Bookmark button title in setupUI"), target: self, action: #selector(deleteBookmark))
         deleteButton.translatesAutoresizingMaskIntoConstraints = false
         deleteButton.bezelStyle = .rounded
 
-        cancelButton = NSButton(title: "Cancel", target: self, action: #selector(cancel))
+        cancelButton = NSButton(title: String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Cancel bookmark editing button title in setupUI"), target: self, action: #selector(cancel))
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
         cancelButton.bezelStyle = .rounded
         cancelButton.keyEquivalent = "\u{1b}" // Escape key
 
-        saveButton = NSButton(title: "Save", target: self, action: #selector(saveChanges))
+        saveButton = NSButton(title: String(localized: "COMMON_SAVE", defaultValue: "Save", comment: "Save bookmark button title in setupUI"), target: self, action: #selector(saveChanges))
         saveButton.translatesAutoresizingMaskIntoConstraints = false
         saveButton.bezelStyle = .rounded
         saveButton.keyEquivalent = "\r"
@@ -221,10 +221,10 @@ class iTermBookmarkTagEditorWindowController: NSWindowController {
 
     @objc private func deleteBookmark() {
         let alert = NSAlert()
-        alert.messageText = "Delete Bookmark"
-        alert.informativeText = "Are you sure you want to delete this bookmark?"
-        alert.addButton(withTitle: "Delete")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = String(localized: "BookmarkTagEditorWindowController_DeleteBookmark", defaultValue: "Delete Bookmark", comment: "Alert title in deleteBookmark")
+        alert.informativeText = String(localized: "BookmarkTagEditorWindowController_AreYouSureYouWantToDelete", defaultValue: "Are you sure you want to delete this bookmark?", comment: "Alert explanatory text in deleteBookmark")
+        alert.addButton(withTitle: String(localized: "COMMON_DELETE", defaultValue: "Delete", comment: "Button title in deleteBookmark"))
+        alert.addButton(withTitle: String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Button title in deleteBookmark"))
         alert.alertStyle = .warning
 
         alert.beginSheetModal(for: window!) { response in
@@ -243,7 +243,7 @@ class iTermBookmarkTagEditorWindowController: NSWindowController {
 
         await MainActor.run {
             if success {
-                ToastWindowController.showToast(withMessage: "Bookmark Deleted")
+                ToastWindowController.showToast(withMessage: String(localized: "BOOKMARK_TAG_EDITOR_BOOKMARK_DELETED_TOAST", defaultValue: "Bookmark Deleted", comment: "Toast confirming a bookmark was deleted"))
             }
             self.close()
         }

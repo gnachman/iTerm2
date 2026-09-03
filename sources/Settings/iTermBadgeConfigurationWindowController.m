@@ -64,7 +64,7 @@ typedef struct {
         _badge.delegate = self;
         _badge.fillColor = [NSColor blackColor];
         _badge.backgroundColor = [NSColor redColor];
-        _badge.stringValue = @"Lorem ipsum dolor sit amet";
+        _badge.stringValue = ITLocalize(@"BadgeConfigurationWindowController_Facing_LoremIpsumDolorSitAmet", @"Lorem ipsum dolor sit amet", @"Text shown in initWithCoder:: Lorem ipsum dolor sit amet");
     }
     return self;
 }

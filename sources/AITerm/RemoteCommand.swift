@@ -245,9 +245,9 @@ struct RemoteCommand: Codable {
             var autopopulationTitle: String? {
                 switch self {
                 case .checkTerminalState:
-                    "Provide Terminal State Automatically"
+                    String(localized: "RemoteCommand_ProvideTerminalStateAutomatically", defaultValue: "Provide Terminal State Automatically", comment: "Text shown in encode: Provide Terminal State Automatically")
                 case .viewContents:
-                    "Provide Screen Contents Automatically"
+                    String(localized: "RemoteCommand_ProvideScreenContentsAutomatically", defaultValue: "Provide Screen Contents Automatically", comment: "Text shown in encode: Provide Screen Contents Automatically")
                 case .runCommands, .writeToClipboard, .controlTerminal, .viewManpages,
                         .writeToFilesystem, .actInWebBrowser:
                     nil
@@ -257,9 +257,9 @@ struct RemoteCommand: Codable {
             var autopopulationWarningText: String? {
                 switch self {
                 case .checkTerminalState:
-                    "By setting this permission to “Always Allow”, terminal state will be sent automatically on every message you send in this chat.\nThis includes:\n • The current or last command and its exit status\n •The window size\n • Your shell\n • The current working directory, username, and hostname."
+                    String(localized: "RemoteCommand_BySettingThisPermissionToAlwaysAllowTerminalState", defaultValue: "By setting this permission to “Always Allow”, terminal state will be sent automatically on every message you send in this chat.\nThis includes:\n • The current or last command and its exit status\n •The window size\n • Your shell\n • The current working directory, username, and hostname.", comment: "Permission explanation for automatically providing terminal state")
                 case .viewContents:
-                    "By setting this permission to “Always Allow”, the current visible screen of your terminal session will be sent automatically on every message you send in this chat."
+                    String(localized: "RemoteCommand_BySettingThisPermissionToAlwaysAllowVisibleScreen", defaultValue: "By setting this permission to “Always Allow”, the current visible screen of your terminal session will be sent automatically on every message you send in this chat.", comment: "Permission explanation for automatically providing the visible screen")
                 case .runCommands, .writeToClipboard, .controlTerminal, .viewManpages,
                         .writeToFilesystem, .actInWebBrowser:
                     nil
@@ -267,7 +267,7 @@ struct RemoteCommand: Codable {
             }
 
             var regularTitle: String {
-                "AI can \(rawValue)"
+                String(format: String(localized: "RemoteCommand_AiCan_FORMAT", defaultValue: "AI can %1$@", comment: "Formatted user-facing text in encode"), rawValue)
             }
 
             var autopopulatedWhenAlways: Bool {

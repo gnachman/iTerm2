@@ -40,7 +40,7 @@ class MiniFilterField: iTermMiniSearchField {
     private func changeIcon(_ cell: NSButtonCell) {
         cell.setButtonType(.toggle)
         let filterImage = NSImage(systemSymbolName: SFSymbol.lineHorizontal3DecreaseCircle.rawValue,
-                                  accessibilityDescription: "Filter")
+                                  accessibilityDescription: String(localized: "MiniFilterViewController_Filter", defaultValue: "Filter", comment: "Descriptive text in changeIcon"))
         let tinted = iconColor.map { filterImage?.it_image(withTintColor: $0) } ?? filterImage
         cell.image = tinted
         cell.alternateImage = tinted

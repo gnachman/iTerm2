@@ -125,28 +125,28 @@ class iTermJobTerminationMonitor: NSObject {
         let alert = NSAlert()
         if terminations.count == 1 {
             let termination = terminations[0]
-            alert.messageText = "Job Terminated"
+            alert.messageText = String(localized: "JobTerminationMonitor_JobTerminated", defaultValue: "Job Terminated", comment: "Alert title in showAlert")
             alert.informativeText = sentence(for: termination)
         } else {
-            alert.messageText = "Jobs Terminated"
+            alert.messageText = String(localized: "JobTerminationMonitor_JobsTerminated", defaultValue: "Jobs Terminated", comment: "Alert title in showAlert")
             alert.informativeText = terminations.map { "• " + sentence(for: $0) }.joined(separator: "\n")
         }
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: String(localized: "COMMON_OK", defaultValue: "OK", comment: "Button title in showAlert"))
         alert.runModal()
     }
 
     private func sentence(for termination: (name: String, pid: pid_t)) -> String {
-        let displayName = termination.name.isEmpty ? "(unknown)" : termination.name
-        return "The job \(displayName) with process ID \(termination.pid) has terminated."
+        let displayName = termination.name.isEmpty ? String(localized: "JobTerminationMonitor_Unknown", defaultValue: "(unknown)", comment: "Text shown in sentence: (unknown)") : termination.name
+        return String(format: String(localized: "JobTerminationMonitor_TheJobWithProcessIdHasTerminated_FORMAT", defaultValue: "The job %1$@ with process ID %2$@ has terminated.", comment: "Formatted user-facing text in sentence"), displayName, String(termination.pid))
     }
 
     private func showCannotMonitorAlert(pid: pid_t, name: String?) {
-        let displayName = (name?.isEmpty == false) ? name! : "(unknown)"
+        let displayName = (name?.isEmpty == false) ? name! : String(localized: "JobTerminationMonitor_Unknown", defaultValue: "(unknown)", comment: "Text shown in showCannotMonitorAlert: (unknown)")
         NSApp.activate(ignoringOtherApps: true)
         let alert = NSAlert()
-        alert.messageText = "Cannot Notify on Termination"
-        alert.informativeText = "iTerm2 cannot watch the job \(displayName) with process ID \(pid) because it has already terminated."
-        alert.addButton(withTitle: "OK")
+        alert.messageText = String(localized: "JobTerminationMonitor_CannotNotifyOnTermination", defaultValue: "Cannot Notify on Termination", comment: "Alert title in showCannotMonitorAlert")
+        alert.informativeText = String(format: String(localized: "JobTerminationMonitor_ITerm2CannotWatchTheJobWith_FORMAT", defaultValue: "iTerm2 cannot watch the job %1$@ with process ID %2$@ because it has already terminated.", comment: "Alert explanatory text in showCannotMonitorAlert"), displayName, String(pid))
+        alert.addButton(withTitle: String(localized: "COMMON_OK", defaultValue: "OK", comment: "Button title in showCannotMonitorAlert"))
         alert.runModal()
     }
 }

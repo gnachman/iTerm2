@@ -680,7 +680,9 @@ extension PTYTextView: ExternalSearchResultsController {
         let firstMaxLength = first.length - first.number(ofTrailingEmptyCellsWhereSpaceIsEmpty: true)
         let lastMaxLength = last.length - last.number(ofTrailingEmptyCellsWhereSpaceIsEmpty: true)
 
-        var mid = " …\(count) line\(count > 1 ? "s" : "")… "
+        var mid = count == 1
+            ? String(localized: "FOLDED_REGION_ONE_LINE", defaultValue: " …1 line… ", comment: "Folded terminal region summary for one line")
+            : String(format: String(localized: "FOLDED_REGION_MANY_LINES_FORMAT", defaultValue: " …%1$d lines… ", comment: "Folded terminal region summary naming the number of lines"), count)
         if mid.utf16.count + 10 > length {
             mid = "…"
         }
@@ -1216,7 +1218,9 @@ extension PTYTextView {
 
         // Line count
         let lineCount = Int(range.upperBound - range.lowerBound)
-        parts.append("…\(lineCount) line\(lineCount > 1 ? "s" : "")…")
+        parts.append(lineCount == 1
+            ? String(localized: "FOLDED_ALL_ONE_LINE", defaultValue: "…1 line…", comment: "Folded terminal placeholder for one line")
+            : String(format: String(localized: "FOLDED_ALL_MANY_LINES_FORMAT", defaultValue: "…%1$d lines…", comment: "Folded terminal placeholder naming the number of lines"), lineCount))
 
         // Last command if different
         if let lastCmd = lastMark?.firstLineOfCommand,

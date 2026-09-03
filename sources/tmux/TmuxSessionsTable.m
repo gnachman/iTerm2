@@ -225,9 +225,9 @@ extern NSString *kWindowPasteboardType;
 - (NSString *)nameForNewSessionWithNumber:(int)n
 {
     if (n == 0) {
-        return @"New Session";
+        return ITLocalize(@"TmuxSessionsTable_Facing_NewSession", @"New Session", @"Text shown in nameForNewSessionWithNumber:: New Session");
     } else {
-        return [NSString stringWithFormat:@"New Session %d", n + 1];
+        return [NSString stringWithFormat:ITLocalize(@"TmuxSessionsTable_FormattedFacing_NewSession_FORMAT", @"New Session %1$d",@"Formatted user-facing text in nameForNewSessionWithNumber:(int)n"), n + 1];
     }
 }
 

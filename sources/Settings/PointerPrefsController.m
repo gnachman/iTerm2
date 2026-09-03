@@ -300,15 +300,15 @@ typedef enum {
 {
     switch (n) {
         case 1:
-            return @"single click";
+            return ITLocalize(@"PointerPrefsController_Facing_SingleClick", @"single click", @"Text shown in localizedNumClicks:: single click");
         case 2:
-            return @"double click";
+            return ITLocalize(@"PointerPrefsController_Facing_DoubleClick", @"double click", @"Text shown in localizedNumClicks:: double click");
         case 3:
-            return @"triple click";
+            return ITLocalize(@"PointerPrefsController_Facing_TripleClick", @"triple click", @"Text shown in localizedNumClicks:: triple click");
         case 4:
-            return @"quad click";
+            return ITLocalize(@"PointerPrefsController_Facing_QuadClick", @"quad click", @"Text shown in localizedNumClicks:: quad click");
         default:
-            return @"(error)";  // shouldn't happen
+            return ITLocalize(@"PointerPrefsController_Facing_Error", @"(error)", @"Text shown in localizedNumClicks:: (error)");  // shouldn't happen
     }
 }
 
@@ -316,26 +316,26 @@ typedef enum {
 {
     switch (n) {
         case -1:
-            return @"Unknown button";
+            return ITLocalize(@"PointerPrefsController_Facing_UnknownButton", @"Unknown button", @"Text shown in localizedButtonNameForButtonNumber:: Unknown button");
         case kLeftButton:
-            return @"Left button";
+            return ITLocalize(@"PointerPrefsController_Facing_LeftButton", @"Left button", @"Text shown in localizedButtonNameForButtonNumber:: Left button");
         case kRightButton:
-            return @"Right button";
+            return ITLocalize(@"PointerPrefsController_Facing_RightButton", @"Right button", @"Text shown in localizedButtonNameForButtonNumber:: Right button");
         case kMiddleButton:
-            return @"Middle button";
+            return ITLocalize(@"PointerPrefsController_Facing_MiddleButton", @"Middle button", @"Text shown in localizedButtonNameForButtonNumber:: Middle button");
         default:
-            return [NSString stringWithFormat:@"Button #%d", n+1];
+            return [NSString stringWithFormat:ITLocalize(@"PointerPrefsController_FormattedFacing_Button_FORMAT", @"Button #%1$d",@"Formatted user-facing text in localizedButtonNameForButtonNumber:(int)n"), n+1];
     }
 }
 
 + (NSDictionary *)gestureNamesDict
 {
-    NSDictionary *names = @{ kThreeFingerClickGesture: @"Three-finger Tap",
-                             kThreeFingerSwipeRight: @"Three-finger Swipe Right",
-                             kThreeFingerSwipeLeft: @"Three-finger Swipe Left",
-                             kThreeFingerSwipeUp: @"Three-finger Swipe Up",
-                             kThreeFingerSwipeDown: @"Three-finger Swipe Down",
-                             kForceTouchSingleClick: @"Force Touch Single Click" };
+    NSDictionary *names = @{ kThreeFingerClickGesture: ITLocalize(@"PointerPrefsController_Facing_ThreeFingerTap", @"Three-finger Tap", @"Text shown in gestureNamesDict: Three-finger Tap"),
+                             kThreeFingerSwipeRight: ITLocalize(@"PointerPrefsController_Facing_ThreeFingerSwipeRight", @"Three-finger Swipe Right", @"Text shown in gestureNamesDict: Three-finger Swipe Right"),
+                             kThreeFingerSwipeLeft: ITLocalize(@"PointerPrefsController_Facing_ThreeFingerSwipeLeft", @"Three-finger Swipe Left", @"Text shown in gestureNamesDict: Three-finger Swipe Left"),
+                             kThreeFingerSwipeUp: ITLocalize(@"PointerPrefsController_Facing_ThreeFingerSwipeUp", @"Three-finger Swipe Up", @"Text shown in gestureNamesDict: Three-finger Swipe Up"),
+                             kThreeFingerSwipeDown: ITLocalize(@"PointerPrefsController_Facing_ThreeFingerSwipeDown", @"Three-finger Swipe Down", @"Text shown in gestureNamesDict: Three-finger Swipe Down"),
+                             kForceTouchSingleClick: ITLocalize(@"PointerPrefsController_Facing_ForceTouchSingleClick", @"Force Touch Single Click", @"Text shown in gestureNamesDict: Force Touch Single Click") };
     return names;
 }
 
@@ -376,7 +376,7 @@ typedef enum {
             return action;
         }
     }
-    return [NSString stringWithFormat:@"Bad name: %@", localizedName];
+    return [NSString stringWithFormat:ITLocalize(@"PointerPrefsController_FormattedFacing_BadName_FORMAT", @"Bad name: %1$@",@"Formatted user-facing text in actionWithLocalizedName:(NSString *)localizedName"), localizedName];
 }
 
 + (NSString *)gestureIdentifierForTag:(int)tag
@@ -395,7 +395,7 @@ typedef enum {
         case kForceTouchSingleClickTag:
             return kForceTouchSingleClick;
         default:
-            return [NSString stringWithFormat:@"Bad tag %d", tag];
+            return [NSString stringWithFormat:ITLocalize(@"PointerPrefsController_FormattedFacing_BadTag_FORMAT", @"Bad tag %1$d",@"Formatted user-facing text in gestureIdentifierForTag:(int)tag"), tag];
     }
 }
 
@@ -406,39 +406,39 @@ typedef enum {
 + (NSDictionary *)localizedActionMap
 {
     NSDictionary *names = [NSDictionary dictionaryWithObjectsAndKeys:
-                           @"Ignore", kIgnoreAction,
-                           @"Invoke Script Function…", kInvokeScriptFunction,
-                           @"Paste from Clipboard…", kPasteFromClipboardPointerAction,
-                           @"Paste from Selection…", kPasteFromSelectionPointerAction,
-                           @"Extend Selection", kExtendSelectionPointerAction,
-                           @"Open URL/Semantic History", kOpenTargetPointerAction,
-                           @"Open URL in background", kOpenTargetInBackgroundPointerAction,
-                           @"Smart Selection", kSmartSelectionPointerAction,
-                           @"Smart Selection Ignoring Newlines", kSmartSelectionIgnoringNewlinesPointerAction,
-                           @"Open Context Menu", kContextMenuPointerAction,
-                           @"Next Tab", kNextTabPointerAction,
-                           @"Previous Tab", kPrevTabPointerAction,
-                           @"Next Window", kNextWindowPointerAction,
-                           @"Previous Window", kPrevWindowPointerAction,
-                           @"Move Pane", kMovePanePointerAction,
-                           @"Send Escape Sequence…", kSendEscapeSequencePointerAction,
-                           @"Send Hex Code…", kSendHexCodePointerAction,
-                           @"Send Text…", kSendTextPointerAction,
-                           @"Select Pane Left", kSelectPaneLeftPointerAction,
-                           @"Select Pane Right", kSelectPaneRightPointerAction,
-                           @"Select Pane Above", kSelectPaneAbovePointerAction,
-                           @"Select Pane Below", kSelectPaneBelowPointerAction,
-                           @"New Window With Profile…", kNewWindowWithProfilePointerAction,
-                           @"New Tab With Profile…", kNewWindowWithProfilePointerAction,
-                           @"New Tab With Profile…", kNewTabWithProfilePointerAction,
-                           @"New Vertical Split With Profile…", kNewVerticalSplitWithProfilePointerAction,
-                           @"New Horizontal Split With Profile…", kNewHorizontalSplitWithProfilePointerAction,
-                           @"QuickLook", kQuickLookAction,
-                           @"Select Menu Item", kSelectMenuItemPointerAction,
-                           @"Copy Link Address", kCopyLinkAddressPointerAction,
-                           @"Select Next Pane", kSelectNextPanePointerAction,
-                           @"Select Previous Pane", kSelectPreviousPanePointerAction,
-                           @"Copy or Paste", kCopyOrPastePointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_Ignore", @"Ignore", @"Text shown in localizedActionMap: Ignore"), kIgnoreAction,
+                           ITLocalize(@"PointerPrefsController_Facing_InvokeScriptFunction", @"Invoke Script Function…", @"Text shown in localizedActionMap: Invoke Script Function…"), kInvokeScriptFunction,
+                           ITLocalize(@"PointerPrefsController_Facing_PasteFromClipboard", @"Paste from Clipboard…", @"Text shown in localizedActionMap: Paste from Clipboard…"), kPasteFromClipboardPointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_PasteFromSelection", @"Paste from Selection…", @"Text shown in localizedActionMap: Paste from Selection…"), kPasteFromSelectionPointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_ExtendSelection", @"Extend Selection", @"Text shown in localizedActionMap: Extend Selection"), kExtendSelectionPointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_OpenUrlSemanticHistory", @"Open URL/Semantic History", @"Text shown in localizedActionMap: Open URL/Semantic History"), kOpenTargetPointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_OpenUrlInBackground", @"Open URL in background", @"Text shown in localizedActionMap: Open URL in background"), kOpenTargetInBackgroundPointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_SmartSelection", @"Smart Selection", @"Text shown in localizedActionMap: Smart Selection"), kSmartSelectionPointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_SmartSelectionIgnoringNewlines", @"Smart Selection Ignoring Newlines", @"Text shown in localizedActionMap: Smart Selection Ignoring Newlines"), kSmartSelectionIgnoringNewlinesPointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_OpenContextMenu", @"Open Context Menu", @"Text shown in localizedActionMap: Open Context Menu"), kContextMenuPointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_NextTab", @"Next Tab", @"Text shown in localizedActionMap: Next Tab"), kNextTabPointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_PreviousTab", @"Previous Tab", @"Text shown in localizedActionMap: Previous Tab"), kPrevTabPointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_NextWindow", @"Next Window", @"Text shown in localizedActionMap: Next Window"), kNextWindowPointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_PreviousWindow", @"Previous Window", @"Text shown in localizedActionMap: Previous Window"), kPrevWindowPointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_MovePane", @"Move Pane", @"Text shown in localizedActionMap: Move Pane"), kMovePanePointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_SendEscapeSequence", @"Send Escape Sequence…", @"Text shown in localizedActionMap: Send Escape Sequence…"), kSendEscapeSequencePointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_SendHexCode", @"Send Hex Code…", @"Text shown in localizedActionMap: Send Hex Code…"), kSendHexCodePointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_SendText", @"Send Text…", @"Text shown in localizedActionMap: Send Text…"), kSendTextPointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_SelectPaneLeft", @"Select Pane Left", @"Text shown in localizedActionMap: Select Pane Left"), kSelectPaneLeftPointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_SelectPaneRight", @"Select Pane Right", @"Text shown in localizedActionMap: Select Pane Right"), kSelectPaneRightPointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_SelectPaneAbove", @"Select Pane Above", @"Text shown in localizedActionMap: Select Pane Above"), kSelectPaneAbovePointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_SelectPaneBelow", @"Select Pane Below", @"Text shown in localizedActionMap: Select Pane Below"), kSelectPaneBelowPointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_NewWindowWithProfile", @"New Window With Profile…", @"Text shown in localizedActionMap: New Window With Profile…"), kNewWindowWithProfilePointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_NewTabWithProfile", @"New Tab With Profile…", @"Text shown in localizedActionMap: New Tab With Profile…"), kNewWindowWithProfilePointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_NewTabWithProfile", @"New Tab With Profile…", @"Text shown in localizedActionMap: New Tab With Profile…"), kNewTabWithProfilePointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_NewVerticalSplitWithProfile", @"New Vertical Split With Profile…", @"Text shown in localizedActionMap: New Vertical Split With Profile…"), kNewVerticalSplitWithProfilePointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_NewHorizontalSplitWithProfile", @"New Horizontal Split With Profile…", @"Text shown in localizedActionMap: New Horizontal Split With Profile…"), kNewHorizontalSplitWithProfilePointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_QuickLook", @"QuickLook", @"Text shown in localizedActionMap: QuickLook"), kQuickLookAction,
+                           ITLocalize(@"PointerPrefsController_Facing_SelectMenuItem", @"Select Menu Item", @"Text shown in localizedActionMap: Select Menu Item"), kSelectMenuItemPointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_CopyLinkAddress", @"Copy Link Address", @"Text shown in localizedActionMap: Copy Link Address"), kCopyLinkAddressPointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_SelectNextPane", @"Select Next Pane", @"Text shown in localizedActionMap: Select Next Pane"), kSelectNextPanePointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_SelectPreviousPane", @"Select Previous Pane", @"Text shown in localizedActionMap: Select Previous Pane"), kSelectPreviousPanePointerAction,
+                           ITLocalize(@"PointerPrefsController_Facing_CopyOrPaste", @"Copy or Paste", @"Text shown in localizedActionMap: Copy or Paste"), kCopyOrPastePointerAction,
                            nil];
     return names;
 }
@@ -475,7 +475,7 @@ typedef enum {
         name = [names objectForKey:action];
     }
     if (!name) {
-        name = @"(Unknown)";
+        name = ITLocalize(@"PointerPrefsController_Facing_Unknown", @"(Unknown)", @"Text shown in localizedActionForDict:: (Unknown)");
     }
     return name;
 }
@@ -489,7 +489,7 @@ typedef enum {
         name = [names objectForKey:action];
     }
     if (!name) {
-        name = @"(Unknown)";
+        name = ITLocalize(@"PointerPrefsController_Facing_Unknown", @"(Unknown)", @"Text shown in formattedLocalizedActionForDict:: (Unknown)");
     }
     if (action) {
         switch ([PointerPrefsController argumentTypeForAction:action]) {
@@ -497,23 +497,23 @@ typedef enum {
                 break;
             case kEscPlusArg:
                 return [name stringByReplacingOccurrencesOfString:@"…"
-                                                       withString:[NSString stringWithFormat:@" Esc + %@", argument]];
+                                                       withString:[NSString stringWithFormat:ITLocalize(@"PointerPrefsController_FormattedFacing_Esc_FORMAT", @" Esc + %1$@",@"Formatted user-facing text in formattedLocalizedActionForDict:(NSDictionary *)dict"), argument]];
             case kHexCodeArg:
             case kTextArg:
             case kScriptFunctionArg:
                 return [name stringByReplacingOccurrencesOfString:@"…"
-                                                       withString:[NSString stringWithFormat:@" \"%@\"", argument]];
+                                                       withString:[NSString stringWithFormat:ITLocalize(@"PointerPrefsController_FormattedFacing_FORMAT", @" \"%1$@\"",@"Formatted user-facing text in formattedLocalizedActionForDict:(NSDictionary *)dict"), argument]];
             case kProfileArg: {
                 NSString *bookmarkName = [[[ProfileModel sharedInstance] bookmarkWithGuid:argument] objectForKey:KEY_NAME];
                 if (!bookmarkName) {
                     bookmarkName = @"?";
                 }
                 return [name stringByReplacingOccurrencesOfString:@"…"
-                                                       withString:[NSString stringWithFormat:@" \"%@\"", bookmarkName]];
+                                                       withString:[NSString stringWithFormat:ITLocalize(@"PointerPrefsController_FormattedFacing_FORMAT", @" \"%1$@\"",@"Formatted user-facing text in formattedLocalizedActionForDict:(NSDictionary *)dict"), bookmarkName]];
             }
             case kAdvancedPasteArg: {
                 if (argument.length) {
-                    return [NSString stringWithFormat:@"%@: %@",
+                    return [NSString stringWithFormat:ITLocalize(@"PointerPrefsController_FormattedFacing_FORMAT_2", @"%1$@: %2$@",@"Formatted user-facing text in formattedLocalizedActionForDict:(NSDictionary *)dict"),
                             [name stringByReplacingOccurrencesOfString:@"…" withString:@""],
                             [iTermPasteSpecialViewController descriptionForCodedSettings:argument]];
                 }
@@ -525,7 +525,7 @@ typedef enum {
                 if (!title.length) {
                     break;
                 }
-                return [NSString stringWithFormat:@"Select Menu Item “%@”", title];
+                return [NSString stringWithFormat:ITLocalize(@"PointerPrefsController_FormattedFacing_SelectMenuItem_FORMAT", @"Select Menu Item “%1$@”",@"Formatted user-facing text in formattedLocalizedActionForDict:(NSDictionary *)dict"), title];
             }
         }
     }
@@ -915,8 +915,8 @@ typedef enum {
             [editArgumentField_ setEnabled:YES];
             [editArgumentButton_ setHidden:YES];
             _menuItemPopupView.hidden = YES;
-            [editArgumentLabel_ setStringValue:@"Esc +"];
-            [[editArgumentField_ cell] setPlaceholderString:@"characters to send"];
+            [editArgumentLabel_ setStringValue:ITLocalize(@"PointerPrefsController_Esc", @"Esc +", @"Label text in updateArgumentFieldsForAction:")];
+            [[editArgumentField_ cell] setPlaceholderString:ITLocalize(@"PointerPrefsController_Placeholder_CharactersToSend", @"characters to send",@"Placeholder text in updateArgumentFieldsForAction:(NSString *)actionIdent argument:(NSString *)currentArg")];
             [editArgumentField_ setStringValue:currentArg];
             [editArgumentField_ setRefusesFirstResponder:NO];
             [editArgumentField_ setSelectable:YES];
@@ -930,8 +930,8 @@ typedef enum {
             [editArgumentField_ setEnabled:YES];
             [editArgumentButton_ setHidden:YES];
             _menuItemPopupView.hidden = YES;
-            [editArgumentLabel_ setStringValue:@"Hex codes:"];
-            [[editArgumentField_ cell] setPlaceholderString:@"ex: 0x7f 0x20"];
+            [editArgumentLabel_ setStringValue:ITLocalize(@"PointerPrefsController_HexCodes", @"Hex codes:", @"Label text in updateArgumentFieldsForAction:")];
+            [[editArgumentField_ cell] setPlaceholderString:ITLocalize(@"PointerPrefsController_Placeholder_Ex0x7f0x20", @"ex: 0x7f 0x20",@"Placeholder text in updateArgumentFieldsForAction:(NSString *)actionIdent argument:(NSString *)currentArg")];
             [editArgumentField_ setStringValue:currentArg];
             _pasteSpecialViewContainer.hidden = YES;
             editArgumentField_.delegate = nil;
@@ -943,8 +943,8 @@ typedef enum {
             [editArgumentField_ setEnabled:YES];
             [editArgumentButton_ setHidden:YES];
             _menuItemPopupView.hidden = YES;
-            [editArgumentLabel_ setStringValue:@"Text:"];
-            [[editArgumentField_ cell] setPlaceholderString:@"Enter value to send"];
+            [editArgumentLabel_ setStringValue:ITLocalize(@"PointerPrefsController_Text", @"Text:", @"Label text in updateArgumentFieldsForAction:")];
+            [[editArgumentField_ cell] setPlaceholderString:ITLocalize(@"PointerPrefsController_Placeholder_EnterValueToSend", @"Enter value to send",@"Placeholder text in updateArgumentFieldsForAction:(NSString *)actionIdent argument:(NSString *)currentArg")];
             [editArgumentField_ setStringValue:currentArg];
             _pasteSpecialViewContainer.hidden = YES;
             editArgumentField_.delegate = nil;
@@ -956,8 +956,8 @@ typedef enum {
             [editArgumentField_ setEnabled:YES];
             [editArgumentButton_ setHidden:YES];
             _menuItemPopupView.hidden = YES;
-            [editArgumentLabel_ setStringValue:@"Text:"];
-            [[editArgumentField_ cell] setPlaceholderString:@"Enter function invocation"];
+            [editArgumentLabel_ setStringValue:ITLocalize(@"PointerPrefsController_Text", @"Text:", @"Label text in updateArgumentFieldsForAction:")];
+            [[editArgumentField_ cell] setPlaceholderString:ITLocalize(@"PointerPrefsController_Placeholder_EnterFunctionInvocation", @"Enter function invocation",@"Placeholder text in updateArgumentFieldsForAction:(NSString *)actionIdent argument:(NSString *)currentArg")];
             [editArgumentField_ setStringValue:currentArg];
             _pasteSpecialViewContainer.hidden = YES;
             _invocationDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession]
@@ -971,7 +971,7 @@ typedef enum {
             [editArgumentField_ setHidden:YES];
             [editArgumentButton_ setHidden:NO];
             _menuItemPopupView.hidden = YES;
-            [editArgumentLabel_ setStringValue:@"Profile:"];
+            [editArgumentLabel_ setStringValue:ITLocalize(@"PointerPrefsController_Profile", @"Profile:", @"Label text in updateArgumentFieldsForAction:")];
             [editArgumentButton_ populateWithProfilesSelectingGuid:currentArg
                                                       profileTypes:ProfileTypeAll];
             _pasteSpecialViewContainer.hidden = YES;

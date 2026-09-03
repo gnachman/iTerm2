@@ -233,7 +233,7 @@ class NotifyOnStatusChangeController: NSObject {
                               from: String?,
                               to: String?,
                               window: NSWindow?) {
-        let name = sessionName ?? "A session"
+        let name = sessionName ?? String(localized: "NotifyOnStatusChangeController_ASession", defaultValue: "A session", comment: "Text shown in presentAlert: A session")
         let fromText = from ?? "none"
         let toText = to ?? "none"
         // Present asynchronously so the modal alert doesn't run
@@ -241,16 +241,16 @@ class NotifyOnStatusChangeController: NSObject {
         // being dispatched.
         DispatchQueue.main.async {
             let alert = NSAlert()
-            alert.messageText = "Session status changed"
-            alert.informativeText = "\(name) changed from “\(fromText)” to “\(toText)”."
-            alert.addButton(withTitle: "OK")
+            alert.messageText = String(localized: "NotifyOnStatusChangeController_SessionStatusChanged", defaultValue: "Session status changed", comment: "Alert title in presentAlert")
+            alert.informativeText = String(format: String(localized: "NotifyOnStatusChangeController_ChangedFromTo_FORMAT", defaultValue: "%1$@ changed from “%2$@” to “%3$@”.", comment: "Alert explanatory text in presentAlert"), name, fromText, toText)
+            alert.addButton(withTitle: String(localized: "COMMON_OK", defaultValue: "OK", comment: "Button title in presentAlert"))
             // Offer Reveal only when the session can still be resolved; it may
             // have gone away between the change and the alert being shown.
             let canReveal = sessionGuid.flatMap {
                 iTermController.sharedInstance()?.anySession(withGUID: $0)
             } != nil
             if canReveal {
-                alert.addButton(withTitle: "Reveal")
+                alert.addButton(withTitle: String(localized: "NotifyOnStatusChangeController_Reveal", defaultValue: "Reveal", comment: "Button title in presentAlert"))
             }
             let reveal: () -> Void = {
                 if let sessionGuid {

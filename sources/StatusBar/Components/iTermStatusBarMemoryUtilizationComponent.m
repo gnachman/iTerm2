@@ -37,11 +37,11 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Memory Utilization";
+    return ITLocalize(@"StatusBarMemoryUtilizationComponent_Facing_MemoryUtilization", @"Memory Utilization", @"Text shown in statusBarComponentShortDescription: Memory Utilization");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Shows current memory utilization.";
+    return ITLocalize(@"StatusBarMemoryUtilizationComponent_Facing_ShowsCurrentMemoryUtilization", @"Shows current memory utilization.", @"Text shown in statusBarComponentDetailedDescription: Shows current memory utilization.");
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor

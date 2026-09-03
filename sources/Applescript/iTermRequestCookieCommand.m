@@ -48,16 +48,16 @@ static NSString *const kReusableCookieAnnouncementIdentifier = @"ReusableCookieA
     }
 
     NSString *appName = self.arguments[@"appName"] ?: @"An app";
-    NSString *message = [NSString stringWithFormat:@"%@ requests a reusable API cookie.", appName];
+    NSString *message = [NSString stringWithFormat:ITLocalize(@"RequestCookieCommand_FormattedFacing_RequestsAReusableApiCookie_FORMAT", @"%1$@ requests a reusable API cookie.",@"Formatted user-facing text in showReusableCookieAnnouncement"), appName];
 
     __weak __typeof(self) weakSelf = self;
     iTermAnnouncementViewController *announcement =
         [iTermAnnouncementViewController announcementWithTitle:message
                                                          style:kiTermAnnouncementViewStyleQuestion
-                                                   withActions:@[ @"_24 Hours",
-                                                                  @"Forever",
-                                                                  @"Always Allow All Apps",
-                                                                  @"Deny" ]
+                                                    withActions:@[ ITLocalize(@"RequestCookieCommand_Action_24Hours", @"_24 Hours", @"Action title in showReusableCookieAnnouncement"),
+                                                                   ITLocalize(@"RequestCookieCommand_Facing_Forever", @"Forever", @"Text shown in showReusableCookieAnnouncement: Forever"),
+                                                                   ITLocalize(@"RequestCookieCommand_Facing_AlwaysAllowAllApps", @"Always Allow All Apps", @"Text shown in showReusableCookieAnnouncement: Always Allow All Apps"),
+                                                                   ITLocalize(@"RequestCookieCommand_Facing_Deny", @"Deny", @"Text shown in showReusableCookieAnnouncement: Deny") ]
                                                     completion:^(int selection) {
             [weakSelf handleReusableCookieSelection:selection];
         }];

@@ -82,12 +82,12 @@ class iTermSavePanelItem: NSObject {
         } else if let endpoint = host.endpoint {
             _ = try await endpoint.replace(filename, content: data)
         } else {
-            iTermWarning.show(withTitle: "No ssh connection to \(host.displayName) is available to upload \(filename.lastPathComponent)",
-                              actions: ["OK"],
+            iTermWarning.show(withTitle: String(format: String(localized: "ModernSavePanel_NoSshConnectionToIsAvailableTo_FORMAT", defaultValue: "No ssh connection to %1$@ is available to upload %2$@", comment: "Alert title in upload"), host.displayName, filename.lastPathComponent),
+                              actions: [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Action title in upload")],
                               accessory: nil,
                               identifier: nil,
                               silenceable: .kiTermWarningTypePersistent,
-                              heading: "Upload Failed",
+                              heading: String(localized: "ModernSavePanel_UploadFailed", defaultValue: "Upload Failed", comment: "Alert heading in upload"),
                               window: nil)
         }
     }
@@ -233,7 +233,7 @@ private extension iTermModernSavePanel {
 
         // Create SSH panel button
         let sshButton = SSHPanelButton()
-        sshButton.title = "Open SSH Panel..."
+        sshButton.title = String(localized: "ModernSavePanel_OpenSshPanel", defaultValue: "Open SSH Panel...", comment: "Button title in createAccessoryViewWithSSHButton")
         sshButton.target = self
         sshButton.action = #selector(openSSHPanelButtonClicked(_:))
         sshButton.bezelStyle = .rounded

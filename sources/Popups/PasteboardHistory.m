@@ -302,8 +302,9 @@
         } else {
             plus = @"";
         }
-        NSString *s = numberOfLines != 1 ? @"s": @"";
-        formattedNumberOfLines = [NSString stringWithFormat:@"%@%@ line%@", @(numberOfLines), plus, s];
+        formattedNumberOfLines = numberOfLines == 1
+            ? [NSString stringWithFormat:ITLocalize(@"PASTEBOARD_HISTORY_ONE_LINE_FORMAT", @"%1$@%2$@ line", @"Pasteboard row line count; the second substitution is + for truncated content"), @(numberOfLines), plus]
+            : [NSString stringWithFormat:ITLocalize(@"PASTEBOARD_HISTORY_MANY_LINES_FORMAT", @"%1$@%2$@ lines", @"Pasteboard row line count; the second substitution is + for truncated content"), @(numberOfLines), plus];
         return [NSString stringWithFormat:@"%@, %@, %@", formattedNumberOfLines, formattedLength, formattedDate];
     } else {
         // Contents

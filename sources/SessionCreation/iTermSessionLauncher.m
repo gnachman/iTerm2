@@ -35,12 +35,12 @@
                                  ligaturesEnabled:[iTermProfilePreferences boolForKey:KEY_ASCII_LIGATURES
                                                                             inProfile:profile]];
     if (!font) {
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Couldn’t find the specified font “%@” or the fallback standard fixed-pitch font, Menlo. Please ensure at least one of these is installed.", profile[KEY_NORMAL_FONT]]
-                                   actions:@[ @"OK" ]
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"SessionLauncher_Alert_CouldnTFindTheSpecifiedFontOr_FORMAT", @"Couldn’t find the specified font “%1$@” or the fallback standard fixed-pitch font, Menlo. Please ensure at least one of these is installed.", @"Alert title in profileIsWellFormed:"), profile[KEY_NORMAL_FONT]]
+                                   actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in profileIsWellFormed:") ]
                                  accessory:nil
                                 identifier:nil
                                silenceable:kiTermWarningTypePersistent
-                                   heading:@"Invalid Profile"
+                                   heading:ITLocalize(@"SessionLauncher_AlertHeading_InvalidProfile", @"Invalid Profile",@"Alert heading in profileIsWellFormed:(Profile *)profile")
                                     window:nil];
         return NO;
     }
@@ -584,14 +584,14 @@
     if (username) {
         NSString *part = [self validatedAndShellEscapedUsername:username];
         if (!part) {
-            NSString *message = [NSString stringWithFormat:@"The SSH user name “%@” contained a disallowed character. The set of allowed characters is limited for security reasons. You can modify it in Settings > Advanced > Valid characters in SSH user names.",
+            NSString *message = [NSString stringWithFormat:ITLocalize(@"SessionLauncher_FormattedFacing_TheSshUserNameContainedADisallowed_FORMAT", @"The SSH user name “%1$@” contained a disallowed character. The set of allowed characters is limited for security reasons. You can modify it in Settings > Advanced > Valid characters in SSH user names.",@"Formatted user-facing text in profileByModifyingProfile:(NSDictionary *)prototype toSshTo:(NSURL *)url"),
                                  username];
             [iTermWarning showWarningWithTitle:message
-                                       actions:@[ @"OK" ]
+                                       actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in profileByModifyingProfile:") ]
                                      accessory:nil
                                     identifier:nil
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"Illegal Username"
+                                       heading:ITLocalize(@"SessionLauncher_AlertHeading_IllegalUsername", @"Illegal Username",@"Alert heading in profileByModifyingProfile:(NSDictionary *)prototype toSshTo:(NSURL *)url")
                                         window:nil];
             RLog(@"bad username");
             return nil;

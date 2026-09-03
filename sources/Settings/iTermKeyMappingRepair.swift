@@ -90,25 +90,34 @@ class iTermKeyMappingRepair: NSObject {
                 return keystrokeString
             }
             let action = iTermKeyBindingAction.withDictionary(actionDict)
-            let actionName = action?.displayName ?? "Unknown action"
-            return "\(keystrokeString): \(actionName)"
+            let actionName = action?.displayName ?? String(localized: "KeyMappingRepair_UnknownAction", defaultValue: "Unknown action", comment: "Action title in confirmRepair")
+            return String(format: String(localized: "KeyMappingRepair_Text_FORMAT", defaultValue: "%1$@: %2$@", comment: "Formatted user-facing text in confirmRepair"), keystrokeString, actionName)
         }
 
         let bindingsList = descriptions.sorted().map { "• \($0)" }.joined(separator: "\n")
         let count = corrupted.count
-        let bindingWord = count == 1 ? "key binding" : "key bindings"
-        let message = """
-            This will repair \(count) \(bindingWord) that \(count == 1 ? "was" : "were") corrupted by a bug in \
-            an earlier version of iTerm2. The affected \(count == 1 ? "binding currently displays" : "bindings currently display") incorrectly \
-            but \(count == 1 ? "functions" : "function") properly. After repair, \(count == 1 ? "it" : "they") will display correctly.
+        let message = count == 1
+            ? String(
+                localized: "KEY_MAPPING_REPAIR_ONE_BINDING_FORMAT",
+                defaultValue: """
+                    This will repair 1 key binding that was corrupted by a bug in an earlier version of iTerm2. The affected binding currently displays incorrectly but functions properly. After repair, it will display correctly.
 
-            Affected \(bindingWord):
-            \(bindingsList)
-            """
+                    Affected key binding:
+                    %1$@
+                    """,
+                comment: "Warning body for repairing one corrupted key mapping")
+            : String(
+                localized: "KEY_MAPPING_REPAIR_MANY_BINDINGS_FORMAT",
+                defaultValue: """
+                    This will repair %1$d key bindings that were corrupted by a bug in an earlier version of iTerm2. The affected bindings currently display incorrectly but function properly. After repair, they will display correctly.
 
+                    Affected key bindings:
+                    %2$@
+                    """,
+                comment: "Warning body naming the number of corrupted key mappings and listing them")
         let selection = iTermWarning.show(
-            withTitle: message,
-            actions: ["Repair", "Cancel"],
+            withTitle: count == 1 ? String(format: message, bindingsList) : String(format: message, count, bindingsList),
+            actions: [String(localized: "KeyMappingRepair_Repair", defaultValue: "Repair", comment: "Action title in confirmRepair"), String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Action title in confirmRepair")],
             identifier: nil,
             silenceable: .kiTermWarningTypePersistent,
             window: window

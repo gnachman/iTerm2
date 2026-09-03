@@ -25,7 +25,7 @@
 }
 
 - (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
-  return @"Directory";
+  return ITLocalize(@"SetDirectoryTrigger_Facing_Directory", @"Directory", @"Text shown in triggerOptionalParameterPlaceholderWithInterpolation:: Directory");
 }
 
 - (BOOL)isIdempotent {

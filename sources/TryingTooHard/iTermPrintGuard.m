@@ -36,12 +36,12 @@
     }
     if (willPrint && [self haveTriedToPrintRecently]) {
         iTermWarningSelection selection =
-        [iTermWarning showWarningWithTitle:@"There's a lot of printing going on. Want to keep allowing it?"
-                                   actions:@[ @"Allow", @"Disable Temporarily", @"Disable Permanently" ]
+        [iTermWarning showWarningWithTitle:ITLocalize(@"PrintGuard_Alert_ThereSALotOfPrintingGoing", @"There's a lot of printing going on. Want to keep allowing it?", @"Alert title in shouldPrintWithProfile:")
+                                   actions:@[ ITLocalize(@"COMMON_ALLOW", @"Allow", @"Action title in shouldPrintWithProfile:"), ITLocalize(@"PrintGuard_Action_DisableTemporarily", @"Disable Temporarily", @"Title in shouldPrintWithProfile:"), ITLocalize(@"PrintGuard_Action_DisablePermanently", @"Disable Permanently", @"Title in shouldPrintWithProfile:") ]
                                  accessory:nil
                                 identifier:@"NoSyncAllowPrinting"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:@"Allow Printing?"
+                                   heading:ITLocalize(@"PrintGuard_AlertHeading_AllowPrinting", @"Allow Printing?",@"Alert heading in shouldPrintWithProfile:(Profile *)profile")
                                     window:window];
         switch (selection) {
             case kiTermWarningSelection0:

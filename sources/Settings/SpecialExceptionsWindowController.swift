@@ -142,32 +142,32 @@ class SpecialExceptionEntryEditorWindowController: NSWindowController, NSTextFie
         preview.textColor = .textColor
         switch checkedRange {
         case .ascii:
-            preview.string = "Start must be at least U+80. ASCII doesn’t support special exceptions."
+            preview.string = String(localized: "SpecialExceptionsWindowController_StartMustBeAtLeastU80", defaultValue: "Start must be at least U+80. ASCII doesn’t support special exceptions.", comment: "Text shown in updatePreview: Start must be at least U+80. ASCII doesn’t support special exceptions.")
         case .incomplete:
             preview.string = ""
         case .inverted:
-            preview.string = "Invalid range."
+            preview.string = String(localized: "SpecialExceptionsWindowController_InvalidRange", defaultValue: "Invalid range.", comment: "Text shown in updatePreview: Invalid range.")
         case .limitTooLarge:
-            preview.string = "End is higher than U+110000, the maximum Unicode code point."
+            preview.string = String(localized: "SpecialExceptionsWindowController_EndIsHigherThanU110000The", defaultValue: "End is higher than U+110000, the maximum Unicode code point.", comment: "Text shown in updatePreview: End is higher than U+110000, the maximum Unicode code point.")
         case .taken:
-            preview.string = "Range includes an already-assigned code point."
+            preview.string = String(localized: "SpecialExceptionsWindowController_RangeIncludesAnAlreadyAssignedCodePoint", defaultValue: "Range includes an already-assigned code point.", comment: "Text shown in updatePreview: Range includes an already-assigned code point.")
         case .invalidDestination:
-            preview.string = "Invalid destination"
+            preview.string = String(localized: "SpecialExceptionsWindowController_InvalidDestination", defaultValue: "Invalid destination", comment: "Preview title shown in updatePreview")
         case let .valid(source: sourceRange, destination: _):
             guard let familyName = affordance.familyName,
                   let font = NSFont(name: familyName, size: NSFont.systemFontSize) else {
-                preview.string = "No font selected."
+                preview.string = String(localized: "SpecialExceptionsWindowController_NoFontSelected", defaultValue: "No font selected.", comment: "Text shown in updatePreview: No font selected.")
                 return
             }
             if (!destinationIsValid(range: sourceRange)) {
-                preview.string = "Invalid destination."
+                preview.string = String(localized: "SpecialExceptionsWindowController_InvalidDestinationMessage", defaultValue: "Invalid destination.", comment: "Preview message shown in updatePreview")
                 return
             }
             let disallowed = IndexSet([9, 10, 13, 0xad, 0x200e, 0x200f, 0x200b, 0x200c])
             let combined = NSMutableAttributedString()
             for i in sourceRange {
                 if combined.length >= 1024 * 10 {
-                    combined.append(NSAttributedString(string: " [truncated]",
+                    combined.append(NSAttributedString(string: String(localized: "SpecialExceptionsWindowController_Truncated", defaultValue: " [truncated]", comment: "Text shown in updatePreview:  [truncated]"),
                                                        attributes: [
                                                         .foregroundColor: NSColor.textColor,
                                                         .font: NSFont.systemFont(ofSize: NSFont.systemFontSize)]))
@@ -478,16 +478,16 @@ final class SpecialExceptionsWindowController: NSWindowController {
 
     private func importString(_ content: String) {
         guard let newConfig = FontTable.Config(string: content) else {
-            showError("This file is not well formed. Is it from a newer version of iTerm2?")
+            showError(String(localized: "SpecialExceptionsWindowController_ThisFileIsNotWellFormedIs", defaultValue: "This file is not well formed. Is it from a newer version of iTerm2?", comment: "Text shown in importString: This file is not well formed. Is it from a newer version of iTerm2?"))
             return
         }
         guard newConfig.version <= FontTable.Config.latestKnownVersion else {
-            showError("This file is from a newer version of iTerm2 and cannot be loaded.")
+            showError(String(localized: "SpecialExceptionsWindowController_ThisFileIsFromANewerVersion", defaultValue: "This file is from a newer version of iTerm2 and cannot be loaded.", comment: "Text shown in importString: This file is from a newer version of iTerm2 and cannot be loaded."))
             return
         }
         let missing = missingFonts(newConfig)
         guard missing.isEmpty else {
-            showError("You must install the following fonts to use the exceptions in this file:\n\n\(missing.joined(separator: "\n"))")
+            showError(String(format: String(localized: "SpecialExceptionsWindowController_YouMustInstallTheFollowingFontsTo_FORMAT", defaultValue: "You must install the following fonts to use the exceptions in this file:\n\n%1$@", comment: "Formatted user-facing text in importString"), missing.joined(separator: "\n")))
             return
         }
         crud.undoable {
@@ -521,11 +521,11 @@ final class SpecialExceptionsWindowController: NSWindowController {
 
     private func showError(_ message: String) {
         iTermWarning.show(withTitle: message,
-                          actions: ["OK"],
+                          actions: [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Action title in showError")],
                           accessory: nil,
                           identifier: "SpecialExceptionsImportError",
                           silenceable: .kiTermWarningTypePersistent,
-                          heading: "Problem Importing Special Exceptions",
+                          heading: String(localized: "SpecialExceptionsWindowController_ProblemImportingSpecialExceptions", defaultValue: "Problem Importing Special Exceptions", comment: "Alert heading in showError"),
                           window: window)
     }
 
@@ -540,12 +540,12 @@ final class SpecialExceptionsWindowController: NSWindowController {
 
     @IBAction func installNerdFontBundle(_ sender: Any) {
         if !config.entries.isEmpty {
-            let selection = iTermWarning.show(withTitle: "This will replace existing special exceptions. Continue?",
-                                              actions: ["OK", "Cancel"],
+            let selection = iTermWarning.show(withTitle: String(localized: "SpecialExceptionsWindowController_ThisWillReplaceExistingSpecialExceptionsContinue", defaultValue: "This will replace existing special exceptions. Continue?", comment: "Alert title in installNerdFontBundle"),
+                                              actions: [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Action title in installNerdFontBundle"), String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Action title in installNerdFontBundle")],
                                               accessory: nil,
                                               identifier: "SpecialExceptionsInstallNerdBundleConfirmation",
                                               silenceable: .kiTermWarningTypePersistent,
-                                              heading: "Confirm",
+                                              heading: String(localized: "SpecialExceptionsWindowController_Confirm", defaultValue: "Confirm", comment: "Alert heading in installNerdFontBundle"),
                                               window: window)
             if selection == .kiTermWarningSelection1 {
                 return

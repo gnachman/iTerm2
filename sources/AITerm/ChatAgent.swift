@@ -1128,12 +1128,12 @@ class ChatAgent {
             // resolved consent while this was queued.
             guard iTermUserDefaults.autoProvideConsent == .unknown else { return }
             let selection = iTermWarning.show(
-                withTitle: "iTerm2 can include this session’s visible screen and terminal state with every message you send in AI chats where you’ve allowed it, so the assistant sees what you see. You can turn this off any time from a chat’s permission settings.",
-                actions: ["Turn On", "Not Now"],
+                withTitle: String(localized: "ChatAgent_ITerm2CanIncludeThisSessionS", defaultValue: "iTerm2 can include this session’s visible screen and terminal state with every message you send in AI chats where you’ve allowed it, so the assistant sees what you see. You can turn this off any time from a chat’s permission settings.", comment: "Alert title in requestAutoProvideConsentIfNeeded"),
+                actions: [String(localized: "ChatAgent_TurnOn", defaultValue: "Turn On", comment: "Action title in requestAutoProvideConsentIfNeeded"), String(localized: "ChatAgent_NotNow", defaultValue: "Not Now", comment: "Action title in requestAutoProvideConsentIfNeeded")],
                 accessory: nil,
                 identifier: nil,
                 silenceable: .kiTermWarningTypePersistent,
-                heading: "Share Terminal Contents Automatically?",
+                heading: String(localized: "ChatAgent_ShareTerminalContentsAutomatically", defaultValue: "Share Terminal Contents Automatically?", comment: "Alert heading in requestAutoProvideConsentIfNeeded"),
                 window: nil)
             iTermUserDefaults.autoProvideConsent = (selection == .kiTermWarningSelection0) ? .granted : .denied
         }

@@ -94,7 +94,7 @@ static NSString *iTermPasteViewControllerNibName(BOOL mini) {
 
 - (void)awakeFromNib {
     if (pasteContext_.isUpload) {
-        _label.stringValue = @"Sending…";
+        _label.stringValue = ITLocalize(@"PasteViewController_Sending", @"Sending…", @"Label text in awakeFromNib");
     }
     [self createKeystrokePassthroughButton];
 }
@@ -215,7 +215,7 @@ static NSString *iTermPasteViewControllerNibName(BOOL mini) {
     }
     if (!_queuedHintView) {
         _queuedHintView = [[iTermPasteQueuedHintView alloc] initWithFrame:NSZeroRect];
-        _queuedHintView.message = @"Typing is queued while pasting. Click the keyboard to toggle queueing.";
+        _queuedHintView.message = ITLocalize(@"PasteViewController_Facing_TypingIsQueuedWhilePastingClickThe", @"Typing is queued while pasting. Click the keyboard to toggle queueing.", @"Text shown in updateProgress: Typing is queued while pasting. Click the keyboard to toggle queueing.");
     }
     const NSRect buttonFrame = [_keystrokePassthroughButton convertRect:_keystrokePassthroughButton.bounds
                                                                  toView:content];

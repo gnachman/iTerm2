@@ -123,7 +123,7 @@ static NSString *kCommandTimestamp = @"timestamp";
 
 - (void)abortWithErrorMessage:(NSString *)message {
     [self abortWithErrorMessage:[NSString stringWithFormat:@"%@", message]
-                          title:@"tmux Reported a Problem"];
+                          title:ITLocalize(@"TmuxGateway_TmuxReportedAProblem", @"tmux Reported a Problem", @"Title in abortWithErrorMessage:")];
 }
 
 // TODO: be more forgiving of errors.
@@ -133,7 +133,7 @@ static NSString *kCommandTimestamp = @"timestamp";
         NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = title;
         alert.informativeText = message;
-        [alert addButtonWithTitle:@"OK"];
+        [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in abortWithErrorMessage:")];
         [alert runModal];
     });
     [self detach];
@@ -563,10 +563,10 @@ static NSString *kCommandTimestamp = @"timestamp";
 
 - (void)abortWithErrorForCurrentCommand {
     if ([self commandIsTmux21Quirk]) {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@.\n\nTmux 2.1 and earlier will refuse to create a new window pane with a nonexistent initial working directory.\n\nInfo:\n%@",
+        [self abortWithErrorMessage:[NSString stringWithFormat:ITLocalize(@"TmuxGateway_FormattedFacing_ErrorNNTmux21And_FORMAT", @"Error: %1$@.\n\nTmux 2.1 and earlier will refuse to create a new window pane with a nonexistent initial working directory.\n\nInfo:\n%2$@",@"Formatted user-facing text in abortWithErrorForCurrentCommand"),
                                      currentCommandResponse_, currentCommand_]];
     } else {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@.\n\nInfo:\n%@", currentCommandResponse_, currentCommand_]];
+        [self abortWithErrorMessage:[NSString stringWithFormat:ITLocalize(@"TmuxGateway_FormattedFacing_ErrorNNInfoN_FORMAT", @"Error: %1$@.\n\nInfo:\n%2$@",@"Formatted user-facing text in abortWithErrorForCurrentCommand"), currentCommandResponse_, currentCommand_]];
     }
 }
 

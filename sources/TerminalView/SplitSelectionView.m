@@ -128,22 +128,22 @@ static CGFloat SplitHalfDistanceFromEdge(SplitSessionHalf half, NSSize size, NSP
     dirtyRect = NSIntersectionRect(dirtyRect, self.bounds);
     switch (_mode) {
         case SplitSelectionViewModeSourceMove:
-            [self drawSourceWithMessage:@"Select a destination pane" rect:dirtyRect];
+            [self drawSourceWithMessage:ITLocalize(@"SplitSelectionView_Facing_SelectADestinationPane", @"Select a destination pane", @"Text shown in drawRect:: Select a destination pane") rect:dirtyRect];
             return;
         case SplitSelectionViewModeSourceSwap:
-            [self drawSourceWithMessage:@"Select pane to swap with" rect:dirtyRect];
+            [self drawSourceWithMessage:ITLocalize(@"SplitSelectionView_Facing_SelectPaneToSwapWith", @"Select pane to swap with", @"Text shown in drawRect:: Select pane to swap with") rect:dirtyRect];
             return;
         case SplitSelectionViewModeTargetMove:
-            [self drawTargetWithMessage:@"Click to move source pane to this split"];
+            [self drawTargetWithMessage:ITLocalize(@"SplitSelectionView_Facing_ClickToMoveSourcePaneToThis", @"Click to move source pane to this split", @"Text shown in drawRect:: Click to move source pane to this split")];
             return;
         case SplitSelectionViewModeTargetSwap:
-            [self drawTargetWithMessage:@"Click to swap source pane with this one"];
+            [self drawTargetWithMessage:ITLocalize(@"SplitSelectionView_Facing_ClickToSwapSourcePaneWithThis", @"Click to swap source pane with this one", @"Text shown in drawRect:: Click to swap source pane with this one")];
             return;
         case SplitSelectionViewModeInspect:
-            [self drawInspectWithMessage:@"Click to inspect" rect:dirtyRect];
+            [self drawInspectWithMessage:ITLocalize(@"SplitSelectionView_Facing_ClickToInspect", @"Click to inspect", @"Text shown in drawRect:: Click to inspect") rect:dirtyRect];
             return;
         case SplitSelectionViewModeSelect:
-            [self drawInspectWithMessage:@"Click to select" rect:dirtyRect];
+            [self drawInspectWithMessage:ITLocalize(@"SplitSelectionView_Facing_ClickToSelect", @"Click to select", @"Text shown in drawRect:: Click to select") rect:dirtyRect];
             return;
     }
 }

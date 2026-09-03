@@ -71,10 +71,10 @@ class SSHFilePanelFileList: NSScrollView {
 
         var title: String {
             switch self {
-            case .name: return "Name"
-            case .dateModified: return "Date Created"
-            case .size: return "Size"
-            case .kind: return "Kind"
+            case .name: return String(localized: "SshFilePanelFileList_Name", defaultValue: "Name", comment: "Text shown in drawInterior: Name")
+            case .dateModified: return String(localized: "SshFilePanelFileList_DateCreated", defaultValue: "Date Created", comment: "Text shown in drawInterior: Date Created")
+            case .size: return String(localized: "SshFilePanelFileList_Size", defaultValue: "Size", comment: "Text shown in drawInterior: Size")
+            case .kind: return String(localized: "SshFilePanelFileList_Kind", defaultValue: "Kind", comment: "Text shown in drawInterior: Kind")
             }
         }
 

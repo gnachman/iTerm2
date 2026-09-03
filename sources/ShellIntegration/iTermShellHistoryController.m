@@ -363,18 +363,20 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
         firstResponder = nil;
     }
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = @"About Shell Integration";
+    alert.messageText = ITLocalize(@"ShellHistoryController_Alert_AboutShellIntegration", @"About Shell Integration", @"Alert title in showInformationalMessageInWindow:");
     alert.informativeText =
-        @"To use shell integration features such as "
-        @"Command History, "
-        @"Recent Directories, "
-        @"Select Output of Last Command, "
-        @"and Automatic Profile Switching, "
-        @"your shell must be properly configured.";
-    [alert addButtonWithTitle:@"Learn More…"];
-    [alert addButtonWithTitle:@"OK"];
+        ITLocalize(@"ShellHistoryController_AlertExplanatory_ToUseShellIntegrationFeaturesSuchAs",
+                   @"To use shell integration features such as "
+                   @"Command History, "
+                   @"Recent Directories, "
+                   @"Select Output of Last Command, "
+                   @"and Automatic Profile Switching, "
+                   @"your shell must be properly configured.",
+                   @"Alert explanatory text in showInformationalMessageInWindow:");
+    [alert addButtonWithTitle:ITLocalize(@"ShellHistoryController_LearnMore", @"Learn More…", @"Button title in showInformationalMessageInWindow:")];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in showInformationalMessageInWindow:")];
     if (firstResponder) {
-        [alert addButtonWithTitle:@"Install Now"];
+        [alert addButtonWithTitle:ITLocalize(@"ShellHistoryController_InstallNow", @"Install Now", @"Button title in showInformationalMessageInWindow:")];
     }
     [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse returnCode) {
         switch (returnCode) {

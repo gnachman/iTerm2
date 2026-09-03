@@ -356,7 +356,7 @@
         }
         if (decoded) {
             NSMenuItem *item = [[NSMenuItem alloc] init];
-            item.title = [NSString stringWithFormat:@"Base64: %@", [[decoded humanFriendlyStringRepresentation] ellipsizedDescriptionNoLongerThan:20]];
+            item.title = [NSString stringWithFormat:ITLocalize(@"ContextMenuUtilities_Base64_FORMAT", @"Base64: %1$@", @"Title in addMenuItemForBase64Encoded:"), [[decoded humanFriendlyStringRepresentation] ellipsizedDescriptionNoLongerThan:20]];
             item.action = selector;
             item.target = target;
             item.representedObject = decoded;
@@ -416,7 +416,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
             if (data.length == 4) {
                 const uint32_t be = iTermInt32FromBytes(data.bytes, YES);
                 theItem = [[NSMenuItem alloc] init];
-                theItem.title = [NSString stringWithFormat:@"Big-Endian int32: %@", @(be)];
+                theItem.title = [NSString stringWithFormat:ITLocalize(@"ContextMenuUtilities_BigEndianInt32_FORMAT", @"Big-Endian int32: %1$@", @"Title in addMenuItemsForNumericConversions:"), @(be)];
                 theItem.target = self;
                 theItem.action = selector;
                 theItem.target = target;
@@ -425,7 +425,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 
                 const uint32_t le = iTermInt32FromBytes(data.bytes, NO);
                 theItem = [[NSMenuItem alloc] init];
-                theItem.title = [NSString stringWithFormat:@"Little-Endian int32: %@", @(le)];
+                theItem.title = [NSString stringWithFormat:ITLocalize(@"ContextMenuUtilities_LittleEndianInt32_FORMAT", @"Little-Endian int32: %1$@", @"Title in addMenuItemsForNumericConversions:"), @(le)];
                 theItem.target = self;
                 theItem.action = selector;
                 theItem.target = target;
@@ -434,7 +434,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
             } else if (data.length == 8) {
                 const uint64_t be = iTermInt64FromBytes(data.bytes, YES);
                 theItem = [[NSMenuItem alloc] init];
-                theItem.title = [NSString stringWithFormat:@"Big-Endian int64: %@", @(be)];
+                theItem.title = [NSString stringWithFormat:ITLocalize(@"ContextMenuUtilities_BigEndianInt64_FORMAT", @"Big-Endian int64: %1$@", @"Title in addMenuItemsForNumericConversions:"), @(be)];
                 theItem.target = self;
                 theItem.action = selector;
                 theItem.target = target;
@@ -443,7 +443,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 
                 const uint64_t le = iTermInt64FromBytes(data.bytes, NO);
                 theItem = [[NSMenuItem alloc] init];
-                theItem.title = [NSString stringWithFormat:@"Little-Endian int64: %@", @(le)];
+                theItem.title = [NSString stringWithFormat:ITLocalize(@"ContextMenuUtilities_LittleEndianInt64_FORMAT", @"Little-Endian int64: %1$@", @"Title in addMenuItemsForNumericConversions:"), @(le)];
                 theItem.target = self;
                 theItem.action = selector;
                 theItem.target = target;
@@ -453,7 +453,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
                 NSString *stringValue = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
                 if (stringValue) {
                     theItem = [[NSMenuItem alloc] init];
-                    theItem.title = [NSString stringWithFormat:@"%@ UTF-8 bytes: %@", @(data.length), stringValue];
+                    theItem.title = [NSString stringWithFormat:ITLocalize(@"ContextMenuUtilities_Utf8Bytes_FORMAT", @"%1$@ UTF-8 bytes: %2$@", @"Title in addMenuItemsForNumericConversions:"), @(data.length), stringValue];
                     theItem.target = self;
                     theItem.action = selector;
                     theItem.target = target;
@@ -463,7 +463,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
             }
             if (!theItem && data.length > 4) {
                 theItem = [[NSMenuItem alloc] init];
-                theItem.title = [NSString stringWithFormat:@"%@ hex bytes", @(data.length)];
+                theItem.title = [NSString stringWithFormat:ITLocalize(@"ContextMenuUtilities_HexBytes_FORMAT", @"%1$@ hex bytes", @"Title in addMenuItemsForNumericConversions:"), @(data.length)];
                 [theMenu insertItem:theItem atIndex:index++];
             }
         }
@@ -486,7 +486,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
         }
         if (decoded) {
             NSMenuItem *item = [[NSMenuItem alloc] init];
-            item.title = @"Copy Base64-Decoded";
+            item.title = ITLocalize(@"ContextMenuUtilities_CopyBase64Decoded", @"Copy Base64-Decoded", @"Title in addMenuItemsToCopyBase64:");
             item.action = selectorForData;
             item.target = target;
             item.representedObject = decoded;
@@ -495,7 +495,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     }
     NSString *encoded = [[text dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:NSDataBase64Encoding76CharacterLineLength];
     NSMenuItem *item = [[NSMenuItem alloc] init];
-    item.title = @"Copy Base64-Encoded";
+    item.title = ITLocalize(@"ContextMenuUtilities_CopyBase64Encoded", @"Copy Base64-Encoded", @"Title in addMenuItemsToCopyBase64:");
     item.target = target;
     item.action = selectorForString;
     item.representedObject = encoded;

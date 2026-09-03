@@ -306,11 +306,11 @@
             [weakSelf.textView.window makeFirstResponder:weakSelf.textView];
         } second:^(NSError *error) {
             [iTermWarning showWarningWithTitle:error.localizedDescription
-                                       actions:@[ @"OK" ]
+                                       actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in performNaturalLanguageQuery:") ]
                                      accessory:nil
                                     identifier:nil
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"AI Error"
+                                       heading:ITLocalize(@"StatusBarLargeComposerViewController_AlertHeading_AiError", @"AI Error",@"Alert heading in performNaturalLanguageQuery:(id)sender")
                                         window:weakSelf.view.window];
         }];
     }];
@@ -342,22 +342,22 @@
     _popoverVC.textView.defaultParagraphStyle = style;
 
     NSArray<NSString*> *lines = @[
-        @"^⇧↑\tAdd cursor above",
-        @"^⇧↓\tAdd cursor below",
-        @"^⇧-click\tAdd cursor",
-        @"⌥-drag\tAdd cursors"
+        ITLocalize(@"StatusBarLargeComposerViewController_Facing_TAddCursorAbove", @"^⇧↑\tAdd cursor above", @"Composer keyboard shortcut help line"),
+        ITLocalize(@"StatusBarLargeComposerViewController_Facing_TAddCursorBelow", @"^⇧↓\tAdd cursor below", @"Composer keyboard shortcut help line"),
+        ITLocalize(@"StatusBarLargeComposerViewController_Facing_ClickTAddCursor", @"^⇧-click\tAdd cursor", @"Composer keyboard shortcut help line"),
+        ITLocalize(@"StatusBarLargeComposerViewController_Facing_DragTAddCursors", @"⌥-drag\tAdd cursors", @"Composer keyboard shortcut help line")
     ];
     if ([iTermAdvancedSettingsModel generativeAIAllowed]) {
-        lines = [lines arrayByAddingObject:@"⌘Y\tNatural language AI lookup"];
+        lines = [lines arrayByAddingObject:ITLocalize(@"StatusBarLargeComposerViewController_Facing_YTNaturalLanguageAiLookup", @"⌘Y\tNatural language AI lookup", @"Composer keyboard shortcut help line")];
     }
     lines = [lines arrayByAddingObjectsFromArray:@[
-        @"⌘F\tOpen Find bar",
-        @"⌥⌘V\tOpen in Advanced Paste",
-        @"⌘-click\tOpen in explainshell.com",
-        @"⇧↩\tSend contents or selection",
-        @"⌥⇧↩\tSend command at cursor",
-        @"⌥↩\tEnqueue command at cursor",
-        @"⇧⌘;\tView command history"
+        ITLocalize(@"StatusBarLargeComposerViewController_Facing_FTOpenFindBar", @"⌘F\tOpen Find bar", @"Composer keyboard shortcut help line"),
+        ITLocalize(@"StatusBarLargeComposerViewController_Facing_VTOpenInAdvancedPaste", @"⌥⌘V\tOpen in Advanced Paste", @"Composer keyboard shortcut help line"),
+        ITLocalize(@"StatusBarLargeComposerViewController_Facing_ClickTOpenInExplainshellCom", @"⌘-click\tOpen in explainshell.com", @"Composer keyboard shortcut help line"),
+        ITLocalize(@"StatusBarLargeComposerViewController_Facing_TSendContentsOrSelection", @"⇧↩\tSend contents or selection", @"Composer keyboard shortcut help line"),
+        ITLocalize(@"StatusBarLargeComposerViewController_Facing_TSendCommandAtCursor", @"⌥⇧↩\tSend command at cursor", @"Composer keyboard shortcut help line"),
+        ITLocalize(@"StatusBarLargeComposerViewController_Facing_TEnqueueCommandAtCursor", @"⌥↩\tEnqueue command at cursor", @"Composer keyboard shortcut help line"),
+        ITLocalize(@"StatusBarLargeComposerViewController_Facing_TViewCommandHistory", @"⇧⌘;\tView command history", @"Composer keyboard shortcut help line")
     ]];
     [_popoverVC appendString:[lines componentsJoinedByString:@"\n"]];
     [_popoverVC.textView.textStorage addAttribute:NSParagraphStyleAttributeName value:style range:NSMakeRange(0, _popoverVC.textView.textStorage.string.length)];

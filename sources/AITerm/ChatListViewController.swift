@@ -399,12 +399,16 @@ class ChatListViewController: NSViewController {
         let menu = NSMenu()
         let count = max(1, selectedChatIDs().count)
         if count == 1 {
-            menu.addItem(withTitle: "Rename Chat",
+            menu.addItem(withTitle: String(localized: "ChatListViewController_RenameChat", defaultValue: "Rename Chat", comment: "Menu title in contextMenu"),
                          action: #selector(renameSelectedChat(_:)),
                          target: self)
             menu.addItem(.separator())
         }
-        let title = count == 1 ? "Delete Chat" : "Delete \(count) Chats"
+        let title = String.localizedStringWithFormat(
+            String(localized: "ChatListViewController_DeleteChats_Title_FORMAT",
+                   defaultValue: "%#@chats@",
+                   comment: "Title in contextMenu for deleting chats"),
+            count)
         menu.addItem(withTitle: title,
                      action: #selector(deleteSelectedChats(_:)),
                      target: self)

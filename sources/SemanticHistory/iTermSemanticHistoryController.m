@@ -663,9 +663,9 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         return;
     }
     iTermWarning *warning = [[iTermWarning alloc] init];
-    warning.title = [NSString stringWithFormat:@"The following command returned a non-zero exit code:\n\n“%@”",
+    warning.title = [NSString stringWithFormat:ITLocalize(@"SemanticHistoryController_TheFollowingCommandReturnedANonZero_FORMAT", @"The following command returned a non-zero exit code:\n\n“%1$@”", @"Title in didFinishCommand:"),
                      [parts componentsJoinedByString:@" "]];
-    warning.heading = @"Semantic History Command Failed";
+    warning.heading = ITLocalize(@"SemanticHistoryController_AlertHeading_SemanticHistoryCommandFailed", @"Semantic History Command Failed",@"Alert heading in didFinishCommand:(NSArray *)parts");
     static const iTermSingleUseWindowOptions options = iTermSingleUseWindowOptionsShortLived;
     NSMutableData *inject = [runner.output mutableCopy];
     NSString *truncationWarning = [NSString stringWithFormat:@"\n%c[m;[output truncated]\n", 27];
@@ -674,8 +674,8 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     }
     [inject it_replaceOccurrencesOfData:[NSData dataWithBytes:"\n" length:1]
                                withData:[NSData dataWithBytes:"\r\n" length:2]];
-    warning.warningActions = @[ [iTermWarningAction warningActionWithLabel:@"OK" block:nil],
-                                [iTermWarningAction warningActionWithLabel:@"View" block:^(iTermWarningSelection selection) {
+    warning.warningActions = @[ [iTermWarningAction warningActionWithLabel:ITLocalize(@"COMMON_OK", @"OK", @"Label text in didFinishCommand:") block:nil],
+                                [iTermWarningAction warningActionWithLabel:ITLocalize(@"SemanticHistoryController_View", @"View", @"Label text in didFinishCommand:") block:^(iTermWarningSelection selection) {
                                     [[iTermController sharedInstance] openSingleUseWindowWithCommand:@"/usr/bin/true"
                                                                                            arguments:nil
                                                                                               inject:inject

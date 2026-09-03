@@ -155,10 +155,15 @@ iTermCommandInfoViewControllerDelegate>
     if (item.action == @selector(sshDisconnect:)) {
         NSString *name = [self.delegate textViewCurrentSSHSessionName];
         if (name) {
-            item.title = [NSString stringWithFormat:@"Disconnect from %@", name];
+      item.title = [NSString
+          stringWithFormat:ITLocalize(@"PtyTextViewArc_DisconnectFrom_FORMAT",
+                                      @"Disconnect from %1$@",
+                                      @"Title in arcValidateMenuItem:"),
+                           name];
             return YES;
         } else {
-            item.title = @"Disconnect";
+      item.title = ITLocalize(@"PtyTextViewArc_Disconnect", @"Disconnect",
+                              @"Title in arcValidateMenuItem:");
         }
     }
     if (item.action == @selector(toggleRemoteHostCanControlIterm2:)) {
@@ -177,13 +182,14 @@ iTermCommandInfoViewControllerDelegate>
             return NO;
         }
         if (!self.selection.hasSelection && !self.selection.live) {
-            item.title = @"Fold/Unfold";
+      item.title = ITLocalize(@"PtyTextViewArc_FoldUnfold", @"Fold/Unfold",
+                              @"Title in arcValidateMenuItem:");
             return NO;
         }
         if ([self selectionContainsFold]) {
-            item.title = @"Unfold in Selection";
+            item.title = ITLocalize(@"PtyTextViewArc_UnfoldInSelection", @"Unfold in Selection", @"Title in arcValidateMenuItem:");
         } else {
-            item.title = @"Fold Selected Lines";
+            item.title = ITLocalize(@"PtyTextViewArc_FoldSelectedLines", @"Fold Selected Lines", @"Title in arcValidateMenuItem:");
         }
         return YES;
     }
@@ -828,10 +834,14 @@ iTermCommandInfoViewControllerDelegate>
                         mouseLocation:(NSPoint)mouseLocation {
     iTermSimpleContextMenu *menu = [[iTermSimpleContextMenu alloc] init];
     __weak __typeof(self) weakSelf = self;
-    [menu addItemWithTitle:@"Look Up in Dictionary" action:^{
+  [menu addItemWithTitle:ITLocalize(@"PtyTextViewArc_Menu_LookUpInDictionary",
+                                    @"Look Up in Dictionary",@"Menu title in disambiguateQuicklookForEvent:(NSEvent *)event")
+                  action:^{
         [weakSelf showDefinitionForWordAt:clickPoint];
     }];
-    [menu addItemWithTitle:@"Quick Look" action:^{
+  [menu addItemWithTitle:ITLocalize(@"PtyTextViewArc_Menu_QuickLook",
+                                    @"Quick Look",@"Menu title in disambiguateQuicklookForEvent:(NSEvent *)event")
+                  action:^{
         [weakSelf openQuickLookForURL:url
                             urlAction:urlAction
                             withEvent:event];
@@ -1983,7 +1993,9 @@ copyRangeAccordingToUserPreferences:(VT100GridWindowedRange)range {
         }
     }
     if (copied) {
-        [ToastWindowController showToastWithMessage:@"Copied"
+    [ToastWindowController
+        showToastWithMessage:ITLocalize(@"PtyTextViewArc_Toast_Copied",
+                                        @"Copied", @"toast message")
                                            duration:1.5
                                    screenCoordinate:[NSEvent mouseLocation]
                                           pointSize:12];
@@ -2072,8 +2084,12 @@ runCommandInBackground:(NSString *)command {
     iTermBackgroundCommandRunner *runner =
         [[iTermBackgroundCommandRunner alloc] initWithCommand:command
                                                         shell:self.delegate.textViewShell
-                                                        title:@"Smart Selection Action"];
-    runner.notificationTitle = @"Smart Selection Action Failed";
+                title:ITLocalize(@"PtyTextViewArc_SmartSelectionAction",
+                                 @"Smart Selection Action",
+                                 @"Title in contextMenu:")];
+  runner.notificationTitle =
+      ITLocalize(@"PtyTextViewArc_SmartSelectionActionFailed",
+                 @"Smart Selection Action Failed", @"Title in contextMenu:");
     [runner run];
 }
 
@@ -2159,7 +2175,7 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
 
         NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = text;
-        [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in blurredScreenshotAccessibilityMenu")];
         [alert layout];
         [alert runModal];
     }
@@ -3050,7 +3066,9 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     [self copyString:content];
     const NSPoint p = view.centerScreenCoordinate;
     if (p.x == p.x) {
-        [ToastWindowController showToastWithMessage:@"Copied"
+    [ToastWindowController
+        showToastWithMessage:ITLocalize(@"PtyTextViewArc_Toast_Copied",
+                                        @"Copied", @"toast message")
                                            duration:1
                                    screenCoordinate:p
                                           pointSize:12];

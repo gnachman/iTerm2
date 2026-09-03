@@ -51,7 +51,7 @@ final class InlineChatToolbarView: NSView {
                                           alignment: .center)
 
     override init(frame frameRect: NSRect) {
-        let label = InlineChatToolbarTitleLabel(labelWithString: "AI Chat")
+        let label = InlineChatToolbarTitleLabel(labelWithString: String(localized: "InlineChatToolbarView_AiChat", defaultValue: "AI Chat", comment: "Title in resetCursorRects"))
         label.font = NSFont.systemFont(ofSize: 13, weight: .semibold)
         label.textColor = .labelColor
         label.alignment = .center
@@ -59,19 +59,19 @@ final class InlineChatToolbarView: NSView {
         titleLabel = label
 
         newChatButton = Self.makeButton(symbol: .squareAndPencil,
-                                        tooltip: "New chat")
+                                        tooltip: String(localized: "InlineChatToolbarView_NewChat", defaultValue: "New chat", comment: "Tooltip text in resetCursorRects"))
         switchChatButton = Self.makeButton(symbol: .bubbleLeftAndBubbleRight,
-                                           tooltip: "Switch to another chat")
+                                           tooltip: String(localized: "InlineChatToolbarView_SwitchToAnotherChat", defaultValue: "Switch to another chat", comment: "Tooltip text in resetCursorRects"))
         // Same info-circle control the chat window toolbar uses.
         sessionInfoButton = ChatToolbar.makeSessionInfoButton()
         sessionInfoButton.imageScaling = .scaleProportionallyDown
-        sessionInfoButton.toolTip = "Link or unlink terminal/browser session"
+        sessionInfoButton.toolTip = String(localized: "InlineChatToolbarView_LinkOrUnlinkTerminalBrowserSession", defaultValue: "Link or unlink terminal/browser session", comment: "Button title in resetCursorRects")
         // makeSessionInfoButton builds the image with a nil accessibility
         // description, so give VoiceOver an explicit label (the tooltip only
         // maps to accessibility help, not the element's label).
-        sessionInfoButton.setAccessibilityLabel("Link or unlink terminal/browser session")
+        sessionInfoButton.setAccessibilityLabel(String(localized: "InlineChatToolbarView_LinkOrUnlinkTerminalBrowserSession", defaultValue: "Link or unlink terminal/browser session", comment: "Button title in resetCursorRects"))
         closeButton = Self.makeButton(symbol: .xmark,
-                                      tooltip: "Hide chat")
+                                      tooltip: String(localized: "InlineChatToolbarView_HideChat", defaultValue: "Hide chat", comment: "Tooltip text in resetCursorRects"))
 
         separator = NSBox()
         separator.boxType = .separator

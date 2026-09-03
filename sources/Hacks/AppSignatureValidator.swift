@@ -57,9 +57,9 @@ class AppSignatureValidator: NSObject {
             "A required file appears to be missing or corrupted, yet against all odds the code signature for iTerm2 is valid. Please file a bug at https://iterm2.com/bugs"
         }
         let alert = NSAlert()
-        alert.messageText = "Application Corrupt"
+        alert.messageText = String(localized: "AppSignatureValidator_ApplicationCorrupt", defaultValue: "Application Corrupt", comment: "Alert title in warn")
         alert.informativeText = reason + ": " + message
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: String(localized: "COMMON_OK", defaultValue: "OK", comment: "Button title in warn"))
         alert.alertStyle = .critical
         alert.runModal()
     }

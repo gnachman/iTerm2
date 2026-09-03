@@ -44,13 +44,12 @@ class iTermWorkgroupDetailViewController: NSViewController {
     override func loadView() {
         let root = NSView(frame: NSRect(x: 0, y: 0, width: 640, height: 420))
 
-        emptyLabel = NSTextField(labelWithString:
-            "Select a workgroup on the left or click + to create one.")
+        emptyLabel = NSTextField(labelWithString: String(localized: "WorkgroupDetailViewController_SelectAWorkgroupOnTheLeftOr", defaultValue: "Select a workgroup on the left or click + to create one.", comment: "Label text in loadView"))
         emptyLabel.textColor = .secondaryLabelColor
         emptyLabel.alignment = .center
         root.addSubview(emptyLabel)
 
-        whatIsButton = NSButton(title: "What is a Workgroup?",
+        whatIsButton = NSButton(title: String(localized: "WorkgroupDetailViewController_WhatIsAWorkgroup", defaultValue: "What is a Workgroup?", comment: "Button title in loadView"),
                                 target: self,
                                 action: #selector(whatIsAWorkgroupClicked(_:)))
         whatIsButton.bezelStyle = .rounded
@@ -59,7 +58,7 @@ class iTermWorkgroupDetailViewController: NSViewController {
         root.addSubview(whatIsButton)
 
         nameField = NSTextField(frame: .zero)
-        nameField.placeholderString = "Workgroup name"
+        nameField.placeholderString = String(localized: "WorkgroupDetailViewController_WorkgroupName", defaultValue: "Workgroup name", comment: "Placeholder text in loadView")
         nameField.delegate = self
         root.addSubview(nameField)
 
@@ -319,18 +318,18 @@ class iTermWorkgroupDetailViewController: NSViewController {
         // Disable AppKit's target-based auto-enable so our own
         // isEnabled flags aren't overridden right before display.
         menu.autoenablesItems = false
-        let peer = menu.addItem(withTitle: "Add Peer",
+        let peer = menu.addItem(withTitle: String(localized: "WorkgroupDetailViewController_AddPeer", defaultValue: "Add Peer", comment: "Menu title in showAddMenu"),
                                 action: #selector(addPeer),
                                 keyEquivalent: "")
         peer.target = self
-        let split = menu.addItem(withTitle: "Add Split",
+        let split = menu.addItem(withTitle: String(localized: "WorkgroupDetailViewController_AddSplit", defaultValue: "Add Split", comment: "Menu title in showAddMenu"),
                                  action: #selector(addSplit),
                                  keyEquivalent: "")
         split.target = self
         // No split from anywhere inside a peer group — that includes
         // both the host (ambiguous target) and the peers themselves.
         split.isEnabled = !sessionIsInPeerGroup(selID: selID)
-        let tab = menu.addItem(withTitle: "Add Tab",
+        let tab = menu.addItem(withTitle: String(localized: "WorkgroupDetailViewController_AddTab", defaultValue: "Add Tab", comment: "Menu title in showAddMenu"),
                                action: #selector(addTab),
                                keyEquivalent: "")
         tab.target = self
@@ -573,15 +572,15 @@ extension iTermWorkgroupDetailViewController: NSOutlineViewDataSource, NSOutline
     private func displayLabel(for session: iTermWorkgroupSessionConfig) -> String {
         switch session.kind {
         case .root:
-            return "Main session"
+            return String(localized: "WorkgroupDetailViewController_MainSession", defaultValue: "Main session", comment: "Text shown in displayLabel: Main session")
         case .peer:
-            return "Peer: \(session.displayName)"
+            return String(format: String(localized: "WorkgroupDetailViewController_Peer_FORMAT", defaultValue: "Peer: %1$@", comment: "Formatted user-facing text in displayLabel"), session.displayName)
         case .split(let s):
-            let dir = s.orientation == .vertical ? "Vertical" : "Horizontal"
+            let dir = s.orientation == .vertical ? String(localized: "WorkgroupDetailViewController_Vertical", defaultValue: "Vertical", comment: "Text shown in displayLabel: Vertical") : String(localized: "WorkgroupDetailViewController_Horizontal", defaultValue: "Horizontal", comment: "Text shown in displayLabel: Horizontal")
             let pct = Int((s.location * 100).rounded())
-            return "Split: \(dir) \(pct)%"
+            return String(format: String(localized: "WorkgroupDetailViewController_Split_FORMAT", defaultValue: "Split: %1$@ %2$@%%", comment: "Formatted user-facing text in displayLabel"), dir, String(pct))
         case .tab:
-            return "Tab"
+            return String(localized: "WorkgroupDetailViewController_Tab", defaultValue: "Tab", comment: "Text shown in displayLabel: Tab")
         }
     }
 }
@@ -619,6 +618,6 @@ extension iTermWorkgroupDetailViewController: WorkgroupVisualViewDelegate {
         }) else { return }
         wg.sessions[idx] = s
         parentEditor?.replaceSelectedWorkgroup(wg,
-                                               actionName: "Change Split Location")
+                                               actionName: String(localized: "WorkgroupDetailViewController_ChangeSplitLocation", defaultValue: "Change Split Location", comment: "Action title in visualView"))
     }
 }

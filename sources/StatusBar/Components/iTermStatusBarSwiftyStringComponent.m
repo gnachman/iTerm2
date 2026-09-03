@@ -32,19 +32,21 @@ NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression"
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Interpolated String";
+    return ITLocalize(@"StatusBarSwiftyStringComponent_Facing_InterpolatedString", @"Interpolated String", @"Text shown in statusBarComponentShortDescription: Interpolated String");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Shows the evaluation of a string with inline expressions which may include session "
-           @"variables or the output of registered scripting functions";
+    return ITLocalize(@"StatusBarSwiftyStringComponent_Facing_ShowsTheEvaluationOfAStringWith",
+                      @"Shows the evaluation of a string with inline expressions which may include session "
+                      @"variables or the output of registered scripting functions",
+                      @"Text shown in statusBarComponentDetailedDescription: Shows the evaluation of a string with inline expressions which may include session variables or the output of registered scripting functions");
 }
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *expressionKnob =
-        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"String Value:"
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:ITLocalize(@"StatusBarSwiftyStringComponent_StringValue", @"String Value:", @"Label text in statusBarComponentKnobs")
                                                           type:iTermStatusBarComponentKnobTypeText
-                                                   placeholder:@"String with \\(expressions)"
+                                                   placeholder:ITLocalize(@"StatusBarSwiftyStringComponent_Placeholder_StringWithExpressions", @"String with \\(expressions)", @"Knob placeholder in statusBarComponentKnobs")
                                                   defaultValue:@""
                                                            key:iTermStatusBarSwiftyStringComponentExpressionKey];
     return [@[ expressionKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
@@ -93,11 +95,11 @@ NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression"
 - (void)onClick:(id)sender {
     if (_errorReason) {
         [iTermWarning showWarningWithTitle:_errorReason
-                                   actions:@[ @"OK" ]
+                                   actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in onClick:") ]
                                  accessory:nil
                                 identifier:@"NoSyncInterpolatedStatusBarComponentError"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:@"Error"
+                                   heading:ITLocalize(@"StatusBarSwiftyStringComponent_AlertHeading_Error", @"Error",@"Alert heading in onClick:(id)sender")
                                     window:self.statusBarComponentView.window];
     }
 }

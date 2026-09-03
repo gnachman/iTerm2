@@ -78,22 +78,30 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
 
     if (appURL == nil) {
         NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-        alert.messageText = [NSString stringWithFormat:@"iTerm is not the default handler for %@. "
-                             @"Would you like to set iTerm as the default handler?",
+        alert.messageText = [NSString stringWithFormat:ITLocalize(@"LaunchServices_Alert_ITermIsNotTheDefaultHandlerFor_FORMAT",
+                                                                  @"iTerm is not the default handler for %1$@. "
+                                                                  @"Would you like to set iTerm as the default handler?",
+                                                                  @"Alert title in makeDefaultHandlerForURLScheme:"),
                              scheme];
-        alert.informativeText = @"There is currently no handler.";
-        [alert addButtonWithTitle:@"OK"];
-        [alert addButtonWithTitle:@"Cancel"];
+        alert.informativeText = ITLocalize(@"LaunchServices_AlertExplanatory_ThereIsCurrentlyNoHandler",
+                                           @"There is currently no handler.",
+                                           @"Alert explanatory text in makeDefaultHandlerForURLScheme:");
+        [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in makeDefaultHandlerForURLScheme:")];
+        [alert addButtonWithTitle:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in makeDefaultHandlerForURLScheme:")];
         set = ([alert runModal] == NSAlertFirstButtonReturn);
     } else if (![[[NSFileManager defaultManager] displayNameAtPath:[appURL path]] isEqualToString:@"iTerm 2"]) {
-        NSString *theTitle = [NSString stringWithFormat:@"iTerm is not the default handler for %@. "
-                                                        @"Would you like to set iTerm as the default handler?", scheme];
+        NSString *theTitle = [NSString stringWithFormat:ITLocalize(@"LaunchServices_Alert_ITermIsNotTheDefaultHandlerFor_FORMAT",
+                                                                  @"iTerm is not the default handler for %1$@. "
+                                                                  @"Would you like to set iTerm as the default handler?",
+                                                                  @"Alert title in makeDefaultHandlerForURLScheme:"), scheme];
         NSAlert *alert = [[[NSAlert alloc] init] autorelease];
         alert.messageText = theTitle;
-        alert.informativeText = [NSString stringWithFormat:@"The current handler is: %@",
+        alert.informativeText = [NSString stringWithFormat:ITLocalize(@"LaunchServices_AlertExplanatory_TheCurrentHandlerIs_FORMAT",
+                                                                      @"The current handler is: %1$@",
+                                                                      @"Alert explanatory text in makeDefaultHandlerForURLScheme:"),
                                  [[NSFileManager defaultManager] displayNameAtPath:[appURL path]]];
-        [alert addButtonWithTitle:@"OK"];
-        [alert addButtonWithTitle:@"Cancel"];
+        [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in makeDefaultHandlerForURLScheme:")];
+        [alert addButtonWithTitle:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in makeDefaultHandlerForURLScheme:")];
         set = ([alert runModal] == NSAlertFirstButtonReturn);
     }
 
@@ -175,10 +183,14 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
 
 - (BOOL)offerToPickApplicationToOpenFile:(NSString *)fullPath {
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = [NSString stringWithFormat:@"There is no application set to open the document “%@”", [fullPath lastPathComponent]];
-    alert.informativeText = @"Choose an application on your computer to open this file.";
-    [alert addButtonWithTitle:@"Choose Application…"];
-    [alert addButtonWithTitle:@"Cancel"];
+    alert.messageText = [NSString stringWithFormat:ITLocalize(@"LaunchServices_Alert_ThereIsNoApplicationSetToOpen_FORMAT",
+                                                             @"There is no application set to open the document “%1$@”",
+                                                             @"Alert title in offerToPickApplicationToOpenFile:"), [fullPath lastPathComponent]];
+    alert.informativeText = ITLocalize(@"LaunchServices_AlertExplanatory_ChooseAnApplicationOnYourComputerTo",
+                                       @"Choose an application on your computer to open this file.",
+                                       @"Alert explanatory text in offerToPickApplicationToOpenFile:");
+    [alert addButtonWithTitle:ITLocalize(@"LaunchServices_ChooseApplication", @"Choose Application…", @"Button title in offerToPickApplicationToOpenFile:")];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in offerToPickApplicationToOpenFile:")];
 
     DLog(@"Offer to pick an app to open %@", fullPath);
     if ([alert runModal] == NSAlertFirstButtonReturn) {

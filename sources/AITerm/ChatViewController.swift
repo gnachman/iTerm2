@@ -795,7 +795,7 @@ extension ChatViewController {
            let chat = listModel.chat(id: chatID) {
             return chat.title
         }
-        return "AI Chat"
+        return String(localized: "ChatViewController_AiChat", defaultValue: "AI Chat", comment: "Text shown in messageLocksProvider: AI Chat")
     }
 
     func offerLink(to guid: String, terminal: Bool, name: String?) {
@@ -880,12 +880,12 @@ extension ChatViewController {
         // window, and clobbering its title with the chat title would be
         // wrong.
         if let windowController = view.window?.windowController as? ChatWindowController {
-            windowController.updateTitle(chat?.title ?? "AI Chat")
+            windowController.updateTitle(chat?.title ?? String(localized: "ChatViewController_AiChat", defaultValue: "AI Chat", comment: "Title in load"))
         } else if isInlinePanel {
             updateInlineToolbarTitle()
         } else {
             // Fallback for compatibility
-            view.window?.title = chat?.title ?? "AI Chat"
+            view.window?.title = chat?.title ?? String(localized: "ChatViewController_AiChat", defaultValue: "AI Chat", comment: "Title in load")
         }
         tableView.reloadData()
         brokerSubscription?.unsubscribe()
@@ -1144,11 +1144,11 @@ extension ChatViewController {
         if newPermission == .always,
            let autopopulationWarningText = category.autopopulationWarningText {
             let sel = iTermWarning.show(withTitle: autopopulationWarningText,
-                                        actions: ["Send Automatically", "Ask Each Time", "Never Allow"],
+                                        actions: [String(localized: "ChatViewController_SendAutomatically", defaultValue: "Send Automatically", comment: "Action title in toggle"), String(localized: "ChatViewController_AskEachTime", defaultValue: "Ask Each Time", comment: "Action title in toggle"), String(localized: "ChatViewController_NeverAllow", defaultValue: "Never Allow", comment: "Action title in toggle")],
                                         accessory: nil,
                                         identifier: nil,
                                         silenceable: .kiTermWarningTypePersistent,
-                                        heading: "Confirm Change",
+                                        heading: String(localized: "ChatViewController_ConfirmChange", defaultValue: "Confirm Change", comment: "Alert heading in toggle"),
                                         window: view.window)
             switch sel {
             case .kiTermWarningSelection0:
@@ -1311,12 +1311,12 @@ extension ChatViewController {
             stopStreaming()
             return
         }
-        let selection = iTermWarning.show(withTitle: "All terminal content will be sent to AI, which may go to a third party. Ensure this is safe to do before proceeding.",
-                                          actions: ["OK", "Cancel"],
+        let selection = iTermWarning.show(withTitle: String(localized: "ChatViewController_AllTerminalContentWillBeSentTo", defaultValue: "All terminal content will be sent to AI, which may go to a third party. Ensure this is safe to do before proceeding.", comment: "Alert title in toggleStream"),
+                                          actions: [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Action title in toggleStream"), String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Action title in toggleStream")],
                                           accessory: nil,
                                           identifier: nil,
                                           silenceable: .kiTermWarningTypePersistent,
-                                          heading: "Privacy Warning",
+                                          heading: String(localized: "ChatViewController_PrivacyWarning", defaultValue: "Privacy Warning", comment: "Alert heading in toggleStream"),
                                           window: nil)
         if selection == .kiTermWarningSelection0 {
             streaming = true
@@ -1328,7 +1328,7 @@ extension ChatViewController {
     }
 
     @objc private func showLinkedSessionHelp(_ sender: Any) {
-        chatToolbar.sessionButton.it_showWarning(withMarkdown: "When a terminal session is linked to this chat, the AI may view terminal contents and run commands in that session. You will be prompted to grant permission before it is able to view, type to, or modify a terminal session.")
+        chatToolbar.sessionButton.it_showWarning(withMarkdown: String(localized: "CHAT_LINKED_SESSION_PERMISSION_WARNING", defaultValue: "When a terminal session is linked to this chat, the AI may view terminal contents and run commands in that session. You will be prompted to grant permission before it is able to view, type to, or modify a terminal session.", comment: "Warning shown when a chat is linked to a terminal session"))
     }
 
     @objc private func deleteChat(_ sender: Any) {
@@ -2751,12 +2751,12 @@ extension Message {
         case .clientLocal(let clientLocal):
             switch clientLocal.action {
             case .pickingSession, .executingCommand:
-                return [.init(title: "Cancel", destructive: true, identifier: "")]
+                return [.init(title: String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Title in attributedStringValue"), destructive: true, identifier: "")]
             case .notice: return []
             case .streamingChanged(let state):
                 switch state {
                 case .active:
-                    return [.init(title: "Stop", destructive: true, identifier: "")]
+                    return [.init(title: String(localized: "ChatViewController_Stop", defaultValue: "Stop", comment: "Title in attributedStringValue"), destructive: true, identifier: "")]
                 case .stopped, .stoppedAutomatically:
                     return []
                 }
@@ -2765,12 +2765,12 @@ extension Message {
                 // handler in configure(cell:RegularMessageCellView,...);
                 // empty-string ids would conflict with the
                 // single-button cases above.
-                return [.init(title: "Link", destructive: false, identifier: "link"),
-                        .init(title: "Enable Orchestration", destructive: false, identifier: "orchestrate")]
+                return [.init(title: String(localized: "ChatViewController_Link", defaultValue: "Link", comment: "Title in attributedStringValue"), destructive: false, identifier: "link"),
+                        .init(title: String(localized: "ChatViewController_EnableOrchestration", defaultValue: "Enable Orchestration", comment: "Title in attributedStringValue"), destructive: false, identifier: "orchestrate")]
             case .offerOrchestration:
                 // Identifier matches the offerOrchestration buttonClicked
                 // handler in configure(cell:RegularMessageCellView,...).
-                return [.init(title: "Enable Orchestration", destructive: false, identifier: "orchestrate")]
+                return [.init(title: String(localized: "ChatViewController_EnableOrchestration", defaultValue: "Enable Orchestration", comment: "Title in attributedStringValue"), destructive: false, identifier: "orchestrate")]
             case let .permissions(terminal: terminal, guid: guid):
                 let rce = RemoteCommandExecutor.instance
                 var buttons = [MessageRendition.Regular.Button]()
@@ -2804,19 +2804,19 @@ extension Message {
                 // wires the buttonClicked handler that parses them and
                 // publishes the matching workgroupPermissionResponse.
                 return [
-                    .init(title: "Approve",
+                    .init(title: String(localized: "ChatViewController_Approve", defaultValue: "Approve", comment: "Title in attributedStringValue"),
                           destructive: false,
                           identifier: "workgroupPermission:\(ApprovalChoice.approve.rawValue):\(requestID)"),
-                    .init(title: "Deny",
+                    .init(title: String(localized: "ChatViewController_Deny", defaultValue: "Deny", comment: "Title in attributedStringValue"),
                           destructive: true,
                           identifier: "workgroupPermission:\(ApprovalChoice.deny.rawValue):\(requestID)"),
                 ]
             case let .enableOrchestrationRequest(requestID):
                 return [
-                    .init(title: "Enable Orchestration",
+                    .init(title: String(localized: "ChatViewController_EnableOrchestration", defaultValue: "Enable Orchestration", comment: "Title in attributedStringValue"),
                           destructive: false,
                           identifier: "enableOrchestration:\(ApprovalChoice.approve.rawValue):\(requestID)"),
-                    .init(title: "Not Now",
+                    .init(title: String(localized: "ChatViewController_NotNow", defaultValue: "Not Now", comment: "Title in attributedStringValue"),
                           destructive: true,
                           identifier: "enableOrchestration:\(ApprovalChoice.deny.rawValue):\(requestID)"),
                 ]
@@ -2826,21 +2826,21 @@ extension Message {
                 // so handleRevokeOrchestrationPermissionButton splits with
                 // maxSplits 1 and keeps everything after it verbatim.
                 return [
-                    .init(title: "Revoke",
+                    .init(title: String(localized: "ChatViewController_Revoke", defaultValue: "Revoke", comment: "Title in attributedStringValue"),
                           destructive: true,
                           identifier: "revokeOrchestrationPermission:\(scope)"),
                 ]
             }
         case .selectSessionRequest:
-            return [.init(title: "Select a Session", destructive: false, identifier: PickSessionButtonIdentifier.pickSession.rawValue),
-                    .init(title: "Cancel", destructive: true, identifier: PickSessionButtonIdentifier.cancel.rawValue)]
+            return [.init(title: String(localized: "ChatViewController_SelectASession", defaultValue: "Select a Session", comment: "Title in attributedStringValue"), destructive: false, identifier: PickSessionButtonIdentifier.pickSession.rawValue),
+                    .init(title: String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Title in attributedStringValue"), destructive: true, identifier: PickSessionButtonIdentifier.cancel.rawValue)]
         case .remoteCommandRequest(let payload, safe: _):
             switch payload {
             case .classic:
-                return [.init(title: "Allow Once", destructive: false, identifier: RemoteCommandButtonIdentifier.allowOnce.rawValue),
-                        .init(title: "Always Allow", destructive: false, identifier: RemoteCommandButtonIdentifier.allowAlways.rawValue),
-                        .init(title: "Deny this Time", destructive: true, identifier: RemoteCommandButtonIdentifier.denyOnce.rawValue),
-                        .init(title: "Always Deny", destructive: true, identifier: RemoteCommandButtonIdentifier.denyAlways.rawValue)]
+                return [.init(title: String(localized: "ChatViewController_AllowOnce", defaultValue: "Allow Once", comment: "Title in attributedStringValue"), destructive: false, identifier: RemoteCommandButtonIdentifier.allowOnce.rawValue),
+                        .init(title: String(localized: "ChatViewController_AlwaysAllow", defaultValue: "Always Allow", comment: "Title in attributedStringValue"), destructive: false, identifier: RemoteCommandButtonIdentifier.allowAlways.rawValue),
+                        .init(title: String(localized: "ChatViewController_DenyThisTime", defaultValue: "Deny this Time", comment: "Title in attributedStringValue"), destructive: true, identifier: RemoteCommandButtonIdentifier.denyOnce.rawValue),
+                        .init(title: String(localized: "ChatViewController_AlwaysDeny", defaultValue: "Always Deny", comment: "Title in attributedStringValue"), destructive: true, identifier: RemoteCommandButtonIdentifier.denyAlways.rawValue)]
             case .external:
                 // Orchestration tool calls aren't per-call gated; no buttons.
                 return []
@@ -2864,7 +2864,7 @@ extension ChatViewController: NSMenuItemValidation {
             if menuItem.state == .on {
                 menuItem.title = autoTitle
             } else {
-                menuItem.title = "AI can \(category.rawValue)"
+                menuItem.title = String(format: String(localized: "ChatViewController_AiCan_FORMAT", defaultValue: "AI can %1$@", comment: "Menu item title in validateMenuItem"), category.rawValue)
             }
         }
         if let action = menuItem.action, isFindAction(action) {
@@ -3339,11 +3339,11 @@ extension ChatViewController: ChatToolbarDataSource {
         // disabled (see ChatListModel.setOrchestrationEnabled).
         let orchestrationOn = listModel.chat(id: chatID)?.orchestrationEnabled ?? false
         if orchestrationOn {
-            menu.addItem(withTitle: "Disable Orchestration",
+            menu.addItem(withTitle: String(localized: "ChatViewController_DisableOrchestration", defaultValue: "Disable Orchestration", comment: "Menu title in showSessionButtonMenu"),
                          action: #selector(disableOrchestration(_:)),
                          target: self)
         } else {
-            menu.addItem(withTitle: "Enable Orchestration",
+            menu.addItem(withTitle: String(localized: "ChatViewController_EnableOrchestration", defaultValue: "Enable Orchestration", comment: "Menu title in showSessionButtonMenu"),
                          action: #selector(enableOrchestration(_:)),
                          target: self)
         }
@@ -3361,12 +3361,12 @@ extension ChatViewController: ChatToolbarDataSource {
             if let guid = model?.terminalSessionGuid,
                iTermController.sharedInstance().anySession(forReference: guid) != nil {
 
-                menu.addItem(withTitle: "Reveal Linked Terminal Session", action: #selector(revealLinkedTerminalSession(_:)), target: self)
-                menu.addItem(withTitle: "Unlink Terminal Session", action: #selector(unlinkTerminalSession(_:)), target: self)
+                menu.addItem(withTitle: String(localized: "ChatViewController_RevealLinkedTerminalSession", defaultValue: "Reveal Linked Terminal Session", comment: "Menu title in showSessionButtonMenu"), action: #selector(revealLinkedTerminalSession(_:)), target: self)
+                menu.addItem(withTitle: String(localized: "ChatViewController_UnlinkTerminalSession", defaultValue: "Unlink Terminal Session", comment: "Menu title in showSessionButtonMenu"), action: #selector(unlinkTerminalSession(_:)), target: self)
                 // Inline-panel CVCs are already hosted in their session — no
                 // need to offer to put themselves there.
                 if !isInlinePanel {
-                    menu.addItem(withTitle: "Put Chat in Linked Terminal Session",
+                    menu.addItem(withTitle: String(localized: "ChatViewController_PutChatInLinkedTerminalSession", defaultValue: "Put Chat in Linked Terminal Session", comment: "Menu title in showSessionButtonMenu"),
                                  action: #selector(putChatInLinkedTerminalSession(_:)),
                                  target: self)
                 }
@@ -3389,7 +3389,7 @@ extension ChatViewController: ChatToolbarDataSource {
                 menu.addItem(NSMenuItem.separator())
 
                 if haveLinkedTerminalSession {
-                    menu.addItem(withTitle: "Send Commands & Output to AI Automatically",
+                    menu.addItem(withTitle: String(localized: "ChatViewController_SendCommandsOutputToAiAutomatically", defaultValue: "Send Commands & Output to AI Automatically", comment: "Menu title in showSessionButtonMenu"),
                                  action: #selector(toggleStream(_:)),
                                  target: self,
                                  state: streaming ? .on : .off,
@@ -3397,7 +3397,7 @@ extension ChatViewController: ChatToolbarDataSource {
                     menu.addItem(NSMenuItem.separator())
                 }
             } else {
-                menu.addItem(withTitle: "Link Terminal Session", action: #selector(objcLinkTerminalSession(_:)), target: self)
+                menu.addItem(withTitle: String(localized: "ChatViewController_LinkTerminalSession", defaultValue: "Link Terminal Session", comment: "Menu title in showSessionButtonMenu"), action: #selector(objcLinkTerminalSession(_:)), target: self)
                 menu.addItem(NSMenuItem.separator())
             }
 
@@ -3405,10 +3405,10 @@ extension ChatViewController: ChatToolbarDataSource {
             if let guid = model?.browserSessionGuid,
                iTermController.sharedInstance().anySession(forReference: guid) != nil {
 
-                menu.addItem(withTitle: "Reveal Linked Web Browser Session", action: #selector(revealLinkedBrowserSession(_:)), target: self)
-                menu.addItem(withTitle: "Unlink Web Browser Session", action: #selector(unlinkBrowserSession(_:)), target: self)
+                menu.addItem(withTitle: String(localized: "ChatViewController_RevealLinkedWebBrowserSession", defaultValue: "Reveal Linked Web Browser Session", comment: "Menu title in showSessionButtonMenu"), action: #selector(revealLinkedBrowserSession(_:)), target: self)
+                menu.addItem(withTitle: String(localized: "ChatViewController_UnlinkWebBrowserSession", defaultValue: "Unlink Web Browser Session", comment: "Menu title in showSessionButtonMenu"), action: #selector(unlinkBrowserSession(_:)), target: self)
                 if !isInlinePanel {
-                    menu.addItem(withTitle: "Put Chat in Linked Browser Session",
+                    menu.addItem(withTitle: String(localized: "ChatViewController_PutChatInLinkedBrowserSession", defaultValue: "Put Chat in Linked Browser Session", comment: "Menu title in showSessionButtonMenu"),
                                  action: #selector(putChatInLinkedBrowserSession(_:)),
                                  target: self)
                 }
@@ -3419,7 +3419,7 @@ extension ChatViewController: ChatToolbarDataSource {
                     if !category.isBrowserSpecific {
                         continue
                     }
-                    menu.addItem(withTitle: "AI can \(category.rawValue)",
+                    menu.addItem(withTitle: String(format: String(localized: "ChatViewController_AiCan_FORMAT", defaultValue: "AI can %1$@", comment: "Menu title in showSessionButtonMenu"), category.rawValue),
                                  action: #selector(toggleAlwaysAllow(_:)),
                                  target: self,
                                  state: rce.controlState(chatID: chatID,
@@ -3430,13 +3430,13 @@ extension ChatViewController: ChatToolbarDataSource {
                 }
                 menu.addItem(NSMenuItem.separator())
             } else {
-                menu.addItem(withTitle: "Link Browser Session", action: #selector(objcLinkBrowserSession(_:)), target: self)
+                menu.addItem(withTitle: String(localized: "ChatViewController_LinkBrowserSession", defaultValue: "Link Browser Session", comment: "Menu title in showSessionButtonMenu"), action: #selector(objcLinkBrowserSession(_:)), target: self)
                 menu.addItem(NSMenuItem.separator())
             }
         }
 
 
-        menu.addItem(withTitle: "Help", action: #selector(showLinkedSessionHelp(_:)), target: self)
+        menu.addItem(withTitle: String(localized: "ChatViewController_Help", defaultValue: "Help", comment: "Menu title in showSessionButtonMenu"), action: #selector(showLinkedSessionHelp(_:)), target: self)
 
         // Position the menu just below the button
         let location = NSPoint(x: 0, y: sender.bounds.height)
@@ -3686,7 +3686,7 @@ extension ChatViewController: InlineChatToolbarViewDelegate {
         // chatStorage is kept most-recent-first (see ChatListModel).
         for i in 0..<listModel.count {
             let chat = listModel.chat(at: i)
-            let title = chat.title.isEmpty ? "Untitled Chat" : chat.title
+            let title = chat.title.isEmpty ? String(localized: "ChatViewController_UntitledChat", defaultValue: "Untitled Chat", comment: "Title in inlineChatToolbarDidTapSwitchChat") : chat.title
             let item = NSMenuItem(title: title,
                                   action: #selector(switchToChatFromMenu(_:)),
                                   keyEquivalent: "")
@@ -3718,7 +3718,7 @@ extension ChatViewController: InlineChatToolbarViewDelegate {
             menu.addItem(item)
         }
         if menu.items.isEmpty {
-            let item = NSMenuItem(title: "No Chats", action: nil, keyEquivalent: "")
+            let item = NSMenuItem(title: String(localized: "ChatViewController_NoChats", defaultValue: "No Chats", comment: "Menu item title in inlineChatToolbarDidTapSwitchChat"), action: nil, keyEquivalent: "")
             item.isEnabled = false
             menu.addItem(item)
         }
@@ -3790,9 +3790,9 @@ class InlinePanelCoordinator: NSObject, ChatViewControllerDelegate {
     func chatViewControllerDeleteSession(_ controller: ChatViewController) {
         guard let chatID = controller.chatID else { return }
         let warning = iTermWarning()
-        warning.title = "Are you sure you want to delete this chat? This action cannot be undone."
-        warning.heading = "Delete Chat?"
-        let action = iTermWarningAction(label: "Delete") { [weak self] _ in
+        warning.title = String(localized: "ChatViewController_AreYouSureYouWantToDelete", defaultValue: "Are you sure you want to delete this chat? This action cannot be undone.", comment: "Title in chatViewControllerDeleteSession")
+        warning.heading = String(localized: "ChatViewController_DeleteChat", defaultValue: "Delete Chat?", comment: "Alert heading in chatViewControllerDeleteSession")
+        let action = iTermWarningAction(label: String(localized: "COMMON_DELETE", defaultValue: "Delete", comment: "Label text in chatViewControllerDeleteSession")) { [weak self] _ in
             // Runs from iTermWarning.runModal() on the main thread.
             MainActor.assumeIsolated {
                 do {
@@ -3811,7 +3811,7 @@ class InlinePanelCoordinator: NSObject, ChatViewControllerDelegate {
             }
         }
         action.destructive = true
-        warning.warningActions = [iTermWarningAction(label: "Cancel"), action]
+        warning.warningActions = [iTermWarningAction(label: String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Label text in chatViewControllerDeleteSession")), action]
         warning.warningType = .kiTermWarningTypePersistent
         warning.runModal()
     }
@@ -3974,19 +3974,11 @@ extension ChatViewController {
         // stick for the rest of the chat. Users coming from the
         // menu-driven toggle won't know that without being told.
         let alert = NSAlert()
-        alert.messageText = "Enable orchestration mode?"
-        alert.informativeText = """
-            Orchestration mode lets the agent coordinate across any iTerm2 sessions. \
-            It can read screen contents from any session, but to type into a session requires \
-            your permission. This is a more permissive model than when an agent is linked to \
-            a single session, where there are very fine-grained permission settings.
-
-            Enabling will detach any linked terminal or browser session and switch \
-            the chat to Orchestration mode.
-            """
+        alert.messageText = String(localized: "ChatViewController_EnableOrchestrationMode", defaultValue: "Enable orchestration mode?", comment: "Alert title in enableOrchestration")
+        alert.informativeText = String(localized: "ChatViewController_OrchestrationModeLetsTheAgentCoordinateAcross", defaultValue: "AI Chat", comment: "Alert explanatory text in enableOrchestration")
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "Enable Orchestration")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: String(localized: "ChatViewController_EnableOrchestration", defaultValue: "Enable Orchestration", comment: "Button title in enableOrchestration"))
+        alert.addButton(withTitle: String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Button title in enableOrchestration"))
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         setOrchestrationEnabled(true)
     }

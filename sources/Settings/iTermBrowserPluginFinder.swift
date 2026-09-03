@@ -19,9 +19,9 @@ class iTermBrowserPluginFinder: NSObject, NSOpenSavePanelDelegate {
         panel.canChooseDirectories = true
         panel.canChooseFiles = true
         panel.allowsMultipleSelection = false
-        panel.title = "Select \(allowedBundleName)"
-        panel.prompt = "Choose"
-        panel.message = "Select \(allowedBundleName)."
+        panel.title = String(format: String(localized: "BrowserPluginFinder_Select_FORMAT", defaultValue: "Select %1$@", comment: "Title in openFindPanel"), allowedBundleName)
+        panel.prompt = String(localized: "BrowserPluginFinder_Choose", defaultValue: "Choose", comment: "Text shown in openFindPanel: Choose")
+        panel.message = String(format: String(localized: "BrowserPluginFinder_SelectMessage_FORMAT", defaultValue: "Select %1$@.", comment: "Formatted alert message in openFindPanel"), allowedBundleName)
         panel.allowedContentTypes = [.bundle, .application, .applicationBundle]
         panel.begin { response in
             if response == .OK {

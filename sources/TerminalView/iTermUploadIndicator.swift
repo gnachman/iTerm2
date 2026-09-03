@@ -29,7 +29,7 @@ class iTermUploadIndicator: NSView {
         layer?.borderColor = NSColor.separatorColor.cgColor
 
         // Configure label
-        label.stringValue = "Uploading \u{201C}\(filename)\u{201D}…"
+        label.stringValue = String(format: String(localized: "UploadIndicator_UploadingU201CU201D_FORMAT", defaultValue: "Uploading \u{201C}%1$@\u{201D}…", comment: "Label text in init"), filename)
         label.font = NSFont.systemFont(ofSize: 12)
         label.textColor = NSColor.labelColor
         label.lineBreakMode = .byTruncatingMiddle
@@ -44,7 +44,7 @@ class iTermUploadIndicator: NSView {
         progressIndicator.startAnimation(nil)
 
         // Configure cancel button
-        cancelButton.title = "Cancel"
+        cancelButton.title = String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Button title in init")
         cancelButton.bezelStyle = .rounded
         cancelButton.controlSize = .small
         cancelButton.target = self

@@ -53,19 +53,19 @@ class ToolNamedMarks: NSView, ToolbeltTool, NSTableViewDelegate, NSTableViewData
         _tableView!.backgroundColor = .clear
 
         addButton = makeToolbeltButton(imageName: SFSymbol.plus.rawValue,
-                                       title: "Add",
+                                       title: String(localized: "COMMON_ADD", defaultValue: "Add", comment: "Title in makeToolbeltButton"),
                                        target: self,
                                        selector: #selector(add(_:)),
                                        frame: frameRect)
         addSubview(addButton!)
         removeButton = makeToolbeltButton(imageName: SFSymbol.minus.rawValue,
-                                          title: "Remove",
+                                          title: String(localized: "COMMON_REMOVE", defaultValue: "Remove", comment: "Title in makeToolbeltButton"),
                                           target: self,
                                           selector: #selector(remove(_:)),
                                           frame: frameRect)
         addSubview(removeButton!)
         editButton = makeToolbeltButton(imageName: SFSymbol.pencil.rawValue,
-                                        title: "Edit",
+                                        title: String(localized: "COMMON_EDIT", defaultValue: "Edit", comment: "Title in makeToolbeltButton"),
                                         target: self,
                                         selector: #selector(edit(_:)),
                                         frame: frameRect)

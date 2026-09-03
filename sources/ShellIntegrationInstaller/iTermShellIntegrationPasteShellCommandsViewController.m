@@ -41,7 +41,7 @@
 }
 
 - (NSString *)waitingText {
-    return @"⏳ Waiting for command to complete…";
+    return ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_Facing_WaitingForCommandToComplete", @"⏳ Waiting for command to complete…", @"Text shown in waitingText: ⏳ Waiting for command to complete…");
 }
 - (void)update {
     const int stage = _stage;
@@ -54,29 +54,29 @@
     NSString *prefix;
 
     if (stage < 0) {
-        prefix = @"1. Discover";
+        prefix = ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_Facing_1Discover", @"1. Discover", @"Text shown in update: 1. Discover");
     } else if (stage == 0) {
         if (_busy) {
             prefix = self.waitingText;
         } else {
-            prefix = @"➡ Select “Continue” to discover";
+            prefix = ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_Facing_SelectContinueToDiscover", @"➡ Select “Continue” to discover", @"Text shown in update: ➡ Select “Continue” to discover");
         }
         indexToBold = lines.count;
     } else if (stage > 0) {
         if (self.shell == iTermShellIntegrationShellUnknown) {
-            prefix = @"🛑 Your shell is not supported.\n\nOnly bash, fish, tcsh, xonsh, and zsh work with shell integration";
+            prefix = ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_Facing_YourShellIsNotSupportedNN", @"🛑 Your shell is not supported.\n\nOnly bash, fish, tcsh, xonsh, and zsh work with shell integration", @"Warning when the current shell is unsupported");
         } else {
-            prefix = @"✅ Discovered";
+            prefix = ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_Facing_Discovered", @"✅ Discovered", @"Text shown in update: ✅ Discovered");
         }
     }
     if (self.shell == iTermShellIntegrationShellUnknown || (_busy && stage == 0)) {
         step = prefix;
     } else {
-        step = [NSString stringWithFormat:@"%@ your shell", prefix];
+        step = [NSString stringWithFormat:ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_FormattedFacing_YourShell_FORMAT", @"%1$@ your shell",@"Formatted user-facing text in update"), prefix];
     }
     if (stage > 0) {
         if (self.shell != iTermShellIntegrationShellUnknown) {
-            step = [step stringByAppendingFormat:@": you use “%@”.", iTermShellIntegrationShellString(self.shell)];
+            step = [step stringByAppendingFormat:ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_FormattedFacing_YouUse_FORMAT", @": you use “%1$@”.",@"Formatted user-facing text in update"), iTermShellIntegrationShellString(self.shell)];
         }
     } else if (stage != 0 || !_busy) {
         step = [step stringByAppendingString:@"."];
@@ -89,23 +89,23 @@
         self.skipButton.enabled = NO;
     } else {
         if (stage < 1) {
-            prefix = @"Step 2. Write";
+            prefix = ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_Facing_Step2Write", @"Step 2. Write", @"Text shown in update: Step 2. Write");
         } else if (stage == 1) {
             if (self.shell == iTermShellIntegrationShellUnknown) {
-                prefix = @"Step 2. Write";
+                prefix = ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_Facing_Step2Write", @"Step 2. Write", @"Text shown in update: Step 2. Write");
             } else if (_busy) {
                 prefix = self.waitingText;
             } else {
-                prefix = @"➡ Select “Continue” to write";
+                prefix = ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_Facing_SelectContinueToWrite", @"➡ Select “Continue” to write", @"Text shown in update: ➡ Select “Continue” to write");
             }
             indexToBold = lines.count;
         } else if (stage > 1) {
-            prefix = @"✅ Wrote";
+            prefix = ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_Facing_Wrote", @"✅ Wrote", @"Text shown in update: ✅ Wrote");
         }
         if (_busy && stage == 1) {
             step = prefix;
         } else {
-            step = [NSString stringWithFormat:@"%@ the shell integration script.", prefix];
+            step = [NSString stringWithFormat:ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_FormattedFacing_TheShellIntegrationScript_FORMAT", @"%1$@ the shell integration script.",@"Formatted user-facing text in update"), prefix];
         }
         [lines addObject:step];
 
@@ -113,20 +113,20 @@
         if (self.installUtilities) {
             i += 1;
             if (stage < 2) {
-                prefix = @"Step 3. Install";
+                prefix = ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_Facing_Step3Install", @"Step 3. Install", @"Text shown in update: Step 3. Install");
             } else if (stage == 2 && !_busy) {
-                prefix = @"➡ Select “Continue” to install";
+                prefix = ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_Facing_SelectContinueToInstall", @"➡ Select “Continue” to install", @"Text shown in update: ➡ Select “Continue” to install");
                 indexToBold = lines.count;
             } else if (stage == 2 && _busy) {
                 prefix = self.waitingText;
                 indexToBold = lines.count;
             } else {
-                prefix = @"✅ Installed";
+                prefix = ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_Facing_Installed", @"✅ Installed", @"Text shown in update: ✅ Installed");
             }
             if (_busy && stage == 2) {
                 step = prefix;
             } else {
-                step = [NSString stringWithFormat:@"%@ iTerm2 utility scripts.", prefix];
+                step = [NSString stringWithFormat:ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_FormattedFacing_ITerm2UtilityScripts_FORMAT", @"%1$@ iTerm2 utility scripts.",@"Formatted user-facing text in update"), prefix];
             }
             [lines addObject:step];
         }
@@ -135,28 +135,28 @@
         // Show this step as already complete for xonsh.
         if (self.shell == iTermShellIntegrationShellXonsh) {
             if (stage < i) {
-                step = [NSString stringWithFormat:@"Step %d. Xonsh auto-loads scripts from rc.d (no dotfile update needed).", i + 1];
+                step = [NSString stringWithFormat:ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_FormattedFacing_StepXonshAutoLoadsScriptsFromRc_FORMAT", @"Step %1$d. Xonsh auto-loads scripts from rc.d (no dotfile update needed).",@"Formatted user-facing text in update"), i + 1];
             } else {
-                step = [NSString stringWithFormat:@"✅ Xonsh auto-loads scripts from rc.d (no dotfile update needed)."];
+                step = [NSString stringWithFormat:ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_FormattedFacing_XonshAutoLoadsScriptsFromRcD", @"✅ Xonsh auto-loads scripts from rc.d (no dotfile update needed).",@"Formatted user-facing text in update")];
             }
             [lines addObject:step];
         } else {
             if (stage < i) {
-                prefix = [NSString stringWithFormat:@"Step %d. Update", i + 1];
+                prefix = [NSString stringWithFormat:ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_FormattedFacing_StepUpdate_FORMAT", @"Step %1$d. Update",@"Formatted user-facing text in update"), i + 1];
             } else if (stage == i && !_busy) {
-                prefix = [NSString stringWithFormat:@"➡ Select “Continue” to update"];
+                prefix = ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_Facing_SelectContinueToUpdate", @"➡ Select “Continue” to update", @"Text shown in update: ➡ Select “Continue” to update");
                 indexToBold = lines.count;
             } else if (stage == i && _busy) {
                 prefix = self.waitingText;
                 indexToBold = lines.count;
             } else if (stage > i) {
-                prefix = @"✅ Updated";
+                prefix = ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_Facing_Updated", @"✅ Updated", @"Text shown in update: ✅ Updated");
             }
             if (_busy && stage == i) {
                 step = prefix;
             } else {
                 step =
-                [NSString stringWithFormat:@"%@ your shell's dotfile.", prefix];
+                [NSString stringWithFormat:ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_FormattedFacing_YourShellSDotfile_FORMAT", @"%1$@ your shell's dotfile.",@"Formatted user-facing text in update"), prefix];
             }
             [lines addObject:step];
         }
@@ -167,7 +167,7 @@
         if (isDone) {
             [lines addObject:@""];
             indexToBold = lines.count;
-            [lines addObject:@"Done! Select “Continue” to proceed."];
+            [lines addObject:ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_Facing_DoneSelectContinueToProceed", @"Done! Select “Continue” to proceed.", @"Text shown in update: Done! Select “Continue” to proceed.")];
             self.skipButton.enabled = NO;
         } else {
             self.skipButton.enabled = !_busy;
@@ -198,9 +198,9 @@
     for (NSInteger i = 0; i < self.previewCommandButtons.count; i++){
         buttons[i].hidden = unavailable || (i != stage) || preview == nil;
         if (_busy && i == stage) {
-            [buttons[i] setTitle:@"Send Again"];
+            [buttons[i] setTitle:ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_Menu_SendAgain", @"Send Again", @"Button title in update")];
         } else {
-            [buttons[i] setTitle:@"Preview Command"];
+            [buttons[i] setTitle:ITLocalize(@"ShellIntegrationPasteShellCommandsViewController_Menu_PreviewCommand", @"Preview Command", @"Button title in update")];
         }
     }
     self.previewTextView.string = preview ?: @"";

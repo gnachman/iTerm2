@@ -475,22 +475,22 @@ extension TextViewPorthole: NSTextViewDelegate {
             return false
         }
         if url.scheme == "file" {
-            if iTermWarning.show(withTitle: "Open file at \(url.path)?",
-                                 actions: ["OK", "Cancel"],
+            if iTermWarning.show(withTitle: String(format: String(localized: "TextViewPorthole_OpenFileAt_FORMAT", defaultValue: "Open file at %1$@?", comment: "Alert title in textView"), url.path),
+                                 actions: [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Action title in textView"), String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Action title in textView")],
                                  accessory: nil,
                                  identifier: "NoSyncOpenFileFromMarkdownLink",
                                  silenceable: .kiTermWarningTypePermanentlySilenceable,
-                                 heading: "Confirm",
+                                 heading: String(localized: "TextViewPorthole_Confirm", defaultValue: "Confirm", comment: "Alert heading in textView"),
                                  window: textView.window) == .kiTermWarningSelection0 {
                 NSWorkspace.shared.open(url)
             }
         } else {
-            if iTermWarning.show(withTitle: "Open URL \(url.absoluteString)?",
-                                 actions: ["OK", "Cancel"],
+            if iTermWarning.show(withTitle: String(format: String(localized: "TextViewPorthole_OpenUrl_FORMAT", defaultValue: "Open URL %1$@?", comment: "Alert title in textView"), url.absoluteString),
+                                 actions: [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Action title in textView"), String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Action title in textView")],
                                  accessory: nil,
                                  identifier: "NoSyncOpenURLFromMarkdownLink",
                                  silenceable: .kiTermWarningTypePermanentlySilenceable,
-                                 heading: "Confirm",
+                                 heading: String(localized: "TextViewPorthole_Confirm", defaultValue: "Confirm", comment: "Alert heading in textView"),
                                  window: textView.window) == .kiTermWarningSelection0 {
                 NSWorkspace.shared.open(url)
             }

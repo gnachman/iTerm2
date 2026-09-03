@@ -119,16 +119,16 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
     __weak __typeof(self) weakSelf = self;
 
     _leader.leaderAllowed = NO;
-    _leader.purpose = @"as the leader";
+    _leader.purpose = ITLocalize(@"KeysPreferencesViewController_Facing_AsTheLeader", @"as the leader", @"Text shown in awakeFromNib: as the leader");
     iTermKeystroke *leaderKeystroke = [iTermKeyMappings leader];
     _leader.stringValue = leaderKeystroke ? [iTermKeystrokeFormatter stringForKeystroke:leaderKeystroke] : @"";
     [self updatePrivateNonDefaultInicators];
 
     _hotkeyField.leaderAllowed = NO;
-    _hotkeyField.purpose = @"as a hotkey";
+    _hotkeyField.purpose = ITLocalize(@"KeysPreferencesViewController_Facing_AsAHotkey", @"as a hotkey", @"Text shown in awakeFromNib: as a hotkey");
 
     _openQuicklyHotkeyField.leaderAllowed = NO;
-    _openQuicklyHotkeyField.purpose = @"as the Open Quickly hotkey";
+    _openQuicklyHotkeyField.purpose = ITLocalize(@"KeysPreferencesViewController_Facing_AsTheOpenQuicklyHotkey", @"as the Open Quickly hotkey", @"Text shown in awakeFromNib: as the Open Quickly hotkey");
     [self updateOpenQuicklyHotkeyField];
 
     [_keyMappingViewController addViewsToSearchIndex:self];
@@ -265,7 +265,7 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
 
     info = [self defineControl:_keyboardLocale
                            key:kPreferenceKeyKeyboardLocale
-                   displayName:@"Keyboard locale"
+                   displayName:ITLocalize(@"KeysPreferencesViewController_Facing_KeyboardLocale", @"Keyboard locale", @"Text shown in awakeFromNib: Keyboard locale")
                           type:kPreferenceInfoTypeStringPopup];
 
     [self defineControl:_remapModifiersGlobally
@@ -284,7 +284,7 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
                    type:kPreferenceInfoTypeCheckbox];
 
     [self addViewToSearchIndex:_keyMappingView
-                   displayName:@"Global key bindings"
+                   displayName:ITLocalize(@"KeysPreferencesViewController_Facing_GlobalKeyBindings", @"Global key bindings", @"Text shown in awakeFromNib: Global key bindings")
                        phrases:@[ @"mapping", @"shortcuts", @"touch bar", @"preset", @"xterm", @"natural", @"terminal.app compatibility", @"numeric keypad" ]
                            key:nil];
 
@@ -419,7 +419,7 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
     }
     iTermHotkeyPreferencesModel *model = [[iTermHotkeyPreferencesModel alloc] init];
     _hotkeyPanel = [[iTermHotkeyPreferencesWindowController alloc] init];
-    [_hotkeyPanel setExplanation:@"This panel helps you configure a new profile that will be bound to a keystroke you assign. Pressing the hotkey (even when iTerm2 is not active) will toggle a special window."];
+    [_hotkeyPanel setExplanation:ITLocalize(@"KeysPreferencesViewController_Facing_ThisPanelHelpsYouConfigureANew", @"This panel helps you configure a new profile that will be bound to a keystroke you assign. Pressing the hotkey (even when iTerm2 is not active) will toggle a special window.", @"Text shown in generateHotkeyWindowProfile: This panel helps you configure a new profile that will be bound to a keystroke you assign. Pressing the hotkey (even when iTerm2 is not active) will toggle a special window.")];
     _hotkeyPanel.descriptorsInUseByOtherProfiles = [[iTermHotKeyController sharedInstance] descriptorsForProfileHotKeysExcept:nil];
     _hotkeyPanel.model = model;
 
@@ -475,11 +475,13 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
                                                                 object:nil
                                                               userInfo:nil];
             NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = @"Hotkey Window Successfully Configured";
-            alert.informativeText = [NSString stringWithFormat:@"A new profile called “%@” was created for you. It is tuned to work well "
-                                     @"for the Hotkey Window feature and it can be customized in the Profiles tab.",
+            alert.messageText = ITLocalize(@"KeysPreferencesViewController_Alert_HotkeyWindowSuccessfullyConfigured", @"Hotkey Window Successfully Configured", @"Alert title in generateHotkeyWindowProfile");
+            alert.informativeText = [NSString stringWithFormat:ITLocalize(@"KeysPreferencesViewController_AlertExplanatory_ANewProfileCalledWasCreatedFor_FORMAT",
+                                                                         @"A new profile called “%1$@” was created for you. It is tuned to work well "
+                                                                         @"for the Hotkey Window feature and it can be customized in the Profiles tab.",
+                                                                         @"Alert explanatory text in generateHotkeyWindowProfile"),
                                      newProfileName];
-            [alert addButtonWithTitle:@"OK"];
+            [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in generateHotkeyWindowProfile")];
             [alert runModal];
         }
     }];
@@ -626,8 +628,8 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
 
 - (IBAction)emulateUsKeyboardHelp:(id)sender {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Emulate US Keyboard";
-    alert.informativeText = @"Some keyboard layouts (such as AZERTY) require a modifier to press a number key. This causes problems for switching to a window, tab, or split pane by pressing modifier+number: you might need other modifiers or conflicting modifiers. When “Emulate US Keyboard” is enabled, you can press the configured modifier plus the key on the top row that corresponds to a number key on a US keyboard. For example, on AZERTY, the & key would act as the 1 key.";
+    alert.messageText = ITLocalize(@"KeysPreferencesViewController_Alert_EmulateUsKeyboard", @"Emulate US Keyboard", @"Alert title in helpForEmulateUSKeyboard:");
+    alert.informativeText = ITLocalize(@"KeysPreferencesViewController_AlertExplanatory_SomeKeyboardLayoutsSuchAsAzertyRequire", @"Some keyboard layouts (such as AZERTY) require a modifier to press a number key. This causes problems for switching to a window, tab, or split pane by pressing modifier+number: you might need other modifiers or conflicting modifiers. When “Emulate US Keyboard” is enabled, you can press the configured modifier plus the key on the top row that corresponds to a number key on a US keyboard. For example, on AZERTY, the & key would act as the 1 key.", @"Alert explanatory text in helpForEmulateUSKeyboard:");
     [alert runModal];
 }
 
@@ -639,7 +641,7 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
     [_popoverVC view];
     _popoverVC.textView.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
     _popoverVC.textView.drawsBackground = NO;
-    [_popoverVC appendString:@"The leader behaves like a modifier key, such as Command or Option, but is a separate keystroke. It can be used in key bindings. For example, if you set the leader to ⌘b then you could bind an action to the two-keystroke sequence “⌘b x”. ⌘b is the recommended leader and that keystroke will not be used for other purposes in the future."];
+    [_popoverVC appendString:ITLocalize(@"KeysPreferencesViewController_Facing_TheLeaderBehavesLikeAModifierKey", @"The leader behaves like a modifier key, such as Command or Option, but is a separate keystroke. It can be used in key bindings. For example, if you set the leader to ⌘b then you could bind an action to the two-keystroke sequence “⌘b x”. ⌘b is the recommended leader and that keystroke will not be used for other purposes in the future.", @"Text shown in openLeaderPopover:: The leader behaves like a modifier key, such as Command or Option, but is a separate keystroke. It can be used in key bindings. For example, if you set the leader to ⌘b then you could bind an action to the two-keystroke sequence “⌘b x”. ⌘b is the recommended leader and that keystroke will not be used for other purposes in the future.")];
     NSRect frame = _popoverVC.view.frame;
     frame.size.width = 300;
     frame.size.height = 108;
@@ -741,7 +743,7 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
 - (BOOL)keyMapping:(iTermKeyMappingViewController *)viewController shouldImportKeystrokes:(NSSet<iTermKeystroke *> *)keystrokesThatWillChange {
     NSSet<iTermKeystroke *> *keystrokesInGlobalMapping = [iTermKeyMappings keystrokesInGlobalMapping];
     if (![keystrokesInGlobalMapping isSubsetOfSet:keystrokesThatWillChange]) {
-        NSNumber *n = [viewController removeBeforeLoading:@"importing mappings"];
+        NSNumber *n = [viewController removeBeforeLoading:ITLocalize(@"KeysPreferencesViewController_Facing_ImportingMappings", @"importing mappings", @"Text shown in keyMapping:didImportPresetFromURL:: importing mappings")];
         if (!n) {
             return NO;
         }
@@ -796,8 +798,8 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
     if ([[iTermTouchbarMappings globalTouchBarMap] count] != 1) {
         return;
     }
-    [[iTermNotificationController sharedInstance] notify:@"Touch Bar Item Added"
-                                         withDescription:@"Select View > Customize Touch Bar to enable your new touch bar item."];
+    [[iTermNotificationController sharedInstance] notify:ITLocalize(@"KeysPreferencesViewController_Notification_TouchBarItemAdded", @"Touch Bar Item Added", @"notification title")
+                                         withDescription:ITLocalize(@"KeysPreferencesViewController_Descriptive_SelectViewCustomizeTouchBarToEnable", @"Select View > Customize Touch Bar to enable your new touch bar item.", @"notification message")];
     [iTermUserDefaults setHaveExplainedHowToAddTouchbarControls:YES];
 }
 
@@ -833,7 +835,7 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
     NSSet<iTermKeystroke *> *keystrokesInGlobalMapping = [iTermKeyMappings keystrokesInGlobalMapping];
     BOOL replaceAll = YES;
     if (![keystrokesInGlobalMapping isSubsetOfSet:keystrokesThatWillChange]) {
-        NSNumber *n = [viewController removeBeforeLoading:@"loading preset"];
+        NSNumber *n = [viewController removeBeforeLoading:ITLocalize(@"KeysPreferencesViewController_Facing_LoadingPreset", @"loading preset", @"Text shown in keyMapping:loadPresets: loading preset")];
         if (!n) {
             return;
         }
@@ -850,12 +852,14 @@ static NSString *const kKeyCode0MitigationSuffixGlobal = @"Global";
 
 - (NSNumber *)removeBeforeLoading:(NSString *)thing {
     const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Remove all key mappings before loading %@?", thing]
-                               actions:@[ @"Keep", @"Remove", @"Cancel" ]
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"KeysPreferencesViewController_Alert_RemoveAllKeyMappingsBeforeLoading_FORMAT", @"Remove all key mappings before loading %1$@?", @"Alert title in removeBeforeLoading:"), thing]
+                               actions:@[ ITLocalize(@"KeysPreferencesViewController_Action_Keep", @"Keep", @"Action title in removeBeforeLoading:"),
+                                          ITLocalize(@"COMMON_REMOVE", @"Remove", @"Title in removeBeforeLoading:"),
+                                          ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in removeBeforeLoading:") ]
                              accessory:nil
                             identifier:@"RemoveExistingGlobalKeyMappingsBeforeLoading"
                            silenceable:kiTermWarningTypePersistent
-                               heading:@"Load Preset"
+                               heading:ITLocalize(@"KeysPreferencesViewController_AlertHeading_LoadPreset", @"Load Preset",@"Alert heading in removeBeforeLoading:(NSString *)thing")
                                 window:self.view.window];
     switch (selection) {
         case kiTermWarningSelection0:

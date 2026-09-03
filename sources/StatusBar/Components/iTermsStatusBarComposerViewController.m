@@ -234,7 +234,7 @@ doCommandBySelector:(SEL)commandSelector {
         static NSImage *darkImage;
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            lightImage = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolChevronDown) accessibilityDescription:@"Show History"];
+            lightImage = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolChevronDown) accessibilityDescription:ITLocalize(@"SStatusBarComposerViewController_Descriptive_ShowHistory", @"Show History", @"Accessibility description for the Show History button")];
             darkImage = [lightImage it_imageWithTintColor:[NSColor whiteColor]];
         });
         NSImage *image = controlView.effectiveAppearance.it_isDark ? darkImage : lightImage;

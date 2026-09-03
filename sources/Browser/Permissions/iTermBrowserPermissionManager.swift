@@ -215,10 +215,10 @@ extension iTermBrowserPermissionManager {
     
     private func showPermissionDialog(for permissionType: BrowserPermissionType, origin: String) async -> BrowserPermissionDecision {
         let alert = NSAlert()
-        alert.messageText = "Allow \(permissionType.displayName)"
-        alert.informativeText = "The website \(origin) wants to access \(permissionType.displayName.lowercased())."
-        alert.addButton(withTitle: "Allow")
-        alert.addButton(withTitle: "Block")
+        alert.messageText = String(format: String(localized: "BrowserPermissionManager_Allow_FORMAT", defaultValue: "Allow %1$@", comment: "Alert title in showPermissionDialog"), permissionType.displayName)
+        alert.informativeText = String(format: String(localized: "BrowserPermissionManager_TheWebsiteWantsToAccess_FORMAT", defaultValue: "The website %1$@ wants to access %2$@.", comment: "Alert explanatory text in showPermissionDialog"), origin, permissionType.displayName.lowercased())
+        alert.addButton(withTitle: String(localized: "COMMON_ALLOW", defaultValue: "Allow", comment: "Button title in showPermissionDialog"))
+        alert.addButton(withTitle: String(localized: "BrowserPermissionManager_Block", defaultValue: "Block", comment: "Button title in showPermissionDialog"))
         alert.alertStyle = .informational
         
         let response = alert.runModal()

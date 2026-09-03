@@ -62,7 +62,7 @@ static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iter
                                                [weakSelf actionsDidChange:notification];
                                            }];
     [container addViewToSearchIndex:_tableView
-                        displayName:@"Actions"
+                        displayName:ITLocalize(@"ActionsEditingViewController_Facing_Actions", @"Actions", @"Text shown in defineControlsInContainer:: Actions")
                             phrases:@[ @"Actions" ]
                                 key:kPreferenceKeyActions];
 }
@@ -244,24 +244,24 @@ static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iter
                                                   encoding:NSUTF8StringEncoding
                                                      error:&error];
     if (!content || error) {
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"While loading %@: %@", url.path, error.localizedDescription]
-                                   actions:@[ @"OK" ]
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"ActionsEditingViewController_Alert_WhileLoading_FORMAT", @"While loading %1$@: %2$@", @"Alert title in importURL:"), url.path, error.localizedDescription]
+                                   actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in importURL:") ]
                                  accessory:nil
                                 identifier:@"NoSyncImportActionsFailed"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:[NSString stringWithFormat:@"Import Failed"]
+                                   heading:ITLocalize(@"ActionsEditingViewController_AlertHeading_ImportFailed", @"Import Failed",@"Alert heading in importURL:(NSURL *)url")
                                     window:self.view.window];
         return;
     }
 
     id root = [NSJSONSerialization it_objectForJsonString:content error:&error];
     if (!root) {
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"While parsing %@: %@", url.path, error.localizedDescription]
-                                   actions:@[ @"OK" ]
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"ActionsEditingViewController_Alert_WhileParsing_FORMAT", @"While parsing %1$@: %2$@", @"Alert title in importURL:"), url.path, error.localizedDescription]
+                                   actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in importURL:") ]
                                  accessory:nil
                                 identifier:@"NoSyncImportActionsFailed"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:[NSString stringWithFormat:@"Import Failed"]
+                                   heading:ITLocalize(@"ActionsEditingViewController_AlertHeading_ImportFailed", @"Import Failed",@"Alert heading in importURL:(NSURL *)url")
                                     window:self.view.window];
         return;
     }
@@ -289,12 +289,12 @@ static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iter
 }
 
 - (void)showEncodingErrorForURL:(NSURL *)url {
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Malformed file at %@", url.path]
-                               actions:@[ @"OK" ]
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"ActionsEditingViewController_Alert_MalformedFileAt_FORMAT", @"Malformed file at %1$@", @"Alert title in showEncodingErrorForURL:"), url.path]
+                               actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in showEncodingErrorForURL:") ]
                              accessory:nil
                             identifier:@"NoSyncActionEncodingError"
                            silenceable:kiTermWarningTypePersistent
-                               heading:[NSString stringWithFormat:@"Import Failed"]
+                               heading:ITLocalize(@"ActionsEditingViewController_AlertHeading_ImportFailed", @"Import Failed",@"Alert heading in showEncodingErrorForURL:(NSURL *)url")
                                 window:self.view.window];
 }
 
@@ -310,13 +310,13 @@ static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iter
     NSString *json = [NSJSONSerialization it_jsonStringForObject:array];
     [json writeToSaveItem:item completionHandler:^(NSError *error) {
         if (error) {
-            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Error saving to %@: %@",
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"ActionsEditingViewController_Alert_ErrorSavingTo_FORMAT", @"Error saving to %1$@: %2$@", @"Alert title in exportToItem:"),
                                                 item.displayName, error.localizedDescription]
-                                       actions:@[ @"OK" ]
+                                       actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in exportToItem:") ]
                                      accessory:nil
                                     identifier:@"NoSyncActionWritingError"
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:[NSString stringWithFormat:@"Export Failed"]
+                                       heading:ITLocalize(@"ActionsEditingViewController_AlertHeading_ExportFailed", @"Export Failed",@"Alert heading in exportToItem:(iTermSavePanelItem *)item")
                                         window:self.view.window];
         } else {
             [item revealInFinderIfLocal];

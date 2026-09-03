@@ -88,20 +88,20 @@
                    type:kPreferenceInfoTypeTokenField];
 
     [self addViewToSearchIndex:_triggersButton
-                   displayName:@"Triggers"
-                       phrases:@[ @"regular expression", @"regex" ]
+                   displayName:ITLocalize(@"ProfilesAdvancedPreferencesViewController_Facing_Triggers", @"Triggers", @"Text shown in awakeFromNib: Triggers")
+                       phrases:@[ ITLocalize(@"ProfilesAdvancedPreferencesViewController_Facing_RegularExpression", @"regular expression", @"Text shown in awakeFromNib: regular expression"), @"regex" ]
                            key:nil];
     [self addViewToSearchIndex:_smartSelectionButton
-                   displayName:@"Smart selection"
-                       phrases:@[ @"regular expression", @"regex" ]
+                   displayName:ITLocalize(@"ProfilesAdvancedPreferencesViewController_Facing_SmartSelection", @"Smart selection", @"Text shown in awakeFromNib: Smart selection")
+                       phrases:@[ ITLocalize(@"ProfilesAdvancedPreferencesViewController_Facing_RegularExpression", @"regular expression", @"Text shown in awakeFromNib: regular expression"), @"regex" ]
                            key:nil];
     [self addViewToSearchIndex:_automaticProfileSwitchingView
-                   displayName:@"Automatic profile switching rules"
+                   displayName:ITLocalize(@"ProfilesAdvancedPreferencesViewController_Facing_AutomaticProfileSwitchingRules", @"Automatic profile switching rules", @"Text shown in awakeFromNib: Automatic profile switching rules")
                        phrases:@[]
                            key:nil];
     [self addViewToSearchIndex:_semanticHistoryAction
-                   displayName:@"Semantic history"
-                       phrases:@[ @"cmd click", @"open file", @"open url" ]
+                   displayName:ITLocalize(@"ProfilesAdvancedPreferencesViewController_Facing_SemanticHistory", @"Semantic history", @"Text shown in awakeFromNib: Semantic history")
+                       phrases:@[ ITLocalize(@"ProfilesAdvancedPreferencesViewController_Facing_CmdClick", @"cmd click", @"Text shown in awakeFromNib: cmd click"), ITLocalize(@"ProfilesAdvancedPreferencesViewController_Facing_OpenFile", @"open file", @"Text shown in awakeFromNib: open file"), ITLocalize(@"ProfilesAdvancedPreferencesViewController_Facing_OpenUrl", @"open url", @"Text shown in awakeFromNib: open url") ]
                            key:nil];
     _enableAPSLogging.state = iTermUserDefaults.enableAutomaticProfileSwitchingLogging ? NSControlStateValueOn : NSControlStateValueOff;
 }
@@ -147,9 +147,9 @@
     _semanticHistoryPrefController.guid = selectedGuid;
     [_boundHostsTableView reloadData];
     if (self.profileType == ProfileTypeBrowser) {
-        _triggersHelp.helpText = @"Triggers are actions you configure to run when certain URLs are visited or text on a web page is found.";
+        _triggersHelp.helpText = ITLocalize(@"ProfilesAdvancedPreferencesViewController_Facing_TriggersAreActionsYouConfigureToRun", @"Triggers are actions you configure to run when certain URLs are visited or text on a web page is found.", @"Text shown in reloadProfile: Triggers are actions you configure to run when certain URLs are visited or text on a web page is found.");
     } else {
-        _triggersHelp.helpText = @"Triggers watch for text matching a regular expression to arrive in a terminal session and then perform an action in response.";
+        _triggersHelp.helpText = ITLocalize(@"ProfilesAdvancedPreferencesViewController_Facing_TriggersWatchForTextMatchingARegular", @"Triggers watch for text matching a regular expression to arrive in a terminal session and then perform an action in response.", @"Text shown in reloadProfile: Triggers watch for text matching a regular expression to arrive in a terminal session and then perform an action in response.");
     }
 }
 
@@ -196,7 +196,7 @@
     [[triggerController.window undoManager] registerUndoWithTarget:self
                                                           selector:@selector(setTriggersValue:)
                                                             object:[self objectForKey:KEY_TRIGGERS]];
-    [[triggerController.window undoManager] setActionName:@"Edit Triggers"];
+    [[triggerController.window undoManager] setActionName:ITLocalize(@"ProfilesAdvancedPreferencesViewController_Action_EditTriggers", @"Edit Triggers", @"Action title in triggerChanged:")];
 
     // No side effects because we don't want the tableview to get reloaded. We'll save when the
     // panel is closed. by setting the _triggersModelHasChanged flag.
@@ -358,12 +358,12 @@
     }
     if (dupProfile) {
         NSString *theTitle;
-        theTitle = [NSString stringWithFormat:@"The profile “%@” is already bound to hostname “%@”.",
+        theTitle = [NSString stringWithFormat:ITLocalize(@"ProfilesAdvancedPreferencesViewController_TheProfileIsAlreadyBoundToHostname_FORMAT", @"The profile “%1$@” is already bound to hostname “%2$@”.", @"Title in tableView:"),
                     dupProfile[KEY_NAME], anObject];
-        NSString *removeFromOtherAction = [NSString stringWithFormat:@"Remove from “%@”", dupProfile[KEY_NAME]];
+        NSString *removeFromOtherAction = [NSString stringWithFormat:ITLocalize(@"ProfilesAdvancedPreferencesViewController_Action_RemoveFrom_FORMAT", @"Remove from “%1$@”", @"Action title in tableView:"), dupProfile[KEY_NAME]];
         switch ([iTermWarning showWarningWithTitle:theTitle
                                            actions:@[ removeFromOtherAction,
-                                                      @"Remove from This Profile" ]
+                                                      ITLocalize(@"ProfilesAdvancedPreferencesViewController_Facing_RemoveFromThisProfile", @"Remove from This Profile", @"Text shown in tableView:: Remove from This Profile") ]
                                         identifier:nil
                                        silenceable:kiTermWarningTypePersistent
                                             window:self.view.window]) {
@@ -398,7 +398,7 @@
     dataCellForTableColumn:(NSTableColumn *)tableColumn
                        row:(NSInteger)row {
     NSTextFieldCell *cell = [[NSTextFieldCell alloc] initTextCell:@"hostname"];
-    [cell setPlaceholderString:@"Enter a rule…"];
+    [cell setPlaceholderString:ITLocalize(@"ProfilesAdvancedPreferencesViewController_Placeholder_EnterARule", @"Enter a rule…",@"Placeholder text in tableView:(NSTableView *)tableView")];
     [cell setEditable:YES];
     return cell;
 }

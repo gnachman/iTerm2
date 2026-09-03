@@ -284,8 +284,8 @@ static NSDictionary *gIntrospection;
     [button setAction:@selector(toggleOnOff:)];
     button.identifier = @"onoff";
     [button.menu removeAllItems];
-    [button.menu addItemWithTitle:@"No" action:nil keyEquivalent:@""];
-    [button.menu addItemWithTitle:@"Yes" action:nil keyEquivalent:@""];
+    [button.menu addItemWithTitle:ITLocalize(@"AdvancedSettingsViewController_Menu_No", @"No",@"Menu title in onOffViewWithValue:(BOOL)on row:(int)row") action:nil keyEquivalent:@""];
+    [button.menu addItemWithTitle:ITLocalize(@"AdvancedSettingsViewController_Menu_Yes", @"Yes",@"Menu title in onOffViewWithValue:(BOOL)on row:(int)row") action:nil keyEquivalent:@""];
     [button selectItemAtIndex:on ? 1 : 0];
     return button;
 }
@@ -324,9 +324,9 @@ static NSDictionary *gIntrospection;
     [button setAction:@selector(toggleTristate:)];
     button.identifier = @"tristate";
     [button.menu removeAllItems];
-    [button.menu addItemWithTitle:@"Unspecified" action:nil keyEquivalent:@""];
-    [button.menu addItemWithTitle:@"No" action:nil keyEquivalent:@""];
-    [button.menu addItemWithTitle:@"Yes" action:nil keyEquivalent:@""];
+    [button.menu addItemWithTitle:ITLocalize(@"AdvancedSettingsViewController_Menu_Unspecified", @"Unspecified",@"Menu title in tristateViewWithValue:(int)tristate row:(int)row") action:nil keyEquivalent:@""];
+    [button.menu addItemWithTitle:ITLocalize(@"AdvancedSettingsViewController_Menu_No", @"No",@"Menu title in tristateViewWithValue:(int)tristate row:(int)row") action:nil keyEquivalent:@""];
+    [button.menu addItemWithTitle:ITLocalize(@"AdvancedSettingsViewController_Menu_Yes", @"Yes",@"Menu title in tristateViewWithValue:(int)tristate row:(int)row") action:nil keyEquivalent:@""];
 
     NSNumber *value = [self objectForRow:row];
     if (!value) {
