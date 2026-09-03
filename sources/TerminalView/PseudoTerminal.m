@@ -1222,6 +1222,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return nil;
 }
 
+- (void)rootTerminalViewDidRequestEditWindowName {
+    [self editWindowTitle:nil];
+}
+
 - (void)rootTerminalViewDidResizeContentArea {
     // Fixes an analog of issue 4323 that happens with left-side tabs. More
     // details in -toolbeltDidFinishGrowing.
