@@ -214,7 +214,7 @@ class ChatCellView: NSTableCellView {
             let configuration = NSImage.SymbolConfiguration(pointSize: iconDiameter * 0.45,
                                                             weight: .medium)
             if let symbol = NSImage(systemSymbolName: SFSymbol.message.rawValue,
-                                    accessibilityDescription: "Chat")?
+                                    accessibilityDescription: String(localized: "ChatCellView_Chat", defaultValue: "Chat", comment: "Descriptive text in iconImage"))?
                 .withSymbolConfiguration(configuration)?
                 .it_image(withTintColor: .white) {
                 let symbolSize = symbol.size

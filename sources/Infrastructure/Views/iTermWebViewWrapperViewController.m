@@ -50,7 +50,7 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
         [button setButtonType:NSButtonTypeMomentaryPushIn];
         [button setTarget:self];
         [button setAction:@selector(openInBrowserButtonPressed:)];
-        [button setTitle:[NSString stringWithFormat:@"Open in %@", [self browserName]]];
+        [button setTitle:[NSString stringWithFormat:ITLocalize(@"WebViewWrapperViewController_OpenIn_FORMAT", @"Open in %1$@", @"Button title in loadView"), [self browserName]]];
         [button setBezelStyle:NSBezelStyleTexturedRounded];
         [button sizeToFit];
         NSRect frame = button.frame;

@@ -88,12 +88,12 @@ static NSString *const iTermRestorableStateControllerUserDefaultsKeyCount = @"No
     const NSInteger count = [[iTermUserDefaults userDefaults] integerForKey:iTermRestorableStateControllerUserDefaultsKeyCount];
     if (count > 1) {
         const iTermWarningSelection selection =
-        [iTermWarning showWarningWithTitle:@"Some windows had trouble restoring last time iTerm2 launched. Try again?"
-                                   actions:@[ @"OK", @"Cancel" ]
+        [iTermWarning showWarningWithTitle:ITLocalize(@"RestorableStateDriver_Alert_SomeWindowsHadTroubleRestoringLastTime", @"Some windows had trouble restoring last time iTerm2 launched. Try again?", @"Alert title in restoreWithIndex:")
+                                   actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in restoreWithIndex:"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in restoreWithIndex:") ]
                                  accessory:nil
                                 identifier:@"RestoreWindows"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:@"Restore Windows?"
+                                   heading:ITLocalize(@"RestorableStateDriver_AlertHeading_RestoreWindows", @"Restore Windows?",@"Alert heading in restoreWithIndex:(id<iTermRestorableStateIndex>)index")
                                     window:nil];
         if (selection == kiTermWarningSelection1) {
             [index restorableStateIndexUnlink];

@@ -384,7 +384,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         NSFontAttributeName: [NSFont boldSystemFontOfSize:[NSFont systemFontSize]]
     };
     NSMutableAttributedString *detail =
-        [[NSMutableAttributedString alloc] initWithString:menuItem.alternate ? @"Alternate menu item under " : @"Menu item under "
+        [[NSMutableAttributedString alloc] initWithString:menuItem.alternate ? ITLocalize(@"OpenQuicklyModel_Menu_AlternateMenuItemUnder", @"Alternate menu item under ", @"menu item title") : ITLocalize(@"OpenQuicklyModel_Menu_MenuItemUnder", @"Menu item under ", @"menu item title")
                                                attributes:regularAttributes];
     NSString *combinedPath = [path componentsJoinedByString:@" > "];
     NSAttributedString *breadcrumbs = [[NSAttributedString alloc] initWithString:combinedPath
@@ -411,7 +411,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         return nil;
     }
     item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
-                                                                    value:[NSString stringWithFormat:@"Named mark “%@”", namedMark.name]
+                                                                    value:[NSString stringWithFormat:ITLocalize(@"OpenQuicklyModel_FormattedFacing_NamedMark_FORMAT", @"Named mark “%1$@”",@"Formatted user-facing text in itemForNamedMark:(id<iTermGenericNamedMarkReading>)namedMark"), namedMark.name]
                                                        highlightedIndexes:nil];
     item.title = attributedName;
     item.identifier = namedMark.guid;
@@ -432,25 +432,25 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
             if (multipleDisplays) {
                 NSString *name = [term.window.screen it_uniqueName];
                 if (name) {
-                    [features addObject:[NSString stringWithFormat:@"On %@", name]];
+                    [features addObject:[NSString stringWithFormat:ITLocalize(@"OpenQuicklyModel_FormattedFacing_On_FORMAT", @"On %1$@",@"Formatted user-facing text in addWindowLocationToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items"), name]];
                 } else {
-                    [features addObject:@"Offscreen"];
+                    [features addObject:ITLocalize(@"OpenQuicklyModel_Facing_Offscreen", @"Offscreen", @"Text shown in addWindowLocationToItems:: Offscreen")];
                 }
             }
             if (term.window.isMiniaturized) {
-                [features addObject:@"Miniaturized"];
+                [features addObject:ITLocalize(@"OpenQuicklyModel_Facing_Miniaturized", @"Miniaturized", @"Text shown in addWindowLocationToItems:: Miniaturized")];
             }
             if (term.anyFullScreen) {
-                [features addObject:@"Full screen"];
+                [features addObject:ITLocalize(@"OpenQuicklyModel_Facing_FullScreen", @"Full screen", @"Text shown in addWindowLocationToItems:: Full screen")];
             }
             if (!term.window.isOnActiveSpace && !(term.window.collectionBehavior & NSWindowCollectionBehaviorCanJoinAllSpaces)) {
-                [features addObject:@"On other Space"];
+                [features addObject:ITLocalize(@"OpenQuicklyModel_Facing_OnOtherSpace", @"On other Space", @"Text shown in addWindowLocationToItems:: On other Space")];
             }
             if (term.isHotKeyWindow) {
                 iTermProfileHotKey *profileHotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:term];
                 iTermShortcut *shortcut = profileHotkey.shortcuts.firstObject;
                 if (shortcut) {
-                    [features addObject:[NSString stringWithFormat:@"Hotkey %@", shortcut.stringValue]];
+                    [features addObject:[NSString stringWithFormat:ITLocalize(@"OpenQuicklyModel_FormattedFacing_Hotkey_FORMAT", @"Hotkey %1$@",@"Formatted user-facing text in addWindowLocationToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items"), shortcut.stringValue]];
                 } else if (profileHotkey.hasModifierActivation) {
                     const iTermHotKeyModifierActivation mod = profileHotkey.modifierActivation;
                     NSEventModifierFlags flags = 0;
@@ -470,7 +470,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
                     }
                     if (flags) {
                         NSString *key = [NSString stringForModifiersWithMask:flags];
-                        [features addObject:[NSString stringWithFormat:@"Hotkey %@%@", key, key]];
+                        [features addObject:[NSString stringWithFormat:ITLocalize(@"OpenQuicklyModel_FormattedFacing_Hotkey_FORMAT_2", @"Hotkey %1$@%2$@",@"Formatted user-facing text in addWindowLocationToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items"), key, key]];
                     }
                 }
             }
@@ -1282,7 +1282,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         score += [self scoreUsingMatcher:matcher
                                documents:@[ session.badgeLabel ]
                               multiplier:kSessionBadgeMultiplier
-                                    name:@"Badge"
+                                    name:ITLocalize(@"OPEN_QUICKLY_FEATURE_BADGE", @"Badge", @"Open Quickly match category for session badge text")
                                 features:features
                                    limit:maxScorePerFeature];
     }
@@ -1290,42 +1290,42 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     score += [self scoreUsingMatcher:matcher
                            documents:session.commands
                           multiplier:kCommandMultiplier
-                                name:@"Command"
+                                name:ITLocalize(@"OPEN_QUICKLY_FEATURE_COMMAND", @"Command", @"Open Quickly match category for session commands")
                             features:features
                                limit:maxScorePerFeature];
 
     score += [self scoreUsingMatcher:matcher
                            documents:session.directories
                           multiplier:kDirectoryMultiplier
-                                name:@"Directory"
+                                name:ITLocalize(@"OPEN_QUICKLY_FEATURE_DIRECTORY", @"Directory", @"Open Quickly match category for session directories")
                             features:features
                                limit:maxScorePerFeature];
 
     score += [self scoreUsingMatcher:matcher
                            documents:[self hostnamesInHosts:session.hosts]
                           multiplier:kHostnameMultiplier
-                                name:@"Host"
+                                name:ITLocalize(@"OPEN_QUICKLY_FEATURE_HOST", @"Host", @"Open Quickly match category for session hosts")
                             features:features
                                limit:maxScorePerFeature];
 
     score += [self scoreUsingMatcher:matcher
                            documents:[self usernamesInHosts:session.hosts]
                           multiplier:kUsernameMultiplier
-                                name:@"User"
+                                name:ITLocalize(@"OPEN_QUICKLY_FEATURE_USER", @"User", @"Open Quickly match category for session usernames")
                             features:features
                                limit:maxScorePerFeature];
 
     score += [self scoreUsingMatcher:matcher
                            documents:@[ session.originalProfile[KEY_NAME] ?: @"" ]
                           multiplier:kProfileNameMultiplier
-                                name:@"Profile"
+                                name:ITLocalize(@"OPEN_QUICKLY_FEATURE_PROFILE", @"Profile", @"Open Quickly match category for profile names")
                             features:features
                                limit:maxScorePerFeature];
 
     score += [self scoreUsingMatcher:matcher
                            documents:[self gitBranchesInSession:session]
                           multiplier:kGitBranchMultiplier
-                                name:@"Git Branch"
+                                name:ITLocalize(@"OPEN_QUICKLY_FEATURE_GIT_BRANCH", @"Git Branch", @"Open Quickly match category for Git branches")
                             features:features
                                limit:maxScorePerFeature];
 

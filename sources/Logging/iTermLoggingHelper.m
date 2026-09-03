@@ -102,7 +102,7 @@ asciicastMetadata:(iTermAsciicastMetadata *)asciicastMetadata
          window:(nullable NSWindow *)window {
     if (path) {
         const BOOL ok = [[NSFileManager defaultManager] it_promptToCreateEnclosingDirectoryFor:path
-                                                                                         title:@"Logging Folder Not Found"
+                                                                                         title:ITLocalize(@"LoggingHelper_LoggingFolderNotFound", @"Logging Folder Not Found", @"Title in setPath:")
                                                                                     identifier:@"LoggingFolder"
                                                                                         window:window];
         if (!ok) {
@@ -210,7 +210,7 @@ asciicastMetadata:(iTermAsciicastMetadata *)asciicastMetadata
     } else {
         self->_enabled = NO;
         dispatch_async(dispatch_get_main_queue(), ^{
-            [[iTermNotificationController sharedInstance] postNotificationWithTitle:@"Couldn’t write to session log"
+            [[iTermNotificationController sharedInstance] postNotificationWithTitle:ITLocalize(@"LoggingHelper_Alert_CouldnTWriteToSessionLog", @"Couldn’t write to session log", @"Alert title in queueStart")
                                                                              detail:self.path
                                                            callbackNotificationName:iTermLoggingHelperErrorNotificationName
                                                        callbackNotificationUserInfo:@{ iTermLoggingHelperErrorNotificationGUIDKey: self->_profileGUID ?: @"" }];

@@ -475,16 +475,16 @@ NSString * const kTriggerVariableValueRegexKey = @"variableValueRegex";
 
 - (void)evaluationDidFailWithError:(NSError *)error {
     NSString *title =
-    [NSString stringWithFormat:@"The following parameter for a “%@” trigger could not be evaluated:\n\n%@\n\nThe error was:\n\n%@",
+    [NSString stringWithFormat:ITLocalize(@"Trigger_FormattedFacing_TheFollowingParameterForATriggerCould_FORMAT", @"The following parameter for a “%1$@” trigger could not be evaluated:\n\n%2$@\n\nThe error was:\n\n%3$@",@"Formatted user-facing text in evaluationDidFailWithError:(NSError *)error"),
      [[self class] title],
      _evaluator.expression,
      error.localizedDescription];
     [iTermWarning showWarningWithTitle:title
-                               actions:@[ @"OK" ]
+                               actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in evaluationDidFailWithError:") ]
                              accessory:nil
                             identifier:@"NoSyncErrorInTriggerParameter"
                            silenceable:kiTermWarningTypeTemporarilySilenceable
-                               heading:@"Error in Trigger Parameter"
+                               heading:ITLocalize(@"Trigger_AlertHeading_ErrorInTriggerParameter", @"Error in Trigger Parameter",@"Alert heading in evaluationDidFailWithError:(NSError *)error")
                                 window:nil];
 }
 
@@ -588,7 +588,7 @@ NSString * const kTriggerVariableValueRegexKey = @"variableValueRegex";
     NSString *instantEmoji = self.partialLine ? @"⚡︎ " : nil;
     id jobAttributedString = [NSNull null];
     if ([self.job stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]].length > 0) {
-        jobAttributedString = [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"Job: %@", self.job]
+        jobAttributedString = [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:ITLocalize(@"Trigger_FormattedFacing_Job_FORMAT", @"Job: %1$@",@"Formatted user-facing text in attributedString"), self.job]
                                                               attributes:self.regularAttributes];
     }
     if ([self.name stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]].length > 0) {
@@ -646,9 +646,9 @@ NSString * const kTriggerVariableValueRegexKey = @"variableValueRegex";
             return [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"/%@/", self.regex ?: @""]
                                                    attributes:monospacedAttributes];
         case iTermTriggerMatchTypePageContentRegex:
-            return [@[ [[NSAttributedString alloc] initWithString:@"Content: " attributes: plainAttributes],
+            return [@[ [[NSAttributedString alloc] initWithString:ITLocalize(@"Trigger_Facing_Content", @"Content: ", @"Text shown in regexAttributedString: Content: ") attributes: plainAttributes],
                       [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"/%@/", self.contentRegex ?: @""] attributes:monospacedAttributes],
-                      [[NSAttributedString alloc] initWithString:@" URL: " attributes: plainAttributes],
+                      [[NSAttributedString alloc] initWithString:ITLocalize(@"Trigger_Facing_Url", @" URL: ", @"Text shown in regexAttributedString:  URL: ") attributes: plainAttributes],
                       [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"/%@/", self.regex ?: @""] attributes:monospacedAttributes]
                     ] attributedComponentsJoinedByAttributedString:nil];
         default:
@@ -669,42 +669,42 @@ NSString * const kTriggerVariableValueRegexKey = @"variableValueRegex";
         if ([exitCodeFilter isEqualToString:@"*"]) {
             // Don't add anything for "any" - it's the default
         } else if ([exitCodeFilter isEqualToString:@"0"]) {
-            [parts addObject:@"exit code 0"];
+            [parts addObject:ITLocalize(@"Trigger_Facing_ExitCode0", @"exit code 0", @"Text shown in eventParamsDescription: exit code 0")];
         } else if ([exitCodeFilter isEqualToString:@"!0"]) {
-            [parts addObject:@"non-zero exit code"];
+            [parts addObject:ITLocalize(@"Trigger_Facing_NonZeroExitCode", @"non-zero exit code", @"Text shown in eventParamsDescription: non-zero exit code")];
         } else {
-            [parts addObject:[NSString stringWithFormat:@"exit code %@", exitCodeFilter]];
+            [parts addObject:[NSString stringWithFormat:ITLocalize(@"Trigger_FormattedFacing_ExitCode_FORMAT", @"exit code %1$@",@"Formatted user-facing text in eventParamsDescription"), exitCodeFilter]];
         }
     }
 
     // Timeout (for idle triggers)
     NSNumber *timeout = self.eventParams[@"timeout"];
     if (timeout) {
-        [parts addObject:[NSString stringWithFormat:@"after %@ seconds", timeout]];
+        [parts addObject:[NSString stringWithFormat:ITLocalize(@"Trigger_FormattedFacing_AfterSeconds_FORMAT", @"after %1$@ seconds",@"Formatted user-facing text in eventParamsDescription"), timeout]];
     }
 
     // Threshold (for long-running command triggers)
     NSNumber *threshold = self.eventParams[@"threshold"];
     if (threshold) {
-        [parts addObject:[NSString stringWithFormat:@"after %@ seconds", threshold]];
+        [parts addObject:[NSString stringWithFormat:ITLocalize(@"Trigger_FormattedFacing_AfterSeconds_FORMAT", @"after %1$@ seconds",@"Formatted user-facing text in eventParamsDescription"), threshold]];
     }
 
     // Sequence ID (for custom escape sequence triggers)
     NSString *sequenceId = self.eventParams[@"sequenceId"];
     if (sequenceId && sequenceId.length > 0) {
-        [parts addObject:[NSString stringWithFormat:@"id: %@", sequenceId]];
+        [parts addObject:[NSString stringWithFormat:ITLocalize(@"Trigger_FormattedFacing_Id_FORMAT", @"id: %1$@",@"Formatted user-facing text in eventParamsDescription"), sequenceId]];
     }
 
     // Directory regex (for directory changed triggers)
     NSString *directoryRegex = self.eventParams[@"directoryRegex"];
     if (directoryRegex && directoryRegex.length > 0) {
-        [parts addObject:[NSString stringWithFormat:@"matching /%@/", directoryRegex]];
+        [parts addObject:[NSString stringWithFormat:ITLocalize(@"Trigger_FormattedFacing_Matching_FORMAT", @"matching /%1$@/",@"Formatted user-facing text in eventParamsDescription"), directoryRegex]];
     }
 
     // Host regex (for host changed triggers)
     NSString *hostRegex = self.eventParams[@"hostRegex"];
     if (hostRegex && hostRegex.length > 0) {
-        [parts addObject:[NSString stringWithFormat:@"matching /%@/", hostRegex]];
+        [parts addObject:[NSString stringWithFormat:ITLocalize(@"Trigger_FormattedFacing_Matching_FORMAT", @"matching /%1$@/",@"Formatted user-facing text in eventParamsDescription"), hostRegex]];
     }
 
     // User regex (for user changed triggers)
@@ -716,7 +716,7 @@ NSString * const kTriggerVariableValueRegexKey = @"variableValueRegex";
     // Command regex (for long-running command triggers)
     NSString *commandRegex = self.eventParams[@"commandRegex"];
     if (commandRegex && commandRegex.length > 0) {
-        [parts addObject:[NSString stringWithFormat:@"command /%@/", commandRegex]];
+        [parts addObject:[NSString stringWithFormat:ITLocalize(@"Trigger_FormattedFacing_Command_FORMAT", @"command /%1$@/",@"Formatted user-facing text in eventParamsDescription"), commandRegex]];
     }
 
     // Variable name and value regex (for variable changed triggers)

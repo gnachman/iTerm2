@@ -61,7 +61,7 @@
 
         _headerView = [[NSTableHeaderView alloc] init];
         _tableView.headerView = _headerView;
-        [_tagsColumn.headerCell setStringValue:@"Tag Name"];
+        [_tagsColumn.headerCell setStringValue:ITLocalize(@"ProfileTagsView_Facing_TagName", @"Tag Name", @"Text shown in initWithFrame:: Tag Name")];
         _tagsColumn.width = [_tagsColumn.headerCell cellSize].width;
 
         [_tableView sizeLastColumnToFit];

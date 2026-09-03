@@ -249,7 +249,7 @@ class PasswordManagerDataSourceProvider: NSObject {
             return
         }
         iTermApplication.shared().localAuthenticationDialogOpen = true
-        let reason = "open the password manager"
+        let reason = String(localized: "PasswordManagerDataSourceProvider_OpenThePasswordManager", defaultValue: "open the password manager", comment: "Text shown in requestAuthenticationIfNeeded: open the password manager")
         context.evaluatePolicy(policy, localizedReason: reason) { success, error in
             RLog("Policy evaluation success=\(success) error=\(String(describing: error))")
             DispatchQueue.main.async {
@@ -282,65 +282,65 @@ class PasswordManagerDataSourceProvider: NSObject {
         let reason: String
         switch LAError.Code(rawValue: error.code) {
         case .authenticationFailed:
-            reason = "valid credentials weren't supplied.";
+            reason = String(localized: "PasswordManagerDataSourceProvider_ValidCredentialsWerenTSupplied", defaultValue: "valid credentials weren't supplied.", comment: "Text shown in showError: valid credentials weren't supplied.");
 
         case .userCancel:
-            reason = "password entry was cancelled.";
+            reason = String(localized: "PasswordManagerDataSourceProvider_PasswordEntryWasCancelled", defaultValue: "password entry was cancelled.", comment: "Text shown in showError: password entry was cancelled.");
 
         case .userFallback:
-            reason = "password authentication was requested.";
+            reason = String(localized: "PasswordManagerDataSourceProvider_PasswordAuthenticationWasRequested", defaultValue: "password authentication was requested.", comment: "Text shown in showError: password authentication was requested.");
 
         case .systemCancel:
-            reason = "the system cancelled the authentication request.";
+            reason = String(localized: "PasswordManagerDataSourceProvider_TheSystemCancelledTheAuthenticationRequest", defaultValue: "the system cancelled the authentication request.", comment: "Text shown in showError: the system cancelled the authentication request.");
 
         case .passcodeNotSet:
-            reason = "no passcode is set.";
+            reason = String(localized: "PasswordManagerDataSourceProvider_NoPasscodeIsSet", defaultValue: "no passcode is set.", comment: "Text shown in showError: no passcode is set.");
 
         case .touchIDNotAvailable:
-            reason = "touch ID is not available.";
+            reason = String(localized: "PasswordManagerDataSourceProvider_TouchIdIsNotAvailable", defaultValue: "touch ID is not available.", comment: "Text shown in showError: touch ID is not available.");
 
         case .biometryNotEnrolled:
-            reason = "touch ID doesn't have any fingers enrolled.";
+            reason = String(localized: "PasswordManagerDataSourceProvider_TouchIdDoesnTHaveAnyFingers", defaultValue: "touch ID doesn't have any fingers enrolled.", comment: "Text shown in showError: touch ID doesn't have any fingers enrolled.");
 
         case .biometryLockout:
-            reason = "there were too many failed Touch ID attempts.";
+            reason = String(localized: "PasswordManagerDataSourceProvider_ThereWereTooManyFailedTouchId", defaultValue: "there were too many failed Touch ID attempts.", comment: "Text shown in showError: there were too many failed Touch ID attempts.");
 
         case .appCancel:
-            reason = "authentication was cancelled by iTerm2.";
+            reason = String(localized: "PasswordManagerDataSourceProvider_AuthenticationWasCancelledByITerm2", defaultValue: "authentication was cancelled by iTerm2.", comment: "Text shown in showError: authentication was cancelled by iTerm2.");
 
         case .invalidContext:
-            reason = "the context is invalid. This is a bug in iTerm2. Please report it.";
+            reason = String(localized: "PasswordManagerDataSourceProvider_TheContextIsInvalidThisIsA", defaultValue: "the context is invalid. This is a bug in iTerm2. Please report it.", comment: "Text shown in showError: the context is invalid. This is a bug in iTerm2. Please report it.");
 
         case .none:
             reason = error.localizedDescription
 
         case .touchIDNotEnrolled:
-            reason = "touch ID is not enrolled."
+            reason = String(localized: "PasswordManagerDataSourceProvider_TouchIdIsNotEnrolled", defaultValue: "touch ID is not enrolled.", comment: "Text shown in showError: touch ID is not enrolled.")
 
         case .touchIDLockout:
-            reason = "touch ID is locked out."
+            reason = String(localized: "PasswordManagerDataSourceProvider_TouchIdIsLockedOut", defaultValue: "touch ID is locked out.", comment: "Text shown in showError: touch ID is locked out.")
 
         case .notInteractive:
-            reason = "the required user interface could not be displayed."
+            reason = String(localized: "PasswordManagerDataSourceProvider_TheRequiredUserInterfaceCouldNotBe", defaultValue: "the required user interface could not be displayed.", comment: "Text shown in showError: the required user interface could not be displayed.")
 
         case .watchNotAvailable:
-            reason = "watch is not available."
+            reason = String(localized: "PasswordManagerDataSourceProvider_WatchIsNotAvailable", defaultValue: "watch is not available.", comment: "Text shown in showError: watch is not available.")
 
         case .biometryNotPaired:
-            reason = "biometry is not paired."
+            reason = String(localized: "PasswordManagerDataSourceProvider_BiometryIsNotPaired", defaultValue: "biometry is not paired.", comment: "Text shown in showError: biometry is not paired.")
 
         case .biometryDisconnected:
-            reason = "biometry is disconnected."
+            reason = String(localized: "PasswordManagerDataSourceProvider_BiometryIsDisconnected", defaultValue: "biometry is disconnected.", comment: "Text shown in showError: biometry is disconnected.")
 
         case .invalidDimensions:
-            reason = "invalid dimensions given."
+            reason = String(localized: "PasswordManagerDataSourceProvider_InvalidDimensionsGiven", defaultValue: "invalid dimensions given.", comment: "Text shown in showError: invalid dimensions given.")
 
         @unknown default:
             reason = error.localizedDescription
         }
-        alert.messageText = "Authentication Failed"
-        alert.informativeText = "Authentication failed because \(reason)"
-        alert.addButton(withTitle: "OK")
+        alert.messageText = String(localized: "PasswordManagerDataSourceProvider_AuthenticationFailed", defaultValue: "Authentication Failed", comment: "Alert title in showError")
+        alert.informativeText = String(format: String(localized: "PasswordManagerDataSourceProvider_AuthenticationFailedBecause_FORMAT", defaultValue: "Authentication failed because %1$@", comment: "Alert explanatory text in showError"), reason)
+        alert.addButton(withTitle: String(localized: "COMMON_OK", defaultValue: "OK", comment: "Button title in showError"))
         alert.runModal()
     }
 }

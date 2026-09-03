@@ -51,7 +51,7 @@ static const CGFloat kMargin = 4;
         clear_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
         clear_.bezelStyle = NSBezelStyleRegularSquare;
         clear_.bordered = NO;
-        clear_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:@"Delete All"];
+        clear_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:ITLocalize(@"TOOL_PASTE_HISTORY_DELETE_ALL", @"Delete All", @"Button that deletes all saved paste history")];
         clear_.imagePosition = NSImageOnly;
         clear_.frame = NSMakeRect(0, 0, 22, 22);
         [clear_ setTarget:self];
@@ -60,7 +60,7 @@ static const CGFloat kMargin = 4;
         [self addSubview:clear_];
 
         _secureKeyboardEntryWarning = [NSTextField newLabelStyledTextField];
-        _secureKeyboardEntryWarning.stringValue = @"⚠️ Secure keyboard entry disables paste history.";
+        _secureKeyboardEntryWarning.stringValue = ITLocalize(@"ToolPasteHistory_SecureKeyboardEntryDisablesPasteHistory", @"⚠️ Secure keyboard entry disables paste history.", @"Text shown in initWithFrame:: ⚠️ Secure keyboard entry disables paste history.");
         _secureKeyboardEntryWarning.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
         _secureKeyboardEntryWarning.cell.truncatesLastVisibleLine = YES;
         _secureKeyboardEntryWarning.hidden = ![[iTermSecureKeyboardEntryController sharedInstance] isEnabled];
@@ -96,13 +96,13 @@ static const CGFloat kMargin = 4;
         _tableView.menu = [[NSMenu alloc] init];
         _tableView.menu.delegate = self;
         NSMenuItem *item;
-        item = [[NSMenuItem alloc] initWithTitle:@"Copy"
+        item = [[NSMenuItem alloc] initWithTitle:ITLocalize(@"COMMON_COPY", @"Copy", @"menu item title")
                                           action:@selector(copySelection:)
                                    keyEquivalent:@""];
         item.target = self;
         [_tableView.menu addItem:item];
 
-        item = [[NSMenuItem alloc] initWithTitle:@"Open in Advanced Paste"
+        item = [[NSMenuItem alloc] initWithTitle:ITLocalize(@"ToolPasteHistory_Menu_OpenInAdvancedPaste", @"Open in Advanced Paste", @"menu item title")
                                           action:@selector(openInAdvancedPaste:)
                                    keyEquivalent:@""];
         item.target = self;
@@ -276,10 +276,10 @@ static const CGFloat kMargin = 4;
 
 - (void)clear:(id)sender {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Erase Paste History";
-    alert.informativeText = @"Paste history will be erased. Continue?";
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
+    alert.messageText = ITLocalize(@"ToolPasteHistory_ErasePasteHistory", @"Erase Paste History", @"Alert title in clear:");
+    alert.informativeText = ITLocalize(@"ToolPasteHistory_PasteHistoryWillBeErasedContinue", @"Paste history will be erased. Continue?", @"Alert explanatory text in clear:");
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in clear:")];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in clear:")];
     if ([alert runModal] == NSAlertFirstButtonReturn) {
         [pasteHistory_ eraseHistory];
         [pasteHistory_ clear];

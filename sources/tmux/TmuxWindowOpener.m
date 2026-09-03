@@ -95,12 +95,12 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
 - (BOOL)openWindows:(BOOL)initial {
     RLog(@"openWindows initial=%d", (int)initial);
     if (!self.layout) {
-        [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Can't open window: missing layout"]];
+        [gateway_ abortWithErrorMessage:[NSString stringWithFormat:ITLocalize(@"TmuxWindowOpener_FormattedFacing_CanTOpenWindowMissingLayout", @"Can't open window: missing layout",@"Formatted user-facing text in openWindows:(BOOL)initial")]];
         return NO;
     }
     self.parseTree = [self parsedAdjustedLayoutFromString:self.layout];
     if (!self.parseTree) {
-        [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Error parsing layout %@", self.layout]];
+        [gateway_ abortWithErrorMessage:[NSString stringWithFormat:ITLocalize(@"TmuxWindowOpener_FormattedFacing_ErrorParsingLayout_FORMAT", @"Error parsing layout %1$@",@"Formatted user-facing text in openWindows:(BOOL)initial"), self.layout]];
         return NO;
     }
     NSMutableArray *cmdList = [NSMutableArray array];
@@ -152,7 +152,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     self.parseTree = [self parsedAdjustedLayoutFromString:self.layout];
     if (!self.parseTree) {
         RLog(@"Failed to create parse tree for %@", self.layout);
-        [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Error parsing layout %@", self.layout]];
+        [gateway_ abortWithErrorMessage:[NSString stringWithFormat:ITLocalize(@"TmuxWindowOpener_FormattedFacing_ErrorParsingLayout_FORMAT", @"Error parsing layout %1$@",@"Formatted user-facing text in updateLayoutInTab:(PTYTab *)tab"), self.layout]];
         return NO;
     }
     if (self.visibleLayout.length > 0) {
@@ -334,8 +334,8 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
     } else {
         dispatch_async(dispatch_get_main_queue(), ^{
             NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = @"Error: malformed history line from tmux.";
-            alert.informativeText = @"See Console.app for details";
+            alert.messageText = ITLocalize(@"TmuxWindowOpener_Alert_ErrorMalformedHistoryLineFromTmux", @"Error: malformed history line from tmux.", @"Alert title in dumpHistoryResponse:");
+            alert.informativeText = ITLocalize(@"TmuxWindowOpener_AlertExplanatory_SeeConsoleAppForDetails", @"See Console.app for details", @"Alert explanatory text in dumpHistoryResponse:");
             [alert runModal];
         });
     }
@@ -530,7 +530,7 @@ static int OctalValue(const char *bytes) {
     }
     NSMutableDictionary *parseTree = [self parsedAdjustedLayoutFromString:self.layout];
     if (!parseTree) {
-        [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Error parsing layout %@", self.layout]];
+        [gateway_ abortWithErrorMessage:[NSString stringWithFormat:ITLocalize(@"TmuxWindowOpener_FormattedFacing_ErrorParsingLayout_FORMAT", @"Error parsing layout %1$@",@"Formatted user-facing text in requestDidComplete"), self.layout]];
         return;
     }
     NSMutableDictionary *visibleParseTree = nil;

@@ -159,16 +159,16 @@ class ModalPasswordAlert {
     private func makeAlert() -> Views {
         let alert = NSAlert()
         alert.messageText = prompt
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: String(localized: "COMMON_OK", defaultValue: "OK", comment: "Button that submits the modal password prompt"))
+        alert.addButton(withTitle: String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Button that cancels the modal password prompt"))
         if showPasswordManagerButton {
-            alert.addButton(withTitle: "Password Manager")
+            alert.addButton(withTitle: String(localized: "PASSWORD_MODAL_PASSWORD_MANAGER", defaultValue: "Password Manager", comment: "Button that opens Password Manager from the modal password prompt"))
         }
 
         let newPassword = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 22))
         newPassword.isEditable = true
         newPassword.isSelectable = true
-        newPassword.placeholderString = "Password"
+        newPassword.placeholderString = String(localized: "PASSWORD_MODAL_PASSWORD", defaultValue: "Password", comment: "Placeholder for the secure password field")
         if let initialPassword {
             newPassword.stringValue = initialPassword
         }
@@ -193,7 +193,7 @@ class ModalPasswordAlert {
             field.isEditable = true
             field.isSelectable = true
             field.stringValue = username
-            field.placeholderString = "User name"
+            field.placeholderString = String(localized: "ModalPasswordAlert_UserName", defaultValue: "User name", comment: "Placeholder text in makeAlert")
 
             wrapper.addArrangedSubview(field)
             field.nextKeyView = newPassword

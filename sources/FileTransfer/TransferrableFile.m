@@ -130,13 +130,13 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
     if (retries == 1 || !prompt) {
         return finalDestination;
     }
-    NSString *message = [NSString stringWithFormat:@"A file named %@ already exists. Keep both files or replace the existing file?", baseName];
+    NSString *message = [NSString stringWithFormat:ITLocalize(@"TransferrableFile_FormattedFacing_AFileNamedAlreadyExistsKeepBoth_FORMAT", @"A file named %1$@ already exists. Keep both files or replace the existing file?",@"Formatted user-facing text in finalDestinationForPath:(NSString *)originalBaseName"), baseName];
     const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:message
-                                                                       actions:@[ @"Keep Both", @"Replace" ]
+                                                                       actions:@[ ITLocalize(@"TransferrableFile_Action_KeepBoth", @"Keep Both", @"Action title in finalDestinationForPath:"), ITLocalize(@"TransferrableFile_Action_Replace", @"Replace", @"Title in finalDestinationForPath:") ]
                                                                      accessory:nil
                                                                     identifier:@"NoSyncOverwriteOrReplaceFile"
                                                                    silenceable:kiTermWarningTypePermanentlySilenceable
-                                                                       heading:@"Overwrite existing file?"
+                                                                       heading:ITLocalize(@"TransferrableFile_AlertHeading_OverwriteExistingFile", @"Overwrite existing file?",@"Alert heading in finalDestinationForPath:(NSString *)originalBaseName")
                                                                         window:nil];
     if (selection == kiTermWarningSelection1) {
         return [destinationDirectory stringByAppendingPathComponent:baseName];
@@ -189,14 +189,14 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
 
                 case kTransferrableFileStatusFinishedSuccessfully:
                     [[iTermNotificationController sharedInstance] notify:
-                        [NSString stringWithFormat:@"%@ finished for “%@”.",
-                            self.isDownloading ? @"Download" : @"Upload", [self shortName]]];
+                        [NSString stringWithFormat:ITLocalize(@"TransferrableFile_FormattedFacing_FinishedFor_FORMAT", @"%1$@ finished for “%2$@”.",@"Formatted user-facing text in setStatus:(TransferrableFileStatus)status"),
+                            self.isDownloading ? ITLocalize(@"TransferrableFile_Facing_Download", @"Download", @"Text shown in setStatus:: Download") : ITLocalize(@"COMMON_UPLOAD", @"Upload", @"Text shown in setStatus:: Upload"), [self shortName]]];
                     break;
 
                 case kTransferrableFileStatusFinishedWithError:
                     [[iTermNotificationController sharedInstance] notify:
-                     [NSString stringWithFormat:@"%@ failed for “%@”.",
-                      self.isDownloading ? @"Download" : @"Upload", [self shortName]]];
+                     [NSString stringWithFormat:ITLocalize(@"TransferrableFile_FormattedFacing_FailedFor_FORMAT", @"%1$@ failed for “%2$@”.",@"Formatted user-facing text in setStatus:(TransferrableFileStatus)status"),
+                      self.isDownloading ? ITLocalize(@"TransferrableFile_Facing_Download", @"Download", @"Text shown in setStatus:: Download") : ITLocalize(@"COMMON_UPLOAD", @"Upload", @"Text shown in setStatus:: Upload"), [self shortName]]];
             }
         }
     }
@@ -213,12 +213,12 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
 }
 
 - (void)failedToRemoveUnquarantinedFileAt:(NSString *)path {
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The file at “%@” could not be quarantined or deleted! It is dangerous and should be removed.", path]
-                               actions:@[ @"OK" ]
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"TransferrableFile_Alert_TheFileAtCouldNotBeQuarantined_FORMAT", @"The file at “%1$@” could not be quarantined or deleted! It is dangerous and should be removed.", @"Alert title in failedToRemoveUnquarantinedFileAt:"), path]
+                               actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in failedToRemoveUnquarantinedFileAt:") ]
                              accessory:nil
                             identifier:nil
                            silenceable:kiTermWarningTypePersistent
-                               heading:@"Danger!"
+                               heading:ITLocalize(@"TransferrableFile_AlertHeading_Danger", @"Danger!",@"Alert heading in failedToRemoveUnquarantinedFileAt:(NSString *)path")
                                 window:nil];
 }
 

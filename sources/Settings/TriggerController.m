@@ -583,26 +583,26 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
                                                  encoding:NSUTF8StringEncoding
                                                     error:&error];
     if (!content || error) {
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"While loading %@: %@",
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"TriggerController_Alert_WhileLoading_FORMAT", @"While loading %1$@: %2$@", @"Alert title in triggersFromFile:"),
                                             filename, error.localizedDescription]
-                                   actions:@[ @"OK" ]
+                                   actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in triggersFromFile:") ]
                                  accessory:nil
                                 identifier:@"NoSyncImportTriggersFailed"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:@"Import Failed"
+                                   heading:ITLocalize(@"TriggerController_AlertHeading_ImportFailed", @"Import Failed",@"Alert heading in triggersFromFile:(NSString *)filename window:(NSWindow *)window")
                                     window:window];
         return nil;
     }
 
     id root = [NSJSONSerialization it_objectForJsonString:content error:&error];
     if (!root) {
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"While parsing %@: %@",
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"TriggerController_Alert_WhileParsing_FORMAT", @"While parsing %1$@: %2$@", @"Alert title in triggersFromFile:"),
                                             filename, error.localizedDescription]
-                                   actions:@[ @"OK" ]
+                                   actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in triggersFromFile:") ]
                                  accessory:nil
                                 identifier:@"NoSyncImportTriggersFailed"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:@"Import Failed"
+                                   heading:ITLocalize(@"TriggerController_AlertHeading_ImportFailed", @"Import Failed",@"Alert heading in triggersFromFile:(NSString *)filename window:(NSWindow *)window")
                                     window:window];
         return nil;
     }
@@ -616,12 +616,12 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
         array = [NSArray castFrom:root];
     }
     if (!array) {
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Malformed file at %@", filename]
-                                   actions:@[ @"OK" ]
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"TriggerController_Alert_MalformedFileAt_FORMAT", @"Malformed file at %1$@", @"Alert title in triggersFromFile:"), filename]
+                                   actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in triggersFromFile:") ]
                                  accessory:nil
                                 identifier:@"NoSyncTriggerEncodingError"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:@"Import Failed"
+                                   heading:ITLocalize(@"TriggerController_AlertHeading_ImportFailed", @"Import Failed",@"Alert heading in triggersFromFile:(NSString *)filename window:(NSWindow *)window")
                                     window:window];
         return nil;
     }
@@ -630,23 +630,23 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
     for (id element in array) {
         NSDictionary *dict = [NSDictionary castFrom:element];
         if (!dict) {
-            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Malformed file at %@", filename]
-                                       actions:@[ @"OK" ]
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"TriggerController_Alert_MalformedFileAt_FORMAT", @"Malformed file at %1$@", @"Alert title in triggersFromFile:"), filename]
+                                       actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in triggersFromFile:") ]
                                      accessory:nil
                                     identifier:@"NoSyncTriggerEncodingError"
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"Import Failed"
+                                       heading:ITLocalize(@"TriggerController_AlertHeading_ImportFailed", @"Import Failed",@"Alert heading in triggersFromFile:(NSString *)filename window:(NSWindow *)window")
                                         window:window];
             return nil;
         }
         Trigger *trigger = [Trigger triggerFromUntrustedDict:dict];
         if (!trigger) {
-            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Malformed file at %@", filename]
-                                       actions:@[ @"OK" ]
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"TriggerController_Alert_MalformedFileAt_FORMAT", @"Malformed file at %1$@", @"Alert title in triggersFromFile:"), filename]
+                                       actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in triggersFromFile:") ]
                                      accessory:nil
                                     identifier:@"NoSyncTriggerEncodingError"
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"Import Failed"
+                                       heading:ITLocalize(@"TriggerController_AlertHeading_ImportFailed", @"Import Failed",@"Alert heading in triggersFromFile:(NSString *)filename window:(NSWindow *)window")
                                         window:window];
             return nil;
         }
@@ -668,10 +668,10 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
 }
 
 + (NSString *)importDescriptionForTrigger:(Trigger *)trigger {
-    return [NSString stringWithFormat:@"On “%@”, %@%@",
+    return [NSString stringWithFormat:ITLocalize(@"TriggerController_FormattedFacing_On_FORMAT", @"On “%1$@”, %2$@%3$@",@"Formatted user-facing text in importDescriptionForTrigger:(Trigger *)trigger"),
             [trigger.regex it_sanitized],
             [trigger.description it_sanitized],
-            trigger.partialLine ? @"  instantly" : @""];
+            trigger.partialLine ? ITLocalize(@"TriggerController_Facing_Instantly", @"  instantly", @"Text shown in importDescriptionForTrigger::   instantly") : @""];
 }
 
 + (NSArray<NSString *> *)guidsForProfilesToImportTriggersInto:(NSArray<Trigger *> *)triggers {
@@ -682,14 +682,14 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
         return [@"• " stringByAppendingString:[self importDescriptionForTrigger:trigger]];
     }];
     if (triggers.count > maxShown) {
-        descriptions = [descriptions arrayByAddingObject:[NSString stringWithFormat:@"…and %@ more",
+        descriptions = [descriptions arrayByAddingObject:[NSString stringWithFormat:ITLocalize(@"TriggerController_FormattedFacing_AndMore_FORMAT", @"…and %1$@ more",@"Formatted user-facing text in guidsForProfilesToImportTriggersInto:(NSArray<Trigger *> *)triggers"),
                                                           @(triggers.count - maxShown)]];
     }
     NSString *joined = [descriptions componentsJoinedByString:@"\n"];
-    NSString *message = [NSString stringWithFormat:@"Select the profiles into which these triggers should be imported:\n\n%@", joined];
+    NSString *message = [NSString stringWithFormat:ITLocalize(@"TriggerController_FormattedFacing_SelectTheProfilesIntoWhichTheseTriggers_FORMAT", @"Select the profiles into which these triggers should be imported:\n\n%1$@",@"Formatted user-facing text in guidsForProfilesToImportTriggersInto:(NSArray<Trigger *> *)triggers"), joined];
     [alert setMessageText:message];
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in guidsForProfilesToImportTriggersInto:")];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in guidsForProfilesToImportTriggersInto:")];
 
     ProfileListView *profiles = [[ProfileListView alloc] initWithFrame:NSMakeRect(0, 0, 300, 300)];
     [profiles disableArrowHandler];
@@ -822,7 +822,7 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
                                                                      size.width,
                                                                      size.height)];
         CGFloat x = 4;
-        NSTextField *label = [self labelWithString:@"Text:" origin:NSMakePoint(x, 0)];
+        NSTextField *label = [self labelWithString:ITLocalize(@"TriggerController_Text", @"Text:", @"Label text in viewForParameterForTrigger:") origin:NSMakePoint(x, 0)];
         [container addSubview:label];
         x += label.frame.size.width;
         const CGFloat kWellWidth = 30;
@@ -836,7 +836,7 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
         [container addSubview:well];
 
         x += 10 + kWellWidth;
-        label = [self labelWithString:@"Background:" origin:NSMakePoint(x, 0)];
+        label = [self labelWithString:ITLocalize(@"TriggerController_Background", @"Background:", @"Label text in viewForParameterForTrigger:") origin:NSMakePoint(x, 0)];
         [container addSubview:label];
         x += label.frame.size.width;
 
@@ -872,7 +872,7 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
 
         // Dot color well
         const CGFloat kWellWidth = 30;
-        NSTextField *label = [self labelWithString:@"Dot:" origin:NSMakePoint(x, 0)];
+        NSTextField *label = [self labelWithString:ITLocalize(@"TriggerController_Dot", @"Dot:", @"Label text in viewForParameterForTrigger:") origin:NSMakePoint(x, 0)];
         [container addSubview:label];
         x += label.frame.size.width;
 
@@ -883,7 +883,7 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
         x += kWellWidth + 6;
 
         // Status text color well
-        label = [self labelWithString:@"Text:" origin:NSMakePoint(x, 0)];
+        label = [self labelWithString:ITLocalize(@"TriggerController_Text", @"Text:", @"Label text in viewForParameterForTrigger:") origin:NSMakePoint(x, 0)];
         [container addSubview:label];
         x += label.frame.size.width;
 
@@ -911,13 +911,13 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
         iTermTuple<NSString *, NSString *> *pair = [iTermTwoParameterTriggerCodec tupleFromString:[NSString castFrom:value]];
         NSTextField *nameTextField = [self newTextFieldOfSize:subsize
                                                         value:pair.firstObject
-                                                  placeholder:@"Name"
+                                                  placeholder:ITLocalize(@"TriggerController_Placeholder_Name", @"Name",@"Placeholder text in viewForParameterForTrigger:(Trigger *)trigger")
                                                    identifier:kTwoPraramNameColumnIdentifier];
         nameTextField.delegate = delegate;
 
         NSTextField *valueTextField = [self newTextFieldOfSize:subsize
                                                          value:pair.secondObject
-                                                   placeholder:@"Value"
+                                                   placeholder:ITLocalize(@"TriggerController_Placeholder_Value", @"Value",@"Placeholder text in viewForParameterForTrigger:(Trigger *)trigger")
                                                     identifier:kTwoPraramValueColumnIdentifier];
         valueTextField.delegate = delegate;
 
@@ -1116,17 +1116,17 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
 
     iTermSimpleContextMenu *menu = [[iTermSimpleContextMenu alloc] init];
     NSURL *url = [self urlForSelectedTriggers];
-    [menu addItemWithTitle:@"Copy Trigger as URL to Clipboard" action:^{
+    [menu addItemWithTitle:ITLocalize(@"TriggerController_Menu_CopyTriggerAsUrlToClipboard", @"Copy Trigger as URL to Clipboard",@"Menu title in share:(id)sender") action:^{
         NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
         [pasteboard clearContents];
         NSArray *objects = @[ url, url.absoluteString ];
         [pasteboard writeObjects:objects];
-        [ToastWindowController showToastWithMessage:@"Copied"
+        [ToastWindowController showToastWithMessage:ITLocalize(@"TriggerController_Toast_Copied", @"Copied", @"toast message")
                                            duration:1
                             topLeftScreenCoordinate:screenPoint
                                           pointSize:12];
     }];
-    [menu addItemWithTitle:@"Export to File" action:^{
+    [menu addItemWithTitle:ITLocalize(@"TriggerController_Menu_ExportToFile", @"Export to File",@"Menu title in share:(id)sender") action:^{
         [self exportSelectedTriggers];
     }];
     [menu showInView:_tableView forEvent:[NSApp currentEvent]];
@@ -1149,13 +1149,13 @@ NSString *const kStatusTextComboBoxIdentifier = @"kStatusTextComboBoxIdentifier"
         NSString *json = [NSJSONSerialization it_jsonStringForObject:array];
         [json writeToSaveItem:item completionHandler:^(NSError *error) {
             if (error) {
-                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Error saving to %@: %@",
+                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"TriggerController_Alert_ErrorSavingTo_FORMAT", @"Error saving to %1$@: %2$@", @"Alert title in exportSelectedTriggers"),
                                                     item.displayName, error.localizedDescription]
-                                           actions:@[ @"OK" ]
+                                           actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in exportSelectedTriggers") ]
                                          accessory:nil
                                         identifier:@"NoSyncTriggerWritingError"
                                        silenceable:kiTermWarningTypePersistent
-                                           heading:@"Export Failed"
+                                           heading:ITLocalize(@"TriggerController_AlertHeading_ExportFailed", @"Export Failed",@"Alert heading in exportSelectedTriggers")
                                             window:self.window];
             } else {
                 [item revealInFinderIfLocal];

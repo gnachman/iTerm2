@@ -179,7 +179,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 
     [self defineControl:_undoTimeout
                     key:KEY_UNDO_TIMEOUT
-            displayName:@"Undo close session timeout"
+            displayName:ITLocalize(@"ProfilesSessionPreferencesViewController_Facing_UndoCloseSessionTimeout", @"Undo close session timeout", @"Text shown in awakeFromNib: Undo close session timeout")
                    type:kPreferenceInfoTypeIntegerTextField];
 
     info = [self defineControl:_autoLog
@@ -286,13 +286,13 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 
     info = [self defineControl:_idleCode
                            key:KEY_IDLE_CODE
-                   displayName:@"Send character periodically while idle"
+                   displayName:ITLocalize(@"ProfilesSessionPreferencesViewController_Facing_SendCharacterPeriodicallyWhileIdle", @"Send character periodically while idle", @"Text shown in awakeFromNib: Send character periodically while idle")
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(0, 256);
 
     [self defineControl:_idlePeriod
                     key:KEY_IDLE_PERIOD
-            displayName:@"Time between sending characters when idle"
+            displayName:ITLocalize(@"ProfilesSessionPreferencesViewController_Facing_TimeBetweenSendingCharactersWhenIdle", @"Time between sending characters when idle", @"Text shown in awakeFromNib: Time between sending characters when idle")
                    type:kPreferenceInfoTypeDoubleTextField];
 
     [self updateRemoveJobButtonEnabled];
@@ -359,7 +359,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 
     _progressBarHeightInfo = [self defineControl:_progressBarHeight
                                               key:KEY_PROGRESS_BAR_HEIGHT
-                                      displayName:@"Progress bar height"
+                                      displayName:ITLocalize(@"ProfilesSessionPreferencesViewController_Facing_ProgressBarHeight", @"Progress bar height", @"Text shown in awakeFromNib: Progress bar height")
                                              type:kPreferenceInfoTypeIntegerTextField];
     _progressBarHeightInfo.shouldBeEnabled = ^BOOL {
         return [weakSelf boolForKey:KEY_ENABLE_PROGRESS_BARS];
@@ -378,7 +378,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     [self populateProgressBarColorSchemes];
     info = [self defineControl:_progressBarColorScheme
                            key:KEY_PROGRESS_BAR_COLOR_SCHEME
-                   displayName:@"Progress bar color scheme"
+                   displayName:ITLocalize(@"ProfilesSessionPreferencesViewController_Facing_ProgressBarColorScheme", @"Progress bar color scheme", @"Text shown in awakeFromNib: Progress bar color scheme")
                           type:kPreferenceInfoTypeStringPopup];
     info.shouldBeEnabled = ^BOOL {
         return [weakSelf boolForKey:KEY_ENABLE_PROGRESS_BARS];
@@ -447,7 +447,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     };
     [self updateNonDefaultIndicatorVisibleForInfo:info];
     [self addViewToSearchIndex:_configureStatusBar
-                   displayName:@"Configure status bar"
+                   displayName:ITLocalize(@"ProfilesSessionPreferencesViewController_Facing_ConfigureStatusBar", @"Configure status bar", @"Text shown in awakeFromNib: Configure status bar")
                        phrases:@[]
                            key:nil];
 

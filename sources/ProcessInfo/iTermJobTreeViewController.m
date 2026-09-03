@@ -332,7 +332,7 @@ static int gSignalsToList[] = {
 }
 
 - (void)awakeFromNib {
-    kill_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPlay) accessibilityDescription:@"Clear"];
+    kill_.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPlay) accessibilityDescription:ITLocalize(@"COMMON_CLEAR", @"Clear", @"Accessibility label for the process kill button")];
     _outlineView.style = NSTableViewStyleInset;
     _outlineView.backgroundColor = [NSColor clearColor];
     if (!_useVisualEffectView) {
@@ -348,11 +348,11 @@ static int gSignalsToList[] = {
         }
     }
     NSImage *magnifyingGlass = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolMagnifyingglass)
-                                    accessibilityDescription:@"Inspect"];
+                                    accessibilityDescription:ITLocalize(@"JobTreeViewController_Inspect", @"Inspect", @"Accessibility description for the Inspect button")];
     _inspectButton = [NSButton buttonWithImage:magnifyingGlass target:self action:@selector(inspect:)];
     _inspectButton.bordered = NO;
     _inspectButton.imageScaling = NSImageScaleProportionallyDown;
-    _inspectButton.toolTip = @"Inspect the selected process";
+    _inspectButton.toolTip = ITLocalize(@"JobTreeViewController_InspectTheSelectedProcess", @"Inspect the selected process", @"Button title in awakeFromNib");
     _inspectButton.refusesFirstResponder = YES;
     [self.view addSubview:_inspectButton];
     [self updateKillButtonEnabled];
@@ -415,25 +415,25 @@ static int gSignalsToList[] = {
     }
     if ([self anySelectedProcessHasChildren]) {
         if (count == 1) {
-            description = @"one process and its children";
+            description = ITLocalize(@"JobTreeViewController_OneProcessAndItsChildren", @"one process and its children", @"Description of a process and its children");
         } else {
-            description = [NSString stringWithFormat:@"%@ processes and their children", @(count)];
+            description = [NSString stringWithFormat:ITLocalize(@"JobTreeViewController_ProcessesAndTheirChildren_FORMAT", @"%1$@ processes and their children",@"Formatted user-facing text in shouldQuit"), @(count)];
         }
     } else {
         if (count == 1) {
-            description = @"one process";
+            description = ITLocalize(@"JobTreeViewController_OneProcess", @"one process", @"Description of a single process");
         } else {
-            description = [NSString stringWithFormat:@"%@ processes", @(count)];
+            description = [NSString stringWithFormat:ITLocalize(@"JobTreeViewController_Processes_FORMAT", @"%1$@ processes",@"Formatted user-facing text in shouldQuit"), @(count)];
         }
     }
 
     const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Are you sure? This may terminate %@.", description]
-                               actions:@[ @"OK", @"Cancel"]
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"JobTreeViewController_AreYouSureThisMayTerminate_FORMAT", @"Are you sure? This may terminate %1$@.", @"Alert title in shouldQuit"), description]
+                               actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in shouldQuit"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in shouldQuit")]
                              accessory:nil
                             identifier:@"NoSyncSuppressSendSignal"
                            silenceable:kiTermWarningTypePermanentlySilenceable
-                               heading:@"Confirmation Needed"
+                               heading:ITLocalize(@"JobTreeViewController_ConfirmationNeeded", @"Confirmation Needed",@"Alert heading in shouldQuit")
                                 window:self.view.window];
     return selection == kiTermWarningSelection0;
 }
@@ -772,7 +772,7 @@ static int gSignalsToList[] = {
     const BOOL monitored = (isJob && info.pid &&
                             [[iTermJobTerminationMonitor sharedInstance] isMonitoringProcessID:info.pid]);
     if (isJob) {
-        string = info.fullName ?: @"(terminated)";
+        string = info.fullName ?: ITLocalize(@"JobTreeViewController_Terminated", @"(terminated)", @"Text shown in outlineView:: (terminated)");
         NSImage *rawImage = [_graphicSource imageForJobName:info.name];
         if (rawImage) {
             image = [NSImage imageWithSize:rawImage.size flipped:NO drawingHandler:^BOOL(NSRect dstRect) {
@@ -817,13 +817,13 @@ static int gSignalsToList[] = {
     }
     // Hovering any cell in the row reveals the full, untruncated command (the
     // visible text is clipped to the column width and capped at 256 chars).
-    cell.toolTip = info.fullName ?: @"(terminated)";
+    cell.toolTip = info.fullName ?: ITLocalize(@"JobTreeViewController_Terminated", @"(terminated)", @"tooltip text");
     return cell;
 }
 
 - (NSAttributedString *)monitorIndicatorPrefixWithFont:(NSFont *)font {
     NSImage *bell = [NSImage it_imageForSymbolName:@"bell"
-                            accessibilityDescription:@"Will notify when this job terminates"];
+                            accessibilityDescription:ITLocalize(@"JobTreeViewController_WillNotifyWhenThisJobTerminates", @"Will notify when this job terminates", @"Accessibility description for a job termination notification")];
     if (!bell) {
         return [[NSAttributedString alloc] initWithString:@""];
     }

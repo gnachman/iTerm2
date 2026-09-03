@@ -53,7 +53,7 @@ class iTermWorkgroupsEditingViewController: NSViewController {
         tableView.allowsMultipleSelection = false
         tableView.rowSizeStyle = .default
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("name"))
-        column.title = "Name"
+        column.title = String(localized: "WorkgroupsEditingViewController_Name", defaultValue: "Name", comment: "Title in loadView")
         column.resizingMask = .autoresizingMask
         tableView.addTableColumn(column)
         tableView.dataSource = self
@@ -78,7 +78,7 @@ class iTermWorkgroupsEditingViewController: NSViewController {
         presetPopup = NSPopUpButton(frame: .zero, pullsDown: true)
         presetPopup.bezelStyle = .rounded
         presetPopup.controlSize = .regular
-        let titleItem = NSMenuItem(title: "Add Preset",
+        let titleItem = NSMenuItem(title: String(localized: "WorkgroupsEditingViewController_AddPreset", defaultValue: "Add Preset", comment: "Menu item title in loadView"),
                                    action: nil, keyEquivalent: "")
         presetPopup.menu?.addItem(titleItem)
         for preset in WorkgroupPresets.all {
@@ -246,7 +246,7 @@ class iTermWorkgroupsEditingViewController: NSViewController {
 
     private func addWorkgroup() {
         pushUndo()
-        let wg = iTermWorkgroup.newEmpty(name: "Untitled Workgroup")
+        let wg = iTermWorkgroup.newEmpty(name: String(localized: "WorkgroupsEditingViewController_UntitledWorkgroup", defaultValue: "Untitled Workgroup", comment: "Text shown in addWorkgroup: Untitled Workgroup"))
         iTermWorkgroupModel.instance.add(wg)
         if let idx = iTermWorkgroupModel.instance.workgroups.firstIndex(where: {
             $0.uniqueIdentifier == wg.uniqueIdentifier

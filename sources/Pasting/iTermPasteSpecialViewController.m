@@ -139,10 +139,10 @@ static NSString *const kSubstitution = @"Substitution";
         units = @"ms";
         multiplier = 0.001;
     } else if (duration < 60) {
-        units = @"sec";
+        units = ITLocalize(@"PasteSpecialViewController_Facing_Sec", @"sec", @"Text shown in descriptionForDuration:: sec");
         multiplier = 1;
     } else {
-        units = @"min";
+        units = ITLocalize(@"PasteSpecialViewController_Facing_Min", @"min", @"Text shown in descriptionForDuration:: min");
         multiplier = 60;
     }
 
@@ -453,7 +453,7 @@ static NSString *const kSubstitution = @"Substitution";
     }
 
     if (tabTransform == kTabTransformConvertToSpaces) {
-        [components addObject:[NSString stringWithFormat:@"Tabs->%@ spcs", dict[kNumberOfSpacesPerTab]]];
+        [components addObject:[NSString stringWithFormat:ITLocalize(@"PasteSpecialViewController_FormattedFacing_TabsSpcs_FORMAT", @"Tabs->%1$@ spcs",@"Formatted user-facing text in descriptionForCodedSettings:(NSString *)jsonString"), dict[kNumberOfSpacesPerTab]]];
     } else if (tabTransform == kTabTransformEscapeWithCtrlV) {
         [components addObject:@"^V+Tab"];
     }

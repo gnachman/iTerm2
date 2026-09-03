@@ -377,26 +377,26 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 - (NSString *)helpTextForIndicatorWithName:(NSString *)name sessionID:(NSString *)sessionID {
     // NOTE: These messages are interpreted as markdown.
     NSDictionary<NSString *, NSString *> *messages = @{
-        kItermIndicatorBroadcastInput: @"Keyboard input gets broadcast to other sessions.",
-        kItermIndicatorBroadcastInputReceiver: @"Keyboard input from another session gets broadcast to this one, but this session is not an input source for broadcasting (anything you type here stays here).",
-        kiTermIndicatorMaximized: @"This is a maximized split pane.",
-        kiTermIndicatorCoprocess: @"A coprocess is running.",
-        kiTermIndicatorAlert: @"Will alert on next mark.",
-        kiTermIndicatorAllOutputSuppressed: @"All output is currently suppressed.",
-        kiTermIndicatorZoomedIn: @"Zoomed in.",
-        kiTermIndicatorFilter: @"Filtering.",
-        kiTermIndicatorCopyMode: @"In copy mode. See [documentation](https://iterm2.com/documentation-copymode.html) for details.",
-        kiTermIndicatorDebugLogging: @"Debug logging is enabled.",
-        kiTermIndicatorSecureKeyboardEntry_User: @"Secure Keyboard Entry is enabled. Select iTerm2 > Secure Keyboard Entry to disable.\n[Disable this indicator.](iterm2:disable-secure-keyboard-entry-indicator)",
-        kiTermIndicatorSecureKeyboardEntry_Forced: @"Secure Keyboard Entry is enabled because another app has turned it on.\n[Disable this indicator.](iterm2:disable-secure-keyboard-entry-indicator)",
-        kiTermIndicatorPinned: @"This Hotkey Window is pinned.",
-        kiTermIndicatorAIChatLinked: [NSString stringWithFormat:@"AI Chats can view or control this session.\n * [Unlink from AI Chat](iterm2:unlink-session-chat?s=%@&t=%@)\n * [Reveal AI Chat](iterm2:reveal-chat-for-session?s=%@&t=%@)", sessionID, [[NSWorkspace sharedWorkspace] it_newToken], sessionID, [[NSWorkspace sharedWorkspace] it_newToken]],
-        kiTermIndicatorAIChatStreaming: [NSString stringWithFormat:@"Commands run in this session are automatically sent to an AI chat, along with their output. [Stop sending](iterm2:disable-streaming-session-chat?s=%@&t=%@)",
+        kItermIndicatorBroadcastInput: ITLocalize(@"IndicatorsHelper_Facing_KeyboardInputGetsBroadcastToOtherSessions", @"Keyboard input gets broadcast to other sessions.", @"Text shown in helpTextForIndicatorWithName:: Keyboard input gets broadcast to other sessions."),
+        kItermIndicatorBroadcastInputReceiver: ITLocalize(@"IndicatorsHelper_Facing_KeyboardInputFromAnotherSessionGetsBroadcast", @"Keyboard input from another session gets broadcast to this one, but this session is not an input source for broadcasting (anything you type here stays here).", @"Text shown in helpTextForIndicatorWithName"),
+        kiTermIndicatorMaximized: ITLocalize(@"IndicatorsHelper_Facing_ThisIsAMaximizedSplitPane", @"This is a maximized split pane.", @"Text shown in helpTextForIndicatorWithName:: This is a maximized split pane."),
+        kiTermIndicatorCoprocess: ITLocalize(@"IndicatorsHelper_Facing_ACoprocessIsRunning", @"A coprocess is running.", @"Text shown in helpTextForIndicatorWithName:: A coprocess is running."),
+        kiTermIndicatorAlert: ITLocalize(@"IndicatorsHelper_Facing_WillAlertOnNextMark", @"Will alert on next mark.", @"Text shown in helpTextForIndicatorWithName:: Will alert on next mark."),
+        kiTermIndicatorAllOutputSuppressed: ITLocalize(@"IndicatorsHelper_Facing_AllOutputIsCurrentlySuppressed", @"All output is currently suppressed.", @"Text shown in helpTextForIndicatorWithName:: All output is currently suppressed."),
+        kiTermIndicatorZoomedIn: ITLocalize(@"IndicatorsHelper_Facing_ZoomedIn", @"Zoomed in.", @"Text shown in helpTextForIndicatorWithName:: Zoomed in."),
+        kiTermIndicatorFilter: ITLocalize(@"IndicatorsHelper_Facing_Filtering", @"Filtering.", @"Text shown in helpTextForIndicatorWithName:: Filtering."),
+        kiTermIndicatorCopyMode: ITLocalize(@"IndicatorsHelper_Facing_InCopyModeSeeDocumentationHttpsIterm2", @"In copy mode. See [documentation](https://iterm2.com/documentation-copymode.html) for details.", @"Text shown in helpTextForIndicatorWithName:: In copy mode. See [documentation](https://iterm2.com/documentation-copymode.html) for details."),
+        kiTermIndicatorDebugLogging: ITLocalize(@"IndicatorsHelper_Facing_DebugLoggingIsEnabled", @"Debug logging is enabled.", @"Text shown in helpTextForIndicatorWithName:: Debug logging is enabled."),
+        kiTermIndicatorSecureKeyboardEntry_User: ITLocalize(@"IndicatorsHelper_Facing_SecureKeyboardEntryIsEnabledSelectI", @"Secure Keyboard Entry is enabled. Select iTerm2 > Secure Keyboard Entry to disable.\n[Disable this indicator.](iterm2:disable-secure-keyboard-entry-indicator)", @"Indicator help text for Secure Keyboard Entry"),
+        kiTermIndicatorSecureKeyboardEntry_Forced: ITLocalize(@"IndicatorsHelper_Facing_SecureKeyboardEntryIsEnabledBecauseAnother", @"Secure Keyboard Entry is enabled because another app has turned it on.\n[Disable this indicator.](iterm2:disable-secure-keyboard-entry-indicator)", @"Indicator help text for forced Secure Keyboard Entry"),
+        kiTermIndicatorPinned: ITLocalize(@"IndicatorsHelper_Facing_ThisHotkeyWindowIsPinned", @"This Hotkey Window is pinned.", @"Text shown in helpTextForIndicatorWithName:: This Hotkey Window is pinned."),
+        kiTermIndicatorAIChatLinked: [NSString stringWithFormat:ITLocalize(@"IndicatorsHelper_FormattedFacing_AiChatsCanViewOrControlThis_FORMAT", @"AI Chats can view or control this session.\n * [Unlink from AI Chat](iterm2:unlink-session-chat?s=%1$@&t=%2$@)\n * [Reveal AI Chat](iterm2:reveal-chat-for-session?s=%3$@&t=%4$@)",@"Formatted user-facing text in helpTextForIndicatorWithName:(NSString *)name sessionID:(NSString *)sessionID"), sessionID, [[NSWorkspace sharedWorkspace] it_newToken], sessionID, [[NSWorkspace sharedWorkspace] it_newToken]],
+        kiTermIndicatorAIChatStreaming: [NSString stringWithFormat:ITLocalize(@"IndicatorsHelper_FormattedFacing_CommandsRunInThisSessionAreAutomatically_FORMAT", @"Commands run in this session are automatically sent to an AI chat, along with their output. [Stop sending](iterm2:disable-streaming-session-chat?s=%1$@&t=%2$@)",@"Formatted user-facing text in helpTextForIndicatorWithName:(NSString *)name sessionID:(NSString *)sessionID"),
                                          sessionID, [[NSWorkspace sharedWorkspace] it_newToken]],
-        kiTermIndicatorChannel: [NSString stringWithFormat:@"This command is running within another session.\n * [Return to Enclosing Session](iterm2:pop-channel?s=%@&t=%@)", sessionID, [[NSWorkspace sharedWorkspace] it_newToken]],
-        kiTermIndicatorBufferingInput: @"Keyboard input is being buffered and will be sent when a trigger stops buffering.",
-        kiTermIndicatorShowRememberedAlerts: @"Showing alerts with remembered selections. Disable in iTerm2 > Suppressed Alerts.",
-        kiTermIndicatorScreenshotMode: @"In screenshot mode. Close the screenshot panel to return to normal."
+        kiTermIndicatorChannel: [NSString stringWithFormat:ITLocalize(@"IndicatorsHelper_FormattedFacing_ThisCommandIsRunningWithinAnotherSession_FORMAT", @"This command is running within another session.\n * [Return to Enclosing Session](iterm2:pop-channel?s=%1$@&t=%2$@)",@"Formatted user-facing text in helpTextForIndicatorWithName:(NSString *)name sessionID:(NSString *)sessionID"), sessionID, [[NSWorkspace sharedWorkspace] it_newToken]],
+        kiTermIndicatorBufferingInput: ITLocalize(@"IndicatorsHelper_Facing_KeyboardInputIsBeingBufferedAndWill", @"Keyboard input is being buffered and will be sent when a trigger stops buffering.", @"Text shown in helpTextForIndicatorWithName:: Keyboard input is being buffered and will be sent when a trigger stops buffering."),
+        kiTermIndicatorShowRememberedAlerts: ITLocalize(@"IndicatorsHelper_Facing_ShowingAlertsWithRememberedSelectionsDisableIn", @"Showing alerts with remembered selections. Disable in iTerm2 > Suppressed Alerts.", @"Text shown in helpTextForIndicatorWithName:: Showing alerts with remembered selections. Disable in iTerm2 > Suppressed Alerts."),
+        kiTermIndicatorScreenshotMode: ITLocalize(@"IndicatorsHelper_Facing_InScreenshotModeCloseTheScreenshotPanel", @"In screenshot mode. Close the screenshot panel to return to normal.", @"Text shown in helpTextForIndicatorWithName:: In screenshot mode. Close the screenshot panel to return to normal.")
     };
     return messages[name];
 }

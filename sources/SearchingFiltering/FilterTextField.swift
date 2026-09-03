@@ -25,7 +25,7 @@ class FilterTextField: NSSearchField {
     private func changeIcon(_ cell: NSButtonCell) {
         cell.setButtonType(.toggle)
         let filterImage = NSImage(systemSymbolName: SFSymbol.lineHorizontal3DecreaseCircle.rawValue,
-                                  accessibilityDescription: "Filter")
+                                  accessibilityDescription: String(localized: "FilterTextField_Filter", defaultValue: "Filter", comment: "Descriptive text in changeIcon"))
         cell.image = filterImage
         cell.alternateImage = filterImage
     }

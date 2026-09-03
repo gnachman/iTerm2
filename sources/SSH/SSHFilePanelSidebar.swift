@@ -124,9 +124,9 @@ class SSHFilePanelSidebar: NSView {
         var name: String {
             switch identifier {
             case .favorites:
-                return "Favorites"
+                return String(localized: "SshFilePanelSidebar_Favorites", defaultValue: "Favorites", comment: "Text shown in sidebarHostIsValid: Favorites")
             case .connectedHosts:
-                return "Connected Hosts"
+                return String(localized: "SshFilePanelSidebar_ConnectedHosts", defaultValue: "Connected Hosts", comment: "Text shown in sidebarHostIsValid: Connected Hosts")
             }
         }
 
@@ -724,14 +724,14 @@ extension SSHFilePanelSidebar: NSOutlineViewDelegate {
                 } else {
                     image = NSImage.it_image(
                         forSymbolName: SFSymbol.folder.rawValue,
-                        accessibilityDescription: "Folder",
+                        accessibilityDescription: String(localized: "SshFilePanelSidebar_Folder", defaultValue: "Folder", comment: "Descriptive text in outlineView"),
                         fallbackImageName: "folder",
                         for: SSHFilePanelSidebar.self)
                 }
             } else {
                 image = NSImage.it_image(
                     forSymbolName: SFSymbol.folder.rawValue,
-                    accessibilityDescription: "Folder",
+                    accessibilityDescription: String(localized: "SshFilePanelSidebar_Folder", defaultValue: "Folder", comment: "Descriptive text in outlineView"),
                     fallbackImageName: "folder",
                     for: SSHFilePanel.self)
             }
@@ -744,7 +744,7 @@ extension SSHFilePanelSidebar: NSOutlineViewDelegate {
             } else {
                 image = NSImage.it_image(
                     forSymbolName: SFSymbol.serverRack.rawValue,
-                    accessibilityDescription: "Server",
+                    accessibilityDescription: String(localized: "SshFilePanelSidebar_Server", defaultValue: "Server", comment: "Descriptive text in outlineView"),
                     fallbackImageName: "rack",
                     for: SSHFilePanel.self
                 )

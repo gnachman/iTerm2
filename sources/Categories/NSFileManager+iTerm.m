@@ -142,12 +142,12 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     if (result == nil) {
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem finding or creating your application support directory. iTerm2 won't work very well until this problem is fixed.\n\nIt should be at ~/Library/Application Support/iTerm2.\n\nThe error was:\n%@", error.localizedDescription]
-                                       actions:@[ @"OK" ]
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"NsFileManagerITerm_Alert_ThereWasAProblemFindingOrCreating_FORMAT", @"There was a problem finding or creating your application support directory. iTerm2 won't work very well until this problem is fixed.\n\nIt should be at ~/Library/Application Support/iTerm2.\n\nThe error was:\n%1$@", @"Alert title in applicationSupportDirectory"), error.localizedDescription]
+                                       actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in applicationSupportDirectory") ]
                                      accessory:nil
                                     identifier:@"NoSyncAppSupportFail"
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"Problem with Application Support Directory"
+                                       heading:ITLocalize(@"NsFileManagerITerm_AlertHeading_ProblemWithApplicationSupportDirectory", @"Problem with Application Support Directory",@"Alert heading in applicationSupportDirectory")
                                         window:nil];
         });
     }
@@ -386,12 +386,12 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             RLog(@"Failed to create the config directory: %@", error);
-            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem finding or creating the config directory. You can set “Settings > Advanced > Folder for config files“ to set a custom location for this directory. Until this is fixed, some features will be disabled.\n%@", error.localizedDescription]
-                                       actions:@[ @"OK" ]
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"NsFileManagerITerm_Alert_ThereWasAProblemFindingOrCreating_FORMAT_2", @"There was a problem finding or creating the config directory. You can set “Settings > Advanced > Folder for config files“ to set a custom location for this directory. Until this is fixed, some features will be disabled.\n%1$@", @"Alert title in _homeDirectoryDotDir"), error.localizedDescription]
+                                       actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in _homeDirectoryDotDir") ]
                                      accessory:nil
                                     identifier:@"NoSyncErrorCreatingConfigFolder"
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"Problem Creating Config Folder"
+                                       heading:ITLocalize(@"NsFileManagerITerm_AlertHeading_ProblemCreatingConfigFolder", @"Problem Creating Config Folder",@"Alert heading in _homeDirectoryDotDir")
                                         window:nil];
         });
     }

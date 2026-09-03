@@ -1644,13 +1644,13 @@ extension Conductor {
             // Only "View" should be remembered. Remembering "Download" could cause
             // repeated download prompts if the download fails or isn't handled.
             let warning = iTermWarning()
-            warning.title = "Download \(path.path.lastPathComponent) or view in browser?"
-            warning.actionLabels = ["Download", "View", "Cancel"]
+            warning.title = String(format: String(localized: "Conductor_DownloadOrViewInBrowser_FORMAT", defaultValue: "Download %1$@ or view in browser?", comment: "Title in downloadOrView"), path.path.lastPathComponent)
+            warning.actionLabels = [String(localized: "Conductor_Download", defaultValue: "Download", comment: "Label text in downloadOrView"), String(localized: "Conductor_View", defaultValue: "View", comment: "Label text in downloadOrView"), String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Label text in downloadOrView")]
             warning.identifier = "DownloadOrViewInBrowser_" + mimeType + " " + path.usernameHostnameString
             warning.warningType = .kiTermWarningTypePermanentlySilenceable
-            warning.heading = "Download or View File?"
+            warning.heading = String(localized: "Conductor_DownloadOrViewFile", defaultValue: "Download or View File?", comment: "Alert heading in downloadOrView")
             warning.window = window
-            warning.doNotRememberLabels = ["Download", "Cancel"]
+            warning.doNotRememberLabels = [String(localized: "Conductor_Download", defaultValue: "Download", comment: "Label text in downloadOrView"), String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Label text in downloadOrView")]
             switch warning.runModal() {
             case .kiTermWarningSelection0:  // Download
                 download(path: path)

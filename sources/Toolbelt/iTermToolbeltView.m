@@ -286,7 +286,7 @@ static NSString *const kDynamicToolURL = @"URL";
 
         _noToolsMessage = [NSTextField newLabelStyledTextField];
         _noToolsMessage.alignment = NSTextAlignmentCenter;
-        _noToolsMessage.stringValue = @"No Tools enabled. Select them from the menu above.";
+        _noToolsMessage.stringValue = ITLocalize(@"ToolbeltView_Facing_NoToolsEnabledSelectThemFromThe", @"No Tools enabled. Select them from the menu above.", @"Text shown in initWithFrame:: No Tools enabled. Select them from the menu above.");
         _noToolsMessage.frame = self.bounds;
         [self addSubview:_noToolsMessage];
         [self layoutNoToolsMessage];

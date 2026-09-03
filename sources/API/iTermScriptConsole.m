@@ -155,10 +155,10 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     [self makeTextViewHorizontallyScrollable:_logsView];
     [self makeTextViewHorizontallyScrollable:_callsView];
 
-    [self setSymbol:SFSymbolGetString(SFSymbolScope) tooltip:@"Inspector" onButton:_inspectorButton];
-    [self setSymbol:SFSymbolGetString(SFSymbolStopCircle) tooltip:@"Terminate" onButton:_terminateButton];
-    [self setSymbol:SFSymbolGetString(SFSymbolArrowClockwise) tooltip:@"Restart" onButton:_startButton];
-    [self setSymbol:SFSymbolGetString(SFSymbolTrash) tooltip:@"Clear Terminated" onButton:_clearTerminatedButton];
+    [self setSymbol:SFSymbolGetString(SFSymbolScope) tooltip:ITLocalize(@"ScriptConsole_Tooltip_Inspector", @"Inspector", @"tooltip text") onButton:_inspectorButton];
+    [self setSymbol:SFSymbolGetString(SFSymbolStopCircle) tooltip:ITLocalize(@"ScriptConsole_Tooltip_Terminate", @"Terminate", @"tooltip text") onButton:_terminateButton];
+    [self setSymbol:SFSymbolGetString(SFSymbolArrowClockwise) tooltip:ITLocalize(@"ScriptConsole_Tooltip_Restart", @"Restart", @"tooltip text") onButton:_startButton];
+    [self setSymbol:SFSymbolGetString(SFSymbolTrash) tooltip:ITLocalize(@"ScriptConsole_Tooltip_ClearTerminated", @"Clear Terminated", @"tooltip text") onButton:_clearTerminatedButton];
 
     [self reloadTableFully];
 }
@@ -544,9 +544,9 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 
 - (NSString *)formatPIDs:(NSArray<NSNumber *> *)pids {
     if (pids.count == 1) {
-        return [NSString stringWithFormat:@"PID %@", pids[0]];
+        return [NSString stringWithFormat:ITLocalize(@"ScriptConsole_FormattedFacing_Pid_FORMAT", @"PID %1$@",@"Formatted user-facing text in formatPIDs:(NSArray<NSNumber *> *)pids"), pids[0]];
     }
-    return [NSString stringWithFormat:@"PIDs %@", [pids componentsJoinedByString:@", "]];
+    return [NSString stringWithFormat:ITLocalize(@"ScriptConsole_FormattedFacing_PiDs_FORMAT", @"PIDs %1$@",@"Formatted user-facing text in formatPIDs:(NSArray<NSNumber *> *)pids"), [pids componentsJoinedByString:@", "]];
 }
 
 - (void)connectionRejected:(NSNotification *)notification {
@@ -564,7 +564,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         }
         if (!name) {
             // Shouldn't happen as there ought to always be a PID
-            name = @"Unknown";
+            name = ITLocalize(@"ScriptConsole_Facing_Unknown", @"Unknown", @"Text shown in connectionRejected:: Unknown");
         }
         entry = [[iTermScriptHistoryEntry alloc] initWithName:name
                                                      fullPath:nil
@@ -593,7 +593,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
         }
         if (!name) {
             // Shouldn't happen as there ought to always be a PID
-            name = @"Unknown";
+            name = ITLocalize(@"ScriptConsole_Facing_Unknown", @"Unknown", @"Text shown in connectionAccepted:: Unknown");
         }
         entry = [[iTermScriptHistoryEntry alloc] initWithName:name
                                                      fullPath:nil

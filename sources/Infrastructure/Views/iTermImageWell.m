@@ -75,10 +75,10 @@
 
 - (void)updateOverlayText {
     if (self.image == nil) {
-        _overlayLabel.stringValue = @"No Image Selected\u2009—\u2009Click to set";
+        _overlayLabel.stringValue = ITLocalize(@"ImageWell_NoImageSelectedU2009U2009ClickTo", @"No Image Selected\u2009—\u2009Click to set", @"Label text in updateOverlayText");
     }
     else {
-        _overlayLabel.stringValue = @"Click to change";
+        _overlayLabel.stringValue = ITLocalize(@"ImageWell_ClickToChange", @"Click to change", @"Label text in updateOverlayText");
     }
     [self setNeedsLayout:YES];
 }

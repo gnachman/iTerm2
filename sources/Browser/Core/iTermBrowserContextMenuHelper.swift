@@ -117,24 +117,24 @@ class iTermBrowserContextMenuHelper: NSObject {
             menu.insertItem(item, at: i)
             i += 1
         }
-        add(title: "Split Pane Vertically",
+        add(title: String(localized: "BrowserContextMenuHelper_SplitPaneVertically", defaultValue: "Split Pane Vertically", comment: "Title in add"),
             selector: #selector(splitPaneVertically(_:)),
             i: &i)
-        add(title: "Split Pane Horizontally",
+        add(title: String(localized: "BrowserContextMenuHelper_SplitPaneHorizontally", defaultValue: "Split Pane Horizontally", comment: "Title in add"),
             selector: #selector(splitPaneHorizontally(_:)),
             i: &i)
-        add(title: "Move Browser to Split Pane",
+        add(title: String(localized: "BrowserContextMenuHelper_MoveBrowserToSplitPane", defaultValue: "Move Browser to Split Pane", comment: "Title in add"),
             selector: #selector(movePane(_:)),
             i: &i)
         if delegate?.contextMenuCurrentTabHasMultipleSessions() ?? false {
-            add(title: "Move Browser to Tab",
+            add(title: String(localized: "BrowserContextMenuHelper_MoveBrowserToTab", defaultValue: "Move Browser to Tab", comment: "Title in add"),
                 selector: #selector(moveBrowserToTab(_:)),
                 i: &i)
-            add(title: "Move Browser to Window",
+            add(title: String(localized: "BrowserContextMenuHelper_MoveBrowserToWindow", defaultValue: "Move Browser to Window", comment: "Title in add"),
                 selector: #selector(moveBrowserToWindow(_:)),
                 i: &i)
         }
-        add(title: "Swap With Session…",
+        add(title: String(localized: "BrowserContextMenuHelper_SwapWithSession", defaultValue: "Swap With Session…", comment: "Title in add"),
             selector: #selector(swapSessions(_:)),
             i: &i)
 
@@ -146,7 +146,7 @@ class iTermBrowserContextMenuHelper: NSObject {
         if let searchEngineName = delegate?.contextMenuSearchEngineName(),
            let i = menu.items.firstIndex(where: { $0.identifier == NSUserInterfaceItemIdentifier(rawValue: "WKMenuItemIdentifierSearchWeb") }) {
             menu.removeItem(at: i)
-            let item = NSMenuItem(title: "Search with \(searchEngineName)",
+            let item = NSMenuItem(title: String(format: String(localized: "BrowserContextMenuHelper_SearchWith_FORMAT", defaultValue: "Search with %1$@", comment: "Menu item title in add"), searchEngineName),
                                   action: #selector(search(_:)),
                                   keyEquivalent: "")
             item.target = self
@@ -157,35 +157,35 @@ class iTermBrowserContextMenuHelper: NSObject {
 
 
         // Add Named Mark menu item
-        let addMarkItem = NSMenuItem(title: "Add Named Mark…", action: #selector(addNamedMarkMenuClicked), keyEquivalent: "")
+        let addMarkItem = NSMenuItem(title: String(localized: "BrowserContextMenuHelper_AddNamedMark", defaultValue: "Add Named Mark…", comment: "Menu item title in add"), action: #selector(addNamedMarkMenuClicked), keyEquivalent: "")
         addMarkItem.target = self
         menu.addItem(addMarkItem)
 
         menu.addItem(NSMenuItem.separator())
 
         // Add Save Page As menu item
-        let savePageItem = NSMenuItem(title: "Save Page As…", action: #selector(savePageAsMenuClicked), keyEquivalent: "")
+        let savePageItem = NSMenuItem(title: String(localized: "BrowserContextMenuHelper_SavePageAs", defaultValue: "Save Page As…", comment: "Menu item title in add"), action: #selector(savePageAsMenuClicked), keyEquivalent: "")
         savePageItem.target = self
         menu.addItem(savePageItem)
 
         // Add Print Page menu item
-        let printPageItem = NSMenuItem(title: "Print…", action: #selector(printMenuClicked), keyEquivalent: "")
+        let printPageItem = NSMenuItem(title: String(localized: "BrowserContextMenuHelper_Print", defaultValue: "Print…", comment: "Menu item title in add"), action: #selector(printMenuClicked), keyEquivalent: "")
         printPageItem.target = self
         menu.addItem(printPageItem)
 
         // Add Copy Page Title menu item
-        let copyTitleItem = NSMenuItem(title: "Copy Page Title", action: #selector(copyPageTitleMenuClicked), keyEquivalent: "")
+        let copyTitleItem = NSMenuItem(title: String(localized: "BrowserContextMenuHelper_CopyPageTitle", defaultValue: "Copy Page Title", comment: "Menu item title in add"), action: #selector(copyPageTitleMenuClicked), keyEquivalent: "")
         copyTitleItem.target = self
         menu.addItem(copyTitleItem)
 
         menu.addItem(NSMenuItem.separator())
 
         // Add View Source menu item
-        let viewSourceItem = NSMenuItem(title: "View Source", action: #selector(viewSourceMenuClicked), keyEquivalent: "")
+        let viewSourceItem = NSMenuItem(title: String(localized: "BrowserContextMenuHelper_ViewSource", defaultValue: "View Source", comment: "Menu item title in add"), action: #selector(viewSourceMenuClicked), keyEquivalent: "")
         viewSourceItem.target = self
         menu.addItem(viewSourceItem)
 
-        let removeElement = NSMenuItem(title: "Remove Element", action: #selector(removeElementMenuClicked), keyEquivalent: "")
+        let removeElement = NSMenuItem(title: String(localized: "BrowserContextMenuHelper_RemoveElement", defaultValue: "Remove Element", comment: "Menu item title in add"), action: #selector(removeElementMenuClicked), keyEquivalent: "")
         removeElement.target = self
         menu.addItem(removeElement)
 

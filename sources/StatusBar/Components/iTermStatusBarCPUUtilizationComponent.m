@@ -51,11 +51,11 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"CPU Utilization";
+    return ITLocalize(@"StatusBarCpuUtilizationComponent_Facing_CpuUtilization", @"CPU Utilization", @"Text shown in statusBarComponentShortDescription: CPU Utilization");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Shows current CPU utilization.";
+    return ITLocalize(@"StatusBarCpuUtilizationComponent_Facing_ShowsCurrentCpuUtilization", @"Shows current CPU utilization.", @"Text shown in statusBarComponentDetailedDescription: Shows current CPU utilization.");
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor

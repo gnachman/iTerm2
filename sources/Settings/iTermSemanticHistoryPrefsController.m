@@ -397,27 +397,29 @@ enum {
     NSDictionary *attributes = @{ NSFontAttributeName: caveat_.font ?: [NSFont systemFontOfSize:[NSFont smallSystemFontSize]] };
     NSAttributedString *legacy = [NSAttributedString attributedStringWithString:text
                                                                      attributes:attributes];
-    NSAttributedString *learnMore = [NSAttributedString attributedStringWithLinkToURL:@"iterm2-private://semantic-history-learn-more/" string:@"Learn more"];
+    NSAttributedString *learnMore = [NSAttributedString attributedStringWithLinkToURL:@"iterm2-private://semantic-history-learn-more/" string:ITLocalize(@"SemanticHistoryPrefsController_Facing_LearnMore", @"Learn more", @"Text shown in attributedStringWithLearnMoreLinkAfterText:: Learn more")];
     NSArray<NSAttributedString *> *parts = @[ legacy, learnMore ];
     return [NSAttributedString attributedStringWithAttributedStrings:parts];
 }
 
 - (NSString *)detailTextForCurrentMode {
     NSString *subs =
-    @"You can provide substitutions as follows:\n"
-    @"  \\1 will be replaced with the filename.\n"
-    @"  \\2 will be replaced with the line number.\n"
-    @"  \\3 will be replaced with the text before the click.\n"
-    @"  \\4 will be replaced with the text after the click.\n"
-    @"  \\5 will be replaced with the working directory.\n"
-    @"\n"
-    @"This is also an interpolated string evaluated in the context of the current session. In addition to the usual variables, the following substitutions are available:\n"
-    @"  \\(semanticHistory.path) will be replaced with the filename.\n"
-    @"  \\(semanticHistory.lineNumber) will be replaced with the line number.\n"
-    @"  \\(semanticHistory.columnNumber) will be replaced with the column number.\n"
-    @"  \\(semanticHistory.prefix) will be replaced with the text before the click.\n"
-    @"  \\(semanticHistory.suffix) will be replaced with the text after the click.\n"
-    @"  \\(semanticHistory.workingDirectory) will be replaced with the working directory.\n";
+    ITLocalize(@"SemanticHistoryPrefsController_Facing_YouCanProvideSubstitutionsAsFollowsN",
+               @"You can provide substitutions as follows:\n"
+               @"  \\1 will be replaced with the filename.\n"
+               @"  \\2 will be replaced with the line number.\n"
+               @"  \\3 will be replaced with the text before the click.\n"
+               @"  \\4 will be replaced with the text after the click.\n"
+               @"  \\5 will be replaced with the working directory.\n"
+               @"\n"
+               @"This is also an interpolated string evaluated in the context of the current session. In addition to the usual variables, the following substitutions are available:\n"
+               @"  \\(semanticHistory.path) will be replaced with the filename.\n"
+               @"  \\(semanticHistory.lineNumber) will be replaced with the line number.\n"
+               @"  \\(semanticHistory.columnNumber) will be replaced with the column number.\n"
+               @"  \\(semanticHistory.prefix) will be replaced with the text before the click.\n"
+               @"  \\(semanticHistory.suffix) will be replaced with the text after the click.\n"
+               @"  \\(semanticHistory.workingDirectory) will be replaced with the working directory.\n",
+               @"Text shown in detailTextForCurrentMode: You can provide substitutions as follows:\n  \1 will be replaced with the filename.\n  \2 will be replaced with the line number.\n  \3 will be replaced with the text before the click.\n  \4 will be replaced with the text after the click.\n  \5 will be replaced with the working directory.\n\nThis is also an interpolated string evaluated in the context of the current session. In addition to the usual variables, the following substitutions are available:\n  \(semanticHistory.path) will be replaced with the filename.\n  \(semanticHistory.lineNumber) will be replaced with the line number.\n  \(semanticHistory.columnNumber) will be replaced with the column number.\n  \(semanticHistory.prefix) will be replaced with the text before the click.\n  \(semanticHistory.suffix) will be replaced with the text after the click.\n  \(semanticHistory.workingDirectory) will be replaced with the working directory.\n");
 
     switch ([[action_ selectedItem] tag]) {
         case 1:
@@ -425,15 +427,15 @@ enum {
             break;
 
         case 5:
-            return [@"In this mode semantic history will be activated on any click, even if you click on something that is not an existing file.\n"
-                    stringByAppendingString:subs];
+            return [ITLocalize(@"SemanticHistoryPrefsController_FormattedFacing_InThisModeSemanticHistoryWillBe_FORMAT", @"In this mode semantic history will be activated on any click, even if you click on something that is not an existing file.\n%1$@",@"Formatted user-facing text in detailTextForCurrentMode")
+                    stringByReplacingOccurrencesOfString:@"%1$@" withString:subs];
 
         case 2:
         case 4:
         case 6:
         case 7:
-            return [@"In this mode semantic history will only be activated when you click on an existing file name.\n"
-                    stringByAppendingString:subs];
+            return [ITLocalize(@"SemanticHistoryPrefsController_FormattedFacing_InThisModeSemanticHistoryWillOnly_FORMAT", @"In this mode semantic history will only be activated when you click on an existing file name.\n%1$@",@"Formatted user-facing text in detailTextForCurrentMode")
+                    stringByReplacingOccurrencesOfString:@"%1$@" withString:subs];
     }
     return @"";
 }
@@ -445,15 +447,17 @@ enum {
     BOOL hideCaveat = caveat_.isHidden;
     switch ([[action_ selectedItem] tag]) {
         case 1:
-            [caveat_ setStringValue:@"When you activate Semantic History on a filename, the associated app loads the file."];
+            [caveat_ setStringValue:ITLocalize(@"SemanticHistoryPrefsController_Facing_WhenYouActivateSemanticHistoryOnA", @"When you activate Semantic History on a filename, the associated app loads the file.", @"Text shown in actionChanged:: When you activate Semantic History on a filename, the associated app loads the file.")];
             hideCaveat = NO;
             break;
 
         case 2: {
-            [[text_ cell] setPlaceholderString:@"Enter URL."];
+            [[text_ cell] setPlaceholderString:ITLocalize(@"SemanticHistoryPrefsController_Placeholder_EnterUrl", @"Enter URL.",@"Placeholder text in actionChanged:(id)sender")];
             NSString *text =
-            @"When you activate Semantic History on a filename, the browser opens a URL.\n"
-            @"Use \\1 for the filename you clicked on and \\2 for the line number. ";
+            ITLocalize(@"SemanticHistoryPrefsController_Facing_WhenYouActivateSemanticHistoryOnA_2",
+                       @"When you activate Semantic History on a filename, the browser opens a URL.\n"
+                       @"Use \\1 for the filename you clicked on and \\2 for the line number. ",
+                       @"Text shown in actionChanged:: When you activate Semantic History on a filename, the browser opens a URL.\nUse \1 for the filename you clicked on and \2 for the line number. ");
             caveat_.attributedStringValue = [self attributedStringWithLearnMoreLinkAfterText:text];
             hideCaveat = NO;
             hideText = NO;
@@ -462,7 +466,7 @@ enum {
 
         case 3:
             hideEditors = NO;
-            [caveat_ setStringValue:@"When you activate Semantic History on a text file, the specified editor opens it.\nOther kinds of files will be opened with their default apps."];
+            [caveat_ setStringValue:ITLocalize(@"SemanticHistoryPrefsController_Facing_WhenYouActivateSemanticHistoryOnA_3", @"When you activate Semantic History on a text file, the specified editor opens it.\nOther kinds of files will be opened with their default apps.", @"Text shown in actionChanged:: When you activate Semantic History on a text file, the specified editor opens it.\nOther kinds of files will be opened with their default apps.")];
             hideCaveat = NO;
             break;
 
@@ -480,11 +484,13 @@ enum {
         }
 
         case 5: {
-            [[text_ cell] setPlaceholderString:@"Enter command"];
+            [[text_ cell] setPlaceholderString:ITLocalize(@"SemanticHistoryPrefsController_Placeholder_EnterCommand", @"Enter command",@"Placeholder text in actionChanged:(id)sender")];
 
             NSString *text =
-            @"Command runs when you activate Semantic History on any text, even if it’s not a valid filename. "
-            @"Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd. ";
+            ITLocalize(@"SemanticHistoryPrefsController_Facing_CommandRunsWhenYouActivateSemanticHistory_2",
+                       @"Command runs when you activate Semantic History on any text, even if it’s not a valid filename. "
+                       @"Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd. ",
+                       @"Text shown in actionChanged:: Command runs when you activate Semantic History on any text, even if it’s not a valid filename. Use \1 for filename, \2 for line number, \3 for text before click, \4 for text after click, \5 for pwd. ");
 
             caveat_.attributedStringValue = [self attributedStringWithLearnMoreLinkAfterText:text];
             hideCaveat = NO;
@@ -493,10 +499,12 @@ enum {
         }
 
         case 6: {
-            [[text_ cell] setPlaceholderString:@"Enter command"];
+            [[text_ cell] setPlaceholderString:ITLocalize(@"SemanticHistoryPrefsController_Placeholder_EnterCommand", @"Enter command",@"Placeholder text in actionChanged:(id)sender")];
             NSString *text =
-            @"Coprocess runs when you activate Semantic History on any filename. "
-            @"Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd. ";
+            ITLocalize(@"SemanticHistoryPrefsController_Facing_CoprocessRunsWhenYouActivateSemanticHistory",
+                       @"Coprocess runs when you activate Semantic History on any filename. "
+                       @"Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd. ",
+                       @"Text shown in actionChanged:: Coprocess runs when you activate Semantic History on any filename. Use \1 for filename, \2 for line number, \3 for text before click, \4 for text after click, \5 for pwd. ");
             caveat_.attributedStringValue = [self attributedStringWithLearnMoreLinkAfterText:text];
             hideCaveat = NO;
             hideText = NO;
@@ -504,10 +512,12 @@ enum {
         }
 
         case 7: {
-            [[text_ cell] setPlaceholderString:@"Enter text"];
+            [[text_ cell] setPlaceholderString:ITLocalize(@"SemanticHistoryPrefsController_Placeholder_EnterText", @"Enter text",@"Placeholder text in actionChanged:(id)sender")];
             NSString *text =
-            @"Text is sent when you activate Semantic History on any filename. Use vim-style special characters."
-            @"Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd. ";
+            ITLocalize(@"SemanticHistoryPrefsController_Facing_TextIsSentWhenYouActivateSemantic",
+                       @"Text is sent when you activate Semantic History on any filename. Use vim-style special characters."
+                       @"Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd. ",
+                       @"Text shown in actionChanged:: Text is sent when you activate Semantic History on any filename. Use vim-style special characters.Use \1 for filename, \2 for line number, \3 for text before click, \4 for text after click, \5 for pwd. ");
             caveat_.attributedStringValue = [self attributedStringWithLearnMoreLinkAfterText:text];
             hideCaveat = NO;
             hideText = NO;

@@ -156,7 +156,7 @@ func AttributedStringForGPTMarkdown(_ unsafeString: String,
 private func AttributedStringForMessage(_ md: SwiftyMarkdown,
                                         didCopy: (() -> ())?) -> NSAttributedString {
     let attributedString = md.attributedString()
-    let image = NSImage(systemSymbolName: SFSymbol.docOnDoc.rawValue, accessibilityDescription: "Copy")!
+    let image = NSImage(systemSymbolName: SFSymbol.docOnDoc.rawValue, accessibilityDescription: String(localized: "COMMON_COPY", defaultValue: "Copy", comment: "Accessibility description for the Copy symbol"))!
     let modified = attributedString.mutableCopy() as! NSMutableAttributedString
     var ranges = [NSRange]()
     let utf16String = attributedString.string.utf16
@@ -186,7 +186,7 @@ private func AttributedStringForMessage(_ md: SwiftyMarkdown,
             modified.insertButton(withImage: DynamicImage(image: image, dark: .white, light: .black), at: range.location) { point in
                 NSPasteboard.general.declareTypes([.string], owner: NSApp)
                 NSPasteboard.general.setString(attributedString.string.substring(nsrange: range), forType: .string)
-                ToastWindowController.showToast(withMessage: "Copied", duration: 1, screenCoordinate: point, pointSize: 12)
+                ToastWindowController.showToast(withMessage: String(localized: "MarkdownHelpers_Copied", defaultValue: "Copied", comment: "toast message"), duration: 1, screenCoordinate: point, pointSize: 12)
                 didCopy()
             }
             modified.insert(

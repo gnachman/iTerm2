@@ -42,7 +42,7 @@
 }
 
 - (void)showShellUnsupportedError {
-    self.textField.stringValue = @"😞 Your shell is not supported, or perhaps your $SHELL environment variable is not set correctly. Press “Continue” to try again.";
+    self.textField.stringValue = ITLocalize(@"ShellIntegrationDownloadAndRunViewController_Facing_YourShellIsNotSupportedOrPerhaps", @"😞 Your shell is not supported, or perhaps your $SHELL environment variable is not set correctly. Press “Continue” to try again.", @"Text shown in showShellUnsupportedError: 😞 Your shell is not supported, or perhaps your $SHELL environment variable is not set correctly. Press “Continue” to try again.");
 }
 
 - (IBAction)pipeCurlToBash:(id)sender {

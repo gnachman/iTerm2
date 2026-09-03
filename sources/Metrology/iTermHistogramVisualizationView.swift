@@ -144,14 +144,14 @@ struct iTermHistogramBarChart: View {
     private var chartContent: some ChartContent {
         ForEach(buckets, id: \.x) { bucket in
             RectangleMark(
-                xStart: .value("Start", bucket.range.lowerBound),
-                xEnd: .value("End", bucket.range.upperBound),
-                yStart: .value("Count", 0),
-                yEnd: .value("Count", bucket.y)
+                xStart: .value(String(localized: "HistogramVisualizationView_Start", defaultValue: "Start", comment: "User-visible message: Start"), bucket.range.lowerBound),
+                xEnd: .value(String(localized: "HistogramVisualizationView_End", defaultValue: "End", comment: "User-visible message: End"), bucket.range.upperBound),
+                yStart: .value(String(localized: "HistogramVisualizationView_Count", defaultValue: "Count", comment: "User-visible message: Count"), 0),
+                yEnd: .value(String(localized: "HistogramVisualizationView_Count", defaultValue: "Count", comment: "User-visible message: Count"), bucket.y)
             )
             .foregroundStyle(selectedX == bucket.x ? .purple : .blue)
         }
-        RuleMark(x: .value("Mean", meanValue))
+        RuleMark(x: .value(String(localized: "HistogramVisualizationView_Mean", defaultValue: "Mean", comment: "User-visible message: Mean"), meanValue))
             .foregroundStyle(.red.opacity(0.75))
             .lineStyle(StrokeStyle(lineWidth: 2))
     }

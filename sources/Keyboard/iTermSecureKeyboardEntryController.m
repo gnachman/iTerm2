@@ -217,12 +217,12 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
     }
     _warningShown = YES;
     const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:@"Secure keyboard entry is enabled.\n\nIn macOS 12 and later, enabling Secure Keyboard Entry prevents other programs from being activated. This affects the `open` command as well as the panel shown when using Touch ID for sudo."
-                               actions:@[ @"OK", @"Cancel" ]
+    [iTermWarning showWarningWithTitle:ITLocalize(@"SecureKeyboardEntryController_Alert_SecureKeyboardEntryIsEnabledNN", @"Secure keyboard entry is enabled.\n\nIn macOS 12 and later, enabling Secure Keyboard Entry prevents other programs from being activated. This affects the `open` command as well as the panel shown when using Touch ID for sudo.", @"Alert title in showMontereyWarning")
+                               actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in showMontereyWarning"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in showMontereyWarning") ]
                              accessory:nil
                             identifier:@"NoSyncMontereySecureKeyboardEntryWarning"
                            silenceable:kiTermWarningTypePermanentlySilenceable
-                               heading:@"Secure Keyboard Entry Enabled"
+                               heading:ITLocalize(@"SecureKeyboardEntryController_AlertHeading_SecureKeyboardEntryEnabled", @"Secure Keyboard Entry Enabled",@"Alert heading in showMontereyWarning NS_AVAILABLE_MAC(12_0)")
                                 window:[NSApp keyWindow]];
     if (selection == kiTermWarningSelection0) {
         return;

@@ -20,11 +20,11 @@ final class iTermArrangementTrustGate: NSObject {
         }
 
         let filename = (path as NSString).lastPathComponent
-        let heading = "Open the arrangement “\(filename)”?"
+        let heading = String(format: String(localized: "ArrangementTrustGate_OpenTheArrangement_FORMAT", defaultValue: "Open the arrangement “%1$@”?", comment: "Alert heading in shouldOpenUntrustedArrangement"), filename)
         let body = buildBody(summary: summary)
 
         let selection = iTermWarning.show(withTitle: body,
-                                          actions: ["Cancel", "Open"],
+                                          actions: [String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Action title in shouldOpenUntrustedArrangement"), String(localized: "ArrangementTrustGate_Open", defaultValue: "Open", comment: "Action title in shouldOpenUntrustedArrangement")],
                                           accessory: nil,
                                           identifier: nil,
                                           silenceable: .kiTermWarningTypePersistent,
@@ -39,16 +39,16 @@ final class iTermArrangementTrustGate: NSObject {
 
     private static func buildBody(summary: RiskSummary) -> String {
         var parts: [String] = []
-        parts.append("Window arrangements embed session profiles, which can run commands, connect to remote hosts, and configure triggers or smart-selection actions that execute when the terminal sees matching output. Opening an arrangement from an untrusted source is equivalent to running a program they gave you.")
+        parts.append(String(localized: "ArrangementTrustGate_WindowArrangementsEmbedSessionProfilesWhichCan", defaultValue: "Window arrangements embed session profiles, which can run commands, connect to remote hosts, and configure triggers or smart-selection actions that execute when the terminal sees matching output. Opening an arrangement from an untrusted source is equivalent to running a program they gave you.", comment: "Warning explaining the risk of opening an untrusted arrangement"))
         if !summary.findings.isEmpty {
             parts.append("")
-            parts.append("This arrangement contains:")
+            parts.append(String(localized: "ArrangementTrustGate_ThisArrangementContains", defaultValue: "This arrangement contains:", comment: "Text shown in buildBody: This arrangement contains:"))
             for finding in summary.findings {
                 parts.append("  • " + finding)
             }
         }
         parts.append("")
-        parts.append("Open it only if you trust where it came from.")
+        parts.append(String(localized: "ArrangementTrustGate_OpenItOnlyIfYouTrustWhere", defaultValue: "Open it only if you trust where it came from.", comment: "Text shown in buildBody: Open it only if you trust where it came from."))
         return parts.joined(separator: "\n")
     }
 

@@ -73,6 +73,27 @@ class iTermNonTextPasteHelper: NSObject {
         case upload = "Upload"
         case uploadAndPastePath = "Upload and Paste Path"
         case cancel = "Cancel"
+
+        var localizedTitle: String {
+            switch self {
+            case .pastePath:
+                return String(localized: "PASTE_ACTION_PASTE_PATH", defaultValue: "Paste Path", comment: "Button that pastes the copied file path")
+            case .pastePaths:
+                return String(localized: "PASTE_ACTION_PASTE_PATHS", defaultValue: "Paste Paths", comment: "Button that pastes multiple copied file paths")
+            case .pasteBase64:
+                return String(localized: "PASTE_ACTION_PASTE_BASE64", defaultValue: "Paste Base64-Encoded Contents", comment: "Button that pastes base64-encoded file contents")
+            case .pasteBase64Archive:
+                return String(localized: "PASTE_ACTION_PASTE_BASE64_ARCHIVE", defaultValue: "Paste Base64-Encoded Archive (tar.gz)", comment: "Button that pastes a tar.gz archive as base64")
+            case .pasteAsText:
+                return String(localized: "PASTE_ACTION_PASTE_AS_TEXT", defaultValue: "Paste as Text", comment: "Button that pastes file contents as text")
+            case .upload:
+                return String(localized: "COMMON_UPLOAD", defaultValue: "Upload", comment: "Standard Upload button title")
+            case .uploadAndPastePath:
+                return String(localized: "PASTE_ACTION_UPLOAD_AND_PASTE_PATH", defaultValue: "Upload and Paste Path", comment: "Button that uploads files and pastes their paths")
+            case .cancel:
+                return String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Standard Cancel button title")
+            }
+        }
     }
 
     private func handleFilePaste(_ paths: [String]) -> Bool {
@@ -139,12 +160,12 @@ class iTermNonTextPasteHelper: NSObject {
         let fileDescription = descriptionForFiles(existingPaths, isDirectory: isDirectory)
 
         let warning = iTermWarning()
-        warning.title = "How would you like to paste \(fileDescription)?"
-        warning.actionLabels = actions.map { $0.rawValue }
+        warning.title = String(format: String(localized: "NonTextPasteHelper_HowWouldYouLikeToPaste_FORMAT", defaultValue: "How would you like to paste %1$@?", comment: "Title in handleFilePaste"), fileDescription)
+        warning.actionLabels = actions.map { $0.localizedTitle }
         warning.identifier = singleFile ? "NoSyncPasteNonTextFile" : "NoSyncPasteNonTextFiles"
         warning.warningType = .kiTermWarningTypePermanentlySilenceable
-        warning.heading = isDirectory ? "Paste Folder" : (singleFile ? "Paste File" : "Paste Files")
-        warning.cancelLabel = FilePasteAction.cancel.rawValue
+        warning.heading = isDirectory ? String(localized: "NonTextPasteHelper_PasteFolder", defaultValue: "Paste Folder", comment: "Alert heading in handleFilePaste") : (singleFile ? String(localized: "NonTextPasteHelper_PasteFile", defaultValue: "Paste File", comment: "Alert heading in handleFilePaste") : String(localized: "NonTextPasteHelper_PasteFiles", defaultValue: "Paste Files", comment: "Alert heading in handleFilePaste"))
+        warning.cancelLabel = FilePasteAction.cancel.localizedTitle
         warning.window = delegate?.nonTextPasteHelperWindow(self)
 
         warning.runModalAsync { [weak self] selection, _ in
@@ -224,10 +245,10 @@ class iTermNonTextPasteHelper: NSObject {
 
     private func showError(_ message: String) {
         let alert = NSAlert()
-        alert.messageText = "Paste Failed"
+        alert.messageText = String(localized: "NonTextPasteHelper_PasteFailed", defaultValue: "Paste Failed", comment: "Alert title in showError")
         alert.informativeText = message
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: String(localized: "COMMON_OK", defaultValue: "OK", comment: "Button title in showError"))
         if let window = delegate?.nonTextPasteHelperWindow(self) {
             alert.beginSheetModal(for: window)
         } else {
@@ -241,6 +262,21 @@ class iTermNonTextPasteHelper: NSObject {
         case upload = "Upload"
         case uploadAndPastePath = "Upload and Paste Path"
         case cancel = "Cancel"
+
+        var localizedTitle: String {
+            switch self {
+            case .saveTempAndPastePath:
+                return String(localized: "PASTE_ACTION_SAVE_TEMP_AND_PASTE_PATH", defaultValue: "Save to Temp File and Paste Path", comment: "Button that saves image data to a temporary file and pastes its path")
+            case .pasteBase64:
+                return String(localized: "PASTE_ACTION_PASTE_BASE64", defaultValue: "Paste Base64-Encoded Contents", comment: "Button that pastes base64-encoded file contents")
+            case .upload:
+                return String(localized: "COMMON_UPLOAD", defaultValue: "Upload", comment: "Standard Upload button title")
+            case .uploadAndPastePath:
+                return String(localized: "PASTE_ACTION_UPLOAD_AND_PASTE_PATH", defaultValue: "Upload and Paste Path", comment: "Button that uploads files and pastes their paths")
+            case .cancel:
+                return String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Standard Cancel button title")
+            }
+        }
     }
 
     private func handleImageDataPaste(imageData: Data, fileExtension: String?) -> Bool {
@@ -267,12 +303,12 @@ class iTermNonTextPasteHelper: NSObject {
         DLog("handleImageDataPaste: actions=\(actions.map { $0.rawValue })")
 
         let warning = iTermWarning()
-        warning.title = "The clipboard contains \(typeDescription) image data (\(sizeDescription)). How would you like to paste it?"
-        warning.actionLabels = actions.map { $0.rawValue }
+        warning.title = String(format: String(localized: "NonTextPasteHelper_TheClipboardContainsImageDataHowWould_FORMAT", defaultValue: "The clipboard contains %1$@ image data (%2$@). How would you like to paste it?", comment: "Title in handleImageDataPaste"), typeDescription, sizeDescription)
+        warning.actionLabels = actions.map { $0.localizedTitle }
         warning.identifier = canUpload ? "NoSyncPasteImageDataRemote" : "NoSyncPasteImageData"
         warning.warningType = .kiTermWarningTypePermanentlySilenceable
-        warning.heading = "Paste Image"
-        warning.cancelLabel = ImagePasteAction.cancel.rawValue
+        warning.heading = String(localized: "NonTextPasteHelper_PasteImage", defaultValue: "Paste Image", comment: "Alert heading in handleImageDataPaste")
+        warning.cancelLabel = ImagePasteAction.cancel.localizedTitle
         warning.window = delegate?.nonTextPasteHelperWindow(self)
 
         warning.runModalAsync { [weak self] selection, _ in
@@ -408,12 +444,12 @@ class iTermNonTextPasteHelper: NSObject {
         }
 
         let warning = iTermWarning()
-        warning.title = "OK to paste \(base64.count.formatted()) bytes of base64-encoded data?"
-        warning.actionLabels = ["OK", "Cancel"]
+        warning.title = String(format: String(localized: "NonTextPasteHelper_OkToPasteBytesOfBase64Encoded_FORMAT", defaultValue: "OK to paste %1$@ bytes of base64-encoded data?", comment: "Title in pasteBase64WithConfirmationIfNeeded"), base64.count.formatted())
+        warning.actionLabels = [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Label text in pasteBase64WithConfirmationIfNeeded"), String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Label text in pasteBase64WithConfirmationIfNeeded")]
         warning.identifier = "NoSyncPasteLargeBase64"
         warning.warningType = .kiTermWarningTypePermanentlySilenceable
-        warning.heading = "Large Paste"
-        warning.cancelLabel = "Cancel"
+        warning.heading = String(localized: "NonTextPasteHelper_LargePaste", defaultValue: "Large Paste", comment: "Alert heading in pasteBase64WithConfirmationIfNeeded")
+        warning.cancelLabel = String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Label text in pasteBase64WithConfirmationIfNeeded")
         warning.window = delegate?.nonTextPasteHelperWindow(self)
 
         warning.runModalAsync { [weak self] selection, _ in

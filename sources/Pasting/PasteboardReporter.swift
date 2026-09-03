@@ -90,22 +90,25 @@ class PasteboardReporter: NSObject {
             return
         }
         let alert = NSAlert()
-        alert.messageText = "Error Updating Settings"
-        alert.informativeText = "An error occurred while removing the file that authorizes clipboard reporting: \(error.localizedDescription).\nAs long as this file exists, clipboard reporting could be enabled by programs running on this computer."
+        alert.messageText = String(localized: "PasteboardReporter_ErrorUpdatingSettings", defaultValue: "Error Updating Settings", comment: "Alert title in failedToDeleteSecureSetting")
+        alert.informativeText = String(format: String(localized: "PasteboardReporter_AnErrorOccurredWhileRemovingTheFile_FORMAT",
+                                                      defaultValue: "An error occurred while removing the file that authorizes clipboard reporting: %1$@.\nAs long as this file exists, clipboard reporting could be enabled by programs running on this computer.",
+                                                      comment: "Alert explanatory text in failedToDeleteSecureSetting"),
+                                       error.localizedDescription)
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "Reveal in Finder")
+        alert.addButton(withTitle: String(localized: "PasteboardReporter_RevealInFinder", defaultValue: "Reveal in Finder", comment: "Button title in failedToDeleteSecureSetting"))
         alert.runModal()
         NSWorkspace.shared.activateFileViewerSelecting([url])
     }
 
     private static func doubleCheck() -> Bool {
         let alert = NSAlert()
-        alert.messageText = "Really Enable Clipboard Reporting?"
-        alert.informativeText = "Reporting the content of the clipboard to apps running inside iTerm2 may expose sensitive information such as passwords. Think carefully before enabling this."
+        alert.messageText = String(localized: "PasteboardReporter_ReallyEnableClipboardReporting", defaultValue: "Really Enable Clipboard Reporting?", comment: "Alert title in doubleCheck")
+        alert.informativeText = String(localized: "PasteboardReporter_ReportingTheContentOfTheClipboardTo", defaultValue: "Reporting the content of the clipboard to apps running inside iTerm2 may expose sensitive information such as passwords. Think carefully before enabling this.", comment: "Alert explanatory text in doubleCheck")
         alert.alertStyle = .warning
-        let button = alert.addButton(withTitle: "OK")
+        let button = alert.addButton(withTitle: String(localized: "COMMON_OK", defaultValue: "OK", comment: "Button that confirms enabling clipboard reporting"))
         button.hasDestructiveAction = true
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Button that cancels enabling clipboard reporting"))
         return alert.runModal() == .alertFirstButtonReturn
     }
 

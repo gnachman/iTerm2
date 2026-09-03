@@ -215,8 +215,8 @@ NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDom
             DLog(@"off -> !off");
             NSWindow *window = [self.delegate broadcastInputHelperWindowForWarnings:self];
             DLog(@"Warn…");
-            if ([iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Keyboard input will be sent to %@.", [self formatDestinationsForMode:mode]]
-                                           actions:@[ @"OK", @"Cancel" ]
+            if ([iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"BroadcastInputHelper_Alert_KeyboardInputWillBeSentTo_FORMAT", @"Keyboard input will be sent to %1$@.", @"Alert title in setBroadcastMode:"), [self formatDestinationsForMode:mode]]
+                                           actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in setBroadcastMode:"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in setBroadcastMode:") ]
                                         identifier:@"NoSyncSuppressBroadcastInputWarning"
                                        silenceable:kiTermWarningTypePermanentlySilenceable
                                             window:window] == kiTermWarningSelection1) {
@@ -243,13 +243,13 @@ NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDom
 - (NSString *)formatDestinationsForMode:(BroadcastMode)mode {
     switch (mode) {
         case BROADCAST_OFF:
-            return @"no sessions";
+            return ITLocalize(@"BroadcastInputHelper_Facing_NoSessions", @"no sessions", @"Text shown in formatDestinationsForMode:: no sessions");
         case BROADCAST_TO_ALL_TABS: {
             const NSInteger count = [[self allSessions] count];
             if (count < 2) {
-                return @"all panes in all tabs in this window";
+                return ITLocalize(@"BroadcastInputHelper_Facing_AllPanesInAllTabsInThis", @"all panes in all tabs in this window", @"Text shown in formatDestinationsForMode:: all panes in all tabs in this window");
             }
-            return [NSString stringWithFormat:@"%@ panes across all tabs in this window", @(count)];
+            return [NSString stringWithFormat:ITLocalize(@"BroadcastInputHelper_FormattedFacing_PanesAcrossAllTabsInThisWindow_FORMAT", @"%1$@ panes across all tabs in this window",@"Formatted user-facing text in formatDestinationsForMode:(BroadcastMode)mode"), @(count)];
         }
             break;
         case BROADCAST_TO_ALL_PANES: {

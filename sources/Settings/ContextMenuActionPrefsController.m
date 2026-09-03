@@ -74,6 +74,23 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
     NSUndoManager *_undoManager;
 }
 
++ (void)initialize {
+    if (self == [ContextMenuActionPrefsController class]) {
+        ContextMenuActionDeclaration decls[] = {
+            { ITLocalize(@"CONTEXT_MENU_ACTION_OPEN_FILE_TITLE", @"Open File…", @"Context menu action that opens a file"), ITLocalize(@"CONTEXT_MENU_ACTION_OPEN_FILE_PLACEHOLDER", @"Enter file name", @"Placeholder for the file used by the Open File context menu action"), ITLocalize(@"CONTEXT_MENU_ACTION_OPEN_FILE_PARAMETER_LABEL", @"File:", @"Label for the file parameter of the Open File action"), kOpenFileContextMenuAction, YES },
+            { ITLocalize(@"CONTEXT_MENU_ACTION_OPEN_URL_TITLE", @"Open URL…", @"Context menu action that opens a URL"), ITLocalize(@"CONTEXT_MENU_ACTION_OPEN_URL_PLACEHOLDER", @"Enter URL", @"Placeholder for the URL used by the Open URL context menu action"), ITLocalize(@"CONTEXT_MENU_ACTION_OPEN_URL_PARAMETER_LABEL", @"URL:", @"Label for the URL parameter of the Open URL action"), kOpenUrlContextMenuAction, YES },
+            { ITLocalize(@"CONTEXT_MENU_ACTION_RUN_COMMAND_TITLE", @"Run Command…", @"Context menu action that runs a command"), ITLocalize(@"CONTEXT_MENU_ACTION_RUN_COMMAND_PLACEHOLDER", @"Enter command", @"Placeholder for the command used by the Run Command action"), ITLocalize(@"CONTEXT_MENU_ACTION_RUN_COMMAND_PARAMETER_LABEL", @"Command:", @"Label for the command parameter of the Run Command action"), kRunCommandContextMenuAction, NO },
+            { ITLocalize(@"CONTEXT_MENU_ACTION_RUN_COPROCESS_TITLE", @"Run Coprocess…", @"Context menu action that runs a coprocess"), ITLocalize(@"CONTEXT_MENU_ACTION_RUN_COPROCESS_PLACEHOLDER", @"Enter coprocess command", @"Placeholder for the command used by the Run Coprocess action"), ITLocalize(@"CONTEXT_MENU_ACTION_RUN_COPROCESS_PARAMETER_LABEL", @"Coprocess:", @"Label for the command parameter of the Run Coprocess action"), kRunCoprocessContextMenuAction, NO },
+            { ITLocalize(@"CONTEXT_MENU_ACTION_SEND_TEXT_TITLE", @"Send text…", @"Context menu action that sends text to the terminal"), ITLocalize(@"CONTEXT_MENU_ACTION_SEND_TEXT_PLACEHOLDER", @"Enter text", @"Placeholder for the text sent by the Send Text action"), ITLocalize(@"CONTEXT_MENU_ACTION_SEND_TEXT_PARAMETER_LABEL", @"Text:", @"Label for the text parameter of the Send Text action"), kSendTextContextMenuAction, NO },
+            { ITLocalize(@"CONTEXT_MENU_ACTION_RUN_COMMAND_IN_WINDOW_TITLE", @"Run Command in Window…", @"Context menu action that runs a command in a new window"), ITLocalize(@"CONTEXT_MENU_ACTION_RUN_COMMAND_IN_WINDOW_PLACEHOLDER", @"Enter command", @"Placeholder for the command used by the Run Command in Window action"), ITLocalize(@"CONTEXT_MENU_ACTION_RUN_COMMAND_IN_WINDOW_PARAMETER_LABEL", @"Command:", @"Label for the command parameter of the Run Command in Window action"), kRunCommandInWindowContextMenuAction, YES },
+            { ITLocalize(@"CONTEXT_MENU_ACTION_COPY_TITLE", @"Copy", @"Context menu action that copies matching text"), ITLocalize(@"CONTEXT_MENU_ACTION_COPY_PLACEHOLDER", @"Enter text", @"Placeholder for matching text copied by the Copy action"), ITLocalize(@"CONTEXT_MENU_ACTION_COPY_PARAMETER_LABEL", @"Text:", @"Label for the text parameter of the Copy action"), kCopyContextMenuAction, YES },
+        };
+        for (int i = 0; i < 7; i++) {
+            gContextMenuActionDeclarations[i] = decls[i];
+        }
+    }
+}
+
 - (instancetype)initWithWindow:(NSWindow *)window {
     self = [super initWithWindow:window];
     if (self) {
@@ -336,7 +353,7 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
         _parameterInfoTextField.selectable = YES;
         _parameterInfoTextField.allowsEditingTextAttributes = YES;
     } else {
-        _parameterInfoTextField.stringValue = @"You can use captured strings from the Smart Selection's regular expression in the parameter. Use \\0 for match, \\1…\\9 for match groups, \\d for directory, \\u for user, \\h for host.";
+        _parameterInfoTextField.stringValue = ITLocalize(@"ContextMenuActionPrefsController_Facing_YouCanUseCapturedStringsFromThe", @"You can use captured strings from the Smart Selection's regular expression in the parameter. Use \\0 for match, \\1…\\9 for match groups, \\d for directory, \\u for user, \\h for host.", @"Help text for a context-menu action parameter, describing substitution tokens");
     }
 }
 
@@ -412,7 +429,7 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
 
     NSString *title = action[kTitleKey];
     if (title.length == 0) {
-        title = @"Untitled Action";
+        title = ITLocalize(@"ContextMenuActionPrefsController_UntitledAction", @"Untitled Action", @"Title in attributedStringForAction:");
     }
     NSAttributedString *nameAttributedString = [[NSAttributedString alloc] initWithString:title
                                                                                attributes:self.nameAttributes];
@@ -512,7 +529,7 @@ static ContextMenuActionDeclaration ContextMenuActionDeclarationForTag(ContextMe
     _parameter.hidden = NO;
     _parameterInfoTextField.hidden = NO;
     if (action.integerValue == kCopyContextMenuAction) {
-        _parameter.placeholderString = @"Leave empty to copy matching text";
+        _parameter.placeholderString = ITLocalize(@"ContextMenuActionPrefsController_Placeholder_LeaveEmptyToCopyMatchingText", @"Leave empty to copy matching text",@"Placeholder text in updateDetailView");
     } else {
         _parameter.placeholderString = @"";
     }

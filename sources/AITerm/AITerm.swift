@@ -477,7 +477,7 @@ class AITermController {
             case .webResponse(let response):
                 if let error = response.error, !error.isEmpty {
                     let provider = llmProvider?.displayName ?? "server"
-                    var message = "Error from \(provider): \(error)"
+                    var message = String(format: String(localized: "AiTerm_ErrorFrom_FORMAT", defaultValue: "Error from %1$@: %2$@", comment: "Formatted user-facing text in handle"), provider, error)
                     if let reason = LLMErrorParser.errorReason(data: response.data.lossyData), !reason.isEmpty {
                         message += " " + reason
                     }
@@ -668,7 +668,7 @@ class AITermController {
                 case .success(let webResponse):
                     if let error = webResponse.error, !error.isEmpty {
                         let provider = llmProvider.displayName
-                        var message = "Error from \(provider): \(error)"
+                        var message = String(format: String(localized: "AiTerm_ErrorFrom_FORMAT", defaultValue: "Error from %1$@: %2$@", comment: "Formatted user-facing text in requestCreateVectorStore"), provider, error)
                         if let reason = LLMErrorParser.errorReason(data: webResponse.data.lossyData), !reason.isEmpty {
                             message += " " + reason
                         }
@@ -719,7 +719,7 @@ class AITermController {
                 case .success(let webResponse):
                     if let error = webResponse.error, !error.isEmpty {
                         let provider = llmProvider.displayName
-                        var message = "Error from \(provider): \(error)"
+                        var message = String(format: String(localized: "AiTerm_ErrorFrom_FORMAT", defaultValue: "Error from %1$@: %2$@", comment: "Formatted user-facing text in requestAddFilesToVectorStore"), provider, error)
                         if let reason = LLMErrorParser.errorReason(data: webResponse.data.lossyData), !reason.isEmpty {
                             message += " " + reason
                         }
@@ -785,7 +785,7 @@ class AITermController {
                 case .success(let webResponse):
                     if let error = webResponse.error, !error.isEmpty {
                         let provider = llmProvider.displayName
-                        var message = "Error from \(provider): \(error)"
+                        var message = String(format: String(localized: "AiTerm_ErrorFrom_FORMAT", defaultValue: "Error from %1$@: %2$@", comment: "Formatted user-facing text in checkVectorStoreReadiness"), provider, error)
                         if let reason = LLMErrorParser.errorReason(data: webResponse.data.lossyData), !reason.isEmpty {
                             message += " " + reason
                         }
@@ -847,7 +847,7 @@ class AITermController {
                 case .success(let webResponse):
                     if let error = webResponse.error, !error.isEmpty {
                         let provider = llmProvider.displayName
-                        var message = "Error from \(provider): \(error)"
+                        var message = String(format: String(localized: "AiTerm_ErrorFrom_FORMAT", defaultValue: "Error from %1$@: %2$@", comment: "Formatted user-facing text in requestFileUpload"), provider, error)
                         if let reason = LLMErrorParser.errorReason(data: webResponse.data.lossyData), !reason.isEmpty {
                             message += " " + reason
                         }

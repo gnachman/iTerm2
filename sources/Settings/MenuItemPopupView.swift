@@ -103,9 +103,9 @@ private extension NSMenuItem {
     func title(descendsFromProfiles: Bool) -> String {
         switch itemType(descendsFromProfiles: descendsFromProfiles) {
         case .newWindow:
-            return "\(self.title) — New Window"
+            return String(format: String(localized: "MENU_ITEM_POPUP_NEW_WINDOW_FORMAT", defaultValue: "%1$@ — New Window", comment: "Menu item that opens a new window for the named menu command"), self.title)
         case .newTab:
-            return "\(self.title) — New Tab"
+            return String(format: String(localized: "MENU_ITEM_POPUP_NEW_TAB_FORMAT", defaultValue: "%1$@ — New Tab", comment: "Menu item that opens a new tab for the named menu command"), self.title)
         case .other:
             return self.title
         }
@@ -203,7 +203,7 @@ class MenuItemPopupView: NSView {
         let identifier = selectedIdentifier
         comboView?.removeFromSuperview()
         let newComboView = SearchableComboView(SearchableComboViewGroup.fromMainMenu(),
-                                               defaultTitle: "Select Menu Item…")
+                                               defaultTitle: String(localized: "MenuItemPopupView_SelectMenuItem", defaultValue: "Select Menu Item…", comment: "Title in reloadData"))
         newComboView.frame = self.bounds
         newComboView.delegate = comboView?.delegate
         addSubview(newComboView)

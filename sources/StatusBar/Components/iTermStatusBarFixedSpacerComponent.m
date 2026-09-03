@@ -38,11 +38,11 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Fixed-size Spacer";
+    return ITLocalize(@"StatusBarFixedSpacerComponent_Facing_FixedSizeSpacer", @"Fixed-size Spacer", @"Text shown in statusBarComponentShortDescription: Fixed-size Spacer");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Adds a fixed amount of space";
+    return ITLocalize(@"StatusBarFixedSpacerComponent_Facing_AddsAFixedAmountOfSpace", @"Adds a fixed amount of space", @"Text shown in statusBarComponentDetailedDescription: Adds a fixed amount of space");
 }
 
 - (NSView *)statusBarComponentView {
@@ -65,14 +65,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *backgroundColorKnob =
-    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Color"
-                                                      type:iTermStatusBarComponentKnobTypeColor
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:ITLocalize(@"StatusBarFixedSpacerComponent_StatusBarKnob_Color", @"Color", @"Status bar knob")
+                                                       type:iTermStatusBarComponentKnobTypeColor
                                                placeholder:nil
                                               defaultValue:nil
                                                        key:iTermStatusBarSharedBackgroundColorKey];
     iTermStatusBarComponentKnob *widthKnob =
-    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Width"
-                                                      type:iTermStatusBarComponentKnobTypeDouble
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:ITLocalize(@"StatusBarFixedSpacerComponent_StatusBarKnob_Width", @"Width", @"Status bar knob")
+                                                       type:iTermStatusBarComponentKnobTypeDouble
                                                placeholder:nil
                                               defaultValue:@5
                                                        key:iTermStatusBarFixedSpacerComponentWidthKnob];

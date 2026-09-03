@@ -439,12 +439,12 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 
     // "Reveal Preference" is a one-time navigation action and shouldn't be remembered.
     iTermWarning *warning = [[iTermWarning alloc] init];
-    warning.title = @"The location of your Application Support directory appears to have moved or its contents have changed unexpectedly. As a precaution, the authentication mechanism for Python API scripts for iTerm2 has been reverted to always require Automation permission.";
-    warning.actionLabels = @[ @"OK", @"Reveal Preference" ];
+    warning.title = ITLocalize(@"ApiHelper_TheLocationOfYourApplicationSupportDirectory", @"The location of your Application Support directory appears to have moved or its contents have changed unexpectedly. As a precaution, the authentication mechanism for Python API scripts for iTerm2 has been reverted to always require Automation permission.", @"Title in internalRequireApplescriptAuth");
+    warning.actionLabels = @[ ITLocalize(@"COMMON_OK", @"OK", @"Label text in internalRequireApplescriptAuth"), ITLocalize(@"ApiHelper_RevealPreference", @"Reveal Preference", @"Label text in internalRequireApplescriptAuth") ];
     warning.identifier = @"NoSyncAppSupportMoved";
     warning.warningType = kiTermWarningTypePermanentlySilenceable;
-    warning.heading = @"Python API Permissions Reset";
-    warning.doNotRememberLabels = @[ @"Reveal Preference" ];
+    warning.heading = ITLocalize(@"ApiHelper_AlertHeading_PythonApiPermissionsReset", @"Python API Permissions Reset",@"Alert heading in internalRequireApplescriptAuth");
+    warning.doNotRememberLabels = @[ ITLocalize(@"ApiHelper_RevealPreference", @"Reveal Preference", @"Label text in internalRequireApplescriptAuth") ];
     const iTermWarningSelection selection = [warning runModal];
     if (selection == kiTermWarningSelection1) {
         [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyAPIAuthentication];
@@ -455,12 +455,12 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 
 + (BOOL)createNoAuthFile:(NSWindow *)window {
     const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:@"Do you want to allow all apps running on this machine to use the Python API?\n\nThis will disable the check for Automation permission. If you agree, you’ll be prompted for administrator access to make the change."
-                               actions:@[ @"OK", @"Cancel", @"More Info" ]
+    [iTermWarning showWarningWithTitle:ITLocalize(@"ApiHelper_Alert_DoYouWantToAllowAllApps", @"Do you want to allow all apps running on this machine to use the Python API?\n\nThis will disable the check for Automation permission. If you agree, you’ll be prompted for administrator access to make the change.", @"Alert title in createNoAuthFile:")
+                               actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in createNoAuthFile:"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in createNoAuthFile:"), ITLocalize(@"ApiHelper_Action_MoreInfo", @"More Info", @"Title in createNoAuthFile:") ]
                              accessory:nil
                             identifier:@"NoSyncRequireApplescriptAuth"
                            silenceable:kiTermWarningTypePersistent
-                               heading:@"Disable per-app authentication?"
+                               heading:ITLocalize(@"ApiHelper_AlertHeading_DisablePerAppAuthentication", @"Disable per-app authentication?",@"Alert heading in createNoAuthFile:(NSWindow *)window")
                                 window:window];
     switch (selection) {
         case kiTermWarningSelection0:
@@ -490,12 +490,12 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 
     [self setEnabled:NO];
     const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Failed to remove the file “%@”: %@\n\nPlease remove this file manually to require Automation permission for the Python API.\n\nThe Python API has been disabled for your security.", path, error.localizedDescription]
-                               actions:@[ @"OK", @"Reveal In Finder" ]
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"ApiHelper_Alert_FailedToRemoveTheFileNN_FORMAT", @"Failed to remove the file “%1$@”: %2$@\n\nPlease remove this file manually to require Automation permission for the Python API.\n\nThe Python API has been disabled for your security.", @"Alert title in removeNoAuthFile:"), path, error.localizedDescription]
+                               actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in removeNoAuthFile:"), ITLocalize(@"ApiHelper_Action_RevealInFinder", @"Reveal In Finder", @"Title in removeNoAuthFile:") ]
                              accessory:nil
                             identifier:@"NoSyncFailedToRemoveNoAuth"
                            silenceable:kiTermWarningTypePersistent
-                               heading:@"Error changing API permissions setting"
+                               heading:ITLocalize(@"ApiHelper_AlertHeading_ErrorChangingApiPermissionsSetting", @"Error changing API permissions setting",@"Alert heading in removeNoAuthFile:(NSWindow *)window")
                                 window:window];
     switch (selection) {
         case kiTermWarningSelection0:
@@ -543,23 +543,23 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     if (!dict) {
         return YES;
     }
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The setting could not be changed: %@", dict[NSAppleScriptErrorBriefMessage]]
-                               actions:@[ @"OK" ]
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"ApiHelper_Alert_TheSettingCouldNotBeChanged_FORMAT", @"The setting could not be changed: %1$@", @"Alert title in reallyCreateNoAuthFile:"), dict[NSAppleScriptErrorBriefMessage]]
+                               actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in reallyCreateNoAuthFile:") ]
                              accessory:nil
                             identifier:@"NoSyncFailedToCreateNoAuth"
                            silenceable:kiTermWarningTypePersistent
-                               heading:@"Failed to make change"
+                               heading:ITLocalize(@"ApiHelper_AlertHeading_FailedToMakeChange", @"Failed to make change",@"Alert heading in reallyCreateNoAuthFile:(NSWindow *)window")
                                 window:window];
     return NO;
 }
 
 + (void)reportFunctionCallError:(NSError *)error forInvocation:(NSString *)invocation origin:(NSString *)origin window:(NSWindow *)window {
-    NSString *message = [NSString stringWithFormat:@"Error running “%@”:\n%@",
+    NSString *message = [NSString stringWithFormat:ITLocalize(@"ApiHelper_FormattedFacing_ErrorRunningN_FORMAT", @"Error running “%1$@”:\n%2$@",@"Formatted user-facing text in reportFunctionCallError:(NSError *)error forInvocation:(NSString *)invocation origin:(NSString *)origin window:(NSWindow *)window"),
                          invocation, error.localizedDescription];
     NSString *traceback = error.localizedFailureReason;
-    NSArray *actions = @[ @"OK" ];
+    NSArray *actions = @[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in reportFunctionCallError:") ];
     if (traceback) {
-        actions = [actions arrayByAddingObject:@"Reveal in Script Console"];
+        actions = [actions arrayByAddingObject:ITLocalize(@"ApiHelper_Action_RevealInScriptConsole", @"Reveal in Script Console", @"Action title in reportFunctionCallError:")];
     }
     NSString *connectionKey = error.userInfo[iTermAPIHelperFunctionCallErrorUserInfoKeyConnection];
     iTermScriptHistoryEntry *entry = [[iTermScriptHistory sharedInstance] entryWithIdentifier:connectionKey];
@@ -573,7 +573,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
                                                                accessory:nil
                                                               identifier:@"NoSyncFunctionCallError"
                                                              silenceable:kiTermWarningTypeTemporarilySilenceable
-                                                                 heading:[NSString stringWithFormat:@"%@ Function Call Failed", origin]
+                                                                  heading:[NSString stringWithFormat:ITLocalize(@"ApiHelper_AlertHeading_FunctionCallFailed_FORMAT", @"%1$@ Function Call Failed",@"Alert heading in reportFunctionCallError:(NSError *)error forInvocation:(NSString *)invocation origin:(NSString *)origin window:(NSWindow *)window"), origin]
                                                                   window:window];
     if (selection == kiTermWarningSelection1) {
         [[iTermScriptConsole sharedInstance] revealTailOfHistoryEntry:entry];
@@ -620,11 +620,11 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     // It was not enabled in preferences. Ask the user. If they permanently silence this
     // they'll need to go into prefs to enable it.
     iTermWarning *warning = [[iTermWarning alloc] init];
-    warning.heading = @"Enable Python API?";
-    warning.actionLabels = @[ @"OK", @"Cancel" ];
+    warning.heading = ITLocalize(@"ApiHelper_AlertHeading_EnablePythonApi", @"Enable Python API?",@"Alert heading in confirmShouldStartServerAndUpdateUserDefaultsForced:(BOOL)forced");
+    warning.actionLabels = @[ ITLocalize(@"COMMON_OK", @"OK", @"Label text in confirmShouldStartServerAndUpdateUserDefaultsForced:"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Label text in confirmShouldStartServerAndUpdateUserDefaultsForced:") ];
     warning.identifier = iTermAPIHelperEnablePythonAPIWarningIdentifier;
     warning.warningType = forced ? kiTermWarningTypePersistent : kiTermWarningTypePermanentlySilenceable;
-    warning.title = @"The Python API allows scripts you run to control iTerm2 and access all its data.";
+    warning.title = ITLocalize(@"ApiHelper_ThePythonApiAllowsScriptsYouRun", @"The Python API allows scripts you run to control iTerm2 and access all its data.", @"Title in confirmShouldStartServerAndUpdateUserDefaultsForced:");
     static BOOL showing;
     if (showing) {
         // This can happen because the call to -runModal below starts a runloop and a delayed perform can then call this.
@@ -1535,7 +1535,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
                        advisoryName:(NSString *)advisoryName
                              reason:(out NSString *__autoreleasing *)reason
                         displayName:(out NSString *__autoreleasing *)displayName {
-    *displayName = advisoryName ? [@"≈" stringByAppendingString:advisoryName] : @"Unknown";
+    *displayName = advisoryName ? [@"≈" stringByAppendingString:advisoryName] : ITLocalize(@"ApiHelper_Facing_Unknown", @"Unknown", @"Text shown in apiServerAuthorizeProcesses:: Unknown");
 
     if (preauthorized) {
         *reason = @"Script launched by user action";
@@ -1551,15 +1551,15 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     }
 
     NSString *message =
-        @"Another process is trying to use the iTerm2 API. The API allows a script to control iTerm2 and view and modify its contents. Allow the connection?";
+        ITLocalize(@"ApiHelper_Facing_AnotherProcessIsTryingToUseThe", @"Another process is trying to use the iTerm2 API. The API allows a script to control iTerm2 and view and modify its contents. Allow the connection?", @"Text shown in apiServerAuthorizeProcesses");
 
     if ([iTermAdvancedSettingsModel setCookie]) {
-        message = [NSString stringWithFormat:@"%@\n\nAlthough you have chosen to allow connections automatically, this script has not presented a valid cookie.", message];
+        message = [NSString stringWithFormat:ITLocalize(@"ApiHelper_FormattedFacing_NNAlthoughYouHaveChosenTo_FORMAT", @"%1$@\n\nAlthough you have chosen to allow connections automatically, this script has not presented a valid cookie.",@"Formatted user-facing text in apiServerAuthorizeProcesses:(NSArray<NSNumber *> *)pids"), message];
     }
 
-    NSArray<NSString *> *actions = @[ @"OK", @"Cancel", @"More Info" ];
+    NSArray<NSString *> *actions = @[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in apiServerAuthorizeProcesses:"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in apiServerAuthorizeProcesses:"), ITLocalize(@"ApiHelper_Action_MoreInfo", @"More Info", @"Title in apiServerAuthorizeProcesses:") ];
     if (![iTermAdvancedSettingsModel setCookie]) {
-        actions = [actions arrayByAddingObject:@"Always"];
+        actions = [actions arrayByAddingObject:ITLocalize(@"ApiHelper_Action_Always", @"Always", @"Action title in apiServerAuthorizeProcesses:")];
     }
     const iTermWarningSelection selection =
     [iTermWarning showWarningWithTitle:message
@@ -1567,7 +1567,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
                              accessory:nil
                             identifier:@"NoSyncAllowPythonAPI"
                            silenceable:kiTermWarningTypePersistent
-                               heading:@"Allow Python API Usage?"
+                               heading:ITLocalize(@"ApiHelper_AlertHeading_AllowPythonApiUsage", @"Allow Python API Usage?",@"Alert heading in apiServerAuthorizeProcesses:(NSArray<NSNumber *> *)pids")
                                 window:nil];
     switch (selection) {
         case kiTermWarningSelection0:
@@ -1584,12 +1584,12 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
                                                window:nil];
             return NO;
         case kiTermWarningSelection3:
-            if ([iTermWarning showWarningWithTitle:@"New sessions will contain an environment variable that allows scripts to run without confirmation. Are you sure you want to enable this?"
-                                           actions:@[ @"OK", @"Cancel" ]
+            if ([iTermWarning showWarningWithTitle:ITLocalize(@"ApiHelper_Alert_NewSessionsWillContainAnEnvironmentVariable", @"New sessions will contain an environment variable that allows scripts to run without confirmation. Are you sure you want to enable this?", @"Alert title in apiServerAuthorizeProcesses:")
+                                           actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in apiServerAuthorizeProcesses:"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in apiServerAuthorizeProcesses:") ]
                                          accessory:nil
                                         identifier:@"NoSyncConfirmAlways"
                                        silenceable:kiTermWarningTypePersistent
-                                           heading:@"Confirm"
+                                           heading:ITLocalize(@"ApiHelper_AlertHeading_Confirm", @"Confirm",@"Alert heading in apiServerAuthorizeProcesses:(NSArray<NSNumber *> *)pids")
                                             window:nil] == kiTermWarningSelection0) {
                 [iTermAdvancedSettingsModel setSetCookie:YES];
                 *reason = @"Allowed by user";

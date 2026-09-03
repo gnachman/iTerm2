@@ -116,15 +116,15 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 - (void)failWithError:(NSError *)error {
     RLog(@"%@", error);
     NSString *message =
-        [NSString stringWithFormat:@"Cannot start logging to session with profile “%@”: %@",
+        [NSString stringWithFormat:ITLocalize(@"PtySessionArc_FormattedFacing_CannotStartLoggingToSessionWithProfile_FORMAT", @"Cannot start logging to session with profile “%1$@”: %2$@",@"Formatted user-facing text in failWithError:(NSError *)error"),
          self.profile[KEY_NAME],
          error.localizedDescription];
     [iTermWarning showWarningWithTitle:message
-                               actions:@[ @"OK" ]
+                               actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in failWithError:") ]
                              accessory:nil
                             identifier:@"NoSyncCannotStartLogging"
                            silenceable:kiTermWarningTypePersistent
-                               heading:@"Session Logging Problem"
+                               heading:ITLocalize(@"PtySessionArc_AlertHeading_SessionLoggingProblem", @"Session Logging Problem",@"Alert heading in failWithError:(NSError *)error")
                                 window:nil];
 }
 

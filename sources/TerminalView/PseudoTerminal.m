@@ -2134,10 +2134,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [[self retain] autorelease];
 
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = [NSString stringWithFormat:@"Close %@?", genericName];
+    alert.messageText = [NSString stringWithFormat:ITLocalize(@"PseudoTerminal_Alert_Close_FORMAT", @"Close %1$@?", @"Alert title in confirmCloseTab:suppressConfirmation:"), genericName];
     alert.informativeText = message;
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in confirmCloseTab:suppressConfirmation:")];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in confirmCloseTab:suppressConfirmation:")];
     return [alert runSheetModalForWindow:self.window] == NSAlertFirstButtonReturn;
 }
 
@@ -2261,9 +2261,13 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)killOrHideTmuxTab:(PTYTab *)aTab {
     iTermWarningSelection selection =
-        [iTermWarning showWarningWithTitle:@"Kill tmux window, terminating its jobs, or hide it? "
-                                           @"Hidden windows may be restored from the tmux dashboard."
-                                   actions:@[ @"Hide", @"Cancel", @"Kill" ]
+        [iTermWarning showWarningWithTitle:ITLocalize(@"PseudoTerminal_Alert_KillTmuxWindow",
+                                                      @"Kill tmux window, terminating its jobs, or hide it? "
+                                                      @"Hidden windows may be restored from the tmux dashboard.",
+                                                      @"Alert title in killOrHideTmuxTab:")
+                                   actions:@[ ITLocalize(@"PseudoTerminal_Action_Hide", @"Hide", @"Action title in killOrHideTmuxTab:"),
+                                              ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Action title in killOrHideTmuxTab:"),
+                                              ITLocalize(@"PseudoTerminal_Action_Kill", @"Kill", @"Action title in killOrHideTmuxTab:") ]
                              actionMapping:@[ @(kiTermWarningSelection0), @(kiTermWarningSelection2), @(kiTermWarningSelection1)]
                                  accessory:nil
                                 identifier:@"ClosingTmuxTabKillsTmuxWindows"
@@ -2639,17 +2643,17 @@ ITERM_WEAKLY_REFERENCEABLE
     if (aSession.exited) {
         [aSession restartSession];
     } else {
-        iTermWarningAction *cancel = [iTermWarningAction warningActionWithLabel:@"Cancel" block:nil];
+        iTermWarningAction *cancel = [iTermWarningAction warningActionWithLabel:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in restartSessionWithConfirmation:") block:nil];
         iTermWarningAction *ok =
-            [iTermWarningAction warningActionWithLabel:@"OK"
+            [iTermWarningAction warningActionWithLabel:ITLocalize(@"COMMON_OK", @"OK", @"Button title in restartSessionWithConfirmation:")
                                                  block:^(iTermWarningSelection selection) {
                                                      if (selection == kiTermWarningSelection0) {
                                                          [aSession restartSession];
                                                      }
                                                  }];
         iTermWarning *warning = [[[iTermWarning alloc] init] autorelease];
-        warning.heading = @"Restart session?";
-        warning.title = @"Running jobs will be killed.";
+        warning.heading = ITLocalize(@"PseudoTerminal_AlertHeading_RestartSession", @"Restart session?", @"Alert heading in restartSessionWithConfirmation:");
+        warning.title = ITLocalize(@"PseudoTerminal_Alert_RunningJobsWillBeKilled", @"Running jobs will be killed.", @"Alert title in restartSessionWithConfirmation:");
         warning.warningActions = @[ ok, cancel ];
         warning.identifier = @"NoSyncSuppressRestartSessionConfirmationAlert";
         warning.warningType = kiTermWarningTypePermanentlySilenceable;
@@ -3615,22 +3619,22 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (IBAction)editWindowTitle:(id)sender {
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = @"Set Window Title";
-    alert.informativeText = @"If this is empty, the window takes the active session’s title. Variables and function calls enclosed in \\(…) will be replaced with their evaluation. This interpolated string is evaluated in the window’s context.";
+    alert.messageText = ITLocalize(@"PseudoTerminal_Alert_SetWindowTitle", @"Set Window Title", @"Alert title in editWindowTitle:");
+    alert.informativeText = ITLocalize(@"PseudoTerminal_AlertExplanatory_SetWindowTitle", @"If this is empty, the window takes the active session’s title. Variables and function calls enclosed in \\(…) will be replaced with their evaluation. This interpolated string is evaluated in the window’s context.", @"Alert explanatory text in editWindowTitle:");
     NSTextField *titleTextField = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 400, 24 * 3)] autorelease];
     iTermFunctionCallTextFieldDelegate *delegate;
     delegate = [[[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextWindow]
                                                                    passthrough:nil
                                                                  functionsOnly:NO] autorelease];
     delegate.canWarnAboutContextMistake = YES;
-    delegate.contextMistakeText = @"This interpolated string is evaluated in the window’s context, not the session’s context. To access variables in the current session, use currentTab.currentSession.sessionVariableNameHere";
+    delegate.contextMistakeText = ITLocalize(@"PseudoTerminal_ContextMistake_Window", @"This interpolated string is evaluated in the window’s context, not the session’s context. To access variables in the current session, use currentTab.currentSession.sessionVariableNameHere", @"Context mistake warning in editWindowTitle:");
     titleTextField.delegate = delegate;
     titleTextField.editable = YES;
     titleTextField.selectable = YES;
     titleTextField.stringValue = [self.scope valueForVariableName:iTermVariableKeyWindowTitleOverrideFormat] ?: @"";
     alert.accessoryView = titleTextField;
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in editWindowTitle:")];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in editWindowTitle:")];
     BOOL isDark;
     if ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL) {
         isDark = self.minimalTabStyleBackgroundColor.isDark;
@@ -6956,27 +6960,24 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     }
 
     // Bookmarks
-    [theMenu insertItemWithTitle:NSLocalizedStringFromTableInBundle(@"New Window",
-                                                                    @"iTerm",
-                                                                    [NSBundle bundleForClass:[self class]],
-                                                                    @"Context menu")
+    [theMenu insertItemWithTitle:ITLocalize(@"COMMON_NEW_WINDOW",
+                                            @"New Window",
+                                            @"Context menu action to create a new window")
                           action:nil
                    keyEquivalent:@""
                          atIndex:nextIndex++];
-    [theMenu insertItemWithTitle:NSLocalizedStringFromTableInBundle(@"New Tab",
-                                                                    @"iTerm",
-                                                                    [NSBundle bundleForClass:[self class]],
-                                                                    @"Context menu")
+    [theMenu insertItemWithTitle:ITLocalize(@"COMMON_NEW_TAB",
+                                            @"New Tab",
+                                            @"Context menu action to create a new tab")
                           action:nil
                    keyEquivalent:@""
                          atIndex:nextIndex++];
 
     // Create a menu with a submenu to navigate between tabs if there are more than one
     if ([_contentView.tabView numberOfTabViewItems] > 1) {
-        [theMenu insertItemWithTitle:NSLocalizedStringFromTableInBundle(@"Select",
-                                                                        @"iTerm",
-                                                                        [NSBundle bundleForClass:[self class]],
-                                                                        @"Context menu")
+        [theMenu insertItemWithTitle:ITLocalize(@"CONTEXT_MENU_SELECT",
+                                                @"Select",
+                                                @"Submenu in the terminal context menu that lists sessions to select")
                               action:nil
                        keyEquivalent:@""
                              atIndex:nextIndex];
@@ -6985,7 +6986,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         int i;
 
         for (i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
-            aMenuItem = [[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:@"%@ #%d",
+            aMenuItem = [[NSMenuItem alloc] initWithTitle:[NSString localizedStringWithFormat:ITLocalize(@"CONTEXT_MENU_SELECT_TAB_FORMAT",
+                                                                                                              @"%1$@ #%2$d",
+                                                                                                              @"Menu item that selects the numbered terminal tab"),
                                                            [[_contentView.tabView tabViewItemAtIndex: i] label],
                                                            i+1]
                                                    action:@selector(selectTab:)
@@ -8386,21 +8389,21 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 
 - (void)openEditTabTitleWindow {
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = @"Set Tab Title";
-    alert.informativeText = @"If this is empty, the tab takes the active session’s title. Variables and function calls enclosed in \\(…) will be replaced with their evaluation. This interpolated string is evaluated in the tab’s context.";
+    alert.messageText = ITLocalize(@"PseudoTerminal_Alert_SetTabTitle", @"Set Tab Title", @"Alert title in openEditTabTitleWindow");
+    alert.informativeText = ITLocalize(@"PseudoTerminal_AlertExplanatory_SetTabTitle", @"If this is empty, the tab takes the active session’s title. Variables and function calls enclosed in \\(…) will be replaced with their evaluation. This interpolated string is evaluated in the tab’s context.", @"Alert explanatory text in openEditTabTitleWindow");
     NSTextField *titleTextField = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 400, 24 * 3)] autorelease];
     _currentTabTitleTextFieldDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextTab]
                                                                                            passthrough:nil
                                                                                          functionsOnly:NO];
     titleTextField.delegate = _currentTabTitleTextFieldDelegate;
     _currentTabTitleTextFieldDelegate.canWarnAboutContextMistake = YES;
-    _currentTabTitleTextFieldDelegate.contextMistakeText = @"This interpolated string is evaluated in the tab’s context, not the session’s context. To access variables in the current session, use currentSession.sessionVariableNameHere";
+    _currentTabTitleTextFieldDelegate.contextMistakeText = ITLocalize(@"PseudoTerminal_ContextMistake_Tab", @"This interpolated string is evaluated in the tab’s context, not the session’s context. To access variables in the current session, use currentSession.sessionVariableNameHere", @"Context mistake warning in openEditTabTitleWindow");
     titleTextField.editable = YES;
     titleTextField.selectable = YES;
     titleTextField.stringValue = self.currentTab.variablesScope.tabTitleOverrideFormat ?: @"";
     alert.accessoryView = titleTextField;
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in openEditTabTitleWindow")];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in openEditTabTitleWindow")];
     BOOL isDark;
     if ((iTermPreferencesTabStyle)[iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL) {
         isDark = self.minimalTabStyleBackgroundColor.isDark;
@@ -8641,9 +8644,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (NSString *)promptForTabGroupName:(NSString *)initialValue title:(NSString *)title {
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = title;
-    alert.informativeText = @"Enter a name for this tab group.";
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
+    alert.informativeText = ITLocalize(@"PseudoTerminal_Alert_EnterNameForTabGroup", @"Enter a name for this tab group.", @"Alert explanatory text in promptForTabGroupName:title:");
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in promptForTabGroupName:title:")];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in promptForTabGroupName:title:")];
     NSTextField *field = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 240, 24)] autorelease];
     // Tab labels come with a trailing newline; trim so it doesn't seed the field
     // (or the resulting group name) with stray whitespace.
@@ -9483,7 +9486,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 - (void)closeTabGroup:(id)sender {
     // Close every member, including pinned ones -- the pinned tabs are the group.
     [self closeTabs:[self tabsInGroup:[sender representedObject]]
-        confirmWith:@"Close this tab group?"
+        confirmWith:ITLocalize(@"PseudoTerminal_Confirm_CloseTabGroup", @"Close this tab group?", @"Confirmation prompt to close all tabs in a group")
       skippingPinned:NO];
 }
 
@@ -9495,7 +9498,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             [others addObject:aTab];
         }
     }
-    [self closeTabs:others confirmWith:@"Close all tabs outside this group?" skippingPinned:YES];
+    [self closeTabs:others confirmWith:ITLocalize(@"PseudoTerminal_Confirm_CloseTabsOutsideGroup", @"Close all tabs outside this group?", @"Confirmation prompt to close tabs outside a group") skippingPinned:YES];
 }
 
 - (void)closeTabsRightOfGroup:(id)sender {
@@ -9510,7 +9513,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return;
     }
     NSArray<PTYTab *> *toRight = [tabs subarrayWithRange:NSMakeRange(lastIndex + 1, tabs.count - lastIndex - 1)];
-    [self closeTabs:toRight confirmWith:@"Close all tabs to the right of this group?" skippingPinned:YES];
+    [self closeTabs:toRight confirmWith:ITLocalize(@"PseudoTerminal_Confirm_CloseTabsRightOfGroup", @"Close all tabs to the right of this group?", @"Confirmation prompt to close tabs to the right of a group") skippingPinned:YES];
 }
 
 // Close a batch of tabs with a single confirmation. `skipPinned` protects
@@ -9532,15 +9535,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     if (closable.count == 0) {
         return;
     }
-    NSString *count = (closable.count == 1) ? @"1 tab"
-                                            : [NSString stringWithFormat:@"%lu tabs", (unsigned long)closable.count];
+    NSString *count = [NSString localizedStringWithFormat:ITLocalize(@"PseudoTerminal_TabCount_FORMAT", @"%#@tabs@", @"Tab count in confirmation dialog"), (unsigned long)closable.count];
     const iTermWarningSelection selection =
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"%@ (%@)", question, count]
-                                   actions:@[ @"Close", @"Cancel" ]
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"PseudoTerminal_Formatted_QuestionWithCount_FORMAT", @"%1$@ (%2$@)", @"Confirmation question with item count"), question, count]
+                                   actions:@[ ITLocalize(@"PseudoTerminal_Action_CloseTabs", @"Close", @"Action button to confirm closing tabs"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Action title in closeTabs:confirmWith:skippingPinned:") ]
                                  accessory:nil
                                 identifier:@"NoSyncCloseTabGroup"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:@"Close Tabs"
+                                   heading:ITLocalize(@"PseudoTerminal_Heading_CloseTabs", @"Close Tabs", @"Alert heading when closing a batch of tabs")
                                     window:self.window];
     if (selection != kiTermWarningSelection0) {
         return;
@@ -10237,8 +10239,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (void)turnOnMetalCaptureInInfoPlist {
     const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:@"You must restart iTerm2 to turn on this feature."
-                               actions:@[ @"Restart Now", @"Cancel"]
+    [iTermWarning showWarningWithTitle:ITLocalize(@"PseudoTerminal_Alert_MustRestartForMetalCapture", @"You must restart iTerm2 to turn on this feature.", @"Alert title in turnOnMetalCaptureInInfoPlist")
+                               actions:@[ ITLocalize(@"PseudoTerminal_Action_RestartNow", @"Restart Now", @"Action title in turnOnMetalCaptureInInfoPlist"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Action title in turnOnMetalCaptureInInfoPlist") ]
                             identifier:@"RestartAfterMetalCaptureEnabled"
                            silenceable:kiTermWarningTypePersistent
                                 window:self.window];
@@ -14970,22 +14972,22 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
          }];
          NSString *message;
          if (names.count < 2) {
-             message = [NSString stringWithFormat:@"The session named “%@” does not appear to be at a password prompt.", names.firstObject];
+             message = [NSString stringWithFormat:ITLocalize(@"PseudoTerminal_Alert_PasswordPromptSession_FORMAT", @"The session named “%1$@” does not appear to be at a password prompt.", @"Warning when broadcasting password"), names.firstObject];
          } else {
-             message = [NSString stringWithFormat:@"The following sessions to which input is broadcast do not appear to be at a password prompt: %@", [names componentsJoinedWithOxfordComma]];
+             message = [NSString stringWithFormat:ITLocalize(@"PseudoTerminal_Alert_PasswordPromptSessions_FORMAT", @"The following sessions to which input is broadcast do not appear to be at a password prompt: %1$@", @"Warning when broadcasting password"), [names componentsJoinedWithOxfordComma]];
          }
          NSArray *actions;
          if (okSessions.count > 0) {
-             actions = @[ @"Cancel", @"Enter Password in Sessions at Prompt" ];
+             actions = @[ ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Action title in broadcast warning"), ITLocalize(@"PseudoTerminal_Action_EnterPasswordInSessionsAtPrompt", @"Enter Password in Sessions at Prompt", @"Action title in broadcast warning") ];
          } else {
-             actions = @[ @"OK" ];
+             actions = @[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in broadcast warning") ];
          }
          iTermWarningSelection selection = [iTermWarning showWarningWithTitle:message
                                                                       actions:actions
                                                                     accessory:nil
                                                                    identifier:nil
                                                                   silenceable:kiTermWarningTypePersistent
-                                                                      heading:@"Not all sessions at password prompt"
+                                                                      heading:ITLocalize(@"PseudoTerminal_Heading_NotAllSessionsAtPasswordPrompt", @"Not all sessions at password prompt",@"Alert heading in broadcastPassword:(NSString *)password")
                                                                        window:self.window];
          switch (selection) {
              case kiTermWarningSelection0:

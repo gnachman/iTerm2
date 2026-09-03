@@ -36,7 +36,7 @@ class CommandShareMenuProvider: NSObject {
         let command = mark.fullCommand ?? ""
         if !command.isEmpty {
             let snippetTitle = mark.firstLineOfCommand.flatMap { $0.isEmpty ? nil : $0 } ?? command
-            menu.addItem(title: "Add Command as Snippet") { [weak window] in
+            menu.addItem(title: String(localized: "CommandShareMenuProvider_AddCommandAsSnippet", defaultValue: "Add Command as Snippet", comment: "Menu title in pop")) { [weak window] in
                 CommandShareMenuProvider.addCommandAsSnippet(title: snippetTitle,
                                                              value: command,
                                                              window: window,
@@ -49,7 +49,7 @@ class CommandShareMenuProvider: NSObject {
         let mark = self.mark
         let promisedContent = self.promisedContent
         let defaultBackgroundColor = self.defaultBackgroundColor
-        menu.addItem(title: "Save Command & Output…") { [weak window] in
+        menu.addItem(title: String(localized: "CommandShareMenuProvider_SaveCommandOutput", defaultValue: "Save Command & Output…", comment: "Menu title in pop")) { [weak window] in
             CommandShareMenuProvider.saveCommandAndOutput(promisedContent: promisedContent,
                                                           defaultBackgroundColor: defaultBackgroundColor,
                                                           mark: mark,
@@ -58,7 +58,7 @@ class CommandShareMenuProvider: NSObject {
 
         menu.addSeparator()
 
-        menu.addItem(title: "Share Command Output…") { [weak view] in
+        menu.addItem(title: String(localized: "CommandShareMenuProvider_ShareCommandOutput", defaultValue: "Share Command Output…", comment: "Menu title in pop")) { [weak view] in
             if let view {
                 CommandShareMenuProvider.shareCommandOutput(locationInWindow: locationInWindow,
                                                             promisedContent: promisedContent,
@@ -69,12 +69,12 @@ class CommandShareMenuProvider: NSObject {
         menu.addSeparator()
 
         if let commandURL {
-            menu.addItem(title: "Copy Command URL to Clipboard") { [weak window] in
+            menu.addItem(title: String(localized: "CommandShareMenuProvider_CopyCommandUrlToClipboard", defaultValue: "Copy Command URL to Clipboard", comment: "Menu title in pop")) { [weak window] in
                 CommandShareMenuProvider.copyCommandURL(url: commandURL,
                                                         window: window,
                                                         locationInWindow: locationInWindow)
             }
-            menu.addItem(title: "Share Command URL…") { [weak view] in
+            menu.addItem(title: String(localized: "CommandShareMenuProvider_ShareCommandUrl", defaultValue: "Share Command URL…", comment: "Menu title in pop")) { [weak view] in
                 if let view {
                     CommandShareMenuProvider.shareCommandURL(locationInWindow: locationInWindow,
                                                              url: commandURL,
@@ -103,7 +103,7 @@ class CommandShareMenuProvider: NSObject {
             return
         }
         let point = window.convertPoint(toScreen: locationInWindow)
-        ToastWindowController.showToast(withMessage: "Snippet Added",
+        ToastWindowController.showToast(withMessage: String(localized: "COMMAND_SHARE_SNIPPET_ADDED_TOAST", defaultValue: "Snippet Added", comment: "Toast confirming a snippet was added"),
                                         duration: 1,
                                         topLeftScreenCoordinate: point,
                                         pointSize: 12)
@@ -143,7 +143,7 @@ class CommandShareMenuProvider: NSObject {
             return
         }
         let point = window.convertPoint(toScreen: locationInWindow)
-        ToastWindowController.showToast(withMessage: "Copied",
+        ToastWindowController.showToast(withMessage: String(localized: "COMMAND_SHARE_COPIED_TOAST", defaultValue: "Copied", comment: "Toast confirming text was copied"),
                                         duration: 1,
                                         topLeftScreenCoordinate: point,
                                         pointSize: 12)

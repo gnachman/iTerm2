@@ -184,7 +184,7 @@ static void FlushDebugLog(void) {
         // nil file handle leaves it nil; fall back to a concrete message so the
         // user gets an actionable reason instead of "(null)".
         NSString *reason = error.localizedDescription ?: [NSString stringWithFormat:@"could not open %@ for writing", kDebugLogFilename];
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Failed to save debug log: %@", reason] actions:@[ @"OK" ] accessory:nil identifier:nil silenceable:kiTermWarningTypePersistent heading:@"Problem Saving Debug Log" window:nil];
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"DebugLogging_Alert_FailedToSaveDebugLog_FORMAT", @"Failed to save debug log: %1$@", @"alert title"), reason] actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"alert title") ] accessory:nil identifier:nil silenceable:kiTermWarningTypePersistent heading:ITLocalize(@"DebugLogging_AlertHeading_ProblemSavingDebugLog", @"Problem Saving Debug Log",@"Alert heading in DebugLogging") window:nil];
     }
 
     [gDebugLogStr setString:@""];
@@ -531,17 +531,17 @@ BOOL TurnOffDebugLoggingSilently(void) {
 void ToggleDebugLogging(void) {
     if (!gDebugLogging) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Debug Logging Enabled";
-        alert.informativeText = @"Please reproduce the bug. Then toggle debug logging again to save the log.";
-        [alert addButtonWithTitle:@"OK"];
+        alert.messageText = ITLocalize(@"DebugLogging_Alert_DebugLoggingEnabled", @"Debug Logging Enabled", @"Alert title in description");
+        alert.informativeText = ITLocalize(@"DebugLogging_AlertExplanatory_PleaseReproduceTheBugThenToggleDebug", @"Please reproduce the bug. Then toggle debug logging again to save the log.", @"Alert explanatory text in description");
+        [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in description")];
         [alert runModal];
         StartDebugLogging();
     } else {
         StopDebugLogging();
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Debug Logging Stopped";
-        alert.informativeText = @"Please send /tmp/debuglog.txt to the developers.";
-        [alert addButtonWithTitle:@"OK"];
+        alert.messageText = ITLocalize(@"DebugLogging_Alert_DebugLoggingStopped", @"Debug Logging Stopped", @"Alert title in description");
+        alert.informativeText = ITLocalize(@"DebugLogging_AlertExplanatory_PleaseSendTmpDebuglogTxtToThe", @"Please send /tmp/debuglog.txt to the developers.", @"Alert explanatory text in description");
+        [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in description")];
         [alert runModal];
     }
 }

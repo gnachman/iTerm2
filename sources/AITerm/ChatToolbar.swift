@@ -112,7 +112,7 @@ class ChatToolbar {
     init(dataSource: ChatToolbarDataSource) {
         self.dataSource = dataSource
 
-        let label = NSTextField(labelWithString: "AI Chat")
+        let label = NSTextField(labelWithString: String(localized: "ChatToolbar_AiChat", defaultValue: "AI Chat", comment: "Label text in selectedServiceTierDidChange"))
         label.font = NSFont.systemFont(ofSize: 20, weight: .semibold)
         label.textColor = NSColor.labelColor
         label.alignment = .center
@@ -128,7 +128,7 @@ class ChatToolbar {
 
         do {
             let webSearchButton = WebSearchButton(image: NSImage.it_image(forSymbolName: SFSymbol.globe.rawValue,
-                                                                          accessibilityDescription: "Web search image",
+                                                                          accessibilityDescription: String(localized: "ChatToolbar_WebSearchImage", defaultValue: "Web search image", comment: "Descriptive text in selectedServiceTierDidChange"),
                                                                           fallbackImageName: "globe",
                                                                           for: Self.self)!,
                                                   target: nil,
@@ -142,7 +142,7 @@ class ChatToolbar {
             webSearchButton.target = self
             webSearchButton.action = #selector(toggleWebSearch(_:))
             webSearchButton.sizeToFit()
-            webSearchButton.toolTip = "Allow AI to perform web search?"
+            webSearchButton.toolTip = String(localized: "ChatToolbar_AllowAiToPerformWebSearch", defaultValue: "Allow AI to perform web search?", comment: "Button title in selectedServiceTierDidChange")
             self.webSearchButton = webSearchButton
             webSearchButton.isEnabled = (dataSource.provider?.supportsHostedWebSearch == true)
         }
@@ -152,7 +152,7 @@ class ChatToolbar {
 
             let image = NSImage(
                 systemSymbolName: SFSymbol.lightbulb.rawValue,
-                accessibilityDescription: "Enable high-effort reasoning?")?.withSymbolConfiguration(smallerConfig)
+                accessibilityDescription: String(localized: "ChatToolbar_EnableHighEffortReasoning", defaultValue: "Enable high-effort reasoning?", comment: "Descriptive text in selectedServiceTierDidChange"))?.withSymbolConfiguration(smallerConfig)
             let thinkingButton = ThinkingButton(image: image!,
                                                   target: nil,
                                                 action: nil)
@@ -165,7 +165,7 @@ class ChatToolbar {
             thinkingButton.target = self
             thinkingButton.action = #selector(toggleThinking(_:))
             thinkingButton.sizeToFit()
-            thinkingButton.toolTip = "Enable high-effort reasoning? Slower but may produce better results."
+            thinkingButton.toolTip = String(localized: "ChatToolbar_EnableHighEffortReasoningSlowerButMay", defaultValue: "Enable high-effort reasoning? Slower but may produce better results.", comment: "Button title in selectedServiceTierDidChange")
             self.thinkingButton = thinkingButton
             thinkingButton.isEnabled = (dataSource.provider?.model.features.contains(.configurableThinking) == true)
         }
@@ -412,8 +412,8 @@ extension ChatToolbar {
         selector.isHidden = selectableCount <= 1
         selector.isEnabled = !options.isEmpty && (dataSource?.canChangeProvider == true)
         selector.toolTip = selector.isEnabled
-            ? "Select the AI provider for this chat before sending the first message."
-            : "The provider is fixed after the first real message in a chat."
+            ? String(localized: "ChatToolbar_SelectTheAiProviderForThisChat", defaultValue: "Select the AI provider for this chat before sending the first message.", comment: "Text shown in createOrUpdateProviderSelector: Select the AI provider for this chat before sending the first message.")
+            : String(localized: "ChatToolbar_TheProviderIsFixedAfterTheFirst", defaultValue: "The provider is fixed after the first real message in a chat.", comment: "Text shown in createOrUpdateProviderSelector: The provider is fixed after the first real message in a chat.")
         if let selectedIdentifier = dataSource?.effectiveProviderIdentifier {
             select(selector, representedObject: selectedIdentifier)
         } else if !options.isEmpty {
@@ -429,7 +429,7 @@ extension ChatToolbar {
         modelSelectorButton = modelSelector
         modelSelector.target = self
         modelSelector.action = #selector(selectModel(_:))
-        modelSelector.toolTip = "Select a model for this chat. The provider is fixed after the chat is created."
+        modelSelector.toolTip = String(localized: "ChatToolbar_SelectAModelForThisChatThe", defaultValue: "Select a model for this chat. The provider is fixed after the chat is created.", comment: "Tooltip text in createOrUpdateModelSelector")
 
         modelSelector.isBordered = false
         modelSelector.bezelStyle = .inline
@@ -446,11 +446,11 @@ extension ChatToolbar {
         // popup would just show a fixed, grayed-out title, so hide it entirely.
         modelSelector.isHidden = availableModels.count <= 1
         if !canChangeModel {
-            modelSelector.toolTip = "The model is fixed after the chat starts."
+            modelSelector.toolTip = String(localized: "ChatToolbar_TheModelIsFixedAfterTheChat", defaultValue: "The model is fixed after the chat starts.", comment: "Tooltip text in createOrUpdateModelSelector")
         } else if availableModels.count > 1 {
-            modelSelector.toolTip = "Select a model for this chat."
+            modelSelector.toolTip = String(localized: "ChatToolbar_SelectAModelForThisChat", defaultValue: "Select a model for this chat.", comment: "Tooltip text in createOrUpdateModelSelector")
         } else {
-            modelSelector.toolTip = "Only one model is available for this chat."
+            modelSelector.toolTip = String(localized: "ChatToolbar_OnlyOneModelIsAvailableForThis", defaultValue: "Only one model is available for this chat.", comment: "Tooltip text in createOrUpdateModelSelector")
         }
         if let selectedModel = dataSource?.effectiveModel {
             modelSelector.selectItem(withTitle: selectedModel)
@@ -468,7 +468,7 @@ extension ChatToolbar {
         selector.isBordered = false
         selector.bezelStyle = .inline
         selector.font = NSFont.systemFont(ofSize: 13)
-        selector.toolTip = "Select reasoning effort for models that support it"
+        selector.toolTip = String(localized: "ChatToolbar_SelectReasoningEffortForModelsThatSupport", defaultValue: "Select reasoning effort for models that support it", comment: "Tooltip text in createOrUpdateReasoningEffortSelector")
 
         let efforts = dataSource?.provider?.model.reasoningEfforts ?? []
         for effort in efforts {
@@ -494,7 +494,7 @@ extension ChatToolbar {
         selector.isBordered = false
         selector.bezelStyle = .inline
         selector.font = NSFont.systemFont(ofSize: 13)
-        selector.toolTip = "Select OpenAI service tier. Priority is faster; Flex is lower-cost and slower."
+        selector.toolTip = String(localized: "ChatToolbar_SelectOpenAiServiceTierPriorityIs", defaultValue: "Select OpenAI service tier. Priority is faster; Flex is lower-cost and slower.", comment: "Tooltip text in createOrUpdateServiceTierSelector")
 
         let tiers = dataSource?.provider?.model.serviceTiers ?? []
         for tier in tiers {
@@ -575,23 +575,23 @@ extension ChatToolbar {
 
     private static func reasoningEffortTitle(_ effort: ResponsesRequestBody.ReasoningOptions.Effort) -> String {
         let value = switch effort {
-        case .none: "None"
-        case .minimal: "Minimal"
-        case .low: "Low"
-        case .medium: "Medium"
-        case .high: "High"
-        case .xhigh: "XHigh"
+        case .none: String(localized: "ChatToolbar_None", defaultValue: "None", comment: "Text shown in reasoningEffortTitle: None")
+        case .minimal: String(localized: "ChatToolbar_Minimal", defaultValue: "Minimal", comment: "Text shown in reasoningEffortTitle: Minimal")
+        case .low: String(localized: "ChatToolbar_Low", defaultValue: "Low", comment: "Text shown in reasoningEffortTitle: Low")
+        case .medium: String(localized: "ChatToolbar_Medium", defaultValue: "Medium", comment: "Text shown in reasoningEffortTitle: Medium")
+        case .high: String(localized: "ChatToolbar_High", defaultValue: "High", comment: "Text shown in reasoningEffortTitle: High")
+        case .xhigh: String(localized: "ChatToolbar_XHigh", defaultValue: "XHigh", comment: "Text shown in reasoningEffortTitle: XHigh")
         }
-        return "Effort: \(value)"
+        return String(format: String(localized: "ChatToolbar_Effort_FORMAT", defaultValue: "Effort: %1$@", comment: "Formatted user-facing text in reasoningEffortTitle"), value)
     }
 
     private static func serviceTierTitle(_ tier: ResponsesRequestBody.ServiceTier) -> String {
         let value = switch tier {
-        case .auto: "Auto"
-        case .default: "Standard"
-        case .priority: "Priority (Fast)"
-        case .flex: "Flex (Slow)"
+        case .auto: String(localized: "ChatToolbar_Auto", defaultValue: "Auto", comment: "Text shown in serviceTierTitle: Auto")
+        case .default: String(localized: "ChatToolbar_Standard", defaultValue: "Standard", comment: "Text shown in serviceTierTitle: Standard")
+        case .priority: String(localized: "ChatToolbar_PriorityFast", defaultValue: "Priority (Fast)", comment: "Text shown in serviceTierTitle: Priority (Fast)")
+        case .flex: String(localized: "ChatToolbar_FlexSlow", defaultValue: "Flex (Slow)", comment: "Text shown in serviceTierTitle: Flex (Slow)")
         }
-        return "Tier: \(value)"
+        return String(format: String(localized: "ChatToolbar_Tier_FORMAT", defaultValue: "Tier: %1$@", comment: "Formatted user-facing text in serviceTierTitle"), value)
     }
 }

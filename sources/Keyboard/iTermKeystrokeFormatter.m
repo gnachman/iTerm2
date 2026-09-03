@@ -135,22 +135,13 @@ exit:
             isArrow = YES;
             break;
         case NSDeleteFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"Del→",
-                                                         @"iTerm",
-                                                         [NSBundle bundleForClass:[self class]],
-                                                         @"Key Names");
+            aString = ITLocalize(@"KeystrokeFormatter_KeyNames_Del", @"Del→", @"Key Names");
             break;
         case 0x7f:
-            aString = NSLocalizedStringFromTableInBundle(@"←Delete",
-                                                         @"iTerm",
-                                                         [NSBundle bundleForClass:[self class]],
-                                                         @"Key Names");
+            aString = ITLocalize(@"KeystrokeFormatter_KeyNames_Delete", @"←Delete", @"Key Names");
             break;
         case NSEndFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"End",
-                                                         @"iTerm",
-                                                         [NSBundle bundleForClass:[self class]],
-                                                         @"Key Names");
+            aString = ITLocalize(@"KeystrokeFormatter_KeyNames_End", @"End", @"Key Names");
             break;
         case NSF1FunctionKey:
         case NSF2FunctionKey:
@@ -175,16 +166,10 @@ exit:
             aString = [NSString stringWithFormat: @"F%d", (character - NSF1FunctionKey + 1)];
             break;
         case NSHelpFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"Help",
-                                                         @"iTerm",
-                                                         [NSBundle bundleForClass:[self class]],
-                                                         @"Key Names");
+            aString = ITLocalize(@"KeystrokeFormatter_KeyNames_Help", @"Help", @"Key Names");
             break;
         case NSHomeFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"Home",
-                                                         @"iTerm",
-                                                         [NSBundle bundleForClass:[self class]],
-                                                         @"Key Names");
+            aString = ITLocalize(@"KeystrokeFormatter_KeyNames_Home", @"Home", @"Key Names");
             break;
 
         // These are standard on Apple en_GB keyboards where ~ and ` go on US keyboards (between esc

@@ -823,11 +823,11 @@ static void HandleSigChld(int n) {
 
         case iTermJobManagerForkAndExecStatusFailedToFork: {
             RLog(@"Unable to fork %@: %s", progpath, strerror(optionalErrorCode.intValue));
-            NSString *error = @"Unable to fork child process: you may have too many processes already running.";
+            NSString *error = ITLocalize(@"PtyTask_Facing_UnableToForkChildProcessYouMay", @"Unable to fork child process: you may have too many processes already running.", @"Text shown in didForkAndExec:: Unable to fork child process: you may have too many processes already running.");
             if (optionalErrorCode) {
                 error = [NSString stringWithFormat:@"%@ The system error was: %s", error, strerror(optionalErrorCode.intValue)];
             }
-            [[iTermNotificationController sharedInstance] notify:@"Unable to fork!"
+            [[iTermNotificationController sharedInstance] notify:ITLocalize(@"PtyTask_Notification_UnableToFork", @"Unable to fork!", @"user notification text")
                                                  withDescription:error];
             [self.delegate taskDiedWithError:error];
             break;
@@ -844,9 +844,9 @@ static void HandleSigChld(int n) {
 
 - (void)showFailedToCreateTempSocketError {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Error";
-    alert.informativeText = [NSString stringWithFormat:@"An error was encountered while creating a temporary file with mkstemps. Verify that %@ exists and is writable.", NSTemporaryDirectory()];
-    [alert addButtonWithTitle:@"OK"];
+    alert.messageText = ITLocalize(@"PtyTask_Alert_Error", @"Error", @"Alert title in showFailedToCreateTempSocketError");
+    alert.informativeText = [NSString stringWithFormat:ITLocalize(@"PtyTask_AlertExplanatory_AnErrorWasEncounteredWhileCreatingA_FORMAT", @"An error was encountered while creating a temporary file with mkstemps. Verify that %1$@ exists and is writable.", @"Alert explanatory text in showFailedToCreateTempSocketError"), NSTemporaryDirectory()];
+    [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in showFailedToCreateTempSocketError")];
     [alert runModal];
 }
 

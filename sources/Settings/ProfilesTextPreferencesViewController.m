@@ -249,13 +249,16 @@
             // mixed Asian/non-asian environments find it useful but almost nobody should turn it on
             // unless they really know what they're doing.
             iTermWarningSelection selection =
-                [iTermWarning showWarningWithTitle:@"You probably don’t want to turn this on. "
-                                                   @"It will confuse interactive programs. "
-                                                   @"You might want it if you work mostly with "
-                                                   @"East Asian text combined with legacy or "
-                                                   @"mathematical character sets. "
-                                                   @"Are you sure you want this?"
-                                           actions:@[ @"Enable", @"Cancel" ]
+                [iTermWarning showWarningWithTitle:ITLocalize(@"ProfilesTextPreferencesViewController_Alert_YouProbablyDonTWantToTurn",
+                                                              @"You probably don’t want to turn this on. "
+                                                              @"It will confuse interactive programs. "
+                                                              @"You might want it if you work mostly with "
+                                                              @"East Asian text combined with legacy or "
+                                                              @"mathematical character sets. "
+                                                              @"Are you sure you want this?",
+                                                              @"Alert title in awakeFromNib")
+                                           actions:@[ ITLocalize(@"ProfilesTextPreferencesViewController_Action_Enable", @"Enable", @"Action title in awakeFromNib"),
+                                                      ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in awakeFromNib") ]
                                         identifier:kWarnAboutAmbiguousWidth
                                        silenceable:kiTermWarningTypePermanentlySilenceable
                                             window:weakSelf.view.window];

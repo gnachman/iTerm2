@@ -141,9 +141,9 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *abbreviateLocalhostKnob =
-    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"localhost replacement"
-                                                      type:iTermStatusBarComponentKnobTypeText
-                                               placeholder:@"Enter replacement text for localhost"
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:ITLocalize(@"StatusBarVariableBaseComponent_StatusBarKnob_LocalhostReplacement", @"localhost replacement", @"Status bar knob")
+                                                       type:iTermStatusBarComponentKnobTypeText
+                                                placeholder:ITLocalize(@"StatusBarVariableBaseComponent_StatusBarKnobPlaceholder_EnterReplacementTextForLocalhost", @"Enter replacement text for localhost", @"Status bar knob placeholder")
                                               defaultValue:@""
                                                        key:iTermStatusBarHostnameComponentAbbreviateLocalhost];
     return [@[ abbreviateLocalhostKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
@@ -154,11 +154,11 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Host Name";
+    return ITLocalize(@"StatusBarVariableBaseComponent_Facing_HostName", @"Host Name", @"Text shown in statusBarComponentShortDescription: Host Name");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Current host name. Requires shell integration.";
+    return ITLocalize(@"StatusBarVariableBaseComponent_Facing_CurrentHostNameRequiresShellIntegration", @"Current host name. Requires shell integration.", @"Text shown in statusBarComponentDetailedDescription: Current host name. Requires shell integration.");
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
@@ -219,11 +219,11 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"User Name";
+    return ITLocalize(@"StatusBarVariableBaseComponent_Facing_UserName", @"User Name", @"Text shown in statusBarComponentShortDescription: User Name");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Current user name. Requires shell integration.";
+    return ITLocalize(@"StatusBarVariableBaseComponent_Facing_CurrentUserNameRequiresShellIntegration", @"Current user name. Requires shell integration.", @"Text shown in statusBarComponentDetailedDescription: Current user name. Requires shell integration.");
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
@@ -285,11 +285,11 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Current Directory";
+    return ITLocalize(@"StatusBarVariableBaseComponent_Facing_CurrentDirectory", @"Current Directory", @"Text shown in statusBarComponentShortDescription: Current Directory");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Current directory. Best with shell integration.";
+    return ITLocalize(@"StatusBarVariableBaseComponent_Facing_CurrentDirectoryBestWithShellIntegration", @"Current directory. Best with shell integration.", @"Text shown in statusBarComponentDetailedDescription: Current directory. Best with shell integration.");
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
@@ -376,35 +376,35 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
     if (currentPath.length) {
         [menu addItem:[NSMenuItem separatorItem]];
 
-        NSMenuItem *copyPath = [[NSMenuItem alloc] initWithTitle:@"Copy Path"
-                                                          action:@selector(copyCurrentPath:)
-                                                   keyEquivalent:@""];
+        NSMenuItem *copyPath = [[NSMenuItem alloc] initWithTitle:ITLocalize(@"StatusBarVariableBaseComponent_StatusBarContextMenu_CopyPath", @"Copy Path", @"Status bar context menu")
+                                                           action:@selector(copyCurrentPath:)
+                                                    keyEquivalent:@""];
         copyPath.target = self;
         [menu addItem:copyPath];
 
-        NSMenuItem *copyBasename = [[NSMenuItem alloc] initWithTitle:@"Copy Folder Name"
-                                                              action:@selector(copyCurrentBasename:)
-                                                       keyEquivalent:@""];
+        NSMenuItem *copyBasename = [[NSMenuItem alloc] initWithTitle:ITLocalize(@"StatusBarVariableBaseComponent_StatusBarContextMenu_CopyFolderName", @"Copy Folder Name", @"Status bar context menu")
+                                                               action:@selector(copyCurrentBasename:)
+                                                        keyEquivalent:@""];
         copyBasename.target = self;
         [menu addItem:copyBasename];
 
-        NSMenuItem *openInFinder = [[NSMenuItem alloc] initWithTitle:@"Reveal in Finder"
-                                                              action:@selector(openCurrentPathInFinder:)
-                                                       keyEquivalent:@""];
+        NSMenuItem *openInFinder = [[NSMenuItem alloc] initWithTitle:ITLocalize(@"StatusBarVariableBaseComponent_StatusBarContextMenu_RevealInFinder", @"Reveal in Finder", @"Status bar context menu")
+                                                               action:@selector(openCurrentPathInFinder:)
+                                                        keyEquivalent:@""];
         openInFinder.target = self;
         [menu addItem:openInFinder];
 
         [menu addItem:[NSMenuItem separatorItem]];
 
-        NSMenuItem *openInNewWindow = [[NSMenuItem alloc] initWithTitle:@"New Session Here in New Window"
+        NSMenuItem *openInNewWindow = [[NSMenuItem alloc] initWithTitle:ITLocalize(@"StatusBarVariableBaseComponent_StatusBarContextMenu_NewSessionHereInNewWindow", @"New Session Here in New Window", @"Status bar context menu")
                                                                  action:@selector(openCurrentPathInNewWindow:)
                                                           keyEquivalent:@""];
         openInNewWindow.target = self;
         [menu addItem:openInNewWindow];
 
-        NSMenuItem *openInNewTab = [[NSMenuItem alloc] initWithTitle:@"New Session Here in New Tab"
-                                                              action:@selector(openCurrentPathInNewTab:)
-                                                       keyEquivalent:@""];
+        NSMenuItem *openInNewTab = [[NSMenuItem alloc] initWithTitle:ITLocalize(@"StatusBarVariableBaseComponent_StatusBarContextMenu_NewSessionHereInNewTab", @"New Session Here in New Tab", @"Status bar context menu")
+                                                               action:@selector(openCurrentPathInNewTab:)
+                                                        keyEquivalent:@""];
         openInNewTab.target = self;
         [menu addItem:openInNewTab];
     }

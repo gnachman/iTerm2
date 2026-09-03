@@ -1607,9 +1607,9 @@ extension iTermBrowserManager: WKUIDelegate {
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
         // Handle JavaScript alerts
         let alert = NSAlert()
-        alert.messageText = "Web Page Alert"
+        alert.messageText = String(localized: "BrowserManager_WebPageAlert", defaultValue: "Web Page Alert", comment: "Alert title in webView")
         alert.informativeText = message
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: String(localized: "COMMON_OK", defaultValue: "OK", comment: "Button title in webView"))
         alert.runModal()
         completionHandler()
     }
@@ -1617,10 +1617,10 @@ extension iTermBrowserManager: WKUIDelegate {
     func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
         // Handle JavaScript confirmations
         let alert = NSAlert()
-        alert.messageText = "Web Page Confirmation"
+        alert.messageText = String(localized: "BrowserManager_WebPageConfirmation", defaultValue: "Web Page Confirmation", comment: "Alert title in webView")
         alert.informativeText = message
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: String(localized: "COMMON_OK", defaultValue: "OK", comment: "Button title in webView"))
+        alert.addButton(withTitle: String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Button title in webView"))
         let response = alert.runModal()
         completionHandler(response == .alertFirstButtonReturn)
     }
@@ -2086,12 +2086,12 @@ extension iTermBrowserManager: iTermBrowserAudioHandlerDelegate {
                     case denyAlways
                 }
                 let announcement = BrowserAnnouncement(
-                    message: "Audio was muted. Allow playback by \(origin)?",
+                    message: String(format: String(localized: "BrowserManager_AudioWasMutedAllowPlaybackBy_FORMAT", defaultValue: "Audio was muted. Allow playback by %1$@?", comment: "Formatted user-facing text in browserAudioHandlerDidStartPlaying"), origin),
                     style: .kiTermAnnouncementViewStyleQuestion,
-                    options: [.init(title: "Allow _Once", identifier: Action.allowOnce),
-                              .init(title: "Allow _Always", identifier: Action.allowAlways),
-                              .init(title: "_Deny Once", identifier: Action.denyOnce),
-                              .init(title: "De_ny Always", identifier: Action.denyAlways) ],
+                    options: [.init(title: String(localized: "BrowserManager_AllowOnce", defaultValue: "Allow _Once", comment: "Title in browserAudioHandlerDidStartPlaying"), identifier: Action.allowOnce),
+                              .init(title: String(localized: "BrowserManager_AllowAlways", defaultValue: "Allow _Always", comment: "Title in browserAudioHandlerDidStartPlaying"), identifier: Action.allowAlways),
+                              .init(title: String(localized: "BrowserManager_DenyOnce", defaultValue: "_Deny Once", comment: "Title in browserAudioHandlerDidStartPlaying"), identifier: Action.denyOnce),
+                              .init(title: String(localized: "BrowserManager_DeNyAlways", defaultValue: "De_ny Always", comment: "Title in browserAudioHandlerDidStartPlaying"), identifier: Action.denyAlways) ],
                     identifier: "NoSyncMuteAudio_\(origin)")
                 switch await delegate?.browserManager(self, announce: announcement) {
                 case .allowOnce:

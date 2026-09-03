@@ -51,7 +51,7 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
         _openButton = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
         _openButton.bezelStyle = NSBezelStyleRegularSquare;
         _openButton.bordered = NO;
-        _openButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPlay) accessibilityDescription:@"Open Profile"];
+        _openButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPlay) accessibilityDescription:ITLocalize(@"TOOL_PROFILES_OPEN_PROFILE", @"Open Profile", @"Button that opens the selected profile")];
         _openButton.imageScaling = NSImageScaleProportionallyUpOrDown;
         _openButton.imagePosition = NSImageOnly;
         [_openButton setTarget:self];
@@ -64,16 +64,16 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
         popup_ = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kPopupHeight, frame.size.width - _openButton.frame.size.width - kInnerMargin, kPopupHeight)];
         [[popup_ cell] setControlSize:NSControlSizeSmall];
         [[popup_ cell] setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
-        [[popup_ menu] addItemWithTitle:@"New Tab"
+        [[popup_ menu] addItemWithTitle:ITLocalize(@"COMMON_NEW_TAB", @"New Tab", @"Toolbelt profiles")
                                  action:@selector(toolProfilesNewTab:)
                           keyEquivalent:@""];
-        [[popup_ menu] addItemWithTitle:@"New Window"
+        [[popup_ menu] addItemWithTitle:ITLocalize(@"COMMON_NEW_WINDOW", @"New Window", @"Toolbelt profiles")
                                  action:@selector(toolProfilesNewWindow:)
                           keyEquivalent:@""];
-        [[popup_ menu] addItemWithTitle:@"New Horizontal Split"
+        [[popup_ menu] addItemWithTitle:ITLocalize(@"ToolProfiles_ToolbeltProfiles_NewHorizontalSplit", @"New Horizontal Split", @"Toolbelt profiles")
                                  action:@selector(toolProfilesNewHorizontalSplit:)
                           keyEquivalent:@""];
-        [[popup_ menu] addItemWithTitle:@"New Vertical Split"
+        [[popup_ menu] addItemWithTitle:ITLocalize(@"ToolProfiles_ToolbeltProfiles_NewVerticalSplit", @"New Vertical Split", @"Toolbelt profiles")
                                  action:@selector(toolProfilesNewVerticalSplit:)
                           keyEquivalent:@""];
         for (NSMenuItem *i in [[popup_ menu] itemArray]) {

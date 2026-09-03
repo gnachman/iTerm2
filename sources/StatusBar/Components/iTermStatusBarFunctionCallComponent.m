@@ -26,32 +26,32 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *labelKnob =
-        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Label:"
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:ITLocalize(@"StatusBarFunctionCallComponent_StatusBarKnob_Label", @"Label:", @"Status bar knob")
                                                           type:iTermStatusBarComponentKnobTypeText
-                                                   placeholder:@"Button Label"
+                                                   placeholder:ITLocalize(@"StatusBarFunctionCallComponent_StatusBarKnobPlaceholder_ButtonLabel", @"Button Label", @"Status bar knob placeholder")
                                                   defaultValue:nil
                                                            key:iTermStatusBarLabelKey];
     iTermStatusBarComponentKnob *invocationKnob =
-        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Function call:"
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:ITLocalize(@"StatusBarFunctionCallComponent_StatusBarKnob_FunctionCall", @"Function call:", @"Status bar knob")
                                                           type:iTermStatusBarComponentKnobTypeInvocation
                                                    placeholder:@"foo(bar: \"baz\")"
                                                   defaultValue:nil
                                                            key:iTermStatusBarFunctionInvocationKey];
     iTermStatusBarComponentKnob *timeoutKnob =
-        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Timeout (seconds):"
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:ITLocalize(@"StatusBarFunctionCallComponent_StatusBarKnob_TimeoutSeconds", @"Timeout (seconds):", @"Status bar knob")
                                                           type:iTermStatusBarComponentKnobTypeDouble
                                                    placeholder:nil
                                                   defaultValue:self.class.statusBarComponentDefaultKnobs[iTermStatusBarTimeoutKey]
                                                            key:iTermStatusBarTimeoutKey];
     iTermStatusBarComponentKnob *backgroundColorKnob =
-        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Background Color:"
-                                                          type:iTermStatusBarComponentKnobTypeColor
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:ITLocalize(@"StatusBarFunctionCallComponent_StatusBarKnob_BackgroundColor", @"Background Color:", @"Status bar knob")
+                                                           type:iTermStatusBarComponentKnobTypeColor
                                                    placeholder:nil
                                                   defaultValue:nil
                                                            key:iTermStatusBarSharedBackgroundColorKey];
     iTermStatusBarComponentKnob *textColorKnob =
-        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Text Color:"
-                                                          type:iTermStatusBarComponentKnobTypeColor
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:ITLocalize(@"StatusBarFunctionCallComponent_StatusBarKnob_TextColor", @"Text Color:", @"Status bar knob")
+                                                           type:iTermStatusBarComponentKnobTypeColor
                                                    placeholder:nil
                                                   defaultValue:nil
                                                            key:iTermStatusBarSharedTextColorKey];
@@ -142,7 +142,7 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Call Script Function";
+    return ITLocalize(@"StatusBarFunctionCallComponent_Facing_CallScriptFunction", @"Call Script Function", @"Text shown in statusBarComponentShortDescription: Call Script Function");
 }
 
 - (BOOL)statusBarComponentCanStretch {
@@ -150,7 +150,7 @@ static NSString *const iTermStatusBarTimeoutKey = @"timeout";
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Adds a button that invokes a script function with a user-provided invocation.";
+    return ITLocalize(@"StatusBarFunctionCallComponent_Facing_AddsAButtonThatInvokesAScript", @"Adds a button that invokes a script function with a user-provided invocation.", @"Text shown in statusBarComponentDetailedDescription: Adds a button that invokes a script function with a user-provided invocation.");
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor

@@ -97,51 +97,51 @@ const CGFloat sideMarginWidth = 40;
 
             case KEY_ACTION_COMPOSE:
                 _parameterHidden = NO;
-                _parameterPlaceholder = @"Text for composer";
+                _parameterPlaceholder = ITLocalize(@"EditKeyActionWindowController_Placeholder_TextForComposer", @"Text for composer",@"Placeholder text in initWithTag:(int)tag");
                 break;
 
             case KEY_ACTION_HEX_CODE:
                 _parameterHidden = NO;
-                _parameterPlaceholder = @"ex: 0x7f 0x20";
+                _parameterPlaceholder = ITLocalize(@"EditKeyActionWindowController_Placeholder_Ex0x7f0x20", @"ex: 0x7f 0x20",@"Placeholder text in initWithTag:(int)tag");
                 _applyHidden = NO;
                 break;
 
             case KEY_ACTION_VIM_TEXT:
             case KEY_ACTION_VIM_TEXT_NO_BROADCAST:
                 _parameterHidden = NO;
-                _helpString = @"Special characters are:\n* \\<1-to-3-digit octal>\n* \\x<1 or 2 digit hex>\n* \\u<4 digit hex>\n* \\b for backspace\n* \\e for esc\n* \\f for formfeed\n* \\n for newline and \\r for return\n* \\t for tab\n* \\\\ and \\\" for literal \\ and \"\n* <C-x> for control key\n* <M-x> for meta key.";
-                _parameterPlaceholder = @"Enter value to send. Click help button for special characters.";
+                _helpString = ITLocalize(@"EditKeyActionWindowController_Facing_SpecialCharactersAreN1To3", @"Special characters are:\n* \\<1-to-3-digit octal>\n* \\x<1 or 2 digit hex>\n* \\u<4 digit hex>\n* \\b for backspace\n* \\e for esc\n* \\f for formfeed\n* \\n for newline and \\r for return\n* \\t for tab\n* \\\\ and \\\" for literal \\ and \"\n* <C-x> for control key\n* <M-x> for meta key.", @"Help text listing special characters supported by key-action parameters");
+                _parameterPlaceholder = ITLocalize(@"EditKeyActionWindowController_Placeholder_EnterValueToSendClickHelpButton", @"Enter value to send. Click help button for special characters.",@"Placeholder text in initWithTag:(int)tag");
                 _applyHidden = NO;
                 break;
 
             case KEY_ACTION_TEXT:
                 _parameterHidden = NO;
-                _parameterPlaceholder = @"Enter value to send";
+                _parameterPlaceholder = ITLocalize(@"EditKeyActionWindowController_Placeholder_EnterValueToSend", @"Enter value to send",@"Placeholder text in initWithTag:(int)tag");
                 _applyHidden = NO;
                 break;
 
             case KEY_ACTION_RUN_COPROCESS:
                 _parameterHidden = NO;
-                _parameterPlaceholder = @"Enter command to run";
+                _parameterPlaceholder = ITLocalize(@"EditKeyActionWindowController_Placeholder_EnterCommandToRun", @"Enter command to run",@"Placeholder text in initWithTag:(int)tag");
                 _applyHidden = NO;
                 break;
 
             case KEY_ACTION_SEND_TMUX_COMMAND:
                 _parameterHidden = NO;
-                _parameterPlaceholder = @"Enter tmux command";
+                _parameterPlaceholder = ITLocalize(@"EditKeyActionWindowController_Placeholder_EnterTmuxCommand", @"Enter tmux command",@"Placeholder text in initWithTag:(int)tag");
                 break;
 
             case KEY_ACTION_SELECT_MENU_ITEM:
-                _parameterPlaceholder = @"Enter name of menu item";
+                _parameterPlaceholder = ITLocalize(@"EditKeyActionWindowController_Placeholder_EnterNameOfMenuItem", @"Enter name of menu item",@"Placeholder text in initWithTag:(int)tag");
                 _menuToSelectPopupHidden = NO;
                 _parameterValue = @"";
                 break;
 
             case KEY_ACTION_ESCAPE_SEQUENCE:
                 _parameterHidden = NO;
-                _parameterPlaceholder = @"characters to send";
+                _parameterPlaceholder = ITLocalize(@"EditKeyActionWindowController_Placeholder_CharactersToSend", @"characters to send",@"Placeholder text in initWithTag:(int)tag");
                 _parameterLabelHidden = NO;
-                _parameterLabel = @"Esc+";
+                _parameterLabel = ITLocalize(@"EditKeyActionWindowController_Esc", @"Esc+", @"Label text in initWithTag:");
                 _applyHidden = NO;
                 break;
 
@@ -171,57 +171,57 @@ const CGFloat sideMarginWidth = 40;
             case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
                 _shortcutFieldDisableKeyRemapping = YES;
                 _parameterValue = @"";
-                _helpString = @"This action lets you exempt a keystroke from modifier remapping. For example, if you remap ⌘ to ⌥ but you want ⌘-Tab to work as though ⌘ were unmapped just for that keystroke, you would use this action and set the keyboard shortcut to ⌘-Tab";
+                _helpString = ITLocalize(@"EditKeyActionWindowController_Facing_ThisActionLetsYouExemptAKeystroke", @"This action lets you exempt a keystroke from modifier remapping. For example, if you remap ⌘ to ⌥ but you want ⌘-Tab to work as though ⌘ were unmapped just for that keystroke, you would use this action and set the keyboard shortcut to ⌘-Tab", @"Text shown in initWithTag");
                 _parameterValue = @"";
                 break;
 
             case KEY_ACTION_REMAP_LOCALLY:
                 _shortcutFieldDisableKeyRemapping = YES;
                 _parameterValue = @"";
-                _helpString = @"This action applies modifier remapping but prevents other programs from seeing the keystroke. For example, if you've swapped ⌘ and ^ and want physical ^-tab to switch tabs in iTerm2 instead of triggering the app switcher: bind ^-tab to this action. The system won't see the remapped ⌘-tab (so no app switcher), but iTerm2 receives it and can switch tabs.";
+                _helpString = ITLocalize(@"EditKeyActionWindowController_Facing_ThisActionAppliesModifierRemappingButPrevents", @"This action applies modifier remapping but prevents other programs from seeing the keystroke. For example, if you've swapped ⌘ and ^ and want physical ^-tab to switch tabs in iTerm2 instead of triggering the app switcher: bind ^-tab to this action. The system won't see the remapped ⌘-tab (so no app switcher), but iTerm2 receives it and can switch tabs.", @"Text shown in initWithTag");
                 _parameterValue = @"";
                 break;
 
             case KEY_ACTION_BYPASS:
-                _helpString = @"Prevents the keystroke from being sent to the terminal while allowing macOS to handle it normally. For example, if F1 triggers a  macOS Shortcut, binding F1 to Bypass Terminal stops it from sending a control sequence to the terminal but still lets the system shortcut work.";
+                _helpString = ITLocalize(@"EditKeyActionWindowController_Facing_PreventsTheKeystrokeFromBeingSentTo", @"Prevents the keystroke from being sent to the terminal while allowing macOS to handle it normally. For example, if F1 triggers a  macOS Shortcut, binding F1 to Bypass Terminal stops it from sending a control sequence to the terminal but still lets the system shortcut work.", @"Text shown in initWithTag");
                 break;
 
             case KEY_ACTION_IGNORE:
-                _helpString = @"Prevents the keystroke from having any effect within iTerm2. Modifier remapping remains unaffected.";
+                _helpString = ITLocalize(@"EditKeyActionWindowController_Facing_PreventsTheKeystrokeFromHavingAnyEffect", @"Prevents the keystroke from having any effect within iTerm2. Modifier remapping remains unaffected.", @"Text shown in initWithTag:: Prevents the keystroke from having any effect within iTerm2. Modifier remapping remains unaffected.");
                 break;
 
             case KEY_ACTION_NEXT_MRU_TAB:
                 _parameterValue = @"";
-                _helpString = @"Switches tabs in most-recently-used order, like ⌘-Tab in macOS. Hold a modifier and tap repeatedly to walk back through tab history; release the modifier to commit your selection. A single tap with no modifier held jumps to the previously-selected tab, so binding this to a plain key acts as a toggle between the two most recent tabs.";
+                _helpString = ITLocalize(@"EditKeyActionWindowController_Facing_SwitchesTabsInMostRecentlyUsedOrder", @"Switches tabs in most-recently-used order, like ⌘-Tab in macOS. Hold a modifier and tap repeatedly to walk back through tab history; release the modifier to commit your selection. A single tap with no modifier held jumps to the previously-selected tab, so binding this to a plain key acts as a toggle between the two most recent tabs.", @"Text shown in initWithTag");
                 break;
 
             case KEY_ACTION_PREVIOUS_MRU_TAB:
                 _parameterValue = @"";
-                _helpString = @"Switches tabs in reverse most-recently-used order. Hold a modifier and tap repeatedly to walk forward through tab history (oldest first); release the modifier to commit your selection. A single tap with no modifier held jumps to the least-recently-used tab.";
+                _helpString = ITLocalize(@"EditKeyActionWindowController_Facing_SwitchesTabsInReverseMostRecentlyUsed", @"Switches tabs in reverse most-recently-used order. Hold a modifier and tap repeatedly to walk forward through tab history (oldest first); release the modifier to commit your selection. A single tap with no modifier held jumps to the least-recently-used tab.", @"Text shown in initWithTag");
                 break;
 
             case KEY_ACTION_FIND_REGEX:
                 _parameterHidden = NO;
-                _parameterPlaceholder = @"Regular Expression";
+                _parameterPlaceholder = ITLocalize(@"EditKeyActionWindowController_Placeholder_RegularExpression", @"Regular Expression",@"Placeholder text in initWithTag:(int)tag");
                 _applyHidden = NO;
                 break;
 
             case KEY_ACTION_COPY_MODE:
                 _parameterHidden = NO;
-                _parameterPlaceholder = @"Copy Mode Commands";
+                _parameterPlaceholder = ITLocalize(@"EditKeyActionWindowController_Placeholder_CopyModeCommands", @"Copy Mode Commands",@"Placeholder text in initWithTag:(int)tag");
                 _applyHidden = NO;
-                _helpString = @"Enter copy mode commands to move cursor, toggle selection, and so on. This key binding enters Copy Mode and then acts as though you had pressed the keys listed here. [See a list of all the commands](https://iterm2.com/documentation-copymode.html). Use vim syntax for control, option, and function keys (e.g., `<C-x>` or `<Up>`.";
+                _helpString = ITLocalize(@"EditKeyActionWindowController_Facing_EnterCopyModeCommandsToMoveCursor", @"Enter copy mode commands to move cursor, toggle selection, and so on. This key binding enters Copy Mode and then acts as though you had pressed the keys listed here. [See a list of all the commands](https://iterm2.com/documentation-copymode.html). Use vim syntax for control, option, and function keys (e.g., `<C-x>` or `<Up>`.", @"Text shown in initWithTag");
                 break;
 
             case KEY_ACTION_TOGGLE_SETTING:
-                _parameterPlaceholder = @"Enter name of menu item";
+                _parameterPlaceholder = ITLocalize(@"EditKeyActionWindowController_Placeholder_EnterNameOfMenuItem", @"Enter name of menu item",@"Placeholder text in initWithTag:(int)tag");
                 _settingToTogglePopupHidden = NO;
                 _parameterValue = @"";
                 break;
 
             case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
                 _parameterHidden = NO;
-                _parameterPlaceholder = @"Function Call";
+                _parameterPlaceholder = ITLocalize(@"EditKeyActionWindowController_Placeholder_FunctionCall", @"Function Call",@"Placeholder text in initWithTag:(int)tag");
                 if (functionCallDelegate) {
                     _parameterDelegate = functionCallDelegate;
                 } else {
@@ -256,7 +256,7 @@ const CGFloat sideMarginWidth = 40;
 
             case KEY_ACTION_COPY_INTERPOLATED_STRING:
                 _parameterHidden = NO;
-                _parameterPlaceholder = @"Enter interpolated string (evaluated in session context)";
+                _parameterPlaceholder = ITLocalize(@"EditKeyActionWindowController_Placeholder_EnterInterpolatedStringEvaluatedInSessionContext", @"Enter interpolated string (evaluated in session context)",@"Placeholder text in initWithTag:(int)tag");
                 if (interpolatedStringDelegate) {
                     _parameterDelegate = interpolatedStringDelegate;
                 } else {
@@ -265,7 +265,7 @@ const CGFloat sideMarginWidth = 40;
                                                                        passthrough:nil
                                                                      functionsOnly:NO];
                 }
-                _helpString = @"You can use this to copy information about the current session to the clipboard. [Learn more about interpolated strings](https://iterm2.com/documentation-scripting-fundamentals.html)";
+                _helpString = ITLocalize(@"EditKeyActionWindowController_Facing_YouCanUseThisToCopyInformation", @"You can use this to copy information about the current session to the clipboard. [Learn more about interpolated strings](https://iterm2.com/documentation-scripting-fundamentals.html)", @"Text shown in initWithTag");
                 break;
 
             case KEY_ACTION_SCROLL_END:
@@ -358,148 +358,148 @@ const CGFloat sideMarginWidth = 40;
 
 - (NSArray<iTermSearchableComboViewGroup *> *)groupsForPrimary:(BOOL)primary {
     NSArray<iTermSearchableComboViewGroup *> *groups = @[
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"General" items:[@[
-            primary ? [[iTermSearchableComboViewItem alloc] initWithLabel:@"Ignore" tag:KEY_ACTION_IGNORE] : [NSNull null],
-            primary ? [[iTermSearchableComboViewItem alloc] initWithLabel:@"Bypass Terminal" tag:KEY_ACTION_BYPASS] : [NSNull null],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Select Menu Item..." tag:KEY_ACTION_SELECT_MENU_ITEM],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_General", @"General", @"Label text in groupsForPrimary:") items:[@[
+            primary ? [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_Ignore", @"Ignore", @"Label text in groupsForPrimary:") tag:KEY_ACTION_IGNORE] : [NSNull null],
+            primary ? [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_BypassTerminal", @"Bypass Terminal", @"Label text in groupsForPrimary:") tag:KEY_ACTION_BYPASS] : [NSNull null],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SelectMenuItem", @"Select Menu Item...", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SELECT_MENU_ITEM],
         ] arrayByRemovingNulls]]
     ];
     if (self.mode == iTermEditKeyActionWindowControllerModeKeyboardShortcut) {
         groups = [groups arrayByAddingObjectsFromArray:[@[
-            primary ? [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Modifier Remapping" items:@[
-                [[iTermSearchableComboViewItem alloc] initWithLabel:@"Do Not Remap Modifiers" tag:KEY_ACTION_DO_NOT_REMAP_MODIFIERS],
-                [[iTermSearchableComboViewItem alloc] initWithLabel:@"Remap Modifiers in iTerm2 Only" tag:KEY_ACTION_REMAP_LOCALLY],
+            primary ? [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_ModifierRemapping", @"Modifier Remapping", @"Label text in groupsForPrimary:") items:@[
+                [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_DoNotRemapModifiers", @"Do Not Remap Modifiers", @"Label text in groupsForPrimary:") tag:KEY_ACTION_DO_NOT_REMAP_MODIFIERS],
+                [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_RemapModifiersInITerm2Only", @"Remap Modifiers in iTerm2 Only", @"Label text in groupsForPrimary:") tag:KEY_ACTION_REMAP_LOCALLY],
             ]] : [NSNull null],
-            [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Recent Tabs" items:@[
-                [[iTermSearchableComboViewItem alloc] initWithLabel:@"Cycle Tabs Forward" tag:KEY_ACTION_NEXT_MRU_TAB],
-                [[iTermSearchableComboViewItem alloc] initWithLabel:@"Cycle Tabs Backward" tag:KEY_ACTION_PREVIOUS_MRU_TAB],
+            [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_RecentTabs", @"Recent Tabs", @"Label text in groupsForPrimary:") items:@[
+                [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_CycleTabsForward", @"Cycle Tabs Forward", @"Label text in groupsForPrimary:") tag:KEY_ACTION_NEXT_MRU_TAB],
+                [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_CycleTabsBackward", @"Cycle Tabs Backward", @"Label text in groupsForPrimary:") tag:KEY_ACTION_PREVIOUS_MRU_TAB],
             ]],
         ] arrayByRemovingNulls]];
     }
 
     const BOOL hideTerminalOnlyItems = (_profileType & ProfileTypeTerminal) == 0;
     groups = [groups arrayByAddingObjectsFromArray:[@[
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Miscellaneous" items:[@[
-            hideTerminalOnlyItems ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Run Coprocess" tag:KEY_ACTION_RUN_COPROCESS],
-            hideTerminalOnlyItems ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Start Instant Replay" tag:KEY_ACTION_IR_BACKWARD],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Undo" tag:KEY_ACTION_UNDO],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send tmux Command" tag:KEY_ACTION_SEND_TMUX_COMMAND],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Alert on Next Mark" tag:KEY_ACTION_ALERT_ON_NEXT_MARK],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_Miscellaneous", @"Miscellaneous", @"Label text in groupsForPrimary:") items:[@[
+            hideTerminalOnlyItems ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_RunCoprocess", @"Run Coprocess", @"Label text in groupsForPrimary:") tag:KEY_ACTION_RUN_COPROCESS],
+            hideTerminalOnlyItems ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_StartInstantReplay", @"Start Instant Replay", @"Label text in groupsForPrimary:") tag:KEY_ACTION_IR_BACKWARD],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_Undo", @"Undo", @"Label text in groupsForPrimary:") tag:KEY_ACTION_UNDO],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SendTmuxCommand", @"Send tmux Command", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SEND_TMUX_COMMAND],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_AlertOnNextMark", @"Alert on Next Mark", @"Label text in groupsForPrimary:") tag:KEY_ACTION_ALERT_ON_NEXT_MARK],
         ] arrayByRemovingNulls]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"New Tab or Window" items:@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"New Window with Profile" tag:KEY_ACTION_NEW_WINDOW_WITH_PROFILE],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"New Tab with Profile" tag:KEY_ACTION_NEW_TAB_WITH_PROFILE],
-        [[iTermSearchableComboViewItem alloc] initWithLabel:@"Duplicate Tab" tag:KEY_ACTION_DUPLICATE_TAB],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_NewTabOrWindow", @"New Tab or Window", @"Label text in groupsForPrimary:") items:@[
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_NewWindowWithProfile", @"New Window with Profile", @"Label text in groupsForPrimary:") tag:KEY_ACTION_NEW_WINDOW_WITH_PROFILE],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_NewTabWithProfile", @"New Tab with Profile", @"Label text in groupsForPrimary:") tag:KEY_ACTION_NEW_TAB_WITH_PROFILE],
+        [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_DuplicateTab", @"Duplicate Tab", @"Label text in groupsForPrimary:") tag:KEY_ACTION_DUPLICATE_TAB],
         ]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Split" items:@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Split Horizontally with Profile" tag:KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Split Vertically with Profile" tag:KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_Split", @"Split", @"Label text in groupsForPrimary:") items:@[
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SplitHorizontallyWithProfile", @"Split Horizontally with Profile", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SplitVerticallyWithProfile", @"Split Vertically with Profile", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE],
         ]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Profile" items:[@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Change Profile" tag:KEY_ACTION_SET_PROFILE],
-            hideTerminalOnlyItems ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Load Color Preset" tag:KEY_ACTION_LOAD_COLOR_PRESET],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_Profile", @"Profile", @"Label text in groupsForPrimary:") items:[@[
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_ChangeProfile", @"Change Profile", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SET_PROFILE],
+            hideTerminalOnlyItems ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_LoadColorPreset", @"Load Color Preset", @"Label text in groupsForPrimary:") tag:KEY_ACTION_LOAD_COLOR_PRESET],
         ] arrayByRemovingNulls]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Navigate Tabs" items:@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Next Tab" tag:KEY_ACTION_NEXT_SESSION],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Previous Tab" tag:KEY_ACTION_PREVIOUS_SESSION],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_NavigateTabs", @"Navigate Tabs", @"Label text in groupsForPrimary:") items:@[
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_NextTab", @"Next Tab", @"Label text in groupsForPrimary:") tag:KEY_ACTION_NEXT_SESSION],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_PreviousTab", @"Previous Tab", @"Label text in groupsForPrimary:") tag:KEY_ACTION_PREVIOUS_SESSION],
         ]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Reorder Tabs" items:@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Move Tab Left" tag:KEY_ACTION_MOVE_TAB_LEFT],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Move Tab Right" tag:KEY_ACTION_MOVE_TAB_RIGHT],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_ReorderTabs", @"Reorder Tabs", @"Label text in groupsForPrimary:") items:@[
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_MoveTabLeft", @"Move Tab Left", @"Label text in groupsForPrimary:") tag:KEY_ACTION_MOVE_TAB_LEFT],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_MoveTabRight", @"Move Tab Right", @"Label text in groupsForPrimary:") tag:KEY_ACTION_MOVE_TAB_RIGHT],
         ]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Navigate Windows" items:@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Next Window" tag:KEY_ACTION_NEXT_WINDOW],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Previous Window" tag:KEY_ACTION_PREVIOUS_WINDOW],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_NavigateWindows", @"Navigate Windows", @"Label text in groupsForPrimary:") items:@[
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_NextWindow", @"Next Window", @"Label text in groupsForPrimary:") tag:KEY_ACTION_NEXT_WINDOW],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_PreviousWindow", @"Previous Window", @"Label text in groupsForPrimary:") tag:KEY_ACTION_PREVIOUS_WINDOW],
         ]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Navigate Panes" items:@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Next Pane" tag:KEY_ACTION_NEXT_PANE],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Previous Pane" tag:KEY_ACTION_PREVIOUS_PANE],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Select Split Pane Above" tag:KEY_ACTION_SELECT_PANE_ABOVE],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Select Split Pane Below" tag:KEY_ACTION_SELECT_PANE_BELOW],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Select Split Pane On Left" tag:KEY_ACTION_SELECT_PANE_LEFT],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Select Split Pane On Right" tag:KEY_ACTION_SELECT_PANE_RIGHT],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_NavigatePanes", @"Navigate Panes", @"Label text in groupsForPrimary:") items:@[
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_NextPane", @"Next Pane", @"Label text in groupsForPrimary:") tag:KEY_ACTION_NEXT_PANE],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_PreviousPane", @"Previous Pane", @"Label text in groupsForPrimary:") tag:KEY_ACTION_PREVIOUS_PANE],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SelectSplitPaneAbove", @"Select Split Pane Above", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SELECT_PANE_ABOVE],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SelectSplitPaneBelow", @"Select Split Pane Below", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SELECT_PANE_BELOW],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SelectSplitPaneOnLeft", @"Select Split Pane On Left", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SELECT_PANE_LEFT],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SelectSplitPaneOnRight", @"Select Split Pane On Right", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SELECT_PANE_RIGHT],
         ]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Resize Pane" items:@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Decrease Height" tag:KEY_ACTION_DECREASE_HEIGHT],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Increase Height" tag:KEY_ACTION_INCREASE_HEIGHT],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Decrease Width" tag:KEY_ACTION_DECREASE_WIDTH],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Increase Width" tag:KEY_ACTION_INCREASE_WIDTH],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_ResizePane", @"Resize Pane", @"Label text in groupsForPrimary:") items:@[
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_DecreaseHeight", @"Decrease Height", @"Label text in groupsForPrimary:") tag:KEY_ACTION_DECREASE_HEIGHT],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_IncreaseHeight", @"Increase Height", @"Label text in groupsForPrimary:") tag:KEY_ACTION_INCREASE_HEIGHT],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_DecreaseWidth", @"Decrease Width", @"Label text in groupsForPrimary:") tag:KEY_ACTION_DECREASE_WIDTH],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_IncreaseWidth", @"Increase Width", @"Label text in groupsForPrimary:") tag:KEY_ACTION_INCREASE_WIDTH],
         ]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Scroll" items:@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Scroll to End" tag:KEY_ACTION_SCROLL_END],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Scroll to Top" tag:KEY_ACTION_SCROLL_HOME],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Scroll One Line Down" tag:KEY_ACTION_SCROLL_LINE_DOWN],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Scroll One Line Up" tag:KEY_ACTION_SCROLL_LINE_UP],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Scroll One Page Down" tag:KEY_ACTION_SCROLL_PAGE_DOWN],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Scroll One Page Up" tag:KEY_ACTION_SCROLL_PAGE_UP],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_Scroll", @"Scroll", @"Label text in groupsForPrimary:") items:@[
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_ScrollToEnd", @"Scroll to End", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SCROLL_END],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_ScrollToTop", @"Scroll to Top", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SCROLL_HOME],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_ScrollOneLineDown", @"Scroll One Line Down", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SCROLL_LINE_DOWN],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_ScrollOneLineUp", @"Scroll One Line Up", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SCROLL_LINE_UP],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_ScrollOnePageDown", @"Scroll One Page Down", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SCROLL_PAGE_DOWN],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_ScrollOnePageUp", @"Scroll One Page Up", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SCROLL_PAGE_UP],
         ]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Split Panes" items:@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Swap With Split Pane Above" tag:KEY_ACTION_SWAP_PANE_ABOVE],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Swap With Split Pane Below" tag:KEY_ACTION_SWAP_PANE_BELOW],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Swap With Split Pane on Left" tag:KEY_ACTION_SWAP_PANE_LEFT],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Swap With Split Pane on Right" tag:KEY_ACTION_SWAP_PANE_RIGHT],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Swap With Next Pane" tag:KEY_ACTION_SWAP_WITH_NEXT_PANE],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Swap With Previous Pane" tag:KEY_ACTION_SWAP_WITH_PREVIOUS_PANE],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Move Session to Split Pane" tag:KEY_ACTION_MOVE_TO_SPLIT_PANE],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SplitPanes", @"Split Panes", @"Label text in groupsForPrimary:") items:@[
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SwapWithSplitPaneAbove", @"Swap With Split Pane Above", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SWAP_PANE_ABOVE],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SwapWithSplitPaneBelow", @"Swap With Split Pane Below", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SWAP_PANE_BELOW],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SwapWithSplitPaneOnLeft", @"Swap With Split Pane on Left", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SWAP_PANE_LEFT],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SwapWithSplitPaneOnRight", @"Swap With Split Pane on Right", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SWAP_PANE_RIGHT],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SwapWithNextPane", @"Swap With Next Pane", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SWAP_WITH_NEXT_PANE],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SwapWithPreviousPane", @"Swap With Previous Pane", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SWAP_WITH_PREVIOUS_PANE],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_MoveSessionToSplitPane", @"Move Session to Split Pane", @"Label text in groupsForPrimary:") tag:KEY_ACTION_MOVE_TO_SPLIT_PANE],
         ]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Send Keystrokes" items:[@[
-            hideTerminalOnlyItems ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send ^H Backspace" tag:KEY_ACTION_SEND_C_H_BACKSPACE],
-            hideTerminalOnlyItems ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send ^? Backspace" tag:KEY_ACTION_SEND_C_QM_BACKSPACE],
-            hideTerminalOnlyItems ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Escape Sequence" tag:KEY_ACTION_ESCAPE_SEQUENCE],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Hex Code" tag:KEY_ACTION_HEX_CODE],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Text" tag:KEY_ACTION_TEXT],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Text with “vim” Special Chars" tag:KEY_ACTION_VIM_TEXT],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Text without Broadcasting" tag:KEY_ACTION_VIM_TEXT_NO_BROADCAST],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send Snippet" tag:KEY_ACTION_SEND_SNIPPET],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Compose…" tag:KEY_ACTION_COMPOSE],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SendKeystrokes", @"Send Keystrokes", @"Label text in groupsForPrimary:") items:[@[
+            hideTerminalOnlyItems ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SendHBackspace", @"Send ^H Backspace", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SEND_C_H_BACKSPACE],
+            hideTerminalOnlyItems ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SendBackspace", @"Send ^? Backspace", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SEND_C_QM_BACKSPACE],
+            hideTerminalOnlyItems ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SendEscapeSequence", @"Send Escape Sequence", @"Label text in groupsForPrimary:") tag:KEY_ACTION_ESCAPE_SEQUENCE],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SendHexCode", @"Send Hex Code", @"Label text in groupsForPrimary:") tag:KEY_ACTION_HEX_CODE],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SendText", @"Send Text", @"Label text in groupsForPrimary:") tag:KEY_ACTION_TEXT],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SendTextWithVimSpecialChars", @"Send Text with “vim” Special Chars", @"Label text in groupsForPrimary:") tag:KEY_ACTION_VIM_TEXT],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SendTextWithoutBroadcasting", @"Send Text without Broadcasting", @"Label text in groupsForPrimary:") tag:KEY_ACTION_VIM_TEXT_NO_BROADCAST],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_SendSnippet", @"Send Snippet", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SEND_SNIPPET],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_Compose", @"Compose…", @"Label text in groupsForPrimary:") tag:KEY_ACTION_COMPOSE],
         ] arrayByRemovingNulls]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Search" items:[@[
-            hideTerminalOnlyItems ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Find Regular Expression…" tag:KEY_ACTION_FIND_REGEX],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Find Again Down" tag:KEY_FIND_AGAIN_DOWN],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Find Again Up" tag:KEY_FIND_AGAIN_UP],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_Search", @"Search", @"Label text in groupsForPrimary:") items:[@[
+            hideTerminalOnlyItems ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_FindRegularExpression", @"Find Regular Expression…", @"Label text in groupsForPrimary:") tag:KEY_ACTION_FIND_REGEX],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_FindAgainDown", @"Find Again Down", @"Label text in groupsForPrimary:") tag:KEY_FIND_AGAIN_DOWN],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_FindAgainUp", @"Find Again Up", @"Label text in groupsForPrimary:") tag:KEY_FIND_AGAIN_UP],
         ] arrayByRemovingNulls]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Pasteboard" items:@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste…" tag:KEY_ACTION_PASTE_SPECIAL],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste from Selection…" tag:KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Copy or Send ^C" tag:KEY_ACTION_COPY_OR_SEND],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste or Send ^V" tag:KEY_ACTION_PASTE_OR_SEND],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Copy Interpolated String" tag:KEY_ACTION_COPY_INTERPOLATED_STRING],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Copy Mode Commands" tag:KEY_ACTION_COPY_MODE],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_Pasteboard", @"Pasteboard", @"Label text in groupsForPrimary:") items:@[
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_Paste", @"Paste…", @"Label text in groupsForPrimary:") tag:KEY_ACTION_PASTE_SPECIAL],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_PasteFromSelection", @"Paste from Selection…", @"Label text in groupsForPrimary:") tag:KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_CopyOrSendC", @"Copy or Send ^C", @"Label text in groupsForPrimary:") tag:KEY_ACTION_COPY_OR_SEND],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_PasteOrSendV", @"Paste or Send ^V", @"Label text in groupsForPrimary:") tag:KEY_ACTION_PASTE_OR_SEND],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_CopyInterpolatedString", @"Copy Interpolated String", @"Label text in groupsForPrimary:") tag:KEY_ACTION_COPY_INTERPOLATED_STRING],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_CopyModeCommands", @"Copy Mode Commands", @"Label text in groupsForPrimary:") tag:KEY_ACTION_COPY_MODE],
         ]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Toggles" items:[@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Toggle Fullscreen" tag:KEY_ACTION_TOGGLE_FULLSCREEN],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Toggle Pin Hotkey Window" tag:KEY_ACTION_TOGGLE_HOTKEY_WINDOW_PINNING],
-            hideTerminalOnlyItems ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:@"Toggle Mouse Reporting" tag:KEY_ACTION_TOGGLE_MOUSE_REPORTING],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Toggle Setting" tag:KEY_ACTION_TOGGLE_SETTING],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_Toggles", @"Toggles", @"Label text in groupsForPrimary:") items:[@[
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_ToggleFullscreen", @"Toggle Fullscreen", @"Label text in groupsForPrimary:") tag:KEY_ACTION_TOGGLE_FULLSCREEN],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_TogglePinHotkeyWindow", @"Toggle Pin Hotkey Window", @"Label text in groupsForPrimary:") tag:KEY_ACTION_TOGGLE_HOTKEY_WINDOW_PINNING],
+            hideTerminalOnlyItems ? [NSNull null] : [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_ToggleMouseReporting", @"Toggle Mouse Reporting", @"Label text in groupsForPrimary:") tag:KEY_ACTION_TOGGLE_MOUSE_REPORTING],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_ToggleSetting", @"Toggle Setting", @"Label text in groupsForPrimary:") tag:KEY_ACTION_TOGGLE_SETTING],
         ] arrayByRemovingNulls]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Selection" items:@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Move Start of Selection Back" tag:KEY_ACTION_MOVE_START_OF_SELECTION_LEFT],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Move Start of Selection Forward" tag:KEY_ACTION_MOVE_START_OF_SELECTION_RIGHT],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Move End of Selection Back" tag:KEY_ACTION_MOVE_END_OF_SELECTION_LEFT],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Move End of Selection Forward" tag:KEY_ACTION_MOVE_END_OF_SELECTION_RIGHT],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_Selection", @"Selection", @"Label text in groupsForPrimary:") items:@[
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_MoveStartOfSelectionBack", @"Move Start of Selection Back", @"Label text in groupsForPrimary:") tag:KEY_ACTION_MOVE_START_OF_SELECTION_LEFT],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_MoveStartOfSelectionForward", @"Move Start of Selection Forward", @"Label text in groupsForPrimary:") tag:KEY_ACTION_MOVE_START_OF_SELECTION_RIGHT],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_MoveEndOfSelectionBack", @"Move End of Selection Back", @"Label text in groupsForPrimary:") tag:KEY_ACTION_MOVE_END_OF_SELECTION_LEFT],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_MoveEndOfSelectionForward", @"Move End of Selection Forward", @"Label text in groupsForPrimary:") tag:KEY_ACTION_MOVE_END_OF_SELECTION_RIGHT],
         ]],
 
-        [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Scripting" items:@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Invoke Script Function…" tag:KEY_ACTION_INVOKE_SCRIPT_FUNCTION],
+        [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_Scripting", @"Scripting", @"Label text in groupsForPrimary:") items:@[
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_InvokeScriptFunction", @"Invoke Script Function…", @"Label text in groupsForPrimary:") tag:KEY_ACTION_INVOKE_SCRIPT_FUNCTION],
         ]],
 
-        primary ? [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Composition" items:@[
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Sequence…" tag:KEY_ACTION_SEQUENCE],
+        primary ? [[iTermSearchableComboViewGroup alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_Composition", @"Composition", @"Label text in groupsForPrimary:") items:@[
+            [[iTermSearchableComboViewItem alloc] initWithLabel:ITLocalize(@"EditKeyActionWindowController_Sequence", @"Sequence…", @"Label text in groupsForPrimary:") tag:KEY_ACTION_SEQUENCE],
         ]] : [NSNull null],
     ] arrayByRemovingNulls]];
     return groups;
@@ -517,21 +517,21 @@ const CGFloat sideMarginWidth = 40;
         case iTermEditKeyActionWindowControllerModeKeyboardShortcut:
             break;
         case iTermEditKeyActionWindowControllerModeTouchBarItem:
-            _touchBarLabel.placeholderString = @"Label to show in Touch Bar";
+            _touchBarLabel.placeholderString = ITLocalize(@"EditKeyActionWindowController_Placeholder_LabelToShowInTouchBar", @"Label to show in Touch Bar", @"Placeholder text for the Touch Bar label in windowDidLoad");
             break;
         case iTermEditKeyActionWindowControllerModeUnbound:
-            _touchBarLabel.placeholderString = self.titleIsInterpolated ? @"Title (Interpolated String)" : @"Title";
+            _touchBarLabel.placeholderString = self.titleIsInterpolated ? ITLocalize(@"EditKeyActionWindowController_Placeholder_TitleInterpolatedString", @"Title (Interpolated String)", @"Placeholder text for an interpolated Touch Bar title in windowDidLoad") : ITLocalize(@"EditKeyActionWindowController_Placeholder_Title", @"Title", @"Placeholder text for the Touch Bar title in windowDidLoad");
             break;
     }
 
     _comboView = [[iTermSearchableComboView alloc] initWithGroups:[self groupsForPrimary:YES]
-                                                     defaultTitle:@"Select Action…"];
+                                                     defaultTitle:ITLocalize(@"EditKeyActionWindowController_SelectAction", @"Select Action…", @"Title in windowDidLoad")];
     [_comboViewContainer addSubview:_comboView];
     _comboView.frame = _comboViewContainer.bounds;
     _comboView.delegate = self;
 
     _secondaryComboView = [[iTermSearchableComboView alloc] initWithGroups:[self groupsForPrimary:NO]
-                                                              defaultTitle:@"Select Action…"];
+                                                              defaultTitle:ITLocalize(@"EditKeyActionWindowController_SelectAction", @"Select Action…", @"Title in windowDidLoad")];
     [_secondaryComboViewContainer addSubview:_secondaryComboView];
     _secondaryComboView.frame = _secondaryComboViewContainer.bounds;
     _secondaryComboView.delegate = self;
@@ -548,17 +548,17 @@ const CGFloat sideMarginWidth = 40;
     (void)[_comboView selectItemWithTag:self.action];
 
     _applyButton = [[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
-    [_applyButton addItemWithTitle:@"Apply to current session"];
+    [_applyButton addItemWithTitle:ITLocalize(@"EditKeyActionWindowController_Menu_ApplyToCurrentSession", @"Apply to current session", @"Button title in windowDidLoad")];
     _applyButton.menu.itemArray.lastObject.tag = iTermActionApplyModeCurrentSession;
-    [_applyButton addItemWithTitle:@"Apply to all sessions"];
+    [_applyButton addItemWithTitle:ITLocalize(@"EditKeyActionWindowController_Menu_ApplyToAllSessions", @"Apply to all sessions", @"Button title in windowDidLoad")];
     _applyButton.menu.itemArray.lastObject.tag = iTermActionApplyModeAllSessions;
-    [_applyButton addItemWithTitle:@"Apply to all sessions except current"];
+    [_applyButton addItemWithTitle:ITLocalize(@"EditKeyActionWindowController_Menu_ApplyToAllSessionsExceptCurrent", @"Apply to all sessions except current", @"Button title in windowDidLoad")];
     _applyButton.menu.itemArray.lastObject.tag = iTermActionApplyModeUnfocusedSessions;
-    [_applyButton addItemWithTitle:@"Apply to all sessions in window"];
+    [_applyButton addItemWithTitle:ITLocalize(@"EditKeyActionWindowController_Menu_ApplyToAllSessionsInWindow", @"Apply to all sessions in window", @"Button title in windowDidLoad")];
     _applyButton.menu.itemArray.lastObject.tag = iTermActionApplyModeAllInWindow;
-    [_applyButton addItemWithTitle:@"Apply to all sessions in tab"];
+    [_applyButton addItemWithTitle:ITLocalize(@"EditKeyActionWindowController_Menu_ApplyToAllSessionsInTab", @"Apply to all sessions in tab", @"Button title in windowDidLoad")];
     _applyButton.menu.itemArray.lastObject.tag = iTermActionApplyModeAllInTab;
-    [_applyButton addItemWithTitle:@"Apply to broadcasted-to sessions"];
+    [_applyButton addItemWithTitle:ITLocalize(@"EditKeyActionWindowController_Menu_ApplyToBroadcastedToSessions", @"Apply to broadcasted-to sessions", @"Button title in windowDidLoad")];
     _applyButton.menu.itemArray.lastObject.tag = iTermActionApplyModeBroadcasting;
 
     _applyButton.target = self;
@@ -692,7 +692,7 @@ const CGFloat sideMarginWidth = 40;
 - (void)updateViewsAnimated:(BOOL)animated secondary:(BOOL)secondary {
     switch (self.mode) {
         case iTermEditKeyActionWindowControllerModeUnbound:
-            _keyboardShortcutLabel.stringValue = @"Title";
+            _keyboardShortcutLabel.stringValue = ITLocalize(@"EditKeyActionWindowController_Title", @"Title", @"Label text in updateViewsAnimated:");
             if (self.titleIsInterpolated) {
                 if (!_labelDelegate) {
                     _labelDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession]
@@ -707,13 +707,13 @@ const CGFloat sideMarginWidth = 40;
             _shortcutField.hidden = YES;
             break;
         case iTermEditKeyActionWindowControllerModeTouchBarItem:
-            _keyboardShortcutLabel.stringValue = @"Touch Bar Label";
+            _keyboardShortcutLabel.stringValue = ITLocalize(@"EditKeyActionWindowController_TouchBarLabel", @"Touch Bar Label", @"Label text in updateViewsAnimated:");
             _touchBarLabel.delegate = self;
             _touchBarLabel.hidden = NO;
             _shortcutField.hidden = YES;
             break;
         case iTermEditKeyActionWindowControllerModeKeyboardShortcut:
-            _keyboardShortcutLabel.stringValue = @"Keyboard Shortcut:";
+            _keyboardShortcutLabel.stringValue = ITLocalize(@"EditKeyActionWindowController_KeyboardShortcut", @"Keyboard Shortcut:", @"Label text in updateViewsAnimated:");
             _touchBarLabel.hidden = YES;
             _shortcutField.hidden = NO;
             break;

@@ -86,14 +86,14 @@ class DiffWaitingPromptView: iTermLayerBackedSolidColorView {
         bodyLabel.usesSingleLineMode = false
         addSubview(bodyLabel)
 
-        runAnywayButton.title = "Run Anyway"
+        runAnywayButton.title = String(localized: "DiffWaitingPromptView_RunAnyway", defaultValue: "Run Anyway", comment: "Button title in init")
         runAnywayButton.bezelStyle = .rounded
         runAnywayButton.target = self
         runAnywayButton.action = #selector(runAnywayClicked(_:))
         runAnywayButton.autoresizingMask = [.minXMargin, .maxYMargin]
         addSubview(runAnywayButton)
 
-        cancelButton.title = "Cancel"
+        cancelButton.title = String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Button title in init")
         cancelButton.bezelStyle = .rounded
         cancelButton.target = self
         cancelButton.action = #selector(cancelClicked(_:))

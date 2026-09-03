@@ -80,7 +80,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         [_clearButton setAutoresizingMask:NSViewMinYMargin];
         _clearButton.bezelStyle = NSBezelStyleRegularSquare;
         _clearButton.bordered = NO;
-        _clearButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:@"Clear"];
+        _clearButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolTrash) accessibilityDescription:ITLocalize(@"TOOL_CAPTURED_OUTPUT_CLEAR", @"Clear", @"Button that clears captured tool output")];
         _clearButton.imagePosition = NSImageOnly;
         _clearButton.frame = NSMakeRect(0, 0, 22, 22);
         [self addSubview:_clearButton];
@@ -106,7 +106,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         tableView_.menu.delegate = self;
         tableView_.intercellSpacing = NSMakeSize(0, 2);
         NSMenuItem *item;
-        item = [[NSMenuItem alloc] initWithTitle:@"Toggle Checkmark"
+        item = [[NSMenuItem alloc] initWithTitle:ITLocalize(@"ToolCapturedOutputView_Menu_ToggleCheckmark", @"Toggle Checkmark", @"menu item title")
                                           action:@selector(toggleCheckmark:)
                                    keyEquivalent:@""];
         [tableView_.menu addItem:item];

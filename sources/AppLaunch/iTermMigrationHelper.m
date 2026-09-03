@@ -60,12 +60,12 @@
         return;
     }
     const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:@"Move OpenAI API key into the keychain? It is currently stored in User Defaults, which is not as secure."
-                               actions:@[ @"OK", @"Erase from Settings" ]
+    [iTermWarning showWarningWithTitle:ITLocalize(@"MigrationHelper_Alert_MoveOpenAiApiKeyIntoThe", @"Move OpenAI API key into the keychain? It is currently stored in User Defaults, which is not as secure.", @"Alert title in migrateOpenAIKeyIfNeeded")
+                               actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Alert title in migrateOpenAIKeyIfNeeded"), ITLocalize(@"MigrationHelper_Action_EraseFromSettings", @"Erase from Settings", @"Action title in migrateOpenAIKeyIfNeeded") ]
                              accessory:nil
                             identifier:@"NoSyncMoveOpenAIAPIKeyIntoKeychain"
                            silenceable:kiTermWarningTypePersistent
-                               heading:@"Move Key" 
+                               heading:ITLocalize(@"MigrationHelper_AlertHeading_MoveKey", @"Move Key",@"Alert heading in migrateOpenAIKeyIfNeeded")
                                 window:nil];
     if (selection == kiTermWarningSelection0) {
         [self addOpenAIKeyToKeychain:key];
@@ -110,10 +110,12 @@
         }
 
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Manual Update Needed";
-        alert.informativeText = @"iTerm2's Application Support directory has changed.\n\n"
-        @"Previously, both these directories were supported:\n~/Library/Application Support/iTerm\n~/Library/Application Support/iTerm2.\n\n"
-            @"Now, only the iTerm2 version is supported. But you have files in both so please move everything from iTerm to iTerm2.";
+        alert.messageText = ITLocalize(@"MigrationHelper_Alert_ManualUpdateNeeded", @"Manual Update Needed", @"Alert title in migrateApplicationSupportDirectoryIfNeeded");
+        alert.informativeText = ITLocalize(@"MigrationHelper_AlertExplanatory_ITerm2SApplicationSupportDirectoryHasChanged",
+                                           @"iTerm2's Application Support directory has changed.\n\n"
+                                           @"Previously, both these directories were supported:\n~/Library/Application Support/iTerm\n~/Library/Application Support/iTerm2.\n\n"
+                                           @"Now, only the iTerm2 version is supported. But you have files in both so please move everything from iTerm to iTerm2.",
+                                           @"Alert explanatory text in migrateApplicationSupportDirectoryIfNeeded");
 
         NSMutableArray<NSString *> *files = [NSMutableArray array];
         int over = 0;
@@ -129,11 +131,11 @@
         if (over == 0) {
             message = [files componentsJoinedByString:@"\n"];
         } else {
-            message = [NSString stringWithFormat:@"%@\n…and %@ more", [files componentsJoinedByString:@"\n"], @(over)];
+            message = [NSString stringWithFormat:ITLocalize(@"MigrationHelper_FormattedFacing_NAndMore_FORMAT", @"%1$@\n…and %2$@ more",@"Formatted user-facing text in migrateApplicationSupportDirectoryIfNeeded"), [files componentsJoinedByString:@"\n"], @(over)];
         }
 
         iTermDisclosableView *accessory = [[iTermDisclosableView alloc] initWithFrame:NSZeroRect
-                                                                               prompt:@"Directory Listing"
+                                                                               prompt:ITLocalize(@"MigrationHelper_Facing_DirectoryListing", @"Directory Listing", @"Prompt title in migrateApplicationSupportDirectoryIfNeeded")
                                                                               message:message];
         iTermAccessoryViewUnfucker *unfucker = [[iTermAccessoryViewUnfucker alloc] initWithView:accessory];
         accessory.frame = NSMakeRect(0, 0, accessory.intrinsicContentSize.width, accessory.intrinsicContentSize.height);
@@ -146,9 +148,9 @@
         [unfucker layout];
         alert.accessoryView = unfucker;
 
-        [alert addButtonWithTitle:@"Open in Finder"];
-        [alert addButtonWithTitle:@"I Fixed It"];
-        [alert addButtonWithTitle:@"Not Now"];
+        [alert addButtonWithTitle:ITLocalize(@"MigrationHelper_OpenInFinder", @"Open in Finder", @"Button title in migrateApplicationSupportDirectoryIfNeeded")];
+        [alert addButtonWithTitle:ITLocalize(@"MigrationHelper_IFixedIt", @"I Fixed It", @"Button title in migrateApplicationSupportDirectoryIfNeeded")];
+        [alert addButtonWithTitle:ITLocalize(@"MigrationHelper_NotNow", @"Not Now", @"Button title in migrateApplicationSupportDirectoryIfNeeded")];
         switch ([alert runModal]) {
             case NSAlertFirstButtonReturn:
                 [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:legacy],
@@ -291,16 +293,18 @@ static NSString *const iTermMigrationHelperRemoveDeprecatedKeyMappingsUserDefaul
 }
 
 + (BOOL)askToRemoveDeprecatedKeyMappings:(NSString *)specialReason NS_AVAILABLE_MAC(15) {
-    NSString *message = specialReason ?: @"Some profiles have unnecessary key mappings which may interfere with window tiling shortcuts added in macOS Sequoia. These were in the default profile for many years but are no longer needed. Remove the key mappings? It shouldn’t break anything, and it won’t modify the on-disk copy of the dynamic profile.";
+    NSString *message = specialReason ?: ITLocalize(@"MigrationHelper_Alert_SomeProfilesHaveUnnecessaryKeyMappingsWhich", @"Some profiles have unnecessary key mappings which may interfere with window tiling shortcuts added in macOS Sequoia. These were in the default profile for many years but are no longer needed. Remove the key mappings? It shouldn’t break anything, and it won’t modify the on-disk copy of the dynamic profile.", @"Alert title in askToRemoveDeprecatedKeyMappings:");
 
 
     const iTermWarningSelection selection =
     [iTermWarning showWarningWithTitle:message
-                               actions:@[ @"OK", @"Learn More", @"Cancel" ]
+                               actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in askToRemoveDeprecatedKeyMappings:"),
+                                          ITLocalize(@"MigrationHelper_Action_LearnMore", @"Learn More", @"Action title in askToRemoveDeprecatedKeyMappings:"),
+                                          ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Action title in askToRemoveDeprecatedKeyMappings:") ]
                              accessory:nil
                             identifier:nil
                            silenceable:kiTermWarningTypePersistent
-                               heading:@"Remove Deprecated Key Mappings?"
+                               heading:ITLocalize(@"MigrationHelper_AlertHeading_RemoveDeprecatedKeyMappings", @"Remove Deprecated Key Mappings?",@"Alert heading in askToRemoveDeprecatedKeyMappings:(NSString *)specialReason NS_AVAILABLE_MAC(15)")
                                 window:nil];
     switch (selection) {
         case kiTermWarningSelection0:  // ok

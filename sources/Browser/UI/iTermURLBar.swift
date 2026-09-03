@@ -247,7 +247,7 @@ class iTermURLBarGuts: NSView {
     private func setupTextField() {
         textField = iTermURLTextField(frame: .zero)
         textField.urlTextFieldDelegate = self
-        textField.placeholderString = "Search or enter website name"
+        textField.placeholderString = String(localized: "UrlBar_SearchOrEnterWebsiteName", defaultValue: "Search or enter website name", comment: "Placeholder text in setupTextField")
         textField.font = NSFont.systemFont(ofSize: 13)
         
         textFieldBackground.addSubview(textField)
@@ -259,7 +259,7 @@ class iTermURLBarGuts: NSView {
         faviconView?.imageScaling = .scaleProportionallyUpOrDown
         faviconView?.unregisterDraggedTypes()  // Clear default drag behavior
         faviconView?.setAccessibilityRole(.button)
-        faviconView?.setAccessibilityLabel("Site icon - drag to copy URL")
+        faviconView?.setAccessibilityLabel(String(localized: "UrlBar_SiteIconDragToCopyUrl", defaultValue: "Site icon - drag to copy URL", comment: "Label text in setupIcons"))
         addSubview(faviconView!)
         
         // Progress indicator
@@ -548,7 +548,7 @@ class iTermURLBarGuts: NSView {
             parent: window,
             location: locationForCompletionsWindow,
             mode: .indicator,
-            placeholder: "Loading suggestions…",
+            placeholder: String(localized: "UrlBar_LoadingSuggestions", defaultValue: "Loading suggestions…", comment: "Placeholder text in createCompletionsWindow"),
             allowKey: false)
         completionsWindow?.alwaysUseMaxWidth = true
     }

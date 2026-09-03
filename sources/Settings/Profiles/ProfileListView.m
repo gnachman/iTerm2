@@ -181,7 +181,7 @@ const CGFloat kDefaultTagsWidth = 80;
 
         [tableView_ setDoubleAction:@selector(onDoubleClick:)];
 
-        tableColumn_.title = @"Profile Name";
+        tableColumn_.title = ITLocalize(@"ProfileListView_ProfileName", @"Profile Name", @"Title in initWithFrame:");
 
         [tableView_ sizeLastColumnToFit];
 
@@ -399,7 +399,7 @@ const CGFloat kDefaultTagsWidth = 80;
                         autorelease];
     NSMenuItem *item;
 
-    item = [[[NSMenuItem alloc] initWithTitle:@"Tags"
+    item = [[[NSMenuItem alloc] initWithTitle:ITLocalize(@"ProfileListView_Menu_Tags", @"Tags", @"menu item title")
                                        action:nil
                                 keyEquivalent:@""] autorelease];
     [item setTarget:self];
@@ -417,7 +417,7 @@ const CGFloat kDefaultTagsWidth = 80;
     }
 
     [cellMenu insertItem:[NSMenuItem separatorItem] atIndex:cellMenu.numberOfItems];
-    [cellMenu addItemWithTitle:@"Search Syntax Help" action:@selector(openHowToSearchHelp:) keyEquivalent:@""];
+    [cellMenu addItemWithTitle:ITLocalize(@"ProfileListView_Menu_SearchSyntaxHelp", @"Search Syntax Help",@"Menu title in _addTags:(NSArray*)tags toSearchField:(NSSearchField*)searchField") action:@selector(openHowToSearchHelp:) keyEquivalent:@""];
 
     id searchCell = [searchField cell];
     [searchCell setSearchMenuTemplate:cellMenu];
@@ -742,7 +742,7 @@ const CGFloat kDefaultTagsWidth = 80;
     } else if (aTableColumn == shortcutColumn_) {
         NSString* key = [bookmark objectForKey:KEY_SHORTCUT];
         if ([key length]) {
-            NSString *theString = [NSString stringWithFormat:@"^⌘%@", [bookmark objectForKey:KEY_SHORTCUT]];
+            NSString *theString = [NSString stringWithFormat:ITLocalize(@"ProfileListView_FormattedFacing_FORMAT", @"^⌘%1$@",@"Formatted user-facing text in stringOrAttributedStringForColumn:(NSTableColumn *)aTableColumn"), [bookmark objectForKey:KEY_SHORTCUT]];
             return [self attributedStringForString:theString
                                           selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]];
         } else {
@@ -1017,8 +1017,8 @@ const CGFloat kDefaultTagsWidth = 80;
 
     [tableColumn_ setWidth:250];
 
-    shortcutColumn_.title = @"Shortcut";
-    commandColumn_.title = @"Command";
+    shortcutColumn_.title = ITLocalize(@"ProfileListView_Shortcut", @"Shortcut", @"Title in multiColumns");
+    commandColumn_.title = ITLocalize(@"ProfileListView_Command", @"Command", @"Title in multiColumns");
     [tableView_ sizeLastColumnToFit];
 }
 

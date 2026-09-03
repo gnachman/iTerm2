@@ -36,15 +36,15 @@ class SSHFolderDialog: NSObject {
 
         // Initialize alert
         self.alert = NSAlert()
-        alert.messageText = "Go to the folder:"
-        alert.informativeText = "Type a pathname or select from the pop-up menu"
-        alert.addButton(withTitle: "Go")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = String(localized: "SshFolderDialog_GoToTheFolder", defaultValue: "Go to the folder:", comment: "alert title")
+        alert.informativeText = String(localized: "SshFolderDialog_TypeAPathnameOrSelectFromThe", defaultValue: "Type a pathname or select from the pop-up menu", comment: "alert explanatory text")
+        alert.addButton(withTitle: String(localized: "SshFolderDialog_Go", defaultValue: "Go", comment: "Button title in init"))
+        alert.addButton(withTitle: String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Button title in init"))
 
         // Initialize text field
         self.textField = SSHFolderDialogTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
         textField.stringValue = currentPath ?? ""
-        textField.placeholderString = "Enter path (e.g., /usr/local/bin)"
+        textField.placeholderString = String(localized: "SshFolderDialog_EnterPathEGUsrLocalBin", defaultValue: "Enter path (e.g., /usr/local/bin)", comment: "Placeholder text in init")
 
         super.init()
 
@@ -160,7 +160,7 @@ class SSHFolderDialog: NSObject {
                 parent: alert.window,
                 location: textFieldFrame,
                 mode: .indicator,
-                placeholder: "Loading completions…",
+                placeholder: String(localized: "SshFolderDialog_LoadingCompletions", defaultValue: "Loading completions…", comment: "Placeholder text in showCompletions"),
                 allowKey: false
             )
             textField.onSpecialKey = { [weak completionsWindow, weak self] key in
@@ -199,7 +199,7 @@ class SSHFolderDialog: NSObject {
                     // Convert to CompletionsWindow items
                     let items = suggestions.map { path in
                         let displayPath = path
-                        let detail = "Folder on " + hostname
+                        let detail = String(format: String(localized: "SshFolderDialog_FolderOn_FORMAT", defaultValue: "Folder on %1$@", comment: "Formatted user-facing text in showCompletions"), hostname)
 
                         return CompletionsWindow.Item(
                             suggestion: path,

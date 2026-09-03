@@ -27,15 +27,15 @@ class iTermMacOS13RequirementNotice: NSObject {
             return
         }
         iTermWarning.show(
-            withTitle: "Future versions of iTerm2 will require macOS 13 (Ventura) or later. This is the last version that supports macOS 12. Sorry for the inconvenience!",
-            actions: ["OK"],
+            withTitle: String(localized: "MacOs13RequirementNotice_FutureVersionsOfITerm2WillRequire", defaultValue: "Future versions of iTerm2 will require macOS 13 (Ventura) or later. This is the last version that supports macOS 12. Sorry for the inconvenience!", comment: "Alert title in maybeShow"),
+            actions: [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Action title in maybeShow")],
             accessory: nil,
             // No identifier: this is a persistent (non-silenceable) warning, so
             // iTermWarning writes no user-defaults key. Once-only is enforced by the
             // separate NoSyncHaveShownMacOS13RequirementNotice flag set below.
             identifier: nil,
             silenceable: .kiTermWarningTypePersistent,
-            heading: "Deprecation Notice",
+            heading: String(localized: "MacOs13RequirementNotice_DeprecationNotice", defaultValue: "Deprecation Notice", comment: "Alert heading in maybeShow"),
             window: nil)
         iTermUserDefaults.haveShownMacOS13RequirementNotice = true
     }

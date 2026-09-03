@@ -47,7 +47,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Progress Indicator";
+    return ITLocalize(@"StatusBarProgressComponent_Facing_ProgressIndicator", @"Progress Indicator", @"Text shown in statusBarComponentShortDescription: Progress Indicator");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {

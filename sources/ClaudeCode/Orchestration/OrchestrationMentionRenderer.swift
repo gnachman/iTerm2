@@ -171,7 +171,7 @@ enum OrchestrationMentionRenderer {
                                    tint: NSColor,
                                    action: ((NSPoint) -> ())?) -> NSAttributedString? {
         guard let symbol = NSImage(systemSymbolName: "terminal",
-                                   accessibilityDescription: "iTerm2 session") else {
+                                   accessibilityDescription: String(localized: "OrchestrationMentionRenderer_ITerm2Session", defaultValue: "iTerm2 session", comment: "Descriptive text in iconString")) else {
             return nil
         }
         let dynamicImage = DynamicImage(image: symbol,
@@ -261,7 +261,7 @@ enum OrchestrationMentionRenderer {
             return nil
         }
         let raw = instance.workgroup.name
-        let name = raw.isEmpty ? "Untitled workgroup" : raw
+        let name = raw.isEmpty ? String(localized: "OrchestrationMentionRenderer_UntitledWorkgroup", defaultValue: "Untitled workgroup", comment: "Text shown in resolveWorkgroup: Untitled workgroup") : raw
         return Resolved(displayName: name,
                         revealGuid: leader.stableID,
                         workgroupID: instanceID)

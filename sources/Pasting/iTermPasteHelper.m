@@ -754,12 +754,12 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
             NSNumberFormatter *numberFormatter = [[NSNumberFormatter alloc] init];
             numberFormatter.numberStyle = NSNumberFormatterDecimalStyle;
             const iTermWarningSelection selection =
-            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"OK to paste %@ characters?", [numberFormatter stringFromNumber:@(pasteEvent.string.length)]]
-                                       actions:@[ @"OK", @"Cancel", @"Advanced…" ]
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"PasteHelper_Alert_OkToPasteCharacters_FORMAT", @"OK to paste %1$@ characters?", @"Alert title in maybeWarnAboutMultiLinePaste:"), [numberFormatter stringFromNumber:@(pasteEvent.string.length)]]
+                                       actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in maybeWarnAboutMultiLinePaste:"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in maybeWarnAboutMultiLinePaste:"), ITLocalize(@"PasteHelper_Action_Advanced", @"Advanced…", @"Title in maybeWarnAboutMultiLinePaste:") ]
                                      accessory:nil
                                     identifier:@"NoSyncPasteOverCharacterLimitWarning"
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"Paste Limit Exceeded"
+                                       heading:ITLocalize(@"PasteHelper_AlertHeading_PasteLimitExceeded", @"Paste Limit Exceeded",@"Alert heading in maybeWarnAboutMultiLinePaste:(PasteEvent *)pasteEvent")
                                         window:self.delegate.pasteHelperViewForIndicator.window];
             switch (selection) {
                 case kiTermWarningSelection0:
@@ -808,12 +808,12 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     NSMutableArray<iTermWarningAction *> *actions = [NSMutableArray array];
 
     __block BOOL result = YES;
-    iTermWarningAction *cancel = [iTermWarningAction warningActionWithLabel:@"Cancel"
+    iTermWarningAction *cancel = [iTermWarningAction warningActionWithLabel:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Label text in maybeWarnAboutMultiLinePaste:")
                                                                       block:^(iTermWarningSelection selection) { result = NO; }];
-    iTermWarningAction *paste = [iTermWarningAction warningActionWithLabel:@"Paste"
-                                                                     block:^(iTermWarningSelection selection) { result = YES; }];
+    iTermWarningAction *paste = [iTermWarningAction warningActionWithLabel:ITLocalize(@"COMMON_PASTE", @"Paste", @"Label text in maybeWarnAboutMultiLinePaste:")
+                                                                      block:^(iTermWarningSelection selection) { result = YES; }];
     iTermWarningAction *pasteWithoutNewline =
-        [iTermWarningAction warningActionWithLabel:@"Paste Without Newline"
+        [iTermWarningAction warningActionWithLabel:ITLocalize(@"PasteHelper_PasteWithoutNewline", @"Paste Without Newline", @"Label text in maybeWarnAboutMultiLinePaste:")
                                              block:^(iTermWarningSelection selection) {
             [pasteEvent trimNewlines];
             RLog(@"paste without newline selected: set result to YES");
@@ -826,23 +826,23 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     BOOL prompt = YES;
     if (lines.count > 1) {
         if (atShellPrompt) {
-            theTitle = [NSString stringWithFormat:@"OK to paste %d lines at shell prompt?",
+            theTitle = [NSString stringWithFormat:ITLocalize(@"PasteHelper_OkToPasteLinesAtShellPrompt_FORMAT", @"OK to paste %1$d lines at shell prompt?", @"Title in maybeWarnAboutMultiLinePaste:"),
                         (int)[lines count]];
         } else {
             prompt = [iTermAdvancedSettingsModel promptForPasteWhenNotAtPrompt];
             DLog(@"set prompt to %@: there are multiple lines and we are not at the shell prompt", @(prompt));
-            theTitle = [NSString stringWithFormat:@"OK to paste %d lines?",
+            theTitle = [NSString stringWithFormat:ITLocalize(@"PasteHelper_OkToPasteLines_FORMAT", @"OK to paste %1$d lines?", @"Title in maybeWarnAboutMultiLinePaste:"),
                         (int)[lines count]];
         }
     } else {
         [actions insertObject:pasteWithoutNewline atIndex:1];
         if (atShellPrompt) {
             identifier = [iTermAdvancedSettingsModel noSyncDoNotWarnBeforePastingOneLineEndingInNewlineAtShellPromptUserDefaultsKey];
-            theTitle = @"OK to paste one line ending in a newline at shell prompt?";
+            theTitle = ITLocalize(@"PasteHelper_OkToPasteOneLineEndingIn", @"OK to paste one line ending in a newline at shell prompt?", @"Title in maybeWarnAboutMultiLinePaste:");
         } else {
             prompt = [iTermAdvancedSettingsModel promptForPasteWhenNotAtPrompt];
             DLog(@"set prompt to %@: pasting 0 or 1 lines and not at shell prompt", @(prompt));
-            theTitle = @"OK to paste one line ending in a newline?";
+            theTitle = ITLocalize(@"PasteHelper_OkToPasteOneLineEndingIn_2", @"OK to paste one line ending in a newline?", @"Title in maybeWarnAboutMultiLinePaste:");
         }
     }
 
@@ -852,7 +852,7 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
     }
     // Issue 5115
     [iTermWarning unsilenceIdentifier:identifier ifSelectionEquals:[actions indexOfObjectIdenticalTo:cancel]];
-    [actions addObject:[iTermWarningAction warningActionWithLabel:@"Advanced…" block:^(iTermWarningSelection selection) {
+    [actions addObject:[iTermWarningAction warningActionWithLabel:ITLocalize(@"PasteHelper_Advanced", @"Advanced…", @"Label text in maybeWarnAboutMultiLinePaste:") block:^(iTermWarningSelection selection) {
         PTYSessionPasteFlags flags = 0;
         if (pasteEvent.slow) {
             flags |= kPTYSessionPasteSlowly;
@@ -863,12 +863,12 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
         result = NO;
     }]];
     iTermWarning *warning = [[iTermWarning alloc] init];
-    warning.heading = @"Confirm Multi-Line Paste";
+    warning.heading = ITLocalize(@"PasteHelper_AlertHeading_ConfirmMultiLinePaste", @"Confirm Multi-Line Paste",@"Alert heading in maybeWarnAboutMultiLinePaste:(PasteEvent *)pasteEvent");
     warning.title = theTitle;
     warning.warningActions = actions;
     warning.identifier = identifier;
     warning.warningType = kiTermWarningTypePermanentlySilenceable;
-    warning.cancelLabel = @"Cancel";
+    warning.cancelLabel = ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Label text in maybeWarnAboutMultiLinePaste:");
     warning.window = [[self.delegate pasteHelperViewForIndicator] window];
     [warning runModal];
     DLog(@"Return result of %@", @(result));
@@ -908,8 +908,8 @@ const NSInteger iTermQuickPasteBytesPerCallDefaultValue = 768;
             [[iTermNumberOfSpacesAccessoryViewController alloc] init];
 
         iTermWarningSelection selection =
-            [iTermWarning showWarningWithTitle:@"You're about to paste a string with tabs."
-                                       actions:@[ @"OK", @"Cancel", @"Convert tabs to spaces", @"Advanced…" ]
+            [iTermWarning showWarningWithTitle:ITLocalize(@"PasteHelper_Alert_YouReAboutToPasteAString", @"You're about to paste a string with tabs.", @"Alert title in numberOfSpacesToConvertTabsTo:")
+                                       actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in numberOfSpacesToConvertTabsTo:"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in numberOfSpacesToConvertTabsTo:"), ITLocalize(@"PasteHelper_Action_ConvertTabsToSpaces", @"Convert tabs to spaces", @"Title in numberOfSpacesToConvertTabsTo:"), ITLocalize(@"PasteHelper_Action_Advanced", @"Advanced…", @"Title in numberOfSpacesToConvertTabsTo:") ]
                                      accessory:accessoryController.view
                                     identifier:@"AboutToPasteTabsWithCancel"
                                    silenceable:kiTermWarningTypePermanentlySilenceable

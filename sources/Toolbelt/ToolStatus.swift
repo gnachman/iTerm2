@@ -117,7 +117,7 @@ class ToolStatus: NSView {
         settingsButton.bezelStyle = .regularSquare
         settingsButton.isBordered = false
         settingsButton.image = NSImage(systemSymbolName: "gearshape",
-                                       accessibilityDescription: "Settings")
+                                       accessibilityDescription: String(localized: "ToolStatus_Settings", defaultValue: "Settings", comment: "Descriptive text in resolveSessionForReload"))
         settingsButton.imagePosition = .imageOnly
         settingsButton.target = self
         settingsButton.action = #selector(showSettings(_:))
@@ -318,7 +318,7 @@ extension ToolStatus {
         updateSelectionWithoutChangingFirstResponder()
     }
 
-    static let helpMarkdown = """
+    static let helpMarkdown = String(localized: "TOOL_STATUS_HELP", defaultValue: """
     ## Session Status
 
     The **Session Status** tool shows the status of sessions across all tabs. Each entry displays the \
@@ -355,7 +355,7 @@ extension ToolStatus {
 
     Right-click a row and choose **Snooze** to move it to the bottom of the list and \
     dim it. A snoozed entry automatically un-snoozes the next time its status changes.
-    """
+    """, comment: "Help popover explaining the Session Status toolbelt tool and its control sequence")
 }
 
 // MARK: - Private methods
@@ -515,15 +515,15 @@ private extension ToolStatus {
         let symbol: SFSymbol = armed ? .bellBadge : .bell
         notifyButton.state = armed ? .on : .off
         notifyButton.image = NSImage(systemSymbolName: symbol.rawValue,
-                                     accessibilityDescription: "Notify on status change")
+                                     accessibilityDescription: String(localized: "ToolStatus_NotifyOnStatusChange", defaultValue: "Notify on status change", comment: "Descriptive text in updateNotifyButtonAppearance"))
         if armed {
             notifyButton.toolTip = targetingSession
-                ? "Watching the selected session for a status change. An alert will appear on the next change, then turn this off."
-                : "Watching this window for a session status change. An alert will appear on the next change, then turn this off."
+                ? String(localized: "ToolStatus_WatchingTheSelectedSessionForAStatus", defaultValue: "Watching the selected session for a status change. An alert will appear on the next change, then turn this off.", comment: "Text shown in updateNotifyButtonAppearance: Watching the selected session for a status change. An alert will appear on the next change, then turn this off.")
+                : String(localized: "ToolStatus_WatchingThisWindowForASessionStatus", defaultValue: "Watching this window for a session status change. An alert will appear on the next change, then turn this off.", comment: "Text shown in updateNotifyButtonAppearance: Watching this window for a session status change. An alert will appear on the next change, then turn this off.")
         } else {
             notifyButton.toolTip = targetingSession
-                ? "Notify with an alert when the selected session’s status changes."
-                : "Notify with an alert when any session in this window changes status."
+                ? String(localized: "ToolStatus_NotifyWithAnAlertWhenTheSelected", defaultValue: "Notify with an alert when the selected session’s status changes.", comment: "Text shown in updateNotifyButtonAppearance: Notify with an alert when the selected session’s status changes.")
+                : String(localized: "ToolStatus_NotifyWithAnAlertWhenAnySession", defaultValue: "Notify with an alert when any session in this window changes status.", comment: "Text shown in updateNotifyButtonAppearance: Notify with an alert when any session in this window changes status.")
         }
     }
 
@@ -906,7 +906,7 @@ private extension ToolStatus {
                     let modString = NSString.modifierSymbols(mask: mask)
                     return "\(modString)\(ordinal)"
                 }
-                return "Pane \(ordinal)"
+                return String(format: String(localized: "ToolStatus_Pane_FORMAT", defaultValue: "Pane %1$@", comment: "Formatted user-facing text in shortcutString"), String(ordinal))
             }
         }
         // Session is in a different tab — show tab shortcut
@@ -919,7 +919,7 @@ private extension ToolStatus {
             return nil
         }
         if tabTag.rawValue == iTermPreferencesModifierTag.preferenceModifierTagNone.rawValue {
-            return "Tab \(tabIndex)"
+            return String(format: String(localized: "ToolStatus_Tab_FORMAT", defaultValue: "Tab %1$@", comment: "Formatted user-facing text in shortcutString"), String(tabIndex))
         }
         let mask = iTermPreferences.mask(for: tabTag)
         let modString = NSString.modifierSymbols(mask: mask)
@@ -1097,7 +1097,7 @@ extension ToolStatus: NSMenuDelegate {
         // A merged row stands for a whole workgroup, so its checkmark reflects
         // (and its toggle affects) every member, not just the representative.
         let members = groupMemberSessionIDs(forRepresentative: sessionID)
-        let item = NSMenuItem(title: "Snooze",
+        let item = NSMenuItem(title: String(localized: "ToolStatus_Snooze", defaultValue: "Snooze", comment: "Menu item title in menuNeedsUpdate"),
                               action: #selector(toggleSnooze(_:)),
                               keyEquivalent: "")
         item.target = self
@@ -1144,13 +1144,13 @@ extension ToolStatus: NSMenuDelegate {
         let snoozed = sessionID.map { allSnoozed(groupMemberSessionIDs(forRepresentative: $0)) } ?? false
         snoozeButton.state = snoozed ? .on : .off
         snoozeButton.image = NSImage(systemSymbolName: SFSymbol.moonZzz.rawValue,
-                                     accessibilityDescription: "Snooze")
+                                     accessibilityDescription: String(localized: "ToolStatus_Accessibility_Snooze", defaultValue: "Snooze", comment: "Accessibility description for the snooze button"))
         if sessionID == nil {
-            snoozeButton.toolTip = "Select a session to snooze it."
+            snoozeButton.toolTip = String(localized: "ToolStatus_ToolTip_SelectASessionToSnooze", defaultValue: "Select a session to snooze it.", comment: "Tooltip shown when no session is selected for snoozing")
         } else if snoozed {
-            snoozeButton.toolTip = "Un-snooze the selected session."
+            snoozeButton.toolTip = String(localized: "ToolStatus_ToolTip_UnSnoozeTheSelectedSession", defaultValue: "Un-snooze the selected session.", comment: "Tooltip for the snoozed session button")
         } else {
-            snoozeButton.toolTip = "Snooze the selected session so it sinks to the bottom of the list and dims until its status changes."
+            snoozeButton.toolTip = String(localized: "ToolStatus_ToolTip_SnoozeTheSelectedSession", defaultValue: "Snooze the selected session so it sinks to the bottom of the list and dims until its status changes.", comment: "Tooltip for snoozing a session")
         }
     }
 

@@ -785,7 +785,7 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
         [rateLimit performRateLimitedBlock:^{
             DLog(@"Called");
             NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = @"Problem Starting iTerm2 Daemon";
+            alert.messageText = ITLocalize(@"FileDescriptorMultiClient_Alert_ProblemStartingITerm2Daemon", @"Problem Starting iTerm2 Daemon", @"Alert title in showError:");
             alert.informativeText = message;
             [alert runModal];
         }];
@@ -849,10 +849,10 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
         if (!sourcePath || ![fileManager fileExistsAtPath:sourcePath]) {
             dispatch_sync(dispatch_get_main_queue(), ^{
                 NSAlert *alert = [[NSAlert alloc] init];
-                alert.messageText = @"Required File Missing";
-                alert.informativeText = @"The iTermServer executable is missing from the application bundle. This indicates iTerm2 is corrupted or incomplete. Please reinstall iTerm2 from the official website.";
+                alert.messageText = ITLocalize(@"FileDescriptorMultiClient_Alert_RequiredFileMissing", @"Required File Missing", @"Alert title in serverPathCopyingIfNeeded");
+                alert.informativeText = ITLocalize(@"FileDescriptorMultiClient_AlertExplanatory_TheITermServerExecutableIsMissing", @"The iTermServer executable is missing from the application bundle. This indicates iTerm2 is corrupted or incomplete. Please reinstall iTerm2 from the official website.", @"Alert explanatory text in serverPathCopyingIfNeeded");
                 alert.alertStyle = NSAlertStyleCritical;
-                [alert addButtonWithTitle:@"Quit"];
+                [alert addButtonWithTitle:ITLocalize(@"FileDescriptorMultiClient_Quit", @"Quit", @"Button title in serverPathCopyingIfNeeded")];
                 [alert runModal];
 
                 // Terminate the application
@@ -867,7 +867,7 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
                               error:&error];
         if (error) {
             [self showError:error
-                    message:[NSString stringWithFormat:@"Could not copy %@ to %@: %@", sourcePath, desiredPath, error.localizedDescription]
+                    message:[NSString stringWithFormat:ITLocalize(@"FileDescriptorMultiClient_FormattedFacing_CouldNotCopyTo_FORMAT", @"Could not copy %1$@ to %2$@: %3$@",@"Formatted user-facing text in serverPathCopyingIfNeeded"), sourcePath, desiredPath, error.localizedDescription]
                      badURL:[NSURL fileURLWithPath:desiredPath]];
             return nil;
         }
@@ -879,7 +879,7 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
         NSDictionary *attributes = [fileManager attributesOfItemAtPath:desiredPath error:&error];
         if (error) {
             [self showError:error
-                    message:[NSString stringWithFormat:@"Could not check permissions on %@", desiredPath]
+                    message:[NSString stringWithFormat:ITLocalize(@"FileDescriptorMultiClient_FormattedFacing_CouldNotCheckPermissionsOn_FORMAT", @"Could not check permissions on %1$@",@"Formatted user-facing text in serverPathCopyingIfNeeded"), desiredPath]
                      badURL:[NSURL fileURLWithPath:desiredPath]];
             return nil;
         }
@@ -897,7 +897,7 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
                                                 error:&error];
         if (error) {
             [self showError:error
-                    message:[NSString stringWithFormat:@"Could not set 0700 permissions on %@", desiredPath]
+                    message:[NSString stringWithFormat:ITLocalize(@"FileDescriptorMultiClient_FormattedFacing_CouldNotSet0700PermissionsOn_FORMAT", @"Could not set 0700 permissions on %1$@",@"Formatted user-facing text in serverPathCopyingIfNeeded"), desiredPath]
                      badURL:[NSURL fileURLWithPath:desiredPath]];
             return nil;
         }

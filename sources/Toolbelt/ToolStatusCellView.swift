@@ -60,7 +60,7 @@ class ToolStatusCellView: NSTableCellView {
 
         let bellConfig = NSImage.SymbolConfiguration(pointSize: 10, weight: .regular)
         bellView.image = NSImage(systemSymbolName: SFSymbol.bellBadge.rawValue,
-                                 accessibilityDescription: "Notify on status change armed")?
+                                 accessibilityDescription: String(localized: "ToolStatusCellView_NotifyOnStatusChangeArmed", defaultValue: "Notify on status change armed", comment: "Descriptive text in hitTest"))?
             .withSymbolConfiguration(bellConfig)
         bellView.imageScaling = .scaleProportionallyDown
         bellView.contentTintColor = .controlAccentColor
@@ -107,7 +107,7 @@ class ToolStatusCellView: NSTableCellView {
 
         let snoozeConfig = NSImage.SymbolConfiguration(pointSize: 10, weight: .regular)
         snoozeIconView.image = NSImage(systemSymbolName: SFSymbol.moonZzz.rawValue,
-                                       accessibilityDescription: "Snoozed")?
+                                       accessibilityDescription: String(localized: "ToolStatusCellView_Snoozed", defaultValue: "Snoozed", comment: "Descriptive text in hitTest"))?
             .withSymbolConfiguration(snoozeConfig)
         snoozeIconView.imageScaling = .scaleProportionallyDown
         snoozeIconView.contentTintColor = .secondaryLabelColor

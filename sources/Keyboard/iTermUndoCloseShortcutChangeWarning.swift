@@ -99,20 +99,20 @@ class iTermUndoCloseShortcutChangeWarning: NSObject {
     }
 
     private static func showWarning(offeringBindingFor keystroke: iTermKeystroke) {
-        let ok = iTermWarningAction(label: "Keep New Shortcut")
-        let restore = iTermWarningAction(label: "Restore ⌘⇧T to Show Tabs") { _ in
+        let ok = iTermWarningAction(label: String(localized: "UndoCloseShortcutChangeWarning_KeepNewShortcut", defaultValue: "Keep New Shortcut", comment: "Label text in showWarning"))
+        let restore = iTermWarningAction(label: String(localized: "UndoCloseShortcutChangeWarning_RestoreTToShowTabs", defaultValue: "Restore ⌘⇧T to Show Tabs", comment: "Label text in showWarning")) { _ in
             addGlobalShowTabsBinding(for: keystroke)
         }
 
         let warning = iTermWarning()
-        warning.heading = "Keyboard Shortcut Changed"
-        warning.title = """
+        warning.heading = String(localized: "UndoCloseShortcutChangeWarning_KeyboardShortcutChanged", defaultValue: "Keyboard Shortcut Changed", comment: "Alert heading in showWarning")
+        warning.title = String(localized: "UndoCloseShortcutChangeWarning_TNowRestoresRecentlyClosedTabsUndo", defaultValue: """
             ⌘⇧T now restores recently closed tabs (Undo Close). The Show Tabs in \
             Fullscreen shortcut has moved to ⌘⇧U.
 
             Would you like to keep ⌘⇧T as the shortcut for Show Tabs in Fullscreen \
             by adding a key binding?
-            """
+            """, comment: "Title in showWarning")
         warning.warningActions = [ok, restore]
         warning.warningType = .kiTermWarningTypePersistent
         warning.window = iTermController.sharedInstance().currentTerminal?.window()

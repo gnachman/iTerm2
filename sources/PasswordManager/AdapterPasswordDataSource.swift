@@ -28,26 +28,26 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
             case .runtime(let message):
                 return message
             case .loginFailed(let message):
-                return "Could not log in: \(message)"
+                return String(format: String(localized: "AdapterPasswordDataSource_CouldNotLogIn_FORMAT", defaultValue: "Could not log in: %1$@", comment: "Formatted user-facing text in message"), message)
             case .needsAuthentication:
-                return "Not authenticated."
+                return String(localized: "AdapterPasswordDataSource_NotAuthenticated", defaultValue: "Not authenticated.", comment: "User-visible message: Not authenticated.")
             case .badOutput:
-                return "Invalid output."
+                return String(localized: "AdapterPasswordDataSource_InvalidOutput", defaultValue: "Invalid output.", comment: "User-visible message: Invalid output.")
             case .canceledByUser:
                 return nil
             case .handshakeFailed:
-                return "Handshake failed."
+                return String(localized: "AdapterPasswordDataSource_HandshakeFailed", defaultValue: "Handshake failed.", comment: "User-visible message: Handshake failed.")
             case .incompatibleProtocol:
-                return "Incompatible protocol. Please update iTerm2."
+                return String(localized: "AdapterPasswordDataSource_IncompatibleProtocolPleaseUpdateITerm2", defaultValue: "Incompatible protocol. Please update iTerm2.", comment: "User-visible message: Incompatible protocol. Please update iTerm2.")
             case .adapterNotFound:
-                return "Adapter not found."
+                return String(localized: "AdapterPasswordDataSource_AdapterNotFound", defaultValue: "Adapter not found.", comment: "User-visible message: Adapter not found.")
             case .invalidToken:
-                return "Authentication failed. Log in again."
+                return String(localized: "AdapterPasswordDataSource_AuthenticationFailedLogInAgain", defaultValue: "Authentication failed. Log in again.", comment: "User-visible message: Authentication failed. Log in again.")
             }
         }
 
         var errorDescription: String? {
-            reason ?? "Unknown error"
+            reason ?? String(localized: "AdapterPasswordDataSource_UnknownError", defaultValue: "Unknown error", comment: "User-visible message: Unknown error")
         }
 
         // Classifies an adapter error response. A response flagged needsAuthentication becomes
@@ -146,7 +146,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 }
 
                 guard let output = output else {
-                    completion(.failure(AdapterError.runtime("No output from adapter")))
+                    completion(.failure(AdapterError.runtime(String(localized: "AdapterPasswordDataSource_NoOutputFromAdapter", defaultValue: "No output from adapter", comment: "Text shown in runAdapterCommand: No output from adapter"))))
                     return
                 }
 
@@ -158,7 +158,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 }
 
                 if output.returnCode != 0 {
-                    completion(.failure(AdapterError.runtime("Adapter returned code \(output.returnCode)")))
+                    completion(.failure(AdapterError.runtime(String(format: String(localized: "AdapterPasswordDataSource_AdapterReturnedCode_FORMAT", defaultValue: "Adapter returned code %1$@", comment: "Formatted user-facing text in runAdapterCommand"), String(output.returnCode)))))
                     return
                 }
 
@@ -242,9 +242,9 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
 
     private func requestPathToDatabaseViaTextField(handshake: HandshakeResponse) -> Bool {
         let alert = NSAlert()
-        alert.messageText = handshake.pathToDatabasePrompt ?? "Enter database URL for \(identifier)"
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = handshake.pathToDatabasePrompt ?? String(format: String(localized: "AdapterPasswordDataSource_EnterDatabaseUrlFor_FORMAT", defaultValue: "Enter database URL for %1$@", comment: "Alert title in requestPathToDatabaseViaTextField"), identifier)
+        alert.addButton(withTitle: String(localized: "COMMON_OK", defaultValue: "OK", comment: "Button title in requestPathToDatabaseViaTextField"))
+        alert.addButton(withTitle: String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Button title in requestPathToDatabaseViaTextField"))
 
         let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
         textField.placeholderString = handshake.pathToDatabasePlaceholder ?? "https://\u{2026}"
@@ -532,10 +532,10 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
     }
 
     private func requestPassword(_ loginInputs: LoginInputs) {
-        let label = handshakeInfo?.masterPasswordLabel ?? "master password"
+        let label = handshakeInfo?.masterPasswordLabel ?? String(localized: "AdapterPasswordDataSource_MasterPassword", defaultValue: "master password", comment: "Label text in requestPassword")
         // Use runAsync because macOS 26 is buggy garbage and doesn’t draw an insertion point
         // in an alert’s accessory in a sheet modal.
-        ModalPasswordAlert("Enter \(label) for \(loginInputs.name):")
+        ModalPasswordAlert(String(format: String(localized: "AdapterPasswordDataSource_EnterFor_FORMAT", defaultValue: "Enter %1$@ for %2$@:", comment: "Formatted user-facing text in requestPassword"), label, loginInputs.name))
             .runAsync(window: loginInputs.window) { [weak self] masterPassword in
                 if let masterPassword {
                     self?.completeEnsureAuthentication(masterPassword: masterPassword,
@@ -595,11 +595,11 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                 if case let .runtime(description) = error as? AdapterError {
                     let loginFailed = AdapterError.loginFailed(description)
                     let selection = iTermWarning.show(withTitle: loginFailed.reason ?? description,
-                                                      actions: ["Try Again", "Cancel"],
+                                                      actions: [String(localized: "AdapterPasswordDataSource_TryAgain", defaultValue: "Try Again", comment: "Action title in completeEnsureAuthentication"), String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Action title in completeEnsureAuthentication")],
                                                       accessory: nil,
                                                       identifier: nil,
                                                       silenceable: .kiTermWarningTypePersistent,
-                                                      heading: "Authentication Problem",
+                                                      heading: String(localized: "AdapterPasswordDataSource_AuthenticationProblem", defaultValue: "Authentication Problem", comment: "Alert heading in completeEnsureAuthentication"),
                                                       window: loginInputs.window)
                     if selection == .kiTermWarningSelection0 {
                         DispatchQueue.main.async {
@@ -623,7 +623,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         return AnyRecipe(AsyncCommandRecipe<Void, [CommandLinePasswordDataSource.Account]>(
             inputTransformer: { [weak self] context, _, completion in
                 guard let self = self else {
-                    completion(.failure(AdapterError.runtime("Data source deallocated")))
+                    completion(.failure(AdapterError.runtime(String(localized: "AdapterPasswordDataSource_DataSourceDeallocated", defaultValue: "Data source deallocated", comment: "Text shown in makeListAccountsRecipe: Data source deallocated"))))
                     return
                 }
 
@@ -707,7 +707,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         return AnyRecipe(AsyncCommandRecipe<CommandLinePasswordDataSource.AccountIdentifier, CommandLinePasswordDataSource.Password>(
             inputTransformer: { [weak self] context, accountIdentifier, completion in
                 guard let self = self else {
-                    completion(.failure(AdapterError.runtime("Data source deallocated")))
+                    completion(.failure(AdapterError.runtime(String(localized: "AdapterPasswordDataSource_DataSourceDeallocated", defaultValue: "Data source deallocated", comment: "Text shown in makeGetPasswordRecipe: Data source deallocated"))))
                     return
                 }
 
@@ -767,7 +767,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         return AnyRecipe(AsyncCommandRecipe<CommandLinePasswordDataSource.SetPasswordRequest, Void>(
             inputTransformer: { [weak self] context, setPasswordRequest, completion in
                 guard let self = self else {
-                    completion(.failure(AdapterError.runtime("Data source deallocated")))
+                    completion(.failure(AdapterError.runtime(String(localized: "AdapterPasswordDataSource_DataSourceDeallocated", defaultValue: "Data source deallocated", comment: "Text shown in makeSetPasswordRecipe: Data source deallocated"))))
                     return
                 }
 
@@ -783,7 +783,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
                     }
 
                     if !handshake.canSetPasswords {
-                        completion(.failure(CommandLineRecipeError.unsupported(reason: "Adapter does not support setting passwords")))
+                        completion(.failure(CommandLineRecipeError.unsupported(reason: String(localized: "AdapterPasswordDataSource_AdapterDoesNotSupportSettingPasswords", defaultValue: "Adapter does not support setting passwords", comment: "Text shown in makeSetPasswordRecipe: Adapter does not support setting passwords"))))
                         return
                     }
 
@@ -842,7 +842,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         return AnyRecipe(AsyncCommandRecipe<CommandLinePasswordDataSource.AccountIdentifier, Void>(
             inputTransformer: { [weak self] context, accountIdentifier, completion in
                 guard let self = self else {
-                    completion(.failure(AdapterError.runtime("Data source deallocated")))
+                    completion(.failure(AdapterError.runtime(String(localized: "AdapterPasswordDataSource_DataSourceDeallocated", defaultValue: "Data source deallocated", comment: "Text shown in makeDeleteRecipe: Data source deallocated"))))
                     return
                 }
 
@@ -905,7 +905,7 @@ class AdapterPasswordDataSource: CommandLinePasswordDataSource {
         return AnyRecipe(AsyncCommandRecipe<CommandLinePasswordDataSource.AddRequest, CommandLinePasswordDataSource.AccountIdentifier>(
             inputTransformer: { [weak self] context, addRequest, completion in
                 guard let self = self else {
-                    completion(.failure(AdapterError.runtime("Data source deallocated")))
+                    completion(.failure(AdapterError.runtime(String(localized: "AdapterPasswordDataSource_DataSourceDeallocated", defaultValue: "Data source deallocated", comment: "Text shown in makeAddAccountRecipe: Data source deallocated"))))
                     return
                 }
 
@@ -992,11 +992,11 @@ extension AdapterPasswordDataSource {
         }
         DispatchQueue.main.async {
             iTermWarning.show(withTitle: reason,
-                              actions: ["OK"],
+                              actions: [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Action title in showError")],
                               accessory: nil,
                               identifier: nil,
                               silenceable: .kiTermWarningTypePersistent,
-                              heading: "Password Manager Error",
+                              heading: String(localized: "AdapterPasswordDataSource_PasswordManagerError", defaultValue: "Password Manager Error", comment: "Alert heading in showError"),
                               window: window)
         }
     }

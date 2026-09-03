@@ -177,7 +177,7 @@ const CGFloat iTermAnnouncementViewHeightPadding = 29;
         [pullDown setTarget:self];
         [pullDown setAction:@selector(pullDownItemSelected:)];
         [_internalView addSubview:pullDown];
-        [pullDown addItemWithTitle:@"More Actions…"];
+        [pullDown addItemWithTitle:ITLocalize(@"AnnouncementView_Menu_MoreActions", @"More Actions…", @"Alert title in createButtonsFromActions:")];
         for (int i = limit; i < actions.count; i++) {
             NSString *action = actions[i];
             [pullDown addItemWithTitle:[self stringByAddingShortcutInString:action]];
@@ -243,10 +243,10 @@ const CGFloat iTermAnnouncementViewHeightPadding = 29;
     NSImage *image;
     switch (_style) {
         case kiTermAnnouncementViewStyleWarning:
-            image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolExclamationmarkTriangle) accessibilityDescription:@"Warning icon"];
+            image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolExclamationmarkTriangle) accessibilityDescription:ITLocalize(@"ANNOUNCEMENT_WARNING_ICON", @"Warning icon", @"Accessibility label for the announcement warning icon")];
             break;
         case kiTermAnnouncementViewStyleQuestion:
-            image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolQuestionmarkCircle) accessibilityDescription:@"Question icon"];
+            image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolQuestionmarkCircle) accessibilityDescription:ITLocalize(@"ANNOUNCEMENT_QUESTION_ICON", @"Question icon", @"Accessibility label for the announcement question icon")];
             break;
     }
     NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithPointSize:22.0 weight:NSFontWeightRegular];
@@ -439,7 +439,7 @@ const CGFloat iTermAnnouncementViewHeightPadding = 29;
     NSMutableAttributedString *string = [_textView.originalAttributedString mutableCopy];
     NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:10],
                                   NSForegroundColorAttributeName: [NSColor textColor] };
-    NSAttributedString *notice = [[NSAttributedString alloc] initWithString:@"\nPress any key to dismiss this message."
+    NSAttributedString *notice = [[NSAttributedString alloc] initWithString:ITLocalize(@"AnnouncementView_NPressAnyKeyToDismissThis", @"\nPress any key to dismiss this message.", @"Dismissal hint for the announcement")
                                                                  attributes:attributes];
     [string appendAttributedString:notice];
     _textView.textStorage.attributedString = string;

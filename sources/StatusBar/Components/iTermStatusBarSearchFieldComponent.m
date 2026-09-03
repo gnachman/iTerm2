@@ -44,16 +44,16 @@ NSString *iTermStatusBarSearchComponentIsTemporaryKey = @"search: temporary";
 #pragma mark - iTermStatusBarComponent
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Search Tool";
+    return ITLocalize(@"StatusBarSearchFieldComponent_Facing_SearchTool", @"Search Tool", @"Text shown in statusBarComponentShortDescription: Search Tool");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Search tool to find text in the terminal window.";
+    return ITLocalize(@"StatusBarSearchFieldComponent_Facing_SearchToolToFindTextInThe", @"Search tool to find text in the terminal window.", @"Text shown in statusBarComponentDetailedDescription: Search tool to find text in the terminal window.");
 }
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     return @[
-        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Color"
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:ITLocalize(@"StatusBarSearchFieldComponent_StatusBarKnob_Color", @"Color", @"Status bar knob")
                                                           type:iTermStatusBarComponentKnobTypeColor
                                                    placeholder:nil
                                                   defaultValue:nil

@@ -17,8 +17,8 @@ extension FileManager {
         if fileExists(atPath: directoryPath, isDirectory: &isDir) && isDir.boolValue {
             return true
         }
-        let selection = iTermWarning.show(withTitle: "Would you like to create the directory at \(directoryPath)?",
-                                          actions: ["OK", "Cancel"],
+        let selection = iTermWarning.show(withTitle: String(format: String(localized: "NsFileManagerITerm_WouldYouLikeToCreateTheDirectory_FORMAT", defaultValue: "Would you like to create the directory at %1$@?", comment: "Alert title in it_promptToCreateEnclosingDirectory"), directoryPath),
+                                          actions: [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Action title in it_promptToCreateEnclosingDirectory"), String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Action title in it_promptToCreateEnclosingDirectory")],
                                           accessory: nil,
                                           identifier: "CreateDirectory_" + identifier,
                                           silenceable: .kiTermWarningTypePermanentlySilenceable,
@@ -32,8 +32,8 @@ extension FileManager {
                                     attributes: nil)
                 return true
             } catch {
-                let selection = iTermWarning.show(withTitle: "Failed to create \(directoryPath):\n\n\(error.localizedDescription)",
-                                                  actions: ["Try Again", "Cancel"],
+                let selection = iTermWarning.show(withTitle: String(format: String(localized: "NsFileManagerITerm_FailedToCreateNN_FORMAT", defaultValue: "Failed to create %1$@:\n\n%2$@", comment: "Alert title in it_promptToCreateEnclosingDirectory"), directoryPath, error.localizedDescription),
+                                                  actions: [String(localized: "NsFileManagerITerm_TryAgain", defaultValue: "Try Again", comment: "Action title in it_promptToCreateEnclosingDirectory"), String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Action title in it_promptToCreateEnclosingDirectory")],
                                                   accessory: nil,
                                                   identifier: nil,
                                                   silenceable: .kiTermWarningTypePersistent,

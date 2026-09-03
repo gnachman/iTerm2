@@ -384,7 +384,7 @@ class MultipartMessageCellView: MessageCellView, ChatFindableCellView {
         header.wantsLayer = true
         updateCodeBlockHeaderColors(header)
 
-        let titleLabel = NSTextField(labelWithString: "Code Interpreter")
+        let titleLabel = NSTextField(labelWithString: String(localized: "MultipartMessageCellView_CodeInterpreter", defaultValue: "Code Interpreter", comment: "Title in makeCodeBlockHeader"))
         titleLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize, weight: .medium)
         titleLabel.textColor = effectiveAppearance.it_isDark ? .white : .black
         titleLabel.identifier = NSUserInterfaceItemIdentifier("codeBlockTitle")
@@ -394,15 +394,15 @@ class MultipartMessageCellView: MessageCellView, ChatFindableCellView {
         // Same reason as in RegularMessageCellView: prevent NSScrollView's
         // focus-tracking auto-scroll on click.
         copyButton.refusesFirstResponder = true
-        copyButton.title = "Copy"
+        copyButton.title = String(localized: "COMMON_COPY", defaultValue: "Copy", comment: "Button title in makeCodeBlockHeader")
         if #available(macOS 15, *) {
             copyButton.image = NSImage.it_image(forSymbolName: SFSymbol.documentOnDocument.rawValue,
-                                                accessibilityDescription: "Copy",
+                                                accessibilityDescription: String(localized: "COMMON_COPY", defaultValue: "Copy", comment: "Descriptive text in makeCodeBlockHeader"),
                                                 fallbackImageName: "document.on.document",
                                                 for: MultipartMessageCellView.self)
         } else {
             copyButton.image = NSImage.it_image(forSymbolName: SFSymbol.docOnDoc.rawValue,
-                                                accessibilityDescription: "Copy",
+                                                accessibilityDescription: String(localized: "COMMON_COPY", defaultValue: "Copy", comment: "Descriptive text in makeCodeBlockHeader"),
                                                 fallbackImageName: "document.on.document",
                                                 for: MultipartMessageCellView.self)
         }

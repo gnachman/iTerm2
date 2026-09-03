@@ -42,13 +42,13 @@ static NSString *const iTermBatteryComponentKnobKeyShowTime = @"ShowTime";
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *showPercentageKnob =
-    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Show Percentage"
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:ITLocalize(@"StatusBarBatteryComponent_StatusBarKnob_ShowPercentage", @"Show Percentage", @"Status bar knob")
                                                       type:iTermStatusBarComponentKnobTypeCheckbox
                                                placeholder:nil
                                               defaultValue:@YES
                                                        key:iTermBatteryComponentKnobKeyShowPercentage];
     iTermStatusBarComponentKnob *showEstimatedTimeKnob =
-    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"Show Estimated Time"
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:ITLocalize(@"StatusBarBatteryComponent_StatusBarKnob_ShowEstimatedTime", @"Show Estimated Time", @"Status bar knob")
                                                       type:iTermStatusBarComponentKnobTypeCheckbox
                                                placeholder:nil
                                               defaultValue:@NO
@@ -83,11 +83,11 @@ static NSString *const iTermBatteryComponentKnobKeyShowTime = @"ShowTime";
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Battery Level";
+    return ITLocalize(@"StatusBarBatteryComponent_Facing_BatteryLevel", @"Battery Level", @"Text shown in statusBarComponentShortDescription: Battery Level");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Shows current battery level and its recent history.";
+    return ITLocalize(@"StatusBarBatteryComponent_Facing_ShowsCurrentBatteryLevelAndItsRecent", @"Shows current battery level and its recent history.", @"Text shown in statusBarComponentDetailedDescription: Shows current battery level and its recent history.");
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor

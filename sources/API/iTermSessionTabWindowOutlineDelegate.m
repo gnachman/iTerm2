@@ -130,7 +130,7 @@
 }
 
 - (NSString *)displayName {
-    return @"Buried Sessions";
+    return ITLocalize(@"SessionTabWindowOutlineDelegate_Facing_BuriedSessions", @"Buried Sessions", @"Text shown in displayName: Buried Sessions");
 }
 
 - (iTermVariableScope *)scope {

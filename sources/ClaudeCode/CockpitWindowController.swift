@@ -643,11 +643,11 @@ class CockpitWindowController: NSWindowController {
         }
         let symbol: SFSymbol = armed ? .bellBadge : .bell
         notifyToolbarItem.image = NSImage(systemSymbolName: symbol.rawValue,
-                                          accessibilityDescription: "Notify on status change")
+                                          accessibilityDescription: String(localized: "CockpitWindowController_NotifyOnStatusChange", defaultValue: "Notify on status change", comment: "Accessibility description for the status-change notification control"))
         notifyToolbarItem.isEnabled = enabled
         notifyToolbarItem.toolTip = armed
-            ? "Watching for a status change on the selected item. An alert will appear on the next change, then turn this off."
-            : "Notify with an alert when the selected window or session’s status changes."
+            ? String(localized: "CockpitWindowController_WatchingForAStatusChangeOnThe", defaultValue: "Watching for a status change on the selected item. An alert will appear on the next change, then turn this off.", comment: "Text shown in updateNotifyToolbarItem: Watching for a status change on the selected item. An alert will appear on the next change, then turn this off.")
+            : String(localized: "CockpitWindowController_NotifyWithAnAlertWhenTheSelected", defaultValue: "Notify with an alert when the selected window or session’s status changes.", comment: "Text shown in updateNotifyToolbarItem: Notify with an alert when the selected window or session’s status changes.")
     }
 
     @objc private func notifyArmedDidChange(_ notification: Notification) {
@@ -939,12 +939,16 @@ class CockpitWindowController: NSWindowController {
             sent += 1
         }
         guard sent > 0 else {
-            setCockpitStatus("No running sessions to send to", isError: true)
+            setCockpitStatus(String(localized: "COCKPIT_NO_RUNNING_SESSIONS", defaultValue: "No running sessions to send to", comment: "Status message when no cockpit session can receive a command"), isError: true)
             return
         }
         DLog("Cockpit sent command to \(sent) session(s)")
         clearCommandView()
-        setCockpitStatus("Sent to \(sent) session\(sent == 1 ? "" : "s")", isError: false)
+        setCockpitStatus(
+            sent == 1
+                ? String(localized: "COCKPIT_SENT_TO_ONE_SESSION", defaultValue: "Sent to 1 session", comment: "Status message after sending a command to one session")
+                : String(format: String(localized: "COCKPIT_SENT_TO_MANY_SESSIONS_FORMAT", defaultValue: "Sent to %1$d sessions", comment: "Status message naming the number of sessions that received a command"), sent),
+            isError: false)
     }
 
     // After a send, drop the command text but keep the mention chips
@@ -1263,20 +1267,20 @@ fileprivate final class CockpitRow {
 
     var shortLabel: String {
         switch self {
-        case .byStatus: return "Status"
-        case .byWindow: return "Window"
-        case .byWorkgroup: return "Workgroup"
+        case .byStatus: return String(localized: "CockpitWindowController_Status", defaultValue: "Status", comment: "status text")
+        case .byWindow: return String(localized: "CockpitWindowController_Window", defaultValue: "Window", comment: "Text shown in setComposerMentions: Window")
+        case .byWorkgroup: return String(localized: "CockpitWindowController_Workgroup", defaultValue: "Workgroup", comment: "Text shown in setComposerMentions: Workgroup")
         }
     }
 
     var tooltip: String {
         switch self {
         case .byStatus:
-            return "Group sessions by status (Waiting / Working / Idle), within each window."
+            return String(localized: "CockpitWindowController_GroupSessionsByStatusWaitingWorkingIdle", defaultValue: "Group sessions by status (Waiting / Working / Idle), within each window.", comment: "Text shown in setComposerMentions: Group sessions by status (Waiting / Working / Idle), within each window.")
         case .byWindow:
-            return "Group sessions by window, then by tab and split pane."
+            return String(localized: "CockpitWindowController_GroupSessionsByWindowThenByTab", defaultValue: "Group sessions by window, then by tab and split pane.", comment: "Text shown in setComposerMentions: Group sessions by window, then by tab and split pane.")
         case .byWorkgroup:
-            return "Show only sessions in a workgroup, grouped by workgroup."
+            return String(localized: "CockpitWindowController_ShowOnlySessionsInAWorkgroupGrouped", defaultValue: "Show only sessions in a workgroup, grouped by workgroup.", comment: "Text shown in setComposerMentions: Show only sessions in a workgroup, grouped by workgroup.")
         }
     }
 
@@ -1521,7 +1525,7 @@ fileprivate final class CockpitTableCellView: NSTableCellView {
         let bell = CockpitPassthroughImageView()
         let config = NSImage.SymbolConfiguration(pointSize: 11, weight: .regular)
         bell.image = NSImage(systemSymbolName: SFSymbol.bellBadge.rawValue,
-                             accessibilityDescription: "Notify on status change armed")?
+                             accessibilityDescription: String(localized: "CockpitWindowController_NotifyOnStatusChangeArmed", defaultValue: "Notify on status change armed", comment: "Accessibility description for the armed status-change notification"))?
             .withSymbolConfiguration(config)
         bell.imageScaling = .scaleProportionallyDown
         bell.isHidden = true
@@ -2059,8 +2063,8 @@ extension CockpitWindowController {
             let buriedRow = rowCache[identity]
                 ?? CockpitRow(identity: identity,
                               kind: .buriedRoot,
-                              title: "Buried Sessions")
-            buriedRow.title = "Buried Sessions"
+                              title: String(localized: "CockpitWindowController_BuriedSessions", defaultValue: "Buried Sessions", comment: "Title in rebuildByStatus"))
+            buriedRow.title = String(localized: "CockpitWindowController_BuriedSessions", defaultValue: "Buried Sessions", comment: "Title in rebuildByStatus")
             buriedRow.armed = false
             freshCache[identity] = buriedRow
             buriedRow.children = bucketSessionsByStatus(
@@ -2127,8 +2131,8 @@ extension CockpitWindowController {
             let buriedRow = rowCache[identity]
                 ?? CockpitRow(identity: identity,
                               kind: .buriedRoot,
-                              title: "Buried Sessions")
-            buriedRow.title = "Buried Sessions"
+                              title: String(localized: "CockpitWindowController_BuriedSessions", defaultValue: "Buried Sessions", comment: "Title in rebuildByWindow"))
+            buriedRow.title = String(localized: "CockpitWindowController_BuriedSessions", defaultValue: "Buried Sessions", comment: "Title in rebuildByWindow")
             buriedRow.armed = false
             freshCache[identity] = buriedRow
             buriedRow.children = sessionRows(for: buriedExpanded,
@@ -2722,11 +2726,11 @@ extension CockpitWindowController {
         if let title = tab.title, !title.isEmpty {
             return title
         }
-        return "Tab \(positionInWindow)"
+        return String(format: String(localized: "CockpitWindowController_Tab_FORMAT", defaultValue: "Tab %1$@", comment: "Formatted user-facing text in cockpitTabTitle"), String(positionInWindow))
     }
 
     private func cockpitWindowTitlePrefix(for terminal: PseudoTerminal) -> String {
-        return "Window \(terminal.number)"
+        return String(format: String(localized: "CockpitWindowController_Window_FORMAT", defaultValue: "Window %1$@", comment: "Formatted user-facing text in cockpitWindowTitlePrefix"), String(terminal.number))
     }
 
     private func cockpitWorkgroupTitle(for instance: iTermWorkgroupInstance) -> String {

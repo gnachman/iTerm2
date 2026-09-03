@@ -302,12 +302,12 @@ extension PTYSession {
                                             sessionID: guid,
                                             baseOffset: screen.totalScrollbackOverflow()))
         guard let client = ChatClient.instance else {
-            iTermWarning.show(withTitle: "AI Chat could not be opened. Verify you only have one instance of iTerm2 running.",
-                              actions: ["OK"],
+            iTermWarning.show(withTitle: String(localized: "PtySession_AiChatCouldNotBeOpenedVerify", defaultValue: "AI Chat could not be opened. Verify you only have one instance of iTerm2 running.", comment: "Alert title in explainWithAI"),
+                              actions: [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Action title in explainWithAI")],
                               accessory: nil,
                               identifier: nil,
                               silenceable: .kiTermWarningTypePersistent,
-                              heading: "Error",
+                              heading: String(localized: "PtySession_Error", defaultValue: "Error", comment: "Alert heading in explainWithAI"),
                               window: self.genericView?.window)
             return
         }
@@ -766,7 +766,7 @@ extension PTYSession {
 
     func getRemoteHostnameRemoteCommand(getRemoteHostname: RemoteCommand.GetRemoteHostname,
                                         completion: @escaping (String, String) throws -> ()) rethrows {
-        try completion(screen.lastRemoteHost()?.hostname ?? "Unknown",
+        try completion(screen.lastRemoteHost()?.hostname ?? String(localized: "PtySession_Unknown", defaultValue: "Unknown", comment: "Text shown in getRemoteHostnameRemoteCommand: Unknown"),
                    "Hostname provided to AI")
     }
 
@@ -821,7 +821,7 @@ extension PTYSession {
     func deleteCurrentLineRemoteCommand(deleteCurrentLine: RemoteCommand.DeleteCurrentLine,
                                         completion: @escaping (String, String) throws -> ()) rethrows {
         writeTaskNoBroadcast("\u{15}")
-        try completion("Done", "Current line deleted by AI.")
+        try completion(String(localized: "COMMON_DONE", defaultValue: "Done", comment: "Text shown in deleteCurrentLineRemoteCommand: Done"), String(localized: "PtySession_CurrentLineDeletedByAi", defaultValue: "Current line deleted by AI.", comment: "Text shown in deleteCurrentLineRemoteCommand: Current line deleted by AI."))
     }
 
     func restartSessionRemoteCommand(restartSession: RemoteCommand.RestartSession,
@@ -872,10 +872,10 @@ extension PTYSession {
         DLog("Send to composer")
         conductor.create(file: createFile.filename, content: createFile.content.lossyData) { error in
             if let error {
-                try? completion("Error creating \(createFile.filename): " + error.localizedDescription,
-                           "Failed to create \(createFile) on remote host: \(error.localizedDescription)")
+                try? completion(String(format: String(localized: "PtySession_ErrorCreating_FORMAT", defaultValue: "Error creating %1$@: %2$@", comment: "Formatted user-facing text in createRemoteFile"), createFile.filename, error.localizedDescription),
+                           String(format: String(localized: "PtySession_FailedToCreateOnRemoteHost_FORMAT", defaultValue: "Failed to create %1$@ on remote host: %2$@", comment: "Formatted user-facing text in createRemoteFile"), "\(createFile)", error.localizedDescription))
             } else {
-                try? completion("Done", "AI created \(createFile.filename) on remote host.")
+                try? completion(String(localized: "COMMON_DONE", defaultValue: "Done", comment: "Text shown in createRemoteFile: Done"), String(format: String(localized: "PtySession_AiCreatedOnRemoteHost_FORMAT", defaultValue: "AI created %1$@ on remote host.", comment: "Formatted user-facing text in createRemoteFile"), createFile.filename))
             }
         }
     }
@@ -2677,7 +2677,7 @@ extension PTYSession {
             return nil
         }
         do {
-            let title = "Chat about \(self.name)"
+            let title = String(format: String(localized: "PtySession_ChatAbout_FORMAT", defaultValue: "Chat about %1$@", comment: "Title in createInlineChat"), self.name)
             let isBrowser = self.isBrowserSession()
             let chatID = try client.create(
                 chatWithTitle: title,

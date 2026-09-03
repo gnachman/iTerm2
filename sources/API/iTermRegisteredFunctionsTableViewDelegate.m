@@ -57,18 +57,18 @@
                 role = @"RPC";
                 break;
             case ITMRPCRegistrationRequest_Role_SessionTitle:
-                role = @"Title Provider";
+                role = ITLocalize(@"RegisteredFunctionsTableViewDelegate_Facing_TitleProvider", @"Title Provider", @"Text shown in loadRows: Title Provider");
                 break;
             case ITMRPCRegistrationRequest_Role_StatusBarComponent:
-                role = @"Status Bar Component";
+                role = ITLocalize(@"RegisteredFunctionsTableViewDelegate_Facing_StatusBarComponent", @"Status Bar Component", @"Text shown in loadRows: Status Bar Component");
                 break;
             case ITMRPCRegistrationRequest_Role_ContextMenu:
-                role = @"Context Menu Provider";
+                role = ITLocalize(@"RegisteredFunctionsTableViewDelegate_Facing_ContextMenuProvider", @"Context Menu Provider", @"Text shown in loadRows: Context Menu Provider");
                 break;
         }
         id connectionKey = subs[signature].firstObject;
         iTermScriptHistoryEntry *entry =  [[iTermAPIHelper sharedInstance] scriptHistoryEntryForConnectionKey:connectionKey];
-        NSString *script = entry.name ?: @"Unknown";
+        NSString *script = entry.name ?: ITLocalize(@"RegisteredFunctionsTableViewDelegate_Facing_Unknown", @"Unknown", @"Text shown in loadRows: Unknown");
         return [[iTermRegisteredFunctionProxy alloc] initWithSignature:signature role:role script:script];
     }];
 }

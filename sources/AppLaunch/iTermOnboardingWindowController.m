@@ -28,22 +28,22 @@ static NSString *const iTermOnboardingWindowControllerHasBeenShown = @"NoSyncOnb
 static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
     if ([path isEqualToString:@"companion"]) {
         if (![iTermAdvancedSettingsModel generativeAIAllowed]) {
-            [iTermWarning showWarningWithTitle:@"Generative AI features have been disabled. Talk to your enterprise system administrator."
-                                       actions:@[ @"OK" ]
+            [iTermWarning showWarningWithTitle:ITLocalize(@"OnboardingWindowController_Alert_GenerativeAiFeaturesHaveBeenDisabledTalk", @"Generative AI features have been disabled. Talk to your enterprise system administrator.", @"alert title")
+                                       actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"action title") ]
                                      accessory:nil
                                     identifier:nil
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"Feature Unavailable"
+                                       heading:ITLocalize(@"OnboardingWindowController_AlertHeading_FeatureUnavailable", @"Feature Unavailable",@"Alert heading in iTermOnboardingWindowController")
                                         window:window];
             return;
         }
         if (![iTermAdvancedSettingsModel companionPairingAllowed]) {
-            [iTermWarning showWarningWithTitle:@"Companion device pairing has been disabled. Talk to your enterprise system administrator."
-                                       actions:@[ @"OK" ]
+            [iTermWarning showWarningWithTitle:ITLocalize(@"OnboardingWindowController_Alert_CompanionDevicePairingHasBeenDisabledTalk", @"Companion device pairing has been disabled. Talk to your enterprise system administrator.", @"alert title")
+                                       actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"action title") ]
                                      accessory:nil
                                     identifier:nil
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"Feature Unavailable"
+                                       heading:ITLocalize(@"OnboardingWindowController_AlertHeading_FeatureUnavailable", @"Feature Unavailable",@"Alert heading in iTermOnboardingWindowController")
                                         window:window];
             return;
         }
@@ -60,12 +60,12 @@ static void iTermOpenWhatsNewURL(NSString *path, NSWindow *window) {
     }
     if ([path isEqualToString:@"screenshot"]) {
         if (![iTermController sharedInstance].currentTerminal) {
-            [iTermWarning showWarningWithTitle:@"You need an open terminal window to make a screenshot."
-                                       actions:@[ @"OK" ]
+            [iTermWarning showWarningWithTitle:ITLocalize(@"OnboardingWindowController_Alert_YouNeedAnOpenTerminalWindowTo", @"You need an open terminal window to make a screenshot.", @"alert title")
+                                       actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"action title") ]
                                      accessory:nil
                                     identifier:nil
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"No Terminal Window"
+                                       heading:ITLocalize(@"OnboardingWindowController_AlertHeading_NoTerminalWindow", @"No Terminal Window",@"Alert heading in iTermOnboardingWindowController")
                                         window:window];
             return;
         }

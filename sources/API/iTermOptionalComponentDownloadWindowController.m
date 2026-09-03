@@ -203,7 +203,7 @@ didCompleteWithError:(nullable NSError *)error {
 - (instancetype)initWithURL:(NSURL *)url
      requestedPythonVersion:(NSString *)requestedPythonVersion
            nextPhaseFactory:(iTermOptionalComponentDownloadPhase *(^)(iTermOptionalComponentDownloadPhase *))nextPhaseFactory {
-    self = [super initWithURL:url title:@"Finding latest version…" nextPhaseFactory:nextPhaseFactory];
+    self = [super initWithURL:url title:ITLocalize(@"OptionalComponentDownloadWindowController_FindingLatestVersion", @"Finding latest version…", @"Title in initWithURL:") nextPhaseFactory:nextPhaseFactory];
     if (self) {
         _requestedPythonVersion = [requestedPythonVersion copy];
     }
@@ -360,7 +360,7 @@ didCompleteWithError:(nullable NSError *)error {
      requestedPythonVersion:(NSString *)requestedPythonVersion
            expectedVersions:(NSArray<NSString *> *)expectedVersions
            nextPhaseFactory:(iTermOptionalComponentDownloadPhase *(^)(iTermOptionalComponentDownloadPhase *))nextPhaseFactory {
-    self = [super initWithURL:url title:@"Downloading Python runtime…" nextPhaseFactory:nextPhaseFactory];
+    self = [super initWithURL:url title:ITLocalize(@"OptionalComponentDownloadWindowController_DownloadingPythonRuntime", @"Downloading Python runtime…", @"Title in initWithURL:") nextPhaseFactory:nextPhaseFactory];
     if (self) {
         _version = version;
         _expectedSignature = [expectedSignature copy];
@@ -414,7 +414,7 @@ didCompleteWithError:(nullable NSError *)error {
     // and it routes through the phase-cancel/completion logic correctly.
     self.window.styleMask &= ~NSWindowStyleMaskClosable;
 
-    _titleLabel.stringValue = @"Initializing…";
+    _titleLabel.stringValue = ITLocalize(@"OptionalComponentDownloadWindowController_Initializing", @"Initializing…", @"Title in windowDidLoad");
     _progressLabel.stringValue = [NSString stringWithFormat:@""];
 }
 
@@ -443,7 +443,7 @@ didCompleteWithError:(nullable NSError *)error {
     [phase download];
     _progressLabel.stringValue = phase.progressString;
     _button.enabled = phase.buttonEnabled;
-    _button.title = @"Cancel";
+    _button.title = ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in beginPhase:");
 }
 
 - (void)showMessage:(NSString *)message {
@@ -452,7 +452,7 @@ didCompleteWithError:(nullable NSError *)error {
     _titleLabel.stringValue = message;
     _progressLabel.stringValue = @"";
     _button.enabled = YES;
-    _button.title = @"OK";
+    _button.title = ITLocalize(@"COMMON_OK", @"OK", @"Button title in showMessage:");
 }
 
 - (IBAction)button:(id)sender {
@@ -471,13 +471,13 @@ didCompleteWithError:(nullable NSError *)error {
 - (void)downloadDidFailWithError:(NSError *)error {
     RLog(@"error=%@ %@", error, self);
     _button.enabled = YES;
-    _button.title = @"Try Again";
+    _button.title = ITLocalize(@"OptionalComponentDownloadWindowController_TryAgain", @"Try Again", @"Button title in downloadDidFailWithError:");
     if (error.code == -999 && [error.domain isEqualToString:@"com.iterm2"]) {
-        _progressLabel.stringValue = @"Canceled";
+        _progressLabel.stringValue = ITLocalize(@"OptionalComponentDownloadWindowController_Canceled", @"Canceled", @"Label text in downloadDidFailWithError:");
         _titleLabel.stringValue = @"";
     } else {
         _progressLabel.stringValue = error.localizedDescription;
-        _titleLabel.stringValue = @"Download Failed";
+        _titleLabel.stringValue = ITLocalize(@"OptionalComponentDownloadWindowController_DownloadFailed", @"Download Failed", @"Title in downloadDidFailWithError:");
     }
     _progressIndicator.doubleValue = 0;
     iTermOptionalComponentDownloadPhase *phase = _currentPhase;
@@ -511,7 +511,7 @@ didCompleteWithError:(nullable NSError *)error {
                                ofTotal:(double)totalBytes {
     DLog(@"downloaded %@/%@ %@", @(bytesWritten), @(totalBytes), self);
     self->_progressIndicator.doubleValue = bytesWritten / totalBytes;
-    self->_progressLabel.stringValue = [NSString stringWithFormat:@"%@ of %@",
+    self->_progressLabel.stringValue = [NSString stringWithFormat:ITLocalize(@"OptionalComponentDownloadWindowController_Of_FORMAT", @"%1$@ of %2$@", @"Label text in optionalComponentDownloadPhase:"),
                                         [NSString it_formatBytes:bytesWritten],
                                         [NSString it_formatBytes:totalBytes]];
 }

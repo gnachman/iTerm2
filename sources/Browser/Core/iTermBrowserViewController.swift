@@ -275,12 +275,12 @@ extension iTermBrowserViewController {
                 } catch {
                     videoWindowController?.close()
                     videoWindowController = nil
-                    iTermWarning.show(withTitle: "Could not create movie: \(error.localizedDescription)",
-                                      actions: ["OK"],
+                    iTermWarning.show(withTitle: String(format: String(localized: "BrowserViewController_CouldNotCreateMovie_FORMAT", defaultValue: "Could not create movie: %1$@", comment: "Alert title in startInstantReplay"), error.localizedDescription),
+                                      actions: [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Action title in startInstantReplay")],
                                       accessory: nil,
                                       identifier: nil,
                                       silenceable: .kiTermWarningTypePersistent,
-                                      heading: "Problem saving instant replay movie",
+                                      heading: String(localized: "BrowserViewController_ProblemSavingInstantReplayMovie", defaultValue: "Problem saving instant replay movie", comment: "Alert heading in startInstantReplay"),
                                       window: view.window)
                 }
             }
@@ -984,7 +984,7 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
             // Remove bookmark
             let success = await database.removeBookmark(url: currentURL)
             if success {
-                ToastWindowController.showToast(withMessage: "Bookmark Removed")
+                ToastWindowController.showToast(withMessage: String(localized: "BROWSER_BOOKMARK_REMOVED_TOAST", defaultValue: "Bookmark Removed", comment: "Toast confirming a bookmark was removed"))
             }
         } else {
             // Add bookmark first, then show tag editor
@@ -1338,7 +1338,7 @@ extension iTermBrowserViewController {
             }
 
             let savePanel = iTermModernSavePanel()
-            savePanel.defaultFilename = browserManager.webView.title ?? "Untitled"
+            savePanel.defaultFilename = browserManager.webView.title ?? String(localized: "BrowserViewController_Untitled", defaultValue: "Untitled", comment: "Title in saveDocumentAs")
             let response = await savePanel.beginSheetModal(for: window)
             if response == .OK,
                 let item = savePanel.item,

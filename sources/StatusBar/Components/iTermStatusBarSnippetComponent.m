@@ -22,11 +22,11 @@
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Snippets Menu";
+    return ITLocalize(@"StatusBarSnippetComponent_Facing_SnippetsMenu", @"Snippets Menu", @"Text shown in statusBarComponentShortDescription: Snippets Menu");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"When clicked, opens a menu of snippets. Snippets are saved text strings that can be pasted quickly.";
+    return ITLocalize(@"StatusBarSnippetComponent_Facing_WhenClickedOpensAMenuOfSnippets", @"When clicked, opens a menu of snippets. Snippets are saved text strings that can be pasted quickly.", @"Text shown in statusBarComponentDetailedDescription: When clicked, opens a menu of snippets. Snippets are saved text strings that can be pasted quickly.");
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
@@ -39,7 +39,7 @@
 }
 
 - (nullable NSString *)stringValue {
-    return @"Send Snippet…";
+    return ITLocalize(@"StatusBarSnippetComponent_StatusBarSnippet_SendSnippet", @"Send Snippet…", @"Status bar snippet");
 }
 
 - (nullable NSString *)stringValueForCurrentWidth {
@@ -83,7 +83,7 @@
 
     [menu addItem:[NSMenuItem separatorItem]];
 
-    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"Edit Snippets…" action:@selector(editSnippets:) keyEquivalent:@""];
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:ITLocalize(@"StatusBarSnippetComponent_StatusBarContextMenu_EditSnippets", @"Edit Snippets…", @"Status bar context menu") action:@selector(editSnippets:) keyEquivalent:@""];
     item.target = self;
     [menu addItem:item];
 

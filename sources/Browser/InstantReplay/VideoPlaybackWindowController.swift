@@ -39,7 +39,7 @@ class VideoPlaybackWindowController: NSWindowController, NSMenuItemValidation {
             backing: .buffered,
             defer: false
         )
-        window.title = "Instant Replay"
+        window.title = String(localized: "VideoPlaybackWindowController_InstantReplay", defaultValue: "Instant Replay", comment: "Title in keyDown")
         window.center()
         
         super.init(window: window)
@@ -115,7 +115,7 @@ class VideoPlaybackWindowController: NSWindowController, NSMenuItemValidation {
         let symbolConfig = NSImage.SymbolConfiguration(pointSize: 18, weight: .medium)
 
         playBackwardButton = NSButton()
-        playBackwardButton.image = NSImage(systemSymbolName: SFSymbol.arrowtriangleBackwardFill.rawValue, accessibilityDescription: "Play Backward")?.withSymbolConfiguration(symbolConfig)
+        playBackwardButton.image = NSImage(systemSymbolName: SFSymbol.arrowtriangleBackwardFill.rawValue, accessibilityDescription: String(localized: "VideoPlaybackWindowController_PlayBackward", defaultValue: "Play Backward", comment: "Play Backward button title in setupUI"))?.withSymbolConfiguration(symbolConfig)
         playBackwardButton.bezelStyle = .shadowlessSquare
         playBackwardButton.isBordered = false
         playBackwardButton.target = self
@@ -124,7 +124,7 @@ class VideoPlaybackWindowController: NSWindowController, NSMenuItemValidation {
         controlsContainer.addSubview(playBackwardButton)
         
         playPauseButton = NSButton()
-        playPauseButton.image = NSImage(systemSymbolName: SFSymbol.playFill.rawValue, accessibilityDescription: "Play")?.withSymbolConfiguration(symbolConfig)
+        playPauseButton.image = NSImage(systemSymbolName: SFSymbol.playFill.rawValue, accessibilityDescription: String(localized: "VideoPlaybackWindowController_Play", defaultValue: "Play", comment: "Play button title in setupUI"))?.withSymbolConfiguration(symbolConfig)
         playPauseButton.bezelStyle = .shadowlessSquare
         playPauseButton.isBordered = false
         playPauseButton.target = self
@@ -151,7 +151,7 @@ class VideoPlaybackWindowController: NSWindowController, NSMenuItemValidation {
         
         revealInFinderButton = NSButton()
         let smallerSymbolConfig = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
-        revealInFinderButton.image = NSImage(systemSymbolName: SFSymbol.arrowUpRightSquare.rawValue, accessibilityDescription: "Reveal in Finder")?.withSymbolConfiguration(smallerSymbolConfig)
+        revealInFinderButton.image = NSImage(systemSymbolName: SFSymbol.arrowUpRightSquare.rawValue, accessibilityDescription: String(localized: "VideoPlaybackWindowController_RevealInFinder", defaultValue: "Reveal in Finder", comment: "Reveal in Finder button title in setupUI"))?.withSymbolConfiguration(smallerSymbolConfig)
         revealInFinderButton.bezelStyle = .shadowlessSquare
         revealInFinderButton.isBordered = false
         revealInFinderButton.target = self
@@ -307,11 +307,11 @@ class VideoPlaybackWindowController: NSWindowController, NSMenuItemValidation {
             
             // Update forward play/pause button
             let forwardSymbolName = player.rate > 0 ? SFSymbol.pauseFill.rawValue : SFSymbol.playFill.rawValue
-            playPauseButton.image = NSImage(systemSymbolName: forwardSymbolName, accessibilityDescription: player.rate > 0 ? "Pause" : "Play")?.withSymbolConfiguration(symbolConfig)
+            playPauseButton.image = NSImage(systemSymbolName: forwardSymbolName, accessibilityDescription: player.rate > 0 ? String(localized: "VideoPlaybackWindowController_Pause", defaultValue: "Pause", comment: "Button title in updateUI") : String(localized: "VideoPlaybackWindowController_Play", defaultValue: "Play", comment: "Button title in updateUI"))?.withSymbolConfiguration(symbolConfig)
             
             // Update backward play button
             let backwardSymbolName = player.rate < 0 ? SFSymbol.pauseFill.rawValue : SFSymbol.arrowtriangleBackwardFill.rawValue
-            playBackwardButton.image = NSImage(systemSymbolName: backwardSymbolName, accessibilityDescription: player.rate < 0 ? "Pause" : "Play Backward")?.withSymbolConfiguration(symbolConfig)
+            playBackwardButton.image = NSImage(systemSymbolName: backwardSymbolName, accessibilityDescription: player.rate < 0 ? String(localized: "VideoPlaybackWindowController_Pause", defaultValue: "Pause", comment: "Button title in updateUI") : String(localized: "VideoPlaybackWindowController_PlayBackward", defaultValue: "Play Backward", comment: "Button title in updateUI"))?.withSymbolConfiguration(symbolConfig)
         }
     }
     

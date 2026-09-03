@@ -30,50 +30,50 @@
     theTime *= -1;
     if (theTime < 60) {
         if (lowerCase) {
-            return @"moments ago";
+            return ITLocalize(@"NsDateFormatterExtras_Facing_MomentsAgo", @"moments ago", @"Text shown in dateDifferenceStringFromDate:: moments ago");
         } else {
-            return @"Moments ago";
+            return ITLocalize(@"NsDateFormatterExtras_Facing_MomentsAgo_2", @"Moments ago", @"Text shown in dateDifferenceStringFromDate:: Moments ago");
         }
     } else if (theTime < 3600) {
         int diff = round(theTime / 60);
         if (diff == 1) {
-            return [NSString stringWithFormat:@"1 minute ago"];
+            return ITLocalize(@"NsDateFormatterExtras_Facing_1MinuteAgo", @"1 minute ago", @"Text shown in dateDifferenceStringFromDate:: 1 minute ago");
         }
-        return [NSString stringWithFormat:@"%d minutes ago", diff];
+        return [NSString stringWithFormat:ITLocalize(@"NsDateFormatterExtras_FormattedFacing_MinutesAgo_FORMAT", @"%1$d minutes ago",@"Formatted user-facing text in dateDifferenceStringFromDate:(NSDate *)date"), diff];
     } else if (theTime < 86400) {
         int diff = round(theTime / 60 / 60);
         if (diff == 1) {
-            return [NSString stringWithFormat:@"1 hour ago"];
+            return ITLocalize(@"NsDateFormatterExtras_Facing_1HourAgo", @"1 hour ago", @"Text shown in dateDifferenceStringFromDate:: 1 hour ago");
         }
-        return [NSString stringWithFormat:@"%d hours ago", diff];
+        return [NSString stringWithFormat:ITLocalize(@"NsDateFormatterExtras_FormattedFacing_HoursAgo_FORMAT", @"%1$d hours ago",@"Formatted user-facing text in dateDifferenceStringFromDate:(NSDate *)date"), diff];
     } else if (theTime < 604800) {
         int diff = round(theTime / 60 / 60 / 24);
         if (diff == 1) {
             if (lowerCase) {
-                return @"yesterday";
+                return ITLocalize(@"NsDateFormatterExtras_Facing_Yesterday", @"yesterday", @"Text shown in dateDifferenceStringFromDate:: yesterday");
             } else {
-                return @"Yesterday";
+                return ITLocalize(@"NsDateFormatterExtras_Facing_Yesterday_2", @"Yesterday", @"Text shown in dateDifferenceStringFromDate:: Yesterday");
             }
         }
         if (diff == 7) {
             if (lowerCase) {
-                return @"one week ago";
+                return ITLocalize(@"NsDateFormatterExtras_Facing_OneWeekAgo", @"one week ago", @"Text shown in dateDifferenceStringFromDate:: one week ago");
             } else {
-                return @"One week ago";
+                return ITLocalize(@"NsDateFormatterExtras_Facing_OneWeekAgo_2", @"One week ago", @"Text shown in dateDifferenceStringFromDate:: One week ago");
             }
         }
-        return[NSString stringWithFormat:@"%d days ago", diff];
+        return[NSString stringWithFormat:ITLocalize(@"NsDateFormatterExtras_FormattedFacing_DaysAgo_FORMAT", @"%1$d days ago",@"Formatted user-facing text in dateDifferenceStringFromDate:(NSDate *)date"), diff];
     } else {
         int diff = round(theTime / 60 / 60 / 24 / 7);
         if (diff == 1) {
             if (lowerCase) {
-                return @"last week";
+                return ITLocalize(@"NsDateFormatterExtras_Facing_LastWeek", @"last week", @"Text shown in dateDifferenceStringFromDate:: last week");
             } else {
-                return @"Last week";
+                return ITLocalize(@"NsDateFormatterExtras_Facing_LastWeek_2", @"Last week", @"Text shown in dateDifferenceStringFromDate:: Last week");
             }
 
         }
-        return [NSString stringWithFormat:@"%d weeks ago", diff];
+        return [NSString stringWithFormat:ITLocalize(@"NsDateFormatterExtras_FormattedFacing_WeeksAgo_FORMAT", @"%1$d weeks ago",@"Formatted user-facing text in dateDifferenceStringFromDate:(NSDate *)date"), diff];
     }
 }
 
@@ -87,35 +87,35 @@
 
 + (NSString *)compactDateDifferenceStringFromTimeDelta:(NSTimeInterval)theTime {
     if (theTime < 60) {
-        return @"< 1 min";
+        return ITLocalize(@"NsDateFormatterExtras_Facing_1Min", @"< 1 min", @"Text shown in compactDateDifferenceStringFromTimeDelta:: < 1 min");
     } else if (theTime < 3600) {
         int diff = round(theTime / 60);
         if (diff == 1) {
-            return [NSString stringWithFormat:@"1 min"];
+            return ITLocalize(@"NsDateFormatterExtras_Facing_1Min_2", @"1 min", @"Text shown in compactDateDifferenceStringFromTimeDelta:: 1 min");
         }
-        return [NSString stringWithFormat:@"%d min", diff];
+        return [NSString stringWithFormat:ITLocalize(@"NsDateFormatterExtras_FormattedFacing_Min_FORMAT", @"%1$d min",@"Formatted user-facing text in compactDateDifferenceStringFromTimeDelta:(NSTimeInterval)theTime"), diff];
     } else if (theTime < 86400) {
         int diff = round(theTime / 60 / 60);
         if (diff == 1) {
-            return [NSString stringWithFormat:@"1 hour"];
+            return ITLocalize(@"NsDateFormatterExtras_Facing_1Hour", @"1 hour", @"Text shown in compactDateDifferenceStringFromTimeDelta:: 1 hour");
         }
-        return [NSString stringWithFormat:@"%d hrs", diff];
+        return [NSString stringWithFormat:ITLocalize(@"NsDateFormatterExtras_FormattedFacing_Hrs_FORMAT", @"%1$d hrs",@"Formatted user-facing text in compactDateDifferenceStringFromTimeDelta:(NSTimeInterval)theTime"), diff];
     } else if (theTime < 604800) {
         int diff = round(theTime / 60 / 60 / 24);
         if (diff == 1) {
-            return [NSString stringWithFormat:@"1 day"];
+            return ITLocalize(@"NsDateFormatterExtras_Facing_1Day", @"1 day", @"Text shown in compactDateDifferenceStringFromTimeDelta:: 1 day");
         }
         if (diff == 7) {
-            return [NSString stringWithFormat:@"1 week"];
+            return ITLocalize(@"NsDateFormatterExtras_Facing_1Week", @"1 week", @"Text shown in compactDateDifferenceStringFromTimeDelta:: 1 week");
         }
-        return[NSString stringWithFormat:@"%d days", diff];
+        return[NSString stringWithFormat:ITLocalize(@"NsDateFormatterExtras_FormattedFacing_Days_FORMAT", @"%1$d days",@"Formatted user-facing text in compactDateDifferenceStringFromTimeDelta:(NSTimeInterval)theTime"), diff];
     } else {
         int diff = round(theTime / 60 / 60 / 24 / 7);
         if (diff == 1) {
-            return [NSString stringWithFormat:@"1 week"];
+            return ITLocalize(@"NsDateFormatterExtras_Facing_1Week", @"1 week", @"Text shown in compactDateDifferenceStringFromTimeDelta:: 1 week");
 
         }
-        return [NSString stringWithFormat:@"%d wks", diff];
+        return [NSString stringWithFormat:ITLocalize(@"NsDateFormatterExtras_FormattedFacing_Wks_FORMAT", @"%1$d wks",@"Formatted user-facing text in compactDateDifferenceStringFromTimeDelta:(NSTimeInterval)theTime"), diff];
     }
 }
 
@@ -124,7 +124,7 @@
     const NSTimeInterval interval = fabs(seconds);
 
     if (interval == 0) {
-        return @"Baseline";
+        return ITLocalize(@"NsDateFormatterExtras_Facing_Baseline", @"Baseline", @"Text shown in highResolutionCompactRelativeTimeStringFromSeconds:: Baseline");
     }
     NSString *sign = negative ? @"-" : @"+";
 

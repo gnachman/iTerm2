@@ -34,9 +34,9 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
     if (!aDict) {
         RLog(@"Failed to parse dictionary");
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Import Failed.";
-        alert.informativeText = @"The selected file could not be read or did not contain a valid color scheme.";
-        [alert addButtonWithTitle:@"OK"];
+        alert.messageText = ITLocalize(@"ColorPresets_Alert_ImportFailed", @"Import Failed.", @"Alert title in importColorPresetFromFile:");
+        alert.informativeText = ITLocalize(@"ColorPresets_AlertExplanatory_TheSelectedFileCouldNotBeRead", @"The selected file could not be read or did not contain a valid color scheme.", @"Alert explanatory text in importColorPresetFromFile:");
+        [alert addButtonWithTitle:ITLocalize(@"COMMON_OK", @"OK", @"Button title in importColorPresetFromFile:")];
         [alert runModal];
         return NO;
     } else {
@@ -45,10 +45,10 @@ NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMen
         if (dup) {
             DLog(@"Is a duplicate preset");
             NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = @"Add duplicate color preset?";
-            alert.informativeText = [NSString stringWithFormat:@"The color preset “%@” is the same as the preset you're trying to add. Really add it?", dup];
-            [alert addButtonWithTitle:@"Cancel"];
-            [alert addButtonWithTitle:@"Add it anyway"];
+            alert.messageText = ITLocalize(@"ColorPresets_Alert_AddDuplicateColorPreset", @"Add duplicate color preset?", @"Alert title in importColorPresetFromFile:");
+            alert.informativeText = [NSString stringWithFormat:ITLocalize(@"ColorPresets_AlertExplanatory_TheColorPresetIsTheSameAsThe_FORMAT", @"The color preset “%1$@” is the same as the preset you're trying to add. Really add it?", @"Alert explanatory text in importColorPresetFromFile:"), dup];
+            [alert addButtonWithTitle:ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in importColorPresetFromFile:")];
+            [alert addButtonWithTitle:ITLocalize(@"ColorPresets_AddItAnyway", @"Add it anyway", @"Button title in importColorPresetFromFile:")];
             if ([alert runModal] == NSAlertFirstButtonReturn) {
                 DLog(@"User declined to install dup");
                 return NO;

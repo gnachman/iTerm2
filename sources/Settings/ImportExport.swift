@@ -21,7 +21,7 @@ class ImportExport: NSObject {
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = ["itermexport"].compactMap { UTType(filenameExtension: $0) }
         savePanel.nameFieldStringValue = "iTerm2 State.itermexport"
-        savePanel.title = "Export iTerm2 Settings and Data"
+        savePanel.title = String(localized: "ImportExport_ExportITerm2SettingsAndData", defaultValue: "Export iTerm2 Settings and Data", comment: "Title in performExportFlow")
 
         let response = savePanel.runModal()
         guard response == NSApplication.ModalResponse.OK else {
@@ -42,13 +42,13 @@ class ImportExport: NSObject {
             RLog("Failed: \(error)")
             switch error {
             case ImportExportError.failedToCreateTempDir(let reason):
-                return .failure("Failed to create temporary directory: \(reason)")
+                return .failure(String(format: String(localized: "ImportExport_FailedToCreateTemporaryDirectory_FORMAT", defaultValue: "Failed to create temporary directory: %1$@", comment: "Formatted user-facing text in performExportFlow"), reason))
             case ImportExportError.failedToCreateIntermediateFolder(let reason):
-                return .failure("Failed to create folder: \(reason)")
+                return .failure(String(format: String(localized: "ImportExport_FailedToCreateFolder_FORMAT", defaultValue: "Failed to create folder: %1$@", comment: "Formatted user-facing text in performExportFlow"), reason))
             case ImportExportError.failedToCopyFile(let reason):
-                return .failure("Failed to copy file: \(reason)")
+                return .failure(String(format: String(localized: "ImportExport_FailedToCopyFile_FORMAT", defaultValue: "Failed to copy file: %1$@", comment: "Formatted user-facing text in performExportFlow"), reason))
             case ImportExportError.failedToSaveFile(let reason):
-                return .failure("Failed to save file: \(reason)")
+                return .failure(String(format: String(localized: "ImportExport_FailedToSaveFile_FORMAT", defaultValue: "Failed to save file: %1$@", comment: "Formatted user-facing text in performExportFlow"), reason))
             case ImportExportError.bug(let reason):
                 return .failure("A bug was encountered: \(reason). Please report this at https://iterm2.com/bugs")
             case ImportExportError.failedToCreateArchive(let reason):
@@ -91,12 +91,12 @@ class ImportExport: NSObject {
 
         do {
             let selection = iTermWarning.show(
-                withTitle: "Any needed Python runtimes will be installed and secure settings will be updated, which may require you to enter your password. Then iTerm2 will restart and finish importing. This can take several minutes.",
-                actions: ["OK", "Cancel"],
+                withTitle: String(localized: "ImportExport_AnyNeededPythonRuntimesWillBeInstalled", defaultValue: "Any needed Python runtimes will be installed and secure settings will be updated, which may require you to enter your password. Then iTerm2 will restart and finish importing. This can take several minutes.", comment: "Alert title in importAll"),
+                actions: [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Action title in importAll"), String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Action title in importAll")],
                 accessory: nil,
                 identifier: nil,
                 silenceable: .kiTermWarningTypePersistent,
-                heading: "Importing Settings and Data",
+                heading: String(localized: "ImportExport_ImportingSettingsAndData", defaultValue: "Importing Settings and Data", comment: "Alert heading in importAll"),
                 window: nil)
             if selection == .kiTermWarningSelection1 {
                 return nil
@@ -125,12 +125,12 @@ class ImportExport: NSObject {
     @objc
     static func eraseAll(window: NSWindow?) -> String? {
         let exportSelection = iTermWarning.show(
-            withTitle: "Would you like to export your settings and data first? You will be able to re-import the exported file later if you change your mind.",
-            actions: ["Export First", "Skip Export", "Cancel"],
+            withTitle: String(localized: "ImportExport_WouldYouLikeToExportYourSettings", defaultValue: "Would you like to export your settings and data first? You will be able to re-import the exported file later if you change your mind.", comment: "Alert title in eraseAll"),
+            actions: [String(localized: "ImportExport_ExportFirst", defaultValue: "Export First", comment: "Action title in eraseAll"), String(localized: "ImportExport_SkipExport", defaultValue: "Skip Export", comment: "Action title in eraseAll"), String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Action title in eraseAll")],
             accessory: nil,
             identifier: nil,
             silenceable: .kiTermWarningTypePersistent,
-            heading: "Erase All Settings and Data",
+            heading: String(localized: "ImportExport_EraseAllSettingsAndData", defaultValue: "Erase All Settings and Data", comment: "Alert heading in eraseAll"),
             window: window)
 
         switch exportSelection {
@@ -150,11 +150,11 @@ class ImportExport: NSObject {
                 // export, not erase, and the erase has not happened.
                 _ = iTermWarning.show(
                     withTitle: message,
-                    actions: ["OK"],
+                    actions: [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Action title in eraseAll")],
                     accessory: nil,
                     identifier: nil,
                     silenceable: .kiTermWarningTypePersistent,
-                    heading: "Problem Exporting Settings and Data",
+                    heading: String(localized: "ImportExport_ProblemExportingSettingsAndData", defaultValue: "Problem Exporting Settings and Data", comment: "Alert heading in eraseAll"),
                     window: window)
                 return nil
             }
@@ -197,7 +197,7 @@ class ImportExport: NSObject {
         warning.heading = confirmHeading
         let eraseAction = iTermWarningAction(label: actionLabel, block: nil)
         eraseAction.destructive = !dryRun
-        warning.warningActions = [iTermWarningAction(label: "Cancel"), eraseAction]
+        warning.warningActions = [iTermWarningAction(label: String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Label text in eraseAll")), eraseAction]
         warning.warningType = .kiTermWarningTypePersistent
         warning.window = window
         let confirm = warning.runModal()
@@ -210,12 +210,12 @@ class ImportExport: NSObject {
             _exit(0)
         }
         _ = iTermWarning.show(
-            withTitle: "iTerm2 logged what it would have erased to Console.app. Nothing was actually deleted because the “Dry-run Erase All Settings and Data” advanced setting is enabled.",
-            actions: ["OK"],
+            withTitle: String(localized: "ImportExport_ITerm2LoggedWhatItWouldHave", defaultValue: "iTerm2 logged what it would have erased to Console.app. Nothing was actually deleted because the “Dry-run Erase All Settings and Data” advanced setting is enabled.", comment: "Alert title in eraseAll"),
+            actions: [String(localized: "COMMON_OK", defaultValue: "OK", comment: "Action title in eraseAll")],
             accessory: nil,
             identifier: nil,
             silenceable: .kiTermWarningTypePersistent,
-            heading: "Dry Run Complete",
+            heading: String(localized: "ImportExport_DryRunComplete", defaultValue: "Dry Run Complete", comment: "Alert heading in eraseAll"),
             window: window)
         return nil
     }
@@ -391,23 +391,23 @@ private struct ImportExportConfig {
     }
     var entities: [Entity] = [
         Entity(key: "python-runtimes",
-               displayName: "Python Runtimes",
+               displayName: String(localized: "ImportExport_PythonRuntimes", defaultValue: "Python Runtimes", comment: "Text shown in iTermMakeTempDir: Python Runtimes"),
                flavor: .pythonRuntimes),
         Entity(key: "secure-user-defaults",
-               displayName: "Secure Settings",
+               displayName: String(localized: "ImportExport_SecureSettings", defaultValue: "Secure Settings", comment: "Text shown in iTermMakeTempDir: Secure Settings"),
                flavor: .secureUserDefaults),
         Entity(key: "disable-automation-auth",
-               displayName: "Python API Authorization Setting",
+               displayName: String(localized: "ImportExport_PythonApiAuthorizationSetting", defaultValue: "Python API Authorization Setting", comment: "Text shown in iTermMakeTempDir: Python API Authorization Setting"),
                flavor: .disableAutomationAuth),
         Entity(key: "user-defaults",
-               displayName: "User Defaults",
+               displayName: String(localized: "ImportExport_UserDefaults", defaultValue: "User Defaults", comment: "Text shown in iTermMakeTempDir: User Defaults"),
                flavor: .userDefaults),
         Entity(key: "dot-iterm2",
                displayName: "~/.iterm2",
                flavor: .folder(Path(baseDirectory: .home, relativePath: ".iterm2"),
                                exclude: Set(["AppSupport", "iTermServer-*", "sockets", "Scripts"]))),
         Entity(key: "app-support",
-               displayName: "Application Support",
+               displayName: String(localized: "ImportExport_ApplicationSupport", defaultValue: "Application Support", comment: "Text shown in iTermMakeTempDir: Application Support"),
                flavor: .folder(Path(baseDirectory: .applicationSupport, relativePath: nil),
                                exclude: Set(["????????-????-????-????-????????????",
                                              "*.secureSetting",
@@ -422,7 +422,7 @@ private struct ImportExportConfig {
                                              "servers",
                                              "version.txt"]))),
         Entity(key: "scripts",
-               displayName: "Python API Scripts",
+               displayName: String(localized: "ImportExport_PythonApiScripts", defaultValue: "Python API Scripts", comment: "Text shown in iTermMakeTempDir: Python API Scripts"),
                flavor: .scripts),
     ]
 }
@@ -478,7 +478,7 @@ private class Importer {
 
     func importEntities(from url: URL) throws {
         let tempDir = try makeTempDir()
-        setStatus("Extracting Archive")
+        setStatus(String(localized: "ImportExport_ExtractingArchive", defaultValue: "Extracting Archive", comment: "Status text in importEntities"))
         if NSData.untar(fromArchive: url, to: tempDir) != 0 {
             return
         }
@@ -501,7 +501,7 @@ private class Importer {
                               from baseURL: URL,
                               phase: Phase) throws {
         let url = baseURL.appendingPathComponent(entity.key)
-        setStatus("Importing \(entity.displayName)")
+        setStatus(String(format: String(localized: "ImportExport_Importing_FORMAT", defaultValue: "Importing %1$@", comment: "Formatted user-facing text in importEntity"), entity.displayName))
         switch entity.flavor {
         case .pythonRuntimes:
             switch phase {
@@ -769,11 +769,11 @@ private struct PythonRuntimesImporterExporter {
             if !install(requirement: nil) {
                 throw ImportExportError.failedToInstallPythonRuntime
             }
-            setStatus?("Installing Python runtime \(i) of \(n)")
+            setStatus?(String(format: String(localized: "ImportExport_InstallingPythonRuntimeLdOfLd", defaultValue: "Installing Python runtime %1$ld of %2$ld", comment: "Formatted user-facing text in performImport"), i, n))
             i += 1
         }
         for requirement in info.requirements {
-            setStatus?("Installing Python runtime \(i) of \(n)")
+            setStatus?(String(format: String(localized: "ImportExport_InstallingPythonRuntimeLdOfLd", defaultValue: "Installing Python runtime %1$ld of %2$ld", comment: "Formatted user-facing text in performImport"), i, n))
             i += 1
             DLog("Install \(requirement)")
             if !install(requirement: requirement) {
@@ -1058,7 +1058,7 @@ private struct ScriptsImporterExporter {
         }
         for (i, path) in items.enumerated() {
             DLog("\(path)")
-            setStatus?("Import script \(i + 1) of \(items.count)")
+            setStatus?(String(format: String(localized: "ImportExport_ImportScriptLdOfLd", defaultValue: "Import script %1$ld of %2$ld", comment: "Formatted user-facing text in performImport"), i + 1, items.count))
             importScript(from: path, autolaunch: path.lastPathComponent.hasPrefix("autolaunch"))
         }
     }

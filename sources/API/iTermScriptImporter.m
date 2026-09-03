@@ -75,7 +75,7 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
     DLog(@"downloadedURL=%@ userInitiated=%@ offerAutoLauch=%@", downloadedURL, @(userInitiated), @(offerAutoLaunch));
     if (sInstallingScript) {
         RLog(@"already installing");
-        completion(@"Another import is in progress. Please try again after it completes.", NO, nil);
+        completion(ITLocalize(@"ScriptImporter_Facing_AnotherImportIsInProgressPleaseTry", @"Another import is in progress. Please try again after it completes.", @"Text shown in reallyImportScriptFromURL:: Another import is in progress. Please try again after it completes."), NO, nil);
         return;
     }
 
@@ -128,7 +128,7 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
             DLog(@"Unzip finished with %@", error);
             if (error) {
                 [pleaseWait.window close];
-                completion([NSString stringWithFormat: @"Could not unzip archive: %@", error.localizedDescription], NO, nil);
+                completion([NSString stringWithFormat: ITLocalize(@"ScriptImporter_FormattedFacing_CouldNotUnzipArchive_FORMAT", @"Could not unzip archive: %1$@",@"Formatted user-facing text in reallyImportScriptFromURL:(NSURL *)downloadedURL"), error.localizedDescription], NO, nil);
                 sInstallingScript = NO;
                 return;
             }
@@ -163,7 +163,7 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
         DLog(@"Is .its");
         if (![verifier smellsLikeSignedArchive:NULL]) {
             DLog(@"Doesn't smell like signed archive");
-            completion(nil, @"This script archive is corrupt and cannot be installed.", NO, NO, NO);
+            completion(nil, ITLocalize(@"ScriptImporter_Facing_ThisScriptArchiveIsCorruptAndCannot", @"This script archive is corrupt and cannot be installed.", @"Text shown in verifyAndUnwrapArchive:: This script archive is corrupt and cannot be installed."), NO, NO, NO);
             return;
         }
         
@@ -183,7 +183,7 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
         return;
     }
     if (requireSignature) {
-        completion(nil, @"This is not a valid iTerm2 script archive.", NO, NO, NO);
+        completion(nil, ITLocalize(@"ScriptImporter_Facing_ThisIsNotAValidITerm2", @"This is not a valid iTerm2 script archive.", @"Text shown in verifyAndUnwrapArchive:: This is not a valid iTerm2 script archive."), NO, NO, NO);
         return;
     }
     completion(url, nil, NO, NO, NO);
@@ -263,15 +263,15 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
                              withCertificate:(SIGCertificate *)cert
                                   completion:(void (^)(BOOL ok, BOOL toTemp))completion {
     DLog(@"Confirming");
-    NSString *body = [NSString stringWithFormat:@"The signature of ”%@” has been verified. The author is:\n\n%@\n\nWould you like to install it?",
+    NSString *body = [NSString stringWithFormat:ITLocalize(@"ScriptImporter_FormattedFacing_TheSignatureOfHasBeenVerifiedThe_FORMAT", @"The signature of ”%1$@” has been verified. The author is:\n\n%2$@\n\nWould you like to install it?",@"Formatted user-facing text in confirmInstallationOfVerifiedArchive:(SIGArchiveReader *)reader"),
                       reader.url.lastPathComponent,
-                      ((cert.name ?: cert.longDescription) ?: @"Unknown")];
+                      ((cert.name ?: cert.longDescription) ?: ITLocalize(@"ScriptImporter_Descriptive_Unknown", @"Unknown", @"Fallback name for an unknown certificate"))];
     iTermWarningSelection selection = [iTermWarning showWarningWithTitle:body
-                                                                 actions:@[ @"OK", @"Cancel", @"Reveal Contents" ]
+                                                                 actions:@[ ITLocalize(@"COMMON_OK", @"OK", @"Action title in confirmInstallationOfVerifiedArchive:"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in confirmInstallationOfVerifiedArchive:"), ITLocalize(@"ScriptImporter_Action_RevealContents", @"Reveal Contents", @"Title in confirmInstallationOfVerifiedArchive:") ]
                                                                accessory:nil
                                                               identifier:nil
                                                              silenceable:kiTermWarningTypePersistent
-                                                                 heading:@"Confirm Installation"
+                                                                 heading:ITLocalize(@"ScriptImporter_AlertHeading_ConfirmInstallation", @"Confirm Installation",@"Alert heading in confirmInstallationOfVerifiedArchive:(SIGArchiveReader *)reader")
                                                                   window:nil];
     completion(selection != kiTermWarningSelection1, selection == kiTermWarningSelection2);
 }
@@ -342,12 +342,12 @@ static NSString *const iTermInstallStagingPrefix = @".installing-";
         DLog(@"Already have a script named %@", archive.name);
         iTermWarningSelection selection = kiTermWarningSelection0;
         if (!avoidUI) {
-            selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"A script named “%@” is already installed", archive.name]
-                                                   actions:@[ @"Replace Script", @"Cancel" ]
+            selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"ScriptImporter_Alert_AScriptNamedIsAlreadyInstalled_FORMAT", @"A script named “%1$@” is already installed", @"Alert title in didUnzipSuccessfullyTo:"), archive.name]
+                                                   actions:@[ ITLocalize(@"ScriptImporter_Action_ReplaceScript", @"Replace Script", @"Action title in didUnzipSuccessfullyTo:"), ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Title in didUnzipSuccessfullyTo:") ]
                                                  accessory:nil
                                                 identifier:nil
                                                silenceable:kiTermWarningTypePersistent
-                                                   heading:@"Script Already Exists"
+                                                   heading:ITLocalize(@"ScriptImporter_AlertHeading_ScriptAlreadyExists", @"Script Already Exists",@"Alert heading in didUnzipSuccessfullyTo:(NSString *)tempDir")
                                                     window:nil];
         }
         if (selection == kiTermWarningSelection0) {

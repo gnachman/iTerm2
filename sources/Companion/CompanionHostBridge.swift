@@ -1974,7 +1974,7 @@ final class CompanionHostBridge {
         let rawName = instance.workgroup.name
         send(.workgroupInfo(CompanionWorkgroupInfo(
             workgroupID: workgroupID,
-            name: rawName.isEmpty ? "Untitled workgroup" : rawName,
+            name: rawName.isEmpty ? String(localized: "CompanionHostBridge_UntitledWorkgroup", defaultValue: "Untitled workgroup", comment: "Text shown in handleFetchWorkgroupInfo: Untitled workgroup") : rawName,
             members: members)),
              requestID: requestID)
     }

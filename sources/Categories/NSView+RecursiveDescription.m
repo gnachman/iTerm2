@@ -77,7 +77,7 @@
      self.isHidden ? @"YES" : @"no",
      self.alphaValue,
      [arm componentsJoinedByString:@","],
-     self.translatesAutoresizingMaskIntoConstraints ? @"No" : [NSString stringWithFormat:@"*AUTO LAYOUT IN EFFECT* intrinsicContentSize=%@", NSStringFromSize(self.intrinsicContentSize)],
+     self.translatesAutoresizingMaskIntoConstraints ? ITLocalize(@"NsViewRecursiveDescription_Facing_No", @"No", @"Text shown in it_description: No") : [NSString stringWithFormat:@"*AUTO LAYOUT IN EFFECT* intrinsicContentSize=%@", NSStringFromSize(self.intrinsicContentSize)],
      detail,
      self.trackingAreas.count ? self.trackingAreas : @"none"];
     return s;

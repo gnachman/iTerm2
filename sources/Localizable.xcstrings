@@ -1,5 +1,171 @@
 {
   "sourceLanguage": "en",
-  "strings": {},
+  "strings": {
+    "ChatInputView_Heading_AttachFiles_FORMAT": {
+      "comment": "Alert heading for attached dropped files in handleTextViewFileDrop",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%#@files@"
+          },
+          "substitutions": {
+            "files": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Attach File?"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Attach Files?"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ChatWindowController_ConfirmDeleteChats_FORMAT": {
+      "comment": "Confirmation shown in deleteChats",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%#@chats@"
+          },
+          "substitutions": {
+            "chats": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Are you sure you want to delete this chat? This action cannot be undone."
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Are you sure you want to delete %lld chats? This action cannot be undone."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ChatWindowController_Heading_DeleteChats_FORMAT": {
+      "comment": "Alert heading in deleteChats",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%#@chats@"
+          },
+          "substitutions": {
+            "chats": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Delete Chat?"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Delete %lld Chats?"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ChatListViewController_DeleteChats_Title_FORMAT": {
+      "comment": "Title in contextMenu for deleting chats",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%#@chats@"
+          },
+          "substitutions": {
+            "chats": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Delete Chat"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "Delete %lld Chats"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "PseudoTerminal_TabCount_FORMAT": {
+      "comment": "Tab count in confirmation dialog",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%#@tabs@"
+          },
+          "substitutions": {
+            "tabs": {
+              "argNum": 1,
+              "formatSpecifier": "lu",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "1 tab"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%lu tabs"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
   "version": "1.0"
 }

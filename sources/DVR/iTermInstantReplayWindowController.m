@@ -235,26 +235,26 @@ typedef NS_ENUM(NSUInteger, iTermInstantReplayState) {
     _state = destinationState;
     switch (_state) {
         case iTermInstantReplayStateNormal:
-            _firstButton.title = @"Export…";
+            _firstButton.title = ITLocalize(@"InstantReplayWindowController_Export", @"Export…", @"Button title in setState:");
             _eventsView.startFraction = 0;
             _eventsView.endFraction = 0;
             [_eventsView setNeedsDisplay:YES];
             _secondButton.hidden = YES;
             break;
         case iTermInstantReplayStateSetStart:
-            _firstButton.title = @"Set Start";
+            _firstButton.title = ITLocalize(@"InstantReplayWindowController_SetStart", @"Set Start", @"Button title in setState:");
             _slider.floatValue = 0;
             [_delegate instantReplaySeekTo:0];
             [self updateInstantReplayView];
-            _secondButton.title = @"Cancel";
+            _secondButton.title = ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in setState:");
             _secondButton.hidden = NO;
             break;
         case iTermInstantReplayStateSetEnd:
-            _firstButton.title = @"Set End";
+            _firstButton.title = ITLocalize(@"InstantReplayWindowController_SetEnd", @"Set End", @"Button title in setState:");
             _slider.floatValue = 1;
             [_delegate instantReplaySeekTo:1];
             [self updateInstantReplayView];
-            _secondButton.title = @"Cancel";
+            _secondButton.title = ITLocalize(@"COMMON_CANCEL", @"Cancel", @"Button title in setState:");
             _secondButton.hidden = NO;
     }
 }
@@ -317,11 +317,11 @@ typedef NS_ENUM(NSUInteger, iTermInstantReplayState) {
     } else {
         // Live view
         [_slider setFloatValue:1.0];
-        [_currentTimeLabel setStringValue:@"Live View"];
+        [_currentTimeLabel setStringValue:ITLocalize(@"InstantReplayWindowController_LiveView", @"Live View", @"Label text in updateInstantReplayView")];
         [_currentTimeLabel sizeToFit];
     }
     [_earliestTimeLabel setStringValue:[self stringForTimestamp:firstTimestamp]];
-    [_latestTimeLabel setStringValue:@"Now"];
+    [_latestTimeLabel setStringValue:ITLocalize(@"InstantReplayWindowController_Now", @"Now", @"Label text in updateInstantReplayView")];
 
     // Adjust the width of the "earliest time" label, and keep the margin between it and the
     // slider the same.

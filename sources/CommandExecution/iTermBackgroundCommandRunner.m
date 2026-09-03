@@ -184,11 +184,11 @@ static NSMutableArray<iTermBackgroundCommandRunner *> *activeRunners;
         RLog(@"%@ post notification with identifier %@", RLogRedact(self, self.redactedDescription), entry.identifier);
         [iTermBackgroundCommandRunnerNotificationObserver sharedInstance];
         [self.class maybeNotify:^(NSInteger deferCount) {
-            NSString *detail = [NSString stringWithFormat:@"\nFinished with status %d", status];
+            NSString *detail = [NSString stringWithFormat:ITLocalize(@"BACKGROUND_COMMAND_FINISHED_STATUS_FORMAT", @"\nFinished with status %1$d", @"Notification detail giving the background command exit status"), status];
             if (deferCount > 1) {
-                detail = [detail stringByAppendingFormat:@", plus %@ other error%@ silenced.",
-                          @(deferCount - 1),
-                          deferCount > 2 ? @"s" : @""];
+                detail = deferCount == 2
+                    ? [detail stringByAppendingFormat:ITLocalize(@"BACKGROUND_COMMAND_ONE_OTHER_ERROR_FORMAT", @", plus %1$@ other error silenced.", @"Notification detail for one additional silenced background command error"), @(deferCount - 1)]
+                    : [detail stringByAppendingFormat:ITLocalize(@"BACKGROUND_COMMAND_MANY_OTHER_ERRORS_FORMAT", @", plus %1$@ other errors silenced.", @"Notification detail for additional silenced background command errors"), @(deferCount - 1)];
             }
             [[iTermNotificationController sharedInstance] postNotificationWithTitle:self.notificationTitle
                                                                              detail:detail

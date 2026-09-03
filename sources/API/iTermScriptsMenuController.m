@@ -362,15 +362,17 @@ NS_ASSUME_NONNULL_BEGIN
     }
     NSString *list = [failures componentsJoinedByString:@"\n• "];
     NSString *body = [NSString stringWithFormat:
-                      @"%@ could not be upgraded and still use the previous Python runtime. "
-                      @"Each will be upgraded automatically the next time it runs.\n\n• %@",
-                      failures.count == 1 ? @"One script" : @"Some scripts", list];
+                      ITLocalize(@"ScriptsMenu_Alert_CouldNotBeUpgradedAndStillUsePrevious_FORMAT",
+                                 @"%1$@ could not be upgraded and still use the previous Python runtime. "
+                                 @"Each will be upgraded automatically the next time it runs.\n\n• %2$@",
+                                 @"Alert title in checkTimers:"),
+                      failures.count == 1 ? ITLocalize(@"PYTHON_RUNTIME_ONE_SCRIPT", @"One script", @"Count of scripts: one") : ITLocalize(@"PYTHON_RUNTIME_SOME_SCRIPTS", @"Some scripts", @"Count of scripts: several"), list];
     [iTermWarning showWarningWithTitle:body
                                actions:@[ @"OK" ]
                              accessory:nil
                             identifier:@"NoSyncUvBumpUpgradeIncomplete"
                            silenceable:kiTermWarningTypePermanentlySilenceable
-                               heading:@"Upgrade Incomplete"
+                               heading:ITLocalize(@"ScriptsMenu_AlertHeading_UpgradeIncomplete", @"Upgrade Incomplete", @"Alert heading in checkTimers:")
                                 window:nil];
 }
 
@@ -484,7 +486,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     for (NSString *file in directoryEnumerator) {
         if (clockWatcher.reachedMaxTime) {
-            iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"It is taking a long time to locate all scripts under %@. Avoid storing many files or using network mounts for the scripts folder.\n\nContinue?", originalRoot]
+            iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"ScriptsMenu_Alert_TakingLongTimeToLocateScripts_FORMAT", @"It is taking a long time to locate all scripts under %1$@. Avoid storing many files or using network mounts for the scripts folder.\n\nContinue?", @"Alert title in checkTimers:"), originalRoot]
                                                                          actions:@[ @"Stop", @"Continue"]
                                                                        accessory:nil
                                                                       identifier:@"TakingTooLongToEnumerateScripts"
@@ -493,7 +495,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                                           window:nil];
             if (selection == kiTermWarningSelection0) {
                 _disableEnumeration = YES;
-                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Some scripts will not be available until the app has restarted or you change the scripts folder."]
+                [iTermWarning showWarningWithTitle:ITLocalize(@"ScriptsMenu_Alert_SomeScriptsNotAvailable", @"Some scripts will not be available until the app has restarted or you change the scripts folder.", @"Alert title in checkTimers:")
                                                                              actions:@[ @"OK"]
                                                                            accessory:nil
                                                                           identifier:@"TakingTooLongToEnumerateScripts2"
@@ -556,12 +558,12 @@ NS_ASSUME_NONNULL_BEGIN
     // "Move to Trash" should not be remembered - silently trashing future
     // script archives without prompting would be surprising.
     iTermWarning *warning = [[iTermWarning alloc] init];
-    warning.title = [NSString stringWithFormat:@"A script archive named “%@” was found in the Scripts directory. Would you like to install it?", file.lastPathComponent];
-    warning.actionLabels = @[ @"OK", @"Cancel", @"Move to Trash" ];
+    warning.title = [NSString stringWithFormat:ITLocalize(@"ScriptsMenu_WarningTitle_ScriptArchiveFoundInScriptsDirectory_FORMAT", @"A script archive named “%1$@” was found in the Scripts directory. Would you like to install it?", @"Warning title in scanForScriptArchives"), file.lastPathComponent];
+    warning.actionLabels = @[ @"OK", @"Cancel", ITLocalize(@"ScriptsMenu_Action_MoveToTrash", @"Move to Trash", @"Button title in scanForScriptArchives") ];
     warning.identifier = @"NoSyncInstallScriptArchive";
     warning.warningType = kiTermWarningTypeTemporarilySilenceable;
-    warning.heading = @"Install Script Archive?";
-    warning.doNotRememberLabels = @[ @"Move to Trash", @"Cancel" ];
+    warning.heading = ITLocalize(@"ScriptsMenu_AlertHeading_InstallScriptArchive", @"Install Script Archive?", @"Alert heading in scanForScriptArchives");
+    warning.doNotRememberLabels = @[ ITLocalize(@"ScriptsMenu_Action_MoveToTrash", @"Move to Trash", @"Button title in scanForScriptArchives"), @"Cancel" ];
     const iTermWarningSelection selection = [warning runModal];
     NSURL *url = [NSURL fileURLWithPath:file];
     switch (selection) {
@@ -697,8 +699,8 @@ NS_ASSUME_NONNULL_BEGIN
                                         completion:^(NSString *errorMessage, NSURL *zipURL) {
                 if (errorMessage || !zipURL) {
                     NSAlert *alert = [[NSAlert alloc] init];
-                    alert.messageText = @"Export Failed";
-                    alert.informativeText = errorMessage ?: @"Failed to create archive";
+                    alert.messageText = ITLocalize(@"ScriptsMenu_Alert_ExportFailed", @"Export Failed", @"Alert title in exportDidFinish");
+                    alert.informativeText = errorMessage ?: ITLocalize(@"ScriptsMenu_AlertExplanatory_FailedToCreateArchive", @"Failed to create archive", @"Alert explanatory text in exportDidFinish");
                     [alert runModal];
                     return;
                 }
@@ -760,18 +762,18 @@ NS_ASSUME_NONNULL_BEGIN
     RLog(@"error=%@ location=%@ url=%@", errorMessage, location, url);
     if (errorMessage) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Could Not Install Script";
+        alert.messageText = ITLocalize(@"ScriptsMenu_Alert_CouldNotInstallScript", @"Could Not Install Script", @"Alert title in importDidFinishWithErrorMessage:(nullable NSString *)errorMessage");
         alert.informativeText = errorMessage;
         [alert addButtonWithTitle:@"OK"];
-        [alert addButtonWithTitle:@"Try Again"];
+        [alert addButtonWithTitle:ITLocalize(@"ScriptsMenu_Button_TryAgain", @"Try Again", @"Button title in importDidFinishWithErrorMessage:(nullable NSString *)errorMessage")];
         if ([alert runModal] ==  NSAlertSecondButtonReturn) {
             [self importFromURL:url];
         }
     } else {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Script Imported Successfully";
+        alert.messageText = ITLocalize(@"ScriptsMenu_Alert_ScriptImportedSuccessfully", @"Script Imported Successfully", @"Alert title in importDidFinishWithErrorMessage:(nullable NSString *)errorMessage");
         [alert addButtonWithTitle:@"OK"];
-        [alert addButtonWithTitle:@"Launch"];
+        [alert addButtonWithTitle:ITLocalize(@"ScriptsMenu_Button_Launch", @"Launch", @"Button title in importDidFinishWithErrorMessage:(nullable NSString *)errorMessage")];
         const NSModalResponse response = [alert runModal];
         if (response == NSAlertFirstButtonReturn) {
             return;
@@ -953,12 +955,12 @@ NS_ASSUME_NONNULL_BEGIN
     if ([[NSFileManager defaultManager] itemIsDirectory:fullPath]) {
         // "Reveal" is a one-time Finder action and shouldn't be remembered.
         iTermWarning *warning = [[iTermWarning alloc] init];
-        warning.title = [NSString stringWithFormat:@"The script “%@” is malformed.", fullPath.lastPathComponent];
-        warning.actionLabels = @[ @"OK", @"Reveal" ];
+        warning.title = [NSString stringWithFormat:ITLocalize(@"ScriptsMenu_WarningTitle_MalformedScript_FORMAT", @"The script “%1$@” is malformed.", @"Warning title in runScriptItem:"), fullPath.lastPathComponent];
+        warning.actionLabels = @[ @"OK", ITLocalize(@"ScriptsMenu_Action_Reveal", @"Reveal", @"Button title in runScriptItem:") ];
         warning.identifier = @"NoSyncScriptMalformed";
         warning.warningType = kiTermWarningTypeTemporarilySilenceable;
-        warning.heading = @"Cannot Run Script";
-        warning.doNotRememberLabels = @[ @"Reveal" ];
+        warning.heading = ITLocalize(@"ScriptsMenu_AlertHeading_CannotRunScript", @"Cannot Run Script", @"Alert heading in runScriptItem:");
+        warning.doNotRememberLabels = @[ ITLocalize(@"ScriptsMenu_Action_Reveal", @"Reveal", @"Button title in runScriptItem:") ];
         iTermWarningSelection selection = [warning runModal];
         if (selection == kiTermWarningSelection1) {
             [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:fullPath] ]];
@@ -991,12 +993,12 @@ NS_ASSUME_NONNULL_BEGIN
                 explicitUserAction:(BOOL)explicitUserAction {
     NSString *name = container.lastPathComponent;
     const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The Python environment for “%@” is missing (the shared runtime may have been deleted). Rebuild it from its saved requirements now?", name]
-                               actions:@[ @"Rebuild", @"Cancel" ]
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:ITLocalize(@"ScriptsMenu_Alert_PythonEnvironmentForScriptMissing_FORMAT", @"The Python environment for “%1$@” is missing (the shared runtime may have been deleted). Rebuild it from its saved requirements now?", @"Alert title in uvScriptContainerNeedsReprovision:"), name]
+                               actions:@[ ITLocalize(@"ScriptsMenu_Action_Rebuild", @"Rebuild", @"Action title in uvScriptContainerNeedsReprovision:"), @"Cancel" ]
                              accessory:nil
                             identifier:@"NoSyncRebuildMissingUvEnv"
                            silenceable:kiTermWarningTypePersistent
-                               heading:@"Rebuild Python Environment?"
+                               heading:ITLocalize(@"ScriptsMenu_AlertHeading_RebuildPythonEnvironment", @"Rebuild Python Environment?", @"Alert heading in uvScriptContainerNeedsReprovision:")
                                 window:nil];
     if (selection != kiTermWarningSelection0) {
         return;
@@ -1016,7 +1018,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                                     dependencies:dependencies
                                                                   createSetupCfg:NO
                                                             provisioningDidBegin:^{
-        [progress showWithMessage:@"Rebuilding the Python environment…"];
+        [progress showWithMessage:ITLocalize(@"ScriptsMenu_Status_RebuildingPythonEnvironment", @"Rebuilding the Python environment…", @"Status message in uvScriptContainerNeedsReprovision:")];
     }
                                                                       completion:^(NSError *error) {
         [progress dismiss];
@@ -1024,8 +1026,8 @@ NS_ASSUME_NONNULL_BEGIN
         if (error != nil) {
             if (![iTermUvProvisioner isCancelationError:error]) {
                 NSAlert *alert = [[NSAlert alloc] init];
-                alert.messageText = @"Could Not Rebuild Environment";
-                alert.informativeText = error.localizedDescription ?: @"Unknown error";
+                alert.messageText = ITLocalize(@"ScriptsMenu_Alert_CouldNotRebuildEnvironment", @"Could Not Rebuild Environment", @"Alert title in uvScriptContainerNeedsReprovision:");
+                alert.informativeText = error.localizedDescription ?: ITLocalize(@"ScriptsMenu_UnknownError", @"Unknown error", @"Fallback error text in uvScriptContainerNeedsReprovision:");
                 [alert runModal];
             }
             return;
@@ -1182,11 +1184,11 @@ NS_ASSUME_NONNULL_BEGIN
                      return;
                  }
                  NSAlert *alert = [[NSAlert alloc] init];
-                 alert.messageText = @"Installation Failed";
+                 alert.messageText = ITLocalize(@"ScriptsMenu_Alert_InstallationFailed", @"Installation Failed", @"Alert title in installPythonRuntimeForPicker:error:");
                  if ([iTermAdvancedSettingsModel pythonRuntimeUsesUV]) {
-                     alert.informativeText = [NSString stringWithFormat:@"An error occurred while creating the Python environment. The error was: %@", errorStatus.localizedDescription];
+                     alert.informativeText = [NSString stringWithFormat:ITLocalize(@"ScriptsMenu_AlertExplanatory_ErrorOccurredCreatingEnvironment_FORMAT", @"An error occurred while creating the Python environment. The error was: %1$@", @"Alert explanatory text in installPythonRuntimeForPicker:error:"), errorStatus.localizedDescription];
                  } else {
-                     alert.informativeText = [NSString stringWithFormat:@"An error ocurred while installing the Python runtime. Remove ~/Library/Application Support/iTerm2/iterm2env and try again. The error was: %@", errorStatus.localizedDescription];
+                     alert.informativeText = [NSString stringWithFormat:ITLocalize(@"ScriptsMenu_AlertExplanatory_ErrorOccurredInstallingRuntime_FORMAT", @"An error ocurred while installing the Python runtime. Remove ~/Library/Application Support/iTerm2/iterm2env and try again. The error was: %1$@", @"Alert explanatory text in installPythonRuntimeForPicker:error:"), errorStatus.localizedDescription];
                  }
                  [alert runModal];
                  return;
@@ -1243,11 +1245,11 @@ NS_ASSUME_NONNULL_BEGIN
     if (app) {
         // "Show in Finder" is a one-time navigation action and shouldn't be remembered.
         iTermWarning *warning = [[iTermWarning alloc] init];
-        warning.title = [NSString stringWithFormat:@"Open new script in %@?", app];
-        warning.actionLabels = @[ @"OK", @"Show in Finder" ];
+        warning.title = [NSString stringWithFormat:ITLocalize(@"ScriptsMenu_WarningTitle_OpenNewScriptIn_FORMAT", @"Open new script in %1$@?", @"Warning title in createTemplateFromPicker:"), app];
+        warning.actionLabels = @[ @"OK", ITLocalize(@"ScriptsMenu_Action_ShowInFinder", @"Show in Finder", @"Button title in createTemplateFromPicker:") ];
         warning.identifier = @"NoSyncOpenNewPythonScriptInDefaultEditor";
         warning.warningType = kiTermWarningTypePermanentlySilenceable;
-        warning.doNotRememberLabels = @[ @"Show in Finder" ];
+        warning.doNotRememberLabels = @[ ITLocalize(@"ScriptsMenu_Action_ShowInFinder", @"Show in Finder", @"Button title in createTemplateFromPicker:") ];
         iTermWarningSelection selection = [warning runModal];
         if (selection == kiTermWarningSelection0) {
             [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:destinationTemplatePath]];
@@ -1312,7 +1314,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSTokenField *)newTokenFieldForDependencies {
     NSTokenField *tokenField = [[NSTokenField alloc] initWithFrame:NSMakeRect(0, 0, 100, 22)];
     tokenField.tokenizingCharacterSet = [NSCharacterSet whitespaceCharacterSet];
-    tokenField.placeholderString = @"Package names";
+    tokenField.placeholderString = ITLocalize(@"ScriptsMenu_Placeholder_PackageNames", @"Package names", @"Placeholder text for the package names token field");
     tokenField.font = [NSFont systemFontOfSize:13];
     return tokenField;
 }
@@ -1321,7 +1323,7 @@ NS_ASSUME_NONNULL_BEGIN
                                     pythonVersionPopup:(NSPopUpButton *)pythonVersionPopup {
     NSTextField *label = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 5, 60, 22)];
     [label setEditable:NO];
-    [label setStringValue:@"PyPI Dependencies:"];
+    [label setStringValue:ITLocalize(@"ScriptsMenu_Label_PyPIDependencies", @"PyPI Dependencies:", @"Label for the PyPI dependencies field")];
     label.font = [NSFont systemFontOfSize:13];
     [label setBordered:NO];
     [label setBezeled:NO];
@@ -1454,10 +1456,10 @@ NS_ASSUME_NONNULL_BEGIN
             return url;
         } else {
             NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = @"Spaces Not Allowed";
-            alert.informativeText = @"Scripts can't have space characters in their filenames.";
-            [alert addButtonWithTitle:@"Use _ Instead of Space"];
-            [alert addButtonWithTitle:@"Change Name"];
+            alert.messageText = ITLocalize(@"ScriptsMenu_Alert_SpacesNotAllowed", @"Spaces Not Allowed", @"Alert title in addFile:withFullPath:");
+            alert.informativeText = ITLocalize(@"ScriptsMenu_AlertExplanatory_ScriptsCantHaveSpaceCharacters", @"Scripts can't have space characters in their filenames.", @"Alert explanatory text in addFile:withFullPath:");
+            [alert addButtonWithTitle:ITLocalize(@"ScriptsMenu_Action_UseInsteadOfSpace", @"Use _ Instead of Space", @"Action title in addFile:withFullPath:")];
+            [alert addButtonWithTitle:ITLocalize(@"ScriptsMenu_Action_ChangeName", @"Change Name", @"Action title in addFile:withFullPath:")];
             if ([alert runModal] == NSAlertFirstButtonReturn) {
                 return [[url URLByDeletingLastPathComponent] URLByAppendingPathComponent:safeFilename];
             } else {
@@ -1572,7 +1574,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)showAlertForScript:(NSString *)fullPath error:(NSError *)error {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Problem running script";
+    alert.messageText = ITLocalize(@"ScriptsMenu_Alert_ProblemRunningScript", @"Problem running script", @"Alert title in showAlertForScript:error:");
     alert.informativeText = [NSString stringWithFormat:@"The script at “%@” failed:\n\n%@",
                              fullPath, error.localizedFailureReason];
     [alert runModal];

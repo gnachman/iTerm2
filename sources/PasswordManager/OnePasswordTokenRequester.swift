@@ -123,23 +123,28 @@ class OnePasswordUtils {
 
     static func showUnavailableMessage(_ path: String? = nil) {
         let alert = NSAlert()
-        alert.messageText = "OnePassword Unavailable"
+        alert.messageText = String(localized: "OnePasswordTokenRequester_OnePasswordUnavailable", defaultValue: "OnePassword Unavailable", comment: "Alert title in showUnavailableMessage")
         if let path = path {
-            alert.informativeText = "The 1Password CLI at \(path) is too old. The iTerm2 integration requires version \(minimumSupportedVersionString) or later."
+            alert.informativeText = String(
+                format: String(localized: "ONE_PASSWORD_INCOMPATIBLE_CLI_FORMAT", defaultValue: "The 1Password CLI at %1$@ is too old. The iTerm2 integration requires version %2$@ or later.", comment: "Alert explanatory text naming the incompatible 1Password CLI path and required version"),
+                path,
+                minimumSupportedVersionString)
         } else {
-            alert.informativeText = "The 1Password CLI could not be found, or is older than the required version \(minimumSupportedVersionString). Check that a current op is installed."
+            alert.informativeText = String(
+                format: String(localized: "ONE_PASSWORD_CLI_NOT_FOUND_FORMAT", defaultValue: "The 1Password CLI could not be found, or is older than the required version %1$@. Check that a current op is installed.", comment: "Alert explanatory text explaining that a current 1Password CLI is required"),
+                minimumSupportedVersionString)
         }
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: String(localized: "COMMON_OK", defaultValue: "OK", comment: "Button title in showUnavailableMessage"))
         alert.runModal()
     }
 
     // Returns true to show an open panel to locate it.
     private static func showCannotFindCLIMessage() -> Bool {
         let alert = NSAlert()
-        alert.messageText = "Can’t Find 1Password CLI"
-        alert.informativeText = "In order to use the 1Password integration, iTerm2 needs to know where to find the CLI app named “op”. It’s normally in /usr/local/bin. If you have installed it elsewhere, please select Locate to provide its location."
-        alert.addButton(withTitle: "Locate")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = String(localized: "OnePasswordTokenRequester_CanTFind1PasswordCli", defaultValue: "Can’t Find 1Password CLI", comment: "Alert title in showCannotFindCLIMessage")
+        alert.informativeText = String(localized: "OnePasswordTokenRequester_InOrderToUseThe1Password", defaultValue: "In order to use the 1Password integration, iTerm2 needs to know where to find the CLI app named “op”. It’s normally in /usr/local/bin. If you have installed it elsewhere, please select Locate to provide its location.", comment: "Alert explanatory text in showCannotFindCLIMessage")
+        alert.addButton(withTitle: String(localized: "OnePasswordTokenRequester_Locate", defaultValue: "Locate", comment: "Button title in showCannotFindCLIMessage"))
+        alert.addButton(withTitle: String(localized: "COMMON_CANCEL", defaultValue: "Cancel", comment: "Button title in showCannotFindCLIMessage"))
         return alert.runModal() == .alertFirstButtonReturn
     }
 
@@ -320,9 +325,9 @@ class OnePasswordTokenRequester {
     private var passwordPrompt: String {
         let account = iTermAdvancedSettingsModel.onePasswordAccount()!
         if account.isEmpty {
-            return "Enter your 1Password master password:"
+            return String(localized: "OnePasswordTokenRequester_EnterYour1PasswordMasterPassword", defaultValue: "Enter your 1Password master password:", comment: "Text shown in argsByAddingAccountArg: Enter your 1Password master password:")
         }
-        return "Enter the 1Password master password for account “\(account)”:"
+        return String(format: String(localized: "OnePasswordTokenRequester_EnterThe1PasswordMasterPasswordFor_FORMAT", defaultValue: "Enter the 1Password master password for account “%1$@”:", comment: "Formatted user-facing text in argsByAddingAccountArg"), account)
     }
 
     func asyncGet(_ completion: @escaping (Result<Auth, Error>) -> ()) {
@@ -386,7 +391,7 @@ class OnePasswordTokenRequester {
             guard output.returnCode == 0 else {
                 DLog("But the return code is nonzero")
                 DLog("signin failed")
-                let reason = String(data: output.stderr, encoding: .utf8) ?? "An unknown error occurred."
+                let reason = String(data: output.stderr, encoding: .utf8) ?? String(localized: "OnePasswordTokenRequester_AnUnknownErrorOccurred", defaultValue: "An unknown error occurred.", comment: "Text shown in asyncGet: An unknown error occurred.")
                 RLog("Failure reason is: \(reason)")
                 if reason.contains("connecting to desktop app timed out") {
                     completion(.failure(OnePasswordDataSource.OPError.unusableCLI))
@@ -398,7 +403,7 @@ class OnePasswordTokenRequester {
             }
             guard let token = String(data: output.stdout, encoding: .utf8) else {
                 DLog("got garbage output")
-                self.showErrorMessage("The 1Password CLI app produced garbled output instead of an auth token.")
+                self.showErrorMessage(String(localized: "OnePasswordTokenRequester_The1PasswordCliAppProducedGarbled", defaultValue: "The 1Password CLI app produced garbled output instead of an auth token.", comment: "Text shown in asyncGet: The 1Password CLI app produced garbled output instead of an auth token."))
                 completion(.failure(OnePasswordDataSource.OPError.badOutput))
                 return
             }
@@ -409,9 +414,9 @@ class OnePasswordTokenRequester {
 
     private func showErrorMessage(_ reason: String) {
         let alert = NSAlert()
-        alert.messageText = "Authentication Error"
+        alert.messageText = String(localized: "OnePasswordTokenRequester_AuthenticationError", defaultValue: "Authentication Error", comment: "Alert title in showErrorMessage")
         alert.informativeText = reason
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: String(localized: "COMMON_OK", defaultValue: "OK", comment: "Button title in showErrorMessage"))
         alert.runModal()
     }
 
