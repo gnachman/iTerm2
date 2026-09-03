@@ -274,6 +274,10 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // tab information
 - (NSMutableArray *)representedTabViewItems;
 - (int)numberOfVisibleTabs;
+// The bar's cells, including group chips and pinned cells. Exposed so a test can
+// populate a window-free bar without going through the KVO binding that
+// -addTabViewItem: sets up.
+- (NSMutableArray *)cells;
 
 // special effects
 - (void)hideTabBar:(BOOL)hide animate:(BOOL)animate;
@@ -392,6 +396,16 @@ extern const CGFloat PSMTabBarProgressBarHeight;
 // on-drop size rather than the dragged unit's size in its source bar.
 - (CGFloat)expectedDropExtentForIncomingTabCount:(NSInteger)tabCount
                                        chipWidth:(CGFloat)chipWidth;
+
+// The largest insets.left at which the cell area still fits every cell at its
+// minimum width, for a bar `width` points wide holding its current cells. Below
+// it the bar degrades: tail cells move into the overflow menu, or the bar
+// scrolls when the scrollable tab bar is on.
+//
+// Takes the width rather than reading self.frame because the caller that needs
+// this computes insets before -setTabBarFrame: runs, when the frame still holds
+// the previous layout pass's width.
+- (CGFloat)maximumLeftInsetFittingAllCellsMinimallyForWidth:(CGFloat)width;
 
 // The style's tab-group run outset when any chip cell is present, else 0.
 // The scrollable bar widens its trailing clip by this so a group's enclosing

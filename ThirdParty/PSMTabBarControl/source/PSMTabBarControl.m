@@ -2737,6 +2737,73 @@ typedef struct {
     return regularWidths;
 }
 
+// Width the cell area needs for every cell to be laid out at its minimum with
+// none dropped. Mirrors the three branches of the width builder below -- chips,
+// pinned, plain -- so the two must be edited together or the reservation this
+// feeds will disagree with the layout it is meant to predict.
+//
+// Uneven (sizeCellsToFit) and optimum sizing deliberately have no branch here.
+// -variableCellWidthsWithOverflow: returns nil unless every cell fits at its
+// desired width, and desired is already at least cellMinWidth;
+// -shouldUseOptimalWidthWithOverflow: is only true when optimum already fits.
+// Neither can overflow a bar that this expression says fits, so the overflow
+// threshold is a cellMinWidth question in every branch.
+- (CGFloat)minimumCellAreaWidth {
+    const CGFloat spacing = _style.intercellSpacing;
+    const CGFloat minWidth = self.cellMinWidth;
+
+    if ([self hasTabGroupChipCells]) {
+        // Collapsed members are hidden: no width and no intercell spacing, which
+        // is exactly why a raw tab count overstates what the tabs need.
+        const NSInteger visibleCellCount = [self numberOfCellsContributingIntercellSpacing];
+        CGFloat reserved = 0;
+        NSInteger tabCount = 0;
+        for (NSInteger i = 0; i < (NSInteger)_cells.count; i++) {
+            PSMTabBarCell *cell = _cells[i];
+            if (cell.isCollapsedHidden) {
+                continue;
+            }
+            if (cell.isTabGroupChip) {
+                reserved += [self widthOfTabGroupChipCellAtIndex:i];
+            } else if (cell.isPinned) {
+                reserved += _pinnedTabWidth;
+            } else {
+                tabCount++;
+            }
+        }
+        return reserved + (CGFloat)tabCount * minWidth + spacing * MAX(0.0, (CGFloat)visibleCellCount - 1.0);
+    }
+
+    // Floor at one cell: _cells is briefly empty during teardown, and a zero
+    // minimum would hand a caller the entire bar for a frame.
+    const NSUInteger cellCount = MAX((NSUInteger)1, _cells.count);
+    const NSUInteger pinnedCount = [self numberOfPinnedCells];
+    if (pinnedCount > 0) {
+        const NSUInteger unpinnedCount = cellCount - pinnedCount;
+        return ([self totalPinnedSpaceForPinnedCount:pinnedCount unpinnedCount:unpinnedCount] +
+                (CGFloat)unpinnedCount * minWidth +
+                spacing * MAX(0.0, (CGFloat)unpinnedCount - 1.0));
+    }
+    return (CGFloat)cellCount * minWidth + spacing * MAX(0.0, (CGFloat)cellCount - 1.0);
+}
+
+- (CGFloat)maximumLeftInsetFittingAllCellsMinimallyForWidth:(CGFloat)width {
+    // -availableCellWidthWithOverflow: is frame width less both margins, so the
+    // largest inset that still fits is whatever remains once the margins and the
+    // cells' own minimum are taken out. Asking for the no-overflow right margin
+    // is the point: this answers whether the bar fits *without* degrading.
+    //
+    // The left margin is not simply insets.left: Yosemite returns it unchanged
+    // but Tahoe returns it plus 2. Subtracting self.insets.left leaves only that
+    // per-style constant, which is what a caller about to choose a new inset
+    // needs. Do not simplify either half away -- alone, one reads a stale inset
+    // and the other silently drops the style's own padding.
+    const CGFloat stylePadding = [_style leftMarginForTabBarControl] - self.insets.left;
+    const CGFloat rightMargin = [_style rightMarginForTabBarControlWithOverflow:NO
+                                                                   addTabButton:self.showAddTabButton];
+    return width - stylePadding - rightMargin - [self minimumCellAreaWidth];
+}
+
 - (NSArray<NSNumber *> *)cellWidthsForHorizontalArrangementWithOverflow:(BOOL)withOverflow {
     if ([self hasTabGroupChipCells]) {
         return [self cellWidthsForHorizontalArrangementWithChipsWithOverflow:withOverflow];

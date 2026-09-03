@@ -1189,6 +1189,39 @@ ITERM_WEAKLY_REFERENCEABLE
     return YES;
 }
 
+- (NSString *)rootTerminalViewWindowNameBesideTabs {
+    if (togglingLionFullScreen_ || self.anyFullScreen) {
+        return nil;
+    }
+    if (!iTermWindowTypeIsCompact(self.windowType)) {
+        // Every other window type has a title bar to show the name in.
+        return nil;
+    }
+    if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] != PSMTab_TopTab) {
+        return nil;
+    }
+    if (!self.tabBarShouldBeVisible) {
+        // The window title is already drawn in place of the tab bar.
+        return nil;
+    }
+    const BOOL haveCustomName = ([self.scope valueForVariableName:iTermVariableKeyWindowTitleOverrideFormat] &&
+                                 self.scope.windowTitleOverrideFormat.length > 0);
+    switch ((iTermWindowNameBesideTabsMode)[iTermAdvancedSettingsModel showWindowNameBesideTabs]) {
+        case iTermWindowNameBesideTabsModeNever:
+            return nil;
+
+        case iTermWindowNameBesideTabsModeWhenCustom:
+            return haveCustomName ? self.scope.windowTitleOverride : nil;
+
+        case iTermWindowNameBesideTabsModeAlways:
+            if (haveCustomName) {
+                return self.scope.windowTitleOverride;
+            }
+            return self.currentSession.nameController.presentationWindowTitle;
+    }
+    return nil;
+}
+
 - (void)rootTerminalViewDidResizeContentArea {
     // Fixes an analog of issue 4323 that happens with left-side tabs. More
     // details in -toolbeltDidFinishGrowing.
@@ -5459,29 +5492,16 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 }
 
 - (NSEdgeInsets)tabBarInsetsForCompactWindow {
-    CGFloat stoplightButtonsWidth = MAX(0, [iTermAdvancedSettingsModel compactTabBarStoplightButtonsWidth]);
-    if (@available(macOS 26, *)) {
-        stoplightButtonsWidth += 3;
-    }
-    const CGFloat proxyIconWidth = [_contentView compactProxyIconWidthIncludingMargin];
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_TopTab: {
             const CGFloat extraSpace = MAX(0, [iTermAdvancedSettingsModel extraSpaceBeforeCompactTopTabBar]);
-            if ([self rootTerminalViewWindowNumberLabelShouldBeVisible]) {
-                const CGFloat leftInset = (stoplightButtonsWidth +
-                                           proxyIconWidth +
-                                           iTermRootTerminalViewWindowNumberLabelMargin * 2 +
-                                           iTermRootTerminalViewWindowNumberLabelWidth +
-                                           extraSpace);
-                return NSEdgeInsetsMake(0,
-                                        leftInset,
-                                        0,
-                                        0);
-            } else {
-                // Make room for stoplight buttons when there is no tab title.
-                const CGFloat proxyIconExtraPadding = proxyIconWidth > 0 ? 4 : 0;
-                return NSEdgeInsetsMake(0, stoplightButtonsWidth + proxyIconWidth + proxyIconExtraPadding + extraSpace, 0, 0);
-            }
+            // Both branches of this used to be spelled out here and again in the
+            // root view, so the space reserved for the window name and the point
+            // it was drawn at could disagree. One expression owns it now.
+            const CGFloat leftInset = ([_contentView widthOfDecorationsBeforeWindowNameBesideTabs] +
+                                       [_contentView windowNameBesideTabsWidthIncludingMargin] +
+                                       extraSpace);
+            return NSEdgeInsetsMake(0, leftInset, 0, 0);
         }
         case PSMTab_LeftTab:
         case PSMTab_RightTab:

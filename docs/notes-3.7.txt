@@ -2776,6 +2776,7 @@ Bug Fixes:
   so arbitrary statuses from any tool just work.
   Window/tab/session rows also carry the matching
   macwindow / folder / terminal icon.
+
 - Parentheses, brackets, and other mirrored
   punctuation now draw correctly in right-to-
   left text when right-to-left support is on.
@@ -2854,3 +2855,11 @@ Bug Fixes:
 - The it2 command-line tool can now send a push
   notification to your paired companion device
   with “it2 notify «title» «body»”.
+- The window name can now appear beside the tabs
+  in the Compact and Minimal themes, which have
+  no title bar to show it in. By default it
+  appears only once you name a window with
+  Window > Edit Window Title, so windows you have
+  not named look exactly as before. The advanced
+  setting “Show the window name beside the
+  tabs” can turn it off or always show it.
