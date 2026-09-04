@@ -20763,6 +20763,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return [_delegate session:self performDragOperation:sender];
 }
 
+- (iTermTabEdgeMask)sessionViewTabEdges {
+    return [_delegate tabEdgesForSession:self];
+}
+
+- (void)sessionViewDidUpdateTabEdgeDropTarget:(SplitSessionHalf)half {
+    [_delegate session:self didUpdateTabEdgeDropTarget:half];
+}
+
 - (NSString *)sessionViewTitle {
     return _nameController.presentationSessionTitle;
 }

@@ -10961,6 +10961,35 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
            performSetup:(BOOL)performSetup {
     RLog(@"splitVertically:%@ before:%@ addingSession:%@ targetSession:%@ performSetup:%@ self=%@",
          @(isVertical), @(before), newSession, targetSession, @(performSetup), self);
+    [self addSession:newSession
+       targetSession:targetSession
+        performSetup:performSetup
+              insert:^(PTYTab *tab) {
+        [tab splitVertically:isVertical
+                  newSession:newSession
+                      before:before
+               targetSession:targetSession];
+    }];
+}
+
+- (void)moveSession:(PTYSession *)session
+          toTabEdge:(SplitSessionHalf)edge
+              ofTab:(PTYTab *)tab {
+    RLog(@"moveSession:%@ toTabEdge:%@ ofTab:%@ self=%@", session, @(edge), tab, self);
+    [self addSession:session
+       targetSession:tab.activeSession
+        performSetup:NO
+              insert:^(PTYTab *destination) {
+        [destination insertSession:session atTabEdge:edge];
+    }];
+}
+
+// Shared tail of the two methods above. They differ only in how the session gets
+// inserted into the destination tab’s view tree.
+- (void)addSession:(PTYSession *)newSession
+     targetSession:(PTYSession *)targetSession
+      performSetup:(BOOL)performSetup
+            insert:(void (^ NS_NOESCAPE)(PTYTab *))insert {
     [self.currentSession refuseFirstResponderAtCurrentMouseLocation];
     NSColor *tabColor;
     PTYTab *tab = [self tabForSession:targetSession] ?: [self currentTab];
@@ -10974,10 +11003,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     SessionView *originalNewSessionView = [[newSession.view retain] autorelease];
 
     // This assigns to newSession.view
-    [tab splitVertically:isVertical
-              newSession:newSession
-                  before:before
-           targetSession:targetSession];
+    insert(tab);
 
     NSSize size = [newSession.view frame].size;
     if (performSetup) {

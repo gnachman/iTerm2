@@ -832,6 +832,17 @@ Settings Improvements:
   and Remove Tab from Group, mirroring the
   tab bar’s right-click menu but acting on
   the current tab.
+- Dragging a split pane near the outer edge
+  of a tab now offers a drop target that
+  spans the tab’s full width or height, so
+  you can move a pane to the top, bottom,
+  left, or right of the whole tab instead of
+  splitting one existing pane. It works the
+  same way in Session > Move Session to
+  Split Pane. The size of the edge zone is
+  set by the tabEdgeDropZoneSize advanced
+  setting; 0 turns the feature off. Not
+  available in tmux tabs.
 
 Web browser improvements:
 - The built-in web browser can now remember

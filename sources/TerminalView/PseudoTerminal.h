@@ -16,6 +16,7 @@
 #import "PSMTabBarControl.h"
 #import "PTYTabView.h"
 #import "PTYWindow.h"
+#import "SplitSelectionView.h"
 #import "WindowControllerInterface.h"
 #import "iTermSessionRestorationStatusProtocol.h"
 
@@ -383,6 +384,12 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 
 // Change split selection mode for all sessions in this window.
 - (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session move:(BOOL)move;
+
+// Moves session into tab as a child of the tab’s root splitter, spanning the
+// full width or height of the tab along the given edge.
+- (void)moveSession:(PTYSession *)session
+          toTabEdge:(SplitSessionHalf)edge
+              ofTab:(PTYTab *)tab;
 
 // Use this if it might be a tmux window. The completion block will always be called eventually.
 // The ready block is called after the session has started, much like the completion block in
