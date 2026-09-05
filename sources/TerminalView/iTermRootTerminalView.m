@@ -633,6 +633,18 @@ typedef struct {
     const CGFloat allowance = MIN(iTermWindowNameBesideTabsMaximumWidth,
                                   [self allowanceForWindowNameBesideTabs]);
     const CGFloat natural = [self naturalWindowNameBesideTabsTextWidth];
+    if (natural > allowance) {
+        // The name cannot be shown in full: it is truncated, or hidden when the
+        // allowance drops below the readable minimum. This fires only for a named
+        // window whose name is actually being squeezed -- not on every layout
+        // pass -- so it records the starving state for a field report of "the
+        // window name beside the tabs has no room" without logging in the common
+        // case. The tab count and strip width are the two inputs that starve it.
+        RLog(@"windowNameBesideTabs squeezed: name=%@ natural=%.0f allowance=%.0f cells=%lu cellMinWidth=%d stripWidth=%.0f",
+             _windowNameBesideTabsLabel.stringValue, natural, allowance,
+             (unsigned long)self.tabBarControl.cells.count, self.tabBarControl.cellMinWidth,
+             NSWidth(self.frame));
+    }
     // The minimum gates truncation, not slack. Applying it to the space left
     // over hid a name that would have fitted whole: “A” in 30 points of slack
     // neither truncates nor takes anything the tabs need, so the reason to hide
