@@ -2575,3 +2575,7 @@ Bug Fixes:
   for a terminal session after editing a
   browser session, because previously hidden
   controls were not restored.
+- Fixed the color of the locale description in
+  Settings > Profiles > Terminal so it adapts
+  correctly when switching between light and
+  dark mode.

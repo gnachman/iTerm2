@@ -11,7 +11,11 @@
 #import "ITAddressBookMgr.h"
 #import "iTermController.h"
 #import "iTermShellHistoryController.h"
+#import "iTermSizeRememberingView.h"
 #import "iTerm2SharedARC-Swift.h"
+
+@interface ProfilesTerminalPreferencesViewController ()<iTermSizeRememberingViewDelegate>
+@end
 
 @implementation ProfilesTerminalPreferencesViewController {
     IBOutlet NSTextField *_numScrollbackLines;
@@ -348,11 +352,32 @@
                            key:nil];
     [self updateEnabledState];
     [self commitControls];
+
+    if ([self.view isKindOfClass:[iTermSizeRememberingView class]]) {
+        ((iTermSizeRememberingView *)self.view).delegate = self;
+    }
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {
     _terminalType.enabled = NO;
     _setLocaleVars.enabled = NO;
+}
+
+- (void)sizeRememberingView:(iTermSizeRememberingView *)sender
+ effectiveAppearanceDidChange:(NSAppearance *)effectiveAppearance {
+    // Rebuild the locale name field's attributed string so its description color is
+    // re-resolved for the new appearance (NSTextField won't re-resolve an
+    // already-set attributed string's colors on its own). This is deferred to the
+    // next runloop spin because when this fires the field's own effectiveAppearance
+    // still lags the window's, so rebuilding synchronously would resolve
+    // secondaryLabelColor against the old appearance.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self updateCustomLocaleControls];
+    });
+}
+
+- (void)updateLocaleDescription {
+    [self updateCustomLocaleControls];
 }
 
 - (NSAttributedString *)attributedStringForLocale:(NSString *)lang {
@@ -362,7 +387,7 @@
     NSAttributedString *langAS = [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"LANG=%@", lang]
                                                                  attributes:@{ NSFontAttributeName: monoFont} ];
     NSAttributedString *titleAS = [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"\u2002\u2002\u2002%@", title]
-                                                                  attributes:@{NSForegroundColorAttributeName: [[NSColor textColor] colorWithAlphaComponent:0.5] }];
+                                                                  attributes:@{NSForegroundColorAttributeName: [NSColor secondaryLabelColor] }];
     [attributedString appendAttributedString:langAS];
     [attributedString appendAttributedString:titleAS];
     return attributedString;

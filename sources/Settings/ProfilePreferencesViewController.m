@@ -1268,6 +1268,11 @@ andEditComponentWithIdentifier:(NSString *)identifier
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     [self resizeWindowForTabViewItem:tabViewItem animated:YES];
+    if (tabViewItem == _terminalTab) {
+        // The locale description's colors are baked into an attributed string that
+        // does not re-resolve if the appearance changed while this tab was hidden.
+        [_terminalViewController updateLocaleDescription];
+    }
 }
 
 #pragma mark - iTermSearchableViewController
