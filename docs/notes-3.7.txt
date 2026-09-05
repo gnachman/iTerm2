@@ -2863,3 +2863,7 @@ Bug Fixes:
   not named look exactly as before. The advanced
   setting “Show the window name beside the
   tabs” can turn it off or always show it.
+- Fixed the color of the locale description in
+  Settings > Profiles > Terminal so it adapts
+  correctly when switching between light and
+  dark mode.
