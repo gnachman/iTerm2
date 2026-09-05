@@ -148,9 +148,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     // Create a symbol configuration for the desired size to avoid upscaling
     NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithPointSize:size weight:NSFontWeightRegular scale:NSImageSymbolScaleMedium];
     NSImage *sfSymbolImage = [NSImage imageWithSystemSymbolName:sfSymbol accessibilityDescription:nil];
-    if (@available(macOS 12.0, *)) {
-        sfSymbolImage = [sfSymbolImage imageWithSymbolConfiguration:config];
-    }
+    sfSymbolImage = [sfSymbolImage imageWithSymbolConfiguration:config];
     
     if (backgroundless) {
         // For backgroundless mode, return the SF Symbol as a template image

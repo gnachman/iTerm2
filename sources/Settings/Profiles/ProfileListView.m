@@ -618,26 +618,24 @@ const CGFloat kDefaultTagsWidth = 80;
         [theAttributedString insertAttributedString:browserIcon atIndex:0];
     }
     if (isDynamic) {
-        if (@available(macOS 12.0, *)) {
-            NSTextAttachment *attachment = [[[NSTextAttachment alloc] init] autorelease];
-            NSString *imageName = SFSymbolGetString(SFSymbolTrayAndArrowDown);
-            NSColor *color = [[NSColor labelColor] colorWithAlphaComponent:0.75];
-            NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithHierarchicalColor:color];
-            NSImage *image = [[NSImage imageWithSystemSymbolName:imageName accessibilityDescription:nil]
-                              imageWithSymbolConfiguration:config];
-            image.size = NSMakeSize(16, 16);
-            attachment.image = image;
-            NSAttributedString *dynamicIcon = [NSAttributedString attributedStringWithAttachment:attachment];
-            NSMutableAttributedString *dynamicIconWithAttr = [[dynamicIcon mutableCopy] autorelease];
-            [dynamicIconWithAttr addAttribute:iTermDynamicProfileSymbolName
-                                        value:imageName
-                                        range:NSMakeRange(0, dynamicIconWithAttr.length)];
-            NSAttributedString *space = [[[NSAttributedString alloc] initWithString:@" "
-                                                                         attributes:plainAttributes] autorelease];
-            NSMutableAttributedString *spaceWithIcon = [[[NSMutableAttributedString alloc] initWithAttributedString:space] autorelease];
-            [spaceWithIcon appendAttributedString:dynamicIconWithAttr];
-            [theAttributedString appendAttributedString:spaceWithIcon];
-        }
+        NSTextAttachment *attachment = [[[NSTextAttachment alloc] init] autorelease];
+        NSString *imageName = SFSymbolGetString(SFSymbolTrayAndArrowDown);
+        NSColor *color = [[NSColor labelColor] colorWithAlphaComponent:0.75];
+        NSImageSymbolConfiguration *config = [NSImageSymbolConfiguration configurationWithHierarchicalColor:color];
+        NSImage *image = [[NSImage imageWithSystemSymbolName:imageName accessibilityDescription:nil]
+                          imageWithSymbolConfiguration:config];
+        image.size = NSMakeSize(16, 16);
+        attachment.image = image;
+        NSAttributedString *dynamicIcon = [NSAttributedString attributedStringWithAttachment:attachment];
+        NSMutableAttributedString *dynamicIconWithAttr = [[dynamicIcon mutableCopy] autorelease];
+        [dynamicIconWithAttr addAttribute:iTermDynamicProfileSymbolName
+                                    value:imageName
+                                    range:NSMakeRange(0, dynamicIconWithAttr.length)];
+        NSAttributedString *space = [[[NSAttributedString alloc] initWithString:@" "
+                                                                     attributes:plainAttributes] autorelease];
+        NSMutableAttributedString *spaceWithIcon = [[[NSMutableAttributedString alloc] initWithAttributedString:space] autorelease];
+        [spaceWithIcon appendAttributedString:dynamicIconWithAttr];
+        [theAttributedString appendAttributedString:spaceWithIcon];
     }
     if (tags.count) {
         NSAttributedString *newline = [[[NSAttributedString alloc] initWithString:@"\n"

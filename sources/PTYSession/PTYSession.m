@@ -4209,9 +4209,7 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
 
 - (void)enterUsername:(NSString *)username {
     if (_view.isBrowser) {
-        if (@available(macOS 12, *)) {
-            [_view.browserViewController enterUsername:username];
-        }
+        [_view.browserViewController enterUsername:username];
         return;
     }
     [self performBlockWithoutFocusReporting:^{
@@ -9285,14 +9283,12 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
         machineSupportsMetal = devices.count > 0;
         [devices release];
     });
-    if (@available(macOS 12.0, *)) {
-        if ([iTermPreferences boolForKey:kPreferenceKeyDisableInLowPowerMode] &&
-            [[iTermPowerManager sharedInstance] isLowPowerModeEnabled]) {
-            if (reason) {
-                *reason = iTermMetalUnavailableReasonLowerPowerMode;
-            }
-            return NO;
+    if ([iTermPreferences boolForKey:kPreferenceKeyDisableInLowPowerMode] &&
+        [[iTermPowerManager sharedInstance] isLowPowerModeEnabled]) {
+        if (reason) {
+            *reason = iTermMetalUnavailableReasonLowerPowerMode;
         }
+        return NO;
     }
     if (!machineSupportsMetal) {
         if (reason) {
@@ -9711,9 +9707,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 
 - (void)enterPassword:(NSString *)password {
     if (_view.isBrowser) {
-        if (@available(macOS 12, *)) {
-            [_view.browserViewController enterPassword:password];
-        }
+        [_view.browserViewController enterPassword:password];
         return;
     }
     [self incrementDisableFocusReporting:1];

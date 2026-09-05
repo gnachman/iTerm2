@@ -177,7 +177,7 @@ typedef struct {
     BOOL _cornerRadiusDetectionFailed;
 
     iTermImageView *_backgroundImage;
-    iTermLayerBackedSolidColorView *_notchMask NS_AVAILABLE_MAC(12_0);
+    iTermLayerBackedSolidColorView *_notchMask;
     iTermCompactProxyIconView *_compactProxyIconView;
 }
 
@@ -315,11 +315,9 @@ typedef struct {
             [iTermAdvancedSettingsModel squareWindowCorners] ? 0 : [iTermWindowCornerRadiusDetector fallbackCornerRadius];
         [self addSubview:_windowBorderView];
 
-        if (@available(macOS 12.0, *)) {
-            _notchMask = [[iTermLayerBackedSolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0) color:[NSColor blackColor]];
-            _notchMask.hidden = YES;
-            [self addSubview:_notchMask];
-        }
+        _notchMask = [[iTermLayerBackedSolidColorView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0) color:[NSColor blackColor]];
+        _notchMask.hidden = YES;
+        [self addSubview:_notchMask];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(advancedSettingsDidChange:)
                                                      name:iTermAdvancedSettingsDidChange
@@ -1617,12 +1615,9 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     if (fakeHeight > 0) {
         return fakeHeight;
     }
-    if (@available(macOS 12, *)) {
-        // self.safeAreaInsets is all 0s on a notch Mac. Why the hell doesn't anything work right?
-        const NSEdgeInsets safeAreaInsets = self.window.screen.safeAreaInsets;
-        return safeAreaInsets.top;
-    }
-    return 0;
+    // self.safeAreaInsets is all 0s on a notch Mac. Why the hell doesn't anything work right?
+    const NSEdgeInsets safeAreaInsets = self.window.screen.safeAreaInsets;
+    return safeAreaInsets.top;
 }
 
 #pragma mark - Layout Calculator Integration
@@ -1988,11 +1983,9 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     } else {
         [self layoutSubviewsWithVisibleTabBarForWindow:thisWindow inlineToolbelt:showToolbeltInline];
     }
-    if (@available(macOS 12.0, *)) {
-        const CGFloat notchHeight = [self notchInset];
-        _notchMask.hidden = (notchHeight == 0);
-        _notchMask.frame = NSMakeRect(0, NSHeight(self.bounds) - notchHeight, NSWidth(self.bounds), notchHeight);
-    }
+    const CGFloat notchHeight = [self notchInset];
+    _notchMask.hidden = (notchHeight == 0);
+    _notchMask.frame = NSMakeRect(0, NSHeight(self.bounds) - notchHeight, NSWidth(self.bounds), notchHeight);
 
     if (showToolbeltInline) {
         [self updateToolbeltFrameForWindow:thisWindow];

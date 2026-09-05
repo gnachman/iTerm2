@@ -311,7 +311,7 @@ typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
 - (WKWebView *)openSingleUserBrowserWindowWithURL:(NSURL *)url
                                     configuration:(WKWebViewConfiguration *)configuration
                                           options:(iTermSingleUseWindowOptions)options
-                                       completion:(void (^)(void))completion NS_AVAILABLE_MAC(11);
+                                       completion:(void (^)(void))completion;
 
 - (NSWindow *)openWindow:(BOOL)makeWindow
                  command:(NSString *)command
