@@ -94,6 +94,12 @@ Major New Features:
   adjacent rows in the suggestions popup.
   Embedded newlines now show as a return
   glyph and the entry stays on one line.
+- Fixed multi-second hangs when navigating
+  tmux sessions. Each mouse-mode escape
+  sequence fired a heavyweight redraw side
+  effect twice, even when the mode did not
+  change, so a burst of them (as tmux sends
+  on every switch) could freeze the UI.
 
 - Fixed a bug where the top-right session
   indicators left a horizontal smear while

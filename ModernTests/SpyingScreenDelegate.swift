@@ -49,6 +49,14 @@ class SpyingScreenDelegate: FakeSession {
     private(set) var promptDidEndCalls: [PromptDidEndCall] = []
     private(set) var commandDidChangeCalls: [CommandDidChangeCall] = []
 
+    /// Number of times screenMouseModeDidChange fired (one per drained
+    /// "mouse mode did change" side effect).
+    private(set) var mouseModeDidChangeCount = 0
+
+    override func screenMouseModeDidChange() {
+        mouseModeDidChangeCount += 1
+    }
+
     func reset() {
         getWorkingDirectoryCalls.removeAll()
         pollLocalDirectoryOnlyCalls.removeAll()
@@ -57,6 +65,7 @@ class SpyingScreenDelegate: FakeSession {
         promptDidStartCalls.removeAll()
         promptDidEndCalls.removeAll()
         commandDidChangeCalls.removeAll()
+        mouseModeDidChangeCount = 0
     }
 
     // MARK: - Overrides
