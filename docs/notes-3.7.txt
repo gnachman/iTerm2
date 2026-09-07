@@ -2577,3 +2577,6 @@ Bug Fixes:
   right of a collapsed tab group in the Minimal
   theme when the group was the rightmost item
   in the tab bar.
+- The Shell > Workgroups menu now shows a
+  checkmark next to the workgroup the current
+  session belongs to.

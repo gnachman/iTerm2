@@ -67,6 +67,7 @@ final class WorkgroupMenu: NSObject, NSMenuDelegate {
               at index: Int,
               shouldCancel: Bool) -> Bool {
         item.isEnabled = shouldEnable(item: item)
+        item.state = isCurrentWorkgroup(item: item) ? .on : .off
         return false
     }
 
@@ -91,6 +92,19 @@ final class WorkgroupMenu: NSObject, NSMenuDelegate {
         // itself from drifting as refusal predicates evolve.
         return iTermWorkgroupController.instance.canEnterFromUI(
             workgroupUniqueIdentifier: id, on: session)
+    }
+
+    // True when `item` is the per-workgroup entry for the workgroup the
+    // current session belongs to. Resolved through the controller's
+    // registered instance so a stale back-pointer on a session that
+    // outlived its workgroup can't show a false checkmark.
+    private func isCurrentWorkgroup(item: NSMenuItem) -> Bool {
+        guard let id = item.representedObject as? String,
+              let session = currentSession(),
+              let instance = iTermWorkgroupController.instance.workgroupInstance(on: session) else {
+            return false
+        }
+        return instance.workgroupUniqueIdentifier == id
     }
 
     // MARK: - Action
