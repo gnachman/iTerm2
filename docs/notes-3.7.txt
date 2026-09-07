@@ -2161,8 +2161,8 @@ Bug Fixes:
   instead of the global default.
 - The iTerm2 companion relay servers moved
   to new addresses. If you paired an iPhone
-  on an earlier build, iTerm2 now asks you
-  to pair it again so it keeps working.
+  on an earlier build, pair it again so it
+  keeps working.
 - AI orchestration: commands the agent runs in
   a session now go through the same automatic
   safety check as regular AI chat, instead of
@@ -2192,10 +2192,7 @@ Bug Fixes:
   suspicious command, stops to ask first.
 - Companion: a paired device that still worked
   no longer nags you to re-pair on every launch
-  after installing a new version. The re-pair
-  prompt now only appears after a genuine relay
-  move, and a normal reconnect records the
-  current relay so the false alarm stops.
+  after installing a new version.
 - Companion: when the relay hits its daily
   data limit, the Mac now shows “Daily relay
   data limit reached” in Companion settings
@@ -2256,13 +2253,10 @@ Bug Fixes:
   phone and the relay logs when reporting a
   problem.
 - Companion pairing moved to the new sharded
-  relay resolver. A Mac still using the old
-  direct relay is switched over
-  automatically, and a one-time notice
-  reminds you to update iTerm2 Buddy on your
-  iPhone so the two keep connecting. Older
-  iPhone apps can no longer pair and are
-  told to update.
+  relay resolver. Older iPhone apps can no
+  longer pair and are told to update. A
+  pairing made before the move must be made
+  again.
 - Fixed a bug where flag emoji (such as a
   country flag) rendered as blank cells or
   flickered under the GPU renderer. The two

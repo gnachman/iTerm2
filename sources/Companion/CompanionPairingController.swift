@@ -123,77 +123,6 @@ final class CompanionPairingController: NSObject {
         alert.runModal()
     }
 
-    /// A device is paired but the relays it was established against no longer
-    /// match where this build points (the push relay it registered with, or the
-    /// main relay it paired over): the phone is pinned to the old relays until
-    /// the user pairs again. Only a POSITIVELY recorded origin that differs
-    /// counts as a move. A never-recorded origin (nil) is NOT a move: it just
-    /// means this pairing predates the mac tracking these hosts. The main relay is
-    /// backfilled on the next successful reconnect (see recordCurrentMainRelay);
-    /// the push relay stays nil until a re-pair, since a reconnect cannot evidence
-    /// it. Either way, treating nil as "moved" here would nag a perfectly working
-    /// pairing on every launch.
-    private var relayConfigurationChanged: Bool {
-        guard hasPairedDevice else { return false }
-        if let recorded = CompanionPushRegistry.registeredPushRelayURL,
-           recorded != CompanionPushRelay.baseURL.absoluteString {
-            return true
-        }
-        // The main-relay-origin move check is a DIRECT-mode (v1) concept: it
-        // exists because a v1 QR bakes in a specific relay host. In resolved (v2)
-        // mode the pairing is anchored to the resolver URL instead, and the owning
-        // host moves freely via the shard map (no re-pair), so this comparison is
-        // meaningless here. Skip it when a resolver is configured, or a change to
-        // the (v2-irrelevant) CompanionRelayOrigin setting would raise a spurious
-        // "server moved" prompt. A resolver-URL move is a DNS concern (the URL is a
-        // stable name), so there is nothing to detect for v2.
-        if Self.configuredResolverURL() == nil,
-           let recorded = CompanionPushRegistry.registeredMainRelayOrigin,
-           recorded != Self.configuredRelayOrigin() {
-            return true
-        }
-        return false
-    }
-
-    /// Called once at app launch. If a device is paired, the feature is enabled,
-    /// and the pairing predates a relay host move (see CompanionPushRelay and the
-    /// CompanionRelayOrigin setting), tell the user their phone must be paired
-    /// again to keep working, and open Companion Device Settings if they accept.
-    /// The phone need not be connected: the check is entirely local. "Later"
-    /// defers to the next launch, since the condition still holds until they
-    /// re-pair.
-    @objc func promptToRepairAfterRelayMoveIfNeeded() {
-        // Defer past launch so the alert appears after the app's windows settle,
-        // and re-check the conditions on the main actor at that point.
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            guard self.hasPairedDevice,
-                  Self.gate() == .allowed,
-                  self.relayConfigurationChanged else {
-                return
-            }
-            // Don't stack two re-pair modals at launch: if the pairing is also
-            // incomplete (missing/denied keychain credentials),
-            // promptToRepairIfPairingIncompleteIfNeeded already asks the user to
-            // re-pair, and re-pairing subsumes the relay-move fix. Yield to it.
-            if case .incomplete = self.pairingCompleteness() {
-                return
-            }
-            let alert = NSAlert()
-            alert.messageText = "Re-pair Your Companion Device"
-            alert.informativeText =
-                "The iTerm2 server has moved to a new address. Your paired "
-                + "iPhone is still registered with the old server. The old "
-                + "server will go away soon. You should re-pair to avoid "
-                + "problems when that happens."
-            alert.addButton(withTitle: "OK")
-            alert.addButton(withTitle: "Later")
-            if alert.runModal() == .alertFirstButtonReturn {
-                CompanionOnboardingRouter.openSettingsOrWizard()
-            }
-        }
-    }
-
     /// Whether the persisted pairing has everything a reconnect actually needs.
     /// `pairedPID` (UserDefaults) only says "a device is paired" and is what makes
     /// the mac try to park. The credentials that authenticate the reconnect live in
@@ -232,10 +161,10 @@ final class CompanionPairingController: NSObject {
         RLog("Companion pairing state (\(context)): pairedPID=\(pairedPID ?? "nil") identityKey=\(CompanionMacIdentity.hasKeyPair()) phoneStatic=\(CompanionMacIdentity.pairedPhoneStaticPublicKey() != nil) roomSecret=\(CompanionMacIdentity.pairedRoomSecret() != nil) pushSecret=\(CompanionMacIdentity.pairedPushSecret() != nil) relayConfigured=\(Self.configuredRelayOrigin() != nil)")
     }
 
-    /// Called once at app launch (alongside promptToRepairAfterRelayMoveIfNeeded).
-    /// If the device is marked paired but the credentials a reconnect needs are
-    /// missing, the pairing can never authenticate: tell the user to re-pair (and
-    /// open settings/wizard on accept) instead of silently failing every park.
+    /// Called once at app launch. If the device is marked paired but the
+    /// credentials a reconnect needs are missing, the pairing can never
+    /// authenticate: tell the user to re-pair (and open settings/wizard on
+    /// accept) instead of silently failing every park.
     @objc func promptToRepairIfPairingIncompleteIfNeeded() {
         Task { @MainActor [weak self] in
             guard let self else { return }
@@ -499,164 +428,19 @@ final class CompanionPairingController: NSObject {
         unpair()
     }
 
-    /// Set once the revision-11 relay migration has run, so it does not repeat.
-    /// NoSync: local device state, not a setting.
-    private static let relayResolverMigrationDoneKey = "NoSyncCompanionRelayResolverMigrationDone"
-
-    /// True from when the migration switches this mac to the resolver until either a
-    /// phone connects (cleared, notice suppressed) or the grace period lapses with
-    /// no phone (notice shown). Persisted so a relaunch mid-grace still resolves it.
-    private static let migrationNoticePendingKey = "NoSyncCompanionRelayMigrationNoticePending"
-
-    /// How long to wait for a phone to connect after the migration before showing
-    /// the "update your iPhone" notice. Longer than the phone's grace: the phone may
-    /// be asleep or away, and a needless nag is worse than a slightly delayed one.
-    /// A ready phone connects within a few seconds, so 30s stays well clear of a
-    /// false alarm while not feeling like nothing happened.
-    private static let migrationNoticeGraceSeconds: TimeInterval = 30
-    private var migrationNoticeTimer: Timer?
-
-    /// Revision-11 migration (CompanionRelayMigration): move a mac that is parking
-    /// on the legacy direct main relay onto the default resolver, and tell the user
-    /// their iPhone must also update. Runs once (NoSync flag) and only for a paired
-    /// mac, so the advanced-setting change is disclosed by the notice, never
-    /// silently. Two parts, deliberately independent:
-    ///   1. ENDPOINT REWRITE, conditional: only a mac still parking on the legacy
-    ///      direct relay (resolver empty AND relay == legacy) is switched to the
-    ///      default resolver. Writing CompanionResolverURL + reloading makes the park
-    ///      that follows resolve through the shard map. A mac already on a resolver
-    ///      (the default) or a custom relay origin is left untouched.
-    ///   2. UPDATE NOTICE, for ANY paired mac: whichever side is upgraded first, the
-    ///      peer that has not updated cannot connect (it stays on the old relay, and
-    ///      the raised minimumPeer refuses it), so it never reaches the version
-    ///      handshake's upgrade wall. We therefore ARM the notice for every paired
-    ///      mac, not only ones that needed a rewrite, so a mac that was already on a
-    ///      resolver but whose iPhone is still old does not sit silently "broken".
-    /// The notice is only ARMED here: armMigrationNoticeIfPending shows it only if no
-    /// phone connects within the grace period, and a phone that already updated
-    /// connects fine and clears the pending flag.
-    private func migrateDirectRelayToResolverIfNeeded() {
+    /// Scrub UserDefaults keys written by the beta-era revision-11 relay
+    /// migration and the relay-move tracking it replaced. The code that read
+    /// and cleared them is gone (see git history: CompanionRelayMigration,
+    /// recordCurrentRelays), so without this sweep a mac that ran those betas
+    /// carries the stale values forever, including a possibly stuck
+    /// NoticePending=true from an upgrade mid-grace-period. Idempotent.
+    private func scrubDefunctMigrationDefaults() {
         let defaults = iTermUserDefaults.userDefaults()
-        // Silent once done: this runs on every resume (launch, reconnect, gate
-        // change), so logging the common no-op would churn the RLog ring buffer.
-        // The done/pending flags are inspectable via `defaults read` if needed.
-        guard !defaults.bool(forKey: Self.relayResolverMigrationDoneKey) else { return }
-        // Only act (and only mark done) once PAIRED. A fresh mac's first rev-11
-        // launch is unpaired; marking done there would skip the notice for the
-        // pairing it forms later, leaving it silently unable to reach an old iPhone.
-        guard hasPairedDevice else {
-            relayLog("Relay migration: not paired yet; deferring to the first paired launch")
-            return
-        }
-        // Now set the flag, BEFORE the advanced-setting write below: that write posts
-        // iTermAdvancedSettingsDidChange, which reentrantly calls this via
-        // gateMayHaveChanged, and the flag makes that reentrant call a no-op.
-        defaults.set(true, forKey: Self.relayResolverMigrationDoneKey)
-
-        let resolver = Self.configuredResolverURL()
-        let relay = Self.configuredRelayOrigin()
-        let inDirectMode = (resolver == nil)
-        let onLegacyRelay = (relay == CompanionRelayMigration.legacyDirectRelayOrigin)
-        relayLog("Relay migration: running (resolver=\(resolver ?? "nil") relay=\(relay ?? "nil") "
-            + "inDirectMode=\(inDirectMode) onLegacyRelay=\(onLegacyRelay))")
-        if inDirectMode && onLegacyRelay {
-            relayLog("Relay migration: switching this mac from the direct legacy relay to the default resolver")
-            defaults.set(CompanionRelayMigration.defaultResolverURL, forKey: "CompanionResolverURL")
-            iTermAdvancedSettingsModel.loadAdvancedSettingsFromUserDefaults()
-        } else {
-            relayLog("Relay migration: no endpoint rewrite (already on a resolver or a custom relay)")
-        }
-        relayLog("Relay migration: arming the update-your-iPhone notice (cancelled if a phone connects)")
-        defaults.set(true, forKey: Self.migrationNoticePendingKey)
-    }
-
-    /// If a migration notice is pending, wait out the grace period for a phone to
-    /// connect before showing it. Called on every resume (launch + reconnects); the
-    /// timer is armed at most once per session, and a phone connecting cancels it
-    /// (clearPendingMigrationNotice).
-    private func armMigrationNoticeIfPending() {
-        let defaults = iTermUserDefaults.userDefaults()
-        // Silent common case: this runs on every resume, and the notice is pending
-        // only briefly around a migration. All the branches below execute only while
-        // pending, so they stay quiet in steady state.
-        guard defaults.bool(forKey: Self.migrationNoticePendingKey) else { return }
-        // The notice is meaningless without a paired iPhone. If the flag leaked past
-        // an unpair (this runs before the park guards), clear it rather than nag a
-        // Mac with no paired device.
-        guard hasPairedDevice else {
-            relayLog("Relay migration: notice pending but no paired device; clearing")
-            clearPendingMigrationNotice()
-            return
-        }
-        if isConnected {
-            relayLog("Relay migration: notice pending but already connected; clearing")
-            clearPendingMigrationNotice()
-            return
-        }
-        // Only nag while we are actually serving: with the gate closed (AI/consent
-        // off) no phone could connect regardless, so "update your iPhone" would
-        // misattribute the cause. A gate change re-enters here and arms then.
-        guard Self.gate() == .allowed else {
-            relayLog("Relay migration: notice pending but gate not allowed; not arming yet")
-            return
-        }
-        guard migrationNoticeTimer == nil else {
-            relayLog("Relay migration: notice grace timer already armed")
-            return
-        }
-        relayLog("Relay migration: arming \(Int(Self.migrationNoticeGraceSeconds))s grace timer before showing the update-your-iPhone notice")
-        migrationNoticeTimer = Timer.scheduledTimer(withTimeInterval: Self.migrationNoticeGraceSeconds,
-                                                    repeats: false) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self else { return }
-                self.migrationNoticeTimer = nil
-                let d = iTermUserDefaults.userDefaults()
-                guard d.bool(forKey: Self.migrationNoticePendingKey) else {
-                    self.relayLog("Relay migration: grace elapsed but notice already resolved; not showing")
-                    return
-                }
-                // Unpaired during the grace window: nothing to notify about.
-                guard self.hasPairedDevice else {
-                    self.relayLog("Relay migration: grace elapsed but no paired device; clearing")
-                    self.clearPendingMigrationNotice()
-                    return
-                }
-                if self.isConnected {
-                    self.relayLog("Relay migration: grace elapsed but a phone is now connected; clearing")
-                    self.clearPendingMigrationNotice()
-                    return
-                }
-                d.set(false, forKey: Self.migrationNoticePendingKey)
-                self.relayLog("Relay migration: no phone connection within the grace period; SHOWING the update-your-iPhone notice")
-                self.presentRelayMigrationNotice()
-            }
-        }
-    }
-
-    /// Cancel any pending "update your iPhone" notice and its grace timer. Called
-    /// when a phone connects (the iPhone is up to date) and on unpair (nothing left
-    /// to notify about). Idempotent.
-    private func clearPendingMigrationNotice() {
-        let defaults = iTermUserDefaults.userDefaults()
-        migrationNoticeTimer?.invalidate()
-        migrationNoticeTimer = nil
-        guard defaults.bool(forKey: Self.migrationNoticePendingKey) else { return }
-        defaults.set(false, forKey: Self.migrationNoticePendingKey)
-        relayLog("Relay migration: clearing the pending update-your-iPhone notice")
-    }
-
-    /// The one-time modal telling the user their iPhone must update. Deferred to the
-    /// next main-loop turn so it does not run modally in the middle of the launch
-    /// path, and posted at most once (guarded by the pending flag above).
-    private func presentRelayMigrationNotice() {
-        relayLog("Relay migration: presenting the update-your-iPhone alert")
-        DispatchQueue.main.async {
-            let alert = NSAlert()
-            alert.messageText = "Update iTerm2 Buddy on your iPhone"
-            alert.informativeText = "iTerm2 has moved to the new relay. For your Mac and iPhone to keep connecting, "
-                + "update the iTerm2 Buddy app on your iPhone to the latest version."
-            alert.addButton(withTitle: "OK")
-            alert.runModal()
+        for key in ["NoSyncCompanionRelayResolverMigrationDone",
+                    "NoSyncCompanionRelayMigrationNoticePending",
+                    "NoSyncCompanionPushRelayBaseURL",
+                    "NoSyncCompanionMainRelayOrigin"] {
+            defaults.removeObject(forKey: key)
         }
     }
 
@@ -665,13 +449,7 @@ final class CompanionPairingController: NSObject {
     @objc func resumePairedListeningIfNeeded() {
         installLogHandler()
         relayLog("resumePairedListeningIfNeeded called")
-        // Revision-11 relay migration: move a mac still on the direct legacy relay
-        // onto the resolver BEFORE the park below reads the resolver setting. Once-
-        // guarded, so the reconnect-driven calls skip it. armMigrationNoticeIfPending
-        // then waits out the grace period for a phone before nagging (a phone that
-        // already updated connects and cancels it).
-        migrateDirectRelayToResolverIfNeeded()
-        armMigrationNoticeIfPending()
+        scrubDefunctMigrationDefaults()
         // First call is at launch (the user is present); read the keychain-backed
         // identity material (Noise keypair, paired phone key, room secret), the
         // push secret, and the outstanding-nonce list into memory now, so later
@@ -1007,9 +785,6 @@ final class CompanionPairingController: NSObject {
         CompanionMacIdentity.deleteKeyPair()
         CompanionPushRegistry.clear()
         CompanionChatMuteRegistry.clear()
-        // No paired device left, so a pending migration notice is moot; clear it
-        // (and cancel its timer) so a later resume cannot nag an unpaired Mac.
-        clearPendingMigrationNotice()
         DLog("Companion: unpaired; key material deleted")
         notifyPresenceChanged()
     }
@@ -1069,8 +844,6 @@ final class CompanionPairingController: NSObject {
         CompanionMacIdentity.deleteKeyPair()
         CompanionPushRegistry.clear()
         CompanionChatMuteRegistry.clear()
-        // No paired device left, so a pending migration notice is moot; clear it.
-        clearPendingMigrationNotice()
         onDisconnect?()
         notifyPresenceChanged()
     }
@@ -1653,14 +1426,6 @@ final class CompanionPairingController: NSObject {
                 }
                 pairedPID = code.pairingID
                 if isFreshPairing {
-                    // Fresh pairing: as part of pairing the phone registers its APNs
-                    // token against its (current) push relay, and this connection was
-                    // carried over the main relay, so BOTH origins are evidenced.
-                    // Record them so a later host move can prompt a re-pair (see
-                    // relayConfigurationChanged).
-                    CompanionPushRegistry.recordCurrentRelays(
-                        pushRelayURL: CompanionPushRelay.baseURL.absoluteString,
-                        mainRelayOrigin: Self.configuredRelayOrigin())
                     // A brand-new device just paired while the user is present
                     // (they just confirmed the SAS code): warm the AI key cache
                     // now so a query later driven from the away phone serves its
@@ -1668,27 +1433,11 @@ final class CompanionPairingController: NSObject {
                     // covers devices already paired at startup; this covers a
                     // pairing that happens while the app is already running.
                     AITermControllerObjC.prewarmAPIKeyCache()
-                } else {
-                    // Reconnect: refresh ONLY the main relay. This connection is
-                    // carried over the main relay, so it proves the phone still
-                    // reaches us there (and backfills a pairing older than this
-                    // tracking so a later main-relay move is detectable). It proves
-                    // NOTHING about the push relay: the phone registers against its
-                    // OWN build's CompanionPushRelay URL, which after a mac-only
-                    // upgrade differs from ours until the phone app is itself updated
-                    // and APNs re-registers. Stamping our push URL here would make
-                    // relayConfigurationChanged see recorded == current and suppress a
-                    // legitimate re-pair prompt while the phone still cannot receive
-                    // pushes. So leave the recorded push relay untouched.
-                    CompanionPushRegistry.recordCurrentMainRelay(Self.configuredRelayOrigin())
                 }
                 // Now established: reconnect is keyed on pairedPID, so the
                 // fresh-pairing intent is done.
                 freshPairingActive = false
                 onPaired?()
-                // A phone reached us, so the revision-11 migration succeeded: the
-                // iPhone is up to date. Cancel any pending "update your iPhone" notice.
-                clearPendingMigrationNotice()
                 // Connected: stop accepting now. The relay room has a single mac
                 // slot, so parking again while connected would displace this very
                 // connection (newest-wins). The next park happens only after this
