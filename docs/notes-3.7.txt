@@ -92,6 +92,12 @@ Major New Features:
   maximized (zoomed) split pane was torn
   down, such as when a tmux connection
   dropped.
+- Fixed multi-second hangs when navigating
+  tmux sessions. Each mouse-mode escape
+  sequence fired a heavyweight redraw side
+  effect twice, even when the mode did not
+  change, so a burst of them (as tmux sends
+  on every switch) could freeze the UI.
 - Fixed a bug where a profile whose custom
   working directory used a tilde (such as
   ~/www) wrongly reported the directory as

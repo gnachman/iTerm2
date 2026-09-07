@@ -14664,7 +14664,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                 } else {
                     terminal.mouseMode = MOUSE_REPORTING_NONE;
                 }
-                [terminal.delegate terminalMouseModeDidChangeTo:terminal.mouseMode];
+                // The setter notifies the delegate when the mode actually changes.
                 break;
 
             case 4:
