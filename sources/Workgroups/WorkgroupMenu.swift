@@ -67,16 +67,19 @@ final class WorkgroupMenu: NSObject, NSMenuDelegate {
               at index: Int,
               shouldCancel: Bool) -> Bool {
         item.isEnabled = shouldEnable(item: item)
-        item.state = isCurrentWorkgroup(item: item) ? .on : .off
         return false
     }
 
     // NSMenu also routes validation through the action target's
     // validateMenuItem:. Without this, items show as enabled
     // (greyed-out flag from menuNeedsUpdate gets overridden) when
-    // there's no current terminal window.
+    // there's no current terminal window. This is the seam AppKit
+    // reliably drives (menu(_:update:...) only fires for lazy menus
+    // that implement numberOfItemsInMenu:), so the current-workgroup
+    // checkmark is set here as a side effect.
     @objc
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        menuItem.state = isCurrentWorkgroup(item: menuItem) ? .on : .off
         return shouldEnable(item: menuItem)
     }
 
