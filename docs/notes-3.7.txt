@@ -2573,3 +2573,7 @@ Bug Fixes:
   Settings > Profiles > Terminal so it adapts
   correctly when switching between light and
   dark mode.
+- Fixed a white rectangle that appeared to the
+  right of a collapsed tab group in the Minimal
+  theme when the group was the rightmost item
+  in the tab bar.
