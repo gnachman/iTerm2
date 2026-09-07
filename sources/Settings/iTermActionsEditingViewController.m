@@ -128,7 +128,7 @@ static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iter
         case iTermActionsDidChangeMutationTypeEdit: {
             [_tableView it_performUpdateBlock:^{
                 [_tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:notif.index]
-                                      columnIndexes:[NSIndexSet indexSetWithIndex:0]];
+                                      columnIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, _tableView.numberOfColumns)]];
             }];
             break;
         }
