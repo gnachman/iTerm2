@@ -42,3 +42,4 @@
 - Tests should not be flaky. Don't write tests that will fail if the system is slower than usual.
 - Write new classes in Swift unless there is a very good reason not to.
 - Do not modify CLAUDE.md without express written permission
+- If you need to run iTerm2 directly, such as for testing, always pass `-suite claude-xxx` where xxx is the last path component of the current directory. So, for exmaple, `-suite claude-iterm2`
