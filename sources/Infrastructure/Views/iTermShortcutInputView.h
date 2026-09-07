@@ -31,6 +31,17 @@ typedef NS_ENUM(NSInteger, iTermShortcutInputViewPurpose) {
 // event will be sent to -handleShortcutEvent: while this field's NSTextView is
 // the first responder. Events are immediately passed to the shortcutDelegate.
 // You can assign the shortcutDelegate in IB as it is an IBOutlet.
+//
+// IMPORTANT: The window (or sheet) that hosts this view MUST be able to become
+// the key window. Recording relies on -[iTermApplication routeEventToShortcutInputView:],
+// which finds the field via the app's key window; if the field's window can't
+// become key, keystrokes are never delivered here and recording silently does
+// nothing. A common trap is an NSPanel declared as a "utility" window in a xib
+// without the "titled" style bit: -canBecomeKeyWindow then returns NO, and when
+// such a panel is presented as a sheet it never becomes key (the key window
+// stays on some unrelated window, typically a terminal). Always give panels that
+// contain this view the "titled" style mask (in addition to "utility"), or
+// otherwise ensure -canBecomeKeyWindow returns YES.
 @interface iTermShortcutInputView : NSView
 
 @property(nonatomic, weak) IBOutlet id<iTermShortcutInputViewDelegate> shortcutDelegate;
