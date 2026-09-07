@@ -2877,3 +2877,6 @@ Bug Fixes:
   certain Settings sheets (such as the hotkey
   configuration or special exceptions panels)
   would bring a terminal window to the front.
+- The Shell > Workgroups menu now shows a
+  checkmark next to the workgroup the current
+  session belongs to.
