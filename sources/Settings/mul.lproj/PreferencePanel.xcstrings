@@ -454,6 +454,12 @@
             "state" : "translated",
             "value" : "Система"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统"
+          }
         }
       }
     },
@@ -21196,6 +21202,12 @@
             "state" : "translated",
             "value" : "Переносимость:"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可移植性："
+          }
         }
       }
     },
@@ -23374,6 +23386,12 @@
             "state" : "translated",
             "value" : "Не давать системе засыпать, пока настройка включена для сессии."
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置此选项时，防止系统进入睡眠状态。"
+          }
         }
       }
     },
@@ -23703,6 +23721,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Работает на устройстве; API-ключ не используется"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在设备上运行；无需使用API密钥"
           }
         }
       }
@@ -32686,6 +32710,12 @@
             "state" : "translated",
             "value" : "Автоматически обновлять доступные модели ИИ из онлайн-базы данных"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动从在线数据库更新可用的AI模型"
+          }
         }
       }
     },
@@ -34191,6 +34221,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "N сессий в настоящее время не позволяют системе перейти в спящий режим"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前有N个会话阻止了睡眠功能"
           }
         }
       }
@@ -38386,6 +38422,12 @@
             "state" : "translated",
             "value" : "Обновить сейчас"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "立即更新"
+          }
         }
       }
     },
@@ -39345,6 +39387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Использовать HDR-курсор, если доступно"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可用时使用 HDR 光标"
           }
         }
       }
@@ -45681,6 +45729,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Если этот параметр включён и текущий дисплей поддерживает HDR (расширенный динамический диапазон), курсор отрисовывается белым цветом максимальной яркости, ярче любого белого цвета, который обычно отображается в приложении."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当启用且当前显示器支持HDR（高动态范围）时，光标会以最大亮度白色显示，比应用程序中通常出现的任何白色更亮"
           }
         }
       }
