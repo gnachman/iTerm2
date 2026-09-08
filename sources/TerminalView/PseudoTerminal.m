@@ -12559,16 +12559,16 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 // which handles the case when the tab bar IS a functioning accessory.
 - (BOOL)rootTerminalViewShouldLeaveEmptyAreaAtTop {
     if ([PseudoTerminal windowTypeHasFullSizeContentView:self.windowType]) {
-        RLog(@"YES because window type %@ has full size content view", @(self.windowType));
+        DLog(@"YES because window type %@ has full size content view", @(self.windowType));
         return YES;
     }
     if (!self.anyFullScreen) {
-        RLog(@"NO because not any full screen");
+        DLog(@"NO because not any full screen");
         return NO;
     }
     BOOL topTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
     if (!topTabBar) {
-        RLog(@"NO because tabbar not on top");
+        DLog(@"NO because tabbar not on top");
         return NO;
     }
 
@@ -12576,17 +12576,17 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         // macOS 13+: We need to leave an empty area at the top only if the tabbar is NOT
         // a titlebar accessory (i.e., it's part of the content view instead).
         const BOOL result = ![self tabBarShouldBeAccessory];
-        RLog(@"macOS 13+: tabBarShouldBeAccessory=%@ so returning %@", @([self tabBarShouldBeAccessory]), @(result));
+        DLog(@"macOS 13+: tabBarShouldBeAccessory=%@ so returning %@", @([self tabBarShouldBeAccessory]), @(result));
         return result;
     } else {
         // macOS 12: Preserve old behavior to avoid requiring testing on this deprecated OS.
         // This had a bug where Minimal and Regular themes behaved differently, but we're
         // leaving it as-is since macOS 12 support will be dropped eventually.
         if ([PseudoTerminal windowTypeHasFullSizeContentView:self.savedWindowType]) {
-            RLog(@"macOS 12: YES because saved window type %@ has full size content view", @(self.savedWindowType));
+            DLog(@"macOS 12: YES because saved window type %@ has full size content view", @(self.savedWindowType));
             return YES;
         }
-        RLog(@"macOS 12: NO because saved window type %@ does not have full size content view", @(self.savedWindowType));
+        DLog(@"macOS 12: NO because saved window type %@ does not have full size content view", @(self.savedWindowType));
         return NO;
     }
 }
