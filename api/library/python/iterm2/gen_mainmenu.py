@@ -75,7 +75,7 @@ def gen_menu_items_impl(items):
     return "\n".join(result)
 
 def items():
-    tree = ET.parse("../../../../Interfaces/MainMenu.xib")
+    tree = ET.parse("../../../../sources/MainMenu/MainMenu.xib")
     items = tree.getroot().find("objects").find("menu").find("items")
     return items
 
