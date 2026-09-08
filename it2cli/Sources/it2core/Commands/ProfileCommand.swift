@@ -8,12 +8,12 @@ struct Profile: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "profile",
         abstract: "Manage iTerm2 profiles.",
-        subcommands: [
+        subcommands: sortedSubcommands([
             List.self,
             Show.self,
             Apply.self,
             Set.self,
-        ]
+        ])
     )
 }
 
