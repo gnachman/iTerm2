@@ -1662,7 +1662,19 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
 // extras going into the overflow menu. Applies to whichever orientation is in use; the scroll axis is
 // chosen from _orientation.
 - (BOOL)tabBarIsScrollable {
-    return [iTermPreferences boolForKey:kPreferenceKeyScrollableSideTabBar];
+    if (![iTermPreferences boolForKey:kPreferenceKeyScrollableSideTabBar]) {
+        return NO;
+    }
+    // Two-row mode and the scrollable layout are competing answers to "too many
+    // tabs" and cannot both be in effect. The scrollable path gives every cell a
+    // fixed _scrollableTabWidth in one scrolling row and bakes _scrollOffset into
+    // the x-walk; two-row stretches cells to fill each row and re-seeds the walk at
+    // each row's own left edge. With both live, row 1 inherited the scroll offset
+    // while row 2 escaped it (its x is reset to the row's left edge), pushing the
+    // leading tabs off the left edge of the bar. Once the bar has spilled onto a
+    // second row, two rows win and it does not scroll. horizontalRowCount is 1
+    // whenever the two-row setting is off, so this is a no-op for that default.
+    return [self horizontalRowCount] == 1;
 }
 
 - (BOOL)isVerticalOrientation {
@@ -1991,6 +2003,11 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
     // otherwise keep going via the _animationTimer clause below and never lay out
     // the second row, so cancel it here.
     const BOOL singleRow = ([self horizontalRowCount] == 1);
+    if (!singleRow && _scrollOffset != 0) {
+        // Two rows don't scroll (see -tabBarIsScrollable); clear the offset the
+        // scrolling single-row bar left behind.
+        _scrollOffset = 0;
+    }
     if (!singleRow && _animationTimer != nil) {
         [_animationTimer invalidate];
         _animationTimer = nil;
