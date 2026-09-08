@@ -646,3 +646,6 @@ Bug Fixes:
   after it had gone out of scope, which could
   terminate iTerm2 at the moment a
   notification was first requested.
+- Fixed a lag when switching or closing tabs
+  with the Session Status tool open in the
+  toolbelt.
