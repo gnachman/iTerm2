@@ -66,6 +66,22 @@ class ToolStatus: NSView {
     private static let debounceInterval: TimeInterval = 0.05
     private var pendingKeys = Set<String>()
     private var pendingFlush: DispatchWorkItem?
+    // Coalesce the shortcut reloads one user action triggers. A single tab
+    // switch posts three of them: iTermSessionBecameKey from both
+    // -[PTYTab setActiveSession:updateActivityCounter:] and
+    // -[PseudoTerminal tabView:didSelectTabViewItem:], plus
+    // iTermSelectedTabDidChange from the latter. They all want the same
+    // thing, so do it once at the end of the current runloop pass rather
+    // than rebuilding every row three times. Scheduled with async (not the
+    // debounce interval above) so the shortcut labels still land in the
+    // same frame as the switch.
+    // Internal (not private), like resolveSessionForReload below, so tests
+    // can pin the coalescing and hidden-toolbelt contracts without standing
+    // up a window and a populated table.
+    var pendingShortcutReload: DispatchWorkItem?
+    // Set when a shortcut reload was skipped because the toolbelt is
+    // hidden, so it can be honored as soon as it is shown again.
+    var missedShortcutReloadWhileHidden = false
     // Session GUIDs the user has snoozed via the row context menu. Transient
     // per-tool UI state (not persisted): snoozed rows sink to the bottom and
     // render dimmed, and auto-un-snooze when their status next changes.
@@ -283,6 +299,9 @@ extension ToolStatus {
         pendingFlush?.cancel()
         pendingFlush = nil
         pendingKeys.removeAll()
+        pendingShortcutReload?.cancel()
+        pendingShortcutReload = nil
+        missedShortcutReloadWhileHidden = false
         statuses = SessionStatusController.instance.statuses.values.compactMap { status in
             let contains = windowContains(sessionGUID: status.sessionID)
             DLog("ToolStatus viewDidMoveToWindow: sessionID=\(status.sessionID) contains=\(contains) hasActive=\(status.hasActiveStatus)")
@@ -296,6 +315,15 @@ extension ToolStatus {
         rebuildDisplayed()
         _tableView?.reloadData()
         updateSelectionWithoutChangingFirstResponder()
+    }
+
+    override func viewDidUnhide() {
+        super.viewDidUnhide()
+        // Pay back a reload that was skipped while the toolbelt was hidden.
+        if missedShortcutReloadWhileHidden {
+            missedShortcutReloadWhileHidden = false
+            setNeedsShortcutReload()
+        }
     }
 }
 
@@ -375,6 +403,33 @@ private extension ToolStatus {
 
     @objc
     func needsShortcutReload(_ notification: Notification) {
+        setNeedsShortcutReload()
+    }
+
+    // Schedules one reload for the end of the current runloop pass,
+    // collapsing the burst of notifications a single tab switch produces.
+    func setNeedsShortcutReload() {
+        if pendingShortcutReload != nil {
+            return
+        }
+        let work = DispatchWorkItem { [weak self] in self?.reloadShortcuts() }
+        pendingShortcutReload = work
+        DispatchQueue.main.async(execute: work)
+    }
+
+    private func reloadShortcuts() {
+        pendingShortcutReload = nil
+        // Hiding the toolbelt sets its `hidden` flag rather than taking it
+        // out of the window, so this tool keeps receiving notifications and
+        // `window` stays non-nil - which is why the window check in
+        // activeSessionDidChange(_:) does not cover this case. Rebuilding
+        // rows nobody can see is pure cost, so remember the debt and pay it
+        // in viewDidUnhide().
+        if isHiddenOrHasHiddenAncestor {
+            missedShortcutReloadWhileHidden = true
+            return
+        }
+        missedShortcutReloadWhileHidden = false
         guard let tableView = _tableView, !displayedStatuses.isEmpty else {
             return
         }
