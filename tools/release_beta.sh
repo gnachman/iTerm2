@@ -134,7 +134,7 @@ make -j8 SIGNED=1 UNIVERSAL=1 Beta
 
 BUILDTYPE=Beta
 
-Build $BUILDTYPE "" "macOS 12.4+" "This is the recommended beta build for most users." "" "--deep"
+Build $BUILDTYPE "" "macOS 13+" "This is the recommended beta build for most users." "" "--deep"
 
 git checkout -- version.txt
 #set -x
