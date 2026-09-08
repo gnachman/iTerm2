@@ -87,6 +87,7 @@ TriggerDelegate> {
     AITermControllerObjC *_aiterm;
     iTermNonTextPasteHelper *_nonTextPasteHelper;
     TransferrableFile *_uploadAndPasteTransfer;  // Current upload for "upload and paste path" feature
+    NSUUID *_uploadAndPasteIdentifier;
 }
 
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;

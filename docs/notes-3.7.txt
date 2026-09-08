@@ -592,6 +592,14 @@ Shell Integration Improvements:
   It's automatically in your path.
 
 SSH Integration Improvements:
+- Speed up uploads with larger transfer chunks.
+- Fix cancelled uploads leaving temporary files
+  or getting stuck while finishing the transfer.
+- Upload and paste image paths through tmux
+  integration using the existing SSH connection.
+- Convert pasted TIFF screenshots to PNG and use
+  unique filenames for remote image uploads.
+- Do not paste paths after cancelling an upload.
 - Better passphrase handling for SCP and
   private keys. Wrong passphrases now retry
   instead of falling through to an empty
