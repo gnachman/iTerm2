@@ -9,7 +9,10 @@ import Foundation
 
 @objc(iTermSwiftyStringTextField)
 class iTermSwiftyStringTextField: NSTextField {
-    private var swiftyString: iTermSwiftyString?
+    // Internal (not private) so tests can pin the reuse contract in
+    // set(interpolatedString:scope:): reuse is observable only as object
+    // identity, since a rebuilt evaluator renders an identical field.
+    var swiftyString: iTermSwiftyString?
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -44,6 +47,17 @@ extension iTermSwiftyStringTextField {
     }
 
     func set(interpolatedString: String, scope: iTermVariableScope) {
+        // A live swifty string for the same string and scope is already
+        // showing the current value and is still observing its
+        // dependencies, so rebuilding it would produce an identical
+        // field at the cost of tearing an evaluator down and standing a
+        // new one up. Table reloads re-set every visible cell, so most
+        // calls land here.
+        if let swiftyString,
+           swiftyString.stringToEvaluate == interpolatedString,
+           swiftyString.scope === scope {
+            return
+        }
         swiftyString?.invalidate()
         swiftyString = iTermSwiftyString(string: interpolatedString,
                                          scope: scope,
