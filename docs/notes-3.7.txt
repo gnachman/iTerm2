@@ -490,6 +490,16 @@ Improvements:
   per session, or with --json adds the result to
   each session as “formatted”. This lists every
   session’s directory or job in one command.
+- Uploads over SSH Integration are about three
+  times faster.
+- “Upload and Paste Path” now works in tmux
+  integration windows reached through SSH
+  Integration, and before shell integration has
+  reported a directory, in which case the file
+  goes to your home directory.
+- Pasting a screenshot with “Upload and Paste
+  Path” converts TIFF images to PNG and gives
+  each one a unique name.
 
 Bug Fixes:
 - On macOS 26, hiding a hotkey window when no
@@ -1213,3 +1223,6 @@ Bug Fixes:
   at the cursor. Before, the new text was typed
   after the original. Corrections elsewhere, or
   in full-screen apps like vim, are ignored.
+- Cancelling an upload over SSH Integration no
+  longer leaves a temporary file on the remote
+  host or gets stuck at “Cancelling…”.
