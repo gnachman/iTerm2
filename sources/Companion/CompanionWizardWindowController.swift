@@ -471,7 +471,7 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
     // Store. When true, the setup wizard links straight to the App Store and
     // never mentions the TestFlight beta, whatever this iTerm2 build's release
     // channel is. Leave false until the iOS app is released.
-    private static let companionIOSAppIsOnAppStore = false
+    private static let companionIOSAppIsOnAppStore = true
 
     // A redirect on iterm2.com that we control, so the shipped app never hardcodes
     // the raw App Store URL. Point it at the App Store page
