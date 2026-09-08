@@ -28,6 +28,7 @@
 		0B05CA460519B96060210386 /* AIChatWireLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88578347A529CFE749B6F433 /* AIChatWireLogger.swift */; };
 		0BC580AF4D2AB9C3E952CB01 /* ShuffleDeck.swift in Sources */ = {isa = PBXBuildFile; fileRef = D46A873D7F2EFCF8441303D1 /* ShuffleDeck.swift */; };
 		0C026664CE3F52A755A333FF /* OrchestrationMentionRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FB54728D976B5A56B887ED5 /* OrchestrationMentionRenderer.swift */; };
+		0C1B7AF329EFE71B706E946C /* ConductorUpload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E9FF32118246D33BBE5EF45 /* ConductorUpload.swift */; };
 		0C345F530667B5539D6243B5 /* CompanionPriorityOutbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 751FAD7033C9A3DC31ABE2F3 /* CompanionPriorityOutbox.swift */; };
 		0C8691424C40627F505DDE94 /* PTYSessionPeerPort.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8721B9515977EC8CB513CDAA /* PTYSessionPeerPort.swift */; };
 		0C9EC47197770F9F682B6F8D /* RemoteCommandToolProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E7BADF8FB7DD7E1B851F797 /* RemoteCommandToolProvider.swift */; };
@@ -6812,6 +6813,7 @@
 		6D70E7DE7E81B39DC29CC27B /* VT100PromptKind.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = VT100PromptKind.h; sourceTree = "<group>"; };
 		6E2F6A9024607073D194DA5A /* iTermConfigGenerationTracker.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermConfigGenerationTracker.m; sourceTree = "<group>"; };
 		6E8BB76193334BC38C90EC4C /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/InstantReplay.xcstrings; sourceTree = "<group>"; };
+		6E9FF32118246D33BBE5EF45 /* ConductorUpload.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConductorUpload.swift; sourceTree = "<group>"; };
 		6EFD41B9F2C6F53723CDF88B /* iTermArrangementKeys.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermArrangementKeys.h; sourceTree = "<group>"; };
 		6F6AD8136D2E4D2EB86E9ABC /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/AITerm.xcstrings; sourceTree = "<group>"; };
 		6F87CB3CBFBF0D0E8781513C /* VT100StringConversionConfig.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = VT100StringConversionConfig.h; sourceTree = "<group>"; };
@@ -12795,6 +12797,7 @@
 				A6069F352DF79A5100EE6CC7 /* SystemFolderIconProvider.swift */,
 				A6EC8096282EBFB000493544 /* TarJob.swift */,
 				A1B19743799E1009AC26E7F4 /* Conductor+IT2.swift */,
+				6E9FF32118246D33BBE5EF45 /* ConductorUpload.swift */,
 			);
 			path = SSH;
 			sourceTree = "<group>";
@@ -22419,6 +22422,7 @@
 				DDC6A04E4BD124950415EFEA /* iTermHDREngager.swift in Sources */,
 				FB47A51FE147AA2BDA2FFFD4 /* SendCompanionNotificationBuiltInFunction.swift in Sources */,
 				3566BF95446653BE5BBB96EB /* iTermSettingsTruncationChecker.swift in Sources */,
+				0C1B7AF329EFE71B706E946C /* ConductorUpload.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

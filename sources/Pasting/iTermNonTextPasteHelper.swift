@@ -361,24 +361,46 @@ class iTermNonTextPasteHelper: NSObject {
 
     private func saveImageToTempFile(imageData: Data, fileExtension: String) -> String? {
         DLog("saveImageToTempFile: \(imageData.count) bytes, extension=\(fileExtension)")
+        // Screenshots often offer TIFF. Agent image readers commonly accept PNG/JPEG,
+        // so convert other bitmap formats before handing them a filename.
+        guard let image = Self.imageForFile(imageData, fileExtension: fileExtension) else {
+            showError(String(localized: "NonTextPaste.CouldNotEncodeImage", defaultValue: "Could not convert the clipboard image to PNG.", comment: "Error when clipboard image data cannot be converted to a PNG file"))
+            return nil
+        }
         guard let tempDir = FileManager.default.it_temporaryDirectory() else {
             RLog("saveImageToTempFile: failed to get temporary directory")
             showError(String(localized: "NonTextPaste.CouldNotCreateTempDir", defaultValue: "Could not create temporary directory.", comment: "Error when a temporary directory cannot be created"))
             return nil
         }
-
         let timestamp = Self.timestampFormatter.string(from: Date())
-        let filename = "pasted-image-\(timestamp).\(fileExtension)"
+        // The basename must also be unique on the remote host, where multiple local
+        // temporary directories all upload to the same directory.
+        let filename = "pasted-image-\(timestamp)-\(UUID().uuidString).\(image.fileExtension)"
         let tempPath = (tempDir as NSString).appendingPathComponent(filename)
 
         do {
-            try imageData.write(to: URL(fileURLWithPath: tempPath))
+            try image.data.write(to: URL(fileURLWithPath: tempPath), options: .atomic)
+            try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: tempPath)
             DLog("saveImageToTempFile: saved to \(tempPath)")
             return tempPath
         } catch {
+            try? FileManager.default.removeItem(atPath: tempDir)
             RLog("saveImageToTempFile: failed to write: \(error)")
             showError(String(localized: "NonTextPaste.CouldNotSaveImage", defaultValue: "Could not save image to temporary file: \(error.localizedDescription)", comment: "Error when a pasted image cannot be written to a temporary file"))
             return nil
+        }
+    }
+
+    static func imageForFile(_ data: Data, fileExtension: String) -> (data: Data, fileExtension: String)? {
+        switch fileExtension.lowercased() {
+        case "png", "jpg", "jpeg", "gif", "webp":
+            return (data, fileExtension.lowercased())
+        default:
+            guard let bitmap = NSBitmapImageRep(data: data),
+                  let png = bitmap.representation(using: .png, properties: [:]) else {
+                return nil
+            }
+            return (png, "png")
         }
     }
 

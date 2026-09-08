@@ -1176,6 +1176,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_pasteHelper release];
     _nonTextPasteHelper.delegate = nil;
     [_nonTextPasteHelper release];
+    [_uploadAndPasteIdentifier release];
     [_backgroundImage release];
     [_antiIdleTimer invalidate];
     [_cadenceController release];
@@ -15211,10 +15212,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         path.path = [destinationPath.path stringByAppendingPathComponent:filename];
         DLog(@"Will upload local:%@ to remote:%@", file, path.path);
 
-        if ([_conductor canTransferFilesTo:path]) {
+        iTermConductor *conductor = [self nonTextPasteConductor];
+        if ([conductor canTransferFilesTo:path]) {
             DLog(@"Using conductor for upload");
-            [_conductor uploadFile:file to:path];
-            break;
+            [conductor uploadFile:file to:path];
+            continue;
         }
         DLog(@"Using SCPFile for upload");
         SCPFile *scpFile = [[[SCPFile alloc] init] autorelease];
@@ -20436,23 +20438,36 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (BOOL)nonTextPasteHelperCanUpload:(iTermNonTextPasteHelper *)sender {
-    // Can upload if we have SSH integration (conductor) in framing mode, or if
-    // shell integration detected we're on a remote host.
-    DLog(@"nonTextPasteHelperCanUpload: conductor=%@ framing=%@ currentHost=%@ isLocalhost=%@",
-         self.conductor, @(self.conductor.framing), self.currentHost, @(self.currentHost.isLocalhost));
-    if (self.conductor.framing) {
-        DLog(@"Can upload via conductor");
-        return YES;
+    return [self scpPathForCurrentRemoteHost] != nil;
+}
+
+// A control-mode pane has no conductor of its own. Its gateway owns the SSH
+// connection, but pasted input must still go to this pane.
+- (iTermConductor *)nonTextPasteConductor {
+    if (_conductor) {
+        return _conductor.framing ? _conductor : nil;
     }
-    BOOL canUpload = self.currentHost != nil && !self.currentHost.isLocalhost;
-    DLog(@"canUpload=%@", @(canUpload));
-    return canUpload;
+    PTYSession *gateway = self.tmuxGatewaySession;
+    if (self.isTmuxClient && !_tmuxController.serverIsLocal && gateway != self) {
+        return [gateway nonTextPasteConductor];
+    }
+    return nil;
 }
 
 // Returns an SCPPath for the current remote host and working directory, or nil if not available.
 - (SCPPath *)scpPathForCurrentRemoteHost {
     id<VT100RemoteHostReading> remoteHost = self.currentHost;
+    iTermConductor *conductor = [self nonTextPasteConductor];
     DLog(@"scpPathForCurrentRemoteHost: remoteHost=%@", remoteHost);
+    // SSH integration knows the destination even before shell integration has
+    // reported a host or working directory (including inside ordinary tmux).
+    if (!remoteHost && conductor) {
+        SCPPath *path = [[[SCPPath alloc] init] autorelease];
+        path.hostname = conductor.sshIdentity.hostname;
+        path.username = conductor.sshIdentity.username;
+        path.path = conductor.homeDirectory;
+        return path.path.length ? path : nil;
+    }
     if (!remoteHost || !remoteHost.username || !remoteHost.hostname) {
         DLog(@"No remote host or missing username/hostname");
         return nil;
@@ -20462,7 +20477,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return nil;
     }
     NSString *workingDirectory = self.variablesScope.path;
-    if (!workingDirectory) {
+    SCPPath *identityPath = [[[SCPPath alloc] init] autorelease];
+    identityPath.hostname = remoteHost.hostname;
+    identityPath.username = remoteHost.username;
+    if (!workingDirectory.length && [conductor canTransferFilesTo:identityPath]) {
+        workingDirectory = conductor.homeDirectory;
+    }
+    if (!workingDirectory.length) {
         DLog(@"No working directory");
         return nil;
     }
@@ -20517,6 +20538,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
     // Show upload indicator
     __weak __typeof(self) weakSelf = self;
+    NSUUID *identifier = [NSUUID UUID];
+    [_uploadAndPasteIdentifier release];
+    _uploadAndPasteIdentifier = [identifier retain];
+    iTermConductor *conductor = [self nonTextPasteConductor];
     [_view showUploadIndicatorWithFilename:filename onCancel:^{
         DLog(@"Upload cancelled by user");
         [weakSelf cancelUploadAndPaste];
@@ -20527,13 +20552,20 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         DLog(@"Upload completed: success=%d error=%@", success, error);
         __strong __typeof(self) strongSelf = [[weakSelf retain] autorelease];
         
-        if (!strongSelf) {
+        if (!strongSelf || strongSelf->_uploadAndPasteIdentifier != identifier) {
             return;
         }
+        NSString *actualPath = [strongSelf->_uploadAndPasteTransfer isKindOfClass:ConductorFileTransfer.class] ?
+            [strongSelf->_uploadAndPasteTransfer destination] : remotePath;
         strongSelf->_uploadAndPasteTransfer = nil;
+        [strongSelf->_uploadAndPasteIdentifier release];
+        strongSelf->_uploadAndPasteIdentifier = nil;
         [strongSelf.view hideUploadIndicator];
-        if (success) {
-            NSString *escapedPath = [remotePath quotedStringForPaste];
+        SCPPath *currentPath = [strongSelf scpPathForCurrentRemoteHost];
+        BOOL sameHost = [currentPath.hostname isEqualToString:scpPath.hostname] &&
+            (currentPath.username == scpPath.username || [currentPath.username isEqualToString:scpPath.username]);
+        if (success && !strongSelf.exited && sameHost && [strongSelf nonTextPasteConductor] == conductor) {
+            NSString *escapedPath = [actualPath quotedStringForPaste];
             DLog(@"Pasting escaped path: %@", escapedPath);
             [strongSelf pasteString:escapedPath flags:0];
         } else {
@@ -20543,6 +20575,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)cancelUploadAndPaste {
+    [_uploadAndPasteIdentifier release];
+    _uploadAndPasteIdentifier = nil;
     if (_uploadAndPasteTransfer) {
         DLog(@"Cancelling upload and paste transfer");
         [_uploadAndPasteTransfer stop];
@@ -20562,9 +20596,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     path.path = [destinationPath.path stringByAppendingPathComponent:filename];
     DLog(@"Will upload local:%@ to remote:%@", localPath, path.path);
 
-    if ([_conductor canTransferFilesTo:path]) {
+    iTermConductor *conductor = [self nonTextPasteConductor];
+    if ([conductor canTransferFilesTo:path]) {
         DLog(@"Using conductor for upload with completion");
-        return [_conductor uploadFile:localPath to:path withCompletion:completion];
+        return [conductor uploadFile:localPath to:path withCompletion:completion];
     }
 
     DLog(@"Using SCPFile for upload with completion");

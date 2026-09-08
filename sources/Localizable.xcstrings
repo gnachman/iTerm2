@@ -97480,6 +97480,17 @@
         }
       }
     },
+    "NonTextPaste.CouldNotEncodeImage" : {
+      "comment" : "Error when clipboard image data cannot be converted to a PNG file",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not convert the clipboard image to PNG."
+          }
+        }
+      }
+    },
     "NonTextPaste.CouldNotCreateTempDir" : {
       "comment" : "Error when a temporary directory cannot be created",
       "extractionState" : "stale",
