@@ -338,3 +338,170 @@ final class ToolStatusSessionMemoTests: XCTestCase {
                      "The armed-state reload must not render from a stale session hit")
     }
 }
+
+// Pins the evaluator-reuse contract behind the tab-switch stall fix: a
+// table reload re-sets every visible cell with the same interpolated
+// string and the same session scope, and rebuilding the swifty string
+// for that is pure churn. Reuse is observable only as object identity,
+// because a rebuilt evaluator renders an identical field.
+final class SwiftyStringTextFieldReuseTests: XCTestCase {
+    private func makeField() -> iTermSwiftyStringTextField {
+        return iTermSwiftyStringTextField(labelWithString: "")
+    }
+
+    // A literal (uninterpolated) swifty string keeps these tests about
+    // evaluator identity rather than about what any particular
+    // registered function happens to evaluate to.
+    // Localization unneeded
+    private let interpolatedString = "session name"
+
+    // The reload case: same string, same scope, so the live evaluator
+    // must survive.
+    func test_settingSameStringAndScopeReusesTheEvaluator() {
+        let field = makeField()
+        let scope = iTermVariableScope()
+        field.set(interpolatedString: interpolatedString, scope: scope)
+        let first = field.swiftyString
+        XCTAssertNotNil(first)
+        field.set(interpolatedString: interpolatedString, scope: scope)
+        XCTAssertTrue(field.swiftyString === first,
+                      "Re-setting an unchanged interpolated string must not rebuild the evaluator")
+    }
+
+    // The recycled-cell case: the same cell is reused for a different
+    // session, so the evaluator must be rebuilt against the new scope.
+    func test_settingDifferentScopeRebuildsTheEvaluator() {
+        let field = makeField()
+        field.set(interpolatedString: interpolatedString, scope: iTermVariableScope())
+        let first = field.swiftyString
+        XCTAssertNotNil(first)
+        field.set(interpolatedString: interpolatedString, scope: iTermVariableScope())
+        XCTAssertFalse(field.swiftyString === first,
+                       "A different scope must rebuild the evaluator")
+    }
+
+    func test_settingDifferentStringRebuildsTheEvaluator() {
+        let field = makeField()
+        let scope = iTermVariableScope()
+        field.set(interpolatedString: interpolatedString, scope: scope)
+        let first = field.swiftyString
+        XCTAssertNotNil(first)
+        // Localization unneeded
+        field.set(interpolatedString: "a different name", scope: scope)
+        XCTAssertFalse(field.swiftyString === first,
+                       "A different interpolated string must rebuild the evaluator")
+    }
+
+    // clear() drops the evaluator, so the next set must build a new one
+    // even though nothing about the string or scope changed.
+    func test_clearForcesARebuild() {
+        let field = makeField()
+        let scope = iTermVariableScope()
+        field.set(interpolatedString: interpolatedString, scope: scope)
+        let first = field.swiftyString
+        XCTAssertNotNil(first)
+        field.clear()
+        XCTAssertNil(field.swiftyString)
+        field.set(interpolatedString: interpolatedString, scope: scope)
+        XCTAssertNotNil(field.swiftyString)
+        XCTAssertFalse(field.swiftyString === first,
+                       "clear() must not leave a reusable evaluator behind")
+    }
+}
+
+// Pins the two halves of the tab-switch stall fix in ToolStatus: a burst
+// of topology notifications collapses into one reload, and a hidden
+// toolbelt does no reload at all until it is shown again.
+final class ToolStatusShortcutReloadTests: XCTestCase {
+    private func makeTool() -> ToolStatus {
+        return ToolStatus(frame: NSRect(x: 0, y: 0, width: 200, height: 200))
+    }
+
+    // Lets the main queue drain the coalesced reload. Deterministic
+    // rather than timing-dependent: the reload was enqueued on the main
+    // queue before this block, and the main queue is FIFO.
+    private func drainMainQueue() {
+        let drained = expectation(description: "main queue drained")
+        DispatchQueue.main.async {
+            drained.fulfill()
+        }
+        wait(for: [drained], timeout: 10)
+    }
+
+    // Tab operations post a burst of these. A switch posts
+    // iTermSessionBecameKey twice and iTermSelectedTabDidChange once;
+    // closing a tab posts those three plus iTermNumberOfSessionsDidChange
+    // twice, once from -[PseudoTerminal tabViewDidChangeNumberOfTabViewItems:]
+    // and once from -[PseudoTerminal sessionWasRemoved], for five in
+    // total. Every notification wired to needsShortcutReload(_:) must
+    // land in ONE scheduled reload rather than reloading every row
+    // synchronously once per notification. Only the notifications with
+    // no window requirement are posted here, since a test tool has no
+    // window and activeSessionDidChange(_:) bails without one.
+    func test_notificationBurstSchedulesExactlyOneReload() {
+        let tool = makeTool()
+        let nc = NotificationCenter.default
+        XCTAssertNil(tool.pendingShortcutReload)
+
+        nc.post(name: NSNotification.Name(iTermSelectedTabDidChange), object: nil)
+        let scheduled = tool.pendingShortcutReload
+        XCTAssertNotNil(scheduled, "The first notification must schedule a reload")
+
+        nc.post(name: NSNotification.Name("iTermNumberOfSessionsDidChange"), object: nil)
+        nc.post(name: .iTermTabDidChangePositionInWindow, object: nil)
+        XCTAssertTrue(tool.pendingShortcutReload === scheduled,
+                      "Further notifications must join the scheduled reload, not add more")
+
+        drainMainQueue()
+        XCTAssertNil(tool.pendingShortcutReload,
+                     "The scheduled reload must run and clear itself")
+    }
+
+    // Hiding the toolbelt sets its hidden flag rather than removing it
+    // from the window, so ToolStatus keeps receiving these notifications
+    // with a non-nil window. It must not rebuild rows nobody can see.
+    func test_hiddenToolSkipsTheReloadAndRemembersIt() {
+        let tool = makeTool()
+        tool.isHidden = true
+
+        NotificationCenter.default.post(name: NSNotification.Name(iTermSelectedTabDidChange),
+                                        object: nil)
+        drainMainQueue()
+        XCTAssertTrue(tool.missedShortcutReloadWhileHidden,
+                      "A hidden tool must skip the reload and record that it owes one")
+    }
+
+    // Showing the toolbelt again pays back the skipped reload. AppKit
+    // calls viewDidUnhide() when a view or an ancestor is unhidden;
+    // calling it directly keeps the test independent of when AppKit
+    // chooses to deliver it.
+    func test_unhidingPaysBackTheSkippedReload() {
+        let tool = makeTool()
+        tool.isHidden = true
+        NotificationCenter.default.post(name: NSNotification.Name(iTermSelectedTabDidChange),
+                                        object: nil)
+        drainMainQueue()
+        XCTAssertTrue(tool.missedShortcutReloadWhileHidden)
+
+        tool.isHidden = false
+        tool.viewDidUnhide()
+        XCTAssertFalse(tool.missedShortcutReloadWhileHidden,
+                       "Unhiding must clear the debt")
+        XCTAssertNotNil(tool.pendingShortcutReload,
+                        "Unhiding must schedule the reload it skipped")
+
+        drainMainQueue()
+        XCTAssertNil(tool.pendingShortcutReload)
+        XCTAssertFalse(tool.missedShortcutReloadWhileHidden,
+                       "A visible tool must not record a missed reload")
+    }
+
+    // A visible tool records no debt, so unhiding it later is a no-op.
+    func test_visibleToolRecordsNoMissedReload() {
+        let tool = makeTool()
+        NotificationCenter.default.post(name: NSNotification.Name(iTermSelectedTabDidChange),
+                                        object: nil)
+        drainMainQueue()
+        XCTAssertFalse(tool.missedShortcutReloadWhileHidden)
+    }
+}
