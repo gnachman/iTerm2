@@ -45196,37 +45196,37 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Installiert die Claude-Code-Arbeitsgruppe, die Ihre Haupt-Claude-Sitzung mit zwei weiteren Sitzungen gruppiert: einem Diff-Betrachter und einer Code-Review-Sitzung. Sie können mit einem Klick zwischen ihnen wechseln.\n\nSie können dieses Layout später unter Einstellungen > Shortcuts > Arbeitsgruppen anpassen."
+            "value" : "Installiert die Claude-Code-Arbeitsgruppe, die Ihre Haupt-Claude-Sitzung mit zwei weiteren Sitzungen gruppiert: einem Diff-Betrachter und einer Code-Review-Sitzung. Sie können mit einem Klick zwischen ihnen wechseln.\n\nSie können dieses Layout später unter Einstellungen > Anordnungen > Arbeitsgruppen anpassen."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Install the Claude Code workgroup, which groups your main Claude session with two peer sessions: a diff viewer and a code-review session. You can switch between them with one click.\n\nYou can customize this layout later in Settings > Shortcuts > Workgroups."
+            "value" : "Install the Claude Code workgroup, which groups your main Claude session with two peer sessions: a diff viewer and a code-review session. You can switch between them with one click.\n\nYou can customize this layout later in Settings > Arrangements > Workgroups."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Claude Codeワークグループをインストールします。これは、メインのClaudeセッションと2つのピアセッション（diffビューアとコードレビューセッション）をグループ化します。ワンクリックで切り替えることができます。\n\nこのレイアウトは、後で設定 > ショートカット > ワークグループでカスタマイズできます。"
+            "value" : "Claude Codeワークグループをインストールします。これは、メインのClaudeセッションと2つのピアセッション（diffビューアとコードレビューセッション）をグループ化します。ワンクリックで切り替えることができます。\n\nこのレイアウトは、後で設定 > アレンジメント > ワークグループでカスタマイズできます。"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Instale o workgroup do Claude Code, que agrupa sua sessão principal do Claude com duas sessões pares: um visualizador de diferenças e uma sessão de revisão de código. Você pode alternar entre elas com um clique.\n\nVocê pode personalizar este layout mais tarde em Ajustes > Atalhos > Workgroups."
+            "value" : "Instale o workgroup do Claude Code, que agrupa sua sessão principal do Claude com duas sessões pares: um visualizador de diferenças e uma sessão de revisão de código. Você pode alternar entre elas com um clique.\n\nVocê pode personalizar este layout mais tarde em Ajustes > Organizações > Workgroups."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Установите рабочую группу Claude Code, которая объединяет вашу основную сессию Claude с двумя равноправными сессиями: просмотром diff и сессией код-ревью. Между ними можно переключаться одним щелчком.\n\nЭту компоновку можно настроить позже в Settings > Shortcuts > Workgroups."
+            "value" : "Установите рабочую группу Claude Code, которая объединяет вашу основную сессию Claude с двумя равноправными сессиями: просмотром diff и сессией код-ревью. Между ними можно переключаться одним щелчком.\n\nЭту компоновку можно настроить позже в Settings > Arrangements > Workgroups."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "安装 Claude Code 工作组，它会将你的主 Claude 会话与两个对等会话分组：差异查看器和代码审查会话。你可以一键在它们之间切换。\n\n你之后可以在 设置 > 快捷键 > 工作组 中自定义此布局。"
+            "value" : "安装 Claude Code 工作组，它会将你的主 Claude 会话与两个对等会话分组：差异查看器和代码审查会话。你可以一键在它们之间切换。\n\n你之后可以在 设置 > Arrangements > 工作组 中自定义此布局。"
           }
         }
       }
