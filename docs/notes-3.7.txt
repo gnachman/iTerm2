@@ -2880,3 +2880,5 @@ Bug Fixes:
 - The Shell > Workgroups menu now shows a
   checkmark next to the workgroup the current
   session belongs to.
+- Fixed a crash that could occur when doing a
+  global search that included a browser session.

@@ -10,7 +10,12 @@ import WebKit
 
 extension PTYSession: iTermBrowserViewControllerDelegate {
     func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResultBundle) {
-        view?.findDriver?.viewController.countDidChange()
+        // `viewController` is imported from ObjC as an implicitly-unwrapped optional, so the bare
+        // `.viewController.` below is a hidden force-unwrap. It can legitimately be nil (e.g. a
+        // status-bar find driver created with no search view controller), and a global search
+        // routes a clearFind result-update through here, which force-unwrapped nil and trapped.
+        // The equivalent ObjC call sites are nil-safe no-ops, so match them with optional chaining.
+        view?.findDriver?.viewController?.countDidChange()
     }
 
     // True if the session already has a non-blank auto name (seeded from the profile
