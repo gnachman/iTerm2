@@ -307,10 +307,10 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			tGi5S+JDBiQnY7wfAIf/29XC9Jk=
+			EcjcrbR4aeP0e6X/IWNiiYHp304=
 			</data>
 			<key>requirement</key>
-			<string>anchor apple generic and identifier fileop and (certificate leaf[field.1.2.840.113635.100.6.1.9] /* exists */ or certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = H7V7XYVQ7D)</string>
+			<string>cdhash H"11c8dcadb47869e3f47ba5ff2163628981e9df4e" or cdhash H"7097f9b0707de8f08ae14723e0538f2a878e623c"</string>
 		</dict>
 		<key>Resources/AppIcon.icns</key>
 		<dict>
