@@ -1,12 +1,4 @@
-Version 3.7.0beta1 was built on April 20, 2026
-
-A note to beta users:
-An awful lot of features have been piling up here
-since the last release off the main branch was
-many months ago. I decided to bump the version
-number up to 3.7. The changelog below is relative
-to version 3.6.7 and duplicates some items in
-betas since then.
+Version 3.7.0 was built on June 8, 2026
 
 Major New Features:
 - Companion App: a new iOS app, iTerm2 Buddy,
@@ -26,110 +18,6 @@ Major New Features:
   takes your API key, and walks you through
   pairing your phone.
 
-- The Companion app can now receive push
-  notifications for terminal alerts. Turn on
-  "Send alerts to paired iPhone" in a profile's
-  Terminal settings (Filter Alerts) to have
-  "alert on next mark" and Post Notification
-  triggers also notify your phone. Pushes are
-  content-free: the phone fetches the text over
-  the encrypted channel, so the relay and Apple
-  never see it or which chat it belongs to.
-
-- The Companion app’s live session video feed
-  now scales its bitrate to the window’s
-  resolution, so large windows stay sharp
-  instead of being pinned to a fixed low rate.
-  Very large windows trade frame rate for
-  sharpness so bandwidth stays reasonable.
-  Advanced settings can tune the feed’s
-  bitrate multiplier and the flow-control
-  back-off thresholds.
-
-- A new setting in Settings > Appearance makes
-  the tab bar scrollable. When the tab bar has
-  more tabs than fit, instead of moving the
-  extras into the “More tabs” overflow menu they
-  stay in the bar and you scroll to reach them.
-  Works for top, bottom, left, and right tab
-  bars. A horizontal bar scrolls with a trackpad
-  swipe or shift + mouse wheel. On by default;
-  turn it off to restore the overflow menu.
-  The “Tab width when the tab bar is scrollable”
-  advanced setting sets the scrolled tab size.
-
-- iTerm2 now probes the local network on
-  every launch so macOS keeps it in the
-  Local Network privacy list. This recovers
-  the permission after a tccutil reset or an
-  OS upgrade, fixing commands like
-  “ping 10.0.0.1” failing with “no route to
-  host”.
-
-- Added a Zero Data Retention setting under
-  Settings > General > AI. Turn it on if your
-  OpenAI organization has Zero Data Retention
-  enabled. iTerm2 then stops sending
-  previous_response_id and sets store=false, so
-  chats no longer fail on the second message.
-
-- A new profile setting, “Use ANSI colors
-  for marks” (Settings > Profiles > Colors),
-  draws command-prompt mark indicators using
-  the color preset’s ANSI blue, red, and
-  yellow instead of the built-in colors, so
-  they harmonize with any theme. Off by
-  default.
-
-- Added support for light/dark color scheme
-  detection and reporting (DECSET 2031 and
-  DSR 996/997). Programs can query whether the
-  terminal is light or dark and ask to be
-  notified when it changes, so tools like vim
-  and delta can adapt automatically.
-
-- Fixed a bug where the top-right session
-  indicators left a horizontal smear while
-  swiping between tabs with two fingers.
-
-- Fixed a bug where an SGR sequence or SGR
-  trigger with more parameters than fit
-  attached the extra parameters’
-  subparameters to the last parameter that
-  did fit, changing its meaning: underline
-  could turn into dashed underline. SGR
-  triggers also silently dropped their 16th
-  parameter.
-
-- Fixed a bug where toolbelt lists
-  (Command History, Recent Directories,
-  Captured Output) could stay blank until
-  the window was resized when a new window
-  was opened with the toolbelt showing.
-
-- There's a new kind of AI chat called
-  "orchestration" which can view all your
-  sessions and operate iTerm2 for you.
-
-- AI chat can now restart a session for you.
-  The “Type for You” permission was renamed
-  “Control Terminal” and now also gates this.
-
-- AI chat linked to a terminal session can now
-  watch that session and tell you when it reaches
-  a state or a described condition, without
-  polling. Previously only orchestration chats
-  could set watches. If your phone is paired it
-  can also push you a notification when the watch
-  fires.
-
-- The manual AI model editor now offers presets
-  for OpenAI-compatible providers (Ollama,
-  OpenRouter, z.ai, Qwen, MiniMax) that fill in
-  the endpoint for you, plus a Test Connection
-  button that verifies your settings and API key
-  before you save.
-
 - Claude Code integration was added. It enables
   the new Session Status feature for claude code
   sessions so you can see at a glance which
@@ -139,6 +27,21 @@ Major New Features:
   ties in with clippings so that AI-authored code
   review comments can easily be sent back to
   Claude code.
+
+- Added tab groups: right-click a tab and choose
+  Add Tab to Group to group Chrome/Firefox-style
+  tabs. A named, colored chip heads each group;
+  right-click it to rename, recolor, duplicate,
+  move to a new window, ungroup, or close the
+  group. Drag the chip to move the whole group,
+  within a window or into another one; drag
+  single tabs into, around, or out of a group.
+  Groups persist their name and color with the
+  member tabs.
+
+- There's a new kind of AI chat called
+  "orchestration" which can view all your
+  sessions and operate iTerm2 for you.
 
 - A new Session Status system was added. Sessions
   can now report status that appears on their tab
@@ -153,12 +56,6 @@ Major New Features:
   draggable, resizable, collapsible multiline
   text notes attached to a session that
   persist across restarts.
-
-- You can now run multiple concurrent
-  instances of iTerm2 side by side with
-  independent settings. Launch with
-  arguments:
-  -suite com.iterm2.unique-id-of-your-choice.
 
 - The new Workgroups feature let you define how to
   transform a session into a cluster of related
@@ -176,68 +73,6 @@ Major New Features:
   the session you entered from, and each spawned
   split or tab takes the name you gave it in the
   Workgroup so its tab title is recognizable.
-
-- A new tab created next to a tab that belongs to
-  a tab group now joins that group, so it stays
-  with the set you're working in. This covers New
-  Tab Next to Current Tab, and New Tab when it is
-  configured to open next to the current tab. The
-  tab group menu also gained a New Tab in Group
-  command.
-
-- Clippings is a new side panel that contains a
-  list of items formatted as markdown. They're a
-  useful place to store text that you need
-  temporarily.
-  The Claude Code integration uses Clippings to
-  store code review comments so they can be shared
-  between related sessions in a Workgroup.
-- Added support for the Kitty drag-and-drop
-  protocol (OSC 72). A program running in the
-  terminal can accept files, text, and images
-  dropped onto the window, and (when it has mouse
-  reporting on, e.g. a full-screen TUI) can offer
-  its own data to be dragged out to other apps.
-  For a program on a remote host, dropped files
-  are transferred to it over the connection. Hold
-  Option while dropping to use the old
-  paste/upload behavior instead.
-- A new tmux window opened with Command-T now
-  picks up the profile’s custom tab title, if
-  one is set.
-- Fixed a bug where modified function keys (such
-  as Shift-F5) lost their modifier in a tmux
-  integration session, sending the unmodified
-  sequence instead of the xterm form like
-  ^[[15;2~.
-- Fixed a bug where a sixel image whose
-  terminator had a doubled escape (ESC ESC \
-  instead of ESC \) was discarded entirely,
-  leaving a stray backslash on the screen. The
-  image now renders.
-- Fixed a bug where a left- or right-of-screen
-  window could suddenly change width (growing or
-  shrinking to a second tab’s profile size) after
-  a display-configuration change, instead of
-  keeping its own width.
-- ⌘-click now linkifies very long URLs in
-  full. Previously only the first couple
-  thousand characters were clickable; the
-  linkifier now scans onward to the next
-  separator so the whole URL is detected.
-- AI chat history entries can now be deleted
-  from the chat list.
-
-- AI chats now keep the provider chosen at
-  creation time. Settings choose the default
-  provider for new chats, while existing
-  chats only offer models from their saved
-  provider.
-
-- The new Fold All menu item folds everything
-  (aside from folds at the very top of history).
-  This makes it easy to keep history around
-  without it getting in the way.
 
 - You can now create screenshots including
   highlights and redactions using the Make
@@ -299,8 +134,29 @@ New Features in Terminal Sessions:
   +1m23s and +2h5m, giving sub-minute
   precision in the 1m–1h range that was
   previously rounded to whole minutes.
+- The new Fold All menu item folds everything
+  (aside from folds at the very top of history).
+  This makes it easy to keep history around
+  without it getting in the way.
+- Added support for the Kitty drag-and-drop
+  protocol (OSC 72). A program running in the
+  terminal can accept files, text, and images
+  dropped onto the window, and (when it has mouse
+  reporting on, e.g. a full-screen TUI) can offer
+  its own data to be dragged out to other apps.
+  For a program on a remote host, dropped files
+  are transferred to it over the connection. Hold
+  Option while dropping to use the old
+  paste/upload behavior instead.
+- Clippings is a new side panel that contains a
+  list of items formatted as markdown. They're a
+  useful place to store text that you need
+  temporarily.
+  The Claude Code integration uses Clippings to
+  store code review comments so they can be shared
+  between related sessions in a Workgroup.
 
-Tabs, Windows, and UI:
+New Features in Tabs, Windows, and UI:
 - Left and right tabs in the Minimal theme are now
   as tall as top tabs, giving subtitles room to
   render legibly. The height follows the existing
@@ -328,22 +184,16 @@ Tabs, Windows, and UI:
   indicator is now shown in the tab bar.
 - An active pane border can be displayed to
   highlight the focused pane.
-- The status bar can now draw a separator line
-  between itself and the terminal content. Enable
-  it in the status bar layout’s advanced settings.
 - You can now choose to show a Proxy icon in
   Compact and Minimal themes.
 - The tab color menu now has a color picker,
   recent colors, and an eyedropper tool.
 - Asymmetrical broadcasting via a per-session
   broadcast-source flag lets you prevent
-  accidental typing in some sessions from being
-  broadcast.
+  accidental typing in non-designated sessions
+  from being broadcast.
 - New key binding action to send text without
   broadcasting.
-- The Cycle Tabs Forward and Cycle Tabs Backward
-  key actions now have a help button explaining
-  their tap-vs-hold behavior.
 - Nerd Font glyphs are now rendered in pane title
   bars and tabs.
 - A unified dock badge combines bell count and tab
@@ -367,7 +217,9 @@ Tabs, Windows, and UI:
   directory, environment variables, and a
   list of open files and network
   connections.
-
+- The status bar can now draw a separator line
+  between itself and the terminal content. Enable
+  it in the status bar layout’s advanced settings.
 - Improve tab dragging: keep Metal enabled
   for normal tab drags, switch reorder
   slots near tab midpoints, and stabilize
@@ -391,15 +243,6 @@ Triggers Improvements:
   Claude Code is running.
 
 AI Improvements:
-- Fixed AI chat failing on OpenAI models with an
-  error about an invalid tool schema. Also fixed
-  a crash while parsing AI responses that
-  contained a null value inside an array.
-- Fixed a bug where, on OpenAI models, the second
-  and later messages in an orchestration or
-  terminal-linked AI chat were ignored: the model
-  received only the terminal/workgroups context
-  and replied as if you had said nothing.
 - The AI chat “View History” permission is now
   “View Contents”. When it is set to provide
   contents automatically, a session-bound chat
@@ -434,10 +277,9 @@ AI Improvements:
   the prior turns from cache instead of paying
   full input price every turn.
 - AI models updated.
-- The built-in AI model list is now
-  data-driven and refreshes in the
-  background, so new models appear
-  without updating iTerm2.
+- The built-in AI model list is now data-driven
+  and refreshes in the background, so new models
+  appear without updating iTerm2.
 - DeepSeek v4 thinking mode is now supported.
   Toggle the lightbulb in the chat toolbar to
   enable. Reasoning summaries appear live in
@@ -459,6 +301,35 @@ AI Improvements:
   instead of inserting a literal newline. The
   tool also reports how many characters were
   inserted.
+- Added a Zero Data Retention setting under
+  Settings > General > AI. Turn it on if your
+  OpenAI organization has Zero Data Retention
+  enabled. iTerm2 then stops sending
+  previous_response_id and sets store=false, so
+  chats no longer fail on the second message.
+- AI chat can now restart a session for you.
+  The “Type for You” permission was renamed
+  “Control Terminal” and now also gates this.
+- AI chat linked to a terminal session can now
+  watch that session and tell you when it reaches
+  a state or a described condition, without
+  polling. Previously only orchestration chats
+  could set watches. If your phone is paired it
+  can also push you a notification when the watch
+  fires.
+- The manual AI model editor now offers presets
+  for OpenAI-compatible providers (Ollama,
+  OpenRouter, z.ai, Qwen, MiniMax) that fill in
+  the endpoint for you, plus a Test Connection
+  button that verifies your settings and API key
+  before you save.
+- AI chat history entries can now be deleted
+  from the chat list.
+- AI chats now keep the provider chosen at
+  creation time. Settings choose the default
+  provider for new chats, while existing
+  chats only offer models from their saved
+  provider.
 
 Python API Improvements:
 - Move sessions to new tabs or windows via the
@@ -496,10 +367,6 @@ Python API Improvements:
 Password Manager Improvements:
 - Bitwarden is now a supported password manager.
 - Keeper Security is also supported.
-- Keeper now supports Nested Shared
-  Folders as well as the classic vault.
-  Both appear in one list, labeled (Classic)
-  or (Nested).
 
 Shell Integration Improvements:
 - xonsh is now a supported shell.
@@ -518,8 +385,6 @@ SSH Integration Improvements:
   improved.
 
 Tmux Improvements:
-- Add an advanced setting to open tmux
-  windows and tabs without taking focus.
 - Bracketed paste state is restored on attach
   (prep for tmux’s upcoming bracket_paste_flag
   format).
@@ -535,6 +400,9 @@ Tmux Improvements:
   choice: a new window, the focused window, or
   the topmost window already hosting that tmux
   session.
+- A new tmux window opened with Command-T now
+  picks up the profile’s custom tab title, if
+  one is set.
 
 Expressions and Variables:
 - Arithmetic expressions and comparisons are
@@ -556,6 +424,17 @@ Expressions and Variables:
   session.presentationName and tab.title.
 
 UI Improvements:
+- A new setting in Settings > Appearance makes
+  the tab bar scrollable. When the tab bar has
+  more tabs than fit, instead of moving the
+  extras into the “More tabs” overflow menu they
+  stay in the bar and you scroll to reach them.
+  Works for top, bottom, left, and right tab
+  bars. A horizontal bar scrolls with a trackpad
+  swipe or shift + mouse wheel. On by default;
+  turn it off to restore the overflow menu.
+  The “Tab width when the tab bar is scrollable”
+  advanced setting sets the scrolled tab size.
 - A new preference hides the session status
   text from tab subtitles while keeping the
   colored dot. Toggle it from the gear menu
@@ -576,6 +455,18 @@ UI Improvements:
 - Cleaner glass material on the jobs popover.
 - Scroll command marks to top (instead of
   centering) on Next/Previous Mark.
+- A new profile setting, “Use ANSI colors
+  for marks” (Settings > Profiles > Colors),
+  draws command-prompt mark indicators using
+  the color preset’s ANSI blue, red, and
+  yellow instead of the built-in colors, so
+  they harmonize with any theme. Off by
+  default.
+- ⌘-click now linkifies very long URLs in
+  full. Previously only the first couple
+  thousand characters were clickable; the
+  linkifier now scans onward to the next
+  separator so the whole URL is detected.
 
 Input and Accessibility:
 - VoiceOver now announces terminal output and
@@ -597,15 +488,11 @@ Search and Selection Improvements:
 - “$” is now considered part of a URL. Used when
   detecting URL boundaries for cmd-click.
 - Search results refresh after window resize.
-- Fix Cmd+G skipping matches sometimes.
 - New “Copy or Paste” pointer action. If there's a
   selection, it copies. Otherwise, it pastes.
 - New pointer action to copy link address.
 
 Menus and Miscellaneous:
-- Heads up: future betas will require macOS 13
-  (Ventura) or later. This is the last version to
-  support macOS 12. Sorry for the inconvenience!
 - New menu item to open new tabs next to the
   current tab or at the end (opposite of the
   default).
@@ -667,10 +554,26 @@ Core Improvements:
   Logs, writes recently captured low-frequency
   diagnostics to a file you choose, even when
   debug logging was never turned on.
+- iTerm2 now probes the local network on
+  every launch so macOS keeps it in the
+  Local Network privacy list. This recovers
+  the permission after a tccutil reset or an
+  OS upgrade, fixing commands like
+  “ping 10.0.0.1” failing with “no route to
+  host”.
+- Added support for light/dark color scheme
+  detection and reporting (DECSET 2031 and
+  DSR 996/997). Programs can query whether the
+  terminal is light or dark and ask to be
+  notified when it changes, so tools like vim
+  and delta can adapt automatically.
+- You can now run multiple concurrent
+  instances of iTerm2 side by side with
+  independent settings. Launch with
+  arguments:
+  -suite com.iterm2.unique-id-of-your-choice.
 
 Settings Improvements:
-- Add an advanced setting to change the relay
-  origin used for companion iOS device pairing.
 - Window frames are remembered per-profile rather
   than globally. When you open a window, the
   default frame will come from a previous window
@@ -693,12 +596,6 @@ Settings Improvements:
   menu’s “Put Chat in Linked Session” item
   and toggle visibility from View > Show
   Inline Chat.
-- The inline chat panel now has a toolbar to
-  create a new chat, switch chats, open the
-  session/link menu, and hide the panel. New
-  inline chats ask whether to link to the
-  session or become an orchestrator instead
-  of linking automatically.
 - Open Quickly now uses recency as a
   tiebreaker, so the session list (whether
   the query is empty or matches several
@@ -723,10 +620,6 @@ Settings Improvements:
   curves, and how long the cursor dwells
   fully visible and fully hidden between
   fades. Off by default.
-- On macOS 27 and later, the Python API
-  runtime now downloads from
-  manifest-new.json by default. Older OS
-  versions continue to use manifest.json.
 - When you load settings from a custom
   folder, snippets, global notes, and
   session icon customizations can now sync
@@ -1710,14 +1603,12 @@ Bug Fixes:
   synthetic workgroup_id so the
   agent can immediately drive the
   new session with the other tools.
-
 - Dropping a file onto the AI chat
   text field now offers to attach it
   when the current backend supports
   that file type, instead of always
   inserting its path as text. The
   choice can be remembered.
-
 - AI chat can now attach images to
   OpenAI models (vision), and audio
   to OpenAI audio models on the
@@ -1797,7 +1688,6 @@ Bug Fixes:
   the Before You Start sheet has an
   always-visible link to a web page
   explaining the whole integration.
-
 - The orchestrator can now
   watch sessions that report no
   status (plain TUIs, coding agents
@@ -2524,16 +2414,6 @@ Bug Fixes:
   whole workgroup now warns you that its other
   sessions will close too, naming the workgroup
   and how many more sessions will end.
-- Added tab groups: right-click a tab and choose
-  Add Tab to Group to group Chrome/Firefox-style
-  tabs. A named, colored chip heads each group;
-  right-click it to rename, recolor, duplicate,
-  move to a new window, ungroup, or close the
-  group. Drag the chip to move the whole group,
-  within a window or into another one; drag
-  single tabs into, around, or out of a group.
-  Groups persist their name and color with the
-  member tabs.
 - Tab groups can be collapsed: click a group's
   chip (or use its menu) to hide its tabs behind
   the chip, which shows a member count. Selecting
@@ -2582,3 +2462,44 @@ Bug Fixes:
   session belongs to.
 - Fixed a crash that could occur when doing a
   global search that included a browser session.
+- Fixed a bug where the top-right session
+  indicators left a horizontal smear while
+  swiping between tabs with two fingers.
+- Fixed a bug where an SGR sequence or SGR
+  trigger with more parameters than fit
+  attached the extra parameters’
+  subparameters to the last parameter that
+  did fit, changing its meaning: underline
+  could turn into dashed underline. SGR
+  triggers also silently dropped their 16th
+  parameter.
+- Fixed a bug where toolbelt lists
+  (Command History, Recent Directories,
+  Captured Output) could stay blank until
+  the window was resized when a new window
+  was opened with the toolbelt showing.
+- Fixed a bug where modified function keys (such
+  as Shift-F5) lost their modifier in a tmux
+  integration session, sending the unmodified
+  sequence instead of the xterm form like
+  ^[[15;2~.
+- Fixed a bug where a sixel image whose
+  terminator had a doubled escape (ESC ESC \
+  instead of ESC \) was discarded entirely,
+  leaving a stray backslash on the screen. The
+  image now renders.
+- Fixed a bug where a left- or right-of-screen
+  window could suddenly change width (growing or
+  shrinking to a second tab’s profile size) after
+  a display-configuration change, instead of
+  keeping its own width.
+- Fixed AI chat failing on OpenAI models with an
+  error about an invalid tool schema. Also fixed
+  a crash while parsing AI responses that
+  contained a null value inside an array.
+- Fixed a bug where, on OpenAI models, the second
+  and later messages in an orchestration or
+  terminal-linked AI chat were ignored: the model
+  received only the terminal/workgroups context
+  and replied as if you had said nothing.
+- Fix Cmd+G skipping matches sometimes.
