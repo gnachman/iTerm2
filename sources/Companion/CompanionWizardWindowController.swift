@@ -473,11 +473,7 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
     // channel is. Leave false until the iOS app is released.
     private static let companionIOSAppIsOnAppStore = true
 
-    // A redirect on iterm2.com that we control, so the shipped app never hardcodes
-    // the raw App Store URL. Point it at the App Store page
-    // (https://apps.apple.com/app/id<APPLE_ID>, the app's Apple ID from App Store
-    // Connect) at launch. Until that redirect is set up, this link will not resolve.
-    private static let companionAppStoreURL = "https://iterm2.com/companion-app-store"
+    private static let companionAppStoreURL = "https://iterm2.com/companion-app.html"
 
     private func buildPhoneAppScreen(in view: NSView) {
         addTitle(String(localized: "Companion.PhoneApp.Title",
