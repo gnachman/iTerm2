@@ -3401,7 +3401,14 @@ typedef struct {
     // right margin while the tabs scroll to its left.
     const BOOL scrollingOverflow = ([self tabBarIsScrollable] && [self maximumScrollOffset] > 0);
     const BOOL addTabButtonWouldBeOffscreen = (scrollingOverflow && [self isVerticalOrientation]);
-    if (!overflowMenu && _showAddTabButton && !addTabButtonWouldBeOffscreen) {
+    // A single-row bar reserves exactly one slot in the right margin, so when the
+    // bar overflows the "..." button takes it and the + has nowhere to go. Two rows
+    // reserve that slot on BOTH rows and the overflow button only occupies row 1's,
+    // so row 2's stays free and the + can keep its place there (it is already laid
+    // out on the bottom row below). Without this the + vanished the moment a
+    // two-row bar overflowed, leaving row 2's reserved slot conspicuously empty.
+    const BOOL twoRowHasFreeAddButtonSlot = ([self horizontalRowCount] == 2);
+    if ((!overflowMenu || twoRowHasFreeAddButtonSlot) && _showAddTabButton && !addTabButtonWouldBeOffscreen) {
         NSRect cellRect = [self genericCellRectWithOverflow:YES];
         cellRect.size = [_addTabButton frame].size;
 
