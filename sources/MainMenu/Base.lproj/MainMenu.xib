@@ -81,7 +81,7 @@
                                 </connections>
                                 <accessibility identifier="Capture GPU Frame"/>
                             </menuItem>
-                            <menuItem title="Check Settings Control Truncation" id="iTS-tc-Mnu">
+                            <menuItem title="Check Settings Control Truncation" identifier="Check Settings Control Truncation" id="iTS-tc-Mnu">
                                 <connections>
                                     <action selector="debugCheckSettingsControlTruncation:" target="201" id="iTS-tc-Act"/>
                                 </connections>
@@ -324,14 +324,14 @@
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Archives" id="A4d-bK-MaG">
                                     <items>
-                                        <menuItem title="Save Archive of Current Session…" id="owl-7s-n9a">
+                                        <menuItem title="Save Archive of Current Session…" identifier="Save Archive of Current Session" id="owl-7s-n9a">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="saveArchive:" target="-1" id="Hkx-vn-Rgq"/>
                                             </connections>
                                             <accessibility identifier="Save Archive of Current Session…"/>
                                         </menuItem>
-                                        <menuItem title="Restore Archive…" id="UXA-3l-Mrb">
+                                        <menuItem title="Restore Archive…" identifier="Restore Archive" id="UXA-3l-Mrb">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="restoreArchive:" target="-1" id="mU3-QI-qQ4"/>
