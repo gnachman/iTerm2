@@ -30,17 +30,25 @@ class iTermUndoCloseMigrationWarning: NSObject {
         }
 
         let warning = iTermWarning()
-        warning.heading = "Undo Close Moved"
-        warning.title = """
-            ⌘Z now undoes text editing. To reopen a session you just closed, use \
-            Shell ▸ Undo Close (⌘⇧T).
+        warning.heading = String(localized: "UndoMigration.Heading",
+                                 defaultValue: "Undo Close Moved",
+                                 comment: "Heading of the one-time notice explaining that ⌘Z no longer reopens a closed session")
+        warning.title = String(localized: "UndoMigration.Message",
+                               defaultValue: """
+                                   ⌘Z now undoes text editing. To reopen a session you just closed, use \
+                                   Shell ▸ Undo Close (⌘⇧T).
 
-            What would you like to do now?
-            """
+                                   What would you like to do now?
+                                   """,
+                               comment: "Body of the one-time notice shown the first time ⌘Z is pressed while a recently closed session can still be restored")
         warning.warningActions = [
-            iTermWarningAction(label: "Undo Close"),
-            iTermWarningAction(label: "Regular Undo"),
-            iTermWarningAction(label: "Cancel"),
+            iTermWarningAction(label: String(localized: "UndoMigration.UndoCloseAction",
+                                             defaultValue: "Undo Close",
+                                             comment: "Button in the ⌘Z migration notice that reopens the session the user just closed")),
+            iTermWarningAction(label: String(localized: "UndoMigration.RegularUndoAction",
+                                             defaultValue: "Regular Undo",
+                                             comment: "Button in the ⌘Z migration notice that performs a normal text undo instead of reopening a closed session")),
+            iTermWarningAction(label: iTermLocalizedCancel()),
         ]
         warning.warningType = .kiTermWarningTypePersistent
         // Deliberately app-modal (no owning window). This is triggered by a global

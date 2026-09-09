@@ -3160,7 +3160,9 @@ static iTermKeyEventReplayer *gReplayer;
                         selector:(SEL)selector
                   allowMigration:(BOOL)allowMigration {
     const BOOL isUndo = (selector == @selector(undo:));
-    NSString *genericTitle = isUndo ? @"Undo" : @"Redo";
+    NSString *genericTitle = isUndo
+        ? NSLocalizedStringWithDefaultValue(@"UndoMenu.Undo", nil, [NSBundle mainBundle], @"Undo", @"Generic Undo menu item title shown when there is nothing specific to undo")
+        : NSLocalizedStringWithDefaultValue(@"UndoMenu.Redo", nil, [NSBundle mainBundle], @"Redo", @"Generic Redo menu item title shown when there is nothing specific to redo");
 
     // The one-time Undo Close migration notice takes the next ⌘Z when pending, so
     // keep the generic title (not "Undo Typing") -- pressing it shows the notice,
