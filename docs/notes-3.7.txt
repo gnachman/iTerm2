@@ -101,6 +101,13 @@ Major New Features:
   change, so a burst of them (as tmux sends
   on every switch) could freeze the UI.
 
+- Fixed a bug where duplicating a tab that
+  belonged to a tab group left the copy as a
+  stray member stranded at the end of the
+  tab bar instead of joining the group. The
+  duplicate now becomes a proper, adjacent
+  member of the same group.
+
 - Fixed a bug where the top-right session
   indicators left a horizontal smear while
   swiping between tabs with two fingers.
