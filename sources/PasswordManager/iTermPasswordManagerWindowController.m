@@ -1745,7 +1745,19 @@ static NSInteger const kDynamicMenuItemTag = 9999;
         if (!allowed) {
             return NO;
         }
+        if (iTermSecureUserDefaults.instance.requireAuthEveryOpenPasswordManager) {
+            // Subsumed: re-authenticating on every open already covers the first open
+            // after a screen lock, so show this as effectively on but not toggleable.
+            menuItem.state = NSControlStateValueOn;
+            return NO;
+        }
         menuItem.state = [iTermUserDefaults requireAuthenticationAfterScreenLocks] ? NSControlStateValueOn : NSControlStateValueOff;
+    } else if (menuItem.action == @selector(toggleRequireAuthenticationEveryOpen:)) {
+        const BOOL allowed = iTermSecureUserDefaults.instance.requireAuthToOpenPasswordManager;
+        if (!allowed) {
+            return NO;
+        }
+        menuItem.state = iTermSecureUserDefaults.instance.requireAuthEveryOpenPasswordManager ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (menuItem.action == @selector(toggleRequireAuthenticationToOpenPasswordManager:)) {
         const BOOL state = iTermSecureUserDefaults.instance.requireAuthToOpenPasswordManager;
         menuItem.state = state ? NSControlStateValueOn : NSControlStateValueOff;
@@ -1808,6 +1820,11 @@ static NSInteger const kDynamicMenuItemTag = 9999;
     [iTermUserDefaults setRequireAuthenticationAfterScreenLocks:![iTermUserDefaults requireAuthenticationAfterScreenLocks]];
 }
 
+- (IBAction)toggleRequireAuthenticationEveryOpen:(id)sender {
+    iTermSecureUserDefaults.instance.requireAuthEveryOpenPasswordManager =
+        !iTermSecureUserDefaults.instance.requireAuthEveryOpenPasswordManager;
+}
+
 - (IBAction)toggleProbe:(id)sender {
     [iTermUserDefaults setProbeForPassword:!self.shouldProbe];
 }
@@ -1842,7 +1859,7 @@ static NSInteger const kDynamicMenuItemTag = 9999;
 
 - (void)authenticate {
     DLog(@"Request auth if possible");
-    if (self.dataSourceProvider.authenticated) {
+    if (self.dataSourceProvider.authenticated && self.dataSourceProvider.mayReuseAuthenticationOnOpen) {
         DLog(@"Already authenticated");
         return;
     }

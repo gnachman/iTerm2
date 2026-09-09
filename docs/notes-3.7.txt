@@ -599,6 +599,11 @@ Password Manager Improvements:
   Folders as well as the classic vault.
   Both appear in one list, labeled (Classic)
   or (Nested).
+- New setting “Require Authentication on Every
+  Open” re-prompts for Touch ID or your password
+  each time the password manager opens, instead
+  of reusing the first unlock until the screen
+  locks.
 
 Shell Integration Improvements:
 - xonsh is now a supported shell.

@@ -5745,6 +5745,20 @@
 			remoteGlobalIDString = 65CD5998B31C26DC8FE4FF68;
 			remoteInfo = it2core;
 		};
+		AA11BB22CC33DD44EE55FF01 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 65CD5998B31C26DC8FE4FF68;
+			remoteInfo = it2core;
+		};
+		AA11BB22CC33DD44EE55FF03 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 65CD5998B31C26DC8FE4FF68;
+			remoteInfo = it2core;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -17940,6 +17954,7 @@
 			dependencies = (
 				A6C763D71B45C5C500E3C992 /* PBXTargetDependency */,
 				1D6ED85319AEA20D005A7799 /* PBXTargetDependency */,
+				AA11BB22CC33DD44EE55FF02 /* PBXTargetDependency */,
 			);
 			name = iTerm2ForApplescriptTesting;
 			productName = "JTerminal (Application)";
@@ -17960,6 +17975,7 @@
 			dependencies = (
 				A62B04A829B429A70077B955 /* PBXTargetDependency */,
 				A6C763D51B45C5BE00E3C992 /* PBXTargetDependency */,
+				AA11BB22CC33DD44EE55FF04 /* PBXTargetDependency */,
 			);
 			name = iTerm2Tests;
 			productName = iTermTests;
@@ -22789,6 +22805,18 @@
 			target = 65CD5998B31C26DC8FE4FF68 /* it2core */;
 			targetProxy = C95C58DC83111B5C860E26B0 /* PBXContainerItemProxy */;
 		};
+		AA11BB22CC33DD44EE55FF02 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = it2core;
+			target = 65CD5998B31C26DC8FE4FF68 /* it2core */;
+			targetProxy = AA11BB22CC33DD44EE55FF01 /* PBXContainerItemProxy */;
+		};
+		AA11BB22CC33DD44EE55FF04 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = it2core;
+			target = 65CD5998B31C26DC8FE4FF68 /* it2core */;
+			targetProxy = AA11BB22CC33DD44EE55FF03 /* PBXContainerItemProxy */;
+		};
 		7577E2802593B77F00905402 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A6C7603F1B45C4CF00E3C992 /* iTerm2Shared */;
@@ -23864,6 +23892,8 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
+					"-force_load",
+					"$(BUILT_PRODUCTS_DIR)/libit2core.a",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
@@ -23938,6 +23968,8 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
+					"-force_load",
+					"$(BUILT_PRODUCTS_DIR)/libit2core.a",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
@@ -24010,6 +24042,8 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
+					"-force_load",
+					"$(BUILT_PRODUCTS_DIR)/libit2core.a",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
@@ -24101,6 +24135,8 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
+					"-force_load",
+					"$(BUILT_PRODUCTS_DIR)/libit2core.a",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -24184,6 +24220,8 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
+					"-force_load",
+					"$(BUILT_PRODUCTS_DIR)/libit2core.a",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -24267,6 +24305,8 @@
 					"-licucore",
 					"-ObjC",
 					"-lc++",
+					"-force_load",
+					"$(BUILT_PRODUCTS_DIR)/libit2core.a",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -25186,6 +25226,8 @@
 					"-laprutil-1",
 					"-licucore",
 					"-ObjC",
+					"-force_load",
+					"$(BUILT_PRODUCTS_DIR)/libit2core.a",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.google.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -25296,6 +25338,8 @@
 					"-laprutil-1",
 					"-licucore",
 					"-ObjC",
+					"-force_load",
+					"$(BUILT_PRODUCTS_DIR)/libit2core.a",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
