@@ -88,6 +88,13 @@ Major New Features:
   notified when it changes, so tools like vim
   and delta can adapt automatically.
 
+- Fixed a bug where a command-line
+  completion whose command history entry
+  contained a newline would spill across
+  adjacent rows in the suggestions popup.
+  Embedded newlines now show as a return
+  glyph and the entry stays on one line.
+
 - Fixed a bug where the top-right session
   indicators left a horizontal smear while
   swiping between tabs with two fingers.
