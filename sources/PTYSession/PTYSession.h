@@ -18,6 +18,7 @@
 #import "PTYTask.h"
 #import "PTYTextView.h"
 #import "PTYTextView+ARC.h"
+#import "SplitSelectionView.h"
 #import "ProfileModel.h"
 #import "TextViewWrapper.h"
 #import "TmuxController.h"
@@ -267,6 +268,14 @@ typedef enum {
 - (nullable NSString *)tmuxWindowName;
 
 - (BOOL)session:(PTYSession *)session shouldAllowDrag:(id<NSDraggingInfo>)sender;
+
+// Which edges of this session’s pane lie on the outer edge of the tab? Used to
+// offer drop targets that span the tab’s full width or height.
+- (iTermTabEdgeMask)tabEdgesForSession:(PTYSession *)session;
+
+// Show a drop target spanning the whole tab along the given edge, or hide it
+// when half is kNoHalf.
+- (void)session:(PTYSession *)session didUpdateTabEdgeDropTarget:(SplitSessionHalf)half;
 - (BOOL)session:(PTYSession *)session performDragOperation:(id<NSDraggingInfo>)sender;
 
 // Indicates if the splits in a tmux tab are currently being dragged. Affects how resizing works for tmux tabs.

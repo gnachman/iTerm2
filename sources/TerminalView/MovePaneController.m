@@ -243,6 +243,10 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
 
     didSplit_ = YES;
 
+    if (SplitSessionHalfIsTabEdge(half)) {
+        return [self moveSessionToTabEdge:half ofTabContainingSession:dest];
+    }
+
     if ([self.session isTmuxClient]) {
         DLog(@"Moving tmux session");
         // Do this after setting didSplit because a second call to this method
@@ -302,6 +306,59 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
         [destinationTab checkInvariants:@"After swap"];
     }
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionDidChangeTabNotification object:self.session];
+    return YES;
+}
+
+// Moves the dragged session to an edge of the whole tab that dest belongs to, so
+// it spans that tab’s full width or height instead of splitting dest.
+- (BOOL)moveSessionToTabEdge:(SplitSessionHalf)half
+      ofTabContainingSession:(PTYSession *)dest {
+    DLog(@"moveSessionToTabEdge:%@ ofTabContainingSession:%@", @(half), dest);
+    if (!isMove_) {
+        // Swapping has no tab-edge targets: -[SplitSelectionView updateAtPoint:]
+        // reports kFullPane in swap mode.
+        DLog(@"Refusing to swap at a tab edge");
+        return NO;
+    }
+    if ([self.session isTmuxClient] || [dest isTmuxClient]) {
+        // tmux owns the layout and has no equivalent of a window-edge move.
+        DLog(@"Refusing tab edge move for tmux");
+        return NO;
+    }
+    PTYTab *destinationTab = [dest.delegate.realParentWindow tabForSession:dest];
+    PseudoTerminal *destinationWindow = [PseudoTerminal castFrom:destinationTab.realParentWindow];
+    if (!destinationWindow) {
+        DLog(@"No destination window");
+        return NO;
+    }
+    PTYSession *movingSession = session_;
+    const BOOL isVertical = SplitSessionHalfTabEdgeIsVertical(half);
+    if (![destinationWindow canSplitPaneVertically:isVertical
+                                     withBookmark:[movingSession profile]]) {
+        DLog(@"Cannot split");
+        return NO;
+    }
+    [destinationTab checkInvariants:@"Before move to tab edge"];
+    SessionView *oldView = [movingSession view];
+    [[oldView retain] autorelease];
+    [[movingSession retain] autorelease];
+    PTYTab *theTab = [movingSession.delegate.realParentWindow tabForSession:movingSession];
+    [theTab removeSession:movingSession];
+    const NSUInteger sourceCount = theTab.sessions.count;
+    if (sourceCount == 0) {
+        DLog(@"Moving tab without sessions. Closing it");
+        [[theTab realParentWindow] closeTab:theTab];
+    }
+
+    [destinationWindow moveSession:movingSession toTabEdge:half ofTab:destinationTab];
+    [destinationTab fitSessionToCurrentViewSize:movingSession];
+    [destinationTab checkInvariants:@"After move to tab edge"];
+    [destinationTab updateSessionOrdinals];
+    if (sourceCount) {
+        [theTab updateSessionOrdinals];
+    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionDidChangeTabNotification
+                                                        object:self.session];
     return YES;
 }
 

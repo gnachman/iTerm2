@@ -21,9 +21,39 @@ static CGFloat SplitHalfDistanceFromEdge(SplitSessionHalf half, NSSize size, NSP
             return size.height - point.y;
         case kNoHalf:
         case kFullPane:
+        case kTabTopEdge:
+        case kTabBottomEdge:
+        case kTabLeftEdge:
+        case kTabRightEdge:
             return INFINITY;
     }
     return INFINITY;
+}
+
+BOOL SplitSessionHalfIsTabEdge(SplitSessionHalf half) {
+    switch (half) {
+        case kTabTopEdge:
+        case kTabBottomEdge:
+        case kTabLeftEdge:
+        case kTabRightEdge:
+            return YES;
+        case kNoHalf:
+        case kNorthHalf:
+        case kSouthHalf:
+        case kEastHalf:
+        case kWestHalf:
+        case kFullPane:
+            return NO;
+    }
+    return NO;
+}
+
+BOOL SplitSessionHalfTabEdgeIsVertical(SplitSessionHalf half) {
+    return (half == kTabLeftEdge || half == kTabRightEdge);
+}
+
+BOOL SplitSessionHalfTabEdgeIsBefore(SplitSessionHalf half) {
+    return (half == kTabTopEdge || half == kTabLeftEdge);
 }
 
 @interface SplitSelectionView ()
@@ -172,31 +202,38 @@ static CGFloat SplitHalfDistanceFromEdge(SplitSessionHalf half, NSSize size, NSP
 - (void)drawTargetWithMessage:(NSString *)theMessage {
     NSRect highlightRect;
     NSRect clearRect;
-    NSRect rect = [self frame];
+    // Drawing happens in bounds coordinates. The tab-spanning drop target has a
+    // non-zero origin; panes are at (0, 0), where bounds and frame agree.
+    NSRect rect = self.bounds;
     switch (half_) {
         case kNoHalf:
+        // A whole-tab drop target spans more than this pane so the tab draws it.
+        case kTabTopEdge:
+        case kTabBottomEdge:
+        case kTabLeftEdge:
+        case kTabRightEdge:
             highlightRect = NSZeroRect;
             clearRect = rect;
             break;
 
         case kSouthHalf:
-            NSDivideRect([self frame], &highlightRect, &clearRect, rect.size.height / 2, NSMinYEdge);
+            NSDivideRect(rect, &highlightRect, &clearRect, rect.size.height / 2, NSMinYEdge);
             break;
 
         case kNorthHalf:
-            NSDivideRect([self frame], &highlightRect, &clearRect, rect.size.height / 2, NSMaxYEdge);
+            NSDivideRect(rect, &highlightRect, &clearRect, rect.size.height / 2, NSMaxYEdge);
             break;
 
         case kWestHalf:
-            NSDivideRect([self frame], &highlightRect, &clearRect, rect.size.width / 2, NSMinXEdge);
+            NSDivideRect(rect, &highlightRect, &clearRect, rect.size.width / 2, NSMinXEdge);
             break;
 
         case kEastHalf:
-            NSDivideRect([self frame], &highlightRect, &clearRect, rect.size.width / 2, NSMaxXEdge);
+            NSDivideRect(rect, &highlightRect, &clearRect, rect.size.width / 2, NSMaxXEdge);
             break;
 
         case kFullPane:
-            highlightRect = [self frame];
+            highlightRect = rect;
             clearRect = NSZeroRect;
             break;
     }
@@ -217,7 +254,7 @@ static CGFloat SplitHalfDistanceFromEdge(SplitSessionHalf half, NSSize size, NSP
     [color ?: [NSColor blackColor] set];
     NSFrameRect(highlightRect);
 
-    if (delegate_ && half_ != kNoHalf) {
+    if (delegate_ && !NSIsEmptyRect(highlightRect)) {
         [self _showMessage:theMessage inRect:highlightRect];
     }
 }
@@ -243,8 +280,7 @@ static CGFloat SplitHalfDistanceFromEdge(SplitSessionHalf half, NSSize size, NSP
 
 - (void)mouseExited:(NSEvent *)theEvent
 {
-    half_ = kNoHalf;
-    [self setNeedsDisplay:YES];
+    [self setHalf:kNoHalf];
 }
 
 - (void)mouseMoved:(NSEvent *)theEvent
@@ -254,6 +290,63 @@ static CGFloat SplitHalfDistanceFromEdge(SplitSessionHalf half, NSSize size, NSP
     [self updateAtPoint:point];
 }
 
+// Extra distance a tab edge keeps its selection for after the pointer leaves
+// its zone, so that a pointer wobbling on the boundary does not flicker between
+// a whole-tab drop and a half-pane drop.
+static const CGFloat kTabEdgeHysteresis = 6;
+
+// A pane may be short or narrow, in which case an absolute zone could swallow
+// the whole thing and make half-pane drops unreachable.
+static const CGFloat kMaxTabEdgeZoneFraction = 0.33;
+
+- (SplitSessionHalf)tabEdgeAtPoint:(NSPoint)point zone:(CGFloat)zone {
+    const NSSize size = self.frame.size;
+    const struct {
+        iTermTabEdgeMask mask;
+        SplitSessionHalf half;
+        CGFloat distance;
+        CGFloat extent;
+    } candidates[] = {
+        { iTermTabEdgeMaskTop, kTabTopEdge, size.height - point.y, size.height },
+        { iTermTabEdgeMaskBottom, kTabBottomEdge, point.y, size.height },
+        { iTermTabEdgeMaskLeft, kTabLeftEdge, point.x, size.width },
+        { iTermTabEdgeMaskRight, kTabRightEdge, size.width - point.x, size.width }
+    };
+    SplitSessionHalf best = kNoHalf;
+    CGFloat bestDistance = INFINITY;
+    for (size_t i = 0; i < sizeof(candidates) / sizeof(*candidates); i++) {
+        if (!(_tabEdges & candidates[i].mask)) {
+            continue;
+        }
+        const CGFloat maximumZone = candidates[i].extent * kMaxTabEdgeZoneFraction;
+        CGFloat limit = MIN(zone, maximumZone);
+        if (half_ == candidates[i].half) {
+            limit = MIN(zone + kTabEdgeHysteresis, maximumZone);
+        }
+        if (candidates[i].distance > limit) {
+            continue;
+        }
+        if (candidates[i].distance < bestDistance) {
+            bestDistance = candidates[i].distance;
+            best = candidates[i].half;
+        }
+    }
+    return best;
+}
+
+- (void)setHalf:(SplitSessionHalf)half {
+    if (half == half_) {
+        return;
+    }
+    const BOOL wasTabEdge = SplitSessionHalfIsTabEdge(half_);
+    half_ = half;
+    [self setNeedsDisplay:YES];
+    const BOOL isTabEdge = SplitSessionHalfIsTabEdge(half_);
+    if ((wasTabEdge || isTabEdge) && self.tabEdgeDidChange) {
+        self.tabEdgeDidChange(isTabEdge ? half_ : kNoHalf);
+    }
+}
+
 - (void)updateAtPoint:(NSPoint)point
 {
     switch (_mode) {
@@ -261,13 +354,29 @@ static CGFloat SplitHalfDistanceFromEdge(SplitSessionHalf half, NSSize size, NSP
         case SplitSelectionViewModeSourceSwap:
         case SplitSelectionViewModeInspect:
         case SplitSelectionViewModeSelect:
-            half_ = kFullPane;
-            [self setNeedsDisplay:YES];
+            [self setHalf:kFullPane];
             return;
 
         case SplitSelectionViewModeTargetMove:
         case SplitSelectionViewModeSourceMove:
             break;
+    }
+    // Only a target offers tab edges: the source pane’s overlay ignores half_ and
+    // clicking it cancels, so a whole-tab highlight there would be misleading.
+    if (_mode == SplitSelectionViewModeTargetMove && _tabEdges != iTermTabEdgeMaskNone) {
+        const CGFloat zone = [iTermAdvancedSettingsModel tabEdgeDropZoneSize];
+        if (zone > 0) {
+            const SplitSessionHalf edge = [self tabEdgeAtPoint:point zone:zone];
+            if (edge != kNoHalf) {
+                [self setHalf:edge];
+                return;
+            }
+        }
+        if (SplitSessionHalfIsTabEdge(half_)) {
+            // Left the zone: give up the whole-tab target before choosing a half
+            // below, so the tab stops drawing it.
+            [self setHalf:kNoHalf];
+        }
     }
     SplitSessionHalf possibilities[4];
     CGFloat scores[4];
@@ -313,14 +422,20 @@ static CGFloat SplitHalfDistanceFromEdge(SplitSessionHalf half, NSSize size, NSP
     const CGFloat hysteresis = MAX(kHysteresisFraction * minDim, kHysteresisMinPx);
     const BOOL switchNow = (currentDist == INFINITY || distances[bestIndex] < currentDist - hysteresis);
     if (switchNow) {
-        half_ = possibilities[bestIndex];
-        [self setNeedsDisplay:YES];
+        [self setHalf:possibilities[bestIndex]];
     }
 }
 
 - (BOOL)acceptsFirstMouse:(NSEvent *)theEvent
 {
     return YES;
+}
+
+- (NSView *)hitTest:(NSPoint)point {
+    if (_clickThrough) {
+        return nil;
+    }
+    return [super hitTest:point];
 }
 
 - (SplitSessionHalf)half

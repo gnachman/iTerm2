@@ -91,6 +91,14 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 // Would the current drop target split this view?
 - (BOOL)sessionViewShouldSplitSelectionAfterDragUpdate:(id<NSDraggingInfo>)sender;
 
+// Which edges of this pane lie on the outer edge of its tab? A drag near one of
+// them offers a drop spanning the tab’s full width or height.
+- (iTermTabEdgeMask)sessionViewTabEdges;
+
+// The whole-tab drop target changed. kNoHalf means there is none. The tab draws
+// it because it spans panes.
+- (void)sessionViewDidUpdateTabEdgeDropTarget:(SplitSessionHalf)half;
+
 // Perform a drag into this view.
 - (BOOL)sessionViewPerformDragOperation:(id<NSDraggingInfo>)sender;
 
