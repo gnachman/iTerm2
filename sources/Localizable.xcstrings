@@ -41018,7 +41018,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "I [annotated](%1$@) “%2$@”: %3$@"
+            "value" : "我[标注了](%1$@)“%2$@”：%3$@"
           }
         }
       }
@@ -41186,7 +41186,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld of %2$lld"
+            "value" : "%1$lld / %2$lld"
           }
         }
       }
@@ -43094,7 +43094,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Llama (Local)"
+            "value" : "Llama（本地）"
           }
         }
       }
@@ -53042,7 +53042,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "### 🔮 Assistant\n%@"
+            "value" : "### 🔮 助手\n%@"
           }
         }
       }
@@ -59882,7 +59882,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Status %@ when running python code"
+            "value" : "运行 Python 代码时状态为 %@"
           }
         }
       }
@@ -59924,7 +59924,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Unexpected output from %@"
+            "value" : "来自 %@ 的意外输出"
           }
         }
       }
@@ -60050,7 +60050,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Could not get attributes of %@"
+            "value" : "无法获取 %@ 的属性"
           }
         }
       }
@@ -60092,7 +60092,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Could not get size of file: %@"
+            "value" : "无法获取文件大小：%@"
           }
         }
       }
@@ -62138,7 +62138,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "0x%1$llx = %2$@ or %3$@%4$@"
+            "value" : "0x%1$llx = %2$@ 或 %3$@%4$@"
           }
         }
       }
@@ -84109,7 +84109,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Import script %1$lld of %2$lld"
+            "value" : "正在导入脚本（第 %1$lld 个，共 %2$lld 个）"
           }
         }
       }
@@ -84151,7 +84151,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Installing Python runtime %1$lld of %2$lld"
+            "value" : "正在安装 Python 运行时（第 %1$lld 个，共 %2$lld 个）"
           }
         }
       }
@@ -84193,7 +84193,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Invalid data found at %@"
+            "value" : "在 %@ 处发现无效数据"
           }
         }
       }
@@ -84235,7 +84235,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Malformed data found: %@"
+            "value" : "发现格式错误的数据：%@"
           }
         }
       }
@@ -84319,7 +84319,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Script could not be exported: %@"
+            "value" : "无法导出脚本：%@"
           }
         }
       }
@@ -109171,7 +109171,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Git Branch"
+            "value" : "Git 分支"
           }
         }
       }
@@ -133176,7 +133176,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Named Mark %@"
+            "value" : "命名标记 %@"
           }
         }
       }
@@ -133386,7 +133386,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Session %1$@ #%2$d: %3$@"
+            "value" : "会话 %1$@ #%2$d：%3$@"
           }
         }
       }
@@ -138906,7 +138906,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "tmux detached"
+            "value" : "tmux 已分离"
           }
         }
       }
@@ -138948,7 +138948,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "tmux logging off"
+            "value" : "tmux 日志记录已关闭"
           }
         }
       }
@@ -138990,7 +138990,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "tmux logging on"
+            "value" : "tmux 日志记录已开启"
           }
         }
       }
@@ -141090,7 +141090,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Filename: %1$@\nDimensions: %2$d x %3$d"
+            "value" : "文件名：%1$@\n尺寸：%2$d x %3$d"
           }
         }
       }
@@ -142788,7 +142788,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "An iTerm2 Python Runtime with Python version %1$@ must be downloaded to proceed.%2$@"
+            "value" : "需要下载 Python 版本为 %1$@ 的 iTerm2 Python 运行时才能继续。%2$@"
           }
         }
       }
@@ -167436,7 +167436,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : ">_ [Command] 💬"
+            "value" : ">_ [命令] 💬"
           }
         }
       }
@@ -179898,7 +179898,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "SSH Integration"
+            "value" : "SSH 集成"
           }
         }
       }
@@ -185148,7 +185148,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%begin with empty command queue"
+            "value" : "%begin 但命令队列为空"
           }
         }
       }
@@ -185190,7 +185190,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ without %2$@"
+            "value" : "%1$@ 缺少 %2$@"
           }
         }
       }
@@ -185232,7 +185232,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Error: %1$@.\n\nInfo:\n%2$@"
+            "value" : "错误：%1$@。\n\n信息：\n%2$@"
           }
         }
       }
@@ -185316,7 +185316,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "tmux exited unexpectedly."
+            "value" : "tmux 意外退出。"
           }
         }
       }
