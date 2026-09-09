@@ -161111,8 +161111,8 @@
         }
       }
     },
-    "SmartSelection.ActionCountSuffix" : {
-      "comment" : "Suffix appended to a smart selection rule name giving its action count; %ld is the count",
+    "SmartSelection.PrecisionVeryLowWithActions" : {
+      "comment" : "Smart selection rule name for the very low precision level with an action count; %ld is the count",
       "extractionState" : "stale",
       "localizations" : {
         "de" : {
@@ -161121,13 +161121,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : ", %ld Aktion"
+                  "value" : "Sehr niedrige Genauigkeit, %ld Aktion"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : ", %ld Aktionen"
+                  "value" : "Sehr niedrige Genauigkeit, %ld Aktionen"
                 }
               }
             }
@@ -161139,13 +161139,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "new",
-                  "value" : ", %ld action"
+                  "value" : "Very low precision, %ld action"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "new",
-                  "value" : ", %ld actions"
+                  "value" : "Very low precision, %ld actions"
                 }
               }
             }
@@ -161157,7 +161157,7 @@
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "、アクション%ld個"
+                  "value" : "非常に低い精度、アクション%ld個"
                 }
               }
             }
@@ -161169,13 +161169,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : ", %ld ação"
+                  "value" : "Precisão muito baixa, %ld ação"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : ", %ld ações"
+                  "value" : "Precisão muito baixa, %ld ações"
                 }
               }
             }
@@ -161187,25 +161187,25 @@
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : ", %ld действия"
+                  "value" : "Очень низкая точность, %ld действия"
                 }
               },
               "many" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : ", %ld действий"
+                  "value" : "Очень низкая точность, %ld действий"
                 }
               },
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : ", %ld действие"
+                  "value" : "Очень низкая точность, %ld действие"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : ", %ld действия"
+                  "value" : "Очень низкая точность, %ld действия"
                 }
               }
             }
@@ -161217,7 +161217,577 @@
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "，%ld 个操作"
+                  "value" : "极低精度，%ld 个操作"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "SmartSelection.PrecisionLowWithActions" : {
+      "comment" : "Smart selection rule name for the low precision level with an action count; %ld is the count",
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Niedrige Genauigkeit, %ld Aktion"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Niedrige Genauigkeit, %ld Aktionen"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "Low precision, %ld action"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "Low precision, %ld actions"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "低精度、アクション%ld個"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Precisão baixa, %ld ação"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Precisão baixa, %ld ações"
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Низкая точность, %ld действия"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Низкая точность, %ld действий"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Низкая точность, %ld действие"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Низкая точность, %ld действия"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "低精度，%ld 个操作"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "SmartSelection.PrecisionNormalWithActions" : {
+      "comment" : "Smart selection rule name for the normal precision level with an action count; %ld is the count",
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Normale Genauigkeit, %ld Aktion"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Normale Genauigkeit, %ld Aktionen"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "Normal precision, %ld action"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "Normal precision, %ld actions"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "標準精度、アクション%ld個"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Precisão normal, %ld ação"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Precisão normal, %ld ações"
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Обычная точность, %ld действия"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Обычная точность, %ld действий"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Обычная точность, %ld действие"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Обычная точность, %ld действия"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "普通精度，%ld 个操作"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "SmartSelection.PrecisionHighWithActions" : {
+      "comment" : "Smart selection rule name for the high precision level with an action count; %ld is the count",
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Hohe Genauigkeit, %ld Aktion"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Hohe Genauigkeit, %ld Aktionen"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "High precision, %ld action"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "High precision, %ld actions"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "高精度、アクション%ld個"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Precisão alta, %ld ação"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Precisão alta, %ld ações"
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Высокая точность, %ld действия"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Высокая точность, %ld действий"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Высокая точность, %ld действие"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Высокая точность, %ld действия"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "高精度，%ld 个操作"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "SmartSelection.PrecisionVeryHighWithActions" : {
+      "comment" : "Smart selection rule name for the very high precision level with an action count; %ld is the count",
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Sehr hohe Genauigkeit, %ld Aktion"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Sehr hohe Genauigkeit, %ld Aktionen"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "Very high precision, %ld action"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "Very high precision, %ld actions"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "非常に高い精度、アクション%ld個"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Precisão muito alta, %ld ação"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Precisão muito alta, %ld ações"
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Очень высокая точность, %ld действия"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Очень высокая точность, %ld действий"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Очень высокая точность, %ld действие"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Очень высокая точность, %ld действия"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "极高精度，%ld 个操作"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "SmartSelection.PrecisionUndefinedWithActions" : {
+      "comment" : "Smart selection rule name for the undefined precision level with an action count; %ld is the count",
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Undefinierte Genauigkeit, %ld Aktion"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Undefinierte Genauigkeit, %ld Aktionen"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "Undefined precision, %ld action"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "Undefined precision, %ld actions"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "未定義の精度、アクション%ld個"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Precisão indefinida, %ld ação"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Precisão indefinida, %ld ações"
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Неопределённая точность, %ld действия"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Неопределённая точность, %ld действий"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Неопределённая точность, %ld действие"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Неопределённая точность, %ld действия"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "未定义精度，%ld 个操作"
                 }
               }
             }
@@ -162102,7 +162672,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "低精度"
+            "value" : "极低精度"
           }
         }
       }
