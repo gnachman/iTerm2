@@ -2620,3 +2620,15 @@ Bug Fixes:
   session belongs to.
 - Fixed a crash that could occur when doing a
   global search that included a browser session.
+- Fixed the git ahead/behind arrows in the
+  session toolbar staying black in dark mode
+  instead of matching the text color.
+- Fixed the git ahead/behind arrows in the
+  session toolbar staying black in dark mode
+  instead of matching the text color.
+- Fixed a memory leak where browser panes were
+  never freed, leaking a WebKit process and a
+  system power-management handle on every page
+  load. Over time this could exhaust a
+  system-wide limit and break other apps that
+  manage power (such as OrbStack).
