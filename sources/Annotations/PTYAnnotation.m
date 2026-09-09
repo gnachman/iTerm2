@@ -22,7 +22,7 @@ static NSString *const PTYAnnotationDictionaryKeyUniqueID = @"UniqueID";
 @synthesize uniqueID = _uniqueID;
 
 + (NSString *)textForAnnotationForNamedMarkWithName:(NSString *)name {
-    return [@"Named Mark " stringByAppendingString:name];
+    return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PTYAnnotation.NamedMark", nil, [NSBundle mainBundle], @"Named Mark %@", @"Annotation text for a named mark. %@ is the mark name."), name];
 }
 
 - (instancetype)init {

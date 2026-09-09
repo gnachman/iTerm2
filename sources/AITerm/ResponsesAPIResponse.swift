@@ -1365,7 +1365,7 @@ struct ResponsesResponse: LLM.AnyResponse {
                     case .outputText(let outputText):
                         bodies.append(.text(outputText.text))
                     case .refusal(let refusal):
-                        bodies.append(.text("The request was refused: \(refusal.refusal)"))
+                        bodies.append(.text(String(localized: "ResponsesAPI.RequestRefused", defaultValue: "The request was refused: \(refusal.refusal)", comment: "Message shown when the model refuses a request")))
                     }
                 }
             case .reasoning(let item):

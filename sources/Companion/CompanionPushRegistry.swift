@@ -26,8 +26,6 @@ enum CompanionPushRegistry {
     private static let peerRevisionKey = "NoSyncCompanionPeerRevision"
     private static let alertsEverEnabledKey = "NoSyncCompanionAlertsEverEnabled"
     private static let everPairedKey = "NoSyncCompanionEverPaired"
-    private static let pushRelayURLKey = "NoSyncCompanionPushRelayBaseURL"
-    private static let mainRelayOriginKey = "NoSyncCompanionMainRelayOrigin"
 
     // The secret authorizes push to the paired phone, so it is kept in the
     // keychain, not UserDefaults. To avoid a keychain prompt while the user is
@@ -186,57 +184,6 @@ enum CompanionPushRegistry {
         iTermUserDefaults.userDefaults().set(value, forKey: everPairedKey)
     }
 
-    /// The push relay origin the current pairing registered its phone against,
-    /// recorded ONLY when the pairing completed: that is the one moment we know
-    /// the phone registered its APNs token against this same push relay. A
-    /// reconnect does NOT refresh it (it proves nothing about push registration,
-    /// see recordCurrentMainRelay). nil for a device paired before the mac tracked
-    /// this; relayConfigurationChanged treats nil as "unknown, not moved", NOT as
-    /// an old host.
-    static var registeredPushRelayURL: String? {
-        iTermUserDefaults.userDefaults().string(forKey: pushRelayURLKey)
-    }
-
-    /// The main (pairing/transport) relay origin this pairing was established
-    /// against, recorded when the pairing completed AND refreshed on each
-    /// successful reconnect (see recordCurrentMainRelay). nil for a device paired
-    /// before the mac tracked this and not reconnected since, or for a pairing
-    /// made with the relay disabled.
-    static var registeredMainRelayOrigin: String? {
-        iTermUserDefaults.userDefaults().string(forKey: mainRelayOriginKey)
-    }
-
-    /// Stamp both relays this pairing is reachable through. Called ONLY when a
-    /// fresh pairing completes: pairing is the one point where the phone both
-    /// registers its APNs token against the current push relay AND carries this
-    /// connection over the current main relay, so both origins are evidenced.
-    /// Recording them makes a later host move (see CompanionPushRelay and the
-    /// CompanionRelayOrigin setting) detectable. A reconnect refreshes only the
-    /// main relay (see recordCurrentMainRelay); it must not touch the push relay,
-    /// which a reconnect does not evidence.
-    static func recordCurrentRelays(pushRelayURL: String, mainRelayOrigin: String?) {
-        iTermUserDefaults.userDefaults().set(pushRelayURL, forKey: pushRelayURLKey)
-        recordCurrentMainRelay(mainRelayOrigin)
-    }
-
-    /// Refresh ONLY the recorded main relay origin, leaving the push relay alone.
-    /// Called on each successful reconnect: the connection is carried over the main
-    /// relay, so it proves the phone still reaches us there and backfills a pairing
-    /// older than this tracking (nil) so a later main-relay move is detectable. It
-    /// does NOT prove which push relay the phone's APNs token is registered against
-    /// (the phone registers against its own build's push-relay URL, which after a
-    /// mac-only upgrade differs from ours until the phone app is updated), so
-    /// stamping the push URL on a reconnect would falsely satisfy
-    /// relayConfigurationChanged and suppress a legitimate re-pair prompt.
-    static func recordCurrentMainRelay(_ mainRelayOrigin: String?) {
-        let defaults = iTermUserDefaults.userDefaults()
-        if let mainRelayOrigin {
-            defaults.set(mainRelayOrigin, forKey: mainRelayOriginKey)
-        } else {
-            defaults.removeObject(forKey: mainRelayOriginKey)
-        }
-    }
-
     /// True when asking for permission could possibly succeed: iOS only ever
     /// shows the prompt while the state is notDetermined; after a decline,
     /// only the Settings app can change it. Gating the request tool on this
@@ -316,8 +263,6 @@ enum CompanionPushRegistry {
         defaults.removeObject(forKey: sandboxKey)
         defaults.removeObject(forKey: authorizationKey)
         defaults.removeObject(forKey: peerRevisionKey)
-        defaults.removeObject(forKey: pushRelayURLKey)
-        defaults.removeObject(forKey: mainRelayOriginKey)
         // alertsEverEnabled is intentionally NOT cleared: it is device-global user
         // intent, so a freshly paired phone is still asked for permission.
         CompanionMacIdentity.deletePairedPushSecret()

@@ -360,6 +360,16 @@ extension iTermMetalView {
     }
 
     @objc
+    public var wantsExtendedDynamicRangeContent: Bool {
+        get {
+            metalLayerBox?.wantsExtendedDynamicRangeContent ?? false
+        }
+        set {
+            metalLayerBox?.wantsExtendedDynamicRangeContent = newValue
+        }
+    }
+
+    @objc
     public var preferredDrawableSize: CGSize {
         doesNotifyOnRecommendedSizeUpdate = true
         return super._recommendedDrawableSize()
@@ -677,7 +687,13 @@ extension iTermMetalView {
 extension iTermMetalView {
     @objc
     func enableHDR() {
-        metalLayerBox?.wantsExtendedDynamicRangeContent = true
+        // The pixel format must match the cached pipeline states and intermediate
+        // textures, which are built from the session's HDR-cursor setting, so this
+        // is called whenever that setting is on (even on a display without
+        // headroom, where the extra fp16 precision is harmless). Whether to
+        // actually engage EDR (the layer's wantsExtendedDynamicRangeContent flag
+        // and an extended color space) is a separate, headroom-gated decision made
+        // in iTermMTKView.
         metalLayerBox?.pixelFormat = .rgba16Float
     }
 

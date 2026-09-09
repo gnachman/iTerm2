@@ -20,7 +20,7 @@
 
 + (NSString *)title
 {
-    return @"Show Alert…";
+    return NSLocalizedStringWithDefaultValue(@"Trigger.Alert.Title", nil, [NSBundle mainBundle], @"Show Alert…", @"Trigger action name: show a modal alert dialog");
 }
 
 - (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {

@@ -17,15 +17,15 @@ fileprivate enum CommandOption {
     var title: String {
         switch self {
         case let .hostname(hostname):
-            return "Run on \(hostname) via ssh"
+            return String(localized: "CommandURL.RunOnHostToggle", defaultValue: "Run on \(hostname) via ssh", comment: "Checkbox to run the command on a remote host via ssh")
         case let .username(username):
-            return "Run as \(username)"
+            return String(localized: "CommandURL.RunAsUser", defaultValue: "Run as \(username)", comment: "Option describing running the command as a user")
         case let .directory(directory):
-            return "Run in directory \(directory)"
+            return String(localized: "CommandURL.RunInDirectory", defaultValue: "Run in directory \(directory)", comment: "Option describing running the command in a directory")
         case .offerTab:
-            return "Open in tab offered"
+            return String(localized: "CommandURL.OpenInTabOffered", defaultValue: "Open in tab offered", comment: "Option indicating opening in a tab is offered")
         case .offerCurrent:
-            return "Run in current session offered"
+            return String(localized: "CommandURL.RunInCurrentOffered", defaultValue: "Run in current session offered", comment: "Option indicating running in the current session is offered")
         }
     }
     var isEnabled: Bool { true }
@@ -171,11 +171,11 @@ fileprivate class CommandOptionsView: NSView {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
         
-        addHorizontalStackView(createHorizontalStackView(label: "Command:",
+        addHorizontalStackView(createHorizontalStackView(label: String(localized: "CommandURL.CommandLabel", defaultValue: "Command:", comment: "Field label for the command text"),
                                                          view: scrollView,
                                                          firstBaselineAnchor: scrollView.centerYAnchor))
 
-        runOnSSHToggle = NSButton(checkboxWithTitle: "Run on \(hostname) via ssh", target: self, action: #selector(runOnSSHToggleValueChanged))
+        runOnSSHToggle = NSButton(checkboxWithTitle: String(localized: "CommandURL.RunOnHostToggle", defaultValue: "Run on \(hostname) via ssh", comment: "Checkbox to run the command on a remote host via ssh"), target: self, action: #selector(runOnSSHToggleValueChanged))
         usernameTextField = NSTextField()
 
         if runOnSSH {
@@ -187,20 +187,20 @@ fileprivate class CommandOptionsView: NSView {
             usernameStackView.spacing = 10
             usernameStackView.translatesAutoresizingMaskIntoConstraints = false
 
-            usernameTextField.placeholderString = "Username"
+            usernameTextField.placeholderString = String(localized: "CommandURL.UsernamePlaceholder", defaultValue: "Username", comment: "Placeholder for the SSH username field")
             usernameTextField.font = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .regular)
             usernameTextField.translatesAutoresizingMaskIntoConstraints = false
-            usernameStackView.addArrangedSubview(createHorizontalStackView(label: "Username:",
+            usernameStackView.addArrangedSubview(createHorizontalStackView(label: String(localized: "CommandURL.UsernameLabel", defaultValue: "Username:", comment: "Field label for the SSH username"),
                                                                            view: usernameTextField,
                                                                            firstBaselineAnchor: usernameTextField.firstBaselineAnchor))
             addHorizontalStackView(usernameStackView)
         }
 
         directoryTextField = NSTextField()
-        directoryTextField.placeholderString = "Directory"
+        directoryTextField.placeholderString = String(localized: "CommandURL.DirectoryPlaceholder", defaultValue: "Directory", comment: "Placeholder for the working-directory field")
         directoryTextField.font = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .regular)
         directoryTextField.translatesAutoresizingMaskIntoConstraints = false
-        addHorizontalStackView(createHorizontalStackView(label: "Directory:",
+        addHorizontalStackView(createHorizontalStackView(label: String(localized: "CommandURL.DirectoryLabel", defaultValue: "Directory:", comment: "Field label for the working directory"),
                                                          view: directoryTextField,
                                                          firstBaselineAnchor: directoryTextField.firstBaselineAnchor))
 
@@ -208,23 +208,23 @@ fileprivate class CommandOptionsView: NSView {
         buttonsStackView.spacing = 10
         buttonsStackView.translatesAutoresizingMaskIntoConstraints = false
 
-        cancelButton = NSButton(title: "Cancel", target: self, action: #selector(cancelButtonClicked))
+        cancelButton = NSButton(title: iTermLocalizedCancel(), target: self, action: #selector(cancelButtonClicked))
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
         cancelButton.keyEquivalent = "\01b"
         buttonsStackView.addArrangedSubview(cancelButton)
 
-        newWindowButton = NSButton(title: "Run in New Window", target: self, action: #selector(newWindowButtonClicked))
+        newWindowButton = NSButton(title: String(localized: "CommandURL.RunInNewWindow", defaultValue: "Run in New Window", comment: "Button to run the command in a new window"), target: self, action: #selector(newWindowButtonClicked))
         newWindowButton.translatesAutoresizingMaskIntoConstraints = false
         buttonsStackView.addArrangedSubview(newWindowButton)
 
         if offerTab {
-            newTabButton = NSButton(title: "Run in New Tab", target: self, action: #selector(newTabButtonClicked))
+            newTabButton = NSButton(title: String(localized: "CommandURL.RunInNewTab", defaultValue: "Run in New Tab", comment: "Button to run the command in a new tab"), target: self, action: #selector(newTabButtonClicked))
             newTabButton.translatesAutoresizingMaskIntoConstraints = false
             buttonsStackView.addArrangedSubview(newTabButton)
         }
 
         if offerCurrent {
-            newTabButton = NSButton(title: "Run in Current Session", target: self, action: #selector(currentSessionButtonClicked))
+            newTabButton = NSButton(title: String(localized: "CommandURL.RunInCurrentSession", defaultValue: "Run in Current Session", comment: "Button to run the command in the current session"), target: self, action: #selector(currentSessionButtonClicked))
             newTabButton.translatesAutoresizingMaskIntoConstraints = false
             buttonsStackView.addArrangedSubview(newTabButton)
         }
@@ -406,22 +406,22 @@ class CommandURLHandler: NSObject {
     @objc
     func show(completion: ((CommandURLHandler) -> ())?) {
         if _action == .runSilently {
-            var parts = ["Run command", "“" + self.command + "”"]
+            var parts = [String(localized: "CommandURL.RunCommandPrefix", defaultValue: "Run command", comment: "Leading fragment of the silent-run confirmation prompt"), String(localized: "CommandURL.OpenQuote", defaultValue: "“", comment: "Opening quotation mark placed before the command") + self.command + String(localized: "CommandURL.CloseQuote", defaultValue: "”", comment: "Closing quotation mark placed after the command")]
             if let username {
-                parts.append("as \(username)")
+                parts.append(String(localized: "CommandURL.AsUser", defaultValue: "as \(username)", comment: "Fragment: run the command as a user"))
             }
             if let hostname, !hostname.isEmpty {
-                parts.append("on \(hostname)")
+                parts.append(String(localized: "CommandURL.OnHost", defaultValue: "on \(hostname)", comment: "Fragment: run the command on a host"))
             }
             if let directory {
-                parts.append("in \(directory)")
+                parts.append(String(localized: "CommandURL.InDirectory", defaultValue: "in \(directory)", comment: "Fragment: run the command in a directory"))
             }
-            let selection = iTermWarning.show(withTitle: parts.joined(separator: " ") + "?\nIt will run silently in the background.",
-                                              actions: [ "OK", "Cancel"],
+            let selection = iTermWarning.show(withTitle: parts.joined(separator: " ") + String(localized: "CommandURL.SilentConfirmSuffix", defaultValue: "?\nIt will run silently in the background.", comment: "Suffix appended to the silent-run confirmation prompt"),
+                                              actions: [ iTermLocalizedOK(), iTermLocalizedCancel()],
                                               accessory: nil,
                                               identifier: "NoSyncRunCommand_\(self.command)",
                                               silenceable: .kiTermWarningTypePermanentlySilenceable,
-                                              heading: "Run Command?",
+                                              heading: String(localized: "CommandURL.RunCommandHeading", defaultValue: "Run Command?", comment: "Heading of the silent-run confirmation alert"),
                                               window: nil)
             if selection == .kiTermWarningSelection0 {
                 _action = .runSilently
@@ -451,7 +451,7 @@ class CommandURLHandler: NSObject {
             defer: false
         )
         window.contentView = contentView
-        window.title = "Run Command from URL"
+        window.title = String(localized: "CommandURL.WindowTitle", defaultValue: "Run Command from URL", comment: "Title of the window that confirms running a command from a URL")
         window.setContentSize(contentView.fittingSize)
 
         window.center()

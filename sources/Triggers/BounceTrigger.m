@@ -18,7 +18,7 @@ typedef NS_ENUM(int, BounceTriggerParamTag) {
 
 + (NSString *)title
 {
-    return @"Bounce Dock Icon";
+    return NSLocalizedStringWithDefaultValue(@"Trigger.Bounce.Title", nil, [NSBundle mainBundle], @"Bounce Dock Icon", @"Trigger action name: bounce the app's Dock icon to get the user's attention");
 }
 
 - (NSString *)description {
@@ -76,11 +76,11 @@ typedef NS_ENUM(int, BounceTriggerParamTag) {
 + (NSString *)stringForParameter:(BounceTriggerParamTag)parameter {
     switch (parameter) {
         case kBounceTriggerParamTagBounceUntilFocus:
-            return @"Bounce Until Activated";
+            return NSLocalizedStringWithDefaultValue(@"Trigger.Bounce.Param.UntilActivated", nil, [NSBundle mainBundle], @"Bounce Until Activated", @"Bounce Dock icon trigger option: keep bouncing until the user activates iTerm2");
         case kBounceTriggerParamTagBounceOnce:
-            return @"Bounce Once";
+            return NSLocalizedStringWithDefaultValue(@"Trigger.Bounce.Param.Once", nil, [NSBundle mainBundle], @"Bounce Once", @"Bounce Dock icon trigger option: bounce the Dock icon a single time");
     }
-    return @"Bounce Until Activated";
+    return NSLocalizedStringWithDefaultValue(@"Trigger.Bounce.Param.UntilActivated", nil, [NSBundle mainBundle], @"Bounce Until Activated", @"Bounce Dock icon trigger option: keep bouncing until the user activates iTerm2");
 }
 
 - (NSDictionary *)menuItemsForPoupupButton

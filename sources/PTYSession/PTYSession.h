@@ -308,6 +308,11 @@ typedef enum {
 
 // Whether metal is allowed has changed
 - (void)sessionUpdateMetalAllowed;
+
+// The session's metal framebuffer pixel format changed (its HDR-cursor setting
+// flipped), so the metal driver must be torn down and rebuilt with the new
+// format. Implemented by bouncing metal for the tab.
+- (void)sessionRebuildMetal;
 - (void)sessionDidChangeMetalViewAlphaValue:(PTYSession *)session to:(CGFloat)newValue;
 
 // Amount of transparency changed (perhaps to none!)
@@ -799,6 +804,16 @@ backgroundColor:(nullable NSColor *)backgroundColor;
                   settingCustomLocale:(NSString *)lang;
 + (NSDictionary *)repairedArrangement:(NSDictionary *)arrangement
                        profileMutator:(Profile *(^)(Profile *))profileMutator;
+
+// Variables persisted into a saved arrangement, excluding the AI tab title (which
+// is re-derived on restore, so persisting it is dead data and would leak a model
+// summary of the screen into the plist). Exposed for testing.
+- (NSDictionary *)encodableArrangementVariables;
+
+// Whether the auto-composer drop-down is visible and active - i.e. the running command
+// is captured in the prompt-mark history (recentCommands.last) rather than only recorded
+// at command end. Used by the AI-title context to decide the running-command dedup.
+- (BOOL)haveAutoComposer;
 
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
 
@@ -1293,6 +1308,10 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // title or already shows the name) so a programmatically assigned name becomes
 // visible in the tab title even when the profile's title shows only the job.
 - (void)enableSessionNameTitleComponentIfPossible;
+
+// Whether a program-set OSC 0/1/2 title should enable TemporarySessionName.
+// Exposed for testing.
++ (BOOL)programOSCTitleShouldEnableTemporaryNameForComponents:(NSUInteger)components;
 - (void)profileNameDidChangeTo:(NSString *)name;
 - (void)profileDidChangeToProfileWithName:(NSString *)name;
 - (void)updateStatusBarStyle;

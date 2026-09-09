@@ -64,7 +64,7 @@ class CodeReviewPromptView: iTermLayerBackedSolidColorView {
         textView = ShiftReturnSubmittingTextView(frame: .zero)
         startButton = NSButton(frame: .zero)
         promptMenuButton = NSPopUpButton(frame: .zero, pullsDown: true)
-        titleLabel = NSTextField(labelWithString: "Code review prompt:")
+        titleLabel = NSTextField(labelWithString: String(localized: "CodeReviewPrompt.TitleLabel", defaultValue: "Code review prompt:", comment: "Label above the code review prompt text field"))
 
         super.init(frame: frameRect)
 
@@ -99,7 +99,7 @@ class CodeReviewPromptView: iTermLayerBackedSolidColorView {
         scrollView.autoresizingMask = [.width, .height]
         addSubview(scrollView)
 
-        startButton.title = "Start"
+        startButton.title = String(localized: "CodeReviewPrompt.StartButton", defaultValue: "Start", comment: "Button that starts the code review with the entered prompt")
         startButton.bezelStyle = .rounded
         // Shift-Return submits via the text view's keyDown override
         // (set above); plain Return inserts a newline. The button
@@ -262,7 +262,7 @@ class CodeReviewPromptView: iTermLayerBackedSolidColorView {
     // saved prompt is currently loaded.
     private func rebuildPromptMenu() {
         let menu = NSMenu()
-        menu.addItem(withTitle: "Prompts", action: nil, keyEquivalent: "")
+        menu.addItem(withTitle: String(localized: "CodeReviewPrompt.MenuHeader", defaultValue: "Prompts", comment: "Header item shown as the label of the saved-prompts pulldown"), action: nil, keyEquivalent: "")
 
         let store = CodeReviewPromptStore.shared
         if !store.prompts.isEmpty {
@@ -277,14 +277,14 @@ class CodeReviewPromptView: iTermLayerBackedSolidColorView {
             menu.addItem(.separator())
         }
 
-        let saveItem = NSMenuItem(title: "Save Current as New…",
+        let saveItem = NSMenuItem(title: String(localized: "CodeReviewPrompt.SaveAsNewMenuItem", defaultValue: "Save Current as New…", comment: "Menu item that saves the current text as a new code review prompt"),
                                    action: #selector(saveAsNewMenuItem(_:)),
                                    keyEquivalent: "")
         saveItem.target = self
         saveItem.identifier = Self.saveItemIdentifier
         menu.addItem(saveItem)
 
-        let manageItem = NSMenuItem(title: "Manage Prompts…",
+        let manageItem = NSMenuItem(title: String(localized: "CodeReviewPrompt.ManageMenuItem", defaultValue: "Manage Prompts…", comment: "Menu item that opens the code review prompt manager"),
                                      action: #selector(manageMenuItem(_:)),
                                      keyEquivalent: "")
         manageItem.target = self
@@ -309,14 +309,14 @@ class CodeReviewPromptView: iTermLayerBackedSolidColorView {
     @objc private func saveAsNewMenuItem(_ sender: Any) {
         guard let host = window else { return }
         let alert = NSAlert()
-        alert.messageText = "Name this prompt"
+        alert.messageText = String(localized: "CodeReviewPrompt.SaveTitle", defaultValue: "Name this prompt", comment: "Title of the dialog for saving a code review prompt")
         alert.informativeText =
-            "Saved prompts can be re-loaded from the Prompts pulldown."
-        alert.addButton(withTitle: "Save")
-        alert.addButton(withTitle: "Cancel")
+            String(localized: "CodeReviewPrompt.SaveInformative", defaultValue: "Saved prompts can be re-loaded from the Prompts pulldown.", comment: "Explanatory text in the dialog for saving a code review prompt")
+        alert.addButton(withTitle: String(localized: "General.Save", defaultValue: "Save", comment: "Save button"))
+        alert.addButton(withTitle: iTermLocalizedCancel())
 
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 22))
-        field.placeholderString = "Prompt name"
+        field.placeholderString = String(localized: "CodeReviewPrompt.NamePlaceholder", defaultValue: "Prompt name", comment: "Placeholder for the field that names a saved code review prompt")
         alert.accessoryView = field
 
         alert.beginSheetModal(for: host) { [weak self] response in

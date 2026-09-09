@@ -95,29 +95,29 @@ static BOOL iTermManualAIModelBoolValue(NSDictionary *configuration, NSString *k
 static NSString *iTermTitleForAIAPI(iTermAIAPI api) {
     switch (api) {
         case iTermAIAPIResponses:
-            return @"Responses";
+            return NSLocalizedStringWithDefaultValue(@"AIAPI.Responses", nil, [NSBundle mainBundle], @"Responses", @"Name of the Responses AI API");
         case iTermAIAPIChatCompletions:
-            return @"Chat Completions";
+            return NSLocalizedStringWithDefaultValue(@"AIAPI.ChatCompletions", nil, [NSBundle mainBundle], @"Chat Completions", @"Name of the Chat Completions AI API");
         case iTermAIAPICompletions:
-            return @"Completions";
+            return NSLocalizedStringWithDefaultValue(@"AIAPI.Completions", nil, [NSBundle mainBundle], @"Completions", @"Name of the Completions AI API");
         case iTermAIAPIGemini:
-            return @"Google Gemini";
+            return NSLocalizedStringWithDefaultValue(@"AIAPI.GoogleGemini", nil, [NSBundle mainBundle], @"Google Gemini", @"Name of the Google Gemini AI API");
         case iTermAIAPIEarlyO1:
-            return @"Chat Completions (Early O1)";
+            return NSLocalizedStringWithDefaultValue(@"AIAPI.ChatCompletionsEarlyO1", nil, [NSBundle mainBundle], @"Chat Completions (Early O1)", @"Name of the early-O1 Chat Completions AI API");
         case iTermAIAPILlama:
-            return @"Llama";
+            return NSLocalizedStringWithDefaultValue(@"AIProvider.Llama", nil, [NSBundle mainBundle], @"Llama", @"Llama provider name");
         case iTermAIAPIDeepSeek:
-            return @"DeepSeek";
+            return NSLocalizedStringWithDefaultValue(@"AIProvider.DeepSeek", nil, [NSBundle mainBundle], @"DeepSeek", @"DeepSeek provider name");
         case iTermAIAPIAnthropic:
-            return @"Anthropic";
+            return NSLocalizedStringWithDefaultValue(@"AIProvider.Anthropic", nil, [NSBundle mainBundle], @"Anthropic", @"Anthropic provider name");
         case iTermAIAPIAppleIntelligence:
-            return @"Apple Intelligence";
+            return NSLocalizedStringWithDefaultValue(@"AIProvider.AppleIntelligence", nil, [NSBundle mainBundle], @"Apple Intelligence", @"Apple Intelligence provider name");
     }
     // An out-of-range api (e.g. api: 999 from hand-edited or synced prefs) would
     // otherwise fall off the end of this non-void function (UB). No default: in
     // the switch so -Wswitch still flags a genuinely new enum value. Mirror
     // LLMMetadata's tolerance of a bad api (iTermAIAPI(rawValue:) ?? .chatCompletions).
-    return @"Chat Completions";
+    return NSLocalizedStringWithDefaultValue(@"AIAPI.ChatCompletions", nil, [NSBundle mainBundle], @"Chat Completions", @"Name of the Chat Completions AI API");
 }
 
 // Human-readable provider name for the vendor whose stored key authorizes a
@@ -126,19 +126,19 @@ static NSString *iTermTitleForAIAPI(iTermAIAPI api) {
 static NSString *iTermAIVendorProviderName(iTermAIVendor vendor) {
     switch (vendor) {
         case iTermAIVendorOpenAI:
-            return @"OpenAI";
+            return NSLocalizedStringWithDefaultValue(@"AIProvider.OpenAI", nil, [NSBundle mainBundle], @"OpenAI", @"OpenAI provider name");
         case iTermAIVendorAnthropic:
-            return @"Anthropic";
+            return NSLocalizedStringWithDefaultValue(@"AIProvider.Anthropic", nil, [NSBundle mainBundle], @"Anthropic", @"Anthropic provider name");
         case iTermAIVendorGemini:
-            return @"Gemini";
+            return NSLocalizedStringWithDefaultValue(@"AIProvider.Gemini", nil, [NSBundle mainBundle], @"Gemini", @"Gemini provider name");
         case iTermAIVendorDeepSeek:
-            return @"DeepSeek";
+            return NSLocalizedStringWithDefaultValue(@"AIProvider.DeepSeek", nil, [NSBundle mainBundle], @"DeepSeek", @"DeepSeek provider name");
         case iTermAIVendorLlama:
-            return @"Llama";
+            return NSLocalizedStringWithDefaultValue(@"AIProvider.Llama", nil, [NSBundle mainBundle], @"Llama", @"Llama provider name");
         case iTermAIVendorApple:
-            return @"Apple Intelligence";
+            return NSLocalizedStringWithDefaultValue(@"AIProvider.AppleIntelligence", nil, [NSBundle mainBundle], @"Apple Intelligence", @"Apple Intelligence provider name");
     }
-    return @"OpenAI";
+    return NSLocalizedStringWithDefaultValue(@"AIProvider.OpenAI", nil, [NSBundle mainBundle], @"OpenAI", @"OpenAI provider name");
 }
 
 // Whether the user can actually configure a key for this vendor. Only the
@@ -275,7 +275,7 @@ static NSString *iTermManualAIModelHost(NSDictionary *configuration) {
                                           styleMask:NSWindowStyleMaskTitled
                                             backing:NSBackingStoreBuffered
                                               defer:NO];
-    _window.title = @"Manual AI Models";
+    _window.title = NSLocalizedStringWithDefaultValue(@"AIManualModels.WindowTitle", nil, [NSBundle mainBundle], @"Manual AI Models", @"Title of the manual AI models panel window");
     NSView *content = _window.contentView;
 
     NSScrollView *scrollView =
@@ -295,9 +295,9 @@ static NSString *iTermManualAIModelHost(NSDictionary *configuration) {
     _tableView.doubleAction = @selector(tableDoubleClicked:);
 
     NSArray<NSDictionary *> *columns = @[
-        @{ @"identifier": kAIManualModelsModelColumn, @"title": @"Model", @"width": @260 },
-        @{ @"identifier": kAIManualModelsAPIColumn, @"title": @"API", @"width": @130 },
-        @{ @"identifier": kAIManualModelsEndpointColumn, @"title": @"Endpoint", @"width": @150 }
+        @{ @"identifier": kAIManualModelsModelColumn, @"title": NSLocalizedStringWithDefaultValue(@"AIManualModels.ModelColumn", nil, [NSBundle mainBundle], @"Model", @"Column title for the model name"), @"width": @260 },
+        @{ @"identifier": kAIManualModelsAPIColumn, @"title": NSLocalizedStringWithDefaultValue(@"AIManualModels.APIColumn", nil, [NSBundle mainBundle], @"API", @"Column title for the API"), @"width": @130 },
+        @{ @"identifier": kAIManualModelsEndpointColumn, @"title": NSLocalizedStringWithDefaultValue(@"AIManualModels.EndpointColumn", nil, [NSBundle mainBundle], @"Endpoint", @"Column title for the endpoint"), @"width": @150 }
     ];
     for (NSDictionary *spec in columns) {
         NSTableColumn *column = [[NSTableColumn alloc] initWithIdentifier:spec[@"identifier"]];
@@ -315,16 +315,16 @@ static NSString *iTermManualAIModelHost(NSDictionary *configuration) {
 
     // Add / remove on the left, then edit / duplicate / default.
     _addDeleteControl = [self makeSegmentedControlWithSegments:@[
-        @{ @"symbol": SFSymbolGetString(SFSymbolPlus), @"tip": @"Add" },
-        @{ @"symbol": SFSymbolGetString(SFSymbolMinus), @"tip": @"Delete" }
+        @{ @"symbol": SFSymbolGetString(SFSymbolPlus), @"tip": iTermLocalizedAdd() },
+        @{ @"symbol": SFSymbolGetString(SFSymbolMinus), @"tip": NSLocalizedStringWithDefaultValue(@"General.Delete", nil, [NSBundle mainBundle], @"Delete", @"Delete button") }
     ] action:@selector(addDeleteClicked:)];
     _editControl = [self makeSegmentedControlWithSegments:@[
-        @{ @"symbol": SFSymbolGetString(SFSymbolPencil), @"tip": @"Edit" },
-        @{ @"symbol": SFSymbolGetString(SFSymbolPlusSquareOnSquare), @"tip": @"Duplicate" },
-        @{ @"symbol": SFSymbolGetString(SFSymbolStar), @"tip": @"Toggle Default" },
+        @{ @"symbol": SFSymbolGetString(SFSymbolPencil), @"tip": iTermLocalizedEdit() },
+        @{ @"symbol": SFSymbolGetString(SFSymbolPlusSquareOnSquare), @"tip": NSLocalizedStringWithDefaultValue(@"AIManualModels.Duplicate", nil, [NSBundle mainBundle], @"Duplicate", @"Tooltip for the duplicate model button") },
+        @{ @"symbol": SFSymbolGetString(SFSymbolStar), @"tip": NSLocalizedStringWithDefaultValue(@"AIManualModels.ToggleDefault", nil, [NSBundle mainBundle], @"Toggle Default", @"Tooltip for the toggle default model button") },
         @{ @"symbol": SFSymbolGetString(SFSymbolLeaf),
-           @"tip": @"Toggle Economy Model. A cheaper model used for frequent background jobs "
-                   @"like command-safety checks and screen-idle detection." }
+           @"tip": NSLocalizedStringWithDefaultValue(@"AIManualModels.ToggleEconomyModel", nil, [NSBundle mainBundle], @"Toggle Economy Model. A cheaper model used for frequent background jobs "
+                   @"like command-safety checks and screen-idle detection.", @"Tooltip for the toggle economy model button") }
     ] action:@selector(editControlClicked:)];
 
     const CGFloat controlY = bottomRowY + (okHeight - _addDeleteControl.frame.size.height) / 2.0;
@@ -339,7 +339,7 @@ static NSString *iTermManualAIModelHost(NSDictionary *configuration) {
     [content addSubview:_editControl];
 
     // OK: its right edge aligns with the table's right edge.
-    NSButton *ok = [NSButton buttonWithTitle:@"OK" target:self action:@selector(okClicked:)];
+    NSButton *ok = [NSButton buttonWithTitle:iTermLocalizedOK() target:self action:@selector(okClicked:)];
     ok.bezelStyle = NSBezelStyleRounded;
     ok.keyEquivalent = @"\r";
     ok.frame = NSMakeRect(margin + tableWidth - okWidth, bottomRowY, okWidth, okHeight);
@@ -377,11 +377,12 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     if ([identifier isEqualToString:kAIManualModelsModelColumn]) {
         NSString *name = [configuration[kAIManualModelNameKey] isKindOfClass:NSString.class]
             ? configuration[kAIManualModelNameKey]
-            : @"Untitled model";
+            : NSLocalizedStringWithDefaultValue(@"AIManualModels.UntitledModel", nil, [NSBundle mainBundle], @"Untitled model", @"Placeholder name for a manual AI model with no name");
         // A leading black star marks the default model, matching the profile list.
         // A leaf SF Symbol marks the economy model. The two are mutually
         // exclusive per row.
         if ([name isEqualToString:self.defaultModelName]) {
+            // Localization unneeded
             return [@"★ " stringByAppendingString:name];
         }
         if (self.economyModelName.length > 0 && [name isEqualToString:self.economyModelName]) {
@@ -416,7 +417,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSImageSymbolConfiguration *config =
         [NSImageSymbolConfiguration configurationWithHierarchicalColor:NSColor.labelColor];
     NSImage *image = [[NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolLeaf)
-                               accessibilityDescription:@"Economy model"]
+                               accessibilityDescription:NSLocalizedStringWithDefaultValue(@"AIManualModels.EconomyModelAccessibility", nil, [NSBundle mainBundle], @"Economy model", @"Accessibility description for the economy model marker symbol")]
                       imageWithSymbolConfiguration:config];
     const CGFloat side = font.pointSize + 1;
     image.size = NSMakeSize(side, side);
@@ -594,7 +595,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 }
 
 - (void)buildWindow {
-    const CGFloat width = 540;
+    // Wide enough for the API-key hint line under the API popup to fit longer
+    // localizations (e.g. Russian) without truncating.
+    const CGFloat width = 590;
     // Extra height over the base layout makes room for the API-key hint line
     // under the API popup and the custom-headers section near the bottom.
     const CGFloat height = 706;
@@ -608,7 +611,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                                           styleMask:NSWindowStyleMaskTitled
                                             backing:NSBackingStoreBuffered
                                               defer:NO];
-    _window.title = _isEditing ? @"Edit Manual AI Model" : @"Add Manual AI Model";
+    _window.title = _isEditing ? NSLocalizedStringWithDefaultValue(@"AIModelEditor.EditTitle", nil, [NSBundle mainBundle], @"Edit Manual AI Model", @"Window title when editing a manual AI model") : NSLocalizedStringWithDefaultValue(@"AIModelEditor.AddTitle", nil, [NSBundle mainBundle], @"Add Manual AI Model", @"Window title when adding a manual AI model");
     NSView *content = _window.contentView;
 
     NSTextField *title = [NSTextField labelWithString:_window.title];
@@ -634,9 +637,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     // Presets copy a built-in model's settings into the form so a user can start
     // from something close to what they want and tweak it.
-    addLabel(@"Preset:");
+    addLabel(NSLocalizedStringWithDefaultValue(@"AIModelEditor.PresetLabel", nil, [NSBundle mainBundle], @"Preset:", @"Label for the preset popup"));
     _presetPopup = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(fieldX, y, fieldWidth, 24)];
-    [_presetPopup addItemWithTitle:@"Custom"];
+    [_presetPopup addItemWithTitle:NSLocalizedStringWithDefaultValue(@"AIModelEditor.PresetCustom", nil, [NSBundle mainBundle], @"Custom", @"Preset popup option for a custom (non-preset) model")];
     _presetPopup.lastItem.tag = -1;
     [_presetPopup.menu addItem:[NSMenuItem separatorItem]];
     _presets = [[AIMetadata instance] presetModels];
@@ -660,10 +663,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     [content addSubview:_presetPopup];
     y -= rowHeight + 8;
 
-    _nameField = addTextField(@"Model:", _base[kAIManualModelNameKey]);
-    _urlField = addTextField(@"URL:", _base[kAIManualModelURLKey]);
+    _nameField = addTextField(NSLocalizedStringWithDefaultValue(@"AIModelEditor.ModelLabel", nil, [NSBundle mainBundle], @"Model:", @"Label for the model name field"), _base[kAIManualModelNameKey]);
+    _urlField = addTextField(NSLocalizedStringWithDefaultValue(@"AIModelEditor.URLLabel", nil, [NSBundle mainBundle], @"URL:", @"Label for the URL field"), _base[kAIManualModelURLKey]);
 
-    addLabel(@"API:");
+    addLabel(NSLocalizedStringWithDefaultValue(@"AIModelEditor.APILabel", nil, [NSBundle mainBundle], @"API:", @"Label for the API popup"));
     _apiPopup = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(fieldX, y, fieldWidth, 24)];
     NSArray<NSNumber *> *apis = @[
         @(iTermAIAPIResponses),
@@ -703,30 +706,30 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _urlField.delegate = self;
 
     _contextField =
-        addTextField(@"Context tokens:",
+        addTextField(NSLocalizedStringWithDefaultValue(@"AIModelEditor.ContextTokensLabel", nil, [NSBundle mainBundle], @"Context tokens:", @"Label for the context window tokens field"),
                      [NSString stringWithFormat:@"%ld",
                       (long)iTermManualAIModelIntegerValue(_base, kAIManualModelContextWindowTokensKey, 8192)]);
     _responseField =
-        addTextField(@"Max response tokens:",
+        addTextField(NSLocalizedStringWithDefaultValue(@"AIModelEditor.MaxResponseTokensLabel", nil, [NSBundle mainBundle], @"Max response tokens:", @"Label for the max response tokens field"),
                      [NSString stringWithFormat:@"%ld",
                       (long)iTermManualAIModelIntegerValue(_base, kAIManualModelMaxResponseTokensKey, 8192)]);
 
-    addLabel(@"Vector store:");
+    addLabel(NSLocalizedStringWithDefaultValue(@"AIModelEditor.VectorStoreLabel", nil, [NSBundle mainBundle], @"Vector store:", @"Label for the vector store popup"));
     _vectorStorePopup = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(fieldX, y, fieldWidth, 24)];
-    [_vectorStorePopup addItemWithTitle:@"Disabled"];
+    [_vectorStorePopup addItemWithTitle:NSLocalizedStringWithDefaultValue(@"AIModelEditor.VectorStoreDisabled", nil, [NSBundle mainBundle], @"Disabled", @"Vector store popup option meaning no vector store")];
     _vectorStorePopup.lastItem.tag = 0;
-    [_vectorStorePopup addItemWithTitle:@"OpenAI"];
+    [_vectorStorePopup addItemWithTitle:NSLocalizedStringWithDefaultValue(@"AIProvider.OpenAI", nil, [NSBundle mainBundle], @"OpenAI", @"OpenAI provider name")];
     _vectorStorePopup.lastItem.tag = 1;
     [_vectorStorePopup selectItemWithTag:iTermManualAIModelIntegerValue(_base, kAIManualModelVectorStoreKey, 0)];
     [content addSubview:_vectorStorePopup];
     y -= rowHeight + 8;
 
     NSArray<NSDictionary *> *features = @[
-        @{ @"title": @"Function calling", @"key": kAIManualModelFunctionCallingKey },
-        @{ @"title": @"Streaming responses", @"key": kAIManualModelStreamingKey },
-        @{ @"title": @"Hosted web search", @"key": kAIManualModelHostedWebSearchKey },
-        @{ @"title": @"Hosted file search", @"key": kAIManualModelHostedFileSearchKey },
-        @{ @"title": @"Hosted code interpreter", @"key": kAIManualModelHostedCodeInterpreterKey }
+        @{ @"title": NSLocalizedStringWithDefaultValue(@"AIModelEditor.FeatureFunctionCalling", nil, [NSBundle mainBundle], @"Function calling", @"Checkbox label for the function-calling model feature"), @"key": kAIManualModelFunctionCallingKey },
+        @{ @"title": NSLocalizedStringWithDefaultValue(@"AIModelEditor.FeatureStreamingResponses", nil, [NSBundle mainBundle], @"Streaming responses", @"Checkbox label for the streaming-responses model feature"), @"key": kAIManualModelStreamingKey },
+        @{ @"title": NSLocalizedStringWithDefaultValue(@"AIModelEditor.FeatureHostedWebSearch", nil, [NSBundle mainBundle], @"Hosted web search", @"Checkbox label for the hosted web search model feature"), @"key": kAIManualModelHostedWebSearchKey },
+        @{ @"title": NSLocalizedStringWithDefaultValue(@"AIModelEditor.FeatureHostedFileSearch", nil, [NSBundle mainBundle], @"Hosted file search", @"Checkbox label for the hosted file search model feature"), @"key": kAIManualModelHostedFileSearchKey },
+        @{ @"title": NSLocalizedStringWithDefaultValue(@"AIModelEditor.FeatureHostedCodeInterpreter", nil, [NSBundle mainBundle], @"Hosted code interpreter", @"Checkbox label for the hosted code interpreter model feature"), @"key": kAIManualModelHostedCodeInterpreterKey }
     ];
     for (NSDictionary *feature in features) {
         NSString *key = feature[@"key"];
@@ -748,21 +751,21 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSString *baseName = [_base[kAIManualModelNameKey] isKindOfClass:NSString.class]
         ? _base[kAIManualModelNameKey] : @"";
     _configurableThinkingButton =
-        [self addQuirkCheckboxWithTitle:@"Configurable thinking"
+        [self addQuirkCheckboxWithTitle:NSLocalizedStringWithDefaultValue(@"AIModelEditor.ConfigurableThinking", nil, [NSBundle mainBundle], @"Configurable thinking", @"Checkbox label for whether a model supports configurable thinking")
                                     key:kAIManualModelConfigurableThinkingKey
                            catalogValue:[[AIMetadata instance] modelSupportsConfigurableThinking:baseName]
-                                tooltip:@"Enable for reasoning models with a thinking mode, such as GPT-5, "
-                                        @"o-series, or DeepSeek models, so the chat’s Think toggle appears."
+                                tooltip:NSLocalizedStringWithDefaultValue(@"AIModelEditor.ConfigurableThinkingTooltip", nil, [NSBundle mainBundle], @"Enable for reasoning models with a thinking mode, such as GPT-5, "
+                                        @"o-series, or DeepSeek models, so the chat’s Think toggle appears.", @"Tooltip for the configurable thinking checkbox")
                                     toY:&y
                                  fieldX:fieldX
                                   width:fieldWidth
                                 content:content];
     _supportsTemperatureButton =
-        [self addQuirkCheckboxWithTitle:@"Supports temperature"
+        [self addQuirkCheckboxWithTitle:NSLocalizedStringWithDefaultValue(@"AIModelEditor.SupportsTemperature", nil, [NSBundle mainBundle], @"Supports temperature", @"Checkbox label for whether a model supports a temperature parameter")
                                     key:kAIManualModelSupportsTemperatureKey
                            catalogValue:[[AIMetadata instance] modelSupportsTemperature:baseName]
-                                tooltip:@"Uncheck for models that reject a temperature parameter, such as "
-                                        @"Anthropic Opus 4.7 and later."
+                                tooltip:NSLocalizedStringWithDefaultValue(@"AIModelEditor.SupportsTemperatureTooltip", nil, [NSBundle mainBundle], @"Uncheck for models that reject a temperature parameter, such as "
+                                        @"Anthropic Opus 4.7 and later.", @"Tooltip for the supports temperature checkbox")
                                     toY:&y
                                  fieldX:fieldX
                                   width:fieldWidth
@@ -782,7 +785,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }
 
     y -= 6;
-    NSTextField *headersLabel = [NSTextField labelWithString:@"Custom headers:"];
+    NSTextField *headersLabel = [NSTextField labelWithString:NSLocalizedStringWithDefaultValue(@"AIModelEditor.CustomHeadersLabel", nil, [NSBundle mainBundle], @"Custom headers:", @"Label for the custom HTTP headers table")];
     headersLabel.alignment = NSTextAlignmentRight;
     headersLabel.frame = NSMakeRect(margin, y - 17, labelWidth, 20);
     [content addSubview:headersLabel];
@@ -797,11 +800,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _headersTable.allowsMultipleSelection = NO;
     _headersTable.rowHeight = 22;
     NSTableColumn *nameColumn = [[NSTableColumn alloc] initWithIdentifier:@"name"];
-    nameColumn.title = @"Header";
+    nameColumn.title = NSLocalizedStringWithDefaultValue(@"AIModelEditor.HeaderColumn", nil, [NSBundle mainBundle], @"Header", @"Column title for the custom header name");
     nameColumn.width = 170;
     nameColumn.editable = YES;
     NSTableColumn *valueColumn = [[NSTableColumn alloc] initWithIdentifier:@"value"];
-    valueColumn.title = @"Value";
+    valueColumn.title = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ValueColumn", nil, [NSBundle mainBundle], @"Value", @"Column title for the custom header value");
     valueColumn.width = fieldWidth - nameColumn.width - 24;
     valueColumn.editable = YES;
     [_headersTable addTableColumn:nameColumn];
@@ -813,6 +816,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     y -= headersTableHeight + 4;
 
     NSSegmentedControl *headersAddRemove =
+        // Localization unneeded
         [NSSegmentedControl segmentedControlWithLabels:@[ @"+", @"−" ]
                                           trackingMode:NSSegmentSwitchTrackingMomentary
                                                 target:self
@@ -821,7 +825,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     [content addSubview:headersAddRemove];
     y -= 22 + 10;
 
-    NSButton *save = [NSButton buttonWithTitle:(_isEditing ? @"Save" : @"Add")
+    NSButton *save = [NSButton buttonWithTitle:(_isEditing ? NSLocalizedStringWithDefaultValue(@"General.Save", nil, [NSBundle mainBundle], @"Save", @"Save button") : iTermLocalizedAdd())
                                         target:self
                                         action:@selector(saveClicked:)];
     save.bezelStyle = NSBezelStyleRounded;
@@ -829,7 +833,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     save.frame = NSMakeRect(width - margin - 100, 16, 100, 30);
     [content addSubview:save];
 
-    NSButton *cancel = [NSButton buttonWithTitle:@"Cancel"
+    NSButton *cancel = [NSButton buttonWithTitle:iTermLocalizedCancel()
                                           target:self
                                           action:@selector(cancelClicked:)];
     cancel.bezelStyle = NSBezelStyleRounded;
@@ -840,7 +844,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     // Sends a live probe with the current form values so the user can confirm the
     // endpoint and API key work before saving. Sits on the far left of the button
     // row, away from Save/Cancel.
-    _testButton = [NSButton buttonWithTitle:@"Test Connection"
+    _testButton = [NSButton buttonWithTitle:NSLocalizedStringWithDefaultValue(@"AIModelEditor.TestConnection", nil, [NSBundle mainBundle], @"Test Connection", @"Title of the button that tests the AI endpoint connection")
                                      target:self
                                      action:@selector(testClicked:)];
     _testButton.bezelStyle = NSBezelStyleRounded;
@@ -880,12 +884,12 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                                                                      modelName:modelName];
     if (iTermAIVendorHasEnterableKey(vendor)) {
         _apiKeyHintLabel.stringValue =
-            [NSString stringWithFormat:@"Authorizes with your %@ API key.",
+            [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"AIKeyHint.Authorizes", nil, [NSBundle mainBundle], @"Authorizes with your %@ API key.", @"Hint telling the user which provider's API key authorizes the model; %@ is the provider name"),
              iTermAIVendorProviderName(vendor)];
     } else {
         // No key can be configured: self-hosted (Llama) or Apple Intelligence
         // (which runs on-device or via Private Cloud Compute).
-        _apiKeyHintLabel.stringValue = @"No API key is used.";
+        _apiKeyHintLabel.stringValue = NSLocalizedStringWithDefaultValue(@"AIKeyHint.NoKeyUsed", nil, [NSBundle mainBundle], @"No API key is used.", @"Hint shown when the selected model needs no API key");
     }
 }
 
@@ -1106,8 +1110,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         [_urlField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
     if (name.length == 0 || url.length == 0) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Missing Information";
-        alert.informativeText = @"Enter a model name and URL before testing the connection.";
+        alert.messageText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MissingInfoTitle", nil, [NSBundle mainBundle], @"Missing Information", @"Title of alert shown when required fields are empty before testing");
+        alert.informativeText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MissingInfoText", nil, [NSBundle mainBundle], @"Enter a model name and URL before testing the connection.", @"Body of alert shown when required fields are empty before testing");
         [alert beginSheetModalForWindow:_window completionHandler:^(NSModalResponse returnCode) {}];
         return;
     }
@@ -1119,7 +1123,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     NSString *savedTitle = _testButton.title;
     _testButton.enabled = NO;
-    _testButton.title = @"Testing…";
+    _testButton.title = NSLocalizedStringWithDefaultValue(@"AIModelEditor.Testing", nil, [NSBundle mainBundle], @"Testing…", @"Title of the test button while an AI connection test is running");
     [_testSpinner startAnimation:nil];
     __weak __typeof(self) weakSelf = self;
     [iTermAIConnectionTester testModelName:name
@@ -1143,10 +1147,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         NSAlert *alert = [[NSAlert alloc] init];
         if (outcome == iTermAIConnectionTestOutcomeSuccess) {
             alert.alertStyle = NSAlertStyleInformational;
-            alert.messageText = @"Connection Succeeded";
+            alert.messageText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ConnectionSucceeded", nil, [NSBundle mainBundle], @"Connection Succeeded", @"Title of alert when the AI connection test succeeds");
         } else {
             alert.alertStyle = NSAlertStyleWarning;
-            alert.messageText = @"Connection Failed";
+            alert.messageText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ConnectionFailed", nil, [NSBundle mainBundle], @"Connection Failed", @"Title of alert when the AI connection test fails");
         }
         alert.informativeText = message ?: @"";
         [alert beginSheetModalForWindow:strongSelf->_window completionHandler:^(NSModalResponse returnCode) {}];
@@ -1168,15 +1172,15 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         [_urlField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
     NSString *failure = nil;
     if (name.length == 0) {
-        failure = @"Model is required.";
+        failure = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ModelRequired", nil, [NSBundle mainBundle], @"Model is required.", @"Validation error when the model name is empty");
     } else if (url.length == 0) {
-        failure = @"URL is required.";
+        failure = NSLocalizedStringWithDefaultValue(@"AIModelEditor.URLRequired", nil, [NSBundle mainBundle], @"URL is required.", @"Validation error when the URL is empty");
     } else if (_contextField.integerValue <= 0) {
-        failure = @"Context tokens must be greater than zero.";
+        failure = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ContextTokensPositive", nil, [NSBundle mainBundle], @"Context tokens must be greater than zero.", @"Validation error when context tokens is not positive");
     } else if (_responseField.integerValue <= 0) {
-        failure = @"Max response tokens must be greater than zero.";
+        failure = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MaxResponseTokensPositive", nil, [NSBundle mainBundle], @"Max response tokens must be greater than zero.", @"Validation error when max response tokens is not positive");
     } else if (_nameIsTaken && _nameIsTaken(name)) {
-        failure = @"Manual model names must be unique.";
+        failure = NSLocalizedStringWithDefaultValue(@"AIModelEditor.NamesUnique", nil, [NSBundle mainBundle], @"Manual model names must be unique.", @"Validation error when a manual model name is already taken");
     }
     // Validate custom headers here rather than in the per-cell delegate: the Save
     // button click ends the active cell edit, so a per-cell alert would race the
@@ -1191,21 +1195,21 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             NSString *headerValue = [entry[@"value"] isKindOfClass:NSString.class] ? entry[@"value"] : @"";
             if (![AICustomHeaders isValidName:headerName]) {
                 failure = [NSString stringWithFormat:
-                           @"Custom header name “%@” is not valid. Use only RFC 7230 token "
-                           @"characters (letters, digits, and any of !#$%%&'*+-.^_`|~).", headerName];
+                           NSLocalizedStringWithDefaultValue(@"AIModelEditor.InvalidHeaderName", nil, [NSBundle mainBundle], @"Custom header name “%@” is not valid. Use only RFC 7230 token "
+                           @"characters (letters, digits, and any of !#$%%&'*+-.^_`|~).", @"Validation error for an invalid custom HTTP header name; %@ is the name"), headerName];
                 break;
             }
             if (![AICustomHeaders isValidValue:headerValue]) {
                 failure = [NSString stringWithFormat:
-                           @"The value for custom header “%@” must not contain newline or "
-                           @"null characters.", headerName];
+                           NSLocalizedStringWithDefaultValue(@"AIModelEditor.InvalidHeaderValue", nil, [NSBundle mainBundle], @"The value for custom header “%@” must not contain newline or "
+                           @"null characters.", @"Validation error for an invalid custom HTTP header value; %@ is the header name"), headerName];
                 break;
             }
         }
     }
     if (failure) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Invalid Manual AI Model";
+        alert.messageText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.InvalidModelTitle", nil, [NSBundle mainBundle], @"Invalid Manual AI Model", @"Title of alert shown when a manual AI model fails validation");
         alert.informativeText = failure;
         [alert beginSheetModalForWindow:_window completionHandler:^(NSModalResponse returnCode) {}];
         return;
@@ -1573,7 +1577,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     info = [self defineControl:_irMemory
                            key:kPreferenceKeyInstantReplayMemoryMegabytes
-                   displayName:@"Instant Replay memory usage limit"
+                   displayName:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.InstantReplayMemoryLimit", nil, [NSBundle mainBundle], @"Instant Replay memory usage limit", @"Label for the Instant Replay memory limit setting")
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(0, 1000);
 
@@ -1612,7 +1616,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     info = [self defineControl:_apiPermission
                            key:kPreferenceKeyAPIAuthentication
-                   displayName:@"Authentication method for Python API"
+                   displayName:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.APIAuthMethod", nil, [NSBundle mainBundle], @"Authentication method for Python API", @"Label for the Python API authentication method setting")
                           type:kPreferenceInfoTypePopup];
     info.syntheticGetter = ^id{
         return @([iTermAPIHelper requireApplescriptAuth] ? 0 : 1);
@@ -1656,8 +1660,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermMetalSettingsDidChangeNotification object:nil];
     };
     info.onChange = ^{
-        [iTermWarning showWarningWithTitle:@"You must restart iTerm2 for this change to take effect."
-                                   actions:@[ @"OK" ]
+        [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.RestartRequired", nil, [NSBundle mainBundle], @"You must restart iTerm2 for this change to take effect.", @"Warning that a setting change requires restarting iTerm2")
+                                   actions:@[ iTermLocalizedOK() ]
                                 identifier:nil
                                silenceable:kiTermWarningTypePersistent
                                     window:nil];
@@ -1665,7 +1669,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 
     [self addViewToSearchIndex:_advancedGPUPrefsButton
-                   displayName:@"Advanced GPU settings"
+                   displayName:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.AdvancedGPUSettings", nil, [NSBundle mainBundle], @"Advanced GPU settings", @"Search index display name for advanced GPU settings")
                        phrases:@[ _advancedGPUWindowController.viewController.disableWhenDisconnected.title,
                                   _advancedGPUWindowController.viewController.disableInLowPowerMode.title,
                                   _advancedGPUWindowController.viewController.preferIntegratedGPU.title ]
@@ -1717,7 +1721,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     info = [self defineControl:_customScriptsFolder
                            key:kPreferenceKeyCustomScriptsFolder
-                   displayName:@"Custom folder for Python API scripts"
+                   displayName:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.CustomScriptsFolder", nil, [NSBundle mainBundle], @"Custom folder for Python API scripts", @"Label for the custom scripts folder setting")
                           type:kPreferenceInfoTypeStringTextField];
     info.shouldBeEnabled = ^BOOL() {
         return [iTermPreferences boolForKey:kPreferenceKeyUseCustomScriptsFolder];
@@ -1869,7 +1873,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     info = [self defineControl:_placementContainer
                            key:kPreferenceKeyWindowPlacement
-                   displayName:@"New window placement"
+                   displayName:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.NewWindowPlacement", nil, [NSBundle mainBundle], @"New window placement", @"Label for the new window placement setting")
                           type:kPreferenceInfoTypeRadioButton];
 
     [self defineControl:_adjustWindowForFontSizeChange
@@ -1951,7 +1955,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     [self defineControl:_tmuxPauseModeAgeLimit
                     key:kPreferenceKeyTmuxPauseModeAgeLimit
-            displayName:@"Pause a tmux pane if it would take more than this many seconds to catch up."
+            displayName:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.TmuxPauseAgeLimit", nil, [NSBundle mainBundle], @"Pause a tmux pane if it would take more than this many seconds to catch up.", @"Label for the tmux pause age limit setting")
                    type:kPreferenceInfoTypeUnsignedIntegerTextField];
     [self defineControl:_unpauseTmuxAutomatically
                     key:kPreferenceKeyTmuxUnpauseAutomatically
@@ -1981,7 +1985,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     /// -------
 
     [self addViewToSearchIndex:_openAIAPIKey
-                   displayName:@"Manage AI API Keys"
+                   displayName:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.ManageAIAPIKeys", nil, [NSBundle mainBundle], @"Manage AI API Keys", @"Title for the AI API keys management UI")
                        phrases:@[ @"Set API key for AI",
                                    @"OpenAI Anthropic Gemini DeepSeek API keys" ]
                            key:kPreferenceKeyAIAPIKey];
@@ -2056,7 +2060,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         [weakSelf reloadDefaultAIModelPopup];
     }];
     [self addViewToSearchIndex:_aiPluginLabel
-                   displayName:@"Install AI Plugin"
+                   displayName:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.InstallAIPlugin", nil, [NSBundle mainBundle], @"Install AI Plugin", @"Search index display name for the install AI plugin action")
                        phrases:@[ @"AI Plugin" ]
                            key:kPhonyPreferenceKeyInstallAIPlugin];
 
@@ -2094,7 +2098,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     };
     [self defineControl:_aiTimeout
                     key:kPreferenceKeyAITimeout
-            displayName:@"AI timeout"
+            displayName:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.AITimeout", nil, [NSBundle mainBundle], @"AI timeout", @"Label for the AI request timeout setting")
                    type:kPreferenceInfoTypeIntegerTextField];
 
     [self defineControl:_aiSafetyCheck
@@ -2159,7 +2163,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     switch ((iTermAIPrompt)_promptSelector.selectedTag) {
         case iTermAIPromptEngageAI:
             name = iTermAIPromptVariablePrompt;
-            explanation = @"The query you enter will replace it when speaking to the AI. For example: “Write a unix command to \\(ai.prompt).”";
+            explanation = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.PromptEngageExplanation", nil, [NSBundle mainBundle], @"The query you enter will replace it when speaking to the AI. For example: “Write a unix command to \\(ai.prompt).”", @"Explanation of the ai.prompt variable in the AI prompt editor");
             key = kPreferenceKeyAIPrompt;
             break;
         case iTermAIPromptAIChat:
@@ -2188,7 +2192,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             break;
         case iTermAIPromptChatIcon:
             name = iTermAIPromptVariableSubject;
-            explanation = @"The chat’s title will replace it when speaking to the AI.";
+            explanation = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.PromptChatIconExplanation", nil, [NSBundle mainBundle], @"The chat’s title will replace it when speaking to the AI.", @"Explanation of the ai.subject variable in the chat-icon prompt editor");
             key = kPreferenceKeyAIPromptChatIcon;
             break;
     }
@@ -2294,9 +2298,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 }
 
 - (NSString *)defaultAIModelTitleForManualConfiguration:(NSDictionary *)configuration {
-    NSString *name = configuration[kAIManualModelNameKey] ?: @"Untitled model";
+    NSString *name = configuration[kAIManualModelNameKey] ?: NSLocalizedStringWithDefaultValue(@"AIManualModels.UntitledModel", nil, [NSBundle mainBundle], @"Untitled model", @"Placeholder name for a manual AI model with no name");
     iTermAIVendor provider = [self providerForManualAIModelConfiguration:configuration];
-    return [NSString stringWithFormat:@"Manual: %@ — %@",
+    return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.DefaultModelManualTitle", nil, [NSBundle mainBundle], @"Manual: %1$@ — %2$@", @"Menu title for a manual AI model; first %@ is the model name, second is the provider"),
             name,
             [self aiAPIKeyProviderNameForVendor:provider]];
 }
@@ -2309,7 +2313,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _aiVendor.action = @selector(defaultAIModelPopupDidChange:);
 
     [self addViewToSearchIndex:_aiVendor
-                   displayName:@"Default model for new AI chats"
+                   displayName:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.DefaultModelForNewChats", nil, [NSBundle mainBundle], @"Default model for new AI chats", @"Search index display name for the default AI model setting")
                        phrases:@[ @"AI default provider",
                                    @"AI manual model default" ]
                            key:kPreferenceKeyAIModel];
@@ -2413,22 +2417,22 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSString *title;
     switch (outcome) {
         case AIModelCatalogUpdateOutcomeUpdated:
-            title = @"A newer AI model list was downloaded. It will take effect the next time you launch iTerm2.";
+            title = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.ModelUpdateDownloaded", nil, [NSBundle mainBundle], @"A newer AI model list was downloaded. It will take effect the next time you launch iTerm2.", @"Alert shown after a newer AI model list was downloaded");
             break;
         case AIModelCatalogUpdateOutcomeUpToDate:
-            title = @"Your AI model list is already up to date.";
+            title = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.ModelUpdateUpToDate", nil, [NSBundle mainBundle], @"Your AI model list is already up to date.", @"Alert shown when the AI model list is already current");
             break;
         case AIModelCatalogUpdateOutcomeFailed:
-            title = @"Couldn’t check for AI model updates. Please try again later.";
+            title = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.ModelUpdateFailed", nil, [NSBundle mainBundle], @"Couldn’t check for AI model updates. Please try again later.", @"Alert shown when checking for AI model updates fails");
             break;
         case AIModelCatalogUpdateOutcomeDisabled:
-            title = @"AI model updates are turned off in Advanced Settings (the update URL is empty).";
+            title = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.ModelUpdateDisabled", nil, [NSBundle mainBundle], @"AI model updates are turned off in Advanced Settings (the update URL is empty).", @"Alert shown when AI model updates are disabled");
             break;
         case AIModelCatalogUpdateOutcomeNotEnabled:
-            title = @"Turn on AI features before checking for model updates.";
+            title = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.ModelUpdateNotEnabled", nil, [NSBundle mainBundle], @"Turn on AI features before checking for model updates.", @"Alert shown when AI is not enabled but the user checks for model updates");
             break;
         case AIModelCatalogUpdateOutcomeBusy:
-            title = @"A check for AI model updates is already in progress.";
+            title = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.ModelUpdateBusy", nil, [NSBundle mainBundle], @"A check for AI model updates is already in progress.", @"Alert shown when an AI model update check is already running");
             break;
         case AIModelCatalogUpdateOutcomeDeclined:
             // The user just dismissed or declined the consent modal; a second
@@ -2436,7 +2440,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             return;
     }
     [iTermWarning showWarningWithTitle:title
-                               actions:@[ @"OK" ]
+                               actions:@[ iTermLocalizedOK() ]
                             identifier:nil
                            silenceable:kiTermWarningTypePersistent
                                 window:self.view.window];
@@ -2519,7 +2523,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 - (void)validatePlugin {
     DLog(@"validatePlugin");
-    _pluginStatus.stringValue = @"Checking plugin status…";
+    _pluginStatus.stringValue = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.CheckingPluginStatus", nil, [NSBundle mainBundle], @"Checking plugin status…", @"Status shown while the AI plugin is being validated");
     __weak __typeof(self) weakSelf = self;
     [iTermAITermGatekeeper validatePlugin:^(NSString * _Nullable problem) {
         [weakSelf setPluginProblem:problem];
@@ -2530,7 +2534,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     DLog(@"problem=%@", problem);
     if (problem) {
         _pluginStatus.stringValue = problem;
-        _installPluginButton.title = @"Install…";
+        _installPluginButton.title = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.InstallEllipsis", nil, [NSBundle mainBundle], @"Install…", @"Title of button that installs the AI plugin");
         _installPluginButton.action = @selector(installPlugin:);
         [_installPluginButton sizeToFit];
         _installPluginButton.enabled = [iTermAdvancedSettingsModel generativeAIAllowed];
@@ -2540,8 +2544,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             [weakSelf validatePlugin];
         });
     } else {
-        _pluginStatus.stringValue = @"Plugin installed and working ✅";
-        _installPluginButton.title = @"Reveal in Finder";
+        _pluginStatus.stringValue = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.PluginInstalledWorking", nil, [NSBundle mainBundle], @"Plugin installed and working ✅", @"Status shown when the AI plugin is installed and working");
+        _installPluginButton.title = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.RevealInFinder", nil, [NSBundle mainBundle], @"Reveal in Finder", @"Title of button that reveals the plugin in Finder");
         [_installPluginButton sizeToFit];
         _installPluginButton.action = @selector(revealPlugin:);
         _installPluginButton.enabled = YES;
@@ -2596,12 +2600,12 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _mainAIAPIKeyHint.hidden = NO;
     if (iTermAIVendorHasEnterableKey(vendor)) {
         _mainAIAPIKeyHint.stringValue =
-            [NSString stringWithFormat:@"Authorizes with your %@ API key.",
+            [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"AIKeyHint.Authorizes", nil, [NSBundle mainBundle], @"Authorizes with your %@ API key.", @"Hint telling the user which provider's API key authorizes the model; %@ is the provider name"),
              iTermAIVendorProviderName(vendor)];
     } else {
         // No key can be configured: self-hosted (Llama) or Apple Intelligence
         // (which runs on-device or via Private Cloud Compute).
-        _mainAIAPIKeyHint.stringValue = @"No API key is used.";
+        _mainAIAPIKeyHint.stringValue = NSLocalizedStringWithDefaultValue(@"AIKeyHint.NoKeyUsed", nil, [NSBundle mainBundle], @"No API key is used.", @"Hint shown when the selected model needs no API key");
     }
 }
 
@@ -2657,7 +2661,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         variableName ? [NSString stringWithFormat:@"\\(ai.%@)", variableName] : nil;
     if (requiredVariable && ![[self stringForKey:key] containsString:requiredVariable]) {
         _aiPromptWarning.toolTip =
-            [NSString stringWithFormat:@"The prompt must contain the substring %@. %@",
+            [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.PromptMustContain", nil, [NSBundle mainBundle], @"The prompt must contain the substring %1$@. %2$@", @"Tooltip warning that a prompt is missing a required variable; first %@ is the variable, second is an explanation"),
              requiredVariable, explanation];
         _aiPromptWarning.alphaValue = 1.0;
     } else {
@@ -2671,13 +2675,13 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 - (NSString *)alwaysOpenLegend {
     if ([iTermScriptsMenuController autoLaunchFolderExists]) {
-        return @"The presence of auto-launch scripts disables opening a window at startup.";
+        return NSLocalizedStringWithDefaultValue(@"GeneralPrefs.AlwaysOpenAutoLaunch", nil, [NSBundle mainBundle], @"The presence of auto-launch scripts disables opening a window at startup.", @"Explains why opening a window at startup is disabled");
     }
     if ([[[iTermHotKeyController sharedInstance] profileHotKeys] count] > 0) {
-        return @"The existence of hotkey windows disables opening a window at startup.";
+        return NSLocalizedStringWithDefaultValue(@"GeneralPrefs.AlwaysOpenHotkey", nil, [NSBundle mainBundle], @"The existence of hotkey windows disables opening a window at startup.", @"Explains why opening a window at startup is disabled");
     }
     if ([[[iTermBuriedSessions sharedInstance] buriedSessions] count] > 0) {
-        return @"The existence of buried sessions disables opening a window at startup.";
+        return NSLocalizedStringWithDefaultValue(@"GeneralPrefs.AlwaysOpenBuried", nil, [NSBundle mainBundle], @"The existence of buried sessions disables opening a window at startup.", @"Explains why opening a window at startup is disabled");
     }
     return nil;
 }
@@ -2761,10 +2765,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 - (IBAction)changeAPIKey:(id)sender {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Manage AI API Keys";
-    alert.informativeText = @"Keys are stored securely in the macOS Keychain.";
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Cancel"];
+    alert.messageText = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.ManageAIAPIKeys", nil, [NSBundle mainBundle], @"Manage AI API Keys", @"Title for the AI API keys management UI");
+    alert.informativeText = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.KeysStoredInKeychain", nil, [NSBundle mainBundle], @"Keys are stored securely in the macOS Keychain.", @"Explanation that API keys are stored in the Keychain");
+    [alert addButtonWithTitle:iTermLocalizedOK()];
+    [alert addButtonWithTitle:iTermLocalizedCancel()];
 
     NSArray<NSNumber *> *vendors = [self aiAPIKeyProviderVendors];
     const CGFloat width = 620;
@@ -2801,7 +2805,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         field.usesSingleLineMode = YES;
         field.editable = YES;
         field.selectable = YES;
-        field.placeholderString = [NSString stringWithFormat:@"%@ API key", name];
+        field.placeholderString = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.APIKeyPlaceholder", nil, [NSBundle mainBundle], @"%@ API key", @"Placeholder for an API key field; %@ is the provider name"), name];
         field.stringValue = [AITermControllerObjC apiKeyForVendor:vendor] ?: @"";
         [accessory addSubview:field];
         [_aiAPIKeySheetFields addObject:field];
@@ -2997,7 +3001,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 }
 
 - (NSString *)manualAIModelTitle:(NSDictionary *)configuration {
-    NSString *name = configuration[kAIManualModelNameKey] ?: @"Untitled model";
+    NSString *name = configuration[kAIManualModelNameKey] ?: NSLocalizedStringWithDefaultValue(@"AIManualModels.UntitledModel", nil, [NSBundle mainBundle], @"Untitled model", @"Placeholder name for a manual AI model with no name");
     NSString *url = configuration[kAIManualModelURLKey] ?: @"";
     iTermAIAPI api = (iTermAIAPI)[self manualAIModelConfiguration:configuration
                                                    integerForKey:kAIManualModelAPIKey
@@ -3039,7 +3043,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSMutableDictionary *copy = [panel.configurations[(NSUInteger)row] mutableCopy];
     copy[kAIManualModelIDKey] = NSUUID.UUID.UUIDString;
     copy[kAIManualModelNameKey] =
-        [NSString stringWithFormat:@"%@ copy", copy[kAIManualModelNameKey] ?: @"Manual model"];
+        [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"AIManualModels.CopySuffix", nil, [NSBundle mainBundle], @"%@ copy", @"Name given to a duplicated manual AI model; %@ is the original name"), copy[kAIManualModelNameKey] ?: NSLocalizedStringWithDefaultValue(@"AIManualModels.ManualModelDefault", nil, [NSBundle mainBundle], @"Manual model", @"Default name for a manual AI model with no name")];
     [self presentManualModelEditorForPanel:panel base:copy isEditing:NO editingIndex:-1];
 }
 
@@ -3228,11 +3232,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }
     [ud setBool:YES forKey:@"NoSyncAILegacyGlobalHeadersWarningShown"];
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Custom Headers Are Now Set Per Model";
-    alert.informativeText = @"Your AI custom HTTP headers used to be a single global "
+    alert.messageText = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.LegacyHeadersTitle", nil, [NSBundle mainBundle], @"Custom Headers Are Now Set Per Model", @"Title of alert explaining custom headers moved to per-model settings");
+    alert.informativeText = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.LegacyHeadersText", nil, [NSBundle mainBundle], @"Your AI custom HTTP headers used to be a single global "
                             @"setting. They still apply to your current model, but adding "
                             @"or editing models here does not carry them over. Re-add the "
-                            @"headers you need in each model’s “Custom headers” section.";
+                            @"headers you need in each model’s “Custom headers” section.", @"Body of alert explaining custom headers moved to per-model settings");
     [alert runModal];
 }
 
@@ -3284,16 +3288,16 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 }
 
 - (IBAction)exportAllSettingsAndData:(id)sender {
-    [self showMessage:[iTerm2ImportExport exportAll] title:@"Problem Exporting"];
+    [self showMessage:[iTerm2ImportExport exportAll] title:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.ProblemExporting", nil, [NSBundle mainBundle], @"Problem Exporting", @"Title of alert shown when exporting settings fails")];
 }
 
 - (IBAction)importAllSettingsAndData:(id)sender {
-    [self showMessage:[iTerm2ImportExport importAll] title:@"Problem Importing"];
+    [self showMessage:[iTerm2ImportExport importAll] title:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.ProblemImporting", nil, [NSBundle mainBundle], @"Problem Importing", @"Title of alert shown when importing settings fails")];
 }
 
 - (IBAction)eraseAllSettingsAndData:(id)sender {
     [self showMessage:[iTerm2ImportExport eraseAllWithWindow:self.view.window]
-                title:@"Problem Erasing Settings and Data"];
+                title:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.ProblemErasing", nil, [NSBundle mainBundle], @"Problem Erasing Settings and Data", @"Title of alert shown when erasing settings fails")];
 }
 
 - (void)showMessage:(NSString *)message title:(NSString *)title {
@@ -3301,7 +3305,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         return;
     }
     [iTermWarning showWarningWithTitle:message
-                               actions:@[ @"OK" ]
+                               actions:@[ iTermLocalizedOK() ]
                              accessory:nil
                             identifier:nil
                            silenceable:kiTermWarningTypePersistent
@@ -3314,21 +3318,21 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSString *action;
     NSString *path;
     if (@available(macOS 13, *)) {
-        message = @"System window restoration has been disabled, which prevents iTerm2 from respecting this setting. Disable ”System Settings > Desktop & Dock > Close windows when quitting an application“ to enable window restoration.";
-        action = @"Open System Settings";
+        message = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.WindowRestorationDisabledMessage13", nil, [NSBundle mainBundle], @"System window restoration has been disabled, which prevents iTerm2 from respecting this setting. Disable ”System Settings > Desktop & Dock > Close windows when quitting an application“ to enable window restoration.", @"Warning shown when macOS window restoration is disabled (macOS 13+)");
+        action = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.OpenSystemSettings", nil, [NSBundle mainBundle], @"Open System Settings", @"Button that opens System Settings");
         path = @"/System/Library/PreferencePanes/Dock.prefPane";
     } else {
-        message = @"System window restoration has been disabled, which prevents iTerm2 from respecting this setting. Disable System Settings > General > Close windows when quitting an app to enable window restoration.";
-        action = @"Open System Preferences";
+        message = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.WindowRestorationDisabledMessageLegacy", nil, [NSBundle mainBundle], @"System window restoration has been disabled, which prevents iTerm2 from respecting this setting. Disable System Settings > General > Close windows when quitting an app to enable window restoration.", @"Warning shown when macOS window restoration is disabled (older macOS)");
+        action = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.OpenSystemPreferences", nil, [NSBundle mainBundle], @"Open System Preferences", @"Button that opens System Preferences");
         path = @"/System/Library/PreferencePanes/Appearance.prefPane";
     }
     const iTermWarningSelection selection =
     [iTermWarning showWarningWithTitle:message
-                               actions:@[ action, @"OK" ]
+                               actions:@[ action, iTermLocalizedOK() ]
                              accessory:nil
                             identifier:@"NoSyncWindowRestorationDisabled"
                            silenceable:kiTermWarningTypePersistent
-                               heading:@"Window Restoration Disabled"
+                               heading:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.WindowRestorationDisabledTitle", nil, [NSBundle mainBundle], @"Window Restoration Disabled", @"Title of window-restoration-disabled warning")
                                 window:self.view.window];
     if (selection == kiTermWarningSelection0) {
         [[NSWorkspace sharedWorkspace] it_openURL:[NSURL fileURLWithPath:path]
@@ -3477,9 +3481,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                 // User didn't hit cancel; if he chose a writable directory, ask if he wants to write to it.
                 if ([[iTermRemotePreferences sharedInstance] remoteLocationIsValid]) {
                     NSAlert *alert = [[NSAlert alloc] init];
-                    alert.messageText = @"Copy local settings to custom folder now?";
-                    [alert addButtonWithTitle:@"Copy"];
-                    [alert addButtonWithTitle:@"Don’t Copy"];
+                    alert.messageText = NSLocalizedStringWithDefaultValue(@"GeneralPrefs.CopyLocalSettingsPrompt", nil, [NSBundle mainBundle], @"Copy local settings to custom folder now?", @"Prompt asking whether to copy local settings into the newly chosen custom prefs folder");
+                    [alert addButtonWithTitle:iTermLocalizedCopy()];
+                    [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"GeneralPrefs.DontCopy", nil, [NSBundle mainBundle], @"Don’t Copy", @"Button declining to copy settings")];
                     if ([alert runModal] == NSAlertFirstButtonReturn) {
                         [[iTermRemotePreferences sharedInstance] saveLocalUserDefaultsToRemotePrefs];
                     }

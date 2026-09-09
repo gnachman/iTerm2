@@ -25,6 +25,7 @@
 
 NSString *const kRegexKey = @"regex";
 NSString *const kNotesKey = @"notes";
+NSString *const kNotesLocalizationKey = @"notesLocalizationKey";
 NSString *const kPrecisionKey = @"precision";
 NSString *const kActionsKey = @"actions";
 
@@ -47,6 +48,50 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
 
 @interface SmartSelectionController() <NSTableViewDataSource, NSTableViewDelegate, NSTextFieldDelegate, iTermPlaygroundTextViewDelegate, NSMenuItemValidation>
 @end
+
+// The default rules ship in SmartSelectionRules.plist with English "notes" and a
+// stable "notesLocalizationKey". A note is stored verbatim in the profile and is
+// user-editable, so the stored value stays English; we only localize the read-only
+// DISPLAY of the known built-in notes (the table cell and the playground result). The
+// editable name field shows the stored value unchanged so editing never persists a
+// translated string.
+//
+// Rather than keeping a hand-maintained English -> localized table in sync with the
+// plist, we derive an English-note -> localization-key map from the plist itself once,
+// then localize a built-in note off its rule's key. A built-in note therefore
+// localizes automatically as soon as its rule (with a notesLocalizationKey) exists in
+// the plist and the catalog carries the key; no separate table can drift. User-authored
+// notes are not in the plist and pass through untouched.
+static NSString *iTermLocalizedSmartSelectionNote(NSString *note) {
+    if (note == nil) {
+        return note;
+    }
+    static NSDictionary<NSString *, NSString *> *noteToLocalizationKey;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableDictionary<NSString *, NSString *> *map = [NSMutableDictionary dictionary];
+        for (NSDictionary *rule in [SmartSelectionController defaultRules]) {
+            NSString *ruleNote = rule[kNotesKey];
+            NSString *localizationKey = rule[kNotesLocalizationKey];
+            if ([ruleNote isKindOfClass:[NSString class]] &&
+                [localizationKey isKindOfClass:[NSString class]]) {
+                map[ruleNote] = localizationKey;
+            }
+        }
+        noteToLocalizationKey = map;
+    });
+    NSString *localizationKey = noteToLocalizationKey[note];
+    if (localizationKey == nil) {
+        // User-authored note (not a built-in): show the stored value verbatim.
+        return note;
+    }
+    // The default value is the built-in's English note, so a missing catalog entry
+    // still displays correct English. The key is dynamic here (derived from the
+    // plist); the catalog entries are maintained alongside the plist keys.
+    return [[NSBundle mainBundle] localizedStringForKey:localizationKey
+                                                  value:note
+                                                  table:nil];
+}
 
 @implementation SmartSelectionController {
     IBOutlet NSTableView *tableView_;
@@ -110,7 +155,7 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
     _regexTextView.richText = NO;
 
     _playgroundTextView.font = [NSFont userFixedPitchFontOfSize:[NSFont systemFontSize]];
-    _playgroundTextView.it_placeholderString = @"Smart Selection Playground\nEnter text here, then click to see which rule matches at that location.";
+    _playgroundTextView.it_placeholderString = NSLocalizedStringWithDefaultValue(@"SmartSelection.PlaygroundPlaceholder", nil, [NSBundle mainBundle], @"Smart Selection Playground\nEnter text here, then click to see which rule matches at that location.", @"Placeholder text for the smart selection playground text view");
     _playgroundTextView.playgroundDelegate = self;
     _playgroundTextView.automaticSpellingCorrectionEnabled = NO;
     _playgroundTextView.automaticDashSubstitutionEnabled = NO;
@@ -238,11 +283,11 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
         [popover showRelativeToRect:button.bounds ofView:button preferredEdge:NSRectEdgeMaxX];
         _popover = popover;
 
-        _visualizationButton.title = @"Close Regular Expression Visualization";
+        _visualizationButton.title = NSLocalizedStringWithDefaultValue(@"SmartSelection.CloseVisualization", nil, [NSBundle mainBundle], @"Close Regular Expression Visualization", @"Button title to close the regular expression visualization popover");
     } else {
         [_popover close];
         _popover = nil;
-        _visualizationButton.title = @"Open Regular Expression Visualization";
+        _visualizationButton.title = NSLocalizedStringWithDefaultValue(@"SmartSelection.OpenVisualization", nil, [NSBundle mainBundle], @"Open Regular Expression Visualization", @"Button title to open the regular expression visualization popover");
     }
 }
 
@@ -294,12 +339,12 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
 }
 
 - (NSString *)displayNameForPrecision:(NSString *)precision {
-    NSDictionary *names = @{ kVeryLowPrecision: @"Very Low",
-                             kLowPrecision: @"Low",
-                             kNormalPrecision: @"Normal",
-                             kHighPrecision: @"High",
-                             kVeryHighPrecision: @"Very High" };
-    return names[precision] ?: @"Undefined";
+    NSDictionary *names = @{ kVeryLowPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionVeryLow", nil, [NSBundle mainBundle], @"Very Low", @"Display name for the very low precision level"),
+                             kLowPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionLow", nil, [NSBundle mainBundle], @"Low", @"Display name for the low precision level"),
+                             kNormalPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionNormal", nil, [NSBundle mainBundle], @"Normal", @"Display name for the normal precision level"),
+                             kHighPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionHigh", nil, [NSBundle mainBundle], @"High", @"Display name for the high precision level"),
+                             kVeryHighPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionVeryHigh", nil, [NSBundle mainBundle], @"Very High", @"Display name for the very high precision level") };
+    return names[precision] ?: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionUndefined", nil, [NSBundle mainBundle], @"Undefined", @"Display name for an unknown precision level");
 }
 
 - (int)indexForPrecision:(NSString *)precision {
@@ -344,7 +389,7 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
     NSString *regex = rule[kRegexKey];
     id regexAttributedString = regex.length > 0 ? [self attributedStringForRegex:regex] : [NSNull null];
     NSArray *lines = nil;
-    NSString *name = rule[kNotesKey];
+    NSString *name = iTermLocalizedSmartSelectionNote(rule[kNotesKey]);
     NSAttributedString *precisionAttributedString = [self precisionAttributedString:rule[kPrecisionKey]
                                                                         actionCount:[[NSArray castFrom:rule[kActionsKey]] count]];
     if ([name stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]].length > 0) {
@@ -366,11 +411,14 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
         NSParagraphStyleAttributeName: paragraphStyle,
         NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize] weight:NSFontWeightSemibold]
     };
-    NSString *name = [[self displayNameForPrecision:precision] stringByAppendingString:@" precision"];
-    if (actionCount == 1) {
-        name = [name stringByAppendingFormat:@", one action"];
-    } else if (actionCount > 1) {
-        name = [name stringByAppendingFormat:@", %@ actions", @(actionCount)];
+    NSDictionary *phrases = @{ kVeryLowPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionVeryLowPhrase", nil, [NSBundle mainBundle], @"Very low precision", @"Describes a smart selection rule using the very low precision level"),
+                               kLowPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionLowPhrase", nil, [NSBundle mainBundle], @"Low precision", @"Describes a smart selection rule using the low precision level"),
+                               kNormalPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionNormalPhrase", nil, [NSBundle mainBundle], @"Normal precision", @"Describes a smart selection rule using the normal precision level"),
+                               kHighPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionHighPhrase", nil, [NSBundle mainBundle], @"High precision", @"Describes a smart selection rule using the high precision level"),
+                               kVeryHighPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionVeryHighPhrase", nil, [NSBundle mainBundle], @"Very high precision", @"Describes a smart selection rule using the very high precision level") };
+    NSString *name = phrases[precision] ?: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionUndefinedPhrase", nil, [NSBundle mainBundle], @"Undefined precision", @"Describes a smart selection rule using an unknown precision level");
+    if (actionCount >= 1) {
+        name = [name stringByAppendingString:[NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"SmartSelection.ActionCountSuffix", nil, [NSBundle mainBundle], @", %ld actions", @"Suffix appended to a smart selection rule name giving its action count; %ld is the count"), (long)actionCount]];
     }
     return [[NSAttributedString alloc] initWithString:name attributes:boldAttributes];
 }
@@ -431,9 +479,10 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
     _detailView.hidden = !self.hasSelection;
     _noRuleSelected.hidden = self.hasSelection;
     if (tableView_.numberOfSelectedRows > 1) {
-        _noRuleSelected.stringValue = @"Multiple rules selected";
+        // Localization unneeded: distinct states, not a count plural.
+        _noRuleSelected.stringValue = NSLocalizedStringWithDefaultValue(@"SmartSelection.MultipleRulesSelected", nil, [NSBundle mainBundle], @"Multiple rules selected", @"Shown in the smart selection editor when more than one rule is selected");
     } else {
-        _noRuleSelected.stringValue = @"No rule selected";
+        _noRuleSelected.stringValue = NSLocalizedStringWithDefaultValue(@"SmartSelection.NoRuleSelected", nil, [NSBundle mainBundle], @"No rule selected", @"Shown in the smart selection editor when no rule is selected");
     }
     if (self.hasSelection) {
         const NSInteger row = [tableView_ selectedRow];
@@ -444,9 +493,9 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
         [self updateVisualization];
         const NSInteger actionCount = [[NSArray castFrom:rule[kActionsKey]] count];
         if (actionCount == 0) {
-            _actionsButton.title = [NSString stringWithFormat:@"Actions…"];
+            _actionsButton.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"SmartSelection.Actions", nil, [NSBundle mainBundle], @"Actions…", @"Button title for the actions menu when a rule has no actions")];
         } else {
-            _actionsButton.title = [NSString stringWithFormat:@"Actions (%@)…", @(actionCount)];
+            _actionsButton.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"SmartSelection.ActionsWithCount", nil, [NSBundle mainBundle], @"Actions (%@)…", @"Button title showing the number of actions attached to a rule; %@ is the count"), @(actionCount)];
         }
     } else {
         _nameTextField.stringValue = @"";
@@ -571,12 +620,12 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
 
 - (void)updatePlayground {
     if (_playgroundTextView.lastCoord.x < 0 || _playgroundTextView.lastCoord.y < 0) {
-        _playgroundResultLabel.stringValue = @"Click on text in playground to test rules";
+        _playgroundResultLabel.stringValue = NSLocalizedStringWithDefaultValue(@"SmartSelection.ClickToTest", nil, [NSBundle mainBundle], @"Click on text in playground to test rules", @"Playground prompt telling the user to click on text to test smart selection rules");
         return;
     }
     if (_playgroundTextView.lastCoord.y >= _playgroundTextView.textStorage.string.numberOfLines ||
         _playgroundTextView.lastCoord.x >= _playgroundTextView.textStorage.string.width) {
-        _playgroundResultLabel.stringValue = @"Click on text in playground to test rules";
+        _playgroundResultLabel.stringValue = NSLocalizedStringWithDefaultValue(@"SmartSelection.ClickToTest", nil, [NSBundle mainBundle], @"Click on text in playground to test rules", @"Playground prompt telling the user to click on text to test smart selection rules");
         return;
     }
     iTermTextExtractor *extractor = [[iTermTextExtractor alloc] initWithDataSource:_playgroundTextView.textStorage.string ?: @""];
@@ -587,10 +636,10 @@ const double SmartSelectionVeryHighPrecision = 1000000.0;
                                                range:&relativeRange
                                     ignoringNewlines:NO];
     if (!result) {
-        _playgroundResultLabel.stringValue = @"No match";
+        _playgroundResultLabel.stringValue = NSLocalizedStringWithDefaultValue(@"SmartSelection.NoMatch", nil, [NSBundle mainBundle], @"No match", @"Playground result label shown when no smart selection rule matches");
         return;
     }
-    _playgroundResultLabel.stringValue = result.rule[kNotesKey];
+    _playgroundResultLabel.stringValue = iTermLocalizedSmartSelectionNote(result.rule[kNotesKey]);
     [_playgroundTextView highlightGridRange:VT100GridCoordRangeMake(result.startX,
                                                                     result.absStartY,
                                                                     result.endX,

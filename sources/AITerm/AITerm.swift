@@ -476,8 +476,8 @@ class AITermController {
                 it_fatalError()
             case .webResponse(let response):
                 if let error = response.error, !error.isEmpty {
-                    let provider = llmProvider?.displayName ?? "server"
-                    var message = "Error from \(provider): \(error)"
+                    let provider = llmProvider?.displayName ?? String(localized: "AITerm.DefaultProviderName", defaultValue: "server", comment: "Fallback name for the AI provider when its name is unknown, used in “Error from …”")
+                    var message = String(localized: "AITerm.ErrorFromProvider", defaultValue: "Error from \(provider): \(String(describing: error))", comment: "Error shown when the AI provider returns an error; first placeholder is the provider name, second is the error text")
                     if let reason = LLMErrorParser.errorReason(data: response.data.lossyData), !reason.isEmpty {
                         message += " " + reason
                     }
@@ -508,7 +508,7 @@ class AITermController {
                         .components(separatedBy: "\n")
                         .map { "    " + $0 }
                         .joined(separator: "\n")
-                    delegate?.aitermController(self, didStreamUpdate: "\n\n**Request failed**\n\n\(details)")
+                    delegate?.aitermController(self, didStreamUpdate: String(localized: "AITerm.RequestFailed", defaultValue: "\n\n**Request failed**\n\n\(details)", comment: "Streamed message shown when an AI request fails; placeholder is the error details"))
                 }
                 delegate?.aitermController(self, didFailWithError: error)
             case .word(let word):
@@ -538,7 +538,7 @@ class AITermController {
             // .begin would request registration again and recurse forever.
             // Fail instead of overflowing the stack.
             guard self.registration != nil else {
-                handle(event: .error(AIError("Could not obtain a valid API key registration for this model’s provider.")))
+                handle(event: .error(AIError(String(localized: "AITerm.NoRegistration", defaultValue: "Could not obtain a valid API key registration for this model’s provider.", comment: "Error shown when a valid API key registration cannot be obtained for the model's provider"))))
                 return
             }
             handle(event: .begin)
@@ -567,12 +567,10 @@ class AITermController {
     // This lets App Store review exercise the AI chat (including through the iOS
     // companion app) with no real key and no cost. No genuine provider key is
     // ever this string.
+    // Localization unneeded
     static let reviewPlaceholderAPIKey = "placeholder"
     static let reviewPlaceholderResponse =
-        "This is a demonstration response from the iTerm2 AI assistant. " +
-        "iTerm2 is configured with a placeholder key for App Review, so no " +
-        "external AI service is contacted and no data leaves your Mac. To get " +
-        "real answers, set your AI provider's API key in iTerm2 Settings > AI."
+        String(localized: "AITerm.ReviewPlaceholderResponse", defaultValue: "This is a demonstration response from the iTerm2 AI assistant. iTerm2 is configured with a placeholder key for App Review, so no external AI service is contacted and no data leaves your Mac. To get real answers, set your AI provider’s API key in iTerm2 Settings > AI.", comment: "Canned AI response shown during App Store review when a placeholder API key is configured")
 
     static var provider: LLMProvider? {
         if let model = LLMMetadata.model() {
@@ -593,7 +591,7 @@ class AITermController {
 
     private func requestCompletion(messages: [Message], registration: Registration, stream: ((String) -> ())?) {
         guard let llmProvider else {
-            handle(event: .error(AIError("No AI model configured in settings.")))
+            handle(event: .error(AIError(String(localized: "AITerm.NoModelConfigured", defaultValue: "No AI model configured in settings.", comment: "Error shown when no AI model is configured in settings"))))
             return
         }
         if llmProvider.model.api == .appleIntelligence {
@@ -621,7 +619,7 @@ class AITermController {
         builder.frozenHistoryElements = frozenHistoryElements
         builder.stream = stream != nil
         guard llmProvider.urlIsValid else {
-            handle(event: .error(AIError("Invalid URL for AI provider of \(iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "(nil)")")))
+            handle(event: .error(AIError(String(localized: "AITerm.InvalidProviderURL", defaultValue: "Invalid URL for AI provider of \(iTermPreferences.string(forKey: kPreferenceKeyAITermURL) ?? "(nil)")", comment: "Error shown when the configured AI provider URL is invalid; placeholder is the configured URL"))))
             return
         }
         let request: WebRequest
@@ -647,7 +645,7 @@ class AITermController {
     private func requestCreateVectorStore(name: String,
                                           registration: Registration) {
         guard let llmProvider else {
-            handle(event: .error(AIError("No AI model configured in settings.")))
+            handle(event: .error(AIError(String(localized: "AITerm.NoModelConfigured", defaultValue: "No AI model configured in settings.", comment: "Error shown when no AI model is configured in settings"))))
             return
         }
         let builder = LLMVectorStoreCreator(name: name,
@@ -668,7 +666,7 @@ class AITermController {
                 case .success(let webResponse):
                     if let error = webResponse.error, !error.isEmpty {
                         let provider = llmProvider.displayName
-                        var message = "Error from \(provider): \(error)"
+                        var message = String(localized: "AITerm.ErrorFromProvider", defaultValue: "Error from \(provider): \(String(describing: error))", comment: "Error shown when the AI provider returns an error; first placeholder is the provider name, second is the error text")
                         if let reason = LLMErrorParser.errorReason(data: webResponse.data.lossyData), !reason.isEmpty {
                             message += " " + reason
                         }
@@ -694,14 +692,14 @@ class AITermController {
                                              vectorStoreID: String,
                                              registration: Registration) {
         guard let llmProvider else {
-            handle(event: .error(AIError("No AI model configured in settings.")))
+            handle(event: .error(AIError(String(localized: "AITerm.NoModelConfigured", defaultValue: "No AI model configured in settings.", comment: "Error shown when no AI model is configured in settings"))))
             return
         }
         guard let builder = LLMVectorStoreAdder(provider: llmProvider,
                                                 apiKey: registration.apiKey,
                                                 fileIDs: fileIDs,
                                                 vectorStoreID: vectorStoreID) else {
-            handle(event: .error(AIError("Vector stores are not supported with this LLM vendor")))
+            handle(event: .error(AIError(String(localized: "AITerm.VectorStoresUnsupported", defaultValue: "Vector stores are not supported with this LLM vendor", comment: "Error shown when the selected AI vendor does not support vector stores"))))
             return
         }
         let request: WebRequest
@@ -719,7 +717,7 @@ class AITermController {
                 case .success(let webResponse):
                     if let error = webResponse.error, !error.isEmpty {
                         let provider = llmProvider.displayName
-                        var message = "Error from \(provider): \(error)"
+                        var message = String(localized: "AITerm.ErrorFromProvider", defaultValue: "Error from \(provider): \(String(describing: error))", comment: "Error shown when the AI provider returns an error; first placeholder is the provider name, second is the error text")
                         if let reason = LLMErrorParser.errorReason(data: webResponse.data.lossyData), !reason.isEmpty {
                             message += " " + reason
                         }
@@ -738,7 +736,7 @@ class AITermController {
                                                 batchID: try builder.batchIDFromResponse(webResponse.data.lossyData),
                                                 registration: registration)
                     case .cancelled, .failed:
-                        handle(event: .error(AIError("Adding file to vector store failed")))
+                        handle(event: .error(AIError(String(localized: "AITerm.AddFileFailed", defaultValue: "Adding file to vector store failed", comment: "Error shown when adding a file to a vector store fails"))))
                     }
                 case .failure(let error):
                     handle(event: .error(error))
@@ -761,14 +759,14 @@ class AITermController {
                                            batchID: String,
                                            registration: Registration) {
         guard let llmProvider else {
-            handle(event: .error(AIError("No AI model configured in settings.")))
+            handle(event: .error(AIError(String(localized: "AITerm.NoModelConfigured", defaultValue: "No AI model configured in settings.", comment: "Error shown when no AI model is configured in settings"))))
             return
         }
         guard let builder = LLMVectorStoreBatchStatusChecker(provider: llmProvider,
                                                              apiKey: registration.apiKey,
                                                              batchID: batchID,
                                                              vectorStoreID: vectorStoreID) else {
-            handle(event: .error(AIError("Vector stores are not supported with this LLM vendor")))
+            handle(event: .error(AIError(String(localized: "AITerm.VectorStoresUnsupported", defaultValue: "Vector stores are not supported with this LLM vendor", comment: "Error shown when the selected AI vendor does not support vector stores"))))
             return
         }
         let request: WebRequest
@@ -785,7 +783,7 @@ class AITermController {
                 case .success(let webResponse):
                     if let error = webResponse.error, !error.isEmpty {
                         let provider = llmProvider.displayName
-                        var message = "Error from \(provider): \(error)"
+                        var message = String(localized: "AITerm.ErrorFromProvider", defaultValue: "Error from \(provider): \(String(describing: error))", comment: "Error shown when the AI provider returns an error; first placeholder is the provider name, second is the error text")
                         if let reason = LLMErrorParser.errorReason(data: webResponse.data.lossyData), !reason.isEmpty {
                             message += " " + reason
                         }
@@ -797,8 +795,8 @@ class AITermController {
                     switch status {
                     case .cancelled, .failed:
                         state = .ground
-                        handle(event: .error(AIError("An error occurred while ingesting files to vector storage")))
-                        delegate?.aitermControllerDidFailToAddFilesToVectorStore(self, error: AIError("The file may not be well formed."))
+                        handle(event: .error(AIError(String(localized: "AITerm.IngestError", defaultValue: "An error occurred while ingesting files to vector storage", comment: "Error shown when ingesting files into vector storage fails"))))
+                        delegate?.aitermControllerDidFailToAddFilesToVectorStore(self, error: AIError(String(localized: "AITerm.FileNotWellFormed", defaultValue: "The file may not be well formed.", comment: "Explanation shown when a file fails to be ingested into vector storage")))
                     case .completed:
                         delegate?.aitermControllerDidAddFilesToVectorStore(self)
                         state = .ground
@@ -822,14 +820,14 @@ class AITermController {
                                    content: Data,
                                    registration: Registration) {
         guard let llmProvider else {
-            handle(event: .error(AIError("No AI model configured in settings.")))
+            handle(event: .error(AIError(String(localized: "AITerm.NoModelConfigured", defaultValue: "No AI model configured in settings.", comment: "Error shown when no AI model is configured in settings"))))
             return
         }
         guard let builder = LLMFileUploader(provider: llmProvider,
                                             apiKey: registration.apiKey,
                                             fileName: name,
                                             content: content) else {
-            handle(event: .error(AIError("File upload not supported with this LLM vendor")))
+            handle(event: .error(AIError(String(localized: "AITerm.FileUploadUnsupported", defaultValue: "File upload not supported with this LLM vendor", comment: "Error shown when the selected AI vendor does not support file upload"))))
             return
         }
         let request: WebRequest
@@ -847,7 +845,7 @@ class AITermController {
                 case .success(let webResponse):
                     if let error = webResponse.error, !error.isEmpty {
                         let provider = llmProvider.displayName
-                        var message = "Error from \(provider): \(error)"
+                        var message = String(localized: "AITerm.ErrorFromProvider", defaultValue: "Error from \(provider): \(String(describing: error))", comment: "Error shown when the AI provider returns an error; first placeholder is the provider name, second is the error text")
                         if let reason = LLMErrorParser.errorReason(data: webResponse.data.lossyData), !reason.isEmpty {
                             message += " " + reason
                         }
@@ -876,7 +874,7 @@ class AITermController {
 
     private func parseStreamingResponse(data: Data, final: Bool, parserState: StreamParserState) -> StreamParserState? {
         guard let llmProvider else {
-            handle(event: .error(AIError("No AI model configured in settings.")))
+            handle(event: .error(AIError(String(localized: "AITerm.NoModelConfigured", defaultValue: "No AI model configured in settings.", comment: "Error shown when no AI model is configured in settings"))))
             return nil
         }
         var accumulatingMessage = parserState.message
@@ -958,7 +956,7 @@ class AITermController {
         DLog("------- parse new stream response of length \(data.count) -------------")
         let string = String(data: parserState.buffer + data, encoding: .utf8) ?? ""
         guard let parser = llmProvider.streamingResponseParser(stream: true) else {
-            handle(event: .error(AIError("Streaming is not supported by this language model in iTerm2. You can disable streaming in Settings > General > AI.")))
+            handle(event: .error(AIError(String(localized: "AITerm.StreamingUnsupported", defaultValue: "Streaming is not supported by this language model in iTerm2. You can disable streaming in Settings > General > AI.", comment: "Error shown when the selected AI model does not support streaming"))))
             return nil
         }
         var (first, rest) = parser.splitFirstJSONEvent(from: string)
@@ -1005,7 +1003,7 @@ class AITermController {
                     }
                     do {
                         guard var parser = llmProvider.streamingResponseParser(stream: true) else {
-                            handle(event: .error(AIError("Streaming is not supported by this language model in iTerm2. You can disable streaming in Settings > General > AI.")))
+                            handle(event: .error(AIError(String(localized: "AITerm.StreamingUnsupported", defaultValue: "Streaming is not supported by this language model in iTerm2. You can disable streaming in Settings > General > AI.", comment: "Error shown when the selected AI model does not support streaming"))))
                             return nil
                         }
                         let response = try parser.parse(data: firstData)
@@ -1073,7 +1071,7 @@ class AITermController {
                     }
                 }
                 guard let parser = llmProvider.streamingResponseParser(stream: true) else {
-                    handle(event: .error(AIError("Streaming is not supported by this language model in iTerm2. You can disable streaming in Settings > General > AI.")))
+                    handle(event: .error(AIError(String(localized: "AITerm.StreamingUnsupported", defaultValue: "Streaming is not supported by this language model in iTerm2. You can disable streaming in Settings > General > AI.", comment: "Error shown when the selected AI model does not support streaming"))))
                     return nil
                 }
 
@@ -1145,13 +1143,13 @@ class AITermController {
 
     private func parseNonStreamingResponse(data: Data) {
         guard let llmProvider else {
-            handle(event: .error(AIError("No AI model configured in settings.")))
+            handle(event: .error(AIError(String(localized: "AITerm.NoModelConfigured", defaultValue: "No AI model configured in settings.", comment: "Error shown when no AI model is configured in settings"))))
             return
         }
         do {
             var parser = llmProvider.responseParser()
             guard let response = try parser.parse(data: data) else {
-                delegate?.aitermController(self, didFailWithError: AIError("Unexpected end of file from server"))
+                delegate?.aitermController(self, didFailWithError: AIError(String(localized: "AITerm.UnexpectedEOF", defaultValue: "Unexpected end of file from server", comment: "Error shown when the AI provider response ends unexpectedly")))
                 return
             }
             if let id = response.newlyCreatedResponseID {
@@ -1168,7 +1166,7 @@ class AITermController {
             // function call in the body (multipart-aware via Message.function_call)
             // and dispatch it; otherwise offer the text.
             guard let messageToDispatch = response.choiceMessages.first else {
-                delegate?.aitermController(self, didFailWithError: AIError("Empty response from server"))
+                delegate?.aitermController(self, didFailWithError: AIError(String(localized: "AITerm.EmptyResponse", defaultValue: "Empty response from server", comment: "Error shown when the AI provider returns an empty response")))
                 return
             }
             if let functionCall = messageToDispatch.function_call {
@@ -1176,7 +1174,7 @@ class AITermController {
                 return
             }
             guard let choice = messageToDispatch.trimmedString else {
-                delegate?.aitermController(self, didFailWithError: AIError("Empty response from server"))
+                delegate?.aitermController(self, didFailWithError: AIError(String(localized: "AITerm.EmptyResponse", defaultValue: "Empty response from server", comment: "Error shown when the AI provider returns an empty response")))
                 return
             }
             // Surface the reasoning scalar BEFORE offerChoice so the delegate
@@ -1192,9 +1190,9 @@ class AITermController {
             delegate?.aitermController(self, offerChoice: choice)
         } catch {
             if let reason = LLMErrorParser.errorReason(data: data) {
-                handle(event: .error(AIError("Could not decode response: " + reason)))
+                handle(event: .error(AIError(String(localized: "AITerm.CouldNotDecode", defaultValue: "Could not decode response: ", comment: "Prefix of an error shown when the AI response cannot be decoded; followed by the reason") + reason)))
             } else {
-                handle(event: .error(AIError("Failed to decode API response: \(error). Data is: \(data.stringOrHex)")))
+                handle(event: .error(AIError(String(localized: "AITerm.FailedToDecode", defaultValue: "Failed to decode API response: \(String(describing: error)). Data is: \(data.stringOrHex)", comment: "Error shown when the AI API response cannot be decoded"))))
             }
         }
     }
@@ -1206,7 +1204,7 @@ class AITermController {
     // response. Text only: function calls and attachments are out of scope.
     private func requestAppleIntelligenceCompletion(messages: [Message]) {
         guard #available(macOS 26, *) else {
-            handle(event: .error(AIError("Apple Intelligence requires macOS 26 or later.")))
+            handle(event: .error(AIError(String(localized: "AITerm.AppleIntelligenceRequiresOS", defaultValue: "Apple Intelligence requires macOS 26 or later.", comment: "Error shown when Apple Intelligence is used on an older macOS version"))))
             return
         }
         let system = messages
@@ -1261,7 +1259,7 @@ class AITermController {
                     self.state = .ground
                     self.delegate?.aitermController(self, offerChoice: text)
                 case .failure(let error):
-                    self.handle(event: .error(AIError("Apple Intelligence error: \(error.localizedDescription)")))
+                    self.handle(event: .error(AIError(String(localized: "AITerm.AppleIntelligenceError", defaultValue: "Apple Intelligence error: \(error.localizedDescription)", comment: "Error shown when the on-device Apple Intelligence model fails"))))
                 }
             }
         }
@@ -1289,7 +1287,7 @@ class AITermController {
 
     private func doFunctionCall(_ message: Message, call functionCall: LLM.FunctionCall) {
         guard llmProvider != nil else {
-            handle(event: .error(AIError("No AI model configured in settings.")))
+            handle(event: .error(AIError(String(localized: "AITerm.NoModelConfigured", defaultValue: "No AI model configured in settings.", comment: "Error shown when no AI model is configured in settings"))))
             return
         }
         switch state {
@@ -1387,6 +1385,7 @@ class AITermController {
                                 LLM.Message.FunctionCallID(callID: $0, itemID: $0)
                             }
                         amended.append(Message(role: .function,
+                                               // Localization unneeded
                                                content: "Tool call failed: \(error.localizedDescription)",
                                                name: functionCall.name,
                                                functionCallID: outputCallID))
@@ -1400,6 +1399,7 @@ class AITermController {
                 }
                 return
             }
+            // Localization unneeded
             let missingFunction = "There is no registered function by that name. Try again."
             // A model that keeps emitting an unknown/hallucinated tool name is
             // the same runaway the real-tool failure branch guards against, so
@@ -1460,8 +1460,10 @@ func truncate(messages: [AITermController.Message], maxTokens: Int) -> [AITermCo
                 tokens -= messagesToSend[j].approximateTokenCount
                 switch messagesToSend[j].body {
                 case .text, .attachment, .multipart:
+                    // Localization unneeded
                     messagesToSend[j].body = .text(head + "…[truncated]…" + tail)
                 case .functionOutput(name: let name, output: _, id: let id):
+                    // Localization unneeded
                     messagesToSend[j].body = .functionOutput(name: name, output: head + "…[truncated]…" + tail, id: id)
                 case .uninitialized, .functionCall:
                     break

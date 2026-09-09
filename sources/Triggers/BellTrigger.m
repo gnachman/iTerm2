@@ -19,7 +19,7 @@
 
 + (NSString *)title
 {
-    return @"Ring Bell";
+    return NSLocalizedStringWithDefaultValue(@"Trigger.Bell.Title", nil, [NSBundle mainBundle], @"Ring Bell", @"Trigger action name: ring the terminal bell");
 }
 
 - (BOOL)takesParameter

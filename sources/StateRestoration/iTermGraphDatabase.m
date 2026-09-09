@@ -548,10 +548,10 @@
     if (version < 1) {
         DLogCyclic(_log, @"Migrating schema to version 1: adding generation and large_data columns");
         if (![state.db executeUpdate:@"ALTER TABLE Node ADD COLUMN generation INTEGER DEFAULT 0"]) {
-            NSString *error = [state.db.lastError localizedDescription] ?: @"Unknown error";
+            NSString *error = [state.db.lastError localizedDescription] ?: NSLocalizedStringWithDefaultValue(@"GraphDatabase.UnknownError", nil, [NSBundle mainBundle], @"Unknown error", @"Fallback text when no error description is available");
             dispatch_async(dispatch_get_main_queue(), ^{
-                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Failed to migrate session database (adding generation column): %@", error]
-                                           actions:@[ @"OK" ]
+                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"GraphDatabase.MigrateGenerationFailed", nil, [NSBundle mainBundle], @"Failed to migrate session database (adding generation column): %@", @"Warning title when a database migration step fails; %@ is the error"), error]
+                                           actions:@[ iTermLocalizedOK() ]
                                         identifier:@"NoSyncGraphDatabaseMigrationFailed"
                                        silenceable:kiTermWarningTypePersistent
                                             window:nil];
@@ -559,10 +559,10 @@
             return NO;
         }
         if (![state.db executeUpdate:@"ALTER TABLE Node ADD COLUMN large_data BLOB"]) {
-            NSString *error = [state.db.lastError localizedDescription] ?: @"Unknown error";
+            NSString *error = [state.db.lastError localizedDescription] ?: NSLocalizedStringWithDefaultValue(@"GraphDatabase.UnknownError", nil, [NSBundle mainBundle], @"Unknown error", @"Fallback text when no error description is available");
             dispatch_async(dispatch_get_main_queue(), ^{
-                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Failed to migrate session database (adding large_data column): %@", error]
-                                           actions:@[ @"OK" ]
+                [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"GraphDatabase.MigrateLargeDataFailed", nil, [NSBundle mainBundle], @"Failed to migrate session database (adding large_data column): %@", @"Warning title when a database migration step fails; %@ is the error"), error]
+                                           actions:@[ iTermLocalizedOK() ]
                                         identifier:@"NoSyncGraphDatabaseMigrationFailed"
                                        silenceable:kiTermWarningTypePersistent
                                             window:nil];

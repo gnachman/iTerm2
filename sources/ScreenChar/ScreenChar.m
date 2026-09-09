@@ -897,6 +897,21 @@ void ScreenCharInvert(screen_char_t *c) {
     c->inverse = !c->inverse;
 }
 
+screen_char_t *ScreenCharLineCopyWithBoldCursorCell(const screen_char_t *line,
+                                                    size_t count,
+                                                    int cursorX,
+                                                    BOOL doubleWidth) {
+    screen_char_t *copy = iTermMalloc(sizeof(screen_char_t) * count);
+    memmove(copy, line, sizeof(screen_char_t) * count);
+    if (cursorX >= 0 && (size_t)cursorX < count) {
+        copy[cursorX].bold = YES;
+        if (doubleWidth && (size_t)(cursorX + 1) < count) {
+            copy[cursorX + 1].bold = YES;
+        }
+    }
+    return copy;
+}
+
 BOOL AnnotateRightToLeftInScreenChars(screen_char_t *c, int len) {
     MutableScreenCharArray *msca = [[MutableScreenCharArray alloc] initWithLine:c length:len continuation:(screen_char_t){.code=EOL_HARD}];
     iTermBidiDisplayInfo *bidi = [[iTermBidiDisplayInfo alloc] initUnpaddedWithScreenCharArray:msca];

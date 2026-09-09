@@ -275,12 +275,12 @@ extension iTermBrowserViewController {
                 } catch {
                     videoWindowController?.close()
                     videoWindowController = nil
-                    iTermWarning.show(withTitle: "Could not create movie: \(error.localizedDescription)",
-                                      actions: ["OK"],
+                    iTermWarning.show(withTitle: String(localized: "BrowserViewController.CouldNotCreateMovie", defaultValue: "Could not create movie: \(error.localizedDescription)", comment: "Error shown when saving an instant replay movie fails"),
+                                      actions: [iTermLocalizedOK()],
                                       accessory: nil,
                                       identifier: nil,
                                       silenceable: .kiTermWarningTypePersistent,
-                                      heading: "Problem saving instant replay movie",
+                                      heading: String(localized: "BrowserViewController.ProblemSavingMovieHeading", defaultValue: "Problem saving instant replay movie", comment: "Heading for error when saving an instant replay movie fails"),
                                       window: view.window)
                 }
             }
@@ -723,6 +723,7 @@ extension iTermBrowserViewController {
                 completion(.success(FindOnPageOutput(results: results,
                                                      excessiveResultsDropped: dropped)))
             } catch {
+                // Localization unneeded
                 completion(.failure(BrowserManagerError(errorDescription: "The page could not be converted to markdown for processing")))
             }
         }
@@ -984,7 +985,7 @@ extension iTermBrowserViewController: iTermBrowserToolbarDelegate {
             // Remove bookmark
             let success = await database.removeBookmark(url: currentURL)
             if success {
-                ToastWindowController.showToast(withMessage: "Bookmark Removed")
+                ToastWindowController.showToast(withMessage: String(localized: "BrowserViewController.BookmarkRemoved", defaultValue: "Bookmark Removed", comment: "Toast shown after removing a bookmark"))
             }
         } else {
             // Add bookmark first, then show tag editor
@@ -1338,7 +1339,7 @@ extension iTermBrowserViewController {
             }
 
             let savePanel = iTermModernSavePanel()
-            savePanel.defaultFilename = browserManager.webView.title ?? "Untitled"
+            savePanel.defaultFilename = browserManager.webView.title ?? String(localized: "BrowserViewController.Untitled", defaultValue: "Untitled", comment: "Default filename when the page has no title")
             let response = await savePanel.beginSheetModal(for: window)
             if response == .OK,
                 let item = savePanel.item,
@@ -1524,6 +1525,7 @@ extension iTermBrowserViewController: iTermBrowserActionPerforming {
                 delegate?.browserViewController(self,
                                                 showError: error.localizedDescription,
                                                 suppressionKey: "NoSyncSuppressCopyModeErrors",
+                                                // Localization unneeded
                                                 identifier: "Copy Mode Error")
                 DLog("\(error.localizedDescription)")
                 return

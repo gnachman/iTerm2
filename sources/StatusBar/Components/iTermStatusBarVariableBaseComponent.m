@@ -141,9 +141,9 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *abbreviateLocalhostKnob =
-    [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"localhost replacement"
+    [[iTermStatusBarComponentKnob alloc] initWithLabelText:NSLocalizedStringWithDefaultValue(@"StatusBarHostname.LocalhostReplacementLabel", nil, [NSBundle mainBundle], @"localhost replacement", @"Label for the localhost replacement text knob")
                                                       type:iTermStatusBarComponentKnobTypeText
-                                               placeholder:@"Enter replacement text for localhost"
+                                               placeholder:NSLocalizedStringWithDefaultValue(@"StatusBarHostname.LocalhostReplacementPlaceholder", nil, [NSBundle mainBundle], @"Enter replacement text for localhost", @"Placeholder for the localhost replacement text field")
                                               defaultValue:@""
                                                        key:iTermStatusBarHostnameComponentAbbreviateLocalhost];
     return [@[ abbreviateLocalhostKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
@@ -154,11 +154,11 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Host Name";
+    return NSLocalizedStringWithDefaultValue(@"StatusBarHostname.ShortDescription", nil, [NSBundle mainBundle], @"Host Name", @"Short description of the host name status bar component");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Current host name. Requires shell integration.";
+    return NSLocalizedStringWithDefaultValue(@"StatusBarHostname.DetailedDescription", nil, [NSBundle mainBundle], @"Current host name. Requires shell integration.", @"Detailed description of the host name status bar component");
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
@@ -219,11 +219,11 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"User Name";
+    return NSLocalizedStringWithDefaultValue(@"StatusBarUsername.ShortDescription", nil, [NSBundle mainBundle], @"User Name", @"Short description of the user name status bar component");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Current user name. Requires shell integration.";
+    return NSLocalizedStringWithDefaultValue(@"StatusBarUsername.DetailedDescription", nil, [NSBundle mainBundle], @"Current user name. Requires shell integration.", @"Detailed description of the user name status bar component");
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
@@ -285,11 +285,11 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Current Directory";
+    return NSLocalizedStringWithDefaultValue(@"StatusBarWorkingDirectory.ShortDescription", nil, [NSBundle mainBundle], @"Current Directory", @"Short description of the current directory status bar component");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Current directory. Best with shell integration.";
+    return NSLocalizedStringWithDefaultValue(@"StatusBarWorkingDirectory.DetailedDescription", nil, [NSBundle mainBundle], @"Current directory. Best with shell integration.", @"Detailed description of the current directory status bar component");
 }
 
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
@@ -376,19 +376,19 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
     if (currentPath.length) {
         [menu addItem:[NSMenuItem separatorItem]];
 
-        NSMenuItem *copyPath = [[NSMenuItem alloc] initWithTitle:@"Copy Path"
+        NSMenuItem *copyPath = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"StatusBarWorkingDirectory.CopyPath", nil, [NSBundle mainBundle], @"Copy Path", @"Menu item to copy the current path")
                                                           action:@selector(copyCurrentPath:)
                                                    keyEquivalent:@""];
         copyPath.target = self;
         [menu addItem:copyPath];
 
-        NSMenuItem *copyBasename = [[NSMenuItem alloc] initWithTitle:@"Copy Folder Name"
+        NSMenuItem *copyBasename = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"StatusBarWorkingDirectory.CopyFolderName", nil, [NSBundle mainBundle], @"Copy Folder Name", @"Menu item to copy the current folder name")
                                                               action:@selector(copyCurrentBasename:)
                                                        keyEquivalent:@""];
         copyBasename.target = self;
         [menu addItem:copyBasename];
 
-        NSMenuItem *openInFinder = [[NSMenuItem alloc] initWithTitle:@"Reveal in Finder"
+        NSMenuItem *openInFinder = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"StatusBarWorkingDirectory.RevealInFinder", nil, [NSBundle mainBundle], @"Reveal in Finder", @"Menu item to reveal the current directory in Finder")
                                                               action:@selector(openCurrentPathInFinder:)
                                                        keyEquivalent:@""];
         openInFinder.target = self;
@@ -396,13 +396,13 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 
         [menu addItem:[NSMenuItem separatorItem]];
 
-        NSMenuItem *openInNewWindow = [[NSMenuItem alloc] initWithTitle:@"New Session Here in New Window"
+        NSMenuItem *openInNewWindow = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"StatusBarWorkingDirectory.NewSessionHereInNewWindow", nil, [NSBundle mainBundle], @"New Session Here in New Window", @"Menu item to open a new session in the current directory in a new window")
                                                                  action:@selector(openCurrentPathInNewWindow:)
                                                           keyEquivalent:@""];
         openInNewWindow.target = self;
         [menu addItem:openInNewWindow];
 
-        NSMenuItem *openInNewTab = [[NSMenuItem alloc] initWithTitle:@"New Session Here in New Tab"
+        NSMenuItem *openInNewTab = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"StatusBarWorkingDirectory.NewSessionHereInNewTab", nil, [NSBundle mainBundle], @"New Session Here in New Tab", @"Menu item to open a new session in the current directory in a new tab")
                                                               action:@selector(openCurrentPathInNewTab:)
                                                        keyEquivalent:@""];
         openInNewTab.target = self;
@@ -415,6 +415,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 - (void)directorySelected:(NSMenuItem *)sender {
     NSString *path = sender.representedObject;
     [self.delegate statusBarComponent:self
+                          // Localization unneeded
                           writeString:[NSString stringWithFormat:@"cd %@", [path stringWithEscapedShellCharactersIncludingNewlines:YES]]];
 }
 

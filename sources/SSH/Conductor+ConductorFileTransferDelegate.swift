@@ -299,7 +299,7 @@ extension Conductor: ConductorFileTransferDelegate {
                 content.append(result)
                 if result.isEmpty && !tasks.isEmpty {
                     throw ConductorFileTransfer.ConductorFileTransferError(
-                        "Download ended prematurely (received \(content.count) of \(remoteFile.size!) byte\(remoteFile.size! == 1 ? "" : "s")")
+                        String(localized: "Conductor.DownloadEndedPrematurely", defaultValue: "Download ended prematurely (received \(content.count) of \(remoteFile.size!) bytes)", comment: "Download error; first placeholder is the number of bytes received, second is the total size in bytes"))
                 }
             }
         }

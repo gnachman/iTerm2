@@ -197,7 +197,7 @@ class SSHConfigurationWindowController: NSWindowController {
             if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) {
                 // ...and it's either a directory or not executable, throw an error.
                 if isDir.boolValue || !FileManager.default.isExecutableFile(atPath: url.path) {
-                    let errorInfo = [NSLocalizedDescriptionKey: "Selected file must be an executable."]
+                    let errorInfo = [NSLocalizedDescriptionKey: String(localized: "SSHConfiguration.NotExecutableError", defaultValue: "Selected file must be an executable.", comment: "Error shown when the chosen SSH binary is not an executable file")]
                     throw NSError(domain: NSCocoaErrorDomain, code: NSUserCancelledError, userInfo: errorInfo)
                 }
             }
@@ -214,7 +214,7 @@ class SSHConfigurationWindowController: NSWindowController {
             panelDelegate = SSHBinaryPanelDelegate()
             openPanel.delegate = panelDelegate
 
-            openPanel.title = "Select SSH Binary"
+            openPanel.title = String(localized: "SSHConfiguration.SelectSSHBinaryTitle", defaultValue: "Select SSH Binary", comment: "Title of the open panel for choosing the SSH binary")
             openPanel.canChooseFiles = true
             openPanel.canChooseDirectories = false
             openPanel.allowsMultipleSelection = false
@@ -223,6 +223,7 @@ class SSHConfigurationWindowController: NSWindowController {
             let key = "NoSyncLastSSHDirectory"
             let lastDirectory = iTermUserDefaults.userDefaults().string(forKey: key) ?? "/usr/bin"
             openPanel.directoryURL = URL(fileURLWithPath: lastDirectory)
+            // Localization unneeded
             openPanel.nameFieldStringValue = "ssh"
 
             openPanel.begin { [weak self] result in
@@ -365,7 +366,7 @@ fileprivate class SSHCopyDestinationView: NSView {
 
         textField = NSTextField()
         textField.stringValue = "~"
-        label = NSTextField(labelWithString: "Destination folder on remote host:")
+        label = NSTextField(labelWithString: String(localized: "SSHConfiguration.DestinationFolderLabel", defaultValue: "Destination folder on remote host:", comment: "Label prompting for the destination folder on the remote host"))
         label.translatesAutoresizingMaskIntoConstraints = false
         label.sizeToFit()
 

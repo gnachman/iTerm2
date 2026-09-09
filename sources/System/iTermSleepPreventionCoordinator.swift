@@ -104,7 +104,14 @@ class SleepPreventionCoordinator: NSObject {
     /// they still exist (the profile doc says the assertion is held "while a session with this
     /// setting enabled exists"), but allSessions() only enumerates sessions in a window.
     private func requestingSessionGUIDs() -> [String] {
-        let live = iTermController.sharedInstance().allSessions() ?? []
+        // During app termination +[iTermController releaseSharedInstance] nils the shared
+        // controller while session-teardown notifications still fire (Sparkle's Install and
+        // Relaunch, or an ordinary quit, closes windows, which posts iTermSessionWillTerminate).
+        // sharedInstance() imports into Swift as an implicitly unwrapped optional, so unwrapping
+        // the now-nil singleton would trap. Nothing needs to stay awake once we are quitting, so
+        // treat its absence as no requesters.
+        guard let controller = iTermController.sharedInstance() else { return [] }
+        let live = controller.allSessions() ?? []
         let buried = iTermBuriedSessions.sharedInstance()?.buriedSessions() ?? []
         return (live + buried).compactMap { session -> String? in
             // A session whose process has died but whose pane is still open (endAction "Do

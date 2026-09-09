@@ -37,7 +37,7 @@
     [_button setButtonType:NSButtonTypeMomentaryPushIn];
     [_button setTarget:self];
     [_button setAction:@selector(buttonPressed:)];
-    [_button setTitle:@"Configure Action…"];
+    [_button setTitle:NSLocalizedStringWithDefaultValue(@"StatusBarKnobAction.ConfigureAction", nil, [NSBundle mainBundle], @"Configure Action…", @"Button title to configure an action")];
     [_button setBezelStyle:NSBezelStyleTexturedRounded];
     [_button sizeToFit];
     [self.view addSubview:_button];

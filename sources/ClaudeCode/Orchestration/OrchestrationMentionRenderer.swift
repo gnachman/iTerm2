@@ -159,7 +159,7 @@ enum OrchestrationMentionRenderer {
         // Keep the bracketed wording the phone renderers use so the same
         // mention reads consistently across Mac and phone; only the styling
         // (glyph, gray, non-clickable) is Mac-specific.
-        result.append(NSAttributedString(string: "[defunct session]", attributes: attributes))
+        result.append(NSAttributedString(string: String(localized: "OrchestrationMentionRenderer.DefunctSession", defaultValue: "[defunct session]", comment: "Inline text shown in place of a session mention when the session no longer exists"), attributes: attributes))
         return result
     }
 
@@ -171,7 +171,7 @@ enum OrchestrationMentionRenderer {
                                    tint: NSColor,
                                    action: ((NSPoint) -> ())?) -> NSAttributedString? {
         guard let symbol = NSImage(systemSymbolName: "terminal",
-                                   accessibilityDescription: "iTerm2 session") else {
+                                   accessibilityDescription: String(localized: "OrchestrationMentionRenderer.SessionIconLabel", defaultValue: "iTerm2 session", comment: "Accessibility label for the terminal glyph shown next to a session mention")) else {
             return nil
         }
         let dynamicImage = DynamicImage(image: symbol,
@@ -261,7 +261,7 @@ enum OrchestrationMentionRenderer {
             return nil
         }
         let raw = instance.workgroup.name
-        let name = raw.isEmpty ? "Untitled workgroup" : raw
+        let name = raw.isEmpty ? String(localized: "OrchestrationMentionRenderer.UntitledWorkgroup", defaultValue: "Untitled workgroup", comment: "Fallback display name for a workgroup with no name") : raw
         return Resolved(displayName: name,
                         revealGuid: leader.stableID,
                         workgroupID: instanceID)

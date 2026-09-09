@@ -29,17 +29,29 @@
 #import "iTermUserDefaults.h"
 #import <QuartzCore/QuartzCore.h>
 
+// Localization unneeded
 NSString *const kActionsToolName = @"Actions";
+// Localization unneeded
 NSString *const kCapturedOutputToolName = @"Captured Output";
+// Localization unneeded
 NSString *const kCommandHistoryToolName = @"Command History";
+// Localization unneeded
 NSString *const kRecentDirectoriesToolName = @"Recent Directories";
+// Localization unneeded
 NSString *const kJobsToolName = @"Jobs";
+// Localization unneeded
 NSString *const kNotesToolName = @"Notes";
+// Localization unneeded
 NSString *const kPasteHistoryToolName = @"Paste History";
+// Localization unneeded
 NSString *const kProfilesToolName = @"Profiles";
+// Localization unneeded
 NSString *const kSnippetsToolName = @"Snippets";
+// Localization unneeded
 NSString *const kNamedMarksToolName = @"Named Marks";
+// Localization unneeded
 NSString *const kStatusToolName = @"Session Status";
+// Localization unneeded
 NSString *const kCodeciergeToolName = @"Codecierge";
 
 NSString *const kToolbeltShouldHide = @"kToolbeltShouldHide";
@@ -97,6 +109,31 @@ static NSString *const kDynamicToolURL = @"URL";
     [dynamicTools enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull identifier, NSDictionary * _Nonnull dict, BOOL * _Nonnull stop) {
         [iTermToolbeltView registerToolWithName:dict[kDynamicToolName] withClass:[ToolWebView class]];
     }];
+}
+
++ (NSString *)localizedToolNameForToolName:(NSString *)name {
+    if (name == nil) {
+        return name;
+    }
+    static NSDictionary<NSString *, NSString *> *map;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        map = @{
+            kActionsToolName: NSLocalizedStringWithDefaultValue(@"Toolbelt.Tool.Actions", nil, [NSBundle mainBundle], @"Actions", @"Name of the Actions toolbelt tool"),
+            kCapturedOutputToolName: NSLocalizedStringWithDefaultValue(@"Toolbelt.Tool.CapturedOutput", nil, [NSBundle mainBundle], @"Captured Output", @"Name of the Captured Output toolbelt tool"),
+            kCommandHistoryToolName: NSLocalizedStringWithDefaultValue(@"Toolbelt.Tool.CommandHistory", nil, [NSBundle mainBundle], @"Command History", @"Name of the Command History toolbelt tool"),
+            kRecentDirectoriesToolName: NSLocalizedStringWithDefaultValue(@"Toolbelt.Tool.RecentDirectories", nil, [NSBundle mainBundle], @"Recent Directories", @"Name of the Recent Directories toolbelt tool"),
+            kJobsToolName: NSLocalizedStringWithDefaultValue(@"Toolbelt.Tool.Jobs", nil, [NSBundle mainBundle], @"Jobs", @"Name of the Jobs toolbelt tool"),
+            kNotesToolName: NSLocalizedStringWithDefaultValue(@"Toolbelt.Tool.Notes", nil, [NSBundle mainBundle], @"Notes", @"Name of the Notes toolbelt tool"),
+            kPasteHistoryToolName: NSLocalizedStringWithDefaultValue(@"Toolbelt.Tool.PasteHistory", nil, [NSBundle mainBundle], @"Paste History", @"Name of the Paste History toolbelt tool"),
+            kProfilesToolName: NSLocalizedStringWithDefaultValue(@"Toolbelt.Tool.Profiles", nil, [NSBundle mainBundle], @"Profiles", @"Name of the Profiles toolbelt tool"),
+            kSnippetsToolName: NSLocalizedStringWithDefaultValue(@"Toolbelt.Tool.Snippets", nil, [NSBundle mainBundle], @"Snippets", @"Name of the Snippets toolbelt tool"),
+            kNamedMarksToolName: NSLocalizedStringWithDefaultValue(@"Toolbelt.Tool.NamedMarks", nil, [NSBundle mainBundle], @"Named Marks", @"Name of the Named Marks toolbelt tool"),
+            kStatusToolName: NSLocalizedStringWithDefaultValue(@"Toolbelt.Tool.SessionStatus", nil, [NSBundle mainBundle], @"Session Status", @"Name of the Session Status toolbelt tool"),
+            kCodeciergeToolName: NSLocalizedStringWithDefaultValue(@"Toolbelt.Tool.Codecierge", nil, [NSBundle mainBundle], @"Codecierge", @"Name of the Codecierge toolbelt tool"),
+        };
+    });
+    return map[name] ?: name;
 }
 
 + (NSArray<NSString *> *)builtInToolNames {
@@ -187,15 +224,31 @@ static NSString *const kDynamicToolURL = @"URL";
     [self addToolsToMenu:menu];
 }
 
++ (NSArray<NSString *> *)toolNames:(NSArray<NSString *> *)names
+   sortedByLocalizedNameUsingBlock:(NSString *(^)(NSString *name))displayNameForName {
+    return [names sortedArrayUsingComparator:^NSComparisonResult(NSString *lhs, NSString *rhs) {
+        return [displayNameForName(lhs) localizedStandardCompare:displayNameForName(rhs)];
+    }];
+}
+
 + (void)addToolsToMenu:(NSMenu *)menu {
-    NSArray *names = [[iTermToolbeltView allTools] sortedArrayUsingSelector:@selector(compare:)];
+    // Sort by the localized display title (not the stable English key) so the menu matches
+    // what the user sees. For English the display order equals the key order.
+    NSArray *names = [self toolNames:[iTermToolbeltView allTools]
+            sortedByLocalizedNameUsingBlock:^NSString *(NSString *name) {
+        return [iTermToolbeltView localizedToolNameForToolName:name];
+    }];
     for (NSString *theName in names) {
-        NSMenuItem *i = [[NSMenuItem alloc] initWithTitle:theName
+        NSMenuItem *i = [[NSMenuItem alloc] initWithTitle:[iTermToolbeltView localizedToolNameForToolName:theName]
                                                    action:@selector(toggleToolbeltTool:)
                                             keyEquivalent:@""];
         i.tag = (ProfileType)[gRegisteredTools[theName] supportedProfileTypes];
         [i setState:[[iTermToolbeltView configuredTools] containsObject:theName] ? NSControlStateValueOn : NSControlStateValueOff];
         i.identifier = [@"Toolbelt." stringByAppendingString:theName];
+        // The title is localized; hold the stable English tool name as the accessibility
+        // identifier so a stored "Select Menu Item" binding still resolves after translation
+        // (the same English-anchor pattern MainMenu.xib leaf items use).
+        [i setAccessibilityIdentifier:theName];
         [menu addItem:i];
     }
 }
@@ -232,6 +285,7 @@ static NSString *const kDynamicToolURL = @"URL";
 #pragma mark - Private class methods
 
 + (NSArray *)defaultTools {
+    // Localization unneeded
     return [NSArray arrayWithObjects:@"Profiles", nil];
 }
 
@@ -286,7 +340,7 @@ static NSString *const kDynamicToolURL = @"URL";
 
         _noToolsMessage = [NSTextField newLabelStyledTextField];
         _noToolsMessage.alignment = NSTextAlignmentCenter;
-        _noToolsMessage.stringValue = @"No Tools enabled. Select them from the menu above.";
+        _noToolsMessage.stringValue = NSLocalizedStringWithDefaultValue(@"Toolbelt.NoToolsMessage", nil, [NSBundle mainBundle], @"No Tools enabled. Select them from the menu above.", @"Message shown when no toolbelt tools are enabled");
         _noToolsMessage.frame = self.bounds;
         [self addSubview:_noToolsMessage];
         [self layoutNoToolsMessage];
@@ -304,6 +358,7 @@ static NSString *const kDynamicToolURL = @"URL";
         [self addSubview:_dragHandle];
 
         _menuButton = [[iTermHamburgerButton alloc] initWithMenuProvider:^NSMenu * _Nonnull {
+            // Localization unneeded
             NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
             [iTermToolbeltView addToolsToMenu:menu];
             return menu;

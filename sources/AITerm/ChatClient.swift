@@ -155,10 +155,11 @@ class ChatClient {
             try? respondSuccessfullyToRemoteCommandRequest(
                 inChat: chatID,
                 requestUUID: message.uniqueID,
+                // Localization unneeded
                 message: "The user denied permission to use function calling in this terminal session. Do not try again.",
                 functionCallName: message.functionCallName ?? "Unknown function call name",
                 functionCallID: message.functionCallID,
-                userNotice: "AI will not execute this command.")
+                userNotice: String(localized: "ChatClient.WillNotExecute", defaultValue: "AI will not execute this command.", comment: "Notice shown when the user denied permission for the AI to run a command"))
             return nil
         case .always, .ask:
             // Park on the user's Allow/Deny when the shared predicate says so (ask
@@ -454,7 +455,7 @@ class ChatClient {
             guard let url else {
                 continue
             }
-            bullets.append("I [annotated](\(url.absoluteString)) “\(annotation.annotatedText)”: \(annotation.note)")
+            bullets.append(String(localized: "ChatClient.AnnotatedBullet", defaultValue: "I [annotated](\(url.absoluteString)) “\(annotation.annotatedText)”: \(annotation.note)", comment: "Markdown bullet describing a terminal annotation the AI made; first placeholder is a link URL, second is the annotated text, third is the note"))
         }
         var result = ""
         result += bullets.map { "  * " + $0 }.joined(separator: "\n")
@@ -462,7 +463,7 @@ class ChatClient {
             result += "\n"
         }
         if value.final && !response.annotations.isEmpty {
-            result += "\nYou can click on a link in this message or on a yellow underline in the terminal to reveal an annotation."
+            result += String(localized: "ChatClient.RevealAnnotationHint", defaultValue: "\nYou can click on a link in this message or on a yellow underline in the terminal to reveal an annotation.", comment: "Hint appended to a chat message explaining how to reveal terminal annotations")
         }
         if let mainResponse = value.mainResponse {
             if !result.isEmpty {

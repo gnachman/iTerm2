@@ -125,6 +125,12 @@ andEditComponentWithIdentifier:(NSString *)identifier
 
 - (void)openToPreferenceWithKey:(NSString *)key;
 - (NSArray<iTermSetting *> *)allSettings;
+
+#if ITERM_DEBUG
+// Debug-only: walk every tab/sub-tab and log controls whose localized text is
+// truncated in the current UI locale (see iTermSettingsTruncationChecker).
+- (void)debugCheckControlTruncation;
+#endif
 - (BOOL)toggleSetting:(NSString * _Nullable)key;
 - (BOOL)toggleProfileSetting:(NSString * _Nullable)key;
 

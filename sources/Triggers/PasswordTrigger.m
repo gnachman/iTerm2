@@ -20,7 +20,7 @@ static NSString *PasswordTriggerPlaceholderString = @"Open Password Manager to U
 @implementation PasswordTrigger
 
 + (NSString *)title {
-    return @"Open Password Manager…";
+    return NSLocalizedStringWithDefaultValue(@"Trigger.Password.Title", nil, [NSBundle mainBundle], @"Open Password Manager…", @"Trigger action name: open the password manager");
 }
 
 - (NSString *)description {

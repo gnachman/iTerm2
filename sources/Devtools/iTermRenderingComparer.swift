@@ -206,6 +206,7 @@ class iTermRenderingComparer: NSObject {
     private static func renderLegacy(rows: Int, columns: Int, guid: String, profile: [AnyHashable: Any], data: Data) throws -> NSImage {
         let session = createSession(rows: rows, columns: columns, guid: guid, profile: profile, data: data)
         guard let textview = session.textview else {
+            // Localization unneeded
             throw NSError(domain: "iTermRenderingComparer", code: 5, userInfo: [NSLocalizedDescriptionKey: "Session has no textview"])
         }
         let scrollback = Int(session.screen.numberOfScrollbackLines())
@@ -218,6 +219,7 @@ class iTermRenderingComparer: NSObject {
                                                includeMargins: true,
                                                backgroundColor: bgColor,
                                                showCursor: true) else {
+            // Localization unneeded
             throw NSError(domain: "iTermRenderingComparer", code: 1, userInfo: [NSLocalizedDescriptionKey: "Legacy render returned nil"])
         }
         return image
@@ -225,14 +227,17 @@ class iTermRenderingComparer: NSObject {
 
     private static func renderGPU(rows: Int, columns: Int, guid: String, profile: [AnyHashable: Any], data: Data) throws -> NSImage {
         guard MTLCreateSystemDefaultDevice() != nil else {
+            // Localization unneeded
             throw NSError(domain: "iTermRenderingComparer", code: 2, userInfo: [NSLocalizedDescriptionKey: "No Metal device"])
         }
         let session = createSession(rows: rows, columns: columns, guid: guid, profile: profile, data: data)
         guard let sessionView = session.view else {
+            // Localization unneeded
             throw NSError(domain: "iTermRenderingComparer", code: 6, userInfo: [NSLocalizedDescriptionKey: "Session has no view"])
         }
 
         guard let screen = NSScreen.main else {
+            // Localization unneeded
             throw NSError(domain: "iTermRenderingComparer", code: 3, userInfo: [NSLocalizedDescriptionKey: "No screen"])
         }
         let window = NSWindow(
@@ -251,6 +256,7 @@ class iTermRenderingComparer: NSObject {
 
         guard let image = sessionView.drawMetalFrameToImage() else {
             window.orderOut(nil)
+            // Localization unneeded
             throw NSError(domain: "iTermRenderingComparer", code: 4, userInfo: [NSLocalizedDescriptionKey: "Metal capture returned nil"])
         }
         window.orderOut(nil)

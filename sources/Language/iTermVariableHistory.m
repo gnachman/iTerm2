@@ -58,6 +58,7 @@
                                     iTermVariableKeySessionProfileName,
                                     iTermVariableKeySessionIconName,
                                     iTermVariableKeySessionTriggerName,
+                                    iTermVariableKeySessionAITitle,
                                     iTermVariableKeySessionWindowName,
                                     iTermVariableKeySessionJob,
                                     iTermVariableKeySessionProcessTitle,

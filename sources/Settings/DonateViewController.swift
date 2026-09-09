@@ -14,15 +14,15 @@ private class DonateView: NSView {
 @objc(iTermDonateViewController)
 class DonateViewController: NSTitlebarAccessoryViewController {
     private static func textString() -> String {
-        return ["Donate",
-                "Support iTerm2",
-                "iTerm2 is one person’s project. Donate now!",
-                "Keep iTerm2 alive — Donate today!",
-                "Love using iTerm2? Help keep it thriving!",
-                "iTerm2 needs your support – Donate here.",
-                "Help iTerm2 grow – Consider donating.",
-                "Keep the iTerm2 dream alive – Donate!",
-                "Support the creator of iTerm2 – Donate now!",
+        return [String(localized: "Donate.CallToAction1", defaultValue: "Donate", comment: "Short donation prompt shown in the Settings window"),
+                String(localized: "Donate.CallToAction2", defaultValue: "Support iTerm2", comment: "Short donation prompt shown in the Settings window"),
+                String(localized: "Donate.CallToAction3", defaultValue: "iTerm2 is one person’s project. Donate now!", comment: "Donation prompt shown in the Settings window"),
+                String(localized: "Donate.CallToAction4", defaultValue: "Keep iTerm2 alive — Donate today!", comment: "Donation prompt shown in the Settings window"),
+                String(localized: "Donate.CallToAction5", defaultValue: "Love using iTerm2? Help keep it thriving!", comment: "Donation prompt shown in the Settings window"),
+                String(localized: "Donate.CallToAction6", defaultValue: "iTerm2 needs your support – Donate here.", comment: "Donation prompt shown in the Settings window"),
+                String(localized: "Donate.CallToAction7", defaultValue: "Help iTerm2 grow – Consider donating.", comment: "Donation prompt shown in the Settings window"),
+                String(localized: "Donate.CallToAction8", defaultValue: "Keep the iTerm2 dream alive – Donate!", comment: "Donation prompt shown in the Settings window"),
+                String(localized: "Donate.CallToAction9", defaultValue: "Support the creator of iTerm2 – Donate now!", comment: "Donation prompt shown in the Settings window"),
         ].randomElement()!
     }
 

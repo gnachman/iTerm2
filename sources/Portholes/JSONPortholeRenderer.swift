@@ -186,6 +186,7 @@ fileprivate extension NSAttributedString {
     private static func fromJSONNull(_ visualAttributes: TextViewPorthole.VisualAttributes,
                                      indent: Int) -> NSAttributedString {
         let color = NSColor.init(white: 0.5, alpha: 1)
+        // Localization unneeded
         return NSAttributedString(string: "null",
                                   attributes: jsonAttributes(visualAttributes: visualAttributes,
                                                              color: color))

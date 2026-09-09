@@ -13,7 +13,7 @@
 @implementation iTermShellPromptTrigger
 
 + (NSString *)title {
-    return @"Prompt Detected";
+    return NSLocalizedStringWithDefaultValue(@"Trigger.ShellPrompt.Title", nil, [NSBundle mainBundle], @"Prompt Detected", @"Trigger action name: treat the matching line as a shell prompt");
 }
 
 - (NSString *)description {

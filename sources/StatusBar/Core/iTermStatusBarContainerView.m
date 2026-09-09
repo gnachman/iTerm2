@@ -343,11 +343,12 @@ const CGFloat iTermGetStatusBarHeight(void) {
 }
 
 - (void)showContextMenuForEvent:(NSEvent *)event {
+    // Localization unneeded
     NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
     if ([_component respondsToSelector:@selector(statusBarComponentCopyableString)]) {
         NSString *copyableString = [_component statusBarComponentCopyableString];
         if (copyableString.length > 0) {
-            [menu addItemWithTitle:@"Copy"
+            [menu addItemWithTitle:iTermLocalizedCopy()
                             action:@selector(copyComponentValue:)
                      keyEquivalent:@""];
             [menu addItem:[NSMenuItem separatorItem]];
@@ -355,18 +356,18 @@ const CGFloat iTermGetStatusBarHeight(void) {
     }
     if (![_component statusBarComponentIsInternal]) {
         if ([[_component statusBarComponentKnobs] count]) {
-            [menu addItemWithTitle:[NSString stringWithFormat:@"Configure %@", [self.component statusBarComponentShortDescription]]
+            [menu addItemWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"StatusBarContainer.ConfigureComponentFormat", nil, [NSBundle mainBundle], @"Configure %@", @"Menu item to configure a status bar component; %@ is the component name"), [self.component statusBarComponentShortDescription]]
                             action:@selector(configureComponent:)
                      keyEquivalent:@""];
         }
-        [menu addItemWithTitle:[NSString stringWithFormat:@"Hide %@", [self.component statusBarComponentShortDescription]]
+        [menu addItemWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"StatusBarContainer.HideComponentFormat", nil, [NSBundle mainBundle], @"Hide %@", @"Menu item to hide a status bar component; %@ is the component name"), [self.component statusBarComponentShortDescription]]
                         action:@selector(hideComponent:)
                  keyEquivalent:@""];
     }
-    [menu addItemWithTitle:@"Configure Status Bar"
+    [menu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"StatusBarContainer.ConfigureStatusBar", nil, [NSBundle mainBundle], @"Configure Status Bar", @"Menu item to configure the status bar")
                     action:@selector(configureStatusBar:)
              keyEquivalent:@""];
-    [menu addItemWithTitle:@"Disable Status Bar"
+    [menu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"StatusBarContainer.DisableStatusBar", nil, [NSBundle mainBundle], @"Disable Status Bar", @"Menu item to disable the status bar")
                     action:@selector(disableStatusBar:)
              keyEquivalent:@""];
     NSDictionary<NSString *, id> *values = [self.component statusBarComponentKnobValues];

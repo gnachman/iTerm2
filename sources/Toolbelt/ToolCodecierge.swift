@@ -106,7 +106,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                                         return
                                     }
                                     session.writeTask(command.command.trimmingTrailingNewline + "\n")
-                                    delegate?.session(session: self, didProduceAdditionalText: "Running `\(command.command.escapedForMarkdownCode)`\n")
+                                    delegate?.session(session: self, didProduceAdditionalText: String(localized: "Codecierge.RunningCommand", defaultValue: "Running `\(command.command.escapedForMarkdownCode)`\n", comment: "Status message shown while running a command"))
                                     pendingCompletion = completion
                                 })
                         }
@@ -138,7 +138,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                                         session.sendTextSlowly("\n")
                                     }
                                     session.sendTextSlowly("\u{0004}")
-                                    delegate?.session(session: self, didProduceAdditionalText: "Writing to \(command.filename)\n")
+                                    delegate?.session(session: self, didProduceAdditionalText: String(localized: "Codecierge.WritingTo", defaultValue: "Writing to \(command.filename)\n", comment: "Status message shown while writing a file"))
                                     pendingCompletion = { result in
                                         switch result {
                                         case .success:
@@ -248,12 +248,12 @@ class ToolCodecierge: NSView, ToolbeltTool {
                 commandCount += 1
                 if commandCount >= iTermAdvancedSettingsModel.codeciergeCommandWarningCount() {
                     let selection =
-                    iTermWarning.show(withTitle: "Your codecierge session has been going on for a long time. Are you still using it? If not, stop it to save money and privacy.",
-                                      actions: ["Keep Going", "Stop Codecierge"],
+                    iTermWarning.show(withTitle: String(localized: "Codecierge.LongSessionBody", defaultValue: "Your codecierge session has been going on for a long time. Are you still using it? If not, stop it to save money and privacy.", comment: "Body of the warning shown when a Codecierge session runs a long time"),
+                                      actions: [String(localized: "Codecierge.KeepGoing", defaultValue: "Keep Going", comment: "Button to keep the Codecierge session going"), String(localized: "Codecierge.StopCodecierge", defaultValue: "Stop Codecierge", comment: "Button to stop the Codecierge session")],
                                       accessory: nil,
                                       identifier: "CodeciergeCommandWarning",
                                       silenceable: .kiTermWarningTypePermanentlySilenceable,
-                                      heading: "Codecierge Usage Warning",
+                                      heading: String(localized: "Codecierge.LongSessionHeading", defaultValue: "Codecierge Usage Warning", comment: "Heading of the warning shown when a Codecierge session runs a long time"),
                                       window: delegate?.sessionWindow)
                     switch selection {
                     case .kiTermWarningSelection0:
@@ -289,7 +289,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                         delegate?.session(session: self, didProduceText: updated.messages.last!.content ?? "")
                     case .failure(let error):
                         RLog("\(error)")
-                        delegate?.session(session: self, didProduceText: "There was an error: \(error.localizedDescription)")
+                        delegate?.session(session: self, didProduceText: String(localized: "Codecierge.GenericError", defaultValue: "There was an error: \(error.localizedDescription)", comment: "Error message shown when a Codecierge request fails"))
                     }
                 }
             }
@@ -304,7 +304,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
                     delegate?.session(session: self, didProduceAdditionalText: updated.messages.last!.content ?? "")
                 case .failure(let error):
                     RLog("\(error)")
-                    delegate?.session(session: self, didProduceAdditionalText: "There was an error: \(error.localizedDescription)")
+                    delegate?.session(session: self, didProduceAdditionalText: String(localized: "Codecierge.GenericError", defaultValue: "There was an error: \(error.localizedDescription)", comment: "Error message shown when a Codecierge request fails"))
                 }
             }
         }
@@ -454,7 +454,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
             }
             session.ghostRiding = autoRunCommands
             session.goal = goal
-            session.suggestion = "Thinking…"
+            session.suggestion = String(localized: "Codecierge.Thinking", defaultValue: "Thinking…", comment: "Suggestion text shown while waiting for the assistant")
             self.state = .running
             session.updateHistory(command: nil)
         })
@@ -596,7 +596,7 @@ class ToolCodecierge: NSView, ToolbeltTool {
             break
         case .running:
             if let session = currentSession() {
-                appendToSuggestion(guid: session.guid, suggestion: "\n\n### 👤 You\n\(text)\n")
+                appendToSuggestion(guid: session.guid, suggestion: String(localized: "Codecierge.YouSection", defaultValue: "\n\n### 👤 You\n\(text)\n", comment: "Markdown section showing the user's message"))
             }
             currentSession()?.sendTextMessage(text)
         }
@@ -605,11 +605,11 @@ class ToolCodecierge: NSView, ToolbeltTool {
 
 extension ToolCodecierge: ToolCodeciergeSessionDelegate {
     fileprivate func session(session: Session, didProduceText text: String) {
-        setSuggestion(guid: session.guid, suggestion: "### 🔮 Assistant\n\(text)")
+        setSuggestion(guid: session.guid, suggestion: String(localized: "Codecierge.AssistantText", defaultValue: "### 🔮 Assistant\n\(text)", comment: "Markdown section showing assistant text"))
     }
 
     fileprivate func session(session: Session, didProduceAdditionalText text: String) {
-        appendToSuggestion(guid: session.guid, suggestion: "\n\n### 🔮 Assistant\n\(text)")
+        appendToSuggestion(guid: session.guid, suggestion: String(localized: "Codecierge.AssistantAppend", defaultValue: "\n\n### 🔮 Assistant\n\(text)", comment: "Markdown section appending assistant text"))
     }
 
     fileprivate func sessionBusyDidChange(session: Session, busy: Bool) {
@@ -620,8 +620,8 @@ extension ToolCodecierge: ToolCodeciergeSessionDelegate {
 
     fileprivate func sessionDidReceiveCommand(session: Session, command: String) {
         let sanitizedCommand = command.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 80)
-        appendToSuggestion(guid: session.guid, suggestion: "\n\n### 💻 Terminal\n`\(sanitizedCommand)`")
-        appendToSuggestion(guid: session.guid, suggestion: "\n\n### 🔮 Assistant\nThinking…")
+        appendToSuggestion(guid: session.guid, suggestion: String(localized: "Codecierge.TerminalSection", defaultValue: "\n\n### 💻 Terminal\n`\(sanitizedCommand)`", comment: "Markdown section showing a terminal command"))
+        appendToSuggestion(guid: session.guid, suggestion: String(localized: "Codecierge.AssistantThinking", defaultValue: "\n\n### 🔮 Assistant\nThinking…", comment: "Markdown section shown while the assistant is thinking"))
     }
 
     fileprivate func sessionEnabled(_ session: ToolCodecierge.Session) -> Bool {
@@ -643,7 +643,7 @@ class CodeciergeOnboardingView: NSView {
     private let label: NSTextField
     private let startButton: NSButton
     private let revealButton: NSButton
-    private let originalLabelText = "Codecierge uses AI to help you in your terminal."
+    private let originalLabelText = String(localized: "Codecierge.OnboardingLabel", defaultValue: "Codecierge uses AI to help you in your terminal.", comment: "Onboarding label describing Codecierge")
     private var notificationObserver: (any NSObjectProtocol)?
 
     init(startCallback: @escaping () -> ()) {
@@ -652,9 +652,9 @@ class CodeciergeOnboardingView: NSView {
         label.usesSingleLineMode = false
         label.lineBreakMode = .byWordWrapping
         label.alignment = .center
-        startButton = NSButton(title: "Get Started", target: nil, action: nil)
+        startButton = NSButton(title: String(localized: "Codecierge.GetStarted", defaultValue: "Get Started", comment: "Button to get started with Codecierge"), target: nil, action: nil)
 
-        revealButton = NSButton(title: "Reveal Setting", target: nil, action: nil)
+        revealButton = NSButton(title: String(localized: "Codecierge.RevealSetting", defaultValue: "Reveal Setting", comment: "Button to reveal the AI setting"), target: nil, action: nil)
         revealButton.isHidden = true
 
         super.init(frame: .zero)
@@ -691,12 +691,12 @@ class CodeciergeOnboardingView: NSView {
 
     private func updateEnabled() {
         if !iTermAdvancedSettingsModel.generativeAIAllowed() {
-            label.stringValue = "Generative AI has been disabled by the system administrator."
+            label.stringValue = String(localized: "Codecierge.AIDisabledByAdmin", defaultValue: "Generative AI has been disabled by the system administrator.", comment: "Message shown when generative AI is disabled by the administrator")
             startButton.isEnabled = false
             startButton.isHidden = false
             revealButton.isHidden = true
         } else if !SecureUserDefaults.instance.enableAI.value {
-            label.stringValue = "You must enable AI features to use Codecierge."
+            label.stringValue = String(localized: "Codecierge.MustEnableAI", defaultValue: "You must enable AI features to use Codecierge.", comment: "Message shown when AI features are not enabled")
             startButton.isEnabled = false
             startButton.isHidden = true
             revealButton.isHidden = false
@@ -764,12 +764,12 @@ class CodeciergeGoalView: NSView, NSTextViewDelegate, NSControlTextEditingDelega
 
     init(startCallback: @escaping (String, Bool) -> ()) {
         self.startCallback = startCallback
-        label = NSTextField(labelWithString: "What are you trying to do? I'll suggest commands and explain their output.")
+        label = NSTextField(labelWithString: String(localized: "Codecierge.GoalPrompt", defaultValue: "What are you trying to do? I'll suggest commands and explain their output.", comment: "Prompt asking the user what they are trying to do"))
         label.lineBreakMode = .byWordWrapping
         label.usesSingleLineMode = false
 
         textView = ShiftEnterTextView(frame: NSRect(x: 0, y: 0, width: 1, height: 1))
-        textView.it_placeholderString = "I want to…"
+        textView.it_placeholderString = String(localized: "Codecierge.GoalPlaceholder", defaultValue: "I want to…", comment: "Placeholder for the goal text view")
         textView.font = NSFont.userFixedPitchFont(ofSize: NSFont.systemFontSize)
         textView.isEditable = true
         textView.isSelectable = true
@@ -788,11 +788,11 @@ class CodeciergeGoalView: NSView, NSTextViewDelegate, NSControlTextEditingDelega
         let hasFunctionCalling = AITermController.provider?.model.features.contains(.functionCalling) ?? false
         autoButton = NSButton()
         autoButton.setButtonType(.switch)
-        autoButton.title = "Run commands automatically"
+        autoButton.title = String(localized: "Codecierge.RunCommandsAutomatically", defaultValue: "Run commands automatically", comment: "Checkbox to run commands automatically")
         autoButton.state = .off
         autoButton.isEnabled = hasFunctionCalling
         userDefaultsObserver = iTermUserDefaultsObserver()
-        startButton = NSButton(title: "Start", target: nil, action: nil)
+        startButton = NSButton(title: String(localized: "Codecierge.Start", defaultValue: "Start", comment: "Button to start Codecierge"), target: nil, action: nil)
         startButton.isEnabled = false
 
         super.init(frame: .zero)
@@ -836,12 +836,12 @@ class CodeciergeGoalView: NSView, NSTextViewDelegate, NSControlTextEditingDelega
 
     @objc func autoToggled(_ sender: Any) {
         if autoButton.state == .on {
-            let selection = iTermWarning.show(withTitle: "This lets an AI completely control your computer. It could delete your files, do something stupid or dangerous, or lead to the downfall of humanity. Proceed with caution.",
-                              actions: [ "OK", "Cancel" ],
+            let selection = iTermWarning.show(withTitle: String(localized: "Codecierge.DangerWarningBody", defaultValue: "This lets an AI completely control your computer. It could delete your files, do something stupid or dangerous, or lead to the downfall of humanity. Proceed with caution.", comment: "Body of the Codecierge auto-run danger warning"),
+                              actions: [ iTermLocalizedOK(), iTermLocalizedCancel() ],
                               accessory: nil,
                               identifier: nil,
                               silenceable: .kiTermWarningTypePersistent,
-                              heading: "Danger!",
+                              heading: String(localized: "Codecierge.DangerWarningHeading", defaultValue: "Danger!", comment: "Heading of the Codecierge auto-run danger warning"),
                               window: window)
             if selection == .kiTermWarningSelection1 {
                 autoButton.state = .off
@@ -885,12 +885,12 @@ class CodeciergeGoalView: NSView, NSTextViewDelegate, NSControlTextEditingDelega
 
     @objc private func startButtonPressed() {
         if !iTermUserDefaults.userDefaults().bool(forKey: codeciergeWarningAcknowledgedUserDefaultsKey) {
-            let option = iTermWarning.show(withTitle: "Everything that happens in your terminal while Codecierge is running will be sent to your AI provider. Don't send them confidential information!",
-                              actions: [ "OK", "Cancel" ],
+            let option = iTermWarning.show(withTitle: String(localized: "Codecierge.PrivacyWarningBody", defaultValue: "Everything that happens in your terminal while Codecierge is running will be sent to your AI provider. Don't send them confidential information!", comment: "Body of the Codecierge privacy warning"),
+                              actions: [ iTermLocalizedOK(), iTermLocalizedCancel() ],
                               accessory: nil,
                               identifier: nil,
                               silenceable: .kiTermWarningTypePersistent,
-                              heading: "Privacy Warning",
+                              heading: String(localized: "Codecierge.PrivacyWarningHeading", defaultValue: "Privacy Warning", comment: "Heading of the Codecierge privacy warning"),
                               window: window)
             if option == .kiTermWarningSelection0 {
                 iTermUserDefaults.userDefaults().setValue(true, forKey: codeciergeWarningAcknowledgedUserDefaultsKey)
@@ -934,7 +934,7 @@ class CodeciergeSuggestionView: NSView, NSTextFieldDelegate {
             goalLabel.stringValue
         }
         set {
-            goalLabel.stringValue = "Goal: " + newValue
+            goalLabel.stringValue = String(localized: "Codecierge.GoalPrefix", defaultValue: "Goal: ", comment: "Prefix label shown before the user's goal") + newValue
             layoutSubviews()
         }
     }
@@ -966,6 +966,7 @@ class CodeciergeSuggestionView: NSView, NSTextFieldDelegate {
         self.endCallback = endCallback
         self.replyCallback = replyCallback
         self.didCopyCallback = didCopyCallback
+        // Localization unneeded
         goalLabel = NSTextField(labelWithString: ")")
         goalLabel.lineBreakMode = .byTruncatingTail
 
@@ -978,14 +979,14 @@ class CodeciergeSuggestionView: NSView, NSTextFieldDelegate {
         
         scrollView = NSScrollView()
         scrollView.hasHorizontalScroller = false
-        endButton = NSButton(title: "End Task", target: nil, action: nil)
+        endButton = NSButton(title: String(localized: "Codecierge.EndTask", defaultValue: "End Task", comment: "Button to end the Codecierge task"), target: nil, action: nil)
 
         replyTextField = NSTextField()
-        replyTextField.placeholderString = "Response"
+        replyTextField.placeholderString = String(localized: "Codecierge.ResponsePlaceholder", defaultValue: "Response", comment: "Placeholder for the reply text field")
         replyButton = NSButton()
         replyButton.isEnabled = false
         replyButton.isBordered = false
-        replyButton.image = NSImage(systemSymbolName: SFSymbol.paperplane.rawValue, accessibilityDescription: "Send reply")
+        replyButton.image = NSImage(systemSymbolName: SFSymbol.paperplane.rawValue, accessibilityDescription: String(localized: "Codecierge.SendReplyAccessibility", defaultValue: "Send reply", comment: "Accessibility description for the send reply button"))
         replyButton.action = #selector(send(_:))
 
         super.init(frame: .zero)

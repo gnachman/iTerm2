@@ -8,6 +8,8 @@
 
 #import "iTermPreferencesBaseViewController.h"
 
+#import "iTermCorruptApplicationAlert.h"
+
 #import "DebugLogging.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermPreferences.h"
@@ -567,22 +569,7 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
 }
 
 - (void)checkAppSignatureForMissingControlWithKey:(NSString *)key {
-    NSString *team = [iTermAppSignatureValidator currentAppTeamID];
-    NSString *message;
-    if (!team) {
-        message = @"A required file appears to be missing or corrupted and iTerm2’s code signature could not be verified. You should download a fresh copy of the app and reinstall it.";
-    } else if (![team isEqualToString:@"H7V7XYVQ7D"]) {
-        message = @"A required file appears to be missing or corrupted and iTerm2’s code signature did not match that of the official distribution. You should download a fresh copy of the app and reinstall it.";
-    } else {
-        message = @"A required file appears to be missing or corrupted, yet against all odds the code signature for iTerm2 is valid. Please file a bug at https://iterm2.com/bugs";
-    }
-    NSAlert *alert = [[NSAlert alloc] init];
-    [alert setMessageText:@"Application Corrupt"];
-    [alert setInformativeText:[NSString stringWithFormat:@"While trying to load the setting for “%@”: %@", key, message]];
-    [alert addButtonWithTitle:@"OK"];
-    [alert setAlertStyle:NSAlertStyleCritical];
-    [alert runModal];
-    exit(1);
+    iTermShowCorruptApplicationAlert(key);
 }
 - (PreferenceInfo *)unsafeDefineControl:(NSView *)control
                                     key:(NSString *)key
@@ -668,11 +655,11 @@ NSString *const iTermPreferencesDidToggleIndicateNonDefaultValues = @"iTermPrefe
     }
     NSSlider *slider = [NSSlider castFrom:control];
     if (slider) {
-        [phrases addObject:@"slider"];
+        [phrases addObject:NSLocalizedStringWithDefaultValue(@"PreferencesBase.Slider", nil, [NSBundle mainBundle], @"slider", @"Search phrase for a slider control")];
     }
     CPKColorWell *colorWell = [CPKColorWell castFrom:control];
     if (colorWell) {
-        [phrases addObject:@"color"];
+        [phrases addObject:NSLocalizedStringWithDefaultValue(@"PreferencesBase.Color", nil, [NSBundle mainBundle], @"color", @"Search phrase for a color control")];
     }
     NSTextField *textField = [NSTextField castFrom:control];
     if (textField) {

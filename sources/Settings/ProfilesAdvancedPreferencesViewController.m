@@ -88,19 +88,19 @@
                    type:kPreferenceInfoTypeTokenField];
 
     [self addViewToSearchIndex:_triggersButton
-                   displayName:@"Triggers"
+                   displayName:NSLocalizedStringWithDefaultValue(@"ProfilesAdvanced.TriggersSearch", nil, [NSBundle mainBundle], @"Triggers", @"Search index display name for the triggers control")
                        phrases:@[ @"regular expression", @"regex" ]
                            key:nil];
     [self addViewToSearchIndex:_smartSelectionButton
-                   displayName:@"Smart selection"
+                   displayName:NSLocalizedStringWithDefaultValue(@"ProfilesAdvanced.SmartSelectionSearch", nil, [NSBundle mainBundle], @"Smart selection", @"Search index display name for the smart selection control")
                        phrases:@[ @"regular expression", @"regex" ]
                            key:nil];
     [self addViewToSearchIndex:_automaticProfileSwitchingView
-                   displayName:@"Automatic profile switching rules"
+                   displayName:NSLocalizedStringWithDefaultValue(@"ProfilesAdvanced.AutomaticProfileSwitchingSearch", nil, [NSBundle mainBundle], @"Automatic profile switching rules", @"Search index display name for automatic profile switching rules")
                        phrases:@[]
                            key:nil];
     [self addViewToSearchIndex:_semanticHistoryAction
-                   displayName:@"Semantic history"
+                   displayName:NSLocalizedStringWithDefaultValue(@"ProfilesAdvanced.SemanticHistorySearch", nil, [NSBundle mainBundle], @"Semantic history", @"Search index display name for the semantic history control")
                        phrases:@[ @"cmd click", @"open file", @"open url" ]
                            key:nil];
     _enableAPSLogging.state = iTermUserDefaults.enableAutomaticProfileSwitchingLogging ? NSControlStateValueOn : NSControlStateValueOff;
@@ -147,9 +147,9 @@
     _semanticHistoryPrefController.guid = selectedGuid;
     [_boundHostsTableView reloadData];
     if (self.profileType == ProfileTypeBrowser) {
-        _triggersHelp.helpText = @"Triggers are actions you configure to run when certain URLs are visited or text on a web page is found.";
+        _triggersHelp.helpText = NSLocalizedStringWithDefaultValue(@"ProfilesAdvanced.TriggersHelpBrowser", nil, [NSBundle mainBundle], @"Triggers are actions you configure to run when certain URLs are visited or text on a web page is found.", @"Help text describing triggers in a browser session");
     } else {
-        _triggersHelp.helpText = @"Triggers watch for text matching a regular expression to arrive in a terminal session and then perform an action in response.";
+        _triggersHelp.helpText = NSLocalizedStringWithDefaultValue(@"ProfilesAdvanced.TriggersHelpTerminal", nil, [NSBundle mainBundle], @"Triggers watch for text matching a regular expression to arrive in a terminal session and then perform an action in response.", @"Help text describing triggers in a terminal session");
     }
 }
 
@@ -196,7 +196,7 @@
     [[triggerController.window undoManager] registerUndoWithTarget:self
                                                           selector:@selector(setTriggersValue:)
                                                             object:[self objectForKey:KEY_TRIGGERS]];
-    [[triggerController.window undoManager] setActionName:@"Edit Triggers"];
+    [[triggerController.window undoManager] setActionName:NSLocalizedStringWithDefaultValue(@"ProfilesAdvanced.EditTriggersUndo", nil, [NSBundle mainBundle], @"Edit Triggers", @"Undo action name for editing triggers")];
 
     // No side effects because we don't want the tableview to get reloaded. We'll save when the
     // panel is closed. by setting the _triggersModelHasChanged flag.
@@ -358,12 +358,12 @@
     }
     if (dupProfile) {
         NSString *theTitle;
-        theTitle = [NSString stringWithFormat:@"The profile “%@” is already bound to hostname “%@”.",
+        theTitle = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilesAdvanced.HostAlreadyBound", nil, [NSBundle mainBundle], @"The profile “%1$@” is already bound to hostname “%2$@”.", @"Warning shown when a hostname is already bound to another profile"),
                     dupProfile[KEY_NAME], anObject];
-        NSString *removeFromOtherAction = [NSString stringWithFormat:@"Remove from “%@”", dupProfile[KEY_NAME]];
+        NSString *removeFromOtherAction = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilesAdvanced.RemoveFromProfile", nil, [NSBundle mainBundle], @"Remove from “%@”", @"Button that removes a bound host from the named profile"), dupProfile[KEY_NAME]];
         switch ([iTermWarning showWarningWithTitle:theTitle
                                            actions:@[ removeFromOtherAction,
-                                                      @"Remove from This Profile" ]
+                                                      NSLocalizedStringWithDefaultValue(@"ProfilesAdvanced.RemoveFromThisProfile", nil, [NSBundle mainBundle], @"Remove from This Profile", @"Button that removes a bound host from the current profile") ]
                                         identifier:nil
                                        silenceable:kiTermWarningTypePersistent
                                             window:self.view.window]) {
@@ -397,8 +397,9 @@
 - (NSCell *)tableView:(NSTableView *)tableView
     dataCellForTableColumn:(NSTableColumn *)tableColumn
                        row:(NSInteger)row {
+    // Localization unneeded
     NSTextFieldCell *cell = [[NSTextFieldCell alloc] initTextCell:@"hostname"];
-    [cell setPlaceholderString:@"Enter a rule…"];
+    [cell setPlaceholderString:NSLocalizedStringWithDefaultValue(@"ProfilesAdvanced.EnterRulePlaceholder", nil, [NSBundle mainBundle], @"Enter a rule…", @"Placeholder text for a bound host rule text field")];
     [cell setEditable:YES];
     return cell;
 }

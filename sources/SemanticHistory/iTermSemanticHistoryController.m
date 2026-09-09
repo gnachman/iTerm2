@@ -663,19 +663,19 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         return;
     }
     iTermWarning *warning = [[iTermWarning alloc] init];
-    warning.title = [NSString stringWithFormat:@"The following command returned a non-zero exit code:\n\n“%@”",
+    warning.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"SemanticHistory.CommandFailedTitle", nil, [NSBundle mainBundle], @"The following command returned a non-zero exit code:\n\n“%@”", @"Alert body when a semantic history command fails; %@ is the command"),
                      [parts componentsJoinedByString:@" "]];
-    warning.heading = @"Semantic History Command Failed";
+    warning.heading = NSLocalizedStringWithDefaultValue(@"SemanticHistory.CommandFailedHeading", nil, [NSBundle mainBundle], @"Semantic History Command Failed", @"Heading for the alert shown when a semantic history command fails");
     static const iTermSingleUseWindowOptions options = iTermSingleUseWindowOptionsShortLived;
     NSMutableData *inject = [runner.output mutableCopy];
-    NSString *truncationWarning = [NSString stringWithFormat:@"\n%c[m;[output truncated]\n", 27];
+    NSString *truncationWarning = [NSString stringWithFormat:@"\n%c[m;%@\n", 27, NSLocalizedStringWithDefaultValue(@"SemanticHistory.OutputTruncatedLabel", nil, [NSBundle mainBundle], @"[output truncated]", @"Marker shown where captured output was truncated")];
     if (runner.truncated) {
         [inject appendData:[truncationWarning dataUsingEncoding:NSUTF8StringEncoding]];
     }
     [inject it_replaceOccurrencesOfData:[NSData dataWithBytes:"\n" length:1]
                                withData:[NSData dataWithBytes:"\r\n" length:2]];
-    warning.warningActions = @[ [iTermWarningAction warningActionWithLabel:@"OK" block:nil],
-                                [iTermWarningAction warningActionWithLabel:@"View" block:^(iTermWarningSelection selection) {
+    warning.warningActions = @[ [iTermWarningAction warningActionWithLabel:iTermLocalizedOK() block:nil],
+                                [iTermWarningAction warningActionWithLabel:NSLocalizedStringWithDefaultValue(@"SemanticHistory.View", nil, [NSBundle mainBundle], @"View", @"Button to view the output of a failed semantic history command") block:^(iTermWarningSelection selection) {
                                     [[iTermController sharedInstance] openSingleUseWindowWithCommand:@"/usr/bin/true"
                                                                                            arguments:nil
                                                                                               inject:inject

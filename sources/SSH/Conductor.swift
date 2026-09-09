@@ -1644,13 +1644,15 @@ extension Conductor {
             // Only "View" should be remembered. Remembering "Download" could cause
             // repeated download prompts if the download fails or isn't handled.
             let warning = iTermWarning()
-            warning.title = "Download \(path.path.lastPathComponent) or view in browser?"
-            warning.actionLabels = ["Download", "View", "Cancel"]
+            warning.title = String(localized: "Conductor.DownloadOrViewTitle", defaultValue: "Download \(path.path.lastPathComponent) or view in browser?", comment: "Prompt asking whether to download a remote file or view it in the browser")
+            let downloadLabel = String(localized: "Conductor.Download", defaultValue: "Download", comment: "Download button")
+            let cancel = iTermLocalizedCancel()
+            warning.actionLabels = [downloadLabel, String(localized: "Conductor.View", defaultValue: "View", comment: "View button"), cancel]
             warning.identifier = "DownloadOrViewInBrowser_" + mimeType + " " + path.usernameHostnameString
             warning.warningType = .kiTermWarningTypePermanentlySilenceable
-            warning.heading = "Download or View File?"
+            warning.heading = String(localized: "Conductor.DownloadOrViewHeading", defaultValue: "Download or View File?", comment: "Heading for the download-or-view prompt")
             warning.window = window
-            warning.doNotRememberLabels = ["Download", "Cancel"]
+            warning.doNotRememberLabels = [downloadLabel, cancel]
             switch warning.runModal() {
             case .kiTermWarningSelection0:  // Download
                 download(path: path)
@@ -2100,7 +2102,7 @@ extension Conductor {
                 if status == 0 {
                     sendInitialText()
                 } else {
-                    fail("\(executionContext.command.stringValue): Unepected status \(status)")
+                    fail(String(localized: "Conductor.UnexpectedStatus", defaultValue: "\(executionContext.command.stringValue): Unepected status \(String(describing: status))", comment: "Error when a remote command returns an unexpected exit status"))
                 }
             case .abort, .line(_), .sideChannelLine(line: _, channel: _, pid: _), .canceled:
                 break
@@ -2109,7 +2111,7 @@ extension Conductor {
             switch result {
             case .end(let status):
                 if status != 0 {
-                    fail("\(executionContext.command.stringValue): Unepected status \(status)")
+                    fail(String(localized: "Conductor.UnexpectedStatus", defaultValue: "\(executionContext.command.stringValue): Unepected status \(String(describing: status))", comment: "Error when a remote command returns an unexpected exit status"))
                 }
             case .abort, .line(_), .sideChannelLine(line: _, channel: _, pid: _), .canceled:
                 break
@@ -2240,7 +2242,7 @@ extension Conductor {
                 if status == 0 {
                     write(code + "\nEOF\n")
                 } else {
-                    fail("Status \(status) when running python code")
+                    fail(String(localized: "Conductor.PythonCodeStatus", defaultValue: "Status \(String(describing: status)) when running python code", comment: "Error when running remote python code returns a nonzero status"))
                 }
                 return
             }
@@ -2359,7 +2361,7 @@ extension Conductor {
         case .handleBackgroundJob(let output, let completion):
             switch result {
             case .line(_):
-                fail("Unexpected output from \(executionContext.command.stringValue)")
+                fail(String(localized: "Conductor.UnexpectedOutput", defaultValue: "Unexpected output from \(executionContext.command.stringValue)", comment: "Error when a background job produces unexpected output"))
             case .sideChannelLine(line: let line, channel: 1, pid: _):
                 output.strings.append(line)
             case .abort, .sideChannelLine(_, _, _), .canceled:
@@ -2389,7 +2391,7 @@ extension Conductor {
             return
         }
         guard let pid = Int32(lines.string) else {
-            fail("Invalid process ID from remote: \(lines.string)")
+            fail(String(localized: "Conductor.InvalidPID", defaultValue: "Invalid process ID from remote: \(lines.string)", comment: "Error when the remote returns a non-numeric process ID"))
             return
         }
         framedPID = pid

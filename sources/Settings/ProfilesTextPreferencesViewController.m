@@ -249,13 +249,8 @@
             // mixed Asian/non-asian environments find it useful but almost nobody should turn it on
             // unless they really know what they're doing.
             iTermWarningSelection selection =
-                [iTermWarning showWarningWithTitle:@"You probably don’t want to turn this on. "
-                                                   @"It will confuse interactive programs. "
-                                                   @"You might want it if you work mostly with "
-                                                   @"East Asian text combined with legacy or "
-                                                   @"mathematical character sets. "
-                                                   @"Are you sure you want this?"
-                                           actions:@[ @"Enable", @"Cancel" ]
+                [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"ProfilesText.AmbiguousWidthWarningBody", nil, [NSBundle mainBundle], @"You probably don’t want to turn this on. It will confuse interactive programs. You might want it if you work mostly with East Asian text combined with legacy or mathematical character sets. Are you sure you want this?", @"Warning shown before enabling treating ambiguous-width characters as double-width")
+                                           actions:@[ NSLocalizedStringWithDefaultValue(@"ProfilesText.EnableAmbiguousWidth", nil, [NSBundle mainBundle], @"Enable", @"Button to enable treating ambiguous-width characters as double-width"), iTermLocalizedCancel() ]
                                         identifier:kWarnAboutAmbiguousWidth
                                        silenceable:kiTermWarningTypePermanentlySilenceable
                                             window:weakSelf.view.window];

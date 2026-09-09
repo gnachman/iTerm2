@@ -62,8 +62,8 @@ static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iter
                                                [weakSelf actionsDidChange:notification];
                                            }];
     [container addViewToSearchIndex:_tableView
-                        displayName:@"Actions"
-                            phrases:@[ @"Actions" ]
+                        displayName:NSLocalizedStringWithDefaultValue(@"ActionsEditing.Actions", nil, [NSBundle mainBundle], @"Actions", @"Name of the Actions section in settings")
+                            phrases:@[ NSLocalizedStringWithDefaultValue(@"ActionsEditing.Actions", nil, [NSBundle mainBundle], @"Actions", @"Name of the Actions section in settings") ]
                                 key:kPreferenceKeyActions];
 }
 
@@ -128,7 +128,7 @@ static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iter
         case iTermActionsDidChangeMutationTypeEdit: {
             [_tableView it_performUpdateBlock:^{
                 [_tableView reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:notif.index]
-                                      columnIndexes:[NSIndexSet indexSetWithIndex:0]];
+                                      columnIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, _tableView.numberOfColumns)]];
             }];
             break;
         }
@@ -244,24 +244,24 @@ static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iter
                                                   encoding:NSUTF8StringEncoding
                                                      error:&error];
     if (!content || error) {
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"While loading %@: %@", url.path, error.localizedDescription]
-                                   actions:@[ @"OK" ]
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ActionsEditing.ImportLoadingError", nil, [NSBundle mainBundle], @"While loading %1$@: %2$@", @"Error message when loading an imported actions file fails; first arg is a filename, second is the error"), url.path, error.localizedDescription]
+                                   actions:@[ iTermLocalizedOK() ]
                                  accessory:nil
                                 identifier:@"NoSyncImportActionsFailed"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:[NSString stringWithFormat:@"Import Failed"]
+                                   heading:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ActionsEditing.ImportFailedHeading", nil, [NSBundle mainBundle], @"Import Failed", @"Heading of the warning shown when importing actions fails")]
                                     window:self.view.window];
         return;
     }
 
     id root = [NSJSONSerialization it_objectForJsonString:content error:&error];
     if (!root) {
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"While parsing %@: %@", url.path, error.localizedDescription]
-                                   actions:@[ @"OK" ]
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ActionsEditing.ImportParsingError", nil, [NSBundle mainBundle], @"While parsing %1$@: %2$@", @"Error message when parsing an imported actions file fails; first arg is a filename, second is the error"), url.path, error.localizedDescription]
+                                   actions:@[ iTermLocalizedOK() ]
                                  accessory:nil
                                 identifier:@"NoSyncImportActionsFailed"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:[NSString stringWithFormat:@"Import Failed"]
+                                   heading:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ActionsEditing.ImportFailedHeading", nil, [NSBundle mainBundle], @"Import Failed", @"Heading of the warning shown when importing actions fails")]
                                     window:self.view.window];
         return;
     }
@@ -289,12 +289,12 @@ static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iter
 }
 
 - (void)showEncodingErrorForURL:(NSURL *)url {
-    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Malformed file at %@", url.path]
-                               actions:@[ @"OK" ]
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ActionsEditing.ImportMalformed", nil, [NSBundle mainBundle], @"Malformed file at %@", @"Error message when an imported actions file is malformed; arg is a filename"), url.path]
+                               actions:@[ iTermLocalizedOK() ]
                              accessory:nil
                             identifier:@"NoSyncActionEncodingError"
                            silenceable:kiTermWarningTypePersistent
-                               heading:[NSString stringWithFormat:@"Import Failed"]
+                               heading:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ActionsEditing.ImportFailedHeading", nil, [NSBundle mainBundle], @"Import Failed", @"Heading of the warning shown when importing actions fails")]
                                 window:self.view.window];
 }
 
@@ -310,13 +310,13 @@ static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iter
     NSString *json = [NSJSONSerialization it_jsonStringForObject:array];
     [json writeToSaveItem:item completionHandler:^(NSError *error) {
         if (error) {
-            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Error saving to %@: %@",
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ActionsEditing.ExportSaveError", nil, [NSBundle mainBundle], @"Error saving to %1$@: %2$@", @"Error message when writing an exported actions file fails; first arg is a filename, second is the error"),
                                                 item.displayName, error.localizedDescription]
-                                       actions:@[ @"OK" ]
+                                       actions:@[ iTermLocalizedOK() ]
                                      accessory:nil
                                     identifier:@"NoSyncActionWritingError"
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:[NSString stringWithFormat:@"Export Failed"]
+                                       heading:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ActionsEditing.ExportFailedHeading", nil, [NSBundle mainBundle], @"Export Failed", @"Heading of the warning shown when exporting actions fails")]
                                         window:self.view.window];
         } else {
             [item revealInFinderIfLocal];

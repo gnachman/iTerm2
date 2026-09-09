@@ -266,6 +266,41 @@ final class OrchestratorClient {
         }
     }
 
+    // Re-arm timers persisted before an app restart so a fired (or overdue) timer
+    // wakes its chat's agent even if the user never reopens any chat -- e.g. a
+    // Sparkle upgrade that quits and relaunches while a timer's deadline passes.
+    // Unlike a state/condition watch (whose reason to fire is a live session
+    // changing, which can't happen while iTerm2 is down), a timer's deadline can
+    // elapse during the downtime, so it must be re-armed eagerly rather than
+    // lazily on next chat open.
+    //
+    // Scans the (already in-memory) chat list for timer-bearing chats; only if
+    // one exists does it boot the chat service and instantiate that chat's
+    // dispatcher, whose init runs reconcilePersistedWatchers -- re-arming each
+    // timer and firing any whose time already passed. Idempotent: a chat whose
+    // dispatcher already exists is left as-is, and armTimer self-guards against
+    // double-arming. Called once at launch (see iTermChatTimerLaunch).
+    @MainActor
+    static func rearmPersistedTimersAtLaunch() {
+        guard let broker = ChatBroker.instance else { return }
+        let model = broker.listModel
+        var timerChatIDs = [String]()
+        for i in 0..<model.count {
+            let chat = model.chat(at: i)
+            if chat.watchers.contains(where: { $0.effectiveMode == .timer }) {
+                timerChatIDs.append(chat.id)
+            }
+        }
+        guard !timerChatIDs.isEmpty else { return }
+        // A fired timer publishes a status_update the chat service turns into an
+        // agent turn; boot it so that consumer exists even with no chat window.
+        broker.ensureServiceRunning()
+        guard let client = instance else { return }
+        for chatID in timerChatIDs {
+            _ = client.dispatcher(forChatID: chatID)
+        }
+    }
+
     // Internal (not private) so wiring tests can obtain two dispatchers for two
     // chatIDs and confirm they share this client's single typed-input store.
     func dispatcher(forChatID chatID: String) -> OrchestratorDispatcher {
@@ -276,5 +311,19 @@ final class OrchestratorClient {
                                              typedInput: typedInput)
         dispatchers[chatID] = created
         return created
+    }
+}
+
+// ObjC shim for the launch-time timer re-arm. The app delegate is Objective-C
+// and can't see OrchestratorClient (a MainActor Swift class); this NSObject
+// subclass gives it a plain selector to call from applicationDidFinishLaunching.
+@objc(iTermChatTimerLaunch)
+final class iTermChatTimerLaunch: NSObject {
+    @objc static func rearmPersistedTimers() {
+        // applicationDidFinishLaunching runs on the main thread, so we're already
+        // in the MainActor's execution context; assert that rather than hop.
+        MainActor.assumeIsolated {
+            OrchestratorClient.rearmPersistedTimersAtLaunch()
+        }
     }
 }

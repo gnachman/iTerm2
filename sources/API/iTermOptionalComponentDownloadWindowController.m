@@ -203,7 +203,7 @@ didCompleteWithError:(nullable NSError *)error {
 - (instancetype)initWithURL:(NSURL *)url
      requestedPythonVersion:(NSString *)requestedPythonVersion
            nextPhaseFactory:(iTermOptionalComponentDownloadPhase *(^)(iTermOptionalComponentDownloadPhase *))nextPhaseFactory {
-    self = [super initWithURL:url title:@"Finding latest version…" nextPhaseFactory:nextPhaseFactory];
+    self = [super initWithURL:url title:NSLocalizedStringWithDefaultValue(@"OptionalComponentDownload.FindingLatest", nil, [NSBundle mainBundle], @"Finding latest version…", @"Status shown while finding the latest version") nextPhaseFactory:nextPhaseFactory];
     if (self) {
         _requestedPythonVersion = [requestedPythonVersion copy];
     }
@@ -360,7 +360,7 @@ didCompleteWithError:(nullable NSError *)error {
      requestedPythonVersion:(NSString *)requestedPythonVersion
            expectedVersions:(NSArray<NSString *> *)expectedVersions
            nextPhaseFactory:(iTermOptionalComponentDownloadPhase *(^)(iTermOptionalComponentDownloadPhase *))nextPhaseFactory {
-    self = [super initWithURL:url title:@"Downloading Python runtime…" nextPhaseFactory:nextPhaseFactory];
+    self = [super initWithURL:url title:NSLocalizedStringWithDefaultValue(@"OptionalComponentDownload.DownloadingRuntime", nil, [NSBundle mainBundle], @"Downloading Python runtime…", @"Title shown while downloading the Python runtime") nextPhaseFactory:nextPhaseFactory];
     if (self) {
         _version = version;
         _expectedSignature = [expectedSignature copy];
@@ -414,7 +414,7 @@ didCompleteWithError:(nullable NSError *)error {
     // and it routes through the phase-cancel/completion logic correctly.
     self.window.styleMask &= ~NSWindowStyleMaskClosable;
 
-    _titleLabel.stringValue = @"Initializing…";
+    _titleLabel.stringValue = NSLocalizedStringWithDefaultValue(@"OptionalComponentDownload.Initializing", nil, [NSBundle mainBundle], @"Initializing…", @"Status shown while initializing a download");
     _progressLabel.stringValue = [NSString stringWithFormat:@""];
 }
 
@@ -443,7 +443,7 @@ didCompleteWithError:(nullable NSError *)error {
     [phase download];
     _progressLabel.stringValue = phase.progressString;
     _button.enabled = phase.buttonEnabled;
-    _button.title = @"Cancel";
+    _button.title = iTermLocalizedCancel();
 }
 
 - (void)showMessage:(NSString *)message {
@@ -452,7 +452,7 @@ didCompleteWithError:(nullable NSError *)error {
     _titleLabel.stringValue = message;
     _progressLabel.stringValue = @"";
     _button.enabled = YES;
-    _button.title = @"OK";
+    _button.title = iTermLocalizedOK();
 }
 
 - (IBAction)button:(id)sender {
@@ -471,13 +471,13 @@ didCompleteWithError:(nullable NSError *)error {
 - (void)downloadDidFailWithError:(NSError *)error {
     RLog(@"error=%@ %@", error, self);
     _button.enabled = YES;
-    _button.title = @"Try Again";
+    _button.title = NSLocalizedStringWithDefaultValue(@"OptionalComponentDownload.TryAgain", nil, [NSBundle mainBundle], @"Try Again", @"Button to retry a failed download");
     if (error.code == -999 && [error.domain isEqualToString:@"com.iterm2"]) {
-        _progressLabel.stringValue = @"Canceled";
+        _progressLabel.stringValue = NSLocalizedStringWithDefaultValue(@"OptionalComponentDownload.Canceled", nil, [NSBundle mainBundle], @"Canceled", @"Status shown when a download is canceled");
         _titleLabel.stringValue = @"";
     } else {
         _progressLabel.stringValue = error.localizedDescription;
-        _titleLabel.stringValue = @"Download Failed";
+        _titleLabel.stringValue = NSLocalizedStringWithDefaultValue(@"OptionalComponentDownload.DownloadFailed", nil, [NSBundle mainBundle], @"Download Failed", @"Title shown when a download fails");
     }
     _progressIndicator.doubleValue = 0;
     iTermOptionalComponentDownloadPhase *phase = _currentPhase;
@@ -511,7 +511,7 @@ didCompleteWithError:(nullable NSError *)error {
                                ofTotal:(double)totalBytes {
     DLog(@"downloaded %@/%@ %@", @(bytesWritten), @(totalBytes), self);
     self->_progressIndicator.doubleValue = bytesWritten / totalBytes;
-    self->_progressLabel.stringValue = [NSString stringWithFormat:@"%@ of %@",
+    self->_progressLabel.stringValue = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"OptionalComponentDownload.BytesProgress", nil, [NSBundle mainBundle], @"%1$@ of %2$@", @"Download progress; first %@ is bytes downloaded, second %@ is total bytes"),
                                         [NSString it_formatBytes:bytesWritten],
                                         [NSString it_formatBytes:totalBytes]];
 }

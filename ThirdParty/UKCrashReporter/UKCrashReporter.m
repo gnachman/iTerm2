@@ -260,8 +260,8 @@ NSString*    gCrashLogString = nil;
     if( gCrashLogString )
         explanation = [[[explanationField stringValue] mutableCopy] autorelease];
     else
-        explanation = [[NSLocalizedStringFromTable(@"FEEDBACK_EXPLANATION_TEXT",@"UKCrashReporter",@"") mutableCopy] autorelease];
-    [explanation replaceOccurrencesOfString: @"%%APPNAME" withString: appName
+        explanation = [[NSLocalizedStringWithDefaultValue(@"CrashReporter.FeedbackExplanation", nil, [NSBundle mainBundle], @"Enter your message below. If you are reporting a bug, please include information about your Mac and operating system version and a list of steps to help reproduce the problem.\n\nBe sure to include your email address or we won’t be able to get back to you.", @"Explanatory text at the top of the feedback window") mutableCopy] autorelease];
+    [explanation replaceOccurrencesOfString: @"{APPNAME}" withString: appName
                                     options: 0 range: NSMakeRange(0, [explanation length])];
     [explanationField setStringValue: explanation];
     
@@ -270,17 +270,17 @@ NSString*    gCrashLogString = nil;
     if( gCrashLogString )
         userMessage = [[[informationField string] mutableCopy] autorelease];
     else
-        userMessage = [[NSLocalizedStringFromTable(@"FEEDBACK_MESSAGE_TEXT",@"UKCrashReporter",@"") mutableCopy] autorelease];
+        userMessage = [[NSLocalizedStringWithDefaultValue(@"CrashReporter.FeedbackMessageTemplate", nil, [NSBundle mainBundle], @"Hi iTerm2 Developers,\n\nhere’s what I’d like to tell you:\n\n\t...\n\n-- {USERNAME}\n\nReply to me at {EMAIL}", @"Prefilled body of the feedback message. {USERNAME} and {EMAIL} are replaced with the user’s full name and email address; keep those tokens verbatim.") mutableCopy] autorelease];
 
-    NSString *emailAddr = NSLocalizedStringFromTable(@"MISSING_EMAIL_ADDRESS",@"UKCrashReporter",@"");
+    NSString *emailAddr = NSLocalizedStringWithDefaultValue(@"CrashReporter.MissingEmailPlaceholder", nil, [NSBundle mainBundle], @"<Your E-Mail Address here>", @"Placeholder substituted into the feedback message when the user’s email address is unknown");
 
     if ([self europeanLocale]) {
-        emailAddr = NSLocalizedStringFromTable(@"MISSING_EMAIL_ADDRESS",@"UKCrashReporter",@"");
+        emailAddr = NSLocalizedStringWithDefaultValue(@"CrashReporter.MissingEmailPlaceholder", nil, [NSBundle mainBundle], @"<Your E-Mail Address here>", @"Placeholder substituted into the feedback message when the user’s email address is unknown");
     }
 
-    [userMessage replaceOccurrencesOfString: @"%%LONGUSERNAME" withString: NSFullUserName()
+    [userMessage replaceOccurrencesOfString: @"{USERNAME}" withString: NSFullUserName()
                 options: 0 range: NSMakeRange(0, [userMessage length])];
-    [userMessage replaceOccurrencesOfString: @"%%EMAILADDRESS" withString: emailAddr
+    [userMessage replaceOccurrencesOfString: @"{EMAIL}" withString: emailAddr
                 options: 0 range: NSMakeRange(0, [userMessage length])];
     [informationField setString: userMessage];
     
@@ -299,7 +299,7 @@ NSString*    gCrashLogString = nil;
         NSTabViewItem*    crashLogItem = [switchTabView tabViewItemAtIndex: itemIndex];
         unsigned        numCores = UKCountCores();
         NSString*        numCPUsString = (numCores == 1) ? @"" : [NSString stringWithFormat: @"%dx ",numCores];
-        [crashLogItem setLabel: NSLocalizedStringFromTable(@"SYSTEM_INFO_TAB_NAME",@"UKCrashReporter",@"")];
+        [crashLogItem setLabel: NSLocalizedStringWithDefaultValue(@"CrashReporter.SystemInfoTabName", nil, [NSBundle mainBundle], @"System Information", @"Title of the tab showing system information in the crash reporter")];
         
         NSString*    systemInfo = [NSString stringWithFormat: @"Application: %@ %@\nModel: %@\nCPU Speed: %@%.2f GHz\nSystem Version: %@\n\nPreferences:\n%@",
                                     appName, [[[NSBundle mainBundle] infoDictionary] objectForKey: @"CFBundleVersion"],
@@ -325,7 +325,8 @@ NSString*    gCrashLogString = nil;
     NSData*                crashReport = [crashReportString dataUsingEncoding: NSUTF8StringEncoding];
     
     // Prepare a request:
-    NSURL *url = [NSURL URLWithString: NSLocalizedStringFromTable( @"CRASH_REPORT_CGI_URL", @"UKCrashReporter", @"" )];
+    // Localization unneeded: this is a service endpoint, not user-visible text.
+    NSURL *url = [NSURL URLWithString: @"https://iterm2.com/crashreportform.php"];
     NSMutableURLRequest *postRequest = [NSMutableURLRequest requestWithURL: url];
     NSString            *contentType = [NSString stringWithFormat:@"multipart/form-data; boundary=%@",boundary];
     NSString            *agent = @"UKCrashReporter";
@@ -394,14 +395,14 @@ NSString*    gCrashLogString = nil;
     {
         NSString*        errTitle = nil;
         if( feedbackMode )
-            errTitle = NSLocalizedStringFromTable( @"COULDNT_SEND_FEEDBACK_ERROR",@"UKCrashReporter",@"");
+            errTitle = NSLocalizedStringWithDefaultValue(@"CrashReporter.FeedbackSendFailedTitle", nil, [NSBundle mainBundle], @"Couldn’t send out your message.", @"Alert title when sending feedback fails");
         else
-            errTitle = NSLocalizedStringFromTable( @"COULDNT_SEND_CRASH_REPORT_ERROR",@"UKCrashReporter",@"");
+            errTitle = NSLocalizedStringWithDefaultValue(@"CrashReporter.CrashSendFailedTitle", nil, [NSBundle mainBundle], @"Couldn’t submit crash report", @"Alert title when submitting a crash report fails");
 
         NSAlert *alert = [[[NSAlert alloc] init] autorelease];
         alert.messageText = errTitle;
         alert.informativeText = [errMsg localizedDescription];
-        [alert addButtonWithTitle:NSLocalizedStringFromTable( @"COULDNT_SEND_CRASH_REPORT_ERROR_OK",@"UKCrashReporter",@"")];
+        [alert addButtonWithTitle:iTermLocalizedOK()];
         [alert runModal];
     }
     

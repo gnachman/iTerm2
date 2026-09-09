@@ -105,7 +105,7 @@ struct LLMProvider {
             return "Llama"
         }
 
-        return "Unknown Platform"
+        return String(localized: "LLMProvider.UnknownPlatform", defaultValue: "Unknown Platform", comment: "Display name for an unrecognized AI provider")
     }
 
     var dynamicModelsSupported: Bool {

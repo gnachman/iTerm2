@@ -326,6 +326,7 @@ static NSRect iTermOutlineViewDisclosureButtonImageRectForBounds(id self, SEL _c
     NSTableCellView *cell = [[iTermTableCellViewWithTextField alloc] initWithFrame:NSZeroRect
                                                                         identifier:@"iTermPhonyCell"
                                                                               font:font
+                                                                             // Localization unneeded
                                                                              value:@"M"];
     return [cell fittingSize].height;
 }

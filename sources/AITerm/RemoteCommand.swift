@@ -196,6 +196,9 @@ struct RemoteCommand: Codable {
         case restartSession(RestartSession)
         // When adding a new command be sure to update allCases.
 
+        // Localization unneeded: these raw values are Codable persistence keys and menu-item
+        // identifiers (round-tripped via PermissionCategory(rawValue:)), not user-facing text. The
+        // display strings come from -regularTitle, which is localized per case.
         enum PermissionCategory: String, Codable, CaseIterable {
             case checkTerminalState = "Check Terminal State"
             case runCommands = "Run Commands"
@@ -245,9 +248,9 @@ struct RemoteCommand: Codable {
             var autopopulationTitle: String? {
                 switch self {
                 case .checkTerminalState:
-                    "Provide Terminal State Automatically"
+                    String(localized: "RemoteCommand.AutopopulationTitleCheckTerminalState", defaultValue: "Provide Terminal State Automatically", comment: "Title for the option to send terminal state automatically")
                 case .viewContents:
-                    "Provide Screen Contents Automatically"
+                    String(localized: "RemoteCommand.AutopopulationTitleViewContents", defaultValue: "Provide Screen Contents Automatically", comment: "Title for the option to send screen contents automatically")
                 case .runCommands, .writeToClipboard, .controlTerminal, .viewManpages,
                         .writeToFilesystem, .actInWebBrowser:
                     nil
@@ -257,17 +260,37 @@ struct RemoteCommand: Codable {
             var autopopulationWarningText: String? {
                 switch self {
                 case .checkTerminalState:
-                    "By setting this permission to “Always Allow”, terminal state will be sent automatically on every message you send in this chat.\nThis includes:\n • The current or last command and its exit status\n •The window size\n • Your shell\n • The current working directory, username, and hostname."
+                    String(localized: "RemoteCommand.AutopopulationWarningCheckTerminalState", defaultValue: "By setting this permission to “Always Allow”, terminal state will be sent automatically on every message you send in this chat.\nThis includes:\n • The current or last command and its exit status\n •The window size\n • Your shell\n • The current working directory, username, and hostname.", comment: "Warning shown when granting always-allow for sending terminal state")
                 case .viewContents:
-                    "By setting this permission to “Always Allow”, the current visible screen of your terminal session will be sent automatically on every message you send in this chat."
+                    String(localized: "RemoteCommand.AutopopulationWarningViewContents", defaultValue: "By setting this permission to “Always Allow”, the current visible screen of your terminal session will be sent automatically on every message you send in this chat.", comment: "Warning shown when granting always-allow for sending screen contents")
                 case .runCommands, .writeToClipboard, .controlTerminal, .viewManpages,
                         .writeToFilesystem, .actInWebBrowser:
                     nil
                 }
             }
 
+            // A complete localized title per category rather than composing "AI can" with the
+            // category name at runtime, which breaks word order and grammar in other languages. The
+            // rawValue is kept for Codable persistence and is not user-facing here.
             var regularTitle: String {
-                "AI can \(rawValue)"
+                switch self {
+                case .checkTerminalState:
+                    return String(localized: "RemoteCommand.PermissionTitleCheckTerminalState", defaultValue: "AI can Check Terminal State", comment: "Title of the permission toggle allowing the AI to check terminal state")
+                case .runCommands:
+                    return String(localized: "RemoteCommand.PermissionTitleRunCommands", defaultValue: "AI can Run Commands", comment: "Title of the permission toggle allowing the AI to run commands")
+                case .viewContents:
+                    return String(localized: "RemoteCommand.PermissionTitleViewContents", defaultValue: "AI can View Contents", comment: "Title of the permission toggle allowing the AI to view screen contents")
+                case .writeToClipboard:
+                    return String(localized: "RemoteCommand.PermissionTitleWriteToClipboard", defaultValue: "AI can Write to the Clipboard", comment: "Title of the permission toggle allowing the AI to write to the clipboard")
+                case .controlTerminal:
+                    return String(localized: "RemoteCommand.PermissionTitleControlTerminal", defaultValue: "AI can Control Terminal", comment: "Title of the permission toggle allowing the AI to control the terminal")
+                case .viewManpages:
+                    return String(localized: "RemoteCommand.PermissionTitleViewManpages", defaultValue: "AI can View Manpages", comment: "Title of the permission toggle allowing the AI to view manpages")
+                case .writeToFilesystem:
+                    return String(localized: "RemoteCommand.PermissionTitleWriteToFilesystem", defaultValue: "AI can Write to the File System", comment: "Title of the permission toggle allowing the AI to write to the file system")
+                case .actInWebBrowser:
+                    return String(localized: "RemoteCommand.PermissionTitleActInWebBrowser", defaultValue: "AI can Act in Web Browser", comment: "Title of the permission toggle allowing the AI to act in the web browser")
+                }
             }
 
             var autopopulatedWhenAlways: Bool {
@@ -381,114 +404,114 @@ struct RemoteCommand: Codable {
     var markdownDescription: String {
         switch content {
         case .isAtPrompt:
-            "Checking if you're at a shell prompt"
+            String(localized: "RemoteCommand.MarkdownIsAtPrompt", defaultValue: "Checking if you’re at a shell prompt", comment: "Status shown while checking whether the user is at a shell prompt")
         case let .executeCommand(args):
-            "Executing `\(args.command.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))`"
+            String(localized: "RemoteCommand.MarkdownExecuteCommand", defaultValue: "Executing `\(args.command.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))`", comment: "Status shown while executing a shell command")
         case .getLastExitStatus:
-            "Checking the exit status of the last command"
+            String(localized: "RemoteCommand.MarkdownGetLastExitStatus", defaultValue: "Checking the exit status of the last command", comment: "Status shown while checking the exit status of the last command")
         case .getCommandHistory:
-            "Reviewing the history of commands you have run in this session"
+            String(localized: "RemoteCommand.MarkdownGetCommandHistory", defaultValue: "Reviewing the history of commands you have run in this session", comment: "Status shown while reviewing command history")
         case .getLastCommand:
-            "Viewing the last command you ran in this session"
+            String(localized: "RemoteCommand.MarkdownGetLastCommand", defaultValue: "Viewing the last command you ran in this session", comment: "Status shown while viewing the last command")
         case .getCommandBeforeCursor:
-            "Reading your current command prompt"
+            String(localized: "RemoteCommand.MarkdownGetCommandBeforeCursor", defaultValue: "Reading your current command prompt", comment: "Status shown while reading the current command prompt")
         case .searchCommandHistory:
-            "Searching the history of commands you have run in this session"
+            String(localized: "RemoteCommand.MarkdownSearchCommandHistory", defaultValue: "Searching the history of commands you have run in this session", comment: "Status shown while searching command history")
         case .getCommandOutput:
-            "Fetching the output of a previously run command"
+            String(localized: "RemoteCommand.MarkdownGetCommandOutput", defaultValue: "Fetching the output of a previously run command", comment: "Status shown while fetching the output of a previously run command")
         case .getScreenContents:
-            "Reading the visible screen"
+            String(localized: "RemoteCommand.MarkdownGetScreenContents", defaultValue: "Reading the visible screen", comment: "Status shown while reading the visible screen")
         case .getTerminalSize:
-            "Querying the size of your terminal window"
+            String(localized: "RemoteCommand.MarkdownGetTerminalSize", defaultValue: "Querying the size of your terminal window", comment: "Status shown while querying the terminal window size")
         case .getShellType:
-            "Determining which shell you use"
+            String(localized: "RemoteCommand.MarkdownGetShellType", defaultValue: "Determining which shell you use", comment: "Status shown while determining which shell is in use")
         case .detectSSHSession:
-            "Checking if you are using SSH"
+            String(localized: "RemoteCommand.MarkdownDetectSSHSession", defaultValue: "Checking if you are using SSH", comment: "Status shown while checking whether an SSH session is in use")
         case .getRemoteHostname:
-            "Getting the current host name of this terminal session"
+            String(localized: "RemoteCommand.MarkdownGetRemoteHostname", defaultValue: "Getting the current host name of this terminal session", comment: "Status shown while getting the current host name")
         case .getUserIdentity:
-            "Checking your username"
+            String(localized: "RemoteCommand.MarkdownGetUserIdentity", defaultValue: "Checking your username", comment: "Status shown while checking the username")
         case .getCurrentDirectory:
-            "Discovering your current directory"
+            String(localized: "RemoteCommand.MarkdownGetCurrentDirectory", defaultValue: "Discovering your current directory", comment: "Status shown while discovering the current directory")
         case .setClipboard:
-            "Pasting to the clipboard"
+            String(localized: "RemoteCommand.MarkdownSetClipboard", defaultValue: "Pasting to the clipboard", comment: "Status shown while writing to the clipboard")
         case let .insertTextAtCursor(args):
-            "Typing `\(args.text.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))` into the current session"
+            String(localized: "RemoteCommand.MarkdownInsertTextAtCursor", defaultValue: "Typing `\(args.text.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))` into the current session", comment: "Status shown while typing text into the current session")
         case .deleteCurrentLine:
-            "Erasing the current command line"
+            String(localized: "RemoteCommand.MarkdownDeleteCurrentLine", defaultValue: "Erasing the current command line", comment: "Status shown while erasing the current command line")
         case let .getManPage(args):
-            "Checking the manpage for `\(args.cmd.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))`"
+            String(localized: "RemoteCommand.MarkdownGetManPage", defaultValue: "Checking the manpage for `\(args.cmd.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))`", comment: "Status shown while checking a command's man page")
         case let .createFile(args):
-            "Creating \(args.filename)"
+            String(localized: "RemoteCommand.MarkdownCreateFile", defaultValue: "Creating \(args.filename)", comment: "Status shown while creating a file")
         case let .searchBrowser(args):
-            "Search in browser for \(args.query)"
+            String(localized: "RemoteCommand.MarkdownSearchBrowser", defaultValue: "Search in browser for \(args.query)", comment: "Status shown while searching in the browser")
         case let .loadURL(args):
-            "Navigate to \(args.url)"
+            String(localized: "RemoteCommand.MarkdownLoadURL", defaultValue: "Navigate to \(args.url)", comment: "Status shown while navigating to a URL")
         case let .webSearch(args):
-            "Search the web for “\(args.query)”"
+            String(localized: "RemoteCommand.MarkdownWebSearch", defaultValue: "Search the web for “\(args.query)”", comment: "Status shown while searching the web")
         case .getURL:
-            "Get the current URL"
+            String(localized: "RemoteCommand.MarkdownGetURL", defaultValue: "Get the current URL", comment: "Status shown while getting the current URL")
         case .readWebPage:
-            "View the current web page"
+            String(localized: "RemoteCommand.MarkdownReadWebPage", defaultValue: "View the current web page", comment: "Status shown while viewing the current web page")
         case .restartSession:
-            "Restarting this session"
+            String(localized: "RemoteCommand.MarkdownRestartSession", defaultValue: "Restarting this session", comment: "Status shown while restarting the session")
         }
     }
 
     var permissionDescription: String {
         switch content {
         case .isAtPrompt:
-            "The AI Agent would like to check if you're at a shell prompt"
+            String(localized: "RemoteCommand.PermissionIsAtPrompt", defaultValue: "The AI Agent would like to check if you’re at a shell prompt", comment: "Permission request to check whether the user is at a shell prompt")
         case let .executeCommand(args):
-            "The AI Agent would like to execute `\(args.command.escapedForMarkdownCode)`"
+            String(localized: "RemoteCommand.PermissionExecuteCommand", defaultValue: "The AI Agent would like to execute `\(args.command.escapedForMarkdownCode)`", comment: "Permission request to execute a shell command")
         case .getLastExitStatus:
-            "The AI Agent would like to check the exit status of the last command"
+            String(localized: "RemoteCommand.PermissionGetLastExitStatus", defaultValue: "The AI Agent would like to check the exit status of the last command", comment: "Permission request to check the exit status of the last command")
         case .getCommandHistory:
-            "The AI Agent would like to review the history of commands you have run in this session"
+            String(localized: "RemoteCommand.PermissionGetCommandHistory", defaultValue: "The AI Agent would like to review the history of commands you have run in this session", comment: "Permission request to review command history")
         case .getLastCommand:
-            "The AI Agent would like to view the last command you ran in this session"
+            String(localized: "RemoteCommand.PermissionGetLastCommand", defaultValue: "The AI Agent would like to view the last command you ran in this session", comment: "Permission request to view the last command")
         case .getCommandBeforeCursor:
-            "The AI Agent would like to read your current command prompt"
+            String(localized: "RemoteCommand.PermissionGetCommandBeforeCursor", defaultValue: "The AI Agent would like to read your current command prompt", comment: "Permission request to read the current command prompt")
         case .searchCommandHistory:
-            "The AI Agent would like to search the history of commands you have run in this session"
+            String(localized: "RemoteCommand.PermissionSearchCommandHistory", defaultValue: "The AI Agent would like to search the history of commands you have run in this session", comment: "Permission request to search command history")
         case .getCommandOutput:
-            "The AI Agent would like to fetch the output of a previously run command"
+            String(localized: "RemoteCommand.PermissionGetCommandOutput", defaultValue: "The AI Agent would like to fetch the output of a previously run command", comment: "Permission request to fetch the output of a previously run command")
         case .getScreenContents:
-            "The AI Agent would like to read the visible screen of your terminal session"
+            String(localized: "RemoteCommand.PermissionGetScreenContents", defaultValue: "The AI Agent would like to read the visible screen of your terminal session", comment: "Permission request to read the visible screen")
         case .getTerminalSize:
-            "The AI Agent would like to query the size of your terminal window"
+            String(localized: "RemoteCommand.PermissionGetTerminalSize", defaultValue: "The AI Agent would like to query the size of your terminal window", comment: "Permission request to query the terminal window size")
         case .getShellType:
-            "The AI Agent would like to determine which shell you use"
+            String(localized: "RemoteCommand.PermissionGetShellType", defaultValue: "The AI Agent would like to determine which shell you use", comment: "Permission request to determine which shell is in use")
         case .detectSSHSession:
-            "The AI Agent would like to check if you are using SSH"
+            String(localized: "RemoteCommand.PermissionDetectSSHSession", defaultValue: "The AI Agent would like to check if you are using SSH", comment: "Permission request to check whether an SSH session is in use")
         case .getRemoteHostname:
-            "The AI Agent would like to get the current host name of this terminal session"
+            String(localized: "RemoteCommand.PermissionGetRemoteHostname", defaultValue: "The AI Agent would like to get the current host name of this terminal session", comment: "Permission request to get the current host name")
         case .getUserIdentity:
-            "The AI Agent would like to check your username"
+            String(localized: "RemoteCommand.PermissionGetUserIdentity", defaultValue: "The AI Agent would like to check your username", comment: "Permission request to check the username")
         case .getCurrentDirectory:
-            "The AI Agent would like to know your current directory"
+            String(localized: "RemoteCommand.PermissionGetCurrentDirectory", defaultValue: "The AI Agent would like to know your current directory", comment: "Permission request to know the current directory")
         case .setClipboard:
-            "The AI Agent would like to paste to the clipboard"
+            String(localized: "RemoteCommand.PermissionSetClipboard", defaultValue: "The AI Agent would like to paste to the clipboard", comment: "Permission request to write to the clipboard")
         case let .insertTextAtCursor(args):
-            "The AI Agent would like to type `\(args.text.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))` into the current session"
+            String(localized: "RemoteCommand.PermissionInsertTextAtCursor", defaultValue: "The AI Agent would like to type `\(args.text.escapedForMarkdownCode.truncatedWithTrailingEllipsis(to: 32))` into the current session", comment: "Permission request to type text into the current session")
         case .deleteCurrentLine:
-            "The AI Agent would like to erase the current command line"
+            String(localized: "RemoteCommand.PermissionDeleteCurrentLine", defaultValue: "The AI Agent would like to erase the current command line", comment: "Permission request to erase the current command line")
         case let .getManPage(args):
-            "The AI Agent would like to check the manpage for `\(args.cmd.escapedForMarkdownCode)`"
+            String(localized: "RemoteCommand.PermissionGetManPage", defaultValue: "The AI Agent would like to check the manpage for `\(args.cmd.escapedForMarkdownCode)`", comment: "Permission request to check a command's man page")
         case let .createFile(args):
-            "The AI Agent would like to create a file named `\(args.filename)`"
+            String(localized: "RemoteCommand.PermissionCreateFile", defaultValue: "The AI Agent would like to create a file named `\(args.filename)`", comment: "Permission request to create a file")
         case let .searchBrowser(args):
-            "The AI agent would like to search the current web page for “\(args.query)”"
+            String(localized: "RemoteCommand.PermissionSearchBrowser", defaultValue: "The AI agent would like to search the current web page for “\(args.query)”", comment: "Permission request to search the current web page")
         case let .loadURL(args):
-            "The AI agent would like to navigate to \(args.url)"
+            String(localized: "RemoteCommand.PermissionLoadURL", defaultValue: "The AI agent would like to navigate to \(args.url)", comment: "Permission request to navigate to a URL")
         case let .webSearch(args):
-            "The AI agent would like to write to search the web for “\(args.query)”"
+            String(localized: "RemoteCommand.PermissionWebSearch", defaultValue: "The AI agent would like to write to search the web for “\(args.query)”", comment: "Permission request to search the web")
         case .getURL:
-            "The AI agent would like to write to get the current URL"
+            String(localized: "RemoteCommand.PermissionGetURL", defaultValue: "The AI agent would like to write to get the current URL", comment: "Permission request to get the current URL")
         case .readWebPage:
-            "The AI agent would like to write to view the current web page"
+            String(localized: "RemoteCommand.PermissionReadWebPage", defaultValue: "The AI agent would like to write to view the current web page", comment: "Permission request to view the current web page")
         case .restartSession:
-            "The AI Agent would like to restart this session, which kills any running jobs"
+            String(localized: "RemoteCommand.PermissionRestartSession", defaultValue: "The AI Agent would like to restart this session, which kills any running jobs", comment: "Permission request to restart the session")
         }
     }
 

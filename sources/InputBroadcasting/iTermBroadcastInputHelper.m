@@ -215,8 +215,8 @@ NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDom
             DLog(@"off -> !off");
             NSWindow *window = [self.delegate broadcastInputHelperWindowForWarnings:self];
             DLog(@"Warn…");
-            if ([iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Keyboard input will be sent to %@.", [self formatDestinationsForMode:mode]]
-                                           actions:@[ @"OK", @"Cancel" ]
+            if ([iTermWarning showWarningWithTitle:[self warningTitleForMode:mode]
+                                           actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
                                         identifier:@"NoSyncSuppressBroadcastInputWarning"
                                        silenceable:kiTermWarningTypePermanentlySilenceable
                                             window:window] == kiTermWarningSelection1) {
@@ -240,30 +240,30 @@ NSString *const iTermBroadcastDomainsDidChangeNotification = @"iTermBroadcastDom
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermBroadcastDomainsDidChangeNotification object:nil];
 }
 
-- (NSString *)formatDestinationsForMode:(BroadcastMode)mode {
+// Returns a complete localized warning sentence per broadcast mode. The destination phrase is not
+// injected into a frame, since word order and grammar differ by language. The count-based variants
+// remain marked for pluralization (String Catalog Vary-by-Plural).
+- (NSString *)warningTitleForMode:(BroadcastMode)mode {
     switch (mode) {
         case BROADCAST_OFF:
-            return @"no sessions";
+            return NSLocalizedStringWithDefaultValue(@"BroadcastInput.WarningNoSessions", nil, [NSBundle mainBundle], @"Keyboard input will be sent to no sessions.", @"Broadcast input warning when there are no destination sessions");
         case BROADCAST_TO_ALL_TABS: {
             const NSInteger count = [[self allSessions] count];
             if (count < 2) {
-                return @"all panes in all tabs in this window";
+                return NSLocalizedStringWithDefaultValue(@"BroadcastInput.WarningAllTabsSingle", nil, [NSBundle mainBundle], @"Keyboard input will be sent to all panes in all tabs in this window.", @"Broadcast input warning when broadcasting to all panes in all tabs");
             }
-            return [NSString stringWithFormat:@"%@ panes across all tabs in this window", @(count)];
+            return [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"BroadcastInput.WarningAllTabsMany", nil, [NSBundle mainBundle], @"Keyboard input will be sent to %ld panes across all tabs in this window.", @"Broadcast input warning when broadcasting to multiple panes across all tabs; %ld is the count"), (long)count];
         }
-            break;
         case BROADCAST_TO_ALL_PANES: {
             // Just this tab
             const NSInteger count = [[self.delegate broadcastInputHelperSessionsInCurrentTab:self includeExited:NO] count];
             if (count < 2) {
-                return @"all panes in the current tab";
-            } else {
-                return [NSString stringWithFormat:@"%@ panes in the current tab", @(count)];
+                return NSLocalizedStringWithDefaultValue(@"BroadcastInput.WarningCurrentTabSingle", nil, [NSBundle mainBundle], @"Keyboard input will be sent to all panes in the current tab.", @"Broadcast input warning when broadcasting to all panes in the current tab");
             }
+            return [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"BroadcastInput.WarningCurrentTabMany", nil, [NSBundle mainBundle], @"Keyboard input will be sent to %ld panes in the current tab.", @"Broadcast input warning when broadcasting to multiple panes in the current tab; %ld is the count"), (long)count];
         }
-            break;
         case BROADCAST_CUSTOM:
-            return @"multiple sessions";
+            return NSLocalizedStringWithDefaultValue(@"BroadcastInput.WarningMultipleSessions", nil, [NSBundle mainBundle], @"Keyboard input will be sent to multiple sessions.", @"Broadcast input warning when broadcasting to a custom set of sessions");
     }
 }
 

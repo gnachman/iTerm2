@@ -34,6 +34,7 @@
                              optionalArguments:[NSSet setWithObject:window_id]
                                  defaultValues:@{ window_id: @"" }
                                        context:iTermVariablesSuggestionContextNone
+                        // Localization unneeded
                         sideEffectsPlaceholder:@"[alert]"
                                          block:
      ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
@@ -89,6 +90,7 @@
                              optionalArguments:[NSSet setWithObject:window_id]
                                  defaultValues:@{ }
                                        context:iTermVariablesSuggestionContextNone
+                        // Localization unneeded
                         sideEffectsPlaceholder:@"[get_string]"
                                          block:
      ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
@@ -223,6 +225,7 @@
                              optionalArguments:[NSSet setWithObject:window_id]
                                  defaultValues:@{ window_id: @"" }
                                        context:iTermVariablesSuggestionContextNone
+                        // Localization unneeded
                         sideEffectsPlaceholder:@"[get_poly_modal_alert]"
                                          block:
      ^(NSDictionary * _Nonnull parameters, iTermBuiltInFunctionCompletionBlock  _Nonnull completion) {
@@ -277,7 +280,7 @@
     }
     if ([checkboxes count] != [checkboxDefaults count]) {
         if (completion) {
-            NSString *errorMessage = @"Number of checkboxes does not match number of defaults";
+            NSString *errorMessage = NSLocalizedStringWithDefaultValue(@"PolyModalAlert.CheckboxDefaultsMismatch", nil, [NSBundle mainBundle], @"Number of checkboxes does not match number of defaults", @"Error when the checkboxes and checkboxDefaults arrays have different lengths");
             NSError *error = [NSError errorWithDomain:@"iTermPolyModalAlertError"
                                                  code:1
                                              userInfo:@{NSLocalizedDescriptionKey: errorMessage}];

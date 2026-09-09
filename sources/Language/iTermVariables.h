@@ -49,6 +49,7 @@ extern NSString *const iTermVariableKeySessionAutoNameFormat;  // Defaults to pr
 extern NSString *const iTermVariableKeySessionAutoName;  // Evaluated value of autoNameFormat
 extern NSString *const iTermVariableKeySessionIconName;  // set by esc code
 extern NSString *const iTermVariableKeySessionTriggerName;
+extern NSString *const iTermVariableKeySessionAITitle;
 extern NSString *const iTermVariableKeySessionWindowName;  // set by esc code
 extern NSString *const iTermVariableKeySessionJob;  // name of the deepest foreground job attached to the tty (stdin/stdout is the terminal), not affected by modifying argv[0]
 extern NSString *const iTermVariableKeySessionProcessTitle;  // process title, affected by modifying argv[0]. see issue 4214 for details.

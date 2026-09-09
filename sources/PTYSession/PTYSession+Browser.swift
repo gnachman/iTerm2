@@ -10,7 +10,12 @@ import WebKit
 
 extension PTYSession: iTermBrowserViewControllerDelegate {
     func browserFindManager(_ manager: iTermBrowserFindManager, didUpdateResult result: iTermBrowserFindResultBundle) {
-        view?.findDriver?.viewController.countDidChange()
+        // `viewController` is imported from ObjC as an implicitly-unwrapped optional, so the bare
+        // `.viewController.` below is a hidden force-unwrap. It can legitimately be nil (e.g. a
+        // status-bar find driver created with no search view controller), and a global search
+        // routes a clearFind result-update through here, which force-unwrapped nil and trapped.
+        // The equivalent ObjC call sites are nil-safe no-ops, so match them with optional chaining.
+        view?.findDriver?.viewController?.countDidChange()
     }
 
     // True if the session already has a non-blank auto name (seeded from the profile
@@ -168,7 +173,7 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     func browserViewControllerInvoke(_ controller: iTermBrowserViewController, scriptFunction: String) {
         invokeFunctionCall(scriptFunction,
                            scope: genericScope,
-                           origin: "Pointer action")
+                           origin: String(localized: "PTYSessionBrowser.PointerActionOrigin", defaultValue: "Pointer action", comment: "Origin label describing that a function call was invoked by a pointer action"))
     }
 
     func browserViewControllerSmartSelectionRules(_ controller: iTermBrowserViewController) -> [SmartSelectRule] {
@@ -293,12 +298,12 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     }
 
     func browserViewController(_ controller: iTermBrowserViewController, runCommand command: String) {
-        guard iTermWarning.show(withTitle: "OK to run:\n\(command)",
-                                actions: ["OK", "Cancel"],
+        guard iTermWarning.show(withTitle: String(localized: "PTYSessionBrowser.OKToRun", defaultValue: "OK to run:\n\(command)", comment: "Confirmation prompt before running a command; placeholder is the command"),
+                                actions: [iTermLocalizedOK(), iTermLocalizedCancel()],
                                 accessory: nil,
                                 identifier: nil,
                                 silenceable: .kiTermWarningTypePersistent,
-                                heading: "Run command?",
+                                heading: String(localized: "PTYSessionBrowser.RunCommandHeading", defaultValue: "Run command?", comment: "Heading for a confirmation prompt before running a command"),
                                 window: view?.window) == .kiTermWarningSelection0 else {
             return
         }
@@ -328,12 +333,12 @@ extension PTYSession: iTermBrowserViewControllerDelegate {
     }
 
     func browserViewController(_ controller: iTermBrowserViewController, openFile file: String) {
-        guard iTermWarning.show(withTitle: "OK to open this file?\n\(file)",
-                                actions: ["OK", "Cancel"],
+        guard iTermWarning.show(withTitle: String(localized: "PTYSessionBrowser.OKToOpenFile", defaultValue: "OK to open this file?\n\(file)", comment: "Confirmation prompt before opening a file; placeholder is the file path"),
+                                actions: [iTermLocalizedOK(), iTermLocalizedCancel()],
                                 accessory: nil,
                                 identifier: nil,
                                 silenceable: .kiTermWarningTypePersistent,
-                                heading: "Open file?",
+                                heading: String(localized: "PTYSessionBrowser.OpenFileHeading", defaultValue: "Open file?", comment: "Heading for a confirmation prompt before opening a file"),
                                 window: view?.window) == .kiTermWarningSelection0 else {
             return
         }

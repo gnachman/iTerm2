@@ -45,6 +45,18 @@ typedef struct iTermScreenIdentifier {
 
 - (CGFloat)it_menuBarHeight;
 
+// YES if the display can show content brighter than reference white, i.e. it has
+// extended-dynamic-range headroom. Uses the potential (not current) headroom: on
+// a reference-mode XDR display the current headroom reads 1.0 even while the panel
+// can display EDR content. This is the single predicate shared by every HDR path.
+- (BOOL)it_hasEDRHeadroom;
+
+// An extended-range color space matching the display's gamut (extended Display P3
+// on a wide-gamut panel, otherwise extended sRGB). Content above 1.0 is only
+// preserved (rather than clamped) in an extended color space; matching the gamut
+// avoids shifting in-gamut color reproduction. Returns nil if none can be made.
+- (nullable CGColorSpaceRef)it_extendedDynamicRangeColorSpace CF_RETURNS_NOT_RETAINED;
+
 @end
 
 NS_ASSUME_NONNULL_END

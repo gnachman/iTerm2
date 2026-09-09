@@ -64,7 +64,7 @@ class iTermJobTerminationMonitor: NSObject {
                                                       eventMask: .exit,
                                                       queue: .main)
         sources[pid] = source
-        names[pid] = name ?? "unknown name"
+        names[pid] = name ?? String(localized: "JobTerminationMonitor.UnknownName", defaultValue: "unknown name", comment: "Fallback name used when a monitored process has no name")
         source.setEventHandler { [weak self] in
             self?.processDidTerminate(pid)
         }
@@ -125,28 +125,28 @@ class iTermJobTerminationMonitor: NSObject {
         let alert = NSAlert()
         if terminations.count == 1 {
             let termination = terminations[0]
-            alert.messageText = "Job Terminated"
+            alert.messageText = String(localized: "JobTermination.JobTerminated", defaultValue: "Job Terminated", comment: "Alert title when a single job was terminated")
             alert.informativeText = sentence(for: termination)
         } else {
-            alert.messageText = "Jobs Terminated"
+            alert.messageText = String(localized: "JobTermination.JobsTerminated", defaultValue: "Jobs Terminated", comment: "Alert title when multiple jobs were terminated")
             alert.informativeText = terminations.map { "• " + sentence(for: $0) }.joined(separator: "\n")
         }
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: iTermLocalizedOK())
         alert.runModal()
     }
 
     private func sentence(for termination: (name: String, pid: pid_t)) -> String {
-        let displayName = termination.name.isEmpty ? "(unknown)" : termination.name
-        return "The job \(displayName) with process ID \(termination.pid) has terminated."
+        let displayName = termination.name.isEmpty ? String(localized: "JobTerminationMonitor.Unknown", defaultValue: "(unknown)", comment: "Placeholder shown for a job whose name is unknown") : termination.name
+        return String(localized: "JobTerminationMonitor.JobTerminatedSentence", defaultValue: "The job \(displayName) with process ID \(String(describing: termination.pid)) has terminated.", comment: "Sentence describing a single terminated job")
     }
 
     private func showCannotMonitorAlert(pid: pid_t, name: String?) {
-        let displayName = (name?.isEmpty == false) ? name! : "(unknown)"
+        let displayName = (name?.isEmpty == false) ? name! : String(localized: "JobTerminationMonitor.Unknown", defaultValue: "(unknown)", comment: "Placeholder shown for a job whose name is unknown")
         NSApp.activate(ignoringOtherApps: true)
         let alert = NSAlert()
-        alert.messageText = "Cannot Notify on Termination"
-        alert.informativeText = "iTerm2 cannot watch the job \(displayName) with process ID \(pid) because it has already terminated."
-        alert.addButton(withTitle: "OK")
+        alert.messageText = String(localized: "JobTerminationMonitor.CannotNotifyTitle", defaultValue: "Cannot Notify on Termination", comment: "Alert title when a process cannot be watched for termination")
+        alert.informativeText = String(localized: "JobTerminationMonitor.CannotWatchJob", defaultValue: "iTerm2 cannot watch the job \(displayName) with process ID \(String(describing: pid)) because it has already terminated.", comment: "Alert body when a process cannot be watched because it already exited")
+        alert.addButton(withTitle: iTermLocalizedOK())
         alert.runModal()
     }
 }

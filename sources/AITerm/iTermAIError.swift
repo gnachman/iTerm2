@@ -44,7 +44,7 @@ public struct AIError: LocalizedError, CustomStringConvertible, CustomNSError, C
     }
 
     static var requestTooLarge: AIError {
-        AIError("AI token limit exceeded because the conversation reached its maximum length", type: .requestTooLarge)
+        AIError(String(localized: "AIError.RequestTooLarge", defaultValue: "AI token limit exceeded because the conversation reached its maximum length", comment: "Error shown when the AI conversation exceeds the model’s token limit"), type: .requestTooLarge)
     }
 
     static func wrapping(error: Error, context: String) -> AIError {

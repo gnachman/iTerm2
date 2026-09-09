@@ -116,7 +116,7 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     PreferenceInfo *info;
     info = [self defineControl:_backgroundImageTextField
                            key:KEY_BACKGROUND_IMAGE_LOCATION
-                   displayName:@"Path to background image"
+                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.BackgroundImagePathDisplayName", nil, [NSBundle mainBundle], @"Path to background image", @"Display name for the background-image path field.")
                           type:kPreferenceInfoTypeStringTextField];
     info.observer = ^{
         [weakSelf backgroundImageTextFieldDidChange];
@@ -128,7 +128,7 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     _backgroundImageFolderTextField.delegate = _backgroundImageTextFieldDelegate;
     info = [self defineControl:_backgroundImageSourceMode
                            key:KEY_BACKGROUND_IMAGE_SOURCE_MODE
-                   displayName:@"Background image source mode"
+                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.BackgroundImageSourceMode", nil, [NSBundle mainBundle], @"Background image source mode", @"Display name for the background-image source mode control.")
                           type:kPreferenceInfoTypePopup];
     info.observer = ^{
         [weakSelf synchronizeBackgroundImageEnabledState];
@@ -137,14 +137,14 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     };
     info = [self defineControl:_backgroundImageFolderTextField
                            key:KEY_BACKGROUND_IMAGE_FOLDER_LOCATION
-                   displayName:@"Path to background image folder"
+                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.BackgroundImageFolderPath", nil, [NSBundle mainBundle], @"Path to background image folder", @"Display name for the background-image folder path field.")
                           type:kPreferenceInfoTypeStringTextField];
     info.observer = ^{
         [weakSelf backgroundImageFolderTextFieldDidChange];
     };
     info = [self defineControl:_backgroundImageFolderIntervalField
                            key:KEY_BACKGROUND_IMAGE_FOLDER_INTERVAL
-                   displayName:@"Background image folder interval"
+                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.BackgroundImageFolderInterval", nil, [NSBundle mainBundle], @"Background image folder interval", @"Display name for the background-image folder rotation interval field.")
                           type:kPreferenceInfoTypeIntegerTextField];
     info.observer = ^{
         [weakSelf sanitizeBackgroundImageFolderInterval];
@@ -188,7 +188,7 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     _blurRadius.maxValue = iTermMaxBlurRadius();
     info = [self defineControl:_blurRadius
                            key:KEY_BLUR_RADIUS
-                   displayName:@"Blur radius"
+                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.BlurRadius", nil, [NSBundle mainBundle], @"Blur radius", @"Display name for the blur radius slider.")
                           type:kPreferenceInfoTypeSlider];
     info.observer = ^{
         [weakSelf updateBlurRadiusWarning];
@@ -197,7 +197,7 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
 
     info = [self defineControl:_backgroundImageMode
                            key:KEY_BACKGROUND_IMAGE_MODE
-                   displayName:@"Background image scaling mode"
+                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.BackgroundImageScalingMode", nil, [NSBundle mainBundle], @"Background image scaling mode", @"Display name for the background-image scaling mode picker.")
                           type:kPreferenceInfoTypePopup];
     info.observer = ^() {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -230,44 +230,44 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
 
     [self defineControl:_blendAmount
                     key:KEY_BLEND
-            displayName:@"Background image blending"
+            displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.BackgroundImageBlending", nil, [NSBundle mainBundle], @"Background image blending", @"Display name for the background-image blending slider.")
                    type:kPreferenceInfoTypeSlider];
     [self updateBackgroundImageUI];
     [self loadBackgroundImageForCurrentSource];
 
     info = [self defineControl:_columnsField
                            key:KEY_COLUMNS
-                   displayName:@"Window width in columns"
+                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.WidthInColumns", nil, [NSBundle mainBundle], @"Window width in columns", @"Display name for the window width (in character columns) field.")
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(1, iTermMaxInitialSessionSize);
 
     info = [self defineControl:_rowsField
                            key:KEY_ROWS
-                   displayName:@"Window height in rows"
+                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.HeightInRows", nil, [NSBundle mainBundle], @"Window height in rows", @"Display name for the window height (in character rows) field.")
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(1, iTermMaxInitialSessionSize);
 
     info = [self defineControl:_widthField
                            key:KEY_WIDTH
-                   displayName:@"Window width in pixels"
+                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.WidthInPixels", nil, [NSBundle mainBundle], @"Window width in pixels", @"Display name for the window width (in pixels) field.")
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(1, iTermMaxInitialSessionSize);
 
     info = [self defineControl:_percentageWidthField
                            key:KEY_WIDTH_PERCENTAGE
-                   displayName:@"Window width in percentage of screen width"
+                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.WidthInPercent", nil, [NSBundle mainBundle], @"Window width in percentage of screen width", @"Display name for the window width (as a percentage of screen width) field.")
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(1, 100);
 
     info = [self defineControl:_percentageHeightField
                            key:KEY_HEIGHT_PERCENTAGE
-                   displayName:@"Window height in percentage of screen height"
+                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.HeightInPercent", nil, [NSBundle mainBundle], @"Window height in percentage of screen height", @"Display name for the window height (as a percentage of screen height) field.")
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(1, 100);
 
     info = [self defineControl:_heightField
                            key:KEY_HEIGHT
-                   displayName:@"Window height in pixels"
+                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.HeightInPixels", nil, [NSBundle mainBundle], @"Window height in pixels", @"Display name for the window height (in pixels) field.")
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(1, iTermMaxInitialSessionSize);
 
@@ -284,7 +284,7 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
 
     info = [self defineControl:_windowStyle
                            key:KEY_WINDOW_TYPE
-                   displayName:@"Window style for new windows"
+                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.WindowStyle", nil, [NSBundle mainBundle], @"Window style for new windows", @"Display name for the window style picker.")
                           type:kPreferenceInfoTypePopup];
     info.onUpdate = ^BOOL{
         // Reading KEY_WINDOW_TYPE can give a value for which the popup has no tag because when
@@ -298,14 +298,14 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     };
     [self defineControl:_screen
                     key:KEY_SCREEN
-            displayName:@"Initial screen for new windows"
+            displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.InitialScreen", nil, [NSBundle mainBundle], @"Initial screen for new windows", @"Display name for the initial screen picker.")
                    type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [self screenDidChange]; }
                  update:^BOOL{ [weakSelf updateScreen]; return YES; }];
 
     info = [self defineControl:_space
                            key:KEY_SPACE
-                   displayName:@"Initial desktop/space for new windows"
+                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.InitialSpace", nil, [NSBundle mainBundle], @"Initial desktop/space for new windows", @"Display name for the initial desktop/space picker.")
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -336,7 +336,7 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     {
         info = [self defineControl:_useCustomWindowTitle
                                key:KEY_USE_CUSTOM_WINDOW_TITLE
-                       displayName:@"Enable custom window title for new windows"
+                       displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.EnableCustomWindowTitle", nil, [NSBundle mainBundle], @"Enable custom window title for new windows", @"Display name for the checkbox enabling a custom window title for new windows.")
                               type:kPreferenceInfoTypeCheckbox];
         info.onChange = ^{
             [weakSelf updateCustomWindowTitleEnabled];
@@ -346,11 +346,11 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
                                                                                         passthrough:self
                                                                                       functionsOnly:NO];
         _customWindowTitleDelegate.canWarnAboutContextMistake = YES;
-        _customWindowTitleDelegate.contextMistakeText = @"This interpolated string is evaluated in the window’s context, not the session’s context. To access variables in the current session, use currentTab.currentSession.sessionVariableNameHere";
+        _customWindowTitleDelegate.contextMistakeText = NSLocalizedStringWithDefaultValue(@"Profiles.Window.WindowTitleContextMistake", nil, [NSBundle mainBundle], @"This interpolated string is evaluated in the window’s context, not the session’s context. To access variables in the current session, use currentTab.currentSession.sessionVariableNameHere", @"Warning shown when a custom window title references session variables directly instead of through the window’s context.");
         _customWindowTitle.delegate = _customWindowTitleDelegate;
         [self defineControl:_customWindowTitle
                         key:KEY_CUSTOM_WINDOW_TITLE
-                displayName:@"Custom window title for new windows"
+                displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.CustomWindowTitle", nil, [NSBundle mainBundle], @"Custom window title for new windows", @"Display name for the custom window title text field.")
                        type:kPreferenceInfoTypeStringTextField];
         [self updateCustomWindowTitleEnabled];
     }
@@ -359,7 +359,7 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     {
         info = [self defineControl:_useCustomTabTitle
                                key:KEY_USE_CUSTOM_TAB_TITLE
-                       displayName:@"Enable custom tab title for new tabs"
+                       displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.EnableCustomTabTitle", nil, [NSBundle mainBundle], @"Enable custom tab title for new tabs", @"Display name for the checkbox enabling a custom tab title for new tabs.")
                               type:kPreferenceInfoTypeCheckbox];
         info.onChange = ^{
             [weakSelf updateCustomTabTitleEnabled];
@@ -369,21 +369,21 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
                                                                                         passthrough:self
                                                                                       functionsOnly:NO];
         _customTabTitleDelegate.canWarnAboutContextMistake = YES;
-        _customTabTitleDelegate.contextMistakeText = @"This interpolated string is evaluated in the tab’s context, not the session’s context. To access variables in the current session, use currentSession.sessionVariableNameHere";
+        _customTabTitleDelegate.contextMistakeText = NSLocalizedStringWithDefaultValue(@"Profiles.Window.TabTitleContextMistake", nil, [NSBundle mainBundle], @"This interpolated string is evaluated in the tab’s context, not the session’s context. To access variables in the current session, use currentSession.sessionVariableNameHere", @"Warning shown when a custom tab title references session variables directly instead of through the tab’s context.");
         _customTabTitle.delegate = _customTabTitleDelegate;
         [self defineControl:_customTabTitle
                         key:KEY_CUSTOM_TAB_TITLE
-                displayName:@"Custom tab title for new tabs"
+                displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.CustomTabTitle", nil, [NSBundle mainBundle], @"Custom tab title for new tabs", @"Display name for the custom tab title text field.")
                        type:kPreferenceInfoTypeStringTextField];
         [self updateCustomTabTitleEnabled];
     }
 
     [self addViewToSearchIndex:_useBackgroundImage
-                   displayName:@"Background image enabled"
+                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.BackgroundImageEnabled", nil, [NSBundle mainBundle], @"Background image enabled", @"Search index display name for the background-image enabled toggle.")
                        phrases:@[]
                            key:nil];
     [self addViewToSearchIndex:_backgroundImageSourceMode
-                   displayName:@"Background image source mode"
+                   displayName:NSLocalizedStringWithDefaultValue(@"Profiles.Window.BackgroundImageSourceMode", nil, [NSBundle mainBundle], @"Background image source mode", @"Display name for the background-image source mode control.")
                        phrases:@[]
                            key:nil];
 }
@@ -469,6 +469,12 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
 - (BOOL)updateWindowTypeControlFromSettings {
     PreferenceInfo *info = [self infoForControl:_windowStyle];
     iTermWindowType type = iTermUnthemedWindowType([self intForKey:info.key]);
+    // Unit pop-up titles, shared across the window-type cases below. The "%" is literal (these are
+    // titles, never format strings) so it stays unescaped.
+    NSString *columnsUnitTitle = NSLocalizedStringWithDefaultValue(@"Profiles.Window.UnitColumns", nil, [NSBundle mainBundle], @"Columns", @"Window-size unit: measure width in character columns.");
+    NSString *percentOfScreenWidthTitle = NSLocalizedStringWithDefaultValue(@"Profiles.Window.UnitPercentOfScreenWidth", nil, [NSBundle mainBundle], @"% of screen width", @"Window-size unit: measure width as a percentage of the screen width.");
+    NSString *rowsUnitTitle = NSLocalizedStringWithDefaultValue(@"Profiles.Window.UnitRows", nil, [NSBundle mainBundle], @"Rows", @"Window-size unit: measure height in character rows.");
+    NSString *percentOfScreenHeightTitle = NSLocalizedStringWithDefaultValue(@"Profiles.Window.UnitPercentOfScreenHeight", nil, [NSBundle mainBundle], @"% of screen height", @"Window-size unit: measure height as a percentage of the screen height.");
     switch (type) {
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
@@ -526,13 +532,13 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
             _percentageHeightField.enabled = YES;
 
             _columnsUnitsButton.hidden = NO;
-            _columnsUnitsButton.menu.itemArray[0].title = @"Columns";
-            _columnsUnitsButton.menu.itemArray[1].title = @"% of screen width";
+            _columnsUnitsButton.menu.itemArray[0].title = columnsUnitTitle;
+            _columnsUnitsButton.menu.itemArray[1].title = percentOfScreenWidthTitle;
             [_columnsUnitsButton selectItemWithTag:columnsIsCells ? iTermWindowUnitsTagCells : iTermWindowUnitsTagScreenPercentage];
 
             _rowsUnitsButton.hidden = NO;
-            _rowsUnitsButton.menu.itemArray[0].title = @"Rows";
-            _rowsUnitsButton.menu.itemArray[1].title = @"% of screen height";
+            _rowsUnitsButton.menu.itemArray[0].title = rowsUnitTitle;
+            _rowsUnitsButton.menu.itemArray[1].title = percentOfScreenHeightTitle;
             [_rowsUnitsButton selectItemWithTag:rowsIsCells ? iTermWindowUnitsTagCells : iTermWindowUnitsTagScreenPercentage];
 
             _widthLabel.hidden = YES;
@@ -554,8 +560,8 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
             _widthLabel.hidden = NO;
             _heightLabel.hidden = NO;
 
-            _widthLabel.stringValue = @"columns by";
-            _heightLabel.stringValue = @"rows";
+            _widthLabel.stringValue = NSLocalizedStringWithDefaultValue(@"Profiles.Window.ColumnsBy", nil, [NSBundle mainBundle], @"columns by", @"Label between the columns field and the rows field in the window-size row.");
+            _heightLabel.stringValue = NSLocalizedStringWithDefaultValue(@"Profiles.Window.Rows", nil, [NSBundle mainBundle], @"rows", @"Label after the rows field in the window-size row.");
 
             _byLabel.hidden = YES;
             break;
@@ -572,13 +578,13 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
             _percentageHeightField.hidden = YES;
 
             _columnsUnitsButton.hidden = NO;
-            _columnsUnitsButton.menu.itemArray[0].title = @"Columns";
-            _columnsUnitsButton.menu.itemArray[1].title = @"% of screen width";
+            _columnsUnitsButton.menu.itemArray[0].title = columnsUnitTitle;
+            _columnsUnitsButton.menu.itemArray[1].title = percentOfScreenWidthTitle;
             [_columnsUnitsButton selectItemWithTag:columnsIsCells ? 0 : 1];
 
             _rowsUnitsButton.hidden = NO;
-            _rowsUnitsButton.menu.itemArray[0].title = @"Rows";
-            _rowsUnitsButton.menu.itemArray[1].title = @"% of screen height";
+            _rowsUnitsButton.menu.itemArray[0].title = rowsUnitTitle;
+            _rowsUnitsButton.menu.itemArray[1].title = percentOfScreenHeightTitle;
             [_rowsUnitsButton selectItemWithTag:rowsIsCells ? iTermWindowUnitsTagCells : iTermWindowUnitsTagScreenPercentage];
 
             _widthLabel.hidden = YES;
@@ -599,13 +605,13 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
             _percentageHeightField.hidden = YES;
 
             _columnsUnitsButton.hidden = NO;
-            _columnsUnitsButton.menu.itemArray[0].title = @"Columns";
-            _columnsUnitsButton.menu.itemArray[1].title = @"% of screen width";
+            _columnsUnitsButton.menu.itemArray[0].title = columnsUnitTitle;
+            _columnsUnitsButton.menu.itemArray[1].title = percentOfScreenWidthTitle;
             [_columnsUnitsButton selectItemWithTag:columnsIsCells ? iTermWindowUnitsTagCells : iTermWindowUnitsTagScreenPercentage];
 
             _rowsUnitsButton.hidden = NO;
-            _rowsUnitsButton.menu.itemArray[0].title = @"Rows";
-            _rowsUnitsButton.menu.itemArray[1].title = @"% of screen height";
+            _rowsUnitsButton.menu.itemArray[0].title = rowsUnitTitle;
+            _rowsUnitsButton.menu.itemArray[1].title = percentOfScreenHeightTitle;
             [_rowsUnitsButton selectItemWithTag:rowsIsCells ? iTermWindowUnitsTagCells : iTermWindowUnitsTagScreenPercentage];
 
             _widthLabel.hidden = YES;
@@ -628,13 +634,13 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
             _percentageHeightField.enabled = YES;
 
             _columnsUnitsButton.hidden = NO;
-            _columnsUnitsButton.menu.itemArray[0].title = @"Columns";
-            _columnsUnitsButton.menu.itemArray[1].title = @"% of screen width";
+            _columnsUnitsButton.menu.itemArray[0].title = columnsUnitTitle;
+            _columnsUnitsButton.menu.itemArray[1].title = percentOfScreenWidthTitle;
             [_columnsUnitsButton selectItemWithTag:columnsIsCells ? iTermWindowUnitsTagCells : iTermWindowUnitsTagScreenPercentage];
 
             _rowsUnitsButton.hidden = NO;
-            _rowsUnitsButton.menu.itemArray[0].title = @"Rows";
-            _rowsUnitsButton.menu.itemArray[1].title = @"% of screen height";
+            _rowsUnitsButton.menu.itemArray[0].title = rowsUnitTitle;
+            _rowsUnitsButton.menu.itemArray[1].title = percentOfScreenHeightTitle;
             [_rowsUnitsButton selectItemWithTag:rowsIsCells ? iTermWindowUnitsTagCells : iTermWindowUnitsTagScreenPercentage];
 
             _widthLabel.hidden = YES;
@@ -656,13 +662,13 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
             _percentageHeightField.enabled = YES;
 
             _columnsUnitsButton.hidden = NO;
-            _columnsUnitsButton.menu.itemArray[0].title = @"Columns";
-            _columnsUnitsButton.menu.itemArray[1].title = @"% of screen width";
+            _columnsUnitsButton.menu.itemArray[0].title = columnsUnitTitle;
+            _columnsUnitsButton.menu.itemArray[1].title = percentOfScreenWidthTitle;
             [_columnsUnitsButton selectItemWithTag:columnsIsCells ? iTermWindowUnitsTagCells : iTermWindowUnitsTagScreenPercentage];
 
             _rowsUnitsButton.hidden = NO;
-            _rowsUnitsButton.menu.itemArray[0].title = @"Rows";
-            _rowsUnitsButton.menu.itemArray[1].title = @"% of screen height";
+            _rowsUnitsButton.menu.itemArray[0].title = rowsUnitTitle;
+            _rowsUnitsButton.menu.itemArray[1].title = percentOfScreenHeightTitle;
             [_rowsUnitsButton selectItemWithTag:rowsIsCells ? iTermWindowUnitsTagCells : iTermWindowUnitsTagScreenPercentage];
 
             _widthLabel.hidden = YES;
@@ -689,8 +695,8 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
             _widthLabel.hidden = NO;
             _heightLabel.hidden = NO;
 
-            _widthLabel.stringValue = @"columns by";
-            _heightLabel.stringValue = @"rows";
+            _widthLabel.stringValue = NSLocalizedStringWithDefaultValue(@"Profiles.Window.ColumnsBy", nil, [NSBundle mainBundle], @"columns by", @"Label between the columns field and the rows field in the window-size row.");
+            _heightLabel.stringValue = NSLocalizedStringWithDefaultValue(@"Profiles.Window.Rows", nil, [NSBundle mainBundle], @"rows", @"Label after the rows field in the window-size row.");
 
             _byLabel.hidden = YES;
             break;
@@ -819,7 +825,7 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     panel.canChooseFiles = YES;
     panel.allowsMultipleSelection = NO;
     panel.treatsFilePackagesAsDirectories = NO;
-    panel.message = @"Choose an image for the background, or a folder to rotate through its images.";
+    panel.message = NSLocalizedStringWithDefaultValue(@"Profiles.Window.BackgroundImagePickerMessage", nil, [NSBundle mainBundle], @"Choose an image for the background, or a folder to rotate through its images.", @"Prompt in the open panel for choosing a background image or folder.");
     // Image-only filter dims non-image files. Folders stay selectable because
     // canChooseDirectories=YES treats them as containers, not content.
     panel.allowedContentTypes = [NSImage.imageTypes mapWithBlock:^id _Nullable(NSString *ext) {
@@ -854,12 +860,12 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
             return;
         }
         if ([iTermBackgroundImageRotationManager firstImagePathInFolder:path] == nil) {
-            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The folder “%@” contains no images, so no background image will be shown.", path.lastPathComponent]
-                                       actions:@[ @"OK" ]
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"Profiles.Window.FolderNoImagesMessage", nil, [NSBundle mainBundle], @"The folder “%@” contains no images, so no background image will be shown.", @"Warning body when a chosen background-image folder has no images. %@ is the folder name."), path.lastPathComponent]
+                                       actions:@[ iTermLocalizedOK() ]
                                      accessory:nil
                                     identifier:@"BackgroundFolderEmpty"
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"Empty Folder"
+                                       heading:NSLocalizedStringWithDefaultValue(@"Profiles.Window.EmptyFolderHeading", nil, [NSBundle mainBundle], @"Empty Folder", @"Warning heading shown when a chosen background-image folder contains no images.")
                                         window:self.view.window];
             [self setString:nil forKey:KEY_BACKGROUND_IMAGE_FOLDER_LOCATION];
             [self updateControlForKey:KEY_BACKGROUND_IMAGE_FOLDER_LOCATION];
@@ -964,31 +970,31 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     NSData *data = [NSData dataWithContentsOfFile:filename options:0 error:&error];
     if (!data) {
         [iTermWarning showWarningWithTitle:error.localizedDescription
-                                   actions:@[ @"OK" ]
+                                   actions:@[ iTermLocalizedOK() ]
                                  accessory:nil
                                 identifier:@"BackgroundImageUnreadable"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:@"Problem Loading Image"
+                                   heading:NSLocalizedStringWithDefaultValue(@"Profiles.Window.ProblemLoadingImageHeading", nil, [NSBundle mainBundle], @"Problem Loading Image", @"Warning heading shown when a background image cannot be loaded.")
                                     window:self.view.window];
         return NO;
     }
     if (data.length == 0) {
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The image “%@” could not be loaded because the file is empty.", filename.lastPathComponent]
-                                   actions:@[ @"OK" ]
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"Profiles.Window.ImageEmptyMessage", nil, [NSBundle mainBundle], @"The image “%@” could not be loaded because the file is empty.", @"Warning body when a background image file is empty. %@ is the image file name."), filename.lastPathComponent]
+                                   actions:@[ iTermLocalizedOK() ]
                                  accessory:nil
                                 identifier:@"BackgroundImageUnreadable"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:@"Problem Loading Image"
+                                   heading:NSLocalizedStringWithDefaultValue(@"Profiles.Window.ProblemLoadingImageHeading", nil, [NSBundle mainBundle], @"Problem Loading Image", @"Warning heading shown when a background image cannot be loaded.")
                                     window:self.view.window];
         return NO;
     }
     if (![[NSImage alloc] initWithData:data]) {
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The image “%@” could not be loaded because it is corrupt or not a supported format.", filename.lastPathComponent]
-                                   actions:@[ @"OK" ]
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"Profiles.Window.ImageCorruptMessage", nil, [NSBundle mainBundle], @"The image “%@” could not be loaded because it is corrupt or not a supported format.", @"Warning body when a background image is corrupt or an unsupported format. %@ is the image file name."), filename.lastPathComponent]
+                                   actions:@[ iTermLocalizedOK() ]
                                  accessory:nil
                                 identifier:@"BackgroundImageUnreadable"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:@"Problem Loading Image"
+                                   heading:NSLocalizedStringWithDefaultValue(@"Profiles.Window.ProblemLoadingImageHeading", nil, [NSBundle mainBundle], @"Problem Loading Image", @"Warning heading shown when a background image cannot be loaded.")
                                     window:self.view.window];
         return NO;
     }
@@ -998,12 +1004,12 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
 - (BOOL)checkFolder:(NSString *)filename {
     BOOL isDirectory = NO;
     if (![[NSFileManager defaultManager] fileExistsAtPath:filename isDirectory:&isDirectory] || !isDirectory) {
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The folder “%@” could not be used because it does not exist or is not a directory.", filename.lastPathComponent]
-                                   actions:@[ @"OK" ]
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"Profiles.Window.FolderNotDirectoryMessage", nil, [NSBundle mainBundle], @"The folder “%@” could not be used because it does not exist or is not a directory.", @"Warning body when a chosen background-image folder is missing or is not a directory. %@ is the folder name."), filename.lastPathComponent]
+                                   actions:@[ iTermLocalizedOK() ]
                                  accessory:nil
                                 identifier:@"BackgroundFolderUnreadable"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:@"Problem Loading Folder"
+                                   heading:NSLocalizedStringWithDefaultValue(@"Profiles.Window.ProblemLoadingFolderHeading", nil, [NSBundle mainBundle], @"Problem Loading Folder", @"Warning heading shown when a background-image folder cannot be loaded.")
                                     window:self.view.window];
         return NO;
     }
@@ -1012,12 +1018,12 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
                                                                                   options:NSDirectoryEnumerationSkipsHiddenFiles
                                                                                     error:nil];
     if (!contents) {
-        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The folder “%@” could not be read.", filename.lastPathComponent]
-                                   actions:@[ @"OK" ]
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"Profiles.Window.FolderUnreadableMessage", nil, [NSBundle mainBundle], @"The folder “%@” could not be read.", @"Warning body when a chosen background-image folder cannot be read. %@ is the folder name."), filename.lastPathComponent]
+                                   actions:@[ iTermLocalizedOK() ]
                                  accessory:nil
                                 identifier:@"BackgroundFolderUnreadable"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:@"Problem Loading Folder"
+                                   heading:NSLocalizedStringWithDefaultValue(@"Profiles.Window.ProblemLoadingFolderHeading", nil, [NSBundle mainBundle], @"Problem Loading Folder", @"Warning heading shown when a background-image folder cannot be loaded.")
                                     window:self.view.window];
         return NO;
     }
@@ -1036,16 +1042,16 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
     int selectedTag = [_screen selectedTag];
     [_screen removeAllItems];
     int i = 0;
-    [_screen addItemWithTitle:@"No Preference"];
+    [_screen addItemWithTitle:NSLocalizedStringWithDefaultValue(@"Profiles.Window.ScreenNoPreference", nil, [NSBundle mainBundle], @"No Preference", @"Initial-screen picker option: no preference for which display a new window opens on.")];
     [[_screen lastItem] setTag:-1];
-    [_screen addItemWithTitle:@"Screen with Cursor"];
+    [_screen addItemWithTitle:NSLocalizedStringWithDefaultValue(@"Profiles.Window.ScreenWithCursor", nil, [NSBundle mainBundle], @"Screen with Cursor", @"Initial-screen picker option: open new windows on whichever display has the mouse cursor.")];
     [[_screen lastItem] setTag:-2];
     NSArray<NSScreen *> *screens = [NSScreen screens];
     [_screen.menu addItem:[NSMenuItem separatorItem]];
     const int numScreens = [screens count];
     for (i = 0; i < numScreens; i++) {
         if (i == 0) {
-            [_screen addItemWithTitle:[NSString stringWithFormat:@"Main Screen"]];
+            [_screen addItemWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"Profiles.Window.MainScreen", nil, [NSBundle mainBundle], @"Main Screen", @"Menu item title for the primary display in the initial-screen picker.")]];
         } else {
             [_screen addItemWithTitle:screens[i].it_uniqueName];
         }
@@ -1071,11 +1077,11 @@ typedef NS_ENUM(NSUInteger, iTermWindowUnitsTag) {
 
 - (void)maybeWarnAboutSpaces
 {
-    [iTermWarning showWarningWithTitle:@"To have a new window open in a specific space, "
+    [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"Profiles.Window.SpacesWarning", nil, [NSBundle mainBundle], @"To have a new window open in a specific space, "
                                        @"make sure that Spaces is enabled in System "
                                        @"Preferences and that it is configured to switch directly "
-                                       @"to a space with ^ Number Keys."
-                               actions:@[ @"OK" ]
+                                       @"to a space with ^ Number Keys.", @"Warning explaining how to configure Spaces so new windows can open in a specific space.")
+                               actions:@[ iTermLocalizedOK() ]
                             identifier:@"NeverWarnAboutSpaces"
                            silenceable:kiTermWarningTypePermanentlySilenceable
                                 window:self.view.window];

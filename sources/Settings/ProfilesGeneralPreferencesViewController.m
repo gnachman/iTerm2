@@ -160,7 +160,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
 - (void)awakeFromNib {
     _sessionHotkeyInputView.leaderAllowed = NO;
-    _sessionHotkeyInputView.purpose = @"as a hotkey";
+    _sessionHotkeyInputView.purpose = iTermShortcutInputViewPurposeHotkey;
     _rateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"General prefs" minimumInterval:0.75];
     
     PreferenceInfo *info;
@@ -173,7 +173,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     
     info = [self defineControl:_profileNameField
                            key:KEY_NAME
-                   displayName:@"Profile name"
+                   displayName:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.SearchName", nil, [NSBundle mainBundle], @"Profile name", @"Search index display name for the profile name control")
                           type:kPreferenceInfoTypeStringTextField];
     __weak PreferenceInfo *weakInfo = info;
     info.customSettingChangedHandler = ^(id sender) {
@@ -228,7 +228,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     info = [self defineControl:_icon
                            key:KEY_ICON
-                   displayName:@"Profile icon"
+                   displayName:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.SearchIcon", nil, [NSBundle mainBundle], @"Profile icon", @"Search index display name for the profile icon control")
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^{
         [weakSelf iconDidChange];
@@ -242,31 +242,31 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     [self defineControl:_profileShortcut
                     key:KEY_SHORTCUT
-            displayName:@"Open profile shortcut keystroke"
+            displayName:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.SearchShortcut", nil, [NSBundle mainBundle], @"Open profile shortcut keystroke", @"Search index display name for the profile shortcut control")
                    type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [weakSelf setShortcutValueToSelectedItem]; }
                  update:^BOOL { [weakSelf updateShortcutTitles]; return YES; }];
 
     [self defineControl:_tagsTokenField
                     key:KEY_TAGS
-            displayName:@"Profile tags"
+            displayName:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.SearchTags", nil, [NSBundle mainBundle], @"Profile tags", @"Search index display name for the tags control")
                    type:kPreferenceInfoTypeTokenField];
 
     [self defineControl:_commandType
                     key:KEY_CUSTOM_COMMAND
-            displayName:@"Profile uses login shell, custom shell, or custom command"
+            displayName:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.SearchCommandType", nil, [NSBundle mainBundle], @"Profile uses login shell, custom shell, or custom command", @"Search index display name for the command type control")
                    type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [weakSelf commandTypeDidChange]; }
                  update:^BOOL { [weakSelf updateCommandType]; return YES; }];
 
     [self defineControl:_initialURL
                     key:KEY_INITIAL_URL
-            displayName:@"Initial URL for Browser mode"
+            displayName:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.SearchInitialURL", nil, [NSBundle mainBundle], @"Initial URL for Browser mode", @"Search index display name for the initial URL control")
                    type:kPreferenceInfoTypeStringTextField];
 
     info = [self defineControl:_profileType
                            key:KEY_PROFILE_TYPE_PHONY
-                   displayName:@"Profile type"
+                   displayName:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.SearchProfileType", nil, [NSBundle mainBundle], @"Profile type", @"Search index display name for the profile type control")
                           type:kPreferenceInfoTypeSegmentedControl];
     info.syntheticGetter = ^id{
         if ([[weakSelf stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {
@@ -305,7 +305,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     info = [self defineControl:_customCommand
                            key:KEY_COMMAND_LINE
-                   displayName:@"Profile custom command"
+                   displayName:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.SearchCustomCommand", nil, [NSBundle mainBundle], @"Profile custom command", @"Search index display name for the custom command control")
                           type:kPreferenceInfoTypeStringTextField];
     info.shouldBeEnabled = ^BOOL {
         __strong __typeof(weakSelf) strongSelf = self;
@@ -329,7 +329,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     [self defineControl:_initialDirectoryType
                     key:KEY_CUSTOM_DIRECTORY
-            displayName:@"Profile initial working directory"
+            displayName:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.SearchInitialWorkingDirectory", nil, [NSBundle mainBundle], @"Profile initial working directory", @"Search index display name for the initial working directory control")
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [weakSelf directoryTypeDidChange]; }
                  update:^BOOL { [weakSelf updateDirectoryType]; return YES; }];
@@ -358,14 +358,14 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         return [[weakSelf objectForKey:KEY_WORKING_DIRECTORY] isEqual:NSHomeDirectory()];
     };
     [self addViewToSearchIndex:_editBadgeButton
-                   displayName:@"Edit badge appearance"
+                   displayName:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.SearchEditBadgeAppearance", nil, [NSBundle mainBundle], @"Edit badge appearance", @"Search index display name for the edit badge appearance button")
                        phrases:@[ @"Badge font",
                                   @"Badge minum and maximum width",
                                   @"Badge right and top margins" ]
                            key:nil];
     [self defineControl:_badgeText
                     key:KEY_BADGE_FORMAT
-            displayName:@"Profile badge"
+            displayName:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.SearchBadge", nil, [NSBundle mainBundle], @"Profile badge", @"Search index display name for the badge text control")
                    type:kPreferenceInfoTypeStringTextField];
     _badgeTextFieldDelegate =
         [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession]
@@ -396,7 +396,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
     [self defineControl:_titleSettings
                     key:KEY_TITLE_COMPONENTS
-            displayName:@"Profile title options"
+            displayName:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.SearchTitleOptions", nil, [NSBundle mainBundle], @"Profile title options", @"Search index display name for the title options control")
                    type:kPreferenceInfoTypePopup
          settingChanged:^(id sender) { [weakSelf toggleSelectedTitleComponent]; }
                  update:^BOOL {
@@ -445,7 +445,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     };
 
     [self addViewToSearchIndex:_urlSchemes
-                   displayName:@"URL schemes handled by profile"
+                   displayName:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.SearchURLSchemes", nil, [NSBundle mainBundle], @"URL schemes handled by profile", @"Search index display name for the URL schemes control")
                        phrases:@[ @"ssh", @"http", @"https" ]
                            key:nil];
 
@@ -668,7 +668,12 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     // Unless a custom title function is in use, ensure session name is visible in the title.
     NSUInteger components = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
 
-    if (components & (iTermTitleComponentsSessionName | iTermTitleComponentsProfileAndSessionName)) {
+    // The AI title occupies the name slot too, so an AI profile already shows a
+    // name-group component: leave it alone rather than force-adding SessionName,
+    // which would render AI | SessionName and break the name-group mutual exclusion
+    // the popup toggle maintains. The name group EXCEPT ProfileName, which is not
+    // yet in the session-name slot and is handled by the promotion branch below.
+    if (components & (iTermTitleComponentsNameGroup & ~iTermTitleComponentsProfileName)) {
         return;
     }
     if (components == iTermTitleComponentsCustom) {
@@ -691,6 +696,17 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     [self updateTitleSettingsMenuForView:_titleSettingsForEditCurrentSession];
 }
 
++ (BOOL)shouldOfferAITitleComponentWithSettingEnabled:(BOOL)enabled
+                                    profileComponents:(NSUInteger)components {
+    // Normally gated behind the off-by-default advanced setting so the feature
+    // stays invisible in a public build. But if the profile already carries the
+    // AI bit (the user enabled the setting, selected AI, then turned it back off)
+    // keep offering it, so the bit stays reachable to uncheck. Otherwise it is
+    // stuck set, the popup label reads "AI" for an item that isn't there, and an
+    // AI-only profile renders the tab as a single blank space.
+    return enabled || (components & iTermTitleComponentsAI) != 0;
+}
+
 - (void)updateTitleSettingsMenuForView:(NSPopUpButton *)titleSettings {
     // First remove any programmatically added items
     NSIndexSet *indexSet = [titleSettings.menu.itemArray indexesOfObjectsPassingTest:^BOOL(NSMenuItem * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
@@ -700,12 +716,32 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         [titleSettings.menu removeItemAtIndex:idx];
     }];
 
+    const NSUInteger selectedComponents = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
+
+    // The AI-generated name option is gated behind the off-by-default
+    // aiGeneratedTabTitles advanced setting (the same switch that gates
+    // generation), so the whole feature stays invisible in a public build until
+    // it's turned on. Remove any existing item first, then re-add it only when
+    // enabled, so toggling the setting is reflected on the next menu rebuild.
+    // Added here rather than in the xib so the option ships without a nib edit;
+    // its tag is not -1, so the tag==-1 removal above never touches it.
+    const NSInteger existingAIIndex = [titleSettings.menu indexOfItemWithTag:iTermTitleComponentsAI];
+    if (existingAIIndex != -1) {
+        [titleSettings.menu removeItemAtIndex:existingAIIndex];
+    }
+    if ([ProfilesGeneralPreferencesViewController shouldOfferAITitleComponentWithSettingEnabled:[iTermAdvancedSettingsModel aiGeneratedTabTitles]
+                                                                              profileComponents:selectedComponents]) {
+        NSMenuItem *aiItem = [[NSMenuItem alloc] init];
+        aiItem.title = @"AI-generated name";
+        aiItem.tag = iTermTitleComponentsAI;
+        [titleSettings.menu addItem:aiItem];
+    }
+
     // Browser sessions have no job, tty, host, user, working directory, command line,
     // or terminal size, so hide those components for a browser profile. A terminal-only
     // component that is already selected stays visible so the user can turn it off (see
     // iTermBrowserSessionTitle). Only name/profile-name (and custom) otherwise apply.
     const BOOL isBrowser = [[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue];
-    const NSUInteger selectedComponents = [self unsignedIntegerForKey:KEY_TITLE_COMPONENTS];
     for (NSMenuItem *item in titleSettings.menu.itemArray) {
         if (item.tag > 0) {
             item.hidden = [iTermBrowserSessionTitle shouldHideTitleComponentMenuItemWithTag:item.tag
@@ -761,7 +797,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             NSArray<NSString *> *parts = [param componentsInShellCommand];
             if ([parts.firstObject isEqual:@"/bin/bash"]) {
                 // Apple's bash disables sourcing ENV when --posix is set 🤬
-                *reasonOut = @"Shell integration needs a newer version of bash.";
+                *reasonOut = NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.ShellIntegrationNeedsNewerBash", nil, [NSBundle mainBundle], @"Shell integration needs a newer version of bash.", @"Reason automatic shell integration cannot load with Apple’s old bash");
                 return NO;
             }
             NSString *shell = [parts.firstObject lastPathComponent];
@@ -770,7 +806,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                 *reasonOut = nil;
                 return YES;
             } else if (shell) {
-                *reasonOut = [NSString stringWithFormat:@"Automatic loading doesn’t work with %@", shell];
+                *reasonOut = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.AutomaticLoadingUnsupportedShell", nil, [NSBundle mainBundle], @"Automatic loading doesn’t work with %@", @"Reason automatic shell integration is unsupported; %@ is the shell name"), shell];
                 return NO;
             } else {
                 *reasonOut = nil;
@@ -780,7 +816,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         case iTermGeneralProfilePreferenceCustomCommandTagLoginShell: {
             if ([self.loginShell isEqual:@"/bin/bash"]) {
                 // Apple's bash disables sourcing ENV when --posix is set 🤬
-                *reasonOut = @"Shell integration needs a newer version of bash.";
+                *reasonOut = NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.ShellIntegrationNeedsNewerBash", nil, [NSBundle mainBundle], @"Shell integration needs a newer version of bash.", @"Reason automatic shell integration cannot load with Apple’s old bash");
                 return NO;
             }
             NSString *shell = [self.loginShell lastPathComponent];
@@ -789,7 +825,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                 *reasonOut = nil;
                 return YES;
             } else if (shell) {
-                *reasonOut = [NSString stringWithFormat:@"Automatic loading doesn’t work with %@", shell];
+                *reasonOut = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.AutomaticLoadingUnsupportedShell", nil, [NSBundle mainBundle], @"Automatic loading doesn’t work with %@", @"Reason automatic shell integration is unsupported; %@ is the shell name"), shell];
                 return NO;
             } else {
                 *reasonOut = nil;
@@ -797,11 +833,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             }
         }
         case iTermGeneralProfilePreferenceCustomCommandTagSSH:
-            *reasonOut = @"Requires bash, fish, tcsh, xonsh, or zsh.";
+            *reasonOut = NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.ShellIntegrationRequiresShell", nil, [NSBundle mainBundle], @"Requires bash, fish, tcsh, xonsh, or zsh.", @"Reason explaining which shells support automatic shell integration");
             return YES;
 
         case iTermGeneralProfilePreferenceCustomCommandTagBrowser:
-            *reasonOut = @"Not available with browser tabs";
+            *reasonOut = NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.ShellIntegrationNotAvailableBrowser", nil, [NSBundle mainBundle], @"Not available with browser tabs", @"Reason shell integration cannot be automatically loaded for browser tabs");
             return NO;
     }
     return NO;
@@ -853,9 +889,9 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     [super updateBrowserSpecific];
     NSMenuItem *item = [_icon.menu itemWithTag:iTermProfileIconAutomatic];
     if ([[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {
-        item.title = @"Favicon";
+        item.title = NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.Favicon", nil, [NSBundle mainBundle], @"Favicon", @"Menu item title for the automatic profile icon in browser mode");
     } else {
-        item.title = @"Built-in Icon for Current App";
+        item.title = NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.BuiltInIconForCurrentApp", nil, [NSBundle mainBundle], @"Built-in Icon for Current App", @"Menu item title for the automatic profile icon in non-browser mode");
     }
 }
 
@@ -924,9 +960,9 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         return;
     }
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Plugin Invalid";
+    alert.messageText = NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.PluginInvalidTitle", nil, [NSBundle mainBundle], @"Plugin Invalid", @"Title of the alert shown when a browser plugin is invalid");
     alert.informativeText = error;
-    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:iTermLocalizedOK()];
     [alert runSheetModalForWindow:self.view.window];
 }
 
@@ -1043,12 +1079,12 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             NSString *rhs = obj2[@"CFBundleURLSchemes"][0];
             return [lhs compare:rhs];
         }];
-        [_urlSchemes addItemWithTitle:@"Select URL Schemes…"];
+        [_urlSchemes addItemWithTitle:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.SelectURLSchemes", nil, [NSBundle mainBundle], @"Select URL Schemes…", @"Title of the URL schemes popup button")];
         for (NSDictionary *dict in urlArray) {
             NSString *scheme = dict[@"CFBundleURLSchemes"][0];
             [_urlSchemes addItemWithTitle:scheme];
         }
-        [_urlSchemes setTitle:@"Select URL Schemes…"];
+        [_urlSchemes setTitle:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.SelectURLSchemes", nil, [NSBundle mainBundle], @"Select URL Schemes…", @"Title of the URL schemes popup button")];
     }
 
     [[_urlSchemes menu] setAutoenablesItems:YES];
@@ -1130,7 +1166,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 - (void)handleCommandWarningClick:(NSClickGestureRecognizer *)recognizer {
     NSString *pathEnv = [[[NSProcessInfo processInfo] environment] objectForKey:@"PATH"];
     NSArray *paths = [pathEnv componentsSeparatedByString:@":"];
-    NSString *message = [NSString stringWithFormat:@"Command not found. You may need to specify the full path because your shell is not used when running this command. The search path contains the following folders: %@.", [paths componentsJoinedWithOxfordComma]];
+    NSString *message = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.CommandNotFoundWarning", nil, [NSBundle mainBundle], @"Command not found. You may need to specify the full path because your shell is not used when running this command. The search path contains the following folders: %@.", @"Warning shown when the command is not found on PATH; %@ is the list of folders in the search path"), [paths componentsJoinedWithOxfordComma]];
     [_commandWarningImageView it_showWarning:message];
 }
 
@@ -1271,17 +1307,17 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     NSString *value = [self stringForKey:KEY_CUSTOM_COMMAND];
     if ([value isEqualToString:kProfilePreferenceCommandTypeCustomValue]) {
         [_commandType selectItemWithTag:iTermGeneralProfilePreferenceCustomCommandTagCustom];
-        _customCommand.placeholderString = @"Enter command to run when a new session is created";
+        _customCommand.placeholderString = NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.CustomCommandPlaceholderCommand", nil, [NSBundle mainBundle], @"Enter command to run when a new session is created", @"Placeholder for the custom command field when the command type is a custom command");
     } else if ([value isEqualToString:kProfilePreferenceCommandTypeCustomShellValue]) {
         [_commandType selectItemWithTag:iTermGeneralProfilePreferenceCustomCommandTagCustomShell];
-        _customCommand.placeholderString = @"Enter full path to shell";
+        _customCommand.placeholderString = NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.CustomCommandPlaceholderShellPath", nil, [NSBundle mainBundle], @"Enter full path to shell", @"Placeholder for the custom command field when the command type is a custom shell");
         [self removeWhitespaceFromCustomCommand];
     } else if ([value isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
         [_commandType selectItemWithTag:iTermGeneralProfilePreferenceCustomCommandTagSSH];
-        _customCommand.placeholderString = @"Arguments to ssh";
+        _customCommand.placeholderString = NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.CustomCommandPlaceholderSSH", nil, [NSBundle mainBundle], @"Arguments to ssh", @"Placeholder for the custom command field when the command type is SSH");
     } else if ([value isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {
         [_commandType selectItemWithTag:iTermGeneralProfilePreferenceCustomCommandTagBrowser];
-        _customCommand.placeholderString = @"Initial URL";
+        _customCommand.placeholderString = NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.CustomCommandPlaceholderInitialURL", nil, [NSBundle mainBundle], @"Initial URL", @"Placeholder for the custom command field when the command type is a browser initial URL");
     } else {
         [_commandType selectItemWithTag:iTermGeneralProfilePreferenceCustomCommandTagLoginShell];
     }
@@ -1352,6 +1388,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     for (NSMenuItem *item in _profileShortcut.menu.itemArray) {
         NSString *theKey = [self shortcutKeyForTag:[item tag]];
         if (theKey.length) {
+            // Localization unneeded
             theKey = [@"⌘⌃" stringByAppendingString:theKey];
         }
         [item setTitle:theKey];
@@ -1365,6 +1402,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         if (tag != -1) {
             const int theIndex = [_profileShortcut indexOfItemWithTag:tag];
             NSMenuItem *item = [_profileShortcut itemAtIndex:theIndex];
+            // Localization unneeded
             NSString* newTitle = [NSString stringWithFormat:@"⌃⌘%@ (%@)",
                                   existingShortcut, profile[KEY_NAME]];
             [item setTitle:newTitle];
@@ -1422,9 +1460,13 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         }
     }
 
-    NSUInteger nameTagsMask = (iTermTitleComponentsProfileName |
-                               iTermTitleComponentsSessionName |
-                               iTermTitleComponentsProfileAndSessionName);
+    // AI is a name-slot winner in titleForSessionName (it out-ranks the other
+    // name components), and its item lives in the same name popup, so it must be
+    // part of the mutually-exclusive name group: selecting it deselects the other
+    // name components and vice versa. Omitting it left both checked (AI silently
+    // dropping the other name) and made switching back to a plain name impossible
+    // without toggling AI off first.
+    NSUInteger nameTagsMask = iTermTitleComponentsNameGroup;
     if (selectedTag & nameTagsMask) {
         // Selected a name tag. Deselect all other name tags. Toggle the selected one.
         const NSUInteger originalTitleBits = (originalValue & nameTagsMask);
@@ -1481,17 +1523,20 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         }
     }
 
-    titleSettings.title = customName ?: [iTermSessionTitleBuiltInFunction titleForSessionName:@"Name"
-                                                                                  profileName:@"Profile"
-                                                                                          job:@"Job"
-                                                                                  commandLine:@"Job+Args"
+    titleSettings.title = customName ?: [iTermSessionTitleBuiltInFunction titleForSessionName:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.TitlePreviewName", nil, [NSBundle mainBundle], @"Name", @"Sample session name shown in the title-format preview")
+                                                                                  profileName:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.TitlePreviewProfile", nil, [NSBundle mainBundle], @"Profile", @"Sample profile name shown in the title-format preview")
+                                                                                          job:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.TitlePreviewJob", nil, [NSBundle mainBundle], @"Job", @"Sample job name shown in the title-format preview")
+                                                                                  commandLine:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.TitlePreviewCommandLine", nil, [NSBundle mainBundle], @"Job+Args", @"Sample command line shown in the title-format preview")
+                                                                                          // Localization unneeded
                                                                                           pwd:@"PWD"
+                                                                                          // Localization unneeded
                                                                                           tty:@"TTY"
-                                                                                         user:@"User"
-                                                                                         host:@"Host"
+                                                                                         user:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.TitlePreviewUser", nil, [NSBundle mainBundle], @"User", @"Sample user name shown in the title-format preview")
+                                                                                         host:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.TitlePreviewHost", nil, [NSBundle mainBundle], @"Host", @"Sample host name shown in the title-format preview")
+                                                                                      aiTitle:@"AI"
                                                                                 homeDirectory:nil
                                                                                      tmuxPane:nil
-                                                                                     iconName:@"“Shell”"
+                                                                                     iconName:NSLocalizedStringWithDefaultValue(@"ProfilesGeneral.TitlePreviewIconName", nil, [NSBundle mainBundle], @"“Shell”", @"Sample icon name shown in the title-format preview")
                                                                                    windowName:@""
                                                                                tmuxWindowName:nil
                                                                               tmuxWindowTitle:nil

@@ -271,15 +271,15 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         var errorDescription: String? {
             switch self {
             case .usrLocalIsFile:
-                "\(FallbackFolder) is a file, not a directory. Please remove it and try again."
+                String(localized: "SecureUserDefaults.FolderIsFileError", defaultValue: "\(FallbackFolder) is a file, not a directory. Please remove it and try again.", comment: "Error shown when the fallback secure-settings folder path is a file; %@ is the folder path")
             case .failedToCreateUsrLocal:
-                "Failed to create \(FallbackFolder). Please manually create this folder."
+                String(localized: "SecureUserDefaults.FailedToCreateFolderError", defaultValue: "Failed to create \(FallbackFolder). Please manually create this folder.", comment: "Error shown when the fallback secure-settings folder cannot be created; %@ is the folder path")
             case .badMagic:
-                "The secure user default is corrupted."
+                String(localized: "SecureUserDefaults.BadMagicError", defaultValue: "The secure user default is corrupted.", comment: "Error shown when a secure user default has an invalid magic number")
             case .scriptError(let message):
                 message
             case .directoryDoesNotExist:
-                "The containing directory for secure user defaults does not exist"
+                String(localized: "SecureUserDefaults.DirectoryDoesNotExistError", defaultValue: "The containing directory for secure user defaults does not exist", comment: "Error shown when the secure user defaults directory is missing")
             }
         }
     }
@@ -330,11 +330,11 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         } catch {
             RLog("Fail: \(error)")
             iTermWarning.show(withTitle: error.localizedDescription,
-                              actions: ["OK"],
+                              actions: [iTermLocalizedOK()],
                               accessory: nil,
                               identifier: "NoSyncSecureUserDefaultsSetFailed",
                               silenceable: .kiTermWarningTypeTemporarilySilenceable,
-                              heading: "Failed to Save Secure Setting",
+                              heading: String(localized: "SecureUserDefaults.SaveFailedHeading", defaultValue: "Failed to Save Secure Setting", comment: "Heading of the warning shown when saving a secure setting fails"),
                               window: nil)
             throw error
         }
@@ -383,7 +383,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         // notifications for keys that were never written.
         try runPrivilegedWrites(statements: statements,
                                 keys: writes.map { $0.key },
-                                prompt: "iTerm2 needs to modify secure settings.")
+                                prompt: String(localized: "SecureUserDefaults.ModifySettingsPrompt", defaultValue: "iTerm2 needs to modify secure settings.", comment: "Authorization prompt shown when iTerm2 needs privileges to modify secure settings"))
     }
 
     private static func fallbackBaseDirectory(create: Bool) throws -> String {
@@ -416,12 +416,26 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         // Folder is owned by root without sticky bit so user can delete files without permission (that enables the delete() method).
         // If the user rewrites a file the ownership changes, which we can check for.
         // I'm not worried about TOCTOU because the threat model is concerned with accidental changes rather than an active attacker.
-        let code =
-        """
+        // SECURITY: This AppleScript runs with administrator privileges, so its
+        // shell command and every AppleScript keyword must come from fixed
+        // literals in code. A translator (or anyone editing the String Catalog)
+        // must not be able to alter what runs as root. Only the human-readable
+        // prompt sentence is localizable, and it is escaped before being embedded
+        // in the AppleScript string literal.
+        let promptTemplate = String(localized: "SecureUserDefaults.CreateFolderPrompt",
+                                     defaultValue: "iTerm2 needs to create %@ to store secure settings because your home directory is on a network file system.",
+                                     comment: "Authorization prompt shown when iTerm2 needs privileges to create the fallback secure-settings folder; %@ is the folder path")
+        let prompt = String(format: promptTemplate, path)
+        // Escape backslashes and double quotes so the prompt is a safe AppleScript
+        // string literal and cannot break out of "with prompt".
+        let escapedPrompt = prompt
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        let code = """
         do shell script "
             umask 000
             /bin/mkdir -m 777 -p \(path)
-        " with prompt "iTerm2 needs to create \(path) to store secure settings because your home directory is on a network file system." with administrator privileges
+        " with prompt "\(escapedPrompt)" with administrator privileges
         """
         DLog("Will execute:\n\(code)")
         let script = NSAppleScript(source: code)
@@ -589,7 +603,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equat
         let statement = try writeStatement(key: key, encodedValue: SecureUserDefaultValue<U>(value: value).encodedString)
         try runPrivilegedWrites(statements: [statement],
                                 keys: [key],
-                                prompt: "iTerm2 needs to modify a secure setting.")
+                                prompt: String(localized: "SecureUserDefaults.ModifySingleSettingPrompt", defaultValue: "iTerm2 needs to modify a secure setting.", comment: "Authorization prompt shown when iTerm2 needs privileges to modify one secure setting"))
     }
 
     /// The double-backslash/double-quote escaping for a path embedded in the

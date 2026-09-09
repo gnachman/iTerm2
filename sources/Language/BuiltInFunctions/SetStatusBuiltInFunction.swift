@@ -36,14 +36,15 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
                                     backgroundTasksArg]),
             defaultValues: ["session_id": iTermVariableKeySessionID],
             context: .session,
+            // Localization unneeded
             sideEffectsPlaceholder: "[set_status]") { parameters, completion in
                 DLog("set_status \(parameters)")
                 guard let sessionID = parameters["session_id"] as? String else {
-                    completion(nil, error(message: "Missing session_id"))
+                    completion(nil, error(message: String(localized: "BuiltInFunction.MissingSessionID", defaultValue: "Missing session_id. This shouldn’t happen so please report a bug.", comment: "Error shown when the session_id argument is unexpectedly missing (should not happen)")))
                     return
                 }
                 guard let session = iTermController.sharedInstance().anySession(withGUID: sessionID) else {
-                    completion(nil, error(message: "No such session"))
+                    completion(nil, error(message: String(localized: "BuiltInFunction.NoSuchSession", defaultValue: "No such session", comment: "Error shown when a function is called with a session ID that does not exist")))
                     return
                 }
 
@@ -64,7 +65,7 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
                     } else {
                         var textColor = iTermSRGBColor(r: 0, g: 0, b: 0)
                         guard iTermSRGBColorFromHexString(textColorHex, &textColor) else {
-                            completion(nil, error(message: "Invalid text_color (expected #rrggbb)"))
+                            completion(nil, error(message: String(localized: "SetStatus.InvalidTextColor", defaultValue: "Invalid text_color (expected #rrggbb)", comment: "Error when the text_color argument isn't a valid hex color")))
                             return
                         }
                         update.statusColorPresence = .set
@@ -78,7 +79,7 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
                     } else {
                         var dotColor = iTermSRGBColor(r: 0, g: 0, b: 0)
                         guard iTermSRGBColorFromHexString(dotColorHex, &dotColor) else {
-                            completion(nil, error(message: "Invalid dot_color (expected #rrggbb)"))
+                            completion(nil, error(message: String(localized: "SetStatus.InvalidDotColor", defaultValue: "Invalid dot_color (expected #rrggbb)", comment: "Error when the dot_color argument isn't a valid hex color")))
                             return
                         }
                         update.indicatorPresence = .set
@@ -118,11 +119,11 @@ extension SetStatusBuiltInFunction: iTermBuiltInFunctionProtocol {
             context: .session,
             sideEffectsPlaceholder: nil) { parameters, completion in
                 guard let sessionID = parameters["session_id"] as? String else {
-                    completion(nil, error(message: "Missing session_id"))
+                    completion(nil, error(message: String(localized: "BuiltInFunction.MissingSessionID", defaultValue: "Missing session_id. This shouldn’t happen so please report a bug.", comment: "Error shown when the session_id argument is unexpectedly missing (should not happen)")))
                     return
                 }
                 guard let session = iTermController.sharedInstance().anySession(withGUID: sessionID) else {
-                    completion(nil, error(message: "No such session"))
+                    completion(nil, error(message: String(localized: "BuiltInFunction.NoSuchSession", defaultValue: "No such session", comment: "Error shown when a function is called with a session ID that does not exist")))
                     return
                 }
                 completion(NSNumber(value: session.tabStatus?.backgroundTasks ?? 0), nil)

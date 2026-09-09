@@ -17,11 +17,11 @@
 @implementation iTermHighlightLineTrigger
 
 + (NSString *)title {
-    return @"Highlight Line…";
+    return NSLocalizedStringWithDefaultValue(@"HighlightLineTrigger.Title", nil, [NSBundle mainBundle], @"Highlight Line…", @"Menu title for the Highlight Line trigger action");
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"Highlight Line with %@ over %@", self.textColor.humanReadableDescription ?: @"(no color)", self.backgroundColor.humanReadableDescription ?: @"(no color)"];
+    return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"HighlightLineTrigger.Description", nil, [NSBundle mainBundle], @"Highlight Line with %1$@ over %2$@", @"Description of a Highlight Line trigger; first %@ is text color, second is background color"), self.textColor.humanReadableDescription ?: NSLocalizedStringWithDefaultValue(@"HighlightTrigger.NoColor", nil, [NSBundle mainBundle], @"(no color)", @"Shown in a highlight trigger description when no color is set"), self.backgroundColor.humanReadableDescription ?: NSLocalizedStringWithDefaultValue(@"HighlightTrigger.NoColor", nil, [NSBundle mainBundle], @"(no color)", @"Shown in a highlight trigger description when no color is set")];
 }
 
 - (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
@@ -174,7 +174,7 @@
 - (NSAttributedString *)paramAttributedString {
     NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
 
-    [result appendAttributedString:[[NSAttributedString alloc] initWithString:@"Text: "]];
+    [result appendAttributedString:[[NSAttributedString alloc] initWithString:NSLocalizedStringWithDefaultValue(@"HighlightTrigger.TextLabel", nil, [NSBundle mainBundle], @"Text: ", @"Label preceding the text color swatch")]];
 
     NSTextAttachment *textColorAttachment = [[NSTextAttachment alloc] init];
     textColorAttachment.image = [self imageForColor:self.textColor];
@@ -184,7 +184,7 @@
     [mutableTextAttachmentString addAttribute:NSBaselineOffsetAttributeName value:@(-2) range:NSMakeRange(0, mutableTextAttachmentString.length)];
     [result appendAttributedString:mutableTextAttachmentString];
 
-    [result appendAttributedString:[[NSAttributedString alloc] initWithString:@" Background: "]];
+    [result appendAttributedString:[[NSAttributedString alloc] initWithString:NSLocalizedStringWithDefaultValue(@"HighlightTrigger.BackgroundLabel", nil, [NSBundle mainBundle], @" Background: ", @"Label preceding the background color swatch")]];
 
     NSTextAttachment *backgroundColorAttachment = [[NSTextAttachment alloc] init];
     backgroundColorAttachment.image = [self imageForColor:self.backgroundColor];

@@ -133,7 +133,6 @@ TriggerDelegate> {
 - (void)queueAnnouncement:(iTermAnnouncementViewController *)announcement
                identifier:(NSString *)identifier;
 - (void)removeAnnouncementWithIdentifier:(NSString *)identifier;
-- (BOOL)haveAutoComposer;
 - (void)sendDataQueue;
 - (void)bracketedPasteDidExpect;
 

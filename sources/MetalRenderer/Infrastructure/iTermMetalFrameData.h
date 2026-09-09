@@ -143,6 +143,10 @@ extern void iTermMetalFrameDataStatsBundleAdd(iTermPreciseTimerStats *dest, iTer
 @property (atomic) CGSize asciiOffset;
 @property (atomic, strong, nullable) NSString *status;
 @property (atomic, strong) id<MTLDevice> device;
+// The framebuffer/intermediate-texture pixel format for this frame, stamped by
+// the driver from its per-session decision so the intermediate textures match
+// the pipeline states. Defaults to BGRA8Unorm (the non-HDR format).
+@property (atomic) MTLPixelFormat framebufferPixelFormat;
 @property (atomic, strong, readonly) iTermMetalView *view;
 @property (atomic, strong, nullable) NSColorSpace *colorSpace;
 @property (atomic) BOOL extendBackgroundColorIntoMargins;

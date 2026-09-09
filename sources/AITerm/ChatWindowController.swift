@@ -15,7 +15,7 @@ import AppKit
         var localizedDescription: String {
             switch self {
             case .chatNotFound:
-                "The messages for this chat could not be loaded."
+                String(localized: "ChatWindowController.ChatNotFound", defaultValue: "The messages for this chat could not be loaded.", comment: "Error description when a chat's messages cannot be loaded")
             }
         }
 
@@ -87,6 +87,84 @@ extension NSToolbarItem.Identifier {
 
 @objc(iTermChatWindowController)
 final class ChatWindowController: NSWindowController, DictionaryCodable {
+    // Builds a forked chat title by stripping any pre-existing fork suffix and
+    // appending a fresh one for the current locale, so re-forking replaces the
+    // suffix instead of stacking a second one.
+    //
+    // DESIGN NOTE: The robust fix is to persist the base title and fork
+    // timestamp as separate Chat fields and compose the display suffix at render
+    // time, so no reverse-engineering of the display string is needed. That is
+    // deliberately NOT done here: Chat is the on-disk persistence model (and is
+    // also compiled into the iOS companion app), so adding fields is a schema
+    // migration that is out of scope for this change. Instead we harden the
+    // string-based approach against the two failure modes of the previous
+    // implementation:
+    //   1. It stripped from the FIRST unanchored occurrence of the prefix, which
+    //      truncated a user title that merely contained "(Forked at " somewhere
+    //      in the middle. We now only strip a suffix anchored to the END of the
+    //      title, and only when the text between the prefix and the trailing ")"
+    //      looks like a timestamp (non-empty and contains a digit).
+    //   2. A reworded translation could not be recognized. We still try the
+    //      current locale first and then the other shipped localizations so a
+    //      chat forked in one language and re-forked in another replaces its
+    //      suffix. This cannot recognize a locale whose wording changed AFTER an
+    //      old suffix was written; only stored provenance (the deferred model
+    //      change above) would fix that.
+    static func forkedChatTitle(from originalTitle: String, timestamp: String) -> String {
+        let currentPrefix = String(localized: "ChatWindowController.ForkedAtPrefix", defaultValue: "(Forked at ", comment: "Prefix appended to a forked chat title, followed by a timestamp")
+        let desiredSuffix = currentPrefix + timestamp + ")"
+
+        var candidatePrefixes = [currentPrefix]
+        for localization in Bundle.main.localizations {
+            guard let lprojPath = Bundle.main.path(forResource: localization, ofType: "lproj"),
+                  let bundle = Bundle(path: lprojPath) else {
+                continue
+            }
+            let prefix = bundle.localizedString(forKey: "ChatWindowController.ForkedAtPrefix", value: "", table: "Localizable")
+            if !prefix.isEmpty && !candidatePrefixes.contains(prefix) {
+                candidatePrefixes.append(prefix)
+            }
+        }
+
+        for prefix in candidatePrefixes {
+            if let base = baseTitle(strippingForkSuffixFrom: originalTitle, prefix: prefix) {
+                return compose(baseTitle: base, suffix: desiredSuffix)
+            }
+        }
+        return compose(baseTitle: originalTitle, suffix: desiredSuffix)
+    }
+
+    // Returns the base title with a trailing fork suffix removed, or nil if the
+    // title does not END in a recognizable "<prefix><timestamp>)" suffix. The
+    // match is anchored to the end of the string and the timestamp portion must
+    // be non-empty and contain a digit, so ordinary titles that merely contain
+    // the prefix are left intact.
+    private static func baseTitle(strippingForkSuffixFrom title: String, prefix: String) -> String? {
+        guard !prefix.isEmpty, title.hasSuffix(")") else {
+            return nil
+        }
+        // Use the LAST occurrence so everything after it is treated as the suffix.
+        guard let prefixRange = title.range(of: prefix, options: .backwards) else {
+            return nil
+        }
+        let timestamp = title[prefixRange.upperBound..<title.index(before: title.endIndex)]
+        guard !timestamp.isEmpty, timestamp.contains(where: { $0.isNumber }) else {
+            return nil
+        }
+        return String(title[..<prefixRange.lowerBound])
+    }
+
+    // Joins a base title and a fork suffix with exactly one separating space,
+    // tolerating a base that already ends in a space (the strip path keeps the
+    // space that preceded the removed suffix).
+    private static func compose(baseTitle: String, suffix: String) -> String {
+        let trimmed = baseTitle.hasSuffix(" ") ? String(baseTitle.dropLast()) : baseTitle
+        if trimmed.isEmpty {
+            return suffix
+        }
+        return trimmed + " " + suffix
+    }
+
     private static var _instance: ChatWindowController?
     @objc(instanceShowingErrors:) static func instance(showErrors: Bool) -> ChatWindowController? {
         if _instance == nil,
@@ -95,12 +173,12 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
             _instance = ChatWindowController(model: model,
                                              client: client)
         } else if showErrors && _instance == nil {
-            iTermWarning.show(withTitle: "AI Chat could not open because of a problem loading the database. Verify there is only one instance of iTerm2 running.",
-                              actions: ["OK"],
+            iTermWarning.show(withTitle: String(localized: "ChatWindowController.OpenFailedMessage", defaultValue: "AI Chat could not open because of a problem loading the database. Verify there is only one instance of iTerm2 running.", comment: "Error message when the AI chat window cannot open due to a database problem"),
+                              actions: [iTermLocalizedOK()],
                               accessory: nil,
                               identifier: nil,
                               silenceable: .kiTermWarningTypePersistent,
-                              heading: "Error",
+                              heading: String(localized: "General.Error", defaultValue: "Error", comment: "Generic error heading"),
                               window: nil)
         }
         return _instance
@@ -279,7 +357,7 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
            let model = model.chat(id: chatID) {
             window.title = model.title
         } else {
-            window.title = "AI Chat"
+            window.title = String(localized: "ChatWindowController.WindowTitle", defaultValue: "AI Chat", comment: "Default window title for the AI chat window")
         }
 
         // Hide the native title
@@ -336,7 +414,7 @@ final class ChatWindowController: NSWindowController, DictionaryCodable {
 
     private func createNewChat(offerGuid guid: String?, enableOrchestration: Bool = false) {
         do {
-            let chatID = try client.create(chatWithTitle: "New Chat",
+            let chatID = try client.create(chatWithTitle: String(localized: "ChatWindowController.NewChatTitle", defaultValue: "New Chat", comment: "Default title for a newly created chat"),
                                            terminalSessionGuid: nil,
                                            browserSessionGuid: nil,
                                            initialMessages: [],
@@ -450,11 +528,11 @@ extension ChatWindowController: NSToolbarDelegate {
         switch itemIdentifier {
         case .toggleChatList:
             let item = NSToolbarItem(itemIdentifier: itemIdentifier)
-            item.label = "Toggle Chat List"
-            item.paletteLabel = "Toggle Chat List"
-            item.toolTip = "Show or hide the chat list"
+            item.label = String(localized: "ChatWindowController.ToggleChatList", defaultValue: "Toggle Chat List", comment: "Toolbar item to show or hide the chat list")
+            item.paletteLabel = String(localized: "ChatWindowController.ToggleChatList", defaultValue: "Toggle Chat List", comment: "Toolbar item to show or hide the chat list")
+            item.toolTip = String(localized: "ChatWindowController.ToggleChatListTooltip", defaultValue: "Show or hide the chat list", comment: "Tooltip for the toggle chat list toolbar item")
             item.image = NSImage(systemSymbolName: SFSymbol.sidebarLeft.rawValue,
-                                 accessibilityDescription: "Toggle Chat List")
+                                 accessibilityDescription: String(localized: "ChatWindowController.ToggleChatList", defaultValue: "Toggle Chat List", comment: "Toolbar item to show or hide the chat list"))
             item.target = self
             item.action = #selector(toggleChatList)
             // Standard toolbar buttons get automatic glass backing on macOS 26
@@ -469,9 +547,9 @@ extension ChatWindowController: NSToolbarDelegate {
             if let providerSelector = chatViewController.chatToolbar.providerSelectorButton,
                !providerSelector.isHidden {
                 let item = NSToolbarItem(itemIdentifier: itemIdentifier)
-                item.label = "Provider"
-                item.paletteLabel = "AI Provider"
-                item.toolTip = "Select AI provider for new chats"
+                item.label = String(localized: "ChatWindowController.ProviderLabel", defaultValue: "Provider", comment: "Toolbar label for the AI provider selector")
+                item.paletteLabel = String(localized: "ChatWindowController.ProviderPaletteLabel", defaultValue: "AI Provider", comment: "Toolbar customization palette label for the AI provider selector")
+                item.toolTip = String(localized: "ChatWindowController.ProviderTooltip", defaultValue: "Select AI provider for new chats", comment: "Tooltip for the AI provider selector toolbar item")
                 item.view = providerSelector
                 return item
             }
@@ -481,9 +559,9 @@ extension ChatWindowController: NSToolbarDelegate {
             // Only create if we have multiple models
             if let modelSelector = chatViewController.chatToolbar.modelSelectorButton {
                 let item = NSToolbarItem(itemIdentifier: itemIdentifier)
-                item.label = "Model"
-                item.paletteLabel = "AI Model"
-                item.toolTip = "Select AI model"
+                item.label = String(localized: "ChatWindowController.ModelLabel", defaultValue: "Model", comment: "Toolbar label for the AI model selector")
+                item.paletteLabel = String(localized: "ChatWindowController.ModelPaletteLabel", defaultValue: "AI Model", comment: "Toolbar customization palette label for the AI model selector")
+                item.toolTip = String(localized: "ChatWindowController.ModelTooltip", defaultValue: "Select AI model", comment: "Tooltip for the AI model selector toolbar item")
                 item.view = modelSelector
                 return item
             }
@@ -492,9 +570,9 @@ extension ChatWindowController: NSToolbarDelegate {
         case .thinkingToggle:
             if let button = chatViewController.chatToolbar.thinkingButton {
                 let item = NSToolbarItem(itemIdentifier: itemIdentifier)
-                item.label = "Thinking"
-                item.paletteLabel = "Toggle Thinking"
-                item.toolTip = "Enable or disable thinking/reasoning mode"
+                item.label = String(localized: "ChatWindowController.ThinkingLabel", defaultValue: "Thinking", comment: "Toolbar label for the thinking toggle")
+                item.paletteLabel = String(localized: "ChatWindowController.ThinkingPaletteLabel", defaultValue: "Toggle Thinking", comment: "Toolbar customization palette label for the thinking toggle")
+                item.toolTip = String(localized: "ChatWindowController.ThinkingTooltip", defaultValue: "Enable or disable thinking/reasoning mode", comment: "Tooltip for the thinking toggle toolbar item")
                 item.view = button
                 return item
             }
@@ -504,9 +582,9 @@ extension ChatWindowController: NSToolbarDelegate {
             if let selector = chatViewController.chatToolbar.reasoningEffortButton,
                !selector.isHidden {
                 let item = NSToolbarItem(itemIdentifier: itemIdentifier)
-                item.label = "Effort"
-                item.paletteLabel = "Reasoning Effort"
-                item.toolTip = "Select reasoning effort"
+                item.label = String(localized: "ChatWindowController.EffortLabel", defaultValue: "Effort", comment: "Toolbar label for the reasoning effort selector")
+                item.paletteLabel = String(localized: "ChatWindowController.EffortPaletteLabel", defaultValue: "Reasoning Effort", comment: "Toolbar customization palette label for the reasoning effort selector")
+                item.toolTip = String(localized: "ChatWindowController.EffortTooltip", defaultValue: "Select reasoning effort", comment: "Tooltip for the reasoning effort selector toolbar item")
                 item.view = selector
                 return item
             }
@@ -516,9 +594,9 @@ extension ChatWindowController: NSToolbarDelegate {
             if let selector = chatViewController.chatToolbar.serviceTierButton,
                !selector.isHidden {
                 let item = NSToolbarItem(itemIdentifier: itemIdentifier)
-                item.label = "Speed"
-                item.paletteLabel = "AI Speed"
-                item.toolTip = "Select AI service tier"
+                item.label = String(localized: "ChatWindowController.SpeedLabel", defaultValue: "Speed", comment: "Toolbar label for the AI service tier selector")
+                item.paletteLabel = String(localized: "ChatWindowController.SpeedPaletteLabel", defaultValue: "AI Speed", comment: "Toolbar customization palette label for the AI service tier selector")
+                item.toolTip = String(localized: "ChatWindowController.SpeedTooltip", defaultValue: "Select AI service tier", comment: "Tooltip for the AI service tier selector toolbar item")
                 item.view = selector
                 return item
             }
@@ -527,9 +605,9 @@ extension ChatWindowController: NSToolbarDelegate {
         case .webSearchToggle:
             if let button = chatViewController.chatToolbar.webSearchButton {
                 let item = NSToolbarItem(itemIdentifier: itemIdentifier)
-                item.label = "Web Search"
-                item.paletteLabel = "Toggle Web Search"
-                item.toolTip = "Enable or disable web search"
+                item.label = String(localized: "ChatWindowController.WebSearchLabel", defaultValue: "Web Search", comment: "Toolbar label for the web search toggle")
+                item.paletteLabel = String(localized: "ChatWindowController.WebSearchPaletteLabel", defaultValue: "Toggle Web Search", comment: "Toolbar customization palette label for the web search toggle")
+                item.toolTip = String(localized: "ChatWindowController.WebSearchTooltip", defaultValue: "Enable or disable web search", comment: "Tooltip for the web search toggle toolbar item")
                 item.view = button
                 return item
             }
@@ -538,9 +616,9 @@ extension ChatWindowController: NSToolbarDelegate {
         case .sessionButton:
             if let button = chatViewController.chatToolbar.sessionButton {
                 let item = NSToolbarItem(itemIdentifier: itemIdentifier)
-                item.label = "Session"
-                item.paletteLabel = "Link Session"
-                item.toolTip = "Link or unlink terminal/browser session"
+                item.label = String(localized: "ChatWindowController.SessionLabel", defaultValue: "Session", comment: "Toolbar label for the link session button")
+                item.paletteLabel = String(localized: "ChatWindowController.SessionPaletteLabel", defaultValue: "Link Session", comment: "Toolbar customization palette label for the link session button")
+                item.toolTip = String(localized: "ChatWindowController.SessionTooltip", defaultValue: "Link or unlink terminal/browser session", comment: "Tooltip for the link session toolbar item")
                 item.view = button
                 return item
             }
@@ -571,7 +649,7 @@ extension ChatWindowController: NSToolbarDelegate {
             chatListViewController.select(chatID: chat.id)
         } else {
             do {
-                let chatID = try client.create(chatWithTitle: "Chat about \(name)",
+                let chatID = try client.create(chatWithTitle: String(localized: "ChatWindowController.ChatAboutTitle", defaultValue: "Chat about \(name)", comment: "Default title for a chat created about a named session"),
                                                terminalSessionGuid: terminal ? guid : nil,
                                                browserSessionGuid: terminal ? nil : guid,
                                                initialMessages: [],
@@ -703,10 +781,10 @@ extension ChatWindowController: ChatListViewControllerDelegate {
             return
         }
         let alert = NSAlert()
-        alert.messageText = "Rename Chat"
-        alert.informativeText = "Choose a new name for this chat."
-        alert.addButton(withTitle: "Rename")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = String(localized: "ChatWindowController.RenameChatTitle", defaultValue: "Rename Chat", comment: "Title of the rename chat dialog")
+        alert.informativeText = String(localized: "ChatWindowController.RenameChatPrompt", defaultValue: "Choose a new name for this chat.", comment: "Prompt in the rename chat dialog")
+        alert.addButton(withTitle: String(localized: "ChatWindowController.RenameButton", defaultValue: "Rename", comment: "Rename button in the rename chat dialog"))
+        alert.addButton(withTitle: iTermLocalizedCancel())
 
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 320, height: 24))
         field.stringValue = chat.title
@@ -730,12 +808,12 @@ extension ChatWindowController: ChatListViewControllerDelegate {
             }
         } catch {
             DLog("Failed to rename chat \(chatID): \(error)")
-            iTermWarning.show(withTitle: "The chat could not be renamed.",
-                              actions: ["OK"],
+            iTermWarning.show(withTitle: String(localized: "ChatWindowController.RenameFailedMessage", defaultValue: "The chat could not be renamed.", comment: "Error message when renaming a chat fails"),
+                              actions: [iTermLocalizedOK()],
                               accessory: nil,
                               identifier: nil,
                               silenceable: .kiTermWarningTypePersistent,
-                              heading: "Rename Failed",
+                              heading: String(localized: "ChatWindowController.RenameFailedHeading", defaultValue: "Rename Failed", comment: "Heading for the rename-failed error dialog"),
                               window: window)
         }
     }
@@ -773,12 +851,10 @@ extension ChatWindowController: ChatViewControllerDelegate {
         }
         let warning = iTermWarning()
         let count = uniqueChatIDs.count
-        warning.title = count == 1
-            ? "Are you sure you want to delete this chat? This action cannot be undone."
-            : "Are you sure you want to delete \(count) chats? This action cannot be undone."
-        warning.heading = count == 1 ? "Delete Chat?" : "Delete \(count) Chats?"
+        warning.title = String(localized: "ChatWindowController.DeleteChatConfirm", defaultValue: "Are you sure you want to delete \(count) chats? This action cannot be undone.", comment: "Confirmation before deleting chats; %lld is the number of chats")
+        warning.heading = String(localized: "ChatWindowController.DeleteChatHeading", defaultValue: "Delete \(count) Chats?", comment: "Heading of the delete-chats confirmation; %lld is the number of chats")
 
-        let action = iTermWarningAction(label: "Delete") { [weak self] _ in
+        let action = iTermWarningAction(label: String(localized: "General.Delete", defaultValue: "Delete", comment: "Delete button")) { [weak self] _ in
             guard let self else {
                 return
             }
@@ -792,7 +868,7 @@ extension ChatWindowController: ChatViewControllerDelegate {
             completion?()
         }
         action.destructive = true
-        warning.warningActions = [ iTermWarningAction(label: "Cancel"), action ]
+        warning.warningActions = [ iTermWarningAction(label: iTermLocalizedCancel()), action ]
         warning.warningType = .kiTermWarningTypePersistent
         warning.runModal()
     }
@@ -844,14 +920,7 @@ extension ChatWindowController: ChatViewControllerDelegate {
             let now = Date()
             let nowString = formatter.string(from: now)
 
-            var title = originalTitle
-            let forkedAt = "(Forked at "
-            let desiredSuffix = forkedAt + nowString + ")"
-            if let range = title.range(of: forkedAt) {
-                title = originalTitle[..<range.lowerBound] + desiredSuffix
-            } else {
-                title += " " + desiredSuffix
-            }
+            let title = Self.forkedChatTitle(from: originalTitle, timestamp: nowString)
             let chatID = try client.create(chatWithTitle: title,
                                            terminalSessionGuid: chat.terminalSessionGuid,
                                            browserSessionGuid: chat.browserSessionGuid,

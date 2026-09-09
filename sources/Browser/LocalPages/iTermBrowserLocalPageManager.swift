@@ -189,7 +189,7 @@ class iTermBrowserLocalPageManager: NSObject {
     func showFilePage(for path: String, webView: iTermBrowserWebView) {
         // Navigate to iterm2-file:// URL with the file path
         guard let fileURL = URL(string: "\(iTermBrowserSchemes.file)://\(path)") else {
-            showErrorPage(for: iTermError("Invalid file path: \(path)"),
+            showErrorPage(for: iTermError(String(localized: "BrowserLocalPageManager.InvalidFilePath", defaultValue: "Invalid file path: \(path)", comment: "Error shown when a local file path is invalid")),
                           failedURL: URL(fileURLWithPath: path),
                           webView: webView)
             return

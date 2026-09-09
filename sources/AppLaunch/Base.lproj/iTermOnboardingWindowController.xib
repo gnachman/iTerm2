@@ -36,7 +36,7 @@
             <windowCollectionBehavior key="collectionBehavior" fullScreenNone="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="240" width="665" height="402"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1661"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1512" height="949"/>
             <value key="minSize" type="size" width="665" height="402"/>
             <value key="maxSize" type="size" width="665" height="437"/>
             <view key="contentView" wantsLayer="YES" id="se5-gp-TjO" customClass="iTermOnboardingView">
@@ -228,7 +228,7 @@
                     </textFieldCell>
                 </textField>
                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="S6M-1Y-bvP" customClass="iTermOnboardingTextField">
-                    <rect key="frame" x="30" y="10" width="577" height="32"/>
+                    <rect key="frame" x="30" y="10" width="577" height="48"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <textFieldCell key="cell" alignment="center" id="d4H-cG-h3K">
                         <font key="font" metaFont="system"/>
@@ -241,7 +241,7 @@
                     </connections>
                 </textField>
                 <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GpA-wZ-e6o">
-                    <rect key="frame" x="30" y="50" width="577" height="238"/>
+                    <rect key="frame" x="30" y="66" width="577" height="222"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="Onboarding-Screenshot" id="UR7-vx-L4E"/>
                 </imageView>
@@ -262,7 +262,7 @@
                     </textFieldCell>
                 </textField>
                 <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Gmu-pM-bKu" customClass="iTermOnboardingTextField">
-                    <rect key="frame" x="30" y="12" width="577" height="48"/>
+                    <rect key="frame" x="30" y="12" width="577" height="64"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <textFieldCell key="cell" alignment="center" id="a2B-NS-5LJ">
                         <font key="font" metaFont="system"/>

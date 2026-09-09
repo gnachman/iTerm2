@@ -64,6 +64,8 @@ class iTermNonTextPasteHelper: NSObject {
         _ = handleFilePaste(files)
     }
 
+    // Raw values are stable identity (used for logging and for cancel-label matching); user-facing
+    // button text comes from displayName.
     private enum FilePasteAction: String {
         case pastePath = "Paste Path"
         case pastePaths = "Paste Paths"
@@ -73,6 +75,19 @@ class iTermNonTextPasteHelper: NSObject {
         case upload = "Upload"
         case uploadAndPastePath = "Upload and Paste Path"
         case cancel = "Cancel"
+
+        var displayName: String {
+            switch self {
+            case .pastePath: return String(localized: "NonTextPaste.PastePath", defaultValue: "Paste Path", comment: "Button to paste a file path")
+            case .pastePaths: return String(localized: "NonTextPaste.PastePaths", defaultValue: "Paste Paths", comment: "Button to paste multiple file paths")
+            case .pasteBase64: return String(localized: "NonTextPaste.PasteBase64", defaultValue: "Paste Base64-Encoded Contents", comment: "Button to paste base64-encoded file contents")
+            case .pasteBase64Archive: return String(localized: "NonTextPaste.PasteBase64Archive", defaultValue: "Paste Base64-Encoded Archive (tar.gz)", comment: "Button to paste a base64-encoded tar.gz archive")
+            case .pasteAsText: return String(localized: "NonTextPaste.PasteAsText", defaultValue: "Paste as Text", comment: "Button to paste a file as text")
+            case .upload: return String(localized: "NonTextPaste.Upload", defaultValue: "Upload", comment: "Button to upload files")
+            case .uploadAndPastePath: return String(localized: "NonTextPaste.UploadAndPastePath", defaultValue: "Upload and Paste Path", comment: "Button to upload a file and paste its path")
+            case .cancel: return iTermLocalizedCancel()
+            }
+        }
     }
 
     private func handleFilePaste(_ paths: [String]) -> Bool {
@@ -83,12 +98,14 @@ class iTermNonTextPasteHelper: NSObject {
         // Verify files exist
         let existingPaths = paths.filter { FileManager.default.fileExists(atPath: $0) }
         if existingPaths.isEmpty {
-            showError("The copied file no longer exists.")
+            showError(String(localized: "NonTextPaste.CopiedFileMissing", defaultValue: "The copied file no longer exists.", comment: "Error when the file on the clipboard no longer exists"))
             return true
         }
         if existingPaths.count < paths.count {
             let missing = paths.count - existingPaths.count
-            showError("\(missing) of \(paths.count) files no longer exist. Proceeding with remaining files.")
+            // Single-count plural so the one count drives both agreements (file/files and
+            // exists/exist); a two-count "N of M" phrasing would need a two-variable substitution.
+            showError(String(localized: "NonTextPaste.SomeFilesMissing", defaultValue: "\(missing) dropped files no longer exist and will be skipped.", comment: "Error when some dropped files are missing; %lld is the number of missing files"))
         }
 
         let singleFile = existingPaths.count == 1
@@ -136,15 +153,19 @@ class iTermNonTextPasteHelper: NSObject {
         DLog("handleFilePaste: actions=\(actions.map { $0.rawValue })")
 
         // Build description of files for the dialog
-        let fileDescription = descriptionForFiles(existingPaths, isDirectory: isDirectory)
-
         let warning = iTermWarning()
-        warning.title = "How would you like to paste \(fileDescription)?"
-        warning.actionLabels = actions.map { $0.rawValue }
+        warning.title = pasteFilesPrompt(existingPaths, isDirectory: isDirectory)
+        warning.actionLabels = actions.map { $0.displayName }
         warning.identifier = singleFile ? "NoSyncPasteNonTextFile" : "NoSyncPasteNonTextFiles"
         warning.warningType = .kiTermWarningTypePermanentlySilenceable
-        warning.heading = isDirectory ? "Paste Folder" : (singleFile ? "Paste File" : "Paste Files")
-        warning.cancelLabel = FilePasteAction.cancel.rawValue
+        if isDirectory {
+            warning.heading = String(localized: "NonTextPaste.PasteFolderHeading", defaultValue: "Paste Folder", comment: "Heading of the dialog for pasting a folder")
+        } else if singleFile {
+            warning.heading = String(localized: "NonTextPaste.PasteFileHeading", defaultValue: "Paste File", comment: "Heading of the dialog for pasting a single file")
+        } else {
+            warning.heading = String(localized: "NonTextPaste.PasteFilesHeading", defaultValue: "Paste Files", comment: "Heading of the dialog for pasting multiple files")
+        }
+        warning.cancelLabel = FilePasteAction.cancel.displayName
         warning.window = delegate?.nonTextPasteHelperWindow(self)
 
         warning.runModalAsync { [weak self] selection, _ in
@@ -190,17 +211,21 @@ class iTermNonTextPasteHelper: NSObject {
         return true
     }
 
-    private func descriptionForFiles(_ paths: [String], isDirectory: Bool = false) -> String {
+    // A complete localized prompt per case rather than injecting a partly-localized description into
+    // a frame. File names are self-contained values and are interpolated; the many-files case varies
+    // by plural on the count (String Catalog Vary-by-Plural; see CLAUDE.md).
+    private func pasteFilesPrompt(_ paths: [String], isDirectory: Bool) -> String {
         if paths.count == 1 {
             let filename = (paths.first! as NSString).lastPathComponent
-            let prefix = isDirectory ? " the folder " : ""
-            return "\(prefix)\u{201C}\(filename)\u{201D}"
+            if isDirectory {
+                return String(localized: "NonTextPaste.PasteOneFolderPrompt", defaultValue: "How would you like to paste the folder \u{201C}\(filename)\u{201D}?", comment: "Prompt asking how to paste a single folder; the placeholder is the folder name")
+            }
+            return String(localized: "NonTextPaste.PasteOneFilePrompt", defaultValue: "How would you like to paste the file \u{201C}\(filename)\u{201D}?", comment: "Prompt asking how to paste a single file; the placeholder is the file name")
         } else if paths.count <= 3 {
-            let filenames = paths.map { "\u{201C}\(($0 as NSString).lastPathComponent)\u{201D}" }
-            return filenames.joined(separator: ", ")
+            let joined = paths.map { "\u{201C}\(($0 as NSString).lastPathComponent)\u{201D}" }.joined(separator: ", ")
+            return String(localized: "NonTextPaste.PasteFewFilesPrompt", defaultValue: "How would you like to paste \(joined)?", comment: "Prompt asking how to paste a few files; the placeholder is a comma-separated list of file names")
         } else {
-            let first = (paths.first! as NSString).lastPathComponent
-            return "\u{201C}\(first)\u{201D} and \(paths.count - 1) other files"
+            return String(localized: "NonTextPaste.PasteManyFilesPrompt", defaultValue: "How would you like to paste these \(paths.count) files?", comment: "Prompt asking how to paste many files; the placeholder is the number of files")
         }
     }
 
@@ -224,10 +249,10 @@ class iTermNonTextPasteHelper: NSObject {
 
     private func showError(_ message: String) {
         let alert = NSAlert()
-        alert.messageText = "Paste Failed"
+        alert.messageText = String(localized: "NonTextPaste.PasteFailedTitle", defaultValue: "Paste Failed", comment: "Title of the dialog shown when a paste operation fails")
         alert.informativeText = message
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: iTermLocalizedOK())
         if let window = delegate?.nonTextPasteHelperWindow(self) {
             alert.beginSheetModal(for: window)
         } else {
@@ -235,19 +260,29 @@ class iTermNonTextPasteHelper: NSObject {
         }
     }
 
+    // Raw values are stable identity (logging and cancel-label matching); text comes from displayName.
     private enum ImagePasteAction: String {
         case saveTempAndPastePath = "Save to Temp File and Paste Path"
         case pasteBase64 = "Paste Base64-Encoded Contents"
         case upload = "Upload"
         case uploadAndPastePath = "Upload and Paste Path"
         case cancel = "Cancel"
+
+        var displayName: String {
+            switch self {
+            case .saveTempAndPastePath: return String(localized: "NonTextPaste.SaveTempAndPastePath", defaultValue: "Save to Temp File and Paste Path", comment: "Button to save image data to a temp file and paste its path")
+            case .pasteBase64: return String(localized: "NonTextPaste.PasteBase64", defaultValue: "Paste Base64-Encoded Contents", comment: "Button to paste base64-encoded file contents")
+            case .upload: return String(localized: "NonTextPaste.Upload", defaultValue: "Upload", comment: "Button to upload files")
+            case .uploadAndPastePath: return String(localized: "NonTextPaste.UploadAndPastePath", defaultValue: "Upload and Paste Path", comment: "Button to upload a file and paste its path")
+            case .cancel: return iTermLocalizedCancel()
+            }
+        }
     }
 
     private func handleImageDataPaste(imageData: Data, fileExtension: String?) -> Bool {
         DLog("handleImageDataPaste: \(imageData.count) bytes, extension=\(fileExtension ?? "nil")")
         let canUpload = delegate?.nonTextPasteHelperCanUpload(self) ?? false
         let sizeDescription = ByteCountFormatter.string(fromByteCount: Int64(imageData.count), countStyle: .file)
-        let typeDescription = fileExtension.map { imageTypeDescription($0) } ?? "some"
 
         DLog("handleImageDataPaste: canUpload=\(canUpload)")
 
@@ -267,12 +302,12 @@ class iTermNonTextPasteHelper: NSObject {
         DLog("handleImageDataPaste: actions=\(actions.map { $0.rawValue })")
 
         let warning = iTermWarning()
-        warning.title = "The clipboard contains \(typeDescription) image data (\(sizeDescription)). How would you like to paste it?"
-        warning.actionLabels = actions.map { $0.rawValue }
+        warning.title = imageDataPrompt(fileExtension: fileExtension, size: sizeDescription)
+        warning.actionLabels = actions.map { $0.displayName }
         warning.identifier = canUpload ? "NoSyncPasteImageDataRemote" : "NoSyncPasteImageData"
         warning.warningType = .kiTermWarningTypePermanentlySilenceable
-        warning.heading = "Paste Image"
-        warning.cancelLabel = ImagePasteAction.cancel.rawValue
+        warning.heading = String(localized: "NonTextPaste.PasteImageHeading", defaultValue: "Paste Image", comment: "Heading for the paste-image options dialog")
+        warning.cancelLabel = ImagePasteAction.cancel.displayName
         warning.window = delegate?.nonTextPasteHelperWindow(self)
 
         warning.runModalAsync { [weak self] selection, _ in
@@ -328,7 +363,7 @@ class iTermNonTextPasteHelper: NSObject {
         DLog("saveImageToTempFile: \(imageData.count) bytes, extension=\(fileExtension)")
         guard let tempDir = FileManager.default.it_temporaryDirectory() else {
             RLog("saveImageToTempFile: failed to get temporary directory")
-            showError("Could not create temporary directory.")
+            showError(String(localized: "NonTextPaste.CouldNotCreateTempDir", defaultValue: "Could not create temporary directory.", comment: "Error when a temporary directory cannot be created"))
             return nil
         }
 
@@ -342,21 +377,25 @@ class iTermNonTextPasteHelper: NSObject {
             return tempPath
         } catch {
             RLog("saveImageToTempFile: failed to write: \(error)")
-            showError("Could not save image to temporary file: \(error.localizedDescription)")
+            showError(String(localized: "NonTextPaste.CouldNotSaveImage", defaultValue: "Could not save image to temporary file: \(error.localizedDescription)", comment: "Error when a pasted image cannot be written to a temporary file"))
             return nil
         }
     }
 
-    private func imageTypeDescription(_ fileExtension: String) -> String {
-        switch fileExtension.lowercased() {
-        case "png": return "a PNG"
-        case "jpg", "jpeg": return "a JPEG"
-        case "gif": return "a GIF"
-        case "tiff", "tif": return "a TIFF"
-        case "bmp": return "a BMP"
-        case "webp": return "a WebP"
-        case "heic": return "a HEIC"
-        default: return "an"
+    // A complete localized prompt per image type rather than injecting an article+type fragment
+    // ("a PNG", "an", "some") into a frame, whose grammar and word order differ by language. The
+    // size is a self-contained value, so interpolating it is fine.
+    private func imageDataPrompt(fileExtension: String?, size: String) -> String {
+        switch fileExtension?.lowercased() {
+        case "png": return String(localized: "NonTextPaste.PastePNGPrompt", defaultValue: "The clipboard contains a PNG image (\(size)). How would you like to paste it?", comment: "Prompt asking how to paste a PNG image; the placeholder is a size")
+        case "jpg", "jpeg": return String(localized: "NonTextPaste.PasteJPEGPrompt", defaultValue: "The clipboard contains a JPEG image (\(size)). How would you like to paste it?", comment: "Prompt asking how to paste a JPEG image; the placeholder is a size")
+        case "gif": return String(localized: "NonTextPaste.PasteGIFPrompt", defaultValue: "The clipboard contains a GIF image (\(size)). How would you like to paste it?", comment: "Prompt asking how to paste a GIF image; the placeholder is a size")
+        case "tiff", "tif": return String(localized: "NonTextPaste.PasteTIFFPrompt", defaultValue: "The clipboard contains a TIFF image (\(size)). How would you like to paste it?", comment: "Prompt asking how to paste a TIFF image; the placeholder is a size")
+        case "bmp": return String(localized: "NonTextPaste.PasteBMPPrompt", defaultValue: "The clipboard contains a BMP image (\(size)). How would you like to paste it?", comment: "Prompt asking how to paste a BMP image; the placeholder is a size")
+        case "webp": return String(localized: "NonTextPaste.PasteWebPPrompt", defaultValue: "The clipboard contains a WebP image (\(size)). How would you like to paste it?", comment: "Prompt asking how to paste a WebP image; the placeholder is a size")
+        case "heic": return String(localized: "NonTextPaste.PasteHEICPrompt", defaultValue: "The clipboard contains a HEIC image (\(size)). How would you like to paste it?", comment: "Prompt asking how to paste a HEIC image; the placeholder is a size")
+        case nil: return String(localized: "NonTextPaste.PasteUnknownImagePrompt", defaultValue: "The clipboard contains image data (\(size)). How would you like to paste it?", comment: "Prompt asking how to paste image data of unknown type; the placeholder is a size")
+        default: return String(localized: "NonTextPaste.PasteGenericImagePrompt", defaultValue: "The clipboard contains an image (\(size)). How would you like to paste it?", comment: "Prompt asking how to paste an image of an unrecognized type; the placeholder is a size")
         }
     }
 
@@ -373,7 +412,7 @@ class iTermNonTextPasteHelper: NSObject {
         guard let data = FileManager.default.contents(atPath: path) else {
             RLog("pasteBase64EncodedContents: failed to read file")
             let filename = (path as NSString).lastPathComponent
-            showError("Could not read file \u{201C}\(filename)\u{201D}.")
+            showError(String(localized: "NonTextPaste.CouldNotReadFile", defaultValue: "Could not read file \u{201C}\(filename)\u{201D}.", comment: "Error when a file cannot be read"))
             return
         }
         DLog("pasteBase64EncodedContents: read \(data.count) bytes")
@@ -396,7 +435,7 @@ class iTermNonTextPasteHelper: NSObject {
             pasteBase64WithConfirmationIfNeeded(base64)
         } catch {
             RLog("pasteBase64EncodedArchive: failed to create archive: \(error)")
-            showError("Could not create archive of \u{201C}\(folderName)\u{201D}: \(error.localizedDescription)")
+            showError(String(localized: "NonTextPaste.CouldNotCreateArchive", defaultValue: "Could not create archive of \u{201C}\(folderName)\u{201D}: \(error.localizedDescription)", comment: "Error when creating a base64 archive of a folder fails"))
         }
     }
 
@@ -408,12 +447,13 @@ class iTermNonTextPasteHelper: NSObject {
         }
 
         let warning = iTermWarning()
-        warning.title = "OK to paste \(base64.count.formatted()) bytes of base64-encoded data?"
-        warning.actionLabels = ["OK", "Cancel"]
+        // Varies by plural on the byte count (String Catalog Vary-by-Plural; see CLAUDE.md).
+        warning.title = String(localized: "NonTextPaste.LargePasteConfirm", defaultValue: "OK to paste \(base64.count) bytes of base64-encoded data?", comment: "Confirmation prompt before pasting a large base64 blob; the number is a byte count")
+        warning.actionLabels = [iTermLocalizedOK(), iTermLocalizedCancel()]
         warning.identifier = "NoSyncPasteLargeBase64"
         warning.warningType = .kiTermWarningTypePermanentlySilenceable
-        warning.heading = "Large Paste"
-        warning.cancelLabel = "Cancel"
+        warning.heading = String(localized: "NonTextPaste.LargePasteHeading", defaultValue: "Large Paste", comment: "Heading for the large-paste confirmation dialog")
+        warning.cancelLabel = iTermLocalizedCancel()
         warning.window = delegate?.nonTextPasteHelperWindow(self)
 
         warning.runModalAsync { [weak self] selection, _ in
@@ -427,11 +467,11 @@ class iTermNonTextPasteHelper: NSObject {
     private func pasteFileAsText(_ path: String) {
         let filename = (path as NSString).lastPathComponent
         guard let data = FileManager.default.contents(atPath: path) else {
-            showError("Could not read file \u{201C}\(filename)\u{201D}.")
+            showError(String(localized: "NonTextPaste.CouldNotReadFile", defaultValue: "Could not read file \u{201C}\(filename)\u{201D}.", comment: "Error when a file cannot be read"))
             return
         }
         guard let text = String(data: data, encoding: .utf8) else {
-            showError("File \u{201C}\(filename)\u{201D} is not valid UTF-8 text.")
+            showError(String(localized: "NonTextPaste.FileNotUTF8", defaultValue: "File \u{201C}\(filename)\u{201D} is not valid UTF-8 text.", comment: "Error when a file cannot be pasted as text because it is not valid UTF-8"))
             return
         }
         delegate?.nonTextPasteHelper(self, pasteString: text)

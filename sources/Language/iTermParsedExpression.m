@@ -169,7 +169,7 @@
         _expressionType = iTermParsedExpressionTypeError;
         _object = [NSError errorWithDomain:@"com.iterm2.parser"
                                       code:code
-                                  userInfo:@{ NSLocalizedDescriptionKey: localizedDescription ?: @"Unknown error" }];
+                                  userInfo:@{ NSLocalizedDescriptionKey: localizedDescription ?: NSLocalizedStringWithDefaultValue(@"ParsedExpression.UnknownError", nil, [NSBundle mainBundle], @"Unknown error", @"Fallback error description when none is provided") }];
     }
     return self;
 }
@@ -210,7 +210,7 @@
 }
 - (instancetype)initWithOptionalObject:(id)object {
     if (object) {
-        self = [self initWithObject:object errorReason:[NSString stringWithFormat:@"Invalid type: %@", [object class]]];
+        self = [self initWithObject:object errorReason:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ParsedExpression.InvalidType", nil, [NSBundle mainBundle], @"Invalid type: %@", @"Error when an object has an unsupported type; placeholder is the class"), [object class]]];
     } else {
         self = [super init];
     }

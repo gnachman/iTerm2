@@ -16,7 +16,7 @@ static NSString *const kSuppressCoprocessTriggerWarning = @"NoSyncSuppressCoproc
 @implementation CoprocessTrigger
 
 + (NSString *)title {
-    return @"Run Coprocess…";
+    return NSLocalizedStringWithDefaultValue(@"Trigger.Coprocess.Title", nil, [NSBundle mainBundle], @"Run Coprocess…", @"Trigger action name: run a coprocess");
 }
 
 - (NSString *)description {
@@ -71,7 +71,7 @@ static NSString *const kSuppressCoprocessTriggerWarning = @"NoSyncSuppressCoproc
 @implementation MuteCoprocessTrigger
 
 + (NSString *)title {
-    return @"Run Silent Coprocess…";
+    return NSLocalizedStringWithDefaultValue(@"Trigger.MuteCoprocess.Title", nil, [NSBundle mainBundle], @"Run Silent Coprocess…", @"Trigger action name: run a coprocess whose output is not shown");
 }
 
 - (BOOL)takesParameter {

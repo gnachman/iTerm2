@@ -18,7 +18,7 @@ class ExitWorkgroupTrigger: Trigger {
     @objc static let leaderOnlyParamKey = "leaderOnly"
 
     override static var title: String {
-        return "Exit Workgroup"
+        return String(localized: "Trigger.ExitWorkgroup.Title", defaultValue: "Exit Workgroup", comment: "Trigger action name: exit the active workgroup on the matching session")
     }
 
     override var description: String {

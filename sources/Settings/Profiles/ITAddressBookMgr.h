@@ -128,6 +128,7 @@
 #define KEY_UNDERLINE_COLOR        @"Underline Color"
 #define KEY_USE_UNDERLINE_COLOR    @"Use Underline Color"
 #define KEY_CURSOR_BOOST           @"Cursor Boost"
+#define KEY_HDR_CURSOR             @"HDR Cursor"
 #define KEY_USE_CURSOR_GUIDE       @"Use Cursor Guide"
 #define KEY_CURSOR_GUIDE_COLOR     @"Cursor Guide Color"
 #define KEY_BADGE_COLOR            @"Badge Color"
@@ -527,8 +528,22 @@ typedef NS_OPTIONS(NSUInteger, iTermTitleComponents) {
     iTermTitleComponentsHost = 1 << 8,
     iTermTitleComponentsCommandLine = 1 << 9,
     iTermTitleComponentsSize = 1 << 10,
-    iTermTitleComponentsTemporarySessionName = 1 << 11
+    iTermTitleComponentsTemporarySessionName = 1 << 11,
+    iTermTitleComponentsAI = 1 << 12  // On-device (Apple Intelligence) generated name for the visible work.
 };
+
+// The mutually-exclusive "name group": the components the title popup treats as radio
+// buttons (selecting one deselects the others). Defined ONCE so a new name-slot
+// component is added in a single place rather than hand-spelled into every ad hoc mask;
+// omitting AI from one such mask silently broke the popup's mutual exclusion once
+// before. NOT the same as "a session name is already visible" (which also
+// counts TemporarySessionName and excludes AI) - that is a different concept, spelled
+// out at its own site.
+#define iTermTitleComponentsNameGroup \
+    (iTermTitleComponentsSessionName | \
+     iTermTitleComponentsProfileName | \
+     iTermTitleComponentsProfileAndSessionName | \
+     iTermTitleComponentsAI)
 
 typedef NS_ENUM(NSUInteger, iTermProfileIcon) {
     iTermProfileIconNone = 0,

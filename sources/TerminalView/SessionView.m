@@ -4,6 +4,7 @@
 #import "iTermTexture.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermCursor.h"
 #import "iTermAnnouncementViewController.h"
 #import "iTermBackgroundColorView.h"
 #import "iTermDropDownFindViewController.h"
@@ -15,6 +16,7 @@
 #import "iTermMetalClipView.h"
 #import "iTermMetalDeviceProvider.h"
 #import "iTermMetalDriver.h"
+#import "iTermMetalRenderer.h"
 #import "iTermPreferences.h"
 #import "iTermSearchResultsMinimapView.h"
 #import "iTermStatusBarContainerView.h"
@@ -143,6 +145,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     NSRect _urlAnchorFrame;
 
     BOOL _useMetal;
+    iTermHDREngager *_hdrEngager;
     iTermMetalClipView *_metalClipView;
     iTermDropDownFindViewController *_dropDownFindViewController;
     iTermFindDriver *_dropDownFindDriver;
@@ -294,6 +297,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         }
 
         [self installLegacyView];
+        [self installHDREngager];
 
 #if ENABLE_LOW_POWER_GPU_DETECTION
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -910,6 +914,31 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     _metalClipView.legacyView = _legacyView;
 }
 
+- (void)setHdrCursorEnabled:(BOOL)hdrCursorEnabled {
+    _hdrCursorEnabled = hdrCursorEnabled;
+    // The engager engages/releases EDR based on this. Its layer work is cheap and
+    // can update live.
+    _hdrEngager.enabled = hdrCursorEnabled;
+    // The metal view's EDR engagement is a layer property that can update live;
+    // its pixel format cannot, so a format change is handled separately by
+    // rebuilding the driver (PTYSession -> bounceMetal). Keep the live part synced.
+    _metalView.wantsHDR = hdrCursorEnabled;
+}
+
+- (void)installHDREngager {
+    assert(!_hdrEngager);
+    // An invisible 1pt view that holds EDR engaged so the HDR cursor (legacy or
+    // Metal) can render above reference white. Installed for every session
+    // regardless of the current setting: it creates Metal resources lazily only
+    // while this session's HDR cursor is enabled and the display has headroom, and
+    // releases them otherwise, so it costs nothing until the feature is used and it
+    // can react live when the setting is flipped on for an existing session.
+    // Keeping it also means tearing down the Metal view never drops EDR.
+    _hdrEngager = [[iTermHDREngager alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)];
+    _hdrEngager.enabled = _hdrCursorEnabled;
+    [self insertSubview:_hdrEngager atIndex:_contentViewIndex];
+}
+
 - (void)insertSubview:(NSView *)subview atIndex:(NSInteger)index {
     [super insertSubview:subview atIndex:index];
     [self sanityCheckSubviewOrder];
@@ -974,10 +1003,15 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 #else
     _metalView.layer.opaque = YES;
 #endif
-    if ([iTermAdvancedSettingsModel hdrCursor]) {
+    _metalView.wantsHDR = _hdrCursorEnabled;
+    if (_hdrCursorEnabled) {
+        // Make the layer fp16 so the cursor can exceed reference white. Must match
+        // the driver's framebufferPixelFormat below.
         [_metalView enableHDR];
     }
-    _metalView.colorspace = [[NSColorSpace it_defaultColorSpace] CGColorSpace];
+    // The metal view's color space is managed by iTermMTKView.preferredColorspace
+    // (set in viewDidMoveToWindow): the screen's own color space normally, or a
+    // gamut-matched extended space only when EDR is engaged.
 
     // Tell the clip view about it so it can ask the metalview to draw itself on scroll.
     _metalClipView.metalView = _metalView;
@@ -995,7 +1029,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
     // Start the metal driver going. It will receive delegate calls from iTermMTKView that kick off
     // frame rendering.
-    _driver = [[iTermMetalDriver alloc] initWithDevice:_metalView.device];
+    _driver = [[iTermMetalDriver alloc] initWithDevice:_metalView.device
+                                framebufferPixelFormat:iTermMetalFramebufferPixelFormat(_hdrCursorEnabled)];
     _driver.dataSource = dataSource;
     [_driver metalView:_metalView drawableSizeWillChange:_metalView.drawableSize];
     _metalView.delegate = _driver;
@@ -1003,12 +1038,18 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)removeMetalView {
+    // The Metal view is itself an EDR-engaged layer. Removing it can drop the
+    // display out of extended range (which historically latched the screen out of
+    // EDR until relaunch). We don't release EDR ourselves; instead the permanent
+    // iTermHDREngager re-asserts it below. reengage is a no-op if this view is not
+    // in a window yet, so it never drops EDR held by some other view.
     _metalView.delegate = nil;
     [_metalView removeFromSuperview];
     _metalView = nil;
     _driver = nil;
     _metalClipView.useMetal = NO;
     _metalClipView.metalView = nil;
+    [_hdrEngager reengage];
     [self metalViewVisibilityDidChange];
 }
 

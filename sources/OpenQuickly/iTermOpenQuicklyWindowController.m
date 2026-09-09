@@ -103,7 +103,7 @@
 
     {
         NSImage *image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolMagnifyingglass)
-                                   accessibilityDescription:@"Search icon"];
+                                   accessibilityDescription:NSLocalizedStringWithDefaultValue(@"OpenQuickly.SearchIconAccessibility", nil, [NSBundle mainBundle], @"Search icon", @"Accessibility description for the Open Quickly search icon")];
         NSImageSymbolConfiguration *config =
         [NSImageSymbolConfiguration configurationWithPointSize:21
                                                         weight:NSFontWeightRegular];
@@ -114,7 +114,7 @@
         [NSImageSymbolConfiguration configurationWithPointSize:14
                                                         weight:NSFontWeightRegular];
         NSImage *image = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolXmarkCircleFill)
-                                   accessibilityDescription:@"Clear search query"];
+                                   accessibilityDescription:NSLocalizedStringWithDefaultValue(@"OpenQuickly.ClearSearchAccessibility", nil, [NSBundle mainBundle], @"Clear search query", @"Accessibility description for the Open Quickly clear search button")];
         [_xButton setImage:[image imageWithSymbolConfiguration:config]];
         NSRect frame = _xButton.frame;
         const CGFloat delta = 2;
@@ -289,9 +289,9 @@
     PTYTab *tab = (PTYTab *)session.delegate;
     NSString *windowTitle = tab.realParentWindow.window.title ?: @"";
     if (windowTitle.length == 0) {
-        return [NSString stringWithFormat:@"Tab %d", tab.objectCount];
+        return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"OpenQuickly.TabNumber", nil, [NSBundle mainBundle], @"Tab %d", @"Open Quickly preview label for a tab; %d is the tab number"), tab.objectCount];
     }
-    return [NSString stringWithFormat:@"Tab %d · %@", tab.objectCount, windowTitle];
+    return [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"OpenQuickly.TabNumberWithWindow", nil, [NSBundle mainBundle], @"Tab %1$d · %2$@", @"Open Quickly preview label for a tab; %d is the tab number and %@ is the window title"), tab.objectCount, windowTitle];
 }
 
 - (void)refreshPreview {
@@ -489,13 +489,13 @@
                     if (error) {
                         [iTermAPIHelper reportFunctionCallError:error
                                                   forInvocation:item.identifier
-                                                         origin:@"Open Quickly"
+                                                         origin:NSLocalizedStringWithDefaultValue(@"OpenQuickly.ErrorOrigin", nil, [NSBundle mainBundle], @"Open Quickly", @"Origin label shown when an Open Quickly function call reports an error")
                                                          window:nil];
                     } else {
                         NSAlert *alert = [[NSAlert alloc] init];
-                        [alert setMessageText:@"Function Call Result"];
-                        [alert setInformativeText:[NSString stringWithFormat:@"%@ returned:\n%@", item.identifier, [value description]]];
-                        [alert addButtonWithTitle:@"OK"];
+                        [alert setMessageText:NSLocalizedStringWithDefaultValue(@"OpenQuickly.FunctionCallResultTitle", nil, [NSBundle mainBundle], @"Function Call Result", @"Alert title showing the result of a function call")];
+                        [alert setInformativeText:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"OpenQuickly.FunctionCallResultBody", nil, [NSBundle mainBundle], @"%1$@ returned:\n%2$@", @"Alert body showing a function call result; first %@ is the invocation and second is the returned value"), item.identifier, [value description]]];
+                        [alert addButtonWithTitle:iTermLocalizedOK()];
                         [alert runModal];
                     }
                 }];
@@ -552,7 +552,7 @@
     result.imageView.image = item.icon;
 
     result.textField.attributedStringValue =
-        item.title ?: [[NSAttributedString alloc] initWithString:@"Untitled" attributes:@{}];
+        item.title ?: [[NSAttributedString alloc] initWithString:NSLocalizedStringWithDefaultValue(@"OpenQuickly.Untitled", nil, [NSBundle mainBundle], @"Untitled", @"Fallback title for an untitled Open Quickly item") attributes:@{}];
     [result.textField.cell setLineBreakMode:NSLineBreakByTruncatingTail];
     if (item.detail) {
         result.detailTextField.attributedStringValue = item.detail;

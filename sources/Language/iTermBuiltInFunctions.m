@@ -128,7 +128,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
 #pragma mark - Private
 
 - (NSError *)typeMismatchError:(NSString *)argument wanted:(Class)wanted got:(nullable id)object {
-    NSString *reason = [NSString stringWithFormat:@"Type mismatch for argument %@. Expected %@ but got %@.",
+    NSString *reason = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"BuiltInFunction.TypeMismatch", nil, [NSBundle mainBundle], @"Type mismatch for argument %1$@. Expected %2$@ but got %3$@.", @"Error when a function argument has the wrong type; placeholders are argument name, expected type, actual type"),
                         argument,
                         NSStringFromClass(wanted),
                         object ? NSStringFromClass([object class]) : @"(null)" ];
@@ -138,7 +138,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
 }
 
 - (NSError *)invalidArgumentError:(NSString *)argument {
-    NSString *reason = [NSString stringWithFormat:@"Invalid argument %@ to %@",
+    NSString *reason = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"BuiltInFunction.InvalidArgument", nil, [NSBundle mainBundle], @"Invalid argument %1$@ to %2$@", @"Error when a function is passed an unknown argument; placeholders are argument name and function name"),
                         argument, _name];
     return [NSError errorWithDomain:@"com.iterm2.bif"
                                code:4
@@ -177,6 +177,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
     [iTermURLEncodeBuiltInFunction registerBuiltInFunction];
     [iTermTmuxFormatBuiltInFunction registerBuiltInFunction];
     [iTermSetStatusBuiltInFunction registerBuiltInFunction];
+    [iTermSendCompanionNotificationBuiltInFunction registerBuiltInFunction];
 }
 
 + (instancetype)sharedInstance {
@@ -274,7 +275,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
 }
 
 - (NSError *)undeclaredIdentifierError:(NSString *)identifier {
-    NSString *reason = [NSString stringWithFormat:@"Undeclared identifier %@",
+    NSString *reason = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"BuiltInFunction.UndeclaredIdentifier", nil, [NSBundle mainBundle], @"Undeclared identifier %@", @"Error when a function references an identifier that was not declared; placeholder is the identifier"),
                         identifier];
     return [NSError errorWithDomain:@"com.iterm2.bif"
                                code:1
@@ -282,7 +283,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
 }
 
 - (NSError *)invalidReferenceError:(NSString *)reference name:(NSString *)name {
-    NSString *reason = [NSString stringWithFormat:@"Invalid reference “%@” to %@",
+    NSString *reason = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"BuiltInFunction.InvalidReference", nil, [NSBundle mainBundle], @"Invalid reference “%1$@” to %2$@", @"Error when a reference is invalid; placeholders are the reference and the name"),
                         reference, name];
     return [NSError errorWithDomain:@"com.iterm2.bif"
                                code:3
@@ -333,7 +334,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
     if (!value) {
         NSError *error = [NSError errorWithDomain:@"com.iterm2.array-count"
                                              code:1
-                                         userInfo:@{ NSLocalizedDescriptionKey: @"Array argument must be non-null" }];
+                                         userInfo:@{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"ArrayCount.ArgumentMustBeNonNull", nil, [NSBundle mainBundle], @"Array argument must be non-null", @"Error when the array argument to count() is null") }];
         completion(nil, error);
         return;
     }
@@ -342,7 +343,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
     if (!array) {
         NSError *error = [NSError errorWithDomain:@"com.iterm2.array-count"
                                              code:2
-                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Argument must be an array (was %@)", [value class]] }];
+                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ArrayCount.ArgumentMustBeArray", nil, [NSBundle mainBundle], @"Argument must be an array (was %@)", @"Error when the argument to count() is not an array; placeholder is the actual class"), [value class]] }];
         completion(nil, error);
         return;
     }
@@ -378,7 +379,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
     if (!value) {
         NSError *error = [NSError errorWithDomain:@"com.iterm2.url-encode"
                                              code:1
-                                         userInfo:@{ NSLocalizedDescriptionKey: @"string argument must be non-null" }];
+                                         userInfo:@{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"URLEncode.StringArgumentMustBeNonNull", nil, [NSBundle mainBundle], @"string argument must be non-null", @"Error when the string argument to urlEncode() is null") }];
         completion(nil, error);
         return;
     }
@@ -387,7 +388,7 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
     if (!string) {
         NSError *error = [NSError errorWithDomain:@"com.iterm2.url-encode"
                                              code:2
-                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Argument must be a string (was %@)", [value class]] }];
+                                         userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"URLEncode.ArgumentMustBeString", nil, [NSBundle mainBundle], @"Argument must be a string (was %@)", @"Error when the argument to urlEncode() is not a string; placeholder is the actual class"), [value class]] }];
         completion(nil, error);
         return;
     }

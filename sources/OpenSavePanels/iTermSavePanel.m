@@ -108,22 +108,22 @@ static NSString *const iTermSavePanelLoggingStyleUserDefaultsKey = @"NoSyncLoggi
         button = [[NSPopUpButton alloc] init];
         NSMenuItem *item;
         {
-            item = [[NSMenuItem alloc] initWithTitle:@"Raw data" action:nil keyEquivalent:@""];
+            item = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"SavePanel.LoggingRawData", nil, [NSBundle mainBundle], @"Raw data", @"Menu item selecting the raw data logging format") action:nil keyEquivalent:@""];
             item.tag = iTermLoggingStyleRaw;
             [button.menu addItem:item];
         }
         {
-            item = [[NSMenuItem alloc] initWithTitle:@"Plain text" action:nil keyEquivalent:@""];
+            item = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"SavePanel.LoggingPlainText", nil, [NSBundle mainBundle], @"Plain text", @"Menu item selecting the plain text logging format") action:nil keyEquivalent:@""];
             item.tag = iTermLoggingStylePlainText;
             [button.menu addItem:item];
         }
         {
-            item = [[NSMenuItem alloc] initWithTitle:@"HTML" action:nil keyEquivalent:@""];
+            item = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"SavePanel.LoggingHTML", nil, [NSBundle mainBundle], @"HTML", @"Menu item selecting the HTML logging format") action:nil keyEquivalent:@""];
             item.tag = iTermLoggingStyleHTML;
             [button.menu addItem:item];
         }
         {
-            item = [[NSMenuItem alloc] initWithTitle:@"ASCIInema" action:nil keyEquivalent:@""];
+            item = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"SavePanel.LoggingAsciinema", nil, [NSBundle mainBundle], @"ASCIInema", @"Menu item selecting the asciinema logging format") action:nil keyEquivalent:@""];
             item.tag = iTermLoggingStyleAsciicast;
             [button.menu addItem:item];
         }
@@ -320,22 +320,23 @@ typedef NS_ENUM(NSUInteger, iTermSavePanelAction) {
 }
 
 - (void)didCheckForExistingFile:(BOOL)exists withCompletion:(void (^)(BOOL retry))completion {
-    NSString *location = @"";
+    // Use a complete localized sentence per location rather than splicing a translated location
+    // phrase into a frame, which would break word order and grammar in other languages.
+    NSString *body;
     NSString *directory = [self.item.filename stringByDeletingLastPathComponent];
     if ([directory isEqualToString:self.item.host.homeDirectory]) {
-        location = @" in your home directory";
+        body = NSLocalizedStringWithDefaultValue(@"SavePanel.ExistsBodyHome", nil, [NSBundle mainBundle], @"A file or folder with the same name already exists in your home directory. Replacing it will overwrite its current contents.", @"Body of the overwrite confirmation when the file is in the home directory");
     } else if (self.item.host.isLocalhost && [directory isEqualToString:[[NSFileManager defaultManager] desktopDirectory]]) {
-        location = @" on the Desktop";
+        body = NSLocalizedStringWithDefaultValue(@"SavePanel.ExistsBodyDesktop", nil, [NSBundle mainBundle], @"A file or folder with the same name already exists on the Desktop. Replacing it will overwrite its current contents.", @"Body of the overwrite confirmation when the file is on the Desktop");
+    } else {
+        body = NSLocalizedStringWithDefaultValue(@"SavePanel.ExistsBodyOther", nil, [NSBundle mainBundle], @"A file or folder with the same name already exists. Replacing it will overwrite its current contents.", @"Body of the overwrite confirmation when the file is in an unspecified location");
     }
 
     NSString *heading =
-    [NSString stringWithFormat:@"“%@” already exists. Do you want to replace it or append to it?",
+    [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"SavePanel.ExistsHeading", nil, [NSBundle mainBundle], @"“%@” already exists. Do you want to replace it or append to it?", @"Heading of the overwrite confirmation; placeholder is the filename"),
      [self.item.filename lastPathComponent]];
-    NSString *body = [NSString stringWithFormat:@"A file or folder with the same name already exists%@. "
-                      @"Replacing it will overwrite its current contents.",
-                      location];
     iTermWarningSelection selection = [iTermWarning showWarningWithTitle:body
-                                                                 actions:@[ @"Cancel", @"Replace", @"Append" ]
+                                                                 actions:@[ iTermLocalizedCancel(), NSLocalizedStringWithDefaultValue(@"SavePanel.Replace", nil, [NSBundle mainBundle], @"Replace", @"Button that replaces an existing file"), NSLocalizedStringWithDefaultValue(@"SavePanel.Append", nil, [NSBundle mainBundle], @"Append", @"Button that appends to an existing file") ]
                                                                accessory:nil
                                                               identifier:nil
                                                              silenceable:kiTermWarningTypePersistent
@@ -404,14 +405,14 @@ typedef NS_ENUM(NSUInteger, iTermSavePanelAction) {
     if ([proposedExtension isEqualToString:self.requiredExtension]) {
         return YES;
     }
-    iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"You can choose to use both, so that your file name ends in “.%@.%@”.", proposedExtension, _requiredExtension]
-                                                                 actions:@[ [NSString stringWithFormat:@"Use .%@", _requiredExtension],
-                                                                            @"Cancel",
-                                                                            @"Use both" ]
+    iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"SavePanel.ExtensionUseBothMessage", nil, [NSBundle mainBundle], @"You can choose to use both, so that your file name ends in “.%1$@.%2$@”.", @"Message offering to keep both filename extensions; first placeholder is the typed extension, second is the required extension"), proposedExtension, _requiredExtension]
+                                                                 actions:@[ [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"SavePanel.UseRequiredExtension", nil, [NSBundle mainBundle], @"Use .%@", @"Button that appends the required filename extension; placeholder is the extension"), _requiredExtension],
+                                                                            iTermLocalizedCancel(),
+                                                                            NSLocalizedStringWithDefaultValue(@"SavePanel.UseBoth", nil, [NSBundle mainBundle], @"Use both", @"Button that keeps both the typed and required filename extensions") ]
                                                                accessory:nil
                                                               identifier:nil
                                                              silenceable:kiTermWarningTypePersistent
-                                                                 heading:[NSString stringWithFormat:@"You cannot save this document with extension “.%@” at the end of the name. The required extension is “.%@”.",
+                                                                 heading:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"SavePanel.WrongExtensionHeading", nil, [NSBundle mainBundle], @"You cannot save this document with extension “.%1$@” at the end of the name. The required extension is “.%2$@”.", @"Heading warning that a filename extension is not allowed; first placeholder is the typed extension, second is the required extension"),
                                                                           proposedExtension, _requiredExtension]
                                                                   window:nil];
     switch (selection) {

@@ -27,6 +27,7 @@ class SimpleContextMenu: NSObject, NSMenuDelegate {
         var action: () -> ()
     }
     private var items = [Item]()
+    // Localization unneeded
     private let menu = NSMenu(title: "Context menu")
     private var cycle: SimpleContextMenu?
     var isEmpty: Bool { items.isEmpty }

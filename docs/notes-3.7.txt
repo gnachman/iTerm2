@@ -92,6 +92,12 @@ Major New Features:
   maximized (zoomed) split pane was torn
   down, such as when a tmux connection
   dropped.
+- Fixed multi-second hangs when navigating
+  tmux sessions. Each mouse-mode escape
+  sequence fired a heavyweight redraw side
+  effect twice, even when the mode did not
+  change, so a burst of them (as tmux sends
+  on every switch) could freeze the UI.
 - Fixed a bug where a profile whose custom
   working directory used a tilde (such as
   ~/www) wrongly reported the directory as
@@ -169,6 +175,12 @@ Major New Features:
   could set watches. If your phone is paired it
   can also push you a notification when the watch
   fires.
+
+- AI chat can now set a timer to act after a
+  delay or at a set time (for example, “in two
+  hours, run this command”). The timer survives
+  restarts, fires immediately if its time already
+  passed, and can push your phone when it fires.
 
 - The manual AI model editor now offers presets
   for OpenAI-compatible providers (Ollama,
@@ -456,6 +468,16 @@ Triggers Improvements:
   advanced setting extends it to battery.
 
 AI Improvements:
+- iTerm2 can now name a tab after the work visible
+  in its session, generated on-device by Apple
+  Intelligence. It is off by default; turn on
+  “Name tabs after the work on screen, using
+  on-device AI” in Advanced Settings, then add the
+  “AI-generated name” title component to a profile
+  (or use \(session.aiTitle) in a custom title
+  format). The screen contents never leave your
+  Mac and no API key is used. Requires Apple
+  Intelligence.
 - You can now press Cmd-F in an AI chat to search
   the current conversation. A find bar appears at
   the top with match counts and next/previous
@@ -651,6 +673,14 @@ UI Improvements:
 - Cleaner glass material on the jobs popover.
 - Scroll command marks to top (instead of
   centering) on Next/Previous Mark.
+- iTerm2 can now run in Brazilian
+  Portuguese. Pick your language in System
+  Settings > General > Language & Region.
+- More of the interface is now translatable:
+  trigger and toolbelt names, smart selection
+  rule names, menu tips, tips of the day, the
+  companion device setup, and the Python REPL
+  banner.
 
 Input and Accessibility:
 - VoiceOver now announces terminal output and
@@ -876,6 +906,12 @@ Bug Fixes:
   screen with “Hide tab bar when there is only
   one tab” enabled, which left an unused strip
   at the bottom of the window.
+- New per-profile “Use HDR cursor when
+  available” setting (Profiles > Colors). When
+  on, a white cursor renders brighter than white
+  on an HDR-capable display, with either the GPU
+  or the legacy renderer. Only sessions that
+  enable it pay the extra fp16 cost.
 - In the tmux Dashboard, “Open in Tabs” is now
   enabled when a single hidden window is
   selected, matching “Open in Window.” Issue
@@ -2280,8 +2316,8 @@ Bug Fixes:
   instead of the global default.
 - The iTerm2 companion relay servers moved
   to new addresses. If you paired an iPhone
-  on an earlier build, iTerm2 now asks you
-  to pair it again so it keeps working.
+  on an earlier build, pair it again so it
+  keeps working.
 - AI orchestration: commands the agent runs in
   a session now go through the same automatic
   safety check as regular AI chat, instead of
@@ -2311,10 +2347,7 @@ Bug Fixes:
   suspicious command, stops to ask first.
 - Companion: a paired device that still worked
   no longer nags you to re-pair on every launch
-  after installing a new version. The re-pair
-  prompt now only appears after a genuine relay
-  move, and a normal reconnect records the
-  current relay so the false alarm stops.
+  after installing a new version.
 - Companion: when the relay hits its daily
   data limit, the Mac now shows “Daily relay
   data limit reached” in Companion settings
@@ -2375,13 +2408,10 @@ Bug Fixes:
   phone and the relay logs when reporting a
   problem.
 - Companion pairing moved to the new sharded
-  relay resolver. A Mac still using the old
-  direct relay is switched over
-  automatically, and a one-time notice
-  reminds you to update iTerm2 Buddy on your
-  iPhone so the two keep connecting. Older
-  iPhone apps can no longer pair and are
-  told to update.
+  relay resolver. Older iPhone apps can no
+  longer pair and are told to update. A
+  pairing made before the move must be made
+  again.
 - Fixed a bug where flag emoji (such as a
   country flag) rendered as blank cells or
   flickered under the GPU renderer. The two
@@ -2771,6 +2801,7 @@ Bug Fixes:
   so arbitrary statuses from any tool just work.
   Window/tab/session rows also carry the matching
   macwindow / folder / terminal icon.
+
 - Parentheses, brackets, and other mirrored
   punctuation now draw correctly in right-to-
   left text when right-to-left support is on.
@@ -2841,3 +2872,36 @@ Bug Fixes:
   pieces in reading order instead of stacking
   them on separate lines. Pieces on different
   lines still copy with line breaks.
+- Fixed a bug where the Keys > General tab in
+  the Edit Session window could appear empty
+  for a terminal session after editing a
+  browser session, because previously hidden
+  controls were not restored.
+- The it2 command-line tool can now send a push
+  notification to your paired companion device
+  with “it2 notify «title» «body»”.
+- The window name can now appear beside the tabs
+  in the Compact and Minimal themes, which have
+  no title bar to show it in. By default it
+  appears only once you name a window with
+  Window > Edit Window Title, so windows you have
+  not named look exactly as before. The advanced
+  setting “Show the window name beside the
+  tabs” can turn it off or always show it.
+- Fixed the color of the locale description in
+  Settings > Profiles > Terminal so it adapts
+  correctly when switching between light and
+  dark mode.
+- Fixed a white rectangle that appeared to the
+  right of a collapsed tab group in the Minimal
+  theme when the group was the rightmost item
+  in the tab bar.
+- Fixed a bug where dismissing a confirmation in
+  certain Settings sheets (such as the hotkey
+  configuration or special exceptions panels)
+  would bring a terminal window to the front.
+- The Shell > Workgroups menu now shows a
+  checkmark next to the workgroup the current
+  session belongs to.
+- Fixed a crash that could occur when doing a
+  global search that included a browser session.

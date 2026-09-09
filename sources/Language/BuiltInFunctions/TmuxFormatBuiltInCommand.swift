@@ -31,15 +31,15 @@ extension TmuxFormatBuiltInFunction: iTermBuiltInFunctionProtocol {
             sideEffectsPlaceholder: nil) {
                 parameters, completion in
                 guard let sessionID = parameters[sessionIDKey] as? String else {
-                    completion(nil, error(message: "Missing \(sessionIDKey). This shouldn't happen so please report a bug."))
+                    completion(nil, error(message: String(localized: "TmuxFormat.MissingSessionID", defaultValue: "Missing \(sessionIDKey). This shouldn't happen so please report a bug.", comment: "Error when the session_id argument is missing")))
                     return
                 }
                 guard let session = iTermController.sharedInstance().session(withGUID: sessionID) else {
-                    completion(nil, error(message: "No such session"))
+                    completion(nil, error(message: String(localized: "BuiltInFunction.NoSuchSession", defaultValue: "No such session", comment: "Error shown when a function is called with a session ID that does not exist")))
                     return
                 }
                 guard let ref = parameters[backingVariableKey] as? iTermVariableReference<AnyObject> else {
-                    completion(nil, error(message: "Type mismatch for \(backingVariableKey). Must be a path reference."))
+                    completion(nil, error(message: String(localized: "TmuxFormat.TypeMismatchBackingVariable", defaultValue: "Type mismatch for \(backingVariableKey). Must be a path reference.", comment: "Error when the backing_var argument is not a path reference")))
                     return
                 }
                 execute(session: session,
@@ -55,7 +55,7 @@ extension TmuxFormatBuiltInFunction: iTermBuiltInFunctionProtocol {
                                 ref: iTermVariableReference<AnyObject>,
                                 completion: iTermBuiltInFunctionCompletionBlock) {
         guard let format else {
-            completion(nil, Self.error(message: "Invalid format"))
+            completion(nil, Self.error(message: String(localized: "TmuxFormat.InvalidFormat", defaultValue: "Invalid format", comment: "Error when the format argument is invalid")))
             return
         }
         do {

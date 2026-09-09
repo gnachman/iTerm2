@@ -399,12 +399,12 @@ static NSString *const iTermStatusBarRPCRegistrationRequestV2Key = @"registratio
         return;
     }
 
-    if ([iTermWarning showWarningWithTitle:@"This will move the script into the AutoLaunch folder."
-                                   actions:@[ @"OK", @"Cancel" ]
+    if ([iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"StatusBarRPC.MoveToAutoLaunchTitle", nil, [NSBundle mainBundle], @"This will move the script into the AutoLaunch folder.", @"Warning shown before moving a script into the AutoLaunch folder")
+                                   actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
                                  accessory:nil
                                 identifier:[NSString stringWithFormat:@"NoSyncAutoLaunchScript_%@", _fullPath]
                                silenceable:kiTermWarningTypePermanentlySilenceable
-                                   heading:@"Always launch this script when iTerm2 starts?"
+                                   heading:NSLocalizedStringWithDefaultValue(@"StatusBarRPC.MoveToAutoLaunchHeading", nil, [NSBundle mainBundle], @"Always launch this script when iTerm2 starts?", @"Heading for the warning shown before moving a script into the AutoLaunch folder")
                                     window:self.delegate.textField.window] == kiTermWarningSelection0) {
         [menuController moveScriptToAutoLaunch:_fullPath];
     }
@@ -425,7 +425,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestV2Key = @"registratio
     }]) {
         _variants = arrayValue;
     } else {
-        _errorMessage = [NSString stringWithFormat:@"Return value from %@ invalid.\n\nIt should have returned a string or a list of strings.\n\nInstead, it returned:\n\n%@", self.invocation, value];
+        _errorMessage = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"StatusBarRPC.InvalidReturnValueFormat", nil, [NSBundle mainBundle], @"Return value from %1$@ invalid.\n\nIt should have returned a string or a list of strings.\n\nInstead, it returned:\n\n%2$@", @"Error message when a status bar script returns an invalid value; first placeholder is the invocation, second is the returned value"), self.invocation, value];
         [[iTermAPIHelper sharedInstance] logToConnectionHostingFunctionWithSignature:_savedRegistrationRequest.latestStatusBarRequest.it_stringRepresentation
                                                                               string:_errorMessage];
         _variants = @[ @"🐞" ];
@@ -435,7 +435,7 @@ static NSString *const iTermStatusBarRPCRegistrationRequestV2Key = @"registratio
 
 - (void)handleEvaluationError:(NSError *)error
              missingFunctions:(NSSet<NSString *> *)missingFunctions {
-    _errorMessage = [NSString stringWithFormat:@"Status bar component “%@” (%@) failed.\n\nThis function call had an error:\n\n%@\n\nThe error was:\n\n%@\n\n%@",
+    _errorMessage = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"StatusBarRPC.ComponentFailedFormat", nil, [NSBundle mainBundle], @"Status bar component “%1$@” (%2$@) failed.\n\nThis function call had an error:\n\n%3$@\n\nThe error was:\n\n%4$@\n\n%5$@", @"Error message when a status bar script component fails; placeholders are the description, unique identifier, invocation, error description, and optional failure reason"),
                      _savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.shortDescription,
                      _savedRegistrationRequest.latestStatusBarRequest.statusBarComponentAttributes.uniqueIdentifier,
                      self.invocation,
@@ -534,22 +534,22 @@ static NSString *const iTermStatusBarRPCRegistrationRequestV2Key = @"registratio
     if (_errorMessage) {
         iTermWarning *warning = [[iTermWarning alloc] init];
         warning.title = _errorMessage;
-        warning.heading = @"Status Bar Component Problem";
-        NSArray *actions = @[ [iTermWarningAction warningActionWithLabel:@"OK" block:nil] ];
+        warning.heading = NSLocalizedStringWithDefaultValue(@"StatusBarRPC.ComponentProblemHeading", nil, [NSBundle mainBundle], @"Status Bar Component Problem", @"Heading for the status bar component error warning");
+        NSArray *actions = @[ [iTermWarningAction warningActionWithLabel:iTermLocalizedOK() block:nil] ];
         if ([self scriptIsNotRunningButCouldBeLaunched]) {
-            iTermWarningAction *launch = [iTermWarningAction warningActionWithLabel:@"Launch Script" block:^(iTermWarningSelection selection) {
+            iTermWarningAction *launch = [iTermWarningAction warningActionWithLabel:NSLocalizedStringWithDefaultValue(@"StatusBarRPC.LaunchScript", nil, [NSBundle mainBundle], @"Launch Script", @"Warning action to launch a status bar script") block:^(iTermWarningSelection selection) {
                 [self launchScript];
             }];
-            iTermWarningAction *reveal = [iTermWarningAction warningActionWithLabel:@"Reveal in Finder" block:^(iTermWarningSelection selection) {
+            iTermWarningAction *reveal = [iTermWarningAction warningActionWithLabel:NSLocalizedStringWithDefaultValue(@"StatusBarRPC.RevealInFinder", nil, [NSBundle mainBundle], @"Reveal in Finder", @"Warning action to reveal a status bar script in Finder") block:^(iTermWarningSelection selection) {
                 [self revealInFinder];
             }];
             actions = [actions arrayByAddingObjectsFromArray:@[ launch, reveal ]];
 
-            warning.title = [NSString stringWithFormat:@"%@It looks like the script is not running. Launching it might fix the problem.", _errorMessage];
+            warning.title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"StatusBarRPC.ScriptNotRunningFormat", nil, [NSBundle mainBundle], @"%@It looks like the script is not running. Launching it might fix the problem.", @"Appended to the error message when a status bar script is not running; placeholder is the existing error message"), _errorMessage];
         }
         warning.warningActions = actions;
         warning.warningType = kiTermWarningTypePersistent;
-        warning.heading = @"Status Bar Script Error";
+        warning.heading = NSLocalizedStringWithDefaultValue(@"StatusBarRPC.ScriptErrorHeading", nil, [NSBundle mainBundle], @"Status Bar Script Error", @"Heading for the status bar script error warning");
         warning.window = self.delegate.textField.window;
         [warning runModal];
         return;

@@ -13,9 +13,9 @@ class BookmarkDialogViewController: NSObject {
     static func show(window: NSWindow, defaultName: String, completion: @escaping (String) -> ()) {
         // Create the modal dialog
         let alert = NSAlert()
-        alert.messageText = "Enter Mark Name"
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = String(localized: "BookmarkDialog.EnterName", defaultValue: "Enter Mark Name", comment: "Prompt asking the user to enter a name for a mark")
+        alert.addButton(withTitle: iTermLocalizedOK())
+        alert.addButton(withTitle: iTermLocalizedCancel())
 
         // Create the text field
         let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
@@ -46,6 +46,7 @@ class BookmarkDialogViewController: NSObject {
 
     private static func currentDateTimeString() -> String {
         let dateFormatter = DateFormatter()
+        // Localization unneeded
         dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         return dateFormatter.string(from: Date())
     }

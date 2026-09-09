@@ -13,7 +13,7 @@ import Foundation
 final class iTermBrowserSessionTitle: NSObject {
     // The default display name for a browser session with no page title, host, or
     // configured profile name.
-    @objc static let defaultProfileName = "Web Browser"
+    @objc static let defaultProfileName = String(localized: "BrowserSessionTitle.DefaultProfileName", defaultValue: "Web Browser", comment: "Default display name for a browser session with no page title, host, or profile name")
 
     // Returns the session name to display given a page title and context, or nil to
     // keep the current name unchanged.

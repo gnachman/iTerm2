@@ -86,7 +86,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
         iTermTouchBarButton *button = (iTermTouchBarButton *)item.view;
         NSString *touchBarStatusString = self.currentSession.keyLabels[@"status"];
         if (touchBarStatusString == nil) {
-            button.title = @"Status";
+            button.title = NSLocalizedStringWithDefaultValue(@"TouchBar.Status", nil, [NSBundle mainBundle], @"Status", @"Touch Bar button title when there is no status message");
             button.enabled = NO;
             item.visibilityPriority = NSTouchBarItemPriorityLow;
         } else {
@@ -107,6 +107,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
         if (![button isKindOfClass:[iTermTouchBarButton class]]) {
             continue;
         }
+        // Localization unneeded
         NSString *label = [NSString stringWithFormat:@"F%@", @(n)];
         NSString *customLabel = self.currentSession.keyLabels[label];
         button.title = customLabel ?: label;
@@ -276,6 +277,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
     scrollView.documentView = documentView;
     NSButton *previous = nil;
     for (NSInteger n = 1; n <= iTermTouchBarNumberOfFunctionKeys; n++) {
+        // Localization unneeded
         NSString *label = [NSString stringWithFormat:@"F%@", @(n)];
         iTermTouchBarButton *button = [iTermTouchBarButton buttonWithTitle:label target:self action:@selector(functionKeyTouchBarItemSelected:)];
         button.tag = n;
@@ -289,7 +291,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
         // Constrain last button's right to document view's right
         [self constrainButton:previous toRightOfSuperview:documentView];
     }
-    item.customizationLabel = @"Function Keys";
+    item.customizationLabel = NSLocalizedStringWithDefaultValue(@"TouchBar.FunctionKeys", nil, [NSBundle mainBundle], @"Function Keys", @"Touch Bar customization label for the function keys item");
     return item;
 }
 
@@ -399,7 +401,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
         NSScrubber *scrubber;
         if (!self.tabsTouchBarItem) {
             self.tabsTouchBarItem = [[[NSCustomTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
-            self.tabsTouchBarItem.customizationLabel = @"Full Screen Tab Bar";
+            self.tabsTouchBarItem.customizationLabel = NSLocalizedStringWithDefaultValue(@"TouchBar.FullScreenTabBar", nil, [NSBundle mainBundle], @"Full Screen Tab Bar", @"Touch Bar customization label for the full screen tab bar item");
 
             scrubber = [[NSScrubber alloc] initWithFrame:NSMakeRect(0, 0, 320, 30)];
             scrubber.delegate = self;   // So we can respond to selection.
@@ -434,7 +436,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierAutocomplete]) {
         self.autocompleteCandidateListItem = [[[NSCandidateListTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
         self.autocompleteCandidateListItem.delegate = self;
-        self.autocompleteCandidateListItem.customizationLabel = @"Autocomplete Suggestions";
+        self.autocompleteCandidateListItem.customizationLabel = NSLocalizedStringWithDefaultValue(@"TouchBar.AutocompleteSuggestions", nil, [NSBundle mainBundle], @"Autocomplete Suggestions", @"Touch Bar customization label for the autocomplete suggestions item");
         NSAttributedString *(^commandUseToAttributedString)(NSString *commandUse,
                                                             NSInteger index) = ^(NSString *command,
                                                                                  NSInteger index) {
@@ -450,26 +452,26 @@ ITERM_IGNORE_PARTIAL_BEGIN
 
     if ([identifier isEqualToString:iTermTouchBarIdentifierManPage]) {
         selector = @selector(manPageTouchBarItemSelected:);
-        label = @"Man Page";
+        label = NSLocalizedStringWithDefaultValue(@"TouchBar.ManPage", nil, [NSBundle mainBundle], @"Man Page", @"Touch Bar label for the man page button");
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierStatus]) {
         selector = @selector(statusTouchBarItemSelected:);
-        label = @"Your Message Here";
+        label = NSLocalizedStringWithDefaultValue(@"TouchBar.StatusLabel", nil, [NSBundle mainBundle], @"Your Message Here", @"Touch Bar customization label for the status item");
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierAddMark]) {
         image = [[NSImage it_imageNamed:@"Add Mark Touch Bar Icon" forClass:self.class] imageWithColor:[NSColor labelColor]];
         selector = @selector(addMarkTouchBarItemSelected:);
-        label = @"Add Mark";
+        label = NSLocalizedStringWithDefaultValue(@"TouchBar.AddMark", nil, [NSBundle mainBundle], @"Add Mark", @"Touch Bar label for the add mark button");
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierNextMark]) {
         image = [NSImage imageNamed:NSImageNameTouchBarGoDownTemplate];
         selector = @selector(nextMarkTouchBarItemSelected:);
-        label = @"Next Mark";
+        label = NSLocalizedStringWithDefaultValue(@"TouchBar.NextMark", nil, [NSBundle mainBundle], @"Next Mark", @"Touch Bar label for the next mark button");
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierPreviousMark]) {
         image = [NSImage imageNamed:NSImageNameTouchBarGoUpTemplate];
         selector = @selector(previousMarkTouchBarItemSelected:);
-        label = @"Previous Mark";
+        label = NSLocalizedStringWithDefaultValue(@"TouchBar.PreviousMark", nil, [NSBundle mainBundle], @"Previous Mark", @"Touch Bar label for the previous mark button");
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierColorPreset]) {
         image = [NSImage imageNamed:NSImageNameTouchBarColorPickerFill];
         NSPopoverTouchBarItem *item = [[[NSPopoverTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
-        item.customizationLabel = @"Color Preset";
+        item.customizationLabel = NSLocalizedStringWithDefaultValue(@"TouchBar.ColorPreset", nil, [NSBundle mainBundle], @"Color Preset", @"Touch Bar customization label for the color preset item");
         item.showsCloseButton = YES;
         item.collapsedRepresentationImage = image;
 
@@ -481,7 +483,7 @@ ITERM_IGNORE_PARTIAL_BEGIN
     } else if ([identifier isEqualToString:iTermTouchBarIdentifierFunctionKeys]) {
         image = [NSImage it_imageNamed:@"Touch Bar Function Keys" forClass:self.class];
         NSPopoverTouchBarItem *item = [[[NSPopoverTouchBarItem alloc] initWithIdentifier:identifier] autorelease];
-        item.customizationLabel = @"Function Keys Popover";
+        item.customizationLabel = NSLocalizedStringWithDefaultValue(@"TouchBar.FunctionKeysPopover", nil, [NSBundle mainBundle], @"Function Keys Popover", @"Touch Bar customization label for the function keys popover");
         item.showsCloseButton = YES;
         item.collapsedRepresentationImage = image;
 

@@ -181,7 +181,7 @@ const CGFloat kDefaultTagsWidth = 80;
 
         [tableView_ setDoubleAction:@selector(onDoubleClick:)];
 
-        tableColumn_.title = @"Profile Name";
+        tableColumn_.title = NSLocalizedStringWithDefaultValue(@"ProfileListView.ProfileNameColumn", nil, [NSBundle mainBundle], @"Profile Name", @"Header for the column showing profile names");
 
         [tableView_ sizeLastColumnToFit];
 
@@ -399,7 +399,7 @@ const CGFloat kDefaultTagsWidth = 80;
                         autorelease];
     NSMenuItem *item;
 
-    item = [[[NSMenuItem alloc] initWithTitle:@"Tags"
+    item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"ProfileListView.TagsMenuItem", nil, [NSBundle mainBundle], @"Tags", @"Menu item heading for the list of profile tags")
                                        action:nil
                                 keyEquivalent:@""] autorelease];
     [item setTarget:self];
@@ -417,7 +417,7 @@ const CGFloat kDefaultTagsWidth = 80;
     }
 
     [cellMenu insertItem:[NSMenuItem separatorItem] atIndex:cellMenu.numberOfItems];
-    [cellMenu addItemWithTitle:@"Search Syntax Help" action:@selector(openHowToSearchHelp:) keyEquivalent:@""];
+    [cellMenu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"ProfileListView.SearchSyntaxHelp", nil, [NSBundle mainBundle], @"Search Syntax Help", @"Menu item that opens help about search syntax") action:@selector(openHowToSearchHelp:) keyEquivalent:@""];
 
     id searchCell = [searchField cell];
     [searchCell setSearchMenuTemplate:cellMenu];
@@ -600,6 +600,7 @@ const CGFloat kDefaultTagsWidth = 80;
                           highlightedAttributes:highlightedNameAttributes] mutableCopy] autorelease];
 
     if (isDefault && !isBrowser) {
+        // Localization unneeded
         NSAttributedString *star = [[[NSAttributedString alloc] initWithString:@"★ "
                                                                     attributes:plainAttributes] autorelease];
         [theAttributedString insertAttributedString:star atIndex:0];
@@ -730,11 +731,12 @@ const CGFloat kDefaultTagsWidth = 80;
             [customCommand isEqualToString:kProfilePreferenceCommandTypeCustomShellValue]) {
             theString = [bookmark objectForKey:KEY_COMMAND_LINE];
         } else if ([customCommand isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
+            // Localization unneeded
             theString = [NSString stringWithFormat:@"ssh %@", bookmark[KEY_COMMAND_LINE]];
         } else if ([customCommand isEqualToString:kProfilePreferenceCommandTypeLoginShellValue]) {
-            theString = @"Login shell";
+            theString = NSLocalizedStringWithDefaultValue(@"ProfileListView.LoginShell", nil, [NSBundle mainBundle], @"Login shell", @"Command type indicating the profile launches a login shell");
         } else if ([customCommand isEqualToString:kProfilePreferenceCommandTypeBrowserValue]) {
-            theString = @"URL";
+            theString = NSLocalizedStringWithDefaultValue(@"ProfileListView.URLCommandType", nil, [NSBundle mainBundle], @"URL", @"Command type indicating the profile opens a URL");
         }
         return [self attributedStringForCommand:theString
                                        selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]
@@ -1017,8 +1019,8 @@ const CGFloat kDefaultTagsWidth = 80;
 
     [tableColumn_ setWidth:250];
 
-    shortcutColumn_.title = @"Shortcut";
-    commandColumn_.title = @"Command";
+    shortcutColumn_.title = NSLocalizedStringWithDefaultValue(@"ProfileListView.ShortcutColumn", nil, [NSBundle mainBundle], @"Shortcut", @"Header for the column showing a profile's keyboard shortcut");
+    commandColumn_.title = NSLocalizedStringWithDefaultValue(@"ProfileListView.CommandColumn", nil, [NSBundle mainBundle], @"Command", @"Header for the column showing a profile's command");
     [tableView_ sizeLastColumnToFit];
 }
 

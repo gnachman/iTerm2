@@ -36,4 +36,9 @@
 - (void)updateShortcutTitles;
 - (void)windowWillClose;
 
+// Whether the "AI-generated name" title component should be offered in the popup.
+// Exposed for testing.
++ (BOOL)shouldOfferAITitleComponentWithSettingEnabled:(BOOL)enabled
+                                    profileComponents:(NSUInteger)components;
+
 @end

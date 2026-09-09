@@ -36,15 +36,15 @@ class SSHFolderDialog: NSObject {
 
         // Initialize alert
         self.alert = NSAlert()
-        alert.messageText = "Go to the folder:"
-        alert.informativeText = "Type a pathname or select from the pop-up menu"
-        alert.addButton(withTitle: "Go")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = String(localized: "SSHFolderDialog.GoToFolderTitle", defaultValue: "Go to the folder:", comment: "Title of the dialog for navigating to a folder")
+        alert.informativeText = String(localized: "SSHFolderDialog.GoToFolderInfo", defaultValue: "Type a pathname or select from the pop-up menu", comment: "Instructions in the go-to-folder dialog")
+        alert.addButton(withTitle: String(localized: "SSHFolderDialog.Go", defaultValue: "Go", comment: "Button that navigates to the entered folder"))
+        alert.addButton(withTitle: iTermLocalizedCancel())
 
         // Initialize text field
         self.textField = SSHFolderDialogTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
         textField.stringValue = currentPath ?? ""
-        textField.placeholderString = "Enter path (e.g., /usr/local/bin)"
+        textField.placeholderString = String(localized: "SSHFolderDialog.PathPlaceholder", defaultValue: "Enter path (e.g., /usr/local/bin)", comment: "Placeholder text for the folder path entry field")
 
         super.init()
 
@@ -160,7 +160,7 @@ class SSHFolderDialog: NSObject {
                 parent: alert.window,
                 location: textFieldFrame,
                 mode: .indicator,
-                placeholder: "Loading completions…",
+                placeholder: String(localized: "SSHFolderDialog.LoadingCompletions", defaultValue: "Loading completions…", comment: "Placeholder shown while path completions are loading"),
                 allowKey: false
             )
             textField.onSpecialKey = { [weak completionsWindow, weak self] key in
@@ -199,7 +199,7 @@ class SSHFolderDialog: NSObject {
                     // Convert to CompletionsWindow items
                     let items = suggestions.map { path in
                         let displayPath = path
-                        let detail = "Folder on " + hostname
+                        let detail = String(localized: "SSHFolderDialog.FolderOnHost", defaultValue: "Folder on \(hostname)", comment: "Label describing a remote folder. %@ is the host name.")
 
                         return CompletionsWindow.Item(
                             suggestion: path,

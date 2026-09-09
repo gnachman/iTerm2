@@ -294,6 +294,7 @@ class AutoResizingTextView: NSTextView {
             return
         }
 
+        // Localization unneeded
         let truncationToken = "…"
         let maxWidth = bounds.width - sizeThatFits(NSAttributedString(string: truncationToken,
                                                                       attributes: defaultAttributes),

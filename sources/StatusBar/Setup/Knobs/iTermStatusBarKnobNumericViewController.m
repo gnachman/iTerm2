@@ -28,8 +28,10 @@
     _value = value;
     _stepper.doubleValue = _value.doubleValue;
     if (_value.doubleValue == INFINITY) {
+        // Localization unneeded
         _textField.stringValue = @"∞";
     } else if (_value.doubleValue == -INFINITY) {
+        // Localization unneeded
         _textField.stringValue = @"-∞";
     } else {
         _textField.doubleValue = _value.doubleValue;

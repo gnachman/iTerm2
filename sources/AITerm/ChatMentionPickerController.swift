@@ -284,7 +284,7 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
                 }
             }
             if !tabNodes.isEmpty {
-                let base = (term.window?.title.isEmpty == false) ? term.window!.title : "Window \(term.number + 1)"
+                let base = (term.window?.title.isEmpty == false) ? term.window!.title : String(localized: "ChatMentionPickerController.Window", defaultValue: "Window \(term.number + 1)", comment: "Fallback name for a window with no title, showing its number")
                 let shortcut = windowShortcut(number: Int(term.number), glyphs: windowGlyphs)
                 let windowToken = term.terminalGuid.map { "win:\($0)" }
                 windowNodes.append(Node(kind: .window,
@@ -362,7 +362,7 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
                     // workgroup, not any one peer.
                     let groupTitle = ChatMentionDisplay.context(for: session)?.workgroup ?? session.name
                     result.append(Node(kind: .tab,
-                                       title: groupTitle.isEmpty ? "Workgroup" : groupTitle,
+                                       title: groupTitle.isEmpty ? String(localized: "ChatMentionPickerController.Workgroup", defaultValue: "Workgroup", comment: "Fallback title for an unnamed workgroup of sessions") : groupTitle,
                                        session: nil,
                                        children: peerNodes))
                 }
@@ -464,9 +464,9 @@ final class ChatMentionPickerController: NSObject, NSOutlineViewDataSource, NSOu
         guard let tab = session.delegate as? PTYTab else { return "" }
         let windowTitle = tab.realParentWindow()?.window?.title ?? ""
         if windowTitle.isEmpty {
-            return "Tab \(tab.objectCount)"
+            return String(localized: "ChatMentionPickerController.Tab", defaultValue: "Tab \(tab.objectCount)", comment: "Detail line showing a tab number")
         }
-        return "Tab \(tab.objectCount) · \(windowTitle)"
+        return String(localized: "ChatMentionPickerController.TabWithWindow", defaultValue: "Tab \(tab.objectCount) · \(windowTitle)", comment: "Detail line showing a tab number and its window title")
     }
 
     // MARK: - Actions

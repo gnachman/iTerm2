@@ -90,22 +90,22 @@ class PasteboardReporter: NSObject {
             return
         }
         let alert = NSAlert()
-        alert.messageText = "Error Updating Settings"
-        alert.informativeText = "An error occurred while removing the file that authorizes clipboard reporting: \(error.localizedDescription).\nAs long as this file exists, clipboard reporting could be enabled by programs running on this computer."
+        alert.messageText = String(localized: "PasteboardReporter.ErrorUpdatingSettingsTitle", defaultValue: "Error Updating Settings", comment: "Title of the dialog shown when updating clipboard settings fails")
+        alert.informativeText = String(localized: "PasteboardReporter.RemoveAuthFileErrorBody", defaultValue: "An error occurred while removing the file that authorizes clipboard reporting: \(error.localizedDescription).\nAs long as this file exists, clipboard reporting could be enabled by programs running on this computer.", comment: "Error body shown when the clipboard-reporting authorization file cannot be removed")
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "Reveal in Finder")
+        alert.addButton(withTitle: String(localized: "PasteboardReporter.RevealInFinder", defaultValue: "Reveal in Finder", comment: "Button that reveals a file in Finder"))
         alert.runModal()
         NSWorkspace.shared.activateFileViewerSelecting([url])
     }
 
     private static func doubleCheck() -> Bool {
         let alert = NSAlert()
-        alert.messageText = "Really Enable Clipboard Reporting?"
-        alert.informativeText = "Reporting the content of the clipboard to apps running inside iTerm2 may expose sensitive information such as passwords. Think carefully before enabling this."
+        alert.messageText = String(localized: "PasteboardReporter.ConfirmEnableTitle", defaultValue: "Really Enable Clipboard Reporting?", comment: "Title of the confirmation dialog for enabling clipboard reporting")
+        alert.informativeText = String(localized: "PasteboardReporter.ConfirmEnableBody", defaultValue: "Reporting the content of the clipboard to apps running inside iTerm2 may expose sensitive information such as passwords. Think carefully before enabling this.", comment: "Warning body shown before enabling clipboard reporting")
         alert.alertStyle = .warning
-        let button = alert.addButton(withTitle: "OK")
+        let button = alert.addButton(withTitle: iTermLocalizedOK())
         button.hasDestructiveAction = true
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: iTermLocalizedCancel())
         return alert.runModal() == .alertFirstButtonReturn
     }
 

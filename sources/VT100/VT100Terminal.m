@@ -408,7 +408,7 @@ static const int kMaxScreenRows = 4096;
     [self resetGraphicRendition];
     self.mouseMode = MOUSE_REPORTING_NONE;
     self.mouseFormat = MOUSE_FORMAT_XTERM;
-    [_delegate terminalMouseModeDidChangeTo:_mouseMode];
+    // The setter notifies the delegate when the mode actually changes.
     [_delegate terminalSetUseColumnScrollRegion:NO];
     self.reportFocus = NO;
     self.protectedMode = VT100TerminalProtectedModeNone;
@@ -850,7 +850,8 @@ static const int kMaxScreenRows = 4096;
                 } else {
                     self.mouseMode = MOUSE_REPORTING_NONE;
                 }
-                [_delegate terminalMouseModeDidChangeTo:_mouseMode];
+                // The setter notifies the delegate on an actual change; don't
+                // fire a second time.
                 break;
             case 1004:
                 self.reportFocus = mode && [_delegate terminalFocusReportingAllowed];
@@ -1243,6 +1244,13 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)setMouseMode:(MouseMode)mode {
+    // Re-asserting the current mouse mode (which tmux does on every session
+    // switch) is a no-op. Skip it so we don't enqueue a redundant heavyweight
+    // "mouse mode did change" side effect, which recomputes terminal button
+    // frames and can pile up into a multi-second main-thread hang.
+    if (_mouseMode == mode) {
+        return;
+    }
     self.dirty = YES;
     if (_mouseMode != MOUSE_REPORTING_NONE) {
         _previousMouseMode = self.mouseMode;
@@ -3995,7 +4003,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
     NSString *name = [dict[@"name"] stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
     if (!name) {
-        name = @"Unnamed file";
+        name = NSLocalizedStringWithDefaultValue(@"VT100Terminal.UnnamedFile", nil, [NSBundle mainBundle], @"Unnamed file", @"Fallback name shown for a file transferred with no name.");
     }
 
     const BOOL forceWide = [dict[@"mode"] isEqualToString:@"wide"];

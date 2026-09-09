@@ -118,13 +118,13 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        _icon = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolTextBubbleFill) accessibilityDescription:@"Snippet icon"];
-        _folderIcon = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolFolderFill) accessibilityDescription:@"Folder icon"];
-        _applyButton = iTermToolSnippetsNewButton(@"play", @"Send", self, @selector(apply:), frame);
-        _addButton = iTermToolSnippetsNewButton(@"plus", @"Add", self, @selector(add:), frame);
-        _removeButton = iTermToolSnippetsNewButton(@"minus", @"Remove", self, @selector(remove:), frame);
-        _editButton = iTermToolSnippetsNewButton(@"square.and.pencil", @"Edit", self, @selector(edit:), frame);
-        _advancedPasteButton = iTermToolSnippetsNewButton(@"rectangle.and.pencil.and.ellipsis", @"Open in Advanced Paste", self, @selector(openInAdvancedPaste:), frame);
+        _icon = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolTextBubbleFill) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"ToolSnippets.SnippetIconAccessibility", nil, [NSBundle mainBundle], @"Snippet icon", @"Accessibility description for the snippet icon")];
+        _folderIcon = [NSImage imageWithSystemSymbolName:SFSymbolGetString(SFSymbolFolderFill) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"ToolSnippets.FolderIconAccessibility", nil, [NSBundle mainBundle], @"Folder icon", @"Accessibility description for the folder icon")];
+        _applyButton = iTermToolSnippetsNewButton(@"play", NSLocalizedStringWithDefaultValue(@"ToolSnippets.Send", nil, [NSBundle mainBundle], @"Send", @"Button to send a snippet"), self, @selector(apply:), frame);
+        _addButton = iTermToolSnippetsNewButton(@"plus", iTermLocalizedAdd(), self, @selector(add:), frame);
+        _removeButton = iTermToolSnippetsNewButton(@"minus", iTermLocalizedRemove(), self, @selector(remove:), frame);
+        _editButton = iTermToolSnippetsNewButton(@"square.and.pencil", iTermLocalizedEdit(), self, @selector(edit:), frame);
+        _advancedPasteButton = iTermToolSnippetsNewButton(@"rectangle.and.pencil.and.ellipsis", NSLocalizedStringWithDefaultValue(@"ToolSnippets.OpenInAdvancedPaste", nil, [NSBundle mainBundle], @"Open in Advanced Paste", @"Button to open a snippet in Advanced Paste"), self, @selector(openInAdvancedPaste:), frame);
         [self addSubview:_advancedPasteButton];
         [self addSubview:_applyButton];
         [self addSubview:_addButton];
@@ -380,7 +380,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 }
 
 - (void)help:(id)sender {
-    [_help it_showWarningWithMarkdown:iTermSnippetHelpMarkdown];
+    [_help it_showWarningWithMarkdown:iTermSnippetHelpMarkdown()];
 }
 
 - (void)doubleClickOnOutlineView:(id)sender {
@@ -565,7 +565,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     iTermToolWrapper *wrapper = self.toolWrapper;
     switch (action) {
         case iTermToolSnippetsActionSend: {
-            iTermAction *action = [[iTermAction alloc] initWithTitle:@"Send Snippet"
+            iTermAction *action = [[iTermAction alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"ToolSnippets.SendSnippet", nil, [NSBundle mainBundle], @"Send Snippet", @"Title of the action that sends a snippet")
                                                               action:KEY_ACTION_SEND_SNIPPET
                                                            parameter:snippet.actionKey
                                                             escaping:snippet.escaping
@@ -611,6 +611,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     if (!title.length) {
         return [self valueStringForSnippet:snippet];
     }
+    // Localization unneeded
     return [NSString stringWithFormat:@"%@ — %@", title, [snippet trimmedValue:256]];
 }
 
@@ -706,6 +707,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     if ([snippet titleEqualsValueUpToLength:40] || !title.length) {
         return highlightedValueAttributedString;
     }
+    // Localization unneeded
     NSAttributedString *emDashAttributedString = [NSAttributedString attributedStringWithString:@" — "
                                                                                      attributes:attributes];
 
@@ -942,7 +944,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     NSArray<NSString *> *parts = [string componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
     return [parts objectPassingTest:^BOOL(NSString *element, NSUInteger index, BOOL *stop) {
         return [[element stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] length] > 0;
-    }] ?: @"Untitled";
+    }] ?: NSLocalizedStringWithDefaultValue(@"ToolSnippets.Untitled", nil, [NSBundle mainBundle], @"Untitled", @"Placeholder title for a snippet with no title");
 }
 
 - (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender {

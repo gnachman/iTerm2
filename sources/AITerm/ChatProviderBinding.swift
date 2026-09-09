@@ -67,7 +67,7 @@ enum ChatProviderBinding {
             // exactly these).
             return .proceed(modelName: turn, bindChatTo: nil)
         }
-        return .reject(reason: "This chat uses “\(bound)”, and “\(turn)” belongs to a different AI provider. A chat cannot change providers once the conversation has started; start a new chat to use “\(turn)”.")
+        return .reject(reason: String(localized: "ChatProviderBinding.ProviderMismatch", defaultValue: "This chat uses “\(bound)”, and “\(turn)” belongs to a different AI provider. A chat cannot change providers once the conversation has started; start a new chat to use “\(turn)”.", comment: "Error shown when the user tries to switch a chat to a model from a different AI provider"))
     }
 
     /// Resolve a model name to its vendor the way request routing does:

@@ -297,10 +297,12 @@ Beta:
 	cp plists/beta-iTerm2.plist plists/iTerm2.plist
 	xcodebuild -scheme iTerm2 -configuration Beta -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" ENABLE_ADDRESS_SANITIZER=NO && \
 	chmod -R go+rX $(BUILD_DIR)/Beta
+	tools/extract_strings.sh Beta "$(BUILD_DIR)"
 
 Deployment:
 	xcodebuild -scheme iTerm2 -configuration Deployment -destination 'platform=macOS' -skipPackagePluginValidation $(SIGNING_FLAGS) $(ARCH_FLAGS) SYMROOT="$(BUILD_DIR)" ENABLE_ADDRESS_SANITIZER=NO && \
 	chmod -R go+rX $(BUILD_DIR)/Deployment
+	tools/extract_strings.sh Deployment "$(BUILD_DIR)"
 
 Nightly: force
 	cp plists/nightly-iTerm2.plist plists/iTerm2.plist
@@ -313,8 +315,29 @@ companion-iphone: force
 open: Development
 	open -W -n "$(BUILD_DIR)/Development/iTerm2.app" --args -suite $(SUITE)
 
+# Set LANGUAGE=<code> to force a UI language, e.g. `LANGUAGE=pt make run` adds
+# -AppleLanguages '(pt)'. Leave it unset to use the system language.
 run: Development
-	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(SUITE) & \
+	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(SUITE) $(if $(LANGUAGE),-AppleLanguages '($(LANGUAGE))') & \
+	pid=$$!; \
+	trap 'kill $$pid 2>/dev/null' INT TERM; \
+	( sleep 1 && osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $$pid) to true" >/dev/null 2>&1 ) & \
+	wait $$pid
+
+# Regenerate sources/Localizable.xcstrings from the current sources. Swift strings come
+# from the per-file .stringsdata the build emits (SWIFT_EMIT_LOC_STRINGS=YES); Objective-C
+# strings are pulled from the NSLocalizedString family with extractLocStrings, which the
+# build does not run for the static-library targets. This is the standalone entry point;
+# the Beta and Deployment targets run the same step automatically after building.
+extract-strings: Development
+	tools/extract_strings.sh Development "$(BUILD_DIR)"
+
+# Like `run`, but doubles every localized string at runtime (e.g. "View" -> "View View")
+# with -NSDoubleLocalizedStrings. Needs no translations, and because the displayed text
+# then differs from the English source it flushes out code that still matches on English
+# strings (menu-item lookups, window titles, etc.).
+pseudorun: Development
+	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(SUITE) -NSDoubleLocalizedStrings YES & \
 	pid=$$!; \
 	trap 'kill $$pid 2>/dev/null' INT TERM; \
 	( sleep 1 && osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $$pid) to true" >/dev/null 2>&1 ) & \

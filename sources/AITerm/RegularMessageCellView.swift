@@ -65,6 +65,7 @@ class RegularMessageCellView: MessageCellView, ChatFindableCellView {
     }
 
     override var description: String {
+        // Localization unneeded
         "<\(Self.self): \(it_addressString) editable=\(editable) text=\(textLabel.textStorage?.string ?? "(nil)")>"
     }
 

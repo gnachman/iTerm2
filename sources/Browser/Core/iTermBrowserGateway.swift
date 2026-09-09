@@ -64,13 +64,13 @@ class iTermBrowserGateway: NSObject {
     @objc(didLocateBundleManually:)
     static func didLocateBundleManually(_ url: URL) -> String? {
         guard let bundle = Bundle(url: url) else {
-            return "The file at \(url.path) is not a valid app bundle."
+            return String(localized: "BrowserGateway.NotValidAppBundle", defaultValue: "The file at \(url.path) is not a valid app bundle.", comment: "Error shown when the selected file is not a valid app bundle")
         }
         if bundle.bundleIdentifier != Self.bundleID {
-            return "This is not the browser plugin. This file’s bundle ID is “\(bundle.bundleIdentifier ?? "not set")”.\n The expected ID is “\(Self.bundleID)”."
+            return String(localized: "BrowserGateway.NotBrowserPlugin", defaultValue: "This is not the browser plugin. This file’s bundle ID is “\(bundle.bundleIdentifier ?? "not set")”.\n The expected ID is “\(Self.bundleID)”.", comment: "Error shown when the selected file is not the browser plugin")
         }
         if !verifyCodeSignature(at: url, teamID: teamID) {
-            return "The code signature of the plugin at \(url.path) is invalid. Download it again, and ensure your anti-virus does not quarantine it."
+            return String(localized: "BrowserGateway.InvalidCodeSignature", defaultValue: "The code signature of the plugin at \(url.path) is invalid. Download it again, and ensure your anti-virus does not quarantine it.", comment: "Error shown when the browser plugin fails code signature verification")
         }
         iTermAdvancedSettingsModel.setBrowserPluginPathHint(url.path)
         cached.expire()
@@ -107,12 +107,12 @@ class iTermBrowserGateway: NSObject {
 
     @objc
     static func offerPlugin() {
-        let selection = iTermWarning.show(withTitle: "You must install the Browser Plugin first. Download it now?",
-                                          actions: ["OK", "Cancel"],
+        let selection = iTermWarning.show(withTitle: String(localized: "BrowserGateway.InstallPluginPrompt", defaultValue: "You must install the Browser Plugin first. Download it now?", comment: "Prompt asking whether to download the browser plugin"),
+                                          actions: [iTermLocalizedOK(), iTermLocalizedCancel()],
                                           accessory: nil,
                                           identifier: nil,
                                           silenceable: .kiTermWarningTypePersistent,
-                                          heading: "Plugin Required",
+                                          heading: String(localized: "BrowserGateway.PluginRequiredHeading", defaultValue: "Plugin Required", comment: "Heading for warning that the browser plugin must be installed"),
                                           window: nil)
         if selection == .kiTermWarningSelection0 {
             NSWorkspace.shared.open(URL(string: "https://iterm2.com/browser-plugin.html")!)
@@ -138,12 +138,14 @@ class iTermBrowserGateway: NSObject {
         // would cause an infinite loop since the plugin would still not be installed.
         // Remembering "Cancel" is also not useful.
         let warning = iTermWarning()
-        warning.title = "iTerm2 can display web pages! But first you must download the Browser Plugin."
-        warning.actionLabels = ["Download", "Use System Browser", "Cancel"]
+        warning.title = String(localized: "BrowserGateway.UpsellTitle", defaultValue: "iTerm2 can display web pages! But first you must download the Browser Plugin.", comment: "Message offering to download the browser plugin")
+        let download = String(localized: "BrowserGateway.Download", defaultValue: "Download", comment: "Button to download the browser plugin")
+        let cancel = iTermLocalizedCancel()
+        warning.actionLabels = [download, String(localized: "BrowserGateway.UseSystemBrowser", defaultValue: "Use System Browser", comment: "Button to open the URL in the system default browser"), cancel]
         warning.identifier = upsellWarningIdentifier
         warning.warningType = .kiTermWarningTypePermanentlySilenceable
-        warning.heading = "Plugin Required"
-        warning.doNotRememberLabels = ["Download", "Cancel"]
+        warning.heading = String(localized: "BrowserGateway.PluginRequiredHeading", defaultValue: "Plugin Required", comment: "Heading for warning that the browser plugin must be installed")
+        warning.doNotRememberLabels = [download, cancel]
         let selection = warning.runModal()
         switch selection {
         case .kiTermWarningSelection0:

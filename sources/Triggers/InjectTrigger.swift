@@ -14,7 +14,7 @@ class InjectTrigger: Trigger {
     }
 
     override static var title: String {
-        return "Inject Data…"
+        return String(localized: "Trigger.Inject.Title", defaultValue: "Inject Data…", comment: "Trigger action name: inject data into the terminal as if received from the process")
     }
 
     override func takesParameter() -> Bool {

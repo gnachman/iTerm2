@@ -26,14 +26,23 @@ typedef enum {
     BulkCopyWeb
 } BulkCopySettings;
 
-// These match labels in the profiles tab view. I guess it should be identifiers but I would probably forget to set them.
+// These match the stable xib identifiers on the profiles tab view items (not
+// their localized labels), so bulk copy works in every UI language.
+// Localization unneeded
 NSString *const iTermBulkCopyIdentifierColors = @"Colors";
+// Localization unneeded
 NSString *const iTermBulkCopyIdentifierText = @"Text";
+// Localization unneeded
 NSString *const iTermBulkCopyIdentifierWeb = @"Web";
+// Localization unneeded
 NSString *const iTermBulkCopyIdentifierWindow = @"Window";
+// Localization unneeded
 NSString *const iTermBulkCopyIdentifierTerminal = @"Terminal";
+// Localization unneeded
 NSString *const iTermBulkCopyIdentifierSession = @"Session";
+// Localization unneeded
 NSString *const iTermBulkCopyIdentifierKeys = @"Keys";
+// Localization unneeded
 NSString *const iTermBulkCopyIdentifierAdvanced = @"Advanced";
 
 @implementation BulkCopyProfilePreferencesWindowController {
@@ -51,6 +60,34 @@ NSString *const iTermBulkCopyIdentifierAdvanced = @"Advanced";
     IBOutlet NSButton *_copyButton;
     NSArray<NSString *> *_identifiersToKeep;
     ProfileType _profileTypes;
+}
+
++ (NSSet<NSString *> *)allBulkCopyIdentifiers {
+    static NSSet<NSString *> *identifiers;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        identifiers = [NSSet setWithArray:@[
+            iTermBulkCopyIdentifierColors,
+            iTermBulkCopyIdentifierText,
+            iTermBulkCopyIdentifierWeb,
+            iTermBulkCopyIdentifierWindow,
+            iTermBulkCopyIdentifierTerminal,
+            iTermBulkCopyIdentifierSession,
+            iTermBulkCopyIdentifierKeys,
+            iTermBulkCopyIdentifierAdvanced,
+        ]];
+    });
+    return identifiers;
+}
+
++ (NSString *)bulkCopyIdentifierForTabViewItemIdentifier:(NSString *)tabViewItemIdentifier {
+    if (tabViewItemIdentifier == nil) {
+        return nil;
+    }
+    if ([[self allBulkCopyIdentifiers] containsObject:tabViewItemIdentifier]) {
+        return tabViewItemIdentifier;
+    }
+    return nil;
 }
 
 - (instancetype)initWithIdentifiers:(NSArray<NSString *> *)identifiers
@@ -182,7 +219,7 @@ NSString *const iTermBulkCopyIdentifierAdvanced = @"Advanced";
 - (void)updateLabel {
     Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:_sourceGuid];
     [_bulkCopyLabel setStringValue:[NSString stringWithFormat:
-                                    @"Copy these settings from profile “%@”:",
+                                    NSLocalizedStringWithDefaultValue(@"BulkCopy.CopyFromProfileLabel", nil, [NSBundle mainBundle], @"Copy these settings from profile “%@”:", @"Label above the bulk-copy options; %@ is the source profile name"),
                                     profile[KEY_NAME]]];
 }
 

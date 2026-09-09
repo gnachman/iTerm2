@@ -6242,14 +6242,14 @@ lengthExcludingInBandSignaling:data.length
 }
 
 - (void)appendArchiveRestoredBanner {
-    [self appendRestoredBanner:@"Archive Restored"];
+    [self appendRestoredBanner:NSLocalizedStringWithDefaultValue(@"ScreenRestore.ArchiveRestoredBanner", nil, [NSBundle mainBundle], @"Archive Restored", @"Banner shown when an archived session is restored")];
 }
 
 - (void)appendSessionRestoredBanner {
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     dateFormatter.dateStyle = NSDateFormatterMediumStyle;
     dateFormatter.timeStyle = NSDateFormatterShortStyle;
-    NSString *message = [NSString stringWithFormat:@"Session Contents Restored on %@", [dateFormatter stringFromDate:[NSDate date]]];
+    NSString *message = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScreenRestore.SessionRestoredBanner", nil, [NSBundle mainBundle], @"Session Contents Restored on %@", @"Banner shown when session contents are restored; %@ is the date"), [dateFormatter stringFromDate:[NSDate date]]];
     [self appendRestoredBanner:message];
 }
 

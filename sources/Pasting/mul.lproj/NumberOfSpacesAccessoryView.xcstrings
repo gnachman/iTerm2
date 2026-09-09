@@ -1,0 +1,90 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Htp-7L-sn0.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"Tab size in spaces:\"; ObjectID = \"Htp-7L-sn0\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tab-Größe in Leerzeichen:"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Tab size in spaces:"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タブサイズ(スペース数):"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tamanho da tabulação em espaços:"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Размер табуляции в пробелах:"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "制表符大小："
+          }
+        }
+      }
+    },
+    "d6u-sa-c0E.title": {
+      "comment": "Class = \"NSTextFieldCell\"; title = \"100\"; ObjectID = \"d6u-sa-c0E\";",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "100"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

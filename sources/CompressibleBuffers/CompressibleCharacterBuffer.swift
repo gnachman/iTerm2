@@ -111,6 +111,7 @@ class EfficientDecoderError: LocalizedError {
     private let _reason: String?
 
     var errorDescription: String? {
+        // Localization unneeded
         return _reason ?? "An error occurred while decoding an object"
     }
     init() {

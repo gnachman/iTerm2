@@ -328,11 +328,11 @@ enum PageSaveError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .failedToGetHTML:
-            return "Failed to get page HTML content"
+            return String(localized: "BrowserPageSaver.FailedToGetHTML", defaultValue: "Failed to get page HTML content", comment: "Error description when page HTML cannot be retrieved")
         case .failedToCreateDirectory:
-            return "Failed to create save directory"
+            return String(localized: "BrowserPageSaver.FailedToCreateDirectory", defaultValue: "Failed to create save directory", comment: "Error description when the save directory cannot be created")
         case .failedToSaveFile:
-            return "Failed to save file"
+            return String(localized: "BrowserPageSaver.FailedToSaveFile", defaultValue: "Failed to save file", comment: "Error description when a file cannot be saved")
         }
     }
 }
@@ -343,6 +343,7 @@ extension iTermBrowserPageSaver {
         guard let url = webView.url else { return }
 
         let savePanel = iTermModernSavePanel()
+        // Localization unneeded
         savePanel.defaultFilename = sanitizeFilename(url.host ?? "page")
 
         let response = await savePanel.beginSheetModal(for: parentWindow)
@@ -382,10 +383,10 @@ extension iTermBrowserPageSaver {
     @MainActor
     private static func showSaveError(_ error: Error, window: NSWindow) {
         let alert = NSAlert()
-        alert.messageText = "Save Failed"
-        alert.informativeText = "Could not save the page: \(error.localizedDescription)"
+        alert.messageText = String(localized: "BrowserPageSaver.SaveFailedTitle", defaultValue: "Save Failed", comment: "Title of alert when saving a page fails")
+        alert.informativeText = String(localized: "BrowserPageSaver.SaveFailedMessage", defaultValue: "Could not save the page: \(error.localizedDescription)", comment: "Informative text when saving a page fails")
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: iTermLocalizedOK())
         alert.beginSheetModal(for: window, completionHandler: nil)
     }
 

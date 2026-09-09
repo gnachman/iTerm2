@@ -911,6 +911,7 @@ class ChatAgent {
                       : kPreferenceKeyAIPromptAIChatReadOnlyTerminal
         }
         parts.append(iTermPreferences.string(forKey: key))
+        // Localization unneeded
         parts.append("If a zip file is provided (this is rare), you should extract it and analyze the contents in the context of the accompanying messages.")
 
         // When the chat is linked to a terminal session and the model can call
@@ -1128,12 +1129,12 @@ class ChatAgent {
             // resolved consent while this was queued.
             guard iTermUserDefaults.autoProvideConsent == .unknown else { return }
             let selection = iTermWarning.show(
-                withTitle: "iTerm2 can include this session’s visible screen and terminal state with every message you send in AI chats where you’ve allowed it, so the assistant sees what you see. You can turn this off any time from a chat’s permission settings.",
-                actions: ["Turn On", "Not Now"],
+                withTitle: String(localized: "ChatAgent.AutoProvideBody", defaultValue: "iTerm2 can include this session’s visible screen and terminal state with every message you send in AI chats where you’ve allowed it, so the assistant sees what you see. You can turn this off any time from a chat’s permission settings.", comment: "Body text of the dialog asking whether to automatically share terminal contents with AI chats"),
+                actions: [String(localized: "ChatAgent.TurnOn", defaultValue: "Turn On", comment: "Button to enable automatic sharing of terminal contents with AI chats"), String(localized: "ChatAgent.NotNow", defaultValue: "Not Now", comment: "Button to decline automatic sharing of terminal contents with AI chats")],
                 accessory: nil,
                 identifier: nil,
                 silenceable: .kiTermWarningTypePersistent,
-                heading: "Share Terminal Contents Automatically?",
+                heading: String(localized: "ChatAgent.AutoProvideHeading", defaultValue: "Share Terminal Contents Automatically?", comment: "Heading of the dialog asking whether to automatically share terminal contents with AI chats"),
                 window: nil)
             iTermUserDefaults.autoProvideConsent = (selection == .kiTermWarningSelection0) ? .granted : .denied
         }
@@ -1865,6 +1866,7 @@ class ChatAgent {
     }
 
     private func requestRenaming() {
+        // Localization unneeded
         let prompt = "Please assign a short, specific name to this chat, less than 30 characters in length, but descriptive. It will be shown in a chat list UI. Respond with only the name of the chat."
         var history = conversation.messages + [AITermController.Message(role: .user, content: prompt)]
         // Remove response IDs so we don't pollute the conversation's history
@@ -1964,7 +1966,7 @@ class ChatAgent {
                 nserror.code == iTermAIError.ErrorType.requestTooLarge.rawValue {
                 return Message(chatID: userMessage.chatID,
                                author: .agent,
-                               content: .plainText("🛑 The text to analyze was too long. Select a portion of it and try again.",
+                               content: .plainText(String(localized: "ChatAgent.TextTooLong", defaultValue: "🛑 The text to analyze was too long. Select a portion of it and try again.", comment: "Chat message shown when the text to analyze exceeds the AI request size limit"),
                                                    context: nil),
                                sentDate: Date(),
                                uniqueID: UUID())
@@ -1976,7 +1978,7 @@ class ChatAgent {
                 .joined(separator: "\n")
             return Message(chatID: userMessage.chatID,
                            author: .agent,
-                           content: .markdown("**Request failed**\n\n\(details)"),
+                           content: .markdown(String(localized: "ChatAgent.RequestFailed", defaultValue: "**Request failed**\n\n\(details)", comment: "Chat message shown when an AI request fails; placeholder is the error details")),
                            sentDate: Date(),
                            uniqueID: UUID())
         }
@@ -2074,7 +2076,7 @@ extension LLM.Message.Attachment {
         case .statusUpdate(let statusUpdate): statusUpdate.displayString
         case .file(let file):
             file.content.lossyString
-        case .fileID: "[Attached file]"
+        case .fileID: String(localized: "ChatAgent.AttachedFile", defaultValue: "[Attached file]", comment: "Placeholder text representing an attached file in a chat message")
         }
     }
 }

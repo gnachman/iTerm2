@@ -75,7 +75,8 @@ static const CGFloat kSponsorRowY = 170.0;
     paragraphStyle.alignment = NSTextAlignmentCenter;
     _sponsorsHeading.selectable = YES;
     _sponsorsHeading.editable = NO;
-    [_sponsorsHeading.textStorage setAttributedString:[NSAttributedString attributedStringWithHTML:_sponsorsHeading.textStorage.string
+    NSString *headingHTML = NSLocalizedStringWithDefaultValue(@"About.BackersHeading", nil, [NSBundle mainBundle], @"iTerm2 is supported by these backers on <a href=\"https://patreon.com/gnachman\">Patreon</a> and <a href=\"https://github.com/sponsors/gnachman\">GitHub Sponsors</a>", @"About window heading. Keep the <a href=...> HTML tags and the URLs. ‘Patreon’ and ‘GitHub Sponsors’ are brand names, keep them. Only translate the prose ‘iTerm2 is supported by these backers on’ and ‘and’.");
+    [_sponsorsHeading.textStorage setAttributedString:[NSAttributedString attributedStringWithHTML:headingHTML
                                                                                               font:_sponsorsHeading.font
                                                                                     paragraphStyle:paragraphStyle]];
 
@@ -121,6 +122,7 @@ static const CGFloat kSponsorRowY = 170.0;
 
 - (NSArray<iTermSponsor *> *)buildUnifiedSponsorRow {
     NSArray<NSDictionary *> *sponsorData = @[
+        // Localization unneeded
         @{ @"image": @"whitebox_logo", @"title": @"Whitebox", @"url": @"https://whitebox.so/?utm_source=iTerm2" },
         @{ @"image": @"coderabbitai",  @"url": @"https://coderabbit.ai/" },
         @{ @"image": @"SerpApi",       @"url": @"https://serpapi.com/?utm_source=iterm" },
@@ -196,26 +198,27 @@ static const CGFloat kSponsorRowY = 170.0;
     if (self) {
         NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
         NSString *const versionNumber = myDict[(NSString *)kCFBundleVersionKey];
-        NSString *versionString = [NSString stringWithFormat: @"Build %@\n\n", versionNumber];
+        NSString *versionString = [NSString stringWithFormat: NSLocalizedStringWithDefaultValue(@"AboutWindow.BuildVersion", nil, [NSBundle mainBundle], @"Build %@\n\n", @"Build version line in the about window; placeholder is the build number"), versionNumber];
         NSAttributedString *whatsNew = nil;
         if ([versionNumber hasPrefix:@"3.7."] || [versionString isEqualToString:@"unknown"]) {
             whatsNew = [self attributedStringWithLinkToURL:iTermAboutWindowControllerWhatsNewURLString
-                                                     title:@"What’s New in 3.7?\n"];
+                                                     title:NSLocalizedStringWithDefaultValue(@"AboutWindow.WhatsNew", nil, [NSBundle mainBundle], @"What’s New in 3.7?\n", @"Link title in the about window that opens the whats-new page for version 3.7")];
         }
 
         NSAttributedString *webAString = [self attributedStringWithLinkToURL:@"https://iterm2.com/"
-                                                                       title:@"Home Page"];
+                                                                       title:NSLocalizedStringWithDefaultValue(@"AboutWindow.HomePage", nil, [NSBundle mainBundle], @"Home Page", @"Link title in the about window that opens the iTerm2 home page")];
         NSAttributedString *bugsAString =
                 [self attributedStringWithLinkToURL:@"https://iterm2.com/bugs"
-                                              title:@"Report a bug"];
+                                              title:NSLocalizedStringWithDefaultValue(@"AboutWindow.ReportBug", nil, [NSBundle mainBundle], @"Report a bug", @"Link title in the about window that opens the bug reporting page")];
         NSAttributedString *creditsAString =
                 [self attributedStringWithLinkToURL:@"https://iterm2.com/credits"
-                                              title:@"Credits"];
+                                              title:NSLocalizedStringWithDefaultValue(@"AboutWindow.Credits", nil, [NSBundle mainBundle], @"Credits", @"Link title in the about window that opens the credits page")];
 
         // Force IBOutlets to be bound by creating window.
         [self window];
 
         NSDictionary *versionAttributes = @{ NSForegroundColorAttributeName: [NSColor controlTextColor] };
+        // Localization unneeded
         NSAttributedString *bullet = [[NSAttributedString alloc] initWithString:@" ∙ "
                                                                      attributes:versionAttributes];
         [_dynamicText setLinkTextAttributes:self.linkTextViewAttributes];
@@ -284,7 +287,7 @@ static const CGFloat kSponsorRowY = 170.0;
 }
 
 - (NSAttributedString *)defaultPatronsString {
-    NSString *string = [NSString stringWithFormat:@"Loading supporters…"];
+    NSString *string = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"AboutWindow.LoadingSupporters", nil, [NSBundle mainBundle], @"Loading supporters…", @"Placeholder text shown in the about window while the patron list loads")];
     NSMutableAttributedString *attributedString =
         [[NSMutableAttributedString alloc] initWithString:string
                                                attributes:self.attributes];
@@ -303,7 +306,7 @@ static const CGFloat kSponsorRowY = 170.0;
 
 - (void)setPatrons:(NSArray *)patronNames {
     if (!patronNames.count) {
-        [self setPatronsString:[[NSAttributedString alloc] initWithString:@"Error loading patrons :("
+        [self setPatronsString:[[NSAttributedString alloc] initWithString:NSLocalizedStringWithDefaultValue(@"AboutWindow.ErrorLoadingPatrons", nil, [NSBundle mainBundle], @"Error loading patrons :(", @"Text shown in the about window when the patron list failed to load")
                                                                 attributes:[self attributes]]
                        animate:NO];
         return;
@@ -315,6 +318,7 @@ static const CGFloat kSponsorRowY = 170.0;
     NSMutableAttributedString *attributedString =
         [[NSMutableAttributedString alloc] initWithString:string
                                                attributes:attributes];
+    // Localization unneeded
     NSAttributedString *period = [[NSAttributedString alloc] initWithString:@"."];
     [attributedString appendAttributedString:period];
 

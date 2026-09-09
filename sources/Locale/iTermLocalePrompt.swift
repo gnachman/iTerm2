@@ -105,7 +105,7 @@ extension NSPopUpButton {
             }
         }
         menu?.addItem(.separator())
-        menu?.addItem(withTitle: "Locales with wrong encoding", action: #selector(Placeholder.placeholder(_:)), keyEquivalent: "")
+        menu?.addItem(withTitle: String(localized: "LocalePrompt.WrongEncodingSection", defaultValue: "Locales with wrong encoding", comment: "Disabled section header in a menu listing locales that use the wrong encoding"), action: #selector(Placeholder.placeholder(_:)), keyEquivalent: "")
         menu?.items.last?.target = Placeholder.instance
         for components in bad {
             if let quality = index[components.languageCode], quality < defaultIndexQuality {
@@ -124,7 +124,7 @@ extension NSPopUpButton {
 class iTermLocalePromptAlert {
     private let languages: [String]
     private var popup = NSPopUpButton(frame: .zero, pullsDown: false)
-    var message = "No valid UNIX locale exists for your computer’s current language and country. This may cause command-line apps to misbehave. Please select one from the list below."
+    var message = String(localized: "LocalePrompt.Message", defaultValue: "No valid UNIX locale exists for your computer’s current language and country. This may cause command-line apps to misbehave. Please select one from the list below.", comment: "Explanation shown when no valid UNIX locale exists for the user’s language and country")
     @objc var allowRemember = true
     private let profileName: String?
     var arrangementName: String?
@@ -145,8 +145,8 @@ class iTermLocalePromptAlert {
     func run(window: NSWindow?, cancelUsesC: Bool) -> (String?, Bool, String?) {
         let alert = NSAlert()
         alert.messageText = message
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: cancelUsesC ? "Use Minimal POSIX Locale" : "Cancel")
+        alert.addButton(withTitle: iTermLocalizedOK())
+        alert.addButton(withTitle: cancelUsesC ? String(localized: "LocalePrompt.UseMinimalPOSIX", defaultValue: "Use Minimal POSIX Locale", comment: "Button that selects a minimal POSIX locale instead of cancelling") : iTermLocalizedCancel())
 
         let wrapper = NSStackView()
         wrapper.orientation = .vertical
@@ -166,9 +166,9 @@ class iTermLocalePromptAlert {
         alert.showsSuppressionButton = allowRemember
         if allowRemember, let profileName {
             if let arrangementName {
-                alert.suppressionButton?.title = "Save selection to arrangement \(arrangementName)"
+                alert.suppressionButton?.title = String(localized: "LocalePrompt.SaveToArrangement", defaultValue: "Save selection to arrangement \(arrangementName)", comment: "Suppression checkbox that saves the locale selection to an arrangement; placeholder is the arrangement name")
             } else {
-                alert.suppressionButton?.title = "Save selection to profile \(profileName)"
+                alert.suppressionButton?.title = String(localized: "LocalePrompt.SaveToProfile", defaultValue: "Save selection to profile \(profileName)", comment: "Suppression checkbox that saves the locale selection to a profile; placeholder is the profile name")
             }
         }
         let popup = self.popup

@@ -289,7 +289,7 @@ final class ConductorIT2Demux {
                     // command has started we drop silently (above) to avoid racing its
                     // output down the same channel.
                     sendLine(connid, IT2FrameType.stderr,
-                             "it2: request too large (over \(Self.maxFrameLength / (1 << 20)) MiB over SSH integration); run it locally instead")
+                             String(localized: "IT2Proxy.RequestTooLarge", defaultValue: "it2: request too large (over \(String(describing: Self.maxFrameLength / (1 << 20))) MiB over SSH integration); run it locally instead", comment: "Error when an it2 request exceeds the size cap; the number is the cap in MiB"))
                     finish(connid, code: 2)
                 }
                 return
@@ -332,7 +332,7 @@ final class ConductorIT2Demux {
         conn.started = true
         guard let object = try? JSONSerialization.jsonObject(with: hello) as? [String: Any] else {
             logger("Malformed HELLO for \(connid)")
-            sendLine(connid, IT2FrameType.stderr, "it2: malformed request")
+            sendLine(connid, IT2FrameType.stderr, String(localized: "IT2Proxy.MalformedRequest", defaultValue: "it2: malformed request", comment: "Error when the it2 HELLO payload is not valid JSON"))
             finish(connid, code: 2)
             return
         }
@@ -343,7 +343,7 @@ final class ConductorIT2Demux {
         // same-user process timing many connections recover the nonce byte by byte.
         guard !expected.isEmpty, it2ConstantTimeEqual(helloNonce, expected) else {
             logger("it2 HELLO nonce mismatch for \(connid)")
-            sendLine(connid, IT2FrameType.stderr, "it2: authorization failed")
+            sendLine(connid, IT2FrameType.stderr, String(localized: "IT2Proxy.AuthorizationFailed", defaultValue: "it2: authorization failed", comment: "Error when the it2 HELLO nonce does not match"))
             finish(connid, code: 1)
             return
         }
@@ -478,6 +478,7 @@ extension Conductor {
     // Console attribution (originDisplayName) and the user-facing authorization
     // announcement, so the console entry and the permission prompt can never diverge.
     var it2DisplayName: String {
+        // Localization unneeded
         "ssh " + sshIdentity.compactDescription
     }
 
@@ -541,7 +542,7 @@ extension Conductor {
                     return cancel
                 }
                 guard iTermAPIHelper.isEnabled() else {
-                    emitStderr("The iTerm2 Python API is not enabled (Settings > General > Magic).")
+                    emitStderr(String(localized: "IT2Proxy.APINotEnabled", defaultValue: "The iTerm2 Python API is not enabled (Settings > General > Magic).", comment: "Error when the iTerm2 Python API is disabled"))
                     finish(2)
                     return cancel
                 }
@@ -555,7 +556,7 @@ extension Conductor {
                         return
                     }
                     guard granted else {
-                        emitStderr("Permission denied: iTerm2 API access was not granted for this session.")
+                        emitStderr(String(localized: "IT2Proxy.PermissionDenied", defaultValue: "Permission denied: iTerm2 API access was not granted for this session.", comment: "Error when the user has not granted it2-over-ssh API access"))
                         finish(1)
                         return
                     }

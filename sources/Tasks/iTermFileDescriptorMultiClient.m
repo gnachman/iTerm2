@@ -785,7 +785,7 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
         [rateLimit performRateLimitedBlock:^{
             DLog(@"Called");
             NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = @"Problem Starting iTerm2 Daemon";
+            alert.messageText = NSLocalizedStringWithDefaultValue(@"MultiClient.DaemonStartFailed", nil, [NSBundle mainBundle], @"Problem Starting iTerm2 Daemon", @"Alert title shown when the iTerm2 daemon fails to start");
             alert.informativeText = message;
             [alert runModal];
         }];
@@ -832,7 +832,7 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
     NSString *desiredPath = [self serverPath];
     if (!desiredPath) {
         [self showError:nil
-                message:[NSString stringWithFormat:@"Neither ~/Library/Application Support/iTerm2 nor ~/.iterm2 are writable directories. This prevents the session restoration server from running. Please correct the problem and restart iTerm2."]
+                message:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"MultiClient.NoWritableDirectory", nil, [NSBundle mainBundle], @"Neither ~/Library/Application Support/iTerm2 nor ~/.iterm2 are writable directories. This prevents the session restoration server from running. Please correct the problem and restart iTerm2.", @"Error shown when neither support directory is writable")]
                  badURL:nil];
         return nil;
     }
@@ -849,10 +849,10 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
         if (!sourcePath || ![fileManager fileExistsAtPath:sourcePath]) {
             dispatch_sync(dispatch_get_main_queue(), ^{
                 NSAlert *alert = [[NSAlert alloc] init];
-                alert.messageText = @"Required File Missing";
-                alert.informativeText = @"The iTermServer executable is missing from the application bundle. This indicates iTerm2 is corrupted or incomplete. Please reinstall iTerm2 from the official website.";
+                alert.messageText = NSLocalizedStringWithDefaultValue(@"MultiClient.RequiredFileMissingTitle", nil, [NSBundle mainBundle], @"Required File Missing", @"Title of alert shown when iTermServer is missing from the bundle");
+                alert.informativeText = NSLocalizedStringWithDefaultValue(@"MultiClient.RequiredFileMissingBody", nil, [NSBundle mainBundle], @"The iTermServer executable is missing from the application bundle. This indicates iTerm2 is corrupted or incomplete. Please reinstall iTerm2 from the official website.", @"Body of alert shown when iTermServer is missing from the bundle");
                 alert.alertStyle = NSAlertStyleCritical;
-                [alert addButtonWithTitle:@"Quit"];
+                [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"MultiClient.Quit", nil, [NSBundle mainBundle], @"Quit", @"Button to quit iTerm2 when a required file is missing")];
                 [alert runModal];
 
                 // Terminate the application
@@ -867,7 +867,7 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
                               error:&error];
         if (error) {
             [self showError:error
-                    message:[NSString stringWithFormat:@"Could not copy %@ to %@: %@", sourcePath, desiredPath, error.localizedDescription]
+                    message:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"MultiClient.CouldNotCopy", nil, [NSBundle mainBundle], @"Could not copy %1$@ to %2$@: %3$@", @"Error message; first %@ is source path, second is destination path, third is the error"), sourcePath, desiredPath, error.localizedDescription]
                      badURL:[NSURL fileURLWithPath:desiredPath]];
             return nil;
         }
@@ -879,7 +879,7 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
         NSDictionary *attributes = [fileManager attributesOfItemAtPath:desiredPath error:&error];
         if (error) {
             [self showError:error
-                    message:[NSString stringWithFormat:@"Could not check permissions on %@", desiredPath]
+                    message:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"MultiClient.CouldNotCheckPermissions", nil, [NSBundle mainBundle], @"Could not check permissions on %@", @"Error message; %@ is a file path"), desiredPath]
                      badURL:[NSURL fileURLWithPath:desiredPath]];
             return nil;
         }
@@ -897,7 +897,7 @@ static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClie
                                                 error:&error];
         if (error) {
             [self showError:error
-                    message:[NSString stringWithFormat:@"Could not set 0700 permissions on %@", desiredPath]
+                    message:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"MultiClient.CouldNotSetPermissions", nil, [NSBundle mainBundle], @"Could not set 0700 permissions on %@", @"Error message; %@ is a file path"), desiredPath]
                      badURL:[NSURL fileURLWithPath:desiredPath]];
             return nil;
         }

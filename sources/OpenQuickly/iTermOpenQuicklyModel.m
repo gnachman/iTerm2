@@ -182,28 +182,35 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 
 // Returns a function PTYSession -> (Feature name, Feature value) that gives the value which most distinguishes sessions from one another.
 - (iTermTuple<NSString *, NSString *> *(^)(PTYSession *))detailFunctionForSessions:(NSArray<PTYSession *> *)sessions {
+    // These blocks run per session per keystroke, so hoist the localized feature names out of the
+    // block bodies (the strings are constant across sessions and calls).
+    NSString *directoryName = NSLocalizedStringWithDefaultValue(@"OpenQuickly.FeatureDirectory", nil, [NSBundle mainBundle], @"Directory", @"Open Quickly feature name: directory");
+    NSString *commandName = NSLocalizedStringWithDefaultValue(@"OpenQuickly.FeatureCommand", nil, [NSBundle mainBundle], @"Command", @"Open Quickly feature name: command");
+    NSString *hostName = NSLocalizedStringWithDefaultValue(@"OpenQuickly.FeatureHost", nil, [NSBundle mainBundle], @"Host", @"Open Quickly feature name: host");
+    NSString *badgeName = NSLocalizedStringWithDefaultValue(@"OpenQuickly.FeatureBadge", nil, [NSBundle mainBundle], @"Badge", @"Open Quickly feature name: badge");
+    NSString *webSiteName = NSLocalizedStringWithDefaultValue(@"OpenQuickly.FeatureWebSite", nil, [NSBundle mainBundle], @"Web Site", @"Open Quickly feature name: web site");
     iTermTriple<NSString *, NSString *, NSNumber *> *(^pwd)(PTYSession *) = ^id(PTYSession *session) {
-        return [iTermTriple tripleWithObject:@"Directory"
+        return [iTermTriple tripleWithObject:directoryName
                                    andObject:session.variablesScope.path
                                    object:@(session.variablesScope.path.length > 0)];
     };
     iTermTriple<NSString *, NSString *, NSNumber *> *(^command)(PTYSession *) = ^id(PTYSession *session) {
-        return [iTermTriple tripleWithObject:@"Command"
+        return [iTermTriple tripleWithObject:commandName
                                    andObject:session.commands.lastObject
                                    object:@(session.commands.lastObject.length > 0)];
     };
     iTermTriple<NSString *, NSString *, NSNumber *> *(^hostname)(PTYSession *) = ^id(PTYSession *session) {
-        return [iTermTriple tripleWithObject:@"Host"
+        return [iTermTriple tripleWithObject:hostName
                                    andObject:session.currentHost.usernameAndHostname
                                    object:@(session.currentHost != nil)];
     };
     iTermTriple<NSString *, NSString *, NSNumber *> *(^badge)(PTYSession *) = ^id(PTYSession *session) {
-        return [iTermTriple tripleWithObject:@"Badge"
+        return [iTermTriple tripleWithObject:badgeName
                                    andObject:session.badgeLabel
                                    object:@(session.badgeLabel.length > 0)];
     };
     iTermTriple<NSString *, NSString *, NSNumber *> *(^webSite)(PTYSession *) = ^id(PTYSession *session) {
-        return [iTermTriple tripleWithObject:@"Web Site"
+        return [iTermTriple tripleWithObject:webSiteName
                                    andObject:session.webSiteTitle ?: @""
                                       object:@(session.webSiteTitle.length > 0)];
     };
@@ -384,7 +391,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         NSFontAttributeName: [NSFont boldSystemFontOfSize:[NSFont systemFontSize]]
     };
     NSMutableAttributedString *detail =
-        [[NSMutableAttributedString alloc] initWithString:menuItem.alternate ? @"Alternate menu item under " : @"Menu item under "
+        [[NSMutableAttributedString alloc] initWithString:menuItem.alternate ? NSLocalizedStringWithDefaultValue(@"OpenQuickly.AlternateMenuItemUnder", nil, [NSBundle mainBundle], @"Alternate menu item under ", @"Open Quickly detail prefix for an alternate menu item") : NSLocalizedStringWithDefaultValue(@"OpenQuickly.MenuItemUnder", nil, [NSBundle mainBundle], @"Menu item under ", @"Open Quickly detail prefix for a menu item")
                                                attributes:regularAttributes];
     NSString *combinedPath = [path componentsJoinedByString:@" > "];
     NSAttributedString *breadcrumbs = [[NSAttributedString alloc] initWithString:combinedPath
@@ -411,7 +418,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         return nil;
     }
     item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
-                                                                    value:[NSString stringWithFormat:@"Named mark “%@”", namedMark.name]
+                                                                    value:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"OpenQuickly.NamedMark", nil, [NSBundle mainBundle], @"Named mark “%@”", @"Open Quickly detail for a named mark; %@ is the mark name"), namedMark.name]
                                                        highlightedIndexes:nil];
     item.title = attributedName;
     item.identifier = namedMark.guid;
@@ -432,25 +439,25 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
             if (multipleDisplays) {
                 NSString *name = [term.window.screen it_uniqueName];
                 if (name) {
-                    [features addObject:[NSString stringWithFormat:@"On %@", name]];
+                    [features addObject:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"OpenQuickly.OnScreen", nil, [NSBundle mainBundle], @"On %@", @"Open Quickly window feature naming the screen; %@ is the screen name"), name]];
                 } else {
-                    [features addObject:@"Offscreen"];
+                    [features addObject:NSLocalizedStringWithDefaultValue(@"OpenQuickly.Offscreen", nil, [NSBundle mainBundle], @"Offscreen", @"Open Quickly window feature: window is offscreen")];
                 }
             }
             if (term.window.isMiniaturized) {
-                [features addObject:@"Miniaturized"];
+                [features addObject:NSLocalizedStringWithDefaultValue(@"OpenQuickly.Miniaturized", nil, [NSBundle mainBundle], @"Miniaturized", @"Open Quickly window feature: window is miniaturized")];
             }
             if (term.anyFullScreen) {
-                [features addObject:@"Full screen"];
+                [features addObject:NSLocalizedStringWithDefaultValue(@"OpenQuickly.FullScreen", nil, [NSBundle mainBundle], @"Full screen", @"Open Quickly window feature: window is full screen")];
             }
             if (!term.window.isOnActiveSpace && !(term.window.collectionBehavior & NSWindowCollectionBehaviorCanJoinAllSpaces)) {
-                [features addObject:@"On other Space"];
+                [features addObject:NSLocalizedStringWithDefaultValue(@"OpenQuickly.OnOtherSpace", nil, [NSBundle mainBundle], @"On other Space", @"Open Quickly window feature: window is on another Space")];
             }
             if (term.isHotKeyWindow) {
                 iTermProfileHotKey *profileHotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:term];
                 iTermShortcut *shortcut = profileHotkey.shortcuts.firstObject;
                 if (shortcut) {
-                    [features addObject:[NSString stringWithFormat:@"Hotkey %@", shortcut.stringValue]];
+                    [features addObject:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"OpenQuickly.Hotkey", nil, [NSBundle mainBundle], @"Hotkey %@", @"Open Quickly window feature: hotkey; %@ is the shortcut"), shortcut.stringValue]];
                 } else if (profileHotkey.hasModifierActivation) {
                     const iTermHotKeyModifierActivation mod = profileHotkey.modifierActivation;
                     NSEventModifierFlags flags = 0;
@@ -470,7 +477,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
                     }
                     if (flags) {
                         NSString *key = [NSString stringForModifiersWithMask:flags];
-                        [features addObject:[NSString stringWithFormat:@"Hotkey %@%@", key, key]];
+                        [features addObject:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"OpenQuickly.HotkeyModifiers", nil, [NSBundle mainBundle], @"Hotkey %1$@%2$@", @"Open Quickly window feature: hotkey with modifiers; both %@ are modifier symbols"), key, key]];
                     }
                 }
             }
@@ -502,9 +509,9 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         if (newSessionWithProfileItem.score > 0) {
             NSString *theValue;
             if (!haveCurrentWindow || [profile[KEY_PREVENT_TAB] boolValue]) {
-                theValue = @"Create a new window with this profile";
+                theValue = NSLocalizedStringWithDefaultValue(@"OpenQuickly.CreateNewWindowWithProfile", nil, [NSBundle mainBundle], @"Create a new window with this profile", @"Open Quickly action: create a new window with this profile");
             } else {
-                theValue = @"Create a new tab with this profile";
+                theValue = NSLocalizedStringWithDefaultValue(@"OpenQuickly.CreateNewTabWithProfile", nil, [NSBundle mainBundle], @"Create a new tab with this profile", @"Open Quickly action: create a new tab with this profile");
             }
             newSessionWithProfileItem.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
                                                                                                  value:theValue
@@ -534,7 +541,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         item.score = [self scoreForBookmarkTitle:triple.firstObject url:triple.secondObject matcher:matcher attributedName:attributedName];
         if (item.score > 0) {
             item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
-                                                                            value:@"Open Bookmark in Browser"
+                                                                            value:NSLocalizedStringWithDefaultValue(@"OpenQuickly.OpenBookmarkInBrowser", nil, [NSBundle mainBundle], @"Open Bookmark in Browser", @"Open Quickly action: open a bookmark in the browser")
                                                                highlightedIndexes:nil];
             item.title = attributedName;
             item.identifier = [triple.secondObject absoluteString];
@@ -555,7 +562,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         item.score = [self scoreForBookmarkTitle:triple.firstObject url:triple.secondObject matcher:matcher attributedName:attributedName];
         if (item.score > 0) {
             item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
-                                                                            value:@"Open Visited Site in Browser"
+                                                                            value:NSLocalizedStringWithDefaultValue(@"OpenQuickly.OpenVisitedSiteInBrowser", nil, [NSBundle mainBundle], @"Open Visited Site in Browser", @"Open Quickly action: open a visited site in the browser")
                                                                highlightedIndexes:nil];
             item.title = attributedName;
             item.identifier = [triple.secondObject absoluteString];
@@ -588,7 +595,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         item.score = [self scoreForURL:url matcher:matcher attributedName:attributedName];
         if (item.score > 0) {
             item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
-                                                                            value:@"Open URL in Browser"
+                                                                            value:NSLocalizedStringWithDefaultValue(@"OpenQuickly.OpenURLInBrowser", nil, [NSBundle mainBundle], @"Open URL in Browser", @"Open Quickly action: open a URL in the browser")
                                                                highlightedIndexes:nil];
             item.title = attributedName;
             item.identifier = matcher.query;
@@ -623,7 +630,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
         item.score = [self scoreForColorPreset:name matcher:matcher attributedName:attributedName];
         if (item.score > 0) {
-            NSString *value = [NSString stringWithFormat:@"Load color preset ”%@“", name];
+            NSString *value = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"OpenQuickly.LoadColorPreset", nil, [NSBundle mainBundle], @"Load color preset ”%@“", @"Open Quickly action: load a color preset; %@ is the preset name"), name];
             item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
                                                                             value:value
                                                                highlightedIndexes:nil];
@@ -646,7 +653,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         changeProfileItem.score = [self scoreForProfile:profile matcher:matcher attributedName:attributedName];
         if (changeProfileItem.score > 0) {
             changeProfileItem.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
-                                                                                         value:@"Change current session’s profile"
+                                                                                         value:NSLocalizedStringWithDefaultValue(@"OpenQuickly.ChangeProfile", nil, [NSBundle mainBundle], @"Change current session’s profile", @"Open Quickly action: change the current session profile")
                                                                             highlightedIndexes:nil];
             changeProfileItem.title = attributedName;
             changeProfileItem.identifier = profile[KEY_GUID];
@@ -690,7 +697,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     iTermOpenQuicklyInvocationItem *item = [[iTermOpenQuicklyInvocationItem alloc] init];
     item.score = 1;
     item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
-                                                                    value:@"Invoke"
+                                                                    value:NSLocalizedStringWithDefaultValue(@"OpenQuickly.Invoke", nil, [NSBundle mainBundle], @"Invoke", @"Open Quickly action: invoke a function call")
                                                        highlightedIndexes:nil];
     NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
     item.score = [self scoreForInvocation:invocation matcher:matcher attributedName:attributedName];
@@ -768,7 +775,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         return nil;
     }
     snippetItem.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
-                                                                           value:[NSString stringWithFormat:@"Send snippet “%@”. Press ⌥ to edit first.", snippet.displayTitle]
+                                                                           value:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"OpenQuickly.SendSnippet", nil, [NSBundle mainBundle], @"Send snippet “%@”. Press ⌥ to edit first.", @"Open Quickly action: send a snippet; %@ is the snippet title"), snippet.displayTitle]
                                                               highlightedIndexes:nil];
     snippetItem.title = attributedName;
     snippetItem.identifier = snippet.guid;
@@ -787,7 +794,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     if (item.score > 0) {
         item.inTabs = inTabs;
         item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
-                                                                        value:inTabs ? @"Restore window arrangement in tabs" : @"Restore window arrangement"
+                                                                        value:inTabs ? NSLocalizedStringWithDefaultValue(@"OpenQuickly.RestoreArrangementInTabs", nil, [NSBundle mainBundle], @"Restore window arrangement in tabs", @"Open Quickly action: restore a window arrangement in tabs") : NSLocalizedStringWithDefaultValue(@"OpenQuickly.RestoreArrangement", nil, [NSBundle mainBundle], @"Restore window arrangement", @"Open Quickly action: restore a window arrangement")
                                                            highlightedIndexes:nil];
         item.title = attributedName;
         item.identifier = arrangementName;
@@ -806,7 +813,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
                                attributedName:attributedName];
     if (item.score > 0) {
         item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
-                                                                        value:@"Run Script"
+                                                                        value:NSLocalizedStringWithDefaultValue(@"OpenQuickly.RunScript", nil, [NSBundle mainBundle], @"Run Script", @"Open Quickly action: run a script")
                                                            highlightedIndexes:nil];
         item.title = attributedName;
         item.identifier = scriptName;
@@ -1282,7 +1289,7 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         score += [self scoreUsingMatcher:matcher
                                documents:@[ session.badgeLabel ]
                               multiplier:kSessionBadgeMultiplier
-                                    name:@"Badge"
+                                    name:NSLocalizedStringWithDefaultValue(@"OpenQuickly.FeatureBadge", nil, [NSBundle mainBundle], @"Badge", @"Open Quickly feature name: badge")
                                 features:features
                                    limit:maxScorePerFeature];
     }
@@ -1290,42 +1297,42 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
     score += [self scoreUsingMatcher:matcher
                            documents:session.commands
                           multiplier:kCommandMultiplier
-                                name:@"Command"
+                                name:NSLocalizedStringWithDefaultValue(@"OpenQuickly.FeatureCommand", nil, [NSBundle mainBundle], @"Command", @"Open Quickly feature name: command")
                             features:features
                                limit:maxScorePerFeature];
 
     score += [self scoreUsingMatcher:matcher
                            documents:session.directories
                           multiplier:kDirectoryMultiplier
-                                name:@"Directory"
+                                name:NSLocalizedStringWithDefaultValue(@"OpenQuickly.FeatureDirectory", nil, [NSBundle mainBundle], @"Directory", @"Open Quickly feature name: directory")
                             features:features
                                limit:maxScorePerFeature];
 
     score += [self scoreUsingMatcher:matcher
                            documents:[self hostnamesInHosts:session.hosts]
                           multiplier:kHostnameMultiplier
-                                name:@"Host"
+                                name:NSLocalizedStringWithDefaultValue(@"OpenQuickly.FeatureHost", nil, [NSBundle mainBundle], @"Host", @"Open Quickly feature name: host")
                             features:features
                                limit:maxScorePerFeature];
 
     score += [self scoreUsingMatcher:matcher
                            documents:[self usernamesInHosts:session.hosts]
                           multiplier:kUsernameMultiplier
-                                name:@"User"
+                                name:NSLocalizedStringWithDefaultValue(@"OpenQuickly.FeatureUser", nil, [NSBundle mainBundle], @"User", @"Open Quickly feature name: user")
                             features:features
                                limit:maxScorePerFeature];
 
     score += [self scoreUsingMatcher:matcher
                            documents:@[ session.originalProfile[KEY_NAME] ?: @"" ]
                           multiplier:kProfileNameMultiplier
-                                name:@"Profile"
+                                name:NSLocalizedStringWithDefaultValue(@"OpenQuickly.FeatureProfile", nil, [NSBundle mainBundle], @"Profile", @"Open Quickly feature name: profile")
                             features:features
                                limit:maxScorePerFeature];
 
     score += [self scoreUsingMatcher:matcher
                            documents:[self gitBranchesInSession:session]
                           multiplier:kGitBranchMultiplier
-                                name:@"Git Branch"
+                                name:NSLocalizedStringWithDefaultValue(@"OpenQuickly.FeatureGitBranch", nil, [NSBundle mainBundle], @"Git Branch", @"Open Quickly feature name: git branch")
                             features:features
                                limit:maxScorePerFeature];
 

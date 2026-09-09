@@ -1,0 +1,294 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "11.label" : {
+      "comment" : "Class = \"NSTabViewItem\"; label = \"Description\"; ObjectID = \"11\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beschreibung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Description"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "説明"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descrição"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Описание"
+          }
+        }
+      }
+    },
+    "12.label" : {
+      "comment" : "Class = \"NSTabViewItem\"; label = \"Crash Log\"; ObjectID = \"12\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Absturzprotokoll"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Crash Log"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "クラッシュログ"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log de falhas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Журнал сбоя"
+          }
+        }
+      }
+    },
+    "5.title" : {
+      "comment" : "Class = \"NSWindow\"; title = \"Crash Reporter\"; ObjectID = \"5\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Absturzbericht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Crash Reporter"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "クラッシュレポーター"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relatório de falhas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отчёт о сбое"
+          }
+        }
+      }
+    },
+    "84.title" : {
+      "comment" : "Class = \"NSTextFieldCell\"; title = \"It appears that {APPNAME} crashed the last time it was used. Do you want to send a crash log to the developers?\\n\\nCrash logs from Apple are not sent to other developers, so this is the only way the developers of {APPNAME} can find out about and fix this crash.\"; ObjectID = \"84\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es sieht so aus, als sei {APPNAME} beim letzten Gebrauch abgestürzt. Möchten Sie ein Absturzprotokoll an die Entwickler senden?\n\nAbsturzprotokolle von Apple werden nicht an andere Entwickler gesendet, daher ist dies die einzige Möglichkeit für die Entwickler von {APPNAME}, von diesem Absturz zu erfahren und ihn zu beheben."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "It appears that {APPNAME} crashed the last time it was used. Do you want to send a crash log to the developers?\n\nCrash logs from Apple are not sent to other developers, so this is the only way the developers of {APPNAME} can find out about and fix this crash."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "前回使用した際に{APPNAME}がクラッシュしたようです。クラッシュログを開発者に送信しますか？\n\nAppleのクラッシュログは他の開発者には送信されないため、これが{APPNAME}の開発者がこのクラッシュを把握して修正できる唯一の方法です。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parece que o {APPNAME} travou na última vez em que foi usado. Deseja enviar um log de falhas aos desenvolvedores?\n\nOs logs de falhas da Apple não são enviados a outros desenvolvedores, então esta é a única maneira de os desenvolvedores do {APPNAME} descobrirem e corrigirem esta falha."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Похоже, что {APPNAME} завершилось сбоем при последнем использовании. Хотите отправить журнал сбоя разработчикам?\n\nЖурналы сбоев от Apple не отправляются другим разработчикам, поэтому это единственный способ, с помощью которого разработчики {APPNAME} могут узнать об этом сбое и исправить его."
+          }
+        }
+      }
+    },
+    "85.title" : {
+      "comment" : "Class = \"NSTextFieldCell\"; title = \"You can delete any information you do not want transmitted, but this will make it more difficult to detect the bug. By default, the crash log as well as what Mac you are using and your settings are transmitted.\"; ObjectID = \"85\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie können alle Informationen löschen, die Sie nicht übermitteln möchten. Dies erschwert jedoch die Fehlersuche. Standardmäßig werden das Absturzprotokoll sowie Angaben zu Ihrem Mac und Ihren Einstellungen übermittelt."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You can delete any information you do not want transmitted, but this will make it more difficult to detect the bug. By default, the crash log as well as what Mac you are using and your settings are transmitted."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "送信したくない情報は削除できますが、そうするとバグの特定が難しくなります。デフォルトでは、クラッシュログに加えて、使用しているMacの種類や設定も送信されます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você pode apagar qualquer informação que não queira transmitir, mas isto tornará mais difícil detectar o bug. Por padrão, são transmitidos o log de falhas, o Mac que você está usando e seus ajustes."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вы можете удалить любую информацию, которую не хотите передавать, но это усложнит обнаружение ошибки. По умолчанию передаются журнал сбоя, а также сведения о вашем Mac и ваших настройках."
+          }
+        }
+      }
+    },
+    "86.title" : {
+      "comment" : "Class = \"NSButtonCell\"; title = \"Send\"; ObjectID = \"86\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Send"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "送信"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправить"
+          }
+        }
+      }
+    },
+    "87.title" : {
+      "comment" : "Class = \"NSButtonCell\"; title = \"Remind Me Later\"; ObjectID = \"87\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Später erinnern"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remind Me Later"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "後で通知"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lembrar mais tarde"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Напомнить позже"
+          }
+        }
+      }
+    },
+    "88.title" : {
+      "comment" : "Class = \"NSButtonCell\"; title = \"Discard\"; ObjectID = \"88\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwerfen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Discard"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "破棄"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descartar"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отклонить"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

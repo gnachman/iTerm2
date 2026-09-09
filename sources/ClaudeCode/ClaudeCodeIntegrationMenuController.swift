@@ -40,14 +40,11 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
 
     @objc func uninstall(_ sender: Any?) {
         let confirm = NSAlert()
-        confirm.messageText = "Uninstall Claude Code Integration?"
-        confirm.informativeText = "This removes the cc-status hook from "
-            + "~/.claude/settings.json, the Claude Code workgroup from your "
-            + "settings, and the Enter/Exit Workgroup triggers from every "
-            + "profile. You can reinstall any time using iTerm2 > Install Claude Code Integration."
+        confirm.messageText = String(localized: "ClaudeCode.UninstallTitle", defaultValue: "Uninstall Claude Code Integration?", comment: "Title of the uninstall confirmation dialog")
+        confirm.informativeText = String(localized: "ClaudeCode.UninstallBody", defaultValue: "This removes the cc-status hook from ~/.claude/settings.json, the Claude Code workgroup from your settings, and the Enter/Exit Workgroup triggers from every profile. You can reinstall any time using iTerm2 > Install Claude Code Integration.", comment: "Explanation of what uninstalling the Claude Code integration does")
         confirm.alertStyle = .warning
-        confirm.addButton(withTitle: "Uninstall")
-        confirm.addButton(withTitle: "Cancel")
+        confirm.addButton(withTitle: String(localized: "ClaudeCode.Uninstall", defaultValue: "Uninstall", comment: "Button to confirm uninstalling the Claude Code integration"))
+        confirm.addButton(withTitle: iTermLocalizedCancel())
         guard confirm.runModal() == .alertFirstButtonReturn else { return }
 
         // Hooks first — they're the only step that can fail (disk).
@@ -61,28 +58,22 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
             let detail: String
             switch hookResult {
             case .unreadable:
-                detail = "Could not read ~/.claude/settings.json — check "
-                    + "the file\u{2019}s permissions."
+                detail = String(localized: "ClaudeCode.HookUnreadable", defaultValue: "Could not read ~/.claude/settings.json — check the file\u{2019}s permissions.", comment: "Detail shown when the Claude Code settings file could not be read")
             case .malformed:
-                detail = "~/.claude/settings.json couldn\u{2019}t be parsed "
-                    + "as JSON. Open it in a text editor and check it for "
-                    + "syntax errors."
+                detail = String(localized: "ClaudeCode.HookMalformed", defaultValue: "~/.claude/settings.json couldn\u{2019}t be parsed as JSON. Open it in a text editor and check it for syntax errors.", comment: "Detail shown when the Claude Code settings file is not valid JSON")
             case .writeFailed:
-                detail = "Could not write to ~/.claude/settings.json — "
-                    + "check the file\u{2019}s permissions."
+                detail = String(localized: "ClaudeCode.HookWriteFailed", defaultValue: "Could not write to ~/.claude/settings.json — check the file\u{2019}s permissions.", comment: "Detail shown when the Claude Code settings file could not be written")
             case .success:
                 detail = ""  // unreachable; covered by outer guard
             @unknown default:
                 detail = ""
             }
             let failure = NSAlert()
-            failure.messageText = "Couldn\u{2019}t Remove Hooks"
-            failure.informativeText = "\(detail) Continue removing the "
-                + "workgroup and triggers anyway? cc-status will keep "
-                + "running until you fix the underlying issue and try again."
+            failure.messageText = String(localized: "ClaudeCode.HookRemovalFailedTitle", defaultValue: "Couldn\u{2019}t Remove Hooks", comment: "Title shown when Claude Code hook removal failed")
+            failure.informativeText = String(localized: "ClaudeCode.HookRemovalFailedBody", defaultValue: "\(detail) Continue removing the workgroup and triggers anyway? cc-status will keep running until you fix the underlying issue and try again.", comment: "Body shown when hook removal failed, asking whether to continue uninstalling")
             failure.alertStyle = .warning
-            failure.addButton(withTitle: "Continue")
-            failure.addButton(withTitle: "Cancel")
+            failure.addButton(withTitle: String(localized: "General.Continue", defaultValue: "Continue", comment: "Continue button"))
+            failure.addButton(withTitle: iTermLocalizedCancel())
             guard failure.runModal() == .alertFirstButtonReturn else { return }
         }
 
@@ -101,12 +92,10 @@ final class ClaudeCodeIntegrationMenuController: NSObject {
         // to offer).
         if iTermAPIHelper.isEnabled() {
             let apiAlert = NSAlert()
-            apiAlert.messageText = "Disable the Python API?"
-            apiAlert.informativeText = "The installer enabled iTerm2\u{2019}s "
-                + "Python API. Other scripts or integrations may be using "
-                + "it now. Leave it enabled, or turn it off?"
-            apiAlert.addButton(withTitle: "Leave Enabled")
-            apiAlert.addButton(withTitle: "Disable")
+            apiAlert.messageText = String(localized: "ClaudeCode.DisableAPITitle", defaultValue: "Disable the Python API?", comment: "Title asking whether to disable the Python API during uninstall")
+            apiAlert.informativeText = String(localized: "ClaudeCode.DisableAPIBody", defaultValue: "The installer enabled iTerm2\u{2019}s Python API. Other scripts or integrations may be using it now. Leave it enabled, or turn it off?", comment: "Explanation shown when asking whether to disable the Python API during uninstall")
+            apiAlert.addButton(withTitle: String(localized: "ClaudeCode.LeaveEnabled", defaultValue: "Leave Enabled", comment: "Button to leave the Python API enabled"))
+            apiAlert.addButton(withTitle: String(localized: "ClaudeCode.Disable", defaultValue: "Disable", comment: "Button to disable the Python API"))
             if apiAlert.runModal() == .alertSecondButtonReturn {
                 iTermAPIHelper.setEnabled(false)
             }

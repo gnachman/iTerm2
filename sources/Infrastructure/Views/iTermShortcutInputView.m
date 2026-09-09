@@ -153,11 +153,11 @@
     }
     NSString *string;
     if (isFirstResponder && self.hotkeyBeingRecorded.length == 0) {
-        string = @"Recording";
+        string = NSLocalizedStringWithDefaultValue(@"ShortcutInput.Recording", nil, [NSBundle mainBundle], @"Recording", @"Placeholder shown in a shortcut field while recording a shortcut");
     } else if (isFirstResponder) {
         string = self.hotkeyBeingRecorded;
     } else if (self.stringValue.length == 0) {
-        string = self.isEnabled ? @"Click to Set" : @"";
+        string = self.isEnabled ? NSLocalizedStringWithDefaultValue(@"ShortcutInput.ClickToSet", nil, [NSBundle mainBundle], @"Click to Set", @"Placeholder in an empty shortcut field prompting the user to set a shortcut") : @"";
     } else {
         string = self.stringValue;
     }
@@ -231,14 +231,30 @@
     if (event.type == NSEventTypeKeyDown) {
         iTermShortcut *shortcut = [iTermShortcut shortcutWithEvent:event
                                                      leaderAllowed:_leaderAllowed];
-        if (self.purpose && shortcut.smellsAccidental) {
+        if (self.purpose != iTermShortcutInputViewPurposeNone && shortcut.smellsAccidental) {
+            // Build a complete localized sentence per purpose rather than injecting a translated
+            // clause into a frame, whose word order and grammar differ by language.
+            NSString *confirmTitle = nil;
+            switch (self.purpose) {
+                case iTermShortcutInputViewPurposeNone:
+                    return;
+                case iTermShortcutInputViewPurposeHotkey:
+                    confirmTitle = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ShortcutInput.AccidentalConfirmHotkey", nil, [NSBundle mainBundle], @"Are you sure you want to use “%@” as a hotkey? This looks like a commonly used keystroke.", @"Confirmation when a chosen hotkey looks like a common keystroke; the placeholder is the shortcut"), shortcut.stringValue];
+                    break;
+                case iTermShortcutInputViewPurposeLeader:
+                    confirmTitle = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ShortcutInput.AccidentalConfirmLeader", nil, [NSBundle mainBundle], @"Are you sure you want to use “%@” as the leader? This looks like a commonly used keystroke.", @"Confirmation when a chosen leader key looks like a common keystroke; the placeholder is the shortcut"), shortcut.stringValue];
+                    break;
+                case iTermShortcutInputViewPurposeOpenQuicklyHotkey:
+                    confirmTitle = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ShortcutInput.AccidentalConfirmOpenQuickly", nil, [NSBundle mainBundle], @"Are you sure you want to use “%@” as the Open Quickly hotkey? This looks like a commonly used keystroke.", @"Confirmation when a chosen Open Quickly hotkey looks like a common keystroke; the placeholder is the shortcut"), shortcut.stringValue];
+                    break;
+            }
             const iTermWarningSelection selection =
-            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Are you sure you want to use “%@” %@? This looks like a commonly used keystroke.", shortcut.stringValue, self.purpose]
-                                       actions:@[ @"OK", @"Cancel" ]
+            [iTermWarning showWarningWithTitle:confirmTitle
+                                       actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
                                      accessory:nil
                                     identifier:nil
                                    silenceable:kiTermWarningTypePersistent
-                                       heading:@"Confirm Shortcut"
+                                       heading:NSLocalizedStringWithDefaultValue(@"ShortcutInput.ConfirmHeading", nil, [NSBundle mainBundle], @"Confirm Shortcut", @"Heading of the confirmation shown when a chosen shortcut looks accidental")
                                         window:self.window];
             if (selection == kiTermWarningSelection1) {
                 [self revert];

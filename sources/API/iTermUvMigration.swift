@@ -103,15 +103,24 @@ class iTermUvMigration: NSObject {
         guard !remaps.isEmpty else {
             return ""
         }
-        let caveat = "Python versions are not always compatible across releases, so a bumped script may need small changes."
+        let caveat = String(localized: "UvMigration.CompatibilityNote",
+                            defaultValue: "Python versions are not always compatible across releases, so a bumped script may need small changes.",
+                            comment: "Trailing note in the startup warning shown when migration bumps a script’s pinned Python version")
         if remaps.count == 1, let only = remaps.first {
-            return "The script “\(only.scriptName)” was written for Python \(only.fromVersion), "
-                + "which is no longer available, so it now uses Python \(only.toVersion). "
-                + caveat
+            let sentence = String(localized: "UvMigration.SingleScriptBumped",
+                                 defaultValue: "The script “\(only.scriptName)” was written for Python \(only.fromVersion), which is no longer available, so it now uses Python \(only.toVersion).",
+                                 comment: "Startup warning body when one script’s Python version was bumped; \\(only.scriptName) is the script name, \\(only.fromVersion) the old Python version, \\(only.toVersion) the new one")
+            return sentence + " " + caveat
         }
-        let lines = remaps.map { "• “\($0.scriptName)”: \($0.fromVersion) → \($0.toVersion)" }
-        return "Some scripts were written for Python versions that are no longer available "
-            + "and now use newer ones. " + caveat + "\n\n"
+        let lead = String(localized: "UvMigration.MultipleScriptsLead",
+                         defaultValue: "Some scripts were written for Python versions that are no longer available and now use newer ones.",
+                         comment: "Lead sentence of the startup warning shown when several scripts’ Python versions were bumped; a bulleted list of the scripts follows")
+        let lines = remaps.map { remap in
+            String(localized: "UvMigration.BulletLine",
+                   defaultValue: "• “\(remap.scriptName)”: \(remap.fromVersion) → \(remap.toVersion)",
+                   comment: "One bullet line in the startup warning listing a script whose Python version was bumped; \\(remap.scriptName) is the script name, \\(remap.fromVersion) the old Python version, \\(remap.toVersion) the new one")
+        }
+        return lead + " " + caveat + "\n\n"
             + lines.joined(separator: "\n")
     }
 

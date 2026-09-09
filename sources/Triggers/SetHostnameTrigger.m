@@ -11,7 +11,7 @@
 @implementation SetHostnameTrigger
 
 + (NSString *)title {
-    return @"Report User & Host";
+    return NSLocalizedStringWithDefaultValue(@"Trigger.SetHostname.Title", nil, [NSBundle mainBundle], @"Report User & Host", @"Trigger action name: report the current user and host name to iTerm2");
 }
 
 - (NSString *)description {

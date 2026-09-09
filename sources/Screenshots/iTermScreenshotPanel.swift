@@ -231,7 +231,7 @@ class iTermScreenshotPanel: NSPanel {
         self.isFloatingPanel = true
         self.becomesKeyOnlyIfNeeded = true
         self.hidesOnDeactivate = true  // Hide when iTerm2 is not active
-        self.title = "Make Screenshot"
+        self.title = String(localized: "ScreenshotPanel.Title", defaultValue: "Make Screenshot", comment: "Title of the screenshot panel window")
         self.isReleasedWhenClosed = false
         self.delegate = self
         setupUI()
@@ -325,7 +325,7 @@ class iTermScreenshotPanel: NSPanel {
         encodingProgressContainer.isHidden = true
         contentView.addSubview(encodingProgressContainer)
 
-        encodingProgressLabel = NSTextField(labelWithString: "Encoding…")
+        encodingProgressLabel = NSTextField(labelWithString: String(localized: "ScreenshotPanel.Encoding", defaultValue: "Encoding…", comment: "Progress label shown while encoding the screenshot"))
         encodingProgressLabel.translatesAutoresizingMaskIntoConstraints = false
         encodingProgressLabel.font = NSFont.systemFont(ofSize: 12)
         encodingProgressLabel.textColor = .labelColor
@@ -341,14 +341,14 @@ class iTermScreenshotPanel: NSPanel {
         encodingProgressBar.translatesAutoresizingMaskIntoConstraints = false
         encodingProgressContainer.addSubview(encodingProgressBar)
 
-        encodingCancelButton = NSButton(title: "Cancel", target: self, action: #selector(cancelEncodingClicked(_:)))
+        encodingCancelButton = NSButton(title: iTermLocalizedCancel(), target: self, action: #selector(cancelEncodingClicked(_:)))
         encodingCancelButton.bezelStyle = .rounded
         encodingCancelButton.controlSize = .small
         encodingCancelButton.translatesAutoresizingMaskIntoConstraints = false
         encodingProgressContainer.addSubview(encodingCancelButton)
 
         // Line range numerical controls
-        let lineRangeLabel = NSTextField(labelWithString: "Line range:")
+        let lineRangeLabel = NSTextField(labelWithString: String(localized: "ScreenshotPanel.LineRange", defaultValue: "Line range:", comment: "Label for the line range fields"))
         lineRangeLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(lineRangeLabel)
 
@@ -369,7 +369,7 @@ class iTermScreenshotPanel: NSPanel {
         startLineStepper.action = #selector(startLineStepperChanged(_:))
         contentView.addSubview(startLineStepper)
 
-        let toLabel = NSTextField(labelWithString: "to")
+        let toLabel = NSTextField(labelWithString: String(localized: "ScreenshotPanel.To", defaultValue: "to", comment: "Word between the start and end line range fields, as in “1 to 10”"))
         toLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(toLabel)
 
@@ -391,30 +391,30 @@ class iTermScreenshotPanel: NSPanel {
         contentView.addSubview(endLineStepper)
 
         // Annotations section
-        let annotationsLabel = NSTextField(labelWithString: "Annotations:")
+        let annotationsLabel = NSTextField(labelWithString: String(localized: "ScreenshotPanel.Annotations", defaultValue: "Annotations:", comment: "Section label for annotations"))
         annotationsLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(annotationsLabel)
 
-        let instructionLabel = NSTextField(labelWithString: "Select text in the terminal, then click a button below.")
+        let instructionLabel = NSTextField(labelWithString: String(localized: "ScreenshotPanel.SelectTextInstruction", defaultValue: "Select text in the terminal, then click a button below.", comment: "Instruction telling the user how to add annotations"))
         instructionLabel.translatesAutoresizingMaskIntoConstraints = false
         instructionLabel.font = NSFont.systemFont(ofSize: 11)
         instructionLabel.textColor = .secondaryLabelColor
         contentView.addSubview(instructionLabel)
 
-        addRedactionButton = NSButton(title: "Redact Selection", target: self, action: #selector(addRedactionClicked(_:)))
+        addRedactionButton = NSButton(title: String(localized: "ScreenshotPanel.RedactSelection", defaultValue: "Redact Selection", comment: "Button to redact the selected text"), target: self, action: #selector(addRedactionClicked(_:)))
         addRedactionButton.translatesAutoresizingMaskIntoConstraints = false
         addRedactionButton.bezelStyle = .rounded
         addRedactionButton.isEnabled = false
         contentView.addSubview(addRedactionButton)
 
-        addHighlightButton = NSButton(title: "Highlight Selection", target: self, action: #selector(addHighlightClicked(_:)))
+        addHighlightButton = NSButton(title: String(localized: "ScreenshotPanel.HighlightSelection", defaultValue: "Highlight Selection", comment: "Button to highlight the selected text"), target: self, action: #selector(addHighlightClicked(_:)))
         addHighlightButton.translatesAutoresizingMaskIntoConstraints = false
         addHighlightButton.bezelStyle = .rounded
         addHighlightButton.isEnabled = false
         contentView.addSubview(addHighlightButton)
 
         // Segmented control with "-" (remove selected) and "Clear All"
-        annotationActionsControl = NSSegmentedControl(labels: ["−", "Clear All"],
+        annotationActionsControl = NSSegmentedControl(labels: [String(localized: "ScreenshotPanel.RemoveSegment", defaultValue: "−", comment: "Segmented control label to remove the selected annotation"), String(localized: "ScreenshotPanel.ClearAll", defaultValue: "Clear All", comment: "Segmented control label to clear all annotations")],
                                                        trackingMode: .momentary,
                                                        target: self,
                                                        action: #selector(annotationActionClicked(_:)))
@@ -440,6 +440,7 @@ class iTermScreenshotPanel: NSPanel {
         annotationsTableView.usesAlternatingRowBackgroundColors = true
 
         let labelColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("label"))
+        // Localization unneeded
         labelColumn.title = "Label"
         labelColumn.minWidth = 200
         annotationsTableView.addTableColumn(labelColumn)
@@ -447,7 +448,7 @@ class iTermScreenshotPanel: NSPanel {
         annotationsScrollView.documentView = annotationsTableView
 
         // Empty state label
-        emptyStateLabel = NSTextField(labelWithString: "No annotations. Select text and click a button above.")
+        emptyStateLabel = NSTextField(labelWithString: String(localized: "ScreenshotPanel.NoAnnotations", defaultValue: "No annotations. Select text and click a button above.", comment: "Empty state shown when there are no annotations"))
         emptyStateLabel.translatesAutoresizingMaskIntoConstraints = false
         emptyStateLabel.font = NSFont.systemFont(ofSize: 11)
         emptyStateLabel.textColor = .tertiaryLabelColor
@@ -455,11 +456,11 @@ class iTermScreenshotPanel: NSPanel {
         contentView.addSubview(emptyStateLabel)
 
         // Method selection
-        let methodLabel = NSTextField(labelWithString: "Redaction method:")
+        let methodLabel = NSTextField(labelWithString: String(localized: "ScreenshotPanel.RedactionMethod", defaultValue: "Redaction method:", comment: "Label for the redaction method control"))
         methodLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(methodLabel)
 
-        segmentedControl = NSSegmentedControl(labels: ["Blur", "Solid Color"],
+        segmentedControl = NSSegmentedControl(labels: [String(localized: "ScreenshotPanel.Blur", defaultValue: "Blur", comment: "Redaction method: blur"), String(localized: "ScreenshotPanel.SolidColor", defaultValue: "Solid Color", comment: "Redaction method: solid color")],
                                                trackingMode: .selectOne,
                                                target: self,
                                                action: #selector(segmentChanged(_:)))
@@ -472,7 +473,7 @@ class iTermScreenshotPanel: NSPanel {
         blurControlsContainer.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(blurControlsContainer)
 
-        let blurLabel = NSTextField(labelWithString: "Blur radius:")
+        let blurLabel = NSTextField(labelWithString: String(localized: "ScreenshotPanel.BlurRadius", defaultValue: "Blur radius:", comment: "Label for the blur radius slider"))
         blurLabel.translatesAutoresizingMaskIntoConstraints = false
         blurControlsContainer.addSubview(blurLabel)
 
@@ -481,6 +482,7 @@ class iTermScreenshotPanel: NSPanel {
         blurRadiusSlider.translatesAutoresizingMaskIntoConstraints = false
         blurControlsContainer.addSubview(blurRadiusSlider)
 
+        // Localization unneeded
         blurRadiusValueLabel = NSTextField(labelWithString: "15")
         blurRadiusValueLabel.alignment = .right
         blurRadiusValueLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -492,7 +494,7 @@ class iTermScreenshotPanel: NSPanel {
         colorControlsContainer.isHidden = true
         contentView.addSubview(colorControlsContainer)
 
-        let colorLabel = NSTextField(labelWithString: "Fill color:")
+        let colorLabel = NSTextField(labelWithString: String(localized: "ScreenshotPanel.FillColor", defaultValue: "Fill color:", comment: "Label for the redaction fill color control"))
         colorLabel.translatesAutoresizingMaskIntoConstraints = false
         colorControlsContainer.addSubview(colorLabel)
 
@@ -513,11 +515,11 @@ class iTermScreenshotPanel: NSPanel {
         colorControlsContainer.addSubview(colorWell)
 
         // Buttons
-        let cancelButton = NSButton(title: "Cancel", target: self, action: #selector(cancelClicked(_:)))
+        let cancelButton = NSButton(title: iTermLocalizedCancel(), target: self, action: #selector(cancelClicked(_:)))
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(cancelButton)
 
-        copyButton = NSButton(title: "Copy to Clipboard", target: self, action: #selector(copyClicked(_:)))
+        copyButton = NSButton(title: String(localized: "ScreenshotPanel.CopyToClipboard", defaultValue: "Copy to Clipboard", comment: "Button to copy the screenshot to the clipboard"), target: self, action: #selector(copyClicked(_:)))
         copyButton.bezelStyle = .rounded
         copyButton.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(copyButton)
@@ -530,13 +532,13 @@ class iTermScreenshotPanel: NSPanel {
         largeScreenshotWarningLabel.isHidden = true
         contentView.addSubview(largeScreenshotWarningLabel)
 
-        let saveButton = NSButton(title: "Save", target: self, action: #selector(saveClicked(_:)))
+        let saveButton = NSButton(title: String(localized: "General.Save", defaultValue: "Save", comment: "Save button"), target: self, action: #selector(saveClicked(_:)))
         saveButton.keyEquivalent = "\r" // Return
         saveButton.bezelStyle = .rounded
         saveButton.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(saveButton)
 
-        let saveAsButton = NSButton(title: "Save As…", target: self, action: #selector(saveAsClicked(_:)))
+        let saveAsButton = NSButton(title: String(localized: "ScreenshotPanel.SaveAs", defaultValue: "Save As…", comment: "Button to save the screenshot to a chosen location"), target: self, action: #selector(saveAsClicked(_:)))
         saveAsButton.bezelStyle = .rounded
         saveAsButton.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(saveAsButton)
@@ -920,7 +922,7 @@ class iTermScreenshotPanel: NSPanel {
         NSLog("updateLargeScreenshotUI: lineRange=\(lineRange), maxLinesPerPart=\(cachedMaxLinesPerPart), numberOfParts=\(cachedNumberOfParts)")
 
         if cachedNumberOfParts > 1 {
-            largeScreenshotWarningLabel.stringValue = "⚠️ Large screenshot will be saved as \(cachedNumberOfParts) files."
+            largeScreenshotWarningLabel.stringValue = String(localized: "ScreenshotPanel.LargeScreenshotParts", defaultValue: "⚠️ Large screenshot will be saved as \(cachedNumberOfParts) files.", comment: "Warning that a large screenshot is split into multiple files; %lld is the number of files")
             largeScreenshotWarningLabel.isHidden = false
             copyButton.isEnabled = false
         } else {
@@ -963,7 +965,7 @@ class iTermScreenshotPanel: NSPanel {
             return
         }
 
-        let typePrefix = annotationType == .redaction ? "Redact" : "Highlight"
+        let typePrefix = annotationType == .redaction ? String(localized: "ScreenshotPanel.Redact", defaultValue: "Redact", comment: "Label prefix for a redaction annotation") : String(localized: "ScreenshotPanel.Highlight", defaultValue: "Highlight", comment: "Label prefix for a highlight annotation")
         let baseLabel = iTermScreenshotRedactionManager.labelForSelection(selection, textView: textView)
         let label = "\(typePrefix): \(baseLabel)"
         _ = redactionManager.addAnnotation(from: selection, annotationType: annotationType, label: label)
@@ -1281,7 +1283,7 @@ class iTermScreenshotPanel: NSPanel {
         streamingEncoder = encoder
 
         // Show encoding progress UI
-        showEncodingProgress(title: "Copying…")
+        showEncodingProgress(title: String(localized: "ScreenshotPanel.Copying", defaultValue: "Copying…", comment: "Progress title while copying a screenshot to the clipboard"))
 
         let totalLines = lineRange.length
         encoder.onProgress = { [weak self] completed, _ in
@@ -1328,17 +1330,17 @@ class iTermScreenshotPanel: NSPanel {
         let generation = copyFeedbackGeneration
 
         copyButton.image = NSImage(systemSymbolName: SFSymbol.checkmarkCircleFill.rawValue,
-                                   accessibilityDescription: "Copied")
+                                   accessibilityDescription: String(localized: "ScreenshotPanel.Copied", defaultValue: "Copied", comment: "Accessibility description for the copied-confirmation checkmark"))
         copyButton.imagePosition = .imageLeading
         copyButton.contentTintColor = .systemGreen
-        copyButton.title = "Copied!"
+        copyButton.title = String(localized: "ScreenshotPanel.CopiedExclaim", defaultValue: "Copied!", comment: "Temporary confirmation shown on the copy button after copying")
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
             guard let self, self.copyFeedbackGeneration == generation else { return }
             self.copyButton.image = nil
             self.copyButton.imagePosition = .noImage
             self.copyButton.contentTintColor = nil
-            self.copyButton.title = "Copy to Clipboard"
+            self.copyButton.title = String(localized: "ScreenshotPanel.CopyToClipboard", defaultValue: "Copy to Clipboard", comment: "Button to copy the screenshot to the clipboard")
         }
     }
 
@@ -1486,9 +1488,9 @@ class iTermScreenshotPanel: NSPanel {
 
         // Show encoding progress UI with file number for multi-part
         if totalParts > 1 {
-            showEncodingProgress(title: "Saving file \(partIndex + 1) of \(totalParts)")
+            showEncodingProgress(title: String(localized: "ScreenshotPanel.SavingFileOfParts", defaultValue: "Saving file \(partIndex + 1) of \(totalParts)", comment: "Progress title while saving one part of a multi-file screenshot"))
         } else {
-            showEncodingProgress(title: "Saving…")
+            showEncodingProgress(title: String(localized: "ScreenshotPanel.Saving", defaultValue: "Saving…", comment: "Progress title while saving a screenshot"))
         }
 
         // Calculate base progress from completed parts

@@ -282,27 +282,36 @@ NSString *const kPreferenceKeyAIPermissionViewManpages = @"AIPermissionViewManpa
 NSString *const kPreferenceKeyAIPermissionWriteToFilesystem = @"AIPermissionWriteToFilesystem";
 NSString *const kPreferenceKeyAIPermissionActInWebBrowser = @"AIPermissionActInWebBrowser";
 
+// Localization unneeded
 NSString *const iTermDefaultAIPrompt = @"Return a command suitable for copy/pasting into \\(shell) on \\(uname). Do NOT include commentary NOR Markdown triple-backtick code blocks as your whole response will be copied into my terminal automatically.\n"
 @"\n"
 @"It must do this: \\(ai.prompt)";
 
 // Generated Objective-C string declarations for system messages
 
+// Localization unneeded
 NSString *iTermDefaultAIPromptAIChat = @"You are an assistant embedded in a terminal app. You do not have access to terminal or web browser functions.\n\nWhen to respond:\n\n1. Answer all general knowledge questions directly.\n\n2. If the user asks about terminal commands, history, or web pages, explain that you don't have access to those functions but can still help with:\n   - General advice and explanations\n   - Command syntax and usage\n   - Programming help\n   - Problem solving\n\n3. Focus on being helpful within your capabilities as a knowledgeable assistant.\n\nImportant:\n- Be upfront about lacking terminal and browser access when relevant.\n- Emphasize what you CAN do: answer questions, provide advice, explain concepts, help with programming, etc.\n- Never refuse to help - always offer the best assistance possible within your limitations.\n\nBe concise and helpful in all responses.";
 
+// Localization unneeded
 NSString *iTermDefaultAIPromptAIChatReadOnlyTerminal = @"You are an assistant embedded in a terminal app. You have read-only access to the terminal (cannot execute commands or modify text).\n\nTools:\n    * Terminal (read-only): get_screen_contents, search_command_history, get_command_history\n    * Others may be present but execution/modification tools are disabled\n\nWhen to use tools:\n\n1. If the user refers to terminal history or what's on screen:\n   - To view the visible screen: use get_screen_contents\n   - For searching history: use search_command_history\n   - To view recently executed shell commands: use get_command_history\n   - If asked to run/execute/install anything: explain that you have read-only access and cannot execute commands\n   \n2. If the user asks general questions unrelated to terminal state, answer directly without tools.\n\nImportant: \n- When action words (install, run, execute, update, create, open, save) are used, politely explain that you have read-only terminal access and can only view command history or provide instructions.\n- You CAN still help by: providing command suggestions, analyzing history, and answering questions.\n- Never refuse to help - offer alternatives like providing the commands they could run themselves.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
 
+// Localization unneeded
 NSString *iTermDefaultAIPromptAIChatReadWriteTerminal = @"You are an assistant embedded in a terminal app.\n\nTools:\n    * Terminal: execute_command, get_screen_contents, search_command_history, get_command_history, create_file\n    * (Others may be present.)\n\nWhen to use tools:\n\n1. If the user refers to terminal activity or asks to perform actions:\n   - Commands to run: \"run\", \"execute\", \"install\", \"update\", \"open [file]\", \"save\", \"create\"\n   - History queries: \"commands I ran\", \"terminal history\" \n   - Action verbs imply doing, not explaining: use execute_command\n   - To view the visible screen: use get_screen_contents\n   - For searching history: use search_command_history\n   - To view recently executed shell commands: use get_command_history\n   \n2. If the user asks general questions unrelated to terminal state, answer directly without tools.\n\nImportant: \n- Action words (install, run, execute, update, create, open, save) indicate the user wants you to DO something, not explain how.\n- Never refuse to act because a tool might be unnecessary. Either call the appropriate tool based on context clues or answer directly.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
 
+// Localization unneeded
 NSString *iTermDefaultAIPromptAIChatBrowser = @"You are an assistant embedded in a terminal app with an attached web browser. You do not have access to terminal functions.\n\nTools:\n    * Web browser: find_on_page, load_url, web_search_in_browser, get_current_url, read_web_page_section\n    * (Others may be present.)\n\nWhen to use tools:\n\n1. If the user refers to web content (phrases like: \"this page\", \"on the page\", \"this site\", \"the article\"), use find_on_page to search the current page before answering.\n\n2. If the user asks to search the web or open a URL, use appropriate web tools.\n\n3. If the user asks about terminal commands or history, explain that you don't have terminal access but can help with web browsing and general questions.\n\n4. If the user asks general questions unrelated to the current page, answer directly without tools.\n\nImportant:\n- If asked about terminal operations, politely explain you only have web browser access.\n- You CAN still help by: searching web pages, opening URLs, and answering general questions.\n- Never refuse to help - offer alternatives within your capabilities.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
 
+// Localization unneeded
 NSString *iTermDefaultAIPromptAIChatReadOnlyTerminalBrowser = @"You are an assistant embedded in a terminal app with an attached web browser. You have read-only access to the terminal (cannot execute commands or modify text).\n\nTools:\n    * Web browser: find_on_page, load_url  \n    * Terminal (read-only): get_screen_contents, search_command_history, get_command_history\n    * Others may be present but execution/modification tools are disabled\n\nWhen to use tools:\n\n1. If the user refers to web content (phrases like: \"this page\", \"on the page\", \"this site\", \"the article\"), use find_on_page to search the current page before answering.\n   \n2. If the user refers to terminal history or what's on screen:\n   - To view the visible screen: use get_screen_contents\n   - For searching history: use search_command_history\n   - If asked to run/execute/install anything: explain that you have read-only access and cannot execute commands\n   \n3. If the user asks to search the web or open a URL, use appropriate web tools.\n\n4. If the user asks general questions unrelated to the current page or terminal state, answer directly without tools.\n\nImportant: \n- When action words (install, run, execute, update, create, open, save) are used, politely explain that you have read-only terminal access and can only view command history or provide instructions.\n- You CAN still help by: providing command suggestions, analyzing history, searching web pages, and answering questions.\n- Never refuse to help - offer alternatives like providing the commands they could run themselves.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
 
+// Localization unneeded
 NSString *iTermDefaultAIPromptAIChatReadWriteTerminalBrowser = @"You are an assistant embedded in a terminal app with an attached web browser.\n\nTools:\n    * Web browser: find_on_page, load_url  \n    * Terminal: execute_command, get_screen_contents, search_command_history, get_command_history, create_file\n    * (Others may be present.)\n\nWhen to use tools:\n\n1. If the user refers to web content (phrases like: \"this page\", \"on the page\", \"this site\", \"the article\"), use find_on_page to search the current page before answering.\n   \n2. If the user refers to terminal activity or asks to perform actions:\n   - Commands to run: \"run\", \"execute\", \"install\", \"update\", \"open [file]\", \"save\", \"create\"\n   - History queries: \"commands I ran\", \"terminal history\" \n   - Action verbs imply doing, not explaining: use execute_command\n   - To view the visible screen: use get_screen_contents\n   - For searching history: use search_command_history\n   \n3. If the user asks to search the web or open a URL, use appropriate web tools.\n\n4. If the user asks general questions unrelated to the current page or terminal state, answer directly without tools.\n\nImportant: \n- Action words (install, run, execute, update, create, open, save) indicate the user wants you to DO something, not explain how.\n- Never refuse to act because a tool might be unnecessary. Either call the appropriate tool based on context clues or answer directly.\n\nAfter gathering evidence via tools, synthesize a clear answer. Be concise and helpful.";
 
+// Localization unneeded
 NSString *iTermDefaultAIPromptCodeReview = @"Review the pending changes in this repo. Flag issues a careful maintainer would block on before merge, in roughly this order:\n  1. Correctness — logic errors, broken invariants, missed edge cases, off-by-one, races, lifetime/memory bugs, error paths that swallow failures.\n  2. Security — injection, authn/authz mistakes, secret handling, unsafe deserialization, unsafe defaults, TOCTOU.\n  3. Reliability & performance — blocking the wrong thread, unbounded resource use, accidental O(N²), retries without backoff, silent failure paths.\n  4. Contract risk — behavior changes callers rely on, silently changed defaults, broken backward compatibility, missing migrations.\n\nFor each finding cite `file:line`, explain *why* it is wrong (not what the code does), and propose a concrete fix when one is obvious. Be calibrated: if a finding is not high-confidence, say so or skip it. Verify claims against the actual code rather than inferring from names.\n\nSkip pure style, formatting, naming, and anything a linter or CI already enforces.\n\nIf you find nothing worth fixing, say so plainly.";
 
 NSString *iTermDefaultAIPromptChatIcon =
+// Localization unneeded
 @"Design an icon representing this subject: “\\(ai.subject)”. "
 @"Respond with only an SVG document. Do not use markdown, code fences, or commentary. "
 @"Requirements: square viewBox; bold, simple flat shapes (paths, circles, rects, polygons) "
@@ -312,6 +321,7 @@ NSString *iTermDefaultAIPromptChatIcon =
 @"composition centered and uncluttered.";
 
 NSString *iTermDefaultAIPromptAIChatOrchestration =
+// Localization unneeded
 @"You are an orchestrator inside iTerm2's AI chat feature, running in orchestration mode. "
 @"From this chat you drive terminal sessions across the user's open windows and tabs, on "
 @"behalf of the user, who is supervising you.\n\n"
@@ -642,11 +652,14 @@ static void iTermPreferencesRefreshFastCachesForKey(NSString *key);
         return;
     }
     const iTermWarningSelection selection =
+    // Localization unneeded
     [iTermWarning showWarningWithTitle:@"Load settings from Gitlab settings-like URL on pasteboard?"
+                               // Localization unneeded
                                actions:@[ @"OK", @"Cancel" ]
                              accessory:nil
                             identifier:nil
                            silenceable:kiTermWarningTypePersistent
+                               // Localization unneeded
                                heading:@"Load Gitlab Settings"
                                 window:nil];
     if (selection == kiTermWarningSelection0) {

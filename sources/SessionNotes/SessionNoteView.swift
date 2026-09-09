@@ -118,7 +118,7 @@ class SessionNoteView: NSView, NSTextViewDelegate {
         titleBar.wantsLayer = true
         titleBar.autoresizingMask = []
 
-        titleLabel = NSTextField(labelWithString: "Session Note")
+        titleLabel = NSTextField(labelWithString: String(localized: "SessionNote.Title", defaultValue: "Session Note", comment: "Default title of a session note."))
         titleLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         titleLabel.textColor = .secondaryLabelColor
         titleLabel.lineBreakMode = .byTruncatingTail
@@ -130,7 +130,7 @@ class SessionNoteView: NSView, NSTextViewDelegate {
         collapseButton.bezelStyle = .inline
         collapseButton.isBordered = false
         collapseButton.image = NSImage(systemSymbolName: "chevron.down",
-                                       accessibilityDescription: "Collapse")
+                                       accessibilityDescription: String(localized: "SessionNote.Collapse", defaultValue: "Collapse", comment: "Accessibility description for the button that collapses a session note."))
         collapseButton.imagePosition = .imageOnly
         collapseButton.setButtonType(.momentaryPushIn)
 
@@ -319,7 +319,7 @@ class SessionNoteView: NSView, NSTextViewDelegate {
         if model.isCollapsed, let firstLine = model.text.components(separatedBy: .newlines).first, !firstLine.isEmpty {
             titleLabel.stringValue = firstLine
         } else {
-            titleLabel.stringValue = "Session Note"
+            titleLabel.stringValue = String(localized: "SessionNote.Title", defaultValue: "Session Note", comment: "Default title of a session note.")
         }
     }
 
@@ -399,7 +399,7 @@ class SessionNoteView: NSView, NSTextViewDelegate {
     private func updateCollapseButtonImage() {
         let name = model.isCollapsed ? "chevron.right" : "chevron.down"
         collapseButton.image = NSImage(systemSymbolName: name,
-                                       accessibilityDescription: model.isCollapsed ? "Expand" : "Collapse")
+                                       accessibilityDescription: model.isCollapsed ? String(localized: "SessionNote.Expand", defaultValue: "Expand", comment: "Accessibility description for the button that expands a collapsed session note.") : String(localized: "SessionNote.Collapse", defaultValue: "Collapse", comment: "Accessibility description for the button that collapses a session note."))
     }
 
     // MARK: - Drag (Title Bar) and Resize

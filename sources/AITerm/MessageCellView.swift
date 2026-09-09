@@ -67,12 +67,13 @@ class MessageCellView: NSView {
     override var menu: NSMenu? {
         get {
             DLog("menu \(self)")
+            // Localization unneeded
             let menu = NSMenu(title: "Context Menu")
             if editable {
                 menu.addItem(makeEditItem())
             }
 
-            let copyItem = NSMenuItem(title: "Copy", action: #selector(copyMenuItemClicked(_:)), keyEquivalent: "")
+            let copyItem = NSMenuItem(title: iTermLocalizedCopy(), action: #selector(copyMenuItemClicked(_:)), keyEquivalent: "")
             copyItem.target = self
             menu.addItem(copyItem)
 
@@ -102,19 +103,19 @@ class MessageCellView: NSView {
     }
 
     private func makeEditItem() -> NSMenuItem {
-        let item = NSMenuItem(title: "Edit", action: #selector(editMenuItemClicked(_:)), keyEquivalent: "")
+        let item = NSMenuItem(title: iTermLocalizedEdit(), action: #selector(editMenuItemClicked(_:)), keyEquivalent: "")
         item.target = self
         return item
     }
 
     private func makeForkItem() -> NSMenuItem {
-        let item = NSMenuItem(title: "Fork", action: #selector(forkMenuItemClicked(_:)), keyEquivalent: "")
+        let item = NSMenuItem(title: String(localized: "MessageCell.Fork", defaultValue: "Fork", comment: "Menu item to fork the conversation at this message"), action: #selector(forkMenuItemClicked(_:)), keyEquivalent: "")
         item.target = self
         return item
     }
 
     private func makeDeleteItem() -> NSMenuItem {
-        let item = NSMenuItem(title: "Delete", action: #selector(deleteMenuItemClicked(_:)), keyEquivalent: "")
+        let item = NSMenuItem(title: String(localized: "General.Delete", defaultValue: "Delete", comment: "Label for a Delete control"), action: #selector(deleteMenuItemClicked(_:)), keyEquivalent: "")
         item.target = self
         return item
     }

@@ -110,17 +110,17 @@ extension LLM.Message.StatusUpdate {
     var displayMarkdownString: String {
         switch self {
         case .webSearchStarted:
-            "Searching the web…"
+            String(localized: "StatusUpdate.WebSearchStarted", defaultValue: "Searching the web…", comment: "Status shown while a web search is running")
         case .webSearchFinished(let query):
             if let query {
-                "Finished searching the web for **\(query.escapedForMarkdown)**."
+                String(localized: "StatusUpdate.WebSearchFinishedQuery", defaultValue: "Finished searching the web for **\(query.escapedForMarkdown)**.", comment: "Status shown after a web search, including the query")
             } else {
-                "Finished searching the web."
+                String(localized: "StatusUpdate.WebSearchFinished", defaultValue: "Finished searching the web.", comment: "Status shown after a web search with no query")
             }
         case .codeInterpreterStarted:
-            "Executing code…"
+            String(localized: "StatusUpdate.CodeInterpreterStarted", defaultValue: "Executing code…", comment: "Status shown while the code interpreter is running")
         case .codeInterpreterFinished:
-            "Finished executing code"
+            String(localized: "StatusUpdate.CodeInterpreterFinished", defaultValue: "Finished executing code", comment: "Status shown after the code interpreter finishes")
         case .reasoningSummaryUpdate(let text): text
         case .multipart(let subparts):
             Self.subpartsForDisplay(subparts).map { $0.displayMarkdownString }.joined(separator: "\n")
@@ -156,7 +156,7 @@ func AttributedStringForGPTMarkdown(_ unsafeString: String,
 private func AttributedStringForMessage(_ md: SwiftyMarkdown,
                                         didCopy: (() -> ())?) -> NSAttributedString {
     let attributedString = md.attributedString()
-    let image = NSImage(systemSymbolName: SFSymbol.docOnDoc.rawValue, accessibilityDescription: "Copy")!
+    let image = NSImage(systemSymbolName: SFSymbol.docOnDoc.rawValue, accessibilityDescription: iTermLocalizedCopy())!
     let modified = attributedString.mutableCopy() as! NSMutableAttributedString
     var ranges = [NSRange]()
     let utf16String = attributedString.string.utf16
@@ -186,7 +186,7 @@ private func AttributedStringForMessage(_ md: SwiftyMarkdown,
             modified.insertButton(withImage: DynamicImage(image: image, dark: .white, light: .black), at: range.location) { point in
                 NSPasteboard.general.declareTypes([.string], owner: NSApp)
                 NSPasteboard.general.setString(attributedString.string.substring(nsrange: range), forType: .string)
-                ToastWindowController.showToast(withMessage: "Copied", duration: 1, screenCoordinate: point, pointSize: 12)
+                ToastWindowController.showToast(withMessage: String(localized: "MarkdownHelpers.CopiedToast", defaultValue: "Copied", comment: "Toast shown after copying a code block"), duration: 1, screenCoordinate: point, pointSize: 12)
                 didCopy()
             }
             modified.insert(

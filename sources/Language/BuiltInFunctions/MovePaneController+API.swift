@@ -18,12 +18,12 @@ extension MovePaneController {
 
         var errorDescription: String? {
             switch self {
-            case .locked: return "Session is locked"
-            case .noSourceTab: return "Session has no tab"
-            case .noSourceWindow: return "Session has no window"
-            case .onlyOneSession: return "Tab has only one session"
-            case .tmuxAsync: return "tmux sessions are moved asynchronously"
-            case .insertFailed: return "Failed to insert session"
+            case .locked: return String(localized: "MoveSession.SessionLocked", defaultValue: "Session is locked", comment: "Error when a session is locked and can't be moved")
+            case .noSourceTab: return String(localized: "MoveSession.NoTab", defaultValue: "Session has no tab", comment: "Error when a session is not in a tab")
+            case .noSourceWindow: return String(localized: "MoveSession.NoWindow", defaultValue: "Session has no window", comment: "Error when a session is not in a window")
+            case .onlyOneSession: return String(localized: "MoveSession.OnlyOneSession", defaultValue: "Tab has only one session", comment: "Error when a tab has only one session so a pane can't be split off")
+            case .tmuxAsync: return String(localized: "MoveSession.TmuxAsync", defaultValue: "tmux sessions are moved asynchronously", comment: "Explanation that tmux session moves complete asynchronously")
+            case .insertFailed: return String(localized: "MoveSession.InsertFailed", defaultValue: "Failed to insert session", comment: "Error when inserting a session into a tab fails")
             }
         }
     }

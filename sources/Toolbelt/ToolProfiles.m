@@ -51,7 +51,7 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
         _openButton = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
         _openButton.bezelStyle = NSBezelStyleRegularSquare;
         _openButton.bordered = NO;
-        _openButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPlay) accessibilityDescription:@"Open Profile"];
+        _openButton.image = [NSImage it_imageForSymbolName:SFSymbolGetString(SFSymbolPlay) accessibilityDescription:NSLocalizedStringWithDefaultValue(@"ToolProfiles.OpenAccessibility", nil, [NSBundle mainBundle], @"Open Profile", @"Accessibility description for the open profile button")];
         _openButton.imageScaling = NSImageScaleProportionallyUpOrDown;
         _openButton.imagePosition = NSImageOnly;
         [_openButton setTarget:self];
@@ -64,16 +64,16 @@ static NSString *const iTermToolProfilesProfileListViewState = @"iTermToolProfil
         popup_ = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kPopupHeight, frame.size.width - _openButton.frame.size.width - kInnerMargin, kPopupHeight)];
         [[popup_ cell] setControlSize:NSControlSizeSmall];
         [[popup_ cell] setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
-        [[popup_ menu] addItemWithTitle:@"New Tab"
+        [[popup_ menu] addItemWithTitle:NSLocalizedStringWithDefaultValue(@"ToolProfiles.NewTab", nil, [NSBundle mainBundle], @"New Tab", @"Menu item to open the profile in a new tab")
                                  action:@selector(toolProfilesNewTab:)
                           keyEquivalent:@""];
-        [[popup_ menu] addItemWithTitle:@"New Window"
+        [[popup_ menu] addItemWithTitle:NSLocalizedStringWithDefaultValue(@"ToolProfiles.NewWindow", nil, [NSBundle mainBundle], @"New Window", @"Menu item to open the profile in a new window")
                                  action:@selector(toolProfilesNewWindow:)
                           keyEquivalent:@""];
-        [[popup_ menu] addItemWithTitle:@"New Horizontal Split"
+        [[popup_ menu] addItemWithTitle:NSLocalizedStringWithDefaultValue(@"ToolProfiles.NewHorizontalSplit", nil, [NSBundle mainBundle], @"New Horizontal Split", @"Menu item to open the profile in a new horizontal split")
                                  action:@selector(toolProfilesNewHorizontalSplit:)
                           keyEquivalent:@""];
-        [[popup_ menu] addItemWithTitle:@"New Vertical Split"
+        [[popup_ menu] addItemWithTitle:NSLocalizedStringWithDefaultValue(@"ToolProfiles.NewVerticalSplit", nil, [NSBundle mainBundle], @"New Vertical Split", @"Menu item to open the profile in a new vertical split")
                                  action:@selector(toolProfilesNewVerticalSplit:)
                           keyEquivalent:@""];
         for (NSMenuItem *i in [[popup_ menu] itemArray]) {

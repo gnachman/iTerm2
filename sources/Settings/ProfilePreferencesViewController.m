@@ -19,6 +19,8 @@
 #import "ProfileListView.h"
 #import "ProfileModelWrapper.h"
 #import "ProfilePreferencesViewController.h"
+
+#import "iTermCorruptApplicationAlert.h"
 #import "ProfilesAdvancedPreferencesViewController.h"
 #import "ProfilesColorsPreferencesViewController.h"
 #import "ProfilesGeneralPreferencesViewController.h"
@@ -157,22 +159,7 @@ NSString *const kProfileSessionHotkeyDidChange = @"kProfileSessionHotkeyDidChang
 }
 
 - (void)warnAboutCorruptNib {
-    NSString *team = [iTermAppSignatureValidator currentAppTeamID];
-    NSString *message;
-    if (!team) {
-        message = @"A required user interface component is missing or corrupted and iTerm2\u2019s code signature could not be verified. You should download a fresh copy of the app and reinstall it.";
-    } else if (![team isEqualToString:@"H7V7XYVQ7D"]) {
-        message = @"A required user interface component is missing or corrupted and iTerm2\u2019s code signature did not match that of the official distribution. You should download a fresh copy of the app and reinstall it.";
-    } else {
-        message = @"A required user interface component is missing or corrupted, yet against all odds the code signature for iTerm2 is valid. Please file a bug at https://iterm2.com/bugs";
-    }
-    NSAlert *alert = [[NSAlert alloc] init];
-    [alert setMessageText:@"Application Corrupt"];
-    [alert setInformativeText:message];
-    [alert addButtonWithTitle:@"OK"];
-    [alert setAlertStyle:NSAlertStyleCritical];
-    [alert runModal];
-    exit(1);
+    iTermShowCorruptApplicationAlert(nil);
 }
 
 - (void)dealloc {
@@ -461,6 +448,29 @@ andEditComponentWithIdentifier:(NSString *)identifier
     [self resizeWindowForTabViewItem:_tabView.selectedTabViewItem animated:animated];
 }
 
+#if ITERM_DEBUG
+- (void)debugCheckControlTruncationWithTopLabel:(NSString *)topLabel
+                                         window:(NSWindow *)window {
+    [self selectFirstProfileIfNecessary];
+    // Detach the delegate so tab selection doesn't trigger an animated resize.
+    id<NSTabViewDelegate> savedDelegate = _tabView.delegate;
+    _tabView.delegate = nil;
+    NSTabViewItem *savedSelection = _tabView.selectedTabViewItem;
+    for (NSTabViewItem *item in [_tabView.tabViewItems copy]) {
+        [_tabView selectTabViewItem:item];
+        [self resizeWindowForCurrentTabAnimated:NO];
+        [window layoutIfNeeded];
+        NSString *subLabel = item.label ?: @"?";
+        [iTermSettingsTruncationChecker check:(item.view ?: self.view)
+                                         path:@[topLabel, subLabel]];
+    }
+    if (savedSelection) {
+        [_tabView selectTabViewItem:savedSelection];
+    }
+    _tabView.delegate = savedDelegate;
+}
+#endif
+
 #pragma mark - ProfileListViewDelegate
 
 - (void)profileTableSelectionDidChange:(id)profileTable {
@@ -496,16 +506,16 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 - (void)profileTableTagsVisibilityDidChange:(ProfileListView *)profileListView {
-    [_toggleTagsButton setTitle:profileListView.tagsVisible ? @"< Tags" : @"Tags >"];
+    [_toggleTagsButton setTitle:profileListView.tagsVisible ? NSLocalizedStringWithDefaultValue(@"ProfilePreferences.HideTags", nil, [NSBundle mainBundle], @"< Tags", @"Button title to hide the tags list") : NSLocalizedStringWithDefaultValue(@"ProfilePreferences.ShowTags", nil, [NSBundle mainBundle], @"Tags >", @"Button title to show the tags list")];
 }
 
 #pragma mark - Private
 
 - (BOOL)confirmProfileDeletion:(Profile *)profile {
-    NSMutableString *question = [NSMutableString stringWithFormat:@"Delete profile %@?",
+    NSMutableString *question = [NSMutableString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilePreferences.DeleteProfileConfirmation", nil, [NSBundle mainBundle], @"Delete profile %@?", @"Confirmation prompt when deleting a profile. %@ is the profile name."),
                                  profile[KEY_NAME]];
     if ([iTermWarning showWarningWithTitle:question
-                                   actions:@[ @"Delete", @"Cancel" ]
+                                   actions:@[ NSLocalizedStringWithDefaultValue(@"General.Delete", nil, [NSBundle mainBundle], @"Delete", @"Delete"), iTermLocalizedCancel() ]
                                 identifier:@"DeleteProfile"
                                silenceable:kiTermWarningTypeTemporarilySilenceable
                                     window:self.view.window] == kiTermWarningSelection0) {
@@ -723,7 +733,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     } else {
         [newDict setValuesForKeysWithDictionary:[[_delegate profilePreferencesModel] defaultBookmark]];
     }
-    newDict[KEY_NAME] = @"New Profile";
+    newDict[KEY_NAME] = NSLocalizedStringWithDefaultValue(@"ProfilePreferences.NewProfileName", nil, [NSBundle mainBundle], @"New Profile", @"Default name for a newly created profile");
     newDict[KEY_SHORTCUT] = @"";
     NSString* guid = [ProfileModel freshGuid];
     newDict[KEY_GUID] = guid;
@@ -770,10 +780,10 @@ andEditComponentWithIdentifier:(NSString *)identifier
     }
 
     NSString *title =
-        [NSString stringWithFormat:@"Replace profile “%@” with the current session's settings?",
+        [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilePreferences.ReplaceProfileConfirmation", nil, [NSBundle mainBundle], @"Replace profile “%@” with the current session's settings?", @"Confirmation prompt when copying current settings to a profile. %@ is the destination profile name."),
             [iTermProfilePreferences stringForKey:KEY_NAME inProfile:destination]];
     if ([iTermWarning showWarningWithTitle:title
-                                   actions:@[ @"Replace", @"Cancel" ]
+                                   actions:@[ NSLocalizedStringWithDefaultValue(@"ProfilePreferences.Replace", nil, [NSBundle mainBundle], @"Replace", @"Button to replace a profile"), iTermLocalizedCancel() ]
                                  identifier:@"NoSyncReplaceProfileWarning"
                                silenceable:kiTermWarningTypePermanentlySilenceable
                                     window:self.view.window] == kiTermWarningSelection1) {
@@ -807,9 +817,11 @@ andEditComponentWithIdentifier:(NSString *)identifier
                                               forKey: @"New Bookmarks"];
 }
 
-- (NSArray<NSString *> *)visibleTabLabels {
+- (NSArray<NSString *> *)visibleBulkCopyIdentifiers {
     return [_tabView.tabViewItems mapWithBlock:^id(__kindof NSTabViewItem *tabViewItem) {
-        return tabViewItem.label;
+        // Key on the stable xib identifier, not the localized label, so bulk
+        // copy shows every category regardless of UI language.
+        return [BulkCopyProfilePreferencesWindowController bulkCopyIdentifierForTabViewItemIdentifier:tabViewItem.identifier];
     }];
 }
 
@@ -817,7 +829,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
 {
     Profile *profile = [self selectedProfile];
     _bulkCopyController =
-    [[BulkCopyProfilePreferencesWindowController alloc] initWithIdentifiers:[self visibleTabLabels]
+    [[BulkCopyProfilePreferencesWindowController alloc] initWithIdentifiers:[self visibleBulkCopyIdentifiers]
                                                                profileTypes:self.profileType];
     _bulkCopyController.sourceGuid = profile[KEY_GUID];
 
@@ -850,7 +862,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
         return;
     }
     NSMutableDictionary *newProfile = [NSMutableDictionary dictionaryWithDictionary:profile];
-    NSString* newName = [NSString stringWithFormat:@"Copy of %@", newProfile[KEY_NAME]];
+    NSString* newName = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilePreferences.CopyOfProfileName", nil, [NSBundle mainBundle], @"Copy of %@", @"Default name for a duplicated profile. %@ is the original profile name."), newProfile[KEY_NAME]];
 
     newProfile[KEY_NAME] = newName;
     newProfile[KEY_GUID] = [ProfileModel freshGuid];
@@ -930,17 +942,17 @@ andEditComponentWithIdentifier:(NSString *)identifier
             for (NSURL *url in urls) {
                 NSError *error = nil;
                 if (![self tryToImportJSONProfileFromURL:url error:&error]) {
-                    NSArray<NSString *> *actions = @[ @"OK" ];
+                    NSArray<NSString *> *actions = @[ iTermLocalizedOK() ];
                     if (![url isEqual:urls.lastObject]) {
-                        actions = [actions arrayByAddingObject:@"Abort"];
+                        actions = [actions arrayByAddingObject:NSLocalizedStringWithDefaultValue(@"ProfilePreferences.Abort", nil, [NSBundle mainBundle], @"Abort", @"Button to abort importing profiles")];
                     }
                     iTermWarningSelection selection =
-                    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Import from %@ failed: %@", url.path, error.localizedDescription]
+                    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilePreferences.ImportFailedFormat", nil, [NSBundle mainBundle], @"Import from %1$@ failed: %2$@", @"Alert when profile import fails. First %@ is the file path, second %@ is the error."), url.path, error.localizedDescription]
                                                actions:actions
                                              accessory:nil
                                             identifier:@"NoSyncJSONImportFailed"
                                            silenceable:kiTermWarningTypeTemporarilySilenceable
-                                               heading:@"Could not Import Profile"
+                                               heading:NSLocalizedStringWithDefaultValue(@"ProfilePreferences.CouldNotImportProfile", nil, [NSBundle mainBundle], @"Could not Import Profile", @"Heading for the profile import failure alert")
                                                 window:self.view.window];
                     if (selection == kiTermWarningSelection1) {
                         return;
@@ -968,7 +980,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     NSDictionary *dict = [NSDictionary castFrom:object];
     if (!dict) {
         if (error) {
-            *error = [[NSError alloc] initWithDomain:@"com.iterm2.json-import-profile" code:0 userInfo:@{ NSLocalizedDescriptionKey: @"Invalid JSON: does not have a top-level dictionary." }];
+            *error = [[NSError alloc] initWithDomain:@"com.iterm2.json-import-profile" code:0 userInfo:@{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"ProfilePreferences.InvalidJSONNoTopLevelDict", nil, [NSBundle mainBundle], @"Invalid JSON: does not have a top-level dictionary.", @"Error message for malformed profile JSON") }];
         }
         return NO;
     }
@@ -981,7 +993,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
             return [self tryToImportMultipleProfilesFromJSONObject:profiles error:error];
         }
         if (error) {
-            *error = [[NSError alloc] initWithDomain:@"com.iterm2.json-import-profile" code:0 userInfo:@{ NSLocalizedDescriptionKey: @"Invalid JSON: missing Name or Guid key in top-level dictionary." }];
+            *error = [[NSError alloc] initWithDomain:@"com.iterm2.json-import-profile" code:0 userInfo:@{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"ProfilePreferences.InvalidJSONMissingNameOrGuid", nil, [NSBundle mainBundle], @"Invalid JSON: missing Name or Guid key in top-level dictionary.", @"Error message for malformed profile JSON") }];
         }
         return NO;
     }
@@ -1001,7 +1013,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
     [profiles enumerateObjectsUsingBlock:^(id  _Nonnull object, NSUInteger idx, BOOL * _Nonnull stop) {
         NSDictionary *dict = [NSDictionary castFrom:object];
         if (!dict) {
-            internalError = [[NSError alloc] initWithDomain:@"com.iterm2.json-import-profile" code:0 userInfo:@{ NSLocalizedDescriptionKey: @"Invalid JSON: not an array of dictionaries." }];
+            internalError = [[NSError alloc] initWithDomain:@"com.iterm2.json-import-profile" code:0 userInfo:@{ NSLocalizedDescriptionKey: NSLocalizedStringWithDefaultValue(@"ProfilePreferences.InvalidJSONNotArrayOfDicts", nil, [NSBundle mainBundle], @"Invalid JSON: not an array of dictionaries.", @"Error message for malformed profile JSON") }];
             ok = NO;
             *stop = YES;
             return;
@@ -1010,7 +1022,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
         NSString *name = dict[KEY_NAME];
         NSString *guid = dict[KEY_GUID];
         if (!name || !guid) {
-            NSString *reason = [NSString stringWithFormat:@"Invalid JSON: missing Name or Guid key in profile number %@.", @(idx + 1)];
+            NSString *reason = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilePreferences.InvalidJSONMissingNameOrGuidInProfile", nil, [NSBundle mainBundle], @"Invalid JSON: missing Name or Guid key in profile number %@.", @"Error message for malformed profile JSON. %@ is the profile number."), @(idx + 1)];
             internalError = [[NSError alloc] initWithDomain:@"com.iterm2.json-import-profile" code:0 userInfo:@{ NSLocalizedDescriptionKey: reason }];
             ok = NO;
             *stop = YES;
@@ -1040,8 +1052,8 @@ andEditComponentWithIdentifier:(NSString *)identifier
         dispatch_async(dispatch_get_main_queue(), ^{
             if (error) {
                 NSAlert *alert = [[NSAlert alloc] init];
-                alert.messageText = @"Error";
-                alert.informativeText = [NSString stringWithFormat:@"Couldn't save to “%@” on %@: %@",
+                alert.messageText = NSLocalizedStringWithDefaultValue(@"General.Error", nil, [NSBundle mainBundle], @"Error", @"Generic error heading");
+                alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilePreferences.CouldntSaveFormat", nil, [NSBundle mainBundle], @"Couldn't save to “%1$@” on %2$@: %3$@", @"Error message when saving fails. First %@ is filename, second %@ is host, third %@ is the error."),
                                          item.filename,
                                          item.host.displayName,
                                          [error localizedDescription]];
@@ -1080,8 +1092,8 @@ andEditComponentWithIdentifier:(NSString *)identifier
     NSString *string = [self jsonForProfile:profile error:&error];
     if (!string) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Error";
-        alert.informativeText = [NSString stringWithFormat:@"Couldn't convert profile to JSON: %@",
+        alert.messageText = NSLocalizedStringWithDefaultValue(@"General.Error", nil, [NSBundle mainBundle], @"Error", @"Generic error heading");
+        alert.informativeText = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilePreferences.CouldntConvertProfileFormat", nil, [NSBundle mainBundle], @"Couldn't convert profile to JSON: %@", @"Error message when converting a profile to JSON fails. %@ is the error."),
                                  [error localizedDescription]];
         [alert runModal];
         return;
@@ -1115,8 +1127,8 @@ andEditComponentWithIdentifier:(NSString *)identifier
     NSString *string = [self jsonForAllProfilesWithErrorCount:&errors];
     if (errors) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Error";
-        alert.informativeText = [NSString stringWithFormat:@"Couldn't convert one or more profiles to JSON. Check Console.app for errors."];
+        alert.messageText = NSLocalizedStringWithDefaultValue(@"General.Error", nil, [NSBundle mainBundle], @"Error", @"Generic error heading");
+        alert.informativeText = NSLocalizedStringWithDefaultValue(@"ProfilePreferences.CouldntConvertProfiles", nil, [NSBundle mainBundle], @"Couldn't convert one or more profiles to JSON. Check Console.app for errors.", @"Error message when converting profiles to JSON fails");
         [alert runModal];
         return;
     }
@@ -1214,17 +1226,18 @@ andEditComponentWithIdentifier:(NSString *)identifier
     if ([iTermProfilePreferences boolForKey:KEY_DYNAMIC_PROFILE_REWRITABLE inProfile:profile]) {
         return;
     }
-    NSString *profileName = [profile objectForKey:KEY_NAME] ?: @"(unknown name)";
-    NSString *message = [NSString stringWithFormat:@"The selected profile, “%@”, is a dynamic profile. These are generally only edited by hand.\n\niTerm2 is now able to write changes back to dynamic profiles when they are marked as “rewritable“. Rewriting can cause the order of values to change.", profileName];
+    NSString *profileName = [profile objectForKey:KEY_NAME] ?: NSLocalizedStringWithDefaultValue(@"ProfilePreferences.UnknownProfileName", nil, [NSBundle mainBundle], @"(unknown name)", @"Placeholder shown when a profile has no name");
+    NSString *message = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilePreferences.DynamicProfileWarningFormat", nil, [NSBundle mainBundle], @"The selected profile, “%@”, is a dynamic profile. These are generally only edited by hand.\n\niTerm2 is now able to write changes back to dynamic profiles when they are marked as “rewritable“. Rewriting can cause the order of values to change.", @"Warning about editing a dynamic profile. %@ is the profile name."), profileName];
+    NSString *revealInFinder = NSLocalizedStringWithDefaultValue(@"ProfilePreferences.RevealInFinder", nil, [NSBundle mainBundle], @"Reveal in Finder", @"Button to reveal a profile in Finder");
     // "Reveal in Finder" is a one-time navigation action and shouldn't be remembered.
     iTermWarning *warning = [[iTermWarning alloc] init];
     warning.title = message;
-    warning.actionLabels = @[ @"Mark as Rewritable", @"Reveal in Finder", @"Cancel" ];
+    warning.actionLabels = @[ NSLocalizedStringWithDefaultValue(@"ProfilePreferences.MarkAsRewritable", nil, [NSBundle mainBundle], @"Mark as Rewritable", @"Button to mark a dynamic profile as rewritable"), revealInFinder, iTermLocalizedCancel() ];
     warning.identifier = @"NoSyncDynamicProfileChangeWillBeLost";
     warning.warningType = kiTermWarningTypeTemporarilySilenceable;
-    warning.heading = @"Changes Will Be Lost";
+    warning.heading = NSLocalizedStringWithDefaultValue(@"ProfilePreferences.ChangesWillBeLost", nil, [NSBundle mainBundle], @"Changes Will Be Lost", @"Heading for the dynamic profile warning");
     warning.window = self.view.window;
-    warning.doNotRememberLabels = @[ @"Reveal in Finder" ];
+    warning.doNotRememberLabels = @[ revealInFinder ];
     const iTermWarningSelection selection = [warning runModal];
     switch (selection) {
         case kiTermWarningSelection0:
@@ -1268,6 +1281,11 @@ andEditComponentWithIdentifier:(NSString *)identifier
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     [self resizeWindowForTabViewItem:tabViewItem animated:YES];
+    if (tabViewItem == _terminalTab) {
+        // The locale description's colors are baked into an attributed string that
+        // does not re-resolve if the appearance changed while this tab was hidden.
+        [_terminalViewController updateLocaleDescription];
+    }
 }
 
 #pragma mark - iTermSearchableViewController

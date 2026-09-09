@@ -205,8 +205,10 @@ class CommandInfoViewController: NSViewController {
         returnCode.stringValue = String(code)
         if code != 0 {
             returnCode.textColor = .red
+            // Localization unneeded
             returnCode.stringValue += " 🛑"
         } else {
+            // Localization unneeded
             returnCode.stringValue += " ✅"
         }
     }
@@ -231,7 +233,7 @@ class CommandInfoViewController: NSViewController {
         if let codeNumber = _returnCode.maybeValue {
             commandDidFinish(returnCode: codeNumber.intValue)
         } else {
-            returnCode.stringValue = "Still Running"
+            returnCode.stringValue = String(localized: "CommandInfo.StillRunning", defaultValue: "Still Running", comment: "Shown in place of a return code while a command is still running")
             if _startDate != nil {
                 timer = Timer.scheduledTimer(withTimeInterval: 0.017, repeats: true) { [weak self] timer in
                     self?.timerDidFire()
@@ -244,12 +246,12 @@ class CommandInfoViewController: NSViewController {
         if let _runningTime {
             runningTime.stringValue = String(_runningTime.formattedHMS)
         } else {
-            runningTime.stringValue = "Unknown"
+            runningTime.stringValue = String(localized: "CommandInfo.Unknown", defaultValue: "Unknown", comment: "Shown when the command's running time is unknown")
         }
-        let numberFormatter = NumberFormatter()
-        numberFormatter.numberStyle = .decimal
-        let formattedLines = numberFormatter.string(from: NSNumber(value: _lines)) ?? "\(_lines)"
-        output.stringValue = NSString.stringWithHumanReadableSize(UInt64(_size)) as String + " (\(formattedLines) line\(_lines != 1 ? "s" : ""))"
+        // The line count varies by plural (String Catalog Vary-by-Plural; see CLAUDE.md).
+        // String(localized:) applies locale-aware digit grouping to the count, so no NumberFormatter.
+        let lineCount = String(localized: "CommandInfo.LineCount", defaultValue: "(\(_lines) lines)", comment: "Line-count suffix shown after a size, e.g. “(1,234 lines)”")
+        output.stringValue = (NSString.stringWithHumanReadableSize(UInt64(_size)) as String) + " " + lineCount
         copyOutput.isEnabled = false
         progressIndicator.isHidden = false
         _outputProgress.addObserver(owner: self, queue: .main) { [weak self] progress in
@@ -261,7 +263,7 @@ class CommandInfoViewController: NSViewController {
             }
         }
         if let _startDate {
-            startedAt.stringValue = "Started at " + formattedDate(_startDate)
+            startedAt.stringValue = String(localized: "CommandInfo.StartedAtPrefix", defaultValue: "Started at ", comment: "Prefix label followed by the command's start timestamp") + formattedDate(_startDate)
         } else {
             startedAtStackView.isHidden = true
             stackView.removeArrangedSubview(startedAtStackView)
@@ -278,7 +280,7 @@ class CommandInfoViewController: NSViewController {
                                                             locale: .current)
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MMM d, yyyy"
-        return "\(timeFormatter.string(from: date)) on \(dateFormatter.string(from: date))"
+        return String(localized: "CommandInfo.DateOnDate", defaultValue: "\(timeFormatter.string(from: date)) on \(dateFormatter.string(from: date))", comment: "Formatted timestamp; first value is the time of day, second is the calendar date")
     }
 
     private func updateOutputProgress(_ progress: Double) {
@@ -335,11 +337,11 @@ class CommandInfoViewController: NSViewController {
                              event: NSEvent,
                              view: NSView) {
         let menu = SimpleContextMenu()
-        menu.addItem(title: "Add Command as Snippet") {
+        menu.addItem(title: String(localized: "CommandInfo.AddCommandAsSnippet", defaultValue: "Add Command as Snippet", comment: "Menu item that saves the command as a snippet")) {
             let snippet = iTermSnippet(title: command, value: command, guid: UUID().uuidString, tags: [], escaping: .none, version: iTermSnippet.currentVersion())
             iTermSnippetsModel.sharedInstance().addSnippet(snippet)
             if let window = view.window {
-                ToastWindowController.showToast(withMessage: "Snippet Added",
+                ToastWindowController.showToast(withMessage: String(localized: "CommandInfo.SnippetAdded", defaultValue: "Snippet Added", comment: "Toast shown after adding a command as a snippet"),
                                                 duration: 1,
                                                 screenCoordinate: window.convertPoint(toScreen: event.locationInWindow), pointSize: 12.0)
             }
@@ -363,10 +365,10 @@ class CommandInfoViewController: NSViewController {
             return
         }
 
-        menu.addItem(title: "Copy Command URL to Clipboard") {
+        menu.addItem(title: String(localized: "CommandInfo.CopyCommandURL", defaultValue: "Copy Command URL to Clipboard", comment: "Menu item that copies a command's URL to the clipboard")) {
             Self.copyURL(url)
         }
-        menu.addItem(title: "Open Share Sheet…") {
+        menu.addItem(title: String(localized: "CommandInfo.OpenShareSheet", defaultValue: "Open Share Sheet…", comment: "Menu item that opens the macOS share sheet")) {
             let viewRect = NSRect(origin: event.locationInWindow, size: .zero)
             let picker = NSSharingServicePicker(items: [url])
             picker.show(relativeTo: viewRect, of: view, preferredEdge: .minY)

@@ -17,6 +17,7 @@
 - The deployment target for iTerm2 is macOS 13. You don't need to perform availability checks for older versions.
 - Don't replace curly quotes with straight quotes. Same for apostrophes and single quotes. If you need help typing a curly quote, just ask. Here are some you can copy and paste: ‘’“”
 - In user-visible strings do not use " except as a shorthand for inch. Prefer curly quotes like “ and ”. I know this goes against your nature, but fight hard here.
+- Localizing user-visible strings — how to wrap them, what to leave in English, the complete-sentence-not-injected-fragment rule, format specifiers, and plurals (including the `localizedStringWithFormat:` and single-argument rules): see `docs/localization.md`. Read it before adding or changing localizable strings.
 - Ask permission before using auto layout if it's not already in use in a given file. Debugging auto layout is the worst hell.
 - Never `git add` submodules without express written permission.
 - Don't include AI-generated markdown files (summaries, plans, etc.) in commits — only ship code.
@@ -41,3 +42,4 @@
 - Tests should not be flaky. Don't write tests that will fail if the system is slower than usual.
 - Write new classes in Swift unless there is a very good reason not to.
 - Do not modify CLAUDE.md without express written permission
+- If you need to run iTerm2 directly, such as for testing, always pass `-suite claude-xxx` where xxx is the last path component of the current directory. So, for exmaple, `-suite claude-iterm2`

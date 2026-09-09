@@ -145,11 +145,11 @@
         __block BOOL result = NO;
         dispatch_sync(dispatch_get_main_queue(), ^{
             NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = @"Still restoring your windows…";
-            alert.informativeText = @"iTerm2 is taking longer than usual to verify your saved windows and tabs. This usually means the system is busy and it’s safe to keep waiting, but a damaged state restoration database could also cause it. You can discard the saved windows instead if you’d rather not wait.";
+            alert.messageText = NSLocalizedStringWithDefaultValue(@"RestorableState.SlowRestoreTitle", nil, [NSBundle mainBundle], @"Still restoring your windows…", @"Alert title shown when window restoration is slow");
+            alert.informativeText = NSLocalizedStringWithDefaultValue(@"RestorableState.SlowRestoreBody", nil, [NSBundle mainBundle], @"iTerm2 is taking longer than usual to verify your saved windows and tabs. This usually means the system is busy and it’s safe to keep waiting, but a damaged state restoration database could also cause it. You can discard the saved windows instead if you’d rather not wait.", @"Explanation shown when window restoration is slow");
             // Keep Waiting is added first so it is the default action (triggered by Return).
-            [alert addButtonWithTitle:@"Keep Waiting"];
-            [alert addButtonWithTitle:@"Discard Saved Windows"];
+            [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"RestorableState.KeepWaiting", nil, [NSBundle mainBundle], @"Keep Waiting", @"Default button to keep waiting for window restoration")];
+            [alert addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"RestorableState.DiscardSavedWindows", nil, [NSBundle mainBundle], @"Discard Saved Windows", @"Button to discard saved windows instead of waiting for restoration")];
             result = ([alert runModal] == NSAlertSecondButtonReturn);
         });
         return result;

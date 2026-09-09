@@ -94,16 +94,13 @@ public enum CompanionProtocolVersion {
     /// its on-screen keyboard only when the mac advertises at least
     /// `keyInputRevision`.
     ///
-    /// Revision 11 moves everyone off the direct main relay
-    /// (https://relay.iterm2.com) onto the sharded resolver: on upgrade, a device
-    /// still pointing at that relay rewrites its pairing to the default resolver
-    /// (CompanionRelayMigration). An un-upgraded peer stays on the direct relay and
-    /// therefore cannot rendezvous on the shard host the upgraded peer resolves to,
-    /// so this is a HARD incompatibility like the revision-5 relay move, not a
-    /// gracefully-degradable feature. minimumPeer is raised to 11 to refuse any peer
-    /// that predates the migration (a revision-10 peer has no resolver support at
-    /// all), and each side also shows a one-time notice telling the user to update
-    /// the OTHER device.
+    /// Revision 11 moved everyone off the direct main relay
+    /// (https://relay.iterm2.com) onto the sharded resolver. An un-upgraded peer
+    /// stays on the direct relay and therefore cannot rendezvous on the shard host
+    /// the upgraded peer resolves to, so this is a HARD incompatibility like the
+    /// revision-5 relay move, not a gracefully-degradable feature. minimumPeer is
+    /// raised to 11 to refuse any peer that predates the resolver (a revision-10
+    /// peer has no resolver support at all).
     ///
     /// Revision 12 adds message deletion (the messagesRemoved host event and the
     /// deleteMessages client message), so an edit/delete truncation on either the
@@ -118,11 +115,11 @@ public enum CompanionProtocolVersion {
     public static let current = 12
 
     /// The oldest peer revision this build accepts. Raised to 11 (lockstep with
-    /// `current`) for the resolver migration: peers older than revision 11 stay on
+    /// `current`) for the sharded resolver: peers older than revision 11 stay on
     /// the direct relay (https://relay.iterm2.com) and cannot rendezvous with an
     /// upgraded peer that has moved to the sharded resolver, so they are refused
     /// with an upgrade wall rather than allowed to pair into a broken state. See
-    /// CompanionRelayMigration and CompanionPushRegistry.peerRevision.
+    /// CompanionPushRegistry.peerRevision.
     public static let minimumPeer = 11
 
     /// The first revision that supports live session streaming. A peer offers

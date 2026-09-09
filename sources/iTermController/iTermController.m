@@ -858,7 +858,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     }
     if ([[ProfileModel sharedInstance] numberOfBookmarks] > MAX_MENU_ITEMS) {
         int overflow = [[ProfileModel sharedInstance] numberOfBookmarks] - MAX_MENU_ITEMS;
-        NSMenuItem* overflowItem = [[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:@"[%d profiles not shown]", overflow]
+        NSMenuItem* overflowItem = [[NSMenuItem alloc] initWithTitle:[NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"iTermController.ProfilesNotShown", nil, [NSBundle mainBundle], @"[%ld profiles not shown]", @"Overflow menu item; %ld is the number of profiles not shown"), (long)overflow]
                                                            action:nil
                                                     keyEquivalent:@""];
         [subMenu addItem:overflowItem];
@@ -869,7 +869,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 
     if (openAllSelector && count > 1) {
         [subMenu addItem:[NSMenuItem separatorItem]];
-        aMenuItem = [[NSMenuItem alloc] initWithTitle:@"Open All"
+        aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"ProfilesMenu.OpenAll", nil, [NSBundle mainBundle], @"Open All", @"Menu item that opens all profiles in this folder as tabs")
                                                action:openAllSelector
                                         keyEquivalent:@""];
         if (@available(macOS 26, *)) {
@@ -890,7 +890,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         [subMenu addItem:aMenuItem];
 
         // Add alternate -------------------------------------------------------
-        aMenuItem = [[NSMenuItem alloc] initWithTitle:@"Open All in New Window"
+        aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"ProfilesMenu.OpenAllInNewWindow", nil, [NSBundle mainBundle], @"Open All in New Window", @"Menu item that opens all profiles in this folder in a new window")
                                                action:openAllSelector
                                         keyEquivalent:@""];
         modifierMask = NSEventModifierFlagCommand | NSEventModifierFlagControl;
@@ -926,10 +926,10 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 }
 
 - (BOOL)shouldOpenManyProfiles:(int)count {
-    NSString *theTitle = [NSString stringWithFormat:@"You are about to open %d profiles.", count];
+    NSString *theTitle = [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"iTermController.AboutToOpenProfiles", nil, [NSBundle mainBundle], @"You are about to open %ld profiles.", @"Confirmation before opening several profiles; %ld is the number of profiles"), (long)count];
     iTermWarningSelection selection =
         [iTermWarning showWarningWithTitle:theTitle
-                                   actions:@[ @"OK", @"Cancel" ]
+                                   actions:@[ iTermLocalizedOK(), iTermLocalizedCancel() ]
                                 identifier:@"AboutToOpenManyProfiles"
                                silenceable:kiTermWarningTypePermanentlySilenceable
                                     window:nil];
@@ -1204,6 +1204,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 
 - (void)maybeWarnAboutOpeningInTab {
 #if ENABLE_RESPECT_DOCK_PREFER_TABS_SETTING
+    // Localization unneeded
     NSString *const firstVersionRespectingSetting = @"SET THIS";
     if (iTermUserDefaults.haveBeenWarnedAboutTabDockSetting) {
         return;
@@ -1215,7 +1216,9 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     if (!haveUsedOlderVersion) {
         return;
     }
+    // Localization unneeded
     [[iTermNotificationController sharedInstance] postNotificationWithTitle:@"Creating a tab"
+                                                                     // Localization unneeded
                                                                      detail:@"The system preference to open a tab instead of a window is now respected in iTerm2."
                                                                         URL:[NSURL URLWithString:@"https://gitlab.com/gnachman/iterm2/wikis/Prefer-Tabs-When-Opening-Documents"]];
     iTermUserDefaults.haveBeenWarnedAboutTabDockSetting = YES;
@@ -1741,6 +1744,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     NSString *const escapedCommand = escapeArguments ? [command stringWithBackslashEscapedShellCharactersIncludingNewlines:YES] : command;
     NSArray<NSString *> *const combinedArray = [@[escapedCommand] arrayByAddingObjectsFromArray:escapedArguments];
     NSString *const commandLine = [combinedArray componentsJoinedByString:@" "];
+    // Localization unneeded
     return [NSString stringWithFormat:@"sh -c \"%@\"", commandLine];
 }
 

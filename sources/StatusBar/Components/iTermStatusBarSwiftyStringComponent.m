@@ -32,19 +32,19 @@ NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression"
 }
 
 - (NSString *)statusBarComponentShortDescription {
-    return @"Interpolated String";
+    return NSLocalizedStringWithDefaultValue(@"StatusBarSwiftyString.ShortDescription", nil, [NSBundle mainBundle], @"Interpolated String", @"Short description of the interpolated string status bar component");
 }
 
 - (NSString *)statusBarComponentDetailedDescription {
-    return @"Shows the evaluation of a string with inline expressions which may include session "
-           @"variables or the output of registered scripting functions";
+    return NSLocalizedStringWithDefaultValue(@"StatusBarSwiftyString.DetailedDescription", nil, [NSBundle mainBundle], @"Shows the evaluation of a string with inline expressions which may include session "
+           @"variables or the output of registered scripting functions", @"Detailed description of the interpolated string status bar component");
 }
 
 - (NSArray<iTermStatusBarComponentKnob *> *)statusBarComponentKnobs {
     iTermStatusBarComponentKnob *expressionKnob =
-        [[iTermStatusBarComponentKnob alloc] initWithLabelText:@"String Value:"
+        [[iTermStatusBarComponentKnob alloc] initWithLabelText:NSLocalizedStringWithDefaultValue(@"StatusBarSwiftyString.StringValueLabel", nil, [NSBundle mainBundle], @"String Value:", @"Label for the string value knob in the interpolated string status bar component")
                                                           type:iTermStatusBarComponentKnobTypeText
-                                                   placeholder:@"String with \\(expressions)"
+                                                   placeholder:NSLocalizedStringWithDefaultValue(@"StatusBarSwiftyString.StringValuePlaceholder", nil, [NSBundle mainBundle], @"String with \\(expressions)", @"Placeholder text for the string value knob in the interpolated string status bar component")
                                                   defaultValue:@""
                                                            key:iTermStatusBarSwiftyStringComponentExpressionKey];
     return [@[ expressionKnob ] arrayByAddingObjectsFromArray:[super statusBarComponentKnobs]];
@@ -58,6 +58,7 @@ NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression"
 - (id)statusBarComponentExemplarWithBackgroundColor:(NSColor *)backgroundColor
                                           textColor:(NSColor *)textColor {
     if (!_swiftyString.swiftyString.length) {
+        // Localization unneeded
         return @"\\(expression)";
     } else {
         return _swiftyString.swiftyString;
@@ -97,7 +98,7 @@ NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression"
                                  accessory:nil
                                 identifier:@"NoSyncInterpolatedStatusBarComponentError"
                                silenceable:kiTermWarningTypePersistent
-                                   heading:@"Error"
+                                   heading:NSLocalizedStringWithDefaultValue(@"General.Error", nil, [NSBundle mainBundle], @"Error", @"Generic error heading")
                                     window:self.statusBarComponentView.window];
     }
 }
@@ -128,7 +129,7 @@ NSString *const iTermStatusBarSwiftyStringComponentExpressionKey = @"expression"
                               error:(NSError *)error {
     static NSString *ladybug = @"🐞";
     if (error != nil) {
-        NSString *message = [NSString stringWithFormat:@"Error while evaluating “%@”:\n%@", expression, error.localizedDescription];
+        NSString *message = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"StatusBarSwiftyString.EvaluationErrorFormat", nil, [NSBundle mainBundle], @"Error while evaluating “%1$@”:\n%2$@", @"Error message when an interpolated string fails to evaluate; first placeholder is the expression, second is the error"), expression, error.localizedDescription];
         [[iTermScriptHistoryEntry globalEntry] addOutput:message completion:^{}];
         _errorReason = message;
         return ladybug;

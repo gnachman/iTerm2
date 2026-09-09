@@ -52,6 +52,7 @@ class iTermBrowserErrorHandler: NSObject, iTermBrowserPageHandler {
     func start(urlSchemeTask: WKURLSchemeTask, url: URL) {
         // Serve our error page HTML
         let htmlToServe = consumePendingErrorHTML() ?? generateErrorPageHTML(
+            // Localization unneeded
             for: NSError(domain: NSURLErrorDomain, code: NSURLErrorResourceUnavailable, userInfo: [NSLocalizedDescriptionKey: "Page Not Available"]),
             failedURL: nil
         )
@@ -91,40 +92,40 @@ class iTermBrowserErrorHandler: NSObject, iTermBrowserPageHandler {
         let tuple: (String, String, String?) = {
             switch nsError.code {
             case NSURLErrorNotConnectedToInternet:
-                return ("No Internet Connection", "Your computer appears to be offline. Check your internet connection and try again.", nil)
+                return (String(localized: "BrowserErrorHandler.NoInternetTitle", defaultValue: "No Internet Connection", comment: "Error title: no internet connection"), String(localized: "BrowserErrorHandler.NoInternetOfflineMessage", defaultValue: "Your computer appears to be offline. Check your internet connection and try again.", comment: "Error message: computer appears offline"), nil)
 
             case NSURLErrorCannotFindHost:
-                return ("Server Not Found", "iTerm2 can’t find the server. Check that the web address is correct and try again.", nil)
+                return (String(localized: "BrowserErrorHandler.ServerNotFoundTitle", defaultValue: "Server Not Found", comment: "Error title: server not found"), String(localized: "BrowserErrorHandler.CannotFindHostMessage", defaultValue: "iTerm2 can’t find the server. Check that the web address is correct and try again.", comment: "Error message: cannot find host"), nil)
 
             case NSURLErrorTimedOut:
-                return ("The Connection Timed Out", "The server didn’t respond in time. The site may be temporarily unavailable or overloaded.", nil)
+                return (String(localized: "BrowserErrorHandler.TimedOutTitle", defaultValue: "The Connection Timed Out", comment: "Error title: connection timed out"), String(localized: "BrowserErrorHandler.TimedOutMessage", defaultValue: "The server didn’t respond in time. The site may be temporarily unavailable or overloaded.", comment: "Error message: connection timed out"), nil)
 
             case NSURLErrorCannotConnectToHost:
-                return ("Can’t Connect to Server", "iTerm2 can’t establish a secure connection to the server. The server may be down or unreachable.", nil)
+                return (String(localized: "BrowserErrorHandler.CannotConnectTitle", defaultValue: "Can’t Connect to Server", comment: "Error title: cannot connect to server"), String(localized: "BrowserErrorHandler.CannotConnectMessage", defaultValue: "iTerm2 can’t establish a secure connection to the server. The server may be down or unreachable.", comment: "Error message: cannot connect to host"), nil)
 
             case NSURLErrorNetworkConnectionLost:
-                return ("Network Connection Lost", "The network connection was lost. Check your internet connection and try again.", nil)
+                return (String(localized: "BrowserErrorHandler.NetworkLostTitle", defaultValue: "Network Connection Lost", comment: "Error title: network connection lost"), String(localized: "BrowserErrorHandler.NetworkLostMessage", defaultValue: "The network connection was lost. Check your internet connection and try again.", comment: "Error message: network connection lost"), nil)
 
             case NSURLErrorDNSLookupFailed:
-                return ("Server Not Found", "The server’s DNS address could not be found. Check that the web address is correct.", nil)
+                return (String(localized: "BrowserErrorHandler.ServerNotFoundTitle", defaultValue: "Server Not Found", comment: "Error title: server not found"), String(localized: "BrowserErrorHandler.DNSFailedMessage", defaultValue: "The server’s DNS address could not be found. Check that the web address is correct.", comment: "Error message: DNS lookup failed"), nil)
 
             case NSURLErrorHTTPTooManyRedirects:
-                return ("Too Many Redirects", "iTerm2 can’t open the page because the server redirected too many times.", nil)
+                return (String(localized: "BrowserErrorHandler.TooManyRedirectsTitle", defaultValue: "Too Many Redirects", comment: "Error title: too many redirects"), String(localized: "BrowserErrorHandler.TooManyRedirectsMessage", defaultValue: "iTerm2 can’t open the page because the server redirected too many times.", comment: "Error message: too many redirects"), nil)
 
             case NSURLErrorResourceUnavailable:
-                return ("Page Unavailable", "The requested page is currently unavailable. Try again later.", nil)
+                return (String(localized: "BrowserErrorHandler.PageUnavailableTitle", defaultValue: "Page Unavailable", comment: "Error title: page unavailable"), String(localized: "BrowserErrorHandler.PageUnavailableMessage", defaultValue: "The requested page is currently unavailable. Try again later.", comment: "Error message: page unavailable"), nil)
 
             case NSURLErrorNotConnectedToInternet:
-                return ("No Internet Connection", "Your computer is not connected to the internet. Check your connection and try again.", nil)
+                return (String(localized: "BrowserErrorHandler.NoInternetTitle", defaultValue: "No Internet Connection", comment: "Error title: no internet connection"), String(localized: "BrowserErrorHandler.NoInternetNotConnectedMessage", defaultValue: "Your computer is not connected to the internet. Check your connection and try again.", comment: "Error message: computer not connected to internet"), nil)
 
             case NSURLErrorServerCertificateUntrusted, NSURLErrorSecureConnectionFailed:
-                return ("Secure Connection Failed", "iTerm2 can’t verify the identity of the website. The connection may not be secure.", sslErrorDetails(from: error))
+                return (String(localized: "BrowserErrorHandler.SecureConnectionFailedTitle", defaultValue: "Secure Connection Failed", comment: "Error title: secure connection failed"), String(localized: "BrowserErrorHandler.SecureConnectionFailedMessage", defaultValue: "iTerm2 can’t verify the identity of the website. The connection may not be secure.", comment: "Error message: secure connection failed"), sslErrorDetails(from: error))
 
             case NSURLErrorFileDoesNotExist:
-                return ("File Not Found", "The requested file does not exist.", nil)
+                return (String(localized: "BrowserErrorHandler.FileNotFoundTitle", defaultValue: "File Not Found", comment: "Error title: file not found"), String(localized: "BrowserErrorHandler.FileNotFoundMessage", defaultValue: "The requested file does not exist.", comment: "Error message: file does not exist"), nil)
 
             default:
-                return ("Page Can’t Be Loaded", "An error occurred while loading this page. \(error.localizedDescription)", nil)
+                return (String(localized: "BrowserErrorHandler.PageCannotLoadTitle", defaultValue: "Page Can’t Be Loaded", comment: "Error title: page cannot be loaded"), String(localized: "BrowserErrorHandler.PageCannotLoadMessage", defaultValue: "An error occurred while loading this page. \(error.localizedDescription)", comment: "Error message: generic page load failure"), nil)
             }
         }()
         return (title: tuple.0,
@@ -163,7 +164,7 @@ func sslErrorDetails(from error: Error) -> String? {
         // Certificate chain subjects
         let subjects = certificateSubjects(from: trust)
         if !subjects.isEmpty {
-            lines.append("Certificate chain:")
+            lines.append(String(localized: "BrowserErrorHandler.CertificateChain", defaultValue: "Certificate chain:", comment: "Label preceding the list of certificates in the chain"))
             for (idx, s) in subjects.enumerated() {
                 lines.append("  [\(idx)] \(s.escapedForHTML)")
             }
@@ -190,13 +191,13 @@ private func secTrust(fromUserInfo ui: [String: Any]) -> SecTrust? {
 private func sslErrorDescription(for status: Int) -> String? {
     // Subset of the most useful SSL codes you’ll actually see.
     switch OSStatus(status) {
-    case errSSLXCertChainInvalid:        return "The presented chain is not valid (e.g., self-signed without trust)."
-    case errSSLUnknownRootCert:          return "The root CA is unknown (not in trust store)."
-    case errSSLNoRootCert:               return "No root certificate found to anchor the chain."
-    case errSSLBadCert:                  return "The certificate is malformed or otherwise bad."
-    case errSSLCertExpired:              return "The certificate is expired."
-    case errSSLCertNotYetValid:          return "The certificate is not yet valid."
-    case errSSLHostNameMismatch:         return "The hostname does not match the certificate."
+    case errSSLXCertChainInvalid:        return String(localized: "BrowserErrorHandler.SSLChainInvalid", defaultValue: "The presented chain is not valid (e.g., self-signed without trust).", comment: "SSL error detail: certificate chain invalid")
+    case errSSLUnknownRootCert:          return String(localized: "BrowserErrorHandler.SSLUnknownRoot", defaultValue: "The root CA is unknown (not in trust store).", comment: "SSL error detail: unknown root CA")
+    case errSSLNoRootCert:               return String(localized: "BrowserErrorHandler.SSLNoRoot", defaultValue: "No root certificate found to anchor the chain.", comment: "SSL error detail: no root certificate")
+    case errSSLBadCert:                  return String(localized: "BrowserErrorHandler.SSLBadCert", defaultValue: "The certificate is malformed or otherwise bad.", comment: "SSL error detail: malformed certificate")
+    case errSSLCertExpired:              return String(localized: "BrowserErrorHandler.SSLCertExpired", defaultValue: "The certificate is expired.", comment: "SSL error detail: expired certificate")
+    case errSSLCertNotYetValid:          return String(localized: "BrowserErrorHandler.SSLCertNotYetValid", defaultValue: "The certificate is not yet valid.", comment: "SSL error detail: certificate not yet valid")
+    case errSSLHostNameMismatch:         return String(localized: "BrowserErrorHandler.SSLHostnameMismatch", defaultValue: "The hostname does not match the certificate.", comment: "SSL error detail: hostname mismatch")
     default:                             return SecCopyErrorMessageString(OSStatus(status), nil) as? String
     }
 }

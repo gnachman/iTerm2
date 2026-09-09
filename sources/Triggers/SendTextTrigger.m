@@ -13,7 +13,7 @@
 
 + (NSString *)title
 {
-    return @"Send Text…";
+    return NSLocalizedStringWithDefaultValue(@"Trigger.SendText.Title", nil, [NSBundle mainBundle], @"Send Text…", @"Trigger action name: send text to the session as if typed");
 }
 
 - (NSString *)description {

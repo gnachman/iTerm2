@@ -68,7 +68,9 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
                             backing: .buffered,
                             defer: false)
         panel.isFloatingPanel = true
-        panel.title = "Set Up a Companion Device"
+        panel.title = String(localized: "Companion.WindowTitle",
+                             defaultValue: "Set Up a Companion Device",
+                             comment: "Title of the companion device setup wizard window")
         super.init(window: panel)
         panel.delegate = self
     }
@@ -195,28 +197,46 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
     // MARK: Screen 1.1 / 1.2 - install
 
     private func buildInstallScreen(in view: NSView, full: Bool) {
-        addTitle(full ? "Set Up Your Companion Device" : "Enable Companion Pairing", to: view)
+        addTitle(full
+                 ? String(localized: "Companion.InstallTitle.Full",
+                          defaultValue: "Set Up Your Companion Device",
+                          comment: "Title of the full setup screen (AI + companion plugins)")
+                 : String(localized: "Companion.InstallTitle.CompanionOnly",
+                          defaultValue: "Enable Companion Pairing",
+                          comment: "Title of the companion-only setup screen"),
+                 to: view)
 
         let explanation = full
-            ? "This installs the AI and Companion plugins and turns on both features. Afterward, iTerm2 can send data off this Mac, but only with your explicit consent."
-            : "This installs the Companion plugin and turns on companion device pairing. Afterward, iTerm2 can send data off this Mac, but only with your explicit consent."
+            ? String(localized: "Companion.InstallExplanation.Full",
+                     defaultValue: "This installs the AI and Companion plugins and turns on both features. Afterward, iTerm2 can send data off this Mac, but only with your explicit consent.",
+                     comment: "Explanatory paragraph on the full setup screen")
+            : String(localized: "Companion.InstallExplanation.CompanionOnly",
+                     defaultValue: "This installs the Companion plugin and turns on companion device pairing. Afterward, iTerm2 can send data off this Mac, but only with your explicit consent.",
+                     comment: "Explanatory paragraph on the companion-only setup screen")
         addBodyLabel(explanation, to: view, y: Self.contentHeight - 160, height: 80)
 
         // Learn-more link sits right under the introductory paragraph, above the
         // API key controls.
-        let learnMore = makeButton("Learn About the Companion App", action: #selector(openDocs))
+        let learnMore = makeButton(String(localized: "Companion.LearnMoreButton",
+                                          defaultValue: "Learn About the Companion App",
+                                          comment: "Button that opens the companion app documentation"),
+                                   action: #selector(openDocs))
         place(learnMore, centeredAtY: Self.contentHeight - 200)
         view.addSubview(learnMore)
 
         var nextY = Self.contentHeight - 250
         if full {
-            let keyLabel = NSTextField(labelWithString: "API key:")
+            let keyLabel = NSTextField(labelWithString: String(localized: "Companion.APIKeyLabel",
+                                                               defaultValue: "API key:",
+                                                               comment: "Label for the API key text field"))
             keyLabel.alignment = .right
             keyLabel.frame = NSRect(x: 20, y: nextY - 5, width: 90, height: 22)
             view.addSubview(keyLabel)
 
             let keyField = NSSecureTextField(frame: NSRect(x: 118, y: nextY - 2, width: Self.contentWidth - 138, height: 24))
-            keyField.placeholderString = "Paste your API key"
+            keyField.placeholderString = String(localized: "Companion.APIKeyPlaceholder",
+                                                defaultValue: "Paste your API key",
+                                                comment: "Placeholder text in the API key field")
             // Pre-fill an existing key so a user who already configured AI doesn't
             // have to find it again; Install stays gated on the field being non-empty.
             keyField.stringValue = AITermControllerObjC.apiKey ?? ""
@@ -225,7 +245,9 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
             apiKeyField = keyField
 
             nextY -= 38
-            let providerLabel = NSTextField(labelWithString: "Provider:")
+            let providerLabel = NSTextField(labelWithString: String(localized: "Companion.ProviderLabel",
+                                                                    defaultValue: "Provider:",
+                                                                    comment: "Label for the AI provider popup"))
             providerLabel.alignment = .right
             providerLabel.frame = NSRect(x: 20, y: nextY - 5, width: 90, height: 22)
             view.addSubview(providerLabel)
@@ -234,6 +256,7 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
             // Each item's tag is the iTermAIVendor raw value. Apple Intelligence is
             // intentionally absent: it runs on-device and uses no API key, so it has
             // no place on a "paste your API key" screen.
+            // Vendor names are brand/product names and are not localized. // Localization unneeded
             let vendors: [(String, Int)] = [
                 ("Anthropic", Int(iTermAIVendor.anthropic.rawValue)),
                 ("OpenAI", Int(iTermAIVendor.openAI.rawValue)),
@@ -259,7 +282,10 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
             providerPopup = popup
 
             nextY -= 36
-            let getKey = makeButton("Get an API Key", action: #selector(openGetAPIKey))
+            let getKey = makeButton(String(localized: "Companion.GetAPIKeyButton",
+                                           defaultValue: "Get an API Key",
+                                           comment: "Button that opens the provider's API key page"),
+                                    action: #selector(openGetAPIKey))
             getKey.frame = NSRect(x: 114, y: nextY, width: getKey.frame.width + 24, height: 28)
             view.addSubview(getKey)
             apiKeyHelpButton = getKey
@@ -276,7 +302,10 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         view.addSubview(spinner)
         installSpinner = spinner
 
-        let install = makeButton("Install", action: #selector(installPressed), isDefault: true)
+        let install = makeButton(String(localized: "Companion.InstallButton",
+                                        defaultValue: "Install",
+                                        comment: "Button that begins the plugin install"),
+                                 action: #selector(installPressed), isDefault: true)
         place(install, centeredAtY: 40, minWidth: 160)
         view.addSubview(install)
         installButton = install
@@ -311,7 +340,10 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         let full = (currentScreen == .fullSetup)
         let apiKey = (apiKeyField?.stringValue ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         if full && apiKey.isEmpty {
-            setStatus("Enter your API key to continue.", color: .systemRed)
+            setStatus(String(localized: "Companion.Status.EnterAPIKey",
+                             defaultValue: "Enter your API key to continue.",
+                             comment: "Error status when Install is pressed with no API key"),
+                      color: .systemRed)
             return
         }
         let vendor = Int32(selectedVendorTag)
@@ -339,15 +371,24 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
             var grantedConsent = false
             do {
                 if full {
-                    self.setStatus("Downloading the AI plugin…", color: .secondaryLabelColor)
+                    self.setStatus(String(localized: "Companion.Status.DownloadingAIPlugin",
+                                          defaultValue: "Downloading the AI plugin…",
+                                          comment: "Progress status while the AI plugin downloads"),
+                                   color: .secondaryLabelColor)
                     try await CompanionPluginInstaller.installAIPlugin()
                 }
-                self.setStatus("Downloading the companion plugin…", color: .secondaryLabelColor)
+                self.setStatus(String(localized: "Companion.Status.DownloadingCompanionPlugin",
+                                      defaultValue: "Downloading the companion plugin…",
+                                      comment: "Progress status while the companion plugin downloads"),
+                               color: .secondaryLabelColor)
                 try await CompanionPluginInstaller.installCompanionPlugin()
                 // The next step raises an admin password prompt and writes
                 // defaults, so stop here if the user already closed the wizard.
                 guard active() else { return }
-                self.setStatus("Granting consent…", color: .secondaryLabelColor)
+                self.setStatus(String(localized: "Companion.Status.GrantingConsent",
+                                      defaultValue: "Granting consent…",
+                                      comment: "Progress status while consent is granted"),
+                               color: .secondaryLabelColor)
                 try SecureUserDefaults.grantConsent(ai: full, companion: true)
                 grantedConsent = true
                 if full {
@@ -358,10 +399,19 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
                     iTermPreferences.setInt(vendor, forKey: kPreferenceKeyAIVendor)
                     wroteAIDefaults = true
                 }
-                self.setStatus("Verifying…", color: .secondaryLabelColor)
+                self.setStatus(String(localized: "Companion.Status.Verifying",
+                                      defaultValue: "Verifying…",
+                                      comment: "Progress status while the install is verified"),
+                               color: .secondaryLabelColor)
                 guard self.verifyReady(full: full) else {
                     throw CompanionPluginInstallerError.verificationFailed(
-                        full ? "AI and companion plugins" : "companion plugin")
+                        full
+                        ? String(localized: "Companion.VerifyFailed.Both",
+                                 defaultValue: "AI and companion plugins",
+                                 comment: "Names the components that failed to verify, inserted into a verification-failed error")
+                        : String(localized: "Companion.VerifyFailed.Companion",
+                                 defaultValue: "companion plugin",
+                                 comment: "Names the component that failed to verify, inserted into a verification-failed error"))
                 }
                 guard active() else { return }
                 self.goTo(.phoneApp)
@@ -395,10 +445,14 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
     private func failAndFallBackToPlainWindow(_ error: Error) {
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = "Setup Could Not Be Completed"
+        alert.messageText = String(localized: "Companion.SetupFailed.Title",
+                                   defaultValue: "Setup Could Not Be Completed",
+                                   comment: "Title of the alert shown when setup fails")
         alert.informativeText = error.localizedDescription
-            + "\n\nYou can finish setting up in Companion Device Settings."
-        alert.addButton(withTitle: "OK")
+            + String(localized: "Companion.SetupFailed.Suffix",
+                     defaultValue: "\n\nYou can finish setting up in Companion Device Settings.",
+                     comment: "Text appended after the error message in the setup-failed alert")
+        alert.addButton(withTitle: iTermLocalizedOK())
         let finish = { [weak self] in
             self?.close()
             CompanionPairingWindowController.shared.showAndBeginPairing()
@@ -417,36 +471,51 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
     // Store. When true, the setup wizard links straight to the App Store and
     // never mentions the TestFlight beta, whatever this iTerm2 build's release
     // channel is. Leave false until the iOS app is released.
-    private static let companionIOSAppIsOnAppStore = false
+    private static let companionIOSAppIsOnAppStore = true
 
-    // A redirect on iterm2.com that we control, so the shipped app never hardcodes
-    // the raw App Store URL. Point it at the App Store page
-    // (https://apps.apple.com/app/id<APPLE_ID>, the app's Apple ID from App Store
-    // Connect) at launch. Until that redirect is set up, this link will not resolve.
-    private static let companionAppStoreURL = "https://iterm2.com/companion-app-store"
+    private static let companionAppStoreURL = "https://iterm2.com/companion-app.html"
 
     private func buildPhoneAppScreen(in view: NSView) {
-        addTitle("Install iTerm2 Buddy on Your iPhone", to: view)
-        addBodyLabel("Pairing connects this Mac to the iTerm2 Buddy app on your iPhone. Install it now, then come back and continue.",
+        addTitle(String(localized: "Companion.PhoneApp.Title",
+                        defaultValue: "Install iTerm2 Buddy on Your iPhone",
+                        comment: "Title of the phone-app install screen"),
+                 to: view)
+        addBodyLabel(String(localized: "Companion.PhoneApp.Body",
+                            defaultValue: "Pairing connects this Mac to the iTerm2 Buddy app on your iPhone. Install it now, then come back and continue.",
+                            comment: "Explanatory paragraph on the phone-app install screen"),
                      to: view, y: Self.contentHeight - 170, height: 80)
 
         if !Self.companionIOSAppIsOnAppStore && (Bundle.it_isEarlyAdopter() || Bundle.it_isNightlyBuild()) {
-            addBodyLabel("This is a beta build, so iTerm2 Buddy is distributed through TestFlight. Install TestFlight, then join the beta.",
+            addBodyLabel(String(localized: "Companion.PhoneApp.BetaBody",
+                                defaultValue: "This is a beta build, so iTerm2 Buddy is distributed through TestFlight. Install TestFlight, then join the beta.",
+                                comment: "Explanatory paragraph shown for beta builds on the phone-app install screen"),
                          to: view, y: Self.contentHeight - 260, height: 60)
-            let testFlight = makeButton("Install TestFlight", action: #selector(openTestFlightApp))
+            let testFlight = makeButton(String(localized: "Companion.PhoneApp.InstallTestFlightButton",
+                                              defaultValue: "Install TestFlight",
+                                              comment: "Button that opens the TestFlight App Store page"),
+                                        action: #selector(openTestFlightApp))
             place(testFlight, centeredAtY: Self.contentHeight - 300, minWidth: 220)
             view.addSubview(testFlight)
 
-            let join = makeButton("Join the iTerm2 Buddy Beta", action: #selector(openJoinBeta))
+            let join = makeButton(String(localized: "Companion.PhoneApp.JoinBetaButton",
+                                        defaultValue: "Join the iTerm2 Buddy Beta",
+                                        comment: "Button that opens the iTerm2 Buddy TestFlight beta invite"),
+                                  action: #selector(openJoinBeta))
             place(join, centeredAtY: Self.contentHeight - 342, minWidth: 220)
             view.addSubview(join)
         } else {
-            let appStore = makeButton("Get iTerm2 Buddy", action: #selector(openReleaseApp))
+            let appStore = makeButton(String(localized: "Companion.PhoneApp.GetAppButton",
+                                            defaultValue: "Get iTerm2 Buddy",
+                                            comment: "Button that opens the iTerm2 Buddy App Store page"),
+                                      action: #selector(openReleaseApp))
             place(appStore, centeredAtY: Self.contentHeight - 280, minWidth: 220)
             view.addSubview(appStore)
         }
 
-        let next = makeButton("Next", action: #selector(phoneAppNextPressed), isDefault: true)
+        let next = makeButton(String(localized: "Companion.NextButton",
+                                     defaultValue: "Next",
+                                     comment: "Button that advances from the phone-app screen"),
+                              action: #selector(phoneAppNextPressed), isDefault: true)
         place(next, centeredAtY: 40, minWidth: 160)
         view.addSubview(next)
     }
@@ -458,8 +527,13 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
     // MARK: Screen 3 - show code
 
     private func buildShowCodeScreen(in view: NSView) {
-        addTitle("Show the Pairing Code", to: view)
-        addBodyLabel("On your iPhone, open iTerm2 Buddy and tap Scan. Then reveal the pairing code below and point the camera at it.",
+        addTitle(String(localized: "Companion.ShowCode.Title",
+                        defaultValue: "Show the Pairing Code",
+                        comment: "Title of the show-pairing-code screen"),
+                 to: view)
+        addBodyLabel(String(localized: "Companion.ShowCode.Body",
+                            defaultValue: "On your iPhone, open iTerm2 Buddy and tap Scan. Then reveal the pairing code below and point the camera at it.",
+                            comment: "Explanatory paragraph on the show-pairing-code screen"),
                      to: view, y: Self.contentHeight - 170, height: 80)
 
         let qr = NSImageView(frame: NSRect(x: (Self.contentWidth - 240) / 2, y: 190, width: 240, height: 240))
@@ -470,7 +544,10 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         view.addSubview(qr)
         qrImageView = qr
 
-        let showButton = NSButton(title: "Show Pairing Code", target: self, action: #selector(showPairingCodePressed))
+        let showButton = NSButton(title: String(localized: "Companion.ShowCode.ShowButton",
+                                                defaultValue: "Show Pairing Code",
+                                                comment: "Button that reveals the pairing QR code"),
+                                  target: self, action: #selector(showPairingCodePressed))
         showButton.bezelStyle = .rounded
         showButton.controlSize = .large
         showButton.sizeToFit()
@@ -483,7 +560,10 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         view.addSubview(status)
         activeStatusLabel = status
 
-        let back = makeButton("Back", action: #selector(backToPhoneAppPressed))
+        let back = makeButton(String(localized: "Companion.BackButton",
+                                     defaultValue: "Back",
+                                     comment: "Button that returns to the previous wizard screen"),
+                              action: #selector(backToPhoneAppPressed))
         back.frame = NSRect(x: 20, y: 40, width: 90, height: 32)
         view.addSubview(back)
     }
@@ -495,14 +575,20 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
 
     @objc private func showPairingCodePressed(_ sender: Any) {
         showCodeButton?.isEnabled = false
-        setStatus("Authenticating…", color: .secondaryLabelColor)
+        setStatus(String(localized: "Companion.Status.Authenticating",
+                         defaultValue: "Authenticating…",
+                         comment: "Status while authenticating before showing the pairing code"),
+                  color: .secondaryLabelColor)
         Task { [weak self] in
             guard let self else { return }
             let authenticated = await self.controller.authenticateToPair()
             guard self.window?.isVisible == true, self.currentScreen == .showCode else { return }
             if !authenticated {
                 self.showCodeButton?.isEnabled = true
-                self.setStatus("Authentication is required to show the pairing code.", color: .systemRed)
+                self.setStatus(String(localized: "Companion.Status.AuthenticationRequired",
+                                      defaultValue: "Authentication is required to show the pairing code.",
+                                      comment: "Error status when authentication fails on the show-code screen"),
+                               color: .systemRed)
                 return
             }
             do {
@@ -510,10 +596,16 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
                 self.showCodeButton?.isHidden = true
                 self.qrImageView?.isHidden = false
                 self.qrImageView?.image = CompanionPairingController.qrImage(for: code.urlString(), pointSize: 240)
-                self.setStatus("Waiting for your iPhone…", color: .secondaryLabelColor)
+                self.setStatus(String(localized: "Companion.Status.WaitingForPhone",
+                                      defaultValue: "Waiting for your iPhone…",
+                                      comment: "Status shown after the QR code appears, waiting for the phone to scan"),
+                               color: .secondaryLabelColor)
             } catch {
                 self.showCodeButton?.isEnabled = true
-                self.setStatus("Could not start pairing: \(error.localizedDescription)", color: .systemRed)
+                self.setStatus(String(localized: "Companion.Status.CouldNotStartPairing",
+                                      defaultValue: "Could not start pairing: \(error.localizedDescription)",
+                                      comment: "Error status when pairing cannot start; the placeholder is the error message"),
+                               color: .systemRed)
             }
         }
     }
@@ -521,14 +613,19 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
     // MARK: Screen 4 - SAS entry
 
     private func buildSASScreen(in view: NSView) {
-        addTitle("Confirm the Code", to: view)
-        addBodyLabel("Type the 6-digit code shown on your iPhone. This confirms you’re pairing with your own phone.",
+        addTitle(String(localized: "Companion.SAS.Title",
+                        defaultValue: "Confirm the Code",
+                        comment: "Title of the SAS (short authentication string) confirmation screen"),
+                 to: view)
+        addBodyLabel(String(localized: "Companion.SAS.Body",
+                            defaultValue: "Type the 6-digit code shown on your iPhone. This confirms you’re pairing with your own phone.",
+                            comment: "Explanatory paragraph on the SAS confirmation screen"),
                      to: view, y: Self.contentHeight - 170, height: 70)
 
         let field = NSTextField(string: "")
         field.alignment = .center
         field.font = .monospacedDigitSystemFont(ofSize: 30, weight: .medium)
-        field.placeholderString = "000000"
+        field.placeholderString = "000000"  // Localization unneeded (digit-format sample)
         field.frame = NSRect(x: (Self.contentWidth - 170) / 2, y: 300, width: 170, height: 48)
         field.target = self
         field.action = #selector(sasVerifyPressed)
@@ -536,7 +633,10 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         view.addSubview(field)
         sasField = field
 
-        let verify = makeButton("Verify", action: #selector(sasVerifyPressed), isDefault: true)
+        let verify = makeButton(String(localized: "Companion.SAS.VerifyButton",
+                                       defaultValue: "Verify",
+                                       comment: "Button that submits the entered SAS code"),
+                                action: #selector(sasVerifyPressed), isDefault: true)
         place(verify, centeredAtY: 250, minWidth: 120)
         verify.isEnabled = false
         view.addSubview(verify)
@@ -546,7 +646,10 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         view.addSubview(status)
         activeStatusLabel = status
 
-        let back = makeButton("Back", action: #selector(backFromSASPressed))
+        let back = makeButton(String(localized: "Companion.BackButton",
+                                     defaultValue: "Back",
+                                     comment: "Button that returns to the previous wizard screen"),
+                              action: #selector(backFromSASPressed))
         back.frame = NSRect(x: 20, y: 40, width: 90, height: 32)
         view.addSubview(back)
     }
@@ -580,13 +683,18 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
     // MARK: Screen 5 - paired
 
     private func buildPairedScreen(in view: NSView) {
-        addTitle("Companion Device Paired", to: view)
+        addTitle(String(localized: "Companion.Paired.Title",
+                        defaultValue: "Companion Device Paired",
+                        comment: "Title of the final paired-status screen"),
+                 to: view)
 
         let check = NSImageView(frame: NSRect(x: (Self.contentWidth - 130) / 2, y: 320, width: 130, height: 130))
         check.imageScaling = .scaleProportionallyUpOrDown
         let config = NSImage.SymbolConfiguration(pointSize: 96, weight: .regular)
         let image = NSImage(systemSymbolName: SFSymbol.checkmarkCircleFill.rawValue,
-                            accessibilityDescription: "Companion device connection status")?
+                            accessibilityDescription: String(localized: "Companion.Paired.CheckmarkAccessibility",
+                                                             defaultValue: "Companion device connection status",
+                                                             comment: "VoiceOver description of the paired-status checkmark image"))?
             .withSymbolConfiguration(config)
         image?.isTemplate = true
         check.image = image
@@ -606,7 +714,10 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         view.addSubview(status)
         activeStatusLabel = status
 
-        let close = makeButton("Close", action: #selector(closePressed), isDefault: true)
+        let close = makeButton(String(localized: "Companion.CloseButton",
+                                      defaultValue: "Close",
+                                      comment: "Button that closes the wizard from the paired screen"),
+                               action: #selector(closePressed), isDefault: true)
         place(close, centeredAtY: 40, minWidth: 160)
         view.addSubview(close)
 
@@ -621,15 +732,21 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
     private func updatePairedConnectionText() {
         guard currentScreen == .paired else { return }
         if controller.isConnected {
-            pairedInstructionsLabel?.stringValue = "Your companion device is paired and connected."
+            pairedInstructionsLabel?.stringValue = String(localized: "Companion.Paired.Connected",
+                                                          defaultValue: "Your companion device is paired and connected.",
+                                                          comment: "Status text when the paired device is connected")
             checkmarkImageView?.contentTintColor = .systemGreen
             setStatus("", color: .secondaryLabelColor)
         } else if controller.isListening {
-            pairedInstructionsLabel?.stringValue = "Your companion device is paired. Waiting for it to connect."
+            pairedInstructionsLabel?.stringValue = String(localized: "Companion.Paired.WaitingToConnect",
+                                                          defaultValue: "Your companion device is paired. Waiting for it to connect.",
+                                                          comment: "Status text when paired but the device has not yet connected")
             checkmarkImageView?.contentTintColor = .tertiaryLabelColor
             setStatus("", color: .secondaryLabelColor)
         } else {
-            pairedInstructionsLabel?.stringValue = "Your companion device is paired but iTerm2 isn’t listening for it yet. Reconnecting…"
+            pairedInstructionsLabel?.stringValue = String(localized: "Companion.Paired.Reconnecting",
+                                                          defaultValue: "Your companion device is paired but iTerm2 isn’t listening for it yet. Reconnecting…",
+                                                          comment: "Status text when paired but iTerm2 is not yet listening")
             checkmarkImageView?.contentTintColor = .systemYellow
             setStatus("", color: .systemYellow)
         }
@@ -697,7 +814,10 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         controller.onFailed = { [weak self] message in
             guard let self, self.isShowing,
                   self.currentScreen == .showCode || self.currentScreen == .sasEntry else { return }
-            self.setStatus("Pairing failed: \(message)", color: .systemRed)
+            self.setStatus(String(localized: "Companion.Status.PairingFailed",
+                                  defaultValue: "Pairing failed: \(message)",
+                                  comment: "Error status when pairing fails; the placeholder is the failure detail"),
+                           color: .systemRed)
         }
         controller.onPaired = { [weak self] in
             guard let self, self.isShowing else { return }
@@ -718,7 +838,9 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
             // screen). A non-acceptance means the code was mistyped past the
             // limit or pairing was declined: tell the user to go back and rescan.
             if !accepted, self.currentScreen == .sasEntry {
-                self.setStatus("That didn’t work. Tap Back to reveal a new code and scan again.",
+                self.setStatus(String(localized: "Companion.Status.SASRejected",
+                                      defaultValue: "That didn’t work. Tap Back to reveal a new code and scan again.",
+                                      comment: "Error status when the SAS code was rejected or pairing declined"),
                                color: .systemRed)
             }
         }

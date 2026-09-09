@@ -207,12 +207,12 @@ class AIModelCatalogUpdater: NSObject {
         askingConsent = true
         defer { askingConsent = false }
         let selection = iTermWarning.show(
-            withTitle: "iTerm2 can keep its built-in list of AI models current by periodically downloading a cryptographically signed list from iterm2.com. No terminal content or personal data is sent. Allow this?",
-            actions: ["Allow", "Don’t Allow"],
+            withTitle: String(localized: "AIModelCatalogUpdater.ConsentBody", defaultValue: "iTerm2 can keep its built-in list of AI models current by periodically downloading a cryptographically signed list from iterm2.com. No terminal content or personal data is sent. Allow this?", comment: "Body text of the dialog asking whether to periodically check for AI model list updates"),
+            actions: [String(localized: "AIModelCatalogUpdater.Allow", defaultValue: "Allow", comment: "Button to allow periodic AI model list update checks"), String(localized: "AIModelCatalogUpdater.DontAllow", defaultValue: "Don’t Allow", comment: "Button to decline periodic AI model list update checks")],
             accessory: nil,
             identifier: nil,
             silenceable: .kiTermWarningTypePersistent,
-            heading: "Check for AI Model Updates?",
+            heading: String(localized: "AIModelCatalogUpdater.ConsentHeading", defaultValue: "Check for AI Model Updates?", comment: "Heading of the dialog asking whether to periodically check for AI model list updates"),
             window: nil)
         switch selection {
         case .kiTermWarningSelection0:

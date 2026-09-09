@@ -53,6 +53,7 @@ class WinSizeController: NSObject {
         }
 
         var debugDescription: String {
+            // Localization unneeded
             return "<Request size=\(size) viewSize=\(viewSize) scaleFactor=\(scaleFactor) regular=\(regular)>"
         }
     }

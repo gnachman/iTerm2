@@ -438,8 +438,10 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
         var errorDescription: String? {
             switch self {
             case .invalidJSON:
+                // Localization unneeded
                 return "Invalid JSON data"
             case .unknownEventType(let type):
+                // Localization unneeded
                 return "Unknown event type: \(type)"
             }
         }
@@ -522,7 +524,7 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
             case let errorEvent as ResponseFailedEvent:
                 choiceMessages.append(LLM.Message(
                     role: .assistant,
-                    content: "Something went wrong: " + (errorEvent.response.error?.message ?? "Unknown error")))
+                    content: String(localized: "ResponsesStreamingParser.SomethingWentWrong", defaultValue: "Something went wrong: ", comment: "Prefix for an error message returned by the AI service") + (errorEvent.response.error?.message ?? String(localized: "ResponsesStreamingParser.UnknownError", defaultValue: "Unknown error", comment: "Fallback message when the AI service reports an error with no description"))))
                 parsedResponse?.ignore = false
             case let deltaEvent as ResponseOutputTextDeltaEvent:
                 choiceMessages.append(LLM.Message(role: .assistant,

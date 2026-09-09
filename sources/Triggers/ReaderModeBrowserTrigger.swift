@@ -12,7 +12,7 @@ class ReaderModeBrowserTrigger: Trigger {
     }
 
     override static var title: String {
-        return "Enter Reader Mode"
+        return String(localized: "Trigger.ReaderModeBrowser.Title", defaultValue: "Enter Reader Mode", comment: "Trigger action name: switch the web page into reader mode")
     }
 
     override func takesParameter() -> Bool {

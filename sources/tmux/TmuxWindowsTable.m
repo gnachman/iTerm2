@@ -91,9 +91,9 @@ NSString *kWindowPasteboardType = @"com.googlecode.iterm2.kWindowPasteboardType"
     [openInTabsButton_ setEnabled:[delegate_ currentSessionSelected] && [tableView_ numberOfSelectedRows] > 0 && ![self anySelectedWindowIsOpen]];
     [openInWindowsButton_ setEnabled:[delegate_ currentSessionSelected] && [tableView_ numberOfSelectedRows] > 0 && ![self anySelectedWindowIsOpen]];
     if ([openInWindowsButton_ isEnabled] && [tableView_ numberOfSelectedRows] == 1) {
-        [openInWindowsButton_ setTitle:@"Open in Window"];
+        [openInWindowsButton_ setTitle:NSLocalizedStringWithDefaultValue(@"TmuxWindows.OpenInWindow", nil, [NSBundle mainBundle], @"Open in Window", @"Button to open a tmux window in a single window")];
     } else {
-        [openInWindowsButton_ setTitle:@"Open in Windows"];
+        [openInWindowsButton_ setTitle:NSLocalizedStringWithDefaultValue(@"TmuxWindows.OpenInWindows", nil, [NSBundle mainBundle], @"Open in Windows", @"Button to open tmux windows each in a new window")];
     }
     [hideWindowButton_ setEnabled:[tableView_ numberOfSelectedRows] > 0 && [self allSelectedWindowsAreOpen]];
 }

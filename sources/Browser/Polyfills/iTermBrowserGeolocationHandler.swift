@@ -206,7 +206,7 @@ class iTermBrowserGeolocationHandler: NSObject {
                                     messageDict: [String: Any],
                                     webView: iTermBrowserWebView,
                                     frame: WKFrameInfo?) async {
-        let denialMessage = "User denied the request for Geolocation."
+        let denialMessage = String(localized: "BrowserGeolocation.UserDenied", defaultValue: "User denied the request for Geolocation.", comment: "Geolocation error when the user denies the permission request")
         switch type {
         case "getCurrentPosition":
             if let opId = messageDict["operationId"] as? Int {
@@ -252,7 +252,7 @@ extension iTermBrowserGeolocationHandler {
                 try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
                 if pendingLocationRequests[operationId] != nil {
                     pendingLocationRequests.removeValue(forKey: operationId)
-                    await sendPositionError(webView: webView, frame: frame, operationId: operationId, code: 3, message: "Timeout expired")
+                    await sendPositionError(webView: webView, frame: frame, operationId: operationId, code: 3, message: String(localized: "BrowserGeolocation.TimeoutExpired", defaultValue: "Timeout expired", comment: "Geolocation error when the request times out"))
                 }
             }
         }
@@ -470,20 +470,20 @@ extension iTermBrowserGeolocationHandler: CLLocationManagerDelegate {
                 switch clError.code {
                 case .denied:
                     code = 1
-                    message = "User denied the request for Geolocation."
+                    message = String(localized: "BrowserGeolocation.UserDenied", defaultValue: "User denied the request for Geolocation.", comment: "Geolocation error when the user denies the permission request")
                 case .network:
                     code = 2
-                    message = "Network error while retrieving location."
+                    message = String(localized: "BrowserGeolocation.NetworkError", defaultValue: "Network error while retrieving location.", comment: "Geolocation error when a network failure occurs")
                 case .locationUnknown:
                     code = 2
-                    message = "Location information is unavailable."
+                    message = String(localized: "BrowserGeolocation.LocationUnavailable", defaultValue: "Location information is unavailable.", comment: "Geolocation error when the location cannot be determined")
                 default:
                     code = 2
-                    message = "An error occurred while retrieving location: \(clError.localizedDescription)"
+                    message = String(localized: "BrowserGeolocation.RetrievalError", defaultValue: "An error occurred while retrieving location: \(clError.localizedDescription)", comment: "Geolocation error message with underlying error details")
                 }
             } else {
                 code = 2
-                message = "An error occurred while retrieving location: \(error.localizedDescription)"
+                message = String(localized: "BrowserGeolocation.RetrievalError", defaultValue: "An error occurred while retrieving location: \(error.localizedDescription)", comment: "Geolocation error message with underlying error details")
             }
 
             // Handle pending single requests

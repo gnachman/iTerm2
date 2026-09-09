@@ -155,7 +155,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     PreferenceInfo *info;
     info = [self defineControl:_onEndAction
                            key:KEY_SESSION_END_ACTION
-                   displayName:@"Close or restart session on end"
+                   displayName:NSLocalizedStringWithDefaultValue(@"ProfilesSession.CloseOrRestartOnEnd", nil, [NSBundle mainBundle], @"Close or restart session on end", @"Display name for the on-end action control")
                           type:kPreferenceInfoTypePopup];
     info.customSettingChangedHandler = ^(id sender) {
         [weakSelf onEndSettingDidChange];
@@ -179,7 +179,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 
     [self defineControl:_undoTimeout
                     key:KEY_UNDO_TIMEOUT
-            displayName:@"Undo close session timeout"
+            displayName:NSLocalizedStringWithDefaultValue(@"ProfilesSession.UndoCloseTimeout", nil, [NSBundle mainBundle], @"Undo close session timeout", @"Display name for the undo-close-session timeout control")
                    type:kPreferenceInfoTypeIntegerTextField];
 
     info = [self defineControl:_autoLog
@@ -220,7 +220,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 
     [self defineControl:_loggingStyle
                     key:KEY_LOGGING_STYLE
-            displayName:@"Log plain text, igoring control sequences"
+            displayName:NSLocalizedStringWithDefaultValue(@"ProfilesSession.LogPlainText", nil, [NSBundle mainBundle], @"Log plain text, igoring control sequences", @"Display name for the logging style control")
                    type:kPreferenceInfoTypePopup];
 
     info = [self defineUnsearchableControl:_logDir
@@ -239,7 +239,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 
     info = [self defineControl:_sendCodeWhenIdle
                            key:KEY_SEND_CODE_WHEN_IDLE
-                   displayName:@"Send ASCII code when idle?"
+                   displayName:NSLocalizedStringWithDefaultValue(@"ProfilesSession.SendASCIICodeWhenIdle", nil, [NSBundle mainBundle], @"Send ASCII code when idle?", @"Display name for the send-code-when-idle checkbox")
                           type:kPreferenceInfoTypeCheckbox];
     info.customSettingChangedHandler = ^(id sender) {
         __strong __typeof(weakSelf) strongSelf = weakSelf;
@@ -259,10 +259,8 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
             // Host *
             //   ServerAliveInterval 60
             iTermWarningSelection selection =
-                [iTermWarning showWarningWithTitle:@"You probably don’t want to turn this on. "
-                                                   @"It's not suitable for keeping ssh sessions alive, "
-                                                   @"even with a code of “0”. Are you sure you want this?"
-                                           actions:@[ @"Enable Send Code", @"Cancel" ]
+                [iTermWarning showWarningWithTitle:NSLocalizedStringWithDefaultValue(@"ProfilesSession.SendCodeWhenIdleWarning", nil, [NSBundle mainBundle], @"You probably don’t want to turn this on. " @"It's not suitable for keeping ssh sessions alive, " @"even with a code of “0”. Are you sure you want this?", @"Warning shown when enabling the send-ASCII-code-when-idle option")
+                                           actions:@[ NSLocalizedStringWithDefaultValue(@"ProfilesSession.EnableSendCodeAction", nil, [NSBundle mainBundle], @"Enable Send Code", @"Button to enable sending an ASCII code when the session is idle"), iTermLocalizedCancel() ]
                                         identifier:kWarnAboutSendCodeWhenIdle
                                        silenceable:kiTermWarningTypePermanentlySilenceable
                                             window:weakSelf.view.window];
@@ -286,13 +284,13 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 
     info = [self defineControl:_idleCode
                            key:KEY_IDLE_CODE
-                   displayName:@"Send character periodically while idle"
+                   displayName:NSLocalizedStringWithDefaultValue(@"ProfilesSession.SendCharPeriodically", nil, [NSBundle mainBundle], @"Send character periodically while idle", @"Display name for the idle-code control")
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(0, 256);
 
     [self defineControl:_idlePeriod
                     key:KEY_IDLE_PERIOD
-            displayName:@"Time between sending characters when idle"
+            displayName:NSLocalizedStringWithDefaultValue(@"ProfilesSession.TimeBetweenChars", nil, [NSBundle mainBundle], @"Time between sending characters when idle", @"Display name for the idle-period control")
                    type:kPreferenceInfoTypeDoubleTextField];
 
     [self updateRemoveJobButtonEnabled];
@@ -359,7 +357,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
 
     _progressBarHeightInfo = [self defineControl:_progressBarHeight
                                               key:KEY_PROGRESS_BAR_HEIGHT
-                                      displayName:@"Progress bar height"
+                                      displayName:NSLocalizedStringWithDefaultValue(@"ProfilesSession.ProgressBarHeight", nil, [NSBundle mainBundle], @"Progress bar height", @"Display name for the progress bar height control")
                                              type:kPreferenceInfoTypeIntegerTextField];
     _progressBarHeightInfo.shouldBeEnabled = ^BOOL {
         return [weakSelf boolForKey:KEY_ENABLE_PROGRESS_BARS];
@@ -367,7 +365,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     __weak NSView *heightView = _progressBarHeight;
     _progressBarHeightInfo.didClamp = ^(int oobValue) {
         if (oobValue > [iTermPreferences topBottomMargins]) {
-            [heightView it_showInformativeMessageWithMarkdown:@"The progress bar height cannot exceed the top margin’s height. You can adjust it in **Settings > Appearance > Panes > Top & Bottom Margins**."];
+            [heightView it_showInformativeMessageWithMarkdown:NSLocalizedStringWithDefaultValue(@"ProfilesSession.ProgressBarHeightTooTall", nil, [NSBundle mainBundle], @"The progress bar height cannot exceed the top margin’s height. You can adjust it in **Settings > Appearance > Panes > Top & Bottom Margins**.", @"Message shown when the progress bar height is clamped to the top margin height")];
         }
     };
     [_progressBarHeightInfo addShouldBeEnabledDependencyOnSetting:KEY_ENABLE_PROGRESS_BARS
@@ -378,7 +376,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     [self populateProgressBarColorSchemes];
     info = [self defineControl:_progressBarColorScheme
                            key:KEY_PROGRESS_BAR_COLOR_SCHEME
-                   displayName:@"Progress bar color scheme"
+                   displayName:NSLocalizedStringWithDefaultValue(@"ProfilesSession.ProgressBarColorScheme", nil, [NSBundle mainBundle], @"Progress bar color scheme", @"Display name for the progress bar color scheme control")
                           type:kPreferenceInfoTypeStringPopup];
     info.shouldBeEnabled = ^BOOL {
         return [weakSelf boolForKey:KEY_ENABLE_PROGRESS_BARS];
@@ -447,7 +445,7 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     };
     [self updateNonDefaultIndicatorVisibleForInfo:info];
     [self addViewToSearchIndex:_configureStatusBar
-                   displayName:@"Configure status bar"
+                   displayName:NSLocalizedStringWithDefaultValue(@"ProfilesSession.ConfigureStatusBar", nil, [NSBundle mainBundle], @"Configure status bar", @"Search index display name for the configure status bar control")
                        phrases:@[]
                            key:nil];
 
@@ -470,17 +468,13 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     const NSInteger requesting = coordinator.numberOfSessionsRequestingPreventSleep;
     NSString *text;
     if (requesting == 0) {
-        text = @"No sessions are currently preventing sleep.";
+        text = NSLocalizedStringWithDefaultValue(@"ProfilesSession.NoSessionsPreventingSleep", nil, [NSBundle mainBundle], @"No sessions are currently preventing sleep.", @"Status shown when no sessions are keeping the machine awake");
     } else if (holding > 0) {
         // Gate is open (on power, or the battery override is enabled): holding == requesting.
-        text = (holding == 1)
-            ? @"1 session is currently preventing sleep."
-            : [NSString stringWithFormat:@"%@ sessions are currently preventing sleep.", @(holding)];
+        text = [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilesSession.SessionsPreventingSleep", nil, [NSBundle mainBundle], @"%ld sessions are currently preventing sleep.", @"Status text; %ld is the number of sessions currently preventing sleep"), (long)holding];
     } else {
         // Sessions want to prevent sleep but are gated off on battery.
-        text = (requesting == 1)
-            ? @"1 session would prevent sleep, but it is disabled while on battery."
-            : [NSString stringWithFormat:@"%@ sessions would prevent sleep, but it is disabled while on battery.", @(requesting)];
+        text = [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"ProfilesSession.SessionsWouldPreventSleep", nil, [NSBundle mainBundle], @"%ld sessions would prevent sleep, but it is disabled while on battery.", @"Status text; %ld is the number of sessions that would prevent sleep but are disabled on battery"), (long)requesting];
     }
     _sleepStatus.stringValue = text;
 }
@@ -499,15 +493,15 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
         iTermProgressBarColorSchemeOrange
     ];
     NSDictionary<NSString *, NSString *> *titles = @{
-        iTermProgressBarColorSchemeDefault: @"Default",
-        iTermProgressBarColorSchemeRainbow: @"Rainbow",
-        iTermProgressBarColorSchemeRed: @"Red",
-        iTermProgressBarColorSchemeGreen: @"Green",
-        iTermProgressBarColorSchemeBlue: @"Blue",
-        iTermProgressBarColorSchemeYellow: @"Yellow",
-        iTermProgressBarColorSchemePurple: @"Purple",
-        iTermProgressBarColorSchemeCyan: @"Cyan",
-        iTermProgressBarColorSchemeOrange: @"Orange"
+        iTermProgressBarColorSchemeDefault: NSLocalizedStringWithDefaultValue(@"ProfilesSession.ColorSchemeDefault", nil, [NSBundle mainBundle], @"Default", @"Progress bar color scheme name: default"),
+        iTermProgressBarColorSchemeRainbow: NSLocalizedStringWithDefaultValue(@"ProfilesSession.ColorSchemeRainbow", nil, [NSBundle mainBundle], @"Rainbow", @"Progress bar color scheme name: rainbow"),
+        iTermProgressBarColorSchemeRed: NSLocalizedStringWithDefaultValue(@"ProfilesSession.ColorSchemeRed", nil, [NSBundle mainBundle], @"Red", @"Progress bar color scheme name: red"),
+        iTermProgressBarColorSchemeGreen: NSLocalizedStringWithDefaultValue(@"ProfilesSession.ColorSchemeGreen", nil, [NSBundle mainBundle], @"Green", @"Progress bar color scheme name: green"),
+        iTermProgressBarColorSchemeBlue: NSLocalizedStringWithDefaultValue(@"ProfilesSession.ColorSchemeBlue", nil, [NSBundle mainBundle], @"Blue", @"Progress bar color scheme name: blue"),
+        iTermProgressBarColorSchemeYellow: NSLocalizedStringWithDefaultValue(@"ProfilesSession.ColorSchemeYellow", nil, [NSBundle mainBundle], @"Yellow", @"Progress bar color scheme name: yellow"),
+        iTermProgressBarColorSchemePurple: NSLocalizedStringWithDefaultValue(@"ProfilesSession.ColorSchemePurple", nil, [NSBundle mainBundle], @"Purple", @"Progress bar color scheme name: purple"),
+        iTermProgressBarColorSchemeCyan: NSLocalizedStringWithDefaultValue(@"ProfilesSession.ColorSchemeCyan", nil, [NSBundle mainBundle], @"Cyan", @"Progress bar color scheme name: cyan"),
+        iTermProgressBarColorSchemeOrange: NSLocalizedStringWithDefaultValue(@"ProfilesSession.ColorSchemeOrange", nil, [NSBundle mainBundle], @"Orange", @"Progress bar color scheme name: orange")
     };
     for (NSString *scheme in schemes) {
         NSString *title = titles[scheme];
@@ -744,9 +738,9 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     NSMutableArray *augmented;
     if (jobNames) {
         augmented = [NSMutableArray arrayWithArray:jobNames];
-        [augmented addObject:@"Job Name"];
+        [augmented addObject:NSLocalizedStringWithDefaultValue(@"ProfilesSession.JobNamePlaceholder", nil, [NSBundle mainBundle], @"Job Name", @"Default name for a newly added job in the session preferences jobs list")];
     } else {
-        augmented = [NSMutableArray arrayWithObject:@"Job Name"];
+        augmented = [NSMutableArray arrayWithObject:NSLocalizedStringWithDefaultValue(@"ProfilesSession.JobNamePlaceholder", nil, [NSBundle mainBundle], @"Job Name", @"Default name for a newly added job in the session preferences jobs list")];
     }
     [self setObject:augmented forKey:KEY_JOBS];
     [_jobsTable reloadData];

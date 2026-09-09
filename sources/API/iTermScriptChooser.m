@@ -46,7 +46,7 @@
         [_signButton setAction:@selector(didToggleSignButton:)];
         _signButton.translatesAutoresizingMaskIntoConstraints = NO;
         _signButton.buttonType = NSButtonTypeSwitch;
-        _signButton.title = @"Code-sign exported script using identity: ";
+        _signButton.title = NSLocalizedStringWithDefaultValue(@"ScriptChooser.CodeSignLabel", nil, [NSBundle mainBundle], @"Code-sign exported script using identity: ", @"Checkbox label to code-sign the exported script");
         [_signButton sizeToFit];
         [self addSubview:_signButton];
 
@@ -60,7 +60,7 @@
                                                                     locale:[NSLocale currentLocale]];
         [_identities enumerateObjectsUsingBlock:^(SIGIdentity * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             NSString *formattedDate = [dateFormatter stringFromDate:obj.signingCertificate.expirationDate];
-            NSString *title = [NSString stringWithFormat:@"%@, expires %@",
+            NSString *title = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"ScriptChooser.IdentityExpires", nil, [NSBundle mainBundle], @"%1$@, expires %2$@", @"Signing identity menu item; first %@ is the identity description, second %@ is the expiration date"),
                                obj.signingCertificate.longDescription, formattedDate];
             NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:title
                                                               action:nil
@@ -74,7 +74,7 @@
         _launchButton.action = @selector(toggleAutoLaunch:);
         _launchButton.translatesAutoresizingMaskIntoConstraints = NO;
         _launchButton.buttonType = NSButtonTypeSwitch;
-        _launchButton.title = @"Offer to launch automatically during installation";
+        _launchButton.title = NSLocalizedStringWithDefaultValue(@"ScriptChooser.OfferAutoLaunch", nil, [NSBundle mainBundle], @"Offer to launch automatically during installation", @"Checkbox to offer auto-launch when installing an exported script");
         _launchButton.state = NSControlStateValueOff;
         _launchButton.enabled = NO;
         [_launchButton sizeToFit];
