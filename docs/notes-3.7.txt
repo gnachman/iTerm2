@@ -877,6 +877,13 @@ Web browser improvements:
   password manager.
 
 Bug Fixes:
+- Stopped falsely offering to reset the key
+  reporting mode after every command in Fish
+  4.x and other shells that re-enable the
+  kitty keyboard protocol at each prompt. The
+  flags are now sampled when the command
+  finished, not after the next prompt turned
+  them back on.
 - Fixed a crash on launch when restoring
   scrollback saved by 3.6.11 that contained
   bidi (right-to-left) text. The old metadata
