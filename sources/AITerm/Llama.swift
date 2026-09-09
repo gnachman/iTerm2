@@ -65,7 +65,11 @@ struct LlamaResponse<Streaming: LlamaStreaming>: Codable {
 
             struct Function: Codable {
                 var name: String  // get_current_weather
-                var arguments: [String: String]
+                // AnyCodable, not String: Ollama echoes tool arguments back with
+                // the JSON types the tool's own schema declared, so a parameter
+                // typed integer|null arrives as a number or null and a
+                // String-valued dictionary fails to decode the whole response.
+                var arguments: [String: AnyCodable]
             }
         }
     }
