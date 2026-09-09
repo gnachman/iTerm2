@@ -746,7 +746,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     // toggling capabilities by hand. When on, the Model field and capability
     // checkboxes are unused (the server is the source of truth).
     _dynamicModelsButton =
-        [NSButton checkboxWithTitle:@"Discover installed models automatically (Ollama)"
+        [NSButton checkboxWithTitle:NSLocalizedStringWithDefaultValue(@"AIModelEditor.DiscoverModelsAutomatically", nil, [NSBundle mainBundle], @"Discover installed models automatically (Ollama)", @"Checkbox that makes the model editor discover installed Ollama models instead of naming one by hand")
                              target:self
                              action:@selector(dynamicModelsToggled:)];
     _dynamicModelsButton.state = iTermManualAIModelBoolValue(_base, kAIManualModelDynamicModelsKey)
@@ -981,7 +981,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSString *previous = _modelPopup.selectedItem.representedObject ?: (_base[kAIManualModelDynamicSelectedModelKey] ?: @"");
     [_modelPopup removeAllItems];
 
-    [_modelPopup addItemWithTitle:@"All installed models"];
+    [_modelPopup addItemWithTitle:NSLocalizedStringWithDefaultValue(@"AIModelEditor.AllInstalledModels", nil, [NSBundle mainBundle], @"All installed models", @"Model popup choice meaning use every model discovered on the Ollama server")];
     _modelPopup.lastItem.representedObject = @"";
 
     NSMutableArray<NSString *> *names =
@@ -1000,7 +1000,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         }
     } else {
         [_modelPopup.menu addItem:[NSMenuItem separatorItem]];
-        NSMenuItem *hint = [[NSMenuItem alloc] initWithTitle:@"No models discovered - click Refresh Models"
+        NSMenuItem *hint = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"AIModelEditor.NoModelsDiscovered", nil, [NSBundle mainBundle], @"No models discovered — click Refresh Models", @"Disabled model popup item shown when no Ollama models have been discovered yet")
                                                       action:NULL
                                                keyEquivalent:@""];
         hint.enabled = NO;
@@ -1262,7 +1262,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         [_apiPopup selectItemWithTag:iTermAIAPILlama];
     }
     _apiPopup.enabled = !dynamic;
-    _fetchModelsButton.title = dynamic ? @"Refresh Models" : @"Fetch Models";
+    _fetchModelsButton.title = dynamic ? NSLocalizedStringWithDefaultValue(@"AIModelEditor.RefreshModels", nil, [NSBundle mainBundle], @"Refresh Models", @"Button that re-lists models installed on the Ollama server")
+                                       : NSLocalizedStringWithDefaultValue(@"AIModelEditor.FetchModels", nil, [NSBundle mainBundle], @"Fetch Models", @"Button that lists models installed on the server");
 }
 
 - (void)fetchOllamaModels:(id)sender {
@@ -1271,15 +1272,15 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         [_urlField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
     if (url.length == 0) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Missing URL";
-        alert.informativeText = @"Enter the server URL before fetching models.";
+        alert.messageText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MissingURLTitle", nil, [NSBundle mainBundle], @"Missing URL", @"Alert title shown when the user fetches models without entering a server URL");
+        alert.informativeText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.MissingURLBody", nil, [NSBundle mainBundle], @"Enter the server URL before fetching models.", @"Alert body shown when the user fetches models without entering a server URL");
         [alert beginSheetModalForWindow:_window completionHandler:^(NSModalResponse r) {}];
         return;
     }
     NSButton *button = _fetchModelsButton;
     NSString *savedTitle = button.title;
     button.enabled = NO;
-    button.title = @"Fetching…";
+    button.title = NSLocalizedStringWithDefaultValue(@"AIModelEditor.FetchingProgress", nil, [NSBundle mainBundle], @"Fetching…", @"Transient button title while the app lists models from the Ollama server");
     NSArray<NSDictionary<NSString *, NSString *> *> *headers = [self nonEmptyHeaders];
     __weak __typeof(self) weakSelf = self;
 
@@ -1303,15 +1304,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             [strongSelf reloadDynamicModelPopup];
             NSAlert *alert = [[NSAlert alloc] init];
             if (failed) {
-                alert.messageText = @"Could Not Reach Server";
-                alert.informativeText = @"Could not reach the Ollama server to list its models. "
-                                        @"Check that it is running and the URL is correct.";
+                alert.messageText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.CouldNotReachServerTitle", nil, [NSBundle mainBundle], @"Could Not Reach Server", @"Alert title shown when refreshing the Ollama model list fails");
+                alert.informativeText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.CouldNotReachServerBody", nil, [NSBundle mainBundle], @"Could not reach the Ollama server to list its models. Check that it is running and the URL is correct.", @"Alert body shown when refreshing the Ollama model list fails");
             } else {
-                alert.messageText = @"Models Refreshed";
-                alert.informativeText = [NSString stringWithFormat:
-                    @"Found %ld installed model%@. Choose one from the Model popup, or "
-                    @"“All installed models” to expose every one.",
-                    (long)count, count == 1 ? @"" : @"s"];
+                alert.messageText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.ModelsRefreshedTitle", nil, [NSBundle mainBundle], @"Models Refreshed", @"Alert title shown after successfully refreshing the Ollama model list");
+                alert.informativeText = [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"AIModelEditor.ModelsRefreshedBody", nil, [NSBundle mainBundle], @"Found %ld installed models. Choose one from the Model popup, or “All installed models” to expose every one.", @"Alert body after refreshing the Ollama model list; %ld is the number of models found"), (long)count];
             }
             [alert beginSheetModalForWindow:strongSelf->_window completionHandler:^(NSModalResponse r) {}];
         }];
@@ -1333,7 +1330,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         }
         if (errorMessage) {
             NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = @"Could Not Fetch Models";
+            alert.messageText = NSLocalizedStringWithDefaultValue(@"AIModelEditor.CouldNotFetchModelsTitle", nil, [NSBundle mainBundle], @"Could Not Fetch Models", @"Alert title shown when listing the Ollama server's models fails");
             alert.informativeText = errorMessage;
             [alert beginSheetModalForWindow:strongSelf->_window completionHandler:^(NSModalResponse r) {}];
             return;
@@ -1374,6 +1371,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     // (so scheme-less "host:port" endpoints don't all collapse to one label) and
     // includes the scheme (so http/https to the same host are distinct). This is
     // what the per-server uniqueness check keys on.
+    // Localization unneeded: this is a stored model-name identity that the
+    // per-server uniqueness check keys on and that is persisted, so it must stay
+    // stable across locales (see docs/localization.md, "stable identifiers").
     return [NSString stringWithFormat:@"Ollama (auto): %@",
             [iTermOllamaModelDiscovery serverLabelForEndpoint:url]];
 }
@@ -2675,8 +2675,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     if (names.count == 0) {
         // Discovery pending or the server is unreachable. Show a disabled hint so
         // the space isn't empty; the observer repopulates when a refresh lands.
-        [_ollamaRegularModelPopup addItemWithTitle:@"No models found (is Ollama running?)"];
-        [_ollamaBudgetModelPopup addItemWithTitle:@"No models found (is Ollama running?)"];
+        NSString *noModelsHint = NSLocalizedStringWithDefaultValue(@"AISettings.OllamaNoModelsFound", nil, [NSBundle mainBundle], @"No models found (is Ollama running?)", @"Disabled popup item shown when no Ollama models have been discovered for the Regular/Budget pickers");
+        [_ollamaRegularModelPopup addItemWithTitle:noModelsHint];
+        [_ollamaBudgetModelPopup addItemWithTitle:noModelsHint];
         _ollamaRegularModelPopup.enabled = NO;
         _ollamaBudgetModelPopup.enabled = NO;
         return;
@@ -2685,7 +2686,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _ollamaBudgetModelPopup.enabled = YES;
     [_ollamaRegularModelPopup addItemsWithTitles:names];
     // The budget model is optional: default it to the regular model.
-    [_ollamaBudgetModelPopup addItemWithTitle:@"Same as regular model"];
+    [_ollamaBudgetModelPopup addItemWithTitle:NSLocalizedStringWithDefaultValue(@"AISettings.OllamaSameAsRegular", nil, [NSBundle mainBundle], @"Same as regular model", @"Budget-model popup choice meaning reuse the regular model")];
     [_ollamaBudgetModelPopup addItemsWithTitles:names];
 
     NSString *regular = [self stringForKey:kPreferenceKeyAIOllamaRegularModel];
@@ -2930,15 +2931,15 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSString *endpoint = [iTermLLMMetadata defaultOllamaEndpoint];
 
     NSAlert *probe = [[NSAlert alloc] init];
-    probe.messageText = @"Contacting Ollama…";
-    probe.informativeText = @"Fetching the models installed on your local Ollama server.";
+    probe.messageText = NSLocalizedStringWithDefaultValue(@"AISettings.ContactingOllamaTitle", nil, [NSBundle mainBundle], @"Contacting Ollama…", @"Progress alert title while contacting the local Ollama server");
+    probe.informativeText = NSLocalizedStringWithDefaultValue(@"AISettings.ContactingOllamaBody", nil, [NSBundle mainBundle], @"Fetching the models installed on your local Ollama server.", @"Progress alert body while contacting the local Ollama server");
     NSProgressIndicator *spinner =
         [[NSProgressIndicator alloc] initWithFrame:NSMakeRect(0, 0, 320, 20)];
     spinner.style = NSProgressIndicatorStyleBar;
     spinner.indeterminate = YES;
     [spinner startAnimation:nil];
     probe.accessoryView = spinner;
-    [probe addButtonWithTitle:@"Cancel"];
+    [probe addButtonWithTitle:NSLocalizedStringWithDefaultValue(@"General.Cancel", nil, [NSBundle mainBundle], @"Cancel", @"Cancel button")];
 
     // resultFailed is filled in by the fetch completion before it ends the sheet
     // with NSModalResponseContinue; a Cancel click ends it with a different code.
@@ -2956,9 +2957,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             return;
         }
         NSAlert *error = [[NSAlert alloc] init];
-        error.messageText = @"Could Not Reach Ollama";
+        error.messageText = NSLocalizedStringWithDefaultValue(@"AISettings.CouldNotReachOllamaTitle", nil, [NSBundle mainBundle], @"Could Not Reach Ollama", @"Alert title shown when the local Ollama server can't be reached");
         error.informativeText = [NSString stringWithFormat:
-            @"Could not reach the Ollama server at %@. Make sure Ollama is running, then try again.",
+            NSLocalizedStringWithDefaultValue(@"AISettings.CouldNotReachOllamaBody", nil, [NSBundle mainBundle], @"Could not reach the Ollama server at %@. Make sure Ollama is running, then try again.", @"Alert body shown when the local Ollama server can't be reached; %@ is the server endpoint URL"),
             endpoint];
         [error beginSheetModalForWindow:strongSelf.view.window
                       completionHandler:^(NSModalResponse r) {}];

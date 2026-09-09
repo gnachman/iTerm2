@@ -147,20 +147,32 @@ class OllamaModelDiscovery: NSObject {
                                       timeout: TimeInterval,
                                       completion: @escaping ([String], String?) -> Void) {
         guard let request = tagsRequest(fromEndpoint: endpoint, headers: headers, timeout: timeout) else {
-            DispatchQueue.main.async { completion([], "Could not derive an /api/tags URL from “\(endpoint)”.") }
+            DispatchQueue.main.async {
+                completion([], String(localized: "Ollama.Discovery.BadURL",
+                                      defaultValue: "Could not derive an /api/tags URL from “\(endpoint)”.",
+                                      comment: "Error shown when the Ollama server URL can't be turned into a model-listing URL; %@ is the URL the user entered"))
+            }
             return
         }
-        let host = request.url?.host ?? "the server"
+        let host = request.url?.host ?? String(localized: "Ollama.Discovery.GenericServer",
+                                               defaultValue: "the server",
+                                               comment: "Fallback name for the Ollama server when its hostname is unknown, inserted into a “Could not reach …” error")
         let task = URLSession.shared.dataTask(with: request) { data, _, error in
             let (names, message): ([String], String?) = {
                 if let error {
-                    return ([], "Could not reach Ollama at \(host): \(error.localizedDescription)")
+                    return ([], String(localized: "Ollama.Discovery.Unreachable",
+                                       defaultValue: "Could not reach Ollama at \(host): \(error.localizedDescription)",
+                                       comment: "Error shown when the Ollama server can't be reached; first %@ is the host, second %@ is the underlying network error"))
                 }
                 guard let data else {
-                    return ([], "Ollama returned no response.")
+                    return ([], String(localized: "Ollama.Discovery.NoResponse",
+                                       defaultValue: "Ollama returned no response.",
+                                       comment: "Error shown when the Ollama server returned no data"))
                 }
                 let names = modelNames(fromTagsResponse: data)
-                return (names, names.isEmpty ? "No installed models were found on the Ollama server." : nil)
+                return (names, names.isEmpty ? String(localized: "Ollama.Discovery.NoModels",
+                                                      defaultValue: "No installed models were found on the Ollama server.",
+                                                      comment: "Error shown when the Ollama server reports zero installed models") : nil)
             }()
             DispatchQueue.main.async { completion(names, message) }
         }
