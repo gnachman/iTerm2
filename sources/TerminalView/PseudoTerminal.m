@@ -14245,16 +14245,34 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     if (!theTab) {
         theTab = [self currentTab];
     }
-    PseudoTerminal *destinationTerminal = 
+    PseudoTerminal *destinationTerminal =
     [[iTermController sharedInstance] windowControllerForNewTabWithProfile:self.currentSession.profile
                                                                  candidate:self
                                                         respectTabbingMode:NO];
-    [self createDuplicateOfTab:theTab inTerminal:destinationTerminal];
+    PTYTab *duplicate = [self createDuplicateOfTab:theTab inTerminal:destinationTerminal];
+    // A duplicated tab inherits the source tab's group membership from its
+    // arrangement. When it lands in the same window it must become a proper,
+    // contiguous member of that group -- not a stray same-id tab appended at the
+    // end of the bar. Otherwise the group is left non-contiguous (an invalid
+    // state) that renders as a phantom one-tab group and, sharing the id with the
+    // original, gets torn down together with it by Close Group. Finalizing
+    // reconciles the group definition onto the copy and repairs contiguity, the
+    // same path New Tab in Group and drag-into-group use. (#13014)
+    if (duplicate.tabGroupID.length > 0 && duplicate.realParentWindow == self) {
+        [self finalizeTabGroupMembershipChangeForTab:duplicate];
+    }
 }
 
-- (void)createDuplicateOfTab:(PTYTab *)theTab inTerminal:(PseudoTerminal *)destinationTerminal {
+- (PTYTab *)createDuplicateOfTab:(PTYTab *)theTab inTerminal:(PseudoTerminal *)destinationTerminal {
     if (destinationTerminal == nil) {
         PTYTab *copyOfTab = [[theTab copy] autorelease];
+        // The copy opens alone in a brand-new window, where the source's group
+        // does not exist, so it must not carry a group id (which would leave a
+        // phantom one-member group named after an unrelated window's group).
+        copyOfTab.tabGroupID = nil;
+        copyOfTab.tabGroupName = nil;
+        copyOfTab.tabGroupColor = nil;
+        copyOfTab.tabGroupCollapsed = NO;
         [copyOfTab updatePaneTitles];
         [iTermSessionLauncher launchBookmark:self.currentSession.profile
                                   inTerminal:nil
@@ -14289,14 +14307,18 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         }
                               didMakeSession:nil
                                   completion:nil];
+        // The tab is created asynchronously in the block above; there is no
+        // synchronous duplicate to return (and a new-window duplicate never joins
+        // a group anyway).
+        return nil;
     } else {
-        [destinationTerminal openTabWithArrangement:theTab.arrangementForDuplication
-                                              named:nil
-                                    hasFlexibleView:theTab.isTmuxTab
-                                            viewMap:nil
-                                         sessionMap:nil
-                                 partialAttachments:nil
-                                            options:@{ PTYSessionArrangementOptionsForDuplication: @YES }];
+        return [destinationTerminal openTabWithArrangement:theTab.arrangementForDuplication
+                                                     named:nil
+                                           hasFlexibleView:theTab.isTmuxTab
+                                                   viewMap:nil
+                                                sessionMap:nil
+                                        partialAttachments:nil
+                                                   options:@{ PTYSessionArrangementOptionsForDuplication: @YES }];
     }
 }
 

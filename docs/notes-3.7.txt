@@ -98,6 +98,12 @@ Major New Features:
   maximized (zoomed) split pane was torn
   down, such as when a tmux connection
   dropped.
+- Fixed a bug where duplicating a tab that
+  belonged to a tab group left the copy as a
+  stray member stranded at the end of the
+  tab bar instead of joining the group. The
+  duplicate now becomes a proper, adjacent
+  member of the same group.
 - Fixed multi-second hangs when navigating
   tmux sessions. Each mouse-mode escape
   sequence fired a heavyweight redraw side
