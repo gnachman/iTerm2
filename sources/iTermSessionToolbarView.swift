@@ -769,6 +769,18 @@ class CCDiffSelectorItem: SessionToolbarControl {
     }
 }
 
+// A plain container view that reports effective-appearance changes so
+// its owner can rebuild appearance-dependent content (e.g. tinted
+// bitmaps that can't carry a dynamic color).
+private class AppearanceObservingView: NSView {
+    var onAppearanceChange: (() -> Void)?
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        onAppearanceChange?()
+    }
+}
+
 @objc(iTermCCGitSessionToolbarItem)
 class CCGitSessionToolbarItem: SessionToolbarGenericView {
     private let textField: NSTextField
@@ -814,8 +826,11 @@ class CCGitSessionToolbarItem: SessionToolbarGenericView {
         // Plain NSView container — terminal toolbars are
         // autoresizing-mask territory per the project rule, no
         // NSStackView / no constraints. Children laid out by frame
-        // in layoutSubviews.
-        let container = NSView(frame: .zero)
+        // in layoutSubviews. The container watches for appearance
+        // changes so the tinted ahead/behind arrow bitmaps get rebuilt
+        // for the new light/dark theme (the branch icon and text track
+        // it automatically, but the arrows are baked bitmaps).
+        let container = AppearanceObservingView(frame: .zero)
         container.addSubview(imageView)
         container.addSubview(textField)
 
@@ -826,6 +841,9 @@ class CCGitSessionToolbarItem: SessionToolbarGenericView {
                 gitPoller: poller))
         ags.delegate = self
         ags.maker.delegate = self
+        container.onAppearanceChange = { [weak self] in
+            self?.update()
+        }
         update()
     }
 

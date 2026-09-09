@@ -2915,3 +2915,6 @@ Bug Fixes:
   session belongs to.
 - Fixed a crash that could occur when doing a
   global search that included a browser session.
+- Fixed the git ahead/behind arrows in the
+  session toolbar staying black in dark mode
+  instead of matching the text color.
