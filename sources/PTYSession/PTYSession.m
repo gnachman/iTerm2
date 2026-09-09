@@ -528,7 +528,7 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     VT100TerminalKeyReportingFlags _keyReportingFlagsAtCommandStart;
 
     // True after screenDidExecuteCommand: is called. Used to avoid false positives
-    // in maybeOfferToResetKeyReportingMode when a shell sends OSC 133;D before OSC 133;C.
+    // in maybeOfferToResetKeyReportingModeWithFlags: when a shell sends OSC 133;D before OSC 133;C.
     BOOL _haveCommandStart;
 
     NSTimeInterval _timeOfLastScheduling;
@@ -17556,13 +17556,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [self.naggingController offerToRestoreIconName:iconName windowName:windowName];
 }
 
-- (void)maybeOfferToResetKeyReportingMode {
+- (void)maybeOfferToResetKeyReportingModeWithFlags:(VT100TerminalKeyReportingFlags)keyReportingFlags {
     // Don't offer if the profile has CSI u mode enabled
     if ([iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL inProfile:self.profile]) {
         return;
     }
-    // Check if key reporting flags are non-zero
-    if (_screen.terminalKeyReportingFlags == 0) {
+    // Check if key reporting flags are non-zero. Use the value snapshotted when the FTCS D token
+    // was processed rather than the live value: a shell like Fish 4.x re-enables key reporting for
+    // its next prompt right after FTCS D, and reading the live value here would misread that as an
+    // app leaving key reporting stuck on. See 13015.
+    if (keyReportingFlags == 0) {
         return;
     }
     // Only check if we've seen a command start - otherwise _keyReportingFlagsAtCommandStart
@@ -17966,10 +17969,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
                          onHost:(id<VT100RemoteHostReading>)host
                     inDirectory:(NSString *)directory
                            mark:(id<VT100ScreenMarkReading>)mark
+              keyReportingFlags:(VT100TerminalKeyReportingFlags)keyReportingFlags
                          paused:(BOOL)paused {
-    // Save key reporting flags at command start to detect apps that enable CSI u but don't clean up
+    // Save key reporting flags at command start to detect apps that enable CSI u but don't clean up.
+    // Use the value snapshotted when the FTCS C token was processed, not the live value, so it is
+    // consistent with the flags snapshotted at command exit. See 13015.
     _haveCommandStart = YES;
-    _keyReportingFlagsAtCommandStart = _screen.terminalKeyReportingFlags;
+    _keyReportingFlagsAtCommandStart = keyReportingFlags;
     if (_eventTriggerEvaluator.hasLongRunningCommandTrigger) {
         [_eventTriggerEvaluator commandStartedWithCommand:command];
     }
@@ -18052,8 +18058,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     });
 }
 
-- (void)screenCommandDidExitWithCode:(int)code mark:(id<VT100ScreenMarkReading>)maybeMark {
-    [self maybeOfferToResetKeyReportingMode];
+- (void)screenCommandDidExitWithCode:(int)code
+                   keyReportingFlags:(VT100TerminalKeyReportingFlags)keyReportingFlags
+                                mark:(id<VT100ScreenMarkReading>)maybeMark {
+    [self maybeOfferToResetKeyReportingModeWithFlags:keyReportingFlags];
     if (_eventTriggerEvaluator.hasCommandFinishedTrigger) {
         NSTimeInterval duration = 0;
         if (maybeMark.startDate) {

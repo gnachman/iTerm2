@@ -3174,6 +3174,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // TODO: Per issue 12581 I should consider finding a way to do this unpaused. Perhaps it could be
     // unmanaged, or part of it could be unmanaged.
     const VT100GridAbsCoordRange absRange = VT100GridAbsCoordRangeFromCoordRange(range, self.cumulativeScrollbackOverflow);
+    // Snapshot the key reporting flags now, on the mutation thread, as of the FTCS C token.
+    // The side effect below may run after later tokens have changed the flags, so reading the
+    // live value there would be inconsistent with the snapshot taken at FTCS D. See 13015.
+    const VT100TerminalKeyReportingFlags keyReportingFlags = self.terminalKeyReportingFlags;
 
     if (IsSecureEventInputEnabled() || self.config.autoComposerEnabled) {
         [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
@@ -3187,6 +3191,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                        onHost:remoteHost
                                   inDirectory:workingDirectory
                                          mark:mark
+                            keyReportingFlags:keyReportingFlags
                                        paused:YES];
             DLog(@"commandDidEndWithRange: unpause");
             [unpauser unpause];
@@ -3203,6 +3208,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                        onHost:remoteHost
                                   inDirectory:workingDirectory
                                          mark:mark
+                            keyReportingFlags:keyReportingFlags
                                        paused:NO];
         } name:@"command did end with range"];
     }
@@ -3932,8 +3938,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     } else {
         DLog(@"No last command mark found.");
     }
+    // Snapshot the key reporting flags now, on the mutation thread, as of the FTCS D token.
+    // A shell like Fish 4.x re-enables key reporting for its next prompt with tokens that follow
+    // FTCS D; reading the live value in the side effect would see that later state and falsely
+    // conclude that an app left key reporting stuck on. See 13015.
+    const VT100TerminalKeyReportingFlags keyReportingFlags = self.terminalKeyReportingFlags;
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenCommandDidExitWithCode:returnCode mark:doppelganger];
+        [delegate screenCommandDidExitWithCode:returnCode
+                             keyReportingFlags:keyReportingFlags
+                                          mark:doppelganger];
     } name:@"set rc 2"];
 }
 
