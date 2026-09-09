@@ -14,6 +14,12 @@ New Features:
   enabling alerts on the Mac.
 
 Bug Fixes:
+- The QR scanner used to show a black preview the
+  first time you granted camera access (notably on
+  iOS 26), because the camera was set up before
+  permission was granted. It now waits for access
+  before configuring the camera, so the live
+  preview appears right away.
 - Opening a session that has already closed now
   shows a “Stream Ended” message explaining the
   session is gone, instead of a blank black
