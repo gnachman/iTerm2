@@ -2976,3 +2976,9 @@ Bug Fixes:
   inside a selected tab in the dark Tahoe theme,
   caused by the tab chrome images meeting on a
   fractional pixel.
+- Fixed a memory leak where browser panes were
+  never freed, leaking a WebKit process and a
+  system power-management handle on every page
+  load. Over time this could exhaust a
+  system-wide limit and break other apps that
+  manage power (such as OrbStack).
