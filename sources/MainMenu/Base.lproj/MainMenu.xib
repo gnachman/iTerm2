@@ -559,7 +559,7 @@ DQ
                             </menuItem>
                             <menuItem title="Redo" keyEquivalent="Z" identifier="Redo" id="1063">
                                 <connections>
-                                    <action selector="redo:" target="-1" id="1064"/>
+                                    <action selector="redo:" target="201" id="1064"/>
                                 </connections>
                                 <accessibility identifier="Redo"/>
                             </menuItem>

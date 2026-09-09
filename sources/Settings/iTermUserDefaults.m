@@ -34,6 +34,7 @@ static NSString *const iTermUserDefaultsKeyShowSessionStatusInTabSubtitle = @"Sh
 NSString *const iTermShowSessionStatusInTabSubtitleDidChange = @"iTermShowSessionStatusInTabSubtitleDidChange";
 static NSString *const iTermUserDefaultsKeyHaveExplainedHowToAddTouchbarControls = @"NoSyncHaveExplainedHowToAddTouchbarControls";
 static NSString *const iTermUserDefaultsKeyHaveWarnedAboutUndoCloseShortcutChange = @"NoSyncHaveWarnedAboutUndoCloseShortcutChange";
+static NSString *const iTermUserDefaultsKeyHaveWarnedAboutUndoKeyChange = @"NoSyncHaveWarnedAboutUndoKeyChange";
 static NSString *const iTermUserDefaultsKeyIgnoreSystemWindowRestoration = @"NoSyncIgnoreSystemWindowRestoration";
 static NSString *const iTermUserDefaultsKeyGlobalSearchMode = @"NoSyncGlobalSearchMode";
 static NSString *const iTermUserDefaultsKeyAddTriggerInstant = @"NoSyncAddTriggerInstant";
@@ -282,6 +283,15 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
 
 + (BOOL)haveWarnedAboutUndoCloseShortcutChange {
     return [self.userDefaults boolForKey:iTermUserDefaultsKeyHaveWarnedAboutUndoCloseShortcutChange];
+}
+
++ (BOOL)haveWarnedAboutUndoKeyChange {
+    return [self.userDefaults boolForKey:iTermUserDefaultsKeyHaveWarnedAboutUndoKeyChange];
+}
+
++ (void)setHaveWarnedAboutUndoKeyChange:(BOOL)haveWarnedAboutUndoKeyChange {
+    [self.userDefaults setBool:haveWarnedAboutUndoKeyChange
+                        forKey:iTermUserDefaultsKeyHaveWarnedAboutUndoKeyChange];
 }
 
 + (void)setHaveWarnedAboutUndoCloseShortcutChange:(BOOL)haveWarnedAboutUndoCloseShortcutChange {

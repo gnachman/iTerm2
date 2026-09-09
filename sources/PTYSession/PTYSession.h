@@ -926,6 +926,12 @@ webViewConfiguration:(nullable WKWebViewConfiguration *)webViewConfiguration
 // after reviving.
 - (BOOL)revive;
 
+// Pause/resume the countdown that makes a terminated-but-restorable session stop
+// being restorable, so a modal alert can be shown without the session expiring.
+// The remaining time is preserved across the pause.
+- (void)pauseTerminationTimer;
+- (void)resumeTerminationTimer;
+
 // Preferences
 - (void)setPreferencesFromAddressBookEntry: (NSDictionary *)aePrefs;
 - (void)loadInitialColorTableAndResetCursorGuide;

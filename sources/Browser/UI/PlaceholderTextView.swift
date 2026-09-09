@@ -21,6 +21,14 @@ class PlaceholderTextView: NSTextView {
         }
     }
 
+    // Give this editor its own undo stack so ⌘Z (which iTerm routes to the focused
+    // editor's own undo manager) is scoped to this field and doesn't share the
+    // window's stack with other editors. This also keeps text-edit undo actions
+    // from outliving the view in the window's undo manager. See
+    // NSTextView+iTermUndoSafety and iTermApplicationDelegate's undo: routing.
+    private lazy var privateUndoManager = UndoManager()
+    override var undoManager: UndoManager? { privateUndoManager }
+
     // Custom initialization of the text view.
     override func awakeFromNib() {
         super.awakeFromNib()

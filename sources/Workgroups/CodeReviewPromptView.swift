@@ -365,6 +365,11 @@ extension CodeReviewPromptView: NSMenuDelegate {
 private class ShiftReturnSubmittingTextView: NSTextView {
     var onSubmit: (() -> Void)?
 
+    // Own undo stack so ⌘Z (routed to the focused editor's undo manager) is scoped
+    // to this prompt and can't outlive the view in the window's undo manager.
+    private lazy var privateUndoManager = UndoManager()
+    override var undoManager: UndoManager? { privateUndoManager }
+
     override func keyDown(with event: NSEvent) {
         if event.charactersIgnoringModifiers == "\r",
            event.modifierFlags.contains(.shift) {

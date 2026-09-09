@@ -715,6 +715,13 @@ typedef NS_ENUM(NSUInteger, PTYSessionTurdType) {
     TriggerController *_triggerWindowController;
     iTermEventTriggerEvaluator *_eventTriggerEvaluator;
 
+    // Tracks the scheduled -hardStop that makes a terminated session stop being
+    // restorable. Used to pause/resume the countdown (see -pauseTerminationTimer)
+    // so a modal alert can be shown without the restorable session expiring.
+    NSDate *_hardStopDeadline;
+    NSTimeInterval _pausedHardStopRemaining;
+    BOOL _hardStopPaused;
+
     // If positive focus reports will not be sent.
     NSInteger _disableFocusReporting;
 
@@ -1285,6 +1292,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_tmuxClientWritePipe release];
     [_arrangementGUID release];
     [_triggerWindowController release];
+    [_hardStopDeadline release];
     [_filter release];
     [_asyncFilter cancel];
     [_asyncFilter release];
@@ -4002,17 +4010,54 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
     _shell.paused = YES;
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
+    const NSTimeInterval timeout = [iTermProfilePreferences intForKey:KEY_UNDO_TIMEOUT
+                                                            inProfile:_profile];
     [self performSelector:@selector(hardStop)
                withObject:nil
-               afterDelay:[iTermProfilePreferences intForKey:KEY_UNDO_TIMEOUT
-                                                   inProfile:_profile]];
+               afterDelay:timeout];
+    // MRC: own the deadline. It is read later, in a different runloop turn, by
+    // -pauseTerminationTimer, so it must outlive this event's autorelease pool.
+    [_hardStopDeadline release];
+    _hardStopDeadline = [[NSDate alloc] initWithTimeIntervalSinceNow:timeout];
+    _hardStopPaused = NO;
     // The analyzer complains that _view is leaked here, but the delayed perform to -hardStop above
     // releases it. If it is canceled by -revive, then -revive autoreleases the view.
     [[iTermController sharedInstance] addRestorableSession:[self restorableSession]];
 }
 
+// Pause the countdown to -hardStop (which makes this terminated session stop
+// being restorable) so a modal alert can be shown without the session expiring
+// out from under the user. Records the time remaining and cancels the timer.
+- (void)pauseTerminationTimer {
+    if (_hardStopPaused || _hardStopDeadline == nil) {
+        return;
+    }
+    _pausedHardStopRemaining = MAX(0, _hardStopDeadline.timeIntervalSinceNow);
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                             selector:@selector(hardStop)
+                                               object:nil];
+    _hardStopPaused = YES;
+}
+
+// Resume a countdown paused by -pauseTerminationTimer, rescheduling -hardStop
+// for the remaining time so the total undo window is preserved.
+- (void)resumeTerminationTimer {
+    if (!_hardStopPaused) {
+        return;
+    }
+    _hardStopPaused = NO;
+    [self performSelector:@selector(hardStop)
+               withObject:nil
+               afterDelay:_pausedHardStopRemaining];
+    [_hardStopDeadline release];
+    _hardStopDeadline = [[NSDate alloc] initWithTimeIntervalSinceNow:_pausedHardStopRemaining];
+}
+
 // Not undoable. Kill the process. However, you can replace the terminated shell after this.
 - (void)hardStop {
+    [_hardStopDeadline release];
+    _hardStopDeadline = nil;
+    _hardStopPaused = NO;
     if (!self.isTmuxClient &&
         !_isArchive &&
         [iTermProfilePreferences boolForKey:KEY_ARCHIVE inProfile:self.profile]) {
@@ -4055,6 +4100,9 @@ webViewConfiguration:(WKWebViewConfiguration *)webViewConfiguration
         [NSObject cancelPreviousPerformRequestsWithTarget:self
                                                  selector:@selector(hardStop)
                                                    object:nil];
+        [_hardStopDeadline release];
+        _hardStopDeadline = nil;
+        _hardStopPaused = NO;
         if (_shell.hasBrokenPipe) {
             if (self.isRestartable) {
                 [self queueRestartSessionAnnouncement];

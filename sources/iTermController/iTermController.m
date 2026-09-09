@@ -1433,6 +1433,32 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     return _restorableSessions.count > 0;
 }
 
+- (void)pauseRestorableSessionTermination {
+    for (iTermRestorableSession *restorableSession in _restorableSessions) {
+        for (PTYSession *session in restorableSession.sessions) {
+            [session pauseTerminationTimer];
+        }
+    }
+}
+
+- (void)resumeRestorableSessionTermination {
+    for (iTermRestorableSession *restorableSession in _restorableSessions) {
+        for (PTYSession *session in restorableSession.sessions) {
+            [session resumeTerminationTimer];
+        }
+    }
+}
+
+- (void)performBlockWithRestorableSessionTerminationPaused:(void (NS_NOESCAPE ^)(void))block {
+    [self pauseRestorableSessionTermination];
+    @try {
+        block();
+    } @finally {
+        // @finally so the resume runs even if block raises an ObjC exception.
+        [self resumeRestorableSessionTermination];
+    }
+}
+
 - (void)killRestorableSessions {
     RLog(@"killRestorableSessions");
     assert([iTermAdvancedSettingsModel runJobsInServers]);

@@ -866,6 +866,22 @@ Web browser improvements:
   password manager.
 
 Bug Fixes:
+- Fixed a class of crash where Undo (⌘Z) after
+  closing a session, split pane, or other view
+  could crash. Text views left their text-edit
+  undo actions in the window’s undo stack, which
+  outlived them and became dangling pointers
+  (a long-standing AppKit bug). iTerm2 now
+  scrubs those actions when a text view leaves
+  its window.
+- ⌘Z now undoes text editing in the field you’re
+  editing (the composer, browser address bar,
+  annotations, notes, and AI chat), and ⌘⇧Z
+  redoes. Undo Close is now solely Shell ▸ Undo
+  Close (⌘⇧T). The first time you press ⌘Z with
+  a recently closed session still restorable, a
+  one-time notice explains the change and lets
+  you choose Undo Close or a regular undo.
 - The SCP-download menu animation no longer
   leaves an invisible window behind. That stray
   window could make clicking the Dock icon fail

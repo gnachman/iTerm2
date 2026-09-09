@@ -184,6 +184,19 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
 - (void)pushCurrentRestorableSession:(iTermRestorableSession *)session;
 - (void)killRestorableSessions;
 
+// Pause/resume the termination countdown of every restorable session, so a modal
+// alert can be presented without any of them expiring while it is up. Each
+// session preserves its remaining time across the pause. Balanced calls.
+- (void)pauseRestorableSessionTermination;
+- (void)resumeRestorableSessionTermination;
+
+// Runs `block` with restorable-session termination paused, guaranteeing the
+// resume runs even if `block` raises an Objective-C exception (Swift `defer`
+// does not run on ObjC exception unwinding, so callers in Swift must use this
+// rather than pause/resume directly around anything that can throw, e.g.
+// -[iTermWarning runModal]).
+- (void)performBlockWithRestorableSessionTerminationPaused:(void (NS_NOESCAPE ^)(void))block;
+
 - (NSArray<PTYSession *> *)allSessions;
 - (NSArray<PseudoTerminal *> *)terminals;
 - (void)addTerminalWindow:(PseudoTerminal *)terminalWindow;
