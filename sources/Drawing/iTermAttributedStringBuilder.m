@@ -779,16 +779,23 @@ preferSpeedToFullLigatureSupport:(BOOL)preferSpeedToFullLigatureSupport
 
     attributes->font = fontInfo.font;
     attributes->ligatureLevel = fontInfo.ligatureLevel;
-    if (_preferSpeedToFullLigatureSupport) {
-        if (!c->complexChar &&
-            iTermCharacterSupportsFastPath(c->code, _asciiLigaturesAvailable)) {
+    // The profile's Ligatures checkboxes must be honored regardless of
+    // preferSpeedToFullLigatureSupport. When that advanced setting is off no character
+    // takes the fast path, so the ligature attribute is the only thing left that can
+    // turn ligatures off.
+    if (c->complexChar || c->code > 128) {
+        if (!_nonAsciiLigatures) {
             attributes->ligatureLevel = 0;
         }
-        if (c->complexChar || c->code > 128) {
-            if (!_nonAsciiLigatures) {
-                attributes->ligatureLevel = 0;
-            }
-        }
+    } else if (!_asciiLigaturesAvailable) {
+        // The drawing helper has already ANDed this with the profile's ASCII ligature
+        // setting.
+        attributes->ligatureLevel = 0;
+    }
+    if (_preferSpeedToFullLigatureSupport &&
+        !c->complexChar &&
+        iTermCharacterSupportsFastPath(c->code, _asciiLigaturesAvailable)) {
+        attributes->ligatureLevel = 0;
     }
     if (c->underline) {
         switch (ScreenCharGetUnderlineStyle(*c)) {
