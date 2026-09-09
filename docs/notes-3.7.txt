@@ -854,6 +854,11 @@ Web browser improvements:
   password manager.
 
 Bug Fixes:
+- Tahoe-style tabs no longer squeeze a session
+  status subtitle under the title. The macOS 26
+  top tab bar is too short for two lines, so the
+  status now follows the title on one line, in
+  its own status color.
 - The SCP-download menu animation no longer
   leaves an invisible window behind. That stray
   window could make clicking the Dock icon fail

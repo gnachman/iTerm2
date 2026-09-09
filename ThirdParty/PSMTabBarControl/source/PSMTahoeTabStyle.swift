@@ -67,8 +67,28 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         2.0
     }
     
+    // A cell shorter than this cannot stack a title line over a subtitle line
+    // without the two touching the pill's edges. It is the same threshold the
+    // Yosemite style applies to its bar, which there equals its cell height.
+    // In a normal macOS 26 window the top bar is 36pt with an 8pt bottom inset,
+    // so the cell is 27pt and the pill 24pt: single-line.
+    static let minimumCellHeightForMultiLineLabels: CGFloat = 28
+
+    // Mirrors -[PSMTabBarControl genericCellRectWithOverflow:] and
+    // adjustedCellRect(_:generic:): the vertical insets come off a horizontal
+    // bar only, and every cell is one point shorter than the generic rect.
+    private var cellHeight: CGFloat {
+        guard let tabBar else {
+            return tabBarHeight - 1
+        }
+        if _orientation == .horizontalOrientation {
+            return tabBar.height - tabBar.insets.top - tabBar.insets.bottom - 1
+        }
+        return tabBar.height - 1
+    }
+
     @objc var supportsMultiLineLabels: Bool {
-        true
+        cellHeight >= Self.minimumCellHeightForMultiLineLabels
     }
     
     // MARK: - Initialization
@@ -1431,6 +1451,20 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         attributedString.draw(in: labelRect)
     }
     
+    // Horizontal gap between the title and an inline status on a single-line cell.
+    static let inlineSubtitleGap: CGFloat = 4
+
+    // When the cell is too short for two lines the status is drawn on the title
+    // line instead, after the title, in its own (status) color and at the
+    // subtitle font size, so it stays visually distinct from the title.
+    private func inlineSubtitle(for cell: PSMTabBarCell) -> PSMCachedTitle? {
+        guard !supportsMultiLineLabels, !cell.isPinned,
+              let subtitle = cell.cachedSubtitle, !subtitle.isEmpty else {
+            return nil
+        }
+        return subtitle
+    }
+
     private func subtitleWidth(cell: PSMTabBarCell, orientation: PSMTabBarOrientation) -> CGFloat {
         guard let cachedSubtitle = cell.cachedSubtitle else {
             return 0
@@ -1500,11 +1534,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     }
     
     @objc func willDrawSubtitle(_ subtitle: PSMCachedTitle?) -> Bool {
-        return Self.willDrawSubtitle(subtitle)
-    }
-    
-    private static func willDrawSubtitle(_ subtitle: PSMCachedTitle?) -> Bool {
-        return subtitle?.isEmpty == false
+        return supportsMultiLineLabels && subtitle?.isEmpty == false
     }
     
     @objc func verticalOffsetForTitleWhenSubtitlePresent() -> CGFloat {
@@ -2099,8 +2129,17 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         // For pinned tabs: skip title if a graphic icon is present.
         let skipLabel = cell.isPinned && cell.cachedTitle?.inputs.graphic != nil
         let subtitleWidth = subtitleWidth(cell: cell, orientation: orientation)
-        let labelWidth = max(widthOfAttributedStringInCell(cell), subtitleWidth)
+        let titleWidth = widthOfAttributedStringInCell(cell)
         let supportsMultiLineLabels = self.supportsMultiLineLabels
+        let inlineSubtitle = inlineSubtitle(for: cell)
+        let labelWidth: CGFloat
+        if supportsMultiLineLabels {
+            labelWidth = max(titleWidth, subtitleWidth)
+        } else if inlineSubtitle != nil {
+            labelWidth = titleWidth + Self.inlineSubtitleGap + subtitleWidth
+        } else {
+            labelWidth = titleWidth
+        }
         // Amount to shift text down from vertically centered so that it matches the OS's rendering
         let textShift = 1.0 + orientationShift
         if !skipLabel {
@@ -2123,6 +2162,40 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                             truncatedForWidth: resolved.frame.size.width)
                         let attrs = fullString.length > 0 ? fullString.attributes(at: 0, effectiveRange: nil) : [:]
                         drawString = NSAttributedString(string: firstChar, attributes: attrs)
+                    } else if let inlineSubtitle, !(cell.isPinned && orientation == .horizontalOrientation) {
+                        // Single-line cell with a status: title, gap, status. The
+                        // status keeps its natural width (the title truncates first)
+                        // unless the label is so narrow that the title would vanish.
+                        let gap = PSMTahoeTabStyle.inlineSubtitleGap
+                        let available = resolved.frame.width
+                        let minimumTitleWidth: CGFloat = 24
+                        let statusWidth = min(ceil(inlineSubtitle.size.width), max(0, available - gap - minimumTitleWidth))
+                        let titleAvailable = max(0, available - gap - statusWidth)
+                        let titleString = cachedTitle.attributedStringForcingLeftAlignment(true, truncatedForWidth: titleAvailable)
+                        let titleSize = cachedTitle.boundingRect(with: NSSize(width: titleAvailable, height: cell.frame.height)).size
+                        let statusString = inlineSubtitle.attributedStringForcingLeftAlignment(true, truncatedForWidth: statusWidth)
+                        let statusSize = inlineSubtitle.boundingRect(with: NSSize(width: statusWidth, height: cell.frame.height)).size
+                        let titleDrawnWidth = min(titleSize.width, titleAvailable)
+                        let statusDrawnWidth = min(statusSize.width, statusWidth)
+                        let totalWidth = titleDrawnWidth + gap + statusDrawnWidth
+                        let x0 = orientation == .horizontalOrientation
+                            ? resolved.frame.minX + floor((available - totalWidth) / 2.0)
+                            : resolved.frame.minX
+                        let titleRect = NSRect(x: x0,
+                                               y: cell.frame.origin.y + floor((cell.frame.size.height - titleSize.height) / 2.0) + textShift,
+                                               width: titleDrawnWidth,
+                                               height: titleSize.height)
+                        titleString.draw(in: titleRect)
+                        // Center the status vertically in the cell exactly as the
+                        // title is, so the two runs read as one line.
+                        let statusRect = NSRect(x: titleRect.maxX + gap,
+                                                y: cell.frame.origin.y + floor((cell.frame.size.height - statusSize.height) / 2.0) + textShift,
+                                                width: statusDrawnWidth,
+                                                height: statusSize.height)
+                        statusString.draw(in: statusRect)
+                        mainLabelHeight = titleSize.height
+                        labelOffset = 0
+                        return
                     } else {
                         drawString = cachedTitle.attributedStringForcingLeftAlignment(
                             orientation == .verticalOrientation,
@@ -2131,7 +2204,7 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                     var rect = resolved.frame
                     let boundingSize = cachedTitle.boundingRect(with: NSSize(width: resolved.frame.width, height: cell.frame.height)).size
                     mainLabelHeight = boundingSize.height
-                    labelOffset = PSMTahoeTabStyle.willDrawSubtitle(cell.cachedSubtitle) ? PSMTahoeTabStyle.verticalOffsetForTitleWhenSubtitlePresent : 0
+                    labelOffset = self.willDrawSubtitle(cell.cachedSubtitle) ? PSMTahoeTabStyle.verticalOffsetForTitleWhenSubtitlePresent : 0
                     rect.origin.y = cell.frame.origin.y + floor((cell.frame.size.height - boundingSize.height) / 2.0) + labelOffset + textShift
                     rect.size.height = boundingSize.height
                     drawString.draw(in: rect)
