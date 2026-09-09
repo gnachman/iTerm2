@@ -1575,6 +1575,11 @@ void TurnOnDebugLoggingAutomatically(void) {
     // run ("test runner hung before establishing connection"). A test host has
     // no paired device, so none of this is needed there.
     if (![NSApp isRunningUnitTests]) {
+        // Re-arm any AI-chat timers persisted before this launch so a timer whose
+        // deadline passed while iTerm2 was quit (e.g. across a Sparkle upgrade)
+        // still fires without the user reopening the chat. A no-op when no chat
+        // has a timer.
+        [iTermChatTimerLaunch rearmPersistedTimers];
         // If a companion device is paired, quietly listen so it can reconnect.
         [[iTermCompanionPairingController shared] resumePairedListeningIfNeeded];
         // If the pairing is half-present (pid persisted but keychain credentials

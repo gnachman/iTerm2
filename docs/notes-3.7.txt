@@ -176,6 +176,12 @@ Major New Features:
   can also push you a notification when the watch
   fires.
 
+- AI chat can now set a timer to act after a
+  delay or at a set time (for example, “in two
+  hours, run this command”). The timer survives
+  restarts, fires immediately if its time already
+  passed, and can push your phone when it fires.
+
 - The manual AI model editor now offers presets
   for OpenAI-compatible providers (Ollama,
   OpenRouter, z.ai, Qwen, MiniMax) that fill in
