@@ -28,13 +28,27 @@ class CompletionsWindow: NSWindow, NSTableViewDataSource, NSTableViewDelegate {
                 .foregroundColor: NSColor.textColor,
                 .paragraphStyle: paragraphStyle]
     }
+    // The return glyph shown in place of an embedded newline in a completion row.
+    private static let returnGlyph = "\u{21A9}"
+
+    // Command-history entries and file names can contain newlines. A raw newline in a
+    // single-line completion row spills across adjacent rows, so collapse each line break
+    // into a return glyph and keep the whole entry on one line. This is display-only; the
+    // item’s unmodified value is what gets inserted when the row is accepted.
+    static func singleLineForDisplay(_ string: String) -> String {
+        return string
+            .replacingOccurrences(of: "\r\n", with: returnGlyph)
+            .replacingOccurrences(of: "\n", with: returnGlyph)
+            .replacingOccurrences(of: "\r", with: returnGlyph)
+    }
+
     static func attributedString(font: NSFont,
                                  prefix: String,
                                  suffix string: String) -> NSAttributedString {
-        let attributedPrefix = NSAttributedString(string: prefix,
+        let attributedPrefix = NSAttributedString(string: singleLineForDisplay(prefix),
                                                   attributes: boldAttributes(font: font))
         let attributedString: NSMutableAttributedString = attributedPrefix.mutableCopy() as! NSMutableAttributedString
-        attributedString.append(NSAttributedString(string: string,
+        attributedString.append(NSAttributedString(string: singleLineForDisplay(string),
                                                    attributes: regularAttributes(font: font)))
         return attributedString
     }

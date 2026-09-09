@@ -88,6 +88,12 @@ Major New Features:
   notified when it changes, so tools like vim
   and delta can adapt automatically.
 
+- Fixed a bug where a command-line
+  completion whose command history entry
+  contained a newline would spill across
+  adjacent rows in the suggestions popup.
+  Embedded newlines now show as a return
+  glyph and the entry stays on one line.
 - Fixed a crash that could occur when a
   maximized (zoomed) split pane was torn
   down, such as when a tmux connection
