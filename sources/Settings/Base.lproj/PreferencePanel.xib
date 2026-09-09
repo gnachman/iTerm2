@@ -2338,11 +2338,6 @@ CA
                             <rect key="frame" x="0.0" y="54" width="730" height="168"/>
                             <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                             <subviews>
-                                <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="G1r-AP-exF">
-                                    <rect key="frame" x="178" y="132" width="16" height="16"/>
-                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="vst-Zn-2a1"/>
-                                </imageView>
                                 <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5410" userLabel="Send text at start text field" customClass="iTermExpandingTextField">
                                     <rect key="frame" x="181" y="103" width="520" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
@@ -2474,6 +2469,11 @@ CA
                                         <action selector="settingChanged:" target="dVg-Ac-SiZ" id="rcS-Ls-102"/>
                                     </connections>
                                 </button>
+                                <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="G1r-AP-exF">
+                                    <rect key="frame" x="178" y="132" width="16" height="16"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="vst-Zn-2a1"/>
+                                </imageView>
                             </subviews>
                         </customView>
                         <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5037" userLabel="URL Schemes popup button">
