@@ -11206,6 +11206,12 @@
             "state" : "translated",
             "value" : "Выбрать следующую группу вкладок"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择下一个标签页组"
+          }
         }
       }
     },
@@ -12039,6 +12045,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выбрать предыдущую группу вкладок"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择上一个标签页组"
           }
         }
       }
@@ -13378,6 +13390,12 @@
             "state" : "translated",
             "value" : "Добавить вкладку в новую группу…"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将标签页添加到新标签页组中…"
+          }
         }
       }
     },
@@ -13413,6 +13431,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удалить вкладку из группы"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从标签页组中移除标签页"
           }
         }
       }
