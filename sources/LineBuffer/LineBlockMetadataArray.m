@@ -234,8 +234,15 @@
             eaIndex = [[iTermExternalAttributeIndex alloc] initWithDictionary:encodedExternalAttributes];
         }
     }
-    NSNumber *rtlFound = components.count > j ? components[j++] : @NO;
-    NSNumber *lineAttribute = components.count > j ? components[j++] : @0;
+    // rtlFound and lineAttribute are optional trailing scalars. The metadata
+    // section is followed by an optional bidi block introduced by an empty-array
+    // delimiter (@[]). Older versions wrote fewer metadata scalars: 3.6.11 shipped
+    // bidi before lineAttribute existed, so its entries have the delimiter sitting
+    // exactly where lineAttribute would be. Never consume the @[] delimiter as a
+    // scalar or we crash trying to send -intValue/-boolValue to an NSArray. Metadata
+    // scalars are never arrays, so an NSArray here means we've reached the delimiter.
+    NSNumber *rtlFound = (components.count > j && ![components[j] isKindOfClass:[NSArray class]]) ? components[j++] : @NO;
+    NSNumber *lineAttribute = (components.count > j && ![components[j] isKindOfClass:[NSArray class]]) ? components[j++] : @0;
 
     iTermMetadataInit(&_guts->_array[i].lineMetadata,
                       timestamp.doubleValue,

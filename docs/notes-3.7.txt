@@ -866,6 +866,11 @@ Web browser improvements:
   password manager.
 
 Bug Fixes:
+- Fixed a crash on launch when restoring
+  scrollback saved by 3.6.11 that contained
+  bidi (right-to-left) text. The old metadata
+  format was misread and could abort launch
+  when session restoration was enabled.
 - Fixed a class of crash where Undo (⌘Z) after
   closing a session, split pane, or other view
   could crash. Text views left their text-edit
