@@ -4178,4 +4178,39 @@ class LineBlockIncrementalMergeTests: XCTestCase {
         XCTAssertEqual(dict[genKey] as? Int, 500,
                        "implicitDictionaryValue should inject the child record's generation")
     }
+
+    // Regression coverage for the copy-on-write mutation-safety instrumentation. Tests build with
+    // BETA defined, so the check is always active. Mutating a block that has a live cowCopy (as a
+    // background search snapshot would hold) must uniquify via copy-on-write before writing, and the
+    // instrumentation must NOT trip on that correct path. If the check false-positived here it would
+    // abort the test process.
+    func testMutationSafetyChecksDoNotTripOnCorrectCopyOnWrite() {
+        let width = Int32(80)
+        let original = LineBlock(rawBufferSize: 100, absoluteBlockNumber: 1)
+        XCTAssertTrue(original.appendLineString(makeLineString("abc"), width: width))
+
+        // A cowCopy shares original's character buffer and cumulative_line_lengths, exactly like a
+        // search snapshot block. original.hasBeenCopied becomes true and copy is a client.
+        let copy = original.cowCopy()
+        XCTAssertEqual(original.numRawLines(), 1)
+        XCTAssertEqual(copy.numRawLines(), 1)
+
+        // Mutating original must clone (copy-on-write) before touching the shared buffer. The
+        // instrumentation runs inside the mutation-certificate accessors; a false positive aborts.
+        XCTAssertTrue(original.appendLineString(makeLineString("def"), width: width))
+
+        // The copy is untouched (still one line, original allocation), proving the write went to a
+        // uniquified buffer and did not corrupt the shared reader.
+        XCTAssertEqual(original.numRawLines(), 2)
+        XCTAssertEqual(original.rawSpaceUsed(), 6)
+        XCTAssertEqual(copy.numRawLines(), 1)
+        XCTAssertEqual(copy.rawSpaceUsed(), 3)
+
+        // Mutating the copy afterward must likewise uniquify without tripping.
+        XCTAssertTrue(copy.appendLineString(makeLineString("ghij"), width: width))
+        XCTAssertEqual(copy.numRawLines(), 2)
+        XCTAssertEqual(copy.rawSpaceUsed(), 7)
+        XCTAssertEqual(original.numRawLines(), 2)
+        XCTAssertEqual(original.rawSpaceUsed(), 6)
+    }
 }
