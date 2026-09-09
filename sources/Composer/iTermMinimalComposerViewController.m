@@ -227,7 +227,19 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
 
 - (void)layoutSubviews {
     if (self.isSeparatorVisible) {
-        const CGFloat offset = self.lineHeight / 2.0;
+        // The overlay is half a line taller than the text (see frameForDesiredHeight:).
+        // Historically the separator consumed that entire half-line, leaving the text
+        // area exactly numberOfLines*lineHeight, so the caret on the last line sat flush
+        // against the bottom edge and its descender/insertion point got clipped. Keep a
+        // few points of that slack for the text and give the rest to the separator.
+        const CGFloat bottomBreathingRoom = 6;
+        // Reserve the 1pt separator plus a 1pt gap above the text, and never let that
+        // reservation vanish (with a small enough font lineHeight/2 falls under the
+        // breathing room, which would otherwise draw the composer text over the
+        // separator line). The remaining slack becomes breathing room below the last
+        // line's caret.
+        const CGFloat separatorAndGap = 2;
+        const CGFloat offset = MAX(separatorAndGap, self.lineHeight / 2.0 - bottomBreathingRoom);
         _largeComposerViewController.view.frame = NSMakeRect(0, 0, self.view.bounds.size.width, self.view.bounds.size.height - offset);
     } else {
         _largeComposerViewController.view.frame = _containerView.bounds;
