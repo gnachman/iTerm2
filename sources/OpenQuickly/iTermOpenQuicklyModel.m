@@ -390,13 +390,19 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
         NSParagraphStyleAttributeName: NSParagraphStyle.defaultParagraphStyle,
         NSFontAttributeName: [NSFont boldSystemFontOfSize:[NSFont systemFontSize]]
     };
-    NSMutableAttributedString *detail =
-        [[NSMutableAttributedString alloc] initWithString:menuItem.alternate ? NSLocalizedStringWithDefaultValue(@"OpenQuickly.AlternateMenuItemUnder", nil, [NSBundle mainBundle], @"Alternate menu item under ", @"Open Quickly detail prefix for an alternate menu item") : NSLocalizedStringWithDefaultValue(@"OpenQuickly.MenuItemUnder", nil, [NSBundle mainBundle], @"Menu item under ", @"Open Quickly detail prefix for a menu item")
-                                               attributes:regularAttributes];
     NSString *combinedPath = [path componentsJoinedByString:@" > "];
-    NSAttributedString *breadcrumbs = [[NSAttributedString alloc] initWithString:combinedPath
-                                                                      attributes:boldAttributes];
-    [detail appendAttributedString:breadcrumbs];
+    NSString *detailFormat = menuItem.alternate ? NSLocalizedStringWithDefaultValue(@"OpenQuickly.AlternateMenuItemUnder", nil, [NSBundle mainBundle], @"Alternate menu item under %@", @"Open Quickly detail for an alternate menu item; %@ is the menu path") : NSLocalizedStringWithDefaultValue(@"OpenQuickly.MenuItemUnder", nil, [NSBundle mainBundle], @"Menu item under %@", @"Open Quickly detail for a menu item; %@ is the menu path");
+    // Substitute the path by hand (rather than stringWithFormat:) so we can bold
+    // just the path run, and so a "%@" in the path itself is treated literally.
+    NSRange placeholderRange = [detailFormat rangeOfString:@"%@"];
+    NSMutableAttributedString *detail;
+    if (placeholderRange.location == NSNotFound) {
+        detail = [[NSMutableAttributedString alloc] initWithString:detailFormat attributes:regularAttributes];
+    } else {
+        NSString *detailString = [detailFormat stringByReplacingCharactersInRange:placeholderRange withString:combinedPath];
+        detail = [[NSMutableAttributedString alloc] initWithString:detailString attributes:regularAttributes];
+        [detail setAttributes:boldAttributes range:NSMakeRange(placeholderRange.location, combinedPath.length)];
+    }
     item.detail = detail;
 
     return item;

@@ -28394,43 +28394,43 @@
       }
     },
     "AITerm.CouldNotDecode" : {
-      "comment" : "Prefix of an error shown when the AI response cannot be decoded; followed by the reason",
+      "comment" : "Error shown when the AI response cannot be decoded; %@ is the reason",
       "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Antwort konnte nicht decodiert werden: "
+            "value" : "Antwort konnte nicht decodiert werden: %@"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Could not decode response: "
+            "value" : "Could not decode response: %@"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "レスポンスをデコードできませんでした: "
+            "value" : "レスポンスをデコードできませんでした: %@"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não foi possível decodificar a resposta: "
+            "value" : "Não foi possível decodificar a resposta: %@"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не удалось декодировать ответ: "
+            "value" : "Не удалось декодировать ответ: %@"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "无法解码响应："
+            "value" : "无法解码响应：%@"
           }
         }
       }
@@ -53342,43 +53342,43 @@
       }
     },
     "Codecierge.GoalPrefix" : {
-      "comment" : "Prefix label shown before the user's goal",
+      "comment" : "Label shown before the user's goal; %@ is the goal",
       "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ziel: "
+            "value" : "Ziel: %@"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Goal: "
+            "value" : "Goal: %@"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "目標: "
+            "value" : "目標: %@"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Objetivo: "
+            "value" : "Objetivo: %@"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Цель: "
+            "value" : "Цель: %@"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "目标："
+            "value" : "目标：%@"
           }
         }
       }
@@ -55556,43 +55556,43 @@
       }
     },
     "CommandInfo.StartedAtPrefix" : {
-      "comment" : "Prefix label followed by the command's start timestamp",
+      "comment" : "Label showing when the command started; %@ is the timestamp",
       "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Gestartet um "
+            "value" : "Gestartet um %@"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Started at "
+            "value" : "Started at %@"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "開始: "
+            "value" : "開始: %@"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Iniciado em "
+            "value" : "Iniciado em %@"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Начато в "
+            "value" : "Начато в %@"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "开始于 "
+            "value" : "开始于 %@"
           }
         }
       }
@@ -68011,7 +68011,7 @@
       }
     },
     "DynamicProfiles.AdditionalErrors" : {
-      "comment" : "Appended to a dynamic-profile error; %ld is the number of additional errors",
+      "comment" : "Note appended after a dynamic-profile error; %ld is the number of additional errors",
       "extractionState" : "stale",
       "localizations" : {
         "de" : {
@@ -68020,13 +68020,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "\n\n%ld weiterer Fehler ist möglicherweise im Protokoll zu finden."
+                  "value" : "%ld weiterer Fehler ist möglicherweise im Protokoll zu finden."
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "\n\n%ld weitere Fehler sind möglicherweise im Protokoll zu finden."
+                  "value" : "%ld weitere Fehler sind möglicherweise im Protokoll zu finden."
                 }
               }
             }
@@ -68038,13 +68038,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "new",
-                  "value" : "\n\n%ld additional error may be seen in the log."
+                  "value" : "%ld additional error may be seen in the log."
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "new",
-                  "value" : "\n\n%ld additional errors may be seen in the log."
+                  "value" : "%ld additional errors may be seen in the log."
                 }
               }
             }
@@ -68056,7 +68056,7 @@
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "\n\n他に %ld 件のエラーがログに表示されている可能性があります。"
+                  "value" : "他に %ld 件のエラーがログに表示されている可能性があります。"
                 }
               }
             }
@@ -68068,13 +68068,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "\n\n%ld erro adicional pode aparecer no log."
+                  "value" : "%ld erro adicional pode aparecer no log."
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "\n\n%ld erros adicionais podem aparecer no log."
+                  "value" : "%ld erros adicionais podem aparecer no log."
                 }
               }
             }
@@ -68086,25 +68086,25 @@
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "\n\nВ журнале могут появиться ещё %ld дополнительные ошибки."
+                  "value" : "В журнале могут появиться ещё %ld дополнительные ошибки."
                 }
               },
               "many" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "\n\nВ журнале могут появиться ещё %ld дополнительных ошибок."
+                  "value" : "В журнале могут появиться ещё %ld дополнительных ошибок."
                 }
               },
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "\n\nВ журнале может появиться ещё %ld дополнительная ошибка."
+                  "value" : "В журнале может появиться ещё %ld дополнительная ошибка."
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "\n\nВ журнале могут появиться ещё %ld дополнительные ошибки."
+                  "value" : "В журнале могут появиться ещё %ld дополнительные ошибки."
                 }
               }
             }
@@ -108757,43 +108757,43 @@
       }
     },
     "OpenQuickly.AlternateMenuItemUnder" : {
-      "comment" : "Open Quickly detail prefix for an alternate menu item",
+      "comment" : "Open Quickly detail for an alternate menu item; %@ is the menu path",
       "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alternativer Menüpunkt unter "
+            "value" : "Alternativer Menüpunkt unter %@"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Alternate menu item under "
+            "value" : "Alternate menu item under %@"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "の下にある代替メニュー項目 "
+            "value" : "%@の下にある代替メニュー項目"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Item de menu alternativo em "
+            "value" : "Item de menu alternativo em %@"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Альтернативный пункт меню в разделе "
+            "value" : "Альтернативный пункт меню в разделе %@"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "替代菜单项位于："
+            "value" : "替代菜单项位于：%@"
           }
         }
       }
@@ -109639,43 +109639,43 @@
       }
     },
     "OpenQuickly.MenuItemUnder" : {
-      "comment" : "Open Quickly detail prefix for a menu item",
+      "comment" : "Open Quickly detail for a menu item; %@ is the menu path",
       "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Menüpunkt unter "
+            "value" : "Menüpunkt unter %@"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Menu item under "
+            "value" : "Menu item under %@"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "の下にあるメニュー項目 "
+            "value" : "%@の下にあるメニュー項目"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Item de menu em "
+            "value" : "Item de menu em %@"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Пункт меню в разделе "
+            "value" : "Пункт меню в разделе %@"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "菜单项位于："
+            "value" : "菜单项位于：%@"
           }
         }
       }
@@ -130489,43 +130489,42 @@
       }
     },
     "PseudoTerminal.CopySuffix" : {
-      "comment" : "Suffix appended to a duplicated group's name; note the leading space",
-      "extractionState" : "stale",
+      "comment" : "Name given to a duplicated tab group; %@ is the original group name",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : " Kopie"
+            "value" : "%@ Kopie"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : " copy"
+            "value" : "%@ copy"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : " のコピー"
+            "value" : "%@ のコピー"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : " cópia"
+            "value" : "%@ cópia"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : " копия"
+            "value" : "%@ копия"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "copy"
+            "value" : "%@ 副本"
           }
         }
       }
@@ -148213,43 +148212,43 @@
       }
     },
     "ResponsesStreamingParser.SomethingWentWrong" : {
-      "comment" : "Prefix for an error message returned by the AI service",
+      "comment" : "Error message returned by the AI service; %@ is the reason",
       "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Etwas ist schiefgegangen: "
+            "value" : "Etwas ist schiefgegangen: %@"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Something went wrong: "
+            "value" : "Something went wrong: %@"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "問題が発生しました: "
+            "value" : "問題が発生しました: %@"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Algo deu errado: "
+            "value" : "Algo deu errado: %@"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Что-то пошло не так: "
+            "value" : "Что-то пошло не так: %@"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "出现错误："
+            "value" : "出现错误：%@"
           }
         }
       }

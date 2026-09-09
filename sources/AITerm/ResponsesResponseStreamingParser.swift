@@ -524,7 +524,7 @@ struct ResponsesResponseStreamingParser: LLMStreamingResponseParser {
             case let errorEvent as ResponseFailedEvent:
                 choiceMessages.append(LLM.Message(
                     role: .assistant,
-                    content: String(localized: "ResponsesStreamingParser.SomethingWentWrong", defaultValue: "Something went wrong: ", comment: "Prefix for an error message returned by the AI service") + (errorEvent.response.error?.message ?? String(localized: "ResponsesStreamingParser.UnknownError", defaultValue: "Unknown error", comment: "Fallback message when the AI service reports an error with no description"))))
+                    content: String(localized: "ResponsesStreamingParser.SomethingWentWrong", defaultValue: "Something went wrong: \(errorEvent.response.error?.message ?? String(localized: "ResponsesStreamingParser.UnknownError", defaultValue: "Unknown error", comment: "Fallback message when the AI service reports an error with no description"))", comment: "Error message returned by the AI service; %@ is the reason")))
                 parsedResponse?.ignore = false
             case let deltaEvent as ResponseOutputTextDeltaEvent:
                 choiceMessages.append(LLM.Message(role: .assistant,

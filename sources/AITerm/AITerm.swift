@@ -1190,7 +1190,7 @@ class AITermController {
             delegate?.aitermController(self, offerChoice: choice)
         } catch {
             if let reason = LLMErrorParser.errorReason(data: data) {
-                handle(event: .error(AIError(String(localized: "AITerm.CouldNotDecode", defaultValue: "Could not decode response: ", comment: "Prefix of an error shown when the AI response cannot be decoded; followed by the reason") + reason)))
+                handle(event: .error(AIError(String(localized: "AITerm.CouldNotDecode", defaultValue: "Could not decode response: \(reason)", comment: "Error shown when the AI response cannot be decoded; %@ is the reason"))))
             } else {
                 handle(event: .error(AIError(String(localized: "AITerm.FailedToDecode", defaultValue: "Failed to decode API response: \(String(describing: error)). Data is: \(data.stringOrHex)", comment: "Error shown when the AI API response cannot be decoded"))))
             }

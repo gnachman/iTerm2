@@ -934,7 +934,7 @@ class CodeciergeSuggestionView: NSView, NSTextFieldDelegate {
             goalLabel.stringValue
         }
         set {
-            goalLabel.stringValue = String(localized: "Codecierge.GoalPrefix", defaultValue: "Goal: ", comment: "Prefix label shown before the user's goal") + newValue
+            goalLabel.stringValue = String(localized: "Codecierge.GoalPrefix", defaultValue: "Goal: \(newValue)", comment: "Label shown before the user's goal; %@ is the goal")
             layoutSubviews()
         }
     }

@@ -9615,7 +9615,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return;
     }
     NSString *newID = [[NSUUID UUID] UUIDString];
-    NSString *newName = [(members.firstObject.tabGroupName ?: NSLocalizedStringWithDefaultValue(@"PseudoTerminal.Group", nil, [NSBundle mainBundle], @"Group", @"Default name for a new tab group")) stringByAppendingString:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CopySuffix", nil, [NSBundle mainBundle], @" copy", @"Suffix appended to a duplicated group's name; note the leading space")];
+    NSString *baseName = members.firstObject.tabGroupName ?: NSLocalizedStringWithDefaultValue(@"PseudoTerminal.Group", nil, [NSBundle mainBundle], @"Group", @"Default name for a new tab group");
+    NSString *newName = [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CopySuffix", nil, [NSBundle mainBundle], @"%@ copy", @"Name given to a duplicated tab group; %1$@ is the original group name"), baseName];
     NSColor *newColor = members.firstObject.tabGroupColor;
     // Duplicate each member (new sessions), then group the freshly created tabs.
     // Each copy is restored carrying the SOURCE group id with collapsed=YES and is

@@ -182,7 +182,7 @@
     [NSString stringWithFormat:NSLocalizedStringWithDefaultValue(@"DynamicProfiles.ProblemWithProfile", nil, [NSBundle mainBundle], @"There was a problem with one of your Dynamic Profiles:\n\n%@", @"Error shown when there is a problem with a dynamic profile"), error];
     if (_pendingErrors > 1) {
         const NSInteger count = _pendingErrors - 1;
-        message = [message stringByAppendingString:[NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"DynamicProfiles.AdditionalErrors", nil, [NSBundle mainBundle], @"\n\n%ld additional errors may be seen in the log.", @"Appended to a dynamic-profile error; %ld is the number of additional errors"), (long)count]];
+        message = [message stringByAppendingFormat:@"\n\n%@", [NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"DynamicProfiles.AdditionalErrors", nil, [NSBundle mainBundle], @"%ld additional errors may be seen in the log.", @"Note appended after a dynamic-profile error; %ld is the number of additional errors"), (long)count]];
     }
     _pendingErrors = 0;
     iTermAlertAccessoryButtonUnfucker *container = nil;

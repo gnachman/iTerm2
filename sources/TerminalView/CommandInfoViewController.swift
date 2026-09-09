@@ -263,7 +263,7 @@ class CommandInfoViewController: NSViewController {
             }
         }
         if let _startDate {
-            startedAt.stringValue = String(localized: "CommandInfo.StartedAtPrefix", defaultValue: "Started at ", comment: "Prefix label followed by the command's start timestamp") + formattedDate(_startDate)
+            startedAt.stringValue = String(localized: "CommandInfo.StartedAtPrefix", defaultValue: "Started at \(formattedDate(_startDate))", comment: "Label showing when the command started; %@ is the timestamp")
         } else {
             startedAtStackView.isHidden = true
             stackView.removeArrangedSubview(startedAtStackView)
