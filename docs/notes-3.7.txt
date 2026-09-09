@@ -749,6 +749,11 @@ Settings Improvements:
   the current tab.
 
 Bug Fixes:
+- Fixed a crash on launch when restoring
+  scrollback saved by 3.6.11 that contained
+  bidi (right-to-left) text. The old metadata
+  format was misread and could abort launch
+  when session restoration was enabled.
 - The selected tab’s bright HDR outline on
   macOS Tahoe is now off by default. It is
   gated behind a new “Allow HDR effects”
