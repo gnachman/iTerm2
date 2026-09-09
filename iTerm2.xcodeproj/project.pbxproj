@@ -5475,6 +5475,7 @@
 		B661B16FF0C20DC268588314 /* iTermMacOS13RequirementNotice.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED1A9F00EB0A2E18AD334E88 /* iTermMacOS13RequirementNotice.swift */; };
 		B6F107C3AFA77C36642979FC /* CompanionPushRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A955B14FF6B89D29018C2AEA /* CompanionPushRegistry.swift */; };
 		B7D24BCC35360983559E530C /* iTermSuppressedAlerts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DB0124F2AA65D7F51AD4A32 /* iTermSuppressedAlerts.swift */; };
+		B80BB2D6C74CAD9750556804 /* AILiveLlamaToolCallTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63E84D570B65467F50B49267 /* AILiveLlamaToolCallTests.swift */; };
 		B89533C4F0E3E8C415065AAC /* iTermLayoutResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = D079EA4C9132883E833B9974 /* iTermLayoutResolver.swift */; };
 		B895F51FF2D64582C90FCE37 /* CompanionPushRelay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BB89D5E8FEBDEAE9E7370EC /* CompanionPushRelay.swift */; };
 		B947C485FA069D07B72E94CC /* iTermWorkgroupToolbarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A07263500827075018158DEC /* iTermWorkgroupToolbarItem.swift */; };
@@ -6813,6 +6814,7 @@
 		625C956DD832F4FD0D8F9715 /* PrivateIPChecker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PrivateIPChecker.swift; sourceTree = "<group>"; };
 		6332079B8F2300214CA6B22E /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/SpecialExceptionsWindowController.xcstrings; sourceTree = "<group>"; };
 		6373295DEB74E8DFC995A362 /* iTermAdapterSettingsRevealHelper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermAdapterSettingsRevealHelper.swift; sourceTree = "<group>"; };
+		63E84D570B65467F50B49267 /* AILiveLlamaToolCallTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AILiveLlamaToolCallTests.swift; sourceTree = "<group>"; };
 		64D77A978A9DB0DB1AC8DE61 /* AILiveChatQueueTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AILiveChatQueueTests.swift; sourceTree = "<group>"; };
 		6518C4017AD4275634FA34AA /* iTermRightGutterPanelRegistry.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermRightGutterPanelRegistry.h; sourceTree = "<group>"; };
 		655BC676F48B084B2CCFF71C /* KittyDnDDragHost.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KittyDnDDragHost.swift; sourceTree = "<group>"; };
@@ -16486,6 +16488,7 @@
 				59B1126B05955C92900D7A85 /* AICassette.swift */,
 				CFDF88A516D67FABD556F296 /* AILiveBlobReplayTests.swift */,
 				7133FD0EA06B662C44BD713A /* AILiveAppleIntelligenceTabTitle.swift */,
+				63E84D570B65467F50B49267 /* AILiveLlamaToolCallTests.swift */,
 			);
 			path = AILiveHarness;
 			sourceTree = "<group>";
@@ -22508,6 +22511,7 @@
 				229997A22B1C8033B1EDEC2E /* iTermTmuxControlModeKeyName.m in Sources */,
 				C17A8484C4DAB6EEFC5D14D9 /* AILiveBlobReplayTests.swift in Sources */,
 				F50FD9F1F317F265BA9D2575 /* AILiveAppleIntelligenceTabTitle.swift in Sources */,
+				B80BB2D6C74CAD9750556804 /* AILiveLlamaToolCallTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
