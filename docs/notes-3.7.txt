@@ -88,6 +88,13 @@ Major New Features:
   notified when it changes, so tools like vim
   and delta can adapt automatically.
 
+- Fixed a bug on macOS 26 where the tab bar
+  became short and shifted down after entering
+  and exiting Lion fullscreen, and where the
+  tabs sat jammed against the top of the screen
+  in fullscreen. Affects the Tahoe tab bar with
+  tabs on top.
+
 - Fixed a bug where a Python API script that
   created a window and then immediately used
   Window.current_tab or Tab.current_session

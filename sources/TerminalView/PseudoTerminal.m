@@ -5611,7 +5611,20 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                     PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
 
                     if (lionFullScreen_ && _contentView.tabBarControlOnLoan) {
-                        topInset += 3;
+                        // In Lion full screen the tab bar accessory sits flush against the
+                        // top edge of the screen, with no stoplight row above it as there is
+                        // in a windowed titlebar. Left top-aligned (the base insets put the
+                        // whole gap at the bottom) the tabs jam against the screen edge.
+                        // Center them by splitting the gap between top and bottom rather
+                        // than only adding to the top: the cell height is
+                        // (bar height - top - bottom), so a one-sided top inset would shrink
+                        // the tabs instead of moving them. The Tahoe pill is drawn 1pt
+                        // top-heavy inside its cell (see -backgroundRect in
+                        // PSMTahoeTabStyle, which insets 2 top / 1 bottom), so bias the split
+                        // 0.5pt toward the bottom so the tab looks vertically centered.
+                        const CGFloat gap = topInset + bottomInset;
+                        topInset = gap / 2.0 - 0.5;
+                        bottomInset = gap / 2.0 + 0.5;
                     }
                     if (lionFullScreen_ && tabPosition == PSMTab_BottomTab) {
                         topInset += 4;
@@ -6868,7 +6881,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
              @(_contentView.tabBarControl.isHidden),
              @(_contentView.tabBarControl.alphaValue),
              NSStringFromRect(_contentView.tabBarControl.frame));
-        DLog(@"View hierarchy:\n%@", [_contentView.tabBarControl.window.contentView iterm_recursiveDescription]);
+        // Dump from the window's frame view (superview of the content view) rather than the
+        // content view itself. When the window is not in Lion fullscreen the tab bar lives in the
+        // titlebar as an NSTitlebarAccessoryClipView, which is a sibling of the content view and is
+        // therefore invisible to a content-view-rooted dump. Issue: tab bar squished after exiting
+        // fullscreen.
+        NSView *frameView = _contentView.tabBarControl.window.contentView.superview ?: _contentView.tabBarControl.window.contentView;
+        DLog(@"View hierarchy:\n%@", [frameView iterm_recursiveDescription]);
 
         [_titlebarAccessoryNanny add:viewController];
         const BOOL minHeightChanged = [_titlebarAccessoryNanny updateViewController:viewController
