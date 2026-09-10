@@ -28,6 +28,9 @@ extern NSString *const iTermWebSocketConnectionLibraryVersionTooOldString;
 @protocol iTermAPIServerConnection<NSObject>
 @property(nonatomic, readonly) id key;
 @property(nonatomic, readonly) NSString *guid;
+// The client's x-iterm2-library-version header (e.g. "python 2.22"), or nil for
+// the in-process runtime. Used to gate client-version-specific workarounds.
+@property(nonatomic, readonly) NSString *libraryVersion;
 - (void)sendBinary:(NSData *)binaryData completion:(void (^)(void))completion;
 - (void)abortWithCompletion:(void (^)(void))completion;
 @end
@@ -40,6 +43,7 @@ extern NSString *const iTermWebSocketConnectionLibraryVersionTooOldString;
 @property(nonatomic, readonly) id key;
 @property(nonatomic, readonly) NSString *advisoryName;
 @property(nonatomic, readonly) NSString *guid;
+@property(nonatomic, readonly) NSString *libraryVersion;
 
 + (instancetype)newWebSocketConnectionForRequest:(NSURLRequest *)request
                                       connection:(iTermHTTPConnection *)connection

@@ -1032,6 +1032,7 @@
 		639530D5AD779882EF35DAE4 /* iTermLargeContentObject.h in Sources */ = {isa = PBXBuildFile; fileRef = 13C5AE44EEA24B945DE0A064 /* iTermLargeContentObject.h */; };
 		63E228527D9C344E2A67AAFC /* ChatBlobCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0C59C22641253239F1BF6BB /* ChatBlobCapture.swift */; };
 		64EC42E62879047B5E0EF077 /* CompanionMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADE0FD36EF2CD108D533CC26 /* CompanionMessages.swift */; };
+		6525DAAA19CCA2BCAF26D083 /* iTermAPICreateTabFocusDeferral.h in Sources */ = {isa = PBXBuildFile; fileRef = DF2961C37EC2E8B987F3D400 /* iTermAPICreateTabFocusDeferral.h */; };
 		65DA44D4F51DFFD1F2DDD380 /* iTermSleepPreventionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA6D8E06662B0A02D1CA8875 /* iTermSleepPreventionCoordinator.swift */; };
 		65EE211B60CDAF7B6FC925B2 /* CompanionPushNonceRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1F7DEDB57FDB370787B646 /* CompanionPushNonceRegistry.swift */; };
 		66ACA31A7AD33D24EE498F7C /* ai-models.json in Resources */ = {isa = PBXBuildFile; fileRef = DF18C01510605DB0C639038F /* ai-models.json */; };
@@ -1044,6 +1045,7 @@
 		6CE3AED77D074C569A3D6D07 /* iTermOpenDirectory.m in Sources */ = {isa = PBXBuildFile; fileRef = 53A96ECF2322040C00AEA8E0 /* iTermOpenDirectory.m */; };
 		6D3FC20125143E8FB69A834B /* iTermUvManifest.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC0E61E311DA6EA85EE80C3E /* iTermUvManifest.swift */; };
 		6DE326D917E8D3D7A0A037B8 /* WorkgroupChildSpawning.swift in Sources */ = {isa = PBXBuildFile; fileRef = A25EF27A7558A60A0553EDC9 /* WorkgroupChildSpawning.swift */; };
+		6DEF6ECE06F2BFCD91F283E1 /* iTermAPICreateTabFocusDeferral.m in Sources */ = {isa = PBXBuildFile; fileRef = 1538A1E2B912F5687FAB3139 /* iTermAPICreateTabFocusDeferral.m */; };
 		6E4CF6BAA30F03B29D036421 /* CompanionHistoryWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EBF93C36BBE5709BAA52E61 /* CompanionHistoryWindow.swift */; };
 		6E6D193C2F48B00C162002BF /* CompanionHostBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457E888882A6E3DD414DA970 /* CompanionHostBridge.swift */; };
 		6F885E79CF1911E60FD729C0 /* Chat+Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25308DD4E67A2804961C3F3E /* Chat+Database.swift */; };
@@ -5952,6 +5954,7 @@
 		13A6B1D037AF894E662A0EFC /* iTermWorkgroup.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWorkgroup.swift; sourceTree = "<group>"; };
 		13C5AE44EEA24B945DE0A064 /* iTermLargeContentObject.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermLargeContentObject.h; sourceTree = "<group>"; };
 		148411BF36E0AD043E6CA1CD /* decdwl_decdhl_normalized.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = decdwl_decdhl_normalized.txt; sourceTree = "<group>"; };
+		1538A1E2B912F5687FAB3139 /* iTermAPICreateTabFocusDeferral.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = iTermAPICreateTabFocusDeferral.m; sourceTree = "<group>"; };
 		1539EBAEEF538ABD2004044A /* AIChatToolCallRepair.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIChatToolCallRepair.swift; sourceTree = "<group>"; };
 		16244DB19048FCA0614235A6 /* CompanionPluginTransport.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CompanionPluginTransport.swift; sourceTree = "<group>"; };
 		167F170AF620D7443F74609C /* CodeReviewPromptView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CodeReviewPromptView.swift; sourceTree = "<group>"; };
@@ -10001,6 +10004,7 @@
 		DE33CBB56EA96FD0239D8CED /* OrchestratorError.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrchestratorError.swift; sourceTree = "<group>"; };
 		DE7B0AE10E1598EDE1E01795 /* iTermEventTriggerParameterView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermEventTriggerParameterView.swift; sourceTree = "<group>"; };
 		DF18C01510605DB0C639038F /* ai-models.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = "ai-models.json"; path = "OtherResources/ai-models.json"; sourceTree = "<group>"; };
+		DF2961C37EC2E8B987F3D400 /* iTermAPICreateTabFocusDeferral.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermAPICreateTabFocusDeferral.h; sourceTree = "<group>"; };
 		DF53E3C0036CD76566117D88 /* iTermRowOutputCache.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = iTermRowOutputCache.h; sourceTree = "<group>"; };
 		DF6440F5192CCA7D62FF605A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/AdvancedWorkingDirectoryWindow.xib; sourceTree = "<group>"; };
 		DF808B854D1D46A0BCFC82B3 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/iTermStatusBarKnobTextViewController.xcstrings; sourceTree = "<group>"; };
@@ -11862,6 +11866,8 @@
 				AA8606A478BC8E0AE0DE9E10 /* iTermUvMigration.swift */,
 				03F4E17ADA3A5F9B20391BAF /* iTermProvisioningProgressWindowController.swift */,
 				30BDC3CFCE129E42150030AF /* iTermRosettaSupport.swift */,
+				1538A1E2B912F5687FAB3139 /* iTermAPICreateTabFocusDeferral.m */,
+				DF2961C37EC2E8B987F3D400 /* iTermAPICreateTabFocusDeferral.h */,
 			);
 			path = API;
 			sourceTree = "<group>";
@@ -22450,6 +22456,8 @@
 				52D5109F7DA67861CB8072E5 /* NSTextView+iTermUndoSafety.m in Sources */,
 				E80D135D7317746A38ADC8B4 /* NSTextView+iTermUndoSafety.h in Sources */,
 				A033F281B74486F43A56A2E0 /* iTermUndoCloseMigrationWarning.swift in Sources */,
+				6DEF6ECE06F2BFCD91F283E1 /* iTermAPICreateTabFocusDeferral.m in Sources */,
+				6525DAAA19CCA2BCAF26D083 /* iTermAPICreateTabFocusDeferral.h in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

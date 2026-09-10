@@ -44,6 +44,8 @@ extern NSString *const iTermAPIServerConnectionClosed;
 - (void)apiServerSendText:(ITMSendTextRequest *)request
                   handler:(void (^)(ITMSendTextResponse *))handler;
 - (void)apiServerCreateTab:(ITMCreateTabRequest *)request
+            libraryVersion:(NSString *)libraryVersion
+             connectionGuid:(NSString *)connectionGuid
                    handler:(void (^)(ITMCreateTabResponse *))handler;
 - (void)apiServerSplitPane:(ITMSplitPaneRequest *)request
                    handler:(void (^)(ITMSplitPaneResponse *))handler;
