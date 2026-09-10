@@ -466,13 +466,9 @@ static NSModalResponse iTermCompareRenderingRunModal(id self, SEL _cmd) {
     } else if ([menuItem action] == @selector(undoCloseSession:)) {
         return [[iTermController sharedInstance] hasRestorableSession];
     } else if ([menuItem action] == @selector(undo:)) {
-        NSResponder *undoResponder = [self responderForMenuItem:menuItem];
-        if (undoResponder) {
-            return YES;
-        } else {
-            menuItem.title = NSLocalizedStringWithDefaultValue(@"UndoMenu.CloseSession", nil, [NSBundle mainBundle], @"Undo Close Session", @"Undo menu item title for reopening a closed session");
-            return [[iTermController sharedInstance] hasRestorableSession];
-        }
+        return [self validateUndoRedoMenuItem:menuItem selector:@selector(undo:) allowMigration:YES];
+    } else if ([menuItem action] == @selector(redo:)) {
+        return [self validateUndoRedoMenuItem:menuItem selector:@selector(redo:) allowMigration:NO];
     } else if ([menuItem action] == @selector(enableMarkAlertShowsModalAlert:)) {
         [menuItem setState:[[self markAlertAction] isEqualToString:kMarkAlertActionModalAlert] ? NSControlStateValueOn : NSControlStateValueOff];
         return YES;
@@ -1575,6 +1571,11 @@ void TurnOnDebugLoggingAutomatically(void) {
     // run ("test runner hung before establishing connection"). A test host has
     // no paired device, so none of this is needed there.
     if (![NSApp isRunningUnitTests]) {
+        // Re-arm any AI-chat timers persisted before this launch so a timer whose
+        // deadline passed while iTerm2 was quit (e.g. across a Sparkle upgrade)
+        // still fires without the user reopening the chat. A no-op when no chat
+        // has a timer.
+        [iTermChatTimerLaunch rearmPersistedTimers];
         // If a companion device is paired, quietly listen so it can reconnect.
         [[iTermCompanionPairingController shared] resumePairedListeningIfNeeded];
         // If the pairing is half-present (pid persisted but keychain credentials
@@ -3065,16 +3066,128 @@ static iTermKeyEventReplayer *gReplayer;
 }
 
 - (IBAction)undo:(id)sender {
-    NSResponder *undoResponder = [self responderForMenuItem:sender];
-    if (undoResponder) {
+    // ⌘Z is idiomatic text undo: it undoes the focused editor. Undo Close moved to
+    // Shell > Undo Close (⌘⇧T). The first time the user presses ⌘Z while a session
+    // they just closed is still restorable, show a one-time notice explaining the
+    // change and let them pick what they meant this time.
+    __weak __typeof(self) weakSelf = self;
+    if ([iTermUndoCloseMigrationWarning maybeShowWithUndoClose:^{ [weakSelf undoCloseSession:nil]; }
+                                                   regularUndo:^{ [weakSelf performUndo:sender]; }]) {
+        return;
+    }
+    [self performUndo:sender];
+}
+
+- (IBAction)redo:(id)sender {
+    [self performRedo:sender];
+}
+
+- (void)performUndo:(id)sender {
+    [self performUndoRedoSelector:@selector(undo:) sender:sender];
+}
+
+- (void)performRedo:(id)sender {
+    [self performUndoRedoSelector:@selector(redo:) sender:sender];
+}
+
+// Shared Undo/Redo dispatch. A focused text editor owns its own undo stack, so
+// drive it directly (NSTextView doesn't respond to undo:/redo:). When the focused
+// editor has nothing to do -- or the first responder isn't a text editor -- fall
+// through to the key window's responder chain, forwarding to a settings
+// controller, a WebKit editing view, or the window's own undo manager. This
+// mirrors the First-Responder menu routing this used to rely on (so ⌘Z can still
+// undo a settings-table edit while a text field is focused, and ⌘⇧Z still redoes
+// in editable web content), while keeping text editors on their private stacks.
+- (void)performUndoRedoSelector:(SEL)selector sender:(id)sender {
+    const BOOL isUndo = (selector == @selector(undo:));
+    NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
+    if ([firstResponder isKindOfClass:[NSText class]]) {
+        NSUndoManager *undoManager = firstResponder.undoManager;
+        if (isUndo ? undoManager.canUndo : undoManager.canRedo) {
+            // Guard against a throwing undo target / NSUndoManager inconsistency.
+            // (This never caught the dangling-target EXC_BAD_ACCESS -- the swizzle
+            // handles that -- but it does stop NSExceptions from escaping.)
+            @try {
+                if (isUndo) {
+                    [undoManager undo];
+                } else {
+                    [undoManager redo];
+                }
+            } @catch (NSException *exception) {
+                RLog(@"%@", exception);
+            }
+            return;
+        }
+        // Nothing to do in this editor; fall through so e.g. an empty settings
+        // text field still defers to its controller's undo.
+    }
+    NSResponder *responder = [self responderForUndoRedoSelector:selector menuItem:sender];
+    if (responder) {
         @try {
-            [undoResponder performSelector:@selector(undo:) withObject:sender];
+            [responder performSelector:selector withObject:sender];
         } @catch (NSException *exception) {
             RLog(@"%@", exception);
         }
-    } else {
-        [self undoCloseSession:nil];
+        return;
     }
+    NSBeep();
+}
+
+// The first responder in the key window's chain that can handle `selector` for
+// `menuItem`: it must implement the selector, conform to NSMenuItemValidation,
+// and validate the item. The validation requirement is what lets us skip an
+// NSWindow with an empty undo stack (NSWindow implements undo:/redo: and would
+// otherwise swallow the action into its unused default manager) and keep walking
+// to a window controller that owns a private undo manager -- e.g. the Smart
+// Selection or Context Menu Action prefs panels. The app delegate is not in any
+// window's responder chain, so there's no recursion risk. Text editors are
+// handled by the caller's NSText branch, not here (NSTextView doesn't implement
+// undo:/redo:).
+- (NSResponder *)responderForUndoRedoSelector:(SEL)selector menuItem:(NSMenuItem *)menuItem {
+    for (NSResponder *responder in [self allResponders]) {
+        if ([responder respondsToSelector:selector] &&
+            [responder conformsToProtocol:@protocol(NSMenuItemValidation)] &&
+            (!menuItem || [(id<NSMenuItemValidation>)responder validateMenuItem:menuItem])) {
+            return responder;
+        }
+    }
+    return nil;
+}
+
+// Enablement/title for the Undo or Redo menu item, matching the dispatch in
+// -performUndoRedoSelector:sender:.
+- (BOOL)validateUndoRedoMenuItem:(NSMenuItem *)menuItem
+                        selector:(SEL)selector
+                  allowMigration:(BOOL)allowMigration {
+    const BOOL isUndo = (selector == @selector(undo:));
+    NSString *genericTitle = isUndo
+        ? NSLocalizedStringWithDefaultValue(@"UndoMenu.Undo", nil, [NSBundle mainBundle], @"Undo", @"Generic Undo menu item title shown when there is nothing specific to undo")
+        : NSLocalizedStringWithDefaultValue(@"UndoMenu.Redo", nil, [NSBundle mainBundle], @"Redo", @"Generic Redo menu item title shown when there is nothing specific to redo");
+
+    // The one-time Undo Close migration notice takes the next ⌘Z when pending, so
+    // keep the generic title (not "Undo Typing") -- pressing it shows the notice,
+    // which offers Regular Undo to perform the pending undo.
+    if (allowMigration &&
+        !iTermUserDefaults.haveWarnedAboutUndoKeyChange &&
+        [[iTermController sharedInstance] hasRestorableSession]) {
+        menuItem.title = genericTitle;
+        return YES;
+    }
+
+    NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
+    if ([firstResponder isKindOfClass:[NSText class]]) {
+        NSUndoManager *undoManager = firstResponder.undoManager;
+        if (isUndo ? undoManager.canUndo : undoManager.canRedo) {
+            menuItem.title = isUndo ? undoManager.undoMenuItemTitle : undoManager.redoMenuItemTitle;
+            return YES;
+        }
+        // else fall through to the forwarded responder.
+    }
+    menuItem.title = genericTitle;
+    // A validating responder further down the chain (settings controller) enables
+    // the item; -responderForUndoRedoSelector:menuItem: already required its
+    // validateMenuItem: to pass.
+    return ([self responderForUndoRedoSelector:selector menuItem:menuItem] != nil);
 }
 
 - (IBAction)undoCloseSession:(id)sender {
@@ -3764,18 +3877,6 @@ static iTermKeyEventReplayer *gReplayer;
         responder = [responder nextResponder];
     }
     return responders;
-}
-
-- (NSResponder *)responderForMenuItem:(NSMenuItem *)menuItem {
-    for (NSResponder *responder in [self allResponders]) {
-        if ([responder respondsToSelector:@selector(undo:)] &&
-            [responder respondsToSelector:@selector(validateMenuItem:)] &&
-            [responder conformsToProtocol:@protocol(NSMenuItemValidation)] &&
-            [(id<NSMenuItemValidation>)responder validateMenuItem:menuItem]) {
-            return responder;
-        }
-    }
-    return nil;
 }
 
 - (void)newSessionInWindowAtIndex:(id)sender {

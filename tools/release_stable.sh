@@ -135,7 +135,7 @@ make SIGNED=1 UNIVERSAL=1 release
 
 BUILDTYPE=Deployment
 
-Build $BUILDTYPE "" "macOS 12.4+" "This is the recommended build for most users." "" "--deep"
+Build $BUILDTYPE "" "macOS 13+" "This is the recommended build for most users." "" "--deep"
 
 git checkout -- version.txt
 #set -x

@@ -597,14 +597,11 @@ class ComposerTextView: MultiCursorTextView {
     override func cancelOperation(_ sender: Any?) {
     }
 
-    override func viewDidMoveToWindow() {
-        guard let textStorage else {
-            return
-        }
-        if window == nil {
-            undoManager?.removeAllActions(withTarget: textStorage)
-        }
-    }
+    // Note: deliberately does NOT clear the undo manager when leaving the window.
+    // This view owns a private undo manager (see `undoManager` above) whose actions
+    // die with the view, so there's no dangling-target risk to guard against, and
+    // this view's instance persists across tab switches (which set window == nil),
+    // so wiping undo here would throw away history the user still wants.
 
     override func it_preferredFirstResponder() -> Bool {
         return true

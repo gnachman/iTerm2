@@ -88,10 +88,35 @@ Major New Features:
   notified when it changes, so tools like vim
   and delta can adapt automatically.
 
+- Fixed a bug where a Python API script that
+  created a window and then immediately used
+  Window.current_tab or Tab.current_session
+  got None, so scripts that split panes or
+  changed fonts on a freshly created window
+  stopped working. Affected 3.7.0.
+
+- Fixed a bug where a command-line
+  completion whose command history entry
+  contained a newline would spill across
+  adjacent rows in the suggestions popup.
+  Embedded newlines now show as a return
+  glyph and the entry stays on one line.
 - Fixed a crash that could occur when a
   maximized (zoomed) split pane was torn
   down, such as when a tmux connection
   dropped.
+- Fixed a bug where duplicating a tab that
+  belonged to a tab group left the copy as a
+  stray member stranded at the end of the
+  tab bar instead of joining the group. The
+  duplicate now becomes a proper, adjacent
+  member of the same group.
+- Fixed multi-second hangs when navigating
+  tmux sessions. Each mouse-mode escape
+  sequence fired a heavyweight redraw side
+  effect twice, even when the mode did not
+  change, so a burst of them (as tmux sends
+  on every switch) could freeze the UI.
 - Fixed a bug where a profile whose custom
   working directory used a tilde (such as
   ~/www) wrongly reported the directory as
@@ -113,6 +138,12 @@ Major New Features:
   did not update its label after you changed
   the setting, and re-clicking it appeared to
   do nothing.
+
+- Fixed a bug where removing a tab from the
+  middle of a tab group left the group split
+  into two runs with the removed tab wedged
+  between them. The group now stays contiguous
+  and the removed tab moves just after it.
 
 - Fixed a bug where the top-right session
   indicators left a horizontal smear while
@@ -169,6 +200,12 @@ Major New Features:
   could set watches. If your phone is paired it
   can also push you a notification when the watch
   fires.
+
+- AI chat can now set a timer to act after a
+  delay or at a set time (for example, “in two
+  hours, run this command”). The timer survives
+  restarts, fires immediately if its time already
+  passed, and can push your phone when it fires.
 
 - The manual AI model editor now offers presets
   for OpenAI-compatible providers (Ollama,
@@ -581,6 +618,11 @@ Password Manager Improvements:
   Folders as well as the classic vault.
   Both appear in one list, labeled (Classic)
   or (Nested).
+- New setting “Require Authentication on Every
+  Open” re-prompts for Touch ID or your password
+  each time the password manager opens, instead
+  of reusing the first unlock until the screen
+  locks.
 
 Shell Integration Improvements:
 - xonsh is now a supported shell.
@@ -859,6 +901,39 @@ Bug Fixes:
   top tab bar is too short for two lines, so the
   status now follows the title on one line, in
   its own status color.
+- Stopped falsely offering to reset the key
+  reporting mode after every command in Fish
+  4.x and other shells that re-enable the
+  kitty keyboard protocol at each prompt. The
+  flags are now sampled when the command
+  finished, not after the next prompt turned
+  them back on.
+- Fixed Kitty drag-and-drop (OSC 72) drag-out
+  from the real `kitten dnd` client, which failed
+  with “EINVAL:unexpected t=e”. The client omits
+  metadata keys whose value is 0, so index-0
+  offers arrived without their x=/y= key.
+- Fixed a crash on launch when restoring
+  scrollback saved by 3.6.11 that contained
+  bidi (right-to-left) text. The old metadata
+  format was misread and could abort launch
+  when session restoration was enabled.
+- Fixed a class of crash where Undo (⌘Z) after
+  closing a session, split pane, or other view
+  could crash. Text views left their text-edit
+  undo actions in the window’s undo stack, which
+  outlived them and became dangling pointers
+  (a long-standing AppKit bug). iTerm2 now
+  scrubs those actions when a text view leaves
+  its window.
+- ⌘Z now undoes text editing in the field you’re
+  editing (the composer, browser address bar,
+  annotations, notes, and AI chat), and ⌘⇧Z
+  redoes. Undo Close is now solely Shell ▸ Undo
+  Close (⌘⇧T). The first time you press ⌘Z with
+  a recently closed session still restorable, a
+  one-time notice explains the change and lets
+  you choose Undo Close or a regular undo.
 - The SCP-download menu animation no longer
   leaves an invisible window behind. That stray
   window could make clicking the Dock icon fail
@@ -2887,3 +2962,15 @@ Bug Fixes:
   session belongs to.
 - Fixed a crash that could occur when doing a
   global search that included a browser session.
+- Fixed the git ahead/behind arrows in the
+  session toolbar staying black in dark mode
+  instead of matching the text color.
+- Fixed the tab group outline in the Tahoe theme,
+  which was being clipped: the top and bottom
+  lines, the outline around the group chip, and
+  the rounded end caps of the first or last group
+  in the tab bar were partly or fully missing.
+- Fixed a faint vertical line that could appear
+  inside a selected tab in the dark Tahoe theme,
+  caused by the tab chrome images meeting on a
+  fractional pixel.

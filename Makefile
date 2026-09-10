@@ -318,6 +318,9 @@ open: Development
 # Set LANGUAGE=<code> to force a UI language, e.g. `LANGUAGE=pt make run` adds
 # -AppleLanguages '(pt)'. Leave it unset to use the system language.
 run: Development
+	$(MAKE) run-nobuild
+
+run-nobuild: force
 	"$(BUILD_DIR)/Development/iTerm2.app/Contents/MacOS/iTerm2" -suite $(SUITE) $(if $(LANGUAGE),-AppleLanguages '($(LANGUAGE))') & \
 	pid=$$!; \
 	trap 'kill $$pid 2>/dev/null' INT TERM; \

@@ -2538,8 +2538,10 @@ extension Message.Content {
         case .watcherEvent(let payload):
             // Render with the system-message styling so the user
             // sees it's not their own message. Symbol prefix marks
-            // it as an iTerm2-posted event.
-            return AttributedStringForSystemMessageMarkdown("📡 \(payload.detail)") {}
+            // it as an iTerm2-posted event (a clock for a fired timer,
+            // the antenna for a session watcher).
+            let glyph = (payload.reason == .timerFired) ? "⏰" : "📡"
+            return AttributedStringForSystemMessageMarkdown("\(glyph) \(payload.detail)") {}
         case .unsupported:
             // A message a newer iTerm2 sent that this build can't decode.
             return AttributedStringForSystemMessageMarkdown(

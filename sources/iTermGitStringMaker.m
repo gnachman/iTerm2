@@ -8,6 +8,7 @@
 #import "iTermGitStringMaker.h"
 
 #import "DebugLogging.h"
+#import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSHost+iTerm.h"
 #import "NSImage+iTerm.h"
@@ -19,7 +20,19 @@
 #import "iTermVariables.h"
 #import "NSObject+iTerm.h"
 
-@implementation iTermGitStringMaker
+@implementation iTermGitStringMaker {
+    // Cache of the tinted arrow/dirty glyphs. They only need rebuilding
+    // when the tint color or the theme they resolve against changes, so
+    // we don't re-tint identical bitmaps on every git poll. The theme
+    // name is part of the key because gitTextColor is often a dynamic
+    // color (e.g. labelColor) whose object identity is unchanged across
+    // a light/dark switch even though what it resolves to differs.
+    NSColor *_tintedGlyphColor;
+    NSString *_tintedGlyphAppearanceName;
+    NSAttributedString *_upImage;
+    NSAttributedString *_downImage;
+    NSAttributedString *_dirtyImage;
+}
 
 - (instancetype)initWithScope:(iTermVariableScope *)scope
                     gitPoller:(iTermGitPoller *)gitPoller {
@@ -55,27 +68,6 @@
         case iTermGitRepoStateApply:
             return [self attributedStringWithString:@"Applying"];
     }
-    static NSAttributedString *upImage;
-    static NSAttributedString *downImage;
-    static NSAttributedString *dirtyImage;
-    static NSAttributedString *enSpace;
-    static NSAttributedString *thinSpace;
-    static NSAttributedString *adds;
-    static NSAttributedString *deletes;
-    static NSAttributedString *addsAndDeletes;
-    static dispatch_once_t onceToken;
-
-    dispatch_once(&onceToken, ^{
-        upImage = [self attributedStringWithImageNamed:@"gitup"];
-        downImage = [self attributedStringWithImageNamed:@"gitdown"];
-        dirtyImage = [self attributedStringWithImageNamed:@"gitdirty"];
-        enSpace = [self attributedStringWithString:@"\u2002"];
-        thinSpace = [self attributedStringWithString:@"\u2009"];
-        adds = [self attributedStringWithString:@"+"];
-        deletes = [self attributedStringWithString:@"-"];
-        addsAndDeletes = [self attributedStringWithString:@"±"];
-    });
-
     if (self.currentState.xcode.length > 0) {
         return [self attributedStringWithString:@"⚠️"];
     }
@@ -83,6 +75,16 @@
     if (!branch) {
         return nil;
     }
+
+    // The arrow/dirty glyphs are bitmaps, so unlike the text runs above
+    // they can't carry a dynamic NSColor that resolves per appearance.
+    // Tint them to the current git text color so they track light/dark
+    // instead of showing the PNG's baked-in black. Cached so a poll that
+    // doesn't change the color/theme reuses the existing bitmaps.
+    [self updateTintedGlyphs];
+    NSAttributedString *upImage = _upImage;
+    NSAttributedString *downImage = _downImage;
+    NSAttributedString *dirtyImage = _dirtyImage;
 
     NSAttributedString *upCount = self.currentState.ahead.integerValue > 0 ? [self attributedStringWithString:self.currentState.ahead] : nil;
     NSAttributedString *downCount = self.currentState.behind.integerValue > 0 ? [self attributedStringWithString:self.currentState.behind] : nil;
@@ -128,6 +130,19 @@
     }
     
     // Minimal: the legacy adds/deletes indicator used by the status bar.
+    // Built per call rather than cached in a static: gitFont/gitTextColor
+    // differ between makers (e.g. the toolbar's system font + labelColor
+    // vs. a status bar's profile font + configured text color), and two
+    // windows can even render with different effective appearances at the
+    // same time (Minimal theme derives appearance from background color).
+    // A single app-wide static would freeze the first maker's font/color
+    // and hand it to everyone.
+    NSAttributedString *enSpace = [self attributedStringWithString:@"\u2002"];
+    NSAttributedString *thinSpace = [self attributedStringWithString:@"\u2009"];
+    NSAttributedString *adds = [self attributedStringWithString:@"+"];
+    NSAttributedString *deletes = [self attributedStringWithString:@"-"];
+    NSAttributedString *addsAndDeletes = [self attributedStringWithString:@"±"];
+
     [result appendAttributedString:branch];
     if (self.currentState.adds && self.currentState.deletes) {
         [result appendAttributedString:thinSpace];
@@ -206,9 +221,36 @@
     }
 }
 
+// Rebuild the tinted arrow/dirty glyphs only when the tint color or the
+// theme they resolve against has changed since the last build.
+- (void)updateTintedGlyphs {
+    NSColor *tintColor = self.delegate.gitTextColor;
+    NSString *appearanceName = [NSAppearance it_appearanceForCurrentTheme].name;
+    const BOOL colorUnchanged = (tintColor == _tintedGlyphColor ||
+                                 [tintColor isEqual:_tintedGlyphColor]);
+    const BOOL appearanceUnchanged = (appearanceName == _tintedGlyphAppearanceName ||
+                                      [appearanceName isEqualToString:_tintedGlyphAppearanceName]);
+    if (_upImage && colorUnchanged && appearanceUnchanged) {
+        return;
+    }
+    _tintedGlyphColor = tintColor;
+    _tintedGlyphAppearanceName = appearanceName;
+    _upImage = [self attributedStringWithImageNamed:@"gitup"];
+    _downImage = [self attributedStringWithImageNamed:@"gitdown"];
+    _dirtyImage = [self attributedStringWithImageNamed:@"gitdirty"];
+}
+
 - (NSAttributedString *)attributedStringWithImageNamed:(NSString *)imageName {
     NSTextAttachment *textAttachment = [[NSTextAttachment alloc] init];
-    textAttachment.image = [NSImage it_imageNamed:imageName forClass:self.class];
+    NSImage *image = [NSImage it_imageNamed:imageName forClass:self.class];
+    // These are flat black PNGs. Tint them to match the surrounding text
+    // (it_imageWithTintColor: resolves the color against iTerm's current
+    // theme appearance) so they don't stay black in dark mode.
+    NSColor *tintColor = self.delegate.gitTextColor;
+    if (tintColor) {
+        image = [image it_imageWithTintColor:tintColor];
+    }
+    textAttachment.image = image;
     return [NSAttributedString attributedStringWithAttachment:textAttachment];
 }
 

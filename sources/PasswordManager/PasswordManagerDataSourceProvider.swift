@@ -227,8 +227,28 @@ class PasswordManagerDataSourceProvider: NSObject {
         authenticated = false
     }
 
+    // Whether a previously-successful authentication cached on this singleton may be
+    // reused when opening the password manager again, or whether the open must prompt
+    // afresh. Pure so it can be unit-tested without LocalAuthentication. A cached
+    // authentication is reused unless the user asked to authenticate on every open,
+    // and that preference only applies while authentication is required at all (with
+    // authentication off there is no prompt to force).
+    @objc static func mayReuseAuthentication(authRequired: Bool, requireEveryOpen: Bool) -> Bool {
+        guard authRequired else {
+            return true
+        }
+        return !requireEveryOpen
+    }
+
+    // Live evaluation of mayReuseAuthentication against the current settings.
+    @objc var mayReuseAuthenticationOnOpen: Bool {
+        return Self.mayReuseAuthentication(
+            authRequired: SecureUserDefaults.instance.requireAuthToOpenPasswordmanager.value,
+            requireEveryOpen: SecureUserDefaults.instance.requireAuthEveryOpenPasswordmanager.value)
+    }
+
     @objc func requestAuthenticationIfNeeded(_ completion: @escaping (Bool) -> ()) {
-        if authenticated {
+        if authenticated && mayReuseAuthenticationOnOpen {
             completion(true)
             return
         }

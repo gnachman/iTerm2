@@ -30,6 +30,16 @@ final class iTermTabGroupOrderingTests: XCTestCase {
                        [0, 1, 3, 2])
     }
 
+    // #13014: duplicating the sole member of a one-tab group. When "new tabs open
+    // at the end of the tab bar" is set, the copy (carrying the source's group id)
+    // is appended at the far end past an ungrouped bystander. The contiguity repair
+    // must pull the copy back adjacent to the source so the two form one visible,
+    // valid group -- not leave a stray same-id tab stranded at the end (which reads
+    // as a phantom one-tab group). Source G at 0, bystander at 1, copy G at 2.
+    func testDuplicatedGroupMemberAppendedAtEndCompactsToSource() {
+        XCTAssertEqual(canonical(["G", nil, "G"], [false, false, false]), [0, 2, 1])
+    }
+
     // An already-valid order is untouched (identity permutation).
     func testValidOrderIsIdentity() {
         XCTAssertEqual(canonical(["G", "G", nil], [false, false, false]), [0, 1, 2])

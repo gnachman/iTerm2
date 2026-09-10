@@ -2440,6 +2440,8 @@ typedef struct {
     } name:@"close aid mark (target)"];
     id<VT100RemoteHostReading> remoteHost = [[self remoteHostOnLine:self.numberOfLines] doppelganger];
     const int notifyCode = code != nil ? code.intValue : 0;
+    // Snapshot key reporting flags as of this FTCS D token (see 13015).
+    const VT100TerminalKeyReportingFlags keyReportingFlags = self.terminalKeyReportingFlags;
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenDidUpdateReturnCodeForMark:doppelganger remoteHost:remoteHost];
         // screenCommandDidExitWithCode always fires for the target so
@@ -2447,7 +2449,9 @@ typedef struct {
         // every close-by-aid. With the parser synthesizing 0 for the
         // no-code D forms, the code argument is always meaningful here;
         // we keep the explicit "0 when unknown" default as a safety net.
-        [delegate screenCommandDidExitWithCode:notifyCode mark:doppelganger];
+        [delegate screenCommandDidExitWithCode:notifyCode
+                             keyReportingFlags:keyReportingFlags
+                                          mark:doppelganger];
     } name:@"close aid mark notify"];
 }
 

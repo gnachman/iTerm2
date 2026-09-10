@@ -411,14 +411,27 @@ static NSString *iTermLocalizedSmartSelectionNote(NSString *note) {
         NSParagraphStyleAttributeName: paragraphStyle,
         NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize] weight:NSFontWeightSemibold]
     };
-    NSDictionary *phrases = @{ kVeryLowPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionVeryLowPhrase", nil, [NSBundle mainBundle], @"Very low precision", @"Describes a smart selection rule using the very low precision level"),
-                               kLowPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionLowPhrase", nil, [NSBundle mainBundle], @"Low precision", @"Describes a smart selection rule using the low precision level"),
-                               kNormalPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionNormalPhrase", nil, [NSBundle mainBundle], @"Normal precision", @"Describes a smart selection rule using the normal precision level"),
-                               kHighPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionHighPhrase", nil, [NSBundle mainBundle], @"High precision", @"Describes a smart selection rule using the high precision level"),
-                               kVeryHighPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionVeryHighPhrase", nil, [NSBundle mainBundle], @"Very high precision", @"Describes a smart selection rule using the very high precision level") };
-    NSString *name = phrases[precision] ?: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionUndefinedPhrase", nil, [NSBundle mainBundle], @"Undefined precision", @"Describes a smart selection rule using an unknown precision level");
+    // Each precision level has two complete, self-contained strings: one plain
+    // and one that includes the action count. They are separate strings (rather
+    // than a phrase with an appended ", N actions" suffix) so every language can
+    // place the count wherever its grammar requires instead of being locked to
+    // "<phrase>, <count>".
+    NSString *name;
     if (actionCount >= 1) {
-        name = [name stringByAppendingString:[NSString localizedStringWithFormat:NSLocalizedStringWithDefaultValue(@"SmartSelection.ActionCountSuffix", nil, [NSBundle mainBundle], @", %ld actions", @"Suffix appended to a smart selection rule name giving its action count; %ld is the count"), (long)actionCount]];
+        NSDictionary *phrasesWithActions = @{ kVeryLowPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionVeryLowWithActions", nil, [NSBundle mainBundle], @"Very low precision, %ld actions", @"Smart selection rule name for the very low precision level with an action count; %ld is the count"),
+                                              kLowPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionLowWithActions", nil, [NSBundle mainBundle], @"Low precision, %ld actions", @"Smart selection rule name for the low precision level with an action count; %ld is the count"),
+                                              kNormalPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionNormalWithActions", nil, [NSBundle mainBundle], @"Normal precision, %ld actions", @"Smart selection rule name for the normal precision level with an action count; %ld is the count"),
+                                              kHighPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionHighWithActions", nil, [NSBundle mainBundle], @"High precision, %ld actions", @"Smart selection rule name for the high precision level with an action count; %ld is the count"),
+                                              kVeryHighPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionVeryHighWithActions", nil, [NSBundle mainBundle], @"Very high precision, %ld actions", @"Smart selection rule name for the very high precision level with an action count; %ld is the count") };
+        NSString *format = phrasesWithActions[precision] ?: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionUndefinedWithActions", nil, [NSBundle mainBundle], @"Undefined precision, %ld actions", @"Smart selection rule name for the undefined precision level with an action count; %ld is the count");
+        name = [NSString localizedStringWithFormat:format, (long)actionCount];
+    } else {
+        NSDictionary *phrases = @{ kVeryLowPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionVeryLowPhrase", nil, [NSBundle mainBundle], @"Very low precision", @"Describes a smart selection rule using the very low precision level"),
+                                   kLowPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionLowPhrase", nil, [NSBundle mainBundle], @"Low precision", @"Describes a smart selection rule using the low precision level"),
+                                   kNormalPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionNormalPhrase", nil, [NSBundle mainBundle], @"Normal precision", @"Describes a smart selection rule using the normal precision level"),
+                                   kHighPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionHighPhrase", nil, [NSBundle mainBundle], @"High precision", @"Describes a smart selection rule using the high precision level"),
+                                   kVeryHighPrecision: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionVeryHighPhrase", nil, [NSBundle mainBundle], @"Very high precision", @"Describes a smart selection rule using the very high precision level") };
+        name = phrases[precision] ?: NSLocalizedStringWithDefaultValue(@"SmartSelection.PrecisionUndefinedPhrase", nil, [NSBundle mainBundle], @"Undefined precision", @"Describes a smart selection rule using an unknown precision level");
     }
     return [[NSAttributedString alloc] initWithString:name attributes:boldAttributes];
 }

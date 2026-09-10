@@ -25,8 +25,7 @@ struct IT2: ParsableCommand {
               it2 window new --profile "Development"
             """,
         version: "1.0.0",
-        subcommands: [
-            // Alphabetical order to match Python CLI
+        subcommands: sortedSubcommands([
             AliasCommand.self,
             App.self,
             Auth.self,
@@ -48,7 +47,7 @@ struct IT2: ParsableCommand {
             Tab.self,
             VSplitShortcut.self,
             Window.self,
-        ]
+        ])
     )
 }
 

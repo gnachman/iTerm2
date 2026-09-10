@@ -1594,6 +1594,9 @@ message ListSessionsResponse {
     optional string window_id = 2;
     optional Frame frame = 3;
     optional int32 number = 4;
+    // uniqueId of the selected tab, so clients can determine the current tab
+    // without waiting for a focus notification. Added in protocol 1.18.
+    optional string selected_tab_id = 5;
   }
   message Tab {
     optional SplitTreeNode root = 3;
@@ -1601,6 +1604,9 @@ message ListSessionsResponse {
     optional string tmux_window_id = 4;
     optional string tmux_connection_id = 5;
     repeated SessionSummary minimized_sessions = 6;
+    // guid of the tab's active session, so clients can determine the current
+    // session without waiting for a focus notification. Added in protocol 1.18.
+    optional string active_session_id = 7;
   }
   repeated Window windows = 1;
   repeated SessionSummary buried_sessions = 2;

@@ -454,6 +454,12 @@
             "state" : "translated",
             "value" : "Система"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统"
+          }
         }
       }
     },
@@ -8942,7 +8948,7 @@
       }
     },
     "3235.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Other Actions...\"; ObjectID = \"3235\";",
+      "comment" : "Class = \"NSMenuItem\"; title = \"Other Actions…\"; ObjectID = \"3235\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -9194,7 +9200,7 @@
       }
     },
     "3516.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Bulk Copy from Selected Profile...\"; ObjectID = \"3516\";",
+      "comment" : "Class = \"NSMenuItem\"; title = \"Bulk Copy from Selected Profile…\"; ObjectID = \"3516\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -13225,86 +13231,44 @@
         }
       }
     },
-    "5060.title" : {
-      "comment" : "Class = \"NSTextFieldCell\"; title = \"MB per session\"; ObjectID = \"5060\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "MB pro Sitzung"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "MB per session"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "セッションあたりのMB"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "MB por sessão"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "МБ на сеанс"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : " MB"
-          }
-        }
-      }
-    },
     "5061.title" : {
-      "comment" : "Class = \"NSTextFieldCell\"; title = \"Instant Replay uses \"; ObjectID = \"5061\";",
+      "comment" : "Class = \"NSTextFieldCell\"; title = \"Memory usage per session (in MB)\"; ObjectID = \"5061\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sofortwiedergabe verwendet "
+            "value" : "Speichernutzung pro Sitzung (in MB)"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Instant Replay uses "
+            "value" : "Memory usage per session (in MB)"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "インスタントリプレイの使用量: "
+            "value" : "セッションあたりのメモリ使用量（MB）"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O Instant Replay usa "
+            "value" : "Uso de memória por sessão (em MB)"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Мгновенный повтор использует "
+            "value" : "Использование памяти на сеанс (МБ)"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "即时回放每会话使用 "
+            "value" : "每会话内存用量（MB）"
           }
         }
       }
@@ -15074,43 +15038,43 @@
       }
     },
     "5701.title" : {
-      "comment" : "Class = \"NSButtonCell\"; title = \"When idle, send ASCII code\"; ObjectID = \"5701\";",
+      "comment" : "Class = \"NSButtonCell\"; title = \"Periodically send an ASCII code when idle\"; ObjectID = \"5701\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Im Leerlauf ASCII-Code senden"
+            "value" : "Im Leerlauf regelmäßig einen ASCII-Code senden"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "When idle, send ASCII code"
+            "value" : "Periodically send an ASCII code when idle"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "アイドル時にASCIIコードを送信する"
+            "value" : "アイドル時に定期的にASCIIコードを送信"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Quando ocioso, enviar código ASCII"
+            "value" : "Enviar periodicamente um código ASCII quando ocioso"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "При простое отправлять код ASCII"
+            "value" : "Периодически отправлять код ASCII при простое"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "空闲时发送 ASCII 码"
+            "value" : "空闲时定期发送 ASCII 码"
           }
         }
       }
@@ -16503,7 +16467,7 @@
     },
     "5976.title" : {
       "comment" : "Class = \"NSButtonCell\"; title = \"Edit…\"; ObjectID = \"5976\";",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -21196,6 +21160,12 @@
             "state" : "translated",
             "value" : "Переносимость:"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可移植性："
+          }
         }
       }
     },
@@ -23374,6 +23344,12 @@
             "state" : "translated",
             "value" : "Не давать системе засыпать, пока настройка включена для сессии."
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置此选项时，防止系统进入睡眠状态。"
+          }
         }
       }
     },
@@ -23703,6 +23679,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Работает на устройстве; API-ключ не используется"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在设备上运行；无需使用API密钥"
           }
         }
       }
@@ -24506,43 +24488,43 @@
       }
     },
     "e95-Tz-JKN.title" : {
-      "comment" : "Class = \"NSTextFieldCell\"; title = \"every\"; ObjectID = \"e95-Tz-JKN\";",
+      "comment" : "Class = \"NSTextFieldCell\"; title = \"ASCII code\"; ObjectID = \"e95-Tz-JKN\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "alle"
+            "value" : "ASCII-Code"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "every"
+            "value" : "ASCII code"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ごとに"
+            "value" : "ASCIIコード"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "a cada"
+            "value" : "Código ASCII"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "каждые"
+            "value" : "Код ASCII"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "每"
+            "value" : "ASCII 码"
           }
         }
       }
@@ -29042,43 +29024,43 @@
       }
     },
     "IC9-FE-YSw.title" : {
-      "comment" : "Class = \"NSTextFieldCell\"; title = \"Pause a pane if it would take more than\"; ObjectID = \"IC9-FE-YSw\";",
+      "comment" : "Class = \"NSTextFieldCell\"; title = \"Pause a pane if catching up would take longer than (seconds):\"; ObjectID = \"IC9-FE-YSw\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bereich pausieren, wenn er mehr als"
+            "value" : "Bereich pausieren, wenn das Aufholen länger als (Sekunden) dauern würde:"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Pause a pane if it would take more than"
+            "value" : "Pause a pane if catching up would take longer than (seconds):"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ペインが処理に要する時間が次を超える場合は一時停止する"
+            "value" : "追いつくのに次の秒数より長くかかる場合はペインを一時停止："
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pausar um painel se ele levar mais de"
+            "value" : "Pausar um painel se recuperar o atraso levar mais de (segundos):"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Приостанавливать панель, если это займёт больше"
+            "value" : "Приостанавливать панель, если наверстывание займёт больше (секунд):"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "如果窗格需要超过以下时间则暂停"
+            "value" : "如果追赶用时超过以下秒数则暂停窗格："
           }
         }
       }
@@ -30008,43 +29990,43 @@
       }
     },
     "JdL-vz-9Vf.title" : {
-      "comment" : "Class = \"NSTextFieldCell\"; title = \"“Undo” can revive a session that has been closed for up to\"; ObjectID = \"JdL-vz-9Vf\";",
+      "comment" : "Class = \"NSTextFieldCell\"; title = \"“Undo” can revive a closed session for up to this many seconds:\"; ObjectID = \"JdL-vz-9Vf\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "„Rückgängig“ kann eine Sitzung wiederherstellen, die geschlossen wurde für bis zu"
+            "value" : "„Rückgängig“ kann eine geschlossene Sitzung für bis zu so viele Sekunden wiederherstellen:"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "“Undo” can revive a session that has been closed for up to"
+            "value" : "“Undo” can revive a closed session for up to this many seconds:"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "「元に戻す」は、閉じてから次の時間以内であればセッションを復元できます"
+            "value" : "「元に戻す」で閉じたセッションを復元できる最大秒数："
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O “Desfazer” pode reviver uma sessão fechada há no máximo"
+            "value" : "O “Desfazer” pode reviver uma sessão fechada por até este número de segundos:"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "«Отмена» может восстановить сессию, которая была закрыта не более чем"
+            "value" : "«Отмена» может восстановить закрытый сеанс в течение указанного числа секунд:"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "“撤销”可以恢复已关闭最多以下时长的会话"
+            "value" : "“撤销”可恢复已关闭会话的最长秒数："
           }
         }
       }
@@ -32686,6 +32668,12 @@
             "state" : "translated",
             "value" : "Автоматически обновлять доступные модели ИИ из онлайн-базы данных"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动从在线数据库更新可用的AI模型"
+          }
         }
       }
     },
@@ -34192,6 +34180,12 @@
             "state" : "translated",
             "value" : "N сессий в настоящее время не позволяют системе перейти в спящий режим"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前有N个会话阻止了睡眠功能"
+          }
         }
       }
     },
@@ -34737,48 +34731,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "编辑："
-          }
-        }
-      }
-    },
-    "o8o-oc-4bB.title" : {
-      "comment" : "Class = \"NSTextFieldCell\"; title = \"seconds to catch up\"; ObjectID = \"o8o-oc-4bB\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sekunden zum Aufholen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "seconds to catch up"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "追いつくまでの秒数"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "segundos para recuperar"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "секунд на то, чтобы наверстать"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "追赶秒数"
           }
         }
       }
@@ -38386,6 +38338,12 @@
             "state" : "translated",
             "value" : "Обновить сейчас"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "立即更新"
+          }
         }
       }
     },
@@ -39345,6 +39303,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Использовать HDR-курсор, если доступно"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可用时使用 HDR 光标"
           }
         }
       }
@@ -42038,85 +42002,43 @@
       }
     },
     "VbV-8M-87X.title" : {
-      "comment" : "Class = \"NSTextFieldCell\"; title = \"seconds\"; ObjectID = \"VbV-8M-87X\";",
+      "comment" : "Class = \"NSTextFieldCell\"; title = \"Interval (seconds)\"; ObjectID = \"VbV-8M-87X\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sekunden"
+            "value" : "Intervall (Sekunden)"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "seconds"
+            "value" : "Interval (seconds)"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "秒"
+            "value" : "間隔（秒）"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "segundos"
+            "value" : "Intervalo (segundos)"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "секунд"
+            "value" : "Интервал (секунды)"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "秒"
-          }
-        }
-      }
-    },
-    "vCA-Gp-FvI.title" : {
-      "comment" : "Class = \"NSTextFieldCell\"; title = \"seconds\"; ObjectID = \"vCA-Gp-FvI\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sekunden"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "seconds"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "秒"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "segundos"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "секунд"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "秒"
+            "value" : "间隔（秒）"
           }
         }
       }
@@ -45230,7 +45152,7 @@
       }
     },
     "Z3d-96-Mba.title" : {
-      "comment" : "Class = \"NSTextFieldCell\"; title = \"Subtitle\"; ObjectID = \"Z3d-96-Mba\";",
+      "comment" : "Class = \"NSTextFieldCell\"; title = \"Subtitle:\"; ObjectID = \"Z3d-96-Mba\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -45681,6 +45603,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Если этот параметр включён и текущий дисплей поддерживает HDR (расширенный динамический диапазон), курсор отрисовывается белым цветом максимальной яркости, ярче любого белого цвета, который обычно отображается в приложении."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当启用且当前显示器支持HDR（高动态范围）时，光标会以最大亮度白色显示，比应用程序中通常出现的任何白色更亮"
           }
         }
       }

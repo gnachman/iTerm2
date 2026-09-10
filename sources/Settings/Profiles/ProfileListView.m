@@ -213,6 +213,20 @@ const CGFloat kDefaultTagsWidth = 80;
     return self;
 }
 
+// NSUndoManager holds targets unretained. This view registers reorder undo
+// (setRowOrder:) with target:self on [self undoManager], which resolves to the
+// WINDOW's shared undo manager. If this view is torn down while the window
+// lives (e.g. the Profiles toolbelt tool is removed), that registration would
+// dangle and crash, or (before the view deallocates) undo would mutate a view
+// no longer on screen. Scrub our actions as we leave the window. Mirrors the
+// same guard on iTermToolActions/iTermToolSnippets.
+- (void)viewWillMoveToWindow:(NSWindow *)newWindow {
+    if (newWindow != self.window) {
+        [self.window.undoManager removeAllActionsWithTarget:self];
+    }
+    [super viewWillMoveToWindow:newWindow];
+}
+
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [_savedHeights release];

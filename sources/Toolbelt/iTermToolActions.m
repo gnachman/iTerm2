@@ -400,4 +400,15 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
                                         object:_actions];
 }
 
+// NSUndoManager holds targets unretained. pushUndo registers this view on the
+// window's shared undo manager, so if this tool is torn down while the window
+// lives (e.g. the tool is removed from the toolbelt) the registration would
+// dangle and crash the next Undo. Scrub it as we leave the window.
+- (void)viewWillMoveToWindow:(NSWindow *)newWindow {
+    if (newWindow != self.window) {
+        [self.window.undoManager removeAllActionsWithTarget:self];
+    }
+    [super viewWillMoveToWindow:newWindow];
+}
+
 @end

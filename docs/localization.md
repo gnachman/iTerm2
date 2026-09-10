@@ -129,7 +129,10 @@ plural rather than a multi-argument substitution.
 
 **Catalog side** - after the key is extracted into `Localizable.xcstrings`,
 replace its `en` `stringUnit` with a `variations.plural` block holding `one` and
-`other` `stringUnit`s (state `new`). `xcstringstool sync` is a key-by-key merge,
+`other` `stringUnit`s (state `new`) by editing the raw JSON - not through Xcode's
+String Catalog editor - then re-run `make extract-strings` to renormalize (see
+"`extract_strings.sh` is the only canonical way to write the catalog").
+`xcstringstool sync` is a key-by-key merge,
 not a regenerate, so it preserves those variations (and translations) across
 future extractions. Verify with:
 
@@ -179,6 +182,29 @@ is scanned by `extractLocStrings`. `tools/extract_strings.sh` (run by the Beta a
 Deployment targets, and standalone via `make extract-strings`) merges both into
 `sources/Localizable.xcstrings` with `xcstringstool sync`. So a new code string
 appears in the catalog after an extraction, not immediately.
+
+### `extract_strings.sh` is the only canonical way to write the catalog
+
+`tools/extract_strings.sh` (i.e. `make extract-strings`) owns the exact
+serialization of `sources/Localizable.xcstrings`: key ordering, Unicode escaping,
+and whitespace. Treat its output as the canonical form and regenerate the catalog
+only through it.
+
+Do **not** let anything else rewrite the file. In particular, opening
+`Localizable.xcstrings` in Xcode's String Catalog editor (or round-tripping it
+through any other tool) reserializes the whole catalog in a different order, so
+even a one-string change surfaces as a whole-file diff (tens of thousands of
+lines) that is unreviewable and collides with every other catalog change in
+flight. If you ever see such a diff, do not hand-reconcile the noise: run
+`make extract-strings` and commit that as the new baseline. A catalog last
+written by some other tool will otherwise make the next extraction churn the
+entire file right back.
+
+Manual JSON edits are occasionally required (the plural `variations` and
+`substitutions` blocks below). Make them as small raw-text edits to the JSON, not
+through the catalog editor, then run `make extract-strings` once to renormalize:
+`xcstringstool sync` preserves your variations and existing translations while
+restoring the canonical serialization.
 
 ## Testing a localization
 

@@ -779,6 +779,23 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             NSGraphicsContext.current?.restoreGraphicsState()
         }
 
+        // The container clip above hugs the tab pills with only a 2pt top / 1pt
+        // bottom margin and is anchored at `containerSideInset`, but a tab-group
+        // run's enclosing outline outsets `groupRunOutset` past those pills on every
+        // side and its horizontal extent follows the cell layout (`leftMargin` /
+        // `insets`), not `containerSideInset`. Under the tight container clip its top
+        // line landed flush with the clip edge (antialiased away), its bottom line
+        // fell outside it, and a run touching the first or last tab had its leading
+        // or trailing cap shaved, so only partial outlines survived. The run pill is
+        // itself a rounded stadium that hugs the tabs, so it never needs the
+        // container's rounded corners; drop the container clip and draw the group
+        // decorations unclipped. A scrollable bar is still bounded horizontally by
+        // the viewport clip in -drawRect: (widened by the run outset), and the
+        // scroll-margin strips are handled by the empty-clipRect guard inside
+        // -drawTabGroupRunDecorations:. The restore/save keeps the graphics-state
+        // stack balanced against the outer save/defer that wraps the whole method.
+        NSGraphicsContext.current?.restoreGraphicsState()
+        NSGraphicsContext.current?.saveGraphicsState()
         drawTabGroupRunDecorations(forTabBar: bar, clipRect: clipRect)
     }
 
@@ -1394,9 +1411,16 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                 NSGraphicsContext.current?.saveGraphicsState()
                 path.addClip()
                 rect.fill(using: .color)
-                
-                NSColor(white: 1.0, alpha: tabColor.perceivedBrightness).set()
-                rect.fill(using: .plusLighter)
+
+                // Additive white pushes the outline past reference white, which
+                // reads as an HDR glow on an extended-range display. Gated
+                // because forcing the display into EDR can hang some systems
+                // (the same risk as the Metal HDR cursor). Off leaves the
+                // outline tinted with the tab color, just not brighter than white.
+                if iTermAdvancedSettingsModel.allowHDR() {
+                    NSColor(white: 1.0, alpha: tabColor.perceivedBrightness).set()
+                    rect.fill(using: .plusLighter)
+                }
                 NSGraphicsContext.current?.restoreGraphicsState()
             }
             
@@ -2416,17 +2440,27 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
         // Clamp so left and right caps never overlap on a narrow tall pill.
         let capWidth = min(left.size.width * scale, rect.width / 2.0)
 
-        let leftDest = NSRect(x: rect.minX, y: rect.minY, width: capWidth, height: rect.height)
-        left.draw(in: leftDest)
+        // The three images (leftCap | mid | rightCap) tile to fill the pill. Their
+        // inner seams fall at rect.minX + capWidth and rect.maxX - capWidth, which
+        // are fractional (capWidth scales with height, and rect.minX moves with
+        // layout/scroll). A seam on a fractional device pixel makes both abutting
+        // image edges antialias against transparency, leaving a faint ~0.5pt
+        // vertical line inside the pill. Snap the seams to the backing-store pixel
+        // grid so the tiles meet on a whole pixel. The outer rounded cap edges are
+        // left as-is; their curves antialiasing over the bar background is correct.
+        let backing = tabBar?.window?.backingScaleFactor ?? 2.0
+        let snap: (CGFloat) -> CGFloat = { backing > 0 ? ($0 * backing).rounded() / backing : $0 }
+        let leftSeam = snap(rect.minX + capWidth)
+        let rightSeam = max(leftSeam, snap(rect.maxX - capWidth))
 
-        let rightDest = NSRect(x: rect.maxX - capWidth, y: rect.minY, width: capWidth, height: rect.height)
-        Self.rightTabCap.draw(in: rightDest)
+        left.draw(in: NSRect(x: rect.minX, y: rect.minY,
+                             width: leftSeam - rect.minX, height: rect.height))
 
-        let midDest = NSRect(x: rect.minX + capWidth,
-                             y: rect.minY,
-                             width: max(0, rect.width - 2 * capWidth),
-                             height: rect.height)
-        Self.tabMid.draw(in: midDest)
+        Self.rightTabCap.draw(in: NSRect(x: rightSeam, y: rect.minY,
+                                         width: rect.maxX - rightSeam, height: rect.height))
+
+        Self.tabMid.draw(in: NSRect(x: leftSeam, y: rect.minY,
+                                    width: max(0, rightSeam - leftSeam), height: rect.height))
     }
     
     private static let leftTabCap: NSImage = {

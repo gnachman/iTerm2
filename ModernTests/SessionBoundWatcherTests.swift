@@ -289,18 +289,26 @@ final class SessionBoundWatcherTests: XCTestCase {
     func test_sessionBoundProvider_registersWatchTools_whenTerminalLinked() {
         let names = registeredToolNames(offerWatchers: true)
         XCTAssertTrue(names.contains("register_watch"))
+        XCTAssertTrue(names.contains("register_timer"))
         XCTAssertTrue(names.contains("unregister_watch"))
         XCTAssertTrue(names.contains("list_watches"))
         // The enable-request tool is always present in session-bound mode.
         XCTAssertTrue(names.contains("request_orchestration_enable"))
     }
 
+    // register_watch is gated on terminal linkage (a watch form needs a session),
+    // but register_timer targets no session and reads nothing, so it -- and the
+    // list/cancel management tools -- stay available even for an unlinked chat.
     @MainActor
-    func test_sessionBoundProvider_omitsWatchTools_whenNotTerminalLinked() {
+    func test_sessionBoundProvider_omitsRegisterWatchButKeepsTimer_whenNotTerminalLinked() {
         let names = registeredToolNames(offerWatchers: false)
         XCTAssertFalse(names.contains("register_watch"))
-        XCTAssertFalse(names.contains("unregister_watch"))
-        XCTAssertFalse(names.contains("list_watches"))
+        XCTAssertTrue(names.contains("register_timer"),
+                      "a timer needs no session, so it's offered even without a linked terminal")
+        XCTAssertTrue(names.contains("unregister_watch"),
+                      "the user must be able to cancel a timer even without a linked terminal")
+        XCTAssertTrue(names.contains("list_watches"),
+                      "the user must be able to list a timer even without a linked terminal")
         XCTAssertTrue(names.contains("request_orchestration_enable"),
                       "the enable-request tool is offered regardless of watcher availability")
     }

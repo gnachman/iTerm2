@@ -136,7 +136,7 @@
             <windowStyleMask key="styleMask" titled="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="132" width="498" height="246"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1512" height="949"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1662"/>
             <view key="contentView" id="6180">
                 <rect key="frame" x="0.0" y="0.0" width="498" height="246"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -391,7 +391,7 @@ Gw
         <window title="Preferences" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="1923" userLabel="Main Preferences Window" customClass="iTermPrefsPanel">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
             <rect key="contentRect" x="269" y="110" width="924" height="463"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1512" height="949"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1662"/>
             <view key="contentView" id="1924" customClass="iTermPreferencesPanelRootView">
                 <rect key="frame" x="0.0" y="0.0" width="924" height="463"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -726,7 +726,7 @@ Gw
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="156" width="805" height="448"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1512" height="949"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1662"/>
             <value key="minSize" type="size" width="805" height="358"/>
             <view key="contentView" id="5911">
                 <rect key="frame" x="0.0" y="0.0" width="805" height="448"/>
@@ -1053,7 +1053,7 @@ DQ
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="229" width="808" height="518"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1512" height="949"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1662"/>
             <value key="minSize" type="size" width="575" height="100"/>
             <view key="contentView" id="6275">
                 <rect key="frame" x="0.0" y="0.0" width="808" height="518"/>
@@ -2338,11 +2338,6 @@ CA
                             <rect key="frame" x="0.0" y="54" width="730" height="168"/>
                             <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                             <subviews>
-                                <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="G1r-AP-exF">
-                                    <rect key="frame" x="178" y="132" width="16" height="16"/>
-                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
-                                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="vst-Zn-2a1"/>
-                                </imageView>
                                 <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5410" userLabel="Send text at start text field" customClass="iTermExpandingTextField">
                                     <rect key="frame" x="181" y="103" width="520" height="21"/>
                                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
@@ -2474,6 +2469,11 @@ CA
                                         <action selector="settingChanged:" target="dVg-Ac-SiZ" id="rcS-Ls-102"/>
                                     </connections>
                                 </button>
+                                <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="G1r-AP-exF">
+                                    <rect key="frame" x="178" y="132" width="16" height="16"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="vst-Zn-2a1"/>
+                                </imageView>
                             </subviews>
                         </customView>
                         <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5037" userLabel="URL Schemes popup button">
@@ -5554,7 +5554,7 @@ CA
                         <button toolTip="Only use this if you really know what you’re doing!" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5697" customClass="iTermSettingsCheckbox">
                             <rect key="frame" x="208" y="126" width="553" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <buttonCell key="cell" type="check" title="When idle, send ASCII code" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5701">
+                            <buttonCell key="cell" type="check" title="Periodically send an ASCII code when idle" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5701">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                 <font key="font" metaFont="system"/>
                             </buttonCell>
@@ -5620,7 +5620,7 @@ CA
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RGW-48-LkR">
                             <rect key="frame" x="320" y="80" width="449" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="seconds" id="VbV-8M-87X">
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Interval (seconds)" id="VbV-8M-87X">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -5641,7 +5641,7 @@ CA
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="SKQ-AW-1wN">
                             <rect key="frame" x="320" y="106" width="443" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="every" id="e95-Tz-JKN">
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="left" title="ASCII code" id="e95-Tz-JKN">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -5729,19 +5729,10 @@ CA
                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                             </textFieldCell>
                         </textField>
-                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fn0-X1-OtH">
-                            <rect key="frame" x="298" y="36" width="436" height="16"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="seconds" id="vCA-Gp-FvI">
-                                <font key="font" metaFont="system"/>
-                                <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                            </textFieldCell>
-                        </textField>
                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wbj-Xu-M03">
-                            <rect key="frame" x="212" y="60" width="522" height="16"/>
+                            <rect key="frame" x="212" y="60" width="551" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="“Undo” can revive a session that has been closed for up to" id="JdL-vz-9Vf">
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="“Undo” can revive a closed session for up to this many seconds:" id="JdL-vz-9Vf">
                                 <font key="font" metaFont="system"/>
                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -6519,7 +6510,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <clipView key="contentView" id="FMp-vf-IvG">
                                 <rect key="frame" x="1" y="1" width="551" height="76"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <autoresizingMask key="autoresizingMask"/>
                                 <subviews>
                                     <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" id="69M-P0-mzb">
                                         <rect key="frame" x="0.0" y="0.0" width="551" height="76"/>
@@ -6936,7 +6927,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hVu-mt-KS9">
-                                        <rect key="frame" x="56" y="207" width="774" height="313"/>
+                                        <rect key="frame" x="56" y="189" width="774" height="331"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Pzu-H5-A6L">
@@ -6960,29 +6951,6 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                     <outlet property="nextKeyView" destination="5048" id="uHG-f2-Hoi"/>
                                                 </connections>
                                             </button>
-                                            <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5054">
-                                                <rect key="frame" x="519" y="279" width="327" height="16"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="MB per session" id="5060">
-                                                    <font key="font" metaFont="system"/>
-                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                                </textFieldCell>
-                                            </textField>
-                                            <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5055">
-                                                <rect key="frame" x="468" y="277" width="46" height="19"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="5058">
-                                                    <font key="font" metaFont="smallSystem"/>
-                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                                </textFieldCell>
-                                                <connections>
-                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="CpN-rd-m6D"/>
-                                                    <outlet property="delegate" destination="9Se-ld-UJa" id="RvR-Z3-Ajw"/>
-                                                    <outlet property="nextKeyView" destination="5056" id="5188"/>
-                                                </connections>
-                                            </textField>
                                             <button toolTip="When enabled, terminals are rendered using the GPU. This improves performance." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YoO-mR-uX5">
                                                 <rect key="frame" x="240" y="110" width="534" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -7020,9 +6988,9 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5053">
-                                                <rect key="frame" x="240" y="279" width="222" height="16"/>
+                                                <rect key="frame" x="240" y="297" width="516" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Instant Replay uses " id="5061">
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Memory usage per session (in MB)" id="5061">
                                                     <font key="font" metaFont="system"/>
                                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -7108,7 +7076,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                 </connections>
                                             </popUpButton>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ex1-Vn-kIn">
-                                                <rect key="frame" x="18" y="279" width="216" height="16"/>
+                                                <rect key="frame" x="18" y="297" width="216" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Instant Replay:" id="ApB-R6-gyC">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -7163,6 +7131,20 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                     <action selector="pythonAPIAuthHelp:" target="9Se-ld-UJa" id="Kwa-lB-SY3"/>
                                                 </connections>
                                             </button>
+                                            <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5055">
+                                                <rect key="frame" x="252" y="270" width="95" height="19"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="5058">
+                                                    <font key="font" metaFont="smallSystem"/>
+                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="CpN-rd-m6D"/>
+                                                    <outlet property="delegate" destination="9Se-ld-UJa" id="RvR-Z3-Ajw"/>
+                                                    <outlet property="nextKeyView" destination="5056" id="5188"/>
+                                                </connections>
+                                            </textField>
                                         </subviews>
                                     </customView>
                                 </subviews>
@@ -7511,7 +7493,7 @@ See the [documentation](https://iterm2.com/automatic-profile-switching.html) for
                                                                             <autoresizingMask key="autoresizingMask"/>
                                                                             <clipView key="contentView" drawsBackground="NO" id="6XT-bG-foe">
                                                                                 <rect key="frame" x="0.0" y="0.0" width="706" height="269"/>
-                                                                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                                                <autoresizingMask key="autoresizingMask"/>
                                                                                 <subviews>
                                                                                     <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="YES" allowsUndo="YES" spellingCorrection="YES" smartInsertDelete="YES" id="pSg-z3-7LN">
                                                                                         <rect key="frame" x="0.0" y="0.0" width="706" height="269"/>
@@ -8469,11 +8451,11 @@ You can choose to define the characters considered part of a word with a regular
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="keM-ww-m44" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="-3" y="228" width="836" height="292"/>
+                                        <rect key="frame" x="-3" y="162" width="836" height="358"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gLU-0J-chc">
-                                                <rect key="frame" x="184" y="173" width="632" height="18"/>
+                                                <rect key="frame" x="184" y="239" width="632" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Use “tmux” profile rather than profile of the connecting session" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5Es-9v-v1s">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -8484,7 +8466,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oHn-bB-rYM">
-                                                <rect key="frame" x="184" y="139" width="632" height="18"/>
+                                                <rect key="frame" x="184" y="205" width="632" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Status bar shows tmux status bar content, not native components" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="ioA-Y9-Zb4">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -8495,7 +8477,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="QSK-Li-EpK">
-                                                <rect key="frame" x="184" y="77" width="632" height="18"/>
+                                                <rect key="frame" x="184" y="113" width="632" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Warn before pausing" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="YPl-Hu-T2J">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -8506,7 +8488,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="H2C-B7-a4o">
-                                                <rect key="frame" x="202" y="126" width="616" height="11"/>
+                                                <rect key="frame" x="202" y="192" width="616" height="11"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" controlSize="mini" lineBreakMode="clipping" title="Requires tmux 2.9 or later." id="fKK-ZX-n3u">
                                                     <font key="font" metaFont="menu" size="9"/>
@@ -8515,37 +8497,16 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="SNR-JO-u3o">
-                                                <rect key="frame" x="184" y="102" width="347" height="16"/>
+                                                <rect key="frame" x="184" y="168" width="634" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" lineBreakMode="clipping" title="Pause a pane if it would take more than" id="IC9-FE-YSw">
-                                                    <font key="font" usesAppearanceFont="YES"/>
-                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                                </textFieldCell>
-                                            </textField>
-                                            <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hXw-El-HMF">
-                                                <rect key="frame" x="537" y="100" width="57" height="21"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="kUm-Z0-4bJ">
-                                                    <font key="font" usesAppearanceFont="YES"/>
-                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                                </textFieldCell>
-                                                <connections>
-                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="6ig-Zs-nDO"/>
-                                                </connections>
-                                            </textField>
-                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="015-rP-up4">
-                                                <rect key="frame" x="600" y="103" width="218" height="16"/>
-                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <textFieldCell key="cell" lineBreakMode="clipping" title="seconds to catch up" id="o8o-oc-4bB">
+                                                <textFieldCell key="cell" lineBreakMode="clipping" title="Pause a pane if catching up would take longer than (seconds):" id="IC9-FE-YSw">
                                                     <font key="font" usesAppearanceFont="YES"/>
                                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xet-Sj-ENm">
-                                                <rect key="frame" x="202" y="44" width="616" height="11"/>
+                                                <rect key="frame" x="202" y="80" width="616" height="11"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" controlSize="mini" lineBreakMode="clipping" title="The “pause” feature requires tmux 3.2 or later." id="2EN-9v-M1n">
                                                     <font key="font" metaFont="menu" size="9"/>
@@ -8554,7 +8515,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Xpa-up-i7z">
-                                                <rect key="frame" x="184" y="57" width="632" height="18"/>
+                                                <rect key="frame" x="184" y="93" width="632" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Unpause automatically" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="XtJ-dD-l7K">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -8565,7 +8526,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="QIN-eH-Mqt">
-                                                <rect key="frame" x="184" y="19" width="632" height="18"/>
+                                                <rect key="frame" x="184" y="55" width="632" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Mirror tmux paste buffer to local clipboard" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="K0Z-BC-hdc">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -8576,7 +8537,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Mys-wd-9p1">
-                                                <rect key="frame" x="18" y="257" width="162" height="16"/>
+                                                <rect key="frame" x="18" y="323" width="162" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Attaching:" id="A6S-vd-jNy">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -8585,7 +8546,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JHl-xs-dLb">
-                                                <rect key="frame" x="18" y="174" width="162" height="16"/>
+                                                <rect key="frame" x="18" y="240" width="162" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Profile:" id="X4l-mC-Lbf">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -8594,7 +8555,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3RB-tf-ZlZ">
-                                                <rect key="frame" x="18" y="140" width="162" height="16"/>
+                                                <rect key="frame" x="18" y="206" width="162" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Status Bar:" id="MHU-Ge-APl">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -8603,7 +8564,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="KLj-N9-Il1">
-                                                <rect key="frame" x="18" y="102" width="162" height="16"/>
+                                                <rect key="frame" x="18" y="168" width="162" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Pausing:" id="DAj-xW-uZ4">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -8612,7 +8573,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6366">
-                                                <rect key="frame" x="184" y="207" width="632" height="18"/>
+                                                <rect key="frame" x="184" y="273" width="632" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">Buried sessions appear under Session &gt; Buried Sessions. When this setting is enabled, window sizes are restored when attaching to an existing tmux session.</string>
                                                 <buttonCell key="cell" type="check" title="Automatically bury the tmux client session after connecting" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6367">
@@ -8624,7 +8585,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4fb-iD-vKc">
-                                                <rect key="frame" x="18" y="20" width="162" height="16"/>
+                                                <rect key="frame" x="18" y="56" width="162" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Clipboard:" id="Sck-8q-qxj">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -8633,7 +8594,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dE6-cL-mk6">
-                                                <rect key="frame" x="184" y="257" width="632" height="16"/>
+                                                <rect key="frame" x="184" y="323" width="632" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Open tmux windows as tabs in the attaching window" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="xhw-nx-tpf">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -8644,7 +8605,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </connections>
                                             </button>
                                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3bY-YO-p4R">
-                                                <rect key="frame" x="184" y="233" width="379" height="16"/>
+                                                <rect key="frame" x="184" y="299" width="379" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="When attaching, open unrecognized windows in" id="eOg-qk-chS">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -8653,7 +8614,7 @@ You can choose to define the characters considered part of a word with a regular
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="S4z-oF-kVc">
-                                                <rect key="frame" x="569" y="229" width="177" height="24"/>
+                                                <rect key="frame" x="569" y="295" width="177" height="24"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="Windows" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="Cy3-Xh-IIQ" id="8fZ-AU-hBh">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -8669,6 +8630,18 @@ You can choose to define the characters considered part of a word with a regular
                                                     <action selector="settingChanged:" target="9Se-ld-UJa" id="AiC-Zv-hp8"/>
                                                 </connections>
                                             </popUpButton>
+                                            <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hXw-El-HMF">
+                                                <rect key="frame" x="194" y="139" width="57" height="21"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="kUm-Z0-4bJ">
+                                                    <font key="font" usesAppearanceFont="YES"/>
+                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="6ig-Zs-nDO"/>
+                                                </connections>
+                                            </textField>
                                         </subviews>
                                     </customView>
                                 </subviews>
@@ -10220,7 +10193,7 @@ instead of the system keyboard.</string>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <clipView key="contentView" id="N1C-ir-dI5">
                                             <rect key="frame" x="1" y="1" width="238" height="327"/>
-                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                            <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" autosaveColumns="NO" typeSelect="NO" id="5562">
                                                     <rect key="frame" x="0.0" y="0.0" width="238" height="327"/>
@@ -10506,7 +10479,7 @@ instead of the system keyboard.</string>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <clipView key="contentView" id="2zv-hI-Vxj">
                                                     <rect key="frame" x="1" y="1" width="849" height="283"/>
-                                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                    <autoresizingMask key="autoresizingMask"/>
                                                     <subviews>
                                                         <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="6091">
                                                             <rect key="frame" x="0.0" y="0.0" width="849" height="283"/>
@@ -10974,7 +10947,7 @@ instead of the system keyboard.</string>
         <window title="Filter Alerts" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="u39-OD-7hu" customClass="NSPanel">
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="120" y="138" width="406" height="214"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1512" height="949"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1662"/>
             <view key="contentView" id="dXn-d7-O8o">
                 <rect key="frame" x="0.0" y="0.0" width="406" height="214"/>
                 <autoresizingMask key="autoresizingMask"/>

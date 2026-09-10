@@ -2078,7 +2078,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
 
     }
     
-    func screenCommandDidExit(withCode code: Int32, mark maybeMark: (any VT100ScreenMarkReading)?) {
+    func screenCommandDidExit(withCode code: Int32, keyReportingFlags: VT100TerminalKeyReportingFlags, mark maybeMark: (any VT100ScreenMarkReading)?) {
 
     }
     
@@ -2577,7 +2577,7 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenDidBecomeAutoComposerEligible() {
     }
 
-    func screenDidExecuteCommand(_ command: String?, absRange range: VT100GridAbsCoordRange, onHost host: (any VT100RemoteHostReading)?, inDirectory directory: String?, mark: (any VT100ScreenMarkReading)?, paused: Bool) {
+    func screenDidExecuteCommand(_ command: String?, absRange range: VT100GridAbsCoordRange, onHost host: (any VT100RemoteHostReading)?, inDirectory directory: String?, mark: (any VT100ScreenMarkReading)?, keyReportingFlags: VT100TerminalKeyReportingFlags, paused: Bool) {
     }
 
     func screenOfferToDisableTriggers(inInteractiveApps stats: String) {

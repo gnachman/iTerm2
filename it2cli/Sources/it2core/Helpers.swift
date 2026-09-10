@@ -1,7 +1,19 @@
+import ArgumentParser
 import Foundation
 #if canImport(ProtobufRuntime)
 import ProtobufRuntime  // standalone SwiftPM build; in-app the types come via the bridging header
 #endif
+
+// MARK: - Subcommand Ordering
+
+/// Sort a list of subcommands alphabetically by their command name, so help output lists them
+/// in a predictable order regardless of source declaration order. Use this when building a
+/// `CommandConfiguration.subcommands` array so nobody has to hand-maintain alphabetical order.
+func sortedSubcommands(_ commands: [ParsableCommand.Type]) -> [ParsableCommand.Type] {
+    commands.sorted {
+        ($0.configuration.commandName ?? "") < ($1.configuration.commandName ?? "")
+    }
+}
 
 // MARK: - Split Tree Walking
 

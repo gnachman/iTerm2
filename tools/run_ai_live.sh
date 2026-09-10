@@ -88,6 +88,10 @@ json_quote() {
     emit ANTHROPIC_MODELS   "${ITERM2_AI_LIVE_ANTHROPIC_MODELS:-}"
     emit GEMINI_MODELS      "${ITERM2_AI_LIVE_GEMINI_MODELS:-}"
     emit DEEPSEEK_MODELS    "${ITERM2_AI_LIVE_DEEPSEEK_MODELS:-}"
+    # Local Ollama model to drive for the llama tool-call tests (comma-separated;
+    # first non-empty entry wins). Defaults to the catalog's llama3.3:latest,
+    # which is 42GB, so set this to a small model, e.g. LLAMA_MODELS=qwen3.5:4b.
+    emit LLAMA_MODELS       "${LLAMA_MODELS:-${ITERM2_AI_LIVE_LLAMA_MODELS:-}}"
     emit OPENAI_INTERVAL    "${ITERM2_AI_LIVE_OPENAI_INTERVAL:-}"
     emit ANTHROPIC_INTERVAL "${ITERM2_AI_LIVE_ANTHROPIC_INTERVAL:-}"
     emit GEMINI_INTERVAL    "${ITERM2_AI_LIVE_GEMINI_INTERVAL:-}"

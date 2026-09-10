@@ -34,6 +34,12 @@
             "state" : "translated",
             "value" : "Разделить текущую панель XXXally"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拆分当前窗格 XXXally"
+          }
         }
       }
     },

@@ -84,6 +84,7 @@ struct SecureUserDefaults {
 
     lazy var allowPaste = { SecureUserDefault<Bool>("AllowPaste", defaultValue: false) }()
     lazy var requireAuthToOpenPasswordmanager = { SecureUserDefault<Bool>("RequireAuthenticationToOpenPasswordManager", defaultValue: true) }()
+    lazy var requireAuthEveryOpenPasswordmanager = { SecureUserDefault<Bool>("RequireAuthenticationOnEveryPasswordManagerOpen", defaultValue: false) }()
     lazy var enableSecureKeyboardEntryAutomatically = { SecureUserDefault<Bool>("EnableSecureKeyboardEntryAutomatically", defaultValue: true) }()
     lazy var enableAI = { SecureUserDefault<Bool>("EnableAI", defaultValue: false) }()
     lazy var enableCompanionPairing = { SecureUserDefault<Bool>("EnableCompanionPairing", defaultValue: false) }()
@@ -151,6 +152,7 @@ struct SecureUserDefaults {
     private mutating func serializables() -> [any SerializableUserDefault] {
         [allowPaste,
          requireAuthToOpenPasswordmanager,
+         requireAuthEveryOpenPasswordmanager,
          enableSecureKeyboardEntryAutomatically,
          enableAI,
          enableCompanionPairing,
@@ -173,6 +175,14 @@ class iTermSecureUserDefaults: NSObject {
         }
         set {
             try? SecureUserDefaults.instance.requireAuthToOpenPasswordmanager.set(newValue)
+        }
+    }
+    @objc var requireAuthEveryOpenPasswordManager: Bool {
+        get {
+            return SecureUserDefaults.instance.requireAuthEveryOpenPasswordmanager.value
+        }
+        set {
+            try? SecureUserDefaults.instance.requireAuthEveryOpenPasswordmanager.set(newValue)
         }
     }
     @objc var defaultValue_enableSecureKeyboardEntryAutomatically: Bool {
