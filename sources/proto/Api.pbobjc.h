@@ -5320,6 +5320,7 @@ typedef GPB_ENUM(ITMListSessionsResponse_Window_FieldNumber) {
   ITMListSessionsResponse_Window_FieldNumber_WindowId = 2,
   ITMListSessionsResponse_Window_FieldNumber_Frame = 3,
   ITMListSessionsResponse_Window_FieldNumber_Number = 4,
+  ITMListSessionsResponse_Window_FieldNumber_SelectedTabId = 5,
 };
 
 GPB_FINAL @interface ITMListSessionsResponse_Window : GPBMessage
@@ -5339,6 +5340,14 @@ GPB_FINAL @interface ITMListSessionsResponse_Window : GPBMessage
 @property(nonatomic, readwrite) int32_t number;
 
 @property(nonatomic, readwrite) BOOL hasNumber;
+/**
+ * uniqueId of the selected tab, so clients can determine the current tab
+ * without waiting for a focus notification. Added in protocol 1.18.
+ **/
+@property(nonatomic, readwrite, copy, null_resettable) NSString *selectedTabId;
+/** Test to see if @c selectedTabId has been set. */
+@property(nonatomic, readwrite) BOOL hasSelectedTabId;
+
 @end
 
 #pragma mark - ITMListSessionsResponse_Tab
@@ -5349,6 +5358,7 @@ typedef GPB_ENUM(ITMListSessionsResponse_Tab_FieldNumber) {
   ITMListSessionsResponse_Tab_FieldNumber_TmuxWindowId = 4,
   ITMListSessionsResponse_Tab_FieldNumber_TmuxConnectionId = 5,
   ITMListSessionsResponse_Tab_FieldNumber_MinimizedSessionsArray = 6,
+  ITMListSessionsResponse_Tab_FieldNumber_ActiveSessionId = 7,
 };
 
 GPB_FINAL @interface ITMListSessionsResponse_Tab : GPBMessage
@@ -5372,6 +5382,14 @@ GPB_FINAL @interface ITMListSessionsResponse_Tab : GPBMessage
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMSessionSummary*> *minimizedSessionsArray;
 /** The number of items in @c minimizedSessionsArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger minimizedSessionsArray_Count;
+
+/**
+ * guid of the tab's active session, so clients can determine the current
+ * session without waiting for a focus notification. Added in protocol 1.18.
+ **/
+@property(nonatomic, readwrite, copy, null_resettable) NSString *activeSessionId;
+/** Test to see if @c activeSessionId has been set. */
+@property(nonatomic, readwrite) BOOL hasActiveSessionId;
 
 @end
 

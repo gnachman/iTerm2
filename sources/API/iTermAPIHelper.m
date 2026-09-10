@@ -7,6 +7,8 @@
 
 #import "iTermAPIHelper.h"
 
+#import "iTermAPICreateTabFocusDeferral.h"
+
 #import "CVector.h"
 #import "DebugLogging.h"
 #import "MovePaneController.h"
@@ -324,6 +326,13 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 @implementation iTermAPIHelper {
     iTermAPIServer *_apiServer;
     BOOL _layoutChanged;
+
+    // Workaround for iterm2 Python library < 2.23 losing the selection of a
+    // freshly API-created window. Self-contained; see the class for details.
+    // The rest of this file touches it only at the four call sites below
+    // (selectedTabDidChange:, activeSessionDidChange:, apiServerCreateTab:...,
+    // and didCreateSession:...).
+    iTermAPICreateTabFocusDeferral *_createTabFocusDeferral;
 
     // Saves the last one to avoid sending changed notifications when nothing changed.
     ITMBroadcastDomainsChangedNotification *_lastBroadcastChangeNotification;
@@ -663,6 +672,7 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         _outstandingRPCs = [NSMutableDictionary dictionary];
         _allSessionsSubscriptions = [NSMutableArray array];
         _allWindowsSubscriptions = [NSMutableArray array];
+        _createTabFocusDeferral = [[iTermAPICreateTabFocusDeferral alloc] init];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(sessionDidTerminate:)
@@ -1035,7 +1045,8 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     PTYTab *tab = notification.object;
     ITMFocusChangedNotification *focusChange = [[ITMFocusChangedNotification alloc] init];
     focusChange.selectedTab = [@(tab.uniqueId) stringValue];
-    [self handleFocusChange:focusChange];
+    // Deferrable: held from a connection that is mid-CreateTab (see the deferral).
+    [self handleFocusChange:focusChange deferrable:YES];
 }
 
 - (void)activeSessionDidChange:(NSNotification *)notification {
@@ -1047,7 +1058,8 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     PTYSession *session = notification.object;
     ITMFocusChangedNotification *focusChange = [[ITMFocusChangedNotification alloc] init];
     focusChange.session = session.guid;
-    [self handleFocusChange:focusChange];
+    // Deferrable: held from a connection that is mid-CreateTab (see the deferral).
+    [self handleFocusChange:focusChange deferrable:YES];
 }
 
 - (void)broadcastDomainsDidChange:(NSNotification *)notification {
@@ -1070,8 +1082,21 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
 }
 
 - (void)handleFocusChange:(ITMFocusChangedNotification *)notif {
+    [self handleFocusChange:notif deferrable:NO];
+}
+
+// `deferrable` marks the selected_tab / active-session changes that can trip the
+// iterm2 Python library < 2.23 bug for a connection mid-CreateTab. For those,
+// delivery is withheld from a holding connection (its create replays the value
+// after its response); all other connections receive it normally. Non-deferrable
+// focus changes (window key, app active) always deliver.
+- (void)handleFocusChange:(ITMFocusChangedNotification *)notif deferrable:(BOOL)deferrable {
     void (^handle)(void) = ^{
         [self->_focusChangeSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
+            if (deferrable &&
+                [self->_createTabFocusDeferral shouldHoldFocusNotificationForConnectionGuid:key]) {
+                return;
+            }
             ITMNotification *notification = [[ITMNotification alloc] init];
             notification.focusChangedNotification = notif;
             [self postAPINotification:notification toConnectionKey:key];
@@ -2371,11 +2396,24 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         windowMessage.frame.size.width = frame.size.width;
         windowMessage.frame.size.height = frame.size.height;
         windowMessage.number = window.number;
+        // Report the selected tab so clients know the current tab without
+        // waiting for a focus notification (protocol 1.18+). A window with no
+        // current tab leaves this unset, mirroring apiServerFocus.
+        PTYTab *currentTab = window.currentTab;
+        if (currentTab) {
+            windowMessage.selectedTabId = [@(currentTab.uniqueId) stringValue];
+        }
 
         for (PTYTab *tab in window.tabs) {
             ITMListSessionsResponse_Tab *tabMessage = [[ITMListSessionsResponse_Tab alloc] init];
             tabMessage.tabId = [@(tab.uniqueId) stringValue];
             tabMessage.root = [tab rootSplitTreeNode];
+            // Report the tab's active session so clients know the current
+            // session without waiting for a focus notification (protocol 1.18+).
+            PTYSession *activeSession = tab.activeSession;
+            if (activeSession) {
+                tabMessage.activeSessionId = activeSession.guid;
+            }
             if (tab.isMaximized) {
                 for (PTYSession *session in [tab minimizedSessions]) {
                     ITMSessionSummary *sessionSummary = [[ITMSessionSummary alloc] init];
@@ -2432,7 +2470,10 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     handler(response);
 }
 
-- (void)apiServerCreateTab:(ITMCreateTabRequest *)request handler:(void (^)(ITMCreateTabResponse *))handler {
+- (void)apiServerCreateTab:(ITMCreateTabRequest *)request
+            libraryVersion:(NSString *)libraryVersion
+             connectionGuid:(NSString *)connectionGuid
+                   handler:(void (^)(ITMCreateTabResponse *))handler {
     PseudoTerminal *term = nil;
     if (request.hasWindowId) {
         term = [[iTermController sharedInstance] terminalWithGuid:request.windowId];
@@ -2465,6 +2506,13 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     // in-app window raise in -[iTermSessionLauncher makeKeyAndActivateIfNeeded:].
     // For a background tab don't make its window key/front.
     launcher.makeKey = select;
+    // For an affected client library, hold this connection's selected_tab /
+    // active-session notifications (which fire synchronously during the create)
+    // until the response has been sent. Nil for unaffected clients. Balanced in
+    // didCreateSession:.
+    iTermAPICreateTabFocusDeferralToken *deferralToken =
+        [_createTabFocusDeferral beginCreateTabForConnectionGuid:connectionGuid
+                                                  libraryVersion:libraryVersion];
     launcher.makeSession = ^(NSDictionary * _Nonnull profile, PseudoTerminal * _Nonnull term, void (^ _Nonnull didMakeSession)(PTYSession * _Nullable)) {
         profile = [self profileByCustomizing:profile withProperties:request.customProfilePropertiesArray];
         // This block bypasses the launcher's own automaticallySelectNewTabs
@@ -2486,17 +2534,43 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     };
     __weak __typeof(self) weakSelf = self;
     [launcher launchWithCompletion:^(PTYSession *session, BOOL ok) {
-        [weakSelf didCreateSession:ok ? session : nil forRequest:request handler:handler];
+        [weakSelf didCreateSession:ok ? session : nil
+                        forRequest:request
+                     deferralToken:deferralToken
+                           handler:handler];
+    }];
+}
+
+// Balances the deferral's beginCreateTabForConnectionGuid:libraryVersion:,
+// replaying this create's own selection now that its response is sent.
+// selectedTabId is nil when the new tab did not become current (e.g. a background
+// tab created with select_tab=false).
+- (void)endCreateTabDeferral:(iTermAPICreateTabFocusDeferralToken *)token
+               selectedTabId:(NSString *)selectedTabId
+             activeSessionId:(NSString *)activeSessionId {
+    __weak __typeof(self) weakSelf = self;
+    [_createTabFocusDeferral endCreateTabWithToken:token
+                                     selectedTabId:selectedTabId
+                                   activeSessionId:activeSessionId
+                                            replay:^(ITMFocusChangedNotification *focusChange,
+                                                     NSString *connectionGuid) {
+        // Replay to the originating connection only; every other connection
+        // already received this focus change live.
+        ITMNotification *notification = [[ITMNotification alloc] init];
+        notification.focusChangedNotification = focusChange;
+        [weakSelf postAPINotification:notification toConnectionKey:connectionGuid];
     }];
 }
 
 - (void)didCreateSession:(PTYSession *)session
               forRequest:(ITMCreateTabRequest *)request
+           deferralToken:(iTermAPICreateTabFocusDeferralToken *)deferralToken
                  handler:(void (^)(ITMCreateTabResponse *))handler {
     if (!session) {
         ITMCreateTabResponse *response = [[ITMCreateTabResponse alloc] init];
         response.status = ITMCreateTabResponse_Status_MissingSubstitution;
         handler(response);
+        [self endCreateTabDeferral:deferralToken selectedTabId:nil activeSessionId:nil];
         return;
     }
 
@@ -2529,6 +2603,14 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
     response.tabId = tab.uniqueId;
     response.sessionId = session.guid;
     handler(response);
+    // Now that the client has the CreateTab response (and will refresh its
+    // window list), replay this create's own selection so it lands on a window
+    // the client already knows about. Only announce the selected tab if this new
+    // tab actually became current (a background tab did not).
+    NSString *selectedTabId = (tab == term.currentTab) ? [@(tab.uniqueId) stringValue] : nil;
+    [self endCreateTabDeferral:deferralToken
+                 selectedTabId:selectedTabId
+               activeSessionId:session.guid];
 }
 
 - (void)apiServerSplitPane:(ITMSplitPaneRequest *)request handler:(void (^)(ITMSplitPaneResponse *))handler {

@@ -88,6 +88,13 @@ Major New Features:
   notified when it changes, so tools like vim
   and delta can adapt automatically.
 
+- Fixed a bug where a Python API script that
+  created a window and then immediately used
+  Window.current_tab or Tab.current_session
+  got None, so scripts that split panes or
+  changed fonts on a freshly created window
+  stopped working. Affected 3.7.0.
+
 - Fixed a bug where a command-line
   completion whose command history entry
   contained a newline would spill across
