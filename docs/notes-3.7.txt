@@ -2965,3 +2965,7 @@ Bug Fixes:
   lines, the outline around the group chip, and
   the rounded end caps of the first or last group
   in the tab bar were partly or fully missing.
+- Fixed a faint vertical line that could appear
+  inside a selected tab in the dark Tahoe theme,
+  caused by the tab chrome images meeting on a
+  fractional pixel.
