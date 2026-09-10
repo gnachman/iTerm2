@@ -2650,3 +2650,8 @@ Bug Fixes:
   load. Over time this could exhaust a
   system-wide limit and break other apps that
   manage power (such as OrbStack).
+- Fixed the tab group outline in the Tahoe theme,
+  which was being clipped: the top and bottom
+  lines, the outline around the group chip, and
+  the rounded end caps of the first or last group
+  in the tab bar were partly or fully missing.
