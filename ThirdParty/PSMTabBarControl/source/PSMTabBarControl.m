@@ -1637,9 +1637,18 @@ static NSString *PSMSmartTruncationPrefix(NSString *title, NSInteger length) {
             [indicator removeFromSuperview];
         }
     }
-    for (NSView *progressBar in _tabProgressBars.objectEnumerator) {
+    // A Tahoe progress ring is deliberately outset past its pill by
+    // progressRingWidth on every side (see -progressBarRectForTabCell:), so an
+    // edge tab's accessory frame reaches a couple of points past the leading or
+    // trailing margin even when the tab itself is fully inside the scroll
+    // region. Testing that outset frame wrongly hid the ring on the first and
+    // last tab. Test the owning cell's frame instead: a fully-visible edge tab
+    // keeps its ring, while a cell that has actually scrolled under the
+    // decorations (or past the trailing edge) is still caught.
+    for (PSMTabBarCell *cell in _tabProgressBars) {
+        NSView *progressBar = [_tabProgressBars objectForKey:cell];
         if (progressBar.superview == self && !progressBar.isHidden &&
-            [self frameIsOutsideScrollRegion:progressBar.frame]) {
+            [self frameIsOutsideScrollRegion:cell.frame]) {
             progressBar.hidden = YES;
         }
     }
