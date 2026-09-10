@@ -2960,3 +2960,8 @@ Bug Fixes:
 - Fixed the git ahead/behind arrows in the
   session toolbar staying black in dark mode
   instead of matching the text color.
+- Fixed the tab group outline in the Tahoe theme,
+  which was being clipped: the top and bottom
+  lines, the outline around the group chip, and
+  the rounded end caps of the first or last group
+  in the tab bar were partly or fully missing.

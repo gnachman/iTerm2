@@ -759,6 +759,23 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             NSGraphicsContext.current?.restoreGraphicsState()
         }
 
+        // The container clip above hugs the tab pills with only a 2pt top / 1pt
+        // bottom margin and is anchored at `containerSideInset`, but a tab-group
+        // run's enclosing outline outsets `groupRunOutset` past those pills on every
+        // side and its horizontal extent follows the cell layout (`leftMargin` /
+        // `insets`), not `containerSideInset`. Under the tight container clip its top
+        // line landed flush with the clip edge (antialiased away), its bottom line
+        // fell outside it, and a run touching the first or last tab had its leading
+        // or trailing cap shaved, so only partial outlines survived. The run pill is
+        // itself a rounded stadium that hugs the tabs, so it never needs the
+        // container's rounded corners; drop the container clip and draw the group
+        // decorations unclipped. A scrollable bar is still bounded horizontally by
+        // the viewport clip in -drawRect: (widened by the run outset), and the
+        // scroll-margin strips are handled by the empty-clipRect guard inside
+        // -drawTabGroupRunDecorations:. The restore/save keeps the graphics-state
+        // stack balanced against the outer save/defer that wraps the whole method.
+        NSGraphicsContext.current?.restoreGraphicsState()
+        NSGraphicsContext.current?.saveGraphicsState()
         drawTabGroupRunDecorations(forTabBar: bar, clipRect: clipRect)
     }
 
