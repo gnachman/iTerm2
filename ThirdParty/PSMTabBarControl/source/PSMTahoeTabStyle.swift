@@ -2363,17 +2363,27 @@ class PSMTahoeDarkTabStyle: PSMTahoeTabStyle {
         // Clamp so left and right caps never overlap on a narrow tall pill.
         let capWidth = min(left.size.width * scale, rect.width / 2.0)
 
-        let leftDest = NSRect(x: rect.minX, y: rect.minY, width: capWidth, height: rect.height)
-        left.draw(in: leftDest)
+        // The three images (leftCap | mid | rightCap) tile to fill the pill. Their
+        // inner seams fall at rect.minX + capWidth and rect.maxX - capWidth, which
+        // are fractional (capWidth scales with height, and rect.minX moves with
+        // layout/scroll). A seam on a fractional device pixel makes both abutting
+        // image edges antialias against transparency, leaving a faint ~0.5pt
+        // vertical line inside the pill. Snap the seams to the backing-store pixel
+        // grid so the tiles meet on a whole pixel. The outer rounded cap edges are
+        // left as-is; their curves antialiasing over the bar background is correct.
+        let backing = tabBar?.window?.backingScaleFactor ?? 2.0
+        let snap: (CGFloat) -> CGFloat = { backing > 0 ? ($0 * backing).rounded() / backing : $0 }
+        let leftSeam = snap(rect.minX + capWidth)
+        let rightSeam = max(leftSeam, snap(rect.maxX - capWidth))
 
-        let rightDest = NSRect(x: rect.maxX - capWidth, y: rect.minY, width: capWidth, height: rect.height)
-        Self.rightTabCap.draw(in: rightDest)
+        left.draw(in: NSRect(x: rect.minX, y: rect.minY,
+                             width: leftSeam - rect.minX, height: rect.height))
 
-        let midDest = NSRect(x: rect.minX + capWidth,
-                             y: rect.minY,
-                             width: max(0, rect.width - 2 * capWidth),
-                             height: rect.height)
-        Self.tabMid.draw(in: midDest)
+        Self.rightTabCap.draw(in: NSRect(x: rightSeam, y: rect.minY,
+                                         width: rect.maxX - rightSeam, height: rect.height))
+
+        Self.tabMid.draw(in: NSRect(x: leftSeam, y: rect.minY,
+                                    width: max(0, rightSeam - leftSeam), height: rect.height))
     }
     
     private static let leftTabCap: NSImage = {
