@@ -896,6 +896,11 @@ Web browser improvements:
   password manager.
 
 Bug Fixes:
+- Tahoe-style tabs no longer squeeze a session
+  status subtitle under the title. The macOS 26
+  top tab bar is too short for two lines, so the
+  status now follows the title on one line, in
+  its own status color.
 - Stopped falsely offering to reset the key
   reporting mode after every command in Fish
   4.x and other shells that re-enable the
