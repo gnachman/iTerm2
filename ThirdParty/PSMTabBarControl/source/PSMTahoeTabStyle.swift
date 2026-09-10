@@ -137,6 +137,9 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     
     @objc static var horizontalTabBarHeight = 36.0
     
+    // One row's height. Growing this for a two-row bar is the caller's job, so that
+    // the two-row geometry lives in one shared place instead of being reimplemented
+    // by each style (which is how the non-Tahoe themes ended up missing it).
     var tabBarHeight: CGFloat {
         if orientation == .horizontalOrientation {
             return Self.horizontalTabBarHeight
@@ -593,7 +596,6 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     // Drawn pill height inside the horizontal tab-bar container (36pt).
     // Only `clippingPath` reads this; cell pills use `pillCornerRadius(for:)`.
     private let barHeight = 28.0
-    private var barRadius: CGFloat { barHeight / 2.0 }
     let containerSideInset = CGFloat(8)
     var containerTopInset: CGFloat {
         tabBar?.insets.top ?? 0.0
@@ -605,16 +607,39 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     // bar insets the *cell* clip (see -drawTabBar:) so scrolled cells can't paint
     // over the rounded border.
     private func clippingPath(rect: NSRect, insetX: CGFloat = 0, insetY: CGFloat = 0) -> NSBezierPath {
-        if orientation == .horizontalOrientation {
-            let container = NSRect(x: containerSideInset - 0.5,
-                                   y: containerTopInset,
-                                   width: rect.width - containerSideInset * 2 + 1,
-                                   height: barHeight).insetBy(dx: insetX, dy: insetY)
-            let radius = max(0, container.height / 2.0)
-            return NSBezierPath(roundedRect: container, xRadius: radius, yRadius: radius)
-        } else {
+        guard orientation == .horizontalOrientation else {
             return NSBezierPath(rect: rect.insetBy(dx: 0, dy: insetY))
         }
+        let x = containerSideInset - 0.5
+        let w = rect.width - containerSideInset * 2 + 1
+        func track(atY y: CGFloat, height: CGFloat) -> NSBezierPath {
+            let container = NSRect(x: x, y: y, width: w, height: height).insetBy(dx: insetX, dy: insetY)
+            let radius = max(0, container.height / 2.0)
+            return NSBezierPath(roundedRect: container, xRadius: radius, yRadius: radius)
+        }
+        let rows = Int(tabBar?.horizontalRowCount() ?? 1)
+        if rows <= 1 {
+            return track(atY: containerTopInset, height: barHeight)
+        }
+        // Two-row mode: draw one rounded track per physical row (aligned to the
+        // cell rows) rather than a single tall capsule spanning both. A tall
+        // capsule puts its rounded corners around the edge tabs, which reads as a
+        // double border around the selected tab; per-row tracks make each row look
+        // like a normal single-row bar. This path is both filled as the background
+        // and used to clip the cells, so it must cover every row. Both the stride and
+        // the per-row height come from the shared two-row geometry (see
+        // PSMTabBarControl), with the track at each row's top so the selected pill
+        // stays inset within it. Taking the height from the hardcoded single-row
+        // barHeight instead made the tracks gap or overlap — and stop aligning with the
+        // cell rows — wherever the per-row height isn't 28pt, e.g. traditional
+        // fullscreen or compact.
+        let rowStride: CGFloat = tabBar?.twoRowStride() ?? CGFloat(barHeight)
+        let rowHeight: CGFloat = tabBar?.twoRowContentHeight() ?? CGFloat(barHeight)
+        let path = NSBezierPath()
+        for r in 0..<rows {
+            path.append(track(atY: containerTopInset + CGFloat(r) * rowStride, height: rowHeight))
+        }
+        return path
     }
     
     @objc func drawBackground(in rect: NSRect, color: NSColor?, horizontal: Bool) {
@@ -738,11 +763,17 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                 }
                 return true
             }
+            // Sort by physical row first, then by x within the row. A plain minX sort
+            // interleaves the two rows in two-row mode, which makes the rightmost cell
+            // of one row “adjacent” to a cell on the other row.
             let sorted = cellsForDividers.sorted { lhs, rhs in
                 if orientation == .horizontalOrientation {
-                    lhs.frame.minX < rhs.frame.minX
+                    if !PSMTahoeTabStyle.sameRow(lhs, rhs) {
+                        return lhs.frame.minY < rhs.frame.minY
+                    }
+                    return lhs.frame.minX < rhs.frame.minX
                 } else {
-                    lhs.frame.minY < rhs.frame.minY
+                    return lhs.frame.minY < rhs.frame.minY
                 }
             }
             // Mid-drag the clip rect can cover only zero-width placeholders, so
@@ -750,6 +781,14 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
             // traps.
             if sorted.count > 1 {
                 for i in 0..<(sorted.count - 1) {
+                    // Only cells on the same physical row are neighbors on screen. Without
+                    // this the pair straddling the row boundary draws a divider just past
+                    // the last cell of the upper row, and hovering the row-2 cell
+                    // suppresses a divider up on row 1.
+                    if orientation == .horizontalOrientation &&
+                        !PSMTahoeTabStyle.sameRow(sorted[i], sorted[i + 1]) {
+                        continue
+                    }
                     drawDivider(betweenCell: sorted[i], andCell: sorted[i + 1])
                 }
             }
@@ -1212,6 +1251,13 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
 
     var dividerColor: NSColor {
         NSColor(displayP3Red: 205.0 / 255.0, green: 205.0 / 255.0, blue: 205.0 / 255.0, alpha: 1.0)
+    }
+
+    // Two cells are on the same physical row when their frames share a top edge.
+    // Compared geometrically rather than via the cached isFirst/isLastInHorizontalRow
+    // flags because those are only refreshed by the non-animated layout path.
+    private static func sameRow(_ lhs: PSMTabBarCell, _ rhs: PSMTabBarCell) -> Bool {
+        return abs(lhs.frame.minY - rhs.frame.minY) <= 0.5
     }
 
     func drawDivider(betweenCell leftCell: PSMTabBarCell, andCell rightCell: PSMTabBarCell) {

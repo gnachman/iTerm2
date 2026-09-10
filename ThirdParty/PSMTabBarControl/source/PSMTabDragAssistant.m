@@ -1639,15 +1639,24 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     int i, cellCount = [cells count];
     // A scrollable bar starts its layout shifted by the scroll offset (up for a vertical bar, left for
     // a horizontal one), so the dragged cells line up with the scrolled positions reallyUpdate: gave
-    // the rest. scrollOffset is 0 when scrolling is off, so this is a no-op there.
+    // the rest. scrollOffset is 0 when scrolling is off, so this is a no-op there. Auto-scroll adds a
+    // further nudge so the targeted drop slot is revealed. Hoisted because the two-row row restart
+    // below re-seeds `position` and needs the same shift.
     const float leadingMargin = ([control orientation] == PSMTabBarHorizontalOrientation
                                  ? [[control style] leftMarginForTabBarControl]
                                  : [[control style] topMarginForTabBarControl]);
-    float position = leadingMargin - [control scrollOffset];
-    if (control == _dragScrollBar) {
-        // Auto-scroll: shift the walk so the targeted drop slot is revealed.
-        position -= _dragScrollNudge;
-    }
+    const float positionShift = [control scrollOffset] +
+                                ((control == _dragScrollBar) ? _dragScrollNudge : 0);
+    float position = leadingMargin - positionShift;
+    // Cells keep their y (and so their row) through the drag, but the reflow below
+    // advances `position` across every cell in sequence. On two rows that pushed the
+    // lower row's tabs off the right edge, since they continued from where the upper
+    // row ended. Restart `position` at each row's own left edge instead. Only in
+    // two-row mode, so the single-row reflow every user gets stays untouched. NAN
+    // means "no row seen yet"; any comparison against it is false, so the first cell
+    // always starts a row.
+    const BOOL twoRow = ([control horizontalRowCount] == 2);
+    CGFloat rowTopForPosition = NAN;
 
     // identify target cell
     // mouse at beginning of tabs
@@ -1682,7 +1691,11 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
             } else {
                 proposedTarget = [self nonChipNeighborInCells:cells atIndex:ci direction:1];
             }
-        } else if (mouseLoc.x < [[control style] leftMarginForTabBarControl]) {
+        // "Left of the first tab" has to be measured against the left edge of the row
+        // under the mouse. With two rows the lower row starts further left than the
+        // style's left margin, so using the margin made a drop anywhere in that
+        // reclaimed inset insert at the very front of the first row instead.
+        } else if (mouseLoc.x < [control leftEdgeOfHorizontalCellRowAtY:mouseLoc.y]) {
             proposedTarget = [cells objectAtIndex:0];
         } else {
             overCell = [control cellForPoint:mouseLoc cellFrame:&overCellRect];
@@ -1901,6 +1914,10 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         }
 
         if ([control orientation] == PSMTabBarHorizontalOrientation) {
+            if (twoRow && !(fabs(newRect.origin.y - rowTopForPosition) <= 0.5)) {
+                rowTopForPosition = newRect.origin.y;
+                position = [control leftEdgeOfHorizontalCellRowAtY:newRect.origin.y] - positionShift;
+            }
             newRect.origin.x = position;
             position += newRect.size.width;
             if (![cell isPlaceholder]) {

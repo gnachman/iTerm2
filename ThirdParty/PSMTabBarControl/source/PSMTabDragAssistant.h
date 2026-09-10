@@ -102,6 +102,7 @@ extern NSString *const PSMTabDragIsGroupPasteboardType;
 - (NSMutableArray *)cells;
 - (void)setControlView:(id)view;
 - (id)cellForPoint:(NSPoint)point cellFrame:(NSRectPointer)outFrame;
+- (CGFloat)leftEdgeOfHorizontalCellRowAtY:(CGFloat)y;
 - (PSMTabBarCell *)lastVisibleTab;
 - (int)numberOfVisibleTabs;
 - (float)availableCellWidthWithOverflow:(BOOL)withOverflow;
