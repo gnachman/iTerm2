@@ -1,7 +1,13 @@
 Version 3.7.1beta1 of iTerm2 was built on
 September 10, 2026.
 
-Other Improvements:
+Improvements:
+- The iTerm2 Buddy companion app is now
+  available on the App Store. The setup wizard
+  links to a page with a QR code you can scan
+  with your phone to install it.
+- Removed the icons that had been added to menu
+  items.
 - Newlines embedded in a completion suggestion
   (such as a command-history entry or file name)
   now show as a return glyph so the entry stays
