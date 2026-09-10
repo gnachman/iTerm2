@@ -8872,6 +8872,11 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     theTab.tabGroupID = nil;
     [self reconcileTabGroupDefinitionForTab:theTab];
     [self updateTabColors];
+    // Removing a member from the middle of a group would otherwise leave the
+    // now-ungrouped tab wedged between the remaining members, splitting them
+    // into two runs. Repair the contiguity invariant so the group stays one
+    // block and the removed tab lands just after it.
+    [self tabsDidReorder];
 }
 
 - (void)groupTabs:(NSArray<PTYTab *> *)tabs withName:(NSString *)name {

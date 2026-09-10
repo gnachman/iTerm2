@@ -139,6 +139,12 @@ Major New Features:
   the setting, and re-clicking it appeared to
   do nothing.
 
+- Fixed a bug where removing a tab from the
+  middle of a tab group left the group split
+  into two runs with the removed tab wedged
+  between them. The group now stays contiguous
+  and the removed tab moves just after it.
+
 - Fixed a bug where the top-right session
   indicators left a horizontal smear while
   swiping between tabs with two fingers.
