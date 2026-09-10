@@ -2960,3 +2960,9 @@ Bug Fixes:
 - Fixed the git ahead/behind arrows in the
   session toolbar staying black in dark mode
   instead of matching the text color.
+- The About window now follows the current
+  theme, updating live when you switch between
+  light and dark. On macOS 26 the backer list
+  sits in a rounded container matching the
+  sponsor cards; before that, dark themes get a
+  frosted-glass look.
