@@ -1402,8 +1402,12 @@ static NSColor *iTermWindowBorderColorFromSetting(NSString *setting) {
     // window size when it appears.
     [self setLeftTabBarWidthFromPreferredWidth];
 
-    if ([_delegate iTermTabBarWindowIsFullScreen]) {
-        // When in full screen the insets must be reset even though the tab bar is not visible.
+    if ([_delegate iTermTabBarWindowIsFullScreen] || _tabBarControlOnLoan) {
+        // The insets must be reset even though the tab bar isn't laid out by this method:
+        // in full screen because it's not visible here, and whenever the tab bar has been
+        // loaned to the titlebar accessory (macOS 26) because -[PseudoTerminal tabBarInsets]
+        // is full-screen-dependent. Without this, the full-screen inset survives the
+        // exit-fullscreen transition into the windowed titlebar.
         self.tabBarControl.insets = [self.delegate tabBarInsets];
     }
 }
