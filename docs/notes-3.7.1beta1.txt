@@ -1,0 +1,73 @@
+Version 3.7.1beta1 of iTerm2 was built on
+September 10, 2026.
+
+Other Improvements:
+- Newlines embedded in a completion suggestion
+  (such as a command-history entry or file name)
+  now show as a return glyph so the entry stays
+  on one line instead of spilling across rows.
+  The value inserted when you accept the row is
+  unchanged.
+- Shell > Workgroups now shows a checkmark next
+  to the workgroup the current session belongs
+  to.
+
+Bug Fixes:
+- Fixed a crash on launch when restoring saved
+  sessions that contained right-to-left text
+  written by version 3.6.11. This could force you
+  to discard all of your restored sessions.
+- Fixed a memory leak where browser panes were
+  never freed, leaking a WebKit process and a
+  system power-management handle on every page
+  load. Over time this could exhaust a
+  system-wide limit and break other apps that
+  manage power (such as OrbStack).
+- Fixed a crash that could occur when doing a
+  global search that included a browser session.
+- Fixed a bug where navigating between tmux
+  sessions or windows could freeze the UI for
+  several seconds.
+- Fixed dragging a file out of a session that
+  failed when the terminal app used kitty's
+  drag-and-drop protocol.
+- Fixed cmd-clicking a URL at the end of a line
+  in a full-screen app (such as irssi or mutt),
+  which could open the URL with text from the
+  next line appended.
+- Fixed AI tool calls failing with Ollama when a
+  tool used a non-string argument such as a
+  number or boolean.
+- Fixed a bug where a Python script that created
+  a window and immediately read its current tab
+  or session got nothing back, which broke
+  scripts that split panes or changed the font of
+  a freshly created window.
+- Fixed Duplicate Tab so a tab duplicated from a
+  tab group stays in that group instead of being
+  left as a stray one-tab group.
+- Fixed a bug where removing a tab from the
+  middle of a tab group left the group
+  discontiguous.
+- Fixed a spurious offer to reset key reporting
+  mode after running a command in shells that use
+  the kitty keyboard protocol, such as Fish 4.
+- Fixed an empty Keys > General tab in Edit
+  Session that could appear after editing a
+  browser session and then a terminal session.
+- Fixed the Actions settings table not redrawing
+  the action column after editing an action
+  without changing its title.
+- Fixed a white rectangle that could appear to
+  the right of a collapsed tab group in the
+  Minimal theme.
+- Fixed the tab group outline in the Tahoe theme,
+  which was being clipped: the top and bottom
+  lines, the outline around the group chip, and
+  the rounded end caps of the first or last group
+  in the tab bar were partly or fully missing.
+- Fixed a faint vertical line that could appear
+  inside a selected tab in the dark Tahoe theme.
+- Fixed the locale description in Settings >
+  Profiles > Terminal not adapting its color when
+  switching between light and dark mode.
