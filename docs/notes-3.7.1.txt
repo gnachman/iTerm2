@@ -1,5 +1,4 @@
-Version 3.7.1beta1 of iTerm2 was built on
-September 10, 2026.
+Version 3.7.1 was built on September 10, 2026.
 
 Improvements:
 - Newlines embedded in a completion suggestion
