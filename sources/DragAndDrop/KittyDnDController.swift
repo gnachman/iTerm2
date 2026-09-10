@@ -179,6 +179,12 @@ final class KittyDnDController {
     // Completion handlers for outstanding lazy data requests, keyed by 0-based
     // MIME index (the program answers a t=e:x=5 request with t=e:y=idx;data).
     private var pendingDataRequests: [Int: (Data?) -> Void] = [:]
+    // Raw base64 payload accumulated for an in-flight lazy data reply, keyed by
+    // MIME index. A reply arrives as one or more t=e:y=idx data messages followed
+    // by an empty t=e:y=idx terminator; we concatenate the raw base64 and decode
+    // the whole at the terminator, since chunk boundaries need not be base64
+    // aligned. Kept parallel to pendingDataRequests and drained alongside it.
+    private var pendingDataReplyPayloads: [Int: String] = [:]
 
     // The in-progress fetch of a remote program's offered files (dragging them
     // out). It collects the t=k pushes; case "k"/"R" route to it. nil when no
@@ -810,7 +816,20 @@ final class KittyDnDController {
         guard !offerMimeTypes.isEmpty else {
             return
         }
-        guard let index = message.intValue("x") else {
+        // Real kitty omits any metadata key whose value is 0, so an absent x means
+        // index 0 (issue 12961). A PRESENT but unparseable x is malformed: ignore.
+        let index: Int
+        if let x = message.intValue("x") {
+            index = x
+        } else if message.metadata["x"] == nil {
+            index = 0
+        } else {
+            return
+        }
+        // kitty follows the pre-sent data with an empty t=p terminator that has no
+        // payload section. It carries no data, so ignore it rather than storing an
+        // empty payload over the bytes we just stored for this index.
+        guard message.rawPayload != nil else {
             return
         }
         let data = message.dataPayload ?? Data()
@@ -1142,17 +1161,40 @@ final class KittyDnDController {
     }
 
     private func handleDragDataReply(_ message: KittyDnDMessage) {
-        // The program's reply to a t=e:x=5 lazy data request: t=e:y=idx;data.
-        if let index = message.intValue("y"),
-           let completion = pendingDataRequests.removeValue(forKey: index) {
-            completion(message.dataPayload)
+        // The program's reply to a t=e:x=5 lazy data request: one or more
+        // t=e:y=idx data messages followed by an empty t=e:y=idx terminator. Real
+        // kitty omits a key whose value is 0, so an absent y means index 0 (issue
+        // 12961); a PRESENT but unparseable y is not index 0.
+        let index: Int
+        if let y = message.intValue("y") {
+            index = y
+        } else if message.metadata["y"] == nil {
+            index = 0
+        } else {
+            index = -1
+        }
+        guard index >= 0, pendingDataRequests[index] != nil else {
+            // Not a reply to any outstanding request. An unsolicited t=e before
+            // the drag started is a protocol error (spec: "must respond with
+            // t=E ; EINVAL and abort the drag").
+            if offerBeingAssembled {
+                rejectOffer(code: "EINVAL:unexpected t=e")
+            }
             return
         }
-        // An unsolicited t=e before the drag started is a protocol error (spec:
-        // "must respond with t=E ; EINVAL and abort the drag").
-        if offerBeingAssembled {
-            rejectOffer(code: "EINVAL:unexpected t=e")
+        // A data-bearing message (has a payload section, even if empty): keep the
+        // completion open and accumulate the raw base64. kitty may split the
+        // base64 stream at boundaries that are not individually decodable, so we
+        // decode the concatenation as a whole at the terminator.
+        if let raw = message.rawPayload, !raw.isEmpty {
+            pendingDataReplyPayloads[index, default: ""] += raw
+            return
         }
+        // Empty terminator: the reply is complete. Decode what we accumulated and
+        // deliver it (an empty accumulation decodes to empty Data, not nil).
+        let accumulated = pendingDataReplyPayloads.removeValue(forKey: index) ?? ""
+        pendingDataRequests.removeValue(forKey: index)?(
+            KittyDnDMessage.decodeBase64Payload(accumulated))
     }
 
     private func handleDragStatus(_ message: KittyDnDMessage) {
@@ -1180,6 +1222,9 @@ final class KittyDnDController {
             dragHost?.cancelDrag()
             resetOfferInProgress()
         } else if let completion = pendingDataRequests.removeValue(forKey: y) {
+            // The client failed this lazy data request: drop any partial payload
+            // accumulated for it and report the error.
+            pendingDataReplyPayloads.removeValue(forKey: y)
             completion(nil)
         } else if offerBeingAssembled {
             // Unsolicited t=E:y before the drag started: protocol error, abort.
@@ -1235,8 +1280,9 @@ final class KittyDnDController {
     /// was not pre-sent). `completion` is called with the bytes, or nil on error.
     func requestDragData(mimeIndex: Int, completion: @escaping (Data?) -> Void) {
         // Fail any request already outstanding for this index so its completion
-        // is never leaked when we overwrite it.
+        // is never leaked when we overwrite it, and discard its partial payload.
         pendingDataRequests[mimeIndex]?(nil)
+        pendingDataReplyPayloads.removeValue(forKey: mimeIndex)
         pendingDataRequests[mimeIndex] = completion
         send(KittyDnDMessage(metadata: ["t": "e", "x": "5", "y": String(mimeIndex)]))
     }
@@ -1258,6 +1304,7 @@ final class KittyDnDController {
             completion(nil)
         }
         pendingDataRequests = [:]
+        pendingDataReplyPayloads = [:]
         // Abandon any in-progress remote drag-out fetch (resumes its awaiter with
         // nil so beginRemoteFileDrag cleans up its temp dir).
         remoteDragFetch?.abort()

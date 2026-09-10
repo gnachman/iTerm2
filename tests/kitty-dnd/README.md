@@ -14,7 +14,11 @@ Run each inside a debug-build iTerm2 session (`make run`).
   window.
 - `drag_source.py` — offers text, a file, and a directory tree to be dragged
   out; logs the drag lifecycle. Start a drag over the window and drop onto
-  Finder/TextEdit.
+  Finder/TextEdit. Pass `--kitten-compat` to mimic the real `kitten dnd`
+  client's wire quirks (it omits zero-valued addressing keys and follows a data
+  reply with an empty `t=e` EOF terminator), which reproduces issue 12961; a
+  correct terminal must complete the drag instead of replying
+  `EINVAL:unexpected t=e`.
 - `kittydnd.py` — shared build/parse/reader helpers (also a spec reference).
 
 ## What works
