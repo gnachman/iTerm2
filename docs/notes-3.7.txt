@@ -776,6 +776,11 @@ Bug Fixes:
   flags are now sampled when the command
   finished, not after the next prompt turned
   them back on.
+- Fixed Kitty drag-and-drop (OSC 72) drag-out
+  from the real `kitten dnd` client, which failed
+  with “EINVAL:unexpected t=e”. The client omits
+  metadata keys whose value is 0, so index-0
+  offers arrived without their x=/y= key.
 - Fixed a crash on launch when restoring
   scrollback saved by 3.6.11 that contained
   bidi (right-to-left) text. The old metadata
