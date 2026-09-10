@@ -145,6 +145,14 @@ Major New Features:
   between them. The group now stays contiguous
   and the removed tab moves just after it.
 
+- Fixed a bug where pressing Backspace while
+  composing with an input method (such as the
+  Korean 2-Set IME) left a stray jamo behind.
+  When the IME commits its composition and
+  hands the keystroke back, iTerm2 now acts on
+  it instead of dropping it. This also makes
+  Return submit the line it completes.
+
 - Fixed a bug where the top-right session
   indicators left a horizontal smear while
   swiping between tabs with two fingers.
