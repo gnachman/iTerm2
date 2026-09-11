@@ -175,6 +175,12 @@ Improvements:
   so arbitrary statuses from any tool just work.
   Window/tab/session rows also carry the matching
   macwindow / folder / terminal icon.
+- Duplicate Tab now opens the copy immediately to
+  the right of the original tab instead of at the
+  end of the tab bar. There is a new advanced
+  setting, “When you duplicate a tab, should the
+  copy open immediately to the right of the
+  original tab?”, if you prefer the old placement.
 
 Bug Fixes:
 - Fixed a bug on macOS 26 where the tab bar
