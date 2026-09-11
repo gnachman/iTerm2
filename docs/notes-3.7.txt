@@ -2976,3 +2976,10 @@ Bug Fixes:
   inside a selected tab in the dark Tahoe theme,
   caused by the tab chrome images meeting on a
   fractional pixel.
+- The Companion setup wizard now
+  saves the pasted API key for the
+  provider chosen in the popup, so
+  picking a different provider than
+  the current default no longer
+  stores the key under the wrong
+  service.

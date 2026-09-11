@@ -346,12 +346,14 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
                       color: .systemRed)
             return
         }
-        let vendor = Int32(selectedVendorTag)
+        let selectedVendor = iTermAIVendor(rawValue: UInt(selectedVendorTag)) ?? .anthropic
         // Capture the prior AI defaults and consents so a failed or abandoned
         // setup can restore them: we must not silently change the user's saved
         // key/vendor, nor leave consent on (possibly with no usable key), when
-        // install never completes.
-        let priorAPIKey = full ? AITermControllerObjC.apiKey : nil
+        // install never completes. Snapshot the popup vendor's existing key (not
+        // effectiveVendor's) so rollback restores that slot instead of parking
+        // the old default vendor's secret there.
+        let priorSelectedVendorKey = full ? AITermControllerObjC.apiKey(for: selectedVendor) : nil
         let priorVendor = full ? iTermPreferences.int(forKey: kPreferenceKeyAIVendor) : 0
         let priorEnableAI = SecureUserDefaults.instance.enableAI.value
         let priorEnableCompanion = SecureUserDefaults.instance.enableCompanionPairing.value
@@ -394,9 +396,13 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
                 if full {
                     // Persist the key/vendor only now that the plugins installed
                     // and consent was granted, so an earlier failure leaves the
-                    // saved defaults untouched.
-                    AITermControllerObjC.apiKey = apiKey
-                    iTermPreferences.setInt(vendor, forKey: kPreferenceKeyAIVendor)
+                    // saved defaults untouched. The pasted key goes in the
+                    // Provider popup's slot, not LLMMetadata.effectiveVendor.
+                    let write = CompanionWizardAIKeyPlan.commit(selectedVendor: selectedVendor,
+                                                                pastedKey: apiKey)
+                    DLog("Companion wizard: storing API key for vendor \(write.vendor.rawValue)")
+                    AITermControllerObjC.setAPIKey(write.key, for: write.vendor)
+                    iTermPreferences.setInt(Int32(write.vendorPreference), forKey: kPreferenceKeyAIVendor)
                     wroteAIDefaults = true
                 }
                 self.setStatus(String(localized: "Companion.Status.Verifying",
@@ -425,8 +431,13 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
                     if !priorEnableCompanion { try? SecureUserDefaults.instance.enableCompanionPairing.reset() }
                 }
                 if wroteAIDefaults {
-                    AITermControllerObjC.apiKey = priorAPIKey
-                    iTermPreferences.setInt(priorVendor, forKey: kPreferenceKeyAIVendor)
+                    let write = CompanionWizardAIKeyPlan.rollback(
+                        selectedVendor: selectedVendor,
+                        priorSelectedVendorKey: priorSelectedVendorKey,
+                        priorVendorRaw: Int(priorVendor))
+                    DLog("Companion wizard: rolling back API key for vendor \(write.vendor.rawValue)")
+                    AITermControllerObjC.setAPIKey(write.key, for: write.vendor)
+                    iTermPreferences.setInt(Int32(write.vendorPreference), forKey: kPreferenceKeyAIVendor)
                 }
                 guard active() else { return }
                 self.setInstalling(false)
@@ -875,5 +886,33 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         }
         // Closed without pairing: stop advertising the QR.
         controller.stopAdvertising()
+    }
+}
+
+// MARK: - API key persist/rollback (extracted from installPressed)
+
+/// Vendor-slot writes `installPressed` performs on a successful full setup and
+/// on a failed one. Pure so tests can pin the keychain account without driving
+/// the plugin-install Task. The slot is always the Provider popup, never
+/// `LLMMetadata.effectiveVendor`.
+enum CompanionWizardAIKeyPlan {
+    struct Write: Equatable {
+        var vendor: iTermAIVendor
+        var key: String?
+        var vendorPreference: Int
+    }
+
+    static func commit(selectedVendor: iTermAIVendor, pastedKey: String) -> Write {
+        Write(vendor: selectedVendor,
+              key: pastedKey,
+              vendorPreference: Int(selectedVendor.rawValue))
+    }
+
+    static func rollback(selectedVendor: iTermAIVendor,
+                         priorSelectedVendorKey: String?,
+                         priorVendorRaw: Int) -> Write {
+        Write(vendor: selectedVendor,
+              key: priorSelectedVendorKey,
+              vendorPreference: priorVendorRaw)
     }
 }
