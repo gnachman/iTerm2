@@ -25,7 +25,8 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
     /// The wizard's steps. The router picks the starting step from how much setup
     /// is already done; transitions from there are driven by the buttons and the
     /// pairing controller's callbacks.
-    enum Screen {
+    enum Screen: Equatable {
+        case chooseMode     // 1.0: pick AI features vs terminal-viewing-only
         case fullSetup      // 1.1: install both plugins + grant both consents
         case companionOnly  // 1.2: install the companion plugin + grant its consent
         case phoneApp       // 2: install iTerm2 Buddy on the phone
@@ -125,6 +126,7 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
         screenView?.removeFromSuperview()
         let view = NSView(frame: NSRect(x: 0, y: 0, width: Self.contentWidth, height: Self.contentHeight))
         switch screen {
+        case .chooseMode: buildChooseModeScreen(in: view)
         case .fullSetup: buildInstallScreen(in: view, full: true)
         case .companionOnly: buildInstallScreen(in: view, full: false)
         case .phoneApp: buildPhoneAppScreen(in: view)
@@ -192,6 +194,54 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
     private func setStatus(_ text: String, color: NSColor) {
         activeStatusLabel?.stringValue = text
         activeStatusLabel?.textColor = color
+    }
+
+    // MARK: Screen 1.0 - choose mode
+
+    /// The first screen a new user sees: use the companion with AI features, or as
+    /// a terminal viewer/controller only. Each button routes to the matching
+    /// install screen (1.1 requires an API key; 1.2 installs only the companion
+    /// plugin). AI is no longer a prerequisite for pairing, so both are valid
+    /// starting points.
+    private func buildChooseModeScreen(in view: NSView) {
+        addTitle(String(localized: "Companion.ChooseMode.Title",
+                        defaultValue: "How Do You Want to Use the Companion?",
+                        comment: "Title of the wizard screen where the user chooses AI vs terminal-only setup"),
+                 to: view)
+        addBodyLabel(String(localized: "Companion.ChooseMode.Body",
+                            defaultValue: "You can pair your iPhone to chat with AI about your sessions, or just to view and control your terminals remotely. You can turn on AI later if you change your mind.",
+                            comment: "Explanatory paragraph on the choose-mode screen"),
+                     to: view, y: Self.contentHeight - 170, height: 80)
+
+        let withAI = makeButton(String(localized: "Companion.ChooseMode.WithAIButton",
+                                       defaultValue: "Set Up with AI Features",
+                                       comment: "Button that starts the full AI + companion setup"),
+                                action: #selector(chooseWithAI), isDefault: true)
+        place(withAI, centeredAtY: Self.contentHeight - 230, minWidth: 260)
+        view.addSubview(withAI)
+        addBodyLabel(String(localized: "Companion.ChooseMode.WithAIDetail",
+                            defaultValue: "Chat with the orchestrator and per-session agents. Requires an AI API key.",
+                            comment: "Detail under the with-AI button on the choose-mode screen"),
+                     to: view, y: Self.contentHeight - 268, height: 34)
+
+        let terminalOnly = makeButton(String(localized: "Companion.ChooseMode.TerminalOnlyButton",
+                                             defaultValue: "Terminal Viewing & Control Only",
+                                             comment: "Button that starts companion-only (no AI) setup"),
+                                      action: #selector(chooseTerminalOnly))
+        place(terminalOnly, centeredAtY: Self.contentHeight - 320, minWidth: 260)
+        view.addSubview(terminalOnly)
+        addBodyLabel(String(localized: "Companion.ChooseMode.TerminalOnlyDetail",
+                            defaultValue: "Browse sessions, watch live output, and type from your iPhone. No AI or API key needed.",
+                            comment: "Detail under the terminal-only button on the choose-mode screen"),
+                     to: view, y: Self.contentHeight - 358, height: 34)
+    }
+
+    @objc private func chooseWithAI(_ sender: Any) {
+        goTo(.fullSetup)
+    }
+
+    @objc private func chooseTerminalOnly(_ sender: Any) {
+        goTo(.companionOnly)
     }
 
     // MARK: Screen 1.1 / 1.2 - install
