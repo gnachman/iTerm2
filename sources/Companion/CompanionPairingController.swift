@@ -342,10 +342,12 @@ final class CompanionPairingController: NSObject {
         return nil
     }
 
-    /// Everything that must hold to pair, or even listen for a paired device.
-    /// Mirrors the AI feature's gating (admin setting + signed plugin + secure
-    /// consent) twice: the AI prerequisite (the companion bridges AI chat) and
-    /// the companion feature itself. Distinct cases so the UI names the remedy.
+    /// Everything that must hold to pair, or even listen for a paired device: the
+    /// companion admin policy, the signed companion plugin (the only outbound path
+    /// to the relay), and the user's secure opt-in. Distinct cases so the UI names
+    /// the remedy. The `.ai*` cases are no longer returned by gate() (AI is now
+    /// advisory, not a prerequisite); they remain only until the classic pairing
+    /// window drops its handling of them.
     enum Gate: Equatable {
         case allowed
         case aiAdminDisabled
@@ -362,21 +364,39 @@ final class CompanionPairingController: NSObject {
     /// in its hello so the phone can disable its chat surfaces when AI is off.
     /// Mirrors the three checks that used to be the AI prerequisites in gate().
     static func aiAvailable() -> Bool {
-        return iTermAdvancedSettingsModel.generativeAIAllowed()
-            && iTermAITermGatekeeper.pluginInstalled()
-            && SecureUserDefaults.instance.enableAI.value
+        return aiAvailable(generativeAIAllowed: iTermAdvancedSettingsModel.generativeAIAllowed(),
+                           pluginInstalled: iTermAITermGatekeeper.pluginInstalled(),
+                           consented: SecureUserDefaults.instance.enableAI.value)
+    }
+
+    /// Pure core of aiAvailable(), split out so the truth table can be tested
+    /// without installing the AI plugin: AI is available only when all three hold.
+    static func aiAvailable(generativeAIAllowed: Bool, pluginInstalled: Bool, consented: Bool) -> Bool {
+        return generativeAIAllowed && pluginInstalled && consented
     }
 
     static func gate() -> Gate {
-        // AI prerequisites.
-        if !iTermAdvancedSettingsModel.generativeAIAllowed() { return .aiAdminDisabled }
-        if !iTermAITermGatekeeper.pluginInstalled() { return .aiPluginMissing }
-        if !SecureUserDefaults.instance.enableAI.value { return .aiConsentNeeded }
-        // Companion-specific: admin policy, the signed companion plugin (the
-        // only outbound path to the relay), and the user's secure opt-in.
-        if !iTermAdvancedSettingsModel.companionPairingAllowed() { return .companionAdminDisabled }
-        if !CompanionPlugin.instance().isSuccess { return .companionPluginMissing }
-        if !SecureUserDefaults.instance.enableCompanionPairing.value { return .companionConsentNeeded }
+        // AI is NO LONGER a prerequisite: the companion pairs and serves a phone
+        // (session browsing, live video, keyboard input) even when AI is off. AI
+        // availability is advisory only (see aiAvailable()), advertised to the
+        // phone so it can disable its chat surfaces. The hard requirements are all
+        // companion-specific: admin policy, the signed companion plugin (the only
+        // outbound path to the relay), and the user's secure opt-in.
+        return gate(companionPairingAllowed: iTermAdvancedSettingsModel.companionPairingAllowed(),
+                    companionPluginInstalled: CompanionPlugin.instance().isSuccess,
+                    companionConsented: SecureUserDefaults.instance.enableCompanionPairing.value)
+    }
+
+    /// Pure core of gate(), split out so the "AI is not a prerequisite" contract
+    /// can be tested deterministically (it takes no AI input at all, so no AI state
+    /// can ever produce an `.ai*` verdict). Depends solely on the three companion
+    /// facts.
+    static func gate(companionPairingAllowed: Bool,
+                     companionPluginInstalled: Bool,
+                     companionConsented: Bool) -> Gate {
+        if !companionPairingAllowed { return .companionAdminDisabled }
+        if !companionPluginInstalled { return .companionPluginMissing }
+        if !companionConsented { return .companionConsentNeeded }
         return .allowed
     }
 
@@ -403,6 +423,13 @@ final class CompanionPairingController: NSObject {
 
     private func gateMayHaveChanged() {
         if Self.gate() == .allowed {
+            // The gate no longer reads AI settings, so an AI toggle keeps the gate
+            // open (the connection is NOT dropped). Instead, tell a live phone that
+            // AI availability changed so it enables/disables its chat surfaces
+            // without reconnecting. The bridge dedupes against what it last
+            // advertised (seeded by its hello), so unrelated settings writes here
+            // do not emit a redundant event.
+            bridge?.updateAIAvailability(Self.aiAvailable())
             resumePairedListeningIfNeeded()
             return
         }
@@ -494,17 +521,18 @@ final class CompanionPairingController: NSObject {
         // than silently keeping the keys around for a feature that can't run.
         unpairIfPluginMissing()
         guard Self.gate() == .allowed else {
-            DLog("Companion: not listening; AI features are unavailable")
-            relayLog("resume: SKIP (AI gate not allowed)")
+            DLog("Companion: not listening; companion pairing is unavailable")
+            relayLog("resume: SKIP (companion gate not allowed)")
             return
         }
         // A paired device means an AI query can arrive from the phone while the
         // user is away. Warm the API key cache now (at launch, or after a
         // disconnect) so that query serves its key from memory rather than
         // blocking on, or prompting for, keychain access with nobody present.
-        // Gated on an actual pairing and idempotent, so this is a cheap no-op
-        // on the reconnect-driven calls.
-        if hasPairedDevice {
+        // Gated on an actual pairing AND on AI being available (no key to warm, and
+        // no phone-driven AI query to serve, when AI is off); idempotent, so this
+        // is a cheap no-op on the reconnect-driven calls.
+        if hasPairedDevice && Self.aiAvailable() {
             AITermControllerObjC.prewarmAPIKeyCache()
         }
         // Park only when nothing is connected. The relay room has a single mac
@@ -1436,13 +1464,14 @@ final class CompanionPairingController: NSObject {
                     return
                 }
                 pairedPID = code.pairingID
-                if isFreshPairing {
+                if isFreshPairing && Self.aiAvailable() {
                     // A brand-new device just paired while the user is present
                     // (they just confirmed the SAS code): warm the AI key cache
                     // now so a query later driven from the away phone serves its
                     // key from memory without a keychain prompt. The launch path
                     // covers devices already paired at startup; this covers a
-                    // pairing that happens while the app is already running.
+                    // pairing that happens while the app is already running. Skipped
+                    // when AI is off: there is no key to warm and no AI query to serve.
                     AITermControllerObjC.prewarmAPIKeyCache()
                 }
                 // Now established: reconnect is keyed on pairedPID, so the

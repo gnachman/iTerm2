@@ -107,6 +107,12 @@ final class CompanionHostBridge {
     /// a re-hello, so a stale peer cannot drive an out-of-date protocol.
     private var versionBlocked = false
 
+    /// The AI availability last advertised to this phone (seeded by the hello it
+    /// was sent). updateAIAvailability emits an aiAvailabilityChanged event only
+    /// when the value actually differs, so unrelated settings writes on the mac do
+    /// not spam the phone. nil until the first hello is sent.
+    private var lastAIAvailable: Bool?
+
     init(transport: MessageTransport) {
         self.transport = transport
     }
@@ -1229,10 +1235,12 @@ final class CompanionHostBridge {
     /// from its side), then evaluate from ours; on incompatibility, block further
     /// service and ask the mac to show an upgrade alert.
     private func handleHello(peerRevision: Int, peerMinimumPeer: Int, requestID: UInt64?) {
+        let aiAvailable = CompanionPairingController.aiAvailable()
+        lastAIAvailable = aiAvailable
         send(.hello(revision: CompanionProtocolVersion.current,
                     minimumPeer: CompanionProtocolVersion.minimumPeer,
                     wantsNotificationPermission: CompanionPushRegistry.alertsEverEnabled,
-                    aiAvailable: CompanionPairingController.aiAvailable()),
+                    aiAvailable: aiAvailable),
              requestID: requestID)
         let verdict = CompanionProtocolVersion.evaluate(peerRevision: peerRevision,
                                                         peerMinimumPeer: peerMinimumPeer)
@@ -2026,6 +2034,18 @@ final class CompanionHostBridge {
 
     /// Enqueue one envelope. Synchronous: enqueue order (main-actor order) is
     /// transmit order among control frames, which always precede pending media.
+    /// Tell the connected phone that the mac's AI availability changed, but only
+    /// when it differs from what this bridge last advertised (in its hello or a
+    /// prior change event). Called by CompanionPairingController when a settings
+    /// change may have flipped aiAvailable(); the dedupe keeps unrelated settings
+    /// writes from emitting redundant events. A no-op before the first hello.
+    func updateAIAvailability(_ available: Bool) {
+        guard lastAIAvailable != available else { return }
+        lastAIAvailable = available
+        RLog("Companion bridge: AI availability changed to \(available); notifying phone")
+        send(.aiAvailabilityChanged(available: available), requestID: nil)
+    }
+
     private func send(_ payload: CompanionHostMessage, requestID: UInt64?) {
         outbox?.enqueueControl(HostEnvelope(requestID: requestID, payload: payload))
     }
