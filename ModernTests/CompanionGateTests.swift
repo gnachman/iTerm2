@@ -24,19 +24,20 @@ final class CompanionGateTests: XCTestCase {
             .allowed)
     }
 
-    // gate() must never return an AI verdict for ANY combination of its inputs.
-    // If someone re-adds an AI prerequisite, it would have to surface as one of
-    // the .ai* cases, which this exhaustive sweep forbids.
-    func testGateNeverReturnsAnAICase() {
-        let aiCases: Set<CompanionPairingController.Gate> = [.aiAdminDisabled, .aiPluginMissing, .aiConsentNeeded]
+    // gate() only ever yields companion verdicts (or .allowed) for ANY combination
+    // of its inputs. The Gate enum no longer even has AI cases, so this is enforced
+    // by the type system too; the sweep documents that no input path is missed.
+    func testGateOnlyYieldsCompanionVerdicts() {
+        let companionCases: Set<CompanionPairingController.Gate> =
+            [.allowed, .companionAdminDisabled, .companionPluginMissing, .companionConsentNeeded]
         for allowed in [true, false] {
             for plugin in [true, false] {
                 for consent in [true, false] {
                     let verdict = CompanionPairingController.gate(companionPairingAllowed: allowed,
                                                                  companionPluginInstalled: plugin,
                                                                  companionConsented: consent)
-                    XCTAssertFalse(aiCases.contains(verdict),
-                                   "gate(\(allowed),\(plugin),\(consent)) must not be an AI verdict, got \(verdict)")
+                    XCTAssertTrue(companionCases.contains(verdict),
+                                  "gate(\(allowed),\(plugin),\(consent)) must be a companion verdict, got \(verdict)")
                 }
             }
         }

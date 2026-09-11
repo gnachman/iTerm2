@@ -345,14 +345,10 @@ final class CompanionPairingController: NSObject {
     /// Everything that must hold to pair, or even listen for a paired device: the
     /// companion admin policy, the signed companion plugin (the only outbound path
     /// to the relay), and the user's secure opt-in. Distinct cases so the UI names
-    /// the remedy. The `.ai*` cases are no longer returned by gate() (AI is now
-    /// advisory, not a prerequisite); they remain only until the classic pairing
-    /// window drops its handling of them.
+    /// the remedy. AI is deliberately absent: it is no longer a prerequisite (see
+    /// aiAvailable(), which is advisory only).
     enum Gate: Equatable {
         case allowed
-        case aiAdminDisabled
-        case aiPluginMissing
-        case aiConsentNeeded
         case companionAdminDisabled
         case companionPluginMissing
         case companionConsentNeeded

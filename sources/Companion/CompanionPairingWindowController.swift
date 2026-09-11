@@ -165,19 +165,6 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         currentGate = gate
         RLog("Companion pairing window: gate is now \(gate)")
         switch gate {
-        case .aiAdminDisabled:
-            // No remedy to offer: this is an administrator decision.
-            showBlockedTop("Generative AI features have been disabled. Check with your system administrator.")
-        case .aiPluginMissing:
-            showBlockedTop("You must install the AI plugin before you can pair a companion device.",
-                           remedyTitle: "Reveal in Settings") {
-                PreferencePanel.sharedInstance().openToPreference(withKey: kPhonyPreferenceKeyInstallAIPlugin)
-            }
-        case .aiConsentNeeded:
-            showBlockedTop("You must enable AI features in settings before you can pair a companion device.",
-                           remedyTitle: "Reveal") {
-                PreferencePanel.sharedInstance().openToPreference(withKey: kPreferenceKeyEnableAI)
-            }
         case .companionAdminDisabled:
             // No remedy to offer: this is an administrator decision.
             showBlockedTop("Companion device pairing has been disabled. Check with your system administrator.")
@@ -449,10 +436,20 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     private func showReadyToPair() {
         controller.stopAdvertising()
         hideTopContent()
-        instructionsLabel.stringValue = "Pair a companion device to use iTerm2 from your iPhone."
+        instructionsLabel.stringValue = "Pair a companion device to use iTerm2 from your iPhone." + aiAdvisorySuffix()
         setStatus("", color: .secondaryLabelColor)
         gateAction = { [weak self] in self?.startFreshPairingFlow() }
         presentPrimaryButton(title: "Show QR Code")
+    }
+
+    /// A short, non-blocking note appended to the pairing instructions when AI is
+    /// off: companion pairing and terminal control still work, but chats are
+    /// unavailable on the phone until AI is turned on. Empty when AI is available,
+    /// so an AI user sees no change. (AI is no longer required to pair, so this is
+    /// informational only, never a blocker.)
+    private func aiAdvisorySuffix() -> String {
+        guard !CompanionPairingController.aiAvailable() else { return "" }
+        return " AI is off, so chats aren’t available on your iPhone; terminal viewing and control still work."
     }
 
     /// Build the placeholder once: a real QR of a throwaway string, Gaussian
@@ -593,11 +590,11 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     /// or dropping while the gate (still .allowed) does not change.
     private func updatePairedConnectionText() {
         if controller.isConnected {
-            instructionsLabel.stringValue = "A companion device is paired and connected."
+            instructionsLabel.stringValue = "A companion device is paired and connected." + aiAdvisorySuffix()
             checkmarkImageView.contentTintColor = .systemGreen
         } else if controller.isListening {
             // Parked at the relay, just waiting for the phone to come back.
-            instructionsLabel.stringValue = "A companion device is paired. Waiting for it to connect."
+            instructionsLabel.stringValue = "A companion device is paired. Waiting for it to connect." + aiAdvisorySuffix()
             checkmarkImageView.contentTintColor = .tertiaryLabelColor
         } else {
             // Not listening at all: the phone cannot reach this Mac. The poll in
