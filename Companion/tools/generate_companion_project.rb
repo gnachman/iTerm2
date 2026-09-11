@@ -73,7 +73,7 @@ SHARED_MAC_SOURCES = %w[
 PUSH_SOURCES = %w[NotificationService.swift NSEFetcher.swift]
 
 # Unit-test sources.
-TEST_SOURCES = %w[AppModelWatchTests.swift SessionWatchStateTests.swift AppModelAIAvailabilityTests.swift]
+TEST_SOURCES = %w[AppModelWatchTests.swift SessionWatchStateTests.swift AppModelAIAvailabilityTests.swift AppModelSessionTreePushTests.swift]
 
 project = Xcodeproj::Project.new(PROJECT_PATH)
 

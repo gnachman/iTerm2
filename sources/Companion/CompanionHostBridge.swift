@@ -72,6 +72,13 @@ final class CompanionHostBridge {
     /// Chat-list change observers driving unsolicited .chatListChanged pushes.
     private var chatListObservers: [any NSObjectProtocol] = []
     private var chatListPushTask: Task<Void, Never>?
+
+    /// Session-tree change observers driving unsolicited .sessionTree pushes, so
+    /// the phone's Sessions tab updates live as sessions/tabs/windows come and go
+    /// (rather than only on tab-appear or pull-to-refresh). Especially important
+    /// without AI, where terminal viewing is the whole feature.
+    private var sessionListObservers: [any NSObjectProtocol] = []
+    private var sessionTreePushTask: Task<Void, Never>?
     private var nextHostRequestID: UInt64 = 1
 
     /// Called once the transport closes remotely, so the owner can drop this
@@ -190,6 +197,40 @@ final class CompanionHostBridge {
                 }
             })
         }
+
+        // Keep the phone's Sessions tab fresh: a session opening or closing, or the
+        // window/tab count changing, changes the tree the phone shows. The debounce
+        // coalesces the burst a single action produces (opening a window creates a
+        // tab and a session at once). Session RENAMES are deliberately NOT observed
+        // here: a progress-style title can churn continuously, which would push the
+        // tree every debounce window; names refresh on the next structural change or
+        // on reconnect/tab-appear instead.
+        for name in [NSNotification.Name.PTYSessionCreated,
+                     NSNotification.Name.PTYSessionTerminated,
+                     Notification.Name("iTermNumberOfSessionsDidChange")] {
+            sessionListObservers.append(center.addObserver(forName: name,
+                                                           object: nil,
+                                                           queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.scheduleSessionTreePush()
+                }
+            })
+        }
+    }
+
+    /// Coalesce a burst of session/tab/window changes (opening a window creates a
+    /// tab and a session at once) into one tree snapshot after a quiet moment, then
+    /// push it unsolicited. The phone updates model.sessionTree in place; a peer too
+    /// old to handle an unsolicited .sessionTree decodes it and ignores it (it is a
+    /// reply type there), so this is backward-compatible.
+    private func scheduleSessionTreePush() {
+        sessionTreePushTask?.cancel()
+        sessionTreePushTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            guard let self, !Task.isCancelled else { return }
+            self.sessionTreePushTask = nil
+            self.send(.sessionTree(CompanionSessionLister.tree()), requestID: nil)
+        }
     }
 
     /// Coalesce bursts (a rename immediately invalidates the icon, which
@@ -217,6 +258,12 @@ final class CompanionHostBridge {
         chatListObservers.removeAll()
         chatListPushTask?.cancel()
         chatListPushTask = nil
+        for observer in sessionListObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        sessionListObservers.removeAll()
+        sessionTreePushTask?.cancel()
+        sessionTreePushTask = nil
         for subscription in subscriptions.values {
             subscription.unsubscribe()
         }
@@ -263,6 +310,12 @@ final class CompanionHostBridge {
         chatListObservers.removeAll()
         chatListPushTask?.cancel()
         chatListPushTask = nil
+        for observer in sessionListObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        sessionListObservers.removeAll()
+        sessionTreePushTask?.cancel()
+        sessionTreePushTask = nil
         for subscription in subscriptions.values {
             subscription.unsubscribe()
         }

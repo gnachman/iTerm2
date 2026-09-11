@@ -3907,6 +3907,14 @@ final class AppModel {
                 liveWatchGuid = nil
                 onStreamEnded?(reason)
             }
+        case .sessionTree(let tree):
+            // Unsolicited: the Mac pushed a fresh session tree because a session,
+            // tab, or window changed. Update in place so the Sessions tab reflects
+            // it live (a solicited fetch is correlated by requestID and resolved by
+            // the client's waiter, so it never reaches here). Clear any prior load
+            // error since we now have a good tree.
+            sessionTree = tree
+            sessionTreeError = nil
         case .aiAvailabilityChanged(let available):
             // The user toggled AI on the paired Mac while we were connected. Flip
             // the flag live so the chat surfaces enable/disable without a reconnect.
