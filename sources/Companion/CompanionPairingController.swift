@@ -360,9 +360,17 @@ final class CompanionPairingController: NSObject {
     /// in its hello so the phone can disable its chat surfaces when AI is off.
     /// Mirrors the three checks that used to be the AI prerequisites in gate().
     static func aiAvailable() -> Bool {
-        return aiAvailable(generativeAIAllowed: iTermAdvancedSettingsModel.generativeAIAllowed(),
-                           pluginInstalled: iTermAITermGatekeeper.pluginInstalled(),
-                           consented: SecureUserDefaults.instance.enableAI.value)
+        // Short-circuit on the cheap, side-effect-free flags BEFORE probing the
+        // plugin. iTermAITermGatekeeper.pluginInstalled() hits LaunchServices and,
+        // when the AI plugin isn't installed, re-probes and logs every call (the AI
+        // plugin deliberately does not cache a "not found" failure). A user who has
+        // AI turned off (the common companion-only case) fails the consent check
+        // here and never triggers that probe, so a polled caller can't spam it.
+        guard iTermAdvancedSettingsModel.generativeAIAllowed(),
+              SecureUserDefaults.instance.enableAI.value else {
+            return false
+        }
+        return iTermAITermGatekeeper.pluginInstalled()
     }
 
     /// Pure core of aiAvailable(), split out so the truth table can be tested
