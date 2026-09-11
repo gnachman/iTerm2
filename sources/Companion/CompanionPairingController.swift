@@ -356,6 +356,17 @@ final class CompanionPairingController: NSObject {
         case companionConsentNeeded
     }
 
+    /// Whether AI is available right now: admin-allowed, the AI plugin is
+    /// installed, and the user has consented. This is advisory for the companion
+    /// (it no longer gates pairing, see gate()): the mac advertises it to the phone
+    /// in its hello so the phone can disable its chat surfaces when AI is off.
+    /// Mirrors the three checks that used to be the AI prerequisites in gate().
+    static func aiAvailable() -> Bool {
+        return iTermAdvancedSettingsModel.generativeAIAllowed()
+            && iTermAITermGatekeeper.pluginInstalled()
+            && SecureUserDefaults.instance.enableAI.value
+    }
+
     static func gate() -> Gate {
         // AI prerequisites.
         if !iTermAdvancedSettingsModel.generativeAIAllowed() { return .aiAdminDisabled }

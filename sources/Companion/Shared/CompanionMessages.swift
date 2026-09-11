@@ -716,7 +716,14 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
     /// foreground status, asks iOS for notification permission if it hasn't yet.
     /// Sent on every connect so it never depends on timing. Optional for
     /// cross-version compatibility: an older mac omits it (decodes as nil -> false).
-    case hello(revision: Int, minimumPeer: Int, wantsNotificationPermission: Bool?)
+    ///
+    /// `aiAvailable` (revision 13+) is whether the mac has AI available right now
+    /// (admin-allowed + AI plugin installed + AI consent). The phone disables its
+    /// chat surfaces with an explanation when this is false. Optional for
+    /// cross-version compatibility: a pre-13 mac omits it, decoding as nil, which
+    /// the phone reads as `true` - such a mac only ever paired with AI on, so
+    /// "unknown" means "available" and existing users see no change.
+    case hello(revision: Int, minimumPeer: Int, wantsNotificationPermission: Bool?, aiAvailable: Bool?)
 
     /// Reply to `.listChatsAndSessions`.
     case chatsAndSessions(chats: [CompanionChatListEntry], sessions: [CompanionSessionSummary])

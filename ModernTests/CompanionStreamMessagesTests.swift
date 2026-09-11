@@ -203,4 +203,40 @@ final class CompanionStreamMessagesTests: XCTestCase {
         XCTAssertEqual(decoded, original)
         XCTAssertEqual(decoded.canResize, false)
     }
+
+    // The host hello carries aiAvailable (revision 13+). Both truth values must
+    // survive a round trip so the phone can read the mac's real AI state.
+    func testHostHelloRoundTripsAIAvailable() throws {
+        for value in [true, false] {
+            guard case let .hello(revision, minimumPeer, wants, aiAvailable) =
+                    try roundTripHost(.hello(revision: 13, minimumPeer: 11,
+                                             wantsNotificationPermission: true,
+                                             aiAvailable: value)) else {
+                return XCTFail("expected .hello")
+            }
+            XCTAssertEqual(revision, 13)
+            XCTAssertEqual(minimumPeer, 11)
+            XCTAssertEqual(wants, true)
+            XCTAssertEqual(aiAvailable, value)
+        }
+    }
+
+    // A pre-13 mac omits aiAvailable (and wantsNotificationPermission). Synthesized
+    // Decodable decodes an absent optional as nil rather than throwing, and the
+    // phone reads nil as "AI available" (a pre-13 mac only ever paired with AI on).
+    // This is the backward-compatibility contract that keeps existing users
+    // unaffected.
+    func testLegacyHostHelloDecodesWithoutAIAvailable() throws {
+        let json = """
+        {"payload":{"hello":{"revision":11,"minimumPeer":11}}}
+        """
+        let decoded = try decoder().decode(HostEnvelope.self, from: Data(json.utf8)).payload
+        guard case let .hello(revision, minimumPeer, wants, aiAvailable) = decoded else {
+            return XCTFail("expected .hello")
+        }
+        XCTAssertEqual(revision, 11)
+        XCTAssertEqual(minimumPeer, 11)
+        XCTAssertNil(wants)
+        XCTAssertNil(aiAvailable, "an absent aiAvailable decodes as nil (read as available)")
+    }
 }

@@ -1231,7 +1231,8 @@ final class CompanionHostBridge {
     private func handleHello(peerRevision: Int, peerMinimumPeer: Int, requestID: UInt64?) {
         send(.hello(revision: CompanionProtocolVersion.current,
                     minimumPeer: CompanionProtocolVersion.minimumPeer,
-                    wantsNotificationPermission: CompanionPushRegistry.alertsEverEnabled),
+                    wantsNotificationPermission: CompanionPushRegistry.alertsEverEnabled,
+                    aiAvailable: CompanionPairingController.aiAvailable()),
              requestID: requestID)
         let verdict = CompanionProtocolVersion.evaluate(peerRevision: peerRevision,
                                                         peerMinimumPeer: peerMinimumPeer)

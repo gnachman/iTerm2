@@ -239,7 +239,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
 
     private static let hostReps: [CompanionHostMessage] = [
         .unsupported,
-        .hello(revision: 1, minimumPeer: 1, wantsNotificationPermission: false),
+        .hello(revision: 1, minimumPeer: 1, wantsNotificationPermission: false, aiAvailable: true),
         .chatsAndSessions(chats: [], sessions: []),
         .chatCreated(entry: CompanionChatListEntry(chat: Chat(title: "t", permissions: ""), snippet: nil)),
         .history(chatID: "c", messages: [], maxSeq: 0),
