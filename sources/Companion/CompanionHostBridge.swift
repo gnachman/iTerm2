@@ -79,6 +79,14 @@ final class CompanionHostBridge {
     /// without AI, where terminal viewing is the whole feature.
     private var sessionListObservers: [any NSObjectProtocol] = []
     private var sessionTreePushTask: Task<Void, Never>?
+    /// When the last session-tree push actually went out, as a monotonic
+    /// systemUptime timestamp (never runs backward on a clock change), for rate
+    /// limiting (see scheduleSessionTreePush). nil until the first push.
+    private var lastSessionTreePush: TimeInterval?
+    /// The minimum spacing between session-tree pushes. A rename can churn a title
+    /// rapidly (e.g. a progress indicator in the title); this caps the resulting
+    /// pushes to one per interval while still letting an idle change go out at once.
+    private static let sessionTreePushMinInterval: TimeInterval = 2.0
     private var nextHostRequestID: UInt64 = 1
 
     /// Called once the transport closes remotely, so the owner can drop this
@@ -198,16 +206,15 @@ final class CompanionHostBridge {
             })
         }
 
-        // Keep the phone's Sessions tab fresh: a session opening or closing, or the
-        // window/tab count changing, changes the tree the phone shows. The debounce
-        // coalesces the burst a single action produces (opening a window creates a
-        // tab and a session at once). Session RENAMES are deliberately NOT observed
-        // here: a progress-style title can churn continuously, which would push the
-        // tree every debounce window; names refresh on the next structural change or
-        // on reconnect/tab-appear instead.
+        // Keep the phone's Sessions tab fresh: a session opening or closing, the
+        // window/tab count changing, or a session being renamed all change the tree
+        // the phone shows. scheduleSessionTreePush rate-limits the result, so a
+        // progress-style title that churns rapidly still costs at most one push per
+        // interval while an idle change (a new session) goes out immediately.
         for name in [NSNotification.Name.PTYSessionCreated,
                      NSNotification.Name.PTYSessionTerminated,
-                     Notification.Name("iTermNumberOfSessionsDidChange")] {
+                     Notification.Name("iTermNumberOfSessionsDidChange"),
+                     NSNotification.Name.PTYSessionPresentationNameDidChange] {
             sessionListObservers.append(center.addObserver(forName: name,
                                                            object: nil,
                                                            queue: .main) { [weak self] _ in
@@ -218,19 +225,59 @@ final class CompanionHostBridge {
         }
     }
 
-    /// Coalesce a burst of session/tab/window changes (opening a window creates a
-    /// tab and a session at once) into one tree snapshot after a quiet moment, then
-    /// push it unsolicited. The phone updates model.sessionTree in place; a peer too
-    /// old to handle an unsolicited .sessionTree decodes it and ignores it (it is a
-    /// reply type there), so this is backward-compatible.
+    /// What scheduleSessionTreePush should do given the current time, the last push
+    /// time, the minimum spacing, and whether a trailing push is already queued.
+    enum SessionTreePushAction: Equatable {
+        /// Push immediately (idle long enough, or the first push).
+        case pushNow
+        /// A push is already queued; this change will ride it (it re-reads the tree
+        /// at fire time), so do nothing.
+        case alreadyScheduled
+        /// Too soon since the last push: queue a trailing push after this delay.
+        case scheduleAfter(TimeInterval)
+    }
+
+    /// Pure rate-limit decision, split out so it can be tested without real time.
+    /// Leading + trailing: an idle change fires at once, and while changes keep
+    /// coming they collapse to at most one push per interval, with a final trailing
+    /// push so the last state (e.g. the settled title) always lands.
+    nonisolated static func sessionTreePushAction(now: TimeInterval,
+                                                  lastPush: TimeInterval?,
+                                                  minInterval: TimeInterval,
+                                                  alreadyScheduled: Bool) -> SessionTreePushAction {
+        if alreadyScheduled { return .alreadyScheduled }
+        guard let lastPush else { return .pushNow }
+        let elapsed = now - lastPush
+        if elapsed >= minInterval { return .pushNow }
+        return .scheduleAfter(minInterval - elapsed)
+    }
+
+    /// Push the current session tree to the phone, rate-limited so a rapidly
+    /// churning title can't flood the relay. The phone updates model.sessionTree in
+    /// place; a peer too old to handle an unsolicited .sessionTree decodes it and
+    /// ignores it (it is a reply type there), so this is backward-compatible.
     private func scheduleSessionTreePush() {
-        sessionTreePushTask?.cancel()
-        sessionTreePushTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 500_000_000)
-            guard let self, !Task.isCancelled else { return }
-            self.sessionTreePushTask = nil
-            self.send(.sessionTree(CompanionSessionLister.tree()), requestID: nil)
+        switch Self.sessionTreePushAction(now: ProcessInfo.processInfo.systemUptime,
+                                          lastPush: lastSessionTreePush,
+                                          minInterval: Self.sessionTreePushMinInterval,
+                                          alreadyScheduled: sessionTreePushTask != nil) {
+        case .alreadyScheduled:
+            break
+        case .pushNow:
+            pushSessionTreeNow()
+        case .scheduleAfter(let delay):
+            sessionTreePushTask = Task { [weak self] in
+                try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                guard let self, !Task.isCancelled else { return }
+                self.sessionTreePushTask = nil
+                self.pushSessionTreeNow()
+            }
         }
+    }
+
+    private func pushSessionTreeNow() {
+        lastSessionTreePush = ProcessInfo.processInfo.systemUptime
+        send(.sessionTree(CompanionSessionLister.tree()), requestID: nil)
     }
 
     /// Coalesce bursts (a rename immediately invalidates the icon, which
