@@ -2976,3 +2976,11 @@ Bug Fixes:
   inside a selected tab in the dark Tahoe theme,
   caused by the tab chrome images meeting on a
   fractional pixel.
+- Fixed a lag when switching or closing tabs
+  with the Session Status tool open in the
+  toolbelt. A switch reloaded the whole tool
+  three times and a close reloaded it five
+  times, and every row rebuilt an
+  interpolated-string evaluator it could have
+  kept. The tool also no longer does this work
+  while the toolbelt is hidden.
