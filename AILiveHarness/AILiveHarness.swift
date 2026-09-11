@@ -24,10 +24,12 @@
 //        "ANTHROPIC_API_KEY": "sk-ant-...",
 //        "GEMINI_API_KEY":    "...",
 //        "DEEPSEEK_API_KEY":  "sk-...",
+//        "XAI_API_KEY":       "xai-...",
 //        "OPENAI_MODELS":    "gpt-5,gpt-5-mini",      // optional override
 //        "ANTHROPIC_MODELS": "claude-haiku-4-5",      // optional override
 //        "GEMINI_MODELS":    "gemini-3-flash-preview",// optional override
 //        "DEEPSEEK_MODELS":  "deepseek-v4-flash",     // optional override
+//        "XAI_MODELS":       "grok-4.6",              // optional override
 //        "GEMINI_INTERVAL":  "13"                     // seconds between calls
 //      }
 //
@@ -42,6 +44,7 @@ final class AILiveHarness: XCTestCase {
         var anthropic: String?
         var gemini: String?
         var deepSeek: String?
+        var xAI: String?
     }
 
     nonisolated static let configFileName = ".iterm2-ai-live.json"
@@ -116,7 +119,8 @@ final class AILiveHarness: XCTestCase {
         return Keys(openAI: json["OPENAI_API_KEY"],
                     anthropic: json["ANTHROPIC_API_KEY"],
                     gemini: json["GEMINI_API_KEY"],
-                    deepSeek: json["DEEPSEEK_API_KEY"])
+                    deepSeek: json["DEEPSEEK_API_KEY"],
+                    xAI: json["XAI_API_KEY"])
     }
 
     // Models that AIMetadata still lists but that a freshly-minted vendor
@@ -162,6 +166,7 @@ final class AILiveHarness: XCTestCase {
             case "anthropic": return .anthropic
             case "gemini":    return .gemini
             case "deepseek":  return .deepSeek
+            case "xai":       return .xAI
             default:          return nil
             }
         }()
@@ -1623,6 +1628,49 @@ final class AILiveHarness: XCTestCase {
     func test_deepseek_refusal_streaming() throws {
         let key = try keyOrSkip(Self.loadKeys().deepSeek, vendor: "deepseek")
         runRefusal(vendor: "deepseek", apiKey: key, streaming: true)
+    }
+
+    // MARK: - xAI / Grok
+
+    func test_xai_smoke_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().xAI, vendor: "xai")
+        runSmoke(vendor: "xai", apiKey: key, streaming: false)
+    }
+    func test_xai_smoke_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().xAI, vendor: "xai")
+        runSmoke(vendor: "xai", apiKey: key, streaming: true)
+    }
+    func test_xai_multiTurn_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().xAI, vendor: "xai")
+        runMultiTurn(vendor: "xai", apiKey: key, streaming: false)
+    }
+    func test_xai_volatileMultiTurn_keepsUserTurn() throws {
+        let key = try keyOrSkip(Self.loadKeys().xAI, vendor: "xai")
+        try runVolatileContextMultiTurn(vendor: "xai", apiKey: key)
+    }
+    func test_xai_multiTurn_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().xAI, vendor: "xai")
+        runMultiTurn(vendor: "xai", apiKey: key, streaming: true)
+    }
+    func test_xai_toolCall_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().xAI, vendor: "xai")
+        runToolCall(vendor: "xai", apiKey: key, streaming: false)
+    }
+    func test_xai_toolCall_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().xAI, vendor: "xai")
+        runToolCall(vendor: "xai", apiKey: key, streaming: true)
+    }
+    func test_xai_toolSchemaAcceptance() throws {
+        let key = try keyOrSkip(Self.loadKeys().xAI, vendor: "xai")
+        runToolSchemaAcceptance(vendor: "xai", apiKey: key)
+    }
+    func test_xai_refusal_nonStreaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().xAI, vendor: "xai")
+        runRefusal(vendor: "xai", apiKey: key, streaming: false)
+    }
+    func test_xai_refusal_streaming() throws {
+        let key = try keyOrSkip(Self.loadKeys().xAI, vendor: "xai")
+        runRefusal(vendor: "xai", apiKey: key, streaming: true)
     }
 
     // MARK: - DeepSeek thinking + tool call (issue 12858 / 12707)
