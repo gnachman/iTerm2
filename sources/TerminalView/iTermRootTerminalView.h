@@ -53,6 +53,10 @@
 // Compact and minimal themes have no title bar, so without this the window name
 // is only visible when the tab bar is hidden and the title takes its place.
 - (NSString *)rootTerminalViewWindowNameBesideTabs;
+
+// The window name beside the tabs was double-clicked. Opens the rename dialog
+// that Window > Edit Window Title opens, which is otherwise the only way there.
+- (void)rootTerminalViewDidRequestEditWindowName;
 - (NSImage *)rootTerminalViewCurrentTabIcon;
 - (BOOL)rootTerminalViewShouldDrawStoplightButtons;
 - (BOOL)rootTerminalViewShouldRevealStandardWindowButtons;
