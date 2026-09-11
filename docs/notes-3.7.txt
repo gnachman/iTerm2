@@ -292,3 +292,12 @@ Bug Fixes:
 - Fixed the git ahead/behind arrows in the
   session toolbar staying black in dark mode
   instead of matching the text color.
+- The About window has been redesigned: one
+  centred column with the app icon, buttons for
+  the home page, bug reports and credits, the
+  sponsors in a row of cards, and the backers in
+  a rounded well with higher-tier backers listed
+  first. It follows the current theme and
+  updates live when you switch between light and
+  dark; before macOS 26, dark themes get a
+  frosted-glass look.
