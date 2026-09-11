@@ -137,6 +137,8 @@ static NSString *iTermAIVendorProviderName(iTermAIVendor vendor) {
             return NSLocalizedStringWithDefaultValue(@"AIProvider.Llama", nil, [NSBundle mainBundle], @"Llama", @"Llama provider name");
         case iTermAIVendorApple:
             return NSLocalizedStringWithDefaultValue(@"AIProvider.AppleIntelligence", nil, [NSBundle mainBundle], @"Apple Intelligence", @"Apple Intelligence provider name");
+        case iTermAIVendorXAI:
+            return NSLocalizedStringWithDefaultValue(@"AIProvider.Grok", nil, [NSBundle mainBundle], @"Grok", @"Grok (xAI) provider name");
     }
     return NSLocalizedStringWithDefaultValue(@"AIProvider.OpenAI", nil, [NSBundle mainBundle], @"OpenAI", @"OpenAI provider name");
 }
@@ -151,6 +153,7 @@ static BOOL iTermAIVendorHasEnterableKey(iTermAIVendor vendor) {
         case iTermAIVendorAnthropic:
         case iTermAIVendorGemini:
         case iTermAIVendorDeepSeek:
+        case iTermAIVendorXAI:
             return YES;
         case iTermAIVendorLlama:
         case iTermAIVendorApple:
@@ -2226,6 +2229,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         @(iTermAIVendorAnthropic),
         @(iTermAIVendorGemini),
         @(iTermAIVendorDeepSeek),
+        @(iTermAIVendorXAI),
         @(iTermAIVendorLlama)
     ];
 }
@@ -2559,7 +2563,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         @(iTermAIVendorOpenAI),
         @(iTermAIVendorAnthropic),
         @(iTermAIVendorGemini),
-        @(iTermAIVendorDeepSeek)
+        @(iTermAIVendorDeepSeek),
+        @(iTermAIVendorXAI)
     ];
 }
 
