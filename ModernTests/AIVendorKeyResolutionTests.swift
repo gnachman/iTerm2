@@ -80,6 +80,8 @@ final class AIVendorKeyResolutionTests: XCTestCase {
         XCTAssertEqual(LLMMetadata.vendor(forModelName: "gemini-2.0-flash"), .gemini)
         XCTAssertEqual(LLMMetadata.vendor(forModelName: "deepseek-chat"), .deepSeek)
         XCTAssertEqual(LLMMetadata.vendor(forModelName: "llama4:latest"), .llama)
+        XCTAssertEqual(LLMMetadata.vendor(forModelName: "grok-4.6"), .xAI)
+        XCTAssertEqual(LLMMetadata.vendor(forModelName: "GROK-4.3"), .xAI)
     }
 
     func testVendorForModelName_returnsNilWhenNoVendorKeyword() {
@@ -138,5 +140,20 @@ final class AIVendorKeyResolutionTests: XCTestCase {
                                                     url: "https://api.openai.com/v1",
                                                     modelName: "custom"),
                        .openAI)
+        XCTAssertEqual(LLMMetadata.objcManualVendor(api: .chatCompletions,
+                                                    url: "https://api.x.ai/v1/chat/completions",
+                                                    modelName: "custom"),
+                       .xAI)
+        XCTAssertEqual(LLMMetadata.objcManualVendor(api: .chatCompletions,
+                                                    url: "https://example.com",
+                                                    modelName: "grok-custom"),
+                       .xAI)
+    }
+
+    func testApiKeyMatcher_xaiPrefixIsXAIOnly() {
+        XCTAssertTrue(AITermControllerObjC.objcApiKey("xai-test-key", matches: .xAI))
+        XCTAssertFalse(AITermControllerObjC.objcApiKey("xai-test-key", matches: .openAI))
+        XCTAssertFalse(AITermControllerObjC.objcApiKey("xai-test-key", matches: .deepSeek))
+        XCTAssertFalse(AITermControllerObjC.objcApiKey("sk-abc", matches: .xAI))
     }
 }

@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "models": [
     {
       "name": "gpt-5.6-sol",
@@ -725,6 +725,32 @@
       "url": "https://api.anthropic.com/v1/messages",
       "contextWindowTokens": 200000,
       "maxResponseTokens": 64000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ]
+    },
+    {
+      "name": "grok-4.6",
+      "vendor": "xAI",
+      "api": "chatCompletions",
+      "url": "https://api.x.ai/v1/chat/completions",
+      "contextWindowTokens": 500000,
+      "maxResponseTokens": 128000,
+      "features": [
+        "functionCalling",
+        "streaming"
+      ],
+      "recommended": true,
+      "economyModel": "grok-4.3"
+    },
+    {
+      "name": "grok-4.3",
+      "vendor": "xAI",
+      "api": "chatCompletions",
+      "url": "https://api.x.ai/v1/chat/completions",
+      "contextWindowTokens": 1000000,
+      "maxResponseTokens": 128000,
       "features": [
         "functionCalling",
         "streaming"

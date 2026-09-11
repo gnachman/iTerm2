@@ -33,7 +33,7 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
     // can require a token; Apple Intelligence is omitted because it runs
     // on-device and needs no key.
     private static let prewarmableVendors: [iTermAIVendor] = [
-        .openAI, .anthropic, .gemini, .deepSeek, .llama
+        .openAI, .anthropic, .gemini, .deepSeek, .llama, .xAI
     ]
 
     // Read every provider's key from the keychain into the in-memory cache.
@@ -299,6 +299,8 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
             return "Llama API Key for iTerm2"
         case .apple:
             return "Apple Intelligence API Key for iTerm2"
+        case .xAI:
+            return "xAI API Key for iTerm2"
         @unknown default:
             return "AI API Key for iTerm2"
         }
@@ -315,10 +317,12 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
             return trimmed.hasPrefix("sk-ant-")
         case .gemini:
             return trimmed.hasPrefix("AIza")
+        case .xAI:
+            return trimmed.hasPrefix("xai-")
         case .openAI:
-            return !trimmed.hasPrefix("sk-ant-") && !trimmed.hasPrefix("AIza")
+            return !trimmed.hasPrefix("sk-ant-") && !trimmed.hasPrefix("AIza") && !trimmed.hasPrefix("xai-")
         case .deepSeek:
-            return !trimmed.hasPrefix("sk-ant-") && !trimmed.hasPrefix("AIza")
+            return !trimmed.hasPrefix("sk-ant-") && !trimmed.hasPrefix("AIza") && !trimmed.hasPrefix("xai-")
         case .llama, .apple:
             return true
         @unknown default:

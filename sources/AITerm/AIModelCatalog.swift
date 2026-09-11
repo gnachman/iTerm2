@@ -278,6 +278,7 @@ private struct ModelDTO: Decodable {
         case "llama": return .llama
         case "anthropic": return .anthropic
         case "apple": return .apple
+        case "xAI": return .xAI
         default: return nil
         }
     }

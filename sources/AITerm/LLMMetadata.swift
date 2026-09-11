@@ -63,6 +63,11 @@ class LLMMetadata: NSObject {
         return (url?.host ?? "").hasSuffix(".anthropic.com")
     }
 
+    @objc(hostIsXAIAIAPIForURL:)
+    static func hostIsXAIAIAPI(url: URL?) -> Bool {
+        return url?.host == "api.x.ai"
+    }
+
     static var effectiveVendor: iTermAIVendor {
         if iTermPreferences.bool(forKey: kPreferenceKeyUseRecommendedAIModel) {
             DLog("Use \(String(describing: currentVendor?.rawValue))")
@@ -104,6 +109,8 @@ class LLMMetadata: NSObject {
             return AIMetadata.alternateAnthropicModels
         case .apple:
             return AIMetadata.alternateAppleModels
+        case .xAI:
+            return AIMetadata.alternateXAIModels
         @unknown default:
             return []
         }
@@ -123,6 +130,8 @@ class LLMMetadata: NSObject {
             return AIMetadata.recommendedAnthropicModel
         case .apple:
             return AIMetadata.recommendedAppleModel
+        case .xAI:
+            return AIMetadata.recommendedXAIModel
         @unknown default:
             return nil
         }
@@ -377,6 +386,9 @@ class LLMMetadata: NSObject {
         if lowercased.contains("llama") {
             return .llama
         }
+        if lowercased.contains("grok") {
+            return .xAI
+        }
         return nil
     }
 
@@ -411,6 +423,9 @@ class LLMMetadata: NSObject {
         }
         if hostIsDeepSeekAIAPI(url: parsedURL) {
             return .deepSeek
+        }
+        if hostIsXAIAIAPI(url: parsedURL) {
+            return .xAI
         }
         if hostIsOpenAIAPI(url: parsedURL) || hostIsAzureAIAPI(url: parsedURL) {
             return .openAI

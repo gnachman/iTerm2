@@ -28,7 +28,7 @@ final class AIModelCatalogTest: XCTestCase {
         let models = try bundledModels()
         XCTAssertFalse(models.isEmpty,
                        "AI model catalog decoded to zero models")
-        XCTAssertEqual(models.count, 42,
+        XCTAssertEqual(models.count, 44,
                        "Unexpected catalog size; update this test if you intentionally changed ai-models.json")
     }
 
@@ -45,6 +45,7 @@ final class AIModelCatalogTest: XCTestCase {
         XCTAssertEqual(AIModelCatalog.recommendedModel(for: .anthropic, in: models)?.name, "claude-opus-4-8")
         XCTAssertEqual(AIModelCatalog.recommendedModel(for: .llama, in: models)?.name, "llama4:latest")
         XCTAssertEqual(AIModelCatalog.recommendedModel(for: .apple, in: models)?.name, "apple-on-device")
+        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .xAI, in: models)?.name, "grok-4.6")
     }
 
     func testAlternateModelsFilterByVendor() throws {
@@ -84,6 +85,18 @@ final class AIModelCatalogTest: XCTestCase {
         if let gpt55 = models.first(where: { $0.name == "gpt-5.5" }) {
             XCTAssertEqual(gpt55.vectorStoreConfig, .disabled)
         }
+
+        guard let grok = models.first(where: { $0.name == "grok-4.6" }) else {
+            XCTFail("grok-4.6 missing from catalog")
+            return
+        }
+        XCTAssertEqual(grok.vendor, .xAI)
+        XCTAssertEqual(grok.api, .chatCompletions)
+        XCTAssertEqual(grok.url, "https://api.x.ai/v1/chat/completions")
+        XCTAssertTrue(grok.features.contains(.functionCalling))
+        XCTAssertTrue(grok.features.contains(.streaming))
+        XCTAssertEqual(grok.economyModelName, "grok-4.3")
+        XCTAssertTrue(grok.recommended)
     }
 
     // Reasoning effort and service tier are per-model catalog data (OpenAI

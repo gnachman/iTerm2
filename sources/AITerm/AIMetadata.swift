@@ -43,7 +43,7 @@
 //        # all models for a vendor:
 //        tools/run_ai_live.sh test_<vendor>_refusal
 //
-//     <vendor> is openai / anthropic / gemini / deepseek (lowercase).
+//     <vendor> is openai / anthropic / gemini / deepseek / xai (lowercase).
 //
 //  4. `git add OtherResources/ai-models.json
 //     ModernTests/Resources/SafetyRefusalFixtures/*` and commit together.
@@ -82,6 +82,11 @@ class AIModel: NSObject {
             apiGuess = .anthropic
             featuresGuess = [.streaming, .functionCalling]
             vendorGuess = .anthropic
+        } else if modelName.lowercased().contains("grok") {
+            urlGuess = "https://api.x.ai/v1/chat/completions"
+            apiGuess = .chatCompletions
+            featuresGuess = [.functionCalling, .streaming]
+            vendorGuess = .xAI
         } else if modelName.contains("gpt") || modelName.hasPrefix("o") {
             if legacy {
                 urlGuess = "https://api.openai.com/v1/completions"
@@ -310,6 +315,10 @@ class AIMetadata: NSObject {
         return recommendedModel(for: .apple)
     }
 
+    static var recommendedXAIModel: Model {
+        return recommendedModel(for: .xAI)
+    }
+
     static var alternateOpenAIModels: [Model] {
         return AIMetadata.instance.models.filter { candidate in
             candidate.vendor == .openAI
@@ -343,6 +352,12 @@ class AIMetadata: NSObject {
     static var alternateAppleModels: [Model] {
         return AIMetadata.instance.models.filter { candidate in
             candidate.vendor == .apple
+        }
+    }
+
+    static var alternateXAIModels: [Model] {
+        return AIMetadata.instance.models.filter { candidate in
+            candidate.vendor == .xAI
         }
     }
 

@@ -95,7 +95,9 @@ typedef NS_ENUM(NSUInteger, iTermAIVendor) {
     iTermAIVendorOpenAI = 2,
     iTermAIVendorLlama = 3,
     iTermAIVendorAnthropic = 4,
-    iTermAIVendorApple = 5
+    iTermAIVendorApple = 5,
+    // Append-only: prefs store this raw value.
+    iTermAIVendorXAI NS_SWIFT_NAME(xAI) = 6
 };
 
 typedef NS_ENUM(NSUInteger, iTermAIPrompt) {

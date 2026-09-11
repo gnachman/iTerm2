@@ -101,6 +101,10 @@ struct LLMProvider {
                                                      streaming: false)) {
             return "Anthropic"
         }
+        if LLMMetadata.hostIsXAIAIAPI(url: url(apiKey: "placeholder",
+                                               streaming: false)) {
+            return "Grok"
+        }
         if model.name.contains("llama") {
             return "Llama"
         }
