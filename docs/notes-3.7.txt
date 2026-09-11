@@ -221,6 +221,12 @@ Major New Features:
   button that verifies your settings and API key
   before you save.
 
+- Grok is now a built-in AI provider.
+  Choose it in Settings > General >
+  AI, in the chat provider menu, or
+  in the Companion setup wizard, and
+  paste an xAI API key.
+
 - AI command safety checks now prefer the cheaper
   "economy" model when one is available, matching
   the screen-watch poller, so the frequent
