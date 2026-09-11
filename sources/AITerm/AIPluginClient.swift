@@ -92,6 +92,13 @@ struct PluginError: LocalizedError, Equatable, CustomDebugStringConvertible {
 struct Plugin {
     static private var _instance = MutableAtomicObject<Result<Plugin, PluginError>?>(nil)
     private static let publicKeyB64 = "fYLUx58QwucuPJRYxBjp7M//uVM0vTfgUo7d6u4TQR8="
+    /// The failure reason last logged by load(), so a repeated identical failure is
+    /// not logged again. instance() deliberately does NOT cache a failure (it
+    /// re-probes every call so a later install is noticed), and callers probe on hot
+    /// paths (e.g. menu validation of the inline-chat item), so without this a
+    /// missing plugin logs "Plugin not found" on every probe. Only accessed inside
+    /// _instance.mutableAccess (which serializes load()), so it needs no extra lock.
+    static private var lastLoggedFailureReason: String?
 
     static func instance() -> Result<Plugin, PluginError> {
         return _instance.mutableAccess { result in
@@ -109,16 +116,27 @@ struct Plugin {
 
     private static func load() -> Result<Plugin, PluginError> {
         do {
-            return  Result<Plugin, PluginError>.success(try Plugin())
+            let plugin = try Plugin()
+            // Success: clear the dedup so a future failure (plugin removed) logs again.
+            lastLoggedFailureReason = nil
+            return .success(plugin)
         } catch let error as PluginError {
-            let temp = Result<Plugin, PluginError>.failure(error)
-            RLog("\(error.reason)")
-            return temp
+            logFailureOnce(error.reason)
+            return .failure(error)
         } catch {
-            RLog("\(error.localizedDescription)")
-            let temp = Result<Plugin, PluginError>.failure(PluginError(reason: error.localizedDescription))
-            return temp
+            logFailureOnce(error.localizedDescription)
+            return .failure(PluginError(reason: error.localizedDescription))
         }
+    }
+
+    /// Log a load failure only when its reason differs from the last one logged, so
+    /// repeated probes of a still-missing plugin don't spam the log while a genuine
+    /// change (missing -> signature invalid, or the plugin appearing then vanishing)
+    /// still surfaces.
+    private static func logFailureOnce(_ reason: String) {
+        guard lastLoggedFailureReason != reason else { return }
+        lastLoggedFailureReason = reason
+        RLog("\(reason)")
     }
     static func reload() {
         _instance.mutableAccess { result in
