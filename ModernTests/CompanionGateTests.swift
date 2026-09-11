@@ -74,4 +74,17 @@ final class CompanionGateTests: XCTestCase {
                            "AI must be unavailable when any prerequisite is missing")
         }
     }
+
+    // The bridge sends the typed .aiUnavailable error only to a phone that can
+    // decode it (revision >= 13, spelled out here since ModernTests can't link the
+    // CompanionProtocol module). An older phone gets .internalError instead so the
+    // unknown code string never drops its whole frame. Revision 0 is an unpaired /
+    // incompatible peer (peerRevision is reset to 0 there), which must not qualify.
+    func testPeerUnderstandsAIUnavailableCodeBoundary() {
+        let aiDecouplingRevision = 13
+        XCTAssertTrue(CompanionHostBridge.peerUnderstandsAIUnavailableCode(peerRevision: aiDecouplingRevision))
+        XCTAssertTrue(CompanionHostBridge.peerUnderstandsAIUnavailableCode(peerRevision: aiDecouplingRevision + 1))
+        XCTAssertFalse(CompanionHostBridge.peerUnderstandsAIUnavailableCode(peerRevision: aiDecouplingRevision - 1))
+        XCTAssertFalse(CompanionHostBridge.peerUnderstandsAIUnavailableCode(peerRevision: 0))
+    }
 }

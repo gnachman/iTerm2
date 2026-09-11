@@ -360,12 +360,18 @@ final class CompanionHostBridge {
         case .hello(let revision, let minimumPeer):
             handleHello(peerRevision: revision, peerMinimumPeer: minimumPeer, requestID: requestID)
         case .listChatsAndSessions:
-            send(.chatsAndSessions(chats: chatEntries(),
+            // Mixed request: the session list works with or without AI, but chats
+            // are AI content. When AI is off, return the sessions and an empty chat
+            // list so the phone's Sessions tab still populates while its Chats tab
+            // shows the AI-unavailable panel.
+            send(.chatsAndSessions(chats: CompanionPairingController.aiAvailable() ? chatEntries() : [],
                                    sessions: CompanionSessionLister.sessions()),
                  requestID: requestID)
         case .createChat(let title, let mode):
+            guard requireAI(requestID) else { return }
             handleCreate(title: title, mode: mode, requestID: requestID)
         case .deleteChat(let chatID):
+            guard requireAI(requestID) else { return }
             do {
                 guard let client = ChatClient.instance else {
                     throw CompanionMacError.chatSystemUnavailable
@@ -379,6 +385,7 @@ final class CompanionHostBridge {
                      requestID: requestID)
             }
         case .deleteMessages(let chatID, let messageIDs):
+            guard requireAI(requestID) else { return }
             // The phone truncated the log (its Edit/Delete). Route through the
             // same broker path the Mac UI uses, so the store, the Mac window, the
             // agent, and the phone (via the messagesRemoved echo) all converge.
@@ -389,27 +396,34 @@ final class CompanionHostBridge {
                      requestID: requestID)
             }
         case .setChatMuted(let chatID, let muted):
+            guard requireAI(requestID) else { return }
             // The phone toggled the row optimistically; persist so the push
             // path (agent-activity notifier + syncSince) honors it even while
             // the phone is unreachable.
             CompanionChatMuteRegistry.setMuted(muted, chatID: chatID)
         case .subscribe(let chatID):
+            guard requireAI(requestID) else { return }
             handleSubscribe(chatID: chatID, requestID: requestID)
         case .unsubscribe(let chatID):
+            guard requireAI(requestID) else { return }
             subscriptions[chatID]?.unsubscribe()
             subscriptions[chatID] = nil
         case .publish(let message, let chatID, _):
+            guard requireAI(requestID) else { return }
             handlePublish(message: message, toChatID: chatID)
         case .selectSessionResponse(let chatID, let originalMessage, let sessionGuid, let terminal):
+            guard requireAI(requestID) else { return }
             handleSelectSessionResponse(chatID: chatID,
                                         originalMessage: originalMessage,
                                         sessionGuid: sessionGuid,
                                         terminal: terminal)
         case .remoteCommandDecision(let chatID, let messageUniqueID, let decision):
+            guard requireAI(requestID) else { return }
             handleRemoteCommandDecision(chatID: chatID,
                                         messageUniqueID: messageUniqueID,
                                         decision: decision)
         case .linkSession(let chatID, let sessionGuid, let terminal):
+            guard requireAI(requestID) else { return }
             performLinkSession(chatID: chatID, guid: sessionGuid, terminal: terminal)
         case .resolveMentions(let identifiers):
             send(.mentionsResolved(identifiers.map { Self.resolveMention($0) }),
@@ -456,9 +470,11 @@ final class CompanionHostBridge {
                      requestID: requestID)
             }
         case .messagesSince(let collapseToken, let seq, let limit, let nonce):
+            guard requireAI(requestID) else { return }
             handleMessagesSince(collapseToken: collapseToken, seq: seq, limit: limit,
                                 nonce: nonce, requestID: requestID)
         case .syncSince(let messageSeq, let alertSeq, let limit, let nonce):
+            guard requireAI(requestID) else { return }
             handleSyncSince(messageSeq: messageSeq, alertSeq: alertSeq, limit: limit,
                             nonce: nonce, requestID: requestID)
         case .unpairing:
@@ -498,9 +514,11 @@ final class CompanionHostBridge {
         case .resizeSession(let sessionGuid, let columns, let rows):
             handleResizeSession(guid: sessionGuid, columns: columns, rows: rows)
         case .fetchAutoProvideConsent(let sessionGuid):
+            guard requireAI(requestID) else { return }
             send(.autoProvideConsent(satisfied: Self.autoProvideConsentSatisfied(sessionGuid: sessionGuid)),
                  requestID: requestID)
         case .grantAutoProvideConsent(let chatID):
+            guard requireAI(requestID) else { return }
             handleGrantAutoProvideConsent(chatID: chatID)
         }
     }
@@ -2044,6 +2062,41 @@ final class CompanionHostBridge {
         lastAIAvailable = available
         RLog("Companion bridge: AI availability changed to \(available); notifying phone")
         send(.aiAvailabilityChanged(available: available), requestID: nil)
+    }
+
+    /// Gate an AI-only request (chat, agent, orchestrator) on AI actually being
+    /// available. When it is not, reply with an error and return false so the
+    /// caller does nothing further. Non-AI requests (session browsing, live video,
+    /// keyboard input) never call this and keep working. Checked live per request,
+    /// since AI can toggle mid-session; a revision-13 phone reads aiAvailable from
+    /// the hello and will not send these at all, so this is a backstop for older
+    /// phones and mid-turn toggles. The typed .aiUnavailable code is sent only to a
+    /// phone new enough to decode it; an older phone gets .internalError instead
+    /// (the new string would fail its decode and drop the whole frame).
+    private func requireAI(_ requestID: UInt64?) -> Bool {
+        if CompanionPairingController.aiAvailable() {
+            return true
+        }
+        // Reply with a correlated error only for a request that expects one; a
+        // fire-and-forget message (no requestID) is dropped silently rather than
+        // answered with an uncorrelated error the phone would surface out of context.
+        if let requestID {
+            let code: CompanionError.Code =
+                Self.peerUnderstandsAIUnavailableCode(peerRevision: CompanionPushRegistry.peerRevision)
+                ? .aiUnavailable : .internalError
+            send(.error(CompanionError(code: code,
+                                       message: "AI features are turned off on the paired Mac.")),
+                 requestID: requestID)
+        }
+        return false
+    }
+
+    /// Whether the paired phone is new enough to decode the typed `.aiUnavailable`
+    /// error code. A pre-13 phone can't (the unknown string fails its decode and
+    /// drops the whole frame), so requireAI sends it the generic `.internalError`
+    /// instead. Pure so the backward-compat boundary is tested without a bridge.
+    static func peerUnderstandsAIUnavailableCode(peerRevision: Int) -> Bool {
+        return peerRevision >= CompanionProtocolVersion.aiDecouplingRevision
     }
 
     private func send(_ payload: CompanionHostMessage, requestID: UInt64?) {
