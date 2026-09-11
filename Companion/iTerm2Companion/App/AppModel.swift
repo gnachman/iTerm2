@@ -636,6 +636,13 @@ final class AppModel {
     /// The mac's advertised protocol revision (0 until the handshake).
     private(set) var macRevision = 0
 
+    /// Whether the paired Mac has AI available (from its hello, updated live by the
+    /// aiAvailabilityChanged event). Defaults to true so a pre-13 Mac - which only
+    /// ever paired with AI on - shows chats exactly as before. When false, the chat
+    /// surfaces are disabled with an explanation and only session browsing/video/
+    /// keyboard remain.
+    private(set) var aiAvailable = true
+
     #if DEBUG
     /// Test override for this phone build's own revision, so a test can simulate a
     /// future (turnLifecycleRevision) build while `current` is still below it.
@@ -1716,7 +1723,8 @@ final class AppModel {
         }
         macSupportsStreaming = handshake.supportsStreaming
         macRevision = handshake.peerRevision
-        companionLog("Version handshake: macRevision=\(macRevision) supportsStreaming=\(macSupportsStreaming) sessionResizeSupported=\(sessionResizeSupported) (resize needs mac revision >= \(CompanionProtocolVersion.sessionResizeRevision))")
+        aiAvailable = handshake.aiAvailable
+        companionLog("Version handshake: macRevision=\(macRevision) supportsStreaming=\(macSupportsStreaming) aiAvailable=\(aiAvailable) sessionResizeSupported=\(sessionResizeSupported) (resize needs mac revision >= \(CompanionProtocolVersion.sessionResizeRevision))")
         // The mac says the user opted into phone alerts: ask iOS for notification
         // permission if we haven't yet (deferring to foreground if backgrounded).
         if handshake.wantsNotificationPermission {
@@ -1734,9 +1742,11 @@ final class AppModel {
         try await refreshLists()
         navigationPath = []
         if phase != .home {
-            // Arriving from pairing (not a pull-to-refresh): start clean.
+            // Arriving from pairing (not a pull-to-refresh): start clean. Land on
+            // Sessions rather than Chats when AI is off, so the user opens on a
+            // useful tab instead of the disabled chat surface.
             sessionsPath = []
-            selectedTab = .chats
+            selectedTab = aiAvailable ? .chats : .sessions
         }
         phase = .home
         // A reply-notification tap during launch was deferred (the nav paths
@@ -1881,7 +1891,8 @@ final class AppModel {
                             let handshake = try await client.handshakeVersion()
                             macSupportsStreaming = handshake.supportsStreaming
                             macRevision = handshake.peerRevision
-                            companionLog("Version handshake (reconnect): macRevision=\(macRevision) supportsStreaming=\(macSupportsStreaming) sessionResizeSupported=\(sessionResizeSupported) (resize needs mac revision >= \(CompanionProtocolVersion.sessionResizeRevision))")
+                            aiAvailable = handshake.aiAvailable
+                            companionLog("Version handshake (reconnect): macRevision=\(macRevision) supportsStreaming=\(macSupportsStreaming) aiAvailable=\(aiAvailable) sessionResizeSupported=\(sessionResizeSupported) (resize needs mac revision >= \(CompanionProtocolVersion.sessionResizeRevision))")
                             if handshake.wantsNotificationPermission {
                                 ensureNotificationPermission(replyTo: nil)
                             }
@@ -3896,10 +3907,27 @@ final class AppModel {
                 liveWatchGuid = nil
                 onStreamEnded?(reason)
             }
+        case .aiAvailabilityChanged(let available):
+            // The user toggled AI on the paired Mac while we were connected. Flip
+            // the flag live so the chat surfaces enable/disable without a reconnect.
+            // If AI just went off while the user was on the Chats tab, move them to
+            // Sessions so they aren't stranded on a now-disabled surface.
+            aiAvailable = available
+            if !available && selectedTab == .chats {
+                selectedTab = .sessions
+            }
         default:
             break
         }
     }
+
+    #if DEBUG
+    /// Test hook: drive a host event through the same path the live connection uses,
+    /// so tests can exercise event handling (e.g. aiAvailabilityChanged) directly.
+    func testHandleHostEvent(_ event: CompanionHostMessage) {
+        handle(event: event)
+    }
+    #endif
 
     // MARK: Live session streaming
 
