@@ -112,6 +112,14 @@ New Features:
   tabs” can turn it off or always show it.
 
 Improvements:
+- Pairing a companion iPhone no longer requires
+  AI. The setup wizard (iTerm2 > Companion Device
+  Settings) now lets you choose “Terminal viewing
+  & control only”, so you can browse sessions,
+  watch live output, and type from your phone
+  without an AI plugin or API key. Chat features
+  appear disabled with an explanation until you
+  turn AI on.
 - Reduced idle CPU usage that previously grew
   with the number of open windows.
 - AI command safety checks now prefer the cheaper

@@ -1,6 +1,12 @@
 iTerm2 Buddy (Companion App) Release Notes
 
 New Features:
+- iTerm2 Buddy now works with Macs that have AI
+  turned off. You can pair for terminal viewing
+  and control alone: browse sessions, watch live
+  output, and type from your phone. Chat surfaces
+  appear with a short explanation of how to turn
+  AI on, and re-enable live if you do.
 - Long-press one of your own messages in a chat
   to delete it and everything after it. The
   change syncs to the Mac and any other device in
