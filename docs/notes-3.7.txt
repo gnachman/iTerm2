@@ -1,6 +1,12 @@
 Version 3.7.2
 
 Bug Fixes:
+- Stopped falsely offering to reset the key
+  reporting mode after every command when using
+  Fish with oh-my-posh, which together emit a
+  duplicate command-finished mark after
+  re-enabling the keyboard protocol for the next
+  prompt.
 - Fixed a bug on macOS 26 where the tab bar
   became short and shifted down after entering
   and exiting Lion fullscreen, and where the

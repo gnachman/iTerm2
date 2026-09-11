@@ -17561,6 +17561,22 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if ([iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL inProfile:self.profile]) {
         return;
     }
+    // Only check if we've seen a command start - otherwise _keyReportingFlagsAtCommandStart
+    // is just the uninitialized default value (0), not the actual flags at command start.
+    // This avoids false positives when Fish sends OSC 133;D before OSC 133;C on startup.
+    if (!_haveCommandStart) {
+        return;
+    }
+    // Consume the command start now, before any flag-based early return. Each FTCS D closes at most
+    // one command, so a subsequent FTCS D that arrives without an intervening FTCS C must not be
+    // evaluated against the prior command's start flags. Some setups (e.g. Fish + oh-my-posh) emit a
+    // duplicate/stray FTCS D as part of the next prompt's sequence, after the shell has already
+    // re-enabled key reporting for that prompt. Consuming the flag here means the first D handles the
+    // real command exit and the stray D is ignored rather than misread as an app leaving key
+    // reporting stuck on. See 13032. (The FTCS-D-time snapshot from 13015 alone is insufficient here
+    // because the re-enable precedes the second D.)
+    _haveCommandStart = NO;
+
     // Check if key reporting flags are non-zero. Use the value snapshotted when the FTCS D token
     // was processed rather than the live value: a shell like Fish 4.x re-enables key reporting for
     // its next prompt right after FTCS D, and reading the live value here would misread that as an
@@ -17568,19 +17584,11 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     if (keyReportingFlags == 0) {
         return;
     }
-    // Only check if we've seen a command start - otherwise _keyReportingFlagsAtCommandStart
-    // is just the uninitialized default value (0), not the actual flags at command start.
-    // This avoids false positives when Fish sends OSC 133;D before OSC 133;C on startup.
-    if (!_haveCommandStart) {
-        return;
-    }
     // Only warn if flags were off when the command started but are on now.
     // This avoids false positives for shells like Fish 4.0+ that legitimately use progressive enhancements.
     if (_keyReportingFlagsAtCommandStart != 0) {
         return;
     }
-    // Reset so we require a new command start before checking again
-    _haveCommandStart = NO;
 
     // Ask nagging controller - it handles user defaults and showing the nag
     if ([self.naggingController shouldResetKeyReportingMode]) {
