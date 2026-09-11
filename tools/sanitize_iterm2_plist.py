@@ -116,7 +116,8 @@ WINDOW ARRANGEMENTS -> session dicts (SESSION_ARRANGEMENT_*)
             Hostname to Shell, Tmux History, Tmux AltHistory, Tmux State
   Redacted: Working Directory, Program.Command, Environment (deep),
             Variables (deep), Substitutions (deep), Commands,
-            Name Controller State (deep), Server Dict (deep),
+            Foreground Job Ancestors, Name Controller State (deep),
+            Server Dict (deep),
             AutoLog File Name, Filter, Browser Target,
             Code Review Last Prompt, Bookmark (profile), Workgroup (recursed)
   Kept: Columns, Rows, Session GUID/Stable ID, geometry, flags.
@@ -170,6 +171,7 @@ CONTENT_KEYS = {
     "Clippings": REMOVE,
     "Clippings Archive": REMOVE,
     "Session Note": REMOVE,
+    "Foreground Job Ancestors": REDACT_V,  # process/job names in arrangement sessions
     "Tmux History": REMOVE,
     "Tmux AltHistory": REMOVE,
     "Tmux State": REMOVE,
