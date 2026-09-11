@@ -859,6 +859,13 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
     /// can skip its consent modal.
     case autoProvideConsent(satisfied: Bool)
 
+    /// Unsolicited (revision 13+): the mac's AI availability changed while the phone
+    /// was connected (the user toggled AI, an admin policy changed, or the plugin
+    /// came or went). Carries the new value; the phone enables or disables its chat
+    /// surfaces live without reconnecting. A pre-13 phone forward-compat-decodes the
+    /// unknown discriminator to `.unsupported` and ignores it, so this is additive.
+    case aiAvailabilityChanged(available: Bool)
+
     /// Discriminators this build knows. Add a line here whenever a case is added.
     static let knownPayloadKeys: Set<String> = [
         "unsupported", "hello", "chatsAndSessions", "chatCreated", "history",
@@ -868,7 +875,7 @@ enum CompanionHostMessage: Codable, CompanionMessagePayload {
         "unpaired", "messagesSince", "syncSince", "error",
         "streamStarted", "streamConfig", "streamEnded", "selectionText",
         "selectionRange", "historyTile", "streamExtent", "autoProvideConsent",
-        "turnLifecycle",
+        "turnLifecycle", "aiAvailabilityChanged",
     ]
 }
 

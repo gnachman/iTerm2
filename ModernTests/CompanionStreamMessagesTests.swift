@@ -221,6 +221,18 @@ final class CompanionStreamMessagesTests: XCTestCase {
         }
     }
 
+    // The unsolicited aiAvailabilityChanged event round-trips both truth values so
+    // a connected phone can flip its chat surfaces live when the mac toggles AI.
+    func testAIAvailabilityChangedRoundTrip() throws {
+        for value in [true, false] {
+            guard case let .aiAvailabilityChanged(available) =
+                    try roundTripHost(.aiAvailabilityChanged(available: value)) else {
+                return XCTFail("expected .aiAvailabilityChanged")
+            }
+            XCTAssertEqual(available, value)
+        }
+    }
+
     // A pre-13 mac omits aiAvailable (and wantsNotificationPermission). Synthesized
     // Decodable decodes an absent optional as nil rather than throwing, and the
     // phone reads nil as "AI available" (a pre-13 mac only ever paired with AI on).

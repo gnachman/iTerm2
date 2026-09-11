@@ -274,6 +274,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
             end: CompanionSelectionPoint(absLine: 1, column: 2))),
         .autoProvideConsent(satisfied: true),
         .turnLifecycle(event: .started, chatID: "c"),
+        .aiAvailabilityChanged(available: false),
     ]
 
     /// The .syncSince representative is built by DECODING rather than a literal, so
@@ -318,6 +319,7 @@ final class CompanionEnvelopeForwardCompatTests: XCTestCase {
         case .selectionRange: return "selectionRange"
         case .autoProvideConsent: return "autoProvideConsent"
         case .turnLifecycle: return "turnLifecycle"
+        case .aiAvailabilityChanged: return "aiAvailabilityChanged"
         }
     }
 
