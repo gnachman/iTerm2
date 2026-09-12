@@ -574,7 +574,10 @@ final class CompanionHostBridge {
             handleMessagesSince(collapseToken: collapseToken, seq: seq, limit: limit,
                                 nonce: nonce, requestID: requestID)
         case .syncSince(let messageSeq, let alertSeq, let limit, let nonce):
-            guard requireAI(requestID) else { return }
+            // NOT gated on AI: syncSince carries terminal ALERTS as well as chat
+            // messages, and alerts are a non-AI feature (the only push path for
+            // them). handleSyncSince serves alerts regardless and suppresses just
+            // the chat-message portion when AI is off.
             handleSyncSince(messageSeq: messageSeq, alertSeq: alertSeq, limit: limit,
                             nonce: nonce, requestID: requestID)
         case .unpairing:
@@ -1553,47 +1556,65 @@ final class CompanionHostBridge {
             return
         }
 
-        // --- Messages across all chats ---
+        let windowLimit = limit * 20
         // A negative message floor is the phone's FIRST-RUN signal (post-upgrade):
         // show the newest `limit` as a teaser and jump the floor to the global tip,
         // skipping the backlog rather than notifying it window-by-window. A normal
         // run drains OLDEST-first within a window and advances the floor only to the
         // highest seq it actually covered, so a truncated window never buries the
-        // tail (the tail drains on the next wakeup).
+        // tail (the tail drains on the next wakeup). Computed here (not inside the AI
+        // branch) because messageWindow is also the summarize cap used further down.
         let firstRun = messageSeq < 0
-        let windowLimit = limit * 20
         let messageWindow = firstRun ? limit : windowLimit
-        guard let probe = db.messagesSinceGlobal(sinceSeq: max(messageSeq, 0),
-                                                 windowLimit: messageWindow,
-                                                 ascending: !firstRun) else {
-            serveError("Chat database unavailable")
-            return
-        }
-        let globalMessageTip = probe.maxSeq
-        // Reset: the phone's floor is past the tip (the store was lost/recreated and
-        // seq rewound). Do NOT re-notify the rewound content; resync silently -
-        // return no message items, signal a reset so the NSE clears its stale-high
-        // per-chat watermarks, and float the floor to the new tip.
-        let messageReset = !firstRun && messageSeq > globalMessageTip
+
+        // --- Messages across all chats ---
+        // Chat messages are AI content, so fetch and notify them ONLY when AI is
+        // available. When AI is off we still serve the alert portion below (a non-AI
+        // feature and the only push path for terminal alerts) and leave the phone's
+        // message floor untouched. The message-item building loops further down are
+        // naturally no-ops on an empty messageRows, so no other gating is needed.
         let messageRows: [(seq: Int64, message: Message)]
         let messageTruncated: Bool
         let messageFloorTarget: Int64
-        if messageReset {
+        let messageReset: Bool
+        if CompanionPairingController.aiAvailable() {
+            guard let probe = db.messagesSinceGlobal(sinceSeq: max(messageSeq, 0),
+                                                     windowLimit: messageWindow,
+                                                     ascending: !firstRun) else {
+                serveError("Chat database unavailable")
+                return
+            }
+            let globalMessageTip = probe.maxSeq
+            // Reset: the phone's floor is past the tip (the store was lost/recreated and
+            // seq rewound). Do NOT re-notify the rewound content; resync silently -
+            // return no message items, signal a reset so the NSE clears its stale-high
+            // per-chat watermarks, and float the floor to the new tip.
+            messageReset = !firstRun && messageSeq > globalMessageTip
+            if messageReset {
+                messageRows = []
+                messageTruncated = false
+                messageFloorTarget = globalMessageTip
+            } else if firstRun {
+                messageRows = probe.rows                       // newest `limit`, DESC
+                messageTruncated = probe.rows.count >= limit   // more backlog exists
+                messageFloorTarget = globalMessageTip          // jump to tip, skip backlog
+            } else {
+                messageRows = probe.rows                        // oldest window, ASC
+                messageTruncated = probe.rows.count >= windowLimit
+                // Advance the floor ONLY to the highest seq we covered in the window
+                // (its last ASC row); the tail above it drains next wakeup. When not
+                // truncated we covered everything above the floor, so jump to the tip.
+                messageFloorTarget = messageTruncated ? (probe.rows.last?.seq ?? globalMessageTip)
+                                                      : globalMessageTip
+            }
+        } else {
+            // AI off: no chat messages to notify. Leave the phone's message floor
+            // where it is (the NSE max-merges maxMessageSeq, so echoing its own floor
+            // is a no-op) and report no reset, so only alerts drive this sync.
             messageRows = []
             messageTruncated = false
-            messageFloorTarget = globalMessageTip
-        } else if firstRun {
-            messageRows = probe.rows                       // newest `limit`, DESC
-            messageTruncated = probe.rows.count >= limit   // more backlog exists
-            messageFloorTarget = globalMessageTip          // jump to tip, skip backlog
-        } else {
-            messageRows = probe.rows                        // oldest window, ASC
-            messageTruncated = probe.rows.count >= windowLimit
-            // Advance the floor ONLY to the highest seq we covered in the window
-            // (its last ASC row); the tail above it drains next wakeup. When not
-            // truncated we covered everything above the floor, so jump to the tip.
-            messageFloorTarget = messageTruncated ? (probe.rows.last?.seq ?? globalMessageTip)
-                                                  : globalMessageTip
+            messageFloorTarget = max(messageSeq, 0)
+            messageReset = false
         }
 
         // --- Alerts (oldest-first drain; window >= store prune cap, so the window
