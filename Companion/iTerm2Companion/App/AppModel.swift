@@ -1887,17 +1887,42 @@ final class AppModel {
                     // honored on each connect, not just the initial pairing. A
                     // failure here must not abort the reconnect, so it's best-effort.
                     if let client {
-                        do {
-                            let handshake = try await client.handshakeVersion()
+                        // Retry a few times: the handshake carries aiAvailable, which
+                        // gates the chat UI, so a single transient failure must not
+                        // leave availability unverified (and the chat surfaces shown
+                        // as enabled on a connection we couldn't confirm). Only the
+                        // failure path sleeps, so a healthy reconnect is not delayed.
+                        var handshake: CompanionClient.HandshakeResult?
+                        for attempt in 0..<3 {
+                            do {
+                                handshake = try await client.handshakeVersion()
+                                break
+                            } catch {
+                                companionLog("Reconnect version handshake attempt \(attempt) failed: \(String(describing: error))")
+                                try? await Task.sleep(nanoseconds: 500_000_000)
+                            }
+                        }
+                        if let handshake {
                             macSupportsStreaming = handshake.supportsStreaming
                             macRevision = handshake.peerRevision
                             aiAvailable = handshake.aiAvailable
+                            // AI may have been turned off on the Mac during the outage;
+                            // don't strand the user on the now-disabled Chats tab (mirror
+                            // the initial-pairing path and the live aiAvailabilityChanged
+                            // handler).
+                            if !aiAvailable && selectedTab == .chats {
+                                selectedTab = .sessions
+                            }
                             companionLog("Version handshake (reconnect): macRevision=\(macRevision) supportsStreaming=\(macSupportsStreaming) aiAvailable=\(aiAvailable) sessionResizeSupported=\(sessionResizeSupported) (resize needs mac revision >= \(CompanionProtocolVersion.sessionResizeRevision))")
                             if handshake.wantsNotificationPermission {
                                 ensureNotificationPermission(replyTo: nil)
                             }
-                        } catch {
-                            companionLog("Reconnect version handshake failed: \(String(describing: error))")
+                        } else {
+                            // All attempts failed: the connection is likely unhealthy and
+                            // the reconnect loop will drop and re-establish, re-running the
+                            // handshake. Leave aiAvailable as-is; the Mac's requireAI still
+                            // backstops any chat request sent meanwhile.
+                            companionLog("Reconnect version handshake failed after retries; AI availability left as \(aiAvailable)")
                         }
                     }
                     reportPushStatus()
@@ -3918,11 +3943,17 @@ final class AppModel {
         case .aiAvailabilityChanged(let available):
             // The user toggled AI on the paired Mac while we were connected. Flip
             // the flag live so the chat surfaces enable/disable without a reconnect.
-            // If AI just went off while the user was on the Chats tab, move them to
-            // Sessions so they aren't stranded on a now-disabled surface.
+            let wasAvailable = aiAvailable
             aiAvailable = available
             if !available && selectedTab == .chats {
+                // AI just went off while on the Chats tab: don't strand the user on
+                // the now-disabled surface.
                 selectedTab = .sessions
+            } else if available && !wasAvailable {
+                // AI just came back on. We connected while it was off, so the chat
+                // list is empty; refetch it now so the Chats tab shows the Mac's real
+                // chats immediately rather than the "no chats yet" empty state.
+                Task { [weak self] in try? await self?.refreshLists() }
             }
         default:
             break
