@@ -304,3 +304,8 @@ Bug Fixes:
 - Fixed the git ahead/behind arrows in the
   session toolbar staying black in dark mode
   instead of matching the text color.
+- The Companion setup wizard now saves the
+  pasted API key for the provider you chose
+  in the popup, so choosing a provider
+  other than the current default no longer
+  stores the key under the wrong service.
