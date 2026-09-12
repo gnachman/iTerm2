@@ -81,7 +81,17 @@ iTermTriggerScopeProvider> {
 // main thread. This can happen when performBlockWithJoinedThreads is reentrant with two different
 // VT100ScreenMutableState objects (for example, when detaching in tmux mode).
 @property (class, atomic, readwrite) BOOL performingJoinedBlock;
+
+// One-shot: set inside a report's joined sync so the rolled-back report token,
+// when it re-executes, is allowed to send (returns YES) instead of rolling back
+// and syncing again forever. Applies to ALL reports. The OSC-4 coalescing
+// skip-sync flag lives separately on the token executor. See
+// terminalShouldSendReport:. (Mutation queue.)
 @property (nonatomic) BOOL allowNextReport;
+
+// Redeclared readwrite; see VT100ScreenMutableState.h. Incremented in the report
+// gate's sync path.
+@property (nonatomic, readwrite) NSInteger reportSyncCount;
 
 // Has the running command appended any output since it began executing (FTCS C)? Reset at FTCS C,
 // set whenever text is appended. Used to decide whether a program that moves the cursor above its
@@ -104,6 +114,11 @@ iTermTriggerScopeProvider> {
 
 - (void)addPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect
                        name:(NSString *)name;
+
+// Paused variant of addReportSideEffect: for outbound report sends that must
+// pause (e.g. an async pasteboard read). Does not disarm skip-sync.
+- (void)addPausedReportSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect
+                             name:(NSString *)name;
 
 - (void)addDeferredSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect
                          name:(NSString *)name;

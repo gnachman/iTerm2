@@ -7,6 +7,11 @@ Bug Fixes:
   duplicate command-finished mark after
   re-enabling the keyboard protocol for the next
   prompt.
+- Fixed a performance regression from 3.7.0 that
+  made typing lag or arrive in bursts when using
+  terminal multiplexers (such as tmux -CC) and
+  other programs that query the terminal’s colors,
+  especially when switching tabs or windows.
 - Fixed a bug on macOS 26 where the tab bar
   became short and shifted down after entering
   and exiting Lion fullscreen, and where the

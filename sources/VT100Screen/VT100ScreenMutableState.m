@@ -293,6 +293,22 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     }];
 }
 
+// Paused variant of addReportSideEffect:: pauses like addPausedSideEffect: but
+// schedules via addReportSideEffect so it does not disarm skip-sync.
+- (void)addPausedReportSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect
+                             name:(NSString *)name {
+    DLog(@"[side effects] %@ Add paused report side effect %@", self.config.sessionGuid, name);
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    __weak __typeof(self) weakSelf = self;
+    [_tokenExecutor addReportSideEffect:^{
+        if (!weakSelf) {
+            [unpauser unpause];
+            return;
+        }
+        [weakSelf performPausedSideEffect:unpauser block:sideEffect name:name];
+    }];
+}
+
 - (void)addDeferredSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect
                          name:(NSString *)name {
     DLog(@"[side effects] %@ Add deferred side effect %@", self.config.sessionGuid, name);
@@ -312,6 +328,18 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     }];
 }
 
+
+// Like addSideEffect:name: but for purely outbound report-send side effects.
+// Does not invalidate the report skip-sync flag, so a burst of report queries
+// coalesces to a single joined sync instead of one per query.
+- (void)addReportSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect name:(NSString *)name {
+    DLog(@"[side effects] %@ Add report side effect %@", self.config.sessionGuid, name);
+    __weak __typeof(self) weakSelf = self;
+    [_tokenExecutor addReportSideEffect:^{
+        DLog(@"[side effects] %@ Execute report side effect %@", weakSelf.config.sessionGuid, name);
+        [weakSelf performSideEffect:sideEffect name:name];
+    }];
+}
 
 - (void)addNoDelegateSideEffect:(void (^)(void))sideEffect name:(NSString *)name {
     DLog(@"[side effects] %@ Add side effect %@", self.config.sessionGuid, name);
@@ -7090,6 +7118,10 @@ lengthExcludingInBandSignaling:data.length
 - (void)addUnmanagedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))block
                           name:(NSString *)name {
     DLog(@"[side effects] Add unmanaged side effect %@", name);
+    // Like addUnmanagedPausedSideEffect:, this dispatches straight to the main
+    // queue and bypasses the executor's addSideEffect chokepoint, so invalidate
+    // the report skip-sync flag explicitly.
+    [_tokenExecutor noteStateSideEffectScheduled];
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         DLog(@"[side effects] Execute unmanaged side effect %@", name);
@@ -7103,6 +7135,10 @@ lengthExcludingInBandSignaling:data.length
 // very hard to reason about and are almost certainly incorrect.
 - (void)addUnmanagedPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))block name:(NSString *)name {
     DLog(@"[side effects] add %@", name);
+    // This scheduling path bypasses the executor's addSideEffect chokepoint, so
+    // invalidate the report skip-sync flag explicitly. (Color-table sets go
+    // through here and are reportable state.)
+    [_tokenExecutor noteStateSideEffectScheduled];
     __weak __typeof(self) weakSelf = self;
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     dispatch_async(dispatch_get_main_queue(), ^{
