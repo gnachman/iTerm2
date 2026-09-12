@@ -194,6 +194,14 @@ Bug Fixes:
   terminal multiplexers (such as tmux -CC) and
   other programs that query the terminal’s colors,
   especially when switching tabs or windows.
+- Fixed a bug where auto-update failed with a
+  message about running from the download
+  location when iTerm2 was unzipped or moved to
+  an Applications folder from the command line
+  rather than dragged in the Finder. iTerm2 now
+  fixes this automatically on launch, and no
+  longer offers to move a copy that is already
+  installed.
 - Fixed a bug on macOS 26 where the tab bar
   became short and shifted down after entering
   and exiting Lion fullscreen, and where the
