@@ -322,3 +322,5 @@ Bug Fixes:
   in the popup, so choosing a provider
   other than the current default no longer
   stores the key under the wrong service.
+- Added a reply to CSI 16 t (report character
+  cell size), which was previously ignored.

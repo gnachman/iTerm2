@@ -783,6 +783,9 @@ static void SetCSITypeAndDefaultParameters(CSIParam *param, VT100Token *result) 
                 case 14:
                     result->type = XTERMCC_REPORT_WIN_PIX_SIZE;
                     break;
+                case 16:
+                    result->type = XTERMCC_REPORT_CELL_SIZE_PIX;
+                    break;
                 case 18:
                     result->type = XTERMCC_REPORT_WIN_SIZE;
                     break;

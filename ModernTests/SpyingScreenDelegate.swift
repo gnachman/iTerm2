@@ -67,6 +67,15 @@ class SpyingScreenDelegate: FakeSession {
         mouseModeDidChangeCount += 1
     }
 
+    /// Every report the terminal sent back to the "process", in order. This is
+    /// the data that would be written to the tty (e.g. a DSR reply or an OSC 4
+    /// color report).
+    private(set) var sentReports: [Data] = []
+
+    override func screenSendReport(_ data: Data) {
+        sentReports.append(data)
+    }
+
     func reset() {
         getWorkingDirectoryCalls.removeAll()
         pollLocalDirectoryOnlyCalls.removeAll()
@@ -76,6 +85,7 @@ class SpyingScreenDelegate: FakeSession {
         promptDidEndCalls.removeAll()
         commandDidChangeCalls.removeAll()
         mouseModeDidChangeCount = 0
+        sentReports.removeAll()
     }
 
     // MARK: - Overrides

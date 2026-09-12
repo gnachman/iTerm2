@@ -2844,6 +2844,23 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
+        case XTERMCC_REPORT_CELL_SIZE_PIX: {
+            // Report the cell size in points, not backing-store pixels. This
+            // matches xterm.js (and therefore VS Code and Cursor), which report
+            // CSS pixels for both this and CSI 14 t, and it is consistent with
+            // iTerm2's own CSI 14 t, which reports the text area in points. (It
+            // differs from Ghostty, which reports device pixels for both; but
+            // matching Ghostty would require also changing CSI 14 t, and would
+            // make a client that computes columns = 14t-width / 16t-width get the
+            // wrong answer here since our 14 t is in points.)
+            double scale = 0;
+            const NSSize cellSize = [_delegate terminalCellSizeInPoints:&scale];
+            NSString *s = [NSString stringWithFormat:@"\033[6;%d;%dt",
+                           (int)round(cellSize.height),
+                           (int)round(cellSize.width)];
+            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+            break;
+        }
         case XTERMCC_REPORT_WIN_SIZE: {
             const VT100GridSize size = [_delegate terminalSizeInCells];
             NSString *s = [NSString stringWithFormat:@"\033[8;%d;%dt",
