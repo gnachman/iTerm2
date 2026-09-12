@@ -10,7 +10,7 @@
 			<key>notesLocalizationKey</key>
 			<string>SmartSelection.Rule.WordBoundedByWhitespace</string>
 			<key>regex</key>
-			<string>\S+</string>
+			<string>\S+(?<![\*\@])</string>
 			<key>precision</key>
 			<string>low</string>
 		</dict>
