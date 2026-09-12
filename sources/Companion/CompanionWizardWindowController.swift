@@ -213,21 +213,32 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
                             comment: "Explanatory paragraph on the choose-mode screen"),
                      to: view, y: Self.contentHeight - 170, height: 80)
 
+        // An administrator can forbid AI (generativeAIAllowed) while still allowing
+        // companion pairing. In that case the AI path cannot work - fullSetup would
+        // install the plugin and take an API key, yet aiAvailable() stays false - so
+        // disable it and steer the user to terminal-only rather than let them set up
+        // an AI that is silently unavailable.
+        let aiAllowed = iTermAdvancedSettingsModel.generativeAIAllowed()
         let withAI = makeButton(String(localized: "Companion.ChooseMode.WithAIButton",
                                        defaultValue: "Set Up with AI Features",
                                        comment: "Button that starts the full AI + companion setup"),
-                                action: #selector(chooseWithAI), isDefault: true)
+                                action: #selector(chooseWithAI), isDefault: aiAllowed)
+        withAI.isEnabled = aiAllowed
         place(withAI, centeredAtY: Self.contentHeight - 230, minWidth: 260)
         view.addSubview(withAI)
-        addBodyLabel(String(localized: "Companion.ChooseMode.WithAIDetail",
-                            defaultValue: "Chat with the orchestrator and per-session agents. Requires an AI API key.",
-                            comment: "Detail under the with-AI button on the choose-mode screen"),
+        addBodyLabel(aiAllowed
+                     ? String(localized: "Companion.ChooseMode.WithAIDetail",
+                              defaultValue: "Chat with the orchestrator and per-session agents. Requires an AI API key.",
+                              comment: "Detail under the with-AI button on the choose-mode screen")
+                     : String(localized: "Companion.ChooseMode.WithAIDisabledDetail",
+                              defaultValue: "Your administrator has disabled AI features, so this option is unavailable.",
+                              comment: "Detail shown under the disabled with-AI button when an administrator has forbidden AI"),
                      to: view, y: Self.contentHeight - 268, height: 34)
 
         let terminalOnly = makeButton(String(localized: "Companion.ChooseMode.TerminalOnlyButton",
                                              defaultValue: "Terminal Viewing & Control Only",
                                              comment: "Button that starts companion-only (no AI) setup"),
-                                      action: #selector(chooseTerminalOnly))
+                                      action: #selector(chooseTerminalOnly), isDefault: !aiAllowed)
         place(terminalOnly, centeredAtY: Self.contentHeight - 320, minWidth: 260)
         view.addSubview(terminalOnly)
         addBodyLabel(String(localized: "Companion.ChooseMode.TerminalOnlyDetail",
@@ -237,6 +248,9 @@ final class CompanionWizardWindowController: NSWindowController, NSWindowDelegat
     }
 
     @objc private func chooseWithAI(_ sender: Any) {
+        // Defense in depth: the button is disabled when AI is admin-forbidden, but
+        // never start the AI setup that couldn't work anyway.
+        guard iTermAdvancedSettingsModel.generativeAIAllowed() else { return }
         goTo(.fullSetup)
     }
 
