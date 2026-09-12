@@ -10,11 +10,11 @@
 		</data>
 		<key>Resources/Autoupdate.app/Contents/MacOS/Autoupdate</key>
 		<data>
-		BWR/rqjpim0h1RzUNJ4a0eE/ZSs=
+		7PXtY/USkWS5PLGXIHo/QSFzAtg=
 		</data>
 		<key>Resources/Autoupdate.app/Contents/MacOS/fileop</key>
 		<data>
-		fP2rrgC3pIN2L9USo/X/Bf9kfE4=
+		Bvs4+Bv7I47J5yuVPJMcbsR7Dqs=
 		</data>
 		<key>Resources/Autoupdate.app/Contents/PkgInfo</key>
 		<data>
@@ -318,7 +318,7 @@
 		</dict>
 		<key>Resources/Autoupdate.app/Contents/_CodeSignature/CodeResources</key>
 		<data>
-		LY+aUPzBxzzWC+2apcGpUmDKMnk=
+		6uRWSVEaP8NMgQl8utJtT45UTnQ=
 		</data>
 		<key>Resources/DarkAqua.css</key>
 		<data>
@@ -1588,14 +1588,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			eqDoKzzmWPAcNJI7pGyGtxuOtP9RBpeBbwc7BoiIYc0=
+			MoPfFlbNA9ZYW/TEXFtP5BnqexLVPlUOqd2IXq6HHs0=
 			</data>
 		</dict>
 		<key>Resources/Autoupdate.app/Contents/MacOS/fileop</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			dGGlrOQXbe6XH+iiLmd56NLut3bYr+LO0vYYBfmjSEs=
+			Le4cJVqyLwDFsT0pFZKobVjyK958AY81GgrRHEmrD2A=
 			</data>
 		</dict>
 		<key>Resources/Autoupdate.app/Contents/PkgInfo</key>
@@ -1911,7 +1911,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			EyamZ55YkkN6b20jSteROTCGwRfsSMOXRSMahRCARb4=
+			gxjW5xI+JwanPiBVV7Is1ccipLM2lUoSRA2ZEvBk4vg=
 			</data>
 		</dict>
 		<key>Resources/DarkAqua.css</key>
