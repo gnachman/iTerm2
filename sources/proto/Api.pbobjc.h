@@ -178,6 +178,17 @@ CF_EXTERN_C_BEGIN
 @class ITMStatusBarComponentRequest_OpenPopover;
 @class ITMStatusBarComponentResponse;
 @class ITMSubSelection;
+@class ITMTabGroupRequest;
+@class ITMTabGroupRequest_AssignTabRequest;
+@class ITMTabGroupRequest_CreateGroupRequest;
+@class ITMTabGroupRequest_GetMembershipRequest;
+@class ITMTabGroupRequest_ListGroupsRequest;
+@class ITMTabGroupRequest_RemoveTabRequest;
+@class ITMTabGroupRequest_RenameRequest;
+@class ITMTabGroupRequest_SetCollapsedRequest;
+@class ITMTabGroupRequest_SetColorRequest;
+@class ITMTabGroupResponse;
+@class ITMTabGroupResponse_Group;
 @class ITMTerminateSessionNotification;
 @class ITMTmuxRequest;
 @class ITMTmuxRequest_CreateWindow;
@@ -488,6 +499,33 @@ GPBEnumDescriptor *ITMReorderTabsResponse_Status_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL ITMReorderTabsResponse_Status_IsValidValue(int32_t value);
+
+#pragma mark - Enum ITMTabGroupResponse_Status
+
+typedef GPB_ENUM(ITMTabGroupResponse_Status) {
+  ITMTabGroupResponse_Status_Ok = 0,
+
+  /** no sub-request set, or missing required field */
+  ITMTabGroupResponse_Status_RequestMalformed = 1,
+  ITMTabGroupResponse_Status_InvalidTabId = 2,
+
+  /** no group with this id exists */
+  ITMTabGroupResponse_Status_InvalidGroupId = 3,
+
+  /** a group's tabs must share one window */
+  ITMTabGroupResponse_Status_TabsInDifferentWindows = 4,
+
+  /** the group is the whole window */
+  ITMTabGroupResponse_Status_CollapseImpossible = 5,
+};
+
+GPBEnumDescriptor *ITMTabGroupResponse_Status_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL ITMTabGroupResponse_Status_IsValidValue(int32_t value);
 
 #pragma mark - Enum ITMTmuxResponse_Status
 
@@ -1133,6 +1171,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_FieldNumber) {
   ITMClientOriginatedMessage_FieldNumber_InvokeFunctionRequest = 132,
   ITMClientOriginatedMessage_FieldNumber_ListPromptsRequest = 133,
   ITMClientOriginatedMessage_FieldNumber_ScreenshotRequest = 134,
+  ITMClientOriginatedMessage_FieldNumber_TabGroupRequest = 135,
 };
 
 typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
@@ -1172,6 +1211,7 @@ typedef GPB_ENUM(ITMClientOriginatedMessage_Submessage_OneOfCase) {
   ITMClientOriginatedMessage_Submessage_OneOfCase_InvokeFunctionRequest = 132,
   ITMClientOriginatedMessage_Submessage_OneOfCase_ListPromptsRequest = 133,
   ITMClientOriginatedMessage_Submessage_OneOfCase_ScreenshotRequest = 134,
+  ITMClientOriginatedMessage_Submessage_OneOfCase_TabGroupRequest = 135,
 };
 
 /**
@@ -1255,6 +1295,8 @@ GPB_FINAL @interface ITMClientOriginatedMessage : GPBMessage
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMScreenshotRequest *screenshotRequest;
 
+@property(nonatomic, readwrite, strong, null_resettable) ITMTabGroupRequest *tabGroupRequest;
+
 @end
 
 /**
@@ -1302,6 +1344,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_FieldNumber) {
   ITMServerOriginatedMessage_FieldNumber_InvokeFunctionResponse = 132,
   ITMServerOriginatedMessage_FieldNumber_ListPromptsResponse = 133,
   ITMServerOriginatedMessage_FieldNumber_ScreenshotResponse = 134,
+  ITMServerOriginatedMessage_FieldNumber_TabGroupResponse = 135,
   ITMServerOriginatedMessage_FieldNumber_Notification = 1000,
 };
 
@@ -1343,6 +1386,7 @@ typedef GPB_ENUM(ITMServerOriginatedMessage_Submessage_OneOfCase) {
   ITMServerOriginatedMessage_Submessage_OneOfCase_InvokeFunctionResponse = 132,
   ITMServerOriginatedMessage_Submessage_OneOfCase_ListPromptsResponse = 133,
   ITMServerOriginatedMessage_Submessage_OneOfCase_ScreenshotResponse = 134,
+  ITMServerOriginatedMessage_Submessage_OneOfCase_TabGroupResponse = 135,
   ITMServerOriginatedMessage_Submessage_OneOfCase_Notification = 1000,
 };
 
@@ -1430,6 +1474,8 @@ GPB_FINAL @interface ITMServerOriginatedMessage : GPBMessage
 @property(nonatomic, readwrite, strong, null_resettable) ITMListPromptsResponse *listPromptsResponse;
 
 @property(nonatomic, readwrite, strong, null_resettable) ITMScreenshotResponse *screenshotResponse;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTabGroupResponse *tabGroupResponse;
 
 /** This is the only response that is sent spontaneously. The 'id' field will not be set. */
 @property(nonatomic, readwrite, strong, null_resettable) ITMNotification *notification;
@@ -2387,6 +2433,294 @@ GPB_FINAL @interface ITMReorderTabsResponse : GPBMessage
 @property(nonatomic, readwrite) ITMReorderTabsResponse_Status status;
 
 @property(nonatomic, readwrite) BOOL hasStatus;
+@end
+
+#pragma mark - ITMTabGroupRequest
+
+typedef GPB_ENUM(ITMTabGroupRequest_FieldNumber) {
+  ITMTabGroupRequest_FieldNumber_CreateGroupRequest = 1,
+  ITMTabGroupRequest_FieldNumber_AssignTabRequest = 2,
+  ITMTabGroupRequest_FieldNumber_RemoveTabRequest = 3,
+  ITMTabGroupRequest_FieldNumber_RenameRequest = 4,
+  ITMTabGroupRequest_FieldNumber_SetColorRequest = 5,
+  ITMTabGroupRequest_FieldNumber_SetCollapsedRequest = 6,
+  ITMTabGroupRequest_FieldNumber_ListGroupsRequest = 7,
+  ITMTabGroupRequest_FieldNumber_GetMembershipRequest = 8,
+};
+
+typedef GPB_ENUM(ITMTabGroupRequest_Request_OneOfCase) {
+  ITMTabGroupRequest_Request_OneOfCase_GPBUnsetOneOfCase = 0,
+  ITMTabGroupRequest_Request_OneOfCase_CreateGroupRequest = 1,
+  ITMTabGroupRequest_Request_OneOfCase_AssignTabRequest = 2,
+  ITMTabGroupRequest_Request_OneOfCase_RemoveTabRequest = 3,
+  ITMTabGroupRequest_Request_OneOfCase_RenameRequest = 4,
+  ITMTabGroupRequest_Request_OneOfCase_SetColorRequest = 5,
+  ITMTabGroupRequest_Request_OneOfCase_SetCollapsedRequest = 6,
+  ITMTabGroupRequest_Request_OneOfCase_ListGroupsRequest = 7,
+  ITMTabGroupRequest_Request_OneOfCase_GetMembershipRequest = 8,
+};
+
+/**
+ * Programmatic access to native tab groups (named, colored, collapsible runs
+ * of tabs). A group is identified by a UUID that rides its member tabs; there
+ * is no separate registry. A group lives within a single window (its members
+ * are a contiguous run in that window's tab bar), so mutations that reference
+ * tabs require them to share a window.
+ **/
+GPB_FINAL @interface ITMTabGroupRequest : GPBMessage
+
+@property(nonatomic, readonly) ITMTabGroupRequest_Request_OneOfCase requestOneOfCase;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTabGroupRequest_CreateGroupRequest *createGroupRequest;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTabGroupRequest_AssignTabRequest *assignTabRequest;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTabGroupRequest_RemoveTabRequest *removeTabRequest;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTabGroupRequest_RenameRequest *renameRequest;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTabGroupRequest_SetColorRequest *setColorRequest;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTabGroupRequest_SetCollapsedRequest *setCollapsedRequest;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTabGroupRequest_ListGroupsRequest *listGroupsRequest;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMTabGroupRequest_GetMembershipRequest *getMembershipRequest;
+
+@end
+
+/**
+ * Clears whatever value was set for the oneof 'request'.
+ **/
+void ITMTabGroupRequest_ClearRequestOneOfCase(ITMTabGroupRequest *message);
+
+#pragma mark - ITMTabGroupRequest_CreateGroupRequest
+
+typedef GPB_ENUM(ITMTabGroupRequest_CreateGroupRequest_FieldNumber) {
+  ITMTabGroupRequest_CreateGroupRequest_FieldNumber_TabIdsArray = 1,
+  ITMTabGroupRequest_CreateGroupRequest_FieldNumber_Name = 2,
+  ITMTabGroupRequest_CreateGroupRequest_FieldNumber_Color = 3,
+};
+
+/**
+ * Create a new group from one or more existing tabs. No modal prompt: the
+ * name and color are supplied here. Tabs already in another group are moved
+ * into the new one. All tabs must be in the same window.
+ **/
+GPB_FINAL @interface ITMTabGroupRequest_CreateGroupRequest : GPBMessage
+
+/** one or more; all in the same window */
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *tabIdsArray;
+/** The number of items in @c tabIdsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger tabIdsArray_Count;
+
+/** group name; defaults to "Group" if unset/empty */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *name;
+/** Test to see if @c name has been set. */
+@property(nonatomic, readwrite) BOOL hasName;
+
+/** group color; a palette color is chosen if unset */
+@property(nonatomic, readwrite, strong, null_resettable) ITMRGBColor *color;
+/** Test to see if @c color has been set. */
+@property(nonatomic, readwrite) BOOL hasColor;
+
+@end
+
+#pragma mark - ITMTabGroupRequest_AssignTabRequest
+
+typedef GPB_ENUM(ITMTabGroupRequest_AssignTabRequest_FieldNumber) {
+  ITMTabGroupRequest_AssignTabRequest_FieldNumber_GroupId = 1,
+  ITMTabGroupRequest_AssignTabRequest_FieldNumber_TabId = 2,
+};
+
+/**
+ * Add an existing tab to an existing group. The tab must be in the same
+ * window as the group's current members.
+ **/
+GPB_FINAL @interface ITMTabGroupRequest_AssignTabRequest : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *groupId;
+/** Test to see if @c groupId has been set. */
+@property(nonatomic, readwrite) BOOL hasGroupId;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tabId;
+/** Test to see if @c tabId has been set. */
+@property(nonatomic, readwrite) BOOL hasTabId;
+
+@end
+
+#pragma mark - ITMTabGroupRequest_RemoveTabRequest
+
+typedef GPB_ENUM(ITMTabGroupRequest_RemoveTabRequest_FieldNumber) {
+  ITMTabGroupRequest_RemoveTabRequest_FieldNumber_TabId = 1,
+};
+
+/**
+ * Remove a tab from whatever group it is in (no-op if it is ungrouped).
+ **/
+GPB_FINAL @interface ITMTabGroupRequest_RemoveTabRequest : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *tabId;
+/** Test to see if @c tabId has been set. */
+@property(nonatomic, readwrite) BOOL hasTabId;
+
+@end
+
+#pragma mark - ITMTabGroupRequest_RenameRequest
+
+typedef GPB_ENUM(ITMTabGroupRequest_RenameRequest_FieldNumber) {
+  ITMTabGroupRequest_RenameRequest_FieldNumber_GroupId = 1,
+  ITMTabGroupRequest_RenameRequest_FieldNumber_Name = 2,
+};
+
+/**
+ * Rename every member of a group. No modal prompt.
+ **/
+GPB_FINAL @interface ITMTabGroupRequest_RenameRequest : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *groupId;
+/** Test to see if @c groupId has been set. */
+@property(nonatomic, readwrite) BOOL hasGroupId;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *name;
+/** Test to see if @c name has been set. */
+@property(nonatomic, readwrite) BOOL hasName;
+
+@end
+
+#pragma mark - ITMTabGroupRequest_SetColorRequest
+
+typedef GPB_ENUM(ITMTabGroupRequest_SetColorRequest_FieldNumber) {
+  ITMTabGroupRequest_SetColorRequest_FieldNumber_GroupId = 1,
+  ITMTabGroupRequest_SetColorRequest_FieldNumber_Color = 2,
+};
+
+/**
+ * Recolor every member of a group.
+ **/
+GPB_FINAL @interface ITMTabGroupRequest_SetColorRequest : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *groupId;
+/** Test to see if @c groupId has been set. */
+@property(nonatomic, readwrite) BOOL hasGroupId;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMRGBColor *color;
+/** Test to see if @c color has been set. */
+@property(nonatomic, readwrite) BOOL hasColor;
+
+@end
+
+#pragma mark - ITMTabGroupRequest_SetCollapsedRequest
+
+typedef GPB_ENUM(ITMTabGroupRequest_SetCollapsedRequest_FieldNumber) {
+  ITMTabGroupRequest_SetCollapsedRequest_FieldNumber_GroupId = 1,
+  ITMTabGroupRequest_SetCollapsedRequest_FieldNumber_Collapsed = 2,
+};
+
+/**
+ * Collapse or expand a group. Collapsing a group that is the whole window is
+ * impossible (there would be no visible tab to move selection to) and fails
+ * with COLLAPSE_IMPOSSIBLE.
+ **/
+GPB_FINAL @interface ITMTabGroupRequest_SetCollapsedRequest : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *groupId;
+/** Test to see if @c groupId has been set. */
+@property(nonatomic, readwrite) BOOL hasGroupId;
+
+@property(nonatomic, readwrite) BOOL collapsed;
+
+@property(nonatomic, readwrite) BOOL hasCollapsed;
+@end
+
+#pragma mark - ITMTabGroupRequest_ListGroupsRequest
+
+/**
+ * List every group in every window (order follows window then tab order).
+ **/
+GPB_FINAL @interface ITMTabGroupRequest_ListGroupsRequest : GPBMessage
+
+@end
+
+#pragma mark - ITMTabGroupRequest_GetMembershipRequest
+
+typedef GPB_ENUM(ITMTabGroupRequest_GetMembershipRequest_FieldNumber) {
+  ITMTabGroupRequest_GetMembershipRequest_FieldNumber_GroupId = 1,
+};
+
+/**
+ * Read a group's membership. If group_id is set, only that group is
+ * returned; otherwise every group is returned (same as list_groups but the
+ * intent is membership).
+ **/
+GPB_FINAL @interface ITMTabGroupRequest_GetMembershipRequest : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *groupId;
+/** Test to see if @c groupId has been set. */
+@property(nonatomic, readwrite) BOOL hasGroupId;
+
+@end
+
+#pragma mark - ITMTabGroupResponse
+
+typedef GPB_ENUM(ITMTabGroupResponse_FieldNumber) {
+  ITMTabGroupResponse_FieldNumber_Status = 1,
+  ITMTabGroupResponse_FieldNumber_GroupsArray = 2,
+};
+
+GPB_FINAL @interface ITMTabGroupResponse : GPBMessage
+
+@property(nonatomic, readwrite) ITMTabGroupResponse_Status status;
+
+@property(nonatomic, readwrite) BOOL hasStatus;
+/**
+ * create_group returns the one created group. list_groups and get_membership
+ * return the matching groups. Other requests leave this empty.
+ **/
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<ITMTabGroupResponse_Group*> *groupsArray;
+/** The number of items in @c groupsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger groupsArray_Count;
+
+@end
+
+#pragma mark - ITMTabGroupResponse_Group
+
+typedef GPB_ENUM(ITMTabGroupResponse_Group_FieldNumber) {
+  ITMTabGroupResponse_Group_FieldNumber_GroupId = 1,
+  ITMTabGroupResponse_Group_FieldNumber_Name = 2,
+  ITMTabGroupResponse_Group_FieldNumber_Color = 3,
+  ITMTabGroupResponse_Group_FieldNumber_WindowId = 4,
+  ITMTabGroupResponse_Group_FieldNumber_Collapsed = 5,
+  ITMTabGroupResponse_Group_FieldNumber_TabIdsArray = 6,
+};
+
+GPB_FINAL @interface ITMTabGroupResponse_Group : GPBMessage
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *groupId;
+/** Test to see if @c groupId has been set. */
+@property(nonatomic, readwrite) BOOL hasGroupId;
+
+@property(nonatomic, readwrite, copy, null_resettable) NSString *name;
+/** Test to see if @c name has been set. */
+@property(nonatomic, readwrite) BOOL hasName;
+
+@property(nonatomic, readwrite, strong, null_resettable) ITMRGBColor *color;
+/** Test to see if @c color has been set. */
+@property(nonatomic, readwrite) BOOL hasColor;
+
+/** the window the group lives in */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *windowId;
+/** Test to see if @c windowId has been set. */
+@property(nonatomic, readwrite) BOOL hasWindowId;
+
+@property(nonatomic, readwrite) BOOL collapsed;
+
+@property(nonatomic, readwrite) BOOL hasCollapsed;
+/** members, in tab order */
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<NSString*> *tabIdsArray;
+/** The number of items in @c tabIdsArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger tabIdsArray_Count;
+
 @end
 
 #pragma mark - ITMTmuxRequest

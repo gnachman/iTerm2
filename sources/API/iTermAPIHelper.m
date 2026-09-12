@@ -3791,6 +3791,277 @@ static BOOL iTermCheckSplitTreesIsomorphic(ITMSplitTreeNode *node1, ITMSplitTree
     handler(response);
 }
 
+#pragma mark - Tab groups
+
+// The window controller that currently owns tab group `gid` (i.e. has a member
+// tab carrying it), or nil if no such group exists in any window.
+- (PseudoTerminal *)terminalContainingTabGroupID:(NSString *)gid {
+    if (gid.length == 0) {
+        return nil;
+    }
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        if ([term tabsInGroup:gid].count > 0) {
+            return term;
+        }
+    }
+    return nil;
+}
+
+- (ITMRGBColor *)rgbColorProtoFromColor:(NSColor *)color {
+    NSColor *rgb = [color it_colorInDefaultColorSpace];
+    ITMRGBColor *proto = [[ITMRGBColor alloc] init];
+    proto.red = round(rgb.redComponent * 255.0);
+    proto.green = round(rgb.greenComponent * 255.0);
+    proto.blue = round(rgb.blueComponent * 255.0);
+    return proto;
+}
+
+- (NSColor *)colorFromRGBColorProto:(ITMRGBColor *)proto {
+    return [NSColor it_colorInDefaultColorSpaceWithRed:proto.red / 255.0
+                                                 green:proto.green / 255.0
+                                                  blue:proto.blue / 255.0
+                                                 alpha:1.0];
+}
+
+// Fill `group` from the live state of tab group `gid` in `term`. The definition
+// rides the member tabs, so read name/color/collapsed from the first member.
+- (void)populateTabGroupProto:(ITMTabGroupResponse_Group *)group
+                  fromGroupID:(NSString *)gid
+                   inTerminal:(PseudoTerminal *)term {
+    NSArray<PTYTab *> *members = [term tabsInGroup:gid];
+    group.groupId = gid;
+    group.windowId = term.terminalGuid ?: @"";
+    PTYTab *first = members.firstObject;
+    group.name = first.tabGroupName ?: @"";
+    group.collapsed = first.tabGroupCollapsed;
+    if (first.tabGroupColor) {
+        group.color = [self rgbColorProtoFromColor:first.tabGroupColor];
+    }
+    for (PTYTab *member in members) {
+        [group.tabIdsArray addObject:[@(member.uniqueId) stringValue]];
+    }
+}
+
+// Append a Group message for every distinct group in every window (or just the
+// one matching `filter`, if non-nil), in window-then-tab order.
+- (void)appendTabGroupsToResponse:(ITMTabGroupResponse *)response matchingGroupID:(NSString *)filter {
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        NSMutableSet<NSString *> *seen = [NSMutableSet set];
+        for (PTYTab *tab in [term tabs]) {
+            NSString *gid = tab.tabGroupID;
+            if (gid.length == 0 || [seen containsObject:gid]) {
+                continue;
+            }
+            [seen addObject:gid];
+            if (filter.length > 0 && ![gid isEqualToString:filter]) {
+                continue;
+            }
+            ITMTabGroupResponse_Group *group = [[ITMTabGroupResponse_Group alloc] init];
+            [self populateTabGroupProto:group fromGroupID:gid inTerminal:term];
+            [response.groupsArray addObject:group];
+        }
+    }
+}
+
+- (void)handleCreateTabGroupRequest:(ITMTabGroupRequest_CreateGroupRequest *)req
+                           response:(ITMTabGroupResponse *)response {
+    if (req.tabIdsArray_Count == 0) {
+        response.status = ITMTabGroupResponse_Status_RequestMalformed;
+        return;
+    }
+    NSMutableArray<PTYTab *> *tabs = [NSMutableArray array];
+    PseudoTerminal *window = nil;
+    for (NSString *tabID in req.tabIdsArray) {
+        PTYTab *tab = [self tabWithID:tabID];
+        if (!tab) {
+            response.status = ITMTabGroupResponse_Status_InvalidTabId;
+            return;
+        }
+        PseudoTerminal *term = [PseudoTerminal castFrom:tab.realParentWindow];
+        if (!window) {
+            window = term;
+        } else if (window != term) {
+            response.status = ITMTabGroupResponse_Status_TabsInDifferentWindows;
+            return;
+        }
+        [tabs addObject:tab];
+    }
+    NSColor *color = req.hasColor ? [self colorFromRGBColorProto:req.color] : nil;
+    NSString *gid = [window createTabGroupWithTabs:tabs
+                                              name:(req.hasName ? req.name : @"")
+                                             color:color];
+    if (!gid) {
+        response.status = ITMTabGroupResponse_Status_RequestMalformed;
+        return;
+    }
+    response.status = ITMTabGroupResponse_Status_Ok;
+    ITMTabGroupResponse_Group *group = [[ITMTabGroupResponse_Group alloc] init];
+    [self populateTabGroupProto:group fromGroupID:gid inTerminal:window];
+    [response.groupsArray addObject:group];
+}
+
+- (void)handleAssignTabGroupRequest:(ITMTabGroupRequest_AssignTabRequest *)req
+                           response:(ITMTabGroupResponse *)response {
+    if (!req.hasGroupId || !req.hasTabId) {
+        response.status = ITMTabGroupResponse_Status_RequestMalformed;
+        return;
+    }
+    PTYTab *tab = [self tabWithID:req.tabId];
+    if (!tab) {
+        response.status = ITMTabGroupResponse_Status_InvalidTabId;
+        return;
+    }
+    PseudoTerminal *window = [self terminalContainingTabGroupID:req.groupId];
+    if (!window) {
+        response.status = ITMTabGroupResponse_Status_InvalidGroupId;
+        return;
+    }
+    if ([PseudoTerminal castFrom:tab.realParentWindow] != window) {
+        response.status = ITMTabGroupResponse_Status_TabsInDifferentWindows;
+        return;
+    }
+    if (![window addTab:tab toExistingTabGroupWithID:req.groupId]) {
+        response.status = ITMTabGroupResponse_Status_InvalidGroupId;
+        return;
+    }
+    response.status = ITMTabGroupResponse_Status_Ok;
+    ITMTabGroupResponse_Group *group = [[ITMTabGroupResponse_Group alloc] init];
+    [self populateTabGroupProto:group fromGroupID:req.groupId inTerminal:window];
+    [response.groupsArray addObject:group];
+}
+
+- (void)handleRemoveTabGroupRequest:(ITMTabGroupRequest_RemoveTabRequest *)req
+                           response:(ITMTabGroupResponse *)response {
+    if (!req.hasTabId) {
+        response.status = ITMTabGroupResponse_Status_RequestMalformed;
+        return;
+    }
+    PTYTab *tab = [self tabWithID:req.tabId];
+    if (!tab) {
+        response.status = ITMTabGroupResponse_Status_InvalidTabId;
+        return;
+    }
+    PseudoTerminal *window = [PseudoTerminal castFrom:tab.realParentWindow];
+    NSString *gid = tab.tabGroupID;  // capture before removal dissolves membership
+    [window removeTabFromItsGroup:tab];
+    response.status = ITMTabGroupResponse_Status_Ok;
+    // Report the group's remaining membership. An emptied group has vanished, so
+    // return nothing in that case.
+    if (gid.length > 0 && [window tabsInGroup:gid].count > 0) {
+        ITMTabGroupResponse_Group *group = [[ITMTabGroupResponse_Group alloc] init];
+        [self populateTabGroupProto:group fromGroupID:gid inTerminal:window];
+        [response.groupsArray addObject:group];
+    }
+}
+
+- (void)handleRenameTabGroupRequest:(ITMTabGroupRequest_RenameRequest *)req
+                           response:(ITMTabGroupResponse *)response {
+    if (!req.hasGroupId || !req.hasName) {
+        response.status = ITMTabGroupResponse_Status_RequestMalformed;
+        return;
+    }
+    PseudoTerminal *window = [self terminalContainingTabGroupID:req.groupId];
+    if (!window) {
+        response.status = ITMTabGroupResponse_Status_InvalidGroupId;
+        return;
+    }
+    [window setTabGroupName:req.name forGroupID:req.groupId];
+    response.status = ITMTabGroupResponse_Status_Ok;
+    ITMTabGroupResponse_Group *group = [[ITMTabGroupResponse_Group alloc] init];
+    [self populateTabGroupProto:group fromGroupID:req.groupId inTerminal:window];
+    [response.groupsArray addObject:group];
+}
+
+- (void)handleSetColorTabGroupRequest:(ITMTabGroupRequest_SetColorRequest *)req
+                             response:(ITMTabGroupResponse *)response {
+    if (!req.hasGroupId || !req.hasColor) {
+        response.status = ITMTabGroupResponse_Status_RequestMalformed;
+        return;
+    }
+    PseudoTerminal *window = [self terminalContainingTabGroupID:req.groupId];
+    if (!window) {
+        response.status = ITMTabGroupResponse_Status_InvalidGroupId;
+        return;
+    }
+    [window setTabGroupColor:[self colorFromRGBColorProto:req.color] forGroupID:req.groupId];
+    response.status = ITMTabGroupResponse_Status_Ok;
+    ITMTabGroupResponse_Group *group = [[ITMTabGroupResponse_Group alloc] init];
+    [self populateTabGroupProto:group fromGroupID:req.groupId inTerminal:window];
+    [response.groupsArray addObject:group];
+}
+
+- (void)handleSetCollapsedTabGroupRequest:(ITMTabGroupRequest_SetCollapsedRequest *)req
+                                 response:(ITMTabGroupResponse *)response {
+    if (!req.hasGroupId || !req.hasCollapsed) {
+        response.status = ITMTabGroupResponse_Status_RequestMalformed;
+        return;
+    }
+    PseudoTerminal *window = [self terminalContainingTabGroupID:req.groupId];
+    if (!window) {
+        response.status = ITMTabGroupResponse_Status_InvalidGroupId;
+        return;
+    }
+    if (req.collapsed) {
+        if ([window tabGroupIsWholeWindow:req.groupId]) {
+            response.status = ITMTabGroupResponse_Status_CollapseImpossible;
+            return;
+        }
+        [window collapseTabGroup:req.groupId];
+    } else {
+        [window expandTabGroup:req.groupId];
+    }
+    response.status = ITMTabGroupResponse_Status_Ok;
+    ITMTabGroupResponse_Group *group = [[ITMTabGroupResponse_Group alloc] init];
+    [self populateTabGroupProto:group fromGroupID:req.groupId inTerminal:window];
+    [response.groupsArray addObject:group];
+}
+
+- (void)handleGetMembershipTabGroupRequest:(ITMTabGroupRequest_GetMembershipRequest *)req
+                                  response:(ITMTabGroupResponse *)response {
+    NSString *filter = req.hasGroupId ? req.groupId : nil;
+    [self appendTabGroupsToResponse:response matchingGroupID:filter];
+    if (filter.length > 0 && response.groupsArray_Count == 0) {
+        response.status = ITMTabGroupResponse_Status_InvalidGroupId;
+        return;
+    }
+    response.status = ITMTabGroupResponse_Status_Ok;
+}
+
+- (void)apiServerTabGroupRequest:(ITMTabGroupRequest *)request handler:(void (^)(ITMTabGroupResponse *))handler {
+    ITMTabGroupResponse *response = [[ITMTabGroupResponse alloc] init];
+    switch (request.requestOneOfCase) {
+        case ITMTabGroupRequest_Request_OneOfCase_CreateGroupRequest:
+            [self handleCreateTabGroupRequest:request.createGroupRequest response:response];
+            break;
+        case ITMTabGroupRequest_Request_OneOfCase_AssignTabRequest:
+            [self handleAssignTabGroupRequest:request.assignTabRequest response:response];
+            break;
+        case ITMTabGroupRequest_Request_OneOfCase_RemoveTabRequest:
+            [self handleRemoveTabGroupRequest:request.removeTabRequest response:response];
+            break;
+        case ITMTabGroupRequest_Request_OneOfCase_RenameRequest:
+            [self handleRenameTabGroupRequest:request.renameRequest response:response];
+            break;
+        case ITMTabGroupRequest_Request_OneOfCase_SetColorRequest:
+            [self handleSetColorTabGroupRequest:request.setColorRequest response:response];
+            break;
+        case ITMTabGroupRequest_Request_OneOfCase_SetCollapsedRequest:
+            [self handleSetCollapsedTabGroupRequest:request.setCollapsedRequest response:response];
+            break;
+        case ITMTabGroupRequest_Request_OneOfCase_ListGroupsRequest:
+            [self appendTabGroupsToResponse:response matchingGroupID:nil];
+            response.status = ITMTabGroupResponse_Status_Ok;
+            break;
+        case ITMTabGroupRequest_Request_OneOfCase_GetMembershipRequest:
+            [self handleGetMembershipTabGroupRequest:request.getMembershipRequest response:response];
+            break;
+        case ITMTabGroupRequest_Request_OneOfCase_GPBUnsetOneOfCase:
+            response.status = ITMTabGroupResponse_Status_RequestMalformed;
+            break;
+    }
+    handler(response);
+}
+
 - (void)apiServerPreferencesRequest:(ITMPreferencesRequest *)request handler:(void (^)(ITMPreferencesResponse *))handler {
     ITMPreferencesResponse *response = [[ITMPreferencesResponse alloc] init];
 

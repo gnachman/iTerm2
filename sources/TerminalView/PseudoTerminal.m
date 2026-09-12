@@ -9021,6 +9021,73 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     [self tabsDidReorder];
 }
 
+#pragma mark - Tab groups (scriptable API)
+
+- (NSString *)createTabGroupWithTabs:(NSArray<PTYTab *> *)tabs
+                                name:(NSString *)name
+                               color:(NSColor *)color {
+    if (tabs.count == 0) {
+        return nil;
+    }
+    // Unlike -groupTabs:withName:, this accepts a single tab and an explicit
+    // color, and prompts for nothing. The definition rides every member (there
+    // is no registry), so stamp id/name/color on all of them.
+    NSString *gid = [[NSUUID UUID] UUIDString];
+    NSColor *resolvedColor = color ?: [self nextTabGroupColor];
+    for (PTYTab *tab in tabs) {
+        tab.tabGroupID = gid;
+        tab.tabGroupName = name;
+        tab.tabGroupColor = resolvedColor;
+        tab.tabGroupCollapsed = NO;
+    }
+    RLog(@"tabGroup: API created group %@ (%@) from %@ tabs", gid, name, @(tabs.count));
+    [self updateTabColors];
+    // The members may be scattered; repair the contiguity invariant so they
+    // become one block.
+    [self tabsDidReorder];
+    return gid;
+}
+
+- (BOOL)addTab:(PTYTab *)tab toExistingTabGroupWithID:(NSString *)groupID {
+    if (groupID.length == 0 || !tab) {
+        return NO;
+    }
+    if ([self tabsInGroup:groupID].count == 0) {
+        return NO;  // no such group in this window
+    }
+    tab.tabGroupID = groupID;
+    RLog(@"tabGroup: API added tab %@ to existing group %@", tab.tabViewItem.label, groupID);
+    // Copy the definition from an existing member, repair contiguity, and expand
+    // if the active tab just joined a collapsed group -- the same finalize path
+    // -addTabToExistingGroup: uses.
+    [self finalizeTabGroupMembershipChangeForTab:tab];
+    return YES;
+}
+
+- (void)removeTabFromItsGroup:(PTYTab *)tab {
+    if (tab.tabGroupID.length == 0) {
+        return;
+    }
+    [self removeTabFromGroup:tab label:(tab.tabViewItem.label ?: @"")];
+}
+
+- (void)setTabGroupName:(NSString *)name forGroupID:(NSString *)groupID {
+    NSArray<PTYTab *> *members = [self tabsInGroup:groupID];
+    if (members.count == 0) {
+        return;
+    }
+    // The name rides every member (see -renameTabGroupWithID:, which this is the
+    // modal-free equivalent of).
+    for (PTYTab *member in members) {
+        member.tabGroupName = name;
+    }
+    RLog(@"tabGroup: API renamed group %@ to %@", groupID, name);
+    [self updateTabColors];
+    // The chip's width is derived from the name; relay out so it isn't stuck at
+    // its old width until some later relayout.
+    [self relayoutTabGroupChipsSynchronously];
+}
+
 // Finalize a tab whose group membership just changed: reconcile its carried
 // definition against surviving members, refresh colors, repair the contiguity
 // invariant, and make sure the active tab isn't left inside a collapsed group.

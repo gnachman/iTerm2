@@ -81,4 +81,65 @@ final class iTermTabGroupTests: XCTestCase {
         XCTAssertEqual(group.color.dictionaryValue as NSDictionary,
                        color.dictionaryValue as NSDictionary)
     }
+
+    // MARK: - Scriptable-API invariants
+    //
+    // The API's create/assign/remove operations (PseudoTerminal
+    // -createTabGroupWithTabs:name:color:, -addTab:toExistingTabGroupWithID:,
+    // -removeTabFromItsGroup:) all mutate a tab's gid and then repair layout
+    // through -tabsDidReorder, i.e. iTermTabGroupOrdering.canonicalOrder. These
+    // pin the layer the API depends on: whatever tabs the API stamps with a gid,
+    // the reorder pass must gather into one contiguous block, and removing a
+    // member must leave the rest contiguous.
+
+    private func order(_ groupIDs: [String?], pinned: [Bool]? = nil) -> [Int] {
+        return iTermTabGroupOrdering.canonicalOrder(
+            groupIDs: groupIDs,
+            pinned: pinned ?? Array(repeating: false, count: groupIDs.count))
+    }
+
+    func testApiCreateFromScatteredTabsCompactsIntoOneBlock() {
+        // create(tabs: [t0, t2, t4]) stamps gid "G" on the scattered members;
+        // the reorder pass must pull them together into one run anchored at the
+        // first member, leaving the ungrouped tabs otherwise in place.
+        let result = order(["G", nil, "G", nil, "G"])
+        XCTAssertEqual(result, [0, 2, 4, 1, 3])
+    }
+
+    func testApiCreateSingleTabGroupIsNoMove() {
+        // A one-tab group (create with a single tab) is already contiguous.
+        XCTAssertEqual(order([nil, "G", nil]), [0, 1, 2])
+    }
+
+    func testApiRemoveMiddleMemberLeavesRemainderContiguous() {
+        // removeTabFromItsGroup: clears the middle member's gid (index 1 -> nil).
+        // The reorder pass must keep the two remaining members adjacent and let
+        // the now-ungrouped tab fall after the block.
+        let result = order(["G", nil, "G"])
+        XCTAssertEqual(result, [0, 2, 1])
+    }
+
+    func testApiAssignScatteredTabJoinsGroupBlock() {
+        // assign(tab: t3, to: "G") stamps gid "G" on a far tab; the reorder pass
+        // must fold it into G's existing block rather than leave it stranded.
+        let result = order(["G", "G", nil, "G"])
+        XCTAssertEqual(result, [0, 1, 3, 2])
+    }
+
+    func testApiCollapseFindsLandingSpotOutsideGroup() {
+        // Collapsing a group that holds the active tab must first move selection
+        // to a visible tab outside the group. With an ungrouped tab present,
+        // there is a landing spot (so collapse is allowed, not COLLAPSE_IMPOSSIBLE).
+        let landing = iTermTabGroupOrdering.indexOfNearestTabOutsideGroup(
+            order: ["G", "G", nil], group: "G")
+        XCTAssertEqual(landing, 2)
+    }
+
+    func testApiCollapseWholeWindowHasNoLandingSpot() {
+        // A group that is the whole window has nowhere to move selection, so the
+        // API returns COLLAPSE_IMPOSSIBLE. That maps to no tab outside the group.
+        let landing = iTermTabGroupOrdering.indexOfNearestTabOutsideGroup(
+            order: ["G", "G", "G"], group: "G")
+        XCTAssertNil(landing)
+    }
 }

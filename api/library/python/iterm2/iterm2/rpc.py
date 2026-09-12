@@ -700,6 +700,93 @@ async def async_reorder_tabs(connection, assignments):
     return await _async_call(connection, request)
 
 
+def _set_rgb_color(proto_color, color):
+    """Copies an iterm2.Color's RGB components into an api_pb2.RGBColor."""
+    proto_color.red = color.red
+    proto_color.green = color.green
+    proto_color.blue = color.blue
+
+
+async def async_create_tab_group(connection, tab_ids, name, color=None):
+    """Creates a tab group from existing tabs.
+
+    :param tab_ids: a list of tab id strings (all in the same window).
+    :param name: the group's name.
+    :param color: an optional `iterm2.Color` for the group.
+    """
+    request = _alloc_request()
+    request.tab_group_request.create_group_request.SetInParent()
+    request.tab_group_request.create_group_request.tab_ids.extend(tab_ids)
+    request.tab_group_request.create_group_request.name = name
+    if color is not None:
+        _set_rgb_color(
+            request.tab_group_request.create_group_request.color, color)
+    return await _async_call(connection, request)
+
+
+async def async_assign_tab_to_group(connection, group_id, tab_id):
+    """Adds an existing tab to an existing tab group."""
+    request = _alloc_request()
+    request.tab_group_request.assign_tab_request.SetInParent()
+    request.tab_group_request.assign_tab_request.group_id = group_id
+    request.tab_group_request.assign_tab_request.tab_id = tab_id
+    return await _async_call(connection, request)
+
+
+async def async_remove_tab_from_group(connection, tab_id):
+    """Removes a tab from whatever group it belongs to."""
+    request = _alloc_request()
+    request.tab_group_request.remove_tab_request.SetInParent()
+    request.tab_group_request.remove_tab_request.tab_id = tab_id
+    return await _async_call(connection, request)
+
+
+async def async_rename_tab_group(connection, group_id, name):
+    """Renames a tab group."""
+    request = _alloc_request()
+    request.tab_group_request.rename_request.SetInParent()
+    request.tab_group_request.rename_request.group_id = group_id
+    request.tab_group_request.rename_request.name = name
+    return await _async_call(connection, request)
+
+
+async def async_set_tab_group_color(connection, group_id, color):
+    """Sets a tab group's color to an `iterm2.Color`."""
+    request = _alloc_request()
+    request.tab_group_request.set_color_request.SetInParent()
+    request.tab_group_request.set_color_request.group_id = group_id
+    _set_rgb_color(request.tab_group_request.set_color_request.color, color)
+    return await _async_call(connection, request)
+
+
+async def async_set_tab_group_collapsed(connection, group_id, collapsed):
+    """Collapses or expands a tab group."""
+    request = _alloc_request()
+    request.tab_group_request.set_collapsed_request.SetInParent()
+    request.tab_group_request.set_collapsed_request.group_id = group_id
+    request.tab_group_request.set_collapsed_request.collapsed = collapsed
+    return await _async_call(connection, request)
+
+
+async def async_list_tab_groups(connection):
+    """Lists every tab group in every window."""
+    request = _alloc_request()
+    request.tab_group_request.list_groups_request.SetInParent()
+    return await _async_call(connection, request)
+
+
+async def async_get_tab_group_membership(connection, group_id=None):
+    """Reads a tab group's membership.
+
+    :param group_id: if set, only that group; otherwise every group.
+    """
+    request = _alloc_request()
+    request.tab_group_request.get_membership_request.SetInParent()
+    if group_id is not None:
+        request.tab_group_request.get_membership_request.group_id = group_id
+    return await _async_call(connection, request)
+
+
 async def async_get_default_profile(connection):
     """Gets the default profile."""
     request = _alloc_request()
