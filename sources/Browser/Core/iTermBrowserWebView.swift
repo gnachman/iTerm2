@@ -733,7 +733,6 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
 
     // MARK: - Deferred Interaction State
 
-    @available(macOS 12.0, *)
     @discardableResult
     func applyDeferredInteractionStateIfNeeded() -> Bool {
         guard let deferred = deferrableInteractionState else { return false }
@@ -748,73 +747,55 @@ class iTermBrowserWebView: iTermBaseWKWebView, iTermEditableTextDetecting {
 
     @discardableResult
     override func load(_ request: URLRequest) -> WKNavigation? {
-        if #available(macOS 12.0, *) {
-            applyDeferredInteractionStateIfNeeded()
-        }
+        applyDeferredInteractionStateIfNeeded()
         return super.load(request)
     }
 
     @discardableResult
     override func loadHTMLString(_ string: String, baseURL: URL?) -> WKNavigation? {
-        if #available(macOS 12.0, *) {
-            applyDeferredInteractionStateIfNeeded()
-        }
+        applyDeferredInteractionStateIfNeeded()
         return super.loadHTMLString(string, baseURL: baseURL)
     }
 
     @discardableResult
     override func load(_ data: Data, mimeType MIMEType: String, characterEncodingName: String, baseURL: URL) -> WKNavigation? {
-        if #available(macOS 12.0, *) {
-            applyDeferredInteractionStateIfNeeded()
-        }
+        applyDeferredInteractionStateIfNeeded()
         return super.load(data, mimeType: MIMEType, characterEncodingName: characterEncodingName, baseURL: baseURL)
     }
 
     @discardableResult
     override func loadFileURL(_ URL: URL, allowingReadAccessTo readAccessURL: URL) -> WKNavigation? {
-        if #available(macOS 12.0, *) {
-            applyDeferredInteractionStateIfNeeded()
-        }
+        applyDeferredInteractionStateIfNeeded()
         return super.loadFileURL(URL, allowingReadAccessTo: readAccessURL)
     }
 
     @discardableResult
     override func reload() -> WKNavigation? {
-        if #available(macOS 12.0, *) {
-            applyDeferredInteractionStateIfNeeded()
-        }
+        applyDeferredInteractionStateIfNeeded()
         return super.reload()
     }
 
     @discardableResult
     override func reloadFromOrigin() -> WKNavigation? {
-        if #available(macOS 12.0, *) {
-            applyDeferredInteractionStateIfNeeded()
-        }
+        applyDeferredInteractionStateIfNeeded()
         return super.reloadFromOrigin()
     }
 
     @discardableResult
     override func goBack() -> WKNavigation? {
-        if #available(macOS 12.0, *) {
-            applyDeferredInteractionStateIfNeeded()
-        }
+        applyDeferredInteractionStateIfNeeded()
         return super.goBack()
     }
 
     @discardableResult
     override func goForward() -> WKNavigation? {
-        if #available(macOS 12.0, *) {
-            applyDeferredInteractionStateIfNeeded()
-        }
+        applyDeferredInteractionStateIfNeeded()
         return super.goForward()
     }
 
     @discardableResult
     override func go(to item: WKBackForwardListItem) -> WKNavigation? {
-        if #available(macOS 12.0, *) {
-            applyDeferredInteractionStateIfNeeded()
-        }
+        applyDeferredInteractionStateIfNeeded()
         return super.go(to: item)
     }
 

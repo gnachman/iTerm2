@@ -573,7 +573,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // Checked and at the end of -refresh. Meant to be use when a reentrant call failed.
 @property (nonatomic) BOOL needsUpdateSubviewFrames;
-@property (nonatomic, readonly) NSArray<iTermTerminalButton *> *terminalButtons NS_AVAILABLE_MAC(11);
+@property (nonatomic, readonly) NSArray<iTermTerminalButton *> *terminalButtons;
 @property (nonatomic, readonly) BOOL scrolledToBottom;
 @property (nonatomic, readonly) BOOL shouldBeAlphaedOut;
 @property (nonatomic, readonly) BOOL drawingHelperIsValid;

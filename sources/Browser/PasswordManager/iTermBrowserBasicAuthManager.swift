@@ -16,7 +16,6 @@
 @preconcurrency import WebKit
 import AppKit
 
-@available(macOS 11.0, *)
 @MainActor
 final class iTermBrowserBasicAuthManager {
     private let store: iTermBrowserBasicAuthStore

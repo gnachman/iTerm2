@@ -93,7 +93,6 @@ extension iTermBrowserPermissionManager {
     
     // MARK: - iTermBrowserWebView Integration
 
-    @available(macOS 12.0, *)
     func handleMediaCapturePermissionRequest(
         from webView: iTermBrowserWebView,
         origin: WKSecurityOrigin,

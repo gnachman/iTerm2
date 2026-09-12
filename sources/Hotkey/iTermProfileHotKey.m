@@ -886,14 +886,12 @@ static NSString *const kArrangement = @"Arrangement";
 - (NSArray<iTermBaseHotKey *> *)hotKeyPressedWithSiblings:(NSArray<iTermBaseHotKey *> *)genericSiblings {
     RLog(@"hotKeypressedWithSiblings called on %@ with siblings %@", self, genericSiblings);
     DLog(@"Secure input=%@", @([[iTermSecureKeyboardEntryController sharedInstance] isEnabled]));
-    if (@available(macOS 12.0, *)) {
-        if ([[iTermSecureKeyboardEntryController sharedInstance] isEnabled] &&
-            ![NSApp isActive]) {
-            DLog(@"Notify");
-            [[iTermNotificationController sharedInstance] notify:@"Hotkeys Unavailable"
-                                                 withDescription:@"Another app has enabled secure keyboard input. That prevents hotkey windows from being shown."];
-            return @[];
-        }
+    if ([[iTermSecureKeyboardEntryController sharedInstance] isEnabled] &&
+        ![NSApp isActive]) {
+        DLog(@"Notify");
+        [[iTermNotificationController sharedInstance] notify:@"Hotkeys Unavailable"
+                                             withDescription:@"Another app has enabled secure keyboard input. That prevents hotkey windows from being shown."];
+        return @[];
     }
     genericSiblings = [genericSiblings arrayByAddingObject:self];
 

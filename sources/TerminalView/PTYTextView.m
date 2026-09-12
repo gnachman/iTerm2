@@ -6860,7 +6860,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 - (NSArray<iTermTerminalButton *> *)commandButtonsForMark:(id<VT100ScreenMarkReading>)mark
                                                      line:(int)markLine
                                               shouldFloat:(BOOL)shouldFloat
-                                                 offByOne:(BOOL)offByOne NS_AVAILABLE_MAC(11)
+                                                 offByOne:(BOOL)offByOne
 {
     const int width = [self.dataSource width];
     const long long offset = self.dataSource.totalScrollbackOverflow;

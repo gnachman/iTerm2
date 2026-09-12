@@ -917,7 +917,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return _configuration->_buttonsBackgroundRects;
 }
 
-- (NSArray<iTermButtonPillInfo *> *)buttonPillInfos NS_AVAILABLE_MAC(11) {
+- (NSArray<iTermButtonPillInfo *> *)buttonPillInfos {
     return _configuration->_buttonPillInfos;
 }
 
@@ -2856,7 +2856,7 @@ static int iTermEmitGlyphsAndSetAttributes(iTermMetalPerFrameState *self,
     return _inputMethodMarkedRange.length > 0;
 }
 
-- (NSArray<iTermTerminalButton *> *)terminalButtons NS_AVAILABLE_MAC(11) {
+- (NSArray<iTermTerminalButton *> *)terminalButtons {
     return _configuration->_terminalButtons;
 }
 
