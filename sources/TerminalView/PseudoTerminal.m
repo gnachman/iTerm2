@@ -160,6 +160,11 @@ NSString *const iTermWindowDidCloseNotification = @"iTermWindowDidClose";
 NSString *const iTermTabDidCloseNotification = @"iTermTabDidClose";
 NSString *const iTermDidCreateTerminalWindowNotification = @"iTermDidCreateTerminalWindowNotification";
 
+// When present in an -openTabWithArrangement: options dictionary, gives the
+// index at which the new tab should be inserted, overriding the automatic
+// placement that otherwise honors kPreferenceKeyNewTabsOpenAtEndOfTabBar.
+static NSString *const iTermOpenTabArrangementInsertionIndexKey = @"iTermOpenTabArrangementInsertionIndex";
+
 #define PtyLog DLog
 
 // Constants for saved window arrangement key names.
@@ -12051,7 +12056,12 @@ typedef struct {
         // Tmux tab
         [self appendTab:theTab];
     } else {
-        [self addTabAtAutomaticallyDeterminedLocation:theTab];
+        NSNumber *insertionIndex = options[iTermOpenTabArrangementInsertionIndexKey];
+        if (insertionIndex != nil) {
+            [self insertTab:theTab atIndex:MIN((int)self.numberOfTabs, insertionIndex.intValue)];
+        } else {
+            [self addTabAtAutomaticallyDeterminedLocation:theTab];
+        }
     }
     [theTab didAddToTerminal:self
              withArrangement:arrangement];
@@ -14432,13 +14442,26 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         // a group anyway).
         return nil;
     } else {
+        NSMutableDictionary *options = [@{ PTYSessionArrangementOptionsForDuplication: @YES } mutableCopy];
+        // Place the copy immediately to the right of the original tab (rather
+        // than wherever the general new-tab placement setting would put it) when
+        // the duplicate lands in the source's own window. Tmux tabs are always
+        // appended by openTabWithArrangement:, so they are excluded. (#13039)
+        if (destinationTerminal == self &&
+            !theTab.isTmuxTab &&
+            [iTermAdvancedSettingsModel duplicatedTabsOpenAdjacentToOriginal]) {
+            const NSInteger sourceIndex = [self indexOfTab:theTab];
+            if (sourceIndex != NSNotFound) {
+                options[iTermOpenTabArrangementInsertionIndexKey] = @(sourceIndex + 1);
+            }
+        }
         return [destinationTerminal openTabWithArrangement:theTab.arrangementForDuplication
                                                      named:nil
                                            hasFlexibleView:theTab.isTmuxTab
                                                    viewMap:nil
                                                 sessionMap:nil
                                         partialAttachments:nil
-                                                   options:@{ PTYSessionArrangementOptionsForDuplication: @YES }];
+                                                   options:options];
     }
 }
 

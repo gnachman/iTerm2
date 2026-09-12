@@ -212,6 +212,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)dockIconTogglesWindow DEPRECATED_ATTRIBUTE;
 + (BOOL)doNotSetCtype;
 + (BOOL)doubleClickTabToEdit;
++ (BOOL)duplicatedTabsOpenAdjacentToOriginal;
 + (BOOL)doubleReportScrollWheel;
 + (NSString *)downloadsDirectory;
 + (double)noSyncDownloadPrefsTimeout;

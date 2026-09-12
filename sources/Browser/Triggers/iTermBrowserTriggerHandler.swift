@@ -17,8 +17,8 @@ class iTermBrowserTriggerHandler: NSObject {
     private let sessionSecret: String
     static let messageHandlerName = "iTerm2Trigger"
     private var triggers: [String: (NSDictionary, BrowserTrigger)]!
-    var delegate: iTermBrowserTriggerHandlerDelegate?
-    var webView: iTermBrowserWebView?
+    weak var delegate: iTermBrowserTriggerHandlerDelegate?
+    weak var webView: iTermBrowserWebView?
 
     init?(profileObserver: iTermProfilePreferenceObserver) {
         guard let sessionSecret = String.makeSecureHexString() else {
