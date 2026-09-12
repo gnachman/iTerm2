@@ -3934,8 +3934,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                                                        color:theColor];
             } else if ([part isEqualToString:@"?"]) {
                 NSColor *theColor = [_delegate terminalColorForIndex:theIndex];
-                // Use tmux-aware method for OSC 4 queries (tmux 3.6+)
-                if ([_delegate terminalShouldSendReport:YES]) {
+                // Use tmux-aware method for OSC 4 queries (tmux 3.6+). Coalescible
+                // because the value is read from the mutation-thread colorMap, so a
+                // burst of queries can share one sync (issue 13013).
+                if ([_delegate terminalShouldSendColorReport:YES]) {
                       [_delegate terminalSendOSC4Report:[self.output reportColor:theColor atIndex:theIndex prefix:@"4;"]];
                 }
             }

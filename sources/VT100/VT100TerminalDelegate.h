@@ -114,6 +114,17 @@ NS_ASSUME_NONNULL_BEGIN
 // Returns if it's safe to send reports.
 - (BOOL)terminalShouldSendReport:(BOOL)tmuxAllowed;
 
+// Like terminalShouldSendReport: but specifically for OSC 4 palette color
+// queries, whose value is read from the mutation-thread colorMap. A run of these
+// may share a single pause+sync instead of one per query (issue 13013). This is
+// deliberately named for colors, not a generic "coalescible": the skip-sync flag
+// is only safe for reports whose value the mutation thread owns and whose every
+// mutation schedules a disarming side effect. It must NOT be used for reports
+// that read main-thread-mirrored state such as the config snapshot (cell size,
+// backing scale, window/grid size), which is refreshed only by a sync and would
+// read stale. Such reports use terminalShouldSendReport:.
+- (BOOL)terminalShouldSendColorReport:(BOOL)tmuxAllowed;
+
 - (void)terminalReportVariableNamed:(NSString *)variable;
 
 // Sends a report.

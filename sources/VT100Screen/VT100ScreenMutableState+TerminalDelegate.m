@@ -623,33 +623,81 @@ typedef struct {
 // want to pause & sync when mutating reportable state. Instead, pause and sync before sending a
 // report becuse reports are pretty rare compared to decset and friends.
 //
-// All reports go through -terminalShouldSendReport:. I know this because any that don't will break
-// tmux integration.
+// All reports go through -terminalShouldSendReport: (or the coalescible variant).
+// I know this because any that don't will break tmux integration.
 //
 // When you get a report, roll back the token (so it will be executed again later) and pause. Force
-// a sync and unpause. The allowNextReport flag is temporarily set to allow the report to go through.
+// a sync and unpause so the report goes through on re-execution.
+//
+// Coalescing (issue 13013): a report whose value the mutation thread owns (currently only OSC 4
+// color queries, which read colorMap) uses -terminalShouldSendColorReport:. Its sync arms the
+// executor's reportsMaySkipSync flag, which stays armed across a run of such reports so a burst
+// (e.g. herdr querying all 256 palette colors on focus) pays one sync, not one per query. Any state
+// side effect scheduled in the interim disarms it (see TokenExecutor.addSideEffect/
+// addDeferredSideEffect/setSideEffectFlag and addUnmanagedPausedSideEffect - the colorMap-mutating
+// paths all funnel through those), forcing the next coalescible report to re-sync. Report-send side
+// effects use addReportSideEffect so they don't disarm it.
+//
+// IMPORTANT: reports that read main-thread-mirrored state (the config snapshot: cell size, backing
+// scale, window/grid size) must NOT be coalescible. That state is refreshed only by a sync running
+// -updateConfigurationFields, and a change to it (e.g. dragging to a display with a different
+// backing scale) schedules no mutation-queue side effect, so it would never disarm the flag and a
+// skipped sync would report a stale value. Those reports use the plain -terminalShouldSendReport:,
+// which always syncs.
 //
 // Some reports are OK to send for a tmux integration client: those that tmux itself is known not
 // to catch.
 - (BOOL)terminalShouldSendReport:(BOOL)tmuxAllowed {
-    DLog(@"begin");
+    return [self shouldSendReport:tmuxAllowed coalescible:NO];
+}
+
+- (BOOL)terminalShouldSendColorReport:(BOOL)tmuxAllowed {
+    return [self shouldSendReport:tmuxAllowed coalescible:YES];
+}
+
+- (BOOL)shouldSendReport:(BOOL)tmuxAllowed coalescible:(BOOL)coalescible {
+    DLog(@"begin coalescible=%@", @(coalescible));
     if (!tmuxAllowed && self.config.isTmuxClient) {
         DLog(@"no - is tmux client");
         return NO;
     }
+    // The one-shot handles the rolled-back report token re-executing after its
+    // sync. It applies to EVERY report, so non-coalescible reports (DSR, DA,
+    // cursor position, cell size, ...) still get delivered. Checked first and
+    // consumed here so a run's leftover cannot leak to the next report. This does
+    // NOT depend on the coalescing flag, so an interleaved state side effect that
+    // disarms coalescing cannot livelock the re-execution.
     if (self.allowNextReport) {
-        DLog(@"Allowing report to go through");
+        DLog(@"Allowing the re-executed report to go through");
         self.allowNextReport = NO;
         return YES;
     }
+    if (coalescible && self.tokenExecutor.reportsMaySkipSync) {
+        // A joined sync already happened and no state side effect has been
+        // scheduled since, so a mutation-thread-owned value (colorMap) reflects
+        // current state. Let it through without another sync. This is what
+        // collapses herdr's 256-color palette query burst to a single sync.
+        DLog(@"Allowing coalescible report to go through without a new sync");
+        return YES;
+    }
     DLog(@"Will send a report. Rollback and pause");
+    self.reportSyncCount = self.reportSyncCount + 1;
     [self.tokenExecutor rollBackCurrentToken];
     iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
+    const BOOL arm = coalescible;
     __weak __typeof(self) weakSelf = self;
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        DLog(@"Now that I have synced, unpause and allow the report to go through");
-        [unpauser unpause];
+        DLog(@"Synced; allow the re-executed report and (if coalescible) arm skip-sync");
+        // Allow the rolled-back token to send when it re-executes.
         weakSelf.allowNextReport = YES;
+        if (arm) {
+            // Armed after the joined side effect flushed everything queued before
+            // it, so the main thread has applied all prior mutations. Only
+            // coalescible reports arm; a non-coalescible report never lets a later
+            // report skip its sync.
+            [weakSelf.tokenExecutor armReportsMaySkipSync];
+        }
+        [unpauser unpause];
     } name:@"should send report"];
     DLog(@"Decline report");
     return NO;
@@ -659,7 +707,7 @@ typedef struct {
     DLog(@"begin %@", variable);
     [self willSendReport];
     __weak __typeof(self) weakSelf = self;
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addReportSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenReportVariableNamed:variable];
         [weakSelf didSendReport:delegate];
@@ -678,7 +726,7 @@ typedef struct {
         DLog(@"report %@", [report stringWithEncoding:NSUTF8StringEncoding]);
         [self willSendReport];
         __weak __typeof(self) weakSelf = self;
-        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [self addReportSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             DLog(@"begin side-effect");
             [delegate screenSendReportData:report];
             [weakSelf didSendReport:delegate];
@@ -701,7 +749,7 @@ typedef struct {
     // tmux: dispatch to session for tmux-specific handling (3.6+)
     [self willSendReport];
     __weak __typeof(self) weakSelf = self;
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [self addReportSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenSendTmuxOSC4Report:report];
         [weakSelf didSendReport:delegate];
     } name:@"OSC 4 tmux report"];
@@ -1214,7 +1262,7 @@ typedef struct {
     DLog(@"begin");
     [self willSendReport];
     __weak __typeof(self) weakSelf = self;
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addPausedReportSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         DLog(@"running");
         [delegate screenReportPasteboard:pasteboard completion:^{
             DLog(@"unpausing");
@@ -1480,7 +1528,7 @@ typedef struct {
     }
     [self willSendReport];
     __weak __typeof(self) weakSelf = self;
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addReportSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenReportIconTitle];
         [weakSelf didSendReport:delegate];
     } name:@"report icon title"];
@@ -1493,7 +1541,7 @@ typedef struct {
     }
     [self willSendReport];
     __weak __typeof(self) weakSelf = self;
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addReportSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenReportWindowTitle];
         [weakSelf didSendReport:delegate];
     } name:@"report window title"];
@@ -3713,7 +3761,7 @@ static BOOL iTermStringIsASCIIDecimal(NSString *string) {
     DLog(@"begin");
     [self willSendReport];
     __weak __typeof(self) weakSelf = self;
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addReportSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenReportCapabilities];
         [weakSelf didSendReport:delegate];

@@ -222,10 +222,38 @@ class TokenExecutor: NSObject {
         impl.addSideEffect(task)
     }
 
+    // Any queue. Schedules an outbound report-send side effect without
+    // invalidating reportsMaySkipSync.
+    @objc
+    func addReportSideEffect(_ task: @escaping TokenExecutorTask) {
+        if gDebugLogging.boolValue { DLog("add report side effect") }
+        impl.addReportSideEffect(task)
+    }
+
     // Any queue
     @objc
     func addDeferredSideEffect(_ task: @escaping TokenExecutorTask) {
         impl.addDeferredSideEffect(task)
+    }
+
+    // Any queue. True if a report may be sent without first pausing+syncing.
+    @objc
+    var reportsMaySkipSync: Bool {
+        return impl.reportsMaySkipSync
+    }
+
+    // Any queue. Call from a scheduling path the executor doesn't otherwise see
+    // (e.g. addUnmanagedPausedSideEffect) so the next report re-syncs.
+    @objc
+    func noteStateSideEffectScheduled() {
+        impl.noteStateSideEffectScheduled()
+    }
+
+    // Arm skip-sync (single atomic op; safe from any queue). Called from the
+    // report gate's joined side effect.
+    @objc
+    func armReportsMaySkipSync() {
+        impl.armReportsMaySkipSync()
     }
 
     // Any queue
@@ -320,6 +348,14 @@ private class TokenExecutorImpl {
     private var sideEffects = iTermTaskQueue()
     private let tokenQueue = TwoTierTokenQueue()
     private var pauseCount = iTermAtomicInt64Create()
+    // Nonzero means a report may be sent without first pausing+syncing, because a
+    // sync has happened and no state side effect has been scheduled since. It is
+    // armed by armReportsMaySkipSync() (from the report gate's joined sync) and
+    // reset to zero by any state side effect being scheduled. Report-send side
+    // effects use addReportSideEffect() so they do NOT reset it; otherwise a burst
+    // of queries (e.g. herdr querying all 256 palette colors on focus) would pay
+    // one joined sync per query. See terminalShouldSendReport:.
+    private var reportsMaySkipSyncFlag = iTermAtomicInt64Create()
     private var executingCount = 0
     private let executingSideEffects = MutableAtomicObject(false)
     private var sideEffectScheduler: PeriodicScheduler! = nil
@@ -491,21 +527,52 @@ private class TokenExecutorImpl {
 
     // Any queue
     func addSideEffect(_ task: @escaping TokenExecutorTask) {
+        noteStateSideEffectScheduled()
         sideEffects.append(task)
         if gDebugLogging.boolValue { DLog("addSideEffect()") }
         sideEffectScheduler.markNeedsUpdate()
     }
 
+    // Like addSideEffect but does NOT invalidate reportsMaySkipSync. Use this only
+    // for purely outbound report-send side effects, which never mutate state a
+    // later report reads.
+    func addReportSideEffect(_ task: @escaping TokenExecutorTask) {
+        sideEffects.append(task)
+        if gDebugLogging.boolValue { DLog("addReportSideEffect()") }
+        sideEffectScheduler.markNeedsUpdate()
+    }
+
     func addDeferredSideEffect(_ task: @escaping TokenExecutorTask) {
+        noteStateSideEffectScheduled()
         sideEffects.append(task)
         sideEffectScheduler.markNeedsUpdate(deferred: sideEffectScheduler.period / 2)
     }
 
     // Any queue
     func setSideEffectFlag(value: Int64) {
+        noteStateSideEffectScheduled()
         if (sideEffects.setFlag(value) & value) == 0 {
             sideEffectScheduler.markNeedsUpdate(deferred: sideEffectScheduler.period / 2)
         }
+    }
+
+    // Any queue. A report may skip its pause+sync only if this is nonzero.
+    var reportsMaySkipSync: Bool {
+        return iTermAtomicInt64Get(reportsMaySkipSyncFlag) != 0
+    }
+
+    // Any queue. Called from every state side-effect scheduling path so that the
+    // next report re-syncs.
+    func noteStateSideEffectScheduled() {
+        iTermAtomicInt64GetAndReset(reportsMaySkipSyncFlag)
+    }
+
+    // Arm the flag with a single atomic op so it can't tear against a concurrent
+    // noteStateSideEffectScheduled (GetAndReset) from any queue: arming ORs in the
+    // low bit; disarming resets to zero. If a disarm lands between... there is no
+    // "between" - each is one atomic operation. (armed == nonzero.)
+    func armReportsMaySkipSync() {
+        iTermAtomicInt64BitwiseOr(reportsMaySkipSyncFlag, 1)
     }
 
     func assertSynchronousSideEffectsAreSafe() {
