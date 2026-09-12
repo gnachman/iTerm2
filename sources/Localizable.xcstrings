@@ -14923,6 +14923,18 @@
         }
       }
     },
+    "AdvancedSetting.duplicatedTabsOpenAdjacentToOriginal" : {
+      "comment" : "Advanced setting: duplicatedTabsOpenAdjacentToOriginal",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When you duplicate a tab, should the copy open immediately to the right of the original tab?\nWhen disabled, duplicated tabs follow the general “New tabs are added” placement setting instead."
+          }
+        }
+      }
+    },
     "AdvancedSetting.dwcLineCache" : {
       "comment" : "Advanced setting: dwcLineCache",
       "extractionState" : "extracted_with_value",
