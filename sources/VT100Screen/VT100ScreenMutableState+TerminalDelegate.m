@@ -629,14 +629,18 @@ typedef struct {
 // When you get a report, roll back the token (so it will be executed again later) and pause. Force
 // a sync and unpause so the report goes through on re-execution.
 //
-// Coalescing (issue 13013): a report whose value the mutation thread owns (currently only OSC 4
-// color queries, which read colorMap) uses -terminalShouldSendColorReport:. Its sync arms the
-// executor's reportsMaySkipSync flag, which stays armed across a run of such reports so a burst
-// (e.g. herdr querying all 256 palette colors on focus) pays one sync, not one per query. Any state
-// side effect scheduled in the interim disarms it (see TokenExecutor.addSideEffect/
-// addDeferredSideEffect/setSideEffectFlag and addUnmanagedPausedSideEffect - the colorMap-mutating
-// paths all funnel through those), forcing the next coalescible report to re-sync. Report-send side
-// effects use addReportSideEffect so they don't disarm it.
+// Coalescing (issue 13013): a report whose value the mutation thread owns uses
+// -terminalShouldSendCoalescibleReport:. Currently that's OSC 4 color queries (which read the
+// mutation-thread colorMap) and device status reports such as CSI 6 n cursor position (which read
+// the mutation-thread grid cursor); both read constant or mutation-owned state that is always
+// current at token-execution time. Its sync arms the executor's reportsMaySkipSync flag, which stays
+// armed across a run of such reports so a burst (e.g. herdr querying all 256 palette colors on
+// focus, or a program that pipelines many CSI 6 n queries) pays one sync, not one per query. Any
+// state side effect scheduled in the interim disarms it (see TokenExecutor.addSideEffect/
+// addDeferredSideEffect/setSideEffectFlag and addUnmanagedPausedSideEffect - the state-mutating
+// paths, including cursor movement's redraw side effect, all funnel through those), forcing the next
+// coalescible report to re-sync. Report-send side effects use addReportSideEffect so they don't
+// disarm it.
 //
 // IMPORTANT: reports that read main-thread-mirrored state (the config snapshot: cell size, backing
 // scale, window/grid size) must NOT be coalescible. That state is refreshed only by a sync running
@@ -651,7 +655,7 @@ typedef struct {
     return [self shouldSendReport:tmuxAllowed coalescible:NO];
 }
 
-- (BOOL)terminalShouldSendColorReport:(BOOL)tmuxAllowed {
+- (BOOL)terminalShouldSendCoalescibleReport:(BOOL)tmuxAllowed {
     return [self shouldSendReport:tmuxAllowed coalescible:YES];
 }
 
@@ -662,10 +666,10 @@ typedef struct {
         return NO;
     }
     // The one-shot handles the rolled-back report token re-executing after its
-    // sync. It applies to EVERY report, so non-coalescible reports (DSR, DA,
-    // cursor position, cell size, ...) still get delivered. Checked first and
-    // consumed here so a run's leftover cannot leak to the next report. This does
-    // NOT depend on the coalescing flag, so an interleaved state side effect that
+    // sync. It applies to EVERY report, so non-coalescible reports (device
+    // attributes, cell size, ...) still get delivered. Checked first and consumed
+    // here so a run's leftover cannot leak to the next report. This does NOT
+    // depend on the coalescing flag, so an interleaved state side effect that
     // disarms coalescing cannot livelock the re-execution.
     if (self.allowNextReport) {
         DLog(@"Allowing the re-executed report to go through");
@@ -674,9 +678,11 @@ typedef struct {
     }
     if (coalescible && self.tokenExecutor.reportsMaySkipSync) {
         // A joined sync already happened and no state side effect has been
-        // scheduled since, so a mutation-thread-owned value (colorMap) reflects
-        // current state. Let it through without another sync. This is what
-        // collapses herdr's 256-color palette query burst to a single sync.
+        // scheduled since, so a mutation-thread-owned value (colorMap for OSC 4,
+        // the grid cursor for CSI 6 n) reflects current state. Let it through
+        // without another sync. This is what collapses herdr's 256-color palette
+        // query burst, or a pipelined run of cursor-position queries, to a single
+        // sync.
         DLog(@"Allowing coalescible report to go through without a new sync");
         return YES;
     }

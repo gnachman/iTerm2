@@ -1260,7 +1260,12 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)handleDeviceStatusReportWithToken:(VT100Token *)token withQuestion:(BOOL)withQuestion {
-    if ([_delegate terminalShouldSendReport:NO]) {
+    // Coalescible: every DSR reply below reads either a constant (status, printer,
+    // locator, macro space) or mutation-thread-owned, always-current state (the
+    // grid cursor for CSI 6 n active-position). None read the main-thread config
+    // snapshot, so a pipelined burst of these can share one pause+sync instead of
+    // paying one per query. See issue 13035 and -terminalShouldSendCoalescibleReport:.
+    if ([_delegate terminalShouldSendCoalescibleReport:NO]) {
         switch (token.csi->p[0]) {
             case 3: // response from VT100 -- Malfunction -- retry
                 break;
@@ -3954,7 +3959,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 // Use tmux-aware method for OSC 4 queries (tmux 3.6+). Coalescible
                 // because the value is read from the mutation-thread colorMap, so a
                 // burst of queries can share one sync (issue 13013).
-                if ([_delegate terminalShouldSendColorReport:YES]) {
+                if ([_delegate terminalShouldSendCoalescibleReport:YES]) {
                       [_delegate terminalSendOSC4Report:[self.output reportColor:theColor atIndex:theIndex prefix:@"4;"]];
                 }
             }

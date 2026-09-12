@@ -2,11 +2,14 @@
 //  ReportSyncCoalescingTests.swift
 //  iTerm2
 //
-//  Regression tests for issue 13013: a burst of OSC 4 color queries (herdr
-//  queries all 256 palette colors on every focus event) used to pause+join once
-//  per query, freezing the UI. OSC 4 queries now use the coalescible report gate,
-//  which arms a skip-sync flag that stays set across a run of such queries and is
-//  invalidated by any state side effect, so a pure burst pays a single joined sync.
+//  Regression tests for issues 13013 and 13035: a burst of OSC 4 color queries
+//  (herdr queries all 256 palette colors on every focus event) used to pause+join
+//  once per query, freezing the UI; a pipelined run of CSI 6 n cursor-position
+//  queries was paced the same way. OSC 4 queries and device status reports now use
+//  the coalescible report gate, which arms a skip-sync flag that stays set across a
+//  run of such queries and is invalidated by any state side effect, so a pure burst
+//  pays a single joined sync. Both read mutation-thread-owned state (colorMap; the
+//  grid cursor), so skipping the extra syncs cannot return stale values.
 //
 //  These tests exercise the REAL token executor (via screen.inject) so the
 //  rollback/pause/joined-sync gate actually runs. Crucially they observe the
@@ -126,10 +129,11 @@ final class ReportSyncCoalescingTests: XCTestCase {
                        "Every query preceded by output must re-sync (disarm works)")
     }
 
-    /// Regression for the livelock: a NON-coalescible report (DSR cursor position,
-    /// ESC[6n) must be delivered exactly once and take exactly one sync. If only
-    /// coalescible reports were wired to pass on re-execution this would loop
-    /// forever and deliver zero reports.
+    /// Regression for the livelock: a single DSR cursor position (ESC[6n) must be
+    /// delivered exactly once and take exactly one sync. DSR is coalescible (issue
+    /// 13035), but a lone query with the skip-sync flag disarmed still syncs once;
+    /// the point here is that allowNextReport applies to every report, so the
+    /// rolled-back token delivers on re-execution instead of looping forever.
     func testCursorPositionReportProducesExactlyOneReport() {
         let screen = makeScreen()
         session.resetReports()
@@ -143,6 +147,48 @@ final class ReportSyncCoalescingTests: XCTestCase {
         XCTAssertEqual(syncCount(screen) - syncsBefore, 1)
     }
 
+    /// herdr/notcurses-style burst: many CSI 6 n cursor-position queries in one
+    /// write must produce one report each AND coalesce to a single pause+sync,
+    /// because the cursor is mutation-thread-owned and no state changes between
+    /// them. Without DSR coalescing this would be one sync per query (issue 13035).
+    func testCursorPositionBurstCoalescesToOneSync() {
+        let screen = makeScreen()
+        session.resetReports()
+        let syncsBefore = syncCount(screen)
+
+        let count = 200
+        var burst = ""
+        for _ in 0..<count { burst += "\u{1b}[6n" }
+        feed(screen, burst, expecting: count)
+
+        XCTAssertEqual(session.reports.count, count, "Every CSI 6n must produce one report")
+        for report in session.reports {
+            XCTAssertTrue(report.hasSuffix("R"), "Each report should be a CPR ending in R: \(report.debugDescription)")
+        }
+        XCTAssertEqual(syncCount(screen) - syncsBefore, 1,
+                       "A pure cursor-position burst must coalesce to a single pause+sync")
+    }
+
+    /// Cross-type coalescing: a CSI 6 n right after a color-query burst shares the
+    /// armed skip-sync flag (both read mutation-owned state, nothing mutates
+    /// between them), so the whole run is a single sync and all reports deliver.
+    func testCursorPositionAfterColorBurstCoalesces() {
+        let screen = makeScreen()
+        session.resetReports()
+        let syncsBefore = syncCount(screen)
+
+        var burst = ""
+        for i in 0..<8 { burst += query(i) }
+        burst += "\u{1b}[6n"   // DSR after the armed color run
+        feed(screen, burst, expecting: 9)
+
+        XCTAssertEqual(session.reports.count, 9, "8 color reports + 1 CPR")
+        XCTAssertTrue((session.reports.last ?? "").hasSuffix("R"),
+                      "Last report should be the CPR: \((session.reports.last ?? "").debugDescription)")
+        XCTAssertEqual(syncCount(screen) - syncsBefore, 1,
+                       "A color burst followed by a cursor query coalesces to one sync")
+    }
+
     /// Primary Device Attributes (ESC[c) is also non-coalescible and must deliver.
     func testDeviceAttributesReportProducesExactlyOneReport() {
         let screen = makeScreen()
@@ -153,25 +199,25 @@ final class ReportSyncCoalescingTests: XCTestCase {
         XCTAssertEqual(session.reports.count, 1)
     }
 
-    /// A non-coalescible report right after a coalescible color burst must still be
-    /// delivered exactly once: the burst arms skip-sync, but that flag must not let
-    /// the DSR skip its own sync (it reads state the flag doesn't guard). Expect
-    /// 2 syncs total: one for the burst, one for the DSR.
-    func testNonCoalescibleReportAfterColorBurstStillDelivers() {
+    /// A genuinely non-coalescible report right after a coalescible color burst
+    /// must still take its own sync: the burst arms skip-sync, but a non-coalescible
+    /// report must not ride that flag. Secondary Device Attributes (ESC[>c) stays
+    /// non-coalescible, so expect 2 syncs total: one for the burst, one for the DA.
+    func testNonCoalescibleReportAfterColorBurstStillSyncs() {
         let screen = makeScreen()
         session.resetReports()
         let syncsBefore = syncCount(screen)
 
         var burst = ""
         for i in 0..<8 { burst += query(i) }
-        burst += "\u{1b}[6n"   // DSR after the armed run
+        burst += "\u{1b}[>c"   // secondary DA (non-coalescible) after the armed run
         feed(screen, burst, expecting: 9)
 
-        XCTAssertEqual(session.reports.count, 9, "8 color reports + 1 CPR")
-        XCTAssertTrue((session.reports.last ?? "").hasSuffix("R"),
-                      "Last report should be the CPR: \((session.reports.last ?? "").debugDescription)")
+        XCTAssertEqual(session.reports.count, 9, "8 color reports + 1 secondary DA")
+        XCTAssertTrue((session.reports.last ?? "").hasSuffix("c"),
+                      "Last report should be the DA reply ending in c: \((session.reports.last ?? "").debugDescription)")
         XCTAssertEqual(syncCount(screen) - syncsBefore, 2,
-                       "One sync for the coalesced burst, one for the non-coalescible DSR")
+                       "One sync for the coalesced burst, one for the non-coalescible DA")
     }
 
     /// A color set is visible to a later query. This is guaranteed by the OSC 4
