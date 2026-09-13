@@ -869,8 +869,13 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
         // A fully collapsed run has no visible member tabs, so the run block
         // above is never invoked for it; its chip draws a self-contained
         // affordance (name + member count + collapse chevron) instead.
+        let dropTargetGID = bar.collapsedTabGroupDropTargetIdentifier()
         bar.enumerateCollapsedTabGroupChips { chip, memberCount, gid in
-            self.drawCollapsedTabGroupChip(chip: chip, memberCount: memberCount, groupID: gid, bar: bar)
+            self.drawCollapsedTabGroupChip(chip: chip,
+                                           memberCount: memberCount,
+                                           groupID: gid,
+                                           bar: bar,
+                                           isDropTarget: gid == dropTargetGID)
         }
     }
 
@@ -895,7 +900,8 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
     private func drawCollapsedTabGroupChip(chip: PSMTabBarCell,
                                            memberCount: Int,
                                            groupID: String,
-                                           bar: PSMTabBarControl) {
+                                           bar: PSMTabBarControl,
+                                           isDropTarget: Bool) {
         let (groupColor, bgColor, name) = tabGroupChrome(forGroupID: groupID, bar: bar)
         let font = Self.groupNameFont
         let textCol = NSColor.labelColor
@@ -994,6 +1000,17 @@ class PSMTahoeTabStyle: NSObject, PSMTabStyle {
                                    xRadius: radius, yRadius: radius)
         outline.lineWidth = 1
         outline.stroke()
+
+        // Drop-target feedback: while a dragged tab is poised to join this
+        // collapsed group, ring the pill in the accent color so the user sees the
+        // drop lands INSIDE the group (no member cells open a slot to show it).
+        if isDropTarget {
+            let ring = NSBezierPath(roundedRect: pill.insetBy(dx: -1.0, dy: -1.0),
+                                    xRadius: radius + 1.0, yRadius: radius + 1.0)
+            ring.lineWidth = 2
+            NSColor.controlAccentColor.setStroke()
+            ring.stroke()
+        }
     }
 
     @objc func tabGroupCollapsedChipCellWidth(forName name: String, memberCount count: Int) -> CGFloat {

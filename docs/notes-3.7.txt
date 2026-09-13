@@ -27,6 +27,12 @@ New Features:
   the layout of all displays. Unlike the older
   CSI 3;x;y t sequence, these are not limited to
   the monitor the window is already on.
+- Dragging a tab into a collapsed tab group
+  now adds it to that group. The group stays
+  collapsed unless you dragged the active tab,
+  in which case it expands. While you drag, the
+  group's pill highlights to show the tab will
+  drop inside it.
 - A new “Set Profile Setting” trigger action turns
   a profile checkbox on or off for the session.
   Paired with Job Started and Job Ended matches it

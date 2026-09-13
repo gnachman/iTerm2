@@ -105,6 +105,62 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     NSString *_draggedGroupID;
     NSArray<PSMTabBarCell *> *_draggedGroupMembers;
 
+    // While the cursor is over a COLLAPSED group's chip during a single-tab drag,
+    // the id of that group. It drives the chip highlight and the join-on-drop
+    // regardless of which side of the midpoint the cursor is on -- the midpoint
+    // only decides whether the group visually slides yet (see the chip-hover
+    // handling in -calculateDragAnimationForTabBar:). Recomputed every tick; nil
+    // when not over a collapsed chip.
+    NSString *_collapsedGroupJoinTargetID;
+
+    // The along-axis mouse location when the collapsed-group drop target was last
+    // recomputed. Used only to tell whether the mouse has paused (moved < ~0.5pt
+    // since): the between/before gap opens on that pause and then stays open while
+    // the same slot remains the target (see _collapsedOpenSlotTarget). The target
+    // itself no longer freezes at a steady mouse -- the settled-origin hit-test keeps
+    // the pill-under-cursor stable -- so this is a gap-open signal only.
+    // NSNotFound.x marks "unset".
+    NSPoint _collapsedDragLastTargetMouseLoc;
+
+    // Debounce for WHICH collapsed pill (if any) the cursor is over. The pill frames
+    // can be repositioned BETWEEN drag ticks (the displayed/settled layout is stable,
+    // but the frame the hit-test reads is transiently shifted for a single tick),
+    // which for one frame flips the pill under the cursor to a neighbor -- or off all
+    // pills entirely. The former blips the join highlight to the wrong pill; the
+    // latter recomputes a POSITIONAL target, opening a drop slot before the group
+    // that shoves the whole run sideways and snaps back (the visible "jitter"). So
+    // any CHANGE to the pill under the cursor -- to a different pill OR to none -- is
+    // held for one tick and only applied once seen for TWO consecutive ticks.
+    // _committedChipGid is the pill we are acting on (nil = acting on "no pill").
+    // _pendingChipGid + _chipChangePending track a candidate change seen once
+    // (_pendingChipGid nil with _chipChangePending YES means "pending no pill").
+    NSString *_committedChipGid;
+    NSString *_pendingChipGid;
+    BOOL _chipChangePending;
+
+    // Whether the collapsed-adjacent between/before drop slot may open this tick. A
+    // drop slot beside a collapsed run (the "between two groups" or "drop before the
+    // group" slot) must stay closed while the cursor is SWEEPING -- an opening gap
+    // there shoves the pill run and snaps back (the field jitter) -- but SHOULD open
+    // once the cursor settles in that zone, to show where the tab will land.
+    // (Front/end join-detector slots never open regardless: a collapsed group signals
+    // a join by highlighting its chip.)
+    //
+    // The open decision is keyed to the TARGET's identity, not to mouse stillness: a
+    // hard threshold on mouse motion is wrong in both directions -- sub-pixel tremor
+    // toggles it (jitter) and a slow deliberate move across the threshold toggles it
+    // (stutter). Instead the gap OPENS when the mouse pauses (steady) over an openable
+    // target, and then STAYS open as long as that SAME target cell remains the target
+    // -- so a slow move within the zone holds it open, tremor holds it open, and a
+    // fast sweep-through (which never pauses) never opens it (no run-away).
+    // _collapsedOpenSlotTarget is the cell currently latched open (nil = none);
+    // unretained, cleared in finishDrag and only ever compared by pointer against the
+    // live cells, never dereferenced stale. Both are destination-only state that must
+    // persist across ticks; a non-destination bar's per-frame tick must NOT reset
+    // them (see -calculateDragAnimationForTabBar:).
+    BOOL _collapsedDropSettled;
+    PSMTabBarCell *_collapsedOpenSlotTarget;
+
     // Drag auto-scroll for a SCROLLABLE destination bar: when the targeted
     // drop slot opens past the visible viewport, the animation walk shifts
     // this bar's cells left by _dragScrollNudge so the slot is revealed
@@ -155,6 +211,11 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     if (self) {
         _participatingTabBars = [[NSMutableSet alloc] init];
         _sineCurveWidths = [[NSMutableArray alloc] initWithCapacity:kPSMTabDragAnimationSteps];
+        // The "unset" sentinel for the steadiness baseline. Without this the ivar is
+        // zero-initialized to (0,0) on the FIRST drag (before any finishDrag has
+        // seeded it), so mouseSteady would compare against (0,0) and could spuriously
+        // report "steady" for a cursor near along-axis 0 on the very first tick.
+        _collapsedDragLastTargetMouseLoc = NSMakePoint(NSNotFound, 0);
 #if PSM_DEBUG_DRAG_PERFORMANCE
         _timerFireTimes = [[NSMutableArray alloc] init];
 #endif
@@ -556,6 +617,14 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
              control, _draggedGroupID ?: @"-", (int)[[control cells] count],
              control.frame.size.width, (int)[control tabBarIsScrollable],
              [control availableCellWidthWithOverflow:NO]);
+        // Distributing slots + reinserting chips does NOT run the position walk, so
+        // the cells still hold inconsistent pre-distribute frames. Run one animation
+        // pass NOW -- before this bar is drawn -- so its first frame is the settled
+        // layout, not a transient with the run shoved a pill-width sideways that
+        // snaps back on the next tick (the entry "jitter"). -beginDragForTabBar:
+        // does the same for the source bar; the destination needs it too.
+        [self calculateDragAnimationForTabBar:control];
+        [control setNeedsDisplay:YES];
     }
     [_participatingTabBars addObject:control];
 
@@ -577,9 +646,32 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     [self setCurrentMouseLoc:mouseLoc];
 }
 
+// All the singleton collapsed-group drag/debounce/latch state, cleared together.
+// This is per-DESTINATION-bar state (which pill the cursor committed to, the join
+// id, the gap-open latch, the last-recompute mouse position). It must be cleared
+// whenever the destination bar goes away, not only at drag end -- otherwise it leaks
+// across a bar exit and into the next bar entered, producing a 1-2 frame wrong-
+// target / spurious-gap glitch there (the committed pill, join id, and mouse
+// baseline all belong to the previous bar).
+- (void)resetCollapsedDragTargetingState {
+    [_collapsedGroupJoinTargetID release];
+    _collapsedGroupJoinTargetID = nil;
+    _collapsedDragLastTargetMouseLoc = NSMakePoint(NSNotFound, 0);
+    [_committedChipGid release];
+    _committedChipGid = nil;
+    [_pendingChipGid release];
+    _pendingChipGid = nil;
+    _chipChangePending = NO;
+    _collapsedDropSettled = NO;
+    _collapsedOpenSlotTarget = nil;
+}
+
 - (void)draggingExitedTabBar:(PSMTabBarControl *)control {
     [self setDestinationTabBar:nil];
     [self setCurrentMouseLoc:NSMakePoint(-1.0, -1.0)];
+    // Leaving this bar ends its collapsed-drop targeting; clear the per-bar state so
+    // it can't bleed into the next bar the cursor enters (or a re-entry of this one).
+    [self resetCollapsedDragTargetingState];
 
     if (_fadeTimer) {
         [_fadeTimer invalidate];
@@ -816,6 +908,12 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         [self performGroupDropOntoBar];
         return;
     }
+    // Capture the destination's active tab NOW, before the move below selects the
+    // dropped tab there: a background tab dropped cross-window into a collapsed group
+    // must keep it collapsed by restoring THIS destination's own active tab (the
+    // source's pre-drag tab lives in another window). See -keepCollapsedAfterInBarDropOf:.
+    NSTabViewItem *destinationPreDropSelection =
+        [[[[[self destinationTabBar] tabView] selectedTabViewItem] retain] autorelease];
     // With chips still present, decide whether the dragged tab landed inside a
     // group's bracket (right after its chip, or between/among members) so the
     // drop handler can join it -- including a one-tab group, which has no
@@ -824,6 +922,9 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     NSString *droppedInsideGroupID =
         [self groupContainingDropOfCell:[self draggedCell]
                                inTabBar:[self destinationTabBar]];
+    RLog(@"tabGroup: reallyPerformDrop draggedGid=%@ droppedInsideGroupID=%@ sameBar=%d",
+         [[self draggedCell] tabGroupIdentifier] ?: @"-", droppedInsideGroupID ?: @"(none)",
+         (int)([self sourceTabBar] == [self destinationTabBar]));
 
     // The chips were reinserted only so they'd stay visible mid-drag. Strip
     // them so all the index math below runs in the pure tab/placeholder world it
@@ -1029,7 +1130,29 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     PSMTabBarControl *source = [[[self sourceTabBar] retain] autorelease];
 
     if (_draggedCell && [destination.cells containsObject:_draggedCell]) {
-        [destination.tabView selectTabViewItem:[_draggedCell representedObject]];
+        NSTabViewItem *droppedItem = [_draggedCell representedObject];
+        // A background tab dropped into a collapsed group keeps the group collapsed:
+        // do not select the dropped tab (selecting it would make it the active tab,
+        // forcing the group to expand since a collapsed group can't hold the active
+        // tab). In every other case -- the active tab was dragged, or the drop did
+        // not land in a collapsed group -- select the dropped tab as before. The
+        // decision reads the SOURCE bar's pre-drag active tab, so it is correct for a
+        // cross-window drop too (source != destination).
+        //
+        // ORDERING INVARIANT: keepCollapsed decides via -tabViewItemIsHiddenInBar:,
+        // so the dropped tab's collapsed/hidden flag must already be set here. It is:
+        // the didDropTabViewItem: delegate call above drives the app's group
+        // reconciliation (PseudoTerminal: didDonateTab -> updateTabGroups ->
+        // setTabGroupCollapsedFlags) synchronously before this point. If that donate
+        // ordering ever changes so the collapse flag is applied AFTER this call, a
+        // cross-window background drop would read droppedHidden = NO and wrongly
+        // expand the group. (The unit tests set the collapsed flag directly and so
+        // cannot catch such a reordering -- it would need an end-to-end drop test.)
+        if (![destination keepCollapsedAfterInBarDropOf:droppedItem
+                                          draggedFromBar:source
+                             destinationPreDropSelection:destinationPreDropSelection]) {
+            [destination.tabView selectTabViewItem:droppedItem];
+        }
     }
     [self finishDrag];
 
@@ -1289,6 +1412,7 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     _draggedGroupID = nil;
     [_draggedGroupMembers release];
     _draggedGroupMembers = nil;
+    [self resetCollapsedDragTargetingState];
 #if PSM_DEBUG_DRAG_PERFORMANCE
     NSLog(@"[PSMTabDrag] Stopping animation timer. Final FPS stats: %d frames recorded", (int)_timerFireTimes.count);
 #endif
@@ -1302,6 +1426,10 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     if (wasDragging) {
         [[NSNotificationCenter defaultCenter] postNotificationName:PSMTabDragDidEndNotification object:nil];
     }
+}
+
+- (NSString *)collapsedGroupJoinTargetIdentifier {
+    return _collapsedGroupJoinTargetID;
 }
 
 - (void)moveDragTabWindowForMouseLocation:(NSPoint)aPoint {
@@ -1591,7 +1719,7 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     // mode). Sampled to stay cheap; RLog always records.
     static int animTickCount = 0;
     if ((++animTickCount % 30) == 1) {
-        RLog(@"tabGroup: animTick #%d participating=%lu dest=%p src=%p",
+        DLog(@"tabGroup: animTick #%d participating=%lu dest=%p src=%p",
              animTickCount, (unsigned long)_participatingTabBars.count,
              [self destinationTabBar], [self sourceTabBar]);
     }
@@ -1628,6 +1756,102 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 #endif
 }
 
+// YES if the placeholder at `index` touches a COLLAPSED group's run -- i.e. the
+// nearest non-placeholder cell on either side (a collapsed group draws no visible
+// members, so its run is the chip plus zero-width collapsed members) is a
+// collapsed chip or a collapsed member. Such a slot must never animate open: a gap
+// beside a collapsed pill shoves the pill run sideways (the field jitter). Slots
+// between two real/expanded cells are unaffected and still open normally.
+- (BOOL)placeholderAtIndex:(NSInteger)index isAdjacentToCollapsedRunInCells:(NSArray *)cells {
+    const NSInteger count = (NSInteger)cells.count;
+    // Scan right, skipping other placeholders, to the first non-placeholder cell.
+    for (NSInteger j = index + 1; j < count; j++) {
+        PSMTabBarCell *c = cells[j];
+        if ([c isPlaceholder]) {
+            continue;
+        }
+        if (([c isTabGroupChip] && [self chipLeadsCollapsedRunInCells:cells atIndex:j]) ||
+            [c isCollapsedHidden]) {
+            return YES;
+        }
+        break;  // a real tab or an expanded group's chip: not collapsed-adjacent
+    }
+    // Scan left similarly.
+    for (NSInteger j = index - 1; j >= 0; j--) {
+        PSMTabBarCell *c = cells[j];
+        if ([c isPlaceholder]) {
+            continue;
+        }
+        if (([c isTabGroupChip] && [self chipLeadsCollapsedRunInCells:cells atIndex:j]) ||
+            [c isCollapsedHidden]) {
+            return YES;
+        }
+        break;
+    }
+    return NO;
+}
+
+// YES if the group chip at `chipIndex` heads a COLLAPSED run: its run leads with a
+// collapsed-group front slot (or a collapsed member) before any visible member.
+- (BOOL)chipLeadsCollapsedRunInCells:(NSArray *)cells atIndex:(NSInteger)chipIndex {
+    const NSInteger count = (NSInteger)cells.count;
+    for (NSInteger k = chipIndex + 1; k < count; k++) {
+        PSMTabBarCell *c = cells[k];
+        if (c.isCollapsedGroupJoinSlot || [c isCollapsedHidden]) {
+            return YES;
+        }
+        if ([c isPlaceholder]) {
+            continue;
+        }
+        return NO;  // a visible member -> expanded group
+    }
+    return NO;
+}
+
+// Along-axis origin (x on a horizontal bar) at which to hit-test a collapsed
+// pill: its live origin with the drop slots BETWEEN it and its left-adjacent pill
+// treated as CLOSED. Drop slots open and close as the target changes and
+// physically shove the pills along the bar, so hit-testing the LIVE frames would
+// feed back: opening the between gap slides the right pill off the cursor, flips
+// the target, closes the gap, slides it back -- a moving-mouse jitter. Hit-testing
+// the SETTLED origin instead keeps the pill-under-cursor stable no matter what the
+// gaps do. Absorbing the placeholder extent between two ADJACENT pills pins their
+// shared boundary so that feedback can't move it.
+//
+// But absorb ONLY back to the left-adjacent pill: a leading drop slot before the
+// FIRST pill (or a slot before a pill whose left neighbor is a real tab) is a
+// legitimate "drop before" position, and swallowing it would map the gap onto the
+// pill and make dropping before the group impossible. With no left pill, hit-test
+// the live frame (WYSIWYG) so the cursor can reach the gap to the pill's left.
+- (CGFloat)settledAlongOriginForChipAtIndex:(NSInteger)chipIndex
+                                    inCells:(NSArray *)cells
+                                    control:(PSMTabBarControl *)control {
+    PSMTabBarCell *chip = cells[chipIndex];
+    const BOOL horizontal = ([control orientation] == PSMTabBarHorizontalOrientation);
+    const CGFloat live = horizontal ? chip.frame.origin.x : chip.frame.origin.y;
+    const NSInteger leftPill = [self collapsedGroupChipAtIndex:chipIndex adjacentPillChipIndexInCells:cells direction:-1];
+    if (leftPill == NSNotFound) {
+        return live;
+    }
+    const CGFloat intercellSpacing = [[control style] intercellSpacing];
+    const CGFloat slotScale = [self dropSlotScaleForTabBar:control];
+    const CGFloat fullExtent = ((_sineCurveWidths.count > 0)
+                                ? [[_sineCurveWidths lastObject] floatValue]
+                                : 0) * slotScale;
+    CGFloat displacement = 0;
+    for (NSInteger j = leftPill + 1; j < chipIndex; j++) {
+        PSMTabBarCell *c = cells[j];
+        if ([c isPlaceholder]) {
+            const CGFloat w = horizontal ? c.frame.size.width : c.frame.size.height;
+            displacement += w;
+            if (fullExtent > 0) {
+                displacement += intercellSpacing * MIN(1.0, w / fullExtent);
+            }
+        }
+    }
+    return live - displacement;
+}
+
 - (void)calculateDragAnimationForTabBar:(PSMTabBarControl *)control {
 #if PSM_DEBUG_DRAG_PERFORMANCE
     os_signpost_interval_begin(PSMTabDragLog(), OS_SIGNPOST_ID_EXCLUSIVE, "calculateDragAnimation", "");
@@ -1635,6 +1859,11 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 #endif
 
     BOOL removeFlag = YES;
+    // NOTE: _collapsedDropSettled is a persistent Schmitt-trigger latch updated in
+    // the target section below; it must NOT be reset per tick here or the latch is
+    // destroyed (it would re-arm every steady tick and jitter). It is only read by
+    // the reposition loop for the destination bar's target cell, so a stale value on
+    // a non-destination bar is harmless (no cell there equals the target).
     NSArray *cells = [control cells];
     int i, cellCount = [cells count];
     // A scrollable bar starts its layout shifted by the scroll offset (up for a vertical bar, left for
@@ -1658,30 +1887,253 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 
     if ([self destinationTabBar] == control) {
         removeFlag = NO;
-        // A group chip has a drop slot on each side: the one to its left drops
-        // before the group, the one to its right (between chip and first member)
-        // joins the group at its front. -cellForPoint: skips chips, so handle a
-        // chip hover explicitly and pick the side by the chip's midpoint, so both
-        // slots are reachable from either direction.
+        // -cellForPoint: skips chips, so a chip hover is handled explicitly below.
         const BOOL horizontalAxis = ([control orientation] == PSMTabBarHorizontalOrientation);
-        PSMTabBarCell *chipUnderMouse = nil;
+        // Is a collapsed group present in this bar? When one is, the drop slots beside
+        // it must stay closed except when the drop settles (see the gap-open latch
+        // below), and this flag gates tracking the last-recompute mouse position that
+        // that latch uses.
+        BOOL hasCollapsedJoinSlot = NO;
         for (PSMTabBarCell *c in cells) {
-            if ([c isTabGroupChip] && NSPointInRect(mouseLoc, [c frame])) {
-                chipUnderMouse = c;
+            if (c.isCollapsedGroupJoinSlot) {
+                hasCollapsedJoinSlot = YES;
                 break;
             }
         }
+        // Which collapsed chip is under the cursor NOW. Hit-test against the pill's
+        // SETTLED position (all drop slots closed), NOT its live frame, so a gap
+        // opening beside a pill can't slide it out from under the cursor and feed
+        // back: the pill-under-cursor stays put at a fixed mouse without any target
+        // freeze. Along-axis only: on a horizontal bar the pill spans the full
+        // height, and cross-axis jitter must never perturb the decision.
+        PSMTabBarCell *chipUnderMouse = nil;
+        PSMTabBarCell *settledOriginChip = nil;    // the chip chipUnderMouseSettledOrigin is for
+        CGFloat chipUnderMouseSettledOrigin = 0;   // reused by the thirds branch below
+        const CGFloat alongMouse = horizontalAxis ? mouseLoc.x : mouseLoc.y;
+        // Memoize each chip's settled origin: the loop needs it for the chip itself
+        // AND for its right-neighbor pill (the seam extension), so without this each
+        // pill's origin is computed twice per frame (once as a neighbor, once when the
+        // loop reaches it). settledCellCount guards the C arrays.
+        const NSInteger settledCellCount = (NSInteger)cells.count;
+        CGFloat *chipSettled = malloc(MAX(1, settledCellCount) * sizeof(CGFloat));
+        BOOL *chipSettledValid = calloc(MAX(1, settledCellCount), sizeof(BOOL));
+#define PSM_SETTLED_ORIGIN(i) (chipSettledValid[(i)] ? chipSettled[(i)] : \
+    (chipSettledValid[(i)] = YES, chipSettled[(i)] = [self settledAlongOriginForChipAtIndex:(i) inCells:cells control:control]))
+        for (NSInteger idx = 0; idx < settledCellCount; idx++) {
+            PSMTabBarCell *c = cells[idx];
+            if (![c isTabGroupChip]) {
+                continue;
+            }
+            const CGFloat lo = PSM_SETTLED_ORIGIN(idx);
+            const CGFloat len = horizontalAxis ? c.frame.size.width : c.frame.size.height;
+            CGFloat hi = lo + len;
+            // Adjacent collapsed pills are separated only by zero-width members and
+            // the (settled-closed) between slot, plus a little intercell spacing --
+            // a thin SEAM between their drawn frames. Extend this pill's hit region
+            // to abut the next pill so the cursor can't fall into the seam (which
+            // would drop to the positional fallback and flip the target as the
+            // between gap opens). The seam lies past the pill's drawn width, so it
+            // reads as this pill's far third -> "between", matching the boundary.
+            const NSInteger rightPill = [self collapsedGroupChipAtIndex:idx adjacentPillChipIndexInCells:cells direction:1];
+            if (rightPill != NSNotFound && rightPill < settledCellCount) {
+                hi = MAX(hi, PSM_SETTLED_ORIGIN(rightPill));
+            }
+            if (alongMouse >= lo && alongMouse < hi) {
+                chipUnderMouse = c;
+                settledOriginChip = c;
+                chipUnderMouseSettledOrigin = lo;   // hoist for the thirds branch
+                break;
+            }
+        }
+#undef PSM_SETTLED_ORIGIN
+        free(chipSettled);
+        free(chipSettledValid);
+        // Debounce WHICH pill (if any) the cursor is over (see _committedChipGid). The
+        // frames the hit-test reads can be stale or transient for a single tick -- on
+        // the FIRST tick after the drag enters (cells hold pre-drag positions until
+        // the first layout pass repacks them) and mid-drag if the run is repositioned
+        // between ticks. Any CHANGE (to a different pill, or off all pills) is held
+        // for one tick and applied only when seen for TWO consecutive ticks:
+        //   * a one-tick flip to a NEIGHBOR pill would blip the join highlight;
+        //   * a one-tick flip to NONE would recompute a POSITIONAL target, opening a
+        //     drop slot before the group that shoves the run sideways and snaps back
+        //     (the visible "jitter").
+        // While a change is pending we act on the still-committed pill (nil = "no
+        // pill"), so the held state is what's applied. chipDebounce: 0=stable,
+        // 1=just applied a change (recompute), 2=change pending (hold).
+        NSString *rawChipGid = [chipUnderMouse tabGroupIdentifier];
+        const BOOL rawEqualsCommitted = (rawChipGid == _committedChipGid) ||
+            [rawChipGid isEqualToString:_committedChipGid];
+        const BOOL rawEqualsPending = _chipChangePending &&
+            ((rawChipGid == _pendingChipGid) || [rawChipGid isEqualToString:_pendingChipGid]);
+        NSInteger chipDebounce;
+        if (rawEqualsCommitted) {
+            // Stable on the committed pill (or stably off all pills): clear any
+            // pending change and act on the committed state.
+            _chipChangePending = NO;
+            [_pendingChipGid release]; _pendingChipGid = nil;
+            chipDebounce = 0;
+        } else if (rawEqualsPending) {
+            // The same change seen a SECOND consecutive tick: apply it (the new
+            // committed pill may be nil, meaning the cursor really left all pills).
+            [_committedChipGid release]; _committedChipGid = [rawChipGid copy];
+            _chipChangePending = NO;
+            [_pendingChipGid release]; _pendingChipGid = nil;
+            chipDebounce = 1;
+        } else {
+            // First sighting of a change: remember it but keep acting on the committed
+            // pill this tick (override the raw hit-test back to it).
+            [_pendingChipGid release]; _pendingChipGid = [rawChipGid copy];
+            _chipChangePending = YES;
+            chipDebounce = 2;
+            PSMTabBarCell *committed = nil;
+            if (_committedChipGid != nil) {
+                for (PSMTabBarCell *c in cells) {
+                    if ([c isTabGroupChip] && [[c tabGroupIdentifier] isEqualToString:_committedChipGid]) {
+                        committed = c;
+                        break;
+                    }
+                }
+            }
+            chipUnderMouse = committed;
+        }
+        // Along-axis mouse motion since the target was last recomputed. Used only to
+        // decide when the between/before gap may OPEN (it opens once the mouse pauses
+        // -- see the gap latch after the target is finalized). Compare ONLY the
+        // along-axis (x on a horizontal bar): cross-axis jitter, which a real mouse
+        // always has, must not count as movement.
+        const CGFloat alongNow = horizontalAxis ? mouseLoc.x : mouseLoc.y;
+        const CGFloat alongPrev = horizontalAxis ? _collapsedDragLastTargetMouseLoc.x : _collapsedDragLastTargetMouseLoc.y;
+        const BOOL mouseSteady = (_collapsedDragLastTargetMouseLoc.x != NSNotFound &&
+                                  fabs(alongNow - alongPrev) < 0.5);
+        // Refresh the steadiness baseline EVERY tick (not only on recompute ticks) so
+        // mouseSteady always means "the mouse barely moved since LAST tick" = paused.
+        // Updating only on recompute left a held tick comparing against a two-tick-old
+        // position, mis-reporting steadiness if the mouse moved during the hold.
+        if (hasCollapsedJoinSlot) {
+            _collapsedDragLastTargetMouseLoc = mouseLoc;
+        }
+        // HOLD the current target only while a pill change is pending (debounce=2:
+        // don't act on an unconfirmed one-tick reading -- this absorbs the one-frame
+        // slot-before-group jitter). Otherwise recompute every tick: the settled
+        // hit-test above makes the pill-under-cursor stable against an opening gap, so
+        // a fixed mouse already recomputes the same target without needing a freeze.
+        const BOOL holdTarget = (chipDebounce == 2 && [self targetCell] != nil);
+        if (holdTarget) {
+            proposedTarget = [self targetCell];
+            // Keep the join id from naming a pill we are no longer committed to. The
+            // recompute branch below is skipped while holding, so _collapsedGroupJoinTargetID
+            // keeps last tick's value; if that no longer matches the committed
+            // (debounced) pill -- e.g. the cursor moved off the pill or across to
+            // another -- clear it, so a drop landing on this held frame can't join a
+            // group the cursor has left. (We only ever CLEAR a mismatch, never
+            // fabricate a join: a held between-zone target legitimately has no join
+            // id, and must keep it nil.)
+            if (_collapsedGroupJoinTargetID != nil &&
+                ![_collapsedGroupJoinTargetID isEqualToString:_committedChipGid]) {
+                [_collapsedGroupJoinTargetID release];
+                _collapsedGroupJoinTargetID = nil;
+            }
+        } else {
+        // Recompute below; the collapsed-group join highlight is set only while the
+        // cursor is over a collapsed chip.
+        [_collapsedGroupJoinTargetID release];
+        _collapsedGroupJoinTargetID = nil;
         if (chipUnderMouse) {
             const NSInteger ci = [cells indexOfObject:chipUnderMouse];
+            PSMTabBarCell *frontSlot = (ci + 1 < (NSInteger)cells.count) ? cells[ci + 1] : nil;
             const CGFloat mid = horizontalAxis ? NSMidX([chipUnderMouse frame]) : NSMidY([chipUnderMouse frame]);
             const CGFloat along = horizontalAxis ? mouseLoc.x : mouseLoc.y;
-            if (along < mid) {
+            DLog(@"tabGroup: chipHover gid=%@ ci=%ld frontSlotPH=%d frontSlotCollapsedJoin=%d frontSlotJoinGid=%@ along=%.1f mid=%.1f",
+                 chipUnderMouse.tabGroupIdentifier ?: @"-", (long)ci,
+                 (int)frontSlot.isPlaceholder, (int)frontSlot.isCollapsedGroupJoinSlot,
+                 frontSlot.joinsTabGroupIdentifier ?: @"-", along, mid);
+            if (frontSlot.isCollapsedGroupJoinSlot) {
+                // COLLAPSED group: split the pill into THIRDS. The center third is
+                // always a JOIN. An edge third is a "drop between" (a gap opens on
+                // that side) ONLY when the neighbor on that side is another pill;
+                // otherwise (a tab neighbor, or none) it too is a JOIN -- dropping
+                // between a pill and a tab is done by hovering the TAB, not the pill.
+                // SETTLED origin (see -settledAlongOriginForChip:): the thirds must
+                // be pinned to where the pill rests, not to a frame the between gap
+                // is currently shoving around, or the zone boundaries jitter too.
+                // Reuse the value already computed in the hit-test loop when this is
+                // the same chip (the common case); recompute only if the debounce
+                // above swapped chipUnderMouse to a different (committed) pill.
+                const CGFloat lo = (chipUnderMouse == settledOriginChip)
+                    ? chipUnderMouseSettledOrigin
+                    : [self settledAlongOriginForChipAtIndex:ci inCells:cells control:control];
+                const CGFloat len = horizontalAxis ? NSWidth([chipUnderMouse frame]) : NSHeight([chipUnderMouse frame]);
+                const CGFloat oneThird = lo + len / 3.0;
+                const CGFloat twoThirds = lo + 2.0 * len / 3.0;
+                // An edge third is a "between two pills" zone only when the neighbor
+                // on that side is another pill. Resolve BOTH sides of a shared
+                // boundary to the SAME slot -- the LEFT group's after-run slot --
+                // else A's right third and B's left third target different slots and
+                // fight (the layout oscillates as the cursor flips between them).
+                NSInteger leftChipForBetween = NSNotFound;   // chip whose after-run slot is the gap
+                if (along < oneThird) {
+                    const NSInteger leftPill = [self collapsedGroupChipAtIndex:ci adjacentPillChipIndexInCells:cells direction:-1];
+                    if (leftPill != NSNotFound) {
+                        leftChipForBetween = leftPill;   // gap = slot after the LEFT group's run
+                    }
+                } else if (along >= twoThirds) {
+                    if ([self collapsedGroupChipAtIndex:ci adjacentPillChipIndexInCells:cells direction:1] != NSNotFound) {
+                        leftChipForBetween = ci;         // gap = slot after THIS (left) group's run
+                    }
+                }
+                const BOOL doJoin = (leftChipForBetween == NSNotFound);
+                if (doJoin) {
+                    // Highlight this pill; NO slot opens on or beside it.
+                    [_collapsedGroupJoinTargetID release];
+                    _collapsedGroupJoinTargetID = [chipUnderMouse.tabGroupIdentifier copy];
+                    if ([self sourceTabBar] == [self destinationTabBar]) {
+                        // Same window: freeze the drop gap where it is (the dragged
+                        // tab's origin) so the layout holds.
+                        proposedTarget = [self targetCell] ?: [self nonChipNeighborInCells:cells atIndex:ci direction:-1];
+                    } else {
+                        // From another window there is no origin gap. Target the
+                        // front slot, which is kept CLOSED (see the animation loop),
+                        // so NO gap opens -- neither on the pill nor before the first
+                        // pill (an earlier anchor-before-the-pill grew a spurious
+                        // "drop before" gap and shoved the pills right). The highlight
+                        // holds even if this pill packs to a new resting position
+                        // because the hit-test above uses settled origins, so the
+                        // cursor keeps resolving to this same pill. On drop the tab
+                        // joins as the group's first member.
+                        proposedTarget = frontSlot;
+                    }
+                } else {
+                    // Drop BETWEEN two adjacent pills. Both A's right third and B's
+                    // left third resolve to the SAME slot -- the slot after the LEFT
+                    // group's run -- so hovering either side opens one stable gap
+                    // instead of two competing ones. (Identity, not geometry: the
+                    // pills abut, so a point "just past" a pill lands inside its
+                    // neighbor.)
+                    //
+                    // Fallback if that between-slot can't be found (a degenerate
+                    // mid-drag layout): the slot BEFORE the left group -- a cell
+                    // OUTSIDE the group's bracket, so the drop resolves as a non-join.
+                    // NOT frontSlot: it sits inside the bracket, so the drop would be
+                    // mis-classified as "join as the first member" -- the opposite of
+                    // the "between" the user asked for.
+                    proposedTarget = [self slotAfterCollapsedGroupRunAtChipIndex:leftChipForBetween inCells:cells]
+                        ?: [self nonChipNeighborInCells:cells atIndex:leftChipForBetween direction:-1];
+                }
+            } else if (along < mid) {
+                // Expanded group: split on the chip's midpoint, like dragging a tab
+                // over an adjacent tab. Left half -> the slot before the group;
+                // right half -> the front-of-group slot (drop among the members).
                 proposedTarget = [self nonChipNeighborInCells:cells atIndex:ci direction:-1];
-            } else if (ci + 1 < (NSInteger)cells.count && [cells[ci + 1] isPlaceholder]) {
-                proposedTarget = cells[ci + 1];
+            } else if (frontSlot.isPlaceholder) {
+                proposedTarget = frontSlot;
             } else {
                 proposedTarget = [self nonChipNeighborInCells:cells atIndex:ci direction:1];
             }
+            DLog(@"tabGroup: chipHover -> proposedTarget=%@ isPH=%d collapsedJoin=%d joinGid=%@",
+                 proposedTarget ? NSStringFromClass([proposedTarget class]) : @"nil",
+                 (int)proposedTarget.isPlaceholder, (int)proposedTarget.isCollapsedGroupJoinSlot,
+                 proposedTarget.joinsTabGroupIdentifier ?: @"-");
         } else if (mouseLoc.x < [[control style] leftMarginForTabBarControl]) {
             proposedTarget = [cells objectAtIndex:0];
         } else {
@@ -1718,6 +2170,7 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
                 proposedTarget = [self dropTargetForUnhitPoint:mouseLoc inControl:control cells:cells];
             }
         }
+        }  // end: recompute target (else of the debounce-pending hold)
 
         // Apply hysteresis around the real tab's midpoint, not the collapsed placeholder edge.
         // Exempt an "end of group" join slot: it shares the gap past the last
@@ -1726,6 +2179,14 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         // is approached from the right (the last member's leading half jumps
         // straight to the between-members slot, skipping it). Let it open eagerly.
         PSMTabBarCell *currentTarget = [self targetCell];
+        // The dead zone only makes sense when the current and proposed targets are
+        // the two slots FLANKING overCell (the pair you toggle between as you cross
+        // its midpoint). If the current target is elsewhere -- e.g. frozen on the
+        // far side of a collapsed group while the cursor was over its pill -- then
+        // holding it would strand the drop gap away from the cursor (the "no slot
+        // opens to the left of the group" bug), so require that the current target
+        // is overCell's flanking slot on the side the cursor is coming FROM.
+        const NSInteger overIndexForHysteresis = overCell ? [cells indexOfObject:overCell] : NSNotFound;
         if (proposedTarget != currentTarget && currentTarget != nil && proposedTarget != nil &&
             overCell != nil && ![overCell isPlaceholder] &&
             proposedTarget.joinsTabGroupIdentifier.length == 0) {
@@ -1733,8 +2194,16 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
             const NSInteger proposedIndex = [cells indexOfObject:proposedTarget];
             const NSInteger currentIndex = [cells indexOfObject:currentTarget];
             const BOOL movingForward = proposedIndex > currentIndex;
-
-            if ([control orientation] == PSMTabBarHorizontalOrientation) {
+            PSMTabBarCell *cameFromFlank = [self nonChipNeighborInCells:cells
+                                                                atIndex:overIndexForHysteresis
+                                                              direction:(movingForward ? -1 : 1)];
+            if (cameFromFlank != nil && currentTarget != cameFromFlank) {
+                // Current target isn't overCell's opposite flank: don't resist. But a
+                // NIL flank means overCell is the FIRST/LAST tab (no cell on the
+                // outward side), not a stranded far target -- there, keep the ordinary
+                // dead-zone damping the pre-collapsed-group code applied, or the drop
+                // target can flip a frame early at the bar ends.
+            } else if ([control orientation] == PSMTabBarHorizontalOrientation) {
                 const CGFloat boundary = overCellRect.origin.x + overCellRect.size.width / 2.0;
                 if ((movingForward && mouseLoc.x < boundary + hysteresis) ||
                     (!movingForward && mouseLoc.x > boundary - hysteresis)) {
@@ -1793,15 +2262,48 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         }
 
         if (proposedTarget != [self targetCell]) {
-            RLog(@"tabGroup: target -> %@ idx=%ld ph=%d in bar=%p (group=%@ mouse=%d,%d)",
+            DLog(@"tabGroup: target -> %@ idx=%ld ph=%d in bar=%p (group=%@ mouse=%d,%d)",
                  proposedTarget ? NSStringFromClass([proposedTarget class]) : @"nil",
                  (long)(proposedTarget ? [cells indexOfObject:proposedTarget] : -1),
                  (int)[proposedTarget isPlaceholder], control, _draggedGroupID ?: @"-",
                  (int)mouseLoc.x, (int)mouseLoc.y);
         }
         [self setTargetCell:proposedTarget];
+
+        // Decide whether the between/before gap may open, keyed to TARGET IDENTITY
+        // (not mouse motion). It OPENS when the mouse pauses (steady) over an
+        // openable collapsed-adjacent slot, and STAYS open while that same target
+        // cell remains the target. So: a fast sweep-through never pauses -> never
+        // opens (no run-away); a slow move within the zone keeps the same target ->
+        // stays open (no stutter); tremor keeps the same target -> stays open (no
+        // jitter). Front/end join-detector slots are excluded (join = highlight).
+        PSMTabBarCell *finalTarget = [self targetCell];
+        BOOL openable = NO;
+        if (finalTarget != nil && [finalTarget isPlaceholder] &&
+            !finalTarget.isCollapsedGroupJoinSlot) {
+            const NSInteger ti = [cells indexOfObject:finalTarget];
+            openable = (ti != NSNotFound &&
+                        [self placeholderAtIndex:ti isAdjacentToCollapsedRunInCells:cells]);
+        }
+        if (!openable) {
+            _collapsedDropSettled = NO;
+            _collapsedOpenSlotTarget = nil;
+        } else if (mouseSteady || (_collapsedDropSettled && finalTarget == _collapsedOpenSlotTarget)) {
+            _collapsedDropSettled = YES;
+            _collapsedOpenSlotTarget = finalTarget;
+        } else {
+            _collapsedDropSettled = NO;
+            _collapsedOpenSlotTarget = nil;
+        }
     } else {
         [self setTargetCell:nil];
+        // Do NOT reset the gap-open latch here. This branch runs for every
+        // NON-destination participating bar every frame (e.g. the SOURCE bar of a
+        // cross-window drag, which -animateDrag: also ticks). The latch is
+        // destination-only state that must persist across ticks (the "stays open"
+        // test reads last tick's value); resetting it here would let the source
+        // bar's per-frame tick wipe what the destination just set, reviving the
+        // between-slot stutter. finishDrag clears it at drag end.
     }
 
 #if PSM_DEBUG_DRAG_PERFORMANCE
@@ -1859,6 +2361,35 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         }
     }
 
+    // Precompute collapsed-run adjacency for every cell in ONE O(n) pass, so the loop
+    // below stays O(n) instead of re-scanning the whole array per placeholder (which
+    // made it O(n^2) per frame). runCell[k]: cell k is a collapsed-run cell (a
+    // collapsed member, or a chip that leads a collapsed run). collapsedAdjacent[k]:
+    // a placeholder at k has such a cell as its nearest non-placeholder neighbor on
+    // either side -- the same answer as -placeholderAtIndex:isAdjacentToCollapsedRunInCells:,
+    // computed once. (chipLeadsCollapsedRun scans only within each chip's own run, so
+    // the whole first pass is O(n) across non-overlapping runs.)
+    BOOL *runCell = calloc(MAX(1, cellCount), sizeof(BOOL));
+    BOOL *collapsedAdjacent = calloc(MAX(1, cellCount), sizeof(BOOL));
+    for (NSInteger k = 0; k < cellCount; k++) {
+        PSMTabBarCell *ck = cells[k];
+        if ([ck isTabGroupChip]) {
+            runCell[k] = [self chipLeadsCollapsedRunInCells:cells atIndex:k];
+        } else if (![ck isPlaceholder] && [ck isCollapsedHidden]) {
+            runCell[k] = YES;
+        }
+    }
+    NSInteger leftNonPH = -1;
+    for (NSInteger k = 0; k < cellCount; k++) {
+        if (![cells[k] isPlaceholder]) { leftNonPH = k; continue; }
+        if (leftNonPH >= 0 && runCell[leftNonPH]) { collapsedAdjacent[k] = YES; }
+    }
+    NSInteger rightNonPH = -1;
+    for (NSInteger k = cellCount - 1; k >= 0; k--) {
+        if (![cells[k] isPlaceholder]) { rightNonPH = k; continue; }
+        if (rightNonPH >= 0 && runCell[rightNonPH]) { collapsedAdjacent[k] = YES; }
+    }
+
     for (i = 0; i < cellCount; i++) {
         PSMTabBarCell *cell = [cells objectAtIndex:i];
         NSRect newRect = [cell frame];
@@ -1867,7 +2398,32 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
             cellsProcessed++;
 #endif
             if([cell isPlaceholder]){
-                if (cell == [self targetCell]) {
+                // A drop slot adjacent to a COLLAPSED group's run must not open while
+                // the cursor is SWEEPING: a gap opening beside a pill (its front/end
+                // slot, the between slot separating it from an adjacent collapsed
+                // group, or the slot just before its chip) shoves the pill run
+                // sideways while the layout is still settling -- the pill "runs away"
+                // from the approaching cursor and snaps back (the field jitter). So:
+                //  * front/end join-detector slots NEVER open (a collapsed group
+                //    signals a join by highlighting its chip, not by opening a gap);
+                //  * the "between two groups" and "drop before the group" slots open
+                //    ONLY when they are the target AND the drop has SETTLED there,
+                //    giving a landing affordance when the cursor stops in that zone
+                //    without shoving the run during a sweep.
+                // (isCollapsedGroupJoinSlot marks the front/end detector slots; the
+                // broader collapsedAdjacent[] test also catches the unmarked
+                // between/before slots.)
+                const BOOL isDetectorSlot = cell.isCollapsedGroupJoinSlot;
+                const BOOL isCollapsedAdjacent = isDetectorSlot || collapsedAdjacent[i];
+                BOOL mayOpen;
+                if (!isCollapsedAdjacent) {
+                    mayOpen = (cell == [self targetCell]);
+                } else if (isDetectorSlot) {
+                    mayOpen = NO;
+                } else {
+                    mayOpen = (cell == [self targetCell] && _collapsedDropSettled);
+                }
+                if (mayOpen) {
                     NSInteger newStep = [cell currentStep] + 1;
                     if (newStep >= kPSMTabDragAnimationSteps) {
                         newStep = kPSMTabDragAnimationSteps - 1;
@@ -1921,6 +2477,8 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         if([cell indicator])
             [[cell indicator] setFrame:[[control style] indicatorRectForTabCell:cell]];
     }
+    free(runCell);
+    free(collapsedAdjacent);
 
 #if PSM_DEBUG_DRAG_PERFORMANCE
     CFAbsoluteTime cellLoopEnd = CFAbsoluteTimeGetCurrent();
@@ -1972,7 +2530,7 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         static int calcSampleCount = 0;
         if ((++calcSampleCount % 30) == 1) {
             PSMTabBarCell *tgt = [self targetCell];
-            RLog(@"tabGroup: calc bar=%p scrollable=%d barW=%.0f avail=%.0f squeeze=%.2f slotScale=%.2f tgtStep=%d tgtFrame=%@ cells=%d",
+            DLog(@"tabGroup: calc bar=%p scrollable=%d barW=%.0f avail=%.0f squeeze=%.2f slotScale=%.2f tgtStep=%d tgtFrame=%@ cells=%d",
                  control, (int)[control tabBarIsScrollable], control.frame.size.width,
                  [control availableCellWidthWithOverflow:NO], squeeze, slotScale,
                  tgt ? [tgt currentStep] : -1,
@@ -2005,6 +2563,12 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 - (void)reinsertDragChipsInTabBar:(PSMTabBarControl *)control {
     NSMutableArray *cells = [control cells];
     NSArray *withChips = [PSMTabBarControl cellsByInsertingDragChipsInto:cells controlView:control];
+    // Rebuilding the cell array frees the old placeholders. _collapsedOpenSlotTarget
+    // is an unretained pointer compared by identity against live cells; drop it (and
+    // the settled latch) so a freed address reused for a new placeholder can't false-
+    // match and open a between/before gap a tick early. The next mouse pause re-arms.
+    _collapsedOpenSlotTarget = nil;
+    _collapsedDropSettled = NO;
     [cells setArray:withChips];
     const BOOL horizontal = ([control orientation] == PSMTabBarHorizontalOrientation);
     // A reference cell for the cross-axis (y/height for a horizontal bar): every
@@ -2094,9 +2658,44 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
                         break;
                     }
                 }
+                // Whether this group is collapsed: test its first real member (skip
+                // placeholders, including a drop slot sitting between the chip and the
+                // member). A collapsed group draws no member cells. STOP at a chip or
+                // at any cell of a different group -- do NOT skip a foreign chip into
+                // the NEXT group (as the run-tally loop above also stops there):
+                // otherwise a group whose only member is gone from the array (e.g. its
+                // sole member is being dragged, leaving just a gid-carrying
+                // placeholder anchor before the next group's chip) would inherit the
+                // NEIGHBOR group's collapse state. No own member found -> NO.
+                NSString *chipGid = c.tabGroupIdentifier;
+                BOOL firstMemberCollapsed = NO;
+                for (NSInteger j = i + 1; j < (NSInteger)cells.count; j++) {
+                    PSMTabBarCell *cj = cells[j];
+                    if ([cj isPlaceholder]) {
+                        continue;
+                    }
+                    if ([cj isTabGroupChip] ||
+                        ![cj.tabGroupIdentifier isEqualToString:chipGid]) {
+                        break;  // reached the next group -> this group has no member here
+                    }
+                    firstMemberCollapsed = [cj isCollapsedHidden];
+                    break;
+                }
                 PSMTabBarCell *slot = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:slotFrame
                                                                              expanded:NO
                                                                         inControlView:control] autorelease];
+                // A collapsed group draws no member cells. Mark its front slot ONLY
+                // as a detector so the chip-hover logic recognizes the cursor is
+                // over a collapsed group (the whole pill is the drop target). It
+                // carries NO joinsTabGroupIdentifier: the join comes from hovering
+                // the pill (the drag assistant's join target), so the join zone is
+                // exactly the pill -- landing on the slot that opens to the pill's
+                // RIGHT once you advance past it must NOT join.
+                if (firstMemberCollapsed) {
+                    slot.isCollapsedGroupJoinSlot = YES;
+                }
+                RLog(@"tabGroup: reinsert frontSlot for chip gid=%@ firstMemberCollapsed=%d slotFrame=%@",
+                     c.tabGroupIdentifier ?: @"-", (int)firstMemberCollapsed, NSStringFromRect(slotFrame));
                 [withSlots addObject:slot];
             }
             continue;
@@ -2134,7 +2733,15 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
             PSMTabBarCell *endSlot = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:[c frame]
                                                                             expanded:NO
                                                                        inControlView:control] autorelease];
-            endSlot.joinsTabGroupIdentifier = gid;
+            // The end-of-group join slot is meaningful only for an EXPANDED group
+            // (drop among its visible members at the end). A COLLAPSED group is a
+            // single pill drop target -- joining happens by hovering the pill, not
+            // via a slot to its side -- so its end slot gets no join, or landing on
+            // the slot that opens once you advance past the pill would join with no
+            // highlight (the join zone would extend past the visible pill).
+            if (![c isCollapsedHidden]) {
+                endSlot.joinsTabGroupIdentifier = gid;
+            }
             [withSlots addObject:endSlot];
         }
     }
@@ -2157,11 +2764,23 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     // and its first member, so a "front of group" drop lands right before the
     // chip; joining sets the membership and -normalizeTabGroupChipCells then
     // re-derives the chip to the left of the new member, giving [chip, X, m1].
+    // Dropping while the cursor is over a collapsed group's chip joins that
+    // group, whichever side of the chip's midpoint the cursor is on (the midpoint
+    // only governs whether the group has slid aside yet, not the outcome).
+    if (_collapsedGroupJoinTargetID.length > 0) {
+        RLog(@"tabGroup: groupContainingDrop -> join %@ (collapsed chip hover)", _collapsedGroupJoinTargetID);
+        return _collapsedGroupJoinTargetID;
+    }
     PSMTabBarCell *target = [self targetCell];
+    RLog(@"tabGroup: groupContainingDrop target=%@ isPH=%d collapsedJoin=%d joinGid=%@ targetGid=%@",
+         target ? NSStringFromClass([target class]) : @"nil",
+         (int)target.isPlaceholder, (int)target.isCollapsedGroupJoinSlot,
+         target.joinsTabGroupIdentifier ?: @"-", target.tabGroupIdentifier ?: @"-");
     // An "end of group" slot names the group to join outright: a tab dropped
     // there lands in the group at its end (its right neighbor is not a member,
     // so the bracket test below would otherwise call it "outside").
     if (target.joinsTabGroupIdentifier.length > 0) {
+        RLog(@"tabGroup: groupContainingDrop -> join %@ (joins slot)", target.joinsTabGroupIdentifier);
         return target.joinsTabGroupIdentifier;
     }
     // The dragged cell's own drop slot carries its group id (set in
@@ -2242,6 +2861,99 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
         return nil;
     }
     return cells[i];
+}
+
+// The drop slot immediately AFTER a collapsed group's run (chip at `ci`), i.e.
+// the "drop after this group" position. Found by identity, not geometry: a
+// collapsed group's members are zero-width and its pill abuts the next group's
+// pill, so a point "just past the pill" would land inside the neighbor. Walk the
+// group's run -- its front (detector) slot, its collapsed members, and any
+// placeholders interleaved among them -- and return the first placeholder past
+// the last member. Returns nil if the run is followed immediately by a chip with
+// no slot between (shouldn't happen mid-drag) or the bar ends.
+// The chip index of the COLLAPSED group adjacent to the group whose chip is at
+// `ci`, on the given side (direction -1 = left, +1 = right), or NSNotFound if the
+// neighbor is a plain tab / nothing / an EXPANDED group (whose visible members
+// read as tabs here). Used to decide whether a pill's edge third is a "drop
+// between two pills" zone, and to resolve BOTH sides of a shared boundary to the
+// SAME between-slot (the left group's after-run slot) so they can't fight.
+- (NSInteger)collapsedGroupChipAtIndex:(NSInteger)ci
+          adjacentPillChipIndexInCells:(NSArray<PSMTabBarCell *> *)cells
+                             direction:(NSInteger)direction {
+    NSString *gid = [cells[ci] tabGroupIdentifier];
+    const NSInteger count = (NSInteger)cells.count;
+    const NSInteger step = (direction >= 0) ? 1 : -1;
+    for (NSInteger j = ci + step; j >= 0 && j < count; j += step) {
+        PSMTabBarCell *c = cells[j];
+        if ([c isPlaceholder]) {
+            continue;
+        }
+        // Scanning right, cells still in THIS group's run are not the neighbor.
+        if (step > 0 && ![c isTabGroupChip] && [c.tabGroupIdentifier isEqualToString:gid]) {
+            continue;
+        }
+        if ([c isTabGroupChip]) {
+            // Another group's chip: a pill iff it leads a collapsed run. Delegate to
+            // the single definition (-chipLeadsCollapsedRunInCells:atIndex:) so this
+            // and the settled-origin/adjacency logic can never disagree about what a
+            // collapsed pill is.
+            return [self chipLeadsCollapsedRunInCells:cells atIndex:j] ? j : NSNotFound;
+        }
+        // A real tab: a collapsed member is part of a pill (find that group's chip
+        // to its left); a visible tab is not a pill.
+        if (![c isCollapsedHidden]) {
+            return NSNotFound;
+        }
+        NSString *neighborGid = c.tabGroupIdentifier;
+        for (NSInteger k = j - 1; k >= 0; k--) {
+            if ([cells[k] isTabGroupChip] && [cells[k].tabGroupIdentifier isEqualToString:neighborGid]) {
+                return k;
+            }
+        }
+        return NSNotFound;
+    }
+    return NSNotFound;
+}
+
+- (PSMTabBarCell *)slotAfterCollapsedGroupRunAtChipIndex:(NSInteger)ci
+                                                 inCells:(NSArray<PSMTabBarCell *> *)cells {
+    NSString *gid = [cells[ci] tabGroupIdentifier];
+    for (NSInteger j = ci + 1; j < (NSInteger)cells.count; j++) {
+        PSMTabBarCell *c = cells[j];
+        if ([c isTabGroupChip]) {
+            return nil;  // hit the next group's chip with no between-slot
+        }
+        if (c.isCollapsedGroupJoinSlot) {
+            continue;  // this group's front/detector slot
+        }
+        if (![c isPlaceholder] && [c.tabGroupIdentifier isEqualToString:gid]) {
+            continue;  // a member of this group
+        }
+        if ([c isPlaceholder]) {
+            // Interior placeholder (still a member ahead before the run ends) vs the
+            // after-run slot.
+            BOOL memberAhead = NO;
+            for (NSInteger k = j + 1; k < (NSInteger)cells.count; k++) {
+                PSMTabBarCell *cc = cells[k];
+                if ([cc isTabGroupChip]) {
+                    break;
+                }
+                if (![cc isPlaceholder] && [cc.tabGroupIdentifier isEqualToString:gid]) {
+                    memberAhead = YES;
+                    break;
+                }
+                if (![cc isPlaceholder]) {
+                    break;
+                }
+            }
+            if (memberAhead) {
+                continue;
+            }
+            return c;  // the after-group slot
+        }
+        return c;  // a foreign real cell right after the run
+    }
+    return nil;
 }
 
 // A whole-group drag must not land inside another group. If `proposed` (a drop-

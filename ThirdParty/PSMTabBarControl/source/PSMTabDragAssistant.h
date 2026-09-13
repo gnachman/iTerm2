@@ -53,6 +53,9 @@ extern NSString *const PSMTabDragIsGroupPasteboardType;
 - (void)setCurrentMouseLoc:(NSPoint)point;
 - (PSMTabBarCell *)targetCell;
 - (void)setTargetCell:(PSMTabBarCell *)cell;
+// The id of the collapsed group the cursor is currently over during a single-tab
+// drag (drives the chip highlight and join-on-drop), or nil. See the ivar.
+- (NSString *)collapsedGroupJoinTargetIdentifier;
 
 // Functionality
 - (void)startAnimationWithOrientation:(PSMTabBarOrientation)orientation width:(CGFloat)width;
