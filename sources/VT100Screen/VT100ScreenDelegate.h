@@ -173,6 +173,10 @@ typedef NS_ENUM(NSUInteger, PTYSessionResizePermission) {
 // Delegate should move the window's top left point to the given screen coordinate.
 - (void)screenMoveWindowTopLeftPointTo:(NSPoint)point;
 
+// Delegate should set the window's frame to the given global AppKit coordinate
+// rect (points).
+- (void)screenSetWindowFrame:(NSRect)frame;
+
 // If flag is set, the window should be miniaturized; otherwise, deminiaturize.
 - (void)screenMiniaturizeWindow:(BOOL)flag;
 

@@ -2486,7 +2486,11 @@ class FakeSession: NSObject, VT100ScreenDelegate {
     func screenMoveWindowTopLeftPoint(to point: NSPoint) {
 
     }
-    
+
+    func screenSetWindowFrame(_ frame: NSRect) {
+
+    }
+
     let scope = iTermVariableScope()
     func triggerSideEffectVariableScope() -> iTermVariableScope {
         return scope

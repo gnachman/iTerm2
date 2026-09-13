@@ -72,6 +72,21 @@ class SpyingScreenDelegate: FakeSession {
     /// color report).
     private(set) var sentReports: [Data] = []
 
+    /// Value returned from screenShouldInitiateWindowResize; defaults to denied
+    /// like FakeSession. Set to .allowed to exercise window-manipulation codes.
+    var windowResizePermission: PTYSessionResizePermission = .denied
+
+    /// Frames passed to screenSetWindowFrame (SetWindowFrame OSC).
+    private(set) var setWindowFrameCalls: [NSRect] = []
+
+    override func screenShouldInitiateWindowResize() -> PTYSessionResizePermission {
+        windowResizePermission
+    }
+
+    override func screenSetWindowFrame(_ frame: NSRect) {
+        setWindowFrameCalls.append(frame)
+    }
+
     override func screenSendReport(_ data: Data) {
         sentReports.append(data)
     }
@@ -85,6 +100,7 @@ class SpyingScreenDelegate: FakeSession {
         promptDidEndCalls.removeAll()
         commandDidChangeCalls.removeAll()
         mouseModeDidChangeCount = 0
+        setWindowFrameCalls.removeAll()
         sentReports.removeAll()
     }
 

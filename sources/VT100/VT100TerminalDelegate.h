@@ -282,6 +282,9 @@ NS_ASSUME_NONNULL_BEGIN
 // Tries to move the window's top left coordinate to the given point.
 - (void)terminalMoveWindowTopLeftPointTo:(NSPoint)point;
 
+// Tries to set the window's frame in global AppKit coordinates (points).
+- (void)terminalSetWindowFrame:(NSRect)frame;
+
 // Either miniaturizes or unminiaturizes, depending on |mini|.
 - (void)terminalMiniaturize:(BOOL)mini;
 
@@ -299,6 +302,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Returns the top-left pixel coordinate of the window.
 - (NSPoint)terminalWindowTopLeftPixelCoordinate;
+
+// Returns the window's frame in global AppKit coordinates (points).
+- (NSRect)terminalWindowFrameInPoints;
+
+// Returns the visible frames of all screens in global AppKit coordinates
+// (points), one boxed NSRect per screen.
+- (NSArray<NSValue *> *)terminalScreenFramesInPoints;
 
 // Returns the size of the window in pixels.
 - (int)terminalWindowWidthInPixels;

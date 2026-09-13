@@ -10691,6 +10691,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [[self window] setFrameTopLeftPoint:point];
 }
 
+- (void)windowSetFrame:(NSRect)frame
+{
+    [[self window] setFrame:frame display:YES];
+}
+
 - (void)windowPerformMiniaturize:(id)sender {
     RLog(@"windowPerformMiniaturize: %@", self);
     [[self window] performMiniaturize:sender];

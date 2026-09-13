@@ -19,6 +19,14 @@ New Features:
   hours, run this command”). The timer survives
   restarts, fires immediately if its time already
   passed, and can push your phone when it fires.
+- New OSC 1337 codes let a program move and
+  resize its window across monitors using global
+  coordinates: SetWindowFrame=x;y;w;h sets the
+  frame, while ReportWindowFrame and
+  ReportScreenFrames report the current frame and
+  the layout of all displays. Unlike the older
+  CSI 3;x;y t sequence, these are not limited to
+  the monitor the window is already on.
 - A new “Set Profile Setting” trigger action turns
   a profile checkbox on or off for the session.
   Paired with Job Started and Job Ended matches it

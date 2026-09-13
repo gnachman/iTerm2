@@ -4213,6 +4213,10 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
     [self updateExternalAttributes];
 }
 
+static NSString *VT100TerminalCompactFloat(CGFloat value) {
+    return [[NSString stringWithFormat:@"%0.2f", value] stringByCompactingFloatingPointString];
+}
+
 - (void)executeXtermSetKvp:(VT100Token *)token {
     if (!token.string) {
         return;
@@ -4406,6 +4410,40 @@ static NSString *VT100GetURLParamForKey(NSString *params, NSString *key) {
             NSString *scale = [[NSString stringWithFormat:@"%0.2f", floatScale] stringByCompactingFloatingPointString];
             NSString *s = [NSString stringWithFormat:@"\033]1337;ReportCellSize=%@;%@;%@\033\\",
                            height, width, scale];
+            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+        }
+    } else if ([key isEqualToString:@"SetWindowFrame"]) {
+        NSArray<NSString *> *parts = [value componentsSeparatedByString:@";"];
+        if (parts.count == 4) {
+            const NSRect frame = NSMakeRect([parts[0] doubleValue],
+                                            [parts[1] doubleValue],
+                                            [parts[2] doubleValue],
+                                            [parts[3] doubleValue]);
+            [_delegate terminalSetWindowFrame:frame];
+        }
+    } else if ([key isEqualToString:@"ReportWindowFrame"]) {
+        if ([_delegate terminalShouldSendReport:YES]) {
+            const NSRect f = [_delegate terminalWindowFrameInPoints];
+            NSString *s = [NSString stringWithFormat:@"\033]1337;WindowFrame=%@;%@;%@;%@\033\\",
+                           VT100TerminalCompactFloat(NSMinX(f)),
+                           VT100TerminalCompactFloat(NSMinY(f)),
+                           VT100TerminalCompactFloat(NSWidth(f)),
+                           VT100TerminalCompactFloat(NSHeight(f))];
+            [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
+        }
+    } else if ([key isEqualToString:@"ReportScreenFrames"]) {
+        if ([_delegate terminalIsTrusted] && [_delegate terminalShouldSendReport:YES]) {
+            NSMutableArray<NSString *> *frames = [NSMutableArray array];
+            for (NSValue *boxed in [_delegate terminalScreenFramesInPoints]) {
+                const NSRect f = boxed.rectValue;
+                [frames addObject:[NSString stringWithFormat:@"%@,%@,%@,%@",
+                                   VT100TerminalCompactFloat(NSMinX(f)),
+                                   VT100TerminalCompactFloat(NSMinY(f)),
+                                   VT100TerminalCompactFloat(NSWidth(f)),
+                                   VT100TerminalCompactFloat(NSHeight(f))]];
+            }
+            NSString *s = [NSString stringWithFormat:@"\033]1337;ScreenFrames=%@\033\\",
+                           [frames componentsJoinedByString:@";"]];
             [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
         }
     } else if ([key isEqualToString:@"UnicodeVersion"]) {

@@ -1436,6 +1436,20 @@ typedef struct {
     } name:@"move window top left point"];
 }
 
+- (void)terminalSetWindowFrame:(NSRect)frame {
+    DLog(@"begin %@", NSStringFromRect(frame));
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate, iTermTokenExecutorUnpauser * _Nonnull unpauser) {
+        DLog(@"begin side-effect");
+        if ([delegate screenShouldInitiateWindowResize] == PTYSessionResizePermissionAllowed &&
+            ![delegate screenWindowIsFullscreen]) {
+            DLog(@"doing it");
+            [delegate screenSetWindowFrame:frame];
+        }
+        [unpauser unpause];
+    } name:@"terminalSetWindowFrame"];
+
+}
+
 - (void)terminalMiniaturize:(BOOL)mini {
     DLog(@"begin %@", @(mini));
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
@@ -1505,6 +1519,16 @@ typedef struct {
 - (NSPoint)terminalWindowTopLeftPixelCoordinate {
     DLog(@"begin");
     return self.config.windowFrame.origin;
+}
+
+- (NSRect)terminalWindowFrameInPoints {
+    DLog(@"begin");
+    return self.config.globalWindowFrame;
+}
+
+- (NSArray<NSValue *> *)terminalScreenFramesInPoints {
+    DLog(@"begin");
+    return self.config.screenFrames ?: @[];
 }
 
 - (int)terminalWindowWidthInPixels {

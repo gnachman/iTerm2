@@ -16104,6 +16104,12 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     [[_delegate parentWindow] windowSetFrameTopLeftPoint:point];
 }
 
+- (void)screenSetWindowFrame:(NSRect)frame {
+    // frame is already in global AppKit coordinates (points), so no conversion
+    // is needed. AppKit constrains it to something sensible.
+    [[_delegate parentWindow] windowSetFrame:frame];
+}
+
 - (NSRect)screenWindowScreenFrame {
     return [[[_delegate parentWindow] windowScreen] visibleFrame];
 }
@@ -18728,6 +18734,18 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
     const NSRect windowFrame = [self windowFrame];
     if (!NSEqualRects(windowFrame, _config.windowFrame)) {
         _config.windowFrame = windowFrame;
+        dirty = YES;
+    }
+    const NSRect globalWindowFrame = [self screenWindowFrame];
+    if (!NSEqualRects(globalWindowFrame, _config.globalWindowFrame)) {
+        _config.globalWindowFrame = globalWindowFrame;
+        dirty = YES;
+    }
+    NSArray<NSValue *> *screenFrames = [[NSScreen screens] mapWithBlock:^id(NSScreen *screen) {
+        return [NSValue valueWithRect:screen.visibleFrame];
+    }];
+    if (![NSObject object:screenFrames isEqualToObject:_config.screenFrames]) {
+        _config.screenFrames = screenFrames;
         dirty = YES;
     }
     const VT100GridSize theoreticalGridSize = [self theoreticalGridSize];
