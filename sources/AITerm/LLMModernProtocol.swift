@@ -119,7 +119,16 @@ struct CompletionsMessage: Codable, Equatable {
             try container.encode(functionName, forKey: .functionName)
         }
 
-        try container.encode(content, forKey: .content)
+        // Native Ollama /api/chat unmarshals `content` into a Go string, so a
+        // multipart (.array) content 400s. An assistant preamble that co-arrives
+        // with a tool call reaches here as .array (text parts, no images, so
+        // encodeOllamaImageMessage declined); collapse it to joined text. Non-Ollama
+        // keeps the OpenAI content-parts array unchanged.
+        if ollamaToolFormat {
+            try container.encode(ollamaScalarContent, forKey: .content)
+        } else {
+            try container.encode(content, forKey: .content)
+        }
 
         if let function_call {
             try container.encode(function_call, forKey: .function_call)
@@ -160,10 +169,27 @@ struct CompletionsMessage: Codable, Equatable {
         if let function_call, tool_calls == nil {
             try container.encode(LLM.Role.assistant, forKey: .role)
             try container.encode([OllamaToolCall(function_call)], forKey: .tool_calls)
-            try container.encodeIfPresent(content, forKey: .content)
+            // Flatten a multipart preamble to a string, like the modern path above:
+            // native /api/chat rejects an array-shaped assistant content.
+            try container.encodeIfPresent(ollamaScalarContent, forKey: .content)
             return true
         }
         return false
+    }
+
+    // The content to send on the native Ollama path: a multipart (.array) content
+    // collapsed to its joined text (images are emitted out-of-band via `images` in
+    // encodeOllamaImageMessage, so only text parts remain here), otherwise the
+    // content unchanged. Ollama's assistant `content` must be a scalar string.
+    private var ollamaScalarContent: Content? {
+        guard case .array(let parts) = content else {
+            return content
+        }
+        let text = parts.compactMap { part -> String? in
+            if case .text(let t) = part { return t.text }
+            return nil
+        }.joined(separator: "\n")
+        return .string(text)
     }
 
     // A native Ollama assistant tool call: {type:"function", function:{name,

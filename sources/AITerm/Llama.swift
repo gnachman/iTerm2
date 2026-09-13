@@ -238,6 +238,13 @@ struct LlamaBodyRequestBuilder {
     // and can force a CPU fallback on a small machine.
     private static let numCtxHeadroom = 256
     private static let minNumCtx = 4096
+    // The window to assume when the model's real context length is unknown (a blank
+    // manual context field, or a discovered model whose server reported none). num_ctx
+    // is still sized to the prompt (min(sized, window)), so this only RAISES the
+    // ceiling for large prompts; small prompts still get a small num_ctx. Using the
+    // 4096 floor here instead made every prompt above ~3968 tokens fail on modern
+    // models that actually support far more.
+    private static let assumedContextWindowWhenUnknown = 32768
     // Below this many tokens of room left inside num_ctx, the response would be
     // uselessly short (or a degenerate single token), so the prompt is treated as
     // too large rather than sent with a silently truncated context.
@@ -268,9 +275,10 @@ struct LlamaBodyRequestBuilder {
             return override
         }
         // A non-positive context window (a blank/0 manual field, which the editor
-        // writes for an empty box) is unknown, not "zero tokens": treat it as the
-        // floor so we never emit num_ctx 0 and hard-fail every request.
-        let window = contextWindow > 0 ? contextWindow : minNumCtx
+        // writes for an empty box) is unknown, not "zero tokens": assume a generous
+        // modern window so medium prompts aren't rejected, rather than the 4096 floor
+        // (which capped num_ctx at 4096 and threw on any prompt above ~3968 tokens).
+        let window = contextWindow > 0 ? contextWindow : assumedContextWindowWhenUnknown
         let reserve = min(max(numPredict, 512), maxResponseReserve)
         let desired = promptTokens + reserve + numCtxHeadroom
         let sized = roundUpToPowerOfTwo(max(desired, minNumCtx))
@@ -462,7 +470,13 @@ struct LlamaBodyRequestBuilder {
         // with a truncated prompt and a silent one-token reply.
         let responseBudget = numCtx - promptTokens
         if responseBudget < Self.minResponseBudget {
-            throw AIError.requestTooLarge
+            // Surface the numbers so a too-small override (or an under-reported
+            // window) is diagnosable rather than an opaque generic error.
+            let override = Int(iTermAdvancedSettingsModel.ollamaNumCtx())
+            let detail = override > 0
+                ? "prompt ≈\(promptTokens) tokens exceeds the ollamaNumCtx override of \(override)"
+                : "prompt ≈\(promptTokens) tokens needs more than num_ctx \(numCtx)"
+            throw AIError.requestTooLarge(detail: detail)
         }
         // Never let num_predict exceed the room left in the window, or Ollama
         // truncates the answer mid-stream once generation reaches num_ctx.

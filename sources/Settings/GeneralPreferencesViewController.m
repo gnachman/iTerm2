@@ -576,6 +576,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSProgressIndicator *_testSpinner;
     NSDictionary *_result;
     BOOL (^_nameIsTaken)(NSString *name);
+    // The Model name typed before auto-discovery was toggled on. Stashed so
+    // toggling discovery back off restores it instead of leaving the field blank
+    // (Save requires a model name for a non-dynamic entry).
+    NSString *_stashedModelName;
 }
 
 - (instancetype)initWithConfiguration:(NSDictionary *)configuration
@@ -1245,8 +1249,17 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _nameField.hidden = dynamic;
     _modelPopup.hidden = !dynamic;
     if (dynamic) {
+        // Stash the typed name once (not on every re-invocation while already
+        // dynamic, which would stash the blank we just wrote) so toggling
+        // discovery back off restores it.
+        if (!_stashedModelName) {
+            _stashedModelName = _nameField.stringValue ?: @"";
+        }
         _nameField.stringValue = @"";
         [self reloadDynamicModelPopup];
+    } else if (_stashedModelName) {
+        _nameField.stringValue = _stashedModelName;
+        _stashedModelName = nil;
     }
     _contextField.enabled = !dynamic;
     _responseField.enabled = !dynamic;
@@ -2792,18 +2805,18 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     [self selectPopUpButton:_aiVendor representedObject:selectedIdentifier];
     if (_aiVendor.selectedItem == nil && _aiVendor.numberOfItems > 0) {
-        // The persisted default no longer matches any item: its manual model was
-        // deleted in Manage AI Models, or a dynamic Ollama tag disappeared / its
-        // collision-disambiguated display name changed on a background refresh.
-        // Don't leave the popup showing index 0 while the prefs still point at the
-        // vanished model (the API-key hint and new-chat resolution would disagree,
-        // and chats would keep resolving the removed model). Select index 0 and
-        // rewrite the prefs to match. commitSelectedDefaultAIModel re-enters this
-        // method (prefs now match index 0, so no fallback and the hint updates), so
-        // return here rather than double-running updateAIAPIKeyHint.
+        // The persisted default doesn't match any item right now. This is USUALLY
+        // transient: a background /api/tags refresh momentarily reported zero models
+        // (Ollama restart), or a dynamic tag's collision-disambiguated display name
+        // changed, so the persisted whole-server/dynamic Ollama default has no menu
+        // item this instant. We must NOT commit a replacement here: this method runs
+        // on every cache-change notification, and persisting index 0 (OpenAI) would
+        // silently reroute new chats from local Ollama to a paid cloud vendor with no
+        // user action (violates "don't change defaults silently"). Show index 0
+        // WITHOUT writing prefs; when discovery repopulates, the next rebuild
+        // re-selects the still-persisted default. A genuine deletion is handled where
+        // the user deletes the model, not here.
         [_aiVendor selectItemAtIndex:0];
-        [self commitSelectedDefaultAIModel];
-        return;
     }
     [self updateAIAPIKeyHint];
 }

@@ -201,16 +201,21 @@ class LLMMetadata: NSObject {
     // the public vendor host. nil when there is no economy alternative (or AI is
     // unconfigured/unknown), leaving the caller on the configured chat model.
     static func economyModel() -> AIMetadata.Model? {
+        // When the built-in Ollama vendor is the default, its own Budget picker wins.
+        // This is checked BEFORE the designated economy model because a previously
+        // designated economy model (kPreferenceKeyAIEconomyModelName) belongs to a
+        // manual vendor configuration and survives the switch to Ollama (manualModels
+        // returns configured models regardless of useRecommendedAIModel); consulting
+        // it first would silently shadow the user's Budget pick. nil means "same as
+        // regular" (empty Budget pref), handled by leaving the caller on the main
+        // model.
+        if isOllamaVendorDefault {
+            return ollamaVendorEconomyModel()
+        }
         // A user-designated economy model is a full manual model with its own
         // url/api/auth, so it is used verbatim.
         if let designated = userDesignatedEconomyModel() {
             return designated
-        }
-        // The Ollama vendor has no catalog economy pointer; the user picks a budget
-        // model explicitly (the "Budget model" popup). nil means "same as regular",
-        // handled by leaving the caller on the main model.
-        if isOllamaVendorDefault {
-            return ollamaVendorEconomyModel()
         }
         guard let configured = model() else {
             return nil
@@ -417,12 +422,19 @@ class LLMMetadata: NSObject {
             return [match]
         }
         // Chosen but not yet in the cache (discovery pending or the tag was removed
-        // from the server): construct a minimal stand-in so the pinned selection
-        // still resolves synchronously and stays on the Ollama vendor.
+        // from the server): construct a stand-in so the pinned selection still
+        // resolves synchronously and stays on the Ollama vendor. Include vision and
+        // function-calling optimistically: gating them off (streaming-only) would
+        // silently DROP an attached image or a tool definition during this transient
+        // window (supportsInlineImageBlock keys on .vision), answering as if the user
+        // never attached it. If the model genuinely lacks them the request surfaces a
+        // visible error, which is better than silent data loss; discovery repopulates
+        // the real capabilities shortly.
         var fallback = AIMetadata.Model(name: selected,
                                         contextWindowTokens: OllamaModelDiscovery.defaultContextWindow,
                                         maxResponseTokens: OllamaModelDiscovery.defaultContextWindow,
-                                        url: url, api: .llama, features: [.streaming],
+                                        url: url, api: .llama,
+                                        features: [.streaming, .vision, .functionCalling],
                                         vectorStoreConfig: .disabled, vendor: .llama)
         fallback.customHeaders = headers
         fallback.wireModelName = selected

@@ -53,10 +53,38 @@ class OllamaModelDiscovery: NSObject {
             }
         }
         var models: [Model]
+
+        // A wrapper whose init never throws, so decoding [FailableModel] consumes
+        // every array element even when one is malformed. Used to decode `models`
+        // leniently: a single bad entry (missing name, a proxy-wrapped shape) must
+        // not fail the whole round, which the cache would treat as a failed fetch,
+        // increment consecutiveFailures, and eventually stop auto-retrying.
+        private struct FailableModel: Decodable {
+            let model: Model?
+            init(from decoder: Decoder) throws {
+                model = try? Model(from: decoder)
+            }
+        }
+        private enum CodingKeys: String, CodingKey {
+            case models
+        }
+        init(from decoder: Decoder) throws {
+            // A body that isn't {models: [...]} at all still throws here (a genuine
+            // unparseable response), which the caller correctly treats as a failure;
+            // only PER-ELEMENT errors are tolerated.
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            let raw = try container.decode([FailableModel].self, forKey: .models)
+            models = raw.compactMap { $0.model }
+        }
     }
 
-    // A conservative context window when the server doesn't report one.
-    static let defaultContextWindow = 8_192
+    // The window to assume when neither /api/tags nor /api/show reports a context
+    // length. Sized generously for modern Ollama models: num_ctx is still sized to
+    // the prompt (Llama.computedNumCtx caps at this window but rounds to fit the
+    // actual prompt), so this only RAISES the ceiling for large prompts rather than
+    // wasting memory on small ones. The former 8192 silently capped genuinely large
+    // models and rejected medium prompts they could handle.
+    static let defaultContextWindow = 32_768
 
     // Model names from an /api/tags body, in server order. Empty for a body that
     // isn't the expected shape (so callers surface "no models" rather than crash).
@@ -296,11 +324,12 @@ class OllamaModelDiscovery: NSObject {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             return (nil, nil)
         }
-        // An ABSENT capabilities key and a PRESENT-but-empty array both mean
-        // "unknown" here: normalize both to nil so callers keep the tags-derived
-        // fallback (tools/vision) rather than treating an empty array as an
-        // authoritative "no capabilities" that would strip them to streaming-only.
-        let capabilities = (json["capabilities"] as? [String]).flatMap { $0.isEmpty ? nil : Set($0) }
+        // Distinguish ABSENT from PRESENT-but-empty: an absent capabilities key is
+        // "unknown" (nil -> caller keeps the tags-derived fallback), but a present
+        // "capabilities": [] is authoritative from the richer /api/show, so it
+        // becomes an empty Set and the caller clears tools/vision. Keeping an empty
+        // array as "unknown" would leave a non-tool model falsely tool-capable.
+        let capabilities = (json["capabilities"] as? [String]).map { Set($0) }
         var contextWindow: Int?
         if let info = json["model_info"] as? [String: Any] {
             // A multimodal model reports more than one *.context_length key (a
@@ -308,7 +337,8 @@ class OllamaModelDiscovery: NSObject {
             // "qwen3.context_length"). Dictionary iteration order is not
             // deterministic, so pick deterministically: prefer the key for the
             // model's own architecture (general.architecture), and otherwise take
-            // the LARGEST window (the text model's, never the smaller projector's).
+            // the LARGEST TEXT-model window, excluding projector/vision blocks whose
+            // context_length is the image encoder's, not the model's real window.
             // JSONSerialization yields NSNumber, so read every value as NSNumber.
             let architecture = info["general.architecture"] as? String
             if let architecture,
@@ -316,12 +346,18 @@ class OllamaModelDiscovery: NSObject {
                 contextWindow = n
             } else {
                 contextWindow = info
-                    .filter { $0.key.hasSuffix(".context_length") }
+                    .filter { $0.key.hasSuffix(".context_length") && !Self.isProjectorInfoKey($0.key) }
                     .compactMap { ($0.value as? NSNumber)?.intValue }
                     .max()
             }
         }
         return (capabilities, contextWindow)
+    }
+
+    // Whether a model_info key belongs to a vision/projector block rather than the
+    // text model, so its context_length isn't mistaken for the real window.
+    private static func isProjectorInfoKey(_ key: String) -> Bool {
+        return key.hasPrefix("clip.") || key.hasPrefix("mmproj") || key.contains(".vision.")
     }
 
     // Fetch one model's capabilities + context window from /api/show. The

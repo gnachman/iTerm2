@@ -156,6 +156,16 @@ final class OllamaModelDiscoveryTests: XCTestCase {
         XCTAssertEqual(OllamaModelDiscovery.modelNames(fromTagsResponse: Data("{\"models\":[]}".utf8)), [])
     }
 
+    // A single malformed entry (here: missing the required `name`) must not fail the
+    // whole /api/tags round, which the cache would treat as a failed fetch and
+    // eventually stop auto-retrying. The good entries still come through.
+    func test_modelNames_skipsMalformedEntry() {
+        let body = Data(#"{"models":[{"name":"good:7b"},{"details":{"context_length":4096}},{"name":"also-good:3b"}]}"#.utf8)
+        XCTAssertEqual(OllamaModelDiscovery.modelNames(fromTagsResponse: body),
+                       ["good:7b", "also-good:3b"],
+                       "a single entry missing name must be skipped, not poison the whole list")
+    }
+
     // MARK: - /api/show enrichment (capabilities + real context window)
 
     // /api/tags lists models but not their capabilities/context window on a real
@@ -227,11 +237,20 @@ final class OllamaModelDiscoveryTests: XCTestCase {
     // streaming-only and dropping tools/vision for a model that /api/tags reported
     // as tool- or vision-capable. An empty array must be indistinguishable from
     // "unknown" (nil) so the caller keeps its fallback, exactly like an absent key.
-    func test_capabilitiesAndContext_emptyCapabilitiesArray_keepsFallback() {
-        let body = Data(#"{"capabilities":[],"model_info":{}}"#.utf8)
-        let (caps, _) = OllamaModelDiscovery.capabilitiesAndContext(fromShowResponse: body)
-        XCTAssertNil(caps,
-                     "an empty capabilities array must be treated as unknown (keep the tags-derived fallback), not as authoritative 'no capabilities'")
+    // /api/show is the authoritative per-model source, so distinguish a PRESENT
+    // "capabilities": [] (authoritative empty: clear tools/vision) from an ABSENT
+    // key (unknown: keep the tags-derived fallback). Treating present-but-empty as
+    // "unknown" would leave a non-tool model falsely advertised as tool-capable.
+    func test_capabilitiesAndContext_emptyCapabilitiesArray_isAuthoritativeEmpty() {
+        let present = Data(#"{"capabilities":[],"model_info":{}}"#.utf8)
+        let (caps, _) = OllamaModelDiscovery.capabilitiesAndContext(fromShowResponse: present)
+        XCTAssertEqual(caps, [],
+                       "a present-but-empty capabilities array is authoritative: clear features rather than keeping the tags-derived fallback")
+
+        let absent = Data(#"{"model_info":{}}"#.utf8)
+        let (absentCaps, _) = OllamaModelDiscovery.capabilitiesAndContext(fromShowResponse: absent)
+        XCTAssertNil(absentCaps,
+                     "an absent capabilities key is unknown: keep the tags-derived fallback")
     }
 
     // Finding: /api/show model_info can contain more than one "*.context_length"

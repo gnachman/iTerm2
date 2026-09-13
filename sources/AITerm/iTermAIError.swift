@@ -47,6 +47,13 @@ public struct AIError: LocalizedError, CustomStringConvertible, CustomNSError, C
         AIError(String(localized: "AIError.RequestTooLarge", defaultValue: "AI token limit exceeded because the conversation reached its maximum length", comment: "Error shown when the AI conversation exceeds the model’s token limit"), type: .requestTooLarge)
     }
 
+    // Same error, but with a technical detail appended (e.g. the computed num_ctx or
+    // a too-small ollamaNumCtx override) so a size mismatch is diagnosable instead of
+    // surfacing only the generic message.
+    static func requestTooLarge(detail: String) -> AIError {
+        AIError(requestTooLarge.message + " (" + detail + ")", type: .requestTooLarge)
+    }
+
     static func wrapping(error: Error, context: String) -> AIError {
         return AIError(context + ": " + error.localizedDescription)
     }
