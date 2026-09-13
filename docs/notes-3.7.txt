@@ -333,3 +333,7 @@ Bug Fixes:
   stores the key under the wrong service.
 - Added a reply to CSI 16 t (report character
   cell size), which was previously ignored.
+- The Python API now reports OSC 8 hyperlinks
+  in a cell’s style (CellStyle.url). Previously
+  it was always empty, even though clicking the
+  link worked.
