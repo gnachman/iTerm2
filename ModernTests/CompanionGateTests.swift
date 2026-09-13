@@ -88,4 +88,31 @@ final class CompanionGateTests: XCTestCase {
         XCTAssertFalse(CompanionHostBridge.peerUnderstandsAIUnavailableCode(peerRevision: aiDecouplingRevision - 1))
         XCTAssertFalse(CompanionHostBridge.peerUnderstandsAIUnavailableCode(peerRevision: 0))
     }
+
+    // The single AI gate keys off aiRequirement(of:). These pin the classification
+    // that the dispatch relies on, especially the cases that were bugs: persistence
+    // and cleanup (setChatMuted, unsubscribe) must be OPEN so they run with AI off,
+    // and the push-fetch messages must be MIXED so their handlers classify the
+    // connection before deciding whether to serve.
+    func testAIRequirementClassification() {
+        func req(_ m: CompanionClientMessage) -> CompanionHostBridge.AIRequirement {
+            CompanionHostBridge.aiRequirement(of: m)
+        }
+        // Open: persistence/cleanup and non-AI interaction.
+        XCTAssertEqual(req(.setChatMuted(chatID: "c", muted: true)), .open)
+        XCTAssertEqual(req(.unsubscribe(chatID: "c")), .open)
+        XCTAssertEqual(req(.fetchSessionTree), .open)
+        XCTAssertEqual(req(.sendKey(sessionGuid: "g", event: CompanionKeyEvent(key: .text("x")))), .open)
+        XCTAssertEqual(req(.ping), .open)
+        // Mixed: partially served with AI off; must classify before gating.
+        XCTAssertEqual(req(.listChatsAndSessions), .mixed)
+        XCTAssertEqual(req(.messagesSince(collapseToken: "t", seq: 0, limit: 1, nonce: nil)), .mixed)
+        XCTAssertEqual(req(.syncSince(messageSeq: 0, alertSeq: 0, limit: 1, nonce: nil)), .mixed)
+        // AI-only: refused with AI off.
+        XCTAssertEqual(req(.createChat(title: "t", mode: .orchestrator)), .aiOnly)
+        XCTAssertEqual(req(.publish(message: Message(chatID: "c", author: .user, content: .markdown("x"),
+                                                     sentDate: Date(timeIntervalSince1970: 0), uniqueID: UUID()),
+                                    toChatID: "c", partial: false)), .aiOnly)
+        XCTAssertEqual(req(.subscribe(chatID: "c")), .aiOnly)
+    }
 }
