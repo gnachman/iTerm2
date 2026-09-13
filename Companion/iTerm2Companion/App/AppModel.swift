@@ -1897,9 +1897,17 @@ final class AppModel {
                             do {
                                 handshake = try await client.handshakeVersion()
                                 break
+                            } catch is CancellationError {
+                                // Teardown (unpair, connection reset) cancelled us:
+                                // stop hitting a dead client and let cancellation
+                                // propagate to the reconnect loop.
+                                throw CancellationError()
                             } catch {
                                 companionLog("Reconnect version handshake attempt \(attempt) failed: \(String(describing: error))")
-                                try? await Task.sleep(nanoseconds: 500_000_000)
+                                // Only back off BETWEEN attempts, not after the last.
+                                if attempt < 2 {
+                                    try await Task.sleep(nanoseconds: 500_000_000)
+                                }
                             }
                         }
                         if let handshake {
@@ -3937,8 +3945,11 @@ final class AppModel {
             // tab, or window changed. Update in place so the Sessions tab reflects
             // it live (a solicited fetch is correlated by requestID and resolved by
             // the client's waiter, so it never reaches here). Clear any prior load
-            // error since we now have a good tree.
-            sessionTree = tree
+            // error since we now have a good tree. Skip the assignment when the tree
+            // is unchanged so an identical push doesn't invalidate the SwiftUI view.
+            if sessionTree != tree {
+                sessionTree = tree
+            }
             sessionTreeError = nil
         case .aiAvailabilityChanged(let available):
             // The user toggled AI on the paired Mac while we were connected. Flip
