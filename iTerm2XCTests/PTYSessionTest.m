@@ -314,6 +314,32 @@ static NSDictionary *PTYSessionTestEncodedColor(CGFloat red, CGFloat green, CGFl
     XCTAssertNil(style.bgRgb);
 }
 
+// Regression (issue 13003): a cell carrying an OSC 8 hyperlink must report it
+// in CellStyle.url. The ITMURL was built but never attached to the style.
+- (void)testProtoStyleForHyperlink {
+    screen_char_t c = { 0 };
+    c.foregroundColorMode = ColorModeAlternate;
+    c.backgroundColorMode = ColorModeAlternate;
+
+    iTermURL *url = [iTermURL urlWithURL:[NSURL URLWithString:@"https://example.com/osc8-test"]
+                              identifier:@"link-1"
+                                  target:nil];
+    iTermExternalAttribute *ea =
+        [iTermExternalAttribute attributeHavingUnderlineColor:NO
+                                               underlineColor:(VT100TerminalColorValue){0}
+                                                          url:url
+                                                  blockIDList:nil
+                                                  controlCode:nil
+                                           dualModeForeground:(iTermDualModeColor){0}
+                                           dualModeBackground:(iTermDualModeColor){0}];
+
+    ITMCellStyle *style = [PTYSession protoStyleForCharacter:c externalAttributes:ea];
+
+    XCTAssertTrue(style.hasURL);
+    XCTAssertEqualObjects(style.URL.URL, @"https://example.com/osc8-test");
+    XCTAssertEqualObjects(style.URL.identifier, @"link-1");
+}
+
 #pragma mark - iTermWarningHandler
 
 - (NSModalResponse)warningWouldShowAlert:(NSAlert *)alert identifier:(NSString *)identifier {
