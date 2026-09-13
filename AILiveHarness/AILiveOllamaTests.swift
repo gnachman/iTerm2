@@ -36,7 +36,8 @@ extension AILiveHarness {
 
     // MARK: - Gating & model
 
-    private static var ollamaBaseURL: String { "http://127.0.0.1:11434" }
+    // Shared with AILiveLlamaToolCallTests (also an AILiveHarness extension).
+    static var ollamaBaseURL: String { "http://127.0.0.1:11434" }
 
     private func ollamaConfig() -> [String: String]? {
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: AILiveHarness.configFilePath())),

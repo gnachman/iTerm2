@@ -33,9 +33,8 @@
 //      tools/run_ai_live.sh llama_toolCall
 //
 //  LLAMA_MODELS names the local Ollama model to drive (comma-separated; the
-//  first non-empty entry wins). It defaults to llama3.3:latest to match the
-//  attachment matrix, but that is a 42GB model -- set LLAMA_MODELS to
-//  something small.
+//  first non-empty entry wins). It defaults to the small qwen3.5:4b; set it to
+//  any tool-capable model you have pulled.
 //
 
 import XCTest
@@ -174,22 +173,29 @@ extension AILiveHarness {
         return key
     }
 
-    /// Synthesize the AIMetadata.Model to drive. Bases it on the catalog's
-    /// llama3.3:latest entry (vendor .llama, api .llama, localhost:11434/api/chat,
-    /// functionCalling) and overrides the name to the configured local model so
-    /// a small model can stand in for the 42GB default.
+    /// Synthesize the AIMetadata.Model to drive the native Ollama lane. Bases it on
+    /// any catalog entry (only the struct shape is reused) and overrides every field,
+    /// mirroring AILiveOllamaTests.ollamaModel(); it deliberately does NOT depend on a
+    /// specific catalog entry, because the bundled ai-models.json no longer ships a
+    /// llama3.3:latest template. The model name comes from LLAMA_MODELS (first
+    /// non-empty, comma-separated), defaulting to the small qwen3.5:4b.
     private func llamaModel() throws -> AIMetadata.Model {
-        guard var template = AIMetadata.instance.models.first(where: { $0.name == "llama3.3:latest" }) else {
-            throw XCTSkip("llama3.3:latest template not in AIMetadata; cannot synthesize a llama model.")
+        guard var model = AIMetadata.instance.models.first else {
+            throw XCTSkip("empty AIMetadata catalog")
         }
         let configured = (try llamaLiveConfig())["LLAMA_MODELS"]?
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .first { !$0.isEmpty }
-        if let configured {
-            template.name = configured
-        }
-        return template
+        model.name = configured ?? "qwen3.5:4b"
+        model.api = .llama
+        model.vendor = .llama
+        model.url = "\(AILiveHarness.ollamaBaseURL)/api/chat"
+        model.contextWindowTokens = 262_144
+        model.maxResponseTokens = 8_192
+        model.features = [.streaming, .functionCalling]
+        model.fixtureExempt = true
+        return model
     }
 }
 
