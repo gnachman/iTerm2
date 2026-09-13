@@ -32,6 +32,16 @@ class OllamaModelCache: NSObject {
         var consecutiveFailures = 0
     }
 
+    // The aggregate result of the fetch batch an update() completed, used to resolve
+    // coalesced completions (see refresh). `lastOfBatch` is true when this update
+    // drained the final outstanding fetch for the endpoint; `succeeded`/`count`
+    // describe the batch as a whole (any success wins), not just this one fetch.
+    struct BatchOutcome {
+        var lastOfBatch: Bool
+        var succeeded: Bool
+        var count: Int
+    }
+
     private let lock = NSLock()
     private var cache: [String: Entry] = [:]
     // How many fetches are outstanding per endpoint. A COUNT (not a set) because a
@@ -39,6 +49,14 @@ class OllamaModelCache: NSObject {
     // endpoint can have two fetches at once; the failure bookkeeping runs only for
     // the last completion of a batch so concurrent failures count as one round.
     private var inFlightCount: [String: Int] = [:]
+    // Whether any fetch in the CURRENT batch has succeeded. A trailing failure in a
+    // batch that already succeeded must not re-increment the failure count or arm a
+    // retry (the endpoint is healthy). Cleared when the batch fully drains.
+    private var batchHadSuccess: [String: Bool] = [:]
+    // Completions for non-forced refreshes that coalesced behind an in-flight fetch.
+    // They still expect to run when that fetch resolves (a caller may re-enable a
+    // control in its completion), so they're delivered instead of dropped.
+    private var pendingCompletions: [String: [(Int, Bool) -> Void]] = [:]
 
     private let networkTimeout: TimeInterval = 10
     private let successTTL: TimeInterval = 300
@@ -111,6 +129,11 @@ class OllamaModelCache: NSObject {
                  completion: ((Int, Bool) -> Void)? = nil) {
         lock.lock()
         if !force && (inFlightCount[endpoint] ?? 0) > 0 {
+            // Coalesce behind the in-flight fetch, but don't drop this caller's
+            // completion: run it when that fetch resolves.
+            if let completion {
+                pendingCompletions[endpoint, default: []].append(completion)
+            }
             lock.unlock()
             return
         }
@@ -118,8 +141,35 @@ class OllamaModelCache: NSObject {
         lock.unlock()
 
         fetcher(endpoint, headers, networkTimeout) { [weak self] result in
-            self?.update(endpoint: endpoint, result: result, headers: headers)
-            completion?(result?.count ?? 0, result == nil)
+            // This fetch's OWN caller (the direct completion) gets this fetch's
+            // result: a forced probe's completion reflects the probe.
+            let count = result?.count ?? 0
+            let failed = result == nil
+            guard let self else {
+                completion?(count, failed)
+                return
+            }
+            let outcome = self.update(endpoint: endpoint, result: result, headers: headers,
+                                      countsAgainstInFlight: true)
+            completion?(count, failed)
+
+            // Coalesced (non-forced) refreshes that parked behind an in-flight fetch
+            // are resolved by the whole BATCH, not by whichever fetch finishes first:
+            // a concurrent forced probe that fails must not report failure to a caller
+            // that coalesced behind a background fetch about to succeed. Deliver only
+            // when this completion drains the batch's last fetch, with the batch's
+            // aggregate outcome. Synchronous (not main-async) so a caller re-enabling
+            // a control sees it on the same turn the fetch resolves.
+            guard outcome.lastOfBatch else {
+                return
+            }
+            self.lock.lock()
+            let coalesced = self.pendingCompletions.removeValue(forKey: endpoint) ?? []
+            self.lock.unlock()
+            let batchCount = outcome.succeeded ? outcome.count : 0
+            for pending in coalesced {
+                pending(batchCount, !outcome.succeeded)
+            }
         }
     }
 
@@ -133,26 +183,45 @@ class OllamaModelCache: NSObject {
     // attempt, and schedule a bounded self-healing retry. Non-nil = success:
     // replace the models, reset the failure count, and post the change
     // notification if the list changed.
-    func update(endpoint: String, result: [AIMetadata.Model]?, headers: [[String: String]] = []) {
+    // countsAgainstInFlight: whether this update resolves a tracked fetch (the
+    // refresh completion) and so owns one of the endpoint's inFlightCount
+    // increments. Only the refresh path passes true. Every DIRECT caller (the
+    // seeding convenience, tests) passes false: it owns no increment, so it must
+    // not decrement one, and if a tracked fetch is currently in flight it defers the
+    // per-round failure/retry bookkeeping to that fetch's completion rather than
+    // forging its own last-of-batch event (which would double-count the round and
+    // arm two self-healing retries).
+    @discardableResult
+    func update(endpoint: String,
+                result: [AIMetadata.Model]?,
+                headers: [[String: String]] = [],
+                countsAgainstInFlight: Bool = false) -> BatchOutcome {
         lock.lock()
         // Decrement the in-flight count for this endpoint. Only the completion that
         // drains the last outstanding fetch does the per-round failure bookkeeping,
         // so two concurrent fetches (a background one plus a forced probe) that both
         // fail count as ONE failed round instead of two, keeping the self-healing
-        // retry budget intact. A direct update() with no tracked fetch (tests,
-        // seeding) has count 0 and is its own round.
-        let outstanding = inFlightCount[endpoint] ?? 0
-        let lastOfBatch: Bool
-        if outstanding > 0 {
-            let remaining = outstanding - 1
-            if remaining == 0 {
-                inFlightCount[endpoint] = nil
+        // retry budget intact.
+        var lastOfBatch: Bool
+        var hadSuccess = false
+        if countsAgainstInFlight {
+            let outstanding = inFlightCount[endpoint] ?? 0
+            if outstanding > 0 {
+                let remaining = outstanding - 1
+                inFlightCount[endpoint] = remaining == 0 ? nil : remaining
+                lastOfBatch = (remaining == 0)
             } else {
-                inFlightCount[endpoint] = remaining
+                lastOfBatch = true
             }
-            lastOfBatch = (remaining == 0)
+            // Did an earlier fetch in this batch already succeed? If so, a trailing
+            // failure must not re-increment the failure count or arm a retry.
+            hadSuccess = batchHadSuccess[endpoint] ?? false
         } else {
-            lastOfBatch = true
+            // A direct update is its own single round ONLY when no tracked fetch is
+            // outstanding; while a fetch is in flight it defers the round to that
+            // fetch's completion (lastOfBatch=false), and it never touches the
+            // fetch's inFlightCount/batchHadSuccess.
+            lastOfBatch = (inFlightCount[endpoint] ?? 0) == 0
         }
 
         var entry = cache[endpoint] ?? Entry()
@@ -164,11 +233,20 @@ class OllamaModelCache: NSObject {
             entry.models = result
             entry.haveSucceeded = true
             entry.consecutiveFailures = 0
-        } else if lastOfBatch {
+            if countsAgainstInFlight && !lastOfBatch {
+                batchHadSuccess[endpoint] = true
+            }
+        } else if lastOfBatch && !hadSuccess {
             entry.consecutiveFailures += 1
             scheduleRetry = entry.consecutiveFailures <= maxAutoRetries
         }
+        // The batch is fully drained; clear its per-round success flag.
+        if countsAgainstInFlight && lastOfBatch {
+            batchHadSuccess[endpoint] = nil
+        }
         let failures = entry.consecutiveFailures
+        let succeeded = (result != nil) || hadSuccess
+        let finalCount = entry.models.count
         cache[endpoint] = entry
         lock.unlock()
 
@@ -186,11 +264,13 @@ class OllamaModelCache: NSObject {
             persistIfEnabled()
             postDidChange(endpoint: endpoint)
         }
+        return BatchOutcome(lastOfBatch: lastOfBatch, succeeded: succeeded, count: finalCount)
     }
 
-    // Convenience for a known-successful result (tests, seeding).
+    // Convenience for a known-successful result (tests, seeding). Out-of-band: does
+    // not participate in the in-flight/batch accounting of a concurrent live fetch.
     func update(endpoint: String, models: [AIMetadata.Model]) {
-        update(endpoint: endpoint, result: models)
+        update(endpoint: endpoint, result: models, countsAgainstInFlight: false)
     }
 
     // Posts the CHANGED endpoint as the notification `object` so observers can
@@ -243,6 +323,11 @@ class OllamaModelCache: NSObject {
         lock.lock()
         defer { lock.unlock() }
         for (endpoint, value) in representation {
+            // Seed only endpoints with no in-memory entry: if an early read already
+            // landed a live refresh, its fresh models must not be clobbered with the
+            // (possibly stale) persisted set (which would also nil lastAttempt and
+            // briefly resolve pinned tags against removed models).
+            guard cache[endpoint] == nil else { continue }
             guard let dicts = value as? [[String: Any]] else { continue }
             let models = dicts.compactMap { Self.model(from: $0, endpoint: endpoint) }
             cache[endpoint] = Entry(models: models, haveSucceeded: true, lastAttempt: nil)

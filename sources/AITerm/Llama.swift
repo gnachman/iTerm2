@@ -147,10 +147,19 @@ extension LlamaResponse: LLM.AnyResponse {
             msg.reasoningContent = thinking
             messages.append(msg)
         }
+        // A spoken preamble that co-arrives with a tool call in the SAME streamed
+        // delta must still be delivered: the non-streaming path keeps both, so emit
+        // the text (when present) before the function call rather than dropping it.
+        if !message.content.isEmpty {
+            messages.append(LLM.Message(responseID: nil, role: .assistant,
+                                        body: .text(message.content)))
+        }
         if let functionCall {
             messages.append(LLM.Message(responseID: nil, role: .assistant,
                                         body: .functionCall(functionCall, id: nil)))
-        } else if messages.isEmpty || !message.content.isEmpty {
+        } else if messages.isEmpty {
+            // No thinking, no preamble, no tool call: still emit an (empty) text
+            // message so a bare delta isn't wholly dropped (prior fallback).
             messages.append(LLM.Message(responseID: nil, role: .assistant,
                                         body: .text(message.content)))
         }

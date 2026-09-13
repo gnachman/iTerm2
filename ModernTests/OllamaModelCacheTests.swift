@@ -134,6 +134,66 @@ final class OllamaModelCacheTests: XCTestCase {
         XCTAssertEqual(scheduled, cache.maxAutoRetries, "the cap counts rounds, not raw concurrent failures")
     }
 
+    // A batch of concurrent fetches where at least one SUCCEEDS must not schedule
+    // a self-healing failure retry just because a sibling (the last to drain)
+    // failed. The success already refreshed the models and reset the failure
+    // budget; the trailing failure re-incrementing consecutiveFailures and
+    // arming a retry defeats "count concurrent failures as one round" and fires a
+    // spurious /api/tags probe against a healthy endpoint.
+    func test_batchWithOneSuccess_doesNotScheduleFailureRetry() {
+        let cache = makeCache()
+        var scheduled = 0
+        var completions: [([AIMetadata.Model]?) -> Void] = []
+        cache.fetcher = { _, _, _, completion in completions.append(completion) }
+        cache.retryScheduler = { _, _ in scheduled += 1 }
+
+        cache.refresh(endpoint: "e")               // background, in flight
+        cache.refresh(endpoint: "e", force: true)  // forced probe, also in flight
+        XCTAssertEqual(completions.count, 2, "the forced refresh runs alongside the background one")
+
+        completions[0](models("e"))  // first fetch SUCCEEDS
+        completions[1](nil)          // sibling fails, and is the last of the batch
+
+        XCTAssertEqual(scheduled, 0,
+                       "a batch that already succeeded must not schedule a failure retry")
+        XCTAssertEqual(cache.models(forEndpoint: "e").map { $0.name }, ["qwen3.5:4b"],
+                       "the successfully-fetched models must be retained")
+    }
+
+    // The completion contract: refresh's completion runs after the fetch
+    // resolves. A non-forced refresh that coalesces behind an in-flight fetch
+    // must still deliver its completion when that fetch lands, not silently drop
+    // it (a caller that re-enables a control in the completion would hang).
+    func test_coalescedRefresh_stillInvokesCompletion() {
+        let cache = makeCache()
+        var completions: [([AIMetadata.Model]?) -> Void] = []
+        cache.fetcher = { _, _, _, completion in completions.append(completion) }
+
+        cache.refresh(endpoint: "e")  // background, in flight (force = false)
+        var called = false
+        cache.refresh(endpoint: "e", force: false) { _, _ in called = true }
+        XCTAssertEqual(completions.count, 1, "the coalesced refresh must not issue a second fetch")
+
+        completions[0](models("e"))  // the in-flight fetch resolves
+        XCTAssertTrue(called,
+                      "the coalesced refresh's completion must run when the in-flight fetch resolves")
+    }
+
+    // restore() (launch-time seeding from persisted models) must not clobber a
+    // FRESHER in-memory entry. If an early read already kicked off and landed a
+    // live refresh, overwriting it with stale persisted data (and nil'ing
+    // lastAttempt) briefly resolves pinned tags against removed/stale models.
+    func test_restore_doesNotClobberFresherInMemoryEntry() {
+        let cache = makeCache()
+        cache.update(endpoint: "e", models: models("e"))  // fresh live discovery in memory
+
+        let stale: [String: Any] = ["e": [["name": "stale-model", "ctx": 4096, "features": ["streaming"]]]]
+        cache.restore(from: stale)
+
+        XCTAssertEqual(cache.models(forEndpoint: "e").map { $0.name }, ["qwen3.5:4b"],
+                       "restore must not overwrite a fresher in-memory entry with stale persisted data")
+    }
+
     // End to end: a failure at launch, then the server comes up, and the scheduled
     // retry repopulates the cache on its own (self-healing).
     func test_selfHeals_whenServerComesUp() {
@@ -240,6 +300,39 @@ final class OllamaModelCacheTests: XCTestCase {
         XCTAssertEqual(Set(llama.map { $0.url }), [epA, epB], "each must keep its own endpoint")
         XCTAssertTrue(llama.allSatisfy { $0.effectiveModelName == "llama3.3" },
                       "each must still send the raw tag on the wire")
+    }
+
+    // serverLabel keeps only scheme://host:port, so two dynamic entries that
+    // point at the SAME host:port by different paths (e.g. the native /api/chat
+    // and the OpenAI-compatible /v1 URL of one server, or two proxy paths)
+    // collapse to the same label. When they expose the same tag, the qualified
+    // names collide -> two identical menu items, and first-match resolution
+    // sends a chat pinned to the second entry to the first entry's url/headers.
+    func test_twoDynamicServers_sameHostPort_differentPath_areDisambiguated() {
+        let epA = "http://sharedbox:11434/api/chat"
+        let epB = "http://sharedbox:11434/v1/chat/completions"
+        let body = Data("{\"models\":[{\"name\":\"sharedtag:latest\",\"capabilities\":[\"tools\"],\"details\":{\"context_length\":4096}}]}".utf8)
+        OllamaModelCache.shared.update(endpoint: epA, models: OllamaModelDiscovery.models(fromTagsResponse: body, endpoint: epA))
+        OllamaModelCache.shared.update(endpoint: epB, models: OllamaModelDiscovery.models(fromTagsResponse: body, endpoint: epB))
+        defer {
+            OllamaModelCache.shared.update(endpoint: epA, models: [])
+            OllamaModelCache.shared.update(endpoint: epB, models: [])
+        }
+
+        let key = kPreferenceKeyAIManualModelConfigurations
+        let saved = iTermPreferences.object(forKey: key)
+        defer { iTermPreferences.setObject(saved, forKey: key) }
+        iTermPreferences.setObject([
+            ["url": epA, "dynamicModels": true, "api": Int(iTermAIAPI.llama.rawValue)],
+            ["url": epB, "dynamicModels": true, "api": Int(iTermAIAPI.llama.rawValue)],
+        ], forKey: key)
+
+        let models = LLMMetadata.manualModels()
+        let matches = models.filter { ($0.wireModelName ?? $0.name) == "sharedtag:latest" }
+        XCTAssertEqual(matches.count, 2, "both entries' shared tag should be present")
+        XCTAssertEqual(Set(matches.map { $0.name }).count, 2,
+                       "same host:port with a different path collapses to one serverLabel, so the disambiguated names collide and .first-match resolution routes to the wrong endpoint")
+        XCTAssertEqual(Set(matches.map { $0.url }), [epA, epB], "each must keep its own endpoint")
     }
 
     // A manual dynamic tag that collides with a BUILT-IN default-endpoint tag must
@@ -480,5 +573,62 @@ final class OllamaModelCacheTests: XCTestCase {
             XCTAssertNil(LLMMetadata.ollamaVendorEconomyModel(),
                          "a budget choice that is no longer installed resolves to nil")
         }
+    }
+
+    // MARK: - Regression tests for review findings (currently FAILING)
+
+    // Finding: a non-forced refresh that coalesces behind an in-flight fetch must
+    // reflect THAT fetch's outcome, not a DIFFERENT concurrent fetch that merely
+    // resolved first. Today `pendingCompletions` is drained by whichever fetcher
+    // block runs first (OllamaModelCache.swift:140), so a coalesced caller can be
+    // told `failed=true` by a forced probe even though the fetch it actually
+    // waited on succeeded. A caller that shows "Could not reach server" or
+    // re-enables a control on failure then reacts to the wrong outcome.
+    func test_coalescedRefresh_reflectsCoalescedFetchOutcome_notAConcurrentForcedProbe() {
+        let cache = makeCache()
+        var completions: [([AIMetadata.Model]?) -> Void] = []
+        cache.fetcher = { _, _, _, completion in completions.append(completion) }
+
+        cache.refresh(endpoint: "e")  // background fetch A, in flight (force = false)
+        var coalescedFailed: Bool?
+        var coalescedCount: Int?
+        cache.refresh(endpoint: "e", force: false) { count, failed in
+            coalescedCount = count
+            coalescedFailed = failed
+        }
+        XCTAssertEqual(completions.count, 1, "the coalesced non-forced refresh must not issue its own fetch")
+
+        cache.refresh(endpoint: "e", force: true)  // forced probe B, also in flight
+        XCTAssertEqual(completions.count, 2)
+
+        completions[1](nil)          // the forced probe B fails FIRST
+        completions[0](models("e"))  // fetch A (the one the caller coalesced behind) then SUCCEEDS
+
+        XCTAssertEqual(coalescedFailed, false,
+                       "the coalesced completion must reflect the fetch it coalesced behind (which succeeded), not the concurrent forced probe that failed first")
+        XCTAssertEqual(coalescedCount, 1,
+                       "the coalesced completion must report the model count of the fetch it coalesced behind")
+    }
+
+    // Finding: a direct update() (the seeding/tests convenience) assumes it is
+    // "its own round" with no in-flight fetch (comment at OllamaModelCache.swift:166).
+    // If a fetch is actually outstanding, update() decrements that fetch's
+    // inFlightCount and is mistaken for the last of its batch; the real fetch's
+    // later completion is ALSO treated as last-of-batch, so a single failed
+    // endpoint round is counted twice and arms two self-healing retries (a retry
+    // storm at double the intended rate).
+    func test_directUpdateDuringInFlightFetch_doesNotDoubleCountBatchFailures() {
+        let cache = makeCache()
+        var scheduled = 0
+        var completions: [([AIMetadata.Model]?) -> Void] = []
+        cache.fetcher = { _, _, _, completion in completions.append(completion) }
+        cache.retryScheduler = { _, _ in scheduled += 1 }
+
+        cache.refresh(endpoint: "e")              // one fetch in flight (inFlightCount == 1)
+        cache.update(endpoint: "e", result: nil)  // a direct update lands while it is outstanding
+        completions[0](nil)                        // the in-flight fetch then completes (also a failure)
+
+        XCTAssertEqual(scheduled, 1,
+                       "one endpoint's failed round must arm exactly one retry; a direct update overlapping an in-flight fetch must not be double-counted as two failed rounds")
     }
 }

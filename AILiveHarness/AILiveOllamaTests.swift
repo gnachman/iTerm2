@@ -357,6 +357,91 @@ extension AILiveHarness {
         }
     }
 
+    // /api/tags does NOT carry per-model capabilities or the real context window
+    // on a real server (both come from /api/show), so discovery must enrich each
+    // model via /api/show. This drives the real discovery fetch path and asserts
+    // the discovered model matches /api/show ground truth. Before the enrichment
+    // fix it fails (features stay streaming-only, window falls back to the default);
+    // after it, discovery reflects the true capabilities and window.
+    func test_ollama_discovery_reflectsApiShowCapabilitiesAndContext() throws {
+        _ = try ollamaKeyOrSkip()
+        try requireReachableOllama(model: ollamaModelName)
+
+        // Ground truth from /api/show.
+        let show = try postOllamaJSON(path: "/api/show", body: ["model": ollamaModelName])
+        let realCaps = Set((show["capabilities"] as? [String]) ?? [])
+        guard realCaps.contains("vision") || realCaps.contains("thinking") else {
+            throw XCTSkip("\(ollamaModelName) advertises no vision/thinking in /api/show; use a richer model")
+        }
+        let realContext: Int? = {
+            guard let info = show["model_info"] as? [String: Any] else { return nil }
+            // The key is architecture-prefixed, e.g. "qwen3.context_length".
+            for (key, value) in info where key.hasSuffix(".context_length") {
+                if let n = value as? Int { return n }
+            }
+            return nil
+        }()
+
+        // Drive the real discovery fetch path (which must consult /api/show). The
+        // notification wait pumps the runloop so the async enrichment can land.
+        let cache = OllamaModelCache()
+        let endpoint = "\(AILiveHarness.ollamaBaseURL)/api/chat"
+        let exp = expectation(forNotification: OllamaModelCache.didChangeNotification, object: nil)
+        cache.refresh(endpoint: endpoint)
+        wait(for: [exp], timeout: 60)
+        let discovered = try XCTUnwrap(
+            cache.models(forEndpoint: endpoint).first { $0.name == ollamaModelName },
+            "discovery did not surface \(ollamaModelName)")
+
+        if realCaps.contains("vision") {
+            XCTAssertTrue(discovered.features.contains(.vision),
+                          "model is vision-capable per /api/show, but discovery missed it (enrich via /api/show)")
+        }
+        if realCaps.contains("thinking") {
+            XCTAssertTrue(discovered.features.contains(.configurableThinking),
+                          "model is thinking-capable per /api/show, but discovery missed it")
+        }
+        if let realContext, realContext > OllamaModelDiscovery.defaultContextWindow {
+            XCTAssertEqual(discovered.contextWindowTokens, realContext,
+                           "discovery used the fallback window \(discovered.contextWindowTokens); the real /api/show window is \(realContext)")
+        }
+    }
+
+    // MARK: - live HTTP helpers (synchronous, matching requireReachableOllama)
+
+    private func syncData(_ request: URLRequest) throws -> Data {
+        let sem = DispatchSemaphore(value: 0)
+        var out: Data?
+        var failure: Error?
+        let task = URLSession.shared.dataTask(with: request) { data, _, error in
+            failure = error
+            out = data
+            sem.signal()
+        }
+        task.resume()
+        if sem.wait(timeout: .now() + 10) == .timedOut {
+            throw AIError("timed out fetching \(request.url?.path ?? "?")")
+        }
+        if let failure { throw failure }
+        guard let out else { throw AIError("no data from \(request.url?.path ?? "?")") }
+        return out
+    }
+
+    private func postOllamaJSON(path: String, body: [String: Any]) throws -> [String: Any] {
+        guard let url = URL(string: "\(AILiveHarness.ollamaBaseURL)\(path)") else {
+            throw AIError("bad Ollama URL for \(path)")
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let data = try syncData(request)
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw AIError("\(path) did not return a JSON object")
+        }
+        return json
+    }
+
     // MARK: - vision
 
     private func solidColorPNG(_ color: NSColor, size: Int = 96) -> Data {

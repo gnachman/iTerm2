@@ -76,13 +76,11 @@ class OllamaModelDiscovery: NSObject {
             return nil
         }
         return response.models.map { entry in
+            // /api/tags does not carry per-model capabilities or context length on
+            // most servers (those come from /api/show; fetchModels enriches with
+            // them). Use them here only if a server does include them, else fall
+            // back to streaming-only and the default window.
             let caps = Set(entry.capabilities ?? [])
-            // Ollama always supports streaming; the rest come from the server's
-            // per-model capability list.
-            var features: Set<AIMetadata.Model.Feature> = [.streaming]
-            if caps.contains("tools") { features.insert(.functionCalling) }
-            if caps.contains("thinking") { features.insert(.configurableThinking) }
-            if caps.contains("vision") { features.insert(.vision) }
             let contextWindow = entry.details?.context_length ?? defaultContextWindow
             return AIMetadata.Model(
                 name: entry.name,
@@ -90,10 +88,21 @@ class OllamaModelDiscovery: NSObject {
                 maxResponseTokens: contextWindow,
                 url: endpoint,
                 api: .llama,
-                features: features,
+                features: features(fromCapabilities: caps),
                 vectorStoreConfig: .disabled,
                 vendor: .llama)
         }
+    }
+
+    // Map an Ollama capability list to model features. Ollama always supports
+    // streaming; the rest come from the server's per-model capability list
+    // (reported by /api/show, and by /api/tags on servers that include it).
+    static func features(fromCapabilities caps: Set<String>) -> Set<AIMetadata.Model.Feature> {
+        var features: Set<AIMetadata.Model.Feature> = [.streaming]
+        if caps.contains("tools") { features.insert(.functionCalling) }
+        if caps.contains("thinking") { features.insert(.configurableThinking) }
+        if caps.contains("vision") { features.insert(.vision) }
+        return features
     }
 
     // Non-optional convenience: [] for both a failure and an empty server. Kept
@@ -184,6 +193,12 @@ class OllamaModelDiscovery: NSObject {
     // error, unparseable/401 body) and a (possibly empty) array on SUCCESS, so the
     // cache can retry a failure without wedging an empty list. Carries the entry's
     // custom auth headers.
+    //
+    // /api/tags lists the installed models but NOT their capabilities or real
+    // context window (those live on /api/show), so each discovered model is then
+    // enriched with a per-model /api/show probe. A model whose /api/show probe
+    // fails keeps the tags-derived fallback (streaming-only, default window) rather
+    // than failing the whole discovery.
     static func fetchModels(fromEndpoint endpoint: String,
                             headers: [[String: String]],
                             timeout: TimeInterval,
@@ -193,22 +208,147 @@ class OllamaModelDiscovery: NSObject {
             return
         }
         let task = URLSession.shared.dataTask(with: request) { data, _, error in
-            let resolved: [AIMetadata.Model]? = {
-                if let error {
-                    DLog("Ollama /api/tags fetch for \(endpoint) failed: \(error)")
-                    return nil
+            if let error {
+                DLog("Ollama /api/tags fetch for \(endpoint) failed: \(error)")
+                DispatchQueue.main.async { completion(nil) }
+                return
+            }
+            guard let data else {
+                DLog("Ollama /api/tags fetch for \(endpoint) returned no data")
+                DispatchQueue.main.async { completion(nil) }
+                return
+            }
+            guard let base = Self.modelsIfParseable(fromTagsResponse: data, endpoint: endpoint) else {
+                DLog("Ollama /api/tags fetch for \(endpoint) returned an unparseable body (\(data.count) bytes)")
+                DispatchQueue.main.async { completion(nil) }
+                return
+            }
+            if base.isEmpty {
+                DispatchQueue.main.async { completion([]) }
+                return
+            }
+            // Enrich each model with /api/show (capabilities + real context window).
+            let group = DispatchGroup()
+            var enriched = base
+            let lock = NSLock()
+            for (index, model) in base.enumerated() {
+                group.enter()
+                Self.fetchShow(fromEndpoint: endpoint, model: model.name,
+                               headers: headers, timeout: timeout) { caps, contextWindow in
+                    lock.lock()
+                    // caps is nil when /api/show reported no usable capabilities (key
+                    // absent OR empty array; normalized in capabilitiesAndContext), so
+                    // only overwrite when it actually reported some: an unknown result
+                    // keeps the tags-derived features (tools/vision) instead of
+                    // dropping them to streaming-only.
+                    if let caps {
+                        enriched[index].features = Self.features(fromCapabilities: caps)
+                    }
+                    if let contextWindow, contextWindow > 0 {
+                        enriched[index].contextWindowTokens = contextWindow
+                        enriched[index].maxResponseTokens = contextWindow
+                    }
+                    lock.unlock()
+                    group.leave()
                 }
-                guard let data else {
-                    DLog("Ollama /api/tags fetch for \(endpoint) returned no data")
-                    return nil
-                }
-                let models = Self.modelsIfParseable(fromTagsResponse: data, endpoint: endpoint)
-                if models == nil {
-                    DLog("Ollama /api/tags fetch for \(endpoint) returned an unparseable body (\(data.count) bytes)")
-                }
-                return models
-            }()
-            DispatchQueue.main.async { completion(resolved) }
+            }
+            group.notify(queue: .main) { completion(enriched) }
+        }
+        task.resume()
+    }
+
+    // The /api/show URL for an endpoint, derived like tagsURL (scheme/host/port,
+    // preserving basic-auth userinfo).
+    static func showURL(fromEndpoint endpoint: String) -> URL? {
+        guard let tags = tagsURL(fromEndpoint: endpoint),
+              var components = URLComponents(url: tags, resolvingAgainstBaseURL: false) else {
+            return nil
+        }
+        components.path = "/api/show"
+        return components.url
+    }
+
+    // The POST /api/show request for one model, carrying the entry's custom auth
+    // headers (same validation/normalization as the chat and tags paths).
+    static func showRequest(fromEndpoint endpoint: String,
+                            model: String,
+                            headers: [[String: String]],
+                            timeout: TimeInterval) -> URLRequest? {
+        guard let url = showURL(fromEndpoint: endpoint) else {
+            return nil
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = timeout
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        for (name, value) in AICustomHeaders.merged(into: [:], customHeaders: headers) {
+            request.setValue(value, forHTTPHeaderField: name)
+        }
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["model": model])
+        return request
+    }
+
+    // Parse an /api/show body for a model's capabilities and real context window.
+    // capabilities is a top-level array (["vision","tools","thinking",...]); the
+    // context length is an architecture-prefixed key in model_info, e.g.
+    // "qwen3.context_length". Either may be absent; the caller falls back.
+    static func capabilitiesAndContext(fromShowResponse data: Data) -> (capabilities: Set<String>?, contextWindow: Int?) {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return (nil, nil)
+        }
+        // An ABSENT capabilities key and a PRESENT-but-empty array both mean
+        // "unknown" here: normalize both to nil so callers keep the tags-derived
+        // fallback (tools/vision) rather than treating an empty array as an
+        // authoritative "no capabilities" that would strip them to streaming-only.
+        let capabilities = (json["capabilities"] as? [String]).flatMap { $0.isEmpty ? nil : Set($0) }
+        var contextWindow: Int?
+        if let info = json["model_info"] as? [String: Any] {
+            // A multimodal model reports more than one *.context_length key (a
+            // vision/projector block plus the text model, e.g. "clip.vision..." and
+            // "qwen3.context_length"). Dictionary iteration order is not
+            // deterministic, so pick deterministically: prefer the key for the
+            // model's own architecture (general.architecture), and otherwise take
+            // the LARGEST window (the text model's, never the smaller projector's).
+            // JSONSerialization yields NSNumber, so read every value as NSNumber.
+            let architecture = info["general.architecture"] as? String
+            if let architecture,
+               let n = (info["\(architecture).context_length"] as? NSNumber)?.intValue {
+                contextWindow = n
+            } else {
+                contextWindow = info
+                    .filter { $0.key.hasSuffix(".context_length") }
+                    .compactMap { ($0.value as? NSNumber)?.intValue }
+                    .max()
+            }
+        }
+        return (capabilities, contextWindow)
+    }
+
+    // Fetch one model's capabilities + context window from /api/show. The
+    // completion runs on the URLSession queue with (nil, nil) on any failure so the
+    // caller keeps the tags-derived fallback.
+    private static func fetchShow(fromEndpoint endpoint: String,
+                                  model: String,
+                                  headers: [[String: String]],
+                                  timeout: TimeInterval,
+                                  completion: @escaping (Set<String>?, Int?) -> Void) {
+        guard let request = showRequest(fromEndpoint: endpoint, model: model,
+                                        headers: headers, timeout: timeout) else {
+            completion(nil, nil)
+            return
+        }
+        let task = URLSession.shared.dataTask(with: request) { data, _, error in
+            if let error {
+                DLog("Ollama /api/show for \(model) at \(endpoint) failed: \(error)")
+                completion(nil, nil)
+                return
+            }
+            guard let data else {
+                completion(nil, nil)
+                return
+            }
+            let parsed = capabilitiesAndContext(fromShowResponse: data)
+            completion(parsed.capabilities, parsed.contextWindow)
         }
         task.resume()
     }

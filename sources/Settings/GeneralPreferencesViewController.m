@@ -1000,7 +1000,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         }
     } else {
         [_modelPopup.menu addItem:[NSMenuItem separatorItem]];
-        NSMenuItem *hint = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"AIModelEditor.NoModelsDiscovered", nil, [NSBundle mainBundle], @"No models discovered — click Refresh Models", @"Disabled model popup item shown when no Ollama models have been discovered yet")
+        NSMenuItem *hint = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"AIModelEditor.NoModelsDiscovered", nil, [NSBundle mainBundle], @"No models discovered (click Refresh Models)", @"Disabled model popup item shown when no Ollama models have been discovered yet")
                                                       action:NULL
                                                keyEquivalent:@""];
         hint.enabled = NO;
@@ -1781,6 +1781,14 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         }];
     }
     return self;
+}
+
+- (void)dealloc {
+    // Selector-based observers are auto-removed on macOS 10.11+, but be explicit
+    // and uniform: this removes all of this controller's notification observations
+    // (the arrangement/auth/buried-state ones registered above and the Ollama
+    // model-cache one in setupDefaultAIModelSelector) in one place.
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (void)awakeFromNib {
@@ -2784,7 +2792,18 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     [self selectPopUpButton:_aiVendor representedObject:selectedIdentifier];
     if (_aiVendor.selectedItem == nil && _aiVendor.numberOfItems > 0) {
+        // The persisted default no longer matches any item: its manual model was
+        // deleted in Manage AI Models, or a dynamic Ollama tag disappeared / its
+        // collision-disambiguated display name changed on a background refresh.
+        // Don't leave the popup showing index 0 while the prefs still point at the
+        // vanished model (the API-key hint and new-chat resolution would disagree,
+        // and chats would keep resolving the removed model). Select index 0 and
+        // rewrite the prefs to match. commitSelectedDefaultAIModel re-enters this
+        // method (prefs now match index 0, so no fallback and the hint updates), so
+        // return here rather than double-running updateAIAPIKeyHint.
         [_aiVendor selectItemAtIndex:0];
+        [self commitSelectedDefaultAIModel];
+        return;
     }
     [self updateAIAPIKeyHint];
 }
@@ -2923,9 +2942,17 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 // while /api/tags is fetched (which also seeds the model cache), then dismiss on
 // success or surface an error if the server can't be reached. A Cancel button
 // lets the user bail out of a hung server. Interactive-only (see the caller).
-- (void)probeOllamaServerWithBlockingUI {
+//
+// priorDefault is the default-model selection in effect BEFORE the caller switched
+// to the Ollama vendor. If the probe fails or the user cancels, it is restored so
+// the default is never left on an Ollama vendor whose models never loaded (which
+// would resolve new chats to the "discovering models…" placeholder).
+- (void)probeOllamaServerWithBlockingUIRestoringDefault:(NSDictionary *)priorDefault {
     NSWindow *window = self.view.window;
     if (!window) {
+        // No window to host the sheet: we can't probe or report, so don't leave the
+        // default switched to an unverified Ollama vendor.
+        [self restoreDefaultAIModelSnapshot:priorDefault];
         return;
     }
     NSString *endpoint = [iTermLLMMetadata defaultOllamaEndpoint];
@@ -2946,16 +2973,21 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     __block BOOL resultFailed = NO;
     __weak __typeof(self) weakSelf = self;
     [probe beginSheetModalForWindow:window completionHandler:^(NSModalResponse response) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (response != NSModalResponseContinue) {
-            return;  // user cancelled
+            // User cancelled the probe: roll back to the prior default rather than
+            // stranding it on an Ollama vendor whose models never loaded.
+            [strongSelf restoreDefaultAIModelSnapshot:priorDefault];
+            return;
         }
         if (!resultFailed) {
             return;  // success: the populated model picker is the feedback
         }
-        __strong __typeof(weakSelf) strongSelf = weakSelf;
         if (!strongSelf) {
             return;
         }
+        // Probe failed (server down/unreachable): roll back and tell the user.
+        [strongSelf restoreDefaultAIModelSnapshot:priorDefault];
         NSAlert *error = [[NSAlert alloc] init];
         error.messageText = NSLocalizedStringWithDefaultValue(@"AISettings.CouldNotReachOllamaTitle", nil, [NSBundle mainBundle], @"Could Not Reach Ollama", @"Alert title shown when the local Ollama server can't be reached");
         error.informativeText = [NSString stringWithFormat:
@@ -2975,20 +3007,30 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 }
 
 - (IBAction)defaultAIModelPopupDidChange:(id)sender {
+    // Snapshot the current default BEFORE committing, so an Ollama probe that fails
+    // or is cancelled below can roll back instead of stranding the default on a
+    // vendor whose models never loaded.
+    NSDictionary *priorDefault = [self currentDefaultAIModelSnapshot];
+    NSNumber *committedVendor = [self commitSelectedDefaultAIModel];
+    // Interactively picking the Ollama vendor probes the local server now with a
+    // blocking sheet, so the user gets immediate feedback and a slow/hung server is
+    // obvious. Only here in the popup action, never for a programmatic pref change
+    // or a prefs load (those also commit the default but do not run this).
+    if (committedVendor && (iTermAIVendor)committedVendor.unsignedIntegerValue == iTermAIVendorLlama) {
+        [self probeOllamaServerWithBlockingUIRestoringDefault:priorDefault];
+    }
+}
+
+// Applies the currently-selected default-model popup item to the prefs. Returns the
+// committed provider vendor (boxed) when a built-in vendor was selected, or nil for
+// a manual model / no match. Factored out of the IBAction so the popup-rebuild
+// fallback can re-commit its own selection without re-running the interactive probe.
+- (NSNumber *)commitSelectedDefaultAIModel {
     NSString *identifier = _aiVendor.selectedItem.representedObject;
     NSNumber *providerNumber = [self providerFromDefaultAIModelIdentifier:identifier];
     if (providerNumber) {
-        const iTermAIVendor vendor = (iTermAIVendor)providerNumber.unsignedIntegerValue;
-        [self selectProviderAsDefaultForNewChats:vendor];
-        // Interactively picking the Ollama vendor probes the local server now with
-        // a blocking sheet, so the user gets immediate feedback and a slow/hung
-        // server is obvious. Only here in the popup action, never for a
-        // programmatic pref change or a prefs load (those also call
-        // selectProviderAsDefaultForNewChats but not this).
-        if (vendor == iTermAIVendorLlama) {
-            [self probeOllamaServerWithBlockingUI];
-        }
-        return;
+        [self selectProviderAsDefaultForNewChats:(iTermAIVendor)providerNumber.unsignedIntegerValue];
+        return providerNumber;
     }
 
     // The popup's manual items are the RESOLVED models, so apply by model. This
@@ -3001,17 +3043,33 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     iTermAIModel *model = [self settingsManualModelNamed:manualName];
     if (model) {
         [self selectManualModelAsDefaultForNewChats:model];
-        return;
+        return nil;
     }
     NSDictionary *configuration =
         [self manualAIModelConfigurationNamed:manualName
                             inConfigurations:[self mutableManualAIModelConfigurations]];
     if (configuration) {
         [self selectManualConfigurationAsDefaultForNewChats:configuration];
-        return;
+        return nil;
     }
 
     [self reloadDefaultAIModelPopup];
+    return nil;
+}
+
+// The persisted default-model selection (vendor tier + manual model name), captured
+// so a failed/cancelled Ollama probe can restore exactly what was in effect.
+- (NSDictionary *)currentDefaultAIModelSnapshot {
+    return @{ @"useRecommended": @([self boolForKey:kPreferenceKeyUseRecommendedAIModel]),
+              @"vendor": @([self unsignedIntegerForKey:kPreferenceKeyAIVendor]),
+              @"model": [self stringForKey:kPreferenceKeyAIModel] ?: @"" };
+}
+
+- (void)restoreDefaultAIModelSnapshot:(NSDictionary *)snapshot {
+    [self setBool:[snapshot[@"useRecommended"] boolValue] forKey:kPreferenceKeyUseRecommendedAIModel];
+    [self setObject:snapshot[@"vendor"] forKey:kPreferenceKeyAIVendor];
+    [self setObject:snapshot[@"model"] forKey:kPreferenceKeyAIModel];
+    [self updateAIAfterDefaultModelChange];
 }
 
 - (void)updateCoarseAIModelSettingsEnabled {

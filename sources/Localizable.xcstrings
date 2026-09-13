@@ -2257,7 +2257,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "No models discovered — click Refresh Models"
+            "value" : "No models discovered (click Refresh Models)"
           }
         }
       }

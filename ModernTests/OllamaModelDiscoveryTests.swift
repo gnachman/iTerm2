@@ -155,4 +155,104 @@ final class OllamaModelDiscoveryTests: XCTestCase {
         XCTAssertEqual(OllamaModelDiscovery.modelNames(fromTagsResponse: Data("not json".utf8)), [])
         XCTAssertEqual(OllamaModelDiscovery.modelNames(fromTagsResponse: Data("{\"models\":[]}".utf8)), [])
     }
+
+    // MARK: - /api/show enrichment (capabilities + real context window)
+
+    // /api/tags lists models but not their capabilities/context window on a real
+    // server, so discovery enriches from /api/show. Its capabilities live in a
+    // top-level array and the context length in an architecture-prefixed model_info
+    // key (e.g. "qwen3.context_length").
+    func test_capabilitiesAndContext_fromShowResponse() {
+        let body = Data("""
+        {"capabilities":["completion","tools","vision","thinking"],
+         "model_info":{"general.architecture":"qwen3","qwen3.context_length":262144,"qwen3.attention.head_count":40}}
+        """.utf8)
+        let (caps, ctx) = OllamaModelDiscovery.capabilitiesAndContext(fromShowResponse: body)
+        XCTAssertEqual(caps, ["completion", "tools", "vision", "thinking"])
+        XCTAssertEqual(ctx, 262_144)
+    }
+
+    func test_capabilitiesAndContext_missingFields_areNil() {
+        let (caps, ctx) = OllamaModelDiscovery.capabilitiesAndContext(fromShowResponse: Data("{}".utf8))
+        XCTAssertNil(caps, "no capabilities key -> nil (caller keeps the tags fallback)")
+        XCTAssertNil(ctx, "no context_length key -> nil (caller keeps the default window)")
+
+        let (garbageCaps, garbageCtx) = OllamaModelDiscovery.capabilitiesAndContext(fromShowResponse: Data("garbage".utf8))
+        XCTAssertNil(garbageCaps)
+        XCTAssertNil(garbageCtx)
+    }
+
+    // /api/show is derived from scheme+host+port exactly like /api/tags, so it
+    // works regardless of the configured chat path and for scheme-less hosts.
+    func test_showURL_derivedLikeTagsURL() {
+        XCTAssertEqual(OllamaModelDiscovery.showURL(fromEndpoint: "http://localhost:11434/api/chat")?.absoluteString,
+                       "http://localhost:11434/api/show")
+        XCTAssertEqual(OllamaModelDiscovery.showURL(fromEndpoint: "https://ollama.example.com:9999/v1/chat/completions")?.absoluteString,
+                       "https://ollama.example.com:9999/api/show")
+        XCTAssertEqual(OllamaModelDiscovery.showURL(fromEndpoint: "localhost:11434")?.absoluteString,
+                       "http://localhost:11434/api/show")
+    }
+
+    // The /api/show request POSTs the model name and carries the entry's custom
+    // auth headers (a header-authenticated server 401s /api/show otherwise).
+    func test_showRequest_postsModelAndAppliesHeaders() throws {
+        let request = try XCTUnwrap(OllamaModelDiscovery.showRequest(
+            fromEndpoint: "http://h:11434/api/chat",
+            model: "qwen3.5:4b",
+            headers: [["name": "Authorization", "value": "Bearer tok"]],
+            timeout: 5))
+        XCTAssertEqual(request.httpMethod, "POST")
+        XCTAssertEqual(request.url?.absoluteString, "http://h:11434/api/show")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer tok")
+        let body = try XCTUnwrap(request.httpBody)
+        let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: body) as? [String: Any])
+        XCTAssertEqual(json["model"] as? String, "qwen3.5:4b")
+    }
+
+    func test_features_fromCapabilities() {
+        XCTAssertEqual(OllamaModelDiscovery.features(fromCapabilities: []), [.streaming],
+                       "Ollama always supports streaming")
+        XCTAssertEqual(OllamaModelDiscovery.features(fromCapabilities: ["tools", "vision", "thinking"]),
+                       [.streaming, .functionCalling, .vision, .configurableThinking])
+        XCTAssertEqual(OllamaModelDiscovery.features(fromCapabilities: ["completion"]), [.streaming],
+                       "completion-only maps to streaming only")
+    }
+
+    // MARK: - Regression tests for review findings (currently FAILING)
+
+    // Finding: a present-but-empty "capabilities" array decodes to a NON-nil empty
+    // Set, and fetchModels's enrichment treats a non-nil result as authoritative
+    // (`if let caps { features = features(fromCapabilities: caps) }`,
+    // OllamaModelDiscovery.swift:239), overwriting the tags-derived features with
+    // streaming-only and dropping tools/vision for a model that /api/tags reported
+    // as tool- or vision-capable. An empty array must be indistinguishable from
+    // "unknown" (nil) so the caller keeps its fallback, exactly like an absent key.
+    func test_capabilitiesAndContext_emptyCapabilitiesArray_keepsFallback() {
+        let body = Data(#"{"capabilities":[],"model_info":{}}"#.utf8)
+        let (caps, _) = OllamaModelDiscovery.capabilitiesAndContext(fromShowResponse: body)
+        XCTAssertNil(caps,
+                     "an empty capabilities array must be treated as unknown (keep the tags-derived fallback), not as authoritative 'no capabilities'")
+    }
+
+    // Finding: /api/show model_info can contain more than one "*.context_length"
+    // key on a multimodal model (a vision/projector block plus the text model).
+    // capabilitiesAndContext iterates the unordered dictionary and breaks on the
+    // FIRST match (OllamaModelDiscovery.swift:297), so it can return the smaller
+    // projector window instead of the real text-model window, undersizing num_ctx
+    // and silently truncating prompts on some launches but not others. It should
+    // select deterministically by the model's own general.architecture. Each
+    // iteration uses a distinct decoy key name so a fresh dictionary layout is
+    // exercised; a first-match implementation returns the small decoy for roughly
+    // half of them.
+    func test_capabilitiesAndContext_multipleContextLengthKeys_prefersArchitectureMatch() {
+        for i in 0..<64 {
+            let decoyKey = "vision\(i).context_length"
+            let body = Data("""
+            {"model_info":{"general.architecture":"qwen3","qwen3.context_length":262144,"\(decoyKey)":512}}
+            """.utf8)
+            let (_, ctx) = OllamaModelDiscovery.capabilitiesAndContext(fromShowResponse: body)
+            XCTAssertEqual(ctx, 262_144,
+                           "must select the context_length for the model's own architecture (qwen3), not whichever *.context_length key (\(decoyKey)) the unordered dictionary happens to iterate first")
+        }
+    }
 }

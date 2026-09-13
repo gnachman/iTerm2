@@ -725,20 +725,31 @@ extension ChatViewController {
     }
 
     private func providerIsAvailable(_ vendor: iTermAIVendor) -> Bool {
-        guard !LLMMetadata.alternateModels(for: vendor).isEmpty else {
-            return false
-        }
+        return Self.providerIsAvailable(vendor,
+                                        alternateModels: LLMMetadata.alternateModels(for: vendor),
+                                        apiKey: AITermControllerObjC.apiKey(for: vendor))
+    }
+
+    // The pure availability rule, extracted so it's unit-testable without a full
+    // view controller (which needs a live ChatClient/broker). Behavior-preserving:
+    // the instance method above just supplies the inputs.
+    static func providerIsAvailable(_ vendor: iTermAIVendor,
+                                    alternateModels: [AIMetadata.Model],
+                                    apiKey: String?) -> Bool {
         // The built-in Ollama vendor is self-hosted (default endpoint is localhost)
         // and intentionally keyless: the request path grants it a placeholder
-        // registration (AITermController.isSelfHosted). Gating it on an API key
-        // would drop it from the switcher unless the user typed a bogus key, so once
-        // it has discovered models (the guard above) it is available. Remote Ollama
+        // registration (AITermController.isSelfHosted). It must stay selectable even
+        // before discovery has landed any models (server-down-at-launch window, the
+        // very case the self-healing cache exists to cover), so it is exempt from
+        // both the empty-models guard and the API-key check below. Remote Ollama
         // servers are configured as manual entries, not this vendor.
         if vendor == .llama {
             return true
         }
-        let key = AITermControllerObjC.apiKey(for: vendor)
-        return key?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+        guard !alternateModels.isEmpty else {
+            return false
+        }
+        return apiKey?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
     }
 
     private func recommendedModel(for provider: iTermAIVendor) -> AIMetadata.Model? {

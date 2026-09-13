@@ -274,14 +274,38 @@ class LLMMetadata: NSObject {
         for model in models {
             nameCounts[model.name, default: 0] += 1
         }
-        return models.map { model in
+        // Pass 1: qualify each colliding dynamic model with its server label.
+        let qualified = models.map { model -> AIMetadata.Model in
             // Only dynamic models carry wireModelName; only qualify on a real clash.
             guard model.wireModelName != nil, (nameCounts[model.name] ?? 0) > 1 else {
                 return model
             }
-            var qualified = model
-            qualified.name = "\(model.effectiveModelName) (\(OllamaModelDiscovery.serverLabel(forEndpoint: model.url)))"
-            return qualified
+            var m = model
+            m.name = "\(model.effectiveModelName) (\(OllamaModelDiscovery.serverLabel(forEndpoint: model.url)))"
+            return m
+        }
+        // Pass 2: the server label keeps only scheme://host:port, so two entries on
+        // the SAME host:port by different paths (e.g. a server's /api/chat and /v1
+        // URLs) still collapse to the same qualified name, and first-match resolution
+        // would route a pin to the wrong endpoint. Re-qualify any still-duplicated
+        // name with the full endpoint URL, and add an occurrence index if even the
+        // URL repeats (same URL, different auth headers), so every identity is unique.
+        var qualifiedCounts: [String: Int] = [:]
+        for model in qualified {
+            qualifiedCounts[model.name, default: 0] += 1
+        }
+        var urlOccurrences: [String: Int] = [:]
+        return qualified.map { model in
+            guard model.wireModelName != nil, (qualifiedCounts[model.name] ?? 0) > 1 else {
+                return model
+            }
+            let occurrence = urlOccurrences[model.url, default: 0]
+            urlOccurrences[model.url] = occurrence + 1
+            var m = model
+            m.name = occurrence == 0
+                ? "\(model.effectiveModelName) (\(model.url))"
+                : "\(model.effectiveModelName) (\(model.url) #\(occurrence + 1))"
+            return m
         }
     }
 
