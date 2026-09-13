@@ -1911,8 +1911,13 @@ final class AppModel {
                     retryUnresolvedMentions()
                     // Re-run the version handshake on every reconnect so the mac's
                     // "user wants alerts" signal (carried in the .hello reply) is
-                    // honored on each connect, not just the initial pairing. A
-                    // failure here must not abort the reconnect, so it's best-effort.
+                    // honored on each connect, not just the initial pairing. This is
+                    // confirmed-or-reconnect, NOT best-effort: the handshake also
+                    // carries aiAvailable, which gates the chat UI, so a persistent
+                    // failure throws ReconnectHandshakeUnconfirmed to tear down and
+                    // re-establish (routed through the generic catch's forceReResolve +
+                    // reconnectDelayNanos backoff) rather than proceed on a socket whose
+                    // availability we could not verify.
                     if let client {
                         // Retry a few times: the handshake carries aiAvailable, which
                         // gates the chat UI, so a single transient failure must not
