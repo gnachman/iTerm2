@@ -448,9 +448,11 @@ struct LlamaBodyRequestBuilder {
         if numPredict < 2 {
             throw AIError.requestTooLarge
         }
-        // See the note about streaming function calling in Llama in AIMetadata.swift
-        // #llama-streaming-functions
-        let tools = stream ? nil : maybeDecls
+        // Ollama's native /api/chat streams content AND tool calls together (each
+        // streamed chunk can carry a complete tool_calls entry), so tools are sent
+        // whether or not we're streaming. The response parser surfaces a streamed
+        // tool call the same way it does a non-streamed one.
+        let tools = maybeDecls
         // llamaMessages is only the CURRENT round. On the blob-native replay path
         // the frozen prior rounds are spliced into `messages` below, AFTER this,
         // so they must be counted here too or num_ctx is sized for just the latest

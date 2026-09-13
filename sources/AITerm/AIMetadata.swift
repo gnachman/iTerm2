@@ -359,10 +359,10 @@ class AIMetadata: NSObject {
     // signed resource that AIModelCatalogUpdater can refresh at runtime). The
     // JSON preserves display order and the first entry is the default model.
     //
-    // Llama supports function calling only without streaming. We don't expose a
-    // "streamingFunctionCalling" feature, so tools are silently omitted while
-    // streaming. To find the places that implement this, search for
-    // #llama-streaming-functions.
+    // Ollama's native /api/chat supports function calling together with streaming
+    // (since Ollama's May 2025 release), so a tool-capable local model gets tools in
+    // the default streaming chat. See LLMProvider.functionsSupported and Llama's
+    // request builder for the request/response handling.
     let models: [Model] = AIModelCatalog.instance.models
 
     // Built-in models offered as presets when creating a manual model. Apple's

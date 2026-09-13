@@ -227,7 +227,6 @@ extension AILiveHarness {
             })
         let messages = [LLM.Message(role: .user,
                                     content: "Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.")]
-        // Tool calling on the .llama path is non-streaming (#llama-streaming-functions).
         let result = try runOllama(thinking: false,
                                    messages: messages,
                                    streaming: false,
@@ -241,6 +240,36 @@ extension AILiveHarness {
                       "tool result not echoed; final text: \(result.finalText)")
     }
 
+    // The same round-trip while STREAMING: Ollama's native /api/chat streams tool
+    // calls together with content (since May 2025), and iTerm2 now sends tools on
+    // the streaming path. Proves the streamed tool_call is parsed, executed, and its
+    // result echoed back on the next (streamed) turn.
+    func test_ollama_toolCall_streaming() throws {
+        let token = "zzq-ollama-stream-tool-42"
+        let decl = ChatGPTFunctionDeclaration(
+            name: "get_random_word",
+            description: "Returns a randomly chosen made-up word. Call this whenever the user asks for a random word.",
+            parameters: JSONSchema(for: EmptyArgs(), descriptions: [:]))
+        let spec = AILiveFunctionSpec<EmptyArgs>(
+            decl: decl,
+            implementation: { _, _, completion in
+                try completion(.success(token))
+            })
+        let messages = [LLM.Message(role: .user,
+                                    content: "Call the get_random_word tool to get a word, then include the exact word it returned somewhere in your reply.")]
+        let result = try runOllama(thinking: false,
+                                   messages: messages,
+                                   streaming: true,
+                                   function: spec,
+                                   timeout: 240,
+                                   scenario: "toolCallStreaming")
+
+        XCTAssertTrue(result.functionsInvoked.contains(decl.name),
+                      "streamed tool was never invoked; final text: \(result.finalText)")
+        XCTAssertTrue(result.finalText.contains(token),
+                      "streamed tool result not echoed; final text: \(result.finalText)")
+    }
+
     // Generic tool runner (the primary runOllama is pinned to EmptyArgs).
     private func runOllamaTool<T: Codable>(messages: [LLM.Message],
                                            function: AILiveFunctionSpec<T>,
@@ -250,7 +279,8 @@ extension AILiveHarness {
         let apiKey = try ollamaKeyOrSkip()
         let model = try ollamaModel()
         try requireReachableOllama(model: model.name)
-        // Tools ride the non-streaming path (#llama-streaming-functions).
+        // These tests exercise the non-streaming tool path; the streaming path is
+        // covered by test_ollama_toolCall_streaming.
         return try AILiveDriver.run(model: model,
                                     apiKey: apiKey,
                                     messages: messages,

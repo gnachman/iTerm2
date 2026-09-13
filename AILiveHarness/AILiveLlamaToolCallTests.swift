@@ -128,9 +128,8 @@ extension AILiveHarness {
 
         throttle(forVendor: "llama")
         do {
-            // Llama sends tools only on the non-streaming path (the streaming
-            // request builder drops tools; see AIMetadata #llama-streaming-functions),
-            // so tool calls must be exercised with streaming: false.
+            // Exercise typed-argument decoding on the non-streaming path (the
+            // streaming tool path is covered by AILiveOllamaTests.test_ollama_toolCall_streaming).
             let result = try AILiveDriver.run(
                 model: model,
                 apiKey: apiKey,

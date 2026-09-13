@@ -127,10 +127,9 @@ struct LLMProvider {
     }
 
     var functionsSupported: Bool {
-        // #llama-streaming-functions
-        if model.api == .llama && model.features.contains(.streaming) {
-            return false
-        }
+        // Ollama's native /api/chat (api == .llama) supports tool calls WHILE
+        // streaming as of Ollama's May 2025 release, so streaming no longer
+        // disqualifies function calling; gate purely on the advertised capability.
         return model.features.contains(.functionCalling)
     }
 
