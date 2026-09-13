@@ -50,6 +50,7 @@ message ClientOriginatedMessage {
     InvokeFunctionRequest invoke_function_request = 132;
     ListPromptsRequest list_prompts_request = 133;
     ScreenshotRequest screenshot_request = 134;
+    TabGroupRequest tab_group_request = 135;
   }
 }
 
@@ -97,6 +98,7 @@ message ServerOriginatedMessage {
     InvokeFunctionResponse invoke_function_response = 132;
     ListPromptsResponse list_prompts_response = 133;
     ScreenshotResponse screenshot_response = 134;
+    TabGroupResponse tab_group_response = 135;
 
     // This is the only response that is sent spontaneously. The 'id' field will not be set.
     Notification notification = 1000;
@@ -397,6 +399,101 @@ message ReorderTabsResponse {
     INVALID_TAB_ID = 3;
   }
   optional Status status = 4;
+}
+
+// Programmatic access to native tab groups (named, colored, collapsible runs
+// of tabs). A group is identified by a UUID that rides its member tabs; there
+// is no separate registry. A group lives within a single window (its members
+// are a contiguous run in that window's tab bar), so mutations that reference
+// tabs require them to share a window.
+message TabGroupRequest {
+  // Create a new group from one or more existing tabs. No modal prompt: the
+  // name and color are supplied here. Tabs already in another group are moved
+  // into the new one. All tabs must be in the same window.
+  message CreateGroupRequest {
+    repeated string tab_ids = 1;      // one or more; all in the same window
+    optional string name = 2;         // group name; defaults to "Group" if unset/empty
+    optional RGBColor color = 3;      // group color; a palette color is chosen if unset
+  }
+
+  // Add an existing tab to an existing group. The tab must be in the same
+  // window as the group's current members.
+  message AssignTabRequest {
+    optional string group_id = 1;
+    optional string tab_id = 2;
+  }
+
+  // Remove a tab from whatever group it is in (no-op if it is ungrouped).
+  message RemoveTabRequest {
+    optional string tab_id = 1;
+  }
+
+  // Rename every member of a group. No modal prompt.
+  message RenameRequest {
+    optional string group_id = 1;
+    optional string name = 2;
+  }
+
+  // Recolor every member of a group.
+  message SetColorRequest {
+    optional string group_id = 1;
+    optional RGBColor color = 2;
+  }
+
+  // Collapse or expand a group. Collapsing a group that is the whole window is
+  // impossible (there would be no visible tab to move selection to) and fails
+  // with COLLAPSE_IMPOSSIBLE.
+  message SetCollapsedRequest {
+    optional string group_id = 1;
+    optional bool collapsed = 2;
+  }
+
+  // List every group in every window (order follows window then tab order).
+  message ListGroupsRequest {
+  }
+
+  // Read a group's membership. If group_id is set, only that group is
+  // returned; otherwise every group is returned (same as list_groups but the
+  // intent is membership).
+  message GetMembershipRequest {
+    optional string group_id = 1;
+  }
+
+  oneof request {
+    CreateGroupRequest create_group_request = 1;
+    AssignTabRequest assign_tab_request = 2;
+    RemoveTabRequest remove_tab_request = 3;
+    RenameRequest rename_request = 4;
+    SetColorRequest set_color_request = 5;
+    SetCollapsedRequest set_collapsed_request = 6;
+    ListGroupsRequest list_groups_request = 7;
+    GetMembershipRequest get_membership_request = 8;
+  }
+}
+
+message TabGroupResponse {
+  enum Status {
+    OK = 0;
+    REQUEST_MALFORMED = 1;       // no sub-request set, or missing required field
+    INVALID_TAB_ID = 2;
+    INVALID_GROUP_ID = 3;        // no group with this id exists
+    TABS_IN_DIFFERENT_WINDOWS = 4;  // a group's tabs must share one window
+    COLLAPSE_IMPOSSIBLE = 5;     // the group is the whole window
+  }
+  optional Status status = 1;
+
+  message Group {
+    optional string group_id = 1;
+    optional string name = 2;
+    optional RGBColor color = 3;
+    optional string window_id = 4;   // the window the group lives in
+    optional bool collapsed = 5;
+    repeated string tab_ids = 6;     // members, in tab order
+  }
+
+  // create_group returns the one created group. list_groups and get_membership
+  // return the matching groups. Other requests leave this empty.
+  repeated Group groups = 2;
 }
 
 message TmuxRequest {

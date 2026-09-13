@@ -80,6 +80,8 @@ extern NSString *const iTermAPIServerConnectionClosed;
                      handler:(void (^)(ITMTmuxResponse *))handler;
 - (void)apiServerReorderTabsRequest:(ITMReorderTabsRequest *)request
                             handler:(void (^)(ITMReorderTabsResponse *))response;
+- (void)apiServerTabGroupRequest:(ITMTabGroupRequest *)request
+                         handler:(void (^)(ITMTabGroupResponse *))response;
 - (void)apiServerPreferencesRequest:(ITMPreferencesRequest *)request
                             handler:(void (^)(ITMPreferencesResponse *))response;
 - (void)apiServerColorPresetRequest:(ITMColorPresetRequest *)request

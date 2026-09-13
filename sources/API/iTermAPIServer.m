@@ -1129,6 +1129,19 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     }];
 }
 
+- (void)handleTabGroupRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
+    ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
+
+    __block BOOL handled = NO;
+    __weak __typeof(self) weakSelf = self;
+    [_delegate apiServerTabGroupRequest:request.tabGroupRequest handler:^(ITMTabGroupResponse *theResponse) {
+        assert(!handled);
+        handled = YES;
+        response.tabGroupResponse = theResponse;
+        [weakSelf finishHandlingRequestWithResponse:response onConnection:webSocketConnection];
+    }];
+}
+
 - (void)handlePreferencesRequest:(ITMClientOriginatedMessage *)request connection:(id<iTermAPIServerConnection>)webSocketConnection {
     ITMServerOriginatedMessage *response = [self newResponseForRequest:request];
 
@@ -1350,6 +1363,10 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
             
         case ITMClientOriginatedMessage_Submessage_OneOfCase_ReorderTabsRequest:
             [self handleReorderTabsRequest:request connection:webSocketConnection];
+            break;
+
+        case ITMClientOriginatedMessage_Submessage_OneOfCase_TabGroupRequest:
+            [self handleTabGroupRequest:request connection:webSocketConnection];
             break;
 
         case ITMClientOriginatedMessage_Submessage_OneOfCase_PreferencesRequest:
