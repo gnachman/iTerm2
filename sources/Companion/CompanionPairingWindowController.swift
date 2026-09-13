@@ -165,14 +165,22 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
                 }
                 // updatePairedConnectionText re-evaluates the AI advisory each poll.
                 updatePairedConnectionText()
-            } else if gate == .allowed, aiAvailable != lastAdvisoryAIAvailable {
-                // Unpaired ready-to-pair state bakes the advisory into its text once,
-                // on the gate transition. The gate doesn't move when AI toggles, so
-                // rebuild it here when AI availability actually flips (e.g. the user
-                // enables AI in Settings while this window is open unpaired).
+                lastAdvisoryAIAvailable = aiAvailable
+            } else if gate == .allowed, aiAvailable != lastAdvisoryAIAvailable,
+                      !controller.isListening, !pairingAuthInFlight {
+                // Ready-to-pair (button) state only: the gate doesn't move when AI
+                // toggles, so rebuild here so the baked-in advisory reflects the new
+                // AI state (e.g. the user enables AI in Settings while this window is
+                // open unpaired). GUARDED against an active fresh pairing: while a QR
+                // is being advertised (isListening), a SAS is being confirmed, or the
+                // auth sheet is up (pairingAuthInFlight), showReadyToPair would call
+                // stopAdvertising()/hideTopContent() and silently abort the pairing the
+                // user is in the middle of. In that case we intentionally leave
+                // lastAdvisoryAIAvailable unchanged so the advisory is rebuilt once the
+                // pairing ends and the button state returns.
                 showReadyToPair()
+                lastAdvisoryAIAvailable = aiAvailable
             }
-            lastAdvisoryAIAvailable = aiAvailable
             return
         }
         currentGate = gate
