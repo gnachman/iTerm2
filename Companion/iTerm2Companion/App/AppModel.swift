@@ -1654,6 +1654,12 @@ final class AppModel {
     /// timeout is distinguishable from a transport drop or a teardown (see loadHome).
     private struct HelloHandshakeTimedOut: Error {}
 
+    /// Thrown when the reconnect handshake fails after its retries. It routes into
+    /// the reconnect loop's generic-error path so the whole connection is torn down
+    /// and re-established, rather than proceeding on a live socket whose aiAvailable
+    /// we could not confirm (which would leave the chat UI wrongly enabled/disabled).
+    private struct ReconnectHandshakeUnconfirmed: Error {}
+
     func loadHome() async throws {
         // Version handshake FIRST: if the apps are incompatible, show the blocking
         // upgrade panel instead of the home screen. Pairing itself succeeded, so
@@ -1721,10 +1727,7 @@ final class AppModel {
             phase = .needsUpgrade(.mac)
             return
         }
-        macSupportsStreaming = handshake.supportsStreaming
-        macRevision = handshake.peerRevision
-        aiAvailable = handshake.aiAvailable
-        companionLog("Version handshake: macRevision=\(macRevision) supportsStreaming=\(macSupportsStreaming) aiAvailable=\(aiAvailable) sessionResizeSupported=\(sessionResizeSupported) (resize needs mac revision >= \(CompanionProtocolVersion.sessionResizeRevision))")
+        applyHandshake(handshake, reconnect: false)
         // The mac says the user opted into phone alerts: ask iOS for notification
         // permission if we haven't yet (deferring to foreground if backgrounded).
         if handshake.wantsNotificationPermission {
@@ -1752,6 +1755,30 @@ final class AppModel {
         // A reply-notification tap during launch was deferred (the nav paths
         // were just reset and no stack was mounted before now); replay it.
         applyPendingSessionChatNav()
+    }
+
+    /// Apply the state a version handshake carries. Shared by the initial and
+    /// reconnect paths so a new handshake field is wired up once and the two can't
+    /// drift. Callers still handle notification-permission themselves (the initial
+    /// path has an extra fresh-pairing opt-in branch). Does NOT choose a landing tab
+    /// (that is the initial path's job); it only rescues the user off a now-disabled
+    /// Chats tab, the one rule all three availability sites share.
+    private func applyHandshake(_ handshake: CompanionClient.HandshakeResult, reconnect: Bool) {
+        macSupportsStreaming = handshake.supportsStreaming
+        macRevision = handshake.peerRevision
+        aiAvailable = handshake.aiAvailable
+        moveOffChatsTabIfAIUnavailable()
+        companionLog("Version handshake\(reconnect ? " (reconnect)" : ""): macRevision=\(macRevision) supportsStreaming=\(macSupportsStreaming) aiAvailable=\(aiAvailable) sessionResizeSupported=\(sessionResizeSupported) (resize needs mac revision >= \(CompanionProtocolVersion.sessionResizeRevision))")
+    }
+
+    /// Move the user off the Chats tab when AI is unavailable, so they are never left
+    /// staring at the disabled AIUnavailablePanel. The single copy of this rule,
+    /// shared by the initial handshake, the reconnect handshake, and the live
+    /// aiAvailabilityChanged event.
+    private func moveOffChatsTabIfAIUnavailable() {
+        if !aiAvailable && selectedTab == .chats {
+            selectedTab = .sessions
+        }
     }
 
     private func refreshLists() async throws {
@@ -1910,27 +1937,19 @@ final class AppModel {
                                 }
                             }
                         }
-                        if let handshake {
-                            macSupportsStreaming = handshake.supportsStreaming
-                            macRevision = handshake.peerRevision
-                            aiAvailable = handshake.aiAvailable
-                            // AI may have been turned off on the Mac during the outage;
-                            // don't strand the user on the now-disabled Chats tab (mirror
-                            // the initial-pairing path and the live aiAvailabilityChanged
-                            // handler).
-                            if !aiAvailable && selectedTab == .chats {
-                                selectedTab = .sessions
-                            }
-                            companionLog("Version handshake (reconnect): macRevision=\(macRevision) supportsStreaming=\(macSupportsStreaming) aiAvailable=\(aiAvailable) sessionResizeSupported=\(sessionResizeSupported) (resize needs mac revision >= \(CompanionProtocolVersion.sessionResizeRevision))")
-                            if handshake.wantsNotificationPermission {
-                                ensureNotificationPermission(replyTo: nil)
-                            }
-                        } else {
-                            // All attempts failed: the connection is likely unhealthy and
-                            // the reconnect loop will drop and re-establish, re-running the
-                            // handshake. Leave aiAvailable as-is; the Mac's requireAI still
-                            // backstops any chat request sent meanwhile.
-                            companionLog("Reconnect version handshake failed after retries; AI availability left as \(aiAvailable)")
+                        guard let handshake else {
+                            // All attempts failed. Don't proceed on this socket with an
+                            // unconfirmed aiAvailable (it would leave the chat UI in a
+                            // stale state - e.g. wrongly disabled if the user turned AI
+                            // ON during the outage, which no aiAvailabilityChanged push
+                            // corrects). Throw so the loop tears down and re-establishes,
+                            // re-running the handshake on a fresh connection.
+                            companionLog("Reconnect version handshake failed after retries; forcing a fresh reconnect")
+                            throw ReconnectHandshakeUnconfirmed()
+                        }
+                        applyHandshake(handshake, reconnect: true)
+                        if handshake.wantsNotificationPermission {
+                            ensureNotificationPermission(replyTo: nil)
                         }
                     }
                     reportPushStatus()
@@ -1966,25 +1985,12 @@ final class AppModel {
                     // there by a reply-notification tap, then handed off from the
                     // watch) is neither, and would otherwise silently drop live
                     // deliveries until the user switched to its tab.
-                    if let client {
-                        // Include openChatID: the conversationDidAppear above is
-                        // skipped while a load is parked, and if that load already
-                        // failed on the dead client (isLoadingConversation flipped
-                        // false), nothing else re-subscribes the open chat.
-                        // Every id here is mounted by construction, so no filter is
-                        // needed (shouldRemainSubscribed would always be true);
-                        // resubscribeVerifyingOwnership re-checks ownership after its
-                        // await regardless.
-                        for chatID in mountedConversationIDs {
-                            await resubscribeVerifyingOwnership(chatID, client: client)
-                        }
-                        // The watch's chat may not be mounted as a conversation; make
-                        // sure it too is re-subscribed (same ownership-verified idiom).
-                        if let watched = watchState.watch, watched.chatID != openChatID,
-                           !isConversationMounted(watched.chatID) {
-                            await resubscribeVerifyingOwnership(watched.chatID, client: client)
-                        }
-                    }
+                    // Include openChatID: the conversationDidAppear above is skipped
+                    // while a load is parked, and if that load already failed on the
+                    // dead client (isLoadingConversation flipped false), nothing else
+                    // re-subscribes the open chat. Every id is mounted by construction
+                    // and resubscribeVerifyingOwnership re-checks ownership regardless.
+                    await resubscribeMountedConversations()
                     // Reset the reply trigger for a live watch: a typingStatus that
                     // arrived during the drop is not replayed, so stale turn state
                     // must not carry across. NOTE this is broader than "completed
@@ -2609,6 +2615,22 @@ final class AppModel {
         _ = try? await client.subscribe(chatID: chatID)
         if !shouldRemainSubscribed(chatID) {
             _ = try? await client.unsubscribe(chatID: chatID)
+        }
+    }
+
+    /// Re-issue `.subscribe` for every mounted conversation (both tabs' stacks) plus
+    /// the live watch's chat. Subscriptions are per-connection, and the Mac drops
+    /// them all when AI is turned off; this re-establishes them without waiting for
+    /// the socket to drop. Used by the reconnect path and the AI off->on transition.
+    private func resubscribeMountedConversations() async {
+        guard let client else { return }
+        for chatID in mountedConversationIDs {
+            await resubscribeVerifyingOwnership(chatID, client: client)
+        }
+        // The watch's chat may not be mounted as a conversation; re-subscribe it too.
+        if let watched = watchState.watch, watched.chatID != openChatID,
+           !isConversationMounted(watched.chatID) {
+            await resubscribeVerifyingOwnership(watched.chatID, client: client)
         }
     }
 
@@ -3961,10 +3983,17 @@ final class AppModel {
                 // the now-disabled surface.
                 selectedTab = .sessions
             } else if available && !wasAvailable {
-                // AI just came back on. We connected while it was off, so the chat
-                // list is empty; refetch it now so the Chats tab shows the Mac's real
-                // chats immediately rather than the "no chats yet" empty state.
-                Task { [weak self] in try? await self?.refreshLists() }
+                // AI just came back on. We connected while it was off, so (1) the chat
+                // list is empty - refetch it so the Chats tab shows the Mac's real
+                // chats instead of "no chats yet"; and (2) the Mac dropped every chat
+                // subscription when AI went off and does NOT re-establish them on the
+                // way back, so an already-open conversation would stay silent until a
+                // full reconnect. Re-subscribe the mounted conversations here.
+                Task { [weak self] in
+                    guard let self else { return }
+                    try? await self.refreshLists()
+                    await self.resubscribeMountedConversations()
+                }
             }
         default:
             break
