@@ -138,10 +138,19 @@ struct Plugin {
         lastLoggedFailureReason = reason
         RLog("\(reason)")
     }
+    /// Posted after reload() re-probes the plugin, so observers can react to the
+    /// plugin being installed or removed. Plugin presence has no OS notification, and
+    /// reload() is the single choke point the Settings reload/validate flow and the
+    /// wizard's installer both go through, so this is where "the plugin came or went"
+    /// is observable. (aiAvailable() also depends on this, not just user defaults.)
+    static let didChangeNotification = Notification.Name("iTermAIPluginDidChange")
+
     static func reload() {
         _instance.mutableAccess { result in
             result = load()
         }
+        // Post outside the atomic access (the observer may read Plugin.instance()).
+        NotificationCenter.default.post(name: Self.didChangeNotification, object: nil)
     }
 
     private let bundleID = "com.googlecode.iterm2.iTermAI"

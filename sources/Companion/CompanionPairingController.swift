@@ -408,13 +408,15 @@ final class CompanionPairingController: NSObject {
 
     private override init() {
         super.init()
-        // Track consent and the advanced setting so the background listener
-        // follows the gate: stop when AI becomes unavailable, resume when it
-        // comes back. (Plugin presence has no notification; it is re-checked
-        // on the next launch or pairing-window visit.)
+        // Track the three inputs to aiAvailable() so a live phone learns of an AI
+        // change without reconnecting: user consent + the AI admin setting
+        // (iTermSecureUserDefaults.didChange / iTermAdvancedSettingsDidChange), and
+        // AI plugin presence (Plugin.didChangeNotification, posted from Plugin.reload
+        // when the plugin is installed or removed). Each fires gateMayHaveChanged.
         let center = NotificationCenter.default
         for name in [iTermSecureUserDefaults.didChange,
-                     Notification.Name(iTermAdvancedSettingsDidChange)] {
+                     Notification.Name(iTermAdvancedSettingsDidChange),
+                     Plugin.didChangeNotification] {
             gateObservers.append(center.addObserver(forName: name,
                                                     object: nil,
                                                     queue: .main) { [weak self] _ in
