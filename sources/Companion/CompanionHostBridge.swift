@@ -1606,48 +1606,53 @@ final class CompanionHostBridge {
         let messageWindow = firstRun ? limit : windowLimit
 
         // --- Messages across all chats ---
-        // Chat messages are AI content, so we NOTIFY them only when AI is on. But the
-        // floor bookkeeping runs either way: skipping it when AI is off (and echoing
-        // the phone's own floor) would burn the first-run sentinel (messageSeq < 0),
-        // so a later AI-on sync would arrive as a normal run at seq 0 and flood the
-        // user with the entire historical backlog. Instead we always probe for the
-        // tip and advance the floor exactly as the AI-on path would (first run jumps
-        // to the tip, skipping the backlog); only the notifiable rows are suppressed.
-        // The alert portion below always runs.
-        let aiOn = CompanionPairingController.aiAvailable()
-        guard let probe = db.messagesSinceGlobal(sinceSeq: max(messageSeq, 0),
-                                                 windowLimit: messageWindow,
-                                                 ascending: !firstRun) else {
-            serveError("Chat database unavailable")
-            return
-        }
-        let globalMessageTip = probe.maxSeq
-        // Reset: the phone's floor is past the tip (the store was lost/recreated and
-        // seq rewound). Do NOT re-notify the rewound content; resync silently -
-        // return no message items, signal a reset so the NSE clears its stale-high
-        // per-chat watermarks, and float the floor to the new tip.
-        let messageReset = !firstRun && messageSeq > globalMessageTip
+        // Chat messages are AI content. When AI is off, serve NONE and, crucially,
+        // do NOT move the phone's message floor: echo its incoming floor unchanged
+        // (advanceFloor is monotonic, so this is a no-op). Jumping the floor to the
+        // tip here would permanently drop messages that accrued while AI was ON but
+        // hadn't been pushed to the NSE yet - they would never be re-fetched once AI
+        // returns. Echoing the floor also keeps a first-run phone (messageSeq < 0) in
+        // first-run, so re-enabling AI still triggers the teaser + jump-to-tip rather
+        // than flooding the whole backlog. The alert portion below always runs.
         let messageRows: [(seq: Int64, message: Message)]
         let messageTruncated: Bool
         let messageFloorTarget: Int64
-        if messageReset {
+        let messageReset: Bool
+        if CompanionPairingController.aiAvailable() {
+            guard let probe = db.messagesSinceGlobal(sinceSeq: max(messageSeq, 0),
+                                                     windowLimit: messageWindow,
+                                                     ascending: !firstRun) else {
+                serveError("Chat database unavailable")
+                return
+            }
+            let globalMessageTip = probe.maxSeq
+            // Reset: the phone's floor is past the tip (the store was lost/recreated
+            // and seq rewound). Do NOT re-notify the rewound content; resync silently
+            // - return no message items, signal a reset so the NSE clears its
+            // stale-high per-chat watermarks, and float the floor to the new tip.
+            messageReset = !firstRun && messageSeq > globalMessageTip
+            if messageReset {
+                messageRows = []
+                messageTruncated = false
+                messageFloorTarget = globalMessageTip
+            } else if firstRun {
+                messageRows = probe.rows                        // newest `limit`, DESC
+                messageTruncated = probe.rows.count >= limit    // more backlog exists
+                messageFloorTarget = globalMessageTip           // jump to tip, skip backlog
+            } else {
+                messageRows = probe.rows                         // oldest window, ASC
+                messageTruncated = probe.rows.count >= windowLimit
+                // Advance the floor ONLY to the highest seq we covered in the window
+                // (its last ASC row); the tail above it drains next wakeup. When not
+                // truncated we covered everything above the floor, so jump to the tip.
+                messageFloorTarget = messageTruncated ? (probe.rows.last?.seq ?? globalMessageTip)
+                                                      : globalMessageTip
+            }
+        } else {
             messageRows = []
             messageTruncated = false
-            messageFloorTarget = globalMessageTip
-        } else if firstRun {
-            messageRows = aiOn ? probe.rows : []                    // newest `limit`, DESC
-            messageTruncated = aiOn ? (probe.rows.count >= limit) : false
-            messageFloorTarget = globalMessageTip                   // jump to tip, skip backlog
-        } else {
-            messageRows = aiOn ? probe.rows : []                    // oldest window, ASC
-            messageTruncated = aiOn ? (probe.rows.count >= windowLimit) : false
-            // Advance the floor ONLY to the highest seq we covered in the window
-            // (its last ASC row); the tail above it drains next wakeup. When not
-            // truncated we covered everything above the floor, so jump to the tip.
-            // With AI off, rows are empty so messageTruncated is false and this jumps
-            // to the tip - correct, since no new chat messages accrue while AI is off.
-            messageFloorTarget = messageTruncated ? (probe.rows.last?.seq ?? globalMessageTip)
-                                                  : globalMessageTip
+            messageFloorTarget = messageSeq   // leave the floor exactly where it is
+            messageReset = false
         }
 
         // --- Alerts (oldest-first drain; window >= store prune cap, so the window
@@ -2212,8 +2217,12 @@ final class CompanionHostBridge {
     /// change may have flipped aiAvailable(); the dedupe keeps unrelated settings
     /// writes from emitting redundant events. A no-op before the first hello.
     func updateAIAvailability(_ available: Bool) {
-        guard lastAIAvailable != available else { return }
-        lastAIAvailable = available
+        // No-op before the first hello: lastAIAvailable is nil until handleHello
+        // seeds it, and the hello reply carries the current availability, so there is
+        // nothing to update (and an aiAvailabilityChanged frame must not precede the
+        // hello reply). After hello, only send when the value actually changed.
+        guard let lastAIAvailable, lastAIAvailable != available else { return }
+        self.lastAIAvailable = available
         RLog("Companion bridge: AI availability changed to \(available); notifying phone")
         if !available {
             // AI was just turned off (consent revoked or admin policy). The gate no
