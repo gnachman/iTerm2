@@ -228,7 +228,14 @@ class OllamaModelCache: NSObject {
         entry.lastAttempt = nowProvider()
         var changed = false
         var scheduleRetry = false
-        if let result {
+        // A reachable server that momentarily returns an empty list (mid-reload)
+        // must not wipe a previously-populated cache and persist the emptiness for
+        // the full success TTL. Treat a non-empty -> empty transition as a soft
+        // failure: keep the last good models and arm a bounded retry, exactly like a
+        // fetch failure, so the picker repopulates on its own. (A first-ever empty,
+        // i.e. no prior models, is still accepted as a genuine empty server.)
+        let suspiciousEmpty = (result?.isEmpty ?? false) && entry.haveSucceeded && !entry.models.isEmpty
+        if let result, !suspiciousEmpty {
             changed = !entry.haveSucceeded || entry.models != result
             entry.models = result
             entry.haveSucceeded = true
@@ -250,7 +257,9 @@ class OllamaModelCache: NSObject {
         cache[endpoint] = entry
         lock.unlock()
 
-        if let result {
+        if suspiciousEmpty {
+            DLog("Ollama discovery for \(endpoint): empty result ignored, kept \(entry.models.count) cached model(s); scheduleRetry=\(scheduleRetry)")
+        } else if let result {
             DLog("Ollama discovery for \(endpoint): success, \(result.count) model(s), changed=\(changed)")
         } else {
             DLog("Ollama discovery for \(endpoint): FAILED (attempt \(failures)); scheduleRetry=\(scheduleRetry)")

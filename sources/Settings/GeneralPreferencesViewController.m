@@ -1235,6 +1235,18 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 }
 
 - (void)dynamicModelsToggled:(id)sender {
+    // Stash/restore the user-typed Model name around the USER's toggle only. This
+    // deliberately lives here, not in updateDynamicModelsEditorState, which also runs
+    // at load and after a preset rewrites the field programmatically: stashing there
+    // would capture the internal auto-label (at load) or a stale prior value and then
+    // clobber a preset's real model name when it flips discovery back off.
+    const BOOL dynamic = _dynamicModelsButton.state == NSControlStateValueOn;
+    if (dynamic) {
+        _stashedModelName = _nameField.stringValue ?: @"";
+    } else if (_stashedModelName) {
+        _nameField.stringValue = _stashedModelName;
+        _stashedModelName = nil;
+    }
     [self updateDynamicModelsEditorState];
 }
 
@@ -1249,17 +1261,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _nameField.hidden = dynamic;
     _modelPopup.hidden = !dynamic;
     if (dynamic) {
-        // Stash the typed name once (not on every re-invocation while already
-        // dynamic, which would stash the blank we just wrote) so toggling
-        // discovery back off restores it.
-        if (!_stashedModelName) {
-            _stashedModelName = _nameField.stringValue ?: @"";
-        }
+        // Clear the hidden field so a stale value (or the internal auto-label a saved
+        // entry loads with) can't leak as a bogus model tag. The user's typed name is
+        // preserved/restored by dynamicModelsToggled:, not here.
         _nameField.stringValue = @"";
         [self reloadDynamicModelPopup];
-    } else if (_stashedModelName) {
-        _nameField.stringValue = _stashedModelName;
-        _stashedModelName = nil;
     }
     _contextField.enabled = !dynamic;
     _responseField.enabled = !dynamic;

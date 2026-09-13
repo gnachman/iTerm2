@@ -631,4 +631,41 @@ final class OllamaModelCacheTests: XCTestCase {
         XCTAssertEqual(scheduled, 1,
                        "one endpoint's failed round must arm exactly one retry; a direct update overlapping an in-flight fetch must not be double-counted as two failed rounds")
     }
+
+    // A reachable server that momentarily returns {"models":[]} (mid-reload) must not
+    // wipe a previously-populated cache and persist the emptiness for the success
+    // TTL. The non-empty -> empty transition keeps the last good models and arms a
+    // self-healing retry, like a fetch failure.
+    func test_transientEmpty_keepsModelsAndArmsRetry() {
+        let cache = makeCache()
+        var scheduled = 0
+        cache.retryScheduler = { _, _ in scheduled += 1 }
+        var nextResult: [AIMetadata.Model]? = models("e")
+        cache.fetcher = { _, _, _, completion in completion(nextResult) }
+
+        cache.refresh(endpoint: "e")  // success -> populated
+        XCTAssertEqual(cache.cachedModelNames(forEndpoint: "e"), ["qwen3.5:4b"])
+
+        nextResult = []               // server momentarily returns an empty list
+        cache.refresh(endpoint: "e", force: true)
+        XCTAssertEqual(cache.cachedModelNames(forEndpoint: "e"), ["qwen3.5:4b"],
+                       "a transient empty result must not wipe previously-discovered models")
+        XCTAssertEqual(scheduled, 1,
+                       "a non-empty -> empty transition must arm a self-healing retry")
+    }
+
+    // A genuinely empty server (no prior models) still accepts the empty list, so a
+    // fresh install with nothing pulled shows an empty picker rather than stalling.
+    func test_firstEverEmpty_isAccepted() {
+        let cache = makeCache()
+        var scheduled = 0
+        cache.retryScheduler = { _, _ in scheduled += 1 }
+        cache.fetcher = { _, _, _, completion in completion([]) }
+
+        cache.refresh(endpoint: "e")
+        XCTAssertEqual(cache.cachedModelNames(forEndpoint: "e"), [],
+                       "an empty result with no prior models is a genuine empty server")
+        XCTAssertEqual(scheduled, 0,
+                       "a genuine empty server is a success, not a failure, so no retry is armed")
+    }
 }
