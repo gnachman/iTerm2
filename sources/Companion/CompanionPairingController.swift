@@ -361,20 +361,24 @@ final class CompanionPairingController: NSObject {
     /// Mirrors the three checks that used to be the AI prerequisites in gate().
     static func aiAvailable() -> Bool {
         // Short-circuit on the cheap, side-effect-free flags BEFORE probing the
-        // plugin. iTermAITermGatekeeper.pluginInstalled() hits LaunchServices and,
-        // when the AI plugin isn't installed, re-probes and logs every call (the AI
-        // plugin deliberately does not cache a "not found" failure). A user who has
-        // AI turned off (the common companion-only case) fails the consent check
-        // here and never triggers that probe, so a polled caller can't spam it.
-        guard iTermAdvancedSettingsModel.generativeAIAllowed(),
-              SecureUserDefaults.instance.enableAI.value else {
-            return false
-        }
-        return iTermAITermGatekeeper.pluginInstalled()
+        // plugin. iTermAITermGatekeeper.pluginInstalled() hits LaunchServices, so a
+        // user who has AI turned off (the common companion-only case) should never
+        // trigger it from a polled caller. The pure core is AND-equivalent, so this
+        // early-out changes no result - it only avoids the probe - and the final
+        // decision still routes through the tested core below.
+        let generativeAIAllowed = iTermAdvancedSettingsModel.generativeAIAllowed()
+        let consented = SecureUserDefaults.instance.enableAI.value
+        guard generativeAIAllowed, consented else { return false }
+        return aiAvailable(generativeAIAllowed: generativeAIAllowed,
+                           pluginInstalled: iTermAITermGatekeeper.pluginInstalled(),
+                           consented: consented)
     }
 
     /// Pure core of aiAvailable(), split out so the truth table can be tested
     /// without installing the AI plugin: AI is available only when all three hold.
+    /// The shipping aiAvailable() above delegates its final decision here, so the
+    /// truth-table test guards the real path (a future fourth condition added here
+    /// is covered).
     static func aiAvailable(generativeAIAllowed: Bool, pluginInstalled: Bool, consented: Bool) -> Bool {
         return generativeAIAllowed && pluginInstalled && consented
     }
