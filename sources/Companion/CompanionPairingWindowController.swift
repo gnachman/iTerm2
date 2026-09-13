@@ -76,6 +76,10 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
     private lazy var placeholderQRImage: NSImage = Self.makePlaceholderQRImage()
     private var gateAction: (() -> Void)?
     private var currentGate: CompanionPairingController.Gate?
+    // AI availability last baked into the unpaired ready-to-pair instructions (via
+    // aiAdvisorySuffix). The gate no longer includes AI, so a toggle doesn't change
+    // `currentGate`; tracking this lets refreshGateState notice and rebuild that text.
+    private var lastAdvisoryAIAvailable: Bool?
     // True while the biometric/password sheet for a fresh pairing is up, so a
     // poll or re-key does not stack a second prompt.
     private var pairingAuthInFlight = false
@@ -144,6 +148,7 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
         guard window?.isVisible == true else { return }
         updateSettingsSection()
         let gate = CompanionPairingController.gate()
+        let aiAvailable = CompanionPairingController.aiAvailable()
         if gate == currentGate {
             // Gate unchanged, so the top is already the right kind of view. But
             // the paired state's connected/not-connected text tracks the live
@@ -158,11 +163,20 @@ final class CompanionPairingWindowController: NSWindowController, NSWindowDelega
                 if !controller.isConnected, !controller.isListening {
                     controller.resumePairedListeningIfNeeded()
                 }
+                // updatePairedConnectionText re-evaluates the AI advisory each poll.
                 updatePairedConnectionText()
+            } else if gate == .allowed, aiAvailable != lastAdvisoryAIAvailable {
+                // Unpaired ready-to-pair state bakes the advisory into its text once,
+                // on the gate transition. The gate doesn't move when AI toggles, so
+                // rebuild it here when AI availability actually flips (e.g. the user
+                // enables AI in Settings while this window is open unpaired).
+                showReadyToPair()
             }
+            lastAdvisoryAIAvailable = aiAvailable
             return
         }
         currentGate = gate
+        lastAdvisoryAIAvailable = aiAvailable
         RLog("Companion pairing window: gate is now \(gate)")
         switch gate {
         case .companionAdminDisabled:
