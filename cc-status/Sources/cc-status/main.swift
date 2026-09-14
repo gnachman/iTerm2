@@ -271,6 +271,15 @@ if let backgroundTasks = backgroundTasks {
     it2Args.append(contentsOf: ["--background-tasks", String(backgroundTasks)])
 }
 
+// Progress ring on the tab (OSC 9;4). Claude Code emits it itself, Codex CLI
+// doesn't. The hook shares the agent's tty, so the terminal picks it up
+// without disturbing the TUI. Repeating it for Claude Code is harmless.
+if let status = status, let tty = FileHandle(forWritingAtPath: "/dev/tty") {
+    let seq = status == "working" ? "\u{1b}]9;4;3\u{7}" : "\u{1b}]9;4;0\u{7}"
+    tty.write(Data(seq.utf8))
+    tty.closeFile()
+}
+
 let it2 = resolveIt2()
 let process = Process()
 process.executableURL = it2.executable
