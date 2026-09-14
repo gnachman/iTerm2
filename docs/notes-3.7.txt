@@ -395,3 +395,9 @@ Bug Fixes:
   restart even though they were actually on, so
   the button now always matches whether the
   behavior is enabled.
+- Notify on Status Change no longer claims
+  ⇧⌘X as a default keyboard shortcut. That
+  shortcut could shadow a macOS Service bound
+  to the same keys. Assign your own shortcut
+  in System Settings > Keyboard > Keyboard
+  Shortcuts > App Shortcuts if you want one.
