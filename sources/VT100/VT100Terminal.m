@@ -6020,6 +6020,19 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     self.literalMode = [dict[kTerminalStateLiteralMode] boolValue];
     _vtLevel = [dict[kTerminalStateVTLevel] integerValue] ?: iTermEmulationLevel500;
 
+    // Restore the saved send-modifier state. Slot 4 is the xterm modifyOtherKeys
+    // level (CSI > 4 ; m). This must be read back: an app inside a session that
+    // survives across a relaunch (e.g. a tmux client under iTermServer with
+    // session restoration on) never re-emits the enable, because tmux only sends
+    // it on client attach and there is no query sequence to re-derive it. Without
+    // this, the mode is silently lost on every restore. The bare assignment is
+    // deliberate: keyReportingFlags and the reporting-mode stacks are restored
+    // separately below, so we don't want the live parse path's side effect of
+    // zeroing them.
+    NSArray<NSNumber *> *savedSendModifiers = [NSArray castFrom:dict[kTerminalStateSendModifiers]];
+    if (savedSendModifiers) {
+        self.sendModifiers = [savedSendModifiers mutableCopy];
+    }
     if (!_sendModifiers) {
         self.sendModifiers = [@[ @-1, @-1, @-1, @-1, @-1 ] mutableCopy];
     } else {
