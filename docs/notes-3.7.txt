@@ -45,3 +45,9 @@ Bug Fixes:
   to the same keys. Assign your own shortcut
   in System Settings > Keyboard > Keyboard
   Shortcuts > App Shortcuts if you want one.
+- Fixed extended key reporting being lost after
+  a restart with session restoration on. An app
+  that had turned on modifyOtherKeys (so keys
+  like Shift-Enter send a distinct code) now
+  keeps working when its session is restored,
+  instead of quietly reverting to plain keys.
