@@ -220,6 +220,57 @@ final class ReportSyncCoalescingTests: XCTestCase {
                        "One sync for the coalesced burst, one for the non-coalescible DA")
     }
 
+    /// Regression for the Microsoft `edit` hang (report to gnachman, 2026-09-14):
+    /// `edit` probes the palette with a SINGLE OSC 4 that batches every index in one
+    /// token -- ESC]4;0;?;1;?;...;7;? BEL -- not one OSC per index. Before DSR/OSC 4
+    /// coalescing, terminalShouldSendReport's single-shot allowNextReport released
+    /// only the FIRST query in a token; the second query rolled the whole token back
+    /// and re-executed from the top, so index 0 reported forever and the token never
+    /// advanced (whole-app hang, force-quit required). skip-sync lets the rest of the
+    /// batch through after one sync, so the token completes. The bound in feed() turns
+    /// the old infinite spin into a failure.
+    private func batchedQuery(_ indices: Range<Int>) -> String {
+        var s = "\u{1b}]4"
+        for i in indices { s += ";\(i);?" }
+        return s + "\u{07}"
+    }
+
+    func testBatchedPaletteQueryInSingleOSC4TerminatesAndReportsEveryIndex() {
+        let screen = makeScreen()
+        session.resetReports()
+
+        feed(screen, batchedQuery(0..<8), expecting: 8)
+
+        XCTAssertEqual(session.reports.count, 8, "Each ;index;? pair in the batch must report once")
+        for (i, report) in session.reports.enumerated() {
+            XCTAssertTrue(report.hasPrefix("\u{1b}]4;\(i);"),
+                          "Report \(i) should be for index \(i): \(report.debugDescription)")
+        }
+    }
+
+    /// The full startup handshake `edit` writes: two batched OSC 4 palette probes
+    /// (0-7, 8-15), OSC 10/11 fg/bg queries, a DSR cursor-position probe, and a
+    /// Primary DA sentinel. All must deliver and the DA reply (ending in `c`) must
+    /// arrive last, proving the stream advanced past the batched OSC 4 that used to
+    /// wedge it.
+    func testEditStartupHandshakeCompletes() {
+        let screen = makeScreen()
+        session.resetReports()
+
+        let handshake =
+            batchedQuery(0..<8) +
+            batchedQuery(8..<16) +
+            "\u{1b}]10;?\u{07}\u{1b}]11;?\u{07}" +   // fg, bg
+            "\r\u{1b}[6n" +                            // CPR probe
+            "\u{1b}[c"                                 // Primary DA sentinel
+        // 16 palette + fg + bg + CPR + DA = 20 reports.
+        feed(screen, handshake, expecting: 20)
+
+        XCTAssertEqual(session.reports.count, 20)
+        XCTAssertTrue((session.reports.last ?? "").hasSuffix("c"),
+                      "DA reply must arrive last: \((session.reports.last ?? "").debugDescription)")
+    }
+
     /// A color set is visible to a later query. This is guaranteed by the OSC 4
     /// set being a pause barrier (it updates the mutation colorMap before the next
     /// token), independent of skip-sync; it guards that coalescing does not break
