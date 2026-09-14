@@ -67,16 +67,24 @@ class AttributedStringSaver: NSObject {
             let rtfData = try attributedString.data(from: range,
                                                     documentAttributes: documentAttributes)
             Task {
-                try await rtfData.writeTo(saveItem: item)
+                do {
+                    try await rtfData.writeTo(saveItem: item)
+                } catch {
+                    self.showSaveError(error, window: window)
+                }
             }
         } catch {
-            _ = iTermWarning.show(withTitle: String(localized: "AttributedStringSaver.SaveFailed", defaultValue: "There was a problem saving the file: \(error.localizedDescription)", comment: "Error shown when saving a file failed; placeholder is the underlying error message"),
-                                  actions: [iTermLocalizedOK()],
-                                  accessory: nil,
-                                  identifier: nil,
-                                  silenceable: .kiTermWarningTypePersistent,
-                                  heading: String(localized: "AttributedStringSaver.SaveFailedHeading", defaultValue: "Could Not Save File", comment: "Heading of the dialog shown when saving a file failed"),
-                                  window: window)
+            showSaveError(error, window: window)
         }
+    }
+
+    private func showSaveError(_ error: Error, window: NSWindow) {
+        _ = iTermWarning.show(withTitle: String(localized: "AttributedStringSaver.SaveFailed", defaultValue: "There was a problem saving the file: \(error.localizedDescription)", comment: "Error shown when saving a file failed; placeholder is the underlying error message"),
+                              actions: [iTermLocalizedOK()],
+                              accessory: nil,
+                              identifier: nil,
+                              silenceable: .kiTermWarningTypePersistent,
+                              heading: String(localized: "AttributedStringSaver.SaveFailedHeading", defaultValue: "Could Not Save File", comment: "Heading of the dialog shown when saving a file failed"),
+                              window: window)
     }
 }

@@ -363,6 +363,20 @@ static NSUInteger iTermTextureBytesPerSampleForMetalPixelFormat(MTLPixelFormat p
 #ifdef MAC_OS_VERSION_26_0
         case MTLPixelFormatUnspecialized:
 #endif  // MAC_OS_VERSION_26_0
+#ifdef MAC_OS_VERSION_27_0
+        case MTLPixelFormatRGB8Unorm:
+        case MTLPixelFormatRGB8Snorm:
+        case MTLPixelFormatRGB8Uint:
+        case MTLPixelFormatRGB8Sint:
+        case MTLPixelFormatRGB16Unorm:
+        case MTLPixelFormatRGB16Snorm:
+        case MTLPixelFormatRGB16Uint:
+        case MTLPixelFormatRGB16Sint:
+        case MTLPixelFormatRGB16Float:
+        case MTLPixelFormatRGB32Uint:
+        case MTLPixelFormatRGB32Sint:
+        case MTLPixelFormatRGB32Float:
+#endif  // MAC_OS_VERSION_27_0
             break;
     }
     ITAssertWithMessage(NO, @"Bad pixel format %@", @(pixelFormat));
