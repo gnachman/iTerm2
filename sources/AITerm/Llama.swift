@@ -392,6 +392,13 @@ struct LlamaBodyRequestBuilder {
             return imageTokenFloor
         }
         let estimate = Int((Double(width) * Double(height) / 750.0).rounded(.up))
+        if estimate > imageTokenCap {
+            // The estimate is clamped: a tiling vision model that doesn't downscale
+            // could really cost more than this, so num_ctx may be undersized and the
+            // prompt truncated. Log it so a truncated-vision report is diagnosable in
+            // the field (a downscaling projector makes the clamp harmless).
+            DLog("Ollama image token estimate clamped: \(width)x\(height) ~= \(estimate) tokens capped at \(imageTokenCap)")
+        }
         return min(max(estimate, imageTokenFloor), imageTokenCap)
     }
 

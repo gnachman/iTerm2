@@ -185,11 +185,18 @@ struct CompletionsMessage: Codable, Equatable {
         guard case .array(let parts) = content else {
             return content
         }
-        let text = parts.compactMap { part -> String? in
+        return .string(Self.joinedTextParts(parts))
+    }
+
+    // Join the text parts of a content-parts array into one string. Native Ollama
+    // carries images out-of-band (message.images), so flattening keeps only text.
+    // Single source of truth for both the assistant-content scalar (ollamaScalarContent)
+    // and the image message's text (encodeOllamaImageMessage), so they can't diverge.
+    private static func joinedTextParts(_ parts: [ContentPart]) -> String {
+        return parts.compactMap { part -> String? in
             if case .text(let t) = part { return t.text }
             return nil
         }.joined(separator: "\n")
-        return .string(text)
     }
 
     // A native Ollama assistant tool call: {type:"function", function:{name,
@@ -233,10 +240,7 @@ struct CompletionsMessage: Codable, Equatable {
         guard !images.isEmpty else {
             return false
         }
-        let text = parts.compactMap { part -> String? in
-            if case .text(let t) = part { return t.text }
-            return nil
-        }.joined(separator: "\n")
+        let text = Self.joinedTextParts(parts)
 
         try container.encode(role, forKey: .role)
         try container.encode(Content.string(text), forKey: .content)

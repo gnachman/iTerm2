@@ -263,6 +263,16 @@ class LLMMetadata: NSObject {
             // discovered from the server (with capabilities), instead of a single
             // hand-configured model.
             if bool(configuration, key: ManualModelKey.dynamicModels) {
+                // A manual dynamic entry pointing at the built-in default endpoint is
+                // redundant with the built-in Ollama vendor (same server, same cache).
+                // Skip it, or every local tag would list twice - a clean built-in copy
+                // plus a server-qualified manual copy that routes identically. Compare
+                // by derived tags URL so scheme/path variants of localhost still match.
+                if let url = configuration[ManualModelKey.url] as? String,
+                   let mine = OllamaModelDiscovery.tagsURL(fromEndpoint: url),
+                   mine == OllamaModelDiscovery.tagsURL(fromEndpoint: defaultOllamaEndpoint) {
+                    return []
+                }
                 return dynamicOllamaModels(configuration: configuration)
             }
             return manualModel(configuration: configuration).map { [$0] } ?? []

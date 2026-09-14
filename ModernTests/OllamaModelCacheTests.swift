@@ -630,6 +630,36 @@ final class OllamaModelCacheTests: XCTestCase {
                        "the coalesced completion must report the model count of the fetch it coalesced behind")
     }
 
+    // A FORCED probe's own completion must also reflect the batch, not just its own
+    // fetch: if the probe fails first while a concurrent background fetch of the same
+    // endpoint then succeeds, the probe must report success, so the settings panel
+    // doesn't show "Could Not Reach Ollama" and roll the default vendor back to a
+    // cloud provider while the healthy fetch is landing.
+    func test_forcedProbe_failsButSiblingSucceeds_reportsBatchSuccess() {
+        let cache = makeCache()
+        var completions: [([AIMetadata.Model]?) -> Void] = []
+        cache.fetcher = { _, _, _, completion in completions.append(completion) }
+
+        cache.refresh(endpoint: "e")  // background fetch A, in flight
+        var probeFailed: Bool?
+        var probeCount: Int?
+        cache.refresh(endpoint: "e", force: true) { count, failed in
+            probeCount = count
+            probeFailed = failed
+        }
+        XCTAssertEqual(completions.count, 2, "the forced probe must issue its own fetch")
+
+        completions[1](nil)  // the forced probe B resolves FIRST, with a transient failure
+        XCTAssertNil(probeFailed,
+                     "the probe's completion must be deferred, not report failure, while a sibling fetch may still succeed")
+
+        completions[0](models("e"))  // the background fetch A then succeeds (last of batch)
+        XCTAssertEqual(probeFailed, false,
+                       "a sibling success in the same batch must suppress the forced probe's failure/rollback")
+        XCTAssertEqual(probeCount, 1,
+                       "the probe reports the batch's resulting model count")
+    }
+
     // Finding: a direct update() (the seeding/tests convenience) assumes it is
     // "its own round" with no in-flight fetch (comment at OllamaModelCache.swift:166).
     // If a fetch is actually outstanding, update() decrements that fetch's

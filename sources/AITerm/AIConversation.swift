@@ -475,21 +475,28 @@ struct AIConversation {
                 }
                 // A thinking model can stream its entire answer in the reasoning
                 // channel with EMPTY visible content (small local Ollama models do
-                // this). Mirror the non-streaming path: rather than show a blank
-                // answer bubble, promote the accumulated reasoning to the visible
-                // body. Only fires when nothing visible was streamed, so vendors
-                // whose final answer has real content are unaffected. reasoningContent
-                // is still set, so vendors that need it on round-trip (DeepSeek) keep it.
+                // this). Mirror the non-streaming path (Llama.choiceMessages): rather
+                // than show a blank answer bubble, promote the accumulated reasoning
+                // to the visible body. Only fires when nothing visible was streamed,
+                // so vendors whose final answer has real content are unaffected.
                 let reasoning = delegate?.pendingReasoning
                 var finalBody = accumulator
+                var finalReasoning = reasoning
                 if !accumulator.hasVisibleContent, let reasoning, !reasoning.isEmpty {
                     finalBody = .text(reasoning)
+                    // Don't ALSO deliver it as reasoning: it would render/persist as
+                    // both the answer bubble AND the collapsible reasoning section
+                    // (the non-streaming path nils it for the same reason). This only
+                    // reaches the empty-content case, which a vendor that needs
+                    // reasoning on round-trip (DeepSeek) never hits (its final answer
+                    // carries real content).
+                    finalReasoning = nil
                 }
                 let message = AITermController.Message(
                     responseID: controller?.previousResponseID,
                     role: .assistant,
                     body: finalBody,
-                    reasoningContent: reasoning)
+                    reasoningContent: finalReasoning)
                 amended.messages.append(message)
                 completion(.success(amended))
                 break

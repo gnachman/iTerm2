@@ -163,6 +163,23 @@ class OllamaModelCache: NSObject {
             }
             let outcome = self.update(endpoint: endpoint, result: result, headers: headers,
                                       countsAgainstInFlight: true)
+            // This fetch failed but is NOT the last of its batch: a sibling fetch of
+            // the same endpoint (e.g. a background refresh running alongside this
+            // forced probe) may still succeed. Defer THIS caller's completion like a
+            // coalesced one so it reports the batch's AGGREGATE outcome at
+            // last-of-batch, instead of a premature failure that would e.g. roll the
+            // default vendor back to a cloud provider while a healthy background fetch
+            // is about to land. A fetch that itself succeeded, or that IS the last of
+            // the batch, reports immediately below.
+            if !outcome.lastOfBatch && !outcome.succeeded {
+                if let completion {
+                    self.lock.lock()
+                    self.pendingCompletions[endpoint, default: []].append(completion)
+                    self.lock.unlock()
+                }
+                return
+            }
+
             // Report the EFFECTIVE outcome, not the raw fetch. For a suspicious-empty
             // result (a reachable server that momentarily returns [] after previously
             // succeeding), update() RETAINS the last-good models and treats it as a

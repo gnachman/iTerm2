@@ -102,6 +102,19 @@ class OllamaModelDiscovery: NSObject {
         }
     }
 
+    // Names of models whose /api/tags entry already carried BOTH capabilities and a
+    // context_length, so a per-model /api/show probe would only re-derive what
+    // modelsIfParseable already applied. Used to skip the probe (one HTTP round-trip
+    // per model) on servers that fully describe models in /api/tags.
+    private static func fullyDescribedModelNames(fromTagsResponse data: Data) -> Set<String> {
+        guard let response = try? JSONDecoder().decode(TagsResponse.self, from: data) else {
+            return []
+        }
+        return Set(response.models
+            .filter { $0.capabilities != nil && ($0.details?.context_length ?? 0) > 0 }
+            .map { $0.name })
+    }
+
     // The window to assume when neither /api/tags nor /api/show reports a context
     // length. Sized generously for modern Ollama models: num_ctx is still sized to
     // the prompt (Llama.computedNumCtx caps at this window but rounds to fit the
@@ -279,11 +292,17 @@ class OllamaModelDiscovery: NSObject {
                 DispatchQueue.main.async { completion([]) }
                 return
             }
-            // Enrich each model with /api/show (capabilities + real context window).
+            // Enrich each model with /api/show (capabilities + real context window),
+            // EXCEPT models the server already fully described in /api/tags (both
+            // capabilities and a context_length): modelsIfParseable already applied
+            // those, so an /api/show probe would add nothing. Skipping them avoids one
+            // HTTP round-trip per model on every refresh (a 20-model modern server
+            // drops from 21 requests to 1).
+            let complete = Self.fullyDescribedModelNames(fromTagsResponse: data)
             let group = DispatchGroup()
             var enriched = base
             let lock = NSLock()
-            for (index, model) in base.enumerated() {
+            for (index, model) in base.enumerated() where !complete.contains(model.name) {
                 group.enter()
                 Self.fetchShow(fromEndpoint: endpoint, model: model.name,
                                headers: headers, timeout: timeout) { caps, contextWindow in
