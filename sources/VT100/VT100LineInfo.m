@@ -169,6 +169,10 @@ int64_t VT100LineInfoAllocateGenerationBlock(int64_t count) {
     _cachedEncodedMetadata = nil;
 }
 
+- (BOOL)rtlFound {
+    return _metadata.rtlFound;
+}
+
 - (void)decodeMetadataArray:(NSArray *)array {
     iTermMetadataRelease(_metadata);
     iTermMetadataInitFromArray(&_metadata, array);

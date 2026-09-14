@@ -1481,15 +1481,19 @@ additionalWordCharacters:(NSString *)additionalWordCharacters
                                                                            unlimited:unlimited];
         return YES;
     }];
-    [encoder encodeDictionaryWithKey:@"PrimaryGrid"
-                          generation:iTermGenerationAlwaysEncode
+    // Gate the (large) grid cell data on the grid's content generation so an
+    // unchanged grid is not rewritten on every save. See VT100Grid contentGeneration.
+    // New keys (…V2): the pre-3.x nodes were AlwaysEncode; using a new key orphans
+    // them on upgrade instead of colliding with the content-generation namespace.
+    [encoder encodeDictionaryWithKey:@"PrimaryGridV2"
+                          generation:_state.primaryGrid.contentGeneration
                                block:^BOOL(id<iTermEncoderAdapter>  _Nonnull subencoder) {
         [_state.primaryGrid encode:subencoder];
         return YES;
     }];
     if (_state.altGrid) {
-        [encoder encodeDictionaryWithKey:@"AltGrid"
-                              generation:iTermGenerationAlwaysEncode
+        [encoder encodeDictionaryWithKey:@"AltGridV2"
+                              generation:_state.altGrid.contentGeneration
                                    block:^BOOL(id<iTermEncoderAdapter>  _Nonnull subencoder) {
             [_state.altGrid encode:subencoder];
             return YES;

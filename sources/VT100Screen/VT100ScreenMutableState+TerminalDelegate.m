@@ -777,15 +777,10 @@ typedef struct {
             // The screen_char_t contents are unchanged, but the row build bakes
             // lineAttribute into the glyph keys (top-half vs bottom-half glyph
             // selection for double-height lines), so a DHL-top → DHL-bottom (or
-            // DWL → DHL) transition changes what is drawn. Mark the line dirty over
-            // its full width, matching the sibling width-changing branch below.
-            // This advances the content generation AND makes copyDirtyFromGrid:
-            // actually copy the changed metadata into the immutable grid the
-            // renderer reads; advancing the generation alone would leave that grid
-            // reporting a fresh identity with the stale lineAttribute.
-            [lineInfo setDirty:YES
-                       inRange:VT100GridRangeMake(0, width)
-             updateTimestampTo:metadata.timestamp];
+            // DWL → DHL) transition changes what is drawn. markLineDidChange: marks
+            // the line dirty (so copyDirtyFromGrid: copies the changed metadata into
+            // the immutable grid the renderer reads) and bumps the content generation.
+            [self.currentGrid markLineDidChange:y];
         }
         return;
     }
@@ -832,9 +827,12 @@ typedef struct {
     iTermMetadata metadata = lineInfo.metadata;
     metadata.lineAttribute = attr;
     lineInfo.metadata = metadata;
-    [lineInfo setDirty:YES
-               inRange:VT100GridRangeMake(0, width)
-      updateTimestampTo:metadata.timestamp];
+    // The in-place cell rewrite and lineAttribute change above are direct
+    // line/cell mutations that bypass the grid's dirtying; markLineDidChange:
+    // dirties the line (so copyDirtyFromGrid: copies it into the immutable grid)
+    // and bumps the content generation. setCursor: below only bumps when the cursor
+    // actually moves (it may not, e.g. at column 0), so it cannot be relied on here.
+    [self.currentGrid markLineDidChange:y];
     [self.currentGrid setCursor:VT100GridCoordMake(newCursorX, y)];
 }
 
@@ -921,7 +919,10 @@ typedef struct {
 - (void)terminalSetCursorType:(ITermCursorType)cursorType {
     DLog(@"begin cursorType=%@", @(cursorType));
     if (self.currentGrid.cursor.x < self.currentGrid.size.width) {
-        [self.currentGrid markCharDirty:YES at:self.currentGrid.cursor updateTimestamp:NO];
+        // Redraw-only: the cursor SHAPE is not part of -[VT100Grid encode:], so use
+        // the non-bumping dirty. A bumping dirty would re-save the whole grid every
+        // time an app toggles cursor style (vim, vi-mode shells do this constantly).
+        [self.currentGrid markCharDirtyForRedrawAt:self.currentGrid.cursor];
     }
     // Use a deferred side effect because the delegate doesn't do anything very important here and
     // programs like changing the cursor type all the time.

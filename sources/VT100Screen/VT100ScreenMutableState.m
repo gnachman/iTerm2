@@ -844,8 +844,15 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
     VT100Grid *grid = self.currentGrid;
     VT100LineInfo *lineInfo = [grid lineInfoAtLineNumber:grid.cursorY];
     iTermMetadata md = lineInfo.metadata;
+    const iTermLineAttribute oldLineAttribute = md.lineAttribute;
     md.lineAttribute = lineAttribute;
     lineInfo.metadata = md;
+    if (oldLineAttribute != lineAttribute) {
+        // lineAttribute is serialized in per-line metadata; when length == 0 nothing
+        // else dirties this line. markLineDidChange: dirties it (so copyDirtyFromGrid:
+        // copies the metadata into the immutable grid) and bumps the content generation.
+        [grid markLineDidChange:grid.cursorY];
+    }
 
     const screen_char_t *chars = line;
     int len = length;
@@ -986,7 +993,17 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
                                 self.terminal.softAlternateScreenMode,
                                 NULL);
             if (rtlFound) {
-                [[self.currentGrid lineInfoAtLineNumber:pred.y] setRTLFound:YES];
+                VT100Grid *grid = self.currentGrid;
+                VT100LineInfo *predLineInfo = [grid lineInfoAtLineNumber:pred.y];
+                if (!predLineInfo.rtlFound) {
+                    // Only on the NO->YES transition: rtlFound is serialized in
+                    // per-line metadata; markLineDidChange: dirties the line (so
+                    // copyDirtyFromGrid: copies the changed metadata) and bumps the
+                    // content generation. Guarding avoids O(width) dirtying + a bump
+                    // per append while RTL text streams over an already-RTL line.
+                    [predLineInfo setRTLFound:YES];
+                    [grid markLineDidChange:pred.y];
+                }
             }
             const screen_char_t current = [self.currentGrid characterAt:pred];
             const unichar predecessorCode = firstChars[0].code;
@@ -1070,7 +1087,17 @@ static const int64_t VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines
         ssize_t bufferOffset = 0;
         if (augmented && len > 0) {
             if (rtlFound) {
-                [[self.currentGrid lineInfoAtLineNumber:pred.y] setRTLFound:YES];
+                VT100Grid *grid = self.currentGrid;
+                VT100LineInfo *predLineInfo = [grid lineInfoAtLineNumber:pred.y];
+                if (!predLineInfo.rtlFound) {
+                    // Only on the NO->YES transition: rtlFound is serialized in
+                    // per-line metadata; markLineDidChange: dirties the line (so
+                    // copyDirtyFromGrid: copies the changed metadata) and bumps the
+                    // content generation. Guarding avoids O(width) dirtying + a bump
+                    // per append while RTL text streams over an already-RTL line.
+                    [predLineInfo setRTLFound:YES];
+                    [grid markLineDidChange:pred.y];
+                }
             }
             const screen_char_t current = [self.currentGrid characterAt:pred];
             if (current.code != buffer[0].code || current.complexChar != buffer[0].complexChar) {
@@ -2687,7 +2714,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)convertHardNewlineToSoftOnGridLine:(int)line {
     screen_char_t *aLine = [self.currentGrid screenCharsAtLineNumber:line];
     if (aLine[self.currentGrid.size.width].code == EOL_HARD) {
-        aLine[self.currentGrid.size.width].code = EOL_SOFT;
+        // Go through setContinuationMarkOnLine:to: (rather than a raw write) so the
+        // line is dirtied and the content generation bumped, keeping the EOL change
+        // in saved state without relying on the caller to move the cursor.
+        [self.currentGrid setContinuationMarkOnLine:line to:EOL_SOFT];
     }
 }
 
@@ -6135,7 +6165,9 @@ lengthExcludingInBandSignaling:data.length
                    reattached:(BOOL)reattached
                     isArchive:(BOOL)isArchive
          largeContentProvider:(id<iTermLargeContentProvider>)largeContentProvider {
-    const BOOL newFormat = (dictionary[@"PrimaryGrid"] != nil);
+    // "…V2" is the current grid node key; "PrimaryGrid" is the pre-upgrade key,
+    // still read so old saves restore their grid contents.
+    const BOOL newFormat = (dictionary[@"PrimaryGridV2"] != nil || dictionary[@"PrimaryGrid"] != nil);
     if (!newFormat) {
         return;
     }
@@ -6630,16 +6662,22 @@ lengthExcludingInBandSignaling:data.length
     self.altGrid.delegate = nil;
     self.altGrid = nil;
 
-    self.primaryGrid = [[VT100Grid alloc] initWithDictionary:dictionary[@"PrimaryGrid"]
+    // Prefer the current "…V2" key; fall back to the pre-upgrade "PrimaryGrid" key.
+    // The content generation is restored from the grid's own POD. A pre-upgrade save
+    // lacks that key; such a grid starts at generation 0 and is re-saved under the
+    // "…V2" key as a fresh node, so no migration fallback is needed.
+    NSString *primaryGridKey = dictionary[@"PrimaryGridV2"] ? @"PrimaryGridV2" : @"PrimaryGrid";
+    self.primaryGrid = [[VT100Grid alloc] initWithDictionary:dictionary[primaryGridKey]
                                                     delegate:self];
     self.primaryGrid.defaultChar = self.terminal.defaultChar;
     if (!self.primaryGrid) {
         // This is to prevent a crash if the dictionary is bad (i.e., non-backward compatible change in a future version).
         self.primaryGrid = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(2, 2) delegate:self];
     }
-    NSDictionary *altGrid = dictionary[@"AltGrid"];
+    NSString *altGridKey = dictionary[@"AltGridV2"] ? @"AltGridV2" : @"AltGrid";
+    NSDictionary *altGrid = dictionary[altGridKey];
     if ([altGrid count]) {
-        self.altGrid = [[VT100Grid alloc] initWithDictionary:dictionary[@"AltGrid"]
+        self.altGrid = [[VT100Grid alloc] initWithDictionary:dictionary[altGridKey]
                                                     delegate:self];
     }
     if (!self.altGrid) {
