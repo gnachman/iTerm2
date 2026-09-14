@@ -104,6 +104,54 @@ class FilteringUpdaterTests: XCTestCase {
                        "acceptedLines should be copied from source updater")
     }
 
+    // Regression test: refining from an updater whose search has not completed
+    // (lastPosition == nil, e.g. it was cancelled because the user typed another
+    // character) must continue searching for the NEW query, not the stale needle
+    // carried by the copied FindContext. Before the fix, the refined search used
+    // the refining updater's query, so "hello foo" matched every line containing
+    // "hello".
+    func testRefiningFromInProgressSearchUsesNewQuery() {
+        let width: Int32 = 80
+        let buffer = createLineBuffer(withLines: ["hello world", "foo bar", "hello foo"], width: width)
+
+        // updater1 is created but never run. Its context still has needle "hello"
+        // and lastPosition == nil, modeling a search interrupted before it finished.
+        let updater1 = FilteringUpdater(
+            query: "hello",
+            lineBuffer: buffer,
+            count: Int32(buffer.numLines(withWidth: width)),
+            width: width,
+            mode: .smartCaseSensitivity,
+            absLineRange: 0..<Int64(buffer.numLines(withWidth: width)),
+            cumulativeOverflow: 0
+        )
+        updater1.accept = { _, _ in }
+
+        let updater2 = FilteringUpdater(
+            query: "hello foo",
+            lineBuffer: buffer,
+            count: Int32(buffer.numLines(withWidth: width)),
+            width: width,
+            mode: .smartCaseSensitivity,
+            absLineRange: 0..<Int64(buffer.numLines(withWidth: width)),
+            cumulativeOverflow: 0
+        )
+        var accepted: [Int32] = []
+        updater2.accept = { lineNumber, temporary in
+            if !temporary {
+                accepted.append(lineNumber)
+            }
+        }
+
+        updater2.copyStateForRefining(from: updater1)
+        while updater2.update() {}
+
+        // Only "hello foo" (wrapped line 2) matches the new query. Before the fix,
+        // the stale needle "hello" also matched "hello world" (wrapped line 0).
+        XCTAssertEqual(accepted, [2],
+                       "Refined search must use the new query, not the refining updater's stale needle")
+    }
+
     // Test haveMatch method
     func testHaveMatch() {
         let width: Int32 = 80
