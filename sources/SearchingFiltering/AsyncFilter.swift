@@ -164,6 +164,14 @@ class FilteringUpdater: HexAddressFormatting {
     func copyStateForRefining(from other: FilteringUpdater) {
         lastPosition = other.lastPosition
         context = other.context.copy()
+        // The copied context carries the refining updater's needle, which is the
+        // previous (less specific) query. We reuse its search position but must
+        // search for our own query. Otherwise, resuming a search that never
+        // completed (lastPosition == nil) would keep matching the stale query.
+        // Because an interrupted refine chain propagates the needle from the very
+        // first keystroke, that stale needle can be as short as one character and
+        // match essentially every line.
+        context.substring = query
         stopAt = other.stopAt
         lastY = other.lastY
         acceptedLines = other.acceptedLines
