@@ -40,6 +40,22 @@ final class OllamaModelDiscoveryTests: XCTestCase {
         XCTAssertNil(OllamaModelDiscovery.tagsURL(fromEndpoint: "not a url"))
     }
 
+    // An IPv6-literal endpoint must resolve: reconstructing the URL from url.host
+    // drops the brackets ("::1") and yields nil, permanently failing discovery.
+    func test_tagsURL_ipv6Endpoint() {
+        XCTAssertEqual(OllamaModelDiscovery.tagsURL(fromEndpoint: "http://[::1]:11434/api/chat")?.absoluteString,
+                       "http://[::1]:11434/api/tags")
+        XCTAssertEqual(OllamaModelDiscovery.tagsURL(fromEndpoint: "http://[fe80::1]:11434/v1/chat/completions")?.absoluteString,
+                       "http://[fe80::1]:11434/api/tags")
+        XCTAssertEqual(OllamaModelDiscovery.showURL(fromEndpoint: "http://[::1]:11434/api/chat")?.absoluteString,
+                       "http://[::1]:11434/api/show")
+    }
+
+    func test_serverLabel_bracketsIPv6() {
+        XCTAssertEqual(OllamaModelDiscovery.serverLabel(forEndpoint: "http://[::1]:11434/api/chat"),
+                       "http://[::1]:11434")
+    }
+
     // A reverse proxy that serves Ollama under a subpath (e.g. "/ollama") must keep
     // that prefix: only the trailing chat suffix is swapped for /api/tags (or
     // /api/show), not the whole path.

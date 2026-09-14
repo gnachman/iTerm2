@@ -291,6 +291,12 @@ class OllamaModelCache: NSObject {
             // models and arm a bounded retry.
             if suspiciousEmpty {
                 entry.consecutiveEmpties += 1
+            } else {
+                // A hard failure (server down / 401) breaks the empty streak:
+                // acceptEmpty must require GENUINELY consecutive empties, or empties
+                // interleaved with failures on a flapping server would prematurely
+                // wipe the retained models.
+                entry.consecutiveEmpties = 0
             }
             entry.consecutiveFailures += 1
             scheduleRetry = entry.consecutiveFailures <= maxAutoRetries

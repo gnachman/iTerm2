@@ -751,6 +751,26 @@ final class OllamaModelCacheTests: XCTestCase {
                        "after maxSuspiciousEmpties empties the genuinely-empty server is accepted")
     }
 
+    // The accept-empty escape hatch requires GENUINELY consecutive empties: a hard
+    // failure (server down/401) interleaved between empties must reset the streak, so
+    // a flapping server doesn't prematurely wipe the retained models.
+    func test_suspiciousEmpty_hardFailureResetsStreak() {
+        let cache = makeCache()
+        cache.retryScheduler = { _, _ in }
+        var nextResult: [AIMetadata.Model]? = models("e")
+        cache.fetcher = { _, _, _, completion in completion(nextResult) }
+        cache.refresh(endpoint: "e")  // success -> 1 model
+
+        for _ in 0..<5 {
+            nextResult = []
+            cache.refresh(endpoint: "e", force: true)
+            nextResult = nil
+            cache.refresh(endpoint: "e", force: true)
+        }
+        XCTAssertEqual(cache.cachedModelNames(forEndpoint: "e"), ["qwen3.5:4b"],
+                       "empties broken up by hard failures are not consecutive and must not trip the accept-empty escape hatch")
+    }
+
     // A down endpoint that previously succeeded (or was restored from persistence)
     // must become refreshable again within failureRetryInterval, not be gated by the
     // 300s success TTL: shouldRefresh keys on the CURRENT failure state.

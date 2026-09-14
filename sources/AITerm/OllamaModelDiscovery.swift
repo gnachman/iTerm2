@@ -40,19 +40,16 @@ class OllamaModelDiscovery: NSObject {
         if url?.host == nil, !endpoint.contains("://") {
             url = URL(string: "http://" + endpoint)
         }
+        // Edit only the path on the parsed components, keeping scheme/host/port and
+        // basic-auth userinfo VERBATIM. Reconstructing components field-by-field from
+        // url.host drops the brackets of an IPv6 literal (url.host returns "::1", but
+        // URLComponents.host must be bracketed to serialize), yielding a nil URL and
+        // permanently failing discovery for IPv6 endpoints like http://[::1]:11434.
         guard let url,
-              let scheme = url.scheme,
-              let host = url.host else {
+              var components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let host = components.host, !host.isEmpty else {
             return nil
         }
-        var components = URLComponents()
-        components.scheme = scheme
-        components.host = host
-        components.port = url.port
-        // Preserve basic-auth userinfo (user:pass@) so a server behind HTTP auth
-        // is reachable for discovery, not just for chat requests.
-        components.user = url.user
-        components.password = url.password
         components.path = basePath(fromURLPath: url.path) + apiPath
         return components.url
     }
@@ -209,7 +206,10 @@ class OllamaModelDiscovery: NSObject {
               let host = url.host else {
             return endpoint
         }
-        let hostPort = url.port.map { "\(host):\($0)" } ?? host
+        // url.host returns an IPv6 literal without brackets ("::1"); re-bracket it so
+        // "host:port" isn't ambiguous/malformed in the label (-> "[::1]:11434").
+        let bracketedHost = host.contains(":") ? "[\(host)]" : host
+        let hostPort = url.port.map { "\(bracketedHost):\($0)" } ?? bracketedHost
         return "\(scheme)://\(hostPort)"
     }
 
