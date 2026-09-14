@@ -772,7 +772,16 @@
 
 - (void)writeModifiedProfile:(Profile *)profile
                       toFile:(NSString *)filename {
-    assert([[NSNumber castFrom:profile[KEY_DYNAMIC_PROFILE_REWRITABLE]] boolValue]);
+    // This used to assert on rewritability, but markProfileRewritableWithGuid:
+    // could pass a nil profile when the on-disk file no longer contains the
+    // GUID (e.g., the user edited the dynamic profile file out from under us).
+    // A nil (or non-rewritable) profile is a recoverable condition, not a
+    // programmer error, so skip the write instead of aborting in release.
+    if (![[NSNumber castFrom:profile[KEY_DYNAMIC_PROFILE_REWRITABLE]] boolValue]) {
+        RLog(@"Not writing profile %@ to %@ because it is not rewritable",
+             profile[KEY_GUID], filename);
+        return;
+    }
     if (!filename) {
         return;
     }
@@ -828,6 +837,12 @@
         return;
     }
     Profile *profile = [self onDiskEntryForProfile:fullProfile];
+    if (!profile) {
+        // The on-disk file no longer has an entry for this GUID (it may have
+        // been edited or removed externally). Nothing to rewrite.
+        RLog(@"No on-disk entry for %@; not marking rewritable", guid);
+        return;
+    }
     MutableProfile *modifiedProfile = [profile mutableCopy];
     modifiedProfile[KEY_DYNAMIC_PROFILE_REWRITABLE] = @YES;
     [self writeModifiedProfile:modifiedProfile toFile:filename];
