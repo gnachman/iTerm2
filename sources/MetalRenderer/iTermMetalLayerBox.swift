@@ -71,15 +71,6 @@ extension iTermMetalLayerBox {
         }
 
     }
-    var allowsNextDrawableTimeout: Bool {
-        get {
-            return metalLayer.access { $0.allowsNextDrawableTimeout }
-        }
-        set {
-            metalLayer.access { $0.allowsNextDrawableTimeout = newValue }
-        }
-    }
-
     var framebufferOnly: Bool {
         get {
             return metalLayer.access { $0.framebufferOnly }
@@ -164,15 +155,12 @@ extension iTermMetalLayerBox {
         }
     }
 
+    // Callers acquire drawables on a background queue and rely on the layer's
+    // allowsNextDrawableTimeout having been set to false once at layer creation
+    // (see iTermMetalView.initCommon). That property must not be set here: it
+    // pushes an implicit CATransaction that aborts off the main thread.
     func nextDrawable() -> CAMetalDrawable? {
         return metalLayer.access { layer in
-            return layer.nextDrawable()
-        }
-    }
-
-    func nextDrawableWithoutTimeout() -> CAMetalDrawable? {
-        return metalLayer.access { layer in
-            layer.allowsNextDrawableTimeout = false
             return layer.nextDrawable()
         }
     }

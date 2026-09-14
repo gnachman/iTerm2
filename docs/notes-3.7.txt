@@ -237,6 +237,9 @@ Improvements:
   original tab?”, if you prefer the old placement.
 
 Bug Fixes:
+- Fixed a crash in the GPU renderer on macOS 26
+  caused by configuring the drawable timeout off
+  the main thread.
 - Fixed a crash that could occur when quitting
   iTerm2 while several Claude Code sessions were
   running.
