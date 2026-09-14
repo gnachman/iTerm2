@@ -12,11 +12,44 @@ class ClaudeWatcher: NSObject {
     private(set) static var instance: ClaudeWatcher?
     private static let disabledUserDefaultsKey = "NoSyncDisableClaudeWatcher"
     private(set) var sessionIDs = Set<String>()
-    private let threshold = 3
+    private let threshold: Int
 
-    private init?(_ placeholder: Void = ()) {
+    // Set once the app begins terminating. GlobalJobMonitor posts a storm of
+    // job-change notifications as windows close and sessions tear down during
+    // quit (sessionWillTerminate -> stopObserving -> postNotification). Acting
+    // on those crashed: thresholdReached offered the upsell to sessions that
+    // were mid-teardown. An upsell has no business appearing during quit
+    // anyway, so we go inert as soon as termination begins. iTermApplicationWillTerminate
+    // is posted from applicationShouldTerminate, before the window-close
+    // cascade that triggered the crash, so the flag is set in time.
+    private var isTerminating = false
+
+    // Test seams. In production these reach into the live app. Tests inject
+    // fakes so the notification -> threshold -> offer path can be exercised
+    // without a real controller, live sessions, or UI.
+
+    // Returns whether the session for a GUID has exited, or nil if there is no
+    // such session.
+    private let sessionExitedProvider: (String) -> Bool?
+    // If non-nil, called instead of the real nagging-controller offer. Tests
+    // use it to record which sessions would have been offered the upsell.
+    private let offerOverride: ((String) -> Void)?
+
+    init?(threshold: Int = 3,
+          seedFromJobMonitor: Bool = true,
+          bypassEnabledCheck: Bool = false,
+          sessionExitedProvider: ((String) -> Bool?)? = nil,
+          offerOverride: ((String) -> Void)? = nil) {
+        self.threshold = threshold
+        self.sessionExitedProvider = sessionExitedProvider ?? { guid in
+            guard let session = iTermController.sharedInstance().session(withGUID: guid) else {
+                return nil
+            }
+            return session.exited
+        }
+        self.offerOverride = offerOverride
         super.init()
-        if !Self.enabled {
+        if !bypassEnabledCheck && !Self.enabled {
             RLog("ClaudeWatcher not enabled, returning nil")
             return nil
         }
@@ -24,6 +57,10 @@ class ClaudeWatcher: NSObject {
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(jobMonitorDidChange(_:)),
                                                name: GlobalJobMonitor.didChangeNotification,
+                                               object: nil)
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(applicationWillTerminate(_:)),
+                                               name: Notification.Name(iTermApplicationWillTerminate),
                                                object: nil)
         // First observer to touch the singleton receives the seed
         // notifications inline from GlobalJobMonitor.init; we
@@ -33,7 +70,9 @@ class ClaudeWatcher: NSObject {
         // time. Later observers (e.g. ClaudeIntegrationHealthMonitor)
         // are responsible for calling replayCurrentState themselves
         // after registering.
-        _ = GlobalJobMonitor.instance
+        if seedFromJobMonitor {
+            _ = GlobalJobMonitor.instance
+        }
     }
 }
 
@@ -48,7 +87,7 @@ extension ClaudeWatcher {
 }
 
 // MARK: - Private Methods
-private extension ClaudeWatcher {
+extension ClaudeWatcher {
     static var enabled: Bool {
         if iTermUserDefaults.userDefaults().bool(forKey: Self.disabledUserDefaultsKey) {
             DLog("ClaudeWatcher disabled by user default")
@@ -65,6 +104,29 @@ private extension ClaudeWatcher {
         return true
     }
 
+    // Whether the upsell should be offered to a session, given the app's
+    // termination state and the session's liveness. Pure so the crash
+    // condition (threshold reached while terminating) is unit-testable
+    // without a live app. sessionExited is nil when no session exists for the
+    // GUID.
+    static func shouldOffer(isTerminating: Bool, sessionExited: Bool?) -> Bool {
+        if isTerminating {
+            return false
+        }
+        guard let sessionExited else {
+            // No live session for this GUID (it may have already been torn
+            // down between the notification and now).
+            return false
+        }
+        return !sessionExited
+    }
+
+    @objc
+    func applicationWillTerminate(_ notification: Notification) {
+        DLog("ClaudeWatcher noting app termination")
+        isTerminating = true
+    }
+
     // This handler must be idempotent: notifications for the
     // claude job can fire repeatedly as the foreground ancestor
     // chain churns, and a future observer that calls
@@ -79,6 +141,10 @@ private extension ClaudeWatcher {
     // idempotency guarantee.
     @objc
     func jobMonitorDidChange(_ notification: Notification) {
+        guard !isTerminating else {
+            DLog("ClaudeWatcher ignoring job change during termination")
+            return
+        }
         defer {
             if !Self.enabled {
                 RLog("ClaudeWatcher no longer enabled, nilling instance")
@@ -102,16 +168,25 @@ private extension ClaudeWatcher {
 
     func thresholdReached() {
         for sessionID in sessionIDs {
-            guard let session = iTermController.sharedInstance().session(withGUID: sessionID) else {
-                DLog("ClaudeWatcher session \(sessionID) not found")
+            guard Self.shouldOffer(isTerminating: isTerminating,
+                                   sessionExited: sessionExitedProvider(sessionID)) else {
+                DLog("ClaudeWatcher not offering to \(sessionID)")
                 continue
             }
             RLog("ClaudeWatcher offering status tool to session \(sessionID)")
-            offerClaudeCodeStatusTool(session: session)
+            if let offerOverride {
+                offerOverride(sessionID)
+            } else {
+                offerClaudeCodeStatusTool(sessionID: sessionID)
+            }
         }
     }
 
-    func offerClaudeCodeStatusTool(session: PTYSession) {
+    func offerClaudeCodeStatusTool(sessionID: String) {
+        guard let session = iTermController.sharedInstance().session(withGUID: sessionID) else {
+            DLog("ClaudeWatcher session \(sessionID) not found")
+            return
+        }
         session.naggingController.offerClaudeCodeStatusTool { [weak self] status in
             RLog("ClaudeWatcher user responded: \(status)")
             switch status {
