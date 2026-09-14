@@ -179,6 +179,23 @@ class LLMMetadata: NSObject {
         return manualModels().map { AIModel($0) }
     }
 
+    // Single source of truth for resolving a pinned/persisted model NAME to a model,
+    // so the UI (ChatViewController), request routing (AIConversation.complete), and
+    // capability gating (ChatAgent) never disagree about where a turn actually goes.
+    // A manual/configured model wins over a built-in catalog entry of the same name
+    // (a user proxying a known model reaches their own url/api), and discovered
+    // built-in Ollama tags are included so a chat pinned to a LOCAL model routes to
+    // the local server rather than silently falling through to the global (possibly
+    // cloud) default.
+    static func model(named name: String?) -> AIMetadata.Model? {
+        guard let name, !name.isEmpty else {
+            return nil
+        }
+        return manualModels().first { $0.name == name }
+            ?? AIMetadata.instance.models.first { $0.name == name }
+            ?? discoveredOllamaModels().first { $0.name == name }
+    }
+
     static func model() -> AIMetadata.Model? {
         if iTermPreferences.bool(forKey: kPreferenceKeyUseRecommendedAIModel),
            let vendor = iTermAIVendor(rawValue: iTermPreferences.unsignedInteger(forKey: kPreferenceKeyAIVendor)) {

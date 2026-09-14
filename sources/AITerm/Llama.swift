@@ -369,13 +369,22 @@ struct LlamaBodyRequestBuilder {
     }
 
     static let imageTokenFloor = 85
-    static let imageTokenCap = 2048
+    // Bounds a single image's estimate so one giant photo can't re-inflate num_ctx
+    // the way base64 length did. Sized to cover a 4K screenshot (3840x2160 ≈ 11k at
+    // w*h/750) at the full conservative rate: a TILING vision model that doesn't
+    // downscale really costs ~that many tokens, and undercounting it silently
+    // truncates the prompt - the exact invisible regression the num_ctx sizing
+    // exists to prevent. For a model with a DOWNSCALING projector this overcounts,
+    // which at worst enlarges num_ctx or, on a small context window, surfaces a
+    // VISIBLE requestTooLarge (with the diagnostic detail) - preferable to silent
+    // truncation. A projector-aware estimate would be ideal but isn't reliably
+    // knowable here.
+    static let imageTokenCap = 12288
 
     // A conservative per-image token estimate from pixel area (Anthropic-style
     // w*h/750, the highest of the common estimates, so it errs toward not
-    // truncating), floored and capped so one giant image can't re-inflate the
-    // estimate the way base64 length does. Falls back to the floor when the
-    // dimensions can't be read (never the base64 length). Accepts either a
+    // truncating), floored and capped (see imageTokenCap). Falls back to the floor
+    // when the dimensions can't be read (never the base64 length). Accepts either a
     // "data:...;base64," URL (the live path's image_url) or bare base64 (the
     // frozen path's native images[] payload).
     static func imageTokenEstimate(dataURL: String) -> Int {

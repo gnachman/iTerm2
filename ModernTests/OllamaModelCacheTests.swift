@@ -533,6 +533,23 @@ final class OllamaModelCacheTests: XCTestCase {
         body()
     }
 
+    // A chat pinned to a DISCOVERED built-in Ollama tag must resolve through the
+    // shared resolver, so request routing (AIConversation/ChatAgent) and the
+    // provider-binding guard agree with the UI instead of falling through to the
+    // global (possibly cloud) default and silently sending a local-model turn there.
+    func test_modelNamed_resolvesDiscoveredOllamaTag() {
+        let endpoint = LLMMetadata.defaultOllamaEndpoint
+        OllamaModelCache.shared.update(endpoint: endpoint, models: models(endpoint))
+        defer { OllamaModelCache.shared.update(endpoint: endpoint, models: []) }
+
+        let resolved = LLMMetadata.model(named: "qwen3.5:4b")
+        XCTAssertEqual(resolved?.name, "qwen3.5:4b",
+                       "a discovered built-in Ollama tag must resolve, not fall through to the default")
+        XCTAssertEqual(resolved?.vendor, .llama)
+        XCTAssertEqual(ChatProviderBinding.vendor(forModelName: "qwen3.5:4b"), .llama,
+                       "the provider-binding guard must classify a discovered local tag as the Ollama vendor")
+    }
+
     func test_recommendedOllama_honorsChosenRegularModel() {
         withOllamaVendorDefault(regular: "zeta:7b", economy: "") {
             XCTAssertEqual(LLMMetadata.recommendedModel(for: .llama)?.name, "zeta:7b",

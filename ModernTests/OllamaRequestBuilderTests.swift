@@ -389,6 +389,24 @@ final class OllamaRequestBuilderTests: XCTestCase {
                              "whitespace in base64 defeated pixel-size decoding (fell back to the floor)")
     }
 
+    // decodeDataURL (history/replay decode) must tolerate the same MIME-line-wrapped
+    // base64 that imageTokenEstimate's sizing path tolerates, so an externally-supplied
+    // wrapped payload round-trips to its exact bytes instead of returning nil.
+    func test_decodeDataURL_toleratesWhitespaceInBase64() throws {
+        let bytes = noisyPNG(120)
+        let raw = bytes.base64EncodedString()
+        var chunked = ""
+        var i = raw.startIndex
+        while i < raw.endIndex {
+            let end = raw.index(i, offsetBy: 76, limitedBy: raw.endIndex) ?? raw.endIndex
+            chunked += raw[i..<end] + "\n"
+            i = end
+        }
+        let decoded = CompletionsMessage.decodeDataURL("data:image/png;base64,\(chunked)")
+        XCTAssertEqual(decoded?.1, bytes,
+                       "wrapped base64 must round-trip through decodeDataURL, matching the sizing path's leniency")
+    }
+
     // MARK: - .llama parser is native-only (finding #5 validity)
 
     // Proves the .llama type was never functional against an OpenAI-compatible

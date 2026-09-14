@@ -514,8 +514,12 @@ struct CompletionsMessage: Codable, Equatable {
 
     // Parse "data:<mime>;base64,<payload>" back into its MIME and bytes.
     static func decodeDataURL(_ string: String) -> (String, Data)? {
+        // .ignoreUnknownCharacters so MIME-line-wrapped (whitespace-embedded) base64
+        // decodes, matching Llama.imagePixelSize's decode leniency: otherwise the
+        // num_ctx sizing path (which tolerates the whitespace) and this history/replay
+        // decode would disagree on the same externally-supplied wrapped payload.
         guard let (meta, payload) = splitDataURL(string),
-              let data = Data(base64Encoded: String(payload)) else {
+              let data = Data(base64Encoded: String(payload), options: .ignoreUnknownCharacters) else {
             return nil
         }
         let mime = meta.split(separator: ";").first.map(String.init) ?? "application/octet-stream"

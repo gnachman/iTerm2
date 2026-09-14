@@ -825,15 +825,13 @@ class ChatAgent {
         return nil
     }
 
-    /// Resolve a turn's model name the same way request routing does
-    /// (AIConversation.complete: manual models first, then the built-in
-    /// catalog, so a manual config wins over a built-in that shares its name).
-    /// nil for an unknown or absent name; the caller falls back to the global
-    /// default, keeping capability gating and routing in agreement.
+    /// Resolve a turn's model name the same way request routing does, through the
+    /// shared LLMMetadata.model(named:) resolver (manual/custom models, the built-in
+    /// catalog, AND discovered built-in Ollama tags), so capability gating and
+    /// routing agree with the UI. nil for an unknown or absent name; the caller falls
+    /// back to the global default.
     static func resolvedModel(named name: String?) -> AIMetadata.Model? {
-        guard let name else { return nil }
-        return LLMMetadata.manualModels().first { $0.name == name }
-            ?? AIMetadata.instance.models.first { $0.name == name }
+        return LLMMetadata.model(named: name)
     }
 
     /// Hosted-tool enablement for a turn, pure over the effective model's

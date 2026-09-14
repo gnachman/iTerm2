@@ -405,15 +405,12 @@ struct AIConversation {
             // economy-model path in ScreenWatchPoller).
             controller.providerOverride = LLMProvider(model: modelOverride)
         } else if let modelName = model {
-            // Consult manually-configured models too: AIMetadata.instance.models
-            // is only the built-in catalog, so a chat pinned to a manual/custom
-            // model would otherwise fall through to the global default and be
-            // sent to a different model (and possibly vendor/URL) than the UI
-            // shows. A manual model WINS over a built-in that shares its name so
-            // a user proxying a known model (custom url/api under the same name)
-            // reaches their endpoint rather than the public one.
-            let pinnedModel = LLMMetadata.manualModels().first(where: { $0.name == modelName })
-                ?? AIMetadata.instance.models.first(where: { $0.name == modelName })
+            // Resolve the pinned name through the shared resolver so routing agrees
+            // with the UI: it consults manual/custom models AND discovered built-in
+            // Ollama tags, not just the built-in catalog. Without the discovered set,
+            // a chat pinned to a local Ollama tag would fall through to the global
+            // (possibly cloud) default and be sent there instead of the local server.
+            let pinnedModel = LLMMetadata.model(named: modelName)
             controller.providerOverride = pinnedModel.map { LLMProvider(model: $0) }
         } else {
             controller.providerOverride = nil

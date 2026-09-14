@@ -577,15 +577,10 @@ extension ChatViewController {
     }
 
     private func model(named name: String?) -> AIMetadata.Model? {
-        guard let name else {
-            return nil
-        }
-        // A manual config wins over a built-in that shares the name, matching
-        // how AIConversation resolves the pinned model at request time.
-        if let manual = manualConfiguredModels.first(where: { $0.name == name }) {
-            return manual
-        }
-        return builtInModels.first { $0.name == name }
+        // Shared resolver so the UI, request routing (AIConversation.complete), and
+        // capability gating (ChatAgent) can never disagree: manual/custom models win
+        // over the built-in catalog, and discovered built-in Ollama tags are included.
+        return LLMMetadata.model(named: name)
     }
 
     private var storedChatModel: AIMetadata.Model? {
