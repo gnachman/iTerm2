@@ -392,7 +392,7 @@ extension iTermMetalView {
         while !timedOut {
             let promise = pendingDrawablePromise ?? iTermPromise<PendingDrawable> { seal in
                 Self.getDrawableQueue.async {
-                    seal.fulfill(PendingDrawable(context, drawable: metalLayerBox.nextDrawableWithoutTimeout()))
+                    seal.fulfill(PendingDrawable(context, drawable: metalLayerBox.nextDrawable()))
                 }
             }
             var result: CAMetalDrawable?
@@ -507,6 +507,15 @@ extension iTermMetalView {
         drawableScaleFactor = CGSize(width: 1.0, height: 1.0)
         wantsLayer = true
         let layer = CAMetalLayer()
+        // Disable the drawable timeout once, here on the main thread. We wait
+        // for drawables on a background queue and impose our own timeout at the
+        // promise level (see fetchDrawable), so the layer itself should block
+        // indefinitely rather than return nil after ~1s. Setting this property
+        // pushes an implicit CATransaction, which aborts if done off the main
+        // thread (CA_ABORT_ON_NON_MAIN_THREAD_TRANSACTION_PUSH on macOS 26), so
+        // it must never be touched from the get-drawable queue. It persists for
+        // the life of the layer, so once here is enough.
+        layer.allowsNextDrawableTimeout = false
         metalLayerBox = iTermMetalLayerBox(metalLayer: layer)
         self.layer = layer
         layerContentsRedrawPolicy = .duringViewResize
