@@ -1776,6 +1776,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     }
     [iTermClaudeWatcher start];
     [[iTermClaudeIntegrationHealthMonitor instance] start];
+    [[iTermClaudeInterruptDetector instance] start];
     [iTermClaudeCodeModeController start];
     if (_workgroupsMenuItem) {
         [iTermWorkgroupMenu attachTo:_workgroupsMenuItem

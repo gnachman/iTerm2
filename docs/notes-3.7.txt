@@ -191,6 +191,12 @@ Improvements:
   original tab?”, if you prefer the old placement.
 
 Bug Fixes:
+- The Session Status tool no longer stays on
+  “Working” or “Waiting” after you press Esc
+  to interrupt Claude Code. Claude Code reports
+  no event for an interrupt, so iTerm2 now checks
+  the screen after the keypress and returns the
+  status to Idle.
 - Stopped falsely offering to reset the key
   reporting mode after every command when using
   Fish with oh-my-posh, which together emit a

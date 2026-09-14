@@ -929,6 +929,7 @@
 		5387013E23629EE8005FDB65 /* iTermPasswordManagerWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DFA7C991923EDD900DF1410 /* iTermPasswordManagerWindowController.m */; };
 		538970BC22E6914E008B4770 /* iTermFileDescriptorMultiServer.h in Headers */ = {isa = PBXBuildFile; fileRef = 538970BA22E6914E008B4770 /* iTermFileDescriptorMultiServer.h */; };
 		538BE55620C9E69A00AD15B0 /* NSDictionary+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */; };
+		538EB4BD9DF945B3F171C2C9 /* ClaudeInterruptDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DA02B7F084CC1F9CEDA8C3D /* ClaudeInterruptDetector.swift */; };
 		539325F31DD66EFA00CABCEF /* iTermPreciseTimer.m in Sources */ = {isa = PBXBuildFile; fileRef = 539325EF1DD66EF100CABCEF /* iTermPreciseTimer.m */; };
 		539E4ECE22E172360084FE9A /* iTermAutomaticProfileSwitcher.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EEA6671C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.m */; };
 		53A96ED02322040C00AEA8E0 /* iTermOpenDirectory.h in Headers */ = {isa = PBXBuildFile; fileRef = 53A96ECE2322040C00AEA8E0 /* iTermOpenDirectory.h */; };
@@ -5936,6 +5937,7 @@
 		0B7ADC37E1C84693B7DDCC43 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/iTermsStatusBarComposerViewController.xib; sourceTree = "<group>"; };
 		0D0DDA8C6A3EBC8252F44780 /* ChatBlobWireEncoder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChatBlobWireEncoder.swift; sourceTree = "<group>"; };
 		0D8A276DFCBA67052E410A14 /* iTermBrowserSessionTitle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermBrowserSessionTitle.swift; sourceTree = "<group>"; };
+		0DA02B7F084CC1F9CEDA8C3D /* ClaudeInterruptDetector.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClaudeInterruptDetector.swift; sourceTree = "<group>"; };
 		0DB9037425C749B5A0E7E089 /* iTermWorkgroupModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermWorkgroupModel.swift; sourceTree = "<group>"; };
 		0DC8A8C38113E7067A530893 /* iTermBrowserBasicAuthManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermBrowserBasicAuthManager.swift; sourceTree = "<group>"; };
 		0DCE6E6D44984C2D7ECD0AB4 /* iTermArrangementTrustGate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = iTermArrangementTrustGate.swift; sourceTree = "<group>"; };
@@ -15661,6 +15663,7 @@
 				2C7A27BB8C594BBB9C0AC3F2 /* Cockpit.xib */,
 				F0CF78DCB35283C048B0B54A /* CockpitWindowController.swift */,
 				0586F89994212302FC06BE82 /* Orchestration */,
+				0DA02B7F084CC1F9CEDA8C3D /* ClaudeInterruptDetector.swift */,
 			);
 			path = ClaudeCode;
 			sourceTree = "<group>";
@@ -22449,6 +22452,7 @@
 				A033F281B74486F43A56A2E0 /* iTermUndoCloseMigrationWarning.swift in Sources */,
 				6DEF6ECE06F2BFCD91F283E1 /* iTermAPICreateTabFocusDeferral.m in Sources */,
 				6525DAAA19CCA2BCAF26D083 /* iTermAPICreateTabFocusDeferral.h in Sources */,
+				538EB4BD9DF945B3F171C2C9 /* ClaudeInterruptDetector.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
