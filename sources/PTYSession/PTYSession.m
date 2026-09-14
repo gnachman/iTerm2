@@ -9807,7 +9807,16 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
 
 - (void)setTitleFromTmuxTitleMonitor:(NSString *)title {
     if (title) {
-        [self setSessionSpecificProfileValues:@{ KEY_TMUX_PANE_TITLE: title ?: @""}];
+        // Use reload:NO. KEY_TMUX_PANE_TITLE is not a real preference; it exists
+        // only to seed the Edit Session dialog, which reads it lazily when opened.
+        // The live title for display is already published to the session variable
+        // iTermVariableKeySessionTmuxPaneTitle by the option monitor, and the tab/
+        // title UI is refreshed via sessionDidUpdatePaneTitle: below. With tmux
+        // subscriptions the pane title is pushed on every change, so a program that
+        // animates a spinner in its title (e.g. Claude Code) would otherwise force a
+        // full profile reload + SessionView relayout several times per second,
+        // making the pane content visibly bounce.
+        [self setSessionSpecificProfileValues:@{ KEY_TMUX_PANE_TITLE: title ?: @""} reload:NO];
         [self.delegate sessionDidUpdatePaneTitle:self];
     }
 }
