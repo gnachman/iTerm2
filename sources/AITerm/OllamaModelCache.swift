@@ -141,17 +141,21 @@ class OllamaModelCache: NSObject {
         lock.unlock()
 
         fetcher(endpoint, headers, networkTimeout) { [weak self] result in
-            // This fetch's OWN caller (the direct completion) gets this fetch's
-            // result: a forced probe's completion reflects the probe.
-            let count = result?.count ?? 0
-            let failed = result == nil
             guard let self else {
-                completion?(count, failed)
+                // self gone: no cache update ran, so report the raw fetch result.
+                completion?(result?.count ?? 0, result == nil)
                 return
             }
             let outcome = self.update(endpoint: endpoint, result: result, headers: headers,
                                       countsAgainstInFlight: true)
-            completion?(count, failed)
+            // Report the EFFECTIVE outcome, not the raw fetch. For a suspicious-empty
+            // result (a reachable server that momentarily returns [] after previously
+            // succeeding), update() RETAINS the last-good models and treats it as a
+            // soft failure, so reporting the raw (0, notFailed) would say "Found 0"
+            // while the picker still lists the retained models. `succeeded`/`count`
+            // reflect what the cache actually holds now.
+            let effectiveCount = outcome.succeeded ? outcome.count : 0
+            completion?(effectiveCount, !outcome.succeeded)
 
             // Coalesced (non-forced) refreshes that parked behind an in-flight fetch
             // are resolved by the whole BATCH, not by whichever fetch finishes first:
@@ -166,9 +170,8 @@ class OllamaModelCache: NSObject {
             self.lock.lock()
             let coalesced = self.pendingCompletions.removeValue(forKey: endpoint) ?? []
             self.lock.unlock()
-            let batchCount = outcome.succeeded ? outcome.count : 0
             for pending in coalesced {
-                pending(batchCount, !outcome.succeeded)
+                pending(effectiveCount, !outcome.succeeded)
             }
         }
     }

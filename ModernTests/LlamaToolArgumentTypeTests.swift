@@ -148,4 +148,22 @@ final class LlamaToolArgumentTypeTests: XCTestCase {
         XCTAssertTrue(combined.contains("Let me check the weather for you."),
                       "streaming must not drop assistant preamble text that co-arrived with the tool call")
     }
+
+    // Finding: the streaming path returns [] for the terminal done:true chunk (to
+    // avoid re-emitting accumulated content). If a future Ollama build delivers the
+    // tool_call ONLY in the done chunk, it must still be surfaced, not dropped.
+    func testStreaming_toolCallInDoneChunk_isNotDropped() throws {
+        let data = Data("""
+        {"model":"qwen3","message":{"role":"assistant","content":"",\
+        "tool_calls":[{"function":{"name":"get_weather","arguments":{"city":"SF"}}}]},\
+        "done":true}
+        """.utf8)
+        let response = try JSONDecoder().decode(LlamaResponse<LlamaStreamingValue>.self, from: data)
+        let hasFunctionCall = response.choiceMessages.contains { message in
+            if case .functionCall = message.body { return true }
+            return false
+        }
+        XCTAssertTrue(hasFunctionCall,
+                      "a tool call arriving only in the done:true streamed chunk must still be dispatched")
+    }
 }

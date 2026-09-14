@@ -89,17 +89,26 @@ struct LlamaResponse<Streaming: LlamaStreaming>: Codable {
 
 extension LlamaResponse: LLM.AnyResponse {
     var choiceMessages: [LLM.Message] {
+        let functionCall: LLM.FunctionCall? = message.tool_calls?.first.map {
+            .init(name: $0.function.name,
+                  arguments: try? JSONEncoder().encode($0.function.arguments ?? [:]).lossyString)
+        }
         if done && Streaming.streaming {
+            // The terminal streamed chunk normally carries only stats: the content
+            // and any tool call arrived in earlier done:false chunks, so return
+            // nothing to avoid re-emitting the accumulated content. Guard against a
+            // future Ollama variant that delivers the tool_call ONLY in the done
+            // chunk by still surfacing it here, so the call isn't silently dropped.
+            if let functionCall {
+                return [LLM.Message(responseID: nil, role: .assistant,
+                                    body: .functionCall(functionCall, id: nil))]
+            }
             return []
         }
         let thinking: String? = {
             guard let t = message.thinking, !t.isEmpty else { return nil }
             return t
         }()
-        let functionCall: LLM.FunctionCall? = message.tool_calls?.first.map {
-            .init(name: $0.function.name,
-                  arguments: try? JSONEncoder().encode($0.function.arguments ?? [:]).lossyString)
-        }
 
         if !Streaming.streaming {
             // Non-streaming: parseNonStreamingResponse consumes only .first, so a

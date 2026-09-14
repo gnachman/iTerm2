@@ -654,6 +654,30 @@ final class OllamaModelCacheTests: XCTestCase {
                        "a non-empty -> empty transition must arm a self-healing retry")
     }
 
+    // The refresh completion must report the EFFECTIVE (retained) count for a
+    // suspicious-empty result, not the raw 0: otherwise the Refresh Models button
+    // shows "Found 0 installed models" while the picker still lists the retained
+    // ones. Keeping them is a soft failure, not a hard one, so failed is false.
+    func test_suspiciousEmpty_completionReportsRetainedCount() {
+        let cache = makeCache()
+        cache.retryScheduler = { _, _ in }
+        var nextResult: [AIMetadata.Model]? = models("e")
+        cache.fetcher = { _, _, _, completion in completion(nextResult) }
+
+        cache.refresh(endpoint: "e")  // success -> 1 model
+        nextResult = []               // server momentarily returns empty
+        var reportedCount = -1
+        var reportedFailed = true
+        cache.refresh(endpoint: "e", force: true) { count, failed in
+            reportedCount = count
+            reportedFailed = failed
+        }
+        XCTAssertEqual(reportedCount, 1,
+                       "must report the retained model count, not the raw empty probe's 0")
+        XCTAssertFalse(reportedFailed,
+                       "retaining the last-good models is a soft failure, reported as not-failed to the caller")
+    }
+
     // A genuinely empty server (no prior models) still accepts the empty list, so a
     // fresh install with nothing pulled shows an empty picker rather than stalling.
     func test_firstEverEmpty_isAccepted() {

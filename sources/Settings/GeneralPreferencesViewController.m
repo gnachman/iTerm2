@@ -580,6 +580,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     // toggling discovery back off restores it instead of leaving the field blank
     // (Save requires a model name for a non-dynamic entry).
     NSString *_stashedModelName;
+    // The API popup selection before auto-discovery was toggled on. Auto-discovery
+    // pins the API to Ollama; stash the prior tag so toggling back off restores the
+    // user's choice instead of silently persisting Ollama on Save. nil = not stashed.
+    NSNumber *_stashedAPITag;
 }
 
 - (instancetype)initWithConfiguration:(NSDictionary *)configuration
@@ -1242,10 +1246,18 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     // clobber a preset's real model name when it flips discovery back off.
     const BOOL dynamic = _dynamicModelsButton.state == NSControlStateValueOn;
     if (dynamic) {
+        // Stash BEFORE updateDynamicModelsEditorState pins the API popup to Ollama.
         _stashedModelName = _nameField.stringValue ?: @"";
-    } else if (_stashedModelName) {
-        _nameField.stringValue = _stashedModelName;
-        _stashedModelName = nil;
+        _stashedAPITag = @(_apiPopup.selectedItem.tag);
+    } else {
+        if (_stashedModelName) {
+            _nameField.stringValue = _stashedModelName;
+            _stashedModelName = nil;
+        }
+        if (_stashedAPITag) {
+            [_apiPopup selectItemWithTag:_stashedAPITag.integerValue];
+            _stashedAPITag = nil;
+        }
     }
     [self updateDynamicModelsEditorState];
 }
