@@ -1,6 +1,8 @@
 Version 3.7.2
 
 Bug Fixes:
+- Fixed a crash when clicking the bookmark
+  button on a command in the terminal.
 - Fixed a crash in the GPU renderer on macOS 26
   caused by configuring the drawable timeout off
   the main thread.

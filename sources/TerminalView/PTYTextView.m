@@ -6780,7 +6780,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     __block int x = width - 3;
 
     // Helper block to add a button, reusing cached instance if available.
-    void (^addButtonForClass)(Class, void(^)(NSPoint, id)) = ^(Class buttonClass, void(^actionBlock)(NSPoint, id)){
+    void (^addButtonForClass)(Class, void(^)(NSPoint, id<VT100ScreenMarkReading>)) = ^(Class buttonClass, void(^actionBlock)(NSPoint, id<VT100ScreenMarkReading>)){
         iTermTerminalMarkButton *existing = [self cachedTerminalButtonForMark:mark ofClass:buttonClass];
         if (existing) {
             existing.shouldFloat = shouldFloat;
@@ -6798,25 +6798,25 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     };
 
     // Settings button.
-    addButtonForClass([iTermTerminalSettingsButton class], ^(NSPoint locationInWindow, id weakMark) {
+    addButtonForClass([iTermTerminalSettingsButton class], ^(NSPoint locationInWindow, id<VT100ScreenMarkReading> weakMark) {
         [weakSelf popCommandSettingsButtonAt:locationInWindow for:weakMark];
     });
 
     // Copy command button.
-    addButtonForClass([iTermTerminalCopyCommandButton class], ^(NSPoint locationInWindow, id weakMark) {
+    addButtonForClass([iTermTerminalCopyCommandButton class], ^(NSPoint locationInWindow, id<VT100ScreenMarkReading> weakMark) {
         [weakSelf popCommandCopyMenuAt:locationInWindow for:weakMark];
     });
 
     // Bookmark button.
-    addButtonForClass([iTermTerminalBookmarkButton class], ^(NSPoint locationInWindow, id weakMark) {
-        NSString *command = [weakMark command];
+    addButtonForClass([iTermTerminalBookmarkButton class], ^(NSPoint locationInWindow, id<VT100ScreenMarkReading> weakMark) {
+        NSString *command = [weakMark firstLineOfCommand];
         if (command.length) {
             [weakSelf toggleBookmarkForMark:weakMark];
         }
     });
 
     // Share button.
-    addButtonForClass([iTermTerminalShareButton class], ^(NSPoint locationInWindow, id weakMark) {
+    addButtonForClass([iTermTerminalShareButton class], ^(NSPoint locationInWindow, id<VT100ScreenMarkReading> weakMark) {
         [weakSelf popShareMenuAt:locationInWindow
                          absLine:(markLine + offset)
                          forMark:weakMark];
@@ -6824,7 +6824,7 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
 
     // Command info button.
     const long long absLine = markLine + offset;
-    addButtonForClass([iTermCommandInfoButton class], ^(NSPoint locationInWindow, id weakMark) {
+    addButtonForClass([iTermCommandInfoButton class], ^(NSPoint locationInWindow, id<VT100ScreenMarkReading> weakMark) {
         if (weakMark) {
             [weakSelf presentCommandInfoForMark:weakMark
                              absoluteLineNumber:absLine
@@ -6837,13 +6837,13 @@ extendResultsAcrossSoftBoundaries:(BOOL)extendResultsAcrossSoftBoundaries {
     // Fold / Unfold button.
     id<iTermFoldMarkReading> fold = [[self.dataSource foldMarksInRange:VT100GridRangeMake(markLine - (offByOne ? 0 : 1), 1)] firstObject];
     if (fold) {
-        addButtonForClass([iTermTerminalUnfoldButton class], ^(NSPoint locationInWindow, id weakMark) {
+        addButtonForClass([iTermTerminalUnfoldButton class], ^(NSPoint locationInWindow, id<VT100ScreenMarkReading> weakMark) {
             if (weakMark) {
                 [weakSelf unfoldMark:fold];
             }
         });
     } else {
-        addButtonForClass([iTermTerminalFoldButton class], ^(NSPoint locationInWindow, id weakMark) {
+        addButtonForClass([iTermTerminalFoldButton class], ^(NSPoint locationInWindow, id<VT100ScreenMarkReading> weakMark) {
             if (weakMark) {
                 [weakSelf foldCommandMark:weakMark];
             }
