@@ -7,10 +7,10 @@
 //  tab status says “working” (or “waiting”, for a permission prompt that
 //  was dismissed) stays that way until the next prompt is submitted.
 //
-//  The detector is keystroke-gated rather than polling. It does nothing
-//  until Esc is typed into a session that is running claude and
-//  whose tab status is working or waiting. Only then does it read the
-//  visible screen a few times over the next couple of seconds, looking for
+//  The detector only polls after a keystroke. It does nothing until Esc
+//  is typed into a session that is running claude and whose tab status
+//  is working or waiting. Only then does it read the visible screen a
+//  few times over the next few seconds, looking for
 //  Claude Code’s own “Interrupted · What should Claude do instead?” line as
 //  the positive idle signal. A live spinner (elapsed-time counter) on
 //  screen means the turn is still running, so the status is left alone.
@@ -37,10 +37,13 @@ final class ClaudeInterruptDetector: NSObject {
 
     // Claude Code renders the interrupt as the dim text “Interrupted” followed
     // by “· What should Claude do instead?” (verified against 2.1.270). Older
-    // and tool-result forms show “⎿ Interrupted” alone. Either form is
-    // accepted; both only appear after an actual interrupt.
+    // and tool-result forms show “⎿ Interrupted” alone on its line. Either
+    // form is accepted; both only appear after an actual interrupt. The bare
+    // form is anchored to the end of the line so a tool result that merely
+    // mentions “Interrupted system call” does not count.
     nonisolated private static let interruptedRegex = try! NSRegularExpression(
-        pattern: "Interrupted\\s*·\\s*What should Claude do instead|⎿\\s*Interrupted\\b")
+        pattern: "Interrupted\\s*·\\s*What should Claude do instead|⎿\\s*Interrupted\\s*$",
+        options: [.anchorsMatchLines])
 
     // The parenthesized elapsed timer, e.g. “(49s · ↓ 3.4k tokens)” or
     // “(1m 13s · still thinking…)”, renders only while a turn is live; the
@@ -161,7 +164,8 @@ final class ClaudeInterruptDetector: NSObject {
                 let text = WorkgroupIntrospection.screenContents(forSession: session,
                                                                  requestedLines: 100).text
                 let verdict = Self.classify(screenText: text)
-                DLog("ClaudeInterruptDetector: poll \(poll) verdict=\(verdict) screen=\(text)")
+                RLog("ClaudeInterruptDetector: poll \(poll) in \(guid) verdict=\(verdict)")
+                DLog("ClaudeInterruptDetector: poll \(poll) screen=\(text)")
                 switch verdict {
                 case .working:
                     RLog("ClaudeInterruptDetector: spinner still live in \(guid), leaving status")

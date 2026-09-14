@@ -73,6 +73,18 @@ final class ClaudeInterruptDetectorTests: XCTestCase {
         XCTAssertEqual(ClaudeInterruptDetector.classify(screenText: screen), .unknown)
     }
 
+    // Esc on an already-finished turn (captured from a field report): the
+    // done line carries a middot but no open paren, so it is not a spinner,
+    // and there is no interrupt line, so the status must be left alone.
+    func test_finishedTurnWithDoneTimestampIsUnknown() {
+        let screen = """
+        ✻ Baked for 3s · done 8:49
+
+        ❯
+        """
+        XCTAssertEqual(ClaudeInterruptDetector.classify(screenText: screen), .unknown)
+    }
+
     func test_shellPromptIsUnknown() {
         XCTAssertEqual(ClaudeInterruptDetector.classify(screenText: "user@host ~ %"), .unknown)
     }
@@ -81,6 +93,18 @@ final class ClaudeInterruptDetectorTests: XCTestCase {
     // interrupt line.
     func test_interruptedInProseIsUnknown() {
         let screen = "The read() call failed with Interrupted system call."
+        XCTAssertEqual(ClaudeInterruptDetector.classify(screenText: screen), .unknown)
+    }
+
+    // A tool result whose first line happens to start with the word is not
+    // an interrupt line either; only “⎿ Interrupted” alone on its line is.
+    func test_interruptedInToolResultIsUnknown() {
+        let screen = """
+        ⏺ Bash(cat /dev/stdin)
+          ⎿  Interrupted system call (EINTR)
+
+        ❯
+        """
         XCTAssertEqual(ClaudeInterruptDetector.classify(screenText: screen), .unknown)
     }
 
