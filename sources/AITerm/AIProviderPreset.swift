@@ -93,10 +93,17 @@ extension AIMetadata {
                 api: .llama,
                 configurableThinking: true,
                 placeholderModelName: "qwen3.5"),
+            // A generic local OpenAI-compatible server (LM Studio, vLLM,
+            // llama.cpp, ...). Deliberately not Ollama-branded: for Ollama the two
+            // native presets above are strictly better (they control thinking and
+            // size the context window, which the /v1/chat/completions shim cannot).
+            // This is the correct starting point for other local runners, whose
+            // authenticated endpoints supply their token via the Custom headers
+            // table (Authorization: Bearer ...).
             AIProviderPreset(
-                name: "Ollama (OpenAI-compatible)",
-                url: "http://localhost:11434/v1/chat/completions",
-                placeholderModelName: "llama3.3"),
+                name: "Local OpenAI-compatible (LM Studio, vLLM, …)",
+                url: "http://localhost:1234/v1/chat/completions",
+                placeholderModelName: "qwen2.5-7b-instruct"),
             AIProviderPreset(
                 name: "OpenRouter",
                 url: "https://openrouter.ai/api/v1/chat/completions",
