@@ -77,10 +77,10 @@ final class ClaudeInterruptDetector: NSObject {
     // Called on the main thread for every keystroke written to the pty. It
     // must stay cheap: everything past the byte check happens only for a
     // bare Esc in a claude session with an active status. (Ctrl-C is not
-    // handled: Claude Code enables the kitty keyboard protocol, which
-    // encodes it as a CSI sequence, and it does not dismiss prompts.)
+    // handled: it does not dismiss permission prompts, so it is not the
+    // interrupt key Claude Code documents.)
     @objc func session(_ session: PTYSession, didSendKeyData data: Data) {
-        guard data.count == 1, data.first == 0x1b else {
+        guard Self.isEscapeKey(data) else {
             return
         }
         guard Self.isInterruptible(status: session.tabStatus?.statusText) else {
@@ -95,6 +95,22 @@ final class ClaudeInterruptDetector: NSObject {
     }
 
     // MARK: - Classification
+
+    // Esc as written to the pty. Claude Code currently runs without kitty
+    // key reporting, so Esc is the bare byte; if it ever enables the
+    // disambiguate flag, iTerm2’s modern key mapper sends CSI 27 u instead
+    // (optionally with a “;1” modifier field). Other keys never take these
+    // shapes: legacy Alt+key is ESC plus a character, and cursor keys end in
+    // a different final byte.
+    nonisolated private static let escapeEncodings: [Data] = [
+        Data([0x1b]),
+        Data("\u{1b}[27u".utf8),
+        Data("\u{1b}[27;1u".utf8),
+    ]
+
+    nonisolated static func isEscapeKey(_ data: Data) -> Bool {
+        return escapeEncodings.contains(data)
+    }
 
     nonisolated static func isInterruptible(status: String?) -> Bool {
         guard let status = status?.lowercased() else {

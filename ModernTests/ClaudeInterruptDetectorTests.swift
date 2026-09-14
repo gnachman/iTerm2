@@ -84,6 +84,23 @@ final class ClaudeInterruptDetectorTests: XCTestCase {
         XCTAssertEqual(ClaudeInterruptDetector.classify(screenText: screen), .unknown)
     }
 
+    // Esc must be recognized both as the legacy bare byte and as the
+    // CSI 27 u form the modern key mapper emits under kitty disambiguate
+    // mode, and nothing else may pass.
+    func test_escapeKeyEncodings() {
+        XCTAssertTrue(ClaudeInterruptDetector.isEscapeKey(Data([0x1b])))
+        XCTAssertTrue(ClaudeInterruptDetector.isEscapeKey(Data("\u{1b}[27u".utf8)))
+        XCTAssertTrue(ClaudeInterruptDetector.isEscapeKey(Data("\u{1b}[27;1u".utf8)))
+
+        XCTAssertFalse(ClaudeInterruptDetector.isEscapeKey(Data()))
+        XCTAssertFalse(ClaudeInterruptDetector.isEscapeKey(Data([0x03])))          // Ctrl-C
+        XCTAssertFalse(ClaudeInterruptDetector.isEscapeKey(Data("a".utf8)))
+        XCTAssertFalse(ClaudeInterruptDetector.isEscapeKey(Data("\u{1b}a".utf8)))  // legacy Alt-a
+        XCTAssertFalse(ClaudeInterruptDetector.isEscapeKey(Data("\u{1b}[A".utf8))) // Up arrow
+        XCTAssertFalse(ClaudeInterruptDetector.isEscapeKey(Data("\u{1b}[27;2u".utf8))) // Shift-Esc
+        XCTAssertFalse(ClaudeInterruptDetector.isEscapeKey(Data("\u{1b}[27u\u{1b}[27u".utf8)))
+    }
+
     func test_onlyWorkingAndWaitingAreInterruptible() {
         XCTAssertTrue(ClaudeInterruptDetector.isInterruptible(status: "working"))
         XCTAssertTrue(ClaudeInterruptDetector.isInterruptible(status: "Waiting"))
