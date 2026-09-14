@@ -27,6 +27,11 @@ final class WorkgroupAutoRequestReviewToolbarItem: SessionToolbarControl {
     private let button: NSButton
     private let isEnabledForReview: Bool
 
+    // Current visual on-state. Read-only; the source of truth is the
+    // owning session's autoRequestReviewWhenIdle flag, mirrored here by
+    // setOn. Exposed for tests and introspection.
+    var isOn: Bool { button.state == .on }
+
     init(identifier: String,
          priority: Int,
          isOn: Bool,
@@ -49,8 +54,11 @@ final class WorkgroupAutoRequestReviewToolbarItem: SessionToolbarControl {
     }
 
     // Reflect a state set programmatically without firing the delegate.
+    // Lets the port re-derive the button from its owning session's live
+    // flag (see iTermWorkgroupPeerPort.syncAutoBehaviorToggles).
     func setOn(_ isOn: Bool) {
         guard isEnabledForReview else { return }
+        guard button.state != (isOn ? .on : .off) else { return }
         button.state = isOn ? .on : .off
         Self.configure(button: button, isOn: isOn, enabled: isEnabledForReview)
     }

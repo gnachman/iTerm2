@@ -33,3 +33,9 @@ Bug Fixes:
   in the popup, so choosing a provider
   other than the current default no longer
   stores the key under the wrong service.
+- Fixed the workgroup toolbar’s
+  auto-request-review and auto-send-clippings
+  toggles showing a stale off state after a
+  restart even though they were actually on, so
+  the button now always matches whether the
+  behavior is enabled.
