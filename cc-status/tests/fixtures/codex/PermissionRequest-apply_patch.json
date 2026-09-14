@@ -1,0 +1,14 @@
+{
+  "cwd": "/Users/user/github/cc-status",
+  "hook_event_name": "PermissionRequest",
+  "model": "gpt-6-astra",
+  "permission_mode": "default",
+  "session_id": "01a09fa1-d3a9-7543-a9d1-aa7efe7e441d",
+  "tool_input": {
+    "input": "*** Begin Patch\n*** Update File: Sources/cc-status/main.swift\n@@\n-old\n+new\n*** Add File: tests/run.py\n+print(1)\n*** End Patch\n"
+  },
+  "tool_name": "apply_patch",
+  "tool_use_id": "call_1",
+  "transcript_path": "/Users/user/.codex/sessions/2026/09/14/rollout-2026-09-14T13-16-17-01a09fa1-d3a9-7543-a9d1-aa7efe7e441d.jsonl",
+  "turn_id": "01a09fa7-be2b-7a23-8439-b29b085f8ce3"
+}
