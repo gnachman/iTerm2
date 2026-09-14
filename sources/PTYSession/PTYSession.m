@@ -22163,6 +22163,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         ITMURL *url = [[[ITMURL alloc] init] autorelease];
         url.URL = ea.url.url.absoluteString;
         url.identifier = ea.url.identifier;
+        style.URL = url;
     }
     style.repeats = 1;
     return style;
