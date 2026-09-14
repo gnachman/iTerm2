@@ -44,12 +44,24 @@ var detail: String? = nil
 // back what the last Stop/SubagentStop knew.
 var backgroundTasks: Int? = nil
 
+// Codex CLI sends no background_tasks, so its count is kept here from
+// SubagentStart/SubagentStop. It also fires no Stop when a detached sub-agent
+// finishes after the parent went idle, so SubagentStop needs to know whether
+// the turn is still open; that lives in a session variable. Both cost an extra
+// it2 round trip (~200 ms), so only Codex pays for them. Codex stamps turn_id
+// on every event; Claude Code only on MessageDisplay, which isn't handled here.
+let isCodex = json["turn_id"] != nil
+let turnOpenVariable = "user.ccStatusTurnOpen"
+
 switch eventName {
 case "UserPromptSubmit", "PreToolUse", "PostToolUse":
     status = "working"
     dotColor = "#ff9500"
     textColor = "#ff9500"
     detail = ""  // new turn / tool activity — previous detail is stale
+    if eventName == "UserPromptSubmit", isCodex {
+        setSessionVariable(turnOpenVariable, "1", it2SessionID: sessionID)
+    }
 case "PermissionRequest":
     status = "waiting"
     dotColor = "#5f87ff"
@@ -117,6 +129,9 @@ case "Stop":
     if let counted = backgroundTaskCount(json) {
         running = counted
         backgroundTasks = counted
+    } else if isCodex {
+        running = storedBackgroundTaskCount(it2SessionID: sessionID)
+        setSessionVariable(turnOpenVariable, "0", it2SessionID: sessionID)
     } else {
         running = 0
     }
@@ -135,6 +150,33 @@ case "Stop":
             detail = ""
         }
     }
+case "Interrupt":
+    // Codex CLI only: Esc cancelled the turn and no Stop follows.
+    guard isCodex else {
+        exit(0)
+    }
+    let running = storedBackgroundTaskCount(it2SessionID: sessionID)
+    setSessionVariable(turnOpenVariable, "0", it2SessionID: sessionID)
+    if running > 0 {
+        status = "working"
+        dotColor = "#ff9500"
+        textColor = "#ff9500"
+        detail = backgroundDetail(count: running)
+    } else {
+        status = "idle"
+        dotColor = "#00d75f"
+        textColor = "#888888"
+        detail = ""
+    }
+case "SubagentStart":
+    // Codex CLI only; Claude Code reports the count in Stop/SubagentStop.
+    guard isCodex else {
+        exit(0)
+    }
+    backgroundTasks = storedBackgroundTaskCount(it2SessionID: sessionID) + 1
+    status = "working"
+    dotColor = "#ff9500"
+    textColor = "#ff9500"
 case "SubagentStop":
     // Fires when any subagent finishes, including background agents
     // completing while the main loop sits at the prompt, so it is the
@@ -144,7 +186,23 @@ case "SubagentStop":
     // while work remains: SubagentStop also fires for internal utility
     // agents while the session is genuinely idle, and flashing those as
     // "working" would create the inverse of the false-idle bug.
-    guard let remaining = backgroundTaskCount(json, excludingID: json["agent_id"] as? String) else {
+    let remaining: Int
+    if let counted = backgroundTaskCount(json, excludingID: json["agent_id"] as? String) {
+        remaining = counted
+    } else if isCodex {
+        remaining = max(0, storedBackgroundTaskCount(it2SessionID: sessionID) - 1)
+        if remaining == 0, sessionVariable(turnOpenVariable, it2SessionID: sessionID) != "1" {
+            // Last one finished after the parent already stopped; nothing else fires.
+            status = "idle"
+            dotColor = "#00d75f"
+            textColor = "#888888"
+            if let message = json["last_assistant_message"] as? String {
+                detail = condense(message)
+            } else {
+                detail = ""
+            }
+        }
+    } else {
         exit(0)  // No field: nothing to learn from this event.
     }
     backgroundTasks = remaining
@@ -269,6 +327,28 @@ func resolveIt2() -> (executable: URL, leadingArgs: [String]) {
     return (URL(fileURLWithPath: "/usr/bin/env"), ["it2"])
 }
 
+/// Trimmed stdout of an it2 subcommand, or nil if it failed.
+func it2Output(_ args: [String]) -> String? {
+    let it2 = resolveIt2()
+    let process = Process()
+    process.executableURL = it2.executable
+    process.arguments = it2.leadingArgs + args
+    let pipe = Pipe()
+    process.standardOutput = pipe
+    process.standardError = FileHandle.nullDevice
+    do {
+        try process.run()
+    } catch {
+        return nil
+    }
+    let data = pipe.fileHandleForReading.readDataToEndOfFile()
+    process.waitUntilExit()
+    guard process.terminationStatus == 0 else {
+        return nil
+    }
+    return String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+}
+
 // MARK: - Background tasks
 
 /// Number of still-running background subagents/tasks reported in a hook
@@ -335,26 +415,21 @@ func backgroundDetail(count: Int) -> String {
 /// (no stored value, session gone, it2 failed): the safe default, since
 /// it just restores the pre-background-awareness behavior.
 func storedBackgroundTaskCount(it2SessionID: String) -> Int {
-    let it2 = resolveIt2()
-    let process = Process()
-    process.executableURL = it2.executable
-    process.arguments = it2.leadingArgs + ["session", "get-background-tasks", "-s", it2SessionID]
-    let pipe = Pipe()
-    process.standardOutput = pipe
-    process.standardError = FileHandle.nullDevice
-    do {
-        try process.run()
-    } catch {
-        return 0
-    }
-    let data = pipe.fileHandleForReading.readDataToEndOfFile()
-    process.waitUntilExit()
-    guard process.terminationStatus == 0,
-          let output = String(data: data, encoding: .utf8),
-          let count = Int(output.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+    guard let output = it2Output(["session", "get-background-tasks", "-s", it2SessionID]),
+          let count = Int(output) else {
         return 0
     }
     return max(0, count)
+}
+
+// MARK: - Session variables
+
+func setSessionVariable(_ name: String, _ value: String, it2SessionID: String) {
+    _ = it2Output(["session", "set-var", name, value, "--session", it2SessionID])
+}
+
+func sessionVariable(_ name: String, it2SessionID: String) -> String? {
+    return it2Output(["session", "get-var", name, "--session", it2SessionID])
 }
 
 // MARK: - Detail formatting
