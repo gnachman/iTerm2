@@ -731,33 +731,6 @@
       ]
     },
     {
-      "name": "llama4:latest",
-      "vendor": "llama",
-      "api": "llama",
-      "url": "http://localhost:11434/api/chat",
-      "contextWindowTokens": 10000000,
-      "maxResponseTokens": 10000000,
-      "features": [
-        "streaming",
-        "functionCalling"
-      ],
-      "recommended": true,
-      "fixtureExempt": true
-    },
-    {
-      "name": "llama3.3:latest",
-      "vendor": "llama",
-      "api": "llama",
-      "url": "http://localhost:11434/api/chat",
-      "contextWindowTokens": 131072,
-      "maxResponseTokens": 131072,
-      "features": [
-        "streaming",
-        "functionCalling"
-      ],
-      "fixtureExempt": true
-    },
-    {
       "name": "apple-on-device",
       "vendor": "apple",
       "api": "appleIntelligence",

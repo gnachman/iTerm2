@@ -136,6 +136,7 @@ class AIModel: NSObject {
     @objc var hostedWebSearchFeatureEnabled: Bool { model.features.contains(.hostedWebSearch) }
     @objc var hostedCodeInterpreterFeatureEnabled: Bool { model.features.contains(.hostedCodeInterpreter) }
     @objc var configurableThinkingFeatureEnabled: Bool { model.features.contains(.configurableThinking) }
+    @objc var visionFeatureEnabled: Bool { model.features.contains(.vision) }
     @objc var supportsTemperature: Bool { model.supportsTemperature }
 
     @objc var vectorStoreConfig: AIMetadata.Model.VectorStoreConfig { model.vectorStoreConfig }
@@ -159,6 +160,10 @@ class AIMetadata: NSObject {
             case hostedWebSearch // Can perform web searches (e.g., via a built-in tool).
             case hostedCodeInterpreter
             case configurableThinking
+            case vision // Accepts inline image input. Used to gate image
+                        // attachments for self-hosted models (e.g. an Ollama
+                        // vision model), where capability can't be inferred from
+                        // the host the way it can for OpenAI/Anthropic/Google.
         }
         var features: Set<Feature>
 
@@ -202,6 +207,15 @@ class AIMetadata: NSObject {
         var thinkingOnEffort: ResponsesRequestBody.ReasoningOptions.Effort = .medium
         var reasoningEfforts: [ResponsesRequestBody.ReasoningOptions.Effort] = []
         var serviceTiers: [ResponsesRequestBody.ServiceTier] = []
+
+        // The model identifier sent ON THE WIRE, when it must differ from `name`.
+        // `name` is both the display identity (unique, used for pins and picker
+        // resolution) and normally the wire model id, but two dynamic Ollama
+        // servers can expose the same tag: then `name` is disambiguated (e.g.
+        // "llama3.3 (http://gpu2:11434)") while `wireModelName` keeps the raw tag
+        // the server expects. nil means "use name". See effectiveModelName.
+        var wireModelName: String? = nil
+        var effectiveModelName: String { wireModelName ?? name }
 
         // Per-model custom HTTP headers merged into every request to this model's
         // endpoint (see AICustomHeaders.merged). Each entry is a
@@ -298,9 +312,10 @@ class AIMetadata: NSObject {
         return recommendedModel(for: .gemini)
     }
 
-    static var recommendedLlamaModel: Model {
-        return recommendedModel(for: .llama)
-    }
+    // No recommendedLlamaModel / alternateLlamaModels: the Ollama vendor's models
+    // are discovered from the local server (see LLMMetadata.discoveredOllamaModels),
+    // not the static catalog. recommendedModel(for: .llama) would assert since the
+    // catalog no longer ships a llama entry.
 
     static var recommendedAnthropicModel: Model {
         return recommendedModel(for: .anthropic)
@@ -328,12 +343,6 @@ class AIMetadata: NSObject {
         }
     }
 
-    static var alternateLlamaModels: [Model] {
-        return AIMetadata.instance.models.filter { candidate in
-            candidate.vendor == .llama
-        }
-    }
-
     static var alternateAnthropicModels: [Model] {
         return AIMetadata.instance.models.filter { candidate in
             candidate.vendor == .anthropic
@@ -350,10 +359,10 @@ class AIMetadata: NSObject {
     // signed resource that AIModelCatalogUpdater can refresh at runtime). The
     // JSON preserves display order and the first entry is the default model.
     //
-    // Llama supports function calling only without streaming. We don't expose a
-    // "streamingFunctionCalling" feature, so tools are silently omitted while
-    // streaming. To find the places that implement this, search for
-    // #llama-streaming-functions.
+    // Ollama's native /api/chat supports function calling together with streaming
+    // (since Ollama's May 2025 release), so a tool-capable local model gets tools in
+    // the default streaming chat. See LLMProvider.functionsSupported and Llama's
+    // request builder for the request/response handling.
     let models: [Model] = AIModelCatalog.instance.models
 
     // Built-in models offered as presets when creating a manual model. Apple's

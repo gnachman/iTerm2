@@ -19,6 +19,38 @@ New Features:
   hours, run this command”). The timer survives
   restarts, fires immediately if its time already
   passed, and can push your phone when it fires.
+- The Ollama native API type now sizes the
+  context window to your prompt so long prompts
+  are no longer silently truncated, and the
+  chat’s Think toggle now controls whether a
+  reasoning-capable local model thinks. Turning
+  thinking off makes quick questions fast again.
+  There is a new one-click “Ollama (native)”
+  model preset, and the API type is now named
+  “Ollama.” The manual model editor has a Fetch
+  Models button that lists the models installed
+  on your Ollama server, and a Vision checkbox so
+  image-capable local models can accept images.
+
+- New “Ollama (auto-discover)” model preset: point
+  it at your Ollama server and it lists every
+  installed model in the picker automatically,
+  reading each model’s context window and
+  capabilities (thinking, tools, vision) from the
+  server. No need to name models or set
+  capabilities by hand, and newly pulled models
+  show up on refresh.
+
+- Ollama is now a first-class provider in the AI
+  model dropdown, alongside OpenAI, Anthropic,
+  Gemini, and DeepSeek. Selecting it lists the
+  models installed on your local server
+  automatically, with no manual configuration. A
+  non-local Ollama server is still added as a
+  manual model. When Ollama is your default, pick
+  which discovered model to use for regular chats
+  and an optional smaller one for quick background
+  tasks.
 - New OSC 1337 codes let a program move and
   resize its window across monitors using global
   coordinates: SetWindowFrame=x;y;w;h sets the

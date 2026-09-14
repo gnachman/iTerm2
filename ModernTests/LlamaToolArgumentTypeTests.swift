@@ -110,4 +110,59 @@ final class LlamaToolArgumentTypeTests: XCTestCase {
         let args = try JSONDecoder().decode([String: String].self, from: json)
         XCTAssertEqual(args["session_guid"], "ptys_X")
     }
+
+    // MARK: - Streaming preamble + tool call (regression for a review finding)
+
+    // Recursively collect all rendered text from a message body.
+    private func text(in body: LLM.Message.Body) -> String {
+        switch body {
+        case .text(let s): return s
+        case .multipart(let parts): return parts.map { text(in: $0) }.joined()
+        default: return ""
+        }
+    }
+
+    // Finding: a streamed chunk can carry BOTH assistant preamble text and a tool
+    // call in the same delta. The non-streaming path keeps both (a .multipart
+    // body, Llama.swift:114-117), but the streaming path (Llama.swift:150-156)
+    // appends only the function-call message when a tool call is present, silently
+    // dropping the spoken text. The two paths must not diverge: streaming must
+    // still surface the preamble the model actually emitted.
+    func testStreaming_preambleTextWithToolCall_isNotDropped() throws {
+        let data = Data("""
+        {"model":"qwen3","message":{"role":"assistant",\
+        "content":"Let me check the weather for you.",\
+        "tool_calls":[{"function":{"name":"get_weather","arguments":{"city":"SF"}}}]},\
+        "done":false}
+        """.utf8)
+        let response = try JSONDecoder().decode(LlamaResponse<LlamaStreamingValue>.self, from: data)
+        let messages = response.choiceMessages
+
+        let hasFunctionCall = messages.contains { message in
+            if case .functionCall = message.body { return true }
+            return false
+        }
+        XCTAssertTrue(hasFunctionCall, "the tool call must still be delivered")
+
+        let combined = messages.map { text(in: $0.body) }.joined()
+        XCTAssertTrue(combined.contains("Let me check the weather for you."),
+                      "streaming must not drop assistant preamble text that co-arrived with the tool call")
+    }
+
+    // The terminal done:true streamed chunk emits nothing: content and any tool call
+    // already arrived (and were emitted) in earlier done:false chunks. We do NOT
+    // re-emit a tool call seen in the done chunk, because choiceMessages is stateless
+    // per chunk and re-emitting one that also appeared in an earlier delta would
+    // double-dispatch or corrupt it in the streaming accumulator. This pins that
+    // contract (the assumption: a tool call never arrives ONLY in the done chunk).
+    func testStreaming_doneChunk_emitsNothing() throws {
+        let data = Data("""
+        {"model":"qwen3","message":{"role":"assistant","content":"",\
+        "tool_calls":[{"function":{"name":"get_weather","arguments":{"city":"SF"}}}]},\
+        "done":true}
+        """.utf8)
+        let response = try JSONDecoder().decode(LlamaResponse<LlamaStreamingValue>.self, from: data)
+        XCTAssertTrue(response.choiceMessages.isEmpty,
+                      "the terminal done chunk must emit nothing; a repeated tool call here would double-dispatch")
+    }
 }

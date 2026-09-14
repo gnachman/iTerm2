@@ -24,6 +24,19 @@ class AIProviderPreset: NSObject {
     @objc let maxResponseTokens: Int
     @objc let functionCalling: Bool
     @objc let streaming: Bool
+    // Whether to preselect the "Configurable thinking" capability, so the chat's
+    // Think toggle appears. On for native Ollama, whose models often support a
+    // thinking mode controllable via the `think` field.
+    @objc let configurableThinking: Bool
+    // Whether this preset configures a dynamic (auto-discovering) provider whose
+    // models come from the server's /api/tags rather than a single named model.
+    @objc let dynamicModels: Bool
+    // Whether to preselect the Vision capability. Off by default: a local runner
+    // is a mix of text and vision models, and enabling it for a text-only model
+    // would make image attachments serialize to a runner that rejects them, so
+    // the user opts in per vision model. (A future dynamic provider can read this
+    // from the server's per-model capabilities.)
+    @objc let vision: Bool
     // Suggested model name shown as placeholder text in the Model field so the
     // user knows the shape of a valid identifier for this host.
     @objc let placeholderModelName: String
@@ -35,6 +48,9 @@ class AIProviderPreset: NSObject {
          maxResponseTokens: Int = 16_384,
          functionCalling: Bool = true,
          streaming: Bool = true,
+         configurableThinking: Bool = false,
+         dynamicModels: Bool = false,
+         vision: Bool = false,
          placeholderModelName: String) {
         self.name = name
         self.url = url
@@ -43,6 +59,9 @@ class AIProviderPreset: NSObject {
         self.maxResponseTokens = maxResponseTokens
         self.functionCalling = functionCalling
         self.streaming = streaming
+        self.configurableThinking = configurableThinking
+        self.dynamicModels = dynamicModels
+        self.vision = vision
         self.placeholderModelName = placeholderModelName
     }
 }
@@ -55,6 +74,25 @@ extension AIMetadata {
     // the resolved vendor (these all classify as .openAI).
     @objc(providerPresets) var providerPresets: [AIProviderPreset] {
         return [
+            // The recommended Ollama setup: discover the installed models and
+            // their capabilities from the server, so nothing is named or toggled
+            // by hand. The Model field and capability checkboxes are unused.
+            AIProviderPreset(
+                name: "Ollama (auto-discover)",
+                url: "http://localhost:11434/api/chat",
+                api: .llama,
+                configurableThinking: true,
+                dynamicModels: true,
+                placeholderModelName: "qwen3.5"),
+            // The native /api/chat dialect for a single hand-named model: the only
+            // endpoint that can control thinking (the `think` field) and size the
+            // context window, which the OpenAI-compatible endpoint below cannot.
+            AIProviderPreset(
+                name: "Ollama (native)",
+                url: "http://localhost:11434/api/chat",
+                api: .llama,
+                configurableThinking: true,
+                placeholderModelName: "qwen3.5"),
             AIProviderPreset(
                 name: "Ollama (OpenAI-compatible)",
                 url: "http://localhost:11434/v1/chat/completions",

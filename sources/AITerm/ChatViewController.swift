@@ -568,16 +568,19 @@ extension ChatViewController {
         .llama
     ]
 
+    // The built-in catalog plus the currently-discovered Ollama models, which live
+    // in the discovery cache rather than the static catalog. Used everywhere the
+    // chat classifies a model by name so a first-class Ollama model resolves and
+    // isn't mistaken for "unknown" (which crosses to the default cloud vendor).
+    private var builtInModels: [AIMetadata.Model] {
+        return AIMetadata.instance.models + LLMMetadata.discoveredOllamaModels()
+    }
+
     private func model(named name: String?) -> AIMetadata.Model? {
-        guard let name else {
-            return nil
-        }
-        // A manual config wins over a built-in that shares the name, matching
-        // how AIConversation resolves the pinned model at request time.
-        if let manual = manualConfiguredModels.first(where: { $0.name == name }) {
-            return manual
-        }
-        return AIMetadata.instance.models.first { $0.name == name }
+        // Shared resolver so the UI, request routing (AIConversation.complete), and
+        // capability gating (ChatAgent) can never disagree: manual/custom models win
+        // over the built-in catalog, and discovered built-in Ollama tags are included.
+        return LLMMetadata.model(named: name)
     }
 
     private var storedChatModel: AIMetadata.Model? {
@@ -693,7 +696,7 @@ extension ChatViewController {
         if manualConfiguredModels.contains(where: { $0.name == name }) {
             return ChatProviderOption.manualModel(name: name).identifier
         }
-        if let builtInVendor = AIMetadata.instance.models.first(where: { $0.name == name })?.vendor {
+        if let builtInVendor = builtInModels.first(where: { $0.name == name })?.vendor {
             return ChatProviderOption.vendorIdentifier(builtInVendor)
         }
         if let effectiveChatProvider {
@@ -711,17 +714,37 @@ extension ChatViewController {
                 manualConfiguredModels.contains { $0.name == modelName }
         }
         if let vendor = ChatProviderOption.vendor(from: identifier) {
-            return AIMetadata.instance.models.contains { $0.name == modelName && $0.vendor == vendor }
+            return builtInModels.contains { $0.name == modelName && $0.vendor == vendor }
         }
         return false
     }
 
     private func providerIsAvailable(_ vendor: iTermAIVendor) -> Bool {
-        guard !LLMMetadata.alternateModels(for: vendor).isEmpty else {
+        return Self.providerIsAvailable(vendor,
+                                        alternateModels: LLMMetadata.alternateModels(for: vendor),
+                                        apiKey: AITermControllerObjC.apiKey(for: vendor))
+    }
+
+    // The pure availability rule, extracted so it's unit-testable without a full
+    // view controller (which needs a live ChatClient/broker). Behavior-preserving:
+    // the instance method above just supplies the inputs.
+    static func providerIsAvailable(_ vendor: iTermAIVendor,
+                                    alternateModels: [AIMetadata.Model],
+                                    apiKey: String?) -> Bool {
+        // The built-in Ollama vendor is self-hosted (default endpoint is localhost)
+        // and intentionally keyless: the request path grants it a placeholder
+        // registration (AITermController.isSelfHosted). It must stay selectable even
+        // before discovery has landed any models (server-down-at-launch window, the
+        // very case the self-healing cache exists to cover), so it is exempt from
+        // both the empty-models guard and the API-key check below. Remote Ollama
+        // servers are configured as manual entries, not this vendor.
+        if vendor == .llama {
+            return true
+        }
+        guard !alternateModels.isEmpty else {
             return false
         }
-        let key = AITermControllerObjC.apiKey(for: vendor)
-        return key?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+        return apiKey?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
     }
 
     private func recommendedModel(for provider: iTermAIVendor) -> AIMetadata.Model? {

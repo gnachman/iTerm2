@@ -295,6 +295,18 @@
         }
       }
     },
+    "AIKeyHint.NoKeySet" : {
+      "comment" : "Hint telling the user no API key is set yet for a provider; %@ is the provider name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No %@ API key is set yet."
+          }
+        }
+      }
+    },
     "AIKeyHint.NoKeyUsed" : {
       "comment" : "Hint shown when the selected model needs no API key",
       "extractionState" : "extracted_with_value",
@@ -1051,6 +1063,30 @@
         }
       }
     },
+    "AIModelEditor.AllInstalledModels" : {
+      "comment" : "Model popup choice meaning use every model discovered on the Ollama server",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "All installed models"
+          }
+        }
+      }
+    },
+    "AIModelEditor.AutoDiscoverEntryExists" : {
+      "comment" : "Validation error when an auto-discover entry already exists for a server",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "There is already an auto-discover entry for this server."
+          }
+        }
+      }
+    },
     "AIModelEditor.ConfigurableThinking" : {
       "comment" : "Checkbox label for whether a model supports configurable thinking",
       "extractionState" : "extracted_with_value",
@@ -1303,6 +1339,42 @@
         }
       }
     },
+    "AIModelEditor.CouldNotFetchModelsTitle" : {
+      "comment" : "Alert title shown when listing the Ollama server's models fails",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could Not Fetch Models"
+          }
+        }
+      }
+    },
+    "AIModelEditor.CouldNotReachServerBody" : {
+      "comment" : "Alert body shown when refreshing the Ollama model list fails",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not reach the Ollama server to list its models. Check that it is running and the URL is correct."
+          }
+        }
+      }
+    },
+    "AIModelEditor.CouldNotReachServerTitle" : {
+      "comment" : "Alert title shown when refreshing the Ollama model list fails",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could Not Reach Server"
+          }
+        }
+      }
+    },
     "AIModelEditor.CustomHeadersLabel" : {
       "comment" : "Label for the custom HTTP headers table",
       "extractionState" : "extracted_with_value",
@@ -1341,6 +1413,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "自定义头信息："
+          }
+        }
+      }
+    },
+    "AIModelEditor.DiscoverModelsAutomatically" : {
+      "comment" : "Checkbox that makes the model editor discover installed Ollama models instead of naming one by hand",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Discover installed models automatically (Ollama)"
           }
         }
       }
@@ -1593,6 +1677,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "流式响应"
+          }
+        }
+      }
+    },
+    "AIModelEditor.FeatureVision" : {
+      "comment" : "Checkbox label for the vision (image input) model feature",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Vision (image input)"
+          }
+        }
+      }
+    },
+    "AIModelEditor.FetchModels" : {
+      "comment" : "Button that lists models installed on the server",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Fetch Models"
+          }
+        }
+      }
+    },
+    "AIModelEditor.FetchingProgress" : {
+      "comment" : "Transient button title while the app lists models from the Ollama server",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Fetching…"
           }
         }
       }
@@ -1933,6 +2053,42 @@
         }
       }
     },
+    "AIModelEditor.MissingURLBody" : {
+      "comment" : "Alert body shown when the user fetches models without entering a server URL",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enter the server URL before fetching models."
+          }
+        }
+      }
+    },
+    "AIModelEditor.MissingURLTitle" : {
+      "comment" : "Alert title shown when the user fetches models without entering a server URL",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Missing URL"
+          }
+        }
+      }
+    },
+    "AIModelEditor.ModelEntryExists" : {
+      "comment" : "Validation error when an entry for this model already exists on a server",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "There is already an entry for this model on this server."
+          }
+        }
+      }
+    },
     "AIModelEditor.ModelLabel" : {
       "comment" : "Label for the model name field",
       "extractionState" : "extracted_with_value",
@@ -2017,6 +2173,41 @@
         }
       }
     },
+    "AIModelEditor.ModelsRefreshedBody" : {
+      "comment" : "Alert body after refreshing the Ollama model list; %ld is the number of models found",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "Found %ld installed model. Choose it from the Model popup, or “All installed models” to expose every one."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "new",
+                  "value" : "Found %ld installed models. Choose one from the Model popup, or “All installed models” to expose every one."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "AIModelEditor.ModelsRefreshedTitle" : {
+      "comment" : "Alert title shown after successfully refreshing the Ollama model list",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Models Refreshed"
+          }
+        }
+      }
+    },
     "AIModelEditor.NamesUnique" : {
       "comment" : "Validation error when a manual model name is already taken",
       "extractionState" : "extracted_with_value",
@@ -2055,6 +2246,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "手动模型名称必须唯一。"
+          }
+        }
+      }
+    },
+    "AIModelEditor.NoModelsDiscovered" : {
+      "comment" : "Disabled model popup item shown when no Ollama models have been discovered yet",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No models discovered (click Refresh Models)"
           }
         }
       }
@@ -2139,6 +2342,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "预设："
+          }
+        }
+      }
+    },
+    "AIModelEditor.RefreshModels" : {
+      "comment" : "Button that re-lists models installed on the Ollama server",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Refresh Models"
           }
         }
       }
@@ -3153,7 +3368,7 @@
     },
     "AIProvider.Llama" : {
       "comment" : "Llama provider name",
-      "extractionState" : "extracted_with_value",
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -3189,6 +3404,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Llama"
+          }
+        }
+      }
+    },
+    "AIProvider.Ollama" : {
+      "comment" : "Ollama provider name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ollama"
           }
         }
       }
@@ -3483,6 +3710,78 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "切换到我的模型"
+          }
+        }
+      }
+    },
+    "AISettings.ContactingOllamaBody" : {
+      "comment" : "Progress alert body while contacting the local Ollama server",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Fetching the models installed on your local Ollama server."
+          }
+        }
+      }
+    },
+    "AISettings.ContactingOllamaTitle" : {
+      "comment" : "Progress alert title while contacting the local Ollama server",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Contacting Ollama…"
+          }
+        }
+      }
+    },
+    "AISettings.CouldNotReachOllamaBody" : {
+      "comment" : "Alert body shown when the local Ollama server can't be reached; %@ is the server endpoint URL",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not reach the Ollama server at %@. Make sure Ollama is running, then try again."
+          }
+        }
+      }
+    },
+    "AISettings.CouldNotReachOllamaTitle" : {
+      "comment" : "Alert title shown when the local Ollama server can't be reached",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could Not Reach Ollama"
+          }
+        }
+      }
+    },
+    "AISettings.OllamaNoModelsFound" : {
+      "comment" : "Disabled popup item shown when no Ollama models have been discovered for the Regular/Budget pickers",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No models found (is Ollama running?)"
+          }
+        }
+      }
+    },
+    "AISettings.OllamaSameAsRegular" : {
+      "comment" : "Budget-model popup choice meaning reuse the regular model",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Same as regular model"
           }
         }
       }
@@ -21093,6 +21392,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "可让辅助功能访问的历史记录最大行数。  \n辅助功能API可能导致iTerm2变慢。为限制影响，可限制每个会话中可见的辅助功能行数。每个会话的最后几行将可被访问。"
+          }
+        }
+      }
+    },
+    "AdvancedSetting.ollamaKeepAlive" : {
+      "comment" : "Advanced setting: ollamaKeepAlive",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ollama keep_alive for native /api/chat requests.\nHow long Ollama keeps the model resident after a request, e.g. 30m, 1h, or 0 to unload immediately. Empty means omit the field and use Ollama’s own default."
+          }
+        }
+      }
+    },
+    "AdvancedSetting.ollamaNumCtx" : {
+      "comment" : "Advanced setting: ollamaNumCtx",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ollama context window size (num_ctx) for native /api/chat requests.\nOllama defaults num_ctx to a small value (around 4096) regardless of the model, silently truncating long prompts. 0 means size it automatically per request, capped at the model’s context window. A positive value overrides that and is sent verbatim (larger values use more memory)."
           }
         }
       }
@@ -107419,6 +107742,66 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未知原因"
+          }
+        }
+      }
+    },
+    "Ollama.Discovery.BadURL" : {
+      "comment" : "Error shown when the Ollama server URL can't be turned into a model-listing URL; %@ is the URL the user entered",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not derive an /api/tags URL from “%@”."
+          }
+        }
+      }
+    },
+    "Ollama.Discovery.GenericServer" : {
+      "comment" : "Fallback name for the Ollama server when its hostname is unknown, inserted into a “Could not reach …” error",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "the server"
+          }
+        }
+      }
+    },
+    "Ollama.Discovery.NoModels" : {
+      "comment" : "Error shown when the Ollama server reports zero installed models",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No installed models were found on the Ollama server."
+          }
+        }
+      }
+    },
+    "Ollama.Discovery.NoResponse" : {
+      "comment" : "Error shown when the Ollama server returned no data",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ollama returned no response."
+          }
+        }
+      }
+    },
+    "Ollama.Discovery.Unreachable" : {
+      "comment" : "Error shown when the Ollama server can't be reached; first %@ is the host, second %@ is the underlying network error",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not reach Ollama at %1$@: %2$@"
           }
         }
       }

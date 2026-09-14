@@ -405,15 +405,12 @@ struct AIConversation {
             // economy-model path in ScreenWatchPoller).
             controller.providerOverride = LLMProvider(model: modelOverride)
         } else if let modelName = model {
-            // Consult manually-configured models too: AIMetadata.instance.models
-            // is only the built-in catalog, so a chat pinned to a manual/custom
-            // model would otherwise fall through to the global default and be
-            // sent to a different model (and possibly vendor/URL) than the UI
-            // shows. A manual model WINS over a built-in that shares its name so
-            // a user proxying a known model (custom url/api under the same name)
-            // reaches their endpoint rather than the public one.
-            let pinnedModel = LLMMetadata.manualModels().first(where: { $0.name == modelName })
-                ?? AIMetadata.instance.models.first(where: { $0.name == modelName })
+            // Resolve the pinned name through the shared resolver so routing agrees
+            // with the UI: it consults manual/custom models AND discovered built-in
+            // Ollama tags, not just the built-in catalog. Without the discovered set,
+            // a chat pinned to a local Ollama tag would fall through to the global
+            // (possibly cloud) default and be sent there instead of the local server.
+            let pinnedModel = LLMMetadata.model(named: modelName)
             controller.providerOverride = pinnedModel.map { LLMProvider(model: $0) }
         } else {
             controller.providerOverride = nil
@@ -476,11 +473,30 @@ struct AIConversation {
                 if let previousResponseID = controller?.previousResponseID {
                     amended.controller.previousResponseID = previousResponseID
                 }
+                // A thinking model can stream its entire answer in the reasoning
+                // channel with EMPTY visible content (small local Ollama models do
+                // this). Mirror the non-streaming path (Llama.choiceMessages): rather
+                // than show a blank answer bubble, promote the accumulated reasoning
+                // to the visible body. Only fires when nothing visible was streamed,
+                // so vendors whose final answer has real content are unaffected.
+                let reasoning = delegate?.pendingReasoning
+                var finalBody = accumulator
+                var finalReasoning = reasoning
+                if !accumulator.hasVisibleContent, let reasoning, !reasoning.isEmpty {
+                    finalBody = .text(reasoning)
+                    // Don't ALSO deliver it as reasoning: it would render/persist as
+                    // both the answer bubble AND the collapsible reasoning section
+                    // (the non-streaming path nils it for the same reason). This only
+                    // reaches the empty-content case, which a vendor that needs
+                    // reasoning on round-trip (DeepSeek) never hits (its final answer
+                    // carries real content).
+                    finalReasoning = nil
+                }
                 let message = AITermController.Message(
                     responseID: controller?.previousResponseID,
                     role: .assistant,
-                    body: accumulator,
-                    reasoningContent: delegate?.pendingReasoning)
+                    body: finalBody,
+                    reasoningContent: finalReasoning)
                 amended.messages.append(message)
                 completion(.success(amended))
                 break
