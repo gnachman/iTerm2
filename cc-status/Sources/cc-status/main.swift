@@ -1,5 +1,8 @@
 import Foundation
 
+// Driven by Claude Code hooks (~/.claude/settings.json). Codex CLI hooks
+// (~/.codex/hooks.json) send the same payload shape, so one binary serves both.
+
 // Get iTerm2 session ID from environment.
 // TERM_SESSION_ID is like "w0t0p0:D1B2BAE2-3D01-4BB6-9021-27D6CF210957"
 guard let termSessionID = ProcessInfo.processInfo.environment["TERM_SESSION_ID"],
@@ -214,6 +217,9 @@ let it2 = resolveIt2()
 let process = Process()
 process.executableURL = it2.executable
 process.arguments = it2.leadingArgs + it2Args
+// it2 prints "Session status updated." and Codex rejects non-JSON stdout from
+// SessionStart/Stop hooks. stderr still shows real failures.
+process.standardOutput = FileHandle.nullDevice
 do {
     try process.run()
 } catch {
@@ -237,9 +243,10 @@ if process.terminationStatus != 0 {
 /// which would otherwise make `/usr/bin/env it2` fail to find it2 and — because
 /// we exit 0 on a failed launch — silently leave the Session Status tool empty.
 ///
-/// Returns the absolute it2 path when the sibling is present and executable;
-/// otherwise falls back to a PATH lookup via /usr/bin/env so a hand-installed it2
-/// still works if the bundle layout ever changes.
+/// Returns the absolute it2 path when the sibling is present and executable,
+/// then the it2 inside an installed iTerm2.app; otherwise falls back to a PATH
+/// lookup via /usr/bin/env so a hand-installed it2 still works if the bundle
+/// layout ever changes.
 func resolveIt2() -> (executable: URL, leadingArgs: [String]) {
     let fm = FileManager.default
     // Claude Code invokes the hook by its absolute command path, so argv[0] is
@@ -250,6 +257,14 @@ func resolveIt2() -> (executable: URL, leadingArgs: [String]) {
         .appendingPathComponent("it2")
     if fm.isExecutableFile(atPath: sibling.path) {
         return (sibling, [])
+    }
+    // Standalone build: use the it2 inside the installed iTerm2.app.
+    let home = fm.homeDirectoryForCurrentUser.path
+    for app in ["\(home)/Applications/iTerm.app", "/Applications/iTerm.app"] {
+        let candidate = URL(fileURLWithPath: app + "/Contents/Resources/utilities/it2")
+        if fm.isExecutableFile(atPath: candidate.path) {
+            return (candidate, [])
+        }
     }
     return (URL(fileURLWithPath: "/usr/bin/env"), ["it2"])
 }
@@ -407,6 +422,16 @@ func toolCallSummary(toolName: String, toolInput: [String: Any]) -> String {
     case "Agent", "Task":
         let desc = (toolInput["description"] as? String) ?? ""
         return "\(toolName): \(desc)"
+    case "apply_patch":
+        // Codex CLI's file edit. tool_input is the whole patch; show the files.
+        let patch = (toolInput["patch"] as? String) ?? (toolInput["input"] as? String) ?? ""
+        let files = applyPatchFiles(patch)
+        if files.isEmpty {
+            return "Edit"
+        }
+        return "Edit: " + files.map { shortPath($0) }.joined(separator: ", ")
+    case "update_plan":
+        return "Update plan"
     case "WebFetch":
         let url = (toolInput["url"] as? String) ?? ""
         return "WebFetch: \(shortURL(url))"
@@ -428,6 +453,22 @@ func toolCallSummary(toolName: String, toolInput: [String: Any]) -> String {
         // (AskUserQuestion, TodoWrite, ExitPlanMode, …) never leaks into the UI.
         return humanize(toolName)
     }
+}
+
+/// Files named in the "*** Update/Add/Delete File:" headers of an apply_patch.
+func applyPatchFiles(_ patch: String) -> [String] {
+    var files: [String] = []
+    for line in patch.split(separator: "\n", omittingEmptySubsequences: true) {
+        for prefix in ["*** Update File: ", "*** Add File: ", "*** Delete File: "] {
+            if line.hasPrefix(prefix) {
+                let path = String(line.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
+                if !path.isEmpty, !files.contains(path) {
+                    files.append(path)
+                }
+            }
+        }
+    }
+    return files
 }
 
 /// Split a PascalCase/camelCase tool identifier into spaced words so unhandled
