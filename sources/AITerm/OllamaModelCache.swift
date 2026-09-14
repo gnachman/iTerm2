@@ -30,6 +30,10 @@ class OllamaModelCache: NSObject {
         var haveSucceeded = false
         var lastAttempt: Date?
         var consecutiveFailures = 0
+        // Consecutive suspicious-empty results (a reachable server returning [] after
+        // it previously had models). Bounded so a genuinely-emptied server is
+        // eventually accepted instead of showing stale models forever.
+        var consecutiveEmpties = 0
     }
 
     // The aggregate result of the fetch batch an update() completed, used to resolve
@@ -64,6 +68,11 @@ class OllamaModelCache: NSObject {
     // Stop the timer-driven retry loop after this many consecutive failures so a
     // permanently-down server isn't probed forever; read-driven recovery remains.
     let maxAutoRetries = 6
+    // After this many consecutive suspicious-empty results (a reachable server that
+    // keeps returning [] after it previously had models), accept the emptiness as
+    // real (the user cleared the server) rather than retaining stale models forever.
+    // Kept below maxAutoRetries so the decision lands before timer retries stop.
+    let maxSuspiciousEmpties = 3
 
     // Disk persistence is enabled only after loadPersistedModels() runs (at app
     // launch), so tests that use the shared instance don't touch user defaults.
@@ -92,7 +101,13 @@ class OllamaModelCache: NSObject {
             return true
         }
         let elapsed = entry.lastAttempt.map { nowProvider().timeIntervalSince($0) } ?? .infinity
-        return entry.haveSucceeded ? elapsed >= successTTL : elapsed >= failureRetryInterval
+        // Use the long success TTL only for a currently-HEALTHY endpoint. An endpoint
+        // that is failing right now (consecutiveFailures > 0) uses the short failure
+        // interval even though it succeeded before (or was restored from persistence
+        // with haveSucceeded=true), so a server that comes back repopulates the picker
+        // promptly instead of staying wedged until successTTL elapses.
+        let healthy = entry.haveSucceeded && entry.consecutiveFailures == 0
+        return elapsed >= (healthy ? successTTL : failureRetryInterval)
     }
 
     // The cached models for an endpoint. Kicks off a background refresh when
@@ -237,16 +252,29 @@ class OllamaModelCache: NSObject {
         // failure: keep the last good models and arm a bounded retry, exactly like a
         // fetch failure, so the picker repopulates on its own. (A first-ever empty,
         // i.e. no prior models, is still accepted as a genuine empty server.)
-        let suspiciousEmpty = (result?.isEmpty ?? false) && entry.haveSucceeded && !entry.models.isEmpty
+        let isSuspiciousEmpty = (result?.isEmpty ?? false) && entry.haveSucceeded && !entry.models.isEmpty
+        // Escape hatch: after enough consecutive suspicious-empties, stop retaining
+        // stale models and accept the empty list as the server's real (now-empty)
+        // state - otherwise a server the user genuinely cleared would show deleted
+        // models forever (persistence reloads them and every fetch is empty again).
+        let acceptEmpty = isSuspiciousEmpty && (entry.consecutiveEmpties + 1) >= maxSuspiciousEmpties
+        let suspiciousEmpty = isSuspiciousEmpty && !acceptEmpty
         if let result, !suspiciousEmpty {
+            // Genuine success (non-empty), a first-ever empty, or a now-accepted empty.
             changed = !entry.haveSucceeded || entry.models != result
             entry.models = result
             entry.haveSucceeded = true
             entry.consecutiveFailures = 0
+            entry.consecutiveEmpties = 0
             if countsAgainstInFlight && !lastOfBatch {
                 batchHadSuccess[endpoint] = true
             }
         } else if lastOfBatch && !hadSuccess {
+            // Hard failure, or a not-yet-accepted suspicious empty: keep the last-good
+            // models and arm a bounded retry.
+            if suspiciousEmpty {
+                entry.consecutiveEmpties += 1
+            }
             entry.consecutiveFailures += 1
             scheduleRetry = entry.consecutiveFailures <= maxAutoRetries
         }
@@ -260,8 +288,10 @@ class OllamaModelCache: NSObject {
         cache[endpoint] = entry
         lock.unlock()
 
-        if suspiciousEmpty {
-            DLog("Ollama discovery for \(endpoint): empty result ignored, kept \(entry.models.count) cached model(s); scheduleRetry=\(scheduleRetry)")
+        if acceptEmpty {
+            DLog("Ollama discovery for \(endpoint): accepted empty server after \(maxSuspiciousEmpties) empties; cleared cached models")
+        } else if suspiciousEmpty {
+            DLog("Ollama discovery for \(endpoint): empty result ignored, kept \(entry.models.count) cached model(s) (empties=\(entry.consecutiveEmpties)); scheduleRetry=\(scheduleRetry)")
         } else if let result {
             DLog("Ollama discovery for \(endpoint): success, \(result.count) model(s), changed=\(changed)")
         } else {

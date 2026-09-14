@@ -40,6 +40,18 @@ final class OllamaModelDiscoveryTests: XCTestCase {
         XCTAssertNil(OllamaModelDiscovery.tagsURL(fromEndpoint: "not a url"))
     }
 
+    // A reverse proxy that serves Ollama under a subpath (e.g. "/ollama") must keep
+    // that prefix: only the trailing chat suffix is swapped for /api/tags (or
+    // /api/show), not the whole path.
+    func test_tagsURL_preservesReverseProxyPrefix() {
+        XCTAssertEqual(OllamaModelDiscovery.tagsURL(fromEndpoint: "https://gw.example.com/ollama/api/chat")?.absoluteString,
+                       "https://gw.example.com/ollama/api/tags")
+        XCTAssertEqual(OllamaModelDiscovery.tagsURL(fromEndpoint: "https://gw.example.com/ollama/v1/chat/completions")?.absoluteString,
+                       "https://gw.example.com/ollama/api/tags")
+        XCTAssertEqual(OllamaModelDiscovery.showURL(fromEndpoint: "https://gw.example.com/ollama/api/chat")?.absoluteString,
+                       "https://gw.example.com/ollama/api/show")
+    }
+
     // The discovery probe must validate headers the same way the chat path does
     // (AICustomHeaders): a bad RFC-7230 name or a control-char value is dropped, so
     // discovery and chat authenticate with the same set.

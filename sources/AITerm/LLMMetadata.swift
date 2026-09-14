@@ -131,17 +131,21 @@ class LLMMetadata: NSObject {
             // The Ollama vendor's models are discovered from the local server, so
             // there is no sane automatic choice of a default. The user picks one
             // explicitly (the "Regular model" popup, stored in
-            // kPreferenceKeyAIOllamaRegularModel); honor it when it is still
-            // installed. Absent a valid pick (not yet chosen, or the tag was
-            // removed), fall back to the lexicographically-first discovered tag for
-            // determinism, or a placeholder while discovery is pending so the
-            // vendor never crosses to a cloud default.
+            // kPreferenceKeyAIOllamaRegularModel).
             let discovered = discoveredOllamaModels()
-            if let chosen = iTermPreferences.string(forKey: kPreferenceKeyAIOllamaRegularModel),
-               !chosen.isEmpty,
-               let model = discovered.first(where: { $0.name == chosen }) {
-                return model
+            let chosen = iTermPreferences.string(forKey: kPreferenceKeyAIOllamaRegularModel) ?? ""
+            if !chosen.isEmpty {
+                // A model was explicitly chosen: honor it when installed. If it is
+                // transiently missing from discovery (server restarting, the tag being
+                // re-pulled, or /api/tags briefly returned a subset), return the
+                // pending placeholder rather than silently substituting a DIFFERENT
+                // discovered tag - a new chat should wait for discovery, not start on a
+                // model the user didn't choose.
+                return discovered.first(where: { $0.name == chosen }) ?? pendingOllamaModel()
             }
+            // No explicit choice yet: fall back to the lexicographically-first
+            // discovered tag for determinism, or the placeholder while discovery is
+            // pending so the vendor never crosses to a cloud default.
             return discovered.sorted { $0.name < $1.name }.first ?? pendingOllamaModel()
         case .anthropic:
             return AIMetadata.recommendedAnthropicModel

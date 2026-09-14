@@ -547,10 +547,13 @@ final class OllamaModelCacheTests: XCTestCase {
         }
     }
 
-    func test_recommendedOllama_staleRegularChoice_fallsBackToFirst() {
+    func test_recommendedOllama_staleRegularChoice_staysPending() {
         withOllamaVendorDefault(regular: "removed:99b", economy: "") {
-            XCTAssertEqual(LLMMetadata.recommendedModel(for: .llama)?.name, "alpha:1b",
-                           "a chosen model that is no longer installed falls back to the first tag")
+            XCTAssertEqual(LLMMetadata.recommendedModel(for: .llama)?.name,
+                           LLMMetadata.pendingOllamaModelName,
+                           "an explicitly-chosen model that is transiently missing must NOT be replaced "
+                           + "by a different tag; return the pending placeholder so a new chat waits for "
+                           + "discovery instead of silently using a model the user didn't choose")
         }
     }
 
@@ -676,6 +679,49 @@ final class OllamaModelCacheTests: XCTestCase {
                        "must report the retained model count, not the raw empty probe's 0")
         XCTAssertFalse(reportedFailed,
                        "retaining the last-good models is a soft failure, reported as not-failed to the caller")
+    }
+
+    // Escape hatch: a server the user genuinely emptied must not show stale models
+    // forever. After maxSuspiciousEmpties consecutive empties, the cache accepts the
+    // empty list and clears the retained models.
+    func test_suspiciousEmpty_afterThreshold_acceptsEmpty() {
+        let cache = makeCache()
+        cache.retryScheduler = { _, _ in }
+        var nextResult: [AIMetadata.Model]? = models("e")
+        cache.fetcher = { _, _, _, completion in completion(nextResult) }
+
+        cache.refresh(endpoint: "e")  // success -> 1 model
+        nextResult = []
+        // The first (maxSuspiciousEmpties - 1) empties retain the models...
+        for _ in 0..<(cache.maxSuspiciousEmpties - 1) {
+            cache.refresh(endpoint: "e", force: true)
+            XCTAssertEqual(cache.cachedModelNames(forEndpoint: "e"), ["qwen3.5:4b"],
+                           "models retained while under the suspicious-empty threshold")
+        }
+        // ...the threshold-th empty accepts it and clears the entry.
+        cache.refresh(endpoint: "e", force: true)
+        XCTAssertEqual(cache.cachedModelNames(forEndpoint: "e"), [],
+                       "after maxSuspiciousEmpties empties the genuinely-empty server is accepted")
+    }
+
+    // A down endpoint that previously succeeded (or was restored from persistence)
+    // must become refreshable again within failureRetryInterval, not be gated by the
+    // 300s success TTL: shouldRefresh keys on the CURRENT failure state.
+    func test_shouldRefresh_currentlyFailingEndpoint_usesFailureInterval() {
+        let cache = makeCache()
+        var clock = Date(timeIntervalSince1970: 1_000)
+        cache.nowProvider = { clock }
+        cache.retryScheduler = { _, _ in }
+        var nextResult: [AIMetadata.Model]? = models("e")
+        cache.fetcher = { _, _, _, completion in completion(nextResult) }
+
+        cache.refresh(endpoint: "e")            // success, haveSucceeded = true
+        nextResult = nil
+        cache.refresh(endpoint: "e", force: true)  // fails; consecutiveFailures > 0
+
+        clock = clock.addingTimeInterval(10)    // 10s later: past failureRetryInterval (5s), well under successTTL
+        XCTAssertTrue(cache.shouldRefresh(endpoint: "e"),
+                      "a currently-failing endpoint must be refreshable within the failure interval, not gated by successTTL")
     }
 
     // A genuinely empty server (no prior models) still accepts the empty list, so a

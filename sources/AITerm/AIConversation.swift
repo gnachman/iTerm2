@@ -476,11 +476,23 @@ struct AIConversation {
                 if let previousResponseID = controller?.previousResponseID {
                     amended.controller.previousResponseID = previousResponseID
                 }
+                // A thinking model can stream its entire answer in the reasoning
+                // channel with EMPTY visible content (small local Ollama models do
+                // this). Mirror the non-streaming path: rather than show a blank
+                // answer bubble, promote the accumulated reasoning to the visible
+                // body. Only fires when nothing visible was streamed, so vendors
+                // whose final answer has real content are unaffected. reasoningContent
+                // is still set, so vendors that need it on round-trip (DeepSeek) keep it.
+                let reasoning = delegate?.pendingReasoning
+                var finalBody = accumulator
+                if !accumulator.hasVisibleContent, let reasoning, !reasoning.isEmpty {
+                    finalBody = .text(reasoning)
+                }
                 let message = AITermController.Message(
                     responseID: controller?.previousResponseID,
                     role: .assistant,
-                    body: accumulator,
-                    reasoningContent: delegate?.pendingReasoning)
+                    body: finalBody,
+                    reasoningContent: reasoning)
                 amended.messages.append(message)
                 completion(.success(amended))
                 break

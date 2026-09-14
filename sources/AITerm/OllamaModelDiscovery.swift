@@ -12,10 +12,27 @@ import Foundation
 
 @objc(iTermOllamaModelDiscovery)
 class OllamaModelDiscovery: NSObject {
-    // The /api/tags URL for the server behind any configured Ollama endpoint,
-    // keeping only scheme/host/port so it works whether the user pointed the
-    // model at /api/chat (native) or /v1/chat/completions (OpenAI-compatible).
-    @objc static func tagsURL(fromEndpoint endpoint: String) -> URL? {
+    // Recognized chat-endpoint path suffixes. Discovery (/api/tags, /api/show) lives
+    // at the SAME base as the chat path, so we strip one of these and keep any
+    // leading prefix (e.g. a reverse proxy that serves Ollama under "/ollama"),
+    // rather than discarding the whole path.
+    private static let chatPathSuffixes = ["/api/chat", "/api/generate",
+                                           "/v1/chat/completions", "/v1/completions"]
+
+    // The base path of a configured chat endpoint: the path with a recognized chat
+    // suffix removed, so "/ollama/api/chat" -> "/ollama" and "/api/chat" -> "".
+    // Falls back to "" when no recognized suffix is present (bare host, or an
+    // endpoint whose path we don't recognize), matching the historical behavior.
+    private static func basePath(fromURLPath path: String) -> String {
+        for suffix in chatPathSuffixes where path.hasSuffix(suffix) {
+            return String(path.dropLast(suffix.count))
+        }
+        return ""
+    }
+
+    // Build a discovery URL (e.g. /api/tags, /api/show) for a configured chat
+    // endpoint, keeping scheme/host/port/userinfo AND any leading path prefix.
+    private static func discoveryURL(fromEndpoint endpoint: String, apiPath: String) -> URL? {
         var url = URL(string: endpoint)
         // A scheme-less "host:port[/path]" parses with scheme="host" and host=nil
         // (e.g. "localhost:11434"), which would fail discovery permanently. Default
@@ -36,8 +53,15 @@ class OllamaModelDiscovery: NSObject {
         // is reachable for discovery, not just for chat requests.
         components.user = url.user
         components.password = url.password
-        components.path = "/api/tags"
+        components.path = basePath(fromURLPath: url.path) + apiPath
         return components.url
+    }
+
+    // The /api/tags URL for the server behind any configured Ollama endpoint. Works
+    // whether the user pointed the model at /api/chat (native) or
+    // /v1/chat/completions (OpenAI-compatible), and preserves a reverse-proxy prefix.
+    @objc static func tagsURL(fromEndpoint endpoint: String) -> URL? {
+        return discoveryURL(fromEndpoint: endpoint, apiPath: "/api/tags")
     }
 
     private struct TagsResponse: Decodable {
@@ -286,14 +310,9 @@ class OllamaModelDiscovery: NSObject {
     }
 
     // The /api/show URL for an endpoint, derived like tagsURL (scheme/host/port,
-    // preserving basic-auth userinfo).
+    // preserving basic-auth userinfo AND any leading reverse-proxy path prefix).
     static func showURL(fromEndpoint endpoint: String) -> URL? {
-        guard let tags = tagsURL(fromEndpoint: endpoint),
-              var components = URLComponents(url: tags, resolvingAgainstBaseURL: false) else {
-            return nil
-        }
-        components.path = "/api/show"
-        return components.url
+        return discoveryURL(fromEndpoint: endpoint, apiPath: "/api/show")
     }
 
     // The POST /api/show request for one model, carrying the entry's custom auth

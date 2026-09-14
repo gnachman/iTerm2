@@ -337,7 +337,7 @@ enum AttachmentMatrix {
             .applicationOctet: .skipped(reason: "no probe encoded in random bytes"),
         ],
 
-        // MARK: llama (local Ollama, default qwen3.5:4b — text + image cells)
+        // MARK: llama (local Ollama, default qwen3.5:4b: text + image cells)
         //
         // Driven by a small, vision-capable model (qwen3.5:4b by default; override
         // via LLAMA_MODELS). Covers the text-shaped cells (the model reads the text

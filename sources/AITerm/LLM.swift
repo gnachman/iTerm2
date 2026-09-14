@@ -221,6 +221,31 @@ extension LLM {
                 maybeContent ?? ""
             }
 
+            // Whether this body carries something the user sees as the answer (real
+            // text, a tool call, a file/code attachment) rather than nothing or a
+            // status-update attachment. Used at streaming finalization to decide
+            // whether to promote streamed reasoning to the visible answer when the
+            // content came back empty (a thinking-only reply).
+            var hasVisibleContent: Bool {
+                switch self {
+                case .uninitialized:
+                    return false
+                case .text(let s):
+                    return !s.isEmpty
+                case .multipart(let parts):
+                    return parts.contains { $0.hasVisibleContent }
+                case .attachment(let attachment):
+                    switch attachment.type {
+                    case .statusUpdate:
+                        return false
+                    case .code, .file, .fileID:
+                        return true
+                    }
+                case .functionCall, .functionOutput:
+                    return true
+                }
+            }
+
             func appending(_ additionalContent: Body) -> Self {
                 var result = self
                 result.append(additionalContent)

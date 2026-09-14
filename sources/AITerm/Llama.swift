@@ -94,15 +94,15 @@ extension LlamaResponse: LLM.AnyResponse {
                   arguments: try? JSONEncoder().encode($0.function.arguments ?? [:]).lossyString)
         }
         if done && Streaming.streaming {
-            // The terminal streamed chunk normally carries only stats: the content
-            // and any tool call arrived in earlier done:false chunks, so return
-            // nothing to avoid re-emitting the accumulated content. Guard against a
-            // future Ollama variant that delivers the tool_call ONLY in the done
-            // chunk by still surfacing it here, so the call isn't silently dropped.
-            if let functionCall {
-                return [LLM.Message(responseID: nil, role: .assistant,
-                                    body: .functionCall(functionCall, id: nil))]
-            }
+            // The terminal streamed chunk carries only stats: content and any tool
+            // call already arrived in earlier done:false chunks and were emitted
+            // there, so emit nothing here. NOTE the assumption that a tool call
+            // never arrives ONLY in the done chunk. We deliberately do NOT re-emit a
+            // tool call seen here: this property is stateless per chunk, so it can't
+            // tell "only in the done chunk" from "repeated in the done chunk", and
+            // re-emitting the latter would double-dispatch or corrupt the call in the
+            // streaming accumulator. If a future Ollama build delivers a tool call
+            // only in the done chunk, add cross-chunk dedup at the accumulator.
             return []
         }
         let thinking: String? = {

@@ -584,6 +584,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     // pins the API to Ollama; stash the prior tag so toggling back off restores the
     // user's choice instead of silently persisting Ollama on Save. nil = not stashed.
     NSNumber *_stashedAPITag;
+    // The URL the dynamic-model popup was last rebuilt for. When the URL changes, the
+    // previously-chosen model belongs to the OLD server and must not be carried into
+    // the new server's popup (it would save a tag the new server lacks). nil until
+    // the first rebuild so the initial load still restores the saved selection.
+    NSString *_lastDynamicPopupURL;
 }
 
 - (instancetype)initWithConfiguration:(NSDictionary *)configuration
@@ -986,7 +991,13 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 - (void)reloadDynamicModelPopup {
     NSString *url =
         [_urlField.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
-    NSString *previous = _modelPopup.selectedItem.representedObject ?: (_base[kAIManualModelDynamicSelectedModelKey] ?: @"");
+    // When the endpoint URL changes, the previously-chosen model was for the OLD
+    // server; don't carry it into the new server's popup (Save would persist a tag
+    // the new server doesn't have, expanding to zero models). Reset to "All
+    // installed models". On the first rebuild (nil), keep the saved selection.
+    const BOOL urlChanged = _lastDynamicPopupURL != nil && ![_lastDynamicPopupURL isEqualToString:url];
+    _lastDynamicPopupURL = url;
+    NSString *previous = urlChanged ? @"" : (_modelPopup.selectedItem.representedObject ?: (_base[kAIManualModelDynamicSelectedModelKey] ?: @""));
     [_modelPopup removeAllItems];
 
     [_modelPopup addItemWithTitle:NSLocalizedStringWithDefaultValue(@"AIModelEditor.AllInstalledModels", nil, [NSBundle mainBundle], @"All installed models", @"Model popup choice meaning use every model discovered on the Ollama server")];
@@ -2666,11 +2677,12 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     _ollamaBudgetModelPopup.target = self;
     _ollamaBudgetModelPopup.action = @selector(ollamaBudgetModelChanged:);
     // Repopulate the Regular/Budget popups when a background /api/tags refresh
-    // brings in new models (matches ChatToolbar's observer). The notification
-    // name matches OllamaModelCache.didChangeNotification.
+    // brings in new models (matches ChatToolbar's observer). Reference the exported
+    // OllamaModelCache constant rather than a raw literal so the poster and this
+    // observer can't silently drift if the name is ever changed.
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(ollamaModelCacheDidChange:)
-                                                 name:@"iTermOllamaModelCacheDidChange"
+                                                 name:iTermOllamaModelCache.iTermOllamaModelCacheDidChangeNotification
                                                object:nil];
 
     [self addViewToSearchIndex:_aiVendor
