@@ -1163,11 +1163,15 @@ extension iTermBrowserViewController: iTermBrowserManagerDelegate {
         BookmarkDialogViewController.show(window: window) { [weak self] name in
             Task { @MainActor in
                 guard let self else { return }
-                try await self.browserManager.namedMarkManager?.add(with: name,
-                                                                    webView: self.browserManager.webView,
-                                                                    httpMethod: self.browserManager.currentHTTPMethod,
-                                                                    clickPoint: point)
-                NamedMarksDidChangeNotification(sessionGuid: nil).post()
+                do {
+                    try await self.browserManager.namedMarkManager?.add(with: name,
+                                                                        webView: self.browserManager.webView,
+                                                                        httpMethod: self.browserManager.currentHTTPMethod,
+                                                                        clickPoint: point)
+                    NamedMarksDidChangeNotification(sessionGuid: nil).post()
+                } catch {
+                    DLog("Failed to add named mark: \(error)")
+                }
             }
         }
     }
@@ -1397,12 +1401,16 @@ extension iTermBrowserViewController {
                 let viewPoint = NSPoint(x: bounds.midX, y: bounds.midY)
                 let windowPoint = self.browserManager.webView.convert(viewPoint, to: nil)
                 let jsPoint = self.browserManager.webView.convertToJavaScriptCoordinates(windowPoint)
-                try await self.browserManager.namedMarkManager?.add(
-                    with: name,
-                    webView: self.browserManager.webView,
-                    httpMethod: self.browserManager.currentHTTPMethod,
-                    clickPoint: jsPoint)
-                NamedMarksDidChangeNotification(sessionGuid: nil).post()
+                do {
+                    try await self.browserManager.namedMarkManager?.add(
+                        with: name,
+                        webView: self.browserManager.webView,
+                        httpMethod: self.browserManager.currentHTTPMethod,
+                        clickPoint: jsPoint)
+                    NamedMarksDidChangeNotification(sessionGuid: nil).post()
+                } catch {
+                    DLog("Failed to add named mark: \(error)")
+                }
             }
         }
     }

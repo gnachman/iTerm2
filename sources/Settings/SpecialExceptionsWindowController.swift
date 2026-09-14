@@ -448,8 +448,12 @@ final class SpecialExceptionsWindowController: NSWindowController {
                 let encoder = JSONEncoder()
                 if let data = try? encoder.encode(config) {
                     Task {
-                        try await data.writeTo(saveItem: item)
-                        item.revealInFinderIfLocal()
+                        do {
+                            try await data.writeTo(saveItem: item)
+                            item.revealInFinderIfLocal()
+                        } catch {
+                            DLog("Failed to write exported exceptions: \(error)")
+                        }
                     }
                 }
             }
