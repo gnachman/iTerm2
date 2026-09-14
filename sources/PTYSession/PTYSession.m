@@ -12632,6 +12632,9 @@ typedef NS_ENUM(NSUInteger, PTYSessionTmuxReport) {
         // Broadcast suppression during injection is enforced centrally in
         // -writeTask:encoding:forceEncoding:canBroadcast:reporting:.
         [self writeLatin1EncodedData:dataToSend broadcastAllowed:YES reporting:NO];
+        // Esc in a Claude Code session: no hook reports the interrupt, so
+        // the detector checks the screen and flips the tab status to idle.
+        [[iTermClaudeInterruptDetector instance] session:self didSendKeyData:dataToSend];
     }
 }
 
