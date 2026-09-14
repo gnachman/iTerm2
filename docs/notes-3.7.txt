@@ -347,3 +347,6 @@ Bug Fixes:
   stores the key under the wrong service.
 - Added a reply to CSI 16 t (report character
   cell size), which was previously ignored.
+- Fixed a lag when switching or closing tabs
+  with the Session Status tool open in the
+  toolbelt.
