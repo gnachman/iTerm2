@@ -8192,6 +8192,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     return YES;
 }
 
+// A left or right tab bar runs top to bottom, so directional menu wording
+// says “Below” where a horizontal tab bar says “to the Right”.
+- (BOOL)tabBarIsVertical {
+    const PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
+    return tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab;
+}
+
 - (NSMenu *)tabView:(NSTabView *)tabView menuForTabViewItem:(NSTabViewItem *)tabViewItem {
     NSMenu *rootMenu = [[[NSMenu alloc] init] autorelease];
     if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
@@ -8231,7 +8238,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     // add tasks
     BOOL (^addNewTab)(void) = ^{
         NSMenuItem *item;
-        item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.NewTabToTheRight", nil, [NSBundle mainBundle], @"New Tab to the Right", @"Menu item that creates a new tab to the right")
+        NSString *newTabTitle = [self tabBarIsVertical] ? NSLocalizedStringWithDefaultValue(@"PseudoTerminal.NewTabBelow", nil, [NSBundle mainBundle], @"New Tab Below", @"Menu item that creates a new tab below the current one, shown when the tab bar is vertical")
+                                                        : NSLocalizedStringWithDefaultValue(@"PseudoTerminal.NewTabToTheRight", nil, [NSBundle mainBundle], @"New Tab to the Right", @"Menu item that creates a new tab to the right");
+        item = [[[NSMenuItem alloc] initWithTitle:newTabTitle
                                            action:@selector(newTabToTheRight:)
                                     keyEquivalent:@""] autorelease];
         [item setRepresentedObject:tabViewItem];
@@ -8345,13 +8354,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         }
 
         if (hasUnpinnedToRight) {
-            NSString *title;
-            const PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
-            if (tabPosition == PSMTab_LeftTab || tabPosition == PSMTab_RightTab) {
-                title = NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsBelow", nil, [NSBundle mainBundle], @"Close Tabs Below", @"Menu item that closes tabs below the current one");
-            } else {
-                title = NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsToTheRight", nil, [NSBundle mainBundle], @"Close Tabs to the Right", @"Menu item that closes tabs to the right");
-            }
+            NSString *title = [self tabBarIsVertical] ? NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsBelow", nil, [NSBundle mainBundle], @"Close Tabs Below", @"Menu item that closes tabs below the current one")
+                                                      : NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsToTheRight", nil, [NSBundle mainBundle], @"Close Tabs to the Right", @"Menu item that closes tabs to the right");
             item = [[[NSMenuItem alloc] initWithTitle:title
                                                action:@selector(closeTabsToTheRight:)
                                         keyEquivalent:@""] autorelease];
@@ -9368,6 +9372,8 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     NSMenu *menu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
     menu.autoenablesItems = NO;  // contextual actions are always applicable
     const BOOL collapsed = [self tabsInGroup:groupID].firstObject.tabGroupCollapsed;
+    NSString *closeAfterTitle = [self tabBarIsVertical] ? NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsBelow", nil, [NSBundle mainBundle], @"Close Tabs Below", @"Menu item that closes tabs below the current one")
+                                                        : NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsToTheRight", nil, [NSBundle mainBundle], @"Close Tabs to the Right", @"Menu item that closes tabs to the right");
     NSArray<NSArray<NSString *> *> *specs = @[
         @[NSLocalizedStringWithDefaultValue(@"PseudoTerminal.NewTabInGroup", nil, [NSBundle mainBundle], @"New Tab in Group", @"Menu item that creates a new tab in the current group"), @"newTabInGroup:"],
         @[@"-", @""],
@@ -9384,7 +9390,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         @[@"-", @""],
         @[NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseGroup", nil, [NSBundle mainBundle], @"Close Group", @"Menu item that closes a tab group"), @"closeTabGroup:"],
         @[NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseOtherTabs", nil, [NSBundle mainBundle], @"Close Other Tabs", @"Menu item that closes tabs other than the current one"), @"closeTabsOutsideGroup:"],
-        @[NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsToTheRight", nil, [NSBundle mainBundle], @"Close Tabs to the Right", @"Menu item that closes tabs to the right"), @"closeTabsRightOfGroup:"],
+        @[closeAfterTitle, @"closeTabsRightOfGroup:"],
     ];
     for (NSArray<NSString *> *spec in specs) {
         if ([spec[0] isEqualToString:@"-"]) {
@@ -9807,7 +9813,9 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return;
     }
     NSArray<PTYTab *> *toRight = [tabs subarrayWithRange:NSMakeRange(lastIndex + 1, tabs.count - lastIndex - 1)];
-    [self closeTabs:toRight confirmWith:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsRightOfGroupPrompt", nil, [NSBundle mainBundle], @"Close all tabs to the right of this group?", @"Confirmation prompt for closing tabs to the right of a group") skippingPinned:YES];
+    NSString *question = [self tabBarIsVertical] ? NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsBelowGroupPrompt", nil, [NSBundle mainBundle], @"Close all tabs below this group?", @"Confirmation prompt for closing tabs below a group, shown when the tab bar is vertical")
+                                                 : NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTabsRightOfGroupPrompt", nil, [NSBundle mainBundle], @"Close all tabs to the right of this group?", @"Confirmation prompt for closing tabs to the right of a group");
+    [self closeTabs:toRight confirmWith:question skippingPinned:YES];
 }
 
 // Close a batch of tabs with a single confirmation. `skipPinned` protects

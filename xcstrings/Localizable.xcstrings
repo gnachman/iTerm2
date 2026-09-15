@@ -140242,6 +140242,48 @@
         }
       }
     },
+    "PseudoTerminal.CloseTabsBelowGroupPrompt" : {
+      "comment" : "Confirmation prompt for closing tabs below a group, shown when the tab bar is vertical",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Tabs unterhalb dieser Gruppe schließen?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Close all tabs below this group?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このグループの下側のすべてのタブを閉じますか?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fechar todas as abas abaixo deste grupo?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Закрыть все вкладки ниже этой группы?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭此组下方的所有标签页？"
+          }
+        }
+      }
+    },
     "PseudoTerminal.CloseTabsHeading" : {
       "comment" : "Warning heading shown when closing multiple tabs",
       "extractionState" : "extracted_with_value",
@@ -141485,6 +141527,48 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新标签页"
+          }
+        }
+      }
+    },
+    "PseudoTerminal.NewTabBelow" : {
+      "comment" : "Menu item that creates a new tab below the current one, shown when the tab bar is vertical",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neuer Tab darunter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Tab Below"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下側に新規タブ"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nova aba abaixo"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Новая вкладка ниже"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在下方新建标签页"
           }
         }
       }
