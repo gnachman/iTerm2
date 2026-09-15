@@ -1,7 +1,10 @@
 #!/bin/bash
 #
 # Extract localizable strings from all first-party source code into
-# sources/Localizable.xcstrings.
+# xcstrings/Localizable.xcstrings (the canonical, tracked catalog). The build
+# copies this into sources/Localizable.xcstrings, which Xcode owns and mangles
+# on every IDE build; that build copy is gitignored. See docs/notes below and
+# .gitignore for why.
 #
 # Two languages, two mechanisms:
 #
@@ -47,7 +50,7 @@ fi
 
 EXTRACT="$(xcrun --find extractLocStrings)"
 XCS="$(xcrun --find xcstringstool)"
-CATALOG="sources/Localizable.xcstrings"
+CATALOG="xcstrings/Localizable.xcstrings"
 
 if [[ ! -f "$CATALOG" ]]; then
     echo "extract_strings: catalog not found at $CATALOG" >&2

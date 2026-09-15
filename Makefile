@@ -287,6 +287,20 @@ TAGS:
 install: | Deployment backup-old-iterm
 	cp -R $(BUILD_DIR)/Deployment/iTerm2.app $(APPS)
 
+# The code-derived string catalog is tracked at xcstrings/Localizable.xcstrings
+# (the canonical copy, owned by tools/extract_strings.sh). Xcode's per-build
+# "sync localizations" mangles whatever catalog is the app target's resource, so
+# the resource copy at sources/Localizable.xcstrings is gitignored and staged
+# here from the canonical copy before every build. This must run before
+# xcodebuild, because the xcstrings compile computes its outputs at build-planning
+# time, before any build phase would run. (The IDE does the same via a scheme
+# pre-action; see iTerm2.xcscheme.)
+.PHONY: ingest-catalogs
+ingest-catalogs:
+	cp -f xcstrings/Localizable.xcstrings sources/Localizable.xcstrings
+
+Development Beta Deployment Nightly: ingest-catalogs
+
 Development:
 	echo "Using PATH for build: $(PATH)"
 	cp plists/dev-iTerm2.plist plists/iTerm2.plist
