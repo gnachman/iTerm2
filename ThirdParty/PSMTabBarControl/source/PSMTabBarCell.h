@@ -65,6 +65,14 @@
 // the id of the group a tab dropped here should join (its "end of group" slot).
 // nil on every non-slot cell and on slots that don't join a group.
 @property(nonatomic, copy) NSString *joinsTabGroupIdentifier;
+// YES for a drag drop-slot placeholder that joins a COLLAPSED group (its
+// front-of-group or end-of-group slot). Such a group draws no member cells, so
+// the drag code uses this flag to recognize when the cursor is over a collapsed
+// group's chip: hovering it (either side of the chip's midpoint) highlights the
+// chip and makes a drop join the group, while the midpoint still governs whether
+// the group has visually slid aside yet. Its group id is carried in
+// joinsTabGroupIdentifier. NO on every other cell.
+@property(nonatomic, assign) BOOL isCollapsedGroupJoinSlot;
 // The cell's width when drop-slot placeholders were distributed for the
 // current drag; 0 outside a drag. The drag animation shrinks real tabs
 // proportionally from this base when an expanding drop slot needs room in a

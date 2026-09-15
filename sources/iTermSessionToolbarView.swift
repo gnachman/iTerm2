@@ -781,6 +781,92 @@ private class AppearanceObservingView: NSView {
     }
 }
 
+private class InteractiveAppearanceObservingView: AppearanceObservingView, NSDraggingSource {
+    var provideMenu: ((NSEvent) -> NSMenu?)?
+    // Text to place on the pasteboard when the item is dragged, or nil to
+    // disable dragging. Dropping onto a text field pastes it; dropping
+    // onto the Finder writes a .textClipping.
+    var dragString: (() -> String?)?
+
+    private var mouseDownEvent: NSEvent?
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        return provideMenu?(event)
+    }
+
+    // The icon and label are display-only subviews. Claim the whole area
+    // so this container is the single target for clicks, drags, and the
+    // context menu rather than having events split across the subviews
+    // (which is also why the branch label alone would not begin a drag).
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        let local = convert(point, from: superview)
+        return bounds.contains(local) ? self : nil
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        mouseDownEvent = event
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard let down = mouseDownEvent else {
+            return
+        }
+        let dx = event.locationInWindow.x - down.locationInWindow.x
+        let dy = event.locationInWindow.y - down.locationInWindow.y
+        // Wait until the pointer clears the standard slop so an ordinary
+        // click still reads as a click rather than a stillborn drag.
+        if (dx * dx) + (dy * dy) < 9 {
+            return
+        }
+        mouseDownEvent = nil
+        beginDrag(with: down)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        mouseDownEvent = nil
+    }
+
+    private func beginDrag(with event: NSEvent) {
+        guard let string = dragString?(), !string.isEmpty else {
+            return
+        }
+        let item = NSPasteboardItem()
+        item.setString(string, forType: .string)
+        let draggingItem = NSDraggingItem(pasteboardWriter: item)
+        let image = dragImage(for: string)
+        draggingItem.setDraggingFrame(NSRect(origin: .zero, size: image.size),
+                                      contents: image)
+        beginDraggingSession(with: [draggingItem], event: event, source: self)
+    }
+
+    // Render just the branch name (not the icon or the ahead/behind and
+    // dirty decorations that share the label) so the drag looks like a
+    // text clipping of the branch. Match the label's system font and
+    // labelColor, resolved against this view's theme.
+    private func dragImage(for string: String) -> NSImage {
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: NSFont.systemFontSize),
+            .foregroundColor: NSColor.labelColor
+        ]
+        let attributed = NSAttributedString(string: string, attributes: attributes)
+        let textSize = attributed.size()
+        let size = NSSize(width: max(1, ceil(textSize.width)),
+                          height: max(1, ceil(textSize.height)))
+        let image = NSImage(size: size)
+        image.lockFocus()
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            attributed.draw(at: .zero)
+        }
+        image.unlockFocus()
+        return image
+    }
+
+    func draggingSession(_ session: NSDraggingSession,
+                         sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation {
+        return .copy
+    }
+}
+
 @objc(iTermCCGitSessionToolbarItem)
 class CCGitSessionToolbarItem: SessionToolbarGenericView {
     private let textField: NSTextField
@@ -830,11 +916,37 @@ class CCGitSessionToolbarItem: SessionToolbarGenericView {
         // changes so the tinted ahead/behind arrow bitmaps get rebuilt
         // for the new light/dark theme (the branch icon and text track
         // it automatically, but the arrows are baked bitmaps).
-        let container = AppearanceObservingView(frame: .zero)
+        let container = InteractiveAppearanceObservingView(frame: .zero)
         container.addSubview(imageView)
         container.addSubview(textField)
 
         super.init(identifier: identifier, priority: priority, view: container)
+
+        container.provideMenu = { [weak self] event in
+            guard let self, self.ags.maker.displayedBranch != nil else {
+                return nil
+            }
+            let menu = NSMenu()
+            // These toolbar items are plain NSObjects, not part of the
+            // responder chain NSMenu's auto-enable pass consults, so it
+            // would grey out the item. Opt out and drive enablement from
+            // our explicit target (matching CCDiffSelectorItem above).
+            menu.autoenablesItems = false
+            let copyItem = NSMenuItem(title: iTermLocalizedCopy(),
+                                      action: #selector(self.copyBranch(_:)),
+                                      keyEquivalent: "")
+            copyItem.target = self
+            copyItem.isEnabled = true
+            menu.addItem(copyItem)
+            return menu
+        }
+
+        container.dragString = { [weak self] in
+            // Only draggable when a real branch name is on screen (not
+            // "Rebasing", a status, stats, etc.).
+            self?.ags.maker.displayedBranch
+        }
+
         ags = iTermAutoGitString(
             stringMaker: iTermGitStringMaker(
                 scope: scope,
@@ -845,6 +957,16 @@ class CCGitSessionToolbarItem: SessionToolbarGenericView {
             self?.update()
         }
         update()
+    }
+
+    @objc
+    private func copyBranch(_ sender: Any?) {
+        guard let branch = ags.maker.displayedBranch else {
+            return
+        }
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(branch, forType: .string)
     }
 
     override var desiredWidthRange: ClosedRange<CGFloat> {

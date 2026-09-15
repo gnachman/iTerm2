@@ -32,6 +32,12 @@ struct SessionView: View {
     /// a chat would push onto the stack behind the picker sheet.
     var allowsChat: Bool = true
 
+    /// Whether the compose-to-agent affordances are offered: only when the caller
+    /// allows chat AND the paired Mac has AI on. When AI is off this view is a
+    /// pure terminal viewer/controller (browse, live video, keyboard) with no chat
+    /// entry points.
+    private var chatEnabled: Bool { allowsChat && model.aiAvailable }
+
     /// Whether the compose overlay (text field + dictation + send) is up.
     @State private var showComposer = false
     /// The chat this visit's compose overlay sends into. Resolved on the first
@@ -154,7 +160,7 @@ struct SessionView: View {
         // bar automatic.
         .toolbarColorScheme(model.macSupportsStreaming ? .dark : nil, for: .navigationBar)
         .overlay(alignment: .bottom) {
-            if showComposer {
+            if showComposer && chatEnabled {
                 composeOverlay
             }
         }
@@ -227,7 +233,7 @@ struct SessionView: View {
                     // orientation's (too-narrow-in-landscape) width.
                     .id(barWidth)
             }
-            if allowsChat {
+            if chatEnabled {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         // Only reset emptiness when actually opening; the overlay's

@@ -160,6 +160,11 @@ NSString *const iTermWindowDidCloseNotification = @"iTermWindowDidClose";
 NSString *const iTermTabDidCloseNotification = @"iTermTabDidClose";
 NSString *const iTermDidCreateTerminalWindowNotification = @"iTermDidCreateTerminalWindowNotification";
 
+// When present in an -openTabWithArrangement: options dictionary, gives the
+// index at which the new tab should be inserted, overriding the automatic
+// placement that otherwise honors kPreferenceKeyNewTabsOpenAtEndOfTabBar.
+static NSString *const iTermOpenTabArrangementInsertionIndexKey = @"iTermOpenTabArrangementInsertionIndex";
+
 #define PtyLog DLog
 
 // Constants for saved window arrangement key names.
@@ -5611,7 +5616,20 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                     PSMTabPosition tabPosition = [iTermPreferences intForKey:kPreferenceKeyTabPosition];
 
                     if (lionFullScreen_ && _contentView.tabBarControlOnLoan) {
-                        topInset += 3;
+                        // In Lion full screen the tab bar accessory sits flush against the
+                        // top edge of the screen, with no stoplight row above it as there is
+                        // in a windowed titlebar. Left top-aligned (the base insets put the
+                        // whole gap at the bottom) the tabs jam against the screen edge.
+                        // Center them by splitting the gap between top and bottom rather
+                        // than only adding to the top: the cell height is
+                        // (bar height - top - bottom), so a one-sided top inset would shrink
+                        // the tabs instead of moving them. The Tahoe pill is drawn 1pt
+                        // top-heavy inside its cell (see -backgroundRect in
+                        // PSMTahoeTabStyle, which insets 2 top / 1 bottom), so bias the split
+                        // 0.5pt toward the bottom so the tab looks vertically centered.
+                        const CGFloat gap = topInset + bottomInset;
+                        topInset = gap / 2.0 - 0.5;
+                        bottomInset = gap / 2.0 + 0.5;
                     }
                     if (lionFullScreen_ && tabPosition == PSMTab_BottomTab) {
                         topInset += 4;
@@ -6868,7 +6886,13 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
              @(_contentView.tabBarControl.isHidden),
              @(_contentView.tabBarControl.alphaValue),
              NSStringFromRect(_contentView.tabBarControl.frame));
-        DLog(@"View hierarchy:\n%@", [_contentView.tabBarControl.window.contentView iterm_recursiveDescription]);
+        // Dump from the window's frame view (superview of the content view) rather than the
+        // content view itself. When the window is not in Lion fullscreen the tab bar lives in the
+        // titlebar as an NSTitlebarAccessoryClipView, which is a sibling of the content view and is
+        // therefore invisible to a content-view-rooted dump. Issue: tab bar squished after exiting
+        // fullscreen.
+        NSView *frameView = _contentView.tabBarControl.window.contentView.superview ?: _contentView.tabBarControl.window.contentView;
+        DLog(@"View hierarchy:\n%@", [frameView iterm_recursiveDescription]);
 
         [_titlebarAccessoryNanny add:viewController];
         const BOOL minHeightChanged = [_titlebarAccessoryNanny updateViewController:viewController
@@ -8168,9 +8192,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
     return YES;
 }
 
-- (NSMenu *)tabView:(NSTabView *)tabView menuForTabViewItem:(NSTabViewItem *)tabViewItem
-{
-    NSMenuItem *item;
+- (NSMenu *)tabView:(NSTabView *)tabView menuForTabViewItem:(NSTabViewItem *)tabViewItem {
     NSMenu *rootMenu = [[[NSMenu alloc] init] autorelease];
     if (self.window.ptyWindow.it_terminalWindowUseMinimalStyle) {
         NSColor *bgColor = [self.window.ptyWindow it_terminalWindowDecorationBackgroundColor];
@@ -8180,72 +8202,121 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         rootMenu.appearance = self.window.appearance;
     }
 
-    // Create a menu with a submenu to navigate between tabs if there are more than one
-    if ([_contentView.tabView numberOfTabViewItems] > 1) {
-        NSMenu *tabMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
-        NSUInteger count = 1;
-        for (NSTabViewItem *aTabViewItem in [_contentView.tabView tabViewItems]) {
-            NSString *title = [NSString stringWithFormat:@"%@ #%ld", [aTabViewItem label], (unsigned long)count++];
-            item = [[[NSMenuItem alloc] initWithTitle:title
-                                               action:@selector(selectTab:)
-                                        keyEquivalent:@""] autorelease];
-            [item setRepresentedObject:[aTabViewItem identifier]];
-            [item setTarget:_contentView.tabView];
-            [tabMenu addItem:item];
-        }
+    BOOL (^addSelect)(void) = ^{
+        NSMenuItem *item;
+        // Create a menu with a submenu to navigate between tabs if there are more than one
+        if ([_contentView.tabView numberOfTabViewItems] > 1) {
+            NSMenu *tabMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
+            NSUInteger count = 1;
+            for (NSTabViewItem *aTabViewItem in [_contentView.tabView tabViewItems]) {
+                NSString *title = [NSString stringWithFormat:@"%@ #%ld", [aTabViewItem label], (unsigned long)count++];
+                item = [[[NSMenuItem alloc] initWithTitle:title
+                                                   action:@selector(selectTab:)
+                                            keyEquivalent:@""] autorelease];
+                [item setRepresentedObject:[aTabViewItem identifier]];
+                [item setTarget:_contentView.tabView];
+                [tabMenu addItem:item];
+            }
 
-        [rootMenu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.Select", nil, [NSBundle mainBundle], @"Select", @"Menu item that selects a tab from a submenu")
-                            action:nil
-                     keyEquivalent:@""];
-        [rootMenu setSubmenu:tabMenu forItem:[rootMenu itemAtIndex:0]];
-        [rootMenu addItem: [NSMenuItem separatorItem]];
-   }
+            [rootMenu addItemWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.Select", nil, [NSBundle mainBundle], @"Select", @"Menu item that selects a tab from a submenu")
+                                action:nil
+                         keyEquivalent:@""];
+            [rootMenu setSubmenu:tabMenu forItem:[rootMenu itemAtIndex:0]];
+            [rootMenu addItem: [NSMenuItem separatorItem]];
+            return YES;
+        }
+        return NO;
+    };
 
     // add tasks
-    item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.NewTabToTheRight", nil, [NSBundle mainBundle], @"New Tab to the Right", @"Menu item that creates a new tab to the right")
-                                       action:@selector(newTabToTheRight:)
-                                keyEquivalent:@""] autorelease];
-    [item setRepresentedObject:tabViewItem];
-    [rootMenu addItem:item];
+    BOOL (^addNewTab)(void) = ^{
+        NSMenuItem *item;
+        item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.NewTabToTheRight", nil, [NSBundle mainBundle], @"New Tab to the Right", @"Menu item that creates a new tab to the right")
+                                           action:@selector(newTabToTheRight:)
+                                    keyEquivalent:@""] autorelease];
+        [item setRepresentedObject:tabViewItem];
+        [rootMenu addItem:item];
+        return YES;
+    };
 
-    item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.EditSession", nil, [NSBundle mainBundle], @"Edit Session…", @"Menu item that edits the session")
-                                       action:@selector(editSession:)
-                                keyEquivalent:@""] autorelease];
-    [item setRepresentedObject:tabViewItem];
-    [rootMenu addItem:item];
+    BOOL (^addSeparator)(void) = ^{
+        if (rootMenu.itemArray.count == 0 || rootMenu.itemArray.lastObject.isSeparatorItem) {
+            return NO;
+        }
+        [rootMenu addItem: [NSMenuItem separatorItem]];
+        return YES;
+    };
 
-    item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTab", nil, [NSBundle mainBundle], @"Close Tab", @"Menu item that closes a tab")
-                                       action:@selector(closeTabContextualMenuAction:)
-                                keyEquivalent:@""] autorelease];
-    [item setRepresentedObject:tabViewItem];
-    [rootMenu addItem:item];
+    BOOL (^addEditSession)(void) = ^{
+        NSMenuItem *item;
 
-    [self addTabGroupMenuItemsToMenu:rootMenu forTabViewItem:tabViewItem];
+        item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.EditSession", nil, [NSBundle mainBundle], @"Edit Session…", @"Menu item that edits the session")
+                                           action:@selector(editSession:)
+                                    keyEquivalent:@""] autorelease];
+        [item setRepresentedObject:tabViewItem];
+        [rootMenu addItem:item];
+        return YES;
+    };
+
+    BOOL (^addCloseTab)(void) = ^{
+        NSMenuItem *item;
+
+        item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseTab", nil, [NSBundle mainBundle], @"Close Tab", @"Menu item that closes a tab")
+                                           action:@selector(closeTabContextualMenuAction:)
+                                    keyEquivalent:@""] autorelease];
+        [item setRepresentedObject:tabViewItem];
+        [rootMenu addItem:item];
+        return YES;
+    };
 
     PTYTab *theTab = [tabViewItem identifier];
-    if (![theTab isTmuxTab]) {
-        item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.DuplicateTab", nil, [NSBundle mainBundle], @"Duplicate Tab", @"Menu item that duplicates a tab")
-                                           action:@selector(duplicateTab:)
+
+    BOOL (^addDuplicateTab)(void) = ^{
+        NSMenuItem *item;
+        if (![theTab isTmuxTab]) {
+            item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.DuplicateTab", nil, [NSBundle mainBundle], @"Duplicate Tab", @"Menu item that duplicates a tab")
+                                               action:@selector(duplicateTab:)
+                                        keyEquivalent:@""] autorelease];
+            [item setRepresentedObject:tabViewItem];
+            [rootMenu addItem:item];
+            return YES;
+        }
+
+        return NO;
+    };
+
+    BOOL (^addTabGroupItems)(void) = ^{
+        return [self addTabGroupMenuItemsToMenu:rootMenu forTabViewItem:tabViewItem];
+    };
+
+    BOOL (^addSaveTabAsArrangement)(void) = ^{
+        NSMenuItem *item;
+
+        item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.SaveTabAsArrangement", nil, [NSBundle mainBundle], @"Save Tab as Window Arrangement", @"Menu item that saves a tab as a window arrangement")
+                                           action:@selector(saveTabAsWindowArrangement:)
                                     keyEquivalent:@""] autorelease];
         [item setRepresentedObject:tabViewItem];
         [rootMenu addItem:item];
-    }
+        return YES;
+    };
 
-    item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.SaveTabAsArrangement", nil, [NSBundle mainBundle], @"Save Tab as Window Arrangement", @"Menu item that saves a tab as a window arrangement")
-                                       action:@selector(saveTabAsWindowArrangement:)
-                                keyEquivalent:@""] autorelease];
-    [item setRepresentedObject:tabViewItem];
-    [rootMenu addItem:item];
+    BOOL (^addMoveToNewWindow)(void) = ^{
+        NSMenuItem *item;
 
-    if ([_contentView.tabView numberOfTabViewItems] > 1 && !theTab.isPinned) {
-        item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.MoveToNewWindow", nil, [NSBundle mainBundle], @"Move to New Window", @"Menu item that moves a tab to a new window")
-                                           action:@selector(moveTabToNewWindowContextualMenuAction:)
-                                    keyEquivalent:@""] autorelease];
-        [item setRepresentedObject:tabViewItem];
-        [rootMenu addItem:item];
-    }
+        if ([_contentView.tabView numberOfTabViewItems] > 1 && !theTab.isPinned) {
+            item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.MoveToNewWindow", nil, [NSBundle mainBundle], @"Move to New Window", @"Menu item that moves a tab to a new window")
+                                               action:@selector(moveTabToNewWindowContextualMenuAction:)
+                                        keyEquivalent:@""] autorelease];
+            [item setRepresentedObject:tabViewItem];
+            [rootMenu addItem:item];
+            return YES;
+        }
+        return NO;
+    };
 
-    {
+    BOOL (^addCloseOthers)(void) = ^{
+        NSMenuItem *item;
+
         // Check if there are unpinned tabs eligible for "Close Other" / "Close to the Right".
         BOOL hasUnpinnedOther = NO;
         BOOL hasUnpinnedToRight = NO;
@@ -8263,12 +8334,14 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
             }
         }
 
+        BOOL added = NO;
         if (hasUnpinnedOther) {
             item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.CloseOtherTabs", nil, [NSBundle mainBundle], @"Close Other Tabs", @"Menu item that closes tabs other than the current one")
                                                action:@selector(closeOtherTabs:)
                                         keyEquivalent:@""] autorelease];
             [item setRepresentedObject:tabViewItem];
             [rootMenu addItem:item];
+            added = YES;
         }
 
         if (hasUnpinnedToRight) {
@@ -8284,39 +8357,85 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
                                         keyEquivalent:@""] autorelease];
             [item setRepresentedObject:tabViewItem];
             [rootMenu addItem:item];
+            added = YES;
         }
-    }
+        return added;
+    };
 
     // pin/unpin tab (not available for tmux tabs)
-    if (![theTab isTmuxTab]) {
-        [rootMenu addItem:[NSMenuItem separatorItem]];
-        NSString *pinTitle = theTab.isPinned ? NSLocalizedStringWithDefaultValue(@"PseudoTerminal.UnpinTab", nil, [NSBundle mainBundle], @"Unpin Tab", @"Menu item that unpins a tab") : NSLocalizedStringWithDefaultValue(@"PseudoTerminal.PinTab", nil, [NSBundle mainBundle], @"Pin Tab", @"Menu item that pins a tab");
-        item = [[[NSMenuItem alloc] initWithTitle:pinTitle
-                                           action:@selector(togglePinTab:)
+    BOOL (^addPinUnpin)(void) = ^{
+        NSMenuItem *item;
+        if (![theTab isTmuxTab]) {
+            NSString *pinTitle = theTab.isPinned ? NSLocalizedStringWithDefaultValue(@"PseudoTerminal.UnpinTab", nil, [NSBundle mainBundle], @"Unpin Tab", @"Menu item that unpins a tab") : NSLocalizedStringWithDefaultValue(@"PseudoTerminal.PinTab", nil, [NSBundle mainBundle], @"Pin Tab", @"Menu item that pins a tab");
+            item = [[[NSMenuItem alloc] initWithTitle:pinTitle
+                                               action:@selector(togglePinTab:)
+                                        keyEquivalent:@""] autorelease];
+            [item setRepresentedObject:tabViewItem];
+            [rootMenu addItem:item];
+            return YES;
+        }
+        return NO;
+    };
+
+    BOOL (^addTabColor)(void) = ^{
+        NSMenuItem *item;
+
+        NSSize tabColorViewSize = [ColorsMenuItemView preferredSize];
+        ColorsMenuItemView *labelTrackView = [[[ColorsMenuItemView alloc]
+                                               initWithFrame:NSMakeRect(0, 0, tabColorViewSize.width, tabColorViewSize.height)] autorelease];
+        PTYTab *tab = [tabViewItem identifier];
+        labelTrackView.currentColor = tab.activeSession.tabColor;
+        labelTrackView.delegate = self;
+        item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.TabColor", nil, [NSBundle mainBundle], @"Tab Color", @"Menu item that sets the color of a tab")
+                                           action:@selector(changeTabColorToMenuAction:)
                                     keyEquivalent:@""] autorelease];
+        [item setView:labelTrackView];
         [item setRepresentedObject:tabViewItem];
+        // The picker's target (tab vs group) is captured when the picker actually
+        // opens -- see colorsMenuItemViewDidRequestColorPicker -- not at menu build,
+        // so an open color panel can't be retargeted by merely showing a menu.
         [rootMenu addItem:item];
+        rootMenu.minimumWidth = tabColorViewSize.width;
+        return YES;
+    };
+
+    NSArray<BOOL (^)(void)> *closures = @[
+        addSelect,
+
+        addSeparator,
+
+        addEditSession,
+
+        addSeparator,
+
+        addNewTab,
+        addDuplicateTab,
+
+        addSeparator,
+
+        addCloseTab,
+        addCloseOthers,
+
+        addSeparator,
+
+        addMoveToNewWindow,
+        addPinUnpin,
+
+        addSeparator,
+
+        addTabGroupItems,
+
+        addSeparator,
+
+        addSaveTabAsArrangement,
+
+        addSeparator,
+
+        addTabColor,
+    ];
+    for (BOOL (^closure)(void) in closures) {
+        closure();
     }
-
-    // add label
-    [rootMenu addItem: [NSMenuItem separatorItem]];
-    NSSize tabColorViewSize = [ColorsMenuItemView preferredSize];
-    ColorsMenuItemView *labelTrackView = [[[ColorsMenuItemView alloc]
-                                              initWithFrame:NSMakeRect(0, 0, tabColorViewSize.width, tabColorViewSize.height)] autorelease];
-    PTYTab *tab = [tabViewItem identifier];
-    labelTrackView.currentColor = tab.activeSession.tabColor;
-    labelTrackView.delegate = self;
-    item = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringWithDefaultValue(@"PseudoTerminal.TabColor", nil, [NSBundle mainBundle], @"Tab Color", @"Menu item that sets the color of a tab")
-                                       action:@selector(changeTabColorToMenuAction:)
-                                keyEquivalent:@""] autorelease];
-    [item setView:labelTrackView];
-    [item setRepresentedObject:tabViewItem];
-    // The picker's target (tab vs group) is captured when the picker actually
-    // opens -- see colorsMenuItemViewDidRequestColorPicker -- not at menu build,
-    // so an open color panel can't be retargeted by merely showing a menu.
-    [rootMenu addItem:item];
-    rootMenu.minimumWidth = tabColorViewSize.width;
-
     for (NSMenuItem *item in rootMenu.itemArray) {
         item.target = self;
     }
@@ -8711,10 +8830,10 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
 // Firefox-style "Add Tab to Group" submenu: New Group, then existing
 // groups (checkmarked if this tab is already in one), and a Remove item
 // when the tab is grouped.
-- (void)addTabGroupMenuItemsToMenu:(NSMenu *)rootMenu forTabViewItem:(NSTabViewItem *)tabViewItem {
+- (BOOL)addTabGroupMenuItemsToMenu:(NSMenu *)rootMenu forTabViewItem:(NSTabViewItem *)tabViewItem {
     PTYTab *theTab = [tabViewItem identifier];
     if (!theTab) {
-        return;
+        return NO;
     }
     NSMenu *groupMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
 
@@ -8762,6 +8881,7 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         removeItem.target = self;
         [rootMenu addItem:removeItem];
     }
+    return YES;
 }
 
 - (void)addTabToNewGroup:(id)sender {
@@ -10571,6 +10691,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [[self window] setFrameTopLeftPoint:point];
 }
 
+- (void)windowSetFrame:(NSRect)frame
+{
+    [[self window] setFrame:frame display:YES];
+}
+
 - (void)windowPerformMiniaturize:(id)sender {
     RLog(@"windowPerformMiniaturize: %@", self);
     [[self window] performMiniaturize:sender];
@@ -11936,7 +12061,12 @@ typedef struct {
         // Tmux tab
         [self appendTab:theTab];
     } else {
-        [self addTabAtAutomaticallyDeterminedLocation:theTab];
+        NSNumber *insertionIndex = options[iTermOpenTabArrangementInsertionIndexKey];
+        if (insertionIndex != nil) {
+            [self insertTab:theTab atIndex:MIN((int)self.numberOfTabs, insertionIndex.intValue)];
+        } else {
+            [self addTabAtAutomaticallyDeterminedLocation:theTab];
+        }
     }
     [theTab didAddToTerminal:self
              withArrangement:arrangement];
@@ -14317,13 +14447,26 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         // a group anyway).
         return nil;
     } else {
+        NSMutableDictionary *options = [@{ PTYSessionArrangementOptionsForDuplication: @YES } mutableCopy];
+        // Place the copy immediately to the right of the original tab (rather
+        // than wherever the general new-tab placement setting would put it) when
+        // the duplicate lands in the source's own window. Tmux tabs are always
+        // appended by openTabWithArrangement:, so they are excluded. (#13039)
+        if (destinationTerminal == self &&
+            !theTab.isTmuxTab &&
+            [iTermAdvancedSettingsModel duplicatedTabsOpenAdjacentToOriginal]) {
+            const NSInteger sourceIndex = [self indexOfTab:theTab];
+            if (sourceIndex != NSNotFound) {
+                options[iTermOpenTabArrangementInsertionIndexKey] = @(sourceIndex + 1);
+            }
+        }
         return [destinationTerminal openTabWithArrangement:theTab.arrangementForDuplication
                                                      named:nil
                                            hasFlexibleView:theTab.isTmuxTab
                                                    viewMap:nil
                                                 sessionMap:nil
                                         partialAttachments:nil
-                                                   options:@{ PTYSessionArrangementOptionsForDuplication: @YES }];
+                                                   options:options];
     }
 }
 

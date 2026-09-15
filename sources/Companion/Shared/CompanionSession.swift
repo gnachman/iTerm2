@@ -172,6 +172,7 @@ actor CompanionSession {
         case .selectionText: "selectionText"
         case .selectionRange: "selectionRange"
         case .autoProvideConsent: "autoProvideConsent"
+        case .aiAvailabilityChanged: "aiAvailabilityChanged"
         }
     }
 

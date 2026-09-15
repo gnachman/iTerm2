@@ -158,11 +158,28 @@
 }
 
 - (void)viewDidLayout {
+    [self reconcileScrollPositionAfterResize];
     // Avoid overlapping text
     if ((!_aiCompletionWarning.isHidden && self.view.bounds.size.width < 418) || self.view.bounds.size.width < 180) {
         _sendTip.hidden = YES;
     } else {
         _sendTip.hidden = NO;
+    }
+}
+
+// When the whole document fits inside the composer, the view must never be
+// scrolled: the top would be clipped for no reason. But editing (and resizing)
+// makes NSTextView scroll to keep the caret visible against a momentarily shorter
+// clip, and NSClipView doesn’t re-clamp that offset back to zero afterward, so a
+// small stale offset survives and truncates the top. Since a document that fits
+// isn’t user-scrollable anyway, unconditionally pin it to the top whenever it
+// fits. When it overflows (a value taller than the composer’s maximum height)
+// leave the caret-driven and user scroll position alone.
+- (void)reconcileScrollPositionAfterResize {
+    const CGFloat clipHeight = NSHeight(_scrollView.contentView.bounds);
+    const CGFloat documentHeight = NSHeight([(NSView *)_scrollView.documentView frame]);
+    if (documentHeight <= clipHeight && _scrollView.contentView.bounds.origin.y != 0) {
+        [self.textView scrollPoint:NSZeroPoint];
     }
 }
 

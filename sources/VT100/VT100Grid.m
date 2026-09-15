@@ -8,6 +8,8 @@
 
 #import "VT100Grid.h"
 
+#import <stdatomic.h>
+
 #import "DebugLogging.h"
 #import "iTermEncoderAdapter.h"
 #import "iTermExternalAttributeIndex.h"
@@ -33,6 +35,43 @@ static NSString *const kGridSizeKey = @"Size";
 @interface VT100Grid ()
 @property(nonatomic, readonly) NSArray *lines;  // Warning: not in order found on screen!
 @end
+
+// Content generation for restorable-state delta encoding. A grid is re-saved
+// only when this value changes, so idle grids (e.g. background tabs with no
+// output) are not rewritten to the SQLite state db on every save. It is bumped
+// on any mutation that -encode: serializes (cell content, cursor, scroll
+// regions, size, saved default char) and preserved across copies so a synced or
+// copied grid keeps its content identity. It is persisted in the POD by -encode:
+// and restored by -initWithDictionary:..., which bumps the global minimum so a
+// restored value stays above anything already written (so the delta encoder does
+// not have to self-heal). This mirrors LineBlock's block.generation exactly. The
+// grid nodes use new keys (PrimaryGridV2/AltGridV2) so pre-upgrade AlwaysEncode
+// nodes, whose generations live in a different (per-save +1) namespace, are
+// orphaned rather than colliding with this counter.
+static _Atomic int64_t gVT100GridNextContentGeneration = 1;
+
+static int64_t VT100GridAllocateContentGeneration(void) {
+    return atomic_fetch_add_explicit(&gVT100GridNextContentGeneration, 1, memory_order_relaxed);
+}
+
+// Bump *generation to a fresh value to record that something -encode: serializes
+// changed. A plain C function taking the ivar by pointer rather than an
+// Objective-C method because the callers (per-cell dirtying, cursor moves) are
+// hot and this avoids objc_msgSend on those paths.
+static inline void VT100GridDidChangeContent(int64_t *generation) {
+    *generation = VT100GridAllocateContentGeneration();
+}
+
+// Ensure future allocations exceed minValue so a generation restored from saved
+// state stays above anything previously written to the db.
+static void VT100GridSetMinimumContentGeneration(int64_t minValue) {
+    int64_t expected = atomic_load_explicit(&gVT100GridNextContentGeneration, memory_order_relaxed);
+    while (expected < minValue &&
+           !atomic_compare_exchange_weak_explicit(&gVT100GridNextContentGeneration, &expected, minValue,
+                                                  memory_order_relaxed, memory_order_relaxed)) {
+        // expected is updated by compare_exchange_weak on failure.
+    }
+}
 
 @implementation VT100Grid {
     VT100GridSize size_;
@@ -60,6 +99,9 @@ static NSString *const kGridSizeKey = @"Size";
     BOOL _bidiDirty;  // Did _bidiInfo change?
     // Number of lines counting from the top that we know are DWC-free.
     int _knownDWCFreeLines;
+    // See gVT100GridNextContentGeneration. Identifies this grid's encoded content
+    // for restorable-state delta encoding.
+    int64_t _contentGeneration;
 }
 
 @synthesize size = size_;
@@ -160,6 +202,16 @@ static NSString *const kGridSizeKey = @"Size";
         }
         _preferredCursorPosition = cursor_;
         [self markAllCharsDirty:YES updateTimestamps:NO];
+        // Restore the content generation from the POD (the value -encode: wrote), and
+        // bump the global minimum so future allocations stay above it and the delta
+        // encoder never has to self-heal. A pre-upgrade save lacks this key; such a
+        // grid starts at 0 and is re-saved under the new (…V2) key as a fresh node,
+        // so no migration fallback is needed.
+        NSNumber *savedContentGeneration = [NSNumber castFrom:dictionary[@"contentGeneration"]];
+        if (savedContentGeneration) {
+            _contentGeneration = savedContentGeneration.longLongValue;
+            VT100GridSetMinimumContentGeneration(_contentGeneration + 1);
+        }
     }
     return self;
 }
@@ -285,11 +337,39 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     return result;
 }
 
+- (int64_t)contentGeneration {
+    return _contentGeneration;
+}
+
+// For callers that mutate grid-wide state -encode: serializes (via a path that
+// bypasses the grid's own dirtying) but do not touch a specific line, so the grid
+// is not skipped on the next restorable-state save. For a per-LINE change use
+// -markLineDidChange:, which also makes copyDirtyFromGrid: copy it.
+- (void)markContentDidChange {
+    VT100GridDidChangeContent(&_contentGeneration);
+}
+
+// For a per-line change that -encode: serializes but does not go through
+// markCharsDirty:, i.e. per-line metadata (rtlFound/lineAttribute/timestamp) or the
+// continuation (EOL) cell. Marks the line dirty over its full width AND bumps the
+// content generation. Both are required: copyDirtyFromGrid: only copies a line's
+// cells+metadata into the immutable (encoded) grid when the line is dirty, but it
+// adopts the content generation unconditionally, so bumping without dirtying would
+// re-encode the immutable grid with stale content and then freeze it.
+- (void)markLineDidChange:(int)line {
+    [[self lineInfoAtLineNumber:line] setDirty:YES
+                                       inRange:VT100GridRangeMake(0, size_.width)
+                             updateTimestampTo:0];
+    VT100GridDidChangeContent(&_contentGeneration);
+}
+
 - (void)markCharDirty:(BOOL)dirty at:(VT100GridCoord)coord updateTimestamp:(BOOL)updateTimestamp {
     DLog(@"Mark %@ dirty=%@ delegate=%@", VT100GridCoordDescription(coord), @(dirty), delegate_);
 
     if (!dirty) {
         allDirty_ = NO;
+    } else {
+        VT100GridDidChangeContent(&_contentGeneration);
     }
     VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:coord.y];
     [lineInfo setDirty:dirty
@@ -298,11 +378,26 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     _hasChanged = YES;
 }
 
+// Marks a single cell dirty for redraw WITHOUT bumping the content generation, for
+// a change that affects rendering but not what -encode: serializes (e.g. the
+// cursor shape set by DECSCUSR, which apps like vim toggle constantly). Mirrors the
+// deliberately non-bumping markAllCharsDirty:updateTimestamps:NO redraw path; using
+// the bumping markCharDirty: here would re-save the whole grid on every cursor-style
+// change and defeat the delta encoding for interactive sessions.
+- (void)markCharDirtyForRedrawAt:(VT100GridCoord)coord {
+    [[self lineInfoAtLineNumber:coord.y] setDirty:YES
+                                          inRange:VT100GridRangeMake(coord.x, 1)
+                                updateTimestampTo:0];
+    _hasChanged = YES;
+}
+
 - (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to {
     DLog(@"Mark rect from %@ to %@ dirty=%@ delegate=%@", VT100GridCoordDescription(from), VT100GridCoordDescription(to), @(dirty), delegate_);
     assert(from.x <= to.x);
     if (!dirty) {
         allDirty_ = NO;
+    } else {
+        VT100GridDidChangeContent(&_contentGeneration);
     }
     const VT100GridRange xrange = VT100GridRangeMake(from.x, to.x - from.x + 1);
     const NSTimeInterval timestamp = self.currentDate;
@@ -332,7 +427,17 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
         allDirty_ = YES;
         if (updateTimestamps) {
             _allDirtyTimestamp = timestamp;
+            // updateTimestamps:YES rewrites every line's timestamp, which -encode:
+            // serializes in per-line metadata, so this IS a content change: bump the
+            // generation (the lines dirtied below make copyDirtyFromGrid: copy the
+            // new timestamps into the immutable grid).
+            VT100GridDidChangeContent(&_contentGeneration);
         }
+        // The updateTimestamps:NO path only flips dirty flags: a redraw signal that
+        // changes no serialized state, so it must NOT bump. Bumping there would
+        // re-save idle grids perpetually. A redraw-only caller like restoreState:
+        // would push the immutable grid's generation past the mutable grid's and
+        // trip the delta encoder's regression self-heal every sync.
         [lineInfos_ enumerateObjectsUsingBlock:^(VT100LineInfo * _Nonnull lineInfo, NSUInteger idx, BOOL * _Nonnull stop) {
             [lineInfo setDirty:YES inRange:horizontalRange updateTimestampTo:updateTimestamps ? timestamp : 0];
         }];
@@ -451,6 +556,7 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     if (newX != cursor_.x) {
         DLog(@"Move cursor x to %d (requested %d)", newX, cursorX);
         cursor_.x = newX;
+        VT100GridDidChangeContent(&_contentGeneration);
         [delegate_ gridCursorDidMove];
     }
 }
@@ -464,6 +570,7 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     cursor_.y = MIN(size_.height - 1, MAX(0, cursorY));
     if (cursorY != prev) {
         DLog(@"Move cursor y to %d (requested %d)", cursor_.y, cursorY);
+        VT100GridDidChangeContent(&_contentGeneration);
         if (resetDWCCount && cursorY < prev) {
             [self resetDWCFreeCount];
         }
@@ -476,15 +583,63 @@ NS_INLINE int VT100GridLineInfoIndex(VT100Grid *self, int lineNumber) {
     const int y = MIN(size_.height - 1, MAX(0, coord.y));
     int x = MIN(size_.width, MAX(0, coord.x));
     x = [self clampedCursorX:x onLine:y];
-    cursor_.x = x;
+    if (x != cursor_.x) {
+        // setCursorY: below bumps the content generation when y changes, but an
+        // x-only move would otherwise go unrecorded.
+        cursor_.x = x;
+        VT100GridDidChangeContent(&_contentGeneration);
+    }
     self.cursorY = y;
 }
 
 - (void)setCursorWithoutInvalidatingDWCFreeLineCount:(VT100GridCoord)coord {
     const int y = MIN(size_.height - 1, MAX(0, coord.y));
-    cursor_.x = [self clampedCursorX:MIN(size_.width, MAX(0, coord.x)) onLine:y];
+    const int newX = [self clampedCursorX:MIN(size_.width, MAX(0, coord.x)) onLine:y];
+    if (newX != cursor_.x) {
+        cursor_.x = newX;
+        VT100GridDidChangeContent(&_contentGeneration);
+    }
     [self setCursorY:y
        resetDWCCount:NO];
+}
+
+// These scalars are @synthesize'd (getter + ivar); we implement the setters so a
+// change bumps the content generation for restorable-state delta encoding. They
+// are also set through -copyMiscellaneousStateTo:, which would spuriously bump
+// the destination, but the copy/adopt paths overwrite _contentGeneration after
+// calling it, so those bumps are harmless.
+- (void)setScrollRegionRows:(VT100GridRange)scrollRegionRows {
+    if (scrollRegionRows.location == scrollRegionRows_.location &&
+        scrollRegionRows.length == scrollRegionRows_.length) {
+        return;
+    }
+    scrollRegionRows_ = scrollRegionRows;
+    VT100GridDidChangeContent(&_contentGeneration);
+}
+
+- (void)setScrollRegionCols:(VT100GridRange)scrollRegionCols {
+    if (scrollRegionCols.location == scrollRegionCols_.location &&
+        scrollRegionCols.length == scrollRegionCols_.length) {
+        return;
+    }
+    scrollRegionCols_ = scrollRegionCols;
+    VT100GridDidChangeContent(&_contentGeneration);
+}
+
+- (void)setUseScrollRegionCols:(BOOL)useScrollRegionCols {
+    if (useScrollRegionCols == useScrollRegionCols_) {
+        return;
+    }
+    useScrollRegionCols_ = useScrollRegionCols;
+    VT100GridDidChangeContent(&_contentGeneration);
+}
+
+- (void)setSavedDefaultChar:(screen_char_t)savedDefaultChar {
+    if (!memcmp(&savedDefaultChar, &savedDefaultChar_, sizeof(screen_char_t))) {
+        return;
+    }
+    savedDefaultChar_ = savedDefaultChar;
+    VT100GridDidChangeContent(&_contentGeneration);
 }
 
 - (int)numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:(BOOL)includeWhitespace {
@@ -1053,14 +1208,6 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     }
 }
 
-- (void)mutateExtendedAttributesOnLine:(int)y
-                        createIfNeeded:(BOOL)createIfNeeded
-                                 block:(void (^)(iTermExternalAttributeIndex *))block {
-    iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:y
-                                                           createIfNeeded:createIfNeeded];
-    block(eaIndex);
-}
-
 - (void)setCharsFrom:(VT100GridCoord)unsafeFrom
                   to:(VT100GridCoord)unsafeTo
               toChar:(screen_char_t)c
@@ -1101,17 +1248,6 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
                          count:maxX - minX + 1];
     }
     [self markCharsDirty:YES inRectFrom:from to:to];
-}
-
-- (void)eraseExternalAttributesFrom:(VT100GridCoord)from to:(VT100GridCoord)to {
-    if (from.x > to.x || from.y > to.y) {
-        return;
-    }
-    const int minX = MAX(0, from.x);
-    const int maxX = MIN(to.x, size_.width - 1);
-    for (int y = MAX(0, from.y); y <= MIN(to.y, size_.height - 1); y++) {
-        [self eraseExternalAttributesAt:VT100GridCoordMake(minX, y) count:maxX - minX + 1];
-    }
 }
 
 - (void)setMetadata:(iTermMetadata)metadata forLine:(int)lineNumber {
@@ -1327,6 +1463,11 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     }
     _hasChanged = YES;
     [otherGrid copyMiscellaneousStateTo:self];
+    // Adopt the source's content identity (this grid now mirrors it). Do this
+    // after copyMiscellaneousStateTo:, whose scalar setters may have bumped our
+    // generation. If the source is unchanged since the last sync its generation
+    // is stable, so an unchanged grid stays skippable by the delta encoder.
+    _contentGeneration = otherGrid->_contentGeneration;
     [otherGrid resetBidiDirty];
 }
 
@@ -2580,6 +2721,13 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     for (VT100LineInfo *info in lineInfos_) {
         [info resetMetadata];
     }
+    // Per-line metadata (timestamps) is serialized by -encode:. Mark every line
+    // dirty so copyDirtyFromGrid: copies the reset metadata into the immutable grid
+    // (it copies metadata only for dirty lines), and bump the content generation.
+    // markAllCharsDirty: is a redraw signal that does not bump (and early-returns
+    // when already all-dirty), so bump explicitly.
+    [self markAllCharsDirty:YES updateTimestamps:NO];
+    VT100GridDidChangeContent(&_contentGeneration);
 }
 
 - (void)restorePreferredCursorPositionIfPossible {
@@ -2607,7 +2755,15 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 - (void)setContinuationMarkOnLine:(int)line to:(unichar)code {
     screen_char_t *chars = [self screenCharsAtLineNumber:line];
     assert(chars);
+    if (chars[size_.width].code == code) {
+        return;
+    }
     chars[size_.width].code = code;
+    // The continuation mark lives in the WIDTH+1 cell, which -encode: serializes.
+    // This is a raw write that does not go through markCharsDirty:. Mark the line
+    // dirty (so copyDirtyFromGrid: copies the WIDTH+1 cell into the immutable grid)
+    // and bump the content generation; a caller may not follow with a dirtying erase.
+    [self markLineDidChange:line];
 }
 
 - (void)encode:(id<iTermEncoderAdapter>)encoder {
@@ -2629,7 +2785,14 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         @"scrollRegionRows": [NSDictionary dictionaryWithGridRange:scrollRegionRows_],
         @"scrollRegionCols": [NSDictionary dictionaryWithGridRange:scrollRegionCols_],
         @"useScrollRegionCols": @(useScrollRegionCols_),
-        @"savedDefaultCharData": [NSData dataWithBytes:&savedDefaultChar_ length:sizeof(savedDefaultChar_)]
+        @"savedDefaultCharData": [NSData dataWithBytes:&savedDefaultChar_ length:sizeof(savedDefaultChar_)],
+        // Persist the content generation in the POD so it survives restore on both
+        // paths (dictionaryValue and implicitDictionaryValue both preserve the POD).
+        // This mirrors how LineBlock persists kLineBlockGenerationKey. The injected
+        // "<key>_Generation" is only a migration fallback for pre-upgrade saves that
+        // lack this key. On the next save an unchanged grid's generation matches the
+        // stored node generation and is skipped.
+        @"contentGeneration": @(_contentGeneration)
     }];
 }
 
@@ -2960,6 +3123,7 @@ static const screen_char_t *VT100GridDefaultLine(VT100Grid *self, int width) {
     if (newSize.width != size_.width || newSize.height != size_.height) {
         DLog(@"Grid for %@ resized to %@", self.delegate, VT100GridSizeDescription(newSize));
         size_ = newSize;
+        VT100GridDidChangeContent(&_contentGeneration);
         lines_ = [self linesWithSize:newSize];
         lineInfos_ = [self lineInfosWithSize:newSize];
 
@@ -3276,8 +3440,11 @@ static void DumpBuf(screen_char_t* p, int n) {
 }
 
 - (void)resetScrollRegions {
-    scrollRegionRows_ = VT100GridRangeMake(0, size_.height);
-    scrollRegionCols_ = VT100GridRangeMake(0, size_.width);
+    // Assign through the setters, which bump the content generation if the value
+    // actually changes. (Scroll regions are scalars copied unconditionally by
+    // copyMiscellaneousStateTo:, so no per-line dirtying is needed.)
+    self.scrollRegionRows = VT100GridRangeMake(0, size_.height);
+    self.scrollRegionCols = VT100GridRangeMake(0, size_.width);
 }
 
 #pragma mark - NSCopying
@@ -3286,6 +3453,14 @@ static void DumpBuf(screen_char_t* p, int n) {
     return [self copyWithZone:nil];
 }
 
+// NOTE: This deliberately does not maintain theCopy's content generation. The
+// cursor is set via the ivar (no bump), and the scalar setters here DO bump, but
+// none of that is meaningful: a copy has the same content as its source and must
+// report the SAME content generation (bumping would make an unchanged grid look
+// changed and force a spurious re-save). Every caller therefore overwrites
+// theCopy->_contentGeneration with the source's generation immediately after
+// calling this (see copyWithZone: and copyDirtyFromGrid:). Any new caller MUST do
+// the same.
 - (void)copyMiscellaneousStateTo:(VT100Grid *)theCopy {
     theCopy->cursor_ = cursor_;  // Don't use property to avoid delegate call
     theCopy.scrollRegionRows = scrollRegionRows_;
@@ -3310,6 +3485,10 @@ static void DumpBuf(screen_char_t* p, int n) {
     }
     theCopy->screenTop_ = screenTop_;
     [self copyMiscellaneousStateTo:theCopy];
+    // Preserve content identity across the copy (copyMiscellaneousStateTo: may
+    // have bumped it via the scalar setters). A copy has the same encoded content
+    // as the original, so it must report the same generation.
+    theCopy->_contentGeneration = _contentGeneration;
 
     return theCopy;
 }

@@ -28,7 +28,7 @@ final class AIModelCatalogTest: XCTestCase {
         let models = try bundledModels()
         XCTAssertFalse(models.isEmpty,
                        "AI model catalog decoded to zero models")
-        XCTAssertEqual(models.count, 42,
+        XCTAssertEqual(models.count, 40,
                        "Unexpected catalog size; update this test if you intentionally changed ai-models.json")
     }
 
@@ -43,7 +43,8 @@ final class AIModelCatalogTest: XCTestCase {
         XCTAssertEqual(AIModelCatalog.recommendedModel(for: .gemini, in: models)?.name, "gemini-3.7-flash")
         XCTAssertEqual(AIModelCatalog.recommendedModel(for: .deepSeek, in: models)?.name, "deepseek-v4-flash")
         XCTAssertEqual(AIModelCatalog.recommendedModel(for: .anthropic, in: models)?.name, "claude-opus-4-8")
-        XCTAssertEqual(AIModelCatalog.recommendedModel(for: .llama, in: models)?.name, "llama4:latest")
+        // Ollama models are discovered from the local server, not the catalog.
+        XCTAssertNil(AIModelCatalog.recommendedModel(for: .llama, in: models))
         XCTAssertEqual(AIModelCatalog.recommendedModel(for: .apple, in: models)?.name, "apple-on-device")
     }
 

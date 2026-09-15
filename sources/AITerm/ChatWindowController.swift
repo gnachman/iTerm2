@@ -960,7 +960,8 @@ extension ChatWindowController: ChatViewControllerDelegate {
                     let copy = ChatBlob(blobID: newBlobID, chatID: chatID,
                                         blobProtocol: blob.blobProtocol, role: blob.role,
                                         payload: blob.payload, responseID: blob.responseID,
-                                        tokenCount: blob.tokenCount)
+                                        tokenCount: blob.tokenCount,
+                                        wireFormatVersion: blob.wireFormatVersion)
                     if listModel.chatDatabase.appendBlob(copy) != nil {
                         blobIDMap[blob.blobID.uuidString] = newBlobID.uuidString
                     }

@@ -231,6 +231,15 @@ extern NSString *const kPreferenceKeyAIManualModelConfigurations;  // NSArray of
 extern NSString *const kPreferenceKeyAIEconomyModelName;
 extern NSString *const kPreferenceKeyUseRecommendedAIModel;
 extern NSString *const kPreferenceKeyAIVendor;  // iTermAIVendor
+// When the built-in Ollama vendor is the default, its models are discovered from
+// the local server rather than a static catalog, so there is no sane automatic
+// choice of which discovered tag to use. These hold the user's explicit picks.
+// Empty string means "not chosen": the regular model then falls back to the
+// lexicographically-first discovered tag, and the economy model falls back to
+// the regular model. See LLMMetadata.recommendedModel(for:) and
+// LLMMetadata.ollamaVendorEconomyModel().
+extern NSString *const kPreferenceKeyAIOllamaRegularModel;
+extern NSString *const kPreferenceKeyAIOllamaEconomyModel;
 extern NSString *const kPreferenceKeyAISafetyCheck;  // boolean
 extern NSString *const kPreferenceKeyAIModelUpdatesEnabled;  // boolean: periodically download the AI model catalog from iterm2.com
 

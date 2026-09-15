@@ -1556,6 +1556,10 @@ void TurnOnDebugLoggingAutomatically(void) {
 #endif
 
     [iTermLaunchExperienceController applicationDidFinishLaunching];
+    // Seed the dynamic Ollama model cache from disk so a chat pinned to a
+    // discovered tag resolves synchronously at launch instead of falling through
+    // to the global default provider while /api/tags is fetched.
+    [[iTermOllamaModelCache shared] loadPersistedModels];
     [[iTermLaunchServices sharedInstance] registerForiTerm2Scheme];
     // Once a day at most, check for a newer uv (silently replace it) and refresh the
     // iterm2 module in provisioned basic-script venvs. A no-op until uv is installed.

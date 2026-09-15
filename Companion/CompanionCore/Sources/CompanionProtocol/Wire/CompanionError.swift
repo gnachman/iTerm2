@@ -15,6 +15,12 @@ public struct CompanionError: Codable, Equatable, Error {
         case notPaired
         case internalError
         case unsupported
+        /// AI is turned off on the paired mac, so an AI-only request (chat, agent,
+        /// orchestrator) cannot be served. Session browsing, live video, and
+        /// keyboard input still work. Sent only to a phone at
+        /// aiDecouplingRevision or newer (an older phone cannot decode this string
+        /// and would drop the frame, so the bridge sends it .internalError instead).
+        case aiUnavailable
     }
     public var code: Code
     public var message: String

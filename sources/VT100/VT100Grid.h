@@ -48,6 +48,20 @@
 @property(nonatomic, readonly) VT100GridCoord preferredCursorPosition;
 @property(nonatomic, readonly) VT100GridSize sizeRespectingRegionConditionally;
 @property(nonatomic, readonly) BOOL haveScrolled;
+// Monotonic identity of the grid's -encode: output, for restorable-state delta
+// encoding. Changes on any mutation that -encode: serializes and is preserved
+// across copies, so an unchanged grid can be skipped when saving state.
+@property(nonatomic, readonly) int64_t contentGeneration;
+// Call after mutating grid-wide state (bypassing the grid's own dirtying methods)
+// in a way that changes what -encode: serializes, so the grid is not skipped on
+// the next restorable-state save. For a per-line change use -markLineDidChange:.
+- (void)markContentDidChange;
+// Call after a per-line change that -encode: serializes but does not go through
+// markCharsDirty: (per-line metadata such as rtlFound/lineAttribute, or the
+// continuation/EOL cell). Marks the line dirty over its full width so
+// copyDirtyFromGrid: copies it into the immutable grid, AND bumps the content
+// generation. Both are required; see the implementation.
+- (void)markLineDidChange:(int)line;
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 @property(nonatomic, readonly) NSArray<VT100LineInfo *> *metadataArray;
 @property(nonatomic, readonly) screen_char_t defaultChar;
@@ -226,6 +240,9 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 // Mark a specific character dirty. If updateTimestamp is set, then the line's last-modified time is
 // set to the current time.
 - (void)markCharDirty:(BOOL)dirty at:(VT100GridCoord)coord updateTimestamp:(BOOL)updateTimestamp;
+// Marks a cell dirty for redraw without bumping the content generation. Use for a
+// change that affects rendering but not serialized content (e.g. cursor shape).
+- (void)markCharDirtyForRedrawAt:(VT100GridCoord)coord;
 
 // Mark chars dirty in a rectangle, inclusive of endpoints.
 - (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to;
@@ -415,9 +432,6 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
                                           iTermExternalAttribute **eaOut,
                                           VT100GridCoord coord,
                                           BOOL *stop))block;
-- (void)mutateExtendedAttributesOnLine:(int)line
-                        createIfNeeded:(BOOL)createIfNeeded
-                                 block:(void (^)(iTermExternalAttributeIndex *))block;
 
 - (void)enumerateParagraphs:(void (^)(int startLine, NSArray<MutableScreenCharArray *> *scas))closure;
 - (void)performBlockWithoutScrollRegions:(void (^NS_NOESCAPE)(void))block;

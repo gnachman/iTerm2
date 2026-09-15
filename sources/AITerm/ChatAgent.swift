@@ -825,15 +825,13 @@ class ChatAgent {
         return nil
     }
 
-    /// Resolve a turn's model name the same way request routing does
-    /// (AIConversation.complete: manual models first, then the built-in
-    /// catalog, so a manual config wins over a built-in that shares its name).
-    /// nil for an unknown or absent name; the caller falls back to the global
-    /// default, keeping capability gating and routing in agreement.
+    /// Resolve a turn's model name the same way request routing does, through the
+    /// shared LLMMetadata.model(named:) resolver (manual/custom models, the built-in
+    /// catalog, AND discovered built-in Ollama tags), so capability gating and
+    /// routing agree with the UI. nil for an unknown or absent name; the caller falls
+    /// back to the global default.
     static func resolvedModel(named name: String?) -> AIMetadata.Model? {
-        guard let name else { return nil }
-        return LLMMetadata.manualModels().first { $0.name == name }
-            ?? AIMetadata.instance.models.first { $0.name == name }
+        return LLMMetadata.model(named: name)
     }
 
     /// Hosted-tool enablement for a turn, pure over the effective model's
@@ -1843,7 +1841,13 @@ class ChatAgent {
                                       database: ChatDatabase) -> Int {
         let existing = database.blobCount(inChat: chatID)
         let sameProtocol = existing == 0 || database.storedBlobProtocol(inChat: chatID) == Int(api.rawValue)
-        if existing > 0, sameProtocol, !Self.historyUsesExplainFeature(display),
+        // The incremental append path must not run when the stored blobs are a
+        // stale wire-FORMAT version: appending current-version rounds onto them
+        // makes a permanent mixed-version chat that replay refuses forever. Fall
+        // through to captureTurn, whose gate re-freezes the whole history.
+        let sameVersion = existing == 0 ||
+            database.minStoredBlobWireFormatVersion(inChat: chatID) == ChatBlob.currentWireFormatVersion(for: api)
+        if existing > 0, sameProtocol, sameVersion, !Self.historyUsesExplainFeature(display),
            let tail = Self.displayTailForNewRounds(display, existing: existing) {
             let tailMessages = translate(messages: tail)
             // The tail must begin at a clean round boundary (a user turn). It does by

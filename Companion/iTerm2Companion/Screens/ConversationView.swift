@@ -46,7 +46,9 @@ struct ConversationView: View {
             }
             Divider()
             AgentComposerBar(placeholder: "Message",
-                             isDisabled: model.openChatWasDeleted) { text in
+                             // Composing is an AI action; also disable if AI was
+                             // turned off on the Mac while this chat was open.
+                             isDisabled: model.openChatWasDeleted || !model.aiAvailable) { text in
                 model.send(text: text)
             }
         }

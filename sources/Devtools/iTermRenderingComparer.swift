@@ -37,6 +37,7 @@ class iTermHeadlessWindowController: NSObject, WindowControllerInterface {
     func currentTab() -> PTYTab! { nil }
     @objc(closeTab:) func close(_ tab: PTYTab!) {}
     func windowSetFrameTopLeftPoint(_ point: NSPoint) {}
+    func windowSetFrame(_ frame: NSRect) {}
     func windowPerformMiniaturize(_ sender: Any!) {}
     func windowDeminiaturize(_ sender: Any!) {}
     func windowOrderFront(_ sender: Any!) {}

@@ -267,6 +267,7 @@ void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, Scre
                 @(XTERMCC_REPORT_WIN_STATE):        @"XTERMCC_REPORT_WIN_STATE",
                 @(XTERMCC_REPORT_WIN_POS):          @"XTERMCC_REPORT_WIN_POS",
                 @(XTERMCC_REPORT_WIN_PIX_SIZE):     @"XTERMCC_REPORT_WIN_PIX_SIZE",
+                @(XTERMCC_REPORT_CELL_SIZE_PIX):    @"XTERMCC_REPORT_CELL_SIZE_PIX",
                 @(XTERMCC_REPORT_WIN_SIZE):         @"XTERMCC_REPORT_WIN_SIZE",
                 @(XTERMCC_REPORT_SCREEN_SIZE):      @"XTERMCC_REPORT_SCREEN_SIZE",
                 @(XTERMCC_REPORT_ICON_TITLE):       @"XTERMCC_REPORT_ICON_TITLE",

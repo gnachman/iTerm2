@@ -70,18 +70,24 @@ function Build {
   # Zip it, notarize it, staple it, and re-zip it.
   PRENOTARIZED_ZIP=iTerm2-${NAME}-prenotarized.zip
   zip -ry $PRENOTARIZED_ZIP iTerm.app
-  xcrun notarytool submit --team-id H7V7XYVQ7D --apple-id "apple@georgester.com" --password "$NOTPASS" $PRENOTARIZED_ZIP > /tmp/upload.out 2>&1 || die "Notarization failed"
-  UUID=$(grep id: /tmp/upload.out | head -1 | sed -e 's/.*id: //')
-  echo "uuid is $UUID"
-  xcrun notarytool info --team-id H7V7XYVQ7D --apple-id "apple@georgester.com" --password "$NOTPASS" $UUID
-  sleep 1
-  while xcrun notarytool info --team-id H7V7XYVQ7D --apple-id "apple@georgester.com" --password "$NOTPASS" $UUID 2>&1 | egrep -i "in progress|Could not find the RequestUUID|Submission does not exist or does not belong to your team":
-  do
-      echo "Trying again"
-      sleep 1
-  done
+  # Submit synchronously with --wait so we block until Apple returns a verdict,
+  # instead of racing a status-polling loop that could exit early (as it did once
+  # notarization returned Invalid) and staple a build Apple never accepted.
+  # --wait can still exit 0 with status Invalid, so require "status: Accepted"
+  # explicitly, and abort on a failed staple rather than silently shipping an
+  # un-notarized zip.
+  xcrun notarytool submit --team-id H7V7XYVQ7D --apple-id "apple@georgester.com" --password "$NOTPASS" --wait "$PRENOTARIZED_ZIP" > /tmp/upload.out 2>&1 || die "Notarization submit failed (see /tmp/upload.out)"
+  cat /tmp/upload.out
+  UUID=$(grep -i "id:" /tmp/upload.out | head -1 | sed -e 's/.*id: //')
+  echo "submission id is $UUID"
+  if ! grep -q "status: Accepted" /tmp/upload.out; then
+      echo "Notarization was not Accepted. Log follows:"
+      xcrun notarytool log "$UUID" --team-id H7V7XYVQ7D --apple-id "apple@georgester.com" --password "$NOTPASS" 2>&1 | head -80
+      die "Notarization not Accepted for $UUID"
+  fi
   NOTARIZED_ZIP=iTerm2-${NAME}.zip
-  xcrun stapler staple iTerm.app
+  xcrun stapler staple iTerm.app || die "Stapling failed (notarization ticket unavailable?)"
+  xcrun stapler validate iTerm.app || die "Staple validation failed"
   zip -ry $NOTARIZED_ZIP iTerm.app
 
   # Update the list of changes

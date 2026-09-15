@@ -28,8 +28,11 @@ TEAM = 'H7V7XYVQ7D'
 # availability checks. The app is unreleased and tracks the current OS.
 DEPLOYMENT_TARGET = '26.0'
 # Kept in sync by hand; bump when releasing (mirrors the old Xcode-managed values).
-MARKETING_VERSION = '1.0'
-CURRENT_PROJECT_VERSION = '9'
+# IMPORTANT: bump these HERE, not in the generated .xcodeproj - the next
+# regeneration overwrites the project wholesale, so a version edited only in
+# project.pbxproj is silently reverted (this is how the 1.1 release was lost).
+MARKETING_VERSION = '1.2'
+CURRENT_PROJECT_VERSION = '1'
 PACKAGE_PRODUCTS = %w[CompanionProtocol CompanionNoise CompanionTransport]
 WHISPERKIT_URL = 'https://github.com/argmaxinc/WhisperKit.git'
 WHISPERKIT_MIN_VERSION = '1.0.0'
@@ -73,7 +76,7 @@ SHARED_MAC_SOURCES = %w[
 PUSH_SOURCES = %w[NotificationService.swift NSEFetcher.swift]
 
 # Unit-test sources.
-TEST_SOURCES = %w[AppModelWatchTests.swift SessionWatchStateTests.swift]
+TEST_SOURCES = %w[AppModelWatchTests.swift SessionWatchStateTests.swift AppModelAIAvailabilityTests.swift AppModelSessionTreePushTests.swift]
 
 project = Xcodeproj::Project.new(PROJECT_PATH)
 

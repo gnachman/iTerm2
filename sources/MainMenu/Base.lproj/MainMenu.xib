@@ -2214,8 +2214,8 @@ DQ
                                 </connections>
                                 <accessibility identifier="Lock Layout"/>
                             </menuItem>
-                            <menuItem title="Notify on Status Change" keyEquivalent="X" identifier="Notify on Status Change" id="Ns0-Ch-G01">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            <menuItem title="Notify on Status Change" identifier="Notify on Status Change" id="Ns0-Ch-G01">
+                                <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="toggleNotifyOnStatusChange:" target="-1" id="Ns0-Ch-A02"/>
                                 </connections>

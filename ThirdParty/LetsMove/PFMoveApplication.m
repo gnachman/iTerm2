@@ -12,6 +12,23 @@
 #import <Security/Security.h>
 #import <dlfcn.h>
 #import <sys/mount.h>
+#import <sys/xattr.h>
+#import <sys/sysctl.h>
+#import <errno.h>
+
+// App Translocation (Gatekeeper path randomization) resolution.
+// SecTranslocateCreateOriginalPathForURL is an SPI in Security.framework
+// (defined by Apple's Security framework, present since macOS 10.12). It is not
+// public, but it is the de-facto standard de-translocation call used by other
+// notarized direct-distribution apps (e.g. Dolphin, DuckStation, PostgresApp,
+// mac-mouse-fix). Note that Sparkle does NOT use it: like us it detects
+// translocation with the /AppTranslocation/ path check and otherwise aborts.
+// We detect translocation ourselves the same way to keep the private-API
+// surface to this single symbol, which is weak-linked: if a future macOS
+// removes it, it binds to NULL and we skip the fix instead of failing to launch.
+// A resignature under the same name can't be guarded at runtime, so we also
+// validate the returned path before acting on it. See potionfactory/LetsMove#56.
+extern CFURLRef _Nullable SecTranslocateCreateOriginalPathForURL(CFURLRef translocatedPath, CFErrorRef *error) __attribute__((weak_import));
 
 @interface LetsMove : NSObject
 @end
@@ -61,6 +78,10 @@ static BOOL AuthorizedInstall(NSString *srcPath, NSString *dstPath, BOOL *cancel
 static BOOL CopyBundle(NSString *srcPath, NSString *dstPath);
 static NSString *ShellQuotedString(NSString *string);
 static void Relaunch(NSString *destinationPath);
+static NSString *UntranslocatedPath(NSString *path);
+static BOOL ClearQuarantine(NSString *path);
+static BOOL AlreadyAttemptedTranslocationFixThisBoot(void);
+static void MarkTranslocationFixAttemptedThisBoot(void);
 
 // Main worker function
 void PFMoveToApplicationsFolderIfNecessary(void) {
@@ -73,11 +94,51 @@ void PFMoveToApplicationsFolderIfNecessary(void) {
 		return;
 	}
 
-	// Skip if user suppressed the alert before
-	if ([[NSUserDefaults standardUserDefaults] boolForKey:AlertSuppressKey]) return;
-
 	// Path of the bundle
 	NSString *bundlePath = [[NSBundle mainBundle] bundlePath];
+
+	// If we're running from an App Translocation image (Gatekeeper path
+	// randomization) the bundle path is a read-only randomized mount rather than
+	// where the app actually lives. Resolve the real location. Upstream LetsMove
+	// never handled this (potionfactory/LetsMove#56), which made it both offer to
+	// "move" an app that is already installed and copy from the read-only image,
+	// sometimes trashing the user's real copy.
+	NSString *untranslocatedPath = UntranslocatedPath(bundlePath);
+	if (untranslocatedPath) {
+		// If the real location is already in an Applications folder, the app is
+		// installed and only translocated because the quarantine flag was never
+		// cleared (e.g. it was unzipped or moved from a terminal instead of
+		// dragged in Finder). Don't move anything: clear the quarantine flag and
+		// relaunch in place so the app stops being translocated and Sparkle can
+		// auto-update. Do this even if the move alert was suppressed, since it is
+		// a silent fix rather than a nag.
+		//
+		// Two guards keep this from becoming an infinite exit()/relaunch loop:
+		// (1) ClearQuarantine only returns YES once the attribute is verifiably
+		//     gone, so we relaunch only when the next launch should no longer be
+		//     translocated; and (2) we attempt this at most once per boot, so if
+		//     the relaunched instance is somehow still translocated for a reason
+		//     quarantine removal did not address, we fall through instead of
+		//     bouncing forever. Falling through is safe: the path is in an
+		//     Applications folder, so the normal flow below returns without a
+		//     move.
+		if (IsInApplicationsFolder(untranslocatedPath) &&
+			!IsApplicationAtPathNested(untranslocatedPath) &&
+			[[NSFileManager defaultManager] isWritableFileAtPath:untranslocatedPath] &&
+			!AlreadyAttemptedTranslocationFixThisBoot() &&
+			ClearQuarantine(untranslocatedPath)) {
+			MarkTranslocationFixAttemptedThisBoot();
+			NSLog(@"INFO -- Running translocated from an Applications folder; relaunching in place to disable translocation");
+			Relaunch(untranslocatedPath);
+			exit(0);
+		}
+		// Otherwise fall through to the normal move flow, but reason about (and
+		// copy from) the real source path rather than the read-only image.
+		bundlePath = untranslocatedPath;
+	}
+
+	// Skip if user suppressed the alert before
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:AlertSuppressKey]) return;
 
 	// Check if the bundle is embedded in another application
 	BOOL isNestedApplication = IsApplicationAtPathNested(bundlePath);
@@ -535,6 +596,96 @@ static BOOL CopyBundle(NSString *srcPath, NSString *dstPath) {
 
 static NSString *ShellQuotedString(NSString *string) {
 	return [NSString stringWithFormat:@"'%@'", [string stringByReplacingOccurrencesOfString:@"'" withString:@"'\\''"]];
+}
+
+// If `path` is running from an App Translocation image, returns the real
+// (non-translocated) path where the app actually lives. Returns nil if the app
+// is not translocated or the original path can't be resolved or validated.
+static NSString *UntranslocatedPath(NSString *path) {
+	if (path == nil) return nil;
+
+	// Detect translocation without an API: a translocated bundle always runs
+	// from a randomized mount under .../AppTranslocation/. This is the same
+	// stable check our Sparkle fork uses (SUHost isRunningTranslocated).
+	if ([path rangeOfString:@"/AppTranslocation/"].location == NSNotFound) return nil;
+
+	// Weak-linked SPI; if it's ever removed this binds to NULL and we skip.
+	if (SecTranslocateCreateOriginalPathForURL == NULL) return nil;
+
+	NSURL *url = [NSURL fileURLWithPath:path];
+	CFURLRef originalURL = SecTranslocateCreateOriginalPathForURL((CFURLRef)url, NULL);
+	if (originalURL == NULL) return nil;
+
+	// Copy before releasing originalURL: -path returns a string whose lifetime is
+	// tied to the (toll-free bridged) URL.
+	NSString *originalPath = [[[(NSURL *)originalURL path] copy] autorelease];
+	CFRelease(originalURL);
+
+	// Validate before any caller acts on this (we may trash/relaunch based on
+	// it): it must be a real bundle directory, different from where we're
+	// running, with the same bundle name. This bounds the blast radius if the
+	// SPI ever misbehaves or returns something unexpected.
+	if (originalPath.length == 0) return nil;
+	if ([originalPath isEqualToString:path]) return nil;
+	if (![[originalPath lastPathComponent] isEqualToString:[path lastPathComponent]]) return nil;
+	BOOL isDirectory = NO;
+	if (![[NSFileManager defaultManager] fileExistsAtPath:originalPath isDirectory:&isDirectory] || !isDirectory) return nil;
+
+	return originalPath;
+}
+
+// Removes the com.apple.quarantine attribute from the bundle so macOS won't
+// translocate it on the next launch. Returns YES only if the attribute is
+// actually gone afterward, so the caller can avoid an infinite relaunch loop.
+static BOOL ClearQuarantine(NSString *path) {
+	NSTask *task = [[[NSTask alloc] init] autorelease];
+	[task setLaunchPath:@"/usr/bin/xattr"];
+	[task setArguments:[NSArray arrayWithObjects:@"-d", @"-r", @"com.apple.quarantine", path, nil]];
+	[task setStandardOutput:[NSPipe pipe]];
+	[task setStandardError:[NSPipe pipe]];
+	@try {
+		[task launch];
+	}
+	@catch (NSException *exception) {
+		NSLog(@"ERROR -- Could not run xattr to clear quarantine: %@", exception);
+		return NO;
+	}
+	[task waitUntilExit];
+
+	// Success means the attribute is verifiably gone. getxattr returns -1 for
+	// ANY error, so we must require errno == ENOATTR (attribute absent). Treating
+	// other failures (ENOTSUP, EPERM, EACCES, EIO) as "gone" would let the caller
+	// relaunch a still-quarantined, still-translocated app and loop forever.
+	ssize_t size = getxattr([path fileSystemRepresentation], "com.apple.quarantine", NULL, 0, 0, XATTR_NOFOLLOW);
+	return size < 0 && errno == ENOATTR;
+}
+
+// Boot time in seconds, or 0 if it can't be determined. Used to scope the
+// in-place de-translocation attempt to once per boot.
+static long BootTimeSeconds(void) {
+	struct timeval boottime = {0};
+	size_t size = sizeof(boottime);
+	int mib[2] = {CTL_KERN, KERN_BOOTTIME};
+	if (sysctl(mib, 2, &boottime, &size, NULL, 0) != 0) return 0;
+	return (long)boottime.tv_sec;
+}
+
+static NSString *const TranslocationFixBootKey = @"NoSyncLastTranslocationFixBootTime";
+
+static BOOL AlreadyAttemptedTranslocationFixThisBoot(void) {
+	long boot = BootTimeSeconds();
+	if (boot == 0) return NO; // Can't tell; prefer to try rather than over-suppress.
+	NSNumber *stored = [[NSUserDefaults standardUserDefaults] objectForKey:TranslocationFixBootKey];
+	return stored != nil && [stored longValue] == boot;
+}
+
+static void MarkTranslocationFixAttemptedThisBoot(void) {
+	long boot = BootTimeSeconds();
+	if (boot == 0) return;
+	// Persist synchronously: we exit() immediately after relaunching, and the
+	// relaunched process must be able to read this on its next launch.
+	[[NSUserDefaults standardUserDefaults] setObject:@(boot) forKey:TranslocationFixBootKey];
+	[[NSUserDefaults standardUserDefaults] synchronize];
 }
 
 static void Relaunch(NSString *destinationPath) {

@@ -472,6 +472,20 @@
     FMResultSet *rs = [state.db executeQuery:@"PRAGMA journal_mode=WAL"];
     [rs close];
 
+    // In WAL mode, synchronous=NORMAL syncs at checkpoints instead of on every
+    // commit. This trades a small durability window (commits since the last
+    // checkpoint can be lost on power loss or kernel panic, but not on an app
+    // crash, and the database can never be corrupted) for far fewer fsync stalls
+    // and much less sustained disk I/O. Restorable state is best-effort and
+    // re-saved constantly, so being set back to the previous save on a hard
+    // poweroff is acceptable, and it avoids the write pressure that can get the
+    // process jetsammed. Unlike journal_mode (persisted in the db header),
+    // synchronous is per-connection and resets to FULL on each open, so it must be
+    // set here every time we open the database.
+    if (![state.db executeUpdate:@"PRAGMA synchronous=NORMAL"]) {
+        DLog(@"Failed to set synchronous=NORMAL");
+    }
+
     if (![state.db executeUpdate:@"create table if not exists Node (key text not null, identifier text not null, parent integer not null, data blob)"]) {
         return NO;
     }
