@@ -299,10 +299,40 @@
       "comment" : "Hint telling the user no API key is set yet for a provider; %@ is the provider name",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für %@ ist noch kein API-Schlüssel festgelegt."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "No %@ API key is set yet."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ のAPIキーはまだ設定されていません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ainda não há uma chave de API do %@ configurada."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ключ API %@ ещё не задан."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未设置 %@ API 密钥。"
           }
         }
       }
@@ -1067,10 +1097,40 @@
       "comment" : "Model popup choice meaning use every model discovered on the Ollama server",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle installierten Modelle"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "All installed models"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インストール済みのすべてのモデル"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos os modelos instalados"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Все установленные модели"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有已安装的模型"
           }
         }
       }
@@ -1079,10 +1139,40 @@
       "comment" : "Validation error when an auto-discover entry already exists for a server",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für diesen Server existiert bereits ein Eintrag zur automatischen Erkennung."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "There is already an auto-discover entry for this server."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このサーバーの自動検出エントリは既に存在します。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Já existe uma entrada de descoberta automática para este servidor."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для этого сервера уже есть запись автоматического обнаружения."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该服务器已存在一个自动发现条目。"
           }
         }
       }
@@ -1343,10 +1433,40 @@
       "comment" : "Alert title shown when listing the Ollama server's models fails",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modelle konnten nicht abgerufen werden"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Could Not Fetch Models"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデルを取得できませんでした"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível buscar os modelos"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось получить модели"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法获取模型"
           }
         }
       }
@@ -1355,10 +1475,40 @@
       "comment" : "Alert body shown when refreshing the Ollama model list fails",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Ollama-Server konnte nicht erreicht werden, um seine Modelle aufzulisten. Stellen Sie sicher, dass er läuft und die URL korrekt ist."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Could not reach the Ollama server to list its models. Check that it is running and the URL is correct."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデルの一覧を取得するためにOllamaサーバーに接続できませんでした。サーバーが実行中であることと、URLが正しいことを確認してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível conectar ao servidor Ollama para listar os modelos. Verifique se ele está em execução e se a URL está correta."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось подключиться к серверу Ollama для получения списка моделей. Убедитесь, что он запущен и URL указан правильно."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法连接到 Ollama 服务器以列出其模型。请检查它是否正在运行，以及 URL 是否正确。"
           }
         }
       }
@@ -1367,10 +1517,40 @@
       "comment" : "Alert title shown when refreshing the Ollama model list fails",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server konnte nicht erreicht werden"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Could Not Reach Server"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サーバーに接続できませんでした"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível conectar ao servidor"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось подключиться к серверу"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法连接到服务器"
           }
         }
       }
@@ -1421,10 +1601,40 @@
       "comment" : "Checkbox that makes the model editor discover installed Ollama models instead of naming one by hand",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installierte Modelle automatisch erkennen (Ollama)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Discover installed models automatically (Ollama)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インストール済みのモデルを自動検出する（Ollama）"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descobrir modelos instalados automaticamente (Ollama)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Автоматически обнаруживать установленные модели (Ollama)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动发现已安装的模型（Ollama）"
           }
         }
       }
@@ -1685,10 +1895,40 @@
       "comment" : "Checkbox label for the vision (image input) model feature",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vision (Bildeingabe)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Vision (image input)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ビジョン（画像入力）"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visão (entrada de imagem)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обработка изображений (ввод изображений)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "视觉（图像输入）"
           }
         }
       }
@@ -1697,10 +1937,40 @@
       "comment" : "Button that lists models installed on the server",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modelle abrufen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Fetch Models"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデルを取得"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar modelos"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Получить модели"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "获取模型"
           }
         }
       }
@@ -1709,10 +1979,40 @@
       "comment" : "Transient button title while the app lists models from the Ollama server",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird abgerufen …"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Fetching…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取得中…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscando…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Получение…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在获取…"
           }
         }
       }
@@ -2057,10 +2357,40 @@
       "comment" : "Alert body shown when the user fetches models without entering a server URL",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geben Sie die Server-URL ein, bevor Sie Modelle abrufen."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Enter the server URL before fetching models."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデルを取得する前にサーバーのURLを入力してください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informe a URL do servidor antes de buscar os modelos."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Введите URL сервера перед получением моделей."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先输入服务器 URL，然后再获取模型。"
           }
         }
       }
@@ -2069,10 +2399,40 @@
       "comment" : "Alert title shown when the user fetches models without entering a server URL",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fehlende URL"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Missing URL"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URLが未入力です"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL ausente"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL не указан"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缺少 URL"
           }
         }
       }
@@ -2081,10 +2441,40 @@
       "comment" : "Validation error when an entry for this model already exists on a server",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für dieses Modell existiert auf diesem Server bereits ein Eintrag."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "There is already an entry for this model on this server."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このサーバーにはこのモデルのエントリが既に存在します。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Já existe uma entrada para este modelo neste servidor."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для этой модели на этом сервере уже есть запись."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该服务器上已存在此模型的条目。"
           }
         }
       }
@@ -2176,6 +2566,24 @@
     "AIModelEditor.ModelsRefreshedBody" : {
       "comment" : "Alert body after refreshing the Ollama model list; %ld is the number of models found",
       "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld installiertes Modell gefunden. Wählen Sie es im Modell-Popup aus, oder „Alle installierten Modelle“, um alle verfügbar zu machen."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld installierte Modelle gefunden. Wählen Sie eines im Modell-Popup aus, oder „Alle installierten Modelle“, um alle verfügbar zu machen."
+                }
+              }
+            }
+          }
+        },
         "en" : {
           "variations" : {
             "plural" : {
@@ -2193,6 +2601,78 @@
               }
             }
           }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld個のインストール済みモデルが見つかりました。「モデル」ポップアップから選択するか、「インストール済みのすべてのモデル」を選んですべてを利用できるようにしてください。"
+                }
+              }
+            }
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld modelo instalado encontrado. Selecione-o no menu Modelo, ou “Todos os modelos instalados” para expor todos eles."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%ld modelos instalados encontrados. Selecione um no menu Modelo, ou “Todos os modelos instalados” para expor todos eles."
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Найдены %ld установленные модели. Выберите одну из них во всплывающем меню «Модель» или пункт «Все установленные модели», чтобы открыть доступ ко всем моделям."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Найдено %ld установленных моделей. Выберите одну из них во всплывающем меню «Модель» или пункт «Все установленные модели», чтобы открыть доступ ко всем моделям."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Найдена %ld установленная модель. Выберите её во всплывающем меню «Модель» или пункт «Все установленные модели», чтобы открыть доступ ко всем моделям."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Найдено %ld установленных моделей. Выберите одну из них во всплывающем меню «Модель» или пункт «Все установленные модели», чтобы открыть доступ ко всем моделям."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "找到 %ld 个已安装的模型。可从“模型”弹出菜单中选择一个，或选择“所有已安装的模型”以显示全部。"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -2200,10 +2680,40 @@
       "comment" : "Alert title shown after successfully refreshing the Ollama model list",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modelle aktualisiert"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Models Refreshed"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデルを更新しました"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modelos atualizados"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Модели обновлены"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型已刷新"
           }
         }
       }
@@ -2254,10 +2764,40 @@
       "comment" : "Disabled model popup item shown when no Ollama models have been discovered yet",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Modelle erkannt (auf „Modelle aktualisieren“ klicken)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "No models discovered (click Refresh Models)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデルが検出されていません（「モデルを再取得」をクリック）"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhum modelo descoberto (clique em Atualizar modelos)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Модели не обнаружены (нажмите «Обновить модели»)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未发现任何模型（点击“刷新模型”）"
           }
         }
       }
@@ -2350,10 +2890,40 @@
       "comment" : "Button that re-lists models installed on the Ollama server",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modelle aktualisieren"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Refresh Models"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデルを再取得"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizar modelos"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обновить модели"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刷新模型"
           }
         }
       }
@@ -3412,9 +3982,39 @@
       "comment" : "Ollama provider name",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollama"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Ollama"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollama"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollama"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollama"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Ollama"
           }
         }
@@ -3718,10 +4318,40 @@
       "comment" : "Progress alert body while contacting the local Ollama server",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die auf Ihrem lokalen Ollama-Server installierten Modelle werden abgerufen."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Fetching the models installed on your local Ollama server."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ローカルのOllamaサーバーにインストールされているモデルを取得しています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscando os modelos instalados no seu servidor Ollama local."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Получение моделей, установленных на локальном сервере Ollama."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在获取本地 Ollama 服务器上已安装的模型。"
           }
         }
       }
@@ -3730,10 +4360,40 @@
       "comment" : "Progress alert title while contacting the local Ollama server",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollama wird kontaktiert …"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Contacting Ollama…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollamaに接続中…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contatando o Ollama…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подключение к Ollama…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在联系 Ollama…"
           }
         }
       }
@@ -3742,10 +4402,40 @@
       "comment" : "Alert body shown when the local Ollama server can't be reached; %@ is the server endpoint URL",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Ollama-Server unter %@ konnte nicht erreicht werden. Stellen Sie sicher, dass Ollama läuft, und versuchen Sie es erneut."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Could not reach the Ollama server at %@. Make sure Ollama is running, then try again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ のOllamaサーバーに接続できませんでした。Ollamaが実行中であることを確認してから、もう一度お試しください。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível conectar ao servidor Ollama em %@. Certifique-se de que o Ollama esteja em execução e tente novamente."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось подключиться к серверу Ollama по адресу %@. Убедитесь, что Ollama запущена, и повторите попытку."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法连接到位于 %@ 的 Ollama 服务器。请确保 Ollama 正在运行，然后重试。"
           }
         }
       }
@@ -3754,10 +4444,40 @@
       "comment" : "Alert title shown when the local Ollama server can't be reached",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollama konnte nicht erreicht werden"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Could Not Reach Ollama"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollamaに接続できませんでした"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível conectar ao Ollama"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось подключиться к Ollama"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法连接到 Ollama"
           }
         }
       }
@@ -3766,10 +4486,40 @@
       "comment" : "Disabled popup item shown when no Ollama models have been discovered for the Regular/Budget pickers",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Modelle gefunden (läuft Ollama?)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "No models found (is Ollama running?)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデルが見つかりません（Ollamaは実行中ですか？）"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhum modelo encontrado (o Ollama está em execução?)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Модели не найдены (Ollama запущена?)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未找到任何模型（Ollama 是否正在运行？）"
           }
         }
       }
@@ -3778,10 +4528,40 @@
       "comment" : "Budget-model popup choice meaning reuse the regular model",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie reguläres Modell"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Same as regular model"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通常モデルと同じ"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mesmo que o modelo normal"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Такая же, как обычная модель"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与常规模型相同"
           }
         }
       }
@@ -10006,10 +10786,40 @@
       "comment" : "Advanced setting: allowHDR",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HDR-Effekte zulassen\nWenn aktiviert, kann iTerm2 einige UI-Effekte, wie den Rahmen des ausgewählten Tabs, auf einem HDR-fähigen Display heller als Weiß darstellen. Standardmäßig deaktiviert, da das Erzwingen des erweiterten Dynamikumfangs auf manchen Systemen zu Hängern führen kann."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Allow HDR effects\nWhen enabled, iTerm2 may render some UI effects, such as the selected tab's outline, brighter than white on an HDR-capable display. Off by default because forcing the display into extended dynamic range can cause hangs on some systems."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HDRエフェクトを許可する\nHDR対応ディスプレイでは、有効にすると、iTerm2は選択中のタブの輪郭など一部のUIエフェクトを白より明るく表示することがあります。ディスプレイを拡張ダイナミックレンジに強制すると一部のシステムでハングを引き起こすことがあるため、デフォルトではオフになっています。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir efeitos HDR\nQuando ativado, o iTerm2 pode renderizar alguns efeitos de interface, como o contorno da aba selecionada, mais claros que o branco em uma tela compatível com HDR. Desativado por padrão porque forçar a tela a entrar em faixa dinâmica estendida pode causar travamentos em alguns sistemas."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разрешить эффекты HDR\nЕсли включено, iTerm2 может отображать некоторые эффекты интерфейса, например контур выбранной вкладки, ярче белого на дисплеях с поддержкой HDR. По умолчанию отключено, так как принудительный переход дисплея в расширенный динамический диапазон может вызывать зависания на некоторых системах."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许 HDR 效果\n启用后，iTerm2 可能会在支持 HDR 的显示器上以比白色更亮的方式渲染某些界面效果，例如所选标签的轮廓。默认关闭，因为强制显示器进入扩展动态范围可能会在某些系统上导致挂起。"
           }
         }
       }
@@ -15226,10 +16036,40 @@
       "comment" : "Advanced setting: duplicatedTabsOpenAdjacentToOriginal",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soll die Kopie beim Duplizieren eines Tabs direkt rechts neben dem ursprünglichen Tab geöffnet werden?\nWenn deaktiviert, folgen duplizierte Tabs stattdessen der allgemeinen Einstellung „Neue Tabs werden hinzugefügt“."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "When you duplicate a tab, should the copy open immediately to the right of the original tab?\nWhen disabled, duplicated tabs follow the general “New tabs are added” placement setting instead."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タブを複製したとき、複製されたタブは元のタブのすぐ右に開きますか？\n無効にすると、複製されたタブは代わりに一般設定の「新規タブの追加位置」に従います。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ao duplicar uma aba, a cópia deve abrir imediatamente à direita da aba original?\nQuando desativado, as abas duplicadas seguem a configuração geral de posicionamento “Novas abas são adicionadas”."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Должна ли копия вкладки открываться сразу справа от исходной вкладки при дублировании?\nЕсли отключено, дублированные вкладки будут располагаться согласно общей настройке «Новые вкладки добавляются»."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制标签时，副本是否应立即在原标签的右侧打开？\n禁用后，复制的标签将改为遵循常规的“新建标签的添加位置”设置。"
           }
         }
       }
@@ -21412,10 +22252,40 @@
       "comment" : "Advanced setting: ollamaKeepAlive",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollama keep_alive für native /api/chat-Anfragen.\nWie lange Ollama das Modell nach einer Anfrage geladen hält, z. B. 30m, 1h oder 0, um es sofort zu entladen. Leer bedeutet, das Feld weglassen und Ollamas eigenen Standardwert verwenden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Ollama keep_alive for native /api/chat requests.\nHow long Ollama keeps the model resident after a request, e.g. 30m, 1h, or 0 to unload immediately. Empty means omit the field and use Ollama’s own default."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ネイティブの/api/chatリクエストに対するOllamaのkeep_alive。\nリクエスト後にOllamaがモデルをメモリ上に保持する時間を指定します。例：30m、1h。すぐにアンロードする場合は0を指定します。空欄の場合はこのフィールドを省略し、Ollama自体のデフォルト値を使用します。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keep_alive do Ollama para requisições nativas de /api/chat.\nPor quanto tempo o Ollama mantém o modelo residente na memória após uma requisição, por exemplo 30m, 1h, ou 0 para descarregar imediatamente. Vazio significa omitir o campo e usar o padrão do próprio Ollama."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Параметр keep_alive Ollama для встроенных запросов /api/chat.\nСколько времени Ollama держит модель в памяти после запроса, например 30m, 1h или 0 для немедленной выгрузки. Пустое значение означает, что поле не передаётся и используется значение по умолчанию из Ollama."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用于原生 /api/chat 请求的 Ollama keep_alive。\n请求结束后 Ollama 保持模型驻留的时长，例如 30m、1h，或 0 表示立即卸载。留空表示省略该字段，使用 Ollama 自身的默认值。"
           }
         }
       }
@@ -21424,10 +22294,40 @@
       "comment" : "Advanced setting: ollamaNumCtx",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollama-Kontextfenstergröße (num_ctx) für native /api/chat-Anfragen.\nOllama setzt num_ctx standardmäßig auf einen kleinen Wert (etwa 4096), unabhängig vom Modell, wodurch lange Prompts stillschweigend abgeschnitten werden. 0 bedeutet, die Größe pro Anfrage automatisch zu bestimmen, begrenzt auf das Kontextfenster des Modells. Ein positiver Wert überschreibt dies und wird unverändert gesendet (größere Werte verbrauchen mehr Arbeitsspeicher)."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Ollama context window size (num_ctx) for native /api/chat requests.\nOllama defaults num_ctx to a small value (around 4096) regardless of the model, silently truncating long prompts. 0 means size it automatically per request, capped at the model’s context window. A positive value overrides that and is sent verbatim (larger values use more memory)."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ネイティブの/api/chatリクエストに対するOllamaのコンテキストウィンドウサイズ（num_ctx）。\nOllamaはモデルに関係なくnum_ctxのデフォルトを小さい値（約4096）にするため、長いプロンプトが黙って切り捨てられます。0を指定するとリクエストごとに自動でサイズを決定し、モデルのコンテキストウィンドウを上限とします。正の値を指定するとこれを上書きし、そのままの値が送信されます（大きな値ほどメモリを多く使用します）。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamanho da janela de contexto do Ollama (num_ctx) para requisições nativas de /api/chat.\nO Ollama define num_ctx para um valor pequeno por padrão (cerca de 4096), independentemente do modelo, truncando silenciosamente prompts longos. 0 significa dimensionar automaticamente a cada requisição, limitado à janela de contexto do modelo. Um valor positivo substitui isso e é enviado literalmente (valores maiores usam mais memória)."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Размер контекстного окна Ollama (num_ctx) для встроенных запросов /api/chat.\nПо умолчанию Ollama устанавливает num_ctx в небольшое значение (около 4096) независимо от модели, что приводит к незаметному обрезанию длинных запросов. 0 означает автоматический расчёт размера для каждого запроса с ограничением по контекстному окну модели. Положительное значение переопределяет это и передаётся без изменений (большие значения используют больше памяти)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用于原生 /api/chat 请求的 Ollama 上下文窗口大小（num_ctx）。\n无论使用何种模型，Ollama 默认将 num_ctx 设为一个较小的值（约 4096），这会悄悄截断较长的提示词。0 表示按请求自动确定大小，并以模型的上下文窗口为上限。正数会覆盖该行为，并按原样发送（数值越大占用的内存越多）。"
           }
         }
       }
@@ -57573,10 +58473,40 @@
       "comment" : "Explanatory paragraph on the choose-mode screen",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sie können Ihr iPhone koppeln, um mit einer KI über Ihre Sitzungen zu chatten, oder einfach nur, um Ihre Terminals aus der Ferne anzuzeigen und zu steuern. Sie können die KI später aktivieren, falls Sie Ihre Meinung ändern."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "You can pair your iPhone to chat with AI about your sessions, or just to view and control your terminals remotely. You can turn on AI later if you change your mind."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPhoneをペアリングして、セッションについてAIとチャットしたり、単に端末を遠隔で表示・操作したりできます。後で気が変わった場合は、AIを後から有効にすることもできます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você pode emparelhar seu iPhone para conversar com a IA sobre suas sessões, ou apenas para visualizar e controlar seus terminais remotamente. Você pode ativar a IA mais tarde, se mudar de ideia."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вы можете подключить iPhone, чтобы общаться с ИИ о своих сессиях, или просто просматривать и удалённо управлять терминалами. Позже вы можете включить ИИ, если измените решение."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "您可以将 iPhone 配对，以便与 AI 讨论您的会话，也可以仅用于远程查看和控制您的终端。如果之后改变想法，可以随时开启 AI 功能。"
           }
         }
       }
@@ -57585,10 +58515,40 @@
       "comment" : "Button that starts companion-only (no AI) setup",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur Terminalanzeige & -steuerung"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Terminal Viewing & Control Only"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ターミナルの表示と操作のみ"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Somente visualização e controle do terminal"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Только просмотр и управление терминалом"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅终端查看和控制"
           }
         }
       }
@@ -57597,10 +58557,40 @@
       "comment" : "Detail under the terminal-only button on the choose-mode screen",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durchsuchen Sie Sitzungen, verfolgen Sie die Live-Ausgabe und tippen Sie von Ihrem iPhone aus. Keine KI oder API-Schlüssel erforderlich."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Browse sessions, watch live output, and type from your iPhone. No AI or API key needed."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "セッションを閲覧し、出力をリアルタイムで確認し、iPhoneから入力できます。AIやAPIキーは不要です。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Navegue pelas sessões, acompanhe a saída em tempo real e digite a partir do seu iPhone. Não é necessária IA nem chave de API."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Просматривайте сессии, следите за выводом в реальном времени и вводите текст с iPhone. ИИ и ключ API не требуются."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浏览会话、查看实时输出，并从 iPhone 上输入内容。无需 AI 或 API 密钥。"
           }
         }
       }
@@ -57609,10 +58599,40 @@
       "comment" : "Title of the wizard screen where the user chooses AI vs terminal-only setup",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie möchten Sie den Companion nutzen?"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "How Do You Want to Use the Companion?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Companionをどのように使用しますか？"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Como você quer usar o Companion?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Как вы хотите использовать Companion?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "您希望如何使用 Companion？"
           }
         }
       }
@@ -57621,10 +58641,40 @@
       "comment" : "Button that starts the full AI + companion setup",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit KI-Funktionen einrichten"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Set Up with AI Features"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI機能を使って設定する"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurar com recursos de IA"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Настроить с функциями ИИ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置并启用 AI 功能"
           }
         }
       }
@@ -57633,10 +58683,40 @@
       "comment" : "Detail under the with-AI button on the choose-mode screen",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chatten Sie mit dem Orchestrator und sitzungsbezogenen Agenten. Erfordert einen KI-API-Schlüssel."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Chat with the orchestrator and per-session agents. Requires an AI API key."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オーケストレーターやセッションごとのエージェントとチャットできます。AIのAPIキーが必要です。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Converse com o orquestrador e com os agentes de cada sessão. Requer uma chave de API de IA."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Общайтесь с оркестратором и агентами отдельных сессий. Требуется ключ API ИИ."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与协调器和各会话专属代理聊天。需要 AI API 密钥。"
           }
         }
       }
@@ -57645,10 +58725,40 @@
       "comment" : "Detail shown under the disabled with-AI button when an administrator has forbidden AI",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihr Administrator hat KI-Funktionen deaktiviert, daher ist diese Option nicht verfügbar."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Your administrator has disabled AI features, so this option is unavailable."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理者によってAI機能が無効化されているため、このオプションは利用できません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu administrador desativou os recursos de IA, portanto esta opção não está disponível."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваш администратор отключил функции ИИ, поэтому этот вариант недоступен."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "您的管理员已禁用 AI 功能，因此此选项不可用。"
           }
         }
       }
@@ -107846,10 +108956,40 @@
       "comment" : "Error shown when the Ollama server URL can't be turned into a model-listing URL; %@ is the URL the user entered",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus „%@“ konnte keine /api/tags-URL abgeleitet werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Could not derive an /api/tags URL from “%@”."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」から/api/tagsのURLを導き出せませんでした。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível derivar uma URL de /api/tags a partir de “%@”."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось получить URL /api/tags из «%@»."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法从“%@”推导出 /api/tags URL。"
           }
         }
       }
@@ -107858,10 +108998,40 @@
       "comment" : "Fallback name for the Ollama server when its hostname is unknown, inserted into a “Could not reach …” error",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dem Server"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "the server"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サーバー"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "o servidor"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "сервер"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "服务器"
           }
         }
       }
@@ -107870,10 +109040,40 @@
       "comment" : "Error shown when the Ollama server reports zero installed models",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf dem Ollama-Server wurden keine installierten Modelle gefunden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "No installed models were found on the Ollama server."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollamaサーバーにインストール済みのモデルが見つかりませんでした。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhum modelo instalado foi encontrado no servidor Ollama."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "На сервере Ollama не найдено установленных моделей."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Ollama 服务器上未找到任何已安装的模型。"
           }
         }
       }
@@ -107882,10 +109082,40 @@
       "comment" : "Error shown when the Ollama server returned no data",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollama hat keine Antwort zurückgegeben."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Ollama returned no response."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollamaから応答がありませんでした。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Ollama não retornou resposta."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollama не вернула ответ."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollama 未返回任何响应。"
           }
         }
       }
@@ -107894,10 +109124,40 @@
       "comment" : "Error shown when the Ollama server can't be reached; first %@ is the host, second %@ is the underlying network error",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ollama konnte unter %1$@ nicht erreicht werden: %2$@"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Could not reach Ollama at %1$@: %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ のOllamaに接続できませんでした: %2$@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível conectar ao Ollama em %1$@: %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось подключиться к Ollama по адресу %1$@: %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法连接到位于 %1$@ 的 Ollama：%2$@"
           }
         }
       }
@@ -196728,10 +197988,40 @@
       "comment" : "Generic Redo menu item title shown when there is nothing specific to redo",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wiederholen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Redo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "やり直す"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refazer"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Повторить"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重做"
           }
         }
       }
@@ -196740,10 +198030,40 @@
       "comment" : "Generic Undo menu item title shown when there is nothing specific to undo",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Widerrufen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Undo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取り消す"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desfazer"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отменить"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "撤销"
           }
         }
       }
@@ -196752,10 +198072,40 @@
       "comment" : "Heading of the one-time notice explaining that ⌘Z no longer reopens a closed session",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„Schließen widerrufen“ verschoben"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Undo Close Moved"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「クローズを元に戻す」が移動しました"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desfazer Fechamento mudou de lugar"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отмена закрытия сессии перемещена"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“撤销关闭”已移动"
           }
         }
       }
@@ -196764,10 +198114,40 @@
       "comment" : "Body of the one-time notice shown the first time ⌘Z is pressed while a recently closed session can still be restored",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘Z macht jetzt Texteingaben rückgängig. Um eine gerade geschlossene Sitzung wieder zu öffnen, verwenden Sie Shell ▸ Schließen widerrufen (⌘⇧T).\n\nWas möchten Sie jetzt tun?"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "⌘Z now undoes text editing. To reopen a session you just closed, use Shell ▸ Undo Close (⌘⇧T).\n\nWhat would you like to do now?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘Zは現在、テキスト編集の取り消しに使用されます。閉じたばかりのセッションを再度開くには、シェル ▸ クローズを元に戻す（⌘⇧T）を使用してください。\n\n今すぐどうしますか？"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘Z agora desfaz a edição de texto. Para reabrir uma sessão que você acabou de fechar, use Shell ▸ Desfazer Fechamento (⌘⇧T).\n\nO que você gostaria de fazer agora?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘Z теперь отменяет редактирование текста. Чтобы повторно открыть только что закрытую сессию, используйте Shell ▸ Отменить закрытие (⌘⇧T).\n\nЧто вы хотите сделать сейчас?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘Z 现在用于撤销文本编辑。要重新打开刚关闭的会话，请使用 Shell ▸ 撤销关闭（⌘⇧T）。\n\n您现在想要做什么？"
           }
         }
       }
@@ -196776,10 +198156,40 @@
       "comment" : "Button in the ⌘Z migration notice that performs a normal text undo instead of reopening a closed session",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reguläres Widerrufen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Regular Undo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通常の取り消し"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desfazer normal"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обычная отмена"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "常规撤销"
           }
         }
       }
@@ -196788,10 +198198,40 @@
       "comment" : "Button in the ⌘Z migration notice that reopens the session the user just closed",
       "extractionState" : "extracted_with_value",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließen widerrufen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Undo Close"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "クローズを元に戻す"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desfazer Fechamento"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отменить закрытие"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "撤销关闭"
           }
         }
       }
