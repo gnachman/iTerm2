@@ -1850,7 +1850,7 @@
       }
     },
     "129.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Preferences...\"; ObjectID = \"129\";",
+      "comment" : "Class = \"NSMenuItem\"; title = \"Preferences…\"; ObjectID = \"129\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -2690,7 +2690,7 @@
       }
     },
     "685.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Page Setup...\"; ObjectID = \"685\";",
+      "comment" : "Class = \"NSMenuItem\"; title = \"Page Setup…\"; ObjectID = \"685\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
@@ -9619,6 +9619,18 @@
         }
       }
     },
+    "iTS-tc-Mnu.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Check Settings Control Truncation\"; ObjectID = \"iTS-tc-Mnu\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Check Settings Control Truncation"
+          }
+        }
+      }
+    },
     "Ixq-yO-JO6.title" : {
       "comment" : "Class = \"NSMenu\"; title = \"Triggers\"; ObjectID = \"Ixq-yO-JO6\";",
       "extractionState" : "extracted_with_value",
@@ -15332,7 +15344,7 @@
       }
     },
     "yIL-PC-jnC.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Find Globally...\"; ObjectID = \"yIL-PC-jnC\";",
+      "comment" : "Class = \"NSMenuItem\"; title = \"Find Globally…\"; ObjectID = \"yIL-PC-jnC\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {

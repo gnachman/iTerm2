@@ -799,6 +799,18 @@
         }
       }
     },
+    "2bM-zr-yMw.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Item 3\"; ObjectID = \"2bM-zr-yMw\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Item 3"
+          }
+        }
+      }
+    },
     "2cn-gz-86d.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Edit > Engage Artifical Intelligence\"; ObjectID = \"2cn-gz-86d\";",
       "extractionState" : "extracted_with_value",
@@ -25579,6 +25591,18 @@
         }
       }
     },
+    "EyK-Y1-w8X.title" : {
+      "comment" : "Class = \"NSTextFieldCell\"; title = \"Budget:\"; ObjectID = \"EyK-Y1-w8X\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Budget:"
+          }
+        }
+      }
+    },
     "f01-4b-exO.title" : {
       "comment" : "Class = \"NSTextFieldCell\"; title = \"Focus:\"; ObjectID = \"f01-4b-exO\";",
       "extractionState" : "extracted_with_value",
@@ -25701,6 +25725,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "^ 数字"
+          }
+        }
+      }
+    },
+    "F8j-y6-Pd4.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Item 3\"; ObjectID = \"F8j-y6-Pd4\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Item 3"
           }
         }
       }
@@ -31287,6 +31323,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "⌥ 数字"
+          }
+        }
+      }
+    },
+    "Kgn-Fr-aIj.title" : {
+      "comment" : "Class = \"NSTextFieldCell\"; title = \"Regular:\"; ObjectID = \"Kgn-Fr-aIj\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Regular:"
           }
         }
       }
@@ -37045,6 +37093,18 @@
         }
       }
     },
+    "qRI-0q-xjo.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Item 2\"; ObjectID = \"qRI-0q-xjo\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Item 2"
+          }
+        }
+      }
+    },
     "QVc-n8-Dea.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Session Name\"; ObjectID = \"QVc-n8-Dea\";",
       "extractionState" : "extracted_with_value",
@@ -39691,6 +39751,18 @@
         }
       }
     },
+    "T72-4I-nvw.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Item 1\"; ObjectID = \"T72-4I-nvw\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Item 1"
+          }
+        }
+      }
+    },
     "tav-Hu-1g6.title" : {
       "comment" : "Class = \"NSButtonCell\"; title = \"Border around active pane\"; ObjectID = \"tav-Hu-1g6\";",
       "extractionState" : "extracted_with_value",
@@ -42169,6 +42241,18 @@
         }
       }
     },
+    "VkH-Uk-pnd.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Item 2\"; ObjectID = \"VkH-Uk-pnd\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Item 2"
+          }
+        }
+      }
+    },
     "vlQ-02-Vie.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"⌥ Number\"; ObjectID = \"vlQ-02-Vie\";",
       "extractionState" : "extracted_with_value",
@@ -42585,6 +42669,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bonjour："
+          }
+        }
+      }
+    },
+    "vyz-YX-AnX.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Item 1\"; ObjectID = \"vyz-YX-AnX\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Item 1"
           }
         }
       }

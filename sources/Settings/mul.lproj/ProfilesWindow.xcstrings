@@ -44,7 +44,7 @@
       }
     },
     "321.title" : {
-      "comment" : "Class = \"NSButtonCell\"; title = \"Edit Profiles...\"; ObjectID = \"321\";",
+      "comment" : "Class = \"NSButtonCell\"; title = \"Edit Profiles…\"; ObjectID = \"321\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "de" : {
