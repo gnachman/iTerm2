@@ -646,11 +646,18 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return anyChange;
 }
 
-- (void)numberOfSessionsDidChange {
+// Applies -updatePaneTitles and, if it changed a session's dimensions on a tmux tab, renegotiates
+// the window size with the server. Per-session decoration changes (title bar, workgroups toolbar)
+// alter how many rows fit and tmux owns pane sizes, so it must be told. `reason` is for logging.
+- (void)updatePaneTitlesRenegotiatingTmuxSizeIfNeeded:(NSString *)reason {
     if ([self updatePaneTitles] && [self isTmuxTab]) {
-        DLog(@"PTYTab numberOfSessionsDidChange triggering windowDidResize");
+        DLog(@"PTYTab %@ triggering windowDidResize", reason);
         [tmuxController_ windowDidResize:realParentWindow_];
     }
+}
+
+- (void)numberOfSessionsDidChange {
+    [self updatePaneTitlesRenegotiatingTmuxSizeIfNeeded:@"numberOfSessionsDidChange"];
     [self updateSessionOrdinals];
     [realParentWindow_ invalidateRestorableState];
     if (self.isBroadcasting) {
@@ -2469,6 +2476,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                         dimensions:(NSSize)dimensions
                         showTitles:(BOOL)showTitles
                showBottomStatusBar:(BOOL)showBottomStatusBar
+                       showToolbar:(BOOL)showToolbar
                         rightExtra:(CGFloat)rightExtra
                         inTerminal:(id<WindowControllerInterface>)term {
     int rows = dimensions.height;
@@ -2497,6 +2505,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (showBottomStatusBar) {
         outerSize.height += iTermGetStatusBarHeight();
     }
+    // The per-session toolbar (e.g. the workgroups toolbar) is always at the top and
+    // steals vertical space from cells, just like the title bar and bottom status bar.
+    if (showToolbar) {
+        outerSize.height += [SessionView toolbarHeight];
+    }
     DLog(@"session size, including space for the scrollview's decoration, is %@", NSStringFromSize(outerSize));
     return outerSize;
 }
@@ -2508,6 +2521,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                  dimensions:NSMakeSize([session columns], [session rows])
                                  showTitles:[sessionView showTitle]
                         showBottomStatusBar:sessionView.showBottomStatusBar
+                              showToolbar:(sessionView.toolbarReservedHeight > 0)
                                  rightExtra:session.desiredRightExtra
                                  inTerminal:parentWindow_];
 }
@@ -4032,6 +4046,33 @@ typedef struct {
     NSSize maximumSize;
 } iTermSizeRange;
 
+// Private, derived parse-tree key: whether a leaf's session currently shows the per-session
+// toolbar (e.g. the workgroups toolbar). Populated by -annotateShowToolbarInTmuxParseTree: and
+// consumed by the geometry pass so that pass doesn't need the tmux controller.
+static NSString *const PTYTabParseTreeShowToolbarKey = @"iTerm2ShowToolbar";
+
+// Annotate each leaf with whether its session shows the per-session toolbar. Unlike titles (a
+// tab-wide pref) and bottom status bars (never present in tmux), the toolbar is per-session
+// (workgroup membership), so it can't be a single tab-wide flag. On initial creation the session
+// doesn't exist yet (sessionForWindowPane: returns nil, so toolbarReservedHeight is 0), which is correct.
++ (void)annotateShowToolbarInTmuxParseTree:(NSMutableDictionary *)parseTree
+                            tmuxController:(TmuxController *)tmuxController {
+    switch ([[parseTree objectForKey:kLayoutDictNodeType] intValue]) {
+        case kLeafLayoutNode: {
+            const int windowPane = [parseTree[kLayoutDictWindowPaneKey] intValue];
+            PTYSession *session = [tmuxController sessionForWindowPane:windowPane];
+            parseTree[PTYTabParseTreeShowToolbarKey] = @(session.view.toolbarReservedHeight > 0);
+            break;
+        }
+        case kVSplitLayoutNode:
+        case kHSplitLayoutNode:
+            for (NSMutableDictionary *child in parseTree[kLayoutDictChildrenKey]) {
+                [self annotateShowToolbarInTmuxParseTree:child tmuxController:tmuxController];
+            }
+            break;
+    }
+}
+
 + (iTermSizeRange)_recursiveSetSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
                                          showTitles:(BOOL)showTitles
                                 showBottomStatusBar:(BOOL)showBottomStatusBar
@@ -4047,11 +4088,17 @@ typedef struct {
         case kLeafLayoutNode: {
             DLog(@"Leaf node. Compute size of session");
             const NSSize cellSize = [self cellSizeForBookmark:profile];
+            // showToolbar reserves space for the per-session toolbar (e.g. the workgroups toolbar),
+            // which is always at the top and steals cell space. It's read from the parse tree, which
+            // -annotateShowToolbarInTmuxParseTree:tmuxController: filled in per leaf, so this geometry
+            // pass doesn't need the tmux controller. Without the reservation the SessionView would be
+            // sized to hold only the grid tmux sent, and the toolbar would overlay the top rows.
             const NSSize size = [PTYTab _sessionSizeWithCellSize:cellSize
                                                       dimensions:NSMakeSize([parseTree[kLayoutDictWidthKey] intValue],
                                                                             [parseTree[kLayoutDictHeightKey] intValue])
                                                       showTitles:showTitles
                                              showBottomStatusBar:showBottomStatusBar
+                                                     showToolbar:[parseTree[PTYTabParseTreeShowToolbarKey] boolValue]
                                                       rightExtra:[PTYSession desiredRightExtraForProfile:profile session:nil]
                                                       inTerminal:term];
             parseTree[kLayoutDictPixelWidthKey] = @(size.width);
@@ -4241,7 +4288,8 @@ typedef struct {
 + (void)setSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
                      inTerminal:(NSWindowController<iTermWindowController> *)term
                          zoomed:(BOOL)zoomed
-                        profile:(Profile *)profile {
+                        profile:(Profile *)profile
+                 tmuxController:(TmuxController *)tmuxController {
     NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
     BOOL haveMultipleSessions = ([theChildren count] > 1);
     const BOOL perPaneTitleBarEnabled = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
@@ -4249,6 +4297,10 @@ typedef struct {
     // TODO: I'm not sure why zoomed is taken into account here but not in
     // other places like this that decide if titles should be shown.
     const BOOL showTitles = forceTitleBar || (perPaneTitleBarEnabled && (zoomed || haveMultipleSessions));
+
+    // Record per-leaf toolbar state up front so the geometry pass below is a pure function of the
+    // parse tree (it reads PTYTabParseTreeShowToolbarKey rather than consulting the controller).
+    [PTYTab annotateShowToolbarInTmuxParseTree:parseTree tmuxController:tmuxController];
 
     // Begin by decorating the tree with pixel sizes.
     [PTYTab _recursiveSetSizesInTmuxParseTree:parseTree
@@ -4286,7 +4338,8 @@ typedef struct {
     [PTYTab setSizesInTmuxParseTree:parseTree_
                          inTerminal:realParentWindow_
                              zoomed:isMaximized_
-                            profile:[self.tmuxController profileForWindow:self.tmuxWindow]];
+                            profile:[self.tmuxController profileForWindow:self.tmuxWindow]
+                     tmuxController:self.tmuxController];
     [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree_];
     if (shouldZoom) {
         [self maximizeAfterApplyingTmuxParseTree:visibleParseTree_ ?: parseTree_
@@ -4305,7 +4358,8 @@ typedef struct {
     [PTYTab setSizesInTmuxParseTree:parseTree
                          inTerminal:term
                              zoomed:NO
-                            profile:profile];
+                            profile:profile
+                     tmuxController:tmuxController];
     parseTree = [PTYTab parseTreeWithInjectedRootSplit:parseTree];
 
     // Grow the window to fit the tab before adding it
@@ -4628,13 +4682,19 @@ typedef struct {
 
         NSArray<NSNumber *> *decorationSizes =
         [sessionViewsInSlice mapWithBlock:^id(SessionView *sessionView) {
-            DLog(@"%@ showTitle=%@ showBottomStatusBar=%@ ",
-                 sessionView, @(sessionView.showTitle), @(sessionView.showBottomStatusBar));
             const CGFloat titleBarHeight = sessionView.showTitle ? SessionView.titleHeight : 0;
             // NOTE: At the time of writing tmux tabs can’t have per-pane status bars. Should that ever
             // change, this line of code might prevent a bug.
             const CGFloat statusBarHeight = sessionView.showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
-            return @(titleBarHeight + statusBarHeight + margins.height);
+            // Reserve space for the per-session toolbar (e.g. the workgroups toolbar). Without this
+            // the tmux window is reported one or more rows too tall, so the pane the server sends back
+            // doesn't fit the toolbar-inset content area and the grid renders misaligned (the content
+            // jumps whenever the renderer toggles between legacy and GPU).
+            const CGFloat toolbarHeight = sessionView.toolbarReservedHeight;
+            DLog(@"%@ showTitle=%@ (%@) showBottomStatusBar=%@ (%@) toolbarHeight=%@",
+                 sessionView, @(sessionView.showTitle), @(titleBarHeight),
+                 @(sessionView.showBottomStatusBar), @(statusBarHeight), @(toolbarHeight));
+            return @(titleBarHeight + statusBarHeight + toolbarHeight + margins.height);
         }];
         DLog(@"Decoration sizes are %@", decorationSizes);
         const CGFloat totalDecorationSize = [decorationSizes sumOfNumbers] + numberOfDividers * dividerThickness;
@@ -5001,6 +5061,7 @@ typedef struct {
                                                                          link.session.gridSize.height)
                                                    showTitles:sessionView.showTitle
                                           showBottomStatusBar:sessionView.showBottomStatusBar
+                                                showToolbar:(sessionView.toolbarReservedHeight > 0)
                                                    rightExtra:session.desiredRightExtra
                                                    inTerminal:realParentWindow_];
         } else {
@@ -5311,7 +5372,8 @@ typedef struct {
     [PTYTab setSizesInTmuxParseTree:maximizedParseTree
                          inTerminal:realParentWindow_
                              zoomed:YES
-                            profile:[tmuxController profileForWindow:self.tmuxWindow]];
+                            profile:[tmuxController profileForWindow:self.tmuxWindow]
+                     tmuxController:tmuxController];
     DLog(@"PTYTab maximizeAfterApplyingTmuxParseTree using width of %@", parseTree[kLayoutDictMaximumPixelWidthKey]);
     [self resizeViewsInViewHierarchy:root_ forNewLayout:maximizedParseTree];
     DLog(@"After resizing views in maximize, root_.width=%f, flexibleView_.width=%f",
@@ -5364,7 +5426,8 @@ typedef struct {
     [PTYTab setSizesInTmuxParseTree:parseTree
                          inTerminal:realParentWindow_
                              zoomed:shouldZoom
-                            profile:[tmuxController profileForWindow:self.tmuxWindow]];
+                            profile:[tmuxController profileForWindow:self.tmuxWindow]
+                     tmuxController:tmuxController];
     DLog(@"Parse tree including sizes:\n%@", parseTree);
     if ([self parseTree:parseTree matchesViewHierarchy:root_]) {
         DLog(@"Parse tree matches the root's view hierarchy.");
@@ -5584,6 +5647,7 @@ typedef struct {
                                         dimensions:NSMakeSize(gridSize.width, gridSize.height)
                                         showTitles:showTitles
                                showBottomStatusBar:NO
+                                     showToolbar:(sessionView.toolbarReservedHeight > 0)
                                         rightExtra:sessionView.desiredRightExtra
                                         inTerminal:self.realParentWindow];
     NSRect frame = {
@@ -7501,7 +7565,10 @@ typedef struct {
 }
 
 - (void)sessionDidChangeDesiredToolbarItems:(PTYSession *)session {
-    [self updatePaneTitles];
+    // Showing/hiding the toolbar changes how much vertical space is available for cells, so a tmux
+    // tab must renegotiate its window size; otherwise the grid keeps its old (toolbar-less) height
+    // and renders rows behind the toolbar.
+    [self updatePaneTitlesRenegotiatingTmuxSizeIfNeeded:@"sessionDidChangeDesiredToolbarItems"];
 }
 
 - (void)sessionDidSetWindowTitle:(NSString *)title {
@@ -7534,9 +7601,14 @@ typedef struct {
 
 - (void)sessionDidUpdatePreferencesFromProfile:(PTYSession *)session {
     if (session == self.activeSession) {
+        // Background-image handling only concerns the active session.
         [self.delegate tabActiveSessionDidUpdatePreferencesFromProfile:self];
-        [self updatePaneTitles];
     }
+    // Applying a reloaded profile can change a session's decoration (e.g. the title bar) as a side
+    // effect of -updatePaneTitles, which changes how many rows fit. This delegate fires per session,
+    // so don't gate on the active session: a background pane's reload must renegotiate too. The
+    // helper resizes tmux only if -updatePaneTitles actually changed a pane's dimensions.
+    [self updatePaneTitlesRenegotiatingTmuxSizeIfNeeded:@"sessionDidUpdatePreferencesFromProfile"];
 }
 
 - (void)session:(PTYSession *)session
