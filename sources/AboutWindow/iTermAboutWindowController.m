@@ -110,6 +110,9 @@ static NSColor *iTermAboutContainerFillColor(void) {
     NSArray<iTermSponsor *> *_sponsors;
     iTermAboutCreditsWellView *_creditsWell;
     NSVisualEffectMaterial _stockMaterial;
+    // Set once awakeFromNib has captured the nib's material. Until then there is
+    // no stock material to fall back to and no _creditsWell to toggle.
+    BOOL _ready;
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
@@ -142,11 +145,19 @@ static NSColor *iTermAboutContainerFillColor(void) {
     NSTextView *creditsTextView = [NSTextView castFrom:_bottomAlignedScrollView.documentView];
     creditsTextView.textContainerInset = kCreditsTextInset;
 
+    _ready = YES;
     [self applyAppearanceTreatment];
 }
 
 - (void)viewDidChangeEffectiveAppearance {
     [super viewDidChangeEffectiveAppearance];
+    // AppKit does not guarantee this fires after awakeFromNib. Applying the
+    // treatment before awakeFromNib has captured the stock material would set a
+    // bogus material and then let awakeFromNib record that bogus value as the
+    // stock one. awakeFromNib does the initial application itself.
+    if (!_ready) {
+        return;
+    }
     [self applyAppearanceTreatment];
 }
 
@@ -357,7 +368,15 @@ static NSColor *iTermAboutContainerFillColor(void) {
 
     NSRect rect = _patronsTextView.enclosingScrollView.frame;
     [_patronsTextView sizeToFit];
-    const CGFloat desiredHeight = [_patronsTextView.textStorage heightForWidth:rect.size.width];
+    // heightForWidth: lays the text out in a bare container with no inset, but
+    // the credits text view carries a textContainerInset (see
+    // iTermAboutWindowContentView). Shrink the layout width by the horizontal
+    // inset on both sides and add the vertical inset back to the height, or the
+    // scroll view (which has no scrollers) comes up short and clips the last
+    // backer names.
+    const NSSize textInset = _patronsTextView.textContainerInset;
+    const CGFloat textWidth = rect.size.width - 2 * textInset.width;
+    const CGFloat desiredHeight = [_patronsTextView.textStorage heightForWidth:textWidth] + 2 * textInset.height;
     CGFloat diff = desiredHeight - rect.size.height;
     rect.size.height = desiredHeight;
     rect.origin.y -= diff;
