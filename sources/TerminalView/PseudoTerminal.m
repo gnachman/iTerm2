@@ -8403,43 +8403,46 @@ hidingToolbeltShouldResizeWindow:(BOOL)hidingToolbeltShouldResizeWindow
         return YES;
     };
 
-    NSArray<BOOL (^)(void)> *closures = @[
-        addSelect,
+    // Invoke each section builder in order. These blocks capture locals
+    // (self, tabViewItem, rootMenu), so they are stack blocks. Call them
+    // directly while this frame is live; do NOT gather them into an
+    // autoreleased NSArray first. Such an array outlives this frame, and when
+    // it later drains, -[__NSArrayI dealloc] sends -release to each element --
+    // by then the stack blocks' storage has been reused, so releasing the
+    // dangling pointers crashes. (Blank lines group items the way the removed
+    // array did, matching the separators.)
+    addSelect();
 
-        addSeparator,
+    addSeparator();
 
-        addEditSession,
+    addEditSession();
 
-        addSeparator,
+    addSeparator();
 
-        addNewTab,
-        addDuplicateTab,
+    addNewTab();
+    addDuplicateTab();
 
-        addSeparator,
+    addSeparator();
 
-        addCloseTab,
-        addCloseOthers,
+    addCloseTab();
+    addCloseOthers();
 
-        addSeparator,
+    addSeparator();
 
-        addMoveToNewWindow,
-        addPinUnpin,
+    addMoveToNewWindow();
+    addPinUnpin();
 
-        addSeparator,
+    addSeparator();
 
-        addTabGroupItems,
+    addTabGroupItems();
 
-        addSeparator,
+    addSeparator();
 
-        addSaveTabAsArrangement,
+    addSaveTabAsArrangement();
 
-        addSeparator,
+    addSeparator();
 
-        addTabColor,
-    ];
-    for (BOOL (^closure)(void) in closures) {
-        closure();
-    }
+    addTabColor();
     for (NSMenuItem *item in rootMenu.itemArray) {
         item.target = self;
     }
