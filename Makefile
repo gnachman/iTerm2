@@ -525,11 +525,11 @@ ifdef UNIVERSAL
 librailroad_dsl: force
 	$(RUSTUP) target add x86_64-apple-darwin
 	$(RUSTUP) target add aarch64-apple-darwin
-	cd submodules/railroad_dsl && $(RUSTUP) run stable cargo build --release --target aarch64-apple-darwin && $(RUSTUP) run stable cargo build --release --target x86_64-apple-darwin && lipo -create target/aarch64-apple-darwin/release/librailroad_dsl.dylib target/x86_64-apple-darwin/release/librailroad_dsl.dylib -output ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
+	cd submodules/railroad_dsl && MACOSX_DEPLOYMENT_TARGET=$(DEPLOYMENT_TARGET) $(RUSTUP) run stable cargo build --release --target aarch64-apple-darwin && MACOSX_DEPLOYMENT_TARGET=$(DEPLOYMENT_TARGET) $(RUSTUP) run stable cargo build --release --target x86_64-apple-darwin && lipo -create target/aarch64-apple-darwin/release/librailroad_dsl.dylib target/x86_64-apple-darwin/release/librailroad_dsl.dylib -output ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
 else
 librailroad_dsl: force
 	$(RUSTUP) target add $(RUST_NATIVE_TARGET)
-	cd submodules/railroad_dsl && $(RUSTUP) run stable cargo build --release --target $(RUST_NATIVE_TARGET) && cp target/$(RUST_NATIVE_TARGET)/release/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
+	cd submodules/railroad_dsl && MACOSX_DEPLOYMENT_TARGET=$(DEPLOYMENT_TARGET) $(RUSTUP) run stable cargo build --release --target $(RUST_NATIVE_TARGET) && cp target/$(RUST_NATIVE_TARGET)/release/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib && cp include/railroad_dsl.h ../../ThirdParty/librailroad_dsl/include && install_name_tool -id @rpath/librailroad_dsl.dylib ../../ThirdParty/librailroad_dsl/lib/librailroad_dsl.dylib
 endif
 
 pwmadapters: force
