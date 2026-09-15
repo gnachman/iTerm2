@@ -10,6 +10,7 @@
 
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermLaunchExperienceController.h"
+#import "NSAppearance+iTerm.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
@@ -24,9 +25,41 @@ static const CGFloat kSponsorSpacing = 16.0;
 // Y origin of the sponsor row, matching the original nib position.
 static const CGFloat kSponsorRowY = 170.0;
 
+// Corner radius shared by the sponsor cards and, on macOS 26, the credits
+// well, so the two containers read as one system. Tahoe's window chrome is
+// rounder than its predecessors', and the containers follow it.
+static const CGFloat kContainerCornerRadiusTahoe = 12.0;
+static const CGFloat kContainerCornerRadiusLegacy = 8.0;
+// Keeps the backer names off the well's rounded corners.
+static const NSSize kCreditsTextInset = { 16.0, 12.0 };
+
+// Before macOS 26, dark themes get a frosted-glass treatment and light themes
+// keep the stock window, so these only ever apply when the theme is dark.
+// Translucent black behind the credits so small text stays legible over the
+// blur. Dark enough to read as a step down from the glass, light enough that
+// the desktop still shows faintly through it.
+static const CGFloat kDarkCreditsScrimAlpha = 0.28;
+static const CGFloat kDarkCreditsScrimCornerRadius = 10.0;
+
+static CGFloat iTermAboutContainerCornerRadius(void) {
+    if (@available(macOS 26, *)) {
+        return kContainerCornerRadiusTahoe;
+    }
+    return kContainerCornerRadiusLegacy;
+}
+
+// One fill for every container in the window, so the sponsor cards and the
+// credits well read as the same surface.
+static NSColor *iTermAboutContainerFillColor(void) {
+    return [NSColor it_dynamicColorForLightMode:[NSColor colorWithWhite:0.0 alpha:0.04]
+                                       darkMode:[NSColor colorWithWhite:1.0 alpha:0.08]];
+}
+
 @interface iTermAboutWindowContentView : NSVisualEffectView
 @end
 
+// Layer properties on the views AppKit manages get reset on the next display
+// pass, so anything that paints a container does it from updateLayer.
 @interface iTermSponsorBoxView : NSView
 @end
 
@@ -34,15 +67,31 @@ static const CGFloat kSponsorRowY = 170.0;
 - (BOOL)wantsUpdateLayer { return YES; }
 - (void)updateLayer {
     [super updateLayer];
-    self.layer.cornerRadius = 8.0;
-    self.layer.borderWidth = 0.5;
-    self.layer.borderColor = [NSColor separatorColor].CGColor;
-    self.layer.backgroundColor = [NSColor it_dynamicColorForLightMode:[NSColor colorWithWhite:0.0 alpha:0.04]
-                                                                    darkMode:[NSColor colorWithWhite:1.0 alpha:0.08]].CGColor;
+    self.layer.cornerRadius = iTermAboutContainerCornerRadius();
+    self.layer.backgroundColor = iTermAboutContainerFillColor().CGColor;
 }
 - (void)resetCursorRects {
     [super resetCursorRects];
     [self addCursorRect:self.bounds cursor:[NSCursor pointingHandCursor]];
+}
+@end
+
+// Sits behind the credits scroll view. On macOS 26 it is a container like the
+// sponsor cards; before that it is the dark scrim over the frosted glass.
+@interface iTermAboutCreditsWellView : NSView
+@end
+
+@implementation iTermAboutCreditsWellView
+- (BOOL)wantsUpdateLayer { return YES; }
+- (void)updateLayer {
+    [super updateLayer];
+    if (@available(macOS 26, *)) {
+        self.layer.cornerRadius = iTermAboutContainerCornerRadius();
+        self.layer.backgroundColor = iTermAboutContainerFillColor().CGColor;
+    } else {
+        self.layer.cornerRadius = kDarkCreditsScrimCornerRadius;
+        self.layer.backgroundColor = [NSColor colorWithWhite:0 alpha:kDarkCreditsScrimAlpha].CGColor;
+    }
 }
 @end
 
@@ -59,6 +108,8 @@ static const CGFloat kSponsorRowY = 170.0;
     IBOutlet NSTextView *_sponsorsHeading;
 
     NSArray<iTermSponsor *> *_sponsors;
+    iTermAboutCreditsWellView *_creditsWell;
+    NSVisualEffectMaterial _stockMaterial;
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
@@ -67,10 +118,13 @@ static const CGFloat kSponsorRowY = 170.0;
     CGFloat topMargin = oldSize.height - NSMaxY(frame);
     frame.origin.y = self.frame.size.height - topMargin - frame.size.height;
     _bottomAlignedScrollView.frame = frame;
+    _creditsWell.frame = frame;
 }
 
 - (void)awakeFromNib {
     [super awakeFromNib];
+    _stockMaterial = self.material;
+
     NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
     paragraphStyle.alignment = NSTextAlignmentCenter;
     _sponsorsHeading.selectable = YES;
@@ -81,6 +135,35 @@ static const CGFloat kSponsorRowY = 170.0;
                                                                                     paragraphStyle:paragraphStyle]];
 
     _sponsors = [self buildUnifiedSponsorRow];
+
+    _creditsWell = [[iTermAboutCreditsWellView alloc] initWithFrame:_bottomAlignedScrollView.frame];
+    _creditsWell.autoresizingMask = _bottomAlignedScrollView.autoresizingMask;
+    [self addSubview:_creditsWell positioned:NSWindowBelow relativeTo:_bottomAlignedScrollView];
+    NSTextView *creditsTextView = [NSTextView castFrom:_bottomAlignedScrollView.documentView];
+    creditsTextView.textContainerInset = kCreditsTextInset;
+
+    [self applyAppearanceTreatment];
+}
+
+- (void)viewDidChangeEffectiveAppearance {
+    [super viewDidChangeEffectiveAppearance];
+    [self applyAppearanceTreatment];
+}
+
+// On macOS 26 the About window is a plain window-background window, the way
+// the system's own About panel is, with the credits in a container like the
+// sponsor cards; the colours are dynamic, so light and dark share one path.
+// Before macOS 26, dark themes get frosted glass with a scrim behind the
+// credits and light themes keep the stock window.
+- (void)applyAppearanceTreatment {
+    if (@available(macOS 26, *)) {
+        self.material = NSVisualEffectMaterialWindowBackground;
+        _creditsWell.hidden = NO;
+        return;
+    }
+    const BOOL dark = self.effectiveAppearance.it_isDark;
+    self.material = dark ? NSVisualEffectMaterialUnderWindowBackground : _stockMaterial;
+    _creditsWell.hidden = !dark;
 }
 
 - (NSView *)makeSponsorBoxWithImageNamed:(NSString *)imageName title:(NSString *)title {
