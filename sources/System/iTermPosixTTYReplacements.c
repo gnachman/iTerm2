@@ -23,6 +23,8 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <limits.h>
+#include <sys/resource.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -249,8 +251,26 @@ void iTermExec(const char *argpath,
     if (closeFileDescriptors) {
         // If running jobs in servers close file descriptors after exec when it's safe to
         // enumerate files in /dev/fd. This is the potentially very slow path (issue 5391).
+        //
+        // Cap the loop at the number of file descriptors this process could actually have
+        // open. getdtablesize() and the soft RLIMIT_NOFILE are normally the same, but when
+        // launchd runs with an enormous "limit maxfiles" (e.g., 2147483646), getdtablesize()
+        // returns a value far beyond any real descriptor count and this loop, running in the
+        // child between fork() and exec(), would spin for hours calling close() on billions
+        // of unused descriptors. The kernel only ever returns descriptor numbers below the
+        // soft limit in effect when open()/pipe()/etc. was called, so taking the larger of
+        // getdtablesize() and the soft limit closes every descriptor the old code closed
+        // while keeping the bound one the kernel could actually have allocated.
+        struct rlimit rl;
+        int maxFd = 0;
+        if (getrlimit(RLIMIT_NOFILE, &rl) == 0 && rl.rlim_cur != RLIM_INFINITY) {
+            maxFd = (rl.rlim_cur > INT_MAX) ? INT_MAX : (int)rl.rlim_cur;
+        }
         const int dtableSize = getdtablesize();
-        for (int j = forkState->numFileDescriptorsToPreserve; j < dtableSize; j++) {
+        if (maxFd < dtableSize) {
+            maxFd = dtableSize;
+        }
+        for (int j = forkState->numFileDescriptorsToPreserve; j < maxFd; j++) {
             close(j);
         }
     }
