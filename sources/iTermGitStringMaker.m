@@ -209,6 +209,29 @@
     return self.currentState.branch;
 }
 
+- (NSString *)displayedBranch {
+    // Mirror the gates in attributedStringValueForBranch: so this only
+    // returns a branch in exactly the cases where the label renders the
+    // plain branch name.
+    if (_status) {
+        return nil;
+    }
+    if (!self.pollerReady) {
+        return nil;
+    }
+    iTermGitState *state = self.currentState;
+    if (state.repoState != iTermGitRepoStateNone) {
+        return nil;
+    }
+    if (state.xcode.length > 0) {
+        return nil;
+    }
+    if (state.branch.length == 0) {
+        return nil;
+    }
+    return state.branch;
+}
+
 - (NSString *)xcode {
     return self.currentState.xcode;
 }

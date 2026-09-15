@@ -235,6 +235,13 @@ Improvements:
   setting, “When you duplicate a tab, should the
   copy open immediately to the right of the
   original tab?”, if you prefer the old placement.
+- The git branch shown in the session
+  toolbar can now be right-clicked to copy
+  its name, or dragged into a text field to
+  paste it (or dropped on the Finder as a
+  text clipping). Available only while a
+  branch name is showing, not during a
+  rebase or similar.
 
 Bug Fixes:
 - Fixed a crash when editing a dynamic profile
