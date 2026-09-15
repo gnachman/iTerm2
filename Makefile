@@ -301,6 +301,14 @@ ingest-catalogs:
 
 Development Beta Deployment Nightly: ingest-catalogs
 
+# Enable the repo's git hooks (tracked in tools/git-hooks). The pre-commit hook
+# blocks committing a newly-added string in xcstrings/Localizable.xcstrings that
+# isn't translated into every language the catalog uses. Run once per clone.
+.PHONY: install-hooks
+install-hooks:
+	git config core.hooksPath tools/git-hooks
+	@echo "Git hooks enabled (core.hooksPath=tools/git-hooks)."
+
 Development:
 	echo "Using PATH for build: $(PATH)"
 	cp plists/dev-iTerm2.plist plists/iTerm2.plist
