@@ -40,6 +40,11 @@ ifndef SIGNED
   SIGNING_FLAGS = CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
 endif
 
+# Developer ID used to re-sign Sparkle's nested Autoupdate.app helpers (see the
+# sparkle target). Xcode never re-signs those nested binaries, so they must carry
+# a Developer ID signature in the committed framework or notarization fails.
+DEVID_APP := Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)
+
 # Architecture: native-only by default (faster builds).
 # Use UNIVERSAL=1 to build universal (arm64 + x86_64) binaries for release.
 NATIVE_ARCH := $(shell uname -m)
@@ -575,6 +580,10 @@ sparkle: force
 	rm -rf ThirdParty/Sparkle.framework
 	cd submodules/Sparkle && xcodebuild -scheme Sparkle -configuration Release 'CONFIGURATION_BUILD_DIR=$$(SRCROOT)/Build/$$(CONFIGURATION)' $(SIGNING_FLAGS) $(ARCH_FLAGS)
 	mv submodules/Sparkle/Build/Release/Sparkle.framework ThirdParty/Sparkle.framework
+	# Xcode's Code Sign On Copy re-signs only the outer framework at app-build time,
+	# never the nested Autoupdate.app, so give its helpers a Developer ID signature
+	# with a secure timestamp now or notarization will reject the release.
+	tools/sign_sparkle_autoupdate.sh ThirdParty/Sparkle.framework "$(DEVID_APP)"
 
 paranoid-cc-status: force
 	/usr/bin/sandbox-exec -f deps.sb $(MAKE) cc-status
