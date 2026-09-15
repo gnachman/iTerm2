@@ -190,6 +190,10 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return iTermGetSessionViewTitleHeight();
 }
 
++ (CGFloat)toolbarHeight {
+    return iTermGetSessionViewToolbarHeight();
+}
+
 + (void)initialize {
     if (self == [SessionView self]) {
         lastResizeDate_ = [NSDate date];
