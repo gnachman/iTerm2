@@ -15222,6 +15222,18 @@
         }
       }
     },
+    "AdvancedSetting.duplicatedTabsOpenAdjacentToOriginal" : {
+      "comment" : "Advanced setting: duplicatedTabsOpenAdjacentToOriginal",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When you duplicate a tab, should the copy open immediately to the right of the original tab?\nWhen disabled, duplicated tabs follow the general “New tabs are added” placement setting instead."
+          }
+        }
+      }
+    },
     "AdvancedSetting.dwcLineCache" : {
       "comment" : "Advanced setting: dwcLineCache",
       "extractionState" : "extracted_with_value",
@@ -57553,6 +57565,90 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "返回"
+          }
+        }
+      }
+    },
+    "Companion.ChooseMode.Body" : {
+      "comment" : "Explanatory paragraph on the choose-mode screen",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You can pair your iPhone to chat with AI about your sessions, or just to view and control your terminals remotely. You can turn on AI later if you change your mind."
+          }
+        }
+      }
+    },
+    "Companion.ChooseMode.TerminalOnlyButton" : {
+      "comment" : "Button that starts companion-only (no AI) setup",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Terminal Viewing & Control Only"
+          }
+        }
+      }
+    },
+    "Companion.ChooseMode.TerminalOnlyDetail" : {
+      "comment" : "Detail under the terminal-only button on the choose-mode screen",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Browse sessions, watch live output, and type from your iPhone. No AI or API key needed."
+          }
+        }
+      }
+    },
+    "Companion.ChooseMode.Title" : {
+      "comment" : "Title of the wizard screen where the user chooses AI vs terminal-only setup",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "How Do You Want to Use the Companion?"
+          }
+        }
+      }
+    },
+    "Companion.ChooseMode.WithAIButton" : {
+      "comment" : "Button that starts the full AI + companion setup",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Set Up with AI Features"
+          }
+        }
+      }
+    },
+    "Companion.ChooseMode.WithAIDetail" : {
+      "comment" : "Detail under the with-AI button on the choose-mode screen",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Chat with the orchestrator and per-session agents. Requires an AI API key."
+          }
+        }
+      }
+    },
+    "Companion.ChooseMode.WithAIDisabledDetail" : {
+      "comment" : "Detail shown under the disabled with-AI button when an administrator has forbidden AI",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Your administrator has disabled AI features, so this option is unavailable."
           }
         }
       }
