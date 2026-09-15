@@ -69,7 +69,7 @@
 }
 
 - (void)ensureNotificationPermissionsWithCompletion:(void (^)(BOOL granted))completion {
-    [self.pendingPermissionCompletions addObject:completion];
+    [self.pendingPermissionCompletions addObject:[completion copy]];
     
     if (self.checkingPermissions) {
         return;
