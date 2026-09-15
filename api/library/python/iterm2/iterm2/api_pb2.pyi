@@ -238,6 +238,7 @@ class ClientOriginatedMessage(_message.Message):
     INVOKE_FUNCTION_REQUEST_FIELD_NUMBER: _builtins.int
     LIST_PROMPTS_REQUEST_FIELD_NUMBER: _builtins.int
     SCREENSHOT_REQUEST_FIELD_NUMBER: _builtins.int
+    TAB_GROUP_REQUEST_FIELD_NUMBER: _builtins.int
     id: _builtins.int
     @_builtins.property
     def get_buffer_request(self) -> Global___GetBufferRequest: ...
@@ -309,6 +310,8 @@ class ClientOriginatedMessage(_message.Message):
     def list_prompts_request(self) -> Global___ListPromptsRequest: ...
     @_builtins.property
     def screenshot_request(self) -> Global___ScreenshotRequest: ...
+    @_builtins.property
+    def tab_group_request(self) -> Global___TabGroupRequest: ...
     def __init__(
         self,
         *,
@@ -348,12 +351,13 @@ class ClientOriginatedMessage(_message.Message):
         invoke_function_request: Global___InvokeFunctionRequest | None = ...,
         list_prompts_request: Global___ListPromptsRequest | None = ...,
         screenshot_request: Global___ScreenshotRequest | None = ...,
+        tab_group_request: Global___TabGroupRequest | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["activate_request", b"activate_request", "close_request", b"close_request", "color_preset_request", b"color_preset_request", "create_tab_request", b"create_tab_request", "focus_request", b"focus_request", "get_broadcast_domains_request", b"get_broadcast_domains_request", "get_buffer_request", b"get_buffer_request", "get_profile_property_request", b"get_profile_property_request", "get_prompt_request", b"get_prompt_request", "get_property_request", b"get_property_request", "id", b"id", "inject_request", b"inject_request", "invoke_function_request", b"invoke_function_request", "list_profiles_request", b"list_profiles_request", "list_prompts_request", b"list_prompts_request", "list_sessions_request", b"list_sessions_request", "menu_item_request", b"menu_item_request", "notification_request", b"notification_request", "preferences_request", b"preferences_request", "register_tool_request", b"register_tool_request", "reorder_tabs_request", b"reorder_tabs_request", "restart_session_request", b"restart_session_request", "saved_arrangement_request", b"saved_arrangement_request", "screenshot_request", b"screenshot_request", "selection_request", b"selection_request", "send_text_request", b"send_text_request", "server_originated_rpc_result_request", b"server_originated_rpc_result_request", "set_broadcast_domains_request", b"set_broadcast_domains_request", "set_profile_property_request", b"set_profile_property_request", "set_property_request", b"set_property_request", "set_tab_layout_request", b"set_tab_layout_request", "split_pane_request", b"split_pane_request", "status_bar_component_request", b"status_bar_component_request", "submessage", b"submessage", "tmux_request", b"tmux_request", "transaction_request", b"transaction_request", "variable_request", b"variable_request"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal["activate_request", b"activate_request", "close_request", b"close_request", "color_preset_request", b"color_preset_request", "create_tab_request", b"create_tab_request", "focus_request", b"focus_request", "get_broadcast_domains_request", b"get_broadcast_domains_request", "get_buffer_request", b"get_buffer_request", "get_profile_property_request", b"get_profile_property_request", "get_prompt_request", b"get_prompt_request", "get_property_request", b"get_property_request", "id", b"id", "inject_request", b"inject_request", "invoke_function_request", b"invoke_function_request", "list_profiles_request", b"list_profiles_request", "list_prompts_request", b"list_prompts_request", "list_sessions_request", b"list_sessions_request", "menu_item_request", b"menu_item_request", "notification_request", b"notification_request", "preferences_request", b"preferences_request", "register_tool_request", b"register_tool_request", "reorder_tabs_request", b"reorder_tabs_request", "restart_session_request", b"restart_session_request", "saved_arrangement_request", b"saved_arrangement_request", "screenshot_request", b"screenshot_request", "selection_request", b"selection_request", "send_text_request", b"send_text_request", "server_originated_rpc_result_request", b"server_originated_rpc_result_request", "set_broadcast_domains_request", b"set_broadcast_domains_request", "set_profile_property_request", b"set_profile_property_request", "set_property_request", b"set_property_request", "set_tab_layout_request", b"set_tab_layout_request", "split_pane_request", b"split_pane_request", "status_bar_component_request", b"status_bar_component_request", "submessage", b"submessage", "tab_group_request", b"tab_group_request", "tmux_request", b"tmux_request", "transaction_request", b"transaction_request", "variable_request", b"variable_request"]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["activate_request", b"activate_request", "close_request", b"close_request", "color_preset_request", b"color_preset_request", "create_tab_request", b"create_tab_request", "focus_request", b"focus_request", "get_broadcast_domains_request", b"get_broadcast_domains_request", "get_buffer_request", b"get_buffer_request", "get_profile_property_request", b"get_profile_property_request", "get_prompt_request", b"get_prompt_request", "get_property_request", b"get_property_request", "id", b"id", "inject_request", b"inject_request", "invoke_function_request", b"invoke_function_request", "list_profiles_request", b"list_profiles_request", "list_prompts_request", b"list_prompts_request", "list_sessions_request", b"list_sessions_request", "menu_item_request", b"menu_item_request", "notification_request", b"notification_request", "preferences_request", b"preferences_request", "register_tool_request", b"register_tool_request", "reorder_tabs_request", b"reorder_tabs_request", "restart_session_request", b"restart_session_request", "saved_arrangement_request", b"saved_arrangement_request", "screenshot_request", b"screenshot_request", "selection_request", b"selection_request", "send_text_request", b"send_text_request", "server_originated_rpc_result_request", b"server_originated_rpc_result_request", "set_broadcast_domains_request", b"set_broadcast_domains_request", "set_profile_property_request", b"set_profile_property_request", "set_property_request", b"set_property_request", "set_tab_layout_request", b"set_tab_layout_request", "split_pane_request", b"split_pane_request", "status_bar_component_request", b"status_bar_component_request", "submessage", b"submessage", "tmux_request", b"tmux_request", "transaction_request", b"transaction_request", "variable_request", b"variable_request"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["activate_request", b"activate_request", "close_request", b"close_request", "color_preset_request", b"color_preset_request", "create_tab_request", b"create_tab_request", "focus_request", b"focus_request", "get_broadcast_domains_request", b"get_broadcast_domains_request", "get_buffer_request", b"get_buffer_request", "get_profile_property_request", b"get_profile_property_request", "get_prompt_request", b"get_prompt_request", "get_property_request", b"get_property_request", "id", b"id", "inject_request", b"inject_request", "invoke_function_request", b"invoke_function_request", "list_profiles_request", b"list_profiles_request", "list_prompts_request", b"list_prompts_request", "list_sessions_request", b"list_sessions_request", "menu_item_request", b"menu_item_request", "notification_request", b"notification_request", "preferences_request", b"preferences_request", "register_tool_request", b"register_tool_request", "reorder_tabs_request", b"reorder_tabs_request", "restart_session_request", b"restart_session_request", "saved_arrangement_request", b"saved_arrangement_request", "screenshot_request", b"screenshot_request", "selection_request", b"selection_request", "send_text_request", b"send_text_request", "server_originated_rpc_result_request", b"server_originated_rpc_result_request", "set_broadcast_domains_request", b"set_broadcast_domains_request", "set_profile_property_request", b"set_profile_property_request", "set_property_request", b"set_property_request", "set_tab_layout_request", b"set_tab_layout_request", "split_pane_request", b"split_pane_request", "status_bar_component_request", b"status_bar_component_request", "submessage", b"submessage", "tab_group_request", b"tab_group_request", "tmux_request", b"tmux_request", "transaction_request", b"transaction_request", "variable_request", b"variable_request"]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    _WhichOneofReturnType_submessage: _TypeAlias = _typing.Literal["get_buffer_request", "get_prompt_request", "transaction_request", "notification_request", "register_tool_request", "set_profile_property_request", "list_sessions_request", "send_text_request", "create_tab_request", "split_pane_request", "get_profile_property_request", "set_property_request", "get_property_request", "inject_request", "activate_request", "variable_request", "saved_arrangement_request", "focus_request", "list_profiles_request", "server_originated_rpc_result_request", "restart_session_request", "menu_item_request", "set_tab_layout_request", "get_broadcast_domains_request", "tmux_request", "reorder_tabs_request", "preferences_request", "color_preset_request", "selection_request", "status_bar_component_request", "set_broadcast_domains_request", "close_request", "invoke_function_request", "list_prompts_request", "screenshot_request"]  # noqa: Y015
+    _WhichOneofReturnType_submessage: _TypeAlias = _typing.Literal["get_buffer_request", "get_prompt_request", "transaction_request", "notification_request", "register_tool_request", "set_profile_property_request", "list_sessions_request", "send_text_request", "create_tab_request", "split_pane_request", "get_profile_property_request", "set_property_request", "get_property_request", "inject_request", "activate_request", "variable_request", "saved_arrangement_request", "focus_request", "list_profiles_request", "server_originated_rpc_result_request", "restart_session_request", "menu_item_request", "set_tab_layout_request", "get_broadcast_domains_request", "tmux_request", "reorder_tabs_request", "preferences_request", "color_preset_request", "selection_request", "status_bar_component_request", "set_broadcast_domains_request", "close_request", "invoke_function_request", "list_prompts_request", "screenshot_request", "tab_group_request"]  # noqa: Y015
     _WhichOneofArgType_submessage: _TypeAlias = _typing.Literal["submessage", b"submessage"]  # noqa: Y015
     def WhichOneof(self, oneof_group: _WhichOneofArgType_submessage) -> _WhichOneofReturnType_submessage | None: ...
 
@@ -404,6 +408,7 @@ class ServerOriginatedMessage(_message.Message):
     INVOKE_FUNCTION_RESPONSE_FIELD_NUMBER: _builtins.int
     LIST_PROMPTS_RESPONSE_FIELD_NUMBER: _builtins.int
     SCREENSHOT_RESPONSE_FIELD_NUMBER: _builtins.int
+    TAB_GROUP_RESPONSE_FIELD_NUMBER: _builtins.int
     NOTIFICATION_FIELD_NUMBER: _builtins.int
     id: _builtins.int
     error: _builtins.str
@@ -479,6 +484,8 @@ class ServerOriginatedMessage(_message.Message):
     @_builtins.property
     def screenshot_response(self) -> Global___ScreenshotResponse: ...
     @_builtins.property
+    def tab_group_response(self) -> Global___TabGroupResponse: ...
+    @_builtins.property
     def notification(self) -> Global___Notification:
         """This is the only response that is sent spontaneously. The 'id' field will not be set."""
 
@@ -522,13 +529,14 @@ class ServerOriginatedMessage(_message.Message):
         invoke_function_response: Global___InvokeFunctionResponse | None = ...,
         list_prompts_response: Global___ListPromptsResponse | None = ...,
         screenshot_response: Global___ScreenshotResponse | None = ...,
+        tab_group_response: Global___TabGroupResponse | None = ...,
         notification: Global___Notification | None = ...,
     ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["activate_response", b"activate_response", "close_response", b"close_response", "color_preset_response", b"color_preset_response", "create_tab_response", b"create_tab_response", "error", b"error", "focus_response", b"focus_response", "get_broadcast_domains_response", b"get_broadcast_domains_response", "get_buffer_response", b"get_buffer_response", "get_profile_property_response", b"get_profile_property_response", "get_prompt_response", b"get_prompt_response", "get_property_response", b"get_property_response", "id", b"id", "inject_response", b"inject_response", "invoke_function_response", b"invoke_function_response", "list_profiles_response", b"list_profiles_response", "list_prompts_response", b"list_prompts_response", "list_sessions_response", b"list_sessions_response", "menu_item_response", b"menu_item_response", "notification", b"notification", "notification_response", b"notification_response", "preferences_response", b"preferences_response", "register_tool_response", b"register_tool_response", "reorder_tabs_response", b"reorder_tabs_response", "restart_session_response", b"restart_session_response", "saved_arrangement_response", b"saved_arrangement_response", "screenshot_response", b"screenshot_response", "selection_response", b"selection_response", "send_text_response", b"send_text_response", "server_originated_rpc_result_response", b"server_originated_rpc_result_response", "set_broadcast_domains_response", b"set_broadcast_domains_response", "set_profile_property_response", b"set_profile_property_response", "set_property_response", b"set_property_response", "set_tab_layout_response", b"set_tab_layout_response", "split_pane_response", b"split_pane_response", "status_bar_component_response", b"status_bar_component_response", "submessage", b"submessage", "tmux_response", b"tmux_response", "transaction_response", b"transaction_response", "variable_response", b"variable_response"]  # noqa: Y015
+    _HasFieldArgType: _TypeAlias = _typing.Literal["activate_response", b"activate_response", "close_response", b"close_response", "color_preset_response", b"color_preset_response", "create_tab_response", b"create_tab_response", "error", b"error", "focus_response", b"focus_response", "get_broadcast_domains_response", b"get_broadcast_domains_response", "get_buffer_response", b"get_buffer_response", "get_profile_property_response", b"get_profile_property_response", "get_prompt_response", b"get_prompt_response", "get_property_response", b"get_property_response", "id", b"id", "inject_response", b"inject_response", "invoke_function_response", b"invoke_function_response", "list_profiles_response", b"list_profiles_response", "list_prompts_response", b"list_prompts_response", "list_sessions_response", b"list_sessions_response", "menu_item_response", b"menu_item_response", "notification", b"notification", "notification_response", b"notification_response", "preferences_response", b"preferences_response", "register_tool_response", b"register_tool_response", "reorder_tabs_response", b"reorder_tabs_response", "restart_session_response", b"restart_session_response", "saved_arrangement_response", b"saved_arrangement_response", "screenshot_response", b"screenshot_response", "selection_response", b"selection_response", "send_text_response", b"send_text_response", "server_originated_rpc_result_response", b"server_originated_rpc_result_response", "set_broadcast_domains_response", b"set_broadcast_domains_response", "set_profile_property_response", b"set_profile_property_response", "set_property_response", b"set_property_response", "set_tab_layout_response", b"set_tab_layout_response", "split_pane_response", b"split_pane_response", "status_bar_component_response", b"status_bar_component_response", "submessage", b"submessage", "tab_group_response", b"tab_group_response", "tmux_response", b"tmux_response", "transaction_response", b"transaction_response", "variable_response", b"variable_response"]  # noqa: Y015
     def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["activate_response", b"activate_response", "close_response", b"close_response", "color_preset_response", b"color_preset_response", "create_tab_response", b"create_tab_response", "error", b"error", "focus_response", b"focus_response", "get_broadcast_domains_response", b"get_broadcast_domains_response", "get_buffer_response", b"get_buffer_response", "get_profile_property_response", b"get_profile_property_response", "get_prompt_response", b"get_prompt_response", "get_property_response", b"get_property_response", "id", b"id", "inject_response", b"inject_response", "invoke_function_response", b"invoke_function_response", "list_profiles_response", b"list_profiles_response", "list_prompts_response", b"list_prompts_response", "list_sessions_response", b"list_sessions_response", "menu_item_response", b"menu_item_response", "notification", b"notification", "notification_response", b"notification_response", "preferences_response", b"preferences_response", "register_tool_response", b"register_tool_response", "reorder_tabs_response", b"reorder_tabs_response", "restart_session_response", b"restart_session_response", "saved_arrangement_response", b"saved_arrangement_response", "screenshot_response", b"screenshot_response", "selection_response", b"selection_response", "send_text_response", b"send_text_response", "server_originated_rpc_result_response", b"server_originated_rpc_result_response", "set_broadcast_domains_response", b"set_broadcast_domains_response", "set_profile_property_response", b"set_profile_property_response", "set_property_response", b"set_property_response", "set_tab_layout_response", b"set_tab_layout_response", "split_pane_response", b"split_pane_response", "status_bar_component_response", b"status_bar_component_response", "submessage", b"submessage", "tmux_response", b"tmux_response", "transaction_response", b"transaction_response", "variable_response", b"variable_response"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["activate_response", b"activate_response", "close_response", b"close_response", "color_preset_response", b"color_preset_response", "create_tab_response", b"create_tab_response", "error", b"error", "focus_response", b"focus_response", "get_broadcast_domains_response", b"get_broadcast_domains_response", "get_buffer_response", b"get_buffer_response", "get_profile_property_response", b"get_profile_property_response", "get_prompt_response", b"get_prompt_response", "get_property_response", b"get_property_response", "id", b"id", "inject_response", b"inject_response", "invoke_function_response", b"invoke_function_response", "list_profiles_response", b"list_profiles_response", "list_prompts_response", b"list_prompts_response", "list_sessions_response", b"list_sessions_response", "menu_item_response", b"menu_item_response", "notification", b"notification", "notification_response", b"notification_response", "preferences_response", b"preferences_response", "register_tool_response", b"register_tool_response", "reorder_tabs_response", b"reorder_tabs_response", "restart_session_response", b"restart_session_response", "saved_arrangement_response", b"saved_arrangement_response", "screenshot_response", b"screenshot_response", "selection_response", b"selection_response", "send_text_response", b"send_text_response", "server_originated_rpc_result_response", b"server_originated_rpc_result_response", "set_broadcast_domains_response", b"set_broadcast_domains_response", "set_profile_property_response", b"set_profile_property_response", "set_property_response", b"set_property_response", "set_tab_layout_response", b"set_tab_layout_response", "split_pane_response", b"split_pane_response", "status_bar_component_response", b"status_bar_component_response", "submessage", b"submessage", "tab_group_response", b"tab_group_response", "tmux_response", b"tmux_response", "transaction_response", b"transaction_response", "variable_response", b"variable_response"]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    _WhichOneofReturnType_submessage: _TypeAlias = _typing.Literal["error", "get_buffer_response", "get_prompt_response", "transaction_response", "notification_response", "register_tool_response", "set_profile_property_response", "list_sessions_response", "send_text_response", "create_tab_response", "split_pane_response", "get_profile_property_response", "set_property_response", "get_property_response", "inject_response", "activate_response", "variable_response", "saved_arrangement_response", "focus_response", "list_profiles_response", "server_originated_rpc_result_response", "restart_session_response", "menu_item_response", "set_tab_layout_response", "get_broadcast_domains_response", "tmux_response", "reorder_tabs_response", "preferences_response", "color_preset_response", "selection_response", "status_bar_component_response", "set_broadcast_domains_response", "close_response", "invoke_function_response", "list_prompts_response", "screenshot_response", "notification"]  # noqa: Y015
+    _WhichOneofReturnType_submessage: _TypeAlias = _typing.Literal["error", "get_buffer_response", "get_prompt_response", "transaction_response", "notification_response", "register_tool_response", "set_profile_property_response", "list_sessions_response", "send_text_response", "create_tab_response", "split_pane_response", "get_profile_property_response", "set_property_response", "get_property_response", "inject_response", "activate_response", "variable_response", "saved_arrangement_response", "focus_response", "list_profiles_response", "server_originated_rpc_result_response", "restart_session_response", "menu_item_response", "set_tab_layout_response", "get_broadcast_domains_response", "tmux_response", "reorder_tabs_response", "preferences_response", "color_preset_response", "selection_response", "status_bar_component_response", "set_broadcast_domains_response", "close_response", "invoke_function_response", "list_prompts_response", "screenshot_response", "tab_group_response", "notification"]  # noqa: Y015
     _WhichOneofArgType_submessage: _TypeAlias = _typing.Literal["submessage", b"submessage"]  # noqa: Y015
     def WhichOneof(self, oneof_group: _WhichOneofArgType_submessage) -> _WhichOneofReturnType_submessage | None: ...
 
@@ -1762,6 +1770,341 @@ class ReorderTabsResponse(_message.Message):
     def WhichOneof(self, oneof_group: _Never) -> None: ...
 
 Global___ReorderTabsResponse: _TypeAlias = ReorderTabsResponse  # noqa: Y015
+
+@_typing.final
+class TabGroupRequest(_message.Message):
+    """Programmatic access to native tab groups (named, colored, collapsible runs
+    of tabs). A group is identified by a UUID that rides its member tabs; there
+    is no separate registry. A group lives within a single window (its members
+    are a contiguous run in that window's tab bar), so mutations that reference
+    tabs require them to share a window.
+    """
+
+    DESCRIPTOR: _descriptor.Descriptor
+
+    @_typing.final
+    class CreateGroupRequest(_message.Message):
+        """Create a new group from one or more existing tabs. No modal prompt: the
+        name and color are supplied here. Tabs already in another group are moved
+        into the new one. All tabs must be in the same window.
+        """
+
+        DESCRIPTOR: _descriptor.Descriptor
+
+        TAB_IDS_FIELD_NUMBER: _builtins.int
+        NAME_FIELD_NUMBER: _builtins.int
+        COLOR_FIELD_NUMBER: _builtins.int
+        name: _builtins.str
+        """group name; defaults to "Group" if unset/empty"""
+        @_builtins.property
+        def tab_ids(self) -> _containers.RepeatedScalarFieldContainer[_builtins.str]:
+            """one or more; all in the same window"""
+
+        @_builtins.property
+        def color(self) -> Global___RGBColor:
+            """group color; a palette color is chosen if unset"""
+
+        def __init__(
+            self,
+            *,
+            tab_ids: _abc.Iterable[_builtins.str] | None = ...,
+            name: _builtins.str | None = ...,
+            color: Global___RGBColor | None = ...,
+        ) -> None: ...
+        _HasFieldArgType: _TypeAlias = _typing.Literal["color", b"color", "name", b"name"]  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["color", b"color", "name", b"name", "tab_ids", b"tab_ids"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
+
+    @_typing.final
+    class AssignTabRequest(_message.Message):
+        """Add an existing tab to an existing group. The tab must be in the same
+        window as the group's current members.
+        """
+
+        DESCRIPTOR: _descriptor.Descriptor
+
+        GROUP_ID_FIELD_NUMBER: _builtins.int
+        TAB_ID_FIELD_NUMBER: _builtins.int
+        group_id: _builtins.str
+        tab_id: _builtins.str
+        def __init__(
+            self,
+            *,
+            group_id: _builtins.str | None = ...,
+            tab_id: _builtins.str | None = ...,
+        ) -> None: ...
+        _HasFieldArgType: _TypeAlias = _typing.Literal["group_id", b"group_id", "tab_id", b"tab_id"]  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["group_id", b"group_id", "tab_id", b"tab_id"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
+
+    @_typing.final
+    class RemoveTabRequest(_message.Message):
+        """Remove a tab from whatever group it is in (no-op if it is ungrouped)."""
+
+        DESCRIPTOR: _descriptor.Descriptor
+
+        TAB_ID_FIELD_NUMBER: _builtins.int
+        tab_id: _builtins.str
+        def __init__(
+            self,
+            *,
+            tab_id: _builtins.str | None = ...,
+        ) -> None: ...
+        _HasFieldArgType: _TypeAlias = _typing.Literal["tab_id", b"tab_id"]  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["tab_id", b"tab_id"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
+
+    @_typing.final
+    class RenameRequest(_message.Message):
+        """Rename every member of a group. No modal prompt."""
+
+        DESCRIPTOR: _descriptor.Descriptor
+
+        GROUP_ID_FIELD_NUMBER: _builtins.int
+        NAME_FIELD_NUMBER: _builtins.int
+        group_id: _builtins.str
+        name: _builtins.str
+        def __init__(
+            self,
+            *,
+            group_id: _builtins.str | None = ...,
+            name: _builtins.str | None = ...,
+        ) -> None: ...
+        _HasFieldArgType: _TypeAlias = _typing.Literal["group_id", b"group_id", "name", b"name"]  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["group_id", b"group_id", "name", b"name"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
+
+    @_typing.final
+    class SetColorRequest(_message.Message):
+        """Recolor every member of a group."""
+
+        DESCRIPTOR: _descriptor.Descriptor
+
+        GROUP_ID_FIELD_NUMBER: _builtins.int
+        COLOR_FIELD_NUMBER: _builtins.int
+        group_id: _builtins.str
+        @_builtins.property
+        def color(self) -> Global___RGBColor: ...
+        def __init__(
+            self,
+            *,
+            group_id: _builtins.str | None = ...,
+            color: Global___RGBColor | None = ...,
+        ) -> None: ...
+        _HasFieldArgType: _TypeAlias = _typing.Literal["color", b"color", "group_id", b"group_id"]  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["color", b"color", "group_id", b"group_id"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
+
+    @_typing.final
+    class SetCollapsedRequest(_message.Message):
+        """Collapse or expand a group. Collapsing a group that is the whole window is
+        impossible (there would be no visible tab to move selection to) and fails
+        with COLLAPSE_IMPOSSIBLE.
+        """
+
+        DESCRIPTOR: _descriptor.Descriptor
+
+        GROUP_ID_FIELD_NUMBER: _builtins.int
+        COLLAPSED_FIELD_NUMBER: _builtins.int
+        group_id: _builtins.str
+        collapsed: _builtins.bool
+        def __init__(
+            self,
+            *,
+            group_id: _builtins.str | None = ...,
+            collapsed: _builtins.bool | None = ...,
+        ) -> None: ...
+        _HasFieldArgType: _TypeAlias = _typing.Literal["collapsed", b"collapsed", "group_id", b"group_id"]  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["collapsed", b"collapsed", "group_id", b"group_id"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
+
+    @_typing.final
+    class ListGroupsRequest(_message.Message):
+        """List every group in every window (order follows window then tab order)."""
+
+        DESCRIPTOR: _descriptor.Descriptor
+
+        def __init__(
+            self,
+        ) -> None: ...
+        _HasFieldArgType: _TypeAlias = _Never  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _Never  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
+
+    @_typing.final
+    class GetMembershipRequest(_message.Message):
+        """Read a group's membership. If group_id is set, only that group is
+        returned; otherwise every group is returned (same as list_groups but the
+        intent is membership).
+        """
+
+        DESCRIPTOR: _descriptor.Descriptor
+
+        GROUP_ID_FIELD_NUMBER: _builtins.int
+        group_id: _builtins.str
+        def __init__(
+            self,
+            *,
+            group_id: _builtins.str | None = ...,
+        ) -> None: ...
+        _HasFieldArgType: _TypeAlias = _typing.Literal["group_id", b"group_id"]  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["group_id", b"group_id"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
+
+    CREATE_GROUP_REQUEST_FIELD_NUMBER: _builtins.int
+    ASSIGN_TAB_REQUEST_FIELD_NUMBER: _builtins.int
+    REMOVE_TAB_REQUEST_FIELD_NUMBER: _builtins.int
+    RENAME_REQUEST_FIELD_NUMBER: _builtins.int
+    SET_COLOR_REQUEST_FIELD_NUMBER: _builtins.int
+    SET_COLLAPSED_REQUEST_FIELD_NUMBER: _builtins.int
+    LIST_GROUPS_REQUEST_FIELD_NUMBER: _builtins.int
+    GET_MEMBERSHIP_REQUEST_FIELD_NUMBER: _builtins.int
+    @_builtins.property
+    def create_group_request(self) -> Global___TabGroupRequest.CreateGroupRequest: ...
+    @_builtins.property
+    def assign_tab_request(self) -> Global___TabGroupRequest.AssignTabRequest: ...
+    @_builtins.property
+    def remove_tab_request(self) -> Global___TabGroupRequest.RemoveTabRequest: ...
+    @_builtins.property
+    def rename_request(self) -> Global___TabGroupRequest.RenameRequest: ...
+    @_builtins.property
+    def set_color_request(self) -> Global___TabGroupRequest.SetColorRequest: ...
+    @_builtins.property
+    def set_collapsed_request(self) -> Global___TabGroupRequest.SetCollapsedRequest: ...
+    @_builtins.property
+    def list_groups_request(self) -> Global___TabGroupRequest.ListGroupsRequest: ...
+    @_builtins.property
+    def get_membership_request(self) -> Global___TabGroupRequest.GetMembershipRequest: ...
+    def __init__(
+        self,
+        *,
+        create_group_request: Global___TabGroupRequest.CreateGroupRequest | None = ...,
+        assign_tab_request: Global___TabGroupRequest.AssignTabRequest | None = ...,
+        remove_tab_request: Global___TabGroupRequest.RemoveTabRequest | None = ...,
+        rename_request: Global___TabGroupRequest.RenameRequest | None = ...,
+        set_color_request: Global___TabGroupRequest.SetColorRequest | None = ...,
+        set_collapsed_request: Global___TabGroupRequest.SetCollapsedRequest | None = ...,
+        list_groups_request: Global___TabGroupRequest.ListGroupsRequest | None = ...,
+        get_membership_request: Global___TabGroupRequest.GetMembershipRequest | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["assign_tab_request", b"assign_tab_request", "create_group_request", b"create_group_request", "get_membership_request", b"get_membership_request", "list_groups_request", b"list_groups_request", "remove_tab_request", b"remove_tab_request", "rename_request", b"rename_request", "request", b"request", "set_collapsed_request", b"set_collapsed_request", "set_color_request", b"set_color_request"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["assign_tab_request", b"assign_tab_request", "create_group_request", b"create_group_request", "get_membership_request", b"get_membership_request", "list_groups_request", b"list_groups_request", "remove_tab_request", b"remove_tab_request", "rename_request", b"rename_request", "request", b"request", "set_collapsed_request", b"set_collapsed_request", "set_color_request", b"set_color_request"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    _WhichOneofReturnType_request: _TypeAlias = _typing.Literal["create_group_request", "assign_tab_request", "remove_tab_request", "rename_request", "set_color_request", "set_collapsed_request", "list_groups_request", "get_membership_request"]  # noqa: Y015
+    _WhichOneofArgType_request: _TypeAlias = _typing.Literal["request", b"request"]  # noqa: Y015
+    def WhichOneof(self, oneof_group: _WhichOneofArgType_request) -> _WhichOneofReturnType_request | None: ...
+
+Global___TabGroupRequest: _TypeAlias = TabGroupRequest  # noqa: Y015
+
+@_typing.final
+class TabGroupResponse(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
+
+    class _Status:
+        ValueType = _typing.NewType("ValueType", _builtins.int)
+        V: _TypeAlias = ValueType  # noqa: Y015
+
+    class _StatusEnumTypeWrapper(_enum_type_wrapper._EnumTypeWrapper[TabGroupResponse._Status.ValueType], _builtins.type):
+        DESCRIPTOR: _descriptor.EnumDescriptor
+        OK: TabGroupResponse._Status.ValueType  # 0
+        REQUEST_MALFORMED: TabGroupResponse._Status.ValueType  # 1
+        """no sub-request set, or missing required field"""
+        INVALID_TAB_ID: TabGroupResponse._Status.ValueType  # 2
+        INVALID_GROUP_ID: TabGroupResponse._Status.ValueType  # 3
+        """no group with this id exists"""
+        TABS_IN_DIFFERENT_WINDOWS: TabGroupResponse._Status.ValueType  # 4
+        """a group's tabs must share one window"""
+        COLLAPSE_IMPOSSIBLE: TabGroupResponse._Status.ValueType  # 5
+        """the group is the whole window"""
+
+    class Status(_Status, metaclass=_StatusEnumTypeWrapper): ...
+    OK: TabGroupResponse.Status.ValueType  # 0
+    REQUEST_MALFORMED: TabGroupResponse.Status.ValueType  # 1
+    """no sub-request set, or missing required field"""
+    INVALID_TAB_ID: TabGroupResponse.Status.ValueType  # 2
+    INVALID_GROUP_ID: TabGroupResponse.Status.ValueType  # 3
+    """no group with this id exists"""
+    TABS_IN_DIFFERENT_WINDOWS: TabGroupResponse.Status.ValueType  # 4
+    """a group's tabs must share one window"""
+    COLLAPSE_IMPOSSIBLE: TabGroupResponse.Status.ValueType  # 5
+    """the group is the whole window"""
+
+    @_typing.final
+    class Group(_message.Message):
+        DESCRIPTOR: _descriptor.Descriptor
+
+        GROUP_ID_FIELD_NUMBER: _builtins.int
+        NAME_FIELD_NUMBER: _builtins.int
+        COLOR_FIELD_NUMBER: _builtins.int
+        WINDOW_ID_FIELD_NUMBER: _builtins.int
+        COLLAPSED_FIELD_NUMBER: _builtins.int
+        TAB_IDS_FIELD_NUMBER: _builtins.int
+        group_id: _builtins.str
+        name: _builtins.str
+        window_id: _builtins.str
+        """the window the group lives in"""
+        collapsed: _builtins.bool
+        @_builtins.property
+        def color(self) -> Global___RGBColor: ...
+        @_builtins.property
+        def tab_ids(self) -> _containers.RepeatedScalarFieldContainer[_builtins.str]:
+            """members, in tab order"""
+
+        def __init__(
+            self,
+            *,
+            group_id: _builtins.str | None = ...,
+            name: _builtins.str | None = ...,
+            color: Global___RGBColor | None = ...,
+            window_id: _builtins.str | None = ...,
+            collapsed: _builtins.bool | None = ...,
+            tab_ids: _abc.Iterable[_builtins.str] | None = ...,
+        ) -> None: ...
+        _HasFieldArgType: _TypeAlias = _typing.Literal["collapsed", b"collapsed", "color", b"color", "group_id", b"group_id", "name", b"name", "window_id", b"window_id"]  # noqa: Y015
+        def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+        _ClearFieldArgType: _TypeAlias = _typing.Literal["collapsed", b"collapsed", "color", b"color", "group_id", b"group_id", "name", b"name", "tab_ids", b"tab_ids", "window_id", b"window_id"]  # noqa: Y015
+        def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+        def WhichOneof(self, oneof_group: _Never) -> None: ...
+
+    STATUS_FIELD_NUMBER: _builtins.int
+    GROUPS_FIELD_NUMBER: _builtins.int
+    status: Global___TabGroupResponse.Status.ValueType
+    @_builtins.property
+    def groups(self) -> _containers.RepeatedCompositeFieldContainer[Global___TabGroupResponse.Group]:
+        """create_group returns the one created group. list_groups and get_membership
+        return the matching groups. Other requests leave this empty.
+        """
+
+    def __init__(
+        self,
+        *,
+        status: Global___TabGroupResponse.Status.ValueType | None = ...,
+        groups: _abc.Iterable[Global___TabGroupResponse.Group] | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["status", b"status"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["groups", b"groups", "status", b"status"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    def WhichOneof(self, oneof_group: _Never) -> None: ...
+
+Global___TabGroupResponse: _TypeAlias = TabGroupResponse  # noqa: Y015
 
 @_typing.final
 class TmuxRequest(_message.Message):

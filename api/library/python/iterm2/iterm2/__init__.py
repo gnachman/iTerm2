@@ -68,6 +68,8 @@ from iterm2.transaction import Transaction
 
 from iterm2.tab import Tab, NavigationDirection
 
+from iterm2.tabgroup import TabGroup, TabGroupException
+
 from iterm2.tmux import (
     TmuxException, TmuxConnection, async_get_tmux_connections,
     async_get_tmux_connection_by_connection_id)

@@ -161,6 +161,39 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
 // groupID or a session with no tab in this window.
 - (void)addTabForSession:(PTYSession *)session toGroupWithID:(NSString *)groupID;
 
+#pragma mark - Tab groups (scriptable API)
+
+// The following mutate tab groups with no modal prompt, for the Python/WebSocket
+// API. Names and colors are supplied by the caller instead of asked for in a
+// dialog. Each keeps iTerm2's contiguity and active-tab-not-collapsed invariants
+// intact by routing through the same finalize/reorder machinery the menu uses.
+
+// Create a brand-new group from `tabs` (one or more) with the given name and
+// color. A tab already in a group is moved into the new one; the members are
+// brought together into one contiguous block. Returns the new group's unique
+// id, or nil if `tabs` is empty.
+- (NSString *)createTabGroupWithTabs:(NSArray<PTYTab *> *)tabs
+                                name:(NSString *)name
+                               color:(NSColor *)color;
+
+// Add `tab` to the existing group `groupID` (which must already have a member
+// in this window). Copies the group's definition onto the tab and repairs
+// contiguity. Returns NO if no such group exists here.
+- (BOOL)addTab:(PTYTab *)tab toExistingTabGroupWithID:(NSString *)groupID;
+
+// Remove `tab` from whatever group it belongs to. No-op if it is ungrouped.
+- (void)removeTabFromItsGroup:(PTYTab *)tab;
+
+// Set the group's name on every member (no modal). No-op if the group is empty.
+- (void)setTabGroupName:(NSString *)name forGroupID:(NSString *)groupID;
+
+// Collapse (hide members in the tab bar) or expand a group. Collapsing is
+// refused when the group is the whole window; -tabGroupIsWholeWindow: reports
+// that case so the API can return a specific error.
+- (void)collapseTabGroup:(NSString *)groupID;
+- (void)expandTabGroup:(NSString *)groupID;
+- (BOOL)tabGroupIsWholeWindow:(NSString *)groupID;
+
 // Mutable state for the tab color picker (popover, debounce timer, etc.).
 @property(nonatomic, strong) TabColorPickerState *tabColorPickerState;
 

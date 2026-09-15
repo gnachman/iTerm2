@@ -178,6 +178,17 @@ GPBObjCClassDeclaration(ITMStatusBarComponentRequest);
 GPBObjCClassDeclaration(ITMStatusBarComponentRequest_OpenPopover);
 GPBObjCClassDeclaration(ITMStatusBarComponentResponse);
 GPBObjCClassDeclaration(ITMSubSelection);
+GPBObjCClassDeclaration(ITMTabGroupRequest);
+GPBObjCClassDeclaration(ITMTabGroupRequest_AssignTabRequest);
+GPBObjCClassDeclaration(ITMTabGroupRequest_CreateGroupRequest);
+GPBObjCClassDeclaration(ITMTabGroupRequest_GetMembershipRequest);
+GPBObjCClassDeclaration(ITMTabGroupRequest_ListGroupsRequest);
+GPBObjCClassDeclaration(ITMTabGroupRequest_RemoveTabRequest);
+GPBObjCClassDeclaration(ITMTabGroupRequest_RenameRequest);
+GPBObjCClassDeclaration(ITMTabGroupRequest_SetCollapsedRequest);
+GPBObjCClassDeclaration(ITMTabGroupRequest_SetColorRequest);
+GPBObjCClassDeclaration(ITMTabGroupResponse);
+GPBObjCClassDeclaration(ITMTabGroupResponse_Group);
 GPBObjCClassDeclaration(ITMTerminateSessionNotification);
 GPBObjCClassDeclaration(ITMTmuxRequest);
 GPBObjCClassDeclaration(ITMTmuxRequest_CreateWindow);
@@ -568,6 +579,7 @@ BOOL ITMImagePlaceholderType_IsValidValue(int32_t value__) {
 @dynamic invokeFunctionRequest;
 @dynamic listPromptsRequest;
 @dynamic screenshotRequest;
+@dynamic tabGroupRequest;
 
 typedef struct ITMClientOriginatedMessage__storage_ {
   uint32_t _has_storage_[2];
@@ -606,6 +618,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
   ITMInvokeFunctionRequest *invokeFunctionRequest;
   ITMListPromptsRequest *listPromptsRequest;
   ITMScreenshotRequest *screenshotRequest;
+  ITMTabGroupRequest *tabGroupRequest;
   int64_t id_p;
 } ITMClientOriginatedMessage__storage_;
 
@@ -939,6 +952,15 @@ typedef struct ITMClientOriginatedMessage__storage_ {
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
+      {
+        .name = "tabGroupRequest",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTabGroupRequest),
+        .number = ITMClientOriginatedMessage_FieldNumber_TabGroupRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, tabGroupRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
     };
     GPBDescriptor *localDescriptor =
         [GPBDescriptor allocDescriptorForClass:[ITMClientOriginatedMessage class]
@@ -1011,6 +1033,7 @@ void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMess
 @dynamic invokeFunctionResponse;
 @dynamic listPromptsResponse;
 @dynamic screenshotResponse;
+@dynamic tabGroupResponse;
 @dynamic notification;
 
 typedef struct ITMServerOriginatedMessage__storage_ {
@@ -1051,6 +1074,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
   ITMInvokeFunctionResponse *invokeFunctionResponse;
   ITMListPromptsResponse *listPromptsResponse;
   ITMScreenshotResponse *screenshotResponse;
+  ITMTabGroupResponse *tabGroupResponse;
   ITMNotification *notification;
   int64_t id_p;
 } ITMServerOriginatedMessage__storage_;
@@ -1391,6 +1415,15 @@ typedef struct ITMServerOriginatedMessage__storage_ {
         .number = ITMServerOriginatedMessage_FieldNumber_ScreenshotResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, screenshotResponse),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "tabGroupResponse",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTabGroupResponse),
+        .number = ITMServerOriginatedMessage_FieldNumber_TabGroupResponse,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, tabGroupResponse),
         .flags = GPBFieldOptional,
         .dataType = GPBDataTypeMessage,
       },
@@ -4585,6 +4618,761 @@ BOOL ITMReorderTabsResponse_Status_IsValidValue(int32_t value__) {
       return NO;
   }
 }
+
+#pragma mark - ITMTabGroupRequest
+
+@implementation ITMTabGroupRequest
+
+@dynamic requestOneOfCase;
+@dynamic createGroupRequest;
+@dynamic assignTabRequest;
+@dynamic removeTabRequest;
+@dynamic renameRequest;
+@dynamic setColorRequest;
+@dynamic setCollapsedRequest;
+@dynamic listGroupsRequest;
+@dynamic getMembershipRequest;
+
+typedef struct ITMTabGroupRequest__storage_ {
+  uint32_t _has_storage_[2];
+  ITMTabGroupRequest_CreateGroupRequest *createGroupRequest;
+  ITMTabGroupRequest_AssignTabRequest *assignTabRequest;
+  ITMTabGroupRequest_RemoveTabRequest *removeTabRequest;
+  ITMTabGroupRequest_RenameRequest *renameRequest;
+  ITMTabGroupRequest_SetColorRequest *setColorRequest;
+  ITMTabGroupRequest_SetCollapsedRequest *setCollapsedRequest;
+  ITMTabGroupRequest_ListGroupsRequest *listGroupsRequest;
+  ITMTabGroupRequest_GetMembershipRequest *getMembershipRequest;
+} ITMTabGroupRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "createGroupRequest",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTabGroupRequest_CreateGroupRequest),
+        .number = ITMTabGroupRequest_FieldNumber_CreateGroupRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest__storage_, createGroupRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "assignTabRequest",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTabGroupRequest_AssignTabRequest),
+        .number = ITMTabGroupRequest_FieldNumber_AssignTabRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest__storage_, assignTabRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "removeTabRequest",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTabGroupRequest_RemoveTabRequest),
+        .number = ITMTabGroupRequest_FieldNumber_RemoveTabRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest__storage_, removeTabRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "renameRequest",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTabGroupRequest_RenameRequest),
+        .number = ITMTabGroupRequest_FieldNumber_RenameRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest__storage_, renameRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "setColorRequest",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTabGroupRequest_SetColorRequest),
+        .number = ITMTabGroupRequest_FieldNumber_SetColorRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest__storage_, setColorRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "setCollapsedRequest",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTabGroupRequest_SetCollapsedRequest),
+        .number = ITMTabGroupRequest_FieldNumber_SetCollapsedRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest__storage_, setCollapsedRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "listGroupsRequest",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTabGroupRequest_ListGroupsRequest),
+        .number = ITMTabGroupRequest_FieldNumber_ListGroupsRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest__storage_, listGroupsRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "getMembershipRequest",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTabGroupRequest_GetMembershipRequest),
+        .number = ITMTabGroupRequest_FieldNumber_GetMembershipRequest,
+        .hasIndex = -1,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest__storage_, getMembershipRequest),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTabGroupRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTabGroupRequest__storage_)
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    static const char *oneofs[] = {
+      "request",
+    };
+    [localDescriptor setupOneofs:oneofs
+                           count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
+                   firstHasIndex:-1];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+void ITMTabGroupRequest_ClearRequestOneOfCase(ITMTabGroupRequest *message) {
+  GPBDescriptor *descriptor = [ITMTabGroupRequest descriptor];
+  GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
+  GPBClearOneof(message, oneof);
+}
+#pragma mark - ITMTabGroupRequest_CreateGroupRequest
+
+@implementation ITMTabGroupRequest_CreateGroupRequest
+
+@dynamic tabIdsArray, tabIdsArray_Count;
+@dynamic hasName, name;
+@dynamic hasColor, color;
+
+typedef struct ITMTabGroupRequest_CreateGroupRequest__storage_ {
+  uint32_t _has_storage_[1];
+  NSMutableArray *tabIdsArray;
+  NSString *name;
+  ITMRGBColor *color;
+} ITMTabGroupRequest_CreateGroupRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "tabIdsArray",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMTabGroupRequest_CreateGroupRequest_FieldNumber_TabIdsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest_CreateGroupRequest__storage_, tabIdsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "name",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMTabGroupRequest_CreateGroupRequest_FieldNumber_Name,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest_CreateGroupRequest__storage_, name),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "color",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMRGBColor),
+        .number = ITMTabGroupRequest_CreateGroupRequest_FieldNumber_Color,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest_CreateGroupRequest__storage_, color),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTabGroupRequest_CreateGroupRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTabGroupRequest_CreateGroupRequest__storage_)
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMTabGroupRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMTabGroupRequest_AssignTabRequest
+
+@implementation ITMTabGroupRequest_AssignTabRequest
+
+@dynamic hasGroupId, groupId;
+@dynamic hasTabId, tabId;
+
+typedef struct ITMTabGroupRequest_AssignTabRequest__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *groupId;
+  NSString *tabId;
+} ITMTabGroupRequest_AssignTabRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "groupId",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMTabGroupRequest_AssignTabRequest_FieldNumber_GroupId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest_AssignTabRequest__storage_, groupId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "tabId",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMTabGroupRequest_AssignTabRequest_FieldNumber_TabId,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest_AssignTabRequest__storage_, tabId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTabGroupRequest_AssignTabRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTabGroupRequest_AssignTabRequest__storage_)
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMTabGroupRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMTabGroupRequest_RemoveTabRequest
+
+@implementation ITMTabGroupRequest_RemoveTabRequest
+
+@dynamic hasTabId, tabId;
+
+typedef struct ITMTabGroupRequest_RemoveTabRequest__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *tabId;
+} ITMTabGroupRequest_RemoveTabRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "tabId",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMTabGroupRequest_RemoveTabRequest_FieldNumber_TabId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest_RemoveTabRequest__storage_, tabId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTabGroupRequest_RemoveTabRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTabGroupRequest_RemoveTabRequest__storage_)
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMTabGroupRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMTabGroupRequest_RenameRequest
+
+@implementation ITMTabGroupRequest_RenameRequest
+
+@dynamic hasGroupId, groupId;
+@dynamic hasName, name;
+
+typedef struct ITMTabGroupRequest_RenameRequest__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *groupId;
+  NSString *name;
+} ITMTabGroupRequest_RenameRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "groupId",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMTabGroupRequest_RenameRequest_FieldNumber_GroupId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest_RenameRequest__storage_, groupId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "name",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMTabGroupRequest_RenameRequest_FieldNumber_Name,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest_RenameRequest__storage_, name),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTabGroupRequest_RenameRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTabGroupRequest_RenameRequest__storage_)
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMTabGroupRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMTabGroupRequest_SetColorRequest
+
+@implementation ITMTabGroupRequest_SetColorRequest
+
+@dynamic hasGroupId, groupId;
+@dynamic hasColor, color;
+
+typedef struct ITMTabGroupRequest_SetColorRequest__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *groupId;
+  ITMRGBColor *color;
+} ITMTabGroupRequest_SetColorRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "groupId",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMTabGroupRequest_SetColorRequest_FieldNumber_GroupId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest_SetColorRequest__storage_, groupId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "color",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMRGBColor),
+        .number = ITMTabGroupRequest_SetColorRequest_FieldNumber_Color,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest_SetColorRequest__storage_, color),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTabGroupRequest_SetColorRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTabGroupRequest_SetColorRequest__storage_)
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMTabGroupRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMTabGroupRequest_SetCollapsedRequest
+
+@implementation ITMTabGroupRequest_SetCollapsedRequest
+
+@dynamic hasGroupId, groupId;
+@dynamic hasCollapsed, collapsed;
+
+typedef struct ITMTabGroupRequest_SetCollapsedRequest__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *groupId;
+} ITMTabGroupRequest_SetCollapsedRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "groupId",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMTabGroupRequest_SetCollapsedRequest_FieldNumber_GroupId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest_SetCollapsedRequest__storage_, groupId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "collapsed",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMTabGroupRequest_SetCollapsedRequest_FieldNumber_Collapsed,
+        .hasIndex = 1,
+        .offset = 2,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTabGroupRequest_SetCollapsedRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTabGroupRequest_SetCollapsedRequest__storage_)
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMTabGroupRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMTabGroupRequest_ListGroupsRequest
+
+@implementation ITMTabGroupRequest_ListGroupsRequest
+
+
+typedef struct ITMTabGroupRequest_ListGroupsRequest__storage_ {
+  uint32_t _has_storage_[1];
+} ITMTabGroupRequest_ListGroupsRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTabGroupRequest_ListGroupsRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:NULL
+                                    fieldCount:0
+                                   storageSize:sizeof(ITMTabGroupRequest_ListGroupsRequest__storage_)
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMTabGroupRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMTabGroupRequest_GetMembershipRequest
+
+@implementation ITMTabGroupRequest_GetMembershipRequest
+
+@dynamic hasGroupId, groupId;
+
+typedef struct ITMTabGroupRequest_GetMembershipRequest__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *groupId;
+} ITMTabGroupRequest_GetMembershipRequest__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "groupId",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMTabGroupRequest_GetMembershipRequest_FieldNumber_GroupId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMTabGroupRequest_GetMembershipRequest__storage_, groupId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTabGroupRequest_GetMembershipRequest class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTabGroupRequest_GetMembershipRequest__storage_)
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMTabGroupRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - ITMTabGroupResponse
+
+@implementation ITMTabGroupResponse
+
+@dynamic hasStatus, status;
+@dynamic groupsArray, groupsArray_Count;
+
+typedef struct ITMTabGroupResponse__storage_ {
+  uint32_t _has_storage_[1];
+  ITMTabGroupResponse_Status status;
+  NSMutableArray *groupsArray;
+} ITMTabGroupResponse__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "status",
+        .dataTypeSpecific.enumDescFunc = ITMTabGroupResponse_Status_EnumDescriptor,
+        .number = ITMTabGroupResponse_FieldNumber_Status,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMTabGroupResponse__storage_, status),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "groupsArray",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTabGroupResponse_Group),
+        .number = ITMTabGroupResponse_FieldNumber_GroupsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMTabGroupResponse__storage_, groupsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTabGroupResponse class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTabGroupResponse__storage_)
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - Enum ITMTabGroupResponse_Status
+
+GPBEnumDescriptor *ITMTabGroupResponse_Status_EnumDescriptor(void) {
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
+  if (!descriptor) {
+    static const char *valueNames =
+        "Ok\000RequestMalformed\000InvalidTabId\000Invalid"
+        "GroupId\000TabsInDifferentWindows\000CollapseI"
+        "mpossible\000";
+    static const int32_t values[] = {
+        ITMTabGroupResponse_Status_Ok,
+        ITMTabGroupResponse_Status_RequestMalformed,
+        ITMTabGroupResponse_Status_InvalidTabId,
+        ITMTabGroupResponse_Status_InvalidGroupId,
+        ITMTabGroupResponse_Status_TabsInDifferentWindows,
+        ITMTabGroupResponse_Status_CollapseImpossible,
+    };
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(ITMTabGroupResponse_Status)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:ITMTabGroupResponse_Status_IsValidValue];
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL ITMTabGroupResponse_Status_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case ITMTabGroupResponse_Status_Ok:
+    case ITMTabGroupResponse_Status_RequestMalformed:
+    case ITMTabGroupResponse_Status_InvalidTabId:
+    case ITMTabGroupResponse_Status_InvalidGroupId:
+    case ITMTabGroupResponse_Status_TabsInDifferentWindows:
+    case ITMTabGroupResponse_Status_CollapseImpossible:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
+#pragma mark - ITMTabGroupResponse_Group
+
+@implementation ITMTabGroupResponse_Group
+
+@dynamic hasGroupId, groupId;
+@dynamic hasName, name;
+@dynamic hasColor, color;
+@dynamic hasWindowId, windowId;
+@dynamic hasCollapsed, collapsed;
+@dynamic tabIdsArray, tabIdsArray_Count;
+
+typedef struct ITMTabGroupResponse_Group__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *groupId;
+  NSString *name;
+  ITMRGBColor *color;
+  NSString *windowId;
+  NSMutableArray *tabIdsArray;
+} ITMTabGroupResponse_Group__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "groupId",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMTabGroupResponse_Group_FieldNumber_GroupId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(ITMTabGroupResponse_Group__storage_, groupId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "name",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMTabGroupResponse_Group_FieldNumber_Name,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(ITMTabGroupResponse_Group__storage_, name),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "color",
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMRGBColor),
+        .number = ITMTabGroupResponse_Group_FieldNumber_Color,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(ITMTabGroupResponse_Group__storage_, color),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "windowId",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMTabGroupResponse_Group_FieldNumber_WindowId,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(ITMTabGroupResponse_Group__storage_, windowId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "collapsed",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMTabGroupResponse_Group_FieldNumber_Collapsed,
+        .hasIndex = 4,
+        .offset = 5,  // Stored in _has_storage_ to save space.
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeBool,
+      },
+      {
+        .name = "tabIdsArray",
+        .dataTypeSpecific.clazz = Nil,
+        .number = ITMTabGroupResponse_Group_FieldNumber_TabIdsArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(ITMTabGroupResponse_Group__storage_, tabIdsArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[ITMTabGroupResponse_Group class]
+                                     rootClass:[ITMApiRoot class]
+                                          file:ITMApiRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(ITMTabGroupResponse_Group__storage_)
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMTabGroupResponse)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
 
 #pragma mark - ITMTmuxRequest
 
